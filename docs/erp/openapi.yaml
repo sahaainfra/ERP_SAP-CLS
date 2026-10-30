@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+  title: ERP API
+  version: 0.1.0
+  description: >
+    Part 00.02 endpoints. Authentication is the development adapter (headers X-Erp-User, X-Erp-Roles,
+    X-Erp-Company) until the IAM module exists (defect D-001). Errors use
+    { error: { code, message, details[{field,message}], correlationId } }.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/health:
+    get:
+      summary: Liveness check (public)
+      responses:
+        '200': { description: ok }
+  /api/v1/core/session:
+    get:
+      summary: Current user, roles, company, permissions and environment
+      responses:
+        '200': { description: session }
+        '401': { description: no identity }
+  /api/v1/core/feature-flags:
+    get:
+      summary: List flag rows visible to the caller's company (needs core.flag.view)
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 25 } }
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+      responses:
+        '200': { description: '{ data: [...], meta: { page, pageSize, total, totalPages } }' }
+        '400': { description: invalid query }
+        '401': { description: no identity }
+        '403': { description: missing core.flag.view }
+  /api/v1/core/feature-flags/evaluate:
+    get:
+      summary: Evaluate flags for the caller's scope (any authenticated user)
+      parameters:
+        - { name: keys, in: query, required: true, schema: { type: string }, description: comma-separated flag keys }
+        - { name: company_id, in: query, schema: { type: integer }, description: must equal the caller's company }
+        - { name: project_id, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: '{ data: { "<key>": true|false } }' }
+        '403': { description: another company's scope }
+  /api/v1/core/feature-flags/{key}:
+    patch:
+      summary: Set a flag at a scope (needs core.flag.configure; reason required)
+      parameters:
+        - { name: key, in: path, required: true, schema: { type: string, pattern: '^ff\.[a-z0-9_.]+$' } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scope, enabled, reason]
+              properties:
+                scope:
+                  type: object
+                  required: [level]
+                  properties:
+                    level: { type: string, enum: [default, environment, company, project] }
+                    environment: { type: string, enum: [development, test, staging, production] }
+                    companyId: { type: integer }
+                    projectId: { type: integer }
+                enabled: { type: boolean }
+                reason: { type: string, minLength: 5, maxLength: 500 }
+                version: { type: integer, description: required when the scope row already exists }
+      responses:
+        '200': { description: '{ data: { id, key, enabled, version } }' }
+        '400': { description: validation errors with field details }
+        '403': { description: missing permission or another company }
+        '404': { description: flag not defined }
+        '409': { description: stale or missing version }

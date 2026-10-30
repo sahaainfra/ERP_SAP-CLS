@@ -1,0 +1,79 @@
+[
+  {
+    "companyId": null,
+    "enabled": false,
+    "environment": "development",
+    "projectId": null,
+    "source": "default"
+  },
+  {
+    "companyId": 1,
+    "enabled": false,
+    "environment": "development",
+    "projectId": null,
+    "source": "company"
+  },
+  {
+    "companyId": 1,
+    "enabled": true,
+    "environment": "development",
+    "projectId": 11,
+    "source": "project"
+  },
+  {
+    "companyId": 1,
+    "enabled": false,
+    "environment": "development",
+    "projectId": 12,
+    "source": "company"
+  },
+  {
+    "companyId": 2,
+    "enabled": false,
+    "environment": "development",
+    "projectId": 11,
+    "source": "default"
+  },
+  {
+    "companyId": null,
+    "enabled": true,
+    "environment": "production",
+    "projectId": null,
+    "source": "environment"
+  },
+  {
+    "companyId": 1,
+    "enabled": false,
+    "environment": "production",
+    "projectId": null,
+    "source": "company"
+  },
+  {
+    "companyId": 1,
+    "enabled": true,
+    "environment": "production",
+    "projectId": 11,
+    "source": "project"
+  },
+  {
+    "companyId": 1,
+    "enabled": false,
+    "environment": "production",
+    "projectId": 12,
+    "source": "company"
+  },
+  {
+    "companyId": 2,
+    "enabled": true,
+    "environment": "production",
+    "projectId": 11,
+    "source": "environment"
+  },
+  {
+    "companyId": null,
+    "enabled": false,
+    "environment": "production",
+    "projectId": null,
+    "source": "undefined"
+  }
+]

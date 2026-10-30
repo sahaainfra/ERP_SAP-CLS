@@ -1,6 +1,6 @@
 seq,part_id,title,module,phase,gate,depends_on,status,started,completed,completion_report,open_defects,reviewer,notes
 1,00.01,"Existing Codebase, Database & Feature Discovery Audit",M00,1,G1 — Platform Gate,,Ready for review,2026-10-30,2026-10-30,docs/erp/COMPLETION/00.01.md,,,Greenfield baseline; no existing code audited. See COMPLETION/00.01.md
-2,00.02,"Engineering Baseline, Feature Flags & Regression Harness",M00,1,G1 — Platform Gate,00.01,Not started,,,docs/erp/COMPLETION/00.02.md,,,
+2,00.02,"Engineering Baseline, Feature Flags & Regression Harness",M00,1,G1 — Platform Gate,00.01,Ready for review,2026-10-30,2026-10-30,docs/erp/COMPLETION/00.02.md,8,,"Stack: Node 24, Express 5, SQLite, React/Vite. Auth and roles are a dev adapter until 02.x. See COMPLETION/00.02.md"
 3,00.03,"CI/CD Pipeline, Quality Gates & Release Engineering",M00,1,G1 — Platform Gate,00.02,Not started,,,docs/erp/COMPLETION/00.03.md,,,
 4,01.01,"Application Architecture, Module Boundaries & API Conventions",M01,1,G1 — Platform Gate,00.02,Not started,,,docs/erp/COMPLETION/01.01.md,,,
 5,01.02,"Database Foundation, Migration Framework & Data Integrity",M01,1,G1 — Platform Gate,01.01,Not started,,,docs/erp/COMPLETION/01.02.md,,,

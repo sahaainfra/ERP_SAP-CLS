@@ -1,5 +1,6 @@
-# DEFECTS
+# DEFECTS (scan output)
 
 Placeholder/dummy markers found by scan (FR-06): 0
 
-No defects: there is no application code to be defective.
+The curated defect register is `docs/erp/DEFECTS.md`.
+

@@ -1,39 +1,40 @@
 # Discovery Summary
 
 - Parts in pack: 228
-- Application source files: 0
-- Parts with existence status `None`: 228
+- Application source files: 34
+- Parts built (Ready for review or Accepted): 2
+- Parts with no implementation: 226
 
-| Module | Parts | Existence |
+| Module | Parts | Built |
 |---|---|---|
-| M00 | 3 | None |
-| M01 | 8 | None |
-| M02 | 7 | None |
-| M03 | 10 | None |
-| M04 | 15 | None |
-| M05 | 5 | None |
-| M06 | 6 | None |
-| M07 | 14 | None |
-| M08 | 3 | None |
-| M09 | 3 | None |
-| M10 | 8 | None |
-| M11 | 5 | None |
-| M12 | 4 | None |
-| M13 | 5 | None |
-| M14 | 7 | None |
-| M15 | 10 | None |
-| M16 | 11 | None |
-| M17 | 8 | None |
-| M18 | 7 | None |
-| M19 | 8 | None |
-| M20 | 3 | None |
-| M21 | 7 | None |
-| M22 | 9 | None |
-| M23 | 15 | None |
-| M24 | 5 | None |
-| M25 | 4 | None |
-| M26 | 4 | None |
-| M27 | 11 | None |
-| M28 | 5 | None |
-| M29 | 8 | None |
-| M30 | 10 | None |
+| M00 | 3 | 2 |
+| M01 | 8 | 0 |
+| M02 | 7 | 0 |
+| M03 | 10 | 0 |
+| M04 | 15 | 0 |
+| M05 | 5 | 0 |
+| M06 | 6 | 0 |
+| M07 | 14 | 0 |
+| M08 | 3 | 0 |
+| M09 | 3 | 0 |
+| M10 | 8 | 0 |
+| M11 | 5 | 0 |
+| M12 | 4 | 0 |
+| M13 | 5 | 0 |
+| M14 | 7 | 0 |
+| M15 | 10 | 0 |
+| M16 | 11 | 0 |
+| M17 | 8 | 0 |
+| M18 | 7 | 0 |
+| M19 | 8 | 0 |
+| M20 | 3 | 0 |
+| M21 | 7 | 0 |
+| M22 | 9 | 0 |
+| M23 | 15 | 0 |
+| M24 | 5 | 0 |
+| M25 | 4 | 0 |
+| M26 | 4 | 0 |
+| M27 | 11 | 0 |
+| M28 | 5 | 0 |
+| M29 | 8 | 0 |
+| M30 | 10 | 0 |
