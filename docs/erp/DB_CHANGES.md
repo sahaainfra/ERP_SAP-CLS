@@ -11,7 +11,10 @@ Every migration is additive, idempotent and reversible (`.up.sql` and `.down.sql
 | 20261030000005_seed_flag_core_p0101 | 01.01 | reference-seed rows for `ff.core.p0101` (default OFF; ON in development and test) | deletes those seed rows |
 | 20261030000006_core_database_foundation | 01.02 | tables `core_idempotency_keys` (replay protection), `core_integrity_runs` (integrity-check history), `core_backfill_runs` (back-fill ledger) and their indexes | drops the three tables |
 | 20261030000007_seed_flag_core_p0102 | 01.02 | reference-seed rows for `ff.core.p0102` (default OFF; ON in development and test) | deletes those seed rows |
+| 20261030000008_core_system_configuration | 01.03 | tables `core_company_settings`, `core_financial_years`, `core_periods` (per-module status), `core_parameters` (typed, scoped, effective-dated), `core_holiday_calendars`, `core_holidays` and their indexes | drops the six tables |
+| 20261030000009_core_numbering_and_approvals | 01.03 | tables `core_document_types`, `core_number_series`, `core_number_counters`, `core_number_issues`, `core_change_requests`, `core_change_request_steps`, `core_sample_documents` and their indexes | drops the seven tables |
+| 20261030000010_seed_core_p0103 | 01.03 | reference-seed rows: flag `ff.core.p0103` (default OFF; ON in development and test) and document type `SAMPLE_DOC` | deletes those seed rows |
 
 Existing objects altered or dropped: none. Schema-diff against `schema/baseline.json`: clean.
 
-Parts 00.03 and 01.01 add no tables or columns; 01.02 adds three tables. Every migration is now verified in CI: it must apply, reverse to the exact previous schema and data, and re-apply (`npm run erp:migration-check`).
+Parts 00.03 and 01.01 add no tables or columns; 01.02 adds three tables; 01.03 adds thirteen tables (configuration, numbering, change requests and a sample document). Every migration is now verified in CI: it must apply, reverse to the exact previous schema and data, and re-apply (`npm run erp:migration-check`).

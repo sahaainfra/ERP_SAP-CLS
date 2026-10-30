@@ -9,7 +9,8 @@ export const MIGRATIONS_DIR = join(ROOT, 'migrations');
 export function openDatabase(path) {
   if (path !== ':memory:') mkdirSync(dirname(resolve(ROOT, path)), { recursive: true });
   const db = new DatabaseSync(path === ':memory:' ? path : resolve(ROOT, path));
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  // busy_timeout: a second process (or connection) waits for the write lock instead of failing at once.
+  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 10000;');
   return db;
 }
 
@@ -24,6 +25,15 @@ export function transaction(db, fn) {
     db.exec('ROLLBACK');
     throw err;
   }
+}
+
+/**
+ * Run fn inside the caller's transaction if there is one, otherwise in a new one. Services that must be atomic with
+ * their caller (numbering, period checks that write) use this so their writes commit or roll back together with
+ * the document that needed them.
+ */
+export function inTransaction(db, fn) {
+  return db.isTransaction ? fn() : transaction(db, fn);
 }
 
 /** Migration files: <id>_<name>.up.sql / <id>_<name>.down.sql, applied in id order. */

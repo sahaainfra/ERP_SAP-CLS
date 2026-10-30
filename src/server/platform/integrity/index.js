@@ -101,6 +101,32 @@ export const CHECKS = [
     },
   },
   {
+    code: 'sequence_gaps',
+    name: 'Gap-free number series have no gaps',
+    severity: 'Critical',
+    description: 'Statutory document numbers (tax invoices, credit notes) must run 1, 2, 3 with none missing; a cancelled document keeps its number.',
+    run({ db, tables, rules }) {
+      const byName = new Map(tables.map((t) => [t.name, t]));
+      let checked = 0;
+      let failures = 0;
+      const samples = [];
+      for (const q of rules.sequences) {
+        const t = byName.get(q.table);
+        if (!t) continue;
+        checked++;
+        const cond = [...activeConditions(t), ...(q.where ? [`(${q.where})`] : [])];
+        const cols = q.groupBy.join(', ');
+        const sql = `SELECT ${cols}, MIN(${q.seq}) AS lo, MAX(${q.seq}) AS hi, COUNT(*) AS n FROM ${q.table} ${where(cond)} GROUP BY ${cols} HAVING MAX(${q.seq}) - MIN(${q.seq}) + 1 <> COUNT(*)`;
+        const bad = db.prepare(sql).all();
+        failures += bad.length;
+        for (const b of bad.slice(0, SAMPLE_LIMIT - samples.length)) {
+          samples.push({ table: q.table, group: Object.fromEntries(q.groupBy.map((c) => [c, b[c]])), from: b.lo, to: b.hi, present: b.n });
+        }
+      }
+      return { checked, failures, samples };
+    },
+  },
+  {
     code: 'negative_quantities',
     name: 'No negative quantities or amounts',
     severity: 'High',

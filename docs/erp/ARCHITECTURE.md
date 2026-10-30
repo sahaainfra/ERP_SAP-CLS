@@ -51,7 +51,7 @@ src/client/
 docs/erp/                     DECISIONS, DEFECTS, DISCOVERY/<part>, COMPLETION/<part>, PROGRESS.csv
 ```
 
-The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`, `platform/integrity`. The one module so far is `modules/core`.
+The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`, `platform/integrity`, `platform/parameters`, `platform/approvals`. The one module so far is `modules/core`.
 
 A module owns its tables. Other modules read through its service or react to its events; they never write into its tables.
 
@@ -158,3 +158,14 @@ The rules every table and migration follows. The detail and the commands are in 
 6. Add `src/client/modules/<code>/` and call `registerModule`.
 7. Add tests: success, validation, 403, cross-scope, 409, and a contract snapshot entry if it replaces a legacy route.
 8. Update `docs/erp/DECISIONS.md` for any structural choice.
+
+## 12. System configuration, numbering and period control (part 01.03)
+
+Platform libraries added: `platform/parameters` (typed parameter registry and resolving, cached store) and `platform/approvals` (a thin role-chain approval engine until the workflow engine of part 04.01). Browser and server share `src/shared/numbering.js` (formats), `src/shared/fiscal.js` (financial years and period statuses) and `src/shared/gst.js` (state codes, PAN, CIN, GSTIN check character).
+
+- **Company settings**: one row per company (`core_company_settings`), saved with a reason, optimistic locking and an audit row that records that a PAN exists, not the number.
+- **Financial years and periods**: a year creates twelve monthly periods; each period has a status per module (Open, Soft-closed, Closed). Transactional modules call `assertPeriodOpen(db, { companyId, module, date, actor })` from `modules/core/api.js` before posting; it throws 422 `PERIOD_CLOSED`, `PERIOD_SOFT_CLOSED` or `PERIOD_NOT_FOUND`. A closed period is reopened only through an approved request (Accounts Manager, then CFO).
+- **Numbering**: `issueNumber(db, ctx)`, `previewNumber(db, ctx)` and `cancelNumber(db, ctx)` from `modules/core/api.js`. A gap-free series must be issued inside the caller's transaction, so a rolled-back document does not consume a number; HTTP `numbering/next` is refused for gap-free series. Counters are per series and period key (empty, the financial year or `YYYY-MM`) and advance with one `INSERT ... ON CONFLICT ... RETURNING`. Every number is logged in `core_number_issues` (ISSUED or CANCELLED, never deleted); the `sequence_gaps` integrity check proves a gap-free series has none.
+- **Parameters**: modules declare definitions with `defineParameter`; values are stored per scope (system, company, project, site) with effective dates. The most specific scope in force on the date wins. A write closes the old row and keeps it as history, the past is never rewritten, and the cache is emptied on every write.
+- **Holidays**: calendars per company, state or site; `isHoliday` and `isWorkingDay` (weekly off from the `core.calendar.week_off_days` parameter) are exported for scheduling modules.
+- **Pages** (behind `ff.core.p0103`): Company Settings, Financial Years, Numbering, Parameters, Holidays under `/admin/...`.

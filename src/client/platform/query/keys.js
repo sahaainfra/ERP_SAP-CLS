@@ -15,5 +15,11 @@ export const queryKeys = {
       runs: (params) => ['core', 'integrity', 'runs', params],
     },
     architecture: () => ['core', 'architecture'],
+    settings: () => ['core', 'settings'],
+    fy: { all: ['core', 'fy'], list: () => ['core', 'fy', 'list'], one: (id) => ['core', 'fy', 'one', id] },
+    numbering: { all: ['core', 'numbering'], types: () => ['core', 'numbering', 'types'], series: () => ['core', 'numbering', 'series'], preview: (p) => ['core', 'numbering', 'preview', p] },
+    requests: { all: ['core', 'requests'], list: (p) => ['core', 'requests', 'list', p] },
+    parameters: { all: ['core', 'parameters'], definitions: () => ['core', 'parameters', 'definitions'], list: (p) => ['core', 'parameters', 'list', p] },
+    holidays: { all: ['core', 'holidays'], calendars: () => ['core', 'holidays', 'calendars'], one: (id, p) => ['core', 'holidays', 'one', id, p] },
   },
 };

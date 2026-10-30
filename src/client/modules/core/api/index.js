@@ -75,3 +75,82 @@ export async function fetchAllFlags(q) {
   }
   return all;
 }
+
+// ---- Part 01.03: configuration, financial years, numbering, parameters, holidays ----
+const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
+const unwrap = async (promise) => (await promise).data;
+
+/** A mutation that sends a fresh Idempotency-Key and refreshes the listed query keys on success. */
+function useWrite(fn, invalidate) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => Promise.all(invalidate.map((queryKey) => qc.invalidateQueries({ queryKey }))),
+    onError: (err) => {
+      if (err.status === 409) invalidate.forEach((queryKey) => qc.invalidateQueries({ queryKey }));
+    },
+  });
+}
+
+export const useCompanySettings = () =>
+  useQuery({ queryKey: queryKeys.core.settings(), queryFn: () => unwrap(api.get('/core/company-settings')), retry: false });
+export const useSaveCompanySettings = () => useWrite((body) => unwrap(api.put('/core/company-settings', body, idem())), [queryKeys.core.settings()]);
+
+export const useFinancialYears = () =>
+  useQuery({ queryKey: queryKeys.core.fy.list(), queryFn: () => api.get('/core/financial-years?page=1&pageSize=50'), retry: false });
+export const useFinancialYear = (id) =>
+  useQuery({ queryKey: queryKeys.core.fy.one(id), queryFn: () => unwrap(api.get(`/core/financial-years/${id}`)), enabled: Boolean(id) });
+export const useCreateFinancialYear = () => useWrite((body) => unwrap(api.post('/core/financial-years', body, idem())), [queryKeys.core.fy.all]);
+export const useSetPeriodStatus = () => useWrite(({ id, ...body }) => unwrap(api.post(`/core/periods/${id}/status`, body, idem())), [queryKeys.core.fy.all]);
+export const useCloseFinancialYear = () => useWrite(({ id, ...body }) => unwrap(api.post(`/core/financial-years/${id}/close`, body, idem())), [queryKeys.core.fy.all]);
+export const useRequestReopen = () => useWrite((body) => unwrap(api.post('/core/period-reopen-requests', body, idem())), [queryKeys.core.requests.all]);
+
+export const useChangeRequests = (params = {}) =>
+  useQuery({
+    queryKey: queryKeys.core.requests.list(params),
+    queryFn: () => api.get(`/core/change-requests?page=1&pageSize=50${params.status ? `&filter[status]=${params.status}` : ''}`),
+    retry: false,
+  });
+export const useActOnRequest = () =>
+  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all]);
+
+export const useDocumentTypes = () =>
+  useQuery({ queryKey: queryKeys.core.numbering.types(), queryFn: () => unwrap(api.get('/core/document-types')), retry: false });
+export const useNumberSeries = () =>
+  useQuery({ queryKey: queryKeys.core.numbering.series(), queryFn: () => unwrap(api.get('/core/number-series')), retry: false });
+export const useCreateDocType = () => useWrite((body) => unwrap(api.post('/core/document-types', body, idem())), [queryKeys.core.numbering.all]);
+export const useCreateSeries = () => useWrite((body) => unwrap(api.post('/core/number-series', body, idem())), [queryKeys.core.numbering.all]);
+export const useUpdateSeries = () => useWrite(({ id, ...body }) => unwrap(api.patch(`/core/number-series/${id}`, body, idem())), [queryKeys.core.numbering.all]);
+export const useRequestSeriesChange = () => useWrite(({ id, ...body }) => unwrap(api.post(`/core/number-series/${id}/change-requests`, body, idem())), [queryKeys.core.requests.all]);
+
+/** The number that would be issued next, from the server's own formatter, so a preview never differs from the real number. */
+export const useNumberPreview = (params) =>
+  useQuery({
+    queryKey: queryKeys.core.numbering.preview(params),
+    queryFn: () => unwrap(api.get(`/core/numbering/preview?${new URLSearchParams(params)}`)),
+    enabled: Boolean(params?.docType),
+    retry: false,
+  });
+
+export const useParameterDefinitions = () =>
+  useQuery({ queryKey: queryKeys.core.parameters.definitions(), queryFn: () => unwrap(api.get('/core/parameters/definitions')), retry: false });
+export const useParameters = (key) =>
+  useQuery({
+    queryKey: queryKeys.core.parameters.list({ key }),
+    queryFn: () => unwrap(api.get(`/core/parameters${key ? `?filter[key]=${encodeURIComponent(key)}` : ''}`)),
+    retry: false,
+  });
+export const useSetParameter = () => useWrite((body) => unwrap(api.post('/core/parameters', body, idem())), [queryKeys.core.parameters.all]);
+
+export const useHolidayCalendars = () =>
+  useQuery({ queryKey: queryKeys.core.holidays.calendars(), queryFn: () => unwrap(api.get('/core/holiday-calendars')), retry: false });
+export const useHolidayCalendar = (id, year) =>
+  useQuery({
+    queryKey: queryKeys.core.holidays.one(id, year),
+    queryFn: () => unwrap(api.get(`/core/holiday-calendars/${id}?from=${year}-01-01&to=${year}-12-31`)),
+    enabled: Boolean(id),
+  });
+export const useCreateCalendar = () => useWrite((body) => unwrap(api.post('/core/holiday-calendars', body, idem())), [queryKeys.core.holidays.all]);
+export const useAddHoliday = () => useWrite(({ calendarId, ...body }) => unwrap(api.post(`/core/holiday-calendars/${calendarId}/holidays`, body, idem())), [queryKeys.core.holidays.all]);
+export const useDeleteHoliday = () => useWrite((id) => unwrap(api.delete(`/core/holidays/${id}`, idem())), [queryKeys.core.holidays.all]);
+export const useImportHolidays = () => useWrite(({ calendarId, rows }) => unwrap(api.post(`/core/holiday-calendars/${calendarId}/import`, { rows }, idem())), [queryKeys.core.holidays.all]);

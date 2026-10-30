@@ -1,24 +1,58 @@
+import { Router } from 'express';
 import { idempotency } from '../../platform/http/idempotency.js';
+import { notFound } from '../../platform/http/errors.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
+import { createApprovalEngine } from '../../platform/approvals/index.js';
+import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
 import { aboutRoutes } from './about/routes.js';
 import { createAboutService } from './about/service.js';
 import { architectureRoutes } from './architecture/routes.js';
 import { createArchitectureService } from './architecture/service.js';
+import { changeRequestRoutes } from './change-requests/routes.js';
+import { createChangeRequestService } from './change-requests/service.js';
 import { featureFlagRoutes } from './feature-flags/routes.js';
 import { createFlagService } from './feature-flags/service.js';
+import { financialYearRoutes } from './financial-years/routes.js';
+import { createFinancialYearService, periodReopenHandler } from './financial-years/service.js';
+import { holidayRoutes } from './holidays/routes.js';
+import { createHolidayService } from './holidays/service.js';
 import { integrityRoutes } from './integrity/routes.js';
 import { createIntegrityService } from './integrity/service.js';
+import { numberingRoutes } from './numbering/routes.js';
+import { createNumberingService, seriesChangeHandler } from './numbering/service.js';
+import { parameterRoutes } from './parameters/routes.js';
+import { createParameterService } from './parameters/service.js';
+import { sampleDocumentRoutes } from './sample-documents/routes.js';
+import { createSampleDocumentService } from './sample-documents/service.js';
 import { sessionRoutes } from './session/routes.js';
+import { displaySettingsRoutes, settingsRoutes } from './settings/routes.js';
+import { createSettingsService } from './settings/service.js';
 
-// The core module's tables for the integrity checks: flag, run and back-fill rows are installation-wide (no company
-// needed), and the two run ledgers have their own status words.
+// Platform parameters this module owns (part 01.03). Others are defined by the modules that use them.
+parameterRegistry.define({ key: 'core.session.timeout_minutes', dataType: 'integer', default: 30, min: 5, max: 480, scopes: ['system', 'company'], description: 'Minutes of inactivity before a user is signed out.' });
+parameterRegistry.define({ key: 'core.export.max_rows', dataType: 'integer', default: 50000, min: 1000, max: 1_000_000, scopes: ['system', 'company'], description: 'The most rows a synchronous export may contain; larger exports run as background jobs.' });
+parameterRegistry.define({ key: 'core.ui.default_page_size', dataType: 'integer', default: 25, min: 10, max: 200, scopes: ['system', 'company'], description: 'Rows per page in lists, until a user chooses another size.' });
+parameterRegistry.define({ key: 'core.calendar.week_off_days', dataType: 'json', default: [0], scopes: ['system', 'company', 'site'], description: 'Weekly off days as day numbers, 0 = Sunday to 6 = Saturday.' });
+
+// What the integrity checks need to know about this module's tables.
 integrityRegistry.register({
-  companyOptional: ['core_feature_flags', 'core_integrity_runs', 'core_backfill_runs'],
+  technicalTables: ['core_number_counters', 'core_change_request_steps'],
+  companyOptional: ['core_feature_flags', 'core_integrity_runs', 'core_backfill_runs', 'core_document_types', 'core_parameters'],
   statuses: {
     core_integrity_runs: ['pass', 'fail', 'not_applicable'],
     core_backfill_runs: ['running', 'completed', 'failed'],
+    core_financial_years: ['Open', 'Closed'],
+    core_change_requests: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'],
+    core_number_issues: ['ISSUED', 'CANCELLED'],
+    core_sample_documents: ['DRAFT', 'SUBMITTED', 'CANCELLED'],
   },
+  // A gap-free series must have no missing number, cancelled ones included.
+  sequences: [{ table: 'core_number_issues', groupBy: ['series_id', 'period_key'], seq: 'seq', where: 'series_id IN (SELECT id FROM core_number_series WHERE gap_free = 1)' }],
 });
+
+/** The feature flag that hides everything this part added until an administrator turns it on for the company. */
+const flagGate = (isFlagOn, key) => (req, _res, next) =>
+  isFlagOn(req.actor, key) ? next() : next(notFound(`System configuration is not enabled for your company yet (feature flag ${key} is OFF).`));
 
 /**
  * Module "core": the reference implementation of the layered architecture
@@ -30,17 +64,45 @@ export const core = {
   routePrefix: '/api/v1/core',
   ownerPart: '01.x',
   status: 'Reference implementation',
-  tables: ['core_feature_flags', 'core_audit_log', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs', 'core_schema_migrations'],
-  resources: ['session', 'about', 'feature-flags', 'architecture', 'integrity'],
+  tables: [
+    'core_feature_flags', 'core_audit_log', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
+    'core_company_settings', 'core_financial_years', 'core_periods', 'core_parameters', 'core_holiday_calendars', 'core_holidays',
+    'core_document_types', 'core_number_series', 'core_number_counters', 'core_number_issues', 'core_change_requests', 'core_change_request_steps',
+    'core_sample_documents', 'core_schema_migrations',
+  ],
+  resources: [
+    'session', 'about', 'feature-flags', 'architecture', 'integrity', 'display-settings', 'company-settings', 'financial-years', 'periods',
+    'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents',
+  ],
   /** Build the module's services and attach its routes to the authenticated /api/v1 router. */
   mount(api, { db, config, buildInfo, modules }) {
     const flags = createFlagService({ db, environment: config.environment });
     const isFlagOn = (actor, key) => flags.isOn(actor, key);
     const idempotent = idempotency(db); // honoured when the client sends an Idempotency-Key; never required here
+    const idempotentRequired = idempotency(db, { required: true }); // every approval, posting and number-issuing action
+
+    const settings = createSettingsService({ db });
+    const store = createParameterStore(db, parameterRegistry);
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler } });
+    const opts = { idempotent, idempotentRequired };
+
     api.use('/core', sessionRoutes({ config }));
     api.use('/core', aboutRoutes(createAboutService({ db, config, buildInfo })));
     api.use('/core', architectureRoutes(createArchitectureService({ modules, isFlagOn })));
-    api.use('/core', integrityRoutes(createIntegrityService({ db, isFlagOn }), { idempotent }));
-    api.use('/core', featureFlagRoutes(flags, { idempotent }));
+    api.use('/core', integrityRoutes(createIntegrityService({ db, isFlagOn }), opts));
+    api.use('/core', featureFlagRoutes(flags, opts));
+    api.use('/core', displaySettingsRoutes(settings));
+
+    // System configuration (part 01.03): everything below is hidden while ff.core.p0103 is OFF for the company.
+    const configuration = Router();
+    configuration.use(flagGate(isFlagOn, 'ff.core.p0103'));
+    configuration.use(settingsRoutes(settings, opts));
+    configuration.use(financialYearRoutes(createFinancialYearService({ db, approvals, settings }), opts));
+    configuration.use(changeRequestRoutes(createChangeRequestService({ approvals }), opts));
+    configuration.use(numberingRoutes(createNumberingService({ db, approvals }), opts));
+    configuration.use(parameterRoutes(createParameterService({ db, store, registry: parameterRegistry }), opts));
+    configuration.use(holidayRoutes(createHolidayService({ db }), opts));
+    configuration.use(sampleDocumentRoutes(createSampleDocumentService({ db }), opts));
+    api.use('/core', configuration);
   },
 };

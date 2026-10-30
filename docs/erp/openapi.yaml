@@ -134,3 +134,120 @@ paths:
         '403': { description: missing permission or another company }
         '404': { description: flag not defined }
         '409': { description: stale or missing version }
+  /api/v1/core/company-settings:
+    get:
+      summary: Company legal identity, tax registrations and formats (core.settings.view)
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: Save the company settings (core.settings.configure, Idempotency-Key, reason required, version for an existing row)
+      responses: { '200': { description: '{ data }' }, '400': { description: field errors }, '409': { description: stale version } }
+  /api/v1/core/display-settings:
+    get:
+      summary: Display formats for any signed-in user
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/financial-years:
+    get:
+      summary: List financial years (core.fy.view)
+      responses: { '200': { description: '{ data, meta }' } }
+    post:
+      summary: Create a year and twelve open periods (core.fy.configure)
+      responses: { '201': { description: '{ data }' }, '422': { description: overlapping or invalid year } }
+  /api/v1/core/financial-years/{id}:
+    get:
+      summary: A year with its periods and per-module status
+      responses: { '200': { description: '{ data }' }, '404': { description: not found } }
+  /api/v1/core/financial-years/{id}/close:
+    post:
+      summary: Close a year when every period is closed (core.period.manage, Idempotency-Key required)
+      responses: { '200': { description: closed }, '422': { description: periods still open } }
+  /api/v1/core/periods/{id}/status:
+    post:
+      summary: Set a module status for a period (core.period.manage)
+      responses: { '200': { description: changed }, '409': { description: stale version }, '422': { description: closed period } }
+  /api/v1/core/period-reopen-requests:
+    post:
+      summary: Ask for a closed period to be reopened (core.period.request_reopen, Idempotency-Key required)
+      responses: { '201': { description: request raised } }
+  /api/v1/core/change-requests:
+    get:
+      summary: List approval requests (core.requests.view)
+      responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/core/change-requests/{id}/act:
+    post:
+      summary: 'Approve, reject or return a request (body: action, comment, version)'
+      responses: { '200': { description: decided }, '403': { description: not your step or your own request }, '422': { description: already decided } }
+  /api/v1/core/document-types:
+    get:
+      summary: List document types (core.numbering.view)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Add a document type (core.numbering.configure)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/core/number-series:
+    get:
+      summary: List series with usage and the next number
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Add a series; format, reset rule and statutory limits are validated
+      responses: { '201': { description: '{ data }' }, '422': { description: invalid definition } }
+  /api/v1/core/number-series/{id}/change-requests:
+    post:
+      summary: Ask to change a series that has issued numbers (approval chain; Idempotency-Key required)
+      responses: { '201': { description: request raised } }
+  /api/v1/core/numbering/preview:
+    get:
+      summary: The next number without consuming it (core.numbering.preview)
+      responses: { '200': { description: '{ data: { number } }' } }
+  /api/v1/core/numbering/next:
+    post:
+      summary: Issue a number for a non gap-free series (core.numbering.issue, Idempotency-Key required)
+      responses: { '201': { description: '{ data: { number, seq } }' }, '422': { description: gap-free series must be issued inside a document transaction } }
+  /api/v1/core/numbering/issues:
+    get:
+      summary: The issue log
+      responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/core/parameters:
+    get:
+      summary: Parameter values with state current, future or past (core.param.view)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Set a value from an effective date; the old value is kept
+      responses: { '201': { description: '{ data }' }, '403': { description: scope not allowed }, '409': { description: a value already starts that day }, '422': { description: past date or scope not allowed } }
+  /api/v1/core/parameters/definitions:
+    get:
+      summary: Declared parameters with type, default, limits and scopes
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/parameters/resolve:
+    get:
+      summary: The value in force for a key, date, project and site
+      responses: { '200': { description: '{ data: { value, source } }' } }
+  /api/v1/core/holiday-calendars:
+    get:
+      summary: Calendars with holiday counts
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Add a calendar (core.holiday.configure)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/core/holiday-calendars/{id}:
+    get:
+      summary: A calendar with its holidays between from and to
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/holiday-calendars/{id}/holidays:
+    post:
+      summary: Add a holiday
+      responses: { '201': { description: '{ data }' }, '409': { description: date already listed } }
+  /api/v1/core/holiday-calendars/{id}/import:
+    post:
+      summary: 'Import rows { date, name, type } all or nothing (max 400)'
+      responses: { '200': { description: '{ data: { added, updated, unchanged } }' }, '400': { description: every bad row listed, nothing saved } }
+  /api/v1/core/holidays/{id}:
+    patch:
+      summary: Edit a holiday (version required)
+      responses: { '200': { description: '{ data }' } }
+    delete:
+      summary: Delete a holiday
+      responses: { '200': { description: deleted } }
+  /api/v1/core/holidays/check:
+    get:
+      summary: Is a date a holiday for a state or site
+      responses: { '200': { description: '{ data: { isHoliday, matches } }' } }

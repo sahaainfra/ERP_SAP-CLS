@@ -33,3 +33,21 @@ export async function startApi(configOverrides = {}, appOverrides = {}) {
   };
   return { db, call, close: () => new Promise((resolve) => server.close(resolve)) };
 }
+
+const C = '/api/v1/core';
+export const admin = (company = '1', user = 'sysadmin') => ({ roles: 'SYSADM', company, user });
+
+/**
+ * Make a company ready to number and post documents: its settings, the financial year 2026-27 (twelve open periods)
+ * and a numbering series for the sample document type. Returns what was created.
+ */
+export async function setupCompany(api, { company = '1', format = '{PREFIX}/{FY}/{SEQ:4}', gapFree = false, resetRule = 'financial_year', prefix = 'SMP' } = {}) {
+  const sys = admin(company);
+  const settings = await api.call('PUT', `${C}/company-settings`, { ...sys, body: { legalName: `Company ${company} Pvt Ltd`, reason: 'initial set-up' } });
+  const fy = await api.call('POST', `${C}/financial-years`, { ...sys, body: { startDate: '2026-04-01' } });
+  const series = await api.call('POST', `${C}/number-series`, {
+    ...sys,
+    body: { docType: 'SAMPLE_DOC', name: 'Sample documents', prefix, format, gapFree, resetRule, reason: 'initial set-up' },
+  });
+  return { settings: settings.json?.data, fy: fy.json?.data, series: series.json?.data, responses: { settings, fy, series } };
+}

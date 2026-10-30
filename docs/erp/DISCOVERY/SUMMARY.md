@@ -1,7 +1,7 @@
 # Discovery Summary
 
 - Parts in pack: 228
-- Application source files: 105
+- Application source files: 163
 - Parts built (Ready for review or Accepted): 5
 - Parts with no implementation: 223
 

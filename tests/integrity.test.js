@@ -218,7 +218,7 @@ test('API: summary lists every check with its last result; a violation seeded in
   assert.equal(by.missing_company_id.status, 'fail');
   assert.equal(by.invalid_status_values.status, 'fail');
   assert.equal(by.negative_quantities.status, 'fail');
-  assert.equal(by.orphan_foreign_keys.status, 'not_applicable');
+  assert.equal(by.orphan_foreign_keys.status, 'pass', 'the 01.03 tables declare foreign keys, so the check now has something to check');
   assert.ok(!JSON.stringify(after).includes('-7'), 'the negative amount itself is never shown');
   await api.close();
 });

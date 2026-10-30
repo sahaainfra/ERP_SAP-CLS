@@ -6,8 +6,18 @@ import { forbidden, unauthorized } from '../http/errors.js';
  * in staging and production.
  */
 const ROLE_PERMISSIONS = {
-  SYSADM: ['core.flag.view', 'core.flag.configure', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view'],
-  ITADM: ['core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view', 'core.integrity.run'],
+  SYSADM: [
+    'core.flag.view', 'core.flag.configure', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view',
+    'core.settings.view', 'core.settings.configure', 'core.fy.view', 'core.fy.configure', 'core.period.request_reopen',
+    'core.numbering.view', 'core.numbering.configure', 'core.numbering.issue', 'core.numbering.preview',
+    'core.param.view', 'core.param.configure', 'core.holiday.configure', 'core.requests.view', 'core.sample.use',
+  ],
+  ITADM: ['core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view', 'core.integrity.run', 'core.param.view', 'core.param.configure_system', 'core.numbering.view'],
+  // Finance: open and close periods, post into a soft-closed period, ask for a reopen, see the settings and the approval requests.
+  ACCMGR: ['core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.request_reopen', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
+  CFO: ['core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
+  DIR: ['core.fy.view', 'core.requests.view'],
+  PM: ['core.sample.use', 'core.numbering.preview'],
 };
 
 export function authenticate(config) {

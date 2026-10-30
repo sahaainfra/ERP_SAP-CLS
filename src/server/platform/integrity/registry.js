@@ -21,6 +21,7 @@ export function createIntegrityRegistry() {
     headerLines: [],
     journals: [],
     uniqueKeys: [],
+    sequences: [],
   };
   return {
     rules,
@@ -44,6 +45,9 @@ export function createIntegrityRegistry() {
         });
       }
       for (const j of m.journals ?? []) rules.journals.push({ table: ident(j.table), group: ident(j.group), debit: ident(j.debit), credit: ident(j.credit) });
+      // sequences: numbers that must run without gaps within a group, for example the issued numbers of a gap-free series.
+      // `where` is SQL written by the module (never user input) that picks the rows the rule applies to.
+      for (const q of m.sequences ?? []) rules.sequences.push({ table: ident(q.table), groupBy: q.groupBy.map(ident), seq: ident(q.seq), where: q.where ?? '' });
       for (const u of m.uniqueKeys ?? []) rules.uniqueKeys.push({ table: ident(u.table), columns: u.columns.map(ident) });
     },
   };

@@ -5,7 +5,7 @@ import { allRoutes, defaultRoute, findRoute, routesFor } from './platform/shell/
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
 
 const THEME_KEY = 'erp.theme';
-const ROLES = ['SYSADM', 'ITADM', 'PM'];
+const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO'];
 
 const currentPath = () => (findRoute(window.location.pathname) ? window.location.pathname : defaultRoute());
 
