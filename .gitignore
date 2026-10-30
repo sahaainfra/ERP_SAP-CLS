@@ -7,3 +7,8 @@ test-results/
 playwright-report/
 *.sqlite
 *.sqlite-*
+.deploy*/
+artifacts/
+coverage/
+__pycache__/
+*.pyc

@@ -22,3 +22,12 @@ One table, `core_feature_flags`. A row's scope comes from its columns: environme
 
 ## 2026-10-30 - Golden outputs
 `golden/registry.mjs` holds deterministic runners; `golden/outputs/*.json` holds the captured results, compared byte-for-byte. The first registered output is the flag-evaluation matrix, because no business calculations exist yet.
+
+## 2026-10-30 - CI/CD and release engineering (part 00.03)
+- One quality-gate command, `npm run erp:regression`, is both the local check and the CI `verify` job, so the two cannot drift.
+- Staging and production hosting are not chosen. Deploy, rollback, backup and smoke-test tooling is written against a directory-based environment and rehearsed there; moving it to a real host means replacing the start/stop and copy steps in `scripts/lib/deploy.mjs`.
+- Database rollback prefers the down-migrations of the build being removed (keeps new data) and falls back to the pre-deploy restore point (loses data written since). Restore points are SQLite `VACUUM INTO` copies.
+- Coverage gate: line coverage of changed JavaScript files under `src/server` and `scripts/lib`, minimum 60 %, to be raised to 80 %. The server entry point is excluded because it is exercised as a separate process. Client code is covered by the E2E suite, not by line coverage.
+- Build ID is `<timestamp>-<commit>` locally and `<run number>-<commit>` in CI. Versions are bumped by hand with `npm run release -- patch|minor|major`; the changelog comes from the `P<part>:` commit subjects and business-language notes from `Release-note:` lines.
+- The About page and `GET /api/v1/core/about` are limited to `core.about.view` (SYSADM, ITADM). The build ID appears nowhere else in the UI.
+- Security scans: `npm audit` (high and critical block), a built-in secret scanner (`scripts/lib/secrets.mjs`) and CodeQL in the workflow. No third-party secret scanner is installed.

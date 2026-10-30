@@ -18,3 +18,6 @@ Single steps: `npm test`, `npm run test:e2e`, `npm run erp:schema-diff`, `npm ru
 
 ## Documents
 `docs/erp/` holds the standards, decisions, defects, DB changes, discovery catalogues (`npm run erp:discover`, needs Python) and a completion report per part.
+
+## Release and deploy
+`npm run package`, `npm run deploy`, `npm run rollback`, `npm run rehearse` and `npm run release` are described in `docs/erp/RELEASE.md`. Administrators can see the running version and build under Administration > About.

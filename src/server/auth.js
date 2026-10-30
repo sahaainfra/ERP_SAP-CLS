@@ -6,8 +6,8 @@ import { forbidden, unauthorized } from './errors.js';
  * in staging and production.
  */
 const ROLE_PERMISSIONS = {
-  SYSADM: ['core.flag.view', 'core.flag.configure'],
-  ITADM: ['core.flag.view'],
+  SYSADM: ['core.flag.view', 'core.flag.configure', 'core.about.view'],
+  ITADM: ['core.flag.view', 'core.about.view'],
 };
 
 export function authenticate(config) {

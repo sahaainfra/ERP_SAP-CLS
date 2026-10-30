@@ -6,6 +6,7 @@ import { ROOT } from './db.js';
 import { authenticate, permissionsOf, requirePermission } from './auth.js';
 import { correlationMiddleware, errorHandler, badRequest, forbidden, HttpError } from './errors.js';
 import { listFlags, resolveFlag, setFlag } from './flags.js';
+import { aboutInfo, loadBuildInfo } from './about.js';
 
 const zodDetails = (err) => err.issues.map((i) => ({ field: i.path.join('.') || 'body', message: i.message }));
 
@@ -49,7 +50,7 @@ const patchBody = z
     }
   });
 
-export function createApp({ config, db, log = console.error }) {
+export function createApp({ config, db, log = console.error, buildInfo = loadBuildInfo() }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(correlationMiddleware);
@@ -75,6 +76,11 @@ export function createApp({ config, db, log = console.error }) {
         environment: config.environment,
       },
     });
+  });
+
+  // Build information for administrators only; never shown on business screens.
+  api.get('/core/about', requirePermission('core.about.view'), (_req, res) => {
+    res.json({ data: aboutInfo({ db, config, buildInfo }) });
   });
 
   api.get('/core/feature-flags', requirePermission('core.flag.view'), (req, res) => {

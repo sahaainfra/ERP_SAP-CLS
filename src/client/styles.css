@@ -99,3 +99,9 @@ tr:last-child td { border-bottom: 0; }
 }
 
 .shellbar select, .shellbar input { color: var(--erp-color-text-primary); }
+
+.shellbar nav { display: flex; gap: var(--erp-space-5); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--erp-space-4); margin: var(--erp-space-5) 0; }
+.facts > div { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-4); }
+.facts dt { font: var(--erp-type-caption); color: var(--erp-color-text-secondary); }
+.facts dd { margin: var(--erp-space-2) 0 0; font: var(--erp-type-title-sm); overflow-wrap: anywhere; }

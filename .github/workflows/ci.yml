@@ -1,0 +1,127 @@
+name: CI
+
+# Runs on every pull request and on every push to main. Branch protection (docs/erp/RELEASE.md) makes the
+# jobs "verify", "security" and "codeql" required checks, so a pull request cannot merge unless they pass.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      COVERAGE_MIN: '60'
+      COVERAGE_BASE: origin/${{ github.base_ref || 'main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # lint, type check, unit/API/permission tests with coverage, coverage gate for changed files,
+      # migration up/down check, schema-diff, golden outputs, secret scan, build, Playwright E2E
+      # (desktop and mobile viewports; Chrome is preinstalled on the runner).
+      - run: npm run erp:regression
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-report
+          path: |
+            reports/regression
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Critical and High vulnerabilities block (BR-03). A time-boxed exception is recorded in
+      # docs/erp/DECISIONS.md and the audit is re-run with an explicit override by an administrator.
+      - run: npm run erp:audit
+      - run: npm run erp:secret-scan
+
+  codeql:
+    name: codeql
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
+
+  package:
+    name: package
+    needs: [verify, security, codeql]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run package
+        env:
+          BUILD_ID: ${{ github.run_number }}-${{ github.sha }}
+          GIT_COMMIT: ${{ github.sha }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.run_number }}
+          path: artifacts/
+
+  # Rehearses deploy, smoke test, rollback and the automatic-rollback drills on the runner itself, using
+  # artefacts packaged from this commit. No hosting target is chosen yet (defect D-009), so this does not
+  # touch a real server and production promotion is not wired.
+  staging-rehearsal:
+    name: staging-rehearsal
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ github.run_number }}
+          path: artifacts/
+      - run: npm run rehearse
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rehearsal-report
+          path: reports/rehearsal.json
+          if-no-files-found: ignore

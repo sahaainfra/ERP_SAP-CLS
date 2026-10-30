@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  { ignores: ['node_modules/**', 'dist/**', 'reports/**', 'data/**', 'test-results/**', 'playwright-report/**'] },
+  { ignores: ['node_modules/**', 'dist/**', '.deploy*/**', 'artifacts/**', 'coverage/**', 'reports/**', 'data/**', 'test-results/**', 'playwright-report/**'] },
   js.configs.recommended,
   {
     languageOptions: { ecmaVersion: 2025, sourceType: 'module', globals: { ...globals.node } },

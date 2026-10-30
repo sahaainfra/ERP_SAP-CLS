@@ -1,0 +1,25 @@
+// Usage: node scripts/rollback.mjs --env <name> [--root .deploy]
+// One-command rollback to the previous build; the database goes back through down-migrations,
+// or through the restore point if those fail.
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { rollback } from './lib/deploy.mjs';
+
+const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const args = process.argv.slice(2);
+const opt = (n, d) => {
+  const i = args.indexOf(`--${n}`);
+  return i >= 0 ? args[i + 1] : d;
+};
+const envName = opt('env');
+if (!envName) {
+  console.error('Usage: rollback.mjs --env <name> [--root .deploy]');
+  process.exit(2);
+}
+try {
+  const r = await rollback({ envName, deployRoot: resolve(repo, opt('root', '.deploy')), nodeEnv: opt('node-env', 'test'), log: (m) => console.log(`  ${m}`) });
+  console.log(`Rolled ${envName} back from ${r.from} to ${r.restored} via ${r.method} in ${r.durationMs} ms.`);
+} catch (err) {
+  console.error(err.message);
+  process.exit(1);
+}

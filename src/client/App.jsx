@@ -2,10 +2,19 @@ import { useEffect, useState } from 'react';
 import { api, loadIdentity, saveIdentity } from './api.js';
 import { FlagsProvider } from './useFeatureFlag.jsx';
 import FlagsPage from './FlagsPage.jsx';
+import AboutPage from './AboutPage.jsx';
 
 const THEME_KEY = 'erp.theme';
 const ROLES = ['SYSADM', 'ITADM', 'PM'];
-const FLAG_KEYS = ['ff.prog.p0001', 'ff.prog.p0002'];
+const FLAG_KEYS = ['ff.prog.p0001', 'ff.prog.p0002', 'ff.prog.p0003'];
+const ROUTES = {
+  '/admin/feature-flags': { label: 'Feature Flags', Page: FlagsPage },
+  '/admin/about': { label: 'About', Page: AboutPage },
+};
+
+function currentPath() {
+  return ROUTES[window.location.pathname] ? window.location.pathname : '/admin/feature-flags';
+}
 
 function loadTheme() {
   try {
@@ -19,6 +28,20 @@ export default function App() {
   const [theme, setTheme] = useState(loadTheme);
   const [identity, setIdentity] = useState(loadIdentity);
   const [session, setSession] = useState(null);
+  const [path, setPath] = useState(currentPath);
+
+  useEffect(() => {
+    const onPop = () => setPath(currentPath());
+    window.addEventListener('popstate', onPop);
+    if (window.location.pathname !== path) window.history.replaceState(null, '', path);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [path]);
+
+  const go = (to) => (e) => {
+    e.preventDefault();
+    window.history.pushState(null, '', to);
+    setPath(to);
+  };
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -42,7 +65,9 @@ export default function App() {
       <header className="shellbar">
         <strong>ERP</strong>
         <nav aria-label="Main">
-          <a href="/admin/feature-flags" aria-current="page">Administration &rsaquo; Feature Flags</a>
+          {Object.entries(ROUTES).map(([to, r]) => (
+            <a key={to} href={to} onClick={go(to)} aria-current={to === path ? 'page' : undefined}>{r.label}</a>
+          ))}
         </nav>
         <span className="spacer" />
         <label className="shell-field">
@@ -70,7 +95,7 @@ export default function App() {
           </label>
         </div>
       )}
-      <main id="main">{session && <FlagsPage session={session} />}</main>
+      <main id="main">{session && (() => { const { Page } = ROUTES[path]; return <Page session={session} />; })()}</main>
     </FlagsProvider>
   );
 }

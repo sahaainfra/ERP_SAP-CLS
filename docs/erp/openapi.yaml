@@ -20,6 +20,13 @@ paths:
       responses:
         '200': { description: session }
         '401': { description: no identity }
+  /api/v1/core/about:
+    get:
+      summary: Version, build ID, commit, deployed-at, environment and applied migrations (needs core.about.view)
+      responses:
+        '200': { description: '{ data: { version, buildId, commit, builtAt, deployedAt, environment, node, migrations[{id, appliedAt}] } }' }
+        '401': { description: no identity }
+        '403': { description: missing core.about.view (SYSADM and ITADM hold it) }
   /api/v1/core/feature-flags:
     get:
       summary: List flag rows visible to the caller's company (needs core.flag.view)
