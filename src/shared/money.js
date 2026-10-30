@@ -65,3 +65,22 @@ export function parseINR(text) {
   const cleaned = String(text).replace(/[₹\s,]/g, '');
   return dec(cleaned);
 }
+
+// Storage in whole minor units (ADR-14): the database holds INTEGERs so SQL can add, compare and index them
+// exactly. money is paise, rate is x10000, quantity is x1000, percent is x10000.
+
+/** A decimal as the integer stored in the database, rounded half-up to the scale of `kind`. */
+export function toUnits(value, kind) {
+  const scale = SCALE[kind];
+  if (scale === undefined) throw new RangeError(`Unknown kind "${kind}"; use money, rate, quantity or percent`);
+  const n = Number(dec(value).round(scale).units);
+  if (!Number.isSafeInteger(n)) throw new RangeError(`${value} is too large to store as whole ${kind} units`);
+  return n;
+}
+
+/** The decimal an integer from the database stands for. */
+export function fromUnits(units, kind) {
+  const scale = SCALE[kind];
+  if (scale === undefined) throw new RangeError(`Unknown kind "${kind}"; use money, rate, quantity or percent`);
+  return new Decimal(BigInt(units), scale);
+}

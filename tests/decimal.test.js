@@ -105,3 +105,11 @@ test('dates: IST display, strict business dates, financial year', () => {
   assert.deepEqual(financialYear('2026-04-01'), { label: '2026-27', start: '2026-04-01', end: '2027-03-31' });
   assert.equal(financialYear('2099-06-01').label, '2099-00');
 });
+
+test('the server entry point re-exports the shared decimal, money and date helpers unchanged', async () => {
+  const server = await import('../src/server/platform/money/index.js');
+  assert.equal(server.dec, dec);
+  assert.equal(server.formatINR, formatINR);
+  assert.equal(server.formatDate, formatDate);
+  assert.equal(server.Decimal, Decimal);
+});

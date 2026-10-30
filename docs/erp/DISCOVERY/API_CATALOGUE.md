@@ -13,4 +13,7 @@ Validation is "yes" when the controller method calls a validator before the serv
 | GET | /api/v1/core/feature-flags | permission core.flag.view | yes |
 | GET | /api/v1/core/feature-flags/evaluate | any authenticated user | yes |
 | PATCH | /api/v1/core/feature-flags/:key | permission core.flag.configure | yes |
+| POST | /api/v1/core/integrity/run | permission core.integrity.run | no |
+| GET | /api/v1/core/integrity/summary | permission core.integrity.view | no |
+| GET | /api/v1/core/integrity/runs | permission core.integrity.view | yes |
 | GET | /api/v1/core/session | any authenticated user | no |

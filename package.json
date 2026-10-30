@@ -30,7 +30,16 @@
     "deploy": "node scripts/deploy.mjs",
     "rollback": "node scripts/rollback.mjs",
     "rehearse": "node scripts/rehearse.mjs",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "erp:db-check": "node scripts/db_check.mjs",
+    "erp:db-lint": "node scripts/db_lint.mjs",
+    "erp:db-baseline": "node scripts/db_baseline.mjs",
+    "erp:gen-data": "node scripts/gen_data.mjs",
+    "migration:new": "node scripts/new_migration.mjs",
+    "backfill": "node --env-file-if-exists=.env scripts/backfill.mjs",
+    "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",
+    "db:restore": "node scripts/db_restore.mjs",
+    "db:rehearse": "node scripts/rehearse_backup.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.0",

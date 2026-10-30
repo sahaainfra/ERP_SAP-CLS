@@ -1,7 +1,7 @@
 // npm run erp:regression [-- --skip-e2e] [--only id,id] [--with-audit]
 // The local and CI quality gate (FR-01 of 00.02 and 00.03). Stages, in order: lint, type check,
-// unit/API/permission tests with coverage, coverage gate for changed files, migration up/down check,
-// schema-diff, golden outputs, secret scan, client build and Playwright E2E (desktop + mobile).
+// unit/API/permission tests with coverage, coverage gate for changed files, migration up/down check, schema lint,
+// data-integrity suite, schema-diff, golden outputs, secret scan, client build and Playwright E2E (desktop + mobile).
 // Dependency audit needs the network: add --with-audit (CI runs `npm run erp:audit` as its own job).
 // Writes reports/regression/report.json and report.html; exits 1 if any stage fails.
 import { spawnSync } from 'node:child_process';
@@ -23,6 +23,8 @@ const all = [
   { id: 'unit-api', title: 'Unit, API and permission tests (with coverage)', cmd: [node, 'scripts/test_coverage.mjs'] },
   { id: 'coverage-gate', title: 'Coverage gate for changed files', cmd: [node, 'scripts/coverage_gate.mjs'] },
   { id: 'migration-check', title: 'Migration up/down check on a schema copy', cmd: [node, 'scripts/migration_check.mjs'] },
+  { id: 'db-lint', title: 'Schema lint (standard columns, FK indexes, integer money, registry, baseline)', cmd: [node, 'scripts/db_lint.mjs'] },
+  { id: 'db-check', title: 'Data-integrity suite (Critical failures block)', cmd: [node, 'scripts/db_check.mjs', '--fresh'] },
   { id: 'schema-diff', title: 'Schema-diff against locked baseline', cmd: [node, 'scripts/schema_diff.mjs'] },
   { id: 'golden', title: 'Golden-output comparison', cmd: [node, 'scripts/golden.mjs'] },
   { id: 'secret-scan', title: 'Secret scan', cmd: [node, 'scripts/secret_scan.mjs'] },

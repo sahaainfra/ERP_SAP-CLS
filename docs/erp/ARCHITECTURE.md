@@ -33,6 +33,9 @@ src/server/
     health/                   database, queue and storage checks
     audit/                    audit-trail writer
     events/                   transactional outbox writer
+    integrity/                data-integrity checks and the registry modules declare their tables in
+    (db/ also holds)          schema.js, scope.js (company scope), backfill.js (resumable back-fills)
+    (http/ also holds)        idempotency.js (replay protection for actions)
   modules/
     registry.js               list of modules and how they mount
     core/                     reference implementation of the layers
@@ -48,7 +51,7 @@ src/client/
 docs/erp/                     DECISIONS, DEFECTS, DISCOVERY/<part>, COMPLETION/<part>, PROGRESS.csv
 ```
 
-The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`. The one module so far is `modules/core`.
+The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`, `platform/integrity`. The one module so far is `modules/core`.
 
 A module owns its tables. Other modules read through its service or react to its events; they never write into its tables.
 
@@ -132,13 +135,26 @@ No floating point for business numbers. `src/shared/decimal.js` is an exact deci
 - Server state uses TanStack Query. Query keys come from one factory (`queryKeys`), so invalidation after a change is one call. A mutation that changes data invalidates the keys it affects.
 - A module registers its pages once (`registerModule`): path, label, permission and page component. The shell builds navigation from the registry and hides entries the user has no permission for; the page still shows a no-permission state if reached by URL.
 
-## 10. Adding a module
+## 10. Database foundation
+
+The rules every table and migration follows. The detail and the commands are in `docs/erp/MIGRATIONS.md`; the schema itself is in `docs/erp/DB_BASELINE.md`.
+
+- **Money and numbers are whole integers** (ADR-14): money in paise, rates x10000, quantities x1000, percentages x10000, stored as `INTEGER`. SQL can then add, compare and index them exactly, and "header total equals the sum of its lines" is an exact test. Convert with `toUnits` and `fromUnits` (`src/shared/money.js`); never use REAL or TEXT for a business number. The schema lint rejects it.
+- **Standard columns** on every business table: `id`, `company_id`, `created_by`, `created_at`, `updated_by`, `updated_at`, `version`, `is_active`, `deleted_at`, `deleted_by`, `source_type`, `source_id`, `remarks` (plus `project_id`, `site_id`, `status`, `doc_no`, `doc_date` where they apply). An index on every foreign key; a unique index on `(company_id, doc_no)` for numbered documents; non-negative `CHECK` on amounts and quantities. `npm run migration:new -- <name> --table <module_table>` writes all of it.
+- **Migrations** are timestamped pairs of `.up.sql` and `.down.sql`, additive and idempotent. CI applies each one, reverses it and re-applies it on a copy, and fails if the schema or the data changed. Back-fills run in batches through `runBackfill`: each batch and its ledger row commit together, so a crash resumes from the saved cursor.
+- **Company scope**: business queries use `companyScope`, `findScoped` and `listScoped` (`platform/db/scope.js`). An actor with no company gets nothing, never everything; a row of another company is "not found".
+- **Idempotency**: every submit, post, payment, stock and approval endpoint uses `idempotency(db, { required: true })`. The client sends an `Idempotency-Key`; a retry with the same key and body returns the stored response (`Idempotency-Replayed: true`) and does not run again; the same key with a different body is 422. Only successful responses are stored, for 24 hours.
+- **Integrity checks** (`npm run erp:db-check`, the Data Health page): orphan foreign keys, duplicate business keys, header totals against lines, unbalanced journals, negative quantities, rows without a company, invalid statuses. A module registers what the schema cannot say (`integrityRegistry.register`): technical tables, company-optional tables, its status words, header and line pairs, journals. A Critical failure blocks CI. A check with nothing to look at reports "nothing to check yet", never a pass. Samples are identifiers only, never amounts.
+- **Backup and restore**: `npm run db:backup` writes a copy plus a manifest of per-table checksums; `npm run db:restore` verifies, restores and proves the checksums are identical. `npm run db:rehearse` times it on 100,000 documents.
+- **Test data**: `npm run erp:gen-data` builds a deterministic performance database (separate from demo seeds) and times the list queries.
+
+## 11. Adding a module
 
 1. Create `src/server/modules/<code>/` with `routes.js`, `controller.js`, `service.js`, `repository.js`, `validators.js` and an `index.js` exporting `{ code, name, routePrefix, ownerPart, status, tables, resources, mount }`.
 2. Add it to `MODULES` in `modules/registry.js`.
-3. Put its tables in migrations with up and down scripts, the standard columns and indexes on every foreign key and filter column.
+3. Put its tables in migrations (`npm run migration:new -- <name> --table <module_table>`) with up and down scripts, the standard columns and indexes on every foreign key and filter column; register them in `docs/erp/DB_CHANGES.md` and run `npm run erp:db-baseline`. Declare them to the integrity registry in the module's `index.js`.
 4. Guard in the service with `assertPermission`; scope every query by the actor's company, project and site.
-5. Use `parseListQuery` for lists, `parse` for input, `writeAudit` and `publishEvent` for changes, `updateVersioned` for edits.
+5. Use `parseListQuery` for lists, `parse` for input, `writeAudit` and `publishEvent` for changes, `updateVersioned` for edits, `companyScope` or `listScoped` for company data, and `idempotency(db, { required: true })` on every submit, post, payment, stock and approval route.
 6. Add `src/client/modules/<code>/` and call `registerModule`.
 7. Add tests: success, validation, 403, cross-scope, 409, and a contract snapshot entry if it replaces a legacy route.
 8. Update `docs/erp/DECISIONS.md` for any structural choice.

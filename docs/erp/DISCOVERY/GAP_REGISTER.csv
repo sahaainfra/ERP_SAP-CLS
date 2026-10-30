@@ -3,7 +3,7 @@ seq,part_id,title,module,existence,decision,evidence
 2,00.02,"Engineering Baseline, Feature Flags & Regression Harness",M00,Partial,Reuse,Built; see docs/erp/COMPLETION/00.02.md (not yet reviewed)
 3,00.03,"CI/CD Pipeline, Quality Gates & Release Engineering",M00,Partial,Reuse,Built; see docs/erp/COMPLETION/00.03.md (not yet reviewed)
 4,01.01,"Application Architecture, Module Boundaries & API Conventions",M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.01.md (not yet reviewed)
-5,01.02,"Database Foundation, Migration Framework & Data Integrity",M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+5,01.02,"Database Foundation, Migration Framework & Data Integrity",M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.02.md (not yet reviewed)
 6,01.03,"System Configuration, Financial Years & Numbering Series",M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 7,01.04,"Domain Event Bus, Transactional Outbox & Background Job Scheduler",M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 8,01.05,File Storage & Secure Attachment Service,M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"

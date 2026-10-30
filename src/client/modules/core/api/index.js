@@ -11,6 +11,26 @@ export const useSession = () =>
 export const useAbout = () =>
   useQuery({ queryKey: queryKeys.core.about(), queryFn: async () => (await api.get('/core/about')).data, retry: false });
 
+export const useIntegritySummary = () =>
+  useQuery({ queryKey: queryKeys.core.integrity.summary(), queryFn: async () => (await api.get('/core/integrity/summary')).data });
+
+/** The history of one check: its latest results, newest first. */
+export const useIntegrityRuns = ({ check, pageSize = 10 }) =>
+  useQuery({
+    queryKey: queryKeys.core.integrity.runs({ check, pageSize }),
+    queryFn: () => api.get(`/core/integrity/runs?page=1&pageSize=${pageSize}&filter[check_code]=${encodeURIComponent(check)}`),
+    enabled: Boolean(check),
+  });
+
+/** Run every check now. A fresh Idempotency-Key per click means a double click or a retry cannot run it twice. */
+export function useRunIntegrity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post('/core/integrity/run', {}, { headers: { 'idempotency-key': globalThis.crypto.randomUUID() } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.core.integrity.all }),
+  });
+}
+
 export const useArchitecture = () =>
   useQuery({ queryKey: queryKeys.core.architecture(), queryFn: async () => (await api.get('/core/architecture')).data });
 
@@ -36,7 +56,8 @@ export function useFeatureFlag(key) {
 export function useSetFlag() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ key, scope, enabled, reason, version }) => api.patch(`/core/feature-flags/${key}`, { scope, enabled, reason, version }),
+    mutationFn: ({ key, scope, enabled, reason, version }) =>
+      api.patch(`/core/feature-flags/${key}`, { scope, enabled, reason, version }, { headers: { 'idempotency-key': globalThis.crypto.randomUUID() } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.core.flags.all }),
     onError: (err) => {
       if (err.status === 409) qc.invalidateQueries({ queryKey: queryKeys.core.flags.all });

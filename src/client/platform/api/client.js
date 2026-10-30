@@ -25,7 +25,8 @@ const defaultId = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.rando
 /**
  * createApiClient({ getAuthHeaders }) -> { get, post, patch, put, delete, request }.
  * `retries` extra attempts for GET on a network error or a 502/503/504, waiting backoffMs, 2x, 4x...
- * Writes are never retried: a retry could apply them twice.
+ * Writes are never retried: a retry could apply them twice. Pass `{ headers: { 'idempotency-key': id } }` on an
+ * action so the server can recognise a repeat (see docs/erp/ARCHITECTURE.md).
  */
 export function createApiClient({
   getAuthHeaders = () => ({}),
@@ -36,7 +37,7 @@ export function createApiClient({
   retries = 2,
   backoffMs = 200,
 } = {}) {
-  async function request(method, path, body, { signal } = {}) {
+  async function request(method, path, body, { signal, headers = {} } = {}) {
     const correlationId = newId();
     const canRetry = method === 'GET' || method === 'HEAD';
     const maxAttempts = canRetry ? retries + 1 : 1;
@@ -47,7 +48,7 @@ export function createApiClient({
         res = await fetchImpl(`${baseUrl}${path}`, {
           method,
           signal,
-          headers: { 'content-type': 'application/json', ...getAuthHeaders(), 'x-correlation-id': correlationId },
+          headers: { 'content-type': 'application/json', ...getAuthHeaders(), ...headers, 'x-correlation-id': correlationId },
           body: body === undefined ? undefined : JSON.stringify(body),
         });
       } catch (err) {

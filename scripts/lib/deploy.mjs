@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { listMigrations } from '../../src/server/platform/db/index.js';
 import { verifyArtifact } from './package.mjs';
+import { backupDatabase, restoreDatabase } from './backup.mjs';
 
 const SMOKE_HEADERS = { 'x-erp-user': 'smoke-test', 'x-erp-roles': 'ITADM', 'x-erp-company': '1' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -38,23 +39,6 @@ function appliedMigrationIds(dbPath) {
   } finally {
     db.close();
   }
-}
-
-/** Consistent copy of the database (restore point) taken before any migration. */
-export function backupDatabase(dbPath, dest) {
-  mkdirSync(join(dest, '..'), { recursive: true });
-  rmSync(dest, { force: true });
-  const db = new DatabaseSync(dbPath);
-  try {
-    db.exec(`VACUUM INTO '${dest.replace(/'/g, "''")}'`);
-  } finally {
-    db.close();
-  }
-}
-
-export function restoreDatabase(backup, dbPath) {
-  for (const suffix of ['', '-wal', '-shm']) rmSync(`${dbPath}${suffix}`, { force: true });
-  cpSync(backup, dbPath);
 }
 
 /** The most useful line of a failed command's output: the first line that names an error. */

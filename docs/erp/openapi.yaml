@@ -7,7 +7,8 @@ info:
     X-Erp-Company) until the IAM module exists (defect D-001). Errors use
     { error: { code, message, details[{field,message}], correlationId } }; the codes are listed on the Architecture page
     (VALIDATION_ERROR, BAD_JSON, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, VERSION_CONFLICT, PAYLOAD_TOO_LARGE,
-    BUSINESS_RULE, RATE_LIMITED, INTERNAL_ERROR, SERVICE_UNAVAILABLE).
+    BUSINESS_RULE, RATE_LIMITED, INTERNAL_ERROR, SERVICE_UNAVAILABLE) plus IDEMPOTENCY_KEY_REUSED (422) and
+    REQUEST_IN_PROGRESS (409) on endpoints that accept an Idempotency-Key.
 servers:
   - url: http://localhost:3000
 paths:
@@ -36,6 +37,35 @@ paths:
         '200': { description: '{ data: { markdown, modules[], errorCodes[], pagination, health } }' }
         '403': { description: missing core.arch.view }
         '404': { description: the flag ff.core.p0101 is OFF for the company }
+  /api/v1/core/integrity/run:
+    post:
+      summary: Run every integrity check now and keep the result (needs core.integrity.run, ITADM; flag ff.core.p0102)
+      parameters:
+        - { name: Idempotency-Key, in: header, required: false, schema: { type: string, minLength: 8, maxLength: 128 }, description: 'a retry with the same key returns the stored result; the same key with a different request is 422' }
+      responses:
+        '201': { description: '{ data: { runId, runAt, summary: { pass, fail, notApplicable, criticalFailures }, results[{ code, severity, status, failures, checked, samples[], durationMs }] } }' }
+        '403': { description: missing core.integrity.run }
+        '404': { description: the flag ff.core.p0102 is OFF for the company }
+        '409': { description: REQUEST_IN_PROGRESS, the same Idempotency-Key is still being processed }
+        '422': { description: IDEMPOTENCY_KEY_REUSED }
+  /api/v1/core/integrity/summary:
+    get:
+      summary: The last run, with every check and its latest result (needs core.integrity.view)
+      responses:
+        '200': { description: '{ data: { runId, runAt, triggeredBy, checks[{ code, name, severity, description, last }] } }' }
+        '403': { description: missing core.integrity.view }
+  /api/v1/core/integrity/runs:
+    get:
+      summary: History, one row per check per run, newest first (needs core.integrity.view)
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 25 } }
+        - { name: sort, in: query, schema: { type: string }, description: 'allowed: run_at, check_code, status, severity' }
+        - { name: 'filter[check_code]', in: query, schema: { type: string } }
+        - { name: 'filter[status]', in: query, schema: { type: string, enum: [pass, fail, not_applicable] } }
+        - { name: 'filter[severity]', in: query, schema: { type: string } }
+      responses:
+        '200': { description: '{ data: [...], meta: { page, pageSize, total, totalPages } }' }
   /api/v1/core/session:
     get:
       summary: Current user, roles, company, permissions and environment

@@ -9,6 +9,11 @@ export const queryKeys = {
       evaluate: (keys) => ['core', 'flags', 'evaluate', [...keys].sort().join(',')],
     },
     about: () => ['core', 'about'],
+    integrity: {
+      all: ['core', 'integrity'],
+      summary: () => ['core', 'integrity', 'summary'],
+      runs: (params) => ['core', 'integrity', 'runs', params],
+    },
     architecture: () => ['core', 'architecture'],
   },
 };

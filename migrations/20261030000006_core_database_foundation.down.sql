@@ -1,0 +1,10 @@
+DROP INDEX IF EXISTS ix_core_backfill_runs_company;
+DROP INDEX IF EXISTS ux_core_backfill_runs_name;
+DROP TABLE IF EXISTS core_backfill_runs;
+DROP INDEX IF EXISTS ix_core_integrity_runs_company;
+DROP INDEX IF EXISTS ix_core_integrity_runs_check;
+DROP INDEX IF EXISTS ix_core_integrity_runs_run;
+DROP TABLE IF EXISTS core_integrity_runs;
+DROP INDEX IF EXISTS ix_core_idempotency_expiry;
+DROP INDEX IF EXISTS ux_core_idempotency_scope;
+DROP TABLE IF EXISTS core_idempotency_keys;

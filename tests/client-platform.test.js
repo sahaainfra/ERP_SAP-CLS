@@ -42,6 +42,13 @@ test('requests carry auth headers, a correlation id and a JSON body', async () =
   assert.equal(calls[0].init.body, '{"a":1}');
 });
 
+test('extra headers (such as an Idempotency-Key) are sent, and cannot overwrite the correlation id', async () => {
+  const { api, calls } = client([response(201, { data: 1 })]);
+  await api.post('/core/integrity/run', {}, { headers: { 'idempotency-key': 'abc-12345678', 'x-correlation-id': 'spoofed' } });
+  assert.equal(calls[0].init.headers['idempotency-key'], 'abc-12345678');
+  assert.equal(calls[0].init.headers['x-correlation-id'], 'client-corr-1');
+});
+
 test('idempotent GET retries a 503 with growing back-off and then succeeds', async () => {
   const { api, calls, sleeps } = client([envelope(503, 'SERVICE_UNAVAILABLE', 'down'), envelope(503, 'SERVICE_UNAVAILABLE', 'down'), response(200, { ok: true })]);
   assert.deepEqual(await api.get('/core/x'), { ok: true });
