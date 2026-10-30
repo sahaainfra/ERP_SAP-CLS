@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERP Dashboard Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===== Design tokens (generated from design-tokens.json) ===== */
+/* Generated from design-tokens.json — do not edit by hand. Theme set via <html data-theme="light|dark|high-contrast">. */
+:root, [data-theme="light"] {
+  --erp-color-bg-page: #F3F5F7;
+  --erp-color-bg-surface: #FFFFFF;
+  --erp-color-bg-surface-sunken: #EEF1F4;
+  --erp-color-bg-selected: #E7EEF8;
+  --erp-color-bg-hover: #F0F3F7;
+  --erp-color-bg-shell: #1C2530;
+  --erp-color-bg-shell-hover: #2A3542;
+  --erp-color-bg-nav: #FFFFFF;
+  --erp-color-bg-nav-active: #E7EEF8;
+  --erp-color-text-primary: #161B22;
+  --erp-color-text-secondary: #4A5563;
+  --erp-color-text-muted: #5F6976;
+  --erp-color-text-disabled: #9AA3AD;
+  --erp-color-text-on-shell: #FFFFFF;
+  --erp-color-text-on-shell-muted: #B8C2CE;
+  --erp-color-text-on-primary: #FFFFFF;
+  --erp-color-text-on-accent: #161B22;
+  --erp-color-text-link: #1D5BA6;
+  --erp-color-border-subtle: #DCE1E6;
+  --erp-color-border-control: #8A94A0;
+  --erp-color-border-strong: #6E7884;
+  --erp-color-border-focus: #2160C4;
+  --erp-color-brand-primary: #1D4F91;
+  --erp-color-brand-primary-text: #1D4F91;
+  --erp-color-brand-primary-hover: #163F75;
+  --erp-color-brand-primary-pressed: #11325E;
+  --erp-color-brand-primary-tint: #E7EEF8;
+  --erp-color-brand-accent: #F2A900;
+  --erp-color-status-success-fg: #17663B;
+  --erp-color-status-success-bg: #E5F4EA;
+  --erp-color-status-success-solid: #1E8A4C;
+  --erp-color-status-warning-fg: #8A4B00;
+  --erp-color-status-warning-bg: #FFF3DC;
+  --erp-color-status-warning-solid: #E59A00;
+  --erp-color-status-error-fg: #A3241B;
+  --erp-color-status-error-bg: #FDE9E7;
+  --erp-color-status-error-solid: #C8372D;
+  --erp-color-status-info-fg: #1D5BA6;
+  --erp-color-status-info-bg: #E6F0FB;
+  --erp-color-status-info-solid: #2A78D6;
+  --erp-color-status-neutral-fg: #4A5563;
+  --erp-color-status-neutral-bg: #EEF1F4;
+  --erp-color-status-neutral-solid: #6E7884;
+  --erp-chart-1: #2a78d6;
+  --erp-chart-2: #eb6834;
+  --erp-chart-3: #1baf7a;
+  --erp-chart-4: #eda100;
+  --erp-chart-5: #e87ba4;
+  --erp-chart-6: #008300;
+  --erp-chart-7: #4a3aa7;
+  --erp-chart-8: #e34948;
+  --erp-font-sans: 'IBM Plex Sans', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --erp-font-indic: 'IBM Plex Sans Devanagari', 'Noto Sans Devanagari', 'Noto Sans', sans-serif;
+  --erp-font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+  --erp-type-caption: 400 12px/16px var(--erp-font-sans);
+  --erp-type-body-sm: 400 13px/18px var(--erp-font-sans);
+  --erp-type-body: 400 14px/20px var(--erp-font-sans);
+  --erp-type-body-lg: 400 16px/24px var(--erp-font-sans);
+  --erp-type-label: 500 13px/18px var(--erp-font-sans);
+  --erp-type-title-sm: 600 15px/20px var(--erp-font-sans);
+  --erp-type-title: 600 18px/24px var(--erp-font-sans);
+  --erp-type-page-title: 600 22px/28px var(--erp-font-sans);
+  --erp-type-kpi: 600 28px/32px var(--erp-font-sans);
+  --erp-type-kpi-hero: 600 36px/40px var(--erp-font-sans);
+  --erp-space-0: 0px;
+  --erp-space-1: 2px;
+  --erp-space-2: 4px;
+  --erp-space-3: 8px;
+  --erp-space-4: 12px;
+  --erp-space-5: 16px;
+  --erp-space-6: 20px;
+  --erp-space-7: 24px;
+  --erp-space-8: 32px;
+  --erp-space-9: 40px;
+  --erp-space-10: 48px;
+  --erp-space-11: 64px;
+  --erp-radius-none: 0px;
+  --erp-radius-xs: 2px;
+  --erp-radius-sm: 4px;
+  --erp-radius-md: 6px;
+  --erp-radius-lg: 8px;
+  --erp-radius-xl: 12px;
+  --erp-radius-pill: 999px;
+  --erp-elevation-0: none;
+  --erp-elevation-1: 0 1px 2px rgba(16,24,40,0.06);
+  --erp-elevation-2: 0 4px 12px rgba(16,24,40,0.10);
+  --erp-elevation-3: 0 12px 32px rgba(16,24,40,0.18);
+  --erp-shellbar-height: 48px;
+  --erp-sidenav-width: 248px;
+  --erp-sidenav-rail: 56px;
+  --erp-page-padding-desktop: 24px;
+  --erp-page-padding-tablet: 16px;
+  --erp-page-padding-mobile: 12px;
+  --erp-grid-columns-desktop: 12px;
+  --erp-grid-columns-tablet: 8px;
+  --erp-grid-columns-mobile: 4px;
+  --erp-grid-gutter: 16px;
+  --erp-grid-row-unit: 112px;
+  --erp-content-max-reading: 880px;
+  --erp-motion-duration-fast: 120ms;
+  --erp-motion-duration-base: 200ms;
+  --erp-motion-duration-slow: 320ms;
+  --erp-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --erp-motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+  --erp-z-base: 0;
+  --erp-z-sticky: 100;
+  --erp-z-dropdown: 1000;
+  --erp-z-drawer: 1100;
+  --erp-z-modal: 1200;
+  --erp-z-toast: 1300;
+  --erp-z-tooltip: 1400;
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  --erp-color-bg-page: #0F141A;
+  --erp-color-bg-surface: #171D25;
+  --erp-color-bg-surface-sunken: #12171D;
+  --erp-color-bg-selected: #1D2F47;
+  --erp-color-bg-hover: #1F2731;
+  --erp-color-bg-shell: #0B1016;
+  --erp-color-bg-shell-hover: #1A222C;
+  --erp-color-bg-nav: #131920;
+  --erp-color-bg-nav-active: #1D2F47;
+  --erp-color-text-primary: #EEF2F6;
+  --erp-color-text-secondary: #B4BEC9;
+  --erp-color-text-muted: #97A2AE;
+  --erp-color-text-disabled: #5E6874;
+  --erp-color-text-on-shell: #FFFFFF;
+  --erp-color-text-on-shell-muted: #AAB5C1;
+  --erp-color-text-on-primary: #FFFFFF;
+  --erp-color-text-on-accent: #161B22;
+  --erp-color-text-link: #7DB3F0;
+  --erp-color-border-subtle: #2A333E;
+  --erp-color-border-control: #6B7683;
+  --erp-color-border-strong: #7E8995;
+  --erp-color-border-focus: #6EA8F5;
+  --erp-color-brand-primary: #2F6FC6;
+  --erp-color-brand-primary-text: #8DBDF3;
+  --erp-color-brand-primary-hover: #2862B0;
+  --erp-color-brand-primary-pressed: #255BA6;
+  --erp-color-brand-primary-tint: #1D2F47;
+  --erp-color-brand-accent: #F2B53A;
+  --erp-color-status-success-fg: #5CC98A;
+  --erp-color-status-success-bg: #11301F;
+  --erp-color-status-success-solid: #2FA563;
+  --erp-color-status-warning-fg: #F2B54A;
+  --erp-color-status-warning-bg: #33250A;
+  --erp-color-status-warning-solid: #E59A00;
+  --erp-color-status-error-fg: #F48A80;
+  --erp-color-status-error-bg: #3A1714;
+  --erp-color-status-error-solid: #E0544A;
+  --erp-color-status-info-fg: #7DB3F0;
+  --erp-color-status-info-bg: #10263F;
+  --erp-color-status-info-solid: #3987E5;
+  --erp-color-status-neutral-fg: #B4BEC9;
+  --erp-color-status-neutral-bg: #232B35;
+  --erp-color-status-neutral-solid: #7E8995;
+  --erp-chart-1: #3987e5;
+  --erp-chart-2: #d95926;
+  --erp-chart-3: #199e70;
+  --erp-chart-4: #c98500;
+  --erp-chart-5: #d55181;
+  --erp-chart-6: #008300;
+  --erp-chart-7: #9085e9;
+  --erp-chart-8: #e66767;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --erp-color-bg-page: #0F141A;
+    --erp-color-bg-surface: #171D25;
+    --erp-color-bg-surface-sunken: #12171D;
+    --erp-color-bg-selected: #1D2F47;
+    --erp-color-bg-hover: #1F2731;
+    --erp-color-bg-shell: #0B1016;
+    --erp-color-bg-shell-hover: #1A222C;
+    --erp-color-bg-nav: #131920;
+    --erp-color-bg-nav-active: #1D2F47;
+    --erp-color-text-primary: #EEF2F6;
+    --erp-color-text-secondary: #B4BEC9;
+    --erp-color-text-muted: #97A2AE;
+    --erp-color-text-disabled: #5E6874;
+    --erp-color-text-on-shell: #FFFFFF;
+    --erp-color-text-on-shell-muted: #AAB5C1;
+    --erp-color-text-on-primary: #FFFFFF;
+    --erp-color-text-on-accent: #161B22;
+    --erp-color-text-link: #7DB3F0;
+    --erp-color-border-subtle: #2A333E;
+    --erp-color-border-control: #6B7683;
+    --erp-color-border-strong: #7E8995;
+    --erp-color-border-focus: #6EA8F5;
+    --erp-color-brand-primary: #2F6FC6;
+    --erp-color-brand-primary-text: #8DBDF3;
+    --erp-color-brand-primary-hover: #2862B0;
+    --erp-color-brand-primary-pressed: #255BA6;
+    --erp-color-brand-primary-tint: #1D2F47;
+    --erp-color-brand-accent: #F2B53A;
+    --erp-color-status-success-fg: #5CC98A;
+    --erp-color-status-success-bg: #11301F;
+    --erp-color-status-success-solid: #2FA563;
+    --erp-color-status-warning-fg: #F2B54A;
+    --erp-color-status-warning-bg: #33250A;
+    --erp-color-status-warning-solid: #E59A00;
+    --erp-color-status-error-fg: #F48A80;
+    --erp-color-status-error-bg: #3A1714;
+    --erp-color-status-error-solid: #E0544A;
+    --erp-color-status-info-fg: #7DB3F0;
+    --erp-color-status-info-bg: #10263F;
+    --erp-color-status-info-solid: #3987E5;
+    --erp-color-status-neutral-fg: #B4BEC9;
+    --erp-color-status-neutral-bg: #232B35;
+    --erp-color-status-neutral-solid: #7E8995;
+    --erp-chart-1: #3987e5;
+    --erp-chart-2: #d95926;
+    --erp-chart-3: #199e70;
+    --erp-chart-4: #c98500;
+    --erp-chart-5: #d55181;
+    --erp-chart-6: #008300;
+    --erp-chart-7: #9085e9;
+    --erp-chart-8: #e66767;
+    color-scheme: dark;
+  }
+}
+[data-theme="high-contrast"] {
+  --erp-color-bg-page: #FFFFFF;
+  --erp-color-bg-surface: #FFFFFF;
+  --erp-color-bg-surface-sunken: #FFFFFF;
+  --erp-color-bg-selected: #FFF2B3;
+  --erp-color-bg-hover: #F2F2F2;
+  --erp-color-bg-shell: #000000;
+  --erp-color-bg-shell-hover: #262626;
+  --erp-color-bg-nav: #FFFFFF;
+  --erp-color-bg-nav-active: #FFF2B3;
+  --erp-color-text-primary: #000000;
+  --erp-color-text-secondary: #1A1A1A;
+  --erp-color-text-muted: #333333;
+  --erp-color-text-disabled: #595959;
+  --erp-color-text-on-shell: #FFFFFF;
+  --erp-color-text-on-shell-muted: #FFFFFF;
+  --erp-color-text-on-primary: #FFFFFF;
+  --erp-color-text-on-accent: #000000;
+  --erp-color-text-link: #0040A0;
+  --erp-color-border-subtle: #000000;
+  --erp-color-border-control: #000000;
+  --erp-color-border-strong: #000000;
+  --erp-color-border-focus: #0040A0;
+  --erp-color-brand-primary: #0040A0;
+  --erp-color-brand-primary-text: #0040A0;
+  --erp-color-brand-primary-hover: #003080;
+  --erp-color-brand-primary-pressed: #002060;
+  --erp-color-brand-primary-tint: #FFF2B3;
+  --erp-color-brand-accent: #FFD400;
+  --erp-color-status-success-fg: #005A1F;
+  --erp-color-status-success-bg: #FFFFFF;
+  --erp-color-status-success-solid: #005A1F;
+  --erp-color-status-warning-fg: #6B3A00;
+  --erp-color-status-warning-bg: #FFFFFF;
+  --erp-color-status-warning-solid: #6B3A00;
+  --erp-color-status-error-fg: #8F0000;
+  --erp-color-status-error-bg: #FFFFFF;
+  --erp-color-status-error-solid: #8F0000;
+  --erp-color-status-info-fg: #0040A0;
+  --erp-color-status-info-bg: #FFFFFF;
+  --erp-color-status-info-solid: #0040A0;
+  --erp-color-status-neutral-fg: #1A1A1A;
+  --erp-color-status-neutral-bg: #FFFFFF;
+  --erp-color-status-neutral-solid: #1A1A1A;
+  --erp-chart-1: #2a78d6;
+  --erp-chart-2: #eb6834;
+  --erp-chart-3: #1baf7a;
+  --erp-chart-4: #eda100;
+  --erp-chart-5: #e87ba4;
+  --erp-chart-6: #008300;
+  --erp-chart-7: #4a3aa7;
+  --erp-chart-8: #e34948;
+}
+:root { --erp-control-h: 36px; --erp-row-h: 40px; }
+[data-density="compact"] { --erp-control-h: 28px; --erp-row-h: 32px; }
+[data-density="cozy"] { --erp-control-h: 36px; --erp-row-h: 40px; }
+[data-density="touch"] { --erp-control-h: 44px; --erp-row-h: 48px; }
+@media (prefers-reduced-motion: reduce) { :root { --erp-motion-duration-fast: 0ms; --erp-motion-duration-base: 0ms; --erp-motion-duration-slow: 0ms; } }
+
+/* ===== Reference page styles — every value comes from a token ===== */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:var(--erp-type-body);font-family:var(--erp-font-sans);color:var(--erp-color-text-primary);background:var(--erp-color-bg-page);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--erp-color-border-focus);outline-offset:2px}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i.s{width:16px;height:16px}
+.skip{position:absolute;left:-999px;top:8px;background:var(--erp-color-bg-surface);padding:8px 12px;z-index:2000}
+.skip:focus{left:8px}
+
+/* shell bar */
+.shellbar{position:sticky;top:0;z-index:var(--erp-z-sticky);height:var(--erp-shellbar-height);display:flex;align-items:center;gap:var(--erp-space-3);padding:0 var(--erp-space-4);background:var(--erp-color-bg-shell);color:var(--erp-color-text-on-shell)}
+.sb-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;min-width:36px;padding:0 8px;border:0;border-radius:var(--erp-radius-sm);background:transparent;color:var(--erp-color-text-on-shell);cursor:pointer}
+.sb-btn:hover{background:var(--erp-color-bg-shell-hover)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;white-space:nowrap}
+.brand-mark{width:26px;height:26px;border-radius:var(--erp-radius-sm);background:var(--erp-color-brand-primary);display:grid;place-items:center}
+.ctx{display:flex;align-items:center;gap:2px;margin-left:var(--erp-space-3);min-width:0}
+.ctx button{height:32px;padding:0 8px;border:0;border-radius:var(--erp-radius-sm);background:transparent;color:var(--erp-color-text-on-shell-muted);cursor:pointer;white-space:nowrap;font-size:13px}
+.ctx button:hover{background:var(--erp-color-bg-shell-hover);color:var(--erp-color-text-on-shell)}
+.ctx .active{color:var(--erp-color-text-on-shell);box-shadow:inset 0 -3px 0 var(--erp-color-brand-accent)}
+.ctx .sep{color:var(--erp-color-text-on-shell-muted);font-size:12px}
+.search{flex:1;max-width:520px;margin-left:auto;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:var(--erp-radius-sm);background:var(--erp-color-bg-shell-hover);color:var(--erp-color-text-on-shell-muted);font-size:13px;border:1px solid transparent}
+.search kbd{margin-left:auto;font:12px var(--erp-font-sans);padding:1px 6px;border-radius:var(--erp-radius-xs);border:1px solid var(--erp-color-text-on-shell-muted)}
+.badge{min-width:18px;height:18px;padding:0 5px;border-radius:var(--erp-radius-pill);background:var(--erp-color-brand-accent);color:var(--erp-color-text-on-accent);font-size:11px;font-weight:600;display:inline-grid;place-items:center}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--erp-color-brand-primary);color:var(--erp-color-text-on-primary);display:grid;place-items:center;font-size:12px;font-weight:600}
+
+/* layout */
+.frame{display:grid;grid-template-columns:var(--erp-sidenav-width) 1fr;min-height:calc(100vh - var(--erp-shellbar-height))}
+nav.side{background:var(--erp-color-bg-nav);border-right:1px solid var(--erp-color-border-subtle);padding:var(--erp-space-3) var(--erp-space-2);overflow:auto;position:sticky;top:var(--erp-shellbar-height);height:calc(100vh - var(--erp-shellbar-height))}
+.nav-h{font-size:12px;color:var(--erp-color-text-muted);padding:var(--erp-space-3) var(--erp-space-3) var(--erp-space-2)}
+.nav-a{display:flex;align-items:center;gap:10px;height:36px;padding:0 var(--erp-space-3);border-radius:var(--erp-radius-md);color:var(--erp-color-text-secondary);text-decoration:none;font-weight:500;font-size:14px}
+.nav-a:hover{background:var(--erp-color-bg-hover);color:var(--erp-color-text-primary)}
+.nav-a[aria-current="page"]{background:var(--erp-color-bg-nav-active);color:var(--erp-color-brand-primary-text)}
+.nav-a .cnt{margin-left:auto;font-size:12px;color:var(--erp-color-text-muted)}
+.pin{width:6px;height:6px;border-radius:50%;background:var(--erp-color-brand-accent);margin-left:auto}
+main{padding:var(--erp-page-padding-desktop);min-width:0}
+
+/* page header */
+.crumb{font-size:12px;color:var(--erp-color-text-muted)}
+.ph{display:flex;align-items:flex-end;gap:var(--erp-space-4);flex-wrap:wrap;margin:4px 0 var(--erp-space-5)}
+.ph h1{font:var(--erp-type-page-title);margin:0}
+.ph .sub{color:var(--erp-color-text-secondary);font-size:13px;margin-top:4px}
+.ph .actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;height:var(--erp-control-h);padding:0 14px;border-radius:var(--erp-radius-sm);border:1px solid var(--erp-color-border-control);background:var(--erp-color-bg-surface);color:var(--erp-color-text-primary);cursor:pointer;font-weight:500}
+.btn:hover{background:var(--erp-color-bg-hover)}
+.btn.primary{background:var(--erp-color-brand-primary);border-color:var(--erp-color-brand-primary);color:var(--erp-color-text-on-primary)}
+.btn.primary:hover{background:var(--erp-color-brand-primary-hover)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--erp-color-brand-primary-text)}
+.asof{font-size:12px;color:var(--erp-color-text-muted)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--erp-color-border-subtle);margin-bottom:var(--erp-space-5)}
+.tab{height:38px;padding:0 12px;border:0;background:none;cursor:pointer;color:var(--erp-color-text-secondary);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--erp-color-brand-primary-text);border-bottom-color:var(--erp-color-brand-primary)}
+
+/* dashboard grid */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--erp-grid-gutter)}
+.card{background:var(--erp-color-bg-surface);border:1px solid var(--erp-color-border-subtle);border-radius:var(--erp-radius-lg);box-shadow:var(--erp-elevation-1);display:flex;flex-direction:column;min-width:0}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.card-h{display:flex;align-items:center;gap:8px;padding:var(--erp-space-4) var(--erp-space-5) 0}
+.card-h h2{font:var(--erp-type-title-sm);margin:0}
+.card-h .more{margin-left:auto}
+.icon-btn{width:32px;height:32px;display:inline-grid;place-items:center;border:0;border-radius:var(--erp-radius-sm);background:transparent;color:var(--erp-color-text-secondary);cursor:pointer}
+.icon-btn:hover{background:var(--erp-color-bg-hover)}
+.card-b{padding:var(--erp-space-3) var(--erp-space-5) var(--erp-space-4);flex:1;min-width:0}
+.card-f{display:flex;align-items:center;gap:8px;padding:10px var(--erp-space-5);border-top:1px solid var(--erp-color-border-subtle);font-size:12px;color:var(--erp-color-text-muted)}
+.card-f a{margin-left:auto;color:var(--erp-color-text-link);text-decoration:none;font-weight:500;display:inline-flex;gap:4px;align-items:center}
+
+/* KPI card */
+.kpi .label{font:var(--erp-type-label);color:var(--erp-color-text-secondary);display:flex;align-items:center;gap:6px}
+.kpi .value{font:var(--erp-type-kpi);margin-top:6px;letter-spacing:-.01em}
+.kpi .unit{font-size:14px;font-weight:500;color:var(--erp-color-text-secondary);margin-left:4px}
+.kpi .row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:var(--erp-radius-pill);font-size:12px;font-weight:500;white-space:nowrap}
+.chip.success{background:var(--erp-color-status-success-bg);color:var(--erp-color-status-success-fg)}
+.chip.warning{background:var(--erp-color-status-warning-bg);color:var(--erp-color-status-warning-fg)}
+.chip.error{background:var(--erp-color-status-error-bg);color:var(--erp-color-status-error-fg)}
+.chip.info{background:var(--erp-color-status-info-bg);color:var(--erp-color-status-info-fg)}
+.chip.neutral{background:var(--erp-color-status-neutral-bg);color:var(--erp-color-status-neutral-fg)}
+.kpi .ctx2{font-size:12px;color:var(--erp-color-text-muted)}
+.spark{display:block;width:100%;height:28px;margin-top:10px}
+
+/* worklist */
+.wl{list-style:none;margin:0;padding:0}
+.wl li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--erp-color-border-subtle)}
+.wl li:last-child{border-bottom:0}
+.wl .doc{width:28px;height:28px;border-radius:var(--erp-radius-md);display:grid;place-items:center;background:var(--erp-color-bg-surface-sunken);color:var(--erp-color-text-secondary)}
+.wl .t{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wl .m{font-size:12px;color:var(--erp-color-text-muted);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.wl .amt{text-align:right;font-weight:600}
+.wl .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.wl li{align-items:start}
+.wl .t{white-space:normal}
+.mini{height:26px;padding:0 8px;font-size:12px;border-radius:var(--erp-radius-sm);border:1px solid var(--erp-color-border-control);background:var(--erp-color-bg-surface);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.mini.ok{background:var(--erp-color-brand-primary);border-color:var(--erp-color-brand-primary);color:var(--erp-color-text-on-primary)}
+
+/* charts */
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--erp-color-text-secondary);margin-bottom:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:3px;border-radius:2px;display:inline-block}
+.sw.dash{background:repeating-linear-gradient(90deg,var(--erp-chart-2) 0 4px,transparent 4px 7px)}
+.axis{font-size:11px;fill:var(--erp-color-text-muted)}
+.gridline{stroke:var(--erp-color-border-subtle);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--erp-color-bg-surface);border:1px solid var(--erp-color-border-subtle);box-shadow:var(--erp-elevation-2);border-radius:var(--erp-radius-md);padding:8px 10px;font-size:12px;display:none;min-width:150px;z-index:5}
+.tip b{display:block;margin-bottom:4px}
+.tip div{display:flex;justify-content:space-between;gap:12px}
+.lbl{font-size:11px;font-weight:600}
+
+/* exceptions */
+.ex{list-style:none;margin:0;padding:0}
+.ex li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--erp-color-border-subtle);align-items:flex-start}
+.ex li:last-child{border-bottom:0}
+.ex .sev{color:var(--erp-color-status-error-solid);margin-top:2px}
+.ex .sev.w{color:var(--erp-color-status-warning-solid)}
+.ex .t{font-weight:500}
+.ex .m{font-size:12px;color:var(--erp-color-text-muted);margin-top:2px}
+
+/* table */
+.tbl-wrap{overflow:auto;max-height:340px;border-top:1px solid var(--erp-color-border-subtle)}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+th{position:sticky;top:0;background:var(--erp-color-bg-surface-sunken);color:var(--erp-color-text-secondary);font:var(--erp-type-label);text-align:left;padding:0 12px;height:36px;border-bottom:1px solid var(--erp-color-border-subtle);white-space:nowrap}
+td{padding:0 12px;height:var(--erp-row-h);border-bottom:1px solid var(--erp-color-border-subtle);white-space:nowrap}
+td.r,th.r{text-align:right}
+tr:hover td{background:var(--erp-color-bg-hover)}
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;padding:0 var(--erp-space-5) var(--erp-space-3)}
+.fb{height:30px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border:1px solid var(--erp-color-border-control);border-radius:var(--erp-radius-sm);background:var(--erp-color-bg-surface);font-size:13px;color:var(--erp-color-text-secondary)}
+.fb b{color:var(--erp-color-text-primary);font-weight:500}
+
+/* theme sheet */
+.sheet h3{font:var(--erp-type-title);margin:var(--erp-space-6) 0 var(--erp-space-3)}
+.sheet h3:first-child{margin-top:0}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.swatch{border:1px solid var(--erp-color-border-subtle);border-radius:var(--erp-radius-md);overflow:hidden;background:var(--erp-color-bg-surface)}
+.swatch i{display:block;height:44px}
+.swatch div{padding:8px 10px;font-size:12px}
+.swatch code{display:block;color:var(--erp-color-text-muted);font-size:11px;margin-top:2px}
+.typerow{display:flex;align-items:baseline;gap:16px;padding:8px 0;border-bottom:1px solid var(--erp-color-border-subtle)}
+.typerow code{width:120px;font-size:12px;color:var(--erp-color-text-muted);flex:none}
+.icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.icons div{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--erp-color-border-subtle);border-radius:var(--erp-radius-md);font-size:12px;background:var(--erp-color-bg-surface)}
+.note{font-size:12px;color:var(--erp-color-text-muted)}
+
+/* bottom nav (mobile) */
+.bottom{display:none}
+
+/* responsive */
+@media (max-width:1199px){
+  .frame{grid-template-columns:var(--erp-sidenav-rail) 1fr}
+  nav.side{padding:var(--erp-space-3) 6px}
+  .nav-a{justify-content:center;padding:0}
+  .nav-a span,.nav-a .cnt,.nav-h,.pin{display:none}
+  .c3{grid-column:span 6}.c4,.c5,.c6,.c7,.c8{grid-column:span 12}
+  .grid{grid-template-columns:repeat(12,1fr)}
+  main{padding:var(--erp-page-padding-tablet)}
+  .ctx button:not(.active),.ctx .sep{display:none}
+}
+@media (max-width:599px){
+  .frame{grid-template-columns:1fr}
+  nav.side{display:none}
+  main{padding:var(--erp-page-padding-mobile);padding-bottom:84px}
+  .search{max-width:none;flex:0}
+  .search span,.search kbd{display:none}
+  .brand span,.hide-m{display:none}
+  .c3{grid-column:span 6}
+  .kpi .value{font-size:22px;line-height:28px}
+  .ph .actions{margin-left:0}
+  .bottom{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--erp-color-bg-surface);border-top:1px solid var(--erp-color-border-subtle);z-index:var(--erp-z-sticky)}
+  .bottom a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--erp-color-text-secondary);text-decoration:none}
+  .bottom a[aria-current="page"]{color:var(--erp-color-brand-primary-text)}
+  .card-b,.card-h,.card-f,.filterbar{padding-left:var(--erp-space-4);padding-right:var(--erp-space-4)}
+  .ctx{max-width:150px;overflow:hidden}
+  .ctx .active{overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .chart{overflow-x:auto}
+  .chart svg{min-width:520px}
+  .tbl-wrap{max-height:none;overflow:visible}
+  table thead{display:none}
+  table,tbody,tr,td{display:block;width:100%}
+  tr{padding:10px 0;border-bottom:1px solid var(--erp-color-border-subtle)}
+  td{height:auto;border:0;padding:3px 16px;display:flex;justify-content:space-between;gap:12px;white-space:normal}
+  td::before{content:attr(data-l);color:var(--erp-color-text-muted);font-size:12px}
+  td.r{text-align:right}
+  .card-h h2{font-size:14px}
+}
+@media (max-width:380px){ .c3{grid-column:span 12} }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="i-launch" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol>
+ <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></symbol>
+ <symbol id="i-projects" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 11v5M12 11v3M16 11v6"/></symbol>
+ <symbol id="i-eng" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="M11 7l-6 13M13 7l6 13M7 15h10"/></symbol>
+ <symbol id="i-calc" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></symbol>
+ <symbol id="i-site" viewBox="0 0 24 24"><path d="M4 17h16v2H4z"/><path d="M6 17v-3a6 6 0 0 1 12 0v3"/><path d="M10 8V5h4v3"/></symbol>
+ <symbol id="i-supply" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+ <symbol id="i-plant" viewBox="0 0 24 24"><path d="M3 16V8h10v8M13 11h4l3 3v2h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></symbol>
+ <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5 5"/></symbol>
+ <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+ <symbol id="i-finance" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.7 10v8M14.3 10v8M19 10v8M3 20h18"/></symbol>
+ <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/></symbol>
+ <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h11v8H8l-4 3z"/><path d="M15 9h5v8l-3-2h-6v-2"/></symbol>
+ <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+ <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></symbol>
+ <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+ <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M4 13l2.5-8h11L20 13v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/></symbol>
+ <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+ <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 5 .5c0 2-2.5 2-2.5 4M12 17h.01"/></symbol>
+ <symbol id="i-ai" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol>
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+ <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+ <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+ <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+ <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+ <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+ <symbol id="i-open" viewBox="0 0 24 24"><path d="M8 16L16 8M9 8h7v7"/></symbol>
+ <symbol id="i-more" viewBox="0 0 24 24"><path d="M6 12h.01M12 12h.01M18 12h.01"/></symbol>
+ <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></symbol>
+ <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+ <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></symbol>
+ <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/></symbol>
+ <symbol id="i-capture" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+ <symbol id="i-tasks" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12l3 3 5-6"/></symbol>
+ <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+ <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v7"/></symbol>
+ <symbol id="i-why" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
+</svg>
+
+<header class="shellbar" role="banner">
+  <button class="sb-btn" aria-label="App launcher"><svg class="i"><use href="#i-launch"/></svg></button>
+  <div class="brand"><div class="brand-mark"><svg class="i s" style="color:var(--erp-color-text-on-primary)"><use href="#i-site"/></svg></div><span>Infra Builders ERP</span></div>
+  <div class="ctx" aria-label="Context">
+    <button>Infra Builders Ltd</button><span class="sep">›</span>
+    <button class="active" aria-current="true">Metro Line 3 — Package 2</button><span class="sep">›</span>
+    <button>Viaduct P1–P48</button>
+  </div>
+  <div class="search" role="search"><svg class="i s"><use href="#i-search"/></svg><span>Search records, people and actions</span><kbd>Ctrl K</kbd></div>
+  <button class="sb-btn hide-m" aria-label="Create"><svg class="i"><use href="#i-plus"/></svg></button>
+  <button class="sb-btn" aria-label="My Inbox, 6 waiting"><svg class="i"><use href="#i-inbox"/></svg><span class="badge num">6</span></button>
+  <button class="sb-btn hide-m" aria-label="Notifications, 3 new"><svg class="i"><use href="#i-bell"/></svg><span class="badge num">3</span></button>
+  <button class="sb-btn hide-m" aria-label="Copilot"><svg class="i"><use href="#i-ai"/></svg></button>
+  <button class="sb-btn" id="themeBtn" aria-label="Switch light or dark theme"><svg class="i"><use href="#i-moon"/></svg></button>
+  <div class="avatar" aria-label="Ravi Kulkarni, Project Manager">RK</div>
+</header>
+
+<div class="frame">
+  <nav class="side" aria-label="Main navigation">
+    <div class="nav-h">Pinned</div>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-calc"/></svg><span>RA billing</span><i class="pin"></i></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-site"/></svg><span>Daily progress reports</span><i class="pin"></i></a>
+    <div class="nav-h">Modules</div>
+    <a class="nav-a" href="#" aria-current="page"><svg class="i"><use href="#i-home"/></svg><span>Home</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-projects"/></svg><span>Projects</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-eng"/></svg><span>Engineering &amp; documents</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-calc"/></svg><span>Estimation &amp; commercial</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-site"/></svg><span>Site execution</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-supply"/></svg><span>Procurement &amp; stores</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-plant"/></svg><span>Plant &amp; equipment</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-people"/></svg><span>Workforce</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-shield"/></svg><span>Quality, HSE &amp; completion</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-finance"/></svg><span>Finance</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-chart"/></svg><span>Reports &amp; analytics</span></a>
+    <a class="nav-a" href="#"><svg class="i"><use href="#i-chat"/></svg><span>Collaboration</span><span class="cnt num">4</span></a>
+    <p class="note" style="padding:12px">Administration appears only for administrator roles. Technical pages are never listed here.</p>
+  </nav>
+
+  <main id="main">
+    <div class="crumb">Home › My workspace</div>
+    <div class="ph">
+      <div>
+        <h1>Good morning, Ravi</h1>
+        <div class="sub">Project Manager · Metro Line 3 — Package 2 · design reference with illustrative data</div>
+      </div>
+      <div class="actions"><span class="asof">As of 09:40 IST</span><button class="btn ghost"><svg class="i s"><use href="#i-pencil"/></svg>Edit layout</button><button class="btn primary"><svg class="i s"><use href="#i-plus"/></svg>Create DPR</button></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-view="ws">Workspace</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="sheet">Theme sheet</button>
+    </div>
+
+    <section id="ws" class="grid">
+      <article class="card kpi c3"><div class="card-b">
+        <div class="label">Physical progress <svg class="i s" aria-label="Definition"><use href="#i-why"/></svg></div>
+        <div class="value num">62.4<span class="unit">%</span></div>
+        <div class="row"><span class="chip warning"><svg class="i s"><use href="#i-alert"/></svg>−3.6 pts vs plan</span><span class="ctx2">Plan 66.0 % · Sep</span></div>
+        <svg class="spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="var(--erp-chart-1)" stroke-width="2" points="0,24 15,22 30,20 45,17 60,15 75,12 90,10 105,8 120,6"/></svg>
+      </div><div class="card-f">Source: progress measurement<a href="#">Open<svg class="i s"><use href="#i-open"/></svg></a></div></article>
+
+      <article class="card kpi c3"><div class="card-b">
+        <div class="label">Cost performance (CPI)</div>
+        <div class="value num">0.96</div>
+        <div class="row"><span class="chip warning"><svg class="i s"><use href="#i-alert"/></svg>Below 1.00</span><span class="ctx2">Earned ₹ 248.1 Cr · Actual ₹ 258.4 Cr</span></div>
+        <svg class="spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="var(--erp-chart-1)" stroke-width="2" points="0,8 15,9 30,10 45,9 60,12 75,13 90,14 105,15 120,16"/></svg>
+      </div><div class="card-f">Source: project control engine<a href="#">Open<svg class="i s"><use href="#i-open"/></svg></a></div></article>
+
+      <article class="card kpi c3"><div class="card-b">
+        <div class="label">Estimate at completion</div>
+        <div class="value num">₹ 412.6<span class="unit">Cr</span></div>
+        <div class="row"><span class="chip error"><svg class="i s"><use href="#i-alert"/></svg>+3.7 % over budget</span><span class="ctx2">Budget ₹ 398.0 Cr</span></div>
+        <svg class="spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="var(--erp-chart-1)" stroke-width="2" points="0,20 15,20 30,19 45,17 60,16 75,14 90,12 105,10 120,9"/></svg>
+      </div><div class="card-f">Source: EAC forecast v7<a href="#">Open<svg class="i s"><use href="#i-open"/></svg></a></div></article>
+
+      <article class="card kpi c3"><div class="card-b">
+        <div class="label">Open RFIs</div>
+        <div class="value num">18</div>
+        <div class="row"><span class="chip error"><svg class="i s"><use href="#i-clock"/></svg>5 overdue</span><span class="ctx2">Avg. response 4.2 d</span></div>
+        <svg class="spark" viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="var(--erp-chart-1)" stroke-width="2" points="0,14 15,12 30,15 45,11 60,13 75,9 90,12 105,10 120,8"/></svg>
+      </div><div class="card-f">Source: RFI register<a href="#">Open<svg class="i s"><use href="#i-open"/></svg></a></div></article>
+
+      <article class="card c5">
+        <div class="card-h"><svg class="i" style="color:var(--erp-color-text-secondary)"><use href="#i-inbox"/></svg><h2>My Inbox</h2><span class="chip info">6 waiting</span><button class="icon-btn more" aria-label="More"><svg class="i"><use href="#i-more"/></svg></button></div>
+        <div class="card-b"><ul class="wl">
+          <li><span class="doc"><svg class="i s"><use href="#i-doc"/></svg></span><div><div class="t">PO-24-01187 · TMT bars Fe 550D, 420 MT</div><div class="m"><span>Procurement</span><span class="chip warning"><svg class="i s"><use href="#i-alert"/></svg>Budget 96 % used</span></div><div class="acts"><button class="mini"><svg class="i s"><use href="#i-undo"/></svg>Return</button><button class="mini ok"><svg class="i s"><use href="#i-check"/></svg>Approve</button></div></div><div><div class="amt num">₹ 2.73 Cr</div></div></li>
+          <li><span class="doc"><svg class="i s"><use href="#i-doc"/></svg></span><div><div class="t">RA bill 14 · Sub-contractor — piling</div><div class="m"><span>Commercial</span><span class="chip error"><svg class="i s"><use href="#i-clock"/></svg>SLA breached 1 d</span></div><div class="acts"><button class="mini">Open</button></div></div><div><div class="amt num">₹ 86.4 L</div></div></li>
+          <li><span class="doc"><svg class="i s"><use href="#i-doc"/></svg></span><div><div class="t">VO-07 · Additional pile cap reinforcement</div><div class="m"><span>Changes</span><span class="chip neutral">Due today</span></div><div class="acts"><button class="mini">Open</button></div></div><div><div class="amt num">₹ 41.2 L</div></div></li>
+          <li><span class="doc"><svg class="i s"><use href="#i-doc"/></svg></span><div><div class="t">WA-0932 · Pier cap P27 concreting</div><div class="m"><span>Site execution</span><span class="chip success"><svg class="i s"><use href="#i-check"/></svg>All gates passed</span></div><div class="acts"><button class="mini ok"><svg class="i s"><use href="#i-check"/></svg>Authorise</button></div></div><div><div class="amt num">96 m³</div></div></li>
+        </ul></div>
+        <div class="card-f">Approvals across modules<a href="#">Open inbox<svg class="i s"><use href="#i-open"/></svg></a></div>
+      </article>
+
+      <article class="card c7">
+        <div class="card-h"><svg class="i" style="color:var(--erp-color-text-secondary)"><use href="#i-chart"/></svg><h2>Is the work on track? Cumulative progress</h2><button class="icon-btn more" aria-label="More"><svg class="i"><use href="#i-more"/></svg></button></div>
+        <div class="card-b"><div class="legend"><span><i class="sw" style="background:var(--erp-chart-1)"></i>Planned</span><span><i class="sw" style="background:var(--erp-chart-2)"></i>Actual</span><span><i class="sw dash"></i>Forecast</span></div>
+          <div class="chart" id="scurve"></div></div>
+        <div class="card-f">% of contract value · Apr 2025 – Mar 2027<a href="#">View as table<svg class="i s"><use href="#i-open"/></svg></a></div>
+      </article>
+
+      <article class="card c7">
+        <div class="card-h"><svg class="i" style="color:var(--erp-color-text-secondary)"><use href="#i-finance"/></svg><h2>Why has the forecast moved? Budget to EAC</h2><button class="icon-btn more" aria-label="More"><svg class="i"><use href="#i-more"/></svg></button></div>
+        <div class="card-b"><div class="chart" id="bridge"></div></div>
+        <div class="card-f">₹ Cr · approved budget v3 to EAC v7<a href="#">Why?<svg class="i s"><use href="#i-open"/></svg></a></div>
+      </article>
+
+      <article class="card c5">
+        <div class="card-h"><svg class="i" style="color:var(--erp-color-text-secondary)"><use href="#i-alert"/></svg><h2>Exceptions on this project</h2><span class="chip error">3 open</span></div>
+        <div class="card-b"><ul class="ex">
+          <li><svg class="i sev"><use href="#i-alert"/></svg><div><div class="t">Cement issue 11 % above theoretical — Pier P21</div><div class="m">Control CP-STR-04 · Stores · raised 2 h ago</div></div></li>
+          <li><svg class="i sev"><use href="#i-alert"/></svg><div><div class="t">Concrete pour started without approved WA</div><div class="m">Control CP-WA-02 · Site execution · yesterday</div></div></li>
+          <li><svg class="i sev w"><use href="#i-clock"/></svg><div><div class="t">Crane 50 T idle 3 days on hire</div><div class="m">Control CP-PLT-05 · Plant · 3 d</div></div></li>
+        </ul></div>
+        <div class="card-f">From the protocol control engine<a href="#">All exceptions<svg class="i s"><use href="#i-open"/></svg></a></div>
+      </article>
+
+      <article class="card c12">
+        <div class="card-h"><svg class="i" style="color:var(--erp-color-text-secondary)"><use href="#i-supply"/></svg><h2>Material shortages — next 14 days</h2><button class="btn ghost more"><svg class="i s"><use href="#i-download"/></svg>Export</button></div>
+        <div class="filterbar"><span class="fb"><svg class="i s"><use href="#i-filter"/></svg>Store: <b>Viaduct central</b></span><span class="fb">Need date: <b>Next 14 days</b></span><span class="fb">View: <b>My shortages</b></span></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Item</th><th>Item code</th><th class="r">Required</th><th class="r">On hand + due</th><th class="r">Shortfall</th><th>Need date</th><th>PO status</th></tr></thead>
+          <tbody>
+            <tr><td data-l="Item">TMT bar Fe 550D 25 mm</td><td data-l="Item code">STL-TMT-25</td><td data-l="Required" class="r num">186.0 MT</td><td data-l="On hand + due" class="r num">142.5 MT</td><td data-l="Shortfall" class="r num">43.5 MT</td><td data-l="Need date" class="num">09-Oct-2026</td><td data-l="PO status"><span class="chip info"><svg class="i s"><use href="#i-clock"/></svg>In review</span></td></tr>
+            <tr><td data-l="Item">OPC 53 grade cement</td><td data-l="Item code">CEM-OPC-53</td><td data-l="Required" class="r num">2,450 bags</td><td data-l="On hand + due" class="r num">1,980 bags</td><td data-l="Shortfall" class="r num">470 bags</td><td data-l="Need date" class="num">11-Oct-2026</td><td data-l="PO status"><span class="chip success"><svg class="i s"><use href="#i-check"/></svg>Approved</span></td></tr>
+            <tr><td data-l="Item">Elastomeric bearing 500×400</td><td data-l="Item code">BRG-ELA-540</td><td data-l="Required" class="r num">24 nos</td><td data-l="On hand + due" class="r num">8 nos</td><td data-l="Shortfall" class="r num">16 nos</td><td data-l="Need date" class="num">14-Oct-2026</td><td data-l="PO status"><span class="chip error"><svg class="i s"><use href="#i-x"/></svg>Vendor delay</span></td></tr>
+            <tr><td data-l="Item">HT strand 15.2 mm</td><td data-l="Item code">PSC-HTS-152</td><td data-l="Required" class="r num">38.0 MT</td><td data-l="On hand + due" class="r num">31.2 MT</td><td data-l="Shortfall" class="r num">6.8 MT</td><td data-l="Need date" class="num">18-Oct-2026</td><td data-l="PO status"><span class="chip neutral"><svg class="i s"><use href="#i-pencil"/></svg>Draft PR</span></td></tr>
+            <tr><td data-l="Item">Shuttering plywood 12 mm</td><td data-l="Item code">FRM-PLY-12</td><td data-l="Required" class="r num">640 sheets</td><td data-l="On hand + due" class="r num">610 sheets</td><td data-l="Shortfall" class="r num">30 sheets</td><td data-l="Need date" class="num">20-Oct-2026</td><td data-l="PO status"><span class="chip warning"><svg class="i s"><use href="#i-undo"/></svg>Returned</span></td></tr>
+          </tbody></table></div>
+        <div class="card-f">Source: material planning (MRP) · 5 of 23 rows<a href="#">Open list<svg class="i s"><use href="#i-open"/></svg></a></div>
+      </article>
+    </section>
+
+    <section id="sheet" class="sheet" hidden>
+      <h3>Colour roles</h3>
+      <div class="swatches" id="swatches"></div>
+      <h3>Status chips (icon + text, never colour alone)</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip neutral"><svg class="i s"><use href="#i-pencil"/></svg>Draft</span>
+        <span class="chip info"><svg class="i s"><use href="#i-clock"/></svg>In review</span>
+        <span class="chip warning"><svg class="i s"><use href="#i-undo"/></svg>Returned</span>
+        <span class="chip success"><svg class="i s"><use href="#i-check"/></svg>Approved</span>
+        <span class="chip error"><svg class="i s"><use href="#i-x"/></svg>Rejected</span>
+        <span class="chip neutral"><svg class="i s"><use href="#i-lock"/></svg>Closed</span>
+        <span class="chip error"><svg class="i s"><use href="#i-alert"/></svg>Exception</span>
+      </div>
+      <h3>Type scale — IBM Plex Sans, tabular figures for numbers</h3>
+      <div id="types"></div>
+      <h3>Chart palette (fixed order)</h3>
+      <div class="swatches" id="chartsw"></div>
+      <h3>Action icons (registry keys)</h3>
+      <div class="icons">
+        <div><svg class="i"><use href="#i-plus"/></svg>action.create</div><div><svg class="i"><use href="#i-pencil"/></svg>action.edit</div>
+        <div><svg class="i"><use href="#i-check"/></svg>action.approve</div><div><svg class="i"><use href="#i-x"/></svg>action.reject</div>
+        <div><svg class="i"><use href="#i-undo"/></svg>action.return</div><div><svg class="i"><use href="#i-filter"/></svg>action.filter</div>
+        <div><svg class="i"><use href="#i-download"/></svg>action.export</div><div><svg class="i"><use href="#i-open"/></svg>action.drill</div>
+        <div><svg class="i"><use href="#i-why"/></svg>action.why</div><div><svg class="i"><use href="#i-ai"/></svg>action.ai</div>
+        <div><svg class="i"><use href="#i-pin"/></svg>action.pin</div><div><svg class="i"><use href="#i-lock"/></svg>state.locked</div>
+      </div>
+      <p class="note" style="margin-top:16px">Glyphs on this page are simplified drawings for reference. The ERP uses the licensed icon family chosen in Part 00 through the icon registry.</p>
+    </section>
+  </main>
+</div>
+
+<nav class="bottom" aria-label="Mobile navigation">
+  <a href="#" aria-current="page"><svg class="i"><use href="#i-home"/></svg>Home</a>
+  <a href="#"><svg class="i"><use href="#i-inbox"/></svg>Inbox</a>
+  <a href="#"><svg class="i"><use href="#i-capture"/></svg>Capture</a>
+  <a href="#"><svg class="i"><use href="#i-tasks"/></svg>Tasks</a>
+  <a href="#"><svg class="i"><use href="#i-more"/></svg>More</a>
+</nav>
+
+<script>
+const TOKENS = {
+ "$schema-note": "Design tokens for the Construction ERP (source of truth; established in Part 00). Values are referenced by role, never hard-coded in modules.",
+ "color": {
+  "light": {
+   "bg.page": "#F3F5F7",
+   "bg.surface": "#FFFFFF",
+   "bg.surface-sunken": "#EEF1F4",
+   "bg.selected": "#E7EEF8",
+   "bg.hover": "#F0F3F7",
+   "bg.shell": "#1C2530",
+   "bg.shell-hover": "#2A3542",
+   "bg.nav": "#FFFFFF",
+   "bg.nav-active": "#E7EEF8",
+   "text.primary": "#161B22",
+   "text.secondary": "#4A5563",
+   "text.muted": "#5F6976",
+   "text.disabled": "#9AA3AD",
+   "text.on-shell": "#FFFFFF",
+   "text.on-shell-muted": "#B8C2CE",
+   "text.on-primary": "#FFFFFF",
+   "text.on-accent": "#161B22",
+   "text.link": "#1D5BA6",
+   "border.subtle": "#DCE1E6",
+   "border.control": "#8A94A0",
+   "border.strong": "#6E7884",
+   "border.focus": "#2160C4",
+   "brand.primary": "#1D4F91",
+   "brand.primary-text": "#1D4F91",
+   "brand.primary-hover": "#163F75",
+   "brand.primary-pressed": "#11325E",
+   "brand.primary-tint": "#E7EEF8",
+   "brand.accent": "#F2A900",
+   "status.success.fg": "#17663B",
+   "status.success.bg": "#E5F4EA",
+   "status.success.solid": "#1E8A4C",
+   "status.warning.fg": "#8A4B00",
+   "status.warning.bg": "#FFF3DC",
+   "status.warning.solid": "#E59A00",
+   "status.error.fg": "#A3241B",
+   "status.error.bg": "#FDE9E7",
+   "status.error.solid": "#C8372D",
+   "status.info.fg": "#1D5BA6",
+   "status.info.bg": "#E6F0FB",
+   "status.info.solid": "#2A78D6",
+   "status.neutral.fg": "#4A5563",
+   "status.neutral.bg": "#EEF1F4",
+   "status.neutral.solid": "#6E7884"
+  },
+  "dark": {
+   "bg.page": "#0F141A",
+   "bg.surface": "#171D25",
+   "bg.surface-sunken": "#12171D",
+   "bg.selected": "#1D2F47",
+   "bg.hover": "#1F2731",
+   "bg.shell": "#0B1016",
+   "bg.shell-hover": "#1A222C",
+   "bg.nav": "#131920",
+   "bg.nav-active": "#1D2F47",
+   "text.primary": "#EEF2F6",
+   "text.secondary": "#B4BEC9",
+   "text.muted": "#97A2AE",
+   "text.disabled": "#5E6874",
+   "text.on-shell": "#FFFFFF",
+   "text.on-shell-muted": "#AAB5C1",
+   "text.on-primary": "#FFFFFF",
+   "text.on-accent": "#161B22",
+   "text.link": "#7DB3F0",
+   "border.subtle": "#2A333E",
+   "border.control": "#6B7683",
+   "border.strong": "#7E8995",
+   "border.focus": "#6EA8F5",
+   "brand.primary": "#2F6FC6",
+   "brand.primary-text": "#8DBDF3",
+   "brand.primary-hover": "#2862B0",
+   "brand.primary-pressed": "#255BA6",
+   "brand.primary-tint": "#1D2F47",
+   "brand.accent": "#F2B53A",
+   "status.success.fg": "#5CC98A",
+   "status.success.bg": "#11301F",
+   "status.success.solid": "#2FA563",
+   "status.warning.fg": "#F2B54A",
+   "status.warning.bg": "#33250A",
+   "status.warning.solid": "#E59A00",
+   "status.error.fg": "#F48A80",
+   "status.error.bg": "#3A1714",
+   "status.error.solid": "#E0544A",
+   "status.info.fg": "#7DB3F0",
+   "status.info.bg": "#10263F",
+   "status.info.solid": "#3987E5",
+   "status.neutral.fg": "#B4BEC9",
+   "status.neutral.bg": "#232B35",
+   "status.neutral.solid": "#7E8995"
+  },
+  "high-contrast": {
+   "bg.page": "#FFFFFF",
+   "bg.surface": "#FFFFFF",
+   "bg.surface-sunken": "#FFFFFF",
+   "bg.selected": "#FFF2B3",
+   "bg.hover": "#F2F2F2",
+   "bg.shell": "#000000",
+   "bg.shell-hover": "#262626",
+   "bg.nav": "#FFFFFF",
+   "bg.nav-active": "#FFF2B3",
+   "text.primary": "#000000",
+   "text.secondary": "#1A1A1A",
+   "text.muted": "#333333",
+   "text.disabled": "#595959",
+   "text.on-shell": "#FFFFFF",
+   "text.on-shell-muted": "#FFFFFF",
+   "text.on-primary": "#FFFFFF",
+   "text.on-accent": "#000000",
+   "text.link": "#0040A0",
+   "border.subtle": "#000000",
+   "border.control": "#000000",
+   "border.strong": "#000000",
+   "border.focus": "#0040A0",
+   "brand.primary": "#0040A0",
+   "brand.primary-text": "#0040A0",
+   "brand.primary-hover": "#003080",
+   "brand.primary-pressed": "#002060",
+   "brand.primary-tint": "#FFF2B3",
+   "brand.accent": "#FFD400",
+   "status.success.fg": "#005A1F",
+   "status.success.bg": "#FFFFFF",
+   "status.success.solid": "#005A1F",
+   "status.warning.fg": "#6B3A00",
+   "status.warning.bg": "#FFFFFF",
+   "status.warning.solid": "#6B3A00",
+   "status.error.fg": "#8F0000",
+   "status.error.bg": "#FFFFFF",
+   "status.error.solid": "#8F0000",
+   "status.info.fg": "#0040A0",
+   "status.info.bg": "#FFFFFF",
+   "status.info.solid": "#0040A0",
+   "status.neutral.fg": "#1A1A1A",
+   "status.neutral.bg": "#FFFFFF",
+   "status.neutral.solid": "#1A1A1A"
+  }
+ },
+ "chart": {
+  "categorical": {
+   "light": [
+    "#2a78d6",
+    "#eb6834",
+    "#1baf7a",
+    "#eda100",
+    "#e87ba4",
+    "#008300",
+    "#4a3aa7",
+    "#e34948"
+   ],
+   "dark": [
+    "#3987e5",
+    "#d95926",
+    "#199e70",
+    "#c98500",
+    "#d55181",
+    "#008300",
+    "#9085e9",
+    "#e66767"
+   ]
+  },
+  "sequential": [
+   "#cde2fb",
+   "#b7d3f6",
+   "#9ec5f4",
+   "#86b6ef",
+   "#6da7ec",
+   "#5598e7",
+   "#3987e5",
+   "#2a78d6",
+   "#256abf",
+   "#1c5cab",
+   "#184f95",
+   "#104281",
+   "#0d366b"
+  ],
+  "diverging": {
+   "negative": "#e34948",
+   "midpoint": {
+    "light": "#eef1f4",
+    "dark": "#2a333e"
+   },
+   "positive": "#2a78d6"
+  },
+  "rules": "fixed slot order, never cycled; >8 series fold to Other; light slots 3,4,5 need direct labels or table view"
+ },
+ "typography": {
+  "family": {
+   "sans": "'IBM Plex Sans', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+   "indic": "'IBM Plex Sans Devanagari', 'Noto Sans Devanagari', 'Noto Sans', sans-serif",
+   "mono": "'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace"
+  },
+  "scale": {
+   "caption": {
+    "size": 12,
+    "lineHeight": 16,
+    "weight": 400
+   },
+   "body-sm": {
+    "size": 13,
+    "lineHeight": 18,
+    "weight": 400
+   },
+   "body": {
+    "size": 14,
+    "lineHeight": 20,
+    "weight": 400
+   },
+   "body-lg": {
+    "size": 16,
+    "lineHeight": 24,
+    "weight": 400
+   },
+   "label": {
+    "size": 13,
+    "lineHeight": 18,
+    "weight": 500
+   },
+   "title-sm": {
+    "size": 15,
+    "lineHeight": 20,
+    "weight": 600
+   },
+   "title": {
+    "size": 18,
+    "lineHeight": 24,
+    "weight": 600
+   },
+   "page-title": {
+    "size": 22,
+    "lineHeight": 28,
+    "weight": 600
+   },
+   "kpi": {
+    "size": 28,
+    "lineHeight": 32,
+    "weight": 600
+   },
+   "kpi-hero": {
+    "size": 36,
+    "lineHeight": 40,
+    "weight": 600
+   }
+  },
+  "numeric": "tabular-nums for tables, KPI values and amounts"
+ },
+ "space": {
+  "0": 0,
+  "1": 2,
+  "2": 4,
+  "3": 8,
+  "4": 12,
+  "5": 16,
+  "6": 20,
+  "7": 24,
+  "8": 32,
+  "9": 40,
+  "10": 48,
+  "11": 64
+ },
+ "radius": {
+  "none": 0,
+  "xs": 2,
+  "sm": 4,
+  "md": 6,
+  "lg": 8,
+  "xl": 12,
+  "pill": 999
+ },
+ "elevation": {
+  "0": "none",
+  "1": "0 1px 2px rgba(16,24,40,0.06)",
+  "2": "0 4px 12px rgba(16,24,40,0.10)",
+  "3": "0 12px 32px rgba(16,24,40,0.18)"
+ },
+ "density": {
+  "compact": {
+   "control": 28,
+   "row": 32,
+   "icon": 16
+  },
+  "cozy": {
+   "control": 36,
+   "row": 40,
+   "icon": 20
+  },
+  "touch": {
+   "control": 44,
+   "row": 48,
+   "icon": 24
+  }
+ },
+ "breakpoint": {
+  "xs": 0,
+  "sm": 600,
+  "md": 900,
+  "lg": 1200,
+  "xl": 1600
+ },
+ "layout": {
+  "shellbar.height": 48,
+  "sidenav.width": 248,
+  "sidenav.rail": 56,
+  "page.padding.desktop": 24,
+  "page.padding.tablet": 16,
+  "page.padding.mobile": 12,
+  "grid.columns.desktop": 12,
+  "grid.columns.tablet": 8,
+  "grid.columns.mobile": 4,
+  "grid.gutter": 16,
+  "grid.row-unit": 112,
+  "content.max-reading": 880
+ },
+ "motion": {
+  "duration.fast": "120ms",
+  "duration.base": "200ms",
+  "duration.slow": "320ms",
+  "easing.standard": "cubic-bezier(0.2, 0, 0, 1)",
+  "easing.exit": "cubic-bezier(0.4, 0, 1, 1)"
+ },
+ "zIndex": {
+  "base": 0,
+  "sticky": 100,
+  "dropdown": 1000,
+  "drawer": 1100,
+  "modal": 1200,
+  "toast": 1300,
+  "tooltip": 1400
+ },
+ "icon": {
+  "size.sm": 16,
+  "size.md": 20,
+  "size.lg": 24,
+  "stroke": 1.75,
+  "grid": 24
+ }
+};
+const root = document.documentElement;
+try { const s = localStorage.getItem('erp-ref-theme'); if (s) root.dataset.theme = s; } catch (e) {}
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('erp-ref-theme', root.dataset.theme); } catch (e) {}
+  renderSheet();
+});
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  document.getElementById('ws').hidden = t.dataset.view !== 'ws';
+  document.getElementById('sheet').hidden = t.dataset.view !== 'sheet';
+}));
+const css = v => getComputedStyle(root).getPropertyValue(v).trim();
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+
+/* S-curve: planned / actual / forecast with crosshair tooltip */
+(function () {
+  const months = ['Apr 25','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan 26','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan 27','Feb','Mar'];
+  const plan = [1,2.5,4.5,7,10,14,18.5,23,28,33,38,43,48,52.5,56.5,60,63,66,69,72.5,77,82,88,94];
+  const act = [0.8,2.1,3.9,6.2,9.0,12.6,16.4,20.5,25.1,29.8,34.6,39.2,43.9,48.0,51.6,55.0,58.6,62.4];
+  const fc = [null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,62.4,65.6,69.2,73.5,78.4,84.0,90.5];
+  const host = document.getElementById('scurve');
+  const W = 640, H = 230, L = 34, R = 12, T = 10, B = 26;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Cumulative progress: planned 66 percent, actual 62.4 percent in September 2026' }, host);
+  const x = i => L + i * (W - L - R) / (months.length - 1), y = v => T + (100 - v) * (H - T - B) / 100;
+  [0, 25, 50, 75, 100].forEach(v => { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gridline' }, svg); const t = el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'axis' }, svg); t.textContent = v + '%'; });
+  [0, 6, 12, 18, 23].forEach(i => { const t = el('text', { x: x(i), y: H - 6, 'text-anchor': 'middle', class: 'axis' }, svg); t.textContent = months[i]; });
+  const path = (arr, color, dash) => { const pts = arr.map((v, i) => v == null ? null : `${x(i)},${y(v)}`).filter(Boolean).join(' '); el('polyline', { points: pts, fill: 'none', stroke: color, 'stroke-width': 2, 'stroke-dasharray': dash || '', 'stroke-linejoin': 'round' }, svg); };
+  path(plan, 'var(--erp-chart-1)'); path(fc, 'var(--erp-chart-2)', '5 4'); path(act, 'var(--erp-chart-2)');
+  const lp = el('text', { x: x(23) - 4, y: y(94) - 6, 'text-anchor': 'end', class: 'lbl', fill: 'var(--erp-color-text-secondary)' }, svg); lp.textContent = 'Planned 94%';
+  const la = el('text', { x: x(17) + 6, y: y(62.4) + 14, class: 'lbl', fill: 'var(--erp-color-text-secondary)' }, svg); la.textContent = 'Actual 62.4%';
+  el('circle', { cx: x(17), cy: y(62.4), r: 4, fill: 'var(--erp-chart-2)', stroke: 'var(--erp-color-bg-surface)', 'stroke-width': 2 }, svg);
+  const cross = el('line', { y1: T, y2: H - B, stroke: 'var(--erp-color-border-strong)', 'stroke-width': 1, visibility: 'hidden' }, svg);
+  const tip = document.createElement('div'); tip.className = 'tip'; host.appendChild(tip);
+  svg.addEventListener('mousemove', ev => {
+    const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) * W / r.width;
+    const i = Math.max(0, Math.min(months.length - 1, Math.round((px - L) / ((W - L - R) / (months.length - 1)))));
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+    const row = (n, v) => v == null ? '' : `<div><span>${n}</span><span class="num">${v.toFixed(1)}%</span></div>`;
+    tip.innerHTML = `<b>${months[i]}</b>${row('Planned', plan[i])}${row('Actual', act[i])}${i > 17 ? row('Forecast', fc[i]) : ''}`;
+    tip.style.display = 'block'; const lx = x(i) * r.width / W; tip.style.left = Math.min(lx + 12, r.width - 170) + 'px'; tip.style.top = '8px';
+  });
+  svg.addEventListener('mouseleave', () => { tip.style.display = 'none'; cross.setAttribute('visibility', 'hidden'); });
+})();
+
+/* Budget -> EAC bridge (waterfall). Increases red, decreases blue (diverging), totals neutral. */
+(function () {
+  const steps = [['Budget v3', 398.0, 'total'], ['Steel price', 9.4], ['Pile redesign', 6.1], ['Crane idle', 1.8], ['RMC savings', -3.9], ['Risk draw', 1.2], ['EAC v7', 412.6, 'total']];
+  const host = document.getElementById('bridge');
+  const W = 640, H = 220, L = 40, R = 10, T = 22, B = 30, lo = 390, hi = 418;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Budget 398.0 crore to EAC 412.6 crore; main driver steel price plus 9.4 crore' }, host);
+  const y = v => T + (hi - v) * (H - T - B) / (hi - lo);
+  [390, 400, 410].forEach(v => { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gridline' }, svg); const t = el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'axis' }, svg); t.textContent = v; });
+  const bw = (W - L - R) / steps.length; let run = 0;
+  steps.forEach((s, i) => {
+    const [name, v, kind] = s; let top, bot, color, label;
+    if (kind) { top = v; bot = lo; run = v; color = 'var(--erp-color-status-neutral-solid)'; label = v.toFixed(1); }
+    else { const a = run, b = run + v; top = Math.max(a, b); bot = Math.min(a, b); run = b; color = v > 0 ? 'var(--erp-chart-8)' : 'var(--erp-chart-1)'; label = (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1); }
+    const x0 = L + i * bw + bw * 0.18, w = bw * 0.64;
+    el('rect', { x: x0, y: y(top), width: w, height: Math.max(2, y(bot) - y(top)), rx: 3, fill: color }, svg);
+    const t = el('text', { x: x0 + w / 2, y: y(top) - 6, 'text-anchor': 'middle', class: 'lbl', fill: 'var(--erp-color-text-primary)' }, svg); t.textContent = label;
+    const n = el('text', { x: x0 + w / 2, y: H - 10, 'text-anchor': 'middle', class: 'axis' }, svg); n.textContent = name;
+  });
+})();
+
+/* Theme sheet rendered from the token file */
+function renderSheet() {
+  const theme = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const t = TOKENS.color[theme] || TOKENS.color.light;
+  const keys = ['bg.page','bg.surface','bg.shell','brand.primary','brand.accent','text.primary','text.secondary','text.muted','border.subtle','border.focus','status.success.solid','status.warning.solid','status.error.solid','status.info.solid'];
+  document.getElementById('swatches').innerHTML = keys.map(k => `<div class="swatch"><i style="background:${t[k]}"></i><div>${k}<code>${t[k]}</code></div></div>`).join('');
+  const ch = TOKENS.chart.categorical[theme === 'dark' ? 'dark' : 'light'];
+  document.getElementById('chartsw').innerHTML = ch.map((c, i) => `<div class="swatch"><i style="background:${c}"></i><div>Series ${i + 1}<code>${c}</code></div></div>`).join('');
+  document.getElementById('types').innerHTML = Object.entries(TOKENS.typography.scale).map(([k, s]) => `<div class="typerow"><code>${k} ${s.size}/${s.lineHeight}</code><span class="num" style="font-size:${s.size}px;line-height:${s.lineHeight}px;font-weight:${s.weight}">Pier cap P27 · ₹ 12,34,567.00</span></div>`).join('');
+}
+renderSheet();
+</script>
+</body>
+</html>

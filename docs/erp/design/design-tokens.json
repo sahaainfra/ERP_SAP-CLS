@@ -1,0 +1,338 @@
+{
+ "$schema-note": "Design tokens for the Construction ERP (source of truth; established in Part 00). Values are referenced by role, never hard-coded in modules.",
+ "color": {
+  "light": {
+   "bg.page": "#F3F5F7",
+   "bg.surface": "#FFFFFF",
+   "bg.surface-sunken": "#EEF1F4",
+   "bg.selected": "#E7EEF8",
+   "bg.hover": "#F0F3F7",
+   "bg.shell": "#1C2530",
+   "bg.shell-hover": "#2A3542",
+   "bg.nav": "#FFFFFF",
+   "bg.nav-active": "#E7EEF8",
+   "text.primary": "#161B22",
+   "text.secondary": "#4A5563",
+   "text.muted": "#5F6976",
+   "text.disabled": "#9AA3AD",
+   "text.on-shell": "#FFFFFF",
+   "text.on-shell-muted": "#B8C2CE",
+   "text.on-primary": "#FFFFFF",
+   "text.on-accent": "#161B22",
+   "text.link": "#1D5BA6",
+   "border.subtle": "#DCE1E6",
+   "border.control": "#8A94A0",
+   "border.strong": "#6E7884",
+   "border.focus": "#2160C4",
+   "brand.primary": "#1D4F91",
+   "brand.primary-text": "#1D4F91",
+   "brand.primary-hover": "#163F75",
+   "brand.primary-pressed": "#11325E",
+   "brand.primary-tint": "#E7EEF8",
+   "brand.accent": "#F2A900",
+   "status.success.fg": "#17663B",
+   "status.success.bg": "#E5F4EA",
+   "status.success.solid": "#1E8A4C",
+   "status.warning.fg": "#8A4B00",
+   "status.warning.bg": "#FFF3DC",
+   "status.warning.solid": "#E59A00",
+   "status.error.fg": "#A3241B",
+   "status.error.bg": "#FDE9E7",
+   "status.error.solid": "#C8372D",
+   "status.info.fg": "#1D5BA6",
+   "status.info.bg": "#E6F0FB",
+   "status.info.solid": "#2A78D6",
+   "status.neutral.fg": "#4A5563",
+   "status.neutral.bg": "#EEF1F4",
+   "status.neutral.solid": "#6E7884"
+  },
+  "dark": {
+   "bg.page": "#0F141A",
+   "bg.surface": "#171D25",
+   "bg.surface-sunken": "#12171D",
+   "bg.selected": "#1D2F47",
+   "bg.hover": "#1F2731",
+   "bg.shell": "#0B1016",
+   "bg.shell-hover": "#1A222C",
+   "bg.nav": "#131920",
+   "bg.nav-active": "#1D2F47",
+   "text.primary": "#EEF2F6",
+   "text.secondary": "#B4BEC9",
+   "text.muted": "#97A2AE",
+   "text.disabled": "#5E6874",
+   "text.on-shell": "#FFFFFF",
+   "text.on-shell-muted": "#AAB5C1",
+   "text.on-primary": "#FFFFFF",
+   "text.on-accent": "#161B22",
+   "text.link": "#7DB3F0",
+   "border.subtle": "#2A333E",
+   "border.control": "#6B7683",
+   "border.strong": "#7E8995",
+   "border.focus": "#6EA8F5",
+   "brand.primary": "#2F6FC6",
+   "brand.primary-text": "#8DBDF3",
+   "brand.primary-hover": "#2862B0",
+   "brand.primary-pressed": "#255BA6",
+   "brand.primary-tint": "#1D2F47",
+   "brand.accent": "#F2B53A",
+   "status.success.fg": "#5CC98A",
+   "status.success.bg": "#11301F",
+   "status.success.solid": "#2FA563",
+   "status.warning.fg": "#F2B54A",
+   "status.warning.bg": "#33250A",
+   "status.warning.solid": "#E59A00",
+   "status.error.fg": "#F48A80",
+   "status.error.bg": "#3A1714",
+   "status.error.solid": "#E0544A",
+   "status.info.fg": "#7DB3F0",
+   "status.info.bg": "#10263F",
+   "status.info.solid": "#3987E5",
+   "status.neutral.fg": "#B4BEC9",
+   "status.neutral.bg": "#232B35",
+   "status.neutral.solid": "#7E8995"
+  },
+  "high-contrast": {
+   "bg.page": "#FFFFFF",
+   "bg.surface": "#FFFFFF",
+   "bg.surface-sunken": "#FFFFFF",
+   "bg.selected": "#FFF2B3",
+   "bg.hover": "#F2F2F2",
+   "bg.shell": "#000000",
+   "bg.shell-hover": "#262626",
+   "bg.nav": "#FFFFFF",
+   "bg.nav-active": "#FFF2B3",
+   "text.primary": "#000000",
+   "text.secondary": "#1A1A1A",
+   "text.muted": "#333333",
+   "text.disabled": "#595959",
+   "text.on-shell": "#FFFFFF",
+   "text.on-shell-muted": "#FFFFFF",
+   "text.on-primary": "#FFFFFF",
+   "text.on-accent": "#000000",
+   "text.link": "#0040A0",
+   "border.subtle": "#000000",
+   "border.control": "#000000",
+   "border.strong": "#000000",
+   "border.focus": "#0040A0",
+   "brand.primary": "#0040A0",
+   "brand.primary-text": "#0040A0",
+   "brand.primary-hover": "#003080",
+   "brand.primary-pressed": "#002060",
+   "brand.primary-tint": "#FFF2B3",
+   "brand.accent": "#FFD400",
+   "status.success.fg": "#005A1F",
+   "status.success.bg": "#FFFFFF",
+   "status.success.solid": "#005A1F",
+   "status.warning.fg": "#6B3A00",
+   "status.warning.bg": "#FFFFFF",
+   "status.warning.solid": "#6B3A00",
+   "status.error.fg": "#8F0000",
+   "status.error.bg": "#FFFFFF",
+   "status.error.solid": "#8F0000",
+   "status.info.fg": "#0040A0",
+   "status.info.bg": "#FFFFFF",
+   "status.info.solid": "#0040A0",
+   "status.neutral.fg": "#1A1A1A",
+   "status.neutral.bg": "#FFFFFF",
+   "status.neutral.solid": "#1A1A1A"
+  }
+ },
+ "chart": {
+  "categorical": {
+   "light": [
+    "#2a78d6",
+    "#eb6834",
+    "#1baf7a",
+    "#eda100",
+    "#e87ba4",
+    "#008300",
+    "#4a3aa7",
+    "#e34948"
+   ],
+   "dark": [
+    "#3987e5",
+    "#d95926",
+    "#199e70",
+    "#c98500",
+    "#d55181",
+    "#008300",
+    "#9085e9",
+    "#e66767"
+   ]
+  },
+  "sequential": [
+   "#cde2fb",
+   "#b7d3f6",
+   "#9ec5f4",
+   "#86b6ef",
+   "#6da7ec",
+   "#5598e7",
+   "#3987e5",
+   "#2a78d6",
+   "#256abf",
+   "#1c5cab",
+   "#184f95",
+   "#104281",
+   "#0d366b"
+  ],
+  "diverging": {
+   "negative": "#e34948",
+   "midpoint": {
+    "light": "#eef1f4",
+    "dark": "#2a333e"
+   },
+   "positive": "#2a78d6"
+  },
+  "rules": "fixed slot order, never cycled; >8 series fold to Other; light slots 3,4,5 need direct labels or table view"
+ },
+ "typography": {
+  "family": {
+   "sans": "'IBM Plex Sans', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+   "indic": "'IBM Plex Sans Devanagari', 'Noto Sans Devanagari', 'Noto Sans', sans-serif",
+   "mono": "'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace"
+  },
+  "scale": {
+   "caption": {
+    "size": 12,
+    "lineHeight": 16,
+    "weight": 400
+   },
+   "body-sm": {
+    "size": 13,
+    "lineHeight": 18,
+    "weight": 400
+   },
+   "body": {
+    "size": 14,
+    "lineHeight": 20,
+    "weight": 400
+   },
+   "body-lg": {
+    "size": 16,
+    "lineHeight": 24,
+    "weight": 400
+   },
+   "label": {
+    "size": 13,
+    "lineHeight": 18,
+    "weight": 500
+   },
+   "title-sm": {
+    "size": 15,
+    "lineHeight": 20,
+    "weight": 600
+   },
+   "title": {
+    "size": 18,
+    "lineHeight": 24,
+    "weight": 600
+   },
+   "page-title": {
+    "size": 22,
+    "lineHeight": 28,
+    "weight": 600
+   },
+   "kpi": {
+    "size": 28,
+    "lineHeight": 32,
+    "weight": 600
+   },
+   "kpi-hero": {
+    "size": 36,
+    "lineHeight": 40,
+    "weight": 600
+   }
+  },
+  "numeric": "tabular-nums for tables, KPI values and amounts"
+ },
+ "space": {
+  "0": 0,
+  "1": 2,
+  "2": 4,
+  "3": 8,
+  "4": 12,
+  "5": 16,
+  "6": 20,
+  "7": 24,
+  "8": 32,
+  "9": 40,
+  "10": 48,
+  "11": 64
+ },
+ "radius": {
+  "none": 0,
+  "xs": 2,
+  "sm": 4,
+  "md": 6,
+  "lg": 8,
+  "xl": 12,
+  "pill": 999
+ },
+ "elevation": {
+  "0": "none",
+  "1": "0 1px 2px rgba(16,24,40,0.06)",
+  "2": "0 4px 12px rgba(16,24,40,0.10)",
+  "3": "0 12px 32px rgba(16,24,40,0.18)"
+ },
+ "density": {
+  "compact": {
+   "control": 28,
+   "row": 32,
+   "icon": 16
+  },
+  "cozy": {
+   "control": 36,
+   "row": 40,
+   "icon": 20
+  },
+  "touch": {
+   "control": 44,
+   "row": 48,
+   "icon": 24
+  }
+ },
+ "breakpoint": {
+  "xs": 0,
+  "sm": 600,
+  "md": 900,
+  "lg": 1200,
+  "xl": 1600
+ },
+ "layout": {
+  "shellbar.height": 48,
+  "sidenav.width": 248,
+  "sidenav.rail": 56,
+  "page.padding.desktop": 24,
+  "page.padding.tablet": 16,
+  "page.padding.mobile": 12,
+  "grid.columns.desktop": 12,
+  "grid.columns.tablet": 8,
+  "grid.columns.mobile": 4,
+  "grid.gutter": 16,
+  "grid.row-unit": 112,
+  "content.max-reading": 880
+ },
+ "motion": {
+  "duration.fast": "120ms",
+  "duration.base": "200ms",
+  "duration.slow": "320ms",
+  "easing.standard": "cubic-bezier(0.2, 0, 0, 1)",
+  "easing.exit": "cubic-bezier(0.4, 0, 1, 1)"
+ },
+ "zIndex": {
+  "base": 0,
+  "sticky": 100,
+  "dropdown": 1000,
+  "drawer": 1100,
+  "modal": 1200,
+  "toast": 1300,
+  "tooltip": 1400
+ },
+ "icon": {
+  "size.sm": 16,
+  "size.md": 20,
+  "size.lg": 24,
+  "stroke": 1.75,
+  "grid": 24
+ }
+}

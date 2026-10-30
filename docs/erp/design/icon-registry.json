@@ -1,0 +1,1119 @@
+{
+ "description": "Icon registry (DS-10). Modules reference keys; glyph_hint names follow common open-source outline libraries and are mapped once to the family chosen in Part 00. Construction glyphs are original drawings on the same 24 px grid and 1.75 px stroke.",
+ "grid": 24,
+ "stroke": 1.75,
+ "sizes": [
+  16,
+  20,
+  24
+ ],
+ "groups": {
+  "erp.group.home": "house",
+  "erp.group.projects": "folder-kanban",
+  "erp.group.engineering": "drafting-compass",
+  "erp.group.commercial": "calculator",
+  "erp.group.site": "hard-hat",
+  "erp.group.supply": "package",
+  "erp.group.plant": "truck",
+  "erp.group.workforce": "users",
+  "erp.group.qhse": "shield-check",
+  "erp.group.finance": "landmark",
+  "erp.group.insights": "chart-column",
+  "erp.group.collab": "messages-square",
+  "erp.group.admin": "settings"
+ },
+ "actions": {
+  "erp.action.create": {
+   "glyph_hint": "plus",
+   "meaning": "Create / add line"
+  },
+  "erp.action.edit": {
+   "glyph_hint": "pencil",
+   "meaning": "Edit"
+  },
+  "erp.action.save": {
+   "glyph_hint": "save",
+   "meaning": "Save draft"
+  },
+  "erp.action.submit": {
+   "glyph_hint": "send",
+   "meaning": "Submit for approval"
+  },
+  "erp.action.approve": {
+   "glyph_hint": "check",
+   "meaning": "Approve"
+  },
+  "erp.action.reject": {
+   "glyph_hint": "x",
+   "meaning": "Reject"
+  },
+  "erp.action.return": {
+   "glyph_hint": "undo-2",
+   "meaning": "Return for correction"
+  },
+  "erp.action.delegate": {
+   "glyph_hint": "forward",
+   "meaning": "Delegate"
+  },
+  "erp.action.cancel": {
+   "glyph_hint": "ban",
+   "meaning": "Cancel / reverse (reason required)"
+  },
+  "erp.action.delete": {
+   "glyph_hint": "trash-2",
+   "meaning": "Delete draft only"
+  },
+  "erp.action.attach": {
+   "glyph_hint": "paperclip",
+   "meaning": "Attachments"
+  },
+  "erp.action.comment": {
+   "glyph_hint": "message-square",
+   "meaning": "Discussion"
+  },
+  "erp.action.export": {
+   "glyph_hint": "download",
+   "meaning": "Export"
+  },
+  "erp.action.import": {
+   "glyph_hint": "upload",
+   "meaning": "Import (Excel engine)"
+  },
+  "erp.action.print": {
+   "glyph_hint": "printer",
+   "meaning": "Print / PDF"
+  },
+  "erp.action.filter": {
+   "glyph_hint": "funnel",
+   "meaning": "Filter"
+  },
+  "erp.action.sort": {
+   "glyph_hint": "arrow-up-down",
+   "meaning": "Sort"
+  },
+  "erp.action.search": {
+   "glyph_hint": "search",
+   "meaning": "Search"
+  },
+  "erp.action.settings": {
+   "glyph_hint": "sliders-horizontal",
+   "meaning": "Settings / adapt"
+  },
+  "erp.action.lock": {
+   "glyph_hint": "lock",
+   "meaning": "Locked / closed"
+  },
+  "erp.action.history": {
+   "glyph_hint": "history",
+   "meaning": "Version history / timeline"
+  },
+  "erp.action.drill": {
+   "glyph_hint": "arrow-up-right",
+   "meaning": "Drill down / open source"
+  },
+  "erp.action.refresh": {
+   "glyph_hint": "refresh-cw",
+   "meaning": "Refresh"
+  },
+  "erp.action.more": {
+   "glyph_hint": "ellipsis",
+   "meaning": "More actions"
+  },
+  "erp.action.pin": {
+   "glyph_hint": "pin",
+   "meaning": "Pin to Home"
+  },
+  "erp.action.info": {
+   "glyph_hint": "info",
+   "meaning": "Definition / help"
+  },
+  "erp.action.why": {
+   "glyph_hint": "circle-help",
+   "meaning": "Why? explanation"
+  },
+  "erp.action.ai": {
+   "glyph_hint": "sparkles",
+   "meaning": "AI suggestion (advisory)"
+  },
+  "erp.action.notify": {
+   "glyph_hint": "bell",
+   "meaning": "Notifications"
+  },
+  "erp.action.inbox": {
+   "glyph_hint": "inbox",
+   "meaning": "My Inbox"
+  },
+  "erp.action.location": {
+   "glyph_hint": "map-pin",
+   "meaning": "Location / site"
+  },
+  "erp.action.camera": {
+   "glyph_hint": "camera",
+   "meaning": "Capture photo"
+  },
+  "erp.action.scan": {
+   "glyph_hint": "scan-line",
+   "meaning": "Scan QR / barcode"
+  },
+  "erp.action.offline": {
+   "glyph_hint": "cloud-off",
+   "meaning": "Offline / pending sync"
+  }
+ },
+ "states": {
+  "erp.state.draft": {
+   "glyph_hint": "pencil-line"
+  },
+  "erp.state.review": {
+   "glyph_hint": "clock"
+  },
+  "erp.state.returned": {
+   "glyph_hint": "undo"
+  },
+  "erp.state.approved": {
+   "glyph_hint": "circle-check"
+  },
+  "erp.state.rejected": {
+   "glyph_hint": "circle-x"
+  },
+  "erp.state.cancelled": {
+   "glyph_hint": "ban"
+  },
+  "erp.state.locked": {
+   "glyph_hint": "lock"
+  },
+  "erp.state.hold": {
+   "glyph_hint": "circle-pause"
+  },
+  "erp.state.overdue": {
+   "glyph_hint": "alarm-clock"
+  },
+  "erp.state.exception": {
+   "glyph_hint": "triangle-alert"
+  },
+  "erp.state.sync": {
+   "glyph_hint": "cloud-off"
+  }
+ },
+ "construction": {
+  "erp.cx.boq": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.measurement-book": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.dpr": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.work-authorisation": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.permit-to-work": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.transit-mixer": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.batching-plant": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.crane": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.formwork": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.rebar": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.pour-card": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.gate-pass": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.hard-hat": {
+   "glyph_hint": "original drawing"
+  },
+  "erp.cx.survey-point": {
+   "glyph_hint": "original drawing"
+  }
+ },
+ "modules": {
+  "erp.home.pgm": {
+   "group": "HOME",
+   "label": "App shell, Home launchpad & theme",
+   "glyph_hint": "house"
+  },
+  "erp.tech.audit": {
+   "group": null,
+   "label": "Existing-system map (repository documents only)",
+   "glyph_hint": "settings"
+  },
+  "erp.separate.preview": {
+   "group": null,
+   "label": "Preview environment",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.cicd": {
+   "group": null,
+   "label": "Releases & quality gates",
+   "glyph_hint": "settings"
+  },
+  "erp.service.core": {
+   "group": null,
+   "label": "Shared services (numbering, attachments, jobs)",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.org": {
+   "group": "ADM",
+   "label": "Organisation, companies & sites",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.iam": {
+   "group": "ADM",
+   "label": "Users & roles",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.audit_sec": {
+   "group": "ADM",
+   "label": "Audit trail & governance",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.secbase": {
+   "group": null,
+   "label": "Security pipeline",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.idsod": {
+   "group": "ADM",
+   "label": "Identity, access reviews & SoD",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.obs": {
+   "group": null,
+   "label": "System health & observability",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.evbus": {
+   "group": null,
+   "label": "Event bus & schemas",
+   "glyph_hint": "settings"
+  },
+  "erp.home.wf": {
+   "group": "HOME",
+   "label": "My Inbox (approvals)",
+   "glyph_hint": "house"
+  },
+  "erp.admin.rules": {
+   "group": "ADM",
+   "label": "Workflow rules & authority matrix",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.protocol": {
+   "group": "ADM",
+   "label": "Control points & exceptions",
+   "glyph_hint": "settings"
+  },
+  "erp.home.acc": {
+   "group": "HOME",
+   "label": "My Actions",
+   "glyph_hint": "house"
+  },
+  "erp.home.rt": {
+   "group": "HOME",
+   "label": "Notification centre",
+   "glyph_hint": "house"
+  },
+  "erp.admin.intg": {
+   "group": "ADM",
+   "label": "Integrations",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.devapi": {
+   "group": null,
+   "label": "API & developer platform",
+   "glyph_hint": "settings"
+  },
+  "erp.home.ds": {
+   "group": "HOME",
+   "label": "Component library",
+   "glyph_hint": "house"
+  },
+  "erp.home.dash": {
+   "group": "HOME",
+   "label": "My Workspace (role dashboards)",
+   "glyph_hint": "house"
+  },
+  "erp.home.rsp": {
+   "group": "HOME",
+   "label": "Responsive shell variants",
+   "glyph_hint": "house"
+  },
+  "erp.field.offline": {
+   "group": null,
+   "label": "Offline sync engine",
+   "glyph_hint": "settings"
+  },
+  "erp.home.search": {
+   "group": "HOME",
+   "label": "Global search & command palette",
+   "glyph_hint": "house"
+  },
+  "erp.engineering.doc": {
+   "group": "ENG",
+   "label": "Document register",
+   "glyph_hint": "drafting-compass"
+  },
+  "erp.service.dsig": {
+   "group": null,
+   "label": "Digital signatures",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.docfmt": {
+   "group": "ADM",
+   "label": "Document templates",
+   "glyph_hint": "settings"
+  },
+  "erp.home.task": {
+   "group": "HOME",
+   "label": "My Tasks",
+   "glyph_hint": "house"
+  },
+  "erp.admin.alert": {
+   "group": "ADM",
+   "label": "Alert rules",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.esc": {
+   "group": "ADM",
+   "label": "Escalation ladders",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.commgw": {
+   "group": "ADM",
+   "label": "Communication channels",
+   "glyph_hint": "settings"
+  },
+  "erp.collab.chat": {
+   "group": "COL",
+   "label": "WorkChat",
+   "glyph_hint": "messages-square"
+  },
+  "erp.collab.scom": {
+   "group": "COL",
+   "label": "Secure messaging",
+   "glyph_hint": "messages-square"
+  },
+  "erp.collab.msg": {
+   "group": "COL",
+   "label": "Messages",
+   "glyph_hint": "message-circle"
+  },
+  "erp.admin.mdm": {
+   "group": "ADM",
+   "label": "Master data",
+   "glyph_hint": "settings"
+  },
+  "erp.service.xls": {
+   "group": null,
+   "label": "Excel import / export (inside every list)",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.calc": {
+   "group": "ADM",
+   "label": "Formula registry",
+   "glyph_hint": "settings"
+  },
+  "erp.commercial.item": {
+   "group": "COM",
+   "label": "Item & resource catalogue",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.ratean": {
+   "group": "COM",
+   "label": "Rate analysis",
+   "glyph_hint": "calculator"
+  },
+  "erp.service.dex": {
+   "group": null,
+   "label": "Data-entry framework (inside every form)",
+   "glyph_hint": "settings"
+  },
+  "erp.finance.fin": {
+   "group": "FIN",
+   "label": "Accounting",
+   "glyph_hint": "landmark"
+  },
+  "erp.projects.prj": {
+   "group": "PRJ",
+   "label": "Project 360",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.projects.crm": {
+   "group": "PRJ",
+   "label": "CRM & business development",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.commercial.boq": {
+   "group": "COM",
+   "label": "WBS & BOQ",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.mto": {
+   "group": "COM",
+   "label": "Material take-off",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.tnd": {
+   "group": "COM",
+   "label": "Tenders",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.est": {
+   "group": "COM",
+   "label": "Estimates",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.qs": {
+   "group": "COM",
+   "label": "Quantity surveying & MB",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.ctr": {
+   "group": "COM",
+   "label": "Contracts",
+   "glyph_hint": "calculator"
+  },
+  "erp.projects.plan": {
+   "group": "PRJ",
+   "label": "Planning & schedule",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.projects.bud": {
+   "group": "PRJ",
+   "label": "Budget & cost control",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.projects.risk": {
+   "group": "PRJ",
+   "label": "Risks & opportunities",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.projects.baseline": {
+   "group": "PRJ",
+   "label": "Baseline handover",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.engineering.drg": {
+   "group": "ENG",
+   "label": "Drawings & design coordination",
+   "glyph_hint": "drafting-compass"
+  },
+  "erp.engineering.epceng": {
+   "group": "ENG",
+   "label": "Engineering deliverables",
+   "glyph_hint": "drafting-compass"
+  },
+  "erp.projects.prog": {
+   "group": "PRJ",
+   "label": "Progress",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.site.site": {
+   "group": "SITE",
+   "label": "Site execution",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.site.wa": {
+   "group": "SITE",
+   "label": "Work authorisations",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.site.dpr": {
+   "group": "SITE",
+   "label": "Daily progress reports",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.site.weather": {
+   "group": "SITE",
+   "label": "Weather & site conditions",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.site.gis": {
+   "group": "SITE",
+   "label": "Site map & survey",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.engineering.rfi": {
+   "group": "ENG",
+   "label": "RFIs",
+   "glyph_hint": "drafting-compass"
+  },
+  "erp.projects.pce": {
+   "group": "PRJ",
+   "label": "Plan vs budget vs actual",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.supply.proc": {
+   "group": "SCM",
+   "label": "Procurement",
+   "glyph_hint": "package"
+  },
+  "erp.supply.stores": {
+   "group": "SCM",
+   "label": "Stores & inventory",
+   "glyph_hint": "package"
+  },
+  "erp.supply.mrp": {
+   "group": "SCM",
+   "label": "Material planning (MRP)",
+   "glyph_hint": "package"
+  },
+  "erp.supply.tools": {
+   "group": "SCM",
+   "label": "Tools & small assets",
+   "glyph_hint": "package"
+  },
+  "erp.plant.plant": {
+   "group": "PLT",
+   "label": "Plant & machinery",
+   "glyph_hint": "truck"
+  },
+  "erp.plant.fuel": {
+   "group": "PLT",
+   "label": "Fuel",
+   "glyph_hint": "truck"
+  },
+  "erp.workforce.hr": {
+   "group": "HCM",
+   "label": "Employees",
+   "glyph_hint": "users"
+  },
+  "erp.workforce.att": {
+   "group": "HCM",
+   "label": "Attendance",
+   "glyph_hint": "users"
+  },
+  "erp.workforce.rescap": {
+   "group": "HCM",
+   "label": "Resource planning",
+   "glyph_hint": "users"
+  },
+  "erp.workforce.capplan": {
+   "group": "HCM",
+   "label": "Capacity planning",
+   "glyph_hint": "users"
+  },
+  "erp.workforce.prodint": {
+   "group": "HCM",
+   "label": "Productivity",
+   "glyph_hint": "users"
+  },
+  "erp.qhse.qa": {
+   "group": "QHSE",
+   "label": "Quality (QA/QC)",
+   "glyph_hint": "shield-check"
+  },
+  "erp.qhse.insp": {
+   "group": "QHSE",
+   "label": "Inspections & checklists",
+   "glyph_hint": "shield-check"
+  },
+  "erp.plant.rmc": {
+   "group": "PLT",
+   "label": "RMC & pours",
+   "glyph_hint": "truck"
+  },
+  "erp.qhse.hse": {
+   "group": "QHSE",
+   "label": "Safety (HSE)",
+   "glyph_hint": "shield-check"
+  },
+  "erp.supply.expedite": {
+   "group": "SCM",
+   "label": "Expediting & vendor inspection",
+   "glyph_hint": "package"
+  },
+  "erp.site.logistics": {
+   "group": "SITE",
+   "label": "Gate & logistics",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.qhse.tnc": {
+   "group": "QHSE",
+   "label": "Testing & commissioning",
+   "glyph_hint": "shield-check"
+  },
+  "erp.commercial.chg": {
+   "group": "COM",
+   "label": "Changes & variations",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.comm": {
+   "group": "COM",
+   "label": "Commercial management",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.bill": {
+   "group": "COM",
+   "label": "RA billing",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.subcon": {
+   "group": "COM",
+   "label": "Subcontractors",
+   "glyph_hint": "calculator"
+  },
+  "erp.admin.finint": {
+   "group": "ADM",
+   "label": "Posting rules",
+   "glyph_hint": "settings"
+  },
+  "erp.finance.match": {
+   "group": "FIN",
+   "label": "Invoice matching",
+   "glyph_hint": "landmark"
+  },
+  "erp.finance.cash": {
+   "group": "FIN",
+   "label": "Cash flow",
+   "glyph_hint": "landmark"
+  },
+  "erp.finance.clbill": {
+   "group": "FIN",
+   "label": "Client billing & collections",
+   "glyph_hint": "landmark"
+  },
+  "erp.commercial.claim": {
+   "group": "COM",
+   "label": "Contract documents & claim evidence",
+   "glyph_hint": "calculator"
+  },
+  "erp.finance.fin2": {
+   "group": "FIN",
+   "label": "Financial close & statements",
+   "glyph_hint": "landmark"
+  },
+  "erp.finance.gst": {
+   "group": "FIN",
+   "label": "GST & e-invoicing",
+   "glyph_hint": "landmark"
+  },
+  "erp.finance.treasury": {
+   "group": "FIN",
+   "label": "Treasury",
+   "glyph_hint": "landmark"
+  },
+  "erp.workforce.statpay": {
+   "group": "HCM",
+   "label": "Payroll & statutory compliance",
+   "glyph_hint": "users"
+  },
+  "erp.projects.eac": {
+   "group": "PRJ",
+   "label": "Cost forecast (EAC)",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.finance.pnl": {
+   "group": "FIN",
+   "label": "Project P&L",
+   "glyph_hint": "landmark"
+  },
+  "erp.finance.cashfc": {
+   "group": "FIN",
+   "label": "Cash forecast",
+   "glyph_hint": "landmark"
+  },
+  "erp.insights.mis": {
+   "group": "RPT",
+   "label": "MIS reports",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.rb": {
+   "group": "RPT",
+   "label": "Report builder",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.tower": {
+   "group": "RPT",
+   "label": "Project control tower",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.exec": {
+   "group": "RPT",
+   "label": "Daily execution & WIP",
+   "glyph_hint": "chart-column"
+  },
+  "erp.service.why": {
+   "group": null,
+   "label": "Why? explanations (on every KPI)",
+   "glyph_hint": "settings"
+  },
+  "erp.service.decide": {
+   "group": null,
+   "label": "Decision support (inside approvals)",
+   "glyph_hint": "settings"
+  },
+  "erp.insights.fcst": {
+   "group": "RPT",
+   "label": "Forecasts & analytics",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.sim": {
+   "group": "RPT",
+   "label": "Scenarios (what-if)",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.detect": {
+   "group": "RPT",
+   "label": "Leakage & control exceptions",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.exectower": {
+   "group": "RPT",
+   "label": "Executive control tower",
+   "glyph_hint": "chart-column"
+  },
+  "erp.service.ai": {
+   "group": null,
+   "label": "AI assistance (inside modules)",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.aigov": {
+   "group": "ADM",
+   "label": "AI governance",
+   "glyph_hint": "settings"
+  },
+  "erp.service.docai": {
+   "group": null,
+   "label": "Document intelligence (inside capture)",
+   "glyph_hint": "settings"
+  },
+  "erp.service.cv": {
+   "group": null,
+   "label": "Image analysis (inside inspections and DPR)",
+   "glyph_hint": "settings"
+  },
+  "erp.home.copilot": {
+   "group": "HOME",
+   "label": "Copilot side panel",
+   "glyph_hint": "house"
+  },
+  "erp.field.field": {
+   "group": null,
+   "label": "Field app",
+   "glyph_hint": "settings"
+  },
+  "erp.portal.supportal": {
+   "group": null,
+   "label": "Supplier portal",
+   "glyph_hint": "settings"
+  },
+  "erp.portal.venportal": {
+   "group": null,
+   "label": "Vendor & subcontractor portal",
+   "glyph_hint": "settings"
+  },
+  "erp.portal.clientportal": {
+   "group": null,
+   "label": "Client & consultant portal",
+   "glyph_hint": "settings"
+  },
+  "erp.service.docgen": {
+   "group": null,
+   "label": "Print & document generation (record actions)",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.perf": {
+   "group": null,
+   "label": "Performance & capacity",
+   "glyph_hint": "settings"
+  },
+  "erp.supply.proc2": {
+   "group": "SCM",
+   "label": "Material lifecycle",
+   "glyph_hint": "package"
+  },
+  "erp.supply.rti": {
+   "group": "SCM",
+   "label": "Material rate intelligence",
+   "glyph_hint": "package"
+  },
+  "erp.supply.vendq": {
+   "group": "SCM",
+   "label": "Supplier qualification & scorecards",
+   "glyph_hint": "package"
+  },
+  "erp.supply.mrec": {
+   "group": "SCM",
+   "label": "Monthly material reconciliation",
+   "glyph_hint": "package"
+  },
+  "erp.finance.mclose": {
+   "group": "FIN",
+   "label": "Monthly close & budget master",
+   "glyph_hint": "landmark"
+  },
+  "erp.plant.plant2": {
+   "group": "PLT",
+   "label": "Fleet management",
+   "glyph_hint": "truck"
+  },
+  "erp.plant.maint": {
+   "group": "PLT",
+   "label": "Maintenance & telematics",
+   "glyph_hint": "truck"
+  },
+  "erp.plant.bplant": {
+   "group": "PLT",
+   "label": "Batching plant",
+   "glyph_hint": "truck"
+  },
+  "erp.plant.bpcost": {
+   "group": "PLT",
+   "label": "Batching plant costing",
+   "glyph_hint": "truck"
+  },
+  "erp.insights.anl": {
+   "group": "RPT",
+   "label": "AI analytics",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.dwh": {
+   "group": "RPT",
+   "label": "Historical analytics",
+   "glyph_hint": "chart-column"
+  },
+  "erp.insights.metrics": {
+   "group": "RPT",
+   "label": "KPI & metric catalogue",
+   "glyph_hint": "chart-column"
+  },
+  "erp.workforce.hcm2": {
+   "group": "HCM",
+   "label": "Talent & development",
+   "glyph_hint": "users"
+  },
+  "erp.qhse.qms2": {
+   "group": "QHSE",
+   "label": "Quality management system",
+   "glyph_hint": "shield-check"
+  },
+  "erp.qhse.esg": {
+   "group": "QHSE",
+   "label": "ESG & sustainability",
+   "glyph_hint": "shield-check"
+  },
+  "erp.qhse.hse2": {
+   "group": "QHSE",
+   "label": "HSE management system",
+   "glyph_hint": "shield-check"
+  },
+  "erp.site.guard": {
+   "group": "SITE",
+   "label": "Security & visitors",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.site.camp": {
+   "group": "SITE",
+   "label": "Labour camp & welfare",
+   "glyph_hint": "hard-hat"
+  },
+  "erp.engineering.doc2": {
+   "group": "ENG",
+   "label": "Project documentation",
+   "glyph_hint": "drafting-compass"
+  },
+  "erp.commercial.ctr2": {
+   "group": "COM",
+   "label": "Contract lifecycle",
+   "glyph_hint": "calculator"
+  },
+  "erp.commercial.claims": {
+   "group": "COM",
+   "label": "Claims, EOT & disputes",
+   "glyph_hint": "calculator"
+  },
+  "erp.qhse.handover": {
+   "group": "QHSE",
+   "label": "Handover & O&M",
+   "glyph_hint": "shield-check"
+  },
+  "erp.qhse.dlp": {
+   "group": "QHSE",
+   "label": "Defects liability & warranty",
+   "glyph_hint": "shield-check"
+  },
+  "erp.projects.twin": {
+   "group": "PRJ",
+   "label": "Digital twin",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.home.xlspack": {
+   "group": "HOME",
+   "label": "Bulk data entry",
+   "glyph_hint": "house"
+  },
+  "erp.admin.bizfmt": {
+   "group": "ADM",
+   "label": "Business formats & report design",
+   "glyph_hint": "settings"
+  },
+  "erp.finance.ewb": {
+   "group": "FIN",
+   "label": "e-Way bills & GST reconciliation",
+   "glyph_hint": "landmark"
+  },
+  "erp.insights.air": {
+   "group": "RPT",
+   "label": "AI management reports",
+   "glyph_hint": "chart-column"
+  },
+  "erp.home.ux2": {
+   "group": "HOME",
+   "label": "Workspace consolidation",
+   "glyph_hint": "house"
+  },
+  "erp.admin.admin": {
+   "group": "ADM",
+   "label": "Control center",
+   "glyph_hint": "settings"
+  },
+  "erp.home.route": {
+   "group": "HOME",
+   "label": "Assign work",
+   "glyph_hint": "house"
+  },
+  "erp.collab.pol": {
+   "group": "COL",
+   "label": "Policies",
+   "glyph_hint": "messages-square"
+  },
+  "erp.workforce.empperf": {
+   "group": "HCM",
+   "label": "Performance & development",
+   "glyph_hint": "users"
+  },
+  "erp.collab.comc": {
+   "group": "COL",
+   "label": "Communication center",
+   "glyph_hint": "messages-square"
+  },
+  "erp.tech.xint": {
+   "group": null,
+   "label": "Integration test chains",
+   "glyph_hint": "settings"
+  },
+  "erp.service.rtc": {
+   "group": null,
+   "label": "Real-time control (status on records)",
+   "glyph_hint": "settings"
+  },
+  "erp.service.trace": {
+   "group": null,
+   "label": "Traceability drill-down (on every record)",
+   "glyph_hint": "settings"
+  },
+  "erp.service.timeline": {
+   "group": null,
+   "label": "Activity timeline (on every record and Home)",
+   "glyph_hint": "settings"
+  },
+  "erp.home.drill": {
+   "group": "HOME",
+   "label": "Enterprise search & drill-down",
+   "glyph_hint": "house"
+  },
+  "erp.admin.sec": {
+   "group": "ADM",
+   "label": "Security settings",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.dr": {
+   "group": null,
+   "label": "Backup & recovery",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.archive": {
+   "group": "ADM",
+   "label": "Retention & archival",
+   "glyph_hint": "settings"
+  },
+  "erp.service.err": {
+   "group": null,
+   "label": "Error, empty & offline states (shared components)",
+   "glyph_hint": "settings"
+  },
+  "erp.projects.closeout": {
+   "group": "PRJ",
+   "label": "Closeout & lessons learned",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.separate.sandbox": {
+   "group": null,
+   "label": "Training & simulation sandbox",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.qa_test": {
+   "group": null,
+   "label": "Test results",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.golive": {
+   "group": null,
+   "label": "Go-live cockpit",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.uxmig": {
+   "group": null,
+   "label": "Screen migration tracker",
+   "glyph_hint": "settings"
+  },
+  "erp.tech.dbf": {
+   "group": null,
+   "label": "Database integrity & migrations",
+   "glyph_hint": "settings"
+  },
+  "erp.admin.docpack": {
+   "group": "ADM",
+   "label": "Documentation package",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.projects.msp": {
+   "group": "PRJ",
+   "label": "Programme & MS Project",
+   "glyph_hint": "folder-kanban"
+  },
+  "erp.finance.gstrec": {
+   "group": "FIN",
+   "label": "GST reconciliation",
+   "glyph_hint": "landmark"
+  },
+  "erp.finance.fincl": {
+   "group": "FIN",
+   "label": "Finance dashboard & close",
+   "glyph_hint": "landmark"
+  },
+  "erp.finance.invhub": {
+   "group": "FIN",
+   "label": "Invoice management",
+   "glyph_hint": "landmark"
+  },
+  "erp.commercial.qsdash": {
+   "group": "COM",
+   "label": "QS management",
+   "glyph_hint": "calculator"
+  },
+  "erp.supply.matdash": {
+   "group": "SCM",
+   "label": "Materials management",
+   "glyph_hint": "package"
+  },
+  "erp.insights.mornrpt": {
+   "group": "RPT",
+   "label": "Daily morning report",
+   "glyph_hint": "chart-column"
+  }
+ }
+}
