@@ -6,6 +6,7 @@ import { QueryState, errorInfo, usePageTitle } from './ui.jsx';
 const KIND = {
   period_reopen: 'Reopen a closed period',
   number_series_change: 'Change a numbering series',
+  connector_change: 'Create or change a connector',
   schedule_change: 'Change a schedule',
   file_settings_change: 'Change file storage settings',
   formula_activation: 'Activate a formula version',

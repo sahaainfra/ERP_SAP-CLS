@@ -1199,6 +1199,403 @@
     ],
     "fks": []
   },
+  "table:core_connector_secrets": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "connector_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "key",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "encrypted_value",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "key_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "rotated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "expires_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "connector_id->core_connectors.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:core_connectors": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "provider",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "environment",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'development'",
+        "pk": 0
+      },
+      {
+        "name": "config_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "timeout_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "10000",
+        "pk": 0
+      },
+      {
+        "name": "max_retries",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "2",
+        "pk": 0
+      },
+      {
+        "name": "retry_backoff_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "500",
+        "pk": 0
+      },
+      {
+        "name": "rate_limit_per_minute",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "60",
+        "pk": 0
+      },
+      {
+        "name": "breaker_threshold",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "5",
+        "pk": 0
+      },
+      {
+        "name": "breaker_reset_seconds",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "60",
+        "pk": 0
+      },
+      {
+        "name": "retention_days",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "90",
+        "pk": 0
+      },
+      {
+        "name": "last_health_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_health_status",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_health_message",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_used_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_document_types": {
     "columns": [
       {
@@ -2833,6 +3230,125 @@
     ],
     "fks": [
       "outbox_id->core_outbox.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:core_integration_logs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "connector_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "direction",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "operation",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "endpoint",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "http_status",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "duration_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "attempts",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "request_redacted",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "response_redacted",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "error",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "correlation_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "connector_id->core_connectors.id:NO ACTION/NO ACTION"
     ]
   },
   "table:core_integrity_runs": {
@@ -4926,6 +5442,41 @@
     ],
     "fks": []
   },
+  "table:core_webhook_receipts": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "connector_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "delivery_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "received_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "connector_id->core_connectors.id:NO ACTION/NO ACTION"
+    ]
+  },
   "index:ix_core_alert_rules_company": {
     "sql": "CREATE INDEX ix_core_alert_rules_company ON core_alert_rules (company_id, enabled)"
   },
@@ -4970,6 +5521,15 @@
   },
   "index:ix_core_client_events_type": {
     "sql": "CREATE INDEX ix_core_client_events_type ON core_client_events (type, created_at)"
+  },
+  "index:ix_core_connector_secrets_company": {
+    "sql": "CREATE INDEX ix_core_connector_secrets_company ON core_connector_secrets (company_id, status)"
+  },
+  "index:ix_core_connectors_company": {
+    "sql": "CREATE INDEX ix_core_connectors_company ON core_connectors (company_id, status)"
+  },
+  "index:ix_core_connectors_type": {
+    "sql": "CREATE INDEX ix_core_connectors_type ON core_connectors (company_id, type)"
   },
   "index:ix_core_document_types_company": {
     "sql": "CREATE INDEX ix_core_document_types_company ON core_document_types (company_id)"
@@ -5033,6 +5593,18 @@
   },
   "index:ix_core_inbox_outbox": {
     "sql": "CREATE INDEX ix_core_inbox_outbox ON core_inbox (outbox_id)"
+  },
+  "index:ix_core_integration_logs_company": {
+    "sql": "CREATE INDEX ix_core_integration_logs_company ON core_integration_logs (company_id, created_at)"
+  },
+  "index:ix_core_integration_logs_connector": {
+    "sql": "CREATE INDEX ix_core_integration_logs_connector ON core_integration_logs (connector_id, created_at)"
+  },
+  "index:ix_core_integration_logs_correlation": {
+    "sql": "CREATE INDEX ix_core_integration_logs_correlation ON core_integration_logs (correlation_id)"
+  },
+  "index:ix_core_integration_logs_status": {
+    "sql": "CREATE INDEX ix_core_integration_logs_status ON core_integration_logs (company_id, status, created_at)"
   },
   "index:ix_core_integrity_runs_check": {
     "sql": "CREATE INDEX ix_core_integrity_runs_check ON core_integrity_runs (check_code, run_at)"
@@ -5115,6 +5687,15 @@
   "index:ux_core_company_settings_company": {
     "sql": "CREATE UNIQUE INDEX ux_core_company_settings_company ON core_company_settings (company_id)"
   },
+  "index:ux_core_connector_secrets_active": {
+    "sql": "CREATE UNIQUE INDEX ux_core_connector_secrets_active ON core_connector_secrets (connector_id, key) WHERE status = 'ACTIVE'"
+  },
+  "index:ux_core_connector_secrets_pending": {
+    "sql": "CREATE UNIQUE INDEX ux_core_connector_secrets_pending ON core_connector_secrets (connector_id, key) WHERE status = 'PENDING'"
+  },
+  "index:ux_core_connectors_code": {
+    "sql": "CREATE UNIQUE INDEX ux_core_connectors_code ON core_connectors (code)"
+  },
   "index:ux_core_document_types_code": {
     "sql": "CREATE UNIQUE INDEX ux_core_document_types_code ON core_document_types (code)"
   },
@@ -5189,5 +5770,8 @@
   },
   "index:ux_core_uoms_code": {
     "sql": "CREATE UNIQUE INDEX ux_core_uoms_code ON core_uoms (code)"
+  },
+  "index:ux_core_webhook_receipts_delivery": {
+    "sql": "CREATE UNIQUE INDEX ux_core_webhook_receipts_delivery ON core_webhook_receipts (connector_id, delivery_id)"
   }
 }

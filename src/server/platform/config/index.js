@@ -12,6 +12,7 @@ const schema = z.object({
   STORAGE_PATH: z.string().min(1).optional(),
   HEALTH_TOKEN: z.string().min(16, 'must be at least 16 characters').optional(),
   FILE_URL_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+  VAULT_KEY: z.string().min(32, 'must be at least 32 characters').optional(),
   CLAMAV_HOST: z.string().min(1).optional(),
   CLAMAV_PORT: z.coerce.number().int().min(1).max(65535).default(3310),
 });
@@ -48,6 +49,7 @@ export function loadConfig(env = process.env) {
     storagePath: c.STORAGE_PATH ?? null,
     healthToken: c.HEALTH_TOKEN ?? null,
     fileUrlSecret: c.FILE_URL_SECRET ?? null,
+    vaultKey: c.VAULT_KEY ?? null,
     clamav: c.CLAMAV_HOST ? { host: c.CLAMAV_HOST, port: c.CLAMAV_PORT } : null,
   };
   const prodLike = nodeEnv === 'production' || nodeEnv === 'staging';
@@ -66,6 +68,9 @@ export function loadConfig(env = process.env) {
   }
   if (prodLike && !config.fileUrlSecret) {
     problems.push(`FILE_URL_SECRET is required when NODE_ENV=${nodeEnv}: it signs the short-lived download links and must be the same on every instance (at least 32 characters).`);
+  }
+  if (prodLike && !config.vaultKey) {
+    problems.push(`VAULT_KEY is required when NODE_ENV=${nodeEnv}: it encrypts the credentials of external connectors and must be the same on every instance (at least 32 characters). Losing it makes the stored credentials unreadable.`);
   }
   if (config.databasePath === ':memory:' && nodeEnv !== 'test') {
     problems.push('DATABASE_PATH=:memory: is only allowed when NODE_ENV=test.');

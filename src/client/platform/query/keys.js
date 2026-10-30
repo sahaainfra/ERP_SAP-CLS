@@ -25,6 +25,14 @@ export const queryKeys = {
       follow: (id) => ['core', 'observe', 'follow', id],
       baseline: () => ['core', 'observe', 'baseline'],
     },
+    hub: {
+      all: ['core', 'hub'],
+      list: (p) => ['core', 'hub', 'list', p],
+      catalog: () => ['core', 'hub', 'catalog'],
+      detail: (id) => ['core', 'hub', 'detail', id],
+      logs: (p) => ['core', 'hub', 'logs', p],
+      log: (id) => ['core', 'hub', 'log', id],
+    },
     architecture: () => ['core', 'architecture'],
     settings: () => ['core', 'settings'],
     files: {

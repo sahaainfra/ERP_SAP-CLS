@@ -79,5 +79,6 @@ export function applyPipeline(app, { logger, bodyLimit = BODY_LIMIT, metrics = d
   app.use(observabilityMiddleware({ tracer }));
   app.use(securityHeaders);
   app.use(requestLogger(logger, { metrics }));
-  app.use(express.json({ limit: bodyLimit }));
+  // Webhooks are signed over the exact bytes received, so those requests keep their raw body beside the parsed one.
+  app.use(express.json({ limit: bodyLimit, verify: (req, _res, buf) => { if (req.originalUrl.includes('/webhooks/')) req.rawBody = buf; } }));
 }

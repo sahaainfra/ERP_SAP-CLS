@@ -10,6 +10,7 @@ import { registerOperations } from './operations.js';
 import { mountFiles } from './files/index.js';
 import { mountCalc } from './calc/index.js';
 import { mountOps } from './ops/index.js';
+import { connectorChangeHandlerFor, mountConnectors } from './connectors/index.js';
 import { opsConfigChangeHandler } from './ops/service.js';
 import { formulaActivationHandler } from './calc/service.js';
 import { fileSettingsChangeHandler } from './files/service.js';
@@ -49,7 +50,7 @@ parameterRegistry.define({ key: 'core.calendar.week_off_days', dataType: 'json',
 
 // What the integrity checks need to know about this module's tables.
 integrityRegistry.register({
-  technicalTables: ['core_number_counters', 'core_change_request_steps', 'core_event_types', 'core_inbox', 'core_jobs', 'core_projection_event_counts', 'core_file_uploads', 'core_calc_traces', 'core_calc_shadow_results', 'core_alerts', 'core_metric_samples', 'core_client_events'],
+  technicalTables: ['core_number_counters', 'core_change_request_steps', 'core_event_types', 'core_inbox', 'core_jobs', 'core_projection_event_counts', 'core_file_uploads', 'core_calc_traces', 'core_calc_shadow_results', 'core_alerts', 'core_metric_samples', 'core_client_events', 'core_integration_logs', 'core_webhook_receipts'],
   companyOptional: ['core_feature_flags', 'core_integrity_runs', 'core_backfill_runs', 'core_document_types', 'core_parameters', 'core_schedules', 'core_formulas', 'core_uoms', 'core_uom_conversions', 'core_slo_definitions', 'core_alert_rules'],
   statuses: {
     core_integrity_runs: ['pass', 'fail', 'not_applicable'],
@@ -64,6 +65,8 @@ integrityRegistry.register({
     core_formulas: ['DRAFT', 'SHADOW', 'ACTIVE', 'RETIRED'],
     core_sample_bills: ['DRAFT', 'SUBMITTED'],
     core_alerts: ['OPEN', 'RESOLVED'],
+    core_connectors: ['PENDING', 'DISABLED', 'ENABLED'],
+    core_connector_secrets: ['PENDING', 'ACTIVE', 'RETIRED'],
   },
   // A gap-free series must have no missing number, cancelled ones included.
   sequences: [{ table: 'core_number_issues', groupBy: ['series_id', 'period_key'], seq: 'seq', where: 'series_id IN (SELECT id FROM core_number_series WHERE gap_free = 1)' }],
@@ -87,11 +90,11 @@ export const core = {
     'core_feature_flags', 'core_audit_log', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
     'core_company_settings', 'core_financial_years', 'core_periods', 'core_parameters', 'core_holiday_calendars', 'core_holidays',
     'core_document_types', 'core_number_series', 'core_number_counters', 'core_number_issues', 'core_change_requests', 'core_change_request_steps',
-    'core_sample_documents', 'core_event_types', 'core_inbox', 'core_jobs', 'core_schedules', 'core_projection_event_counts', 'core_files', 'core_file_uploads', 'core_file_settings', 'core_formulas', 'core_calc_traces', 'core_calc_shadow_results', 'core_uoms', 'core_uom_conversions', 'core_sample_bills', 'core_slo_definitions', 'core_alert_rules', 'core_alerts', 'core_metric_samples', 'core_client_events', 'core_schema_migrations',
+    'core_sample_documents', 'core_event_types', 'core_inbox', 'core_jobs', 'core_schedules', 'core_projection_event_counts', 'core_files', 'core_file_uploads', 'core_file_settings', 'core_formulas', 'core_calc_traces', 'core_calc_shadow_results', 'core_uoms', 'core_uom_conversions', 'core_sample_bills', 'core_slo_definitions', 'core_alert_rules', 'core_alerts', 'core_metric_samples', 'core_client_events', 'core_connectors', 'core_connector_secrets', 'core_integration_logs', 'core_webhook_receipts', 'core_schema_migrations',
   ],
   resources: [
     'session', 'about', 'feature-flags', 'architecture', 'integrity', 'display-settings', 'company-settings', 'financial-years', 'periods',
-    'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents', 'events', 'jobs', 'schedules', 'files', 'formulas', 'calc-traces', 'uoms', 'uom-conversions', 'calc', 'sample-bills', 'ops',
+    'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents', 'events', 'jobs', 'schedules', 'files', 'formulas', 'calc-traces', 'uoms', 'uom-conversions', 'calc', 'sample-bills', 'ops', 'connectors', 'integration-logs', 'webhooks',
   ],
   /** Build the module's services and attach its routes to the authenticated /api/v1 router. */
   mount(api, { db, config, buildInfo, modules, publicApi, storagePath }) {
@@ -107,7 +110,7 @@ export const core = {
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_schedules'").get());
     if (migrated) syncEventTypes(db);
     registerOperations({ db, ...runtime, persist: migrated });
-    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler } });
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config) } });
     const opts = { idempotent, idempotentRequired };
 
     api.use('/core', sessionRoutes({ config }));
@@ -130,6 +133,9 @@ export const core = {
 
     // Observability (part 01.07): hidden while ff.core.p0107 is OFF for the company.
     mountOps({ api, db, runtime, approvals, opts, isFlagOn, storagePath, persist: migrated });
+
+    // Integration hub (part 01.08): hidden while ff.core.p0108 is OFF for the company; the webhook receiver is public (signed).
+    mountConnectors({ api, publicApi, db, config, runtime, approvals, opts, isFlagOn, persist: migrated });
 
     // Calculation engine and formula registry (part 01.06): hidden while ff.core.p0106 is OFF for the company.
     mountCalc({ api, db, approvals, opts, isFlagOn, persist: migrated });

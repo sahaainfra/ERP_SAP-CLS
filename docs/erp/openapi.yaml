@@ -531,3 +531,50 @@ paths:
     post:
       summary: Log, raise an event, queue a job, then fail on purpose with a 500 that carries the correlation ID (core.ops.manage; Idempotency-Key required)
       responses: { '500': { description: error envelope with correlationId } }
+  /api/v1/core/connectors/catalog:
+    get:
+      summary: Connector types, their providers, settings and credentials, and which types need the CFO (core.connectors.view)
+      responses: { '200': { description: '{ data: [type] }' } }
+  /api/v1/core/connectors:
+    get:
+      summary: Connectors of the company with health and circuit state; filters type, status, environment; search q (core.connectors.view)
+      responses: { '200': { description: '{ data, meta }' } }
+    post:
+      summary: Ask for a new connector; it exists switched off until approved. Credentials go in the body once and are never returned (core.connectors.configure; Idempotency-Key required)
+      responses: { '201': { description: '{ data: { connector, request } }' }, '409': { description: code already used }, '422': { description: unknown provider or missing credential } }
+  /api/v1/core/connectors/{id}:
+    get:
+      summary: One connector with credential names and dates (never values), webhook details and whether a request is open (core.connectors.view)
+      responses: { '200': { description: '{ data }' }, '404': { description: unknown or another company } }
+  /api/v1/core/connectors/{id}/secrets:
+    get:
+      summary: Credential names, state, rotation and expiry dates - no values (core.connectors.view)
+      responses: { '200': { description: '{ data: [{ key, status, isSet, rotatedAt, expiresAt, expired }] }' } }
+  /api/v1/core/connectors/{id}/change-requests:
+    post:
+      summary: Ask to change settings, limits, credentials or the on/off state; approved by SYSADM (and CFO for bank and GST) (core.connectors.configure; Idempotency-Key required)
+      responses: { '201': { description: change request }, '409': { description: a request is already open }, '422': { description: nothing would change } }
+  /api/v1/core/connectors/{id}/disable:
+    post:
+      summary: Switch a connector off at once (a safety control); switching on needs an approved request (core.connectors.configure; Idempotency-Key required)
+      responses: { '200': { description: '{ data: connector }' }, '422': { description: not switched on } }
+  /api/v1/core/connectors/{id}/test:
+    post:
+      summary: Test connection - one health request, recorded on the connector and in the log (core.connectors.configure; Idempotency-Key required)
+      responses: { '200': { description: '{ data: { status, message, durationMs } }' }, '409': { description: waiting for approval } }
+  /api/v1/core/connectors/{id}/sample:
+    post:
+      summary: Send the provider's sample operation through the abstraction, for example a test email (core.connectors.configure; Idempotency-Key required)
+      responses: { '200': { description: '{ data: { operation, result, attempts, durationMs, logId } }' }, '429': { description: rate limit }, '503': { description: provider failing or circuit open } }
+  /api/v1/core/integration-logs:
+    get:
+      summary: Redacted call log; filters connector, status, direction, from, to, q (core.connectors.view)
+      responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/core/integration-logs/{id}:
+    get:
+      summary: One log entry with the redacted request and response (core.connectors.view)
+      responses: { '200': { description: '{ data }' }, '404': { description: unknown or another company } }
+  /api/v1/core/webhooks/{connector}:
+    post:
+      summary: Inbound webhook (no sign-in). Headers x-timestamp, x-signature (HMAC-SHA256 of timestamp.body), optional x-delivery-id; a replay answers 200 with duplicate true
+      responses: { '200': { description: '{ data: { received, duplicate, deliveryId } }' }, '401': { description: bad or missing signature }, '404': { description: unknown, off or unconfigured }, '429': { description: too many deliveries } }

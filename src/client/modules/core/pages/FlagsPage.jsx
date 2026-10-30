@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
-import { fetchAllFlags, useFeatureFlag, useFlagList, useSetFlag } from '../api/index.js';
+import { fetchAllFlags, useFeatureFlag, useFlagKeys, useFlagList, useSetFlag } from '../api/index.js';
 import { formatDateTime, levelLabel, toCsv } from '../../../platform/format.js';
 
 const ENVIRONMENTS = ['development', 'test', 'staging', 'production'];
@@ -136,7 +136,8 @@ export default function FlagsPage({ session }) {
     URL.revokeObjectURL(url);
   };
 
-  const keys = [...new Set(state.rows.map((r) => r.key))];
+  const allKeys = useFlagKeys();
+  const keys = allKeys.data ?? [...new Set(state.rows.map((r) => r.key))];
 
   return (
     <section aria-labelledby="page-title">

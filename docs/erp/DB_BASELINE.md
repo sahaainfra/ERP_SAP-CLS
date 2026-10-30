@@ -258,6 +258,83 @@ Indexes:
 Indexes:
 - ux_core_company_settings_company (unique): company_id
 
+## core_connector_secrets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| connector_id | INTEGER | yes |  |  |
+| key | TEXT | yes |  |  |
+| encrypted_value | TEXT | yes |  |  |
+| key_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| rotated_at | TEXT |  |  |  |
+| expires_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: connector_id -> core_connectors(id)
+
+Indexes:
+- ix_core_connector_secrets_company: company_id, status
+- ux_core_connector_secrets_pending (unique): connector_id, key
+- ux_core_connector_secrets_active (unique): connector_id, key
+
+## core_connectors
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| type | TEXT | yes |  |  |
+| provider | TEXT | yes |  |  |
+| environment | TEXT | yes |  | 'development' |
+| config_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'PENDING' |
+| timeout_ms | INTEGER | yes |  | 10000 |
+| max_retries | INTEGER | yes |  | 2 |
+| retry_backoff_ms | INTEGER | yes |  | 500 |
+| rate_limit_per_minute | INTEGER | yes |  | 60 |
+| breaker_threshold | INTEGER | yes |  | 5 |
+| breaker_reset_seconds | INTEGER | yes |  | 60 |
+| retention_days | INTEGER | yes |  | 90 |
+| last_health_at | TEXT |  |  |  |
+| last_health_status | TEXT |  |  |  |
+| last_health_message | TEXT |  |  |  |
+| last_used_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_core_connectors_type: company_id, type
+- ix_core_connectors_company: company_id, status
+- ux_core_connectors_code (unique): code
+
 ## core_document_types
 
 | Column | Type | Not null | Key | Default |
@@ -606,6 +683,35 @@ Indexes:
 - ix_core_inbox_outbox: outbox_id
 - ix_core_inbox_due: status, next_attempt_at
 - ux_core_inbox_consumer_event (unique): consumer, event_id
+
+## core_integration_logs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| connector_id | INTEGER | yes |  |  |
+| direction | TEXT | yes |  |  |
+| operation | TEXT | yes |  |  |
+| endpoint | TEXT |  |  |  |
+| status | TEXT | yes |  |  |
+| http_status | INTEGER |  |  |  |
+| duration_ms | INTEGER | yes |  | 0 |
+| attempts | INTEGER | yes |  | 1 |
+| request_redacted | TEXT |  |  |  |
+| response_redacted | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| correlation_id | TEXT |  |  |  |
+| user_ref | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+
+Foreign keys: connector_id -> core_connectors(id)
+
+Indexes:
+- ix_core_integration_logs_correlation: correlation_id
+- ix_core_integration_logs_status: company_id, status, created_at
+- ix_core_integration_logs_company: company_id, created_at
+- ix_core_integration_logs_connector: connector_id, created_at
 
 ## core_integrity_runs
 
@@ -1050,3 +1156,17 @@ Indexes:
 Indexes:
 - ix_core_uoms_company: company_id
 - ux_core_uoms_code (unique): code
+
+## core_webhook_receipts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| connector_id | INTEGER | yes |  |  |
+| delivery_id | TEXT | yes |  |  |
+| received_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+
+Foreign keys: connector_id -> core_connectors(id)
+
+Indexes:
+- ux_core_webhook_receipts_delivery (unique): connector_id, delivery_id

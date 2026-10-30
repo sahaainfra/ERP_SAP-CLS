@@ -76,6 +76,10 @@ export async function fetchAllFlags(q) {
   return all;
 }
 
+/** Every flag key, for the override dialog: the list on screen shows one page, but any flag can be overridden. */
+export const useFlagKeys = () =>
+  useQuery({ queryKey: [...queryKeys.core.flags.all, 'keys'], queryFn: async () => [...new Set((await fetchAllFlags('')).map((r) => r.key))], staleTime: 30_000 });
+
 // ---- Part 01.03: configuration, financial years, numbering, parameters, holidays ----
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
 const unwrap = async (promise) => (await promise).data;
@@ -112,7 +116,7 @@ export const useChangeRequests = (params = {}) =>
     retry: false,
   });
 export const useActOnRequest = () =>
-  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all, queryKeys.core.files.all, queryKeys.core.calc.all, queryKeys.core.observe.all]);
+  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all, queryKeys.core.files.all, queryKeys.core.calc.all, queryKeys.core.observe.all, queryKeys.core.hub.all]);
 
 export const useDocumentTypes = () =>
   useQuery({ queryKey: queryKeys.core.numbering.types(), queryFn: () => unwrap(api.get('/core/document-types')), retry: false });
@@ -306,3 +310,31 @@ export const useOpsAcknowledge = () => useOpsMutation((id) => api.post(`/core/op
 export const useOpsForceError = () => useOpsMutation(() => api.post('/core/ops/diagnostics/force-error', {}, idem()));
 export const useOpsChangeRequest = () =>
   useOpsMutation(({ kind, key, changes, reason }) => api.post(kind === 'alert_rule' ? `/core/ops/alert-rules/${key}/change-requests` : `/core/ops/slo-definitions/${key}/change-requests`, { changes, reason }, idem()));
+
+// Integration hub (part 01.08).
+const hubQuery = (params) => Object.entries(params).filter(([, v]) => v !== '' && v !== undefined && v !== null).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+
+export const useConnectors = ({ page = 1, pageSize = 25, q = '', type = '', status = '' }) =>
+  useQuery({
+    queryKey: queryKeys.core.hub.list({ page, pageSize, q, type, status }),
+    queryFn: () => api.get(`/core/connectors?${hubQuery({ page, pageSize, q, 'filter[type]': type, 'filter[status]': status })}`),
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+export const useConnectorCatalog = () => useQuery({ queryKey: queryKeys.core.hub.catalog(), queryFn: () => unwrap(api.get('/core/connectors/catalog')), staleTime: 60_000, retry: false });
+export const useConnector = (id) => useQuery({ queryKey: queryKeys.core.hub.detail(id), queryFn: () => unwrap(api.get(`/core/connectors/${id}`)), enabled: Boolean(id), retry: false });
+export const useConnectorLogs = ({ page = 1, pageSize = 25, q = '', connector = '', status = '', direction = '', from = '', to = '' }) =>
+  useQuery({
+    queryKey: queryKeys.core.hub.logs({ page, pageSize, q, connector, status, direction, from, to }),
+    queryFn: () => api.get(`/core/integration-logs?${hubQuery({ page, pageSize, q, 'filter[connector]': connector, 'filter[status]': status, 'filter[direction]': direction, from, to })}`),
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+export const useConnectorLog = (id) => useQuery({ queryKey: queryKeys.core.hub.log(id), queryFn: () => unwrap(api.get(`/core/integration-logs/${id}`)), enabled: Boolean(id), retry: false });
+
+const hubKeys = [queryKeys.core.hub.all, queryKeys.core.requests.all];
+export const useCreateConnector = () => useWrite((body) => unwrap(api.post('/core/connectors', body, idem())), hubKeys);
+export const useChangeConnector = () => useWrite(({ id, ...body }) => unwrap(api.post(`/core/connectors/${id}/change-requests`, body, idem())), hubKeys);
+export const useDisableConnector = () => useWrite(({ id, ...body }) => unwrap(api.post(`/core/connectors/${id}/disable`, body, idem())), hubKeys);
+export const useTestConnector = () => useWrite((id) => unwrap(api.post(`/core/connectors/${id}/test`, {}, idem())), hubKeys);
+export const useSampleConnector = () => useWrite((id) => unwrap(api.post(`/core/connectors/${id}/sample`, {}, idem())), hubKeys);
