@@ -7,6 +7,8 @@ import { createParameterStore, parameterRegistry } from '../../platform/paramete
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { syncEventTypes } from '../../platform/events/index.js';
 import { registerOperations } from './operations.js';
+import { mountFiles } from './files/index.js';
+import { fileSettingsChangeHandler } from './files/service.js';
 import { eventRoutes } from './events/routes.js';
 import { createEventService } from './events/service.js';
 import { jobRoutes } from './jobs/routes.js';
@@ -43,7 +45,7 @@ parameterRegistry.define({ key: 'core.calendar.week_off_days', dataType: 'json',
 
 // What the integrity checks need to know about this module's tables.
 integrityRegistry.register({
-  technicalTables: ['core_number_counters', 'core_change_request_steps', 'core_event_types', 'core_inbox', 'core_jobs', 'core_projection_event_counts'],
+  technicalTables: ['core_number_counters', 'core_change_request_steps', 'core_event_types', 'core_inbox', 'core_jobs', 'core_projection_event_counts', 'core_file_uploads'],
   companyOptional: ['core_feature_flags', 'core_integrity_runs', 'core_backfill_runs', 'core_document_types', 'core_parameters', 'core_schedules'],
   statuses: {
     core_integrity_runs: ['pass', 'fail', 'not_applicable'],
@@ -54,6 +56,7 @@ integrityRegistry.register({
     core_sample_documents: ['DRAFT', 'SUBMITTED', 'CANCELLED'],
     core_inbox: ['PENDING', 'PROCESSED', 'DEAD', 'DISCARDED'],
     core_jobs: ['QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED'],
+    core_files: ['PENDING', 'CLEAN', 'INFECTED', 'ERROR'],
   },
   // A gap-free series must have no missing number, cancelled ones included.
   sequences: [{ table: 'core_number_issues', groupBy: ['series_id', 'period_key'], seq: 'seq', where: 'series_id IN (SELECT id FROM core_number_series WHERE gap_free = 1)' }],
@@ -77,14 +80,14 @@ export const core = {
     'core_feature_flags', 'core_audit_log', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
     'core_company_settings', 'core_financial_years', 'core_periods', 'core_parameters', 'core_holiday_calendars', 'core_holidays',
     'core_document_types', 'core_number_series', 'core_number_counters', 'core_number_issues', 'core_change_requests', 'core_change_request_steps',
-    'core_sample_documents', 'core_event_types', 'core_inbox', 'core_jobs', 'core_schedules', 'core_projection_event_counts', 'core_schema_migrations',
+    'core_sample_documents', 'core_event_types', 'core_inbox', 'core_jobs', 'core_schedules', 'core_projection_event_counts', 'core_files', 'core_file_uploads', 'core_file_settings', 'core_schema_migrations',
   ],
   resources: [
     'session', 'about', 'feature-flags', 'architecture', 'integrity', 'display-settings', 'company-settings', 'financial-years', 'periods',
-    'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents', 'events', 'jobs', 'schedules',
+    'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents', 'events', 'jobs', 'schedules', 'files',
   ],
   /** Build the module's services and attach its routes to the authenticated /api/v1 router. */
-  mount(api, { db, config, buildInfo, modules }) {
+  mount(api, { db, config, buildInfo, modules, publicApi, storagePath }) {
     const flags = createFlagService({ db, environment: config.environment });
     const isFlagOn = (actor, key) => flags.isOn(actor, key);
     const idempotent = idempotency(db); // honoured when the client sends an Idempotency-Key; never required here
@@ -97,7 +100,7 @@ export const core = {
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_schedules'").get());
     if (migrated) syncEventTypes(db);
     registerOperations({ db, ...runtime, persist: migrated });
-    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler) } });
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler } });
     const opts = { idempotent, idempotentRequired };
 
     api.use('/core', sessionRoutes({ config }));
@@ -114,6 +117,9 @@ export const core = {
     operations.use(eventRoutes(createEventService({ db, bus: runtime.bus, jobs: runtime.jobs }), opts));
     operations.use(jobRoutes(createJobService({ db, jobs: runtime.jobs, scheduler: runtime.scheduler, approvals }), opts));
     api.use('/core', operations);
+
+    // File storage and attachments (part 01.05): hidden while ff.core.p0105 is OFF for the company.
+    mountFiles({ api, publicApi, db, config, runtime, approvals, opts, isFlagOn, storagePath, persist: migrated });
 
     // System configuration (part 01.03): everything below is hidden while ff.core.p0103 is OFF for the company.
     const configuration = Router();

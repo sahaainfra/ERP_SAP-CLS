@@ -126,7 +126,7 @@ test('idempotent replay: repeating the same PATCH leaves the same value and a co
 
 test('session endpoint reports permissions; unknown API route is a 404 envelope', async () => {
   const s = await api.call('GET', '/api/v1/core/session', { roles: 'ITADM' });
-  assert.deepEqual(s.json.data.permissions, ['core.about.view', 'core.arch.view', 'core.events.redrive', 'core.events.replay', 'core.events.view', 'core.flag.view', 'core.health.view', 'core.integrity.run', 'core.integrity.view', 'core.jobs.manage', 'core.jobs.view', 'core.numbering.view', 'core.param.configure_system', 'core.param.view', 'core.requests.view', 'core.schedule.manage', 'core.schedule.view']);
+  assert.deepEqual(s.json.data.permissions, ['core.about.view', 'core.arch.view', 'core.events.redrive', 'core.events.replay', 'core.events.view', 'core.files.admin', 'core.flag.view', 'core.health.view', 'core.integrity.run', 'core.integrity.view', 'core.jobs.manage', 'core.jobs.view', 'core.numbering.view', 'core.param.configure_system', 'core.param.view', 'core.requests.view', 'core.schedule.manage', 'core.schedule.view']);
   const nf = await api.call('GET', '/api/v1/nothing', { roles: 'SYSADM' });
   assert.equal(nf.status, 404);
   assert.equal(nf.json.error.code, 'NOT_FOUND');

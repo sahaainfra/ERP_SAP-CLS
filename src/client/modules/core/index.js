@@ -11,6 +11,8 @@ import DeadLettersPage from './pages/DeadLettersPage.jsx';
 import JobsPage from './pages/JobsPage.jsx';
 import OperationsPage from './pages/OperationsPage.jsx';
 import SchedulesPage from './pages/SchedulesPage.jsx';
+import FileSettingsPage from './pages/FileSettingsPage.jsx';
+import SampleDocumentsPage from './pages/SampleDocumentsPage.jsx';
 import FlagsPage from './pages/FlagsPage.jsx';
 
 // Module "core" registers its pages once. The shell builds navigation and routing from the registry.
@@ -31,5 +33,7 @@ registerModule({
     { path: '/admin/operations/dead-letters', label: 'Dead Letters', permission: 'core.events.view', flag: 'ff.core.p0104', Page: DeadLettersPage },
     { path: '/admin/operations/jobs', label: 'Jobs', permission: 'core.jobs.view', flag: 'ff.core.p0104', Page: JobsPage },
     { path: '/admin/operations/schedules', label: 'Schedules', permission: 'core.schedule.view', flag: 'ff.core.p0104', Page: SchedulesPage },
+    { path: '/admin/file-storage', label: 'File Storage', permission: 'core.files.admin', flag: 'ff.core.p0105', Page: FileSettingsPage },
+    { path: '/admin/sample-documents', label: 'Sample Documents', permission: 'core.sample.use', flag: 'ff.core.p0105', Page: SampleDocumentsPage },
   ],
 });

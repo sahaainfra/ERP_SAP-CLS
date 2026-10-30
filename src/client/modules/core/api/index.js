@@ -112,7 +112,7 @@ export const useChangeRequests = (params = {}) =>
     retry: false,
   });
 export const useActOnRequest = () =>
-  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all]);
+  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all, queryKeys.core.files.all]);
 
 export const useDocumentTypes = () =>
   useQuery({ queryKey: queryKeys.core.numbering.types(), queryFn: () => unwrap(api.get('/core/document-types')), retry: false });
@@ -204,3 +204,29 @@ export const useCronPreview = (cron) =>
   });
 export const useRequestScheduleChange = () =>
   useWrite(({ id, ...body }) => unwrap(api.post(`/core/schedules/${id}/change-requests`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.ops.all]);
+
+// ---- Part 01.05: files and attachments ----
+export const useFiles = ({ entity, entityId }) =>
+  useQuery({
+    queryKey: queryKeys.core.files.list(entity, entityId),
+    queryFn: () => unwrap(api.get(`/core/files?entity=${entity}&entityId=${entityId}`)),
+    enabled: Boolean(entity && entityId),
+    // A file is "scanning" for a moment after it arrives: keep looking until every file has a verdict.
+    refetchInterval: (query) => (query.state.data?.some((f) => f.scanStatus === 'PENDING') ? 1500 : false),
+    retry: false,
+  });
+/** A short-lived link to a file or its thumbnail. Called when the user opens a file, never cached. */
+export const fetchFileUrl = async (id, { variant = 'file', download = false } = {}) => (await api.get(`/core/files/${id}/url?variant=${variant}&download=${download}`)).data;
+export const useDeleteFile = () => useWrite(({ id, reason }) => unwrap(api.delete(`/core/files/${id}`, idem(), { reason })), [queryKeys.core.files.all]);
+export const useFileSettings = () =>
+  useQuery({ queryKey: queryKeys.core.files.settings(), queryFn: () => unwrap(api.get('/core/files/settings')), retry: false });
+export const useFileOverview = () =>
+  useQuery({ queryKey: queryKeys.core.files.overview(), queryFn: () => unwrap(api.get('/core/files/overview')), refetchInterval: 10_000, retry: false });
+export const useRescanFile = () => useWrite((id) => unwrap(api.post(`/core/files/${id}/rescan`, {}, idem())), [queryKeys.core.files.all]);
+export const useRequestFileSettingsChange = () =>
+  useWrite((body) => unwrap(api.post('/core/files/settings/change-requests', body, idem())), [queryKeys.core.requests.all, queryKeys.core.files.all]);
+
+export const useSampleDocuments = (page) =>
+  useQuery({ queryKey: queryKeys.core.sampleDocs.list({ page }), queryFn: () => api.get(`/core/sample-documents?page=${page}&pageSize=10`), placeholderData: (previous) => previous, retry: false });
+export const useCreateSampleDocument = () => useWrite((body) => unwrap(api.post('/core/sample-documents', body, idem())), [queryKeys.core.sampleDocs.all]);
+export const useSubmitSampleDocument = () => useWrite(({ id, version }) => unwrap(api.post(`/core/sample-documents/${id}/submit`, { version }, idem())), [queryKeys.core.sampleDocs.all, queryKeys.core.files.all]);

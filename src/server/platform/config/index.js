@@ -11,6 +11,9 @@ const schema = z.object({
   ERP_DEMO_SEED: z.enum(['true', 'false']).default('false'),
   STORAGE_PATH: z.string().min(1).optional(),
   HEALTH_TOKEN: z.string().min(16, 'must be at least 16 characters').optional(),
+  FILE_URL_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+  CLAMAV_HOST: z.string().min(1).optional(),
+  CLAMAV_PORT: z.coerce.number().int().min(1).max(65535).default(3310),
 });
 
 export class ConfigError extends Error {
@@ -44,6 +47,8 @@ export function loadConfig(env = process.env) {
     demoSeed: c.ERP_DEMO_SEED === 'true',
     storagePath: c.STORAGE_PATH ?? null,
     healthToken: c.HEALTH_TOKEN ?? null,
+    fileUrlSecret: c.FILE_URL_SECRET ?? null,
+    clamav: c.CLAMAV_HOST ? { host: c.CLAMAV_HOST, port: c.CLAMAV_PORT } : null,
   };
   const prodLike = nodeEnv === 'production' || nodeEnv === 'staging';
   if (config.demoSeed && prodLike) {
@@ -58,6 +63,9 @@ export function loadConfig(env = process.env) {
   }
   if (config.authMode === 'iam') {
     problems.push('AUTH_MODE=iam is not available yet: the IAM module (part 02.x) has not been built.');
+  }
+  if (prodLike && !config.fileUrlSecret) {
+    problems.push(`FILE_URL_SECRET is required when NODE_ENV=${nodeEnv}: it signs the short-lived download links and must be the same on every instance (at least 32 characters).`);
   }
   if (config.databasePath === ':memory:' && nodeEnv !== 'test') {
     problems.push('DATABASE_PATH=:memory: is only allowed when NODE_ENV=test.');

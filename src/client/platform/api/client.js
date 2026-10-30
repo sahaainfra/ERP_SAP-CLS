@@ -90,7 +90,7 @@ export function createApiClient({
     post: (path, body, opts) => request('POST', path, body, opts),
     patch: (path, body, opts) => request('PATCH', path, body, opts),
     put: (path, body, opts) => request('PUT', path, body, opts),
-    delete: (path, opts) => request('DELETE', path, undefined, opts),
+    delete: (path, opts, body) => request('DELETE', path, body, opts),
   };
 }
 

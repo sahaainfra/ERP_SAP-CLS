@@ -33,6 +33,9 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | core_projection_event_counts | 20261030000011_core_events_and_jobs.up.sql | company_id, event_type, total, last_event_at |
 | core_change_requests | 20261030000013_core_change_request_types.up.sql | id, company_id, type, title, target_type, target_id, payload_json, reason, status, chain_json, current_step, requested_by, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
 | core_change_request_steps | 20261030000013_core_change_request_types.up.sql | id, request_id, step_no, role_code, decision, decided_by, decided_at, comment |
+| core_files | 20261030000014_core_files.up.sql | id, company_id, storage_key, original_name, extension, mime, category, size_bytes, scan_status, scan_detail, scanned_at, linked_entity, linked_id, supersedes_id, version_no, retention_class, exif_json, exif_stripped, thumbnail_key, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_file_uploads | 20261030000014_core_files.up.sql | id, upload_id, company_id, user_id, file_name, declared_size, received, meta_json, status, file_id, expires_at, created_at, updated_at |
+| core_file_settings | 20261030000014_core_files.up.sql | id, company_id, settings_json, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
 
 ## Indexes
 
@@ -97,6 +100,15 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | ix_core_change_requests_type | core_change_requests | no | 20261030000013_core_change_request_types.up.sql |
 | ix_core_change_requests_target | core_change_requests | no | 20261030000013_core_change_request_types.up.sql |
 | ix_core_change_request_steps_request | core_change_request_steps | no | 20261030000013_core_change_request_types.up.sql |
+| ux_core_files_storage_key | core_files | yes | 20261030000014_core_files.up.sql |
+| ix_core_files_entity | core_files | no | 20261030000014_core_files.up.sql |
+| ix_core_files_sha256 | core_files | no | 20261030000014_core_files.up.sql |
+| ix_core_files_scan | core_files | no | 20261030000014_core_files.up.sql |
+| ix_core_files_supersedes | core_files | no | 20261030000014_core_files.up.sql |
+| ux_core_file_uploads_upload_id | core_file_uploads | yes | 20261030000014_core_files.up.sql |
+| ix_core_file_uploads_expiry | core_file_uploads | no | 20261030000014_core_files.up.sql |
+| ix_core_file_uploads_file | core_file_uploads | no | 20261030000014_core_files.up.sql |
+| ux_core_file_settings_company | core_file_settings | yes | 20261030000014_core_files.up.sql |
 
 Views, triggers and functions: none.
 
@@ -130,6 +142,9 @@ erDiagram
   core_projection_event_counts
   core_change_requests
   core_change_request_steps
+  core_files
+  core_file_uploads
+  core_file_settings
 ```
 
 No foreign keys exist yet; tables are independent until the organisation tables (02.02) are built.

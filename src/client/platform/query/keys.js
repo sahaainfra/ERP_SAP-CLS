@@ -16,6 +16,13 @@ export const queryKeys = {
     },
     architecture: () => ['core', 'architecture'],
     settings: () => ['core', 'settings'],
+    files: {
+      all: ['core', 'files'],
+      list: (entity, id) => ['core', 'files', 'list', entity, id],
+      settings: () => ['core', 'files', 'settings'],
+      overview: () => ['core', 'files', 'overview'],
+    },
+    sampleDocs: { all: ['core', 'sample-documents'], list: (p) => ['core', 'sample-documents', 'list', p] },
     ops: {
       all: ['core', 'ops'],
       metrics: () => ['core', 'ops', 'metrics'],

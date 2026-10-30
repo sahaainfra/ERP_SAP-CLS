@@ -26,6 +26,21 @@ Validation is "yes" when the controller method calls a validator before the serv
 | GET | /api/v1/core/feature-flags | permission core.flag.view | yes |
 | GET | /api/v1/core/feature-flags/evaluate | any authenticated user | yes |
 | PATCH | /api/v1/core/feature-flags/:key | permission core.flag.configure | yes |
+| GET | /api/v1/core/files/settings | permission core.files.admin | no |
+| POST | /api/v1/core/files/settings/change-requests | permission core.files.configure | no |
+| GET | /api/v1/core/files/overview | permission core.files.admin | no |
+| GET | /api/v1/core/files/admin | permission core.files.admin | no |
+| POST | /api/v1/core/files/uploads | any authenticated user | no |
+| GET | /api/v1/core/files/uploads/:uploadId | any authenticated user | no |
+| PUT | /api/v1/core/files/uploads/:uploadId | any authenticated user | no |
+| POST | /api/v1/core/files/uploads/:uploadId/complete | any authenticated user | no |
+| POST | /api/v1/core/files | any authenticated user | no |
+| GET | /api/v1/core/files | any authenticated user | no |
+| GET | /api/v1/core/files/:id | any authenticated user | no |
+| GET | /api/v1/core/files/:id/url | any authenticated user | no |
+| POST | /api/v1/core/files/:id/rescan | permission core.files.admin | no |
+| DELETE | /api/v1/core/files/:id | any authenticated user | no |
+| GET | /api/v1/core/core/files/:id/content | any authenticated user | no |
 | GET | /api/v1/core/financial-years | permission core.fy.view | no |
 | POST | /api/v1/core/financial-years | permission core.fy.configure | no |
 | GET | /api/v1/core/financial-years/:id | permission core.fy.view | no |

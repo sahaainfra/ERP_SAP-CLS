@@ -33,6 +33,10 @@ export const ERROR_CODES = [
   { code: 'RATE_LIMITED', status: 429, meaning: 'Too many requests in a short time.', action: 'Wait and retry with back-off.' },
   { code: 'INTERNAL_ERROR', status: 500, meaning: 'An unexpected server error; details are in the server log under the correlation ID.', action: 'Retry once, then report the correlation ID.' },
   { code: 'SERVICE_UNAVAILABLE', status: 503, meaning: 'A dependency (database, queue or storage) is down.', action: 'Retry later; administrators see which dependency failed on the readiness check.' },
+  { code: 'DUPLICATE_FILE', status: 409, meaning: 'A file with identical content is already attached to this record.', action: 'Use the existing file, or upload a changed version.' },
+  { code: 'LINK_EXPIRED', status: 410, meaning: 'A signed download link has expired.', action: 'Open the file again from its record to get a fresh link.' },
+  { code: 'FILE_REJECTED', status: 422, meaning: 'The file type, content or size is not allowed.', action: 'Check the allowed types and size limits on the File Storage Settings page and upload a permitted file.' },
+  { code: 'FILE_NOT_AVAILABLE', status: 409, meaning: 'The file has not passed the virus scan (still scanning, quarantined or scan failed), so it cannot be opened.', action: 'Wait for the scan to finish; ask an administrator if it stays unavailable.' },
 ];
 
 /** Map errors raised by body parsing (not HttpError) to the standard envelope. */

@@ -221,6 +221,102 @@ Indexes:
 - ix_core_feature_flags_company: company_id
 - ux_core_feature_flags_scope (unique): key, , , 
 
+## core_file_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| settings_json | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ux_core_file_settings_company (unique): company_id
+
+## core_file_uploads
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| upload_id | TEXT | yes |  |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | TEXT | yes |  |  |
+| file_name | TEXT | yes |  |  |
+| declared_size | INTEGER | yes |  |  |
+| received | INTEGER | yes |  | 0 |
+| meta_json | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| file_id | INTEGER |  |  |  |
+| expires_at | TEXT | yes |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_at | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id)
+
+Indexes:
+- ix_core_file_uploads_file: file_id
+- ix_core_file_uploads_expiry: status, expires_at
+- ux_core_file_uploads_upload_id (unique): upload_id
+
+## core_files
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| storage_key | TEXT | yes |  |  |
+| original_name | TEXT | yes |  |  |
+| extension | TEXT | yes |  |  |
+| mime | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| size_bytes | INTEGER | yes |  |  |
+| sha256 | TEXT | yes |  |  |
+| scan_status | TEXT | yes |  | 'PENDING' |
+| scan_detail | TEXT |  |  |  |
+| scanned_at | TEXT |  |  |  |
+| linked_entity | TEXT | yes |  |  |
+| linked_id | INTEGER | yes |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| retention_class | TEXT | yes |  | 'standard' |
+| exif_json | TEXT |  |  |  |
+| exif_stripped | INTEGER | yes |  | 0 |
+| thumbnail_key | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supersedes_id -> core_files(id)
+
+Indexes:
+- ix_core_files_supersedes: supersedes_id
+- ix_core_files_scan: company_id, scan_status
+- ix_core_files_sha256: company_id, linked_entity, linked_id, sha256
+- ix_core_files_entity: company_id, linked_entity, linked_id
+- ux_core_files_storage_key (unique): storage_key
+
 ## core_financial_years
 
 | Column | Type | Not null | Key | Default |

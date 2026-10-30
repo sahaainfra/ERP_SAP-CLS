@@ -46,9 +46,12 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
     });
   });
 
+  // Routes that carry their own proof of access (short-lived signed download links) are mounted before authentication.
+  const publicApi = express.Router();
   const api = express.Router();
   api.use(authenticate(config));
-  mountModules(api, { db, config, buildInfo });
+  mountModules(api, { db, config, buildInfo, publicApi, storagePath: storage });
+  app.use('/api/v1', publicApi);
   app.use('/api/v1', api);
   app.use('/api', (_req, _res, next) => next(new HttpError(404, 'NOT_FOUND', 'No such API route.')));
 

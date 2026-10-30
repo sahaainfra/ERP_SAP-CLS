@@ -31,7 +31,19 @@ export async function startApi(configOverrides = {}, appOverrides = {}) {
     const res = await fetch(base + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
     return { status: res.status, headers: res.headers, json: await res.json().catch(() => null) };
   };
-  return { db, call, close: () => new Promise((resolve) => server.close(resolve)) };
+  /** Like call, but with a raw body (a FormData, a Buffer) and a binary response: { status, headers, buffer, json }. */
+  const raw = async (method, path, { user = 'tester', roles = '', company = '1', body, headers = {} } = {}) => {
+    const h = { ...headers };
+    if (user) h['x-erp-user'] = user;
+    if (roles) h['x-erp-roles'] = roles;
+    if (company) h['x-erp-company'] = company;
+    const res = await fetch(base + path, { method, headers: h, body });
+    const buffer = Buffer.from(await res.arrayBuffer());
+    let json = null;
+    if ((res.headers.get('content-type') ?? '').includes('json')) json = JSON.parse(buffer.toString('utf8'));
+    return { status: res.status, headers: res.headers, buffer, json };
+  };
+  return { db, call, raw, base, close: () => new Promise((resolve) => server.close(resolve)) };
 }
 
 const C = '/api/v1/core';

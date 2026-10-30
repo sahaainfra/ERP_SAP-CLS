@@ -315,3 +315,60 @@ paths:
     post:
       summary: Ask to change a schedule's cron or enabled flag (core.schedule.manage; approved by the System Administrator; Idempotency-Key required)
       responses: { '201': { description: request raised }, '409': { description: an open request exists }, '422': { description: nothing would change } }
+  /api/v1/core/files:
+    get:
+      summary: 'Files attached to a record (query: entity, entityId); needs view permission on the record'
+      responses: { '200': { description: '{ data: [file] } with scan status, version and metadata; never the storage key' }, '403': { description: no view permission on the record }, '404': { description: record not found in your company } }
+    post:
+      summary: 'Upload one file as multipart/form-data (fields: entity, entityId, supersedesId, stripExif; part: file). Needs edit permission on the record'
+      responses: { '201': { description: '{ data: file } with scanStatus PENDING' }, '409': { description: DUPLICATE_FILE }, '413': { description: larger than any limit }, '422': { description: FILE_REJECTED (type, content or size) } }
+  /api/v1/core/files/uploads:
+    post:
+      summary: 'Start a resumable upload (fileName, size, entity, entityId, supersedesId, stripExif)'
+      responses: { '201': { description: '{ data: { uploadId, received, chunkSize, expiresAt } }' }, '422': { description: type or size not allowed } }
+  /api/v1/core/files/uploads/{uploadId}:
+    get:
+      summary: How many bytes the server has (use it to resume after a dropped connection)
+      responses: { '200': { description: '{ data: { received, size, status } }' } }
+    put:
+      summary: 'Append a chunk at ?offset= (application/octet-stream). A chunk that stops half way counts for nothing'
+      responses: { '200': { description: '{ data: { received } }' }, '409': { description: offset is not where the server stopped; resume from the number in the message }, '422': { description: more than was declared, or expired } }
+  /api/v1/core/files/uploads/{uploadId}/complete:
+    post:
+      summary: Finish a resumable upload; runs every check. Completing twice returns the same file
+      responses: { '201': { description: '{ data: file }' }, '409': { description: bytes missing } }
+  /api/v1/core/files/{id}:
+    get:
+      summary: File metadata (view permission on the linked record)
+      responses: { '200': { description: '{ data: file }' }, '404': { description: not found or deleted } }
+    delete:
+      summary: Soft delete (edit permission; refused with 422 when the record is approved: upload a new version instead)
+      responses: { '200': { description: '{ data: { id, deleted } }' }, '422': { description: record is locked } }
+  /api/v1/core/files/{id}/url:
+    get:
+      summary: 'A short-lived signed download link (query: variant = file or thumbnail, download). Only CLEAN files have one'
+      responses: { '200': { description: '{ data: { url, expiresAt, disposition } }' }, '409': { description: FILE_NOT_AVAILABLE (scanning, quarantined or scan failed) } }
+  /api/v1/core/files/{id}/content:
+    get:
+      summary: 'The file itself, for a valid signed link (no sign-in). Supports Range. Content type comes from the validated type'
+      responses: { '200': { description: file bytes }, '206': { description: partial content }, '403': { description: link not valid }, '410': { description: LINK_EXPIRED }, '416': { description: range not satisfiable } }
+  /api/v1/core/files/{id}/rescan:
+    post:
+      summary: Scan again a file whose scan failed or never ran (core.files.admin, Idempotency-Key)
+      responses: { '200': { description: '{ data: file }' }, '422': { description: file is clean or quarantined } }
+  /api/v1/core/files/overview:
+    get:
+      summary: Scan status counts, storage and scanners, files by category and files needing attention (core.files.admin)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/files/admin:
+    get:
+      summary: 'All files of the company (filter[scan_status]; core.files.admin)'
+      responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/core/files/settings:
+    get:
+      summary: The file settings in force, the known file types and the hard ceiling (core.files.admin)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/files/settings/change-requests:
+    post:
+      summary: Ask to change types, size limits, retention classes or link life (core.files.configure; approved by the IT Administrator)
+      responses: { '201': { description: request raised }, '409': { description: an open request exists }, '422': { description: nothing would change } }
