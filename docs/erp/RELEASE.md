@@ -8,6 +8,8 @@ Everything below runs from the repository root. Commands marked (GitHub) need th
 A failing stage exits 1 and the report (`reports/regression/report.html`) names it. A migration without a working down-migration fails the migration check; a leaked credential fails the secret scan.
 
 ## 2. Make the gates mandatory (GitHub, once, by a repository admin)
+On the current free plan this cannot be enforced for a private repository (defect D-010): GitHub shows "rulesets won't be enforced on this private repository until you move to GitHub Team". Do this after the plan changes or the repository becomes public.
+
 `.github/CODEOWNERS` already requests review from `@sahaainfra`. After `gh auth login`, protect main:
 
 ```bash
