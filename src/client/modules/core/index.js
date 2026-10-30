@@ -10,6 +10,7 @@ import ParametersPage from './pages/ParametersPage.jsx';
 import DeadLettersPage from './pages/DeadLettersPage.jsx';
 import JobsPage from './pages/JobsPage.jsx';
 import OperationsPage from './pages/OperationsPage.jsx';
+import OperationsHealthPage from './pages/OperationsHealthPage.jsx';
 import SchedulesPage from './pages/SchedulesPage.jsx';
 import FileSettingsPage from './pages/FileSettingsPage.jsx';
 import SampleDocumentsPage from './pages/SampleDocumentsPage.jsx';
@@ -34,6 +35,7 @@ registerModule({
     { path: '/admin/parameters', label: 'Parameters', permission: 'core.param.view', flag: 'ff.core.p0103', Page: ParametersPage },
     { path: '/admin/holidays', label: 'Holidays', flag: 'ff.core.p0103', Page: HolidaysPage },
     { path: '/admin/operations', label: 'Operations', permission: 'core.events.view', flag: 'ff.core.p0104', Page: OperationsPage },
+    { path: '/admin/operations/health', label: 'Operations Health', permission: 'core.ops.view', flag: 'ff.core.p0107', Page: OperationsHealthPage },
     { path: '/admin/operations/dead-letters', label: 'Dead Letters', permission: 'core.events.view', flag: 'ff.core.p0104', Page: DeadLettersPage },
     { path: '/admin/operations/jobs', label: 'Jobs', permission: 'core.jobs.view', flag: 'ff.core.p0104', Page: JobsPage },
     { path: '/admin/operations/schedules', label: 'Schedules', permission: 'core.schedule.view', flag: 'ff.core.p0104', Page: SchedulesPage },

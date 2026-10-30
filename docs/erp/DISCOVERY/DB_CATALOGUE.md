@@ -42,6 +42,11 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | core_uoms | 20261030000016_core_calculation_engine.up.sql | id, company_id, code, name, dimension, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
 | core_uom_conversions | 20261030000016_core_calculation_engine.up.sql | id, company_id, item_code, from_uom, to_uom, factor, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
 | core_sample_bills | 20261030000016_core_calculation_engine.up.sql | id, company_id, title, quantity, unit_rate, gst_percent, supply, taxable_amount, cgst_amount, sgst_amount, igst_amount, total_amount, formula_pins_json, status, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_slo_definitions | 20261030000018_core_observability.up.sql | id, company_id, journey, label, description, route_patterns_json, target_latency_ms, latency_percentile, target_availability_bp, window_days, enabled, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_alert_rules | 20261030000018_core_observability.up.sql | id, company_id, code, kind, description, threshold, unit, window_minutes, min_requests, severity, channels_json, cooldown_minutes, enabled, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_alerts | 20261030000018_core_observability.up.sql | id, rule_code, dedupe_key, severity, message, value, threshold, status, fired_at, resolved_at, acknowledged_by, acknowledged_at, notified_json, correlation_id |
+| core_metric_samples | 20261030000018_core_observability.up.sql | id, bucket_hour, route_key, requests, server_errors, client_errors, sum_ms, hist_json |
+| core_client_events | 20261030000018_core_observability.up.sql | id, company_id, user_ref, type, message, path, status, correlation_id, duration_ms, created_at |
 
 ## Indexes
 
@@ -128,6 +133,16 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | ix_core_uom_conversions_item | core_uom_conversions | no | 20261030000016_core_calculation_engine.up.sql |
 | ix_core_uom_conversions_company | core_uom_conversions | no | 20261030000016_core_calculation_engine.up.sql |
 | ix_core_sample_bills_company | core_sample_bills | no | 20261030000016_core_calculation_engine.up.sql |
+| ux_core_slo_definitions_journey | core_slo_definitions | yes | 20261030000018_core_observability.up.sql |
+| ix_core_slo_definitions_company | core_slo_definitions | no | 20261030000018_core_observability.up.sql |
+| ux_core_alert_rules_code | core_alert_rules | yes | 20261030000018_core_observability.up.sql |
+| ix_core_alert_rules_company | core_alert_rules | no | 20261030000018_core_observability.up.sql |
+| ix_core_alerts_status | core_alerts | no | 20261030000018_core_observability.up.sql |
+| ix_core_alerts_rule | core_alerts | no | 20261030000018_core_observability.up.sql |
+| ux_core_metric_samples_bucket | core_metric_samples | yes | 20261030000018_core_observability.up.sql |
+| ix_core_client_events_time | core_client_events | no | 20261030000018_core_observability.up.sql |
+| ix_core_client_events_type | core_client_events | no | 20261030000018_core_observability.up.sql |
+| ix_core_client_events_correlation | core_client_events | no | 20261030000018_core_observability.up.sql |
 
 Views, triggers and functions: none.
 
@@ -170,6 +185,11 @@ erDiagram
   core_uoms
   core_uom_conversions
   core_sample_bills
+  core_slo_definitions
+  core_alert_rules
+  core_alerts
+  core_metric_samples
+  core_client_events
 ```
 
 No foreign keys exist yet; tables are independent until the organisation tables (02.02) are built.

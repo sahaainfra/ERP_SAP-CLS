@@ -32,6 +32,7 @@ test('SYSADM sees the flags, toggles one with a reason and the page chip reacts 
   await page.reload();
   await expect(page.getByTestId('page-flag-chip')).toContainText('OFF');
   // toggle it back via the switch
+  await page.getByPlaceholder('Search key or description').fill('ff.prog.p0002');
   await page.getByRole('switch', { name: new RegExp(`ff.prog.p0002 Company ${company}: OFF`) }).click();
   const toggle = page.getByRole('dialog', { name: /Turn ON ff.prog.p0002/ });
   await toggle.getByLabel(/Reason/).fill('back on after pilot');

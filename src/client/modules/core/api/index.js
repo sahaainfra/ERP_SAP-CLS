@@ -112,7 +112,7 @@ export const useChangeRequests = (params = {}) =>
     retry: false,
   });
 export const useActOnRequest = () =>
-  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all, queryKeys.core.files.all, queryKeys.core.calc.all]);
+  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all, queryKeys.core.files.all, queryKeys.core.calc.all, queryKeys.core.observe.all]);
 
 export const useDocumentTypes = () =>
   useQuery({ queryKey: queryKeys.core.numbering.types(), queryFn: () => unwrap(api.get('/core/document-types')), retry: false });
@@ -278,3 +278,31 @@ export const useRecalculateBill = () => useWrite((id) => unwrap(api.post(`/core/
 /** Pending approval requests of every kind, for the approvals inbox. */
 export const usePendingRequests = () =>
   useQuery({ queryKey: queryKeys.core.requests.list({ status: 'SUBMITTED', inbox: true }), queryFn: () => api.get('/core/change-requests?page=1&pageSize=100&filter[status]=SUBMITTED'), refetchInterval: 10_000, retry: false });
+
+// Operations health (part 01.07).
+
+export const useOpsSummary = () =>
+  useQuery({ queryKey: queryKeys.core.observe.summary(), queryFn: async () => (await api.get('/core/ops/summary')).data, refetchInterval: 10_000, retry: false });
+
+export const useOpsSlos = () => useQuery({ queryKey: queryKeys.core.observe.slos(), queryFn: async () => (await api.get('/core/ops/slos')).data });
+export const useOpsAlertRules = () => useQuery({ queryKey: queryKeys.core.observe.rules(), queryFn: async () => (await api.get('/core/ops/alert-rules')).data });
+export const useOpsBaseline = () => useQuery({ queryKey: queryKeys.core.observe.baseline(), queryFn: async () => (await api.get('/core/ops/baseline')).data });
+
+export const useOpsTraces = ({ status = '' } = {}) =>
+  useQuery({ queryKey: queryKeys.core.observe.traces({ status }), queryFn: async () => (await api.get(`/core/ops/traces?limit=15${status ? `&status=${status}` : ''}`)).data, refetchInterval: 15_000 });
+
+export const useOpsTrace = (traceId) =>
+  useQuery({ queryKey: queryKeys.core.observe.trace(traceId), queryFn: async () => (await api.get(`/core/ops/traces/${traceId}`)).data, enabled: Boolean(traceId), retry: false });
+
+export const useOpsFollow = (correlationId) =>
+  useQuery({ queryKey: queryKeys.core.observe.follow(correlationId), queryFn: async () => (await api.get(`/core/ops/follow?correlationId=${encodeURIComponent(correlationId)}`)).data, enabled: Boolean(correlationId), retry: false });
+
+function useOpsMutation(fn) {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: fn, onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.core.observe.all }) });
+}
+export const useOpsEvaluate = () => useOpsMutation(() => api.post('/core/ops/evaluate', {}, idem()));
+export const useOpsAcknowledge = () => useOpsMutation((id) => api.post(`/core/ops/alerts/${id}/acknowledge`, {}, idem()));
+export const useOpsForceError = () => useOpsMutation(() => api.post('/core/ops/diagnostics/force-error', {}, idem()));
+export const useOpsChangeRequest = () =>
+  useOpsMutation(({ kind, key, changes, reason }) => api.post(kind === 'alert_rule' ? `/core/ops/alert-rules/${key}/change-requests` : `/core/ops/slo-definitions/${key}/change-requests`, { changes, reason }, idem()));

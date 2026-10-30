@@ -464,3 +464,70 @@ paths:
     post:
       summary: Calculate again - a draft with the versions in force today, a submitted bill with the versions it was calculated with
       responses: { '200': { description: '{ data: bill with recalculation }' } }
+  /metrics:
+    get:
+      summary: Prometheus text metrics (header x-health-token, or a signed-in user with core.ops.view)
+      responses: { '200': { description: text/plain }, '401': { description: no token }, '403': { description: no permission } }
+  /api/v1/core/ops/summary:
+    get:
+      summary: Operations dashboard data - requests, errors, latency, queues, database, disk, objectives, alerts, slow queries, browser reports (core.ops.view; ITADM, SYSADM)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/ops/slos:
+    get:
+      summary: Service objectives with the measured status (core.ops.view)
+      responses: { '200': { description: '{ data: [objective] }' } }
+  /api/v1/core/ops/alert-rules:
+    get:
+      summary: Alert rules (core.ops.view)
+      responses: { '200': { description: '{ data: [rule] }' } }
+  /api/v1/core/ops/alerts:
+    get:
+      summary: Alerts, newest first; filter status=OPEN|RESOLVED (core.ops.view)
+      responses: { '200': { description: '{ data: [alert] }' } }
+  /api/v1/core/ops/alerts/{id}/acknowledge:
+    post:
+      summary: Acknowledge an alert (core.ops.manage; Idempotency-Key required)
+      responses: { '200': { description: '{ data: alert }' }, '404': { description: unknown alert } }
+  /api/v1/core/ops/evaluate:
+    post:
+      summary: Save the metrics and check every alert rule now (core.ops.manage; Idempotency-Key required)
+      responses: { '200': { description: '{ data: { fired, resolved } }' } }
+  /api/v1/core/ops/slo-definitions/{journey}/change-requests:
+    post:
+      summary: Ask to change an objective; the System Administrator approves (core.ops.manage)
+      responses: { '201': { description: change request }, '409': { description: a request is already open }, '422': { description: nothing would change } }
+  /api/v1/core/ops/alert-rules/{code}/change-requests:
+    post:
+      summary: Ask to change an alert rule; the System Administrator approves (core.ops.manage)
+      responses: { '201': { description: change request }, '409': { description: a request is already open }, '422': { description: nothing would change } }
+  /api/v1/core/ops/traces:
+    get:
+      summary: Recent traces held in memory; filters status=ok|error, minMs (core.ops.view)
+      responses: { '200': { description: '{ data: [trace] }' } }
+  /api/v1/core/ops/traces/{traceId}:
+    get:
+      summary: One trace with its spans (core.ops.view)
+      responses: { '200': { description: '{ data: trace }' }, '404': { description: no longer kept } }
+  /api/v1/core/ops/traces/{traceId}/otlp:
+    get:
+      summary: One trace as OTLP/JSON (core.ops.view)
+      responses: { '200': { description: OTLP resourceSpans } }
+  /api/v1/core/ops/follow:
+    get:
+      summary: Everything under one correlation ID - log lines, traces, events, jobs, browser reports (core.ops.view; query correlationId)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/ops/client-events:
+    post:
+      summary: Browser error, failed-call and page-load reports (any signed-in user; at most 20 per request and 60 a minute; works even when ff.core.p0107 is off)
+      responses: { '202': { description: '{ data: { recorded } }' }, '422': { description: too many reports } }
+    get:
+      summary: Recent browser reports; filter type=js_error|api_failure|page_load (core.ops.view)
+      responses: { '200': { description: '{ data: [report] }' } }
+  /api/v1/core/ops/baseline:
+    get:
+      summary: The stored performance baseline (core.ops.view)
+      responses: { '200': { description: '{ data: { available, journeys, environment, dataset } }' } }
+  /api/v1/core/ops/diagnostics/force-error:
+    post:
+      summary: Log, raise an event, queue a job, then fail on purpose with a 500 that carries the correlation ID (core.ops.manage; Idempotency-Key required)
+      responses: { '500': { description: error envelope with correlationId } }

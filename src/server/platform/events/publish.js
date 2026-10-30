@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { currentContext } from '../observability/context.js';
+import { formatTraceparent } from '../observability/tracing.js';
 import { EventSchemaError, eventTypes } from './registry.js';
 
 /**
@@ -15,6 +17,8 @@ export function publishEvent(db, { type, entity, entityId, version = null, actor
     const problems = eventTypes.validate(type, data);
     if (problems.length) throw new EventSchemaError(type, problems);
   }
+  // The event carries the correlation ID and trace of the work that raised it, so its consumers' log lines and spans join them (T-01).
+  const ctx = currentContext();
   const payload = {
     eventId: randomUUID(),
     type,
@@ -27,7 +31,8 @@ export function publishEvent(db, { type, entity, entityId, version = null, actor
     entity,
     entityId: String(entityId),
     actorId,
-    correlationId,
+    correlationId: correlationId ?? ctx?.correlationId ?? null,
+    traceparent: ctx?.span ? formatTraceparent(ctx.span.traceId, ctx.span.spanId) : null,
     data,
   };
   db.prepare('INSERT INTO core_outbox (event_type, aggregate_id, payload) VALUES (?, ?, ?)').run(type, String(entityId), JSON.stringify(payload));

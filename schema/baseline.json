@@ -1,4 +1,294 @@
 {
+  "table:core_alert_rules": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "threshold",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "unit",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "window_minutes",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "5",
+        "pk": 0
+      },
+      {
+        "name": "min_requests",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "severity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'warning'",
+        "pk": 0
+      },
+      {
+        "name": "channels_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[\"email\"]'",
+        "pk": 0
+      },
+      {
+        "name": "cooldown_minutes",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "30",
+        "pk": 0
+      },
+      {
+        "name": "enabled",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_alerts": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "rule_code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "dedupe_key",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "severity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "value",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "threshold",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'OPEN'",
+        "pk": 0
+      },
+      {
+        "name": "fired_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "resolved_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "acknowledged_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "acknowledged_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "notified_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "correlation_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_audit_log": {
     "columns": [
       {
@@ -635,6 +925,81 @@
         "type": "TEXT",
         "notnull": 0,
         "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_client_events": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "path",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "correlation_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "duration_ms",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
         "pk": 0
       }
     ],
@@ -2802,6 +3167,67 @@
     ],
     "fks": []
   },
+  "table:core_metric_samples": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "bucket_hour",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "route_key",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "requests",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "server_errors",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "client_errors",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "sum_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "hist_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_number_counters": {
     "columns": [
       {
@@ -4058,6 +4484,179 @@
     ],
     "fks": []
   },
+  "table:core_slo_definitions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "journey",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "label",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "route_patterns_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "target_latency_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "latency_percentile",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "95",
+        "pk": 0
+      },
+      {
+        "name": "target_availability_bp",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "window_days",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "30",
+        "pk": 0
+      },
+      {
+        "name": "enabled",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_uom_conversions": {
     "columns": [
       {
@@ -4327,6 +4926,15 @@
     ],
     "fks": []
   },
+  "index:ix_core_alert_rules_company": {
+    "sql": "CREATE INDEX ix_core_alert_rules_company ON core_alert_rules (company_id, enabled)"
+  },
+  "index:ix_core_alerts_rule": {
+    "sql": "CREATE INDEX ix_core_alerts_rule ON core_alerts (rule_code, dedupe_key, status)"
+  },
+  "index:ix_core_alerts_status": {
+    "sql": "CREATE INDEX ix_core_alerts_status ON core_alerts (status, fired_at)"
+  },
   "index:ix_core_audit_log_entity": {
     "sql": "CREATE INDEX ix_core_audit_log_entity ON core_audit_log (entity, entity_id)"
   },
@@ -4353,6 +4961,15 @@
   },
   "index:ix_core_change_requests_type": {
     "sql": "CREATE INDEX ix_core_change_requests_type ON core_change_requests (type, status)"
+  },
+  "index:ix_core_client_events_correlation": {
+    "sql": "CREATE INDEX ix_core_client_events_correlation ON core_client_events (correlation_id)"
+  },
+  "index:ix_core_client_events_time": {
+    "sql": "CREATE INDEX ix_core_client_events_time ON core_client_events (created_at)"
+  },
+  "index:ix_core_client_events_type": {
+    "sql": "CREATE INDEX ix_core_client_events_type ON core_client_events (type, created_at)"
   },
   "index:ix_core_document_types_company": {
     "sql": "CREATE INDEX ix_core_document_types_company ON core_document_types (company_id)"
@@ -4474,6 +5091,9 @@
   "index:ix_core_schedules_due": {
     "sql": "CREATE INDEX ix_core_schedules_due ON core_schedules (enabled, next_run_at)"
   },
+  "index:ix_core_slo_definitions_company": {
+    "sql": "CREATE INDEX ix_core_slo_definitions_company ON core_slo_definitions (company_id, enabled)"
+  },
   "index:ix_core_uom_conversions_company": {
     "sql": "CREATE INDEX ix_core_uom_conversions_company ON core_uom_conversions (company_id)"
   },
@@ -4485,6 +5105,9 @@
   },
   "trigger:trg_core_formulas_immutable": {
     "sql": "CREATE TRIGGER trg_core_formulas_immutable BEFORE UPDATE OF code, formula_version, expression, inputs_json, outputs_json, rounding_policy, tests_json, owner_module, financial, effective_from ON core_formulas WHEN OLD.status <> 'DRAFT' BEGIN SELECT RAISE(ABORT, 'A formula version that is no longer a draft cannot be changed: create a new version'); END"
+  },
+  "index:ux_core_alert_rules_code": {
+    "sql": "CREATE UNIQUE INDEX ux_core_alert_rules_code ON core_alert_rules (code)"
   },
   "index:ux_core_backfill_runs_name": {
     "sql": "CREATE UNIQUE INDEX ux_core_backfill_runs_name ON core_backfill_runs (name)"
@@ -4534,6 +5157,9 @@
   "index:ux_core_jobs_schedule_run": {
     "sql": "CREATE UNIQUE INDEX ux_core_jobs_schedule_run ON core_jobs (schedule_code, scheduled_for) WHERE schedule_code IS NOT NULL"
   },
+  "index:ux_core_metric_samples_bucket": {
+    "sql": "CREATE UNIQUE INDEX ux_core_metric_samples_bucket ON core_metric_samples (bucket_hour, route_key)"
+  },
   "index:ux_core_number_issues_number": {
     "sql": "CREATE UNIQUE INDEX ux_core_number_issues_number ON core_number_issues (series_id, number)"
   },
@@ -4554,6 +5180,9 @@
   },
   "index:ux_core_schedules_code": {
     "sql": "CREATE UNIQUE INDEX ux_core_schedules_code ON core_schedules (code)"
+  },
+  "index:ux_core_slo_definitions_journey": {
+    "sql": "CREATE UNIQUE INDEX ux_core_slo_definitions_journey ON core_slo_definitions (journey)"
   },
   "index:ux_core_uom_conversions_pair": {
     "sql": "CREATE UNIQUE INDEX ux_core_uom_conversions_pair ON core_uom_conversions (COALESCE(item_code, ''), from_uom, to_uom) WHERE deleted_at IS NULL"

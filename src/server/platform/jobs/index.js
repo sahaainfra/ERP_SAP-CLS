@@ -2,11 +2,17 @@ import { randomUUID } from 'node:crypto';
 import { transaction } from '../db/index.js';
 import { writeAudit } from '../audit/index.js';
 import { publishEvent } from '../events/index.js';
+import { log as appLog } from '../http/logger.js';
+import { currentContext, runWithContext } from '../observability/context.js';
+import { metrics } from '../observability/metrics.js';
+import { formatTraceparent, parseTraceparent, tracer } from '../observability/tracing.js';
 import { notFound, unprocessable } from '../http/errors.js';
 
 const DEFAULT_BACKOFF = (attempt) => Math.min(60_000 * 2 ** (attempt - 1), 3_600_000);
 const iso = (ms) => new Date(ms).toISOString();
 const MAX_LOG_LINES = 200;
+/** The correlation ID and trace of the request that queued a job travel in its parameters under these keys. */
+const stripTrace = ({ _cid, _tp, ...rest }) => rest;
 
 /** Thrown by a handler (or by `ctx.throwIfCancelled()`) to stop a job that was asked to cancel. */
 export class JobCancelled extends Error {
@@ -30,7 +36,8 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
     id: r.id,
     jobId: r.job_id,
     type: r.type,
-    params: JSON.parse(r.params_json),
+    params: stripTrace(JSON.parse(r.params_json)),
+    correlationId: JSON.parse(r.params_json)._cid ?? null,
     status: r.status,
     progress: r.progress,
     progressMessage: r.progress_message,
@@ -65,10 +72,12 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
       const def = handlers.get(type);
       if (!def) throw unprocessable(`There is no job type ${type}.`);
       const jobId = randomUUID();
+      const ctx = currentContext();
+      const stored = { ...params, ...(ctx?.correlationId ? { _cid: ctx.correlationId } : {}), ...(ctx?.span ? { _tp: formatTraceparent(ctx.span.traceId, ctx.span.spanId) } : {}) };
       db.prepare(
         `INSERT INTO core_jobs (job_id, type, params_json, run_after, max_attempts, created_by, company_id, schedule_code, scheduled_for)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(jobId, type, JSON.stringify(params), runAfter ?? iso(now().getTime()), maxAttempts ?? def.maxAttempts, createdBy, companyId, scheduleCode, scheduledFor);
+      ).run(jobId, type, JSON.stringify(stored), runAfter ?? iso(now().getTime()), maxAttempts ?? def.maxAttempts, createdBy, companyId, scheduleCode, scheduledFor);
       return present(db.prepare('SELECT * FROM core_jobs WHERE job_id = ?').get(jobId));
     },
 
@@ -106,9 +115,10 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
       const log = [];
       const flush = () => db.prepare('UPDATE core_jobs SET log_json = ?, heartbeat_at = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(log.slice(-MAX_LOG_LINES)), iso(now().getTime()), iso(now().getTime()), row.id);
       const isCancelled = () => db.prepare('SELECT cancel_requested FROM core_jobs WHERE id = ?').get(row.id)?.cancel_requested === 1;
+      const raw = JSON.parse(row.params_json);
       const ctx = {
         jobId: row.job_id,
-        params: JSON.parse(row.params_json),
+        params: stripTrace(raw),
         attempt: row.attempts,
         db,
         setProgress(percent, message = null) {
@@ -124,14 +134,18 @@ export function createJobRunner({ db, now = () => new Date(), backoffMs = DEFAUL
         },
       };
       let outcome;
+      const started = process.hrtime.bigint();
+      appLog.info({ msg: 'job started', jobId: row.job_id, jobType: row.type, attempt: row.attempts, ...(raw._cid ? { correlationId: raw._cid } : {}) });
       try {
         if (!def) throw new Error(`No handler is registered for job type ${row.type}`);
-        const result = await def.handler(ctx);
+        const result = await runWithContext({ correlationId: raw._cid ?? undefined }, () => tracer.withSpan(`job ${row.type}`, { kind: 'consumer', parent: parseTraceparent(raw._tp), attributes: { 'job.id': row.job_id, 'job.attempt': row.attempts } }, () => def.handler(ctx)));
         outcome = isCancelled() ? { status: 'CANCELLED' } : { status: 'SUCCEEDED', result };
       } catch (err) {
         if (err instanceof JobCancelled) outcome = { status: 'CANCELLED' };
         else outcome = { status: 'FAILED', error: String(err?.message ?? err).slice(0, 1000) };
       }
+      metrics.counter(`jobs.${outcome.status.toLowerCase()}`);
+      (outcome.status === 'FAILED' ? appLog.warn : appLog.info)({ msg: `job ${outcome.status.toLowerCase()}`, jobId: row.job_id, jobType: row.type, durationMs: Math.round(Number(process.hrtime.bigint() - started) / 1e6), ...(raw._cid ? { correlationId: raw._cid } : {}), ...(outcome.error ? { error: outcome.error } : {}) });
       return runner.finish(row, outcome, log);
     },
 

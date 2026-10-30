@@ -1,3 +1,4 @@
+import { metrics } from '../observability/metrics.js';
 import { dec } from '../../../shared/decimal.js';
 import { parseBusinessDate } from '../../../shared/dates.js';
 import { badRequest } from '../http/errors.js';
@@ -127,7 +128,11 @@ export function createParameterStore(db, registry = parameterRegistry) {
       if (!def) throw new Error(`Unknown parameter "${key}"`);
       const ck = `${key}|${companyId}|${projectId}|${siteId}|${date}`;
       const hit = cache.get(ck);
-      if (hit && hit.generation === generation) return hit.out;
+      if (hit && hit.generation === generation) {
+        metrics.counter('cache.parameters.hit');
+        return hit.out;
+      }
+      metrics.counter('cache.parameters.miss');
       const row = stmt.get({ key, date, company: companyId ?? -1, project: projectId ?? -1, site: siteId ?? -1 });
       const out = row
         ? { value: typed(def.dataType, row.value), source: row.scope_type, text: row.value, effectiveFrom: row.effective_from }

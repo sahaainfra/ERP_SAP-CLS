@@ -1,6 +1,8 @@
 import { createEventBus } from '../events/index.js';
 import { createJobRunner } from '../jobs/index.js';
 import { createScheduler } from '../jobs/scheduler.js';
+import { metrics } from '../observability/metrics.js';
+import { opsOf } from '../observability/ops.js';
 
 /**
  * One event bus, job runner and scheduler per database, shared by the module that mounts the routes and by the
@@ -26,7 +28,8 @@ export function runtimeOf(db, options = {}) {
  */
 export function startWorkers(db, { intervalMs = 1000, logger = console } = {}) {
   const rt = runtimeOf(db);
-  let busy = { events: false, jobs: false, schedule: false };
+  let busy = { events: false, jobs: false, schedule: false, ops: false };
+  let ticks = 0;
   const guard = (name, fn) => async () => {
     if (busy[name]) return;
     busy[name] = true;
@@ -45,10 +48,17 @@ export function startWorkers(db, { intervalMs = 1000, logger = console } = {}) {
       await rt.jobs.drain(5);
     }), intervalMs),
     setInterval(guard('schedule', () => rt.scheduler.tick()), Math.max(intervalMs, 5000)),
+    // Every minute: save the request metrics and check the alert rules; once an hour also remove what is old.
+    setInterval(guard('ops', () => {
+      const ops = opsOf(db, { metrics, storagePath: process.cwd() });
+      ops.tick();
+      ticks += 1;
+      if (ticks % 60 === 0) ops.purge();
+    }), Math.max(intervalMs * 60, 60_000)),
   ];
   for (const t of timers) t.unref?.();
   return () => {
     for (const t of timers) clearInterval(t);
-    busy = { events: true, jobs: true, schedule: true };
+    busy = { events: true, jobs: true, schedule: true, ops: true };
   };
 }

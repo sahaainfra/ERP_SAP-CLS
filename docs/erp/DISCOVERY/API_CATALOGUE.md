@@ -8,6 +8,7 @@ Validation is "yes" when the controller method calls a validator before the serv
 | GET | /api/health | none (public) | no |
 | GET | /health/live | none (public) | no |
 | GET | /health/ready | administrators or monitoring token | no |
+| GET | /metrics | none (public) | no |
 | GET | /api/v1/core/about | permission core.about.view | no |
 | GET | /api/v1/core/architecture | permission core.arch.view | no |
 | GET | /api/v1/core/formulas | any authenticated user | no |
@@ -97,6 +98,22 @@ Validation is "yes" when the controller method calls a validator before the serv
 | GET | /api/v1/core/numbering/preview | permission core.numbering.preview | no |
 | POST | /api/v1/core/numbering/next | permission core.numbering.issue | yes |
 | GET | /api/v1/core/numbering/issues | permission core.numbering.view | yes |
+| GET | /api/v1/core/ops/summary | any authenticated user | no |
+| GET | /api/v1/core/ops/slos | any authenticated user | no |
+| GET | /api/v1/core/ops/alert-rules | any authenticated user | no |
+| GET | /api/v1/core/ops/alerts | any authenticated user | no |
+| POST | /api/v1/core/ops/alerts/:id/acknowledge | any authenticated user | no |
+| POST | /api/v1/core/ops/evaluate | any authenticated user | no |
+| POST | /api/v1/core/ops/slo-definitions/:journey/change-requests | any authenticated user | no |
+| POST | /api/v1/core/ops/alert-rules/:code/change-requests | any authenticated user | no |
+| GET | /api/v1/core/ops/traces | any authenticated user | no |
+| GET | /api/v1/core/ops/traces/:traceId/otlp | any authenticated user | no |
+| GET | /api/v1/core/ops/traces/:traceId | any authenticated user | no |
+| GET | /api/v1/core/ops/follow | any authenticated user | no |
+| POST | /api/v1/core/ops/client-events | any authenticated user | no |
+| GET | /api/v1/core/ops/client-events | any authenticated user | no |
+| GET | /api/v1/core/ops/baseline | any authenticated user | no |
+| POST | /api/v1/core/ops/diagnostics/force-error | any authenticated user | no |
 | GET | /api/v1/core/parameters/definitions | permission core.param.view | no |
 | GET | /api/v1/core/parameters/resolve | permission core.param.view | no |
 | GET | /api/v1/core/parameters | permission core.param.view | no |

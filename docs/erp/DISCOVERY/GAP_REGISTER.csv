@@ -7,8 +7,8 @@ seq,part_id,title,module,existence,decision,evidence
 6,01.03,"System Configuration, Financial Years & Numbering Series",M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.03.md (not yet reviewed)
 7,01.04,"Domain Event Bus, Transactional Outbox & Background Job Scheduler",M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.04.md (not yet reviewed)
 8,01.05,File Storage & Secure Attachment Service,M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.05.md (not yet reviewed)
-9,01.06,Central Calculation Engine & Formula Registry,M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
-10,01.07,"Observability, Logging, Health Checks & Performance Baseline",M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
+9,01.06,Central Calculation Engine & Formula Registry,M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.06.md (not yet reviewed)
+10,01.07,"Observability, Logging, Health Checks & Performance Baseline",M01,Partial,Reuse,Built; see docs/erp/COMPLETION/01.07.md (not yet reviewed)
 11,01.08,Integration Hub & External Connector Framework,M01,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 12,02.01,"Authentication, Sessions, MFA & Password Policy",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"
 13,02.02,"Organisation Hierarchy — Company, Branch, Department, Project & Site Master",M02,None,New,"Repository scan: no code, schema or routes for this part (see SYSTEM_MAP.md)"

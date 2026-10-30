@@ -17,6 +17,7 @@ Status comes from the E2E run (`npm run test:e2e`, desktop and mobile), not from
 | Holidays | src/client/modules/core/pages/HolidaysPage.jsx | real API (query hooks) | Working |
 | Jobs | src/client/modules/core/pages/JobsPage.jsx | real API (query hooks) | Working |
 | Numbering | src/client/modules/core/pages/NumberingPage.jsx | real API (query hooks) | Working |
+| OperationsHealth | src/client/modules/core/pages/OperationsHealthPage.jsx | real API (query hooks) | Working |
 | Operations | src/client/modules/core/pages/OperationsPage.jsx | real API (query hooks) | Working |
 | Parameters | src/client/modules/core/pages/ParametersPage.jsx | real API (query hooks) | Working |
 | SampleBills | src/client/modules/core/pages/SampleBillsPage.jsx | real API (query hooks) | Working |

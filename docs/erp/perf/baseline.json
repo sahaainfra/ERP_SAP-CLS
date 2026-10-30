@@ -1,0 +1,163 @@
+{
+  "generatedAt": "2026-10-30T17:00:46.744Z",
+  "note": "Baseline for comparison by the performance tests of part 30.06. Numbers depend on the machine: compare runs from the same kind of machine.",
+  "environment": {
+    "node": "v24.20.0",
+    "platform": "win32 10.0.19045",
+    "cpus": 4,
+    "cpuModel": "Intel(R) Core(TM) i5-6200U CPU @ 2.30GHz",
+    "memoryGb": 16,
+    "database": "SQLite file on local disk, one connection"
+  },
+  "config": {
+    "durationMsPerJourney": 4000,
+    "concurrency": 8,
+    "standards": {
+      "list": 500,
+      "record": 300,
+      "save": 800
+    }
+  },
+  "dataset": {
+    "documents": 20000,
+    "bills": 20000,
+    "events": 100000
+  },
+  "journeys": [
+    {
+      "id": "session",
+      "label": "Session check (every page load)",
+      "kind": "record",
+      "requests": 5518,
+      "errors": 0,
+      "requestsPerSecond": 1378.81,
+      "meanMs": 5.8,
+      "p50Ms": 4.92,
+      "p95Ms": 10.49,
+      "p99Ms": 17.05,
+      "maxMs": 31.93,
+      "standardMs": 300,
+      "meetsStandard": true
+    },
+    {
+      "id": "flags_list",
+      "label": "Feature flags list",
+      "kind": "list",
+      "requests": 1820,
+      "errors": 0,
+      "requestsPerSecond": 454.09,
+      "meanMs": 17.6,
+      "p50Ms": 16.55,
+      "p95Ms": 26.88,
+      "p99Ms": 36.66,
+      "maxMs": 43.74,
+      "standardMs": 500,
+      "meetsStandard": true
+    },
+    {
+      "id": "sample_documents_list",
+      "label": "Sample documents list (20000 rows)",
+      "kind": "list",
+      "requests": 144,
+      "errors": 0,
+      "requestsPerSecond": 34.59,
+      "meanMs": 229.66,
+      "p50Ms": 230,
+      "p95Ms": 268.67,
+      "p99Ms": 270.44,
+      "maxMs": 271.7,
+      "standardMs": 500,
+      "meetsStandard": true
+    },
+    {
+      "id": "sample_bills_list",
+      "label": "Sample bills list (20000 rows)",
+      "kind": "list",
+      "requests": 132,
+      "errors": 0,
+      "requestsPerSecond": 31.15,
+      "meanMs": 251.8,
+      "p50Ms": 254.97,
+      "p95Ms": 281.04,
+      "p99Ms": 281.94,
+      "maxMs": 282.08,
+      "standardMs": 500,
+      "meetsStandard": true
+    },
+    {
+      "id": "events_list",
+      "label": "Event log (100000 rows)",
+      "kind": "list",
+      "requests": 120,
+      "errors": 0,
+      "requestsPerSecond": 28.36,
+      "meanMs": 280.1,
+      "p50Ms": 284.13,
+      "p95Ms": 292.59,
+      "p99Ms": 293.8,
+      "maxMs": 309.21,
+      "standardMs": 500,
+      "meetsStandard": true
+    },
+    {
+      "id": "formula_detail",
+      "label": "Formula with its versions",
+      "kind": "record",
+      "requests": 2565,
+      "errors": 0,
+      "requestsPerSecond": 639.01,
+      "meanMs": 12.5,
+      "p50Ms": 12.01,
+      "p95Ms": 13.81,
+      "p99Ms": 29.92,
+      "maxMs": 49.98,
+      "standardMs": 300,
+      "meetsStandard": true
+    },
+    {
+      "id": "calc_bench",
+      "label": "Calculation test bench",
+      "kind": "record",
+      "requests": 2016,
+      "errors": 0,
+      "requestsPerSecond": 502.87,
+      "meanMs": 15.88,
+      "p50Ms": 14.57,
+      "p95Ms": 23.6,
+      "p99Ms": 33.38,
+      "maxMs": 66.25,
+      "standardMs": 300,
+      "meetsStandard": true
+    },
+    {
+      "id": "bill_create",
+      "label": "Create a bill (engine, trace, audit, event)",
+      "kind": "save",
+      "requests": 392,
+      "errors": 0,
+      "requestsPerSecond": 96.5,
+      "meanMs": 82.73,
+      "p50Ms": 82.62,
+      "p95Ms": 105.51,
+      "p99Ms": 118.74,
+      "maxMs": 118.83,
+      "standardMs": 800,
+      "meetsStandard": true
+    },
+    {
+      "id": "file_upload",
+      "label": "Attach a small PDF",
+      "kind": "save",
+      "requests": 333,
+      "errors": 0,
+      "requestsPerSecond": 81.9,
+      "meanMs": 97.17,
+      "p50Ms": 92.98,
+      "p95Ms": 143.58,
+      "p99Ms": 168,
+      "maxMs": 171.96,
+      "standardMs": 800,
+      "meetsStandard": true
+    }
+  ]
+}

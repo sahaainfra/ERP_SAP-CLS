@@ -36,7 +36,16 @@ export function createApiClient({
   newId = defaultId,
   retries = 2,
   backoffMs = 200,
+  onFailure = () => {},
 } = {}) {
+  const fail = (err, path) => {
+    try {
+      onFailure(err, path);
+    } catch {
+      /* a broken observer must not change the outcome of the call */
+    }
+    return err;
+  };
   async function request(method, path, body, { signal, headers = {} } = {}) {
     const correlationId = newId();
     const canRetry = method === 'GET' || method === 'HEAD';
@@ -64,7 +73,7 @@ export function createApiClient({
           await sleep(backoffMs * 2 ** (attempt - 1));
           continue;
         }
-        throw lastError;
+        throw fail(lastError, path);
       }
       const text = await res.text();
       let json;
@@ -79,7 +88,7 @@ export function createApiClient({
         await sleep(backoffMs * 2 ** (attempt - 1));
         continue;
       }
-      throw lastError;
+      throw fail(lastError, path);
     }
     throw lastError;
   }

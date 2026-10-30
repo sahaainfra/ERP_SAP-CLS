@@ -7,6 +7,8 @@ import { likePattern, pageResponse } from '../../../platform/pagination/index.js
 import { writeAudit } from '../../../platform/audit/index.js';
 
 const iso = (s) => s;
+/** The event log browses the most recent events only: scanning every payload of a large outbox cost over a second at 100,000 rows (baseline, part 01.07). Older events stay for replay (D-045). */
+export const EVENT_LOG_WINDOW = 20_000;
 const eventScope = "(json_extract(o.payload, '$.companyId') IS NULL OR json_extract(o.payload, '$.companyId') = :c)";
 
 const presentEvent = (o) => {
@@ -72,8 +74,9 @@ export function createEventService({ db, bus, jobs }) {
 
     list(actor, query) {
       assertPermission(actor, 'core.events.view');
-      const params = { c: companyOf(actor), q: likePattern(query.q), type: query.filters.type ?? null, published: query.filters.published === undefined ? null : query.filters.published === 'true' ? 1 : 0 };
-      const where = `${eventScope} AND o.event_type LIKE :q ESCAPE '\\' AND (:type IS NULL OR o.event_type = :type) AND (:published IS NULL OR (o.published_at IS NOT NULL) = :published)`;
+      const floor = Math.max(0, db.prepare('SELECT COALESCE(MAX(id), 0) AS m FROM core_outbox').get().m - EVENT_LOG_WINDOW);
+      const params = { c: companyOf(actor), floor, q: likePattern(query.q), type: query.filters.type ?? null, published: query.filters.published === undefined ? null : query.filters.published === 'true' ? 1 : 0 };
+      const where = `o.id > :floor AND ${eventScope} AND o.event_type LIKE :q ESCAPE '\\' AND (:type IS NULL OR o.event_type = :type) AND (:published IS NULL OR (o.published_at IS NOT NULL) = :published)`;
       const total = db.prepare(`SELECT COUNT(*) AS n FROM core_outbox o WHERE ${where}`).get(params).n;
       const sort = query.sort[0];
       const column = { id: 'o.id', type: 'o.event_type', occurredAt: 'o.created_at' }[sort?.column] ?? 'o.id';

@@ -14,6 +14,17 @@ export const queryKeys = {
       summary: () => ['core', 'integrity', 'summary'],
       runs: (params) => ['core', 'integrity', 'runs', params],
     },
+    observe: {
+      all: ['core', 'observe'],
+      summary: () => ['core', 'observe', 'summary'],
+      slos: () => ['core', 'observe', 'slos'],
+      rules: () => ['core', 'observe', 'rules'],
+      alerts: (p) => ['core', 'observe', 'alerts', p],
+      traces: (p) => ['core', 'observe', 'traces', p],
+      trace: (id) => ['core', 'observe', 'trace', id],
+      follow: (id) => ['core', 'observe', 'follow', id],
+      baseline: () => ['core', 'observe', 'baseline'],
+    },
     architecture: () => ['core', 'architecture'],
     settings: () => ['core', 'settings'],
     files: {

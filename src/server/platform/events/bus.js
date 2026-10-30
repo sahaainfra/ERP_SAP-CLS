@@ -1,6 +1,10 @@
 import { transaction } from '../db/index.js';
 import { writeAudit } from '../audit/index.js';
 import { notFound, unprocessable } from '../http/errors.js';
+import { log } from '../http/logger.js';
+import { currentContext, runWithContext } from '../observability/context.js';
+import { metrics } from '../observability/metrics.js';
+import { parseTraceparent, tracer } from '../observability/tracing.js';
 import { publishEvent } from './publish.js';
 
 const DEFAULT_BACKOFF = (attempt) => Math.min(30_000 * 2 ** (attempt - 1), 3_600_000); // 30 s, 1 min, 2 min ... up to 1 h
@@ -39,6 +43,46 @@ export function createEventBus({ db, now = () => new Date(), maxAttempts = 5, ba
 
   const subscribersOf = (type) => [...consumers.values()].filter((c) => c.patterns.some((p) => matches(p, type)));
   const outboxRow = (id) => db.prepare('SELECT * FROM core_outbox WHERE id = ?').get(id);
+
+  /** One try of one inbox row (the body of deliver). */
+  function attempt(consumer, row, event) {
+    const stamp = iso(now().getTime());
+    const started = process.hrtime.bigint();
+    try {
+      const done = transaction(db, () => {
+        const current = db.prepare('SELECT status FROM core_inbox WHERE id = ?').get(row.id);
+        if (!current || current.status !== 'PENDING') return false; // processed or resolved elsewhere
+        if (!event) throw new Error('The event is no longer in the outbox');
+        consumer.handler(event, { db, replay: false, attempt: row.attempts + 1, consumer: consumer.name });
+        db.prepare("UPDATE core_inbox SET status = 'PROCESSED', attempts = attempts + 1, processed_at = ?, last_error = NULL, updated_at = ? WHERE id = ?").run(stamp, stamp, row.id);
+        return true;
+      });
+      if (done) {
+        metrics.counter('events.processed');
+        log.info({ msg: 'event handled', consumer: consumer.name, eventType: row.event_type, eventId: event?.eventId, attempt: row.attempts + 1, durationMs: Math.round(Number(process.hrtime.bigint() - started) / 1e6) });
+      }
+      return done ? 'processed' : 'skipped';
+    } catch (err) {
+      const attempts = row.attempts + 1;
+      const dead = attempts >= consumer.maxAttempts;
+      const message = String(err?.message ?? err).slice(0, 1000);
+      db.prepare("UPDATE core_inbox SET status = ?, attempts = ?, last_error = ?, next_attempt_at = ?, updated_at = ? WHERE id = ? AND status = 'PENDING'").run(
+        dead ? 'DEAD' : 'PENDING',
+        attempts,
+        message,
+        dead ? row.next_attempt_at : iso(now().getTime() + backoffMs(attempts)),
+        stamp,
+        row.id,
+      );
+      currentContext()?.span?.end({ status: 'error', attributes: { 'error.message': message } });
+      metrics.counter(dead ? 'events.dead_lettered' : 'events.failed');
+      (dead ? log.error : log.warn)({ msg: dead ? 'event dead-lettered' : 'event handler failed', consumer: consumer.name, eventType: row.event_type, eventId: event?.eventId, attempt: attempts, error: message });
+      if (dead) {
+        publishEvent(db, { type: 'core.event.dead_lettered', entity: 'inbox', entityId: row.id, actorId: 'system', companyId: row.company_id, data: { consumer: row.consumer, eventId: row.event_id, eventType: row.event_type, attempts, error: message } });
+      }
+      return dead ? 'dead' : 'retry';
+    }
+  }
 
   const bus = {
     consumers: () => [...consumers.values()].map(({ name, patterns, maxAttempts: m }) => ({ name, patterns, maxAttempts: m })),
@@ -101,34 +145,10 @@ export function createEventBus({ db, now = () => new Date(), maxAttempts = 5, ba
       if (!consumer) return 'skipped'; // another service owns this consumer
       const source = outboxRow(row.outbox_id);
       const event = source ? envelopeOf(source) : null;
-      const stamp = iso(now().getTime());
-      try {
-        const done = transaction(db, () => {
-          const current = db.prepare('SELECT status FROM core_inbox WHERE id = ?').get(row.id);
-          if (!current || current.status !== 'PENDING') return false; // processed or resolved elsewhere
-          if (!event) throw new Error('The event is no longer in the outbox');
-          consumer.handler(event, { db, replay: false, attempt: row.attempts + 1, consumer: consumer.name });
-          db.prepare("UPDATE core_inbox SET status = 'PROCESSED', attempts = attempts + 1, processed_at = ?, last_error = NULL, updated_at = ? WHERE id = ?").run(stamp, stamp, row.id);
-          return true;
-        });
-        return done ? 'processed' : 'skipped';
-      } catch (err) {
-        const attempts = row.attempts + 1;
-        const dead = attempts >= consumer.maxAttempts;
-        const message = String(err?.message ?? err).slice(0, 1000);
-        db.prepare("UPDATE core_inbox SET status = ?, attempts = ?, last_error = ?, next_attempt_at = ?, updated_at = ? WHERE id = ? AND status = 'PENDING'").run(
-          dead ? 'DEAD' : 'PENDING',
-          attempts,
-          message,
-          dead ? row.next_attempt_at : iso(now().getTime() + backoffMs(attempts)),
-          stamp,
-          row.id,
-        );
-        if (dead) {
-          publishEvent(db, { type: 'core.event.dead_lettered', entity: 'inbox', entityId: row.id, actorId: 'system', companyId: row.company_id, data: { consumer: row.consumer, eventId: row.event_id, eventType: row.event_type, attempts, error: message } });
-        }
-        return dead ? 'dead' : 'retry';
-      }
+      // The consumer works inside the correlation ID and trace of the request that raised the event.
+      return runWithContext({ correlationId: event?.correlationId ?? undefined, user: undefined }, () =>
+        tracer.withSpan(`consume ${consumer.name}`, { kind: 'consumer', parent: parseTraceparent(event?.traceparent), attributes: { 'messaging.event_type': row.event_type, 'messaging.consumer': consumer.name, 'messaging.attempt': row.attempts + 1 } }, () => attempt(consumer, row, event)),
+      );
     },
 
     /** Relay and deliver until nothing is due (tests, and the worker's single tick). */
