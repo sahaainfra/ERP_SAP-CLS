@@ -13,14 +13,14 @@ A failing stage exits 1 and the report (`reports/regression/report.html`) names 
 ```bash
 gh api -X PUT repos/sahaainfra/ERP_SAP-CLS/branches/main/protection --input - <<'EOF'
 {
-  "required_status_checks": { "strict": true, "contexts": ["verify", "security", "codeql"] },
+  "required_status_checks": { "strict": true, "contexts": ["verify", "security"] },
   "enforce_admins": true,
   "required_pull_request_reviews": { "required_approving_review_count": 1, "require_code_owner_reviews": true },
   "restrictions": null
 }
 EOF
 ```
-With one owner, GitHub will not let the author approve their own pull request; add a second reviewer or relax `enforce_admins` knowingly and record that in DECISIONS.md.
+Add `"codeql"` to `contexts` once code scanning is enabled (D-012). With one owner, GitHub will not let the author approve their own pull request; add a second reviewer or relax `enforce_admins` knowingly and record that in DECISIONS.md.
 
 ## 3. Cut a release
 1. Write the commit subjects as `P<part>: summary (module code)`. Add a line `Release-note: <what changed, in business language>` to the body of any commit users will notice.

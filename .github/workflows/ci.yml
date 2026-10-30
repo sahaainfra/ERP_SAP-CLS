@@ -1,7 +1,7 @@
 name: CI
 
 # Runs on every pull request and on every push to main. Branch protection (docs/erp/RELEASE.md) makes the
-# jobs "verify", "security" and "codeql" required checks, so a pull request cannot merge unless they pass.
+# jobs "verify" and "security" required checks (add "codeql" once code scanning is enabled), so a pull request cannot merge unless they pass.
 on:
   pull_request:
   push:
@@ -62,10 +62,13 @@ jobs:
       - run: npm run erp:audit
       - run: npm run erp:secret-scan
 
+  # Not blocking until code scanning is enabled in the repository settings (defect D-012); the job then
+  # fails at upload with "Code scanning is not enabled". Remove continue-on-error once it is enabled.
   codeql:
     name: codeql
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    continue-on-error: true
     permissions:
       actions: read
       contents: read
@@ -79,7 +82,7 @@ jobs:
 
   package:
     name: package
-    needs: [verify, security, codeql]
+    needs: [verify, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
