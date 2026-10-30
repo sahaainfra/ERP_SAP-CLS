@@ -9,7 +9,7 @@ import { scanRepository, scanText } from '../scripts/lib/secrets.mjs';
 import { gateCoverage, parseLcov } from '../scripts/lib/coverage.mjs';
 import { bumpVersion, flagList, parseCommits, renderChangelog, renderReleaseNotes } from '../scripts/lib/release.mjs';
 import { createArtifact, verifyArtifact, writeSums } from '../scripts/lib/package.mjs';
-import { MIGRATIONS_DIR, ROOT } from '../src/server/db.js';
+import { MIGRATIONS_DIR, ROOT } from '../src/server/platform/db/index.js';
 
 const scratch = (prefix) => mkdtempSync(join(tmpdir(), prefix));
 
@@ -145,8 +145,8 @@ test('artefacts carry build info and checksums; tampering is detected', () => {
   const { dir, info } = createArtifact({ root: ROOT, outRoot: out, buildId: 'test-1', version: '9.9.9', commit: 'abc1234', requireClient: false });
   assert.deepEqual(JSON.parse(readFileSync(join(dir, 'build-info.json'), 'utf8')).buildId, info.buildId);
   assert.deepEqual(verifyArtifact(dir), []);
-  writeFileSync(join(dir, 'src', 'server', 'flags.js'), '// tampered\n');
-  assert.ok(verifyArtifact(dir).some((p) => /checksum mismatch src\/server\/flags\.js/.test(p)));
+  writeFileSync(join(dir, 'src', 'server', 'app.js'), '// tampered\n');
+  assert.ok(verifyArtifact(dir).some((p) => /checksum mismatch src\/server\/app\.js/.test(p)));
   writeSums(dir);
   assert.deepEqual(verifyArtifact(dir), []);
   mkdirSync(join(dir, 'extra'));

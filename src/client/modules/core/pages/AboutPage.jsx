@@ -1,23 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api } from './api.js';
-import { formatDateTime } from './format.js';
+import { useEffect } from 'react';
+import { useAbout } from '../api/index.js';
+import { formatDateTime } from '../../../platform/format.js';
 
-export default function AboutPage({ session }) {
-  const [state, setState] = useState({ status: 'loading', data: null, error: null });
-
-  const load = useCallback(async () => {
-    setState({ status: 'loading', data: null, error: null });
-    try {
-      const res = await api('GET', '/core/about');
-      setState({ status: 'ready', data: res.data, error: null });
-    } catch (error) {
-      setState({ status: error.status === 403 ? 'forbidden' : 'error', data: null, error });
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load, session?.user, session?.roles?.join(',')]);
+export default function AboutPage() {
+  const query = useAbout();
+  const state = query.isError
+    ? { status: query.error.status === 403 ? 'forbidden' : 'error', data: null, error: query.error }
+    : query.data
+      ? { status: 'ready', data: query.data, error: null }
+      : { status: 'loading', data: null, error: null };
+  const load = () => query.refetch();
 
   useEffect(() => {
     document.title = 'About - Administration - ERP';

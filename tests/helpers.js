@@ -1,7 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
-import { loadConfig } from '../src/server/config.js';
-import { migrateUp } from '../src/server/db.js';
+import { loadConfig } from '../src/server/platform/config/index.js';
+import { migrateUp } from '../src/server/platform/db/index.js';
 import { createApp } from '../src/server/app.js';
+import { silentLogger } from '../src/server/platform/http/logger.js';
 
 export function testConfig(overrides = {}) {
   return loadConfig({ NODE_ENV: 'test', DATABASE_PATH: ':memory:', AUTH_MODE: 'dev-headers', ...overrides });
@@ -15,9 +16,9 @@ export function memoryDb() {
 }
 
 /** Start the API on a random port; returns { db, call, close }. */
-export async function startApi(configOverrides = {}) {
+export async function startApi(configOverrides = {}, appOverrides = {}) {
   const db = memoryDb();
-  const app = createApp({ config: testConfig(configOverrides), db, log: () => {} });
+  const app = createApp({ config: testConfig(configOverrides), db, logger: silentLogger, ...appOverrides });
   const server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });

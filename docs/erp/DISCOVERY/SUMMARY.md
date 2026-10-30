@@ -1,14 +1,14 @@
 # Discovery Summary
 
 - Parts in pack: 228
-- Application source files: 414
-- Parts built (Ready for review or Accepted): 3
-- Parts with no implementation: 225
+- Application source files: 84
+- Parts built (Ready for review or Accepted): 4
+- Parts with no implementation: 224
 
 | Module | Parts | Built |
 |---|---|---|
 | M00 | 3 | 3 |
-| M01 | 8 | 0 |
+| M01 | 8 | 1 |
 | M02 | 7 | 0 |
 | M03 | 10 | 0 |
 | M04 | 15 | 0 |

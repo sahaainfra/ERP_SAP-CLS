@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { createArtifact, writeSums } from '../scripts/lib/package.mjs';
 import { deploy, environmentPaths, rollback, stopEnvironment } from '../scripts/lib/deploy.mjs';
 import { ROLLBACK_TARGET_MS, rehearse } from '../scripts/lib/rehearsal.mjs';
-import { ROOT } from '../src/server/db.js';
+import { ROOT } from '../src/server/platform/db/index.js';
 
 // Deployments must live under the repository so the release finds node_modules (a real host runs npm ci).
 const WORK = join(ROOT, '.deploy-test');
@@ -57,7 +57,7 @@ test('deploy refuses a tampered artefact and a build that is already deployed', 
   const { dir } = createArtifact({ root: ROOT, outRoot: join(work, 'artifacts'), buildId: 'ref-A', version: '1.0.0', commit: 'x', requireClient: false });
   const common = { envName: 'staging', deployRoot: join(work, 'env'), port: 3393, nodeEnv: 'test' };
   try {
-    appendFileSync(join(dir, 'src', 'server', 'flags.js'), '\n// tampered after packaging\n');
+    appendFileSync(join(dir, 'src', 'server', 'app.js'), '\n// tampered after packaging\n');
     await assert.rejects(deploy({ ...common, artifactDir: dir }), /failed verification/);
     writeSums(dir);
     assert.ok((await deploy({ ...common, artifactDir: dir })).ok);

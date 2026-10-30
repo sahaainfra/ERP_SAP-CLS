@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { migrateUp } from '../../src/server/db.js';
+import { migrateUp } from '../../src/server/platform/db/index.js';
 
 export function bumpVersion(version, kind) {
   const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);

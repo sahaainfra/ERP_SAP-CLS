@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { diffSchema, snapshotFromMigrations } from '../scripts/lib/schema.mjs';
 import { canonical, captureGolden, compareGolden, sha256 } from '../scripts/lib/golden.mjs';
-import { MIGRATIONS_DIR, ROOT } from '../src/server/db.js';
+import { MIGRATIONS_DIR, ROOT } from '../src/server/platform/db/index.js';
 
 function scratchMigrations(extra = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'erp-mig-'));

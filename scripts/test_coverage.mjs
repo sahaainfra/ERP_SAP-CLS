@@ -12,6 +12,8 @@ const r = spawnSync(
     '--test',
     '--experimental-test-coverage',
     '--test-coverage-include=src/server/**',
+    '--test-coverage-include=src/shared/**',
+    '--test-coverage-include=src/client/platform/**',
     '--test-coverage-include=scripts/lib/**',
     '--test-reporter=spec',
     '--test-reporter-destination=stdout',

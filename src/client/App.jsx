@@ -1,20 +1,13 @@
-import { useEffect, useState } from 'react';
-import { api, loadIdentity, saveIdentity } from './api.js';
-import { FlagsProvider } from './useFeatureFlag.jsx';
-import FlagsPage from './FlagsPage.jsx';
-import AboutPage from './AboutPage.jsx';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { loadIdentity, saveIdentity } from './platform/api/index.js';
+import { allRoutes, defaultRoute, findRoute, routesFor } from './platform/shell/registry.js';
+import { useFeatureFlag, useSession } from './modules/core/api/index.js';
 
 const THEME_KEY = 'erp.theme';
 const ROLES = ['SYSADM', 'ITADM', 'PM'];
-const FLAG_KEYS = ['ff.prog.p0001', 'ff.prog.p0002', 'ff.prog.p0003'];
-const ROUTES = {
-  '/admin/feature-flags': { label: 'Feature Flags', Page: FlagsPage },
-  '/admin/about': { label: 'About', Page: AboutPage },
-};
 
-function currentPath() {
-  return ROUTES[window.location.pathname] ? window.location.pathname : '/admin/feature-flags';
-}
+const currentPath = () => (findRoute(window.location.pathname) ? window.location.pathname : defaultRoute());
 
 function loadTheme() {
   try {
@@ -24,11 +17,19 @@ function loadTheme() {
   }
 }
 
+/** Shows its children only while a feature flag is ON for the signed-in user. */
+function FlagGate({ flag, children }) {
+  const on = useFeatureFlag(flag);
+  return on ? children : null;
+}
+
 export default function App() {
+  const qc = useQueryClient();
   const [theme, setTheme] = useState(loadTheme);
   const [identity, setIdentity] = useState(loadIdentity);
-  const [session, setSession] = useState(null);
   const [path, setPath] = useState(currentPath);
+  const session = useSession();
+  const firstIdentity = useRef(true);
 
   useEffect(() => {
     const onPop = () => setPath(currentPath());
@@ -52,22 +53,30 @@ export default function App() {
     }
   }, [theme]);
 
+  // A different (development) identity sees different data: drop everything cached for the old one.
   useEffect(() => {
     saveIdentity(identity);
-    api('GET', '/core/session').then((r) => setSession(r.data)).catch(() => setSession(null));
-  }, [identity]);
+    if (firstIdentity.current) firstIdentity.current = false;
+    else qc.resetQueries();
+  }, [identity, qc]);
 
-  const devIdentity = session?.environment !== 'production';
+  const s = session.data;
+  const devIdentity = s?.environment !== 'production';
+  const nav = s ? routesFor(s.permissions) : [];
+  const route = findRoute(path) ?? allRoutes()[0];
 
   return (
-    <FlagsProvider keys={FLAG_KEYS} identityVersion={`${identity.user}|${identity.roles}|${identity.company}`}>
+    <>
       <a href="#main" className="skip">Skip to content</a>
       <header className="shellbar">
         <strong>ERP</strong>
         <nav aria-label="Main">
-          {Object.entries(ROUTES).map(([to, r]) => (
-            <a key={to} href={to} onClick={go(to)} aria-current={to === path ? 'page' : undefined}>{r.label}</a>
-          ))}
+          {nav.map((r) => {
+            const link = (
+              <a key={r.path} href={r.path} onClick={go(r.path)} aria-current={r.path === path ? 'page' : undefined}>{r.label}</a>
+            );
+            return r.flag ? <FlagGate key={r.path} flag={r.flag}>{link}</FlagGate> : link;
+          })}
         </nav>
         <span className="spacer" />
         <label className="shell-field">
@@ -95,7 +104,17 @@ export default function App() {
           </label>
         </div>
       )}
-      <main id="main">{session && (() => { const { Page } = ROUTES[path]; return <Page session={session} />; })()}</main>
-    </FlagsProvider>
+      <main id="main">
+        {s && route && <route.Page session={s} />}
+        {session.isError && (
+          <div className="state state-error" role="alert">
+            <h2>Could not reach the server</h2>
+            <p>{session.error.message}</p>
+            {session.error.correlationId && <p className="muted">Correlation ID: <code>{session.error.correlationId}</code></p>}
+            <button type="button" className="btn" onClick={() => session.refetch()}>Try again</button>
+          </div>
+        )}
+      </main>
+    </>
   );
 }

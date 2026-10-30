@@ -15,13 +15,14 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 import catalogues  # noqa: E402
+import catalogues_api  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "docs", "erp", "DISCOVERY")
 PROGRESS = os.path.join(ROOT, "docs", "erp", "PROGRESS.csv")
 
 SKIP_DIRS = {".git", "node_modules", "dist", "build", "__pycache__", ".venv",
-             "reports", "data", "test-results", "playwright-report"}
+             "reports", "data", "test-results", "playwright-report", "artifacts", "coverage"}
 GENERATED = {os.path.join("docs", "erp", "DISCOVERY")}
 
 STACK_MARKERS = {
@@ -50,7 +51,7 @@ def walk():
     files = []
     for dirpath, dirnames, filenames in os.walk(ROOT):
         rel_dir = os.path.relpath(dirpath, ROOT)
-        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
+        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and not d.startswith('.deploy'))
         if rel_dir in GENERATED:
             dirnames[:] = []
             continue
@@ -124,8 +125,8 @@ def main():
     write("SYSTEM_MAP.md", "\n".join(lines))
 
     write("DB_CATALOGUE.md", catalogues.db_catalogue(ROOT))
-    write("API_CATALOGUE.md", catalogues.api_catalogue(ROOT))
-    write("PAGE_INVENTORY_EXISTING.md", catalogues.page_inventory(ROOT, files))
+    write("API_CATALOGUE.md", catalogues_api.api_catalogue(ROOT, files))
+    write("PAGE_INVENTORY_EXISTING.md", catalogues_api.page_inventory(ROOT, files))
     write("CALCULATION_REGISTRY.md", catalogues.calculation_registry(ROOT))
 
     # DEFECTS.md: placeholder scan only (the curated register is docs/erp/DEFECTS.md)

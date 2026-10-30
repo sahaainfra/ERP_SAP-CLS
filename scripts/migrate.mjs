@@ -1,6 +1,6 @@
 // Usage: node scripts/migrate.mjs up | down [steps]
-import { loadConfig } from '../src/server/config.js';
-import { migrateDown, migrateUp, openDatabase } from '../src/server/db.js';
+import { loadConfig } from '../src/server/platform/config/index.js';
+import { migrateDown, migrateUp, openDatabase } from '../src/server/platform/db/index.js';
 
 const [direction = 'up', steps = '1'] = process.argv.slice(2);
 const config = loadConfig();

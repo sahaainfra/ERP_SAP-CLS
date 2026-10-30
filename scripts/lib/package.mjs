@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const INCLUDE = ['dist', 'src/server', 'migrations', 'scripts/migrate.mjs', 'package.json', 'package-lock.json'];
+const INCLUDE = ['dist', 'src/server', 'src/shared', 'docs/erp/ARCHITECTURE.md', 'migrations', 'scripts/migrate.mjs', 'package.json', 'package-lock.json'];
 
 function listFiles(dir, base = dir) {
   const out = [];

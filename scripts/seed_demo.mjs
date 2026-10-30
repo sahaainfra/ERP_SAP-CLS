@@ -1,7 +1,7 @@
 // Demo/sandbox seed (FR-04). Never loaded in production: loadConfig() refuses ERP_DEMO_SEED=true there,
 // and this script refuses to run unless the guard is explicitly set.
-import { loadConfig, ConfigError } from '../src/server/config.js';
-import { migrateUp, openDatabase } from '../src/server/db.js';
+import { loadConfig, ConfigError } from '../src/server/platform/config/index.js';
+import { migrateUp, openDatabase } from '../src/server/platform/db/index.js';
 import { seedDemo } from '../seeds/demo/index.js';
 
 let config;

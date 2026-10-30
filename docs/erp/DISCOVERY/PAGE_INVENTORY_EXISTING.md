@@ -4,5 +4,6 @@ Status comes from the E2E run (`npm run test:e2e`, desktop and mobile), not from
 
 | Page | File | Data source | Status |
 |---|---|---|---|
-| About | src/client/AboutPage.jsx | real API | Working |
-| Flags | src/client/FlagsPage.jsx | real API | Working |
+| About | src/client/modules/core/pages/AboutPage.jsx | real API (query hooks) | Working |
+| Architecture | src/client/modules/core/pages/ArchitecturePage.jsx | real API (query hooks) | Working |
+| Flags | src/client/modules/core/pages/FlagsPage.jsx | real API (query hooks) | Working |

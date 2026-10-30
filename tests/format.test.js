@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { csvCell, formatDateTime, toCsv } from '../src/client/format.js';
+import { csvCell, formatDateTime, toCsv } from '../src/client/platform/format.js';
 
 test('CSV neutralises spreadsheet formula injection', () => {
   for (const bad of ['=1+1', '+SUM(A1)', '-2+3', '@cmd', '\tx']) assert.ok(csvCell(bad).startsWith("'"), bad);

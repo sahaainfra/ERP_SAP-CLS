@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { api, ApiError } from './api.js';
-import { FLAGS_CHANGED, useFeatureFlag } from './useFeatureFlag.jsx';
-import { formatDateTime, levelLabel, toCsv } from './format.js';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ApiError } from '../../../platform/api/index.js';
+import { fetchAllFlags, useFeatureFlag, useFlagList, useSetFlag } from '../api/index.js';
+import { formatDateTime, levelLabel, toCsv } from '../../../platform/format.js';
 
-const PAGE_SIZE = 25;
 const ENVIRONMENTS = ['development', 'test', 'staging', 'production'];
 
 function scopeText(row) {
@@ -72,55 +71,37 @@ export default function FlagsPage({ session }) {
   const pageFlag = useFeatureFlag('ff.prog.p0002');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
-  const [state, setState] = useState({ status: 'loading', rows: [], meta: null, error: null });
+  const query = useFlagList({ page, q });
+  const setFlag = useSetFlag();
   const [target, setTarget] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState(null);
   const [notice, setNotice] = useState('');
   const toggleDialog = useRef(null);
   const addDialog = useRef(null);
 
-  const load = useCallback(async () => {
-    setState((s) => ({ ...s, status: 'loading' }));
-    try {
-      const res = await api('GET', `/core/feature-flags?page=${page}&pageSize=${PAGE_SIZE}&q=${encodeURIComponent(q)}`);
-      setState({ status: 'ready', rows: res.data, meta: res.meta, error: null });
-    } catch (error) {
-      setState({ status: error.status === 403 ? 'forbidden' : 'error', rows: [], meta: null, error });
-    }
-  }, [page, q]);
-
-  useEffect(() => {
-    load();
-  }, [load, session?.user, session?.roles?.join(',')]);
+  // The shape the template below renders: loading, forbidden, error or ready.
+  const state = query.isError
+    ? { status: query.error.status === 403 ? 'forbidden' : 'error', rows: [], meta: null, error: query.error }
+    : query.data
+      ? { status: 'ready', rows: query.data.data, meta: query.data.meta, error: null }
+      : { status: 'loading', rows: [], meta: null, error: null };
+  const load = () => query.refetch();
+  const saving = setFlag.isPending;
 
   useEffect(() => {
     document.title = 'Feature Flags - Administration - ERP';
   }, []);
 
-  const save = async (scope, enabled, form, version, dialog) => {
-    setSaving(true);
+  const save = async (key, scope, enabled, form, version, dialog) => {
     setFormError(null);
     try {
-      await api('PATCH', `/core/feature-flags/${scopeKey(form)}`, {
-        scope,
-        enabled,
-        reason: String(form.get('reason') ?? ''),
-        version,
-      });
+      await setFlag.mutateAsync({ key, scope, enabled, reason: String(form.get('reason') ?? ''), version });
       dialog.current?.close();
-      setNotice(`Saved. ${scopeKey(form)} is now ${enabled ? 'ON' : 'OFF'} for ${scopeText({ ...scope })}.`);
-      window.dispatchEvent(new Event(FLAGS_CHANGED));
-      await load();
+      setNotice(`Saved. ${key} is now ${enabled ? 'ON' : 'OFF'} for ${scopeText({ ...scope })}.`);
     } catch (err) {
       setFormError(dialogError(err));
-      if (err.status === 409) load();
-    } finally {
-      setSaving(false);
     }
   };
-
-  const scopeKey = (form) => String(form.get('__key'));
 
   const openToggle = (row) => {
     setTarget(row);
@@ -130,9 +111,8 @@ export default function FlagsPage({ session }) {
 
   const submitToggle = (form) => {
     const row = target;
-    form.set('__key', row.key);
     const scope = { level: row.level, environment: row.environment ?? undefined, companyId: row.companyId ?? undefined, projectId: row.projectId ?? undefined };
-    return save(scope, !row.enabled, form, row.version, toggleDialog);
+    return save(row.key, scope, !row.enabled, form, row.version, toggleDialog);
   };
 
   const submitAdd = (form) => {
@@ -141,17 +121,11 @@ export default function FlagsPage({ session }) {
     if (level === 'environment') scope.environment = String(form.get('environment'));
     if (level === 'company' || level === 'project') scope.companyId = Number(form.get('companyId'));
     if (level === 'project') scope.projectId = Number(form.get('projectId'));
-    form.set('__key', String(form.get('key')));
-    return save(scope, form.get('enabled') === 'on', form, undefined, addDialog);
+    return save(String(form.get('key')), scope, form.get('enabled') === 'on', form, undefined, addDialog);
   };
 
   const exportCsv = async () => {
-    const all = [];
-    for (let p = 1; p <= 50; p++) {
-      const res = await api('GET', `/core/feature-flags?page=${p}&pageSize=200&q=${encodeURIComponent(q)}`);
-      all.push(...res.data);
-      if (p >= res.meta.totalPages) break;
-    }
+    const all = await fetchAllFlags(q);
     const csv = toCsv(
       ['Key', 'Level', 'Scope', 'Value', 'Default', 'Changed by', 'Changed at (IST)', 'Version', 'Last reason'],
       all.map((r) => [r.key, levelLabel[r.level], scopeText(r), r.enabled ? 'ON' : 'OFF', r.defaultEnabled ? 'ON' : 'OFF', r.changedBy, formatDateTime(r.changedAt), r.version, r.remarks]),

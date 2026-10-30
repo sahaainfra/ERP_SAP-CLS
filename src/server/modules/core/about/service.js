@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT } from './db.js';
+import { ROOT } from '../../../platform/db/index.js';
+import { assertPermission } from '../../../platform/auth/index.js';
 
 /**
  * Build information. A packaged release carries `build-info.json` at its root (written by
@@ -22,18 +23,21 @@ export function loadBuildInfo(root = ROOT) {
   return { version: pkg.version, buildId: 'dev', commit, builtAt: null };
 }
 
-export function aboutInfo({ db, config, buildInfo }) {
-  const migrations = db
-    .prepare('SELECT id, applied_at AS appliedAt FROM core_schema_migrations ORDER BY id')
-    .all();
+export function createAboutService({ db, config, buildInfo }) {
   return {
-    version: buildInfo.version,
-    buildId: buildInfo.buildId,
-    commit: buildInfo.commit,
-    builtAt: buildInfo.builtAt ?? null,
-    deployedAt: process.env.ERP_DEPLOYED_AT ?? null,
-    environment: config.environment,
-    node: process.version,
-    migrations,
+    about(actor) {
+      assertPermission(actor, 'core.about.view');
+      const migrations = db.prepare('SELECT id, applied_at AS appliedAt FROM core_schema_migrations ORDER BY id').all();
+      return {
+        version: buildInfo.version,
+        buildId: buildInfo.buildId,
+        commit: buildInfo.commit,
+        builtAt: buildInfo.builtAt ?? null,
+        deployedAt: process.env.ERP_DEPLOYED_AT ?? null,
+        environment: config.environment,
+        node: process.version,
+        migrations,
+      };
+    },
   };
 }

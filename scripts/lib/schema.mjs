@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { migrateUp } from '../../src/server/db.js';
+import { migrateUp } from '../../src/server/platform/db/index.js';
 
 const INTERNAL = new Set(['core_schema_migrations']);
 const norm = (sql) => (sql ?? '').replace(/\s+/g, ' ').trim();

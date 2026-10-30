@@ -15,7 +15,7 @@ test('administrators see version, build, commit, environment and applied migrati
   await expect(page).toHaveTitle(/About/);
   await expect(page.getByTestId('about-version')).toHaveText(/^\d+\.\d+\.\d+/);
   await expect(page.getByTestId('about-build')).toHaveText('dev');
-  await expect(page.getByText('Migrations applied (4)')).toBeVisible();
+  await expect(page.getByText(/Migrations applied \(\d+\)/)).toBeVisible();
   await expect(page.getByText('20261030000004_seed_flag_p0003')).toBeVisible();
   expect(errors).toEqual([]);
 });

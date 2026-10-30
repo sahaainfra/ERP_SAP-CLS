@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { listMigrations, transaction } from '../../src/server/db.js';
+import { listMigrations, transaction } from '../../src/server/platform/db/index.js';
 import { snapshot } from './schema.mjs';
 
 function rowCounts(db) {

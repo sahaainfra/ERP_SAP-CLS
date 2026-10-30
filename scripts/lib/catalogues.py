@@ -45,42 +45,6 @@ def db_catalogue(root):
     return "\n".join(lines)
 
 
-def api_catalogue(root):
-    routes = []
-    app_js = os.path.join(root, "src", "server", "app.js")
-    if os.path.exists(app_js):
-        src = _read(app_js)
-        matches = list(ROUTE_RE.finditer(src))
-        for i, m in enumerate(matches):
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(src)
-            base = "/api/v1" if m.group(1) == "api" else ""
-            perm = PERMISSION_RE.search(m.group(4))
-            if m.group(1) == "app":
-                access = "none (public)"
-            else:
-                access = "permission " + perm.group(1) if perm else "any authenticated user"
-            validated = "yes" if "parse(" in src[m.start():end] else "no"
-            routes.append((m.group(2).upper(), base + m.group(3), access, validated))
-    lines = ["# API_CATALOGUE", "", "Read from `src/server/app.js`.", "",
-             "| Method | Path | Access | Server-side validation |", "|---|---|---|---|"]
-    lines += ["| %s | %s | %s | %s |" % r for r in routes] or ["| none | | | |"]
-    return "\n".join(lines) + "\n"
-
-
-def page_inventory(root, files):
-    pages = [f for f in files if f.replace(os.sep, "/").startswith("src/client/") and f.endswith("Page.jsx")]
-    lines = ["# PAGE_INVENTORY_EXISTING", "",
-             "Status comes from the E2E run (`npm run test:e2e`, desktop and mobile), not from reading code.", "",
-             "| Page | File | Data source | Status |", "|---|---|---|---|"]
-    for pg in pages:
-        source = "real API" if "api(" in _read(os.path.join(root, pg)) else "none"
-        lines.append("| %s | %s | %s | Working |" % (
-            os.path.basename(pg).replace("Page.jsx", ""), pg.replace(os.sep, "/"), source))
-    if not pages:
-        lines.append("| none | | | |")
-    return "\n".join(lines) + "\n"
-
-
 def calculation_registry(root):
     reg = os.path.join(root, "golden", "registry.mjs")
     ids = re.findall(r"id: '([^']+)'", _read(reg)) if os.path.exists(reg) else []

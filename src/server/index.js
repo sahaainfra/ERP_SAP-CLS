@@ -1,5 +1,5 @@
-import { loadConfig, ConfigError } from './config.js';
-import { openDatabase, migrateUp } from './db.js';
+import { loadConfig, ConfigError } from './platform/config/index.js';
+import { openDatabase, migrateUp } from './platform/db/index.js';
 import { createApp } from './app.js';
 
 let config;

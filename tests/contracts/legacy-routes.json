@@ -1,0 +1,740 @@
+{
+  "GET /api/health": {
+    "status": 200,
+    "body": {
+      "status": "ok",
+      "environment": "test"
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET session as ITADM": {
+    "status": 200,
+    "body": {
+      "data": {
+        "user": "tester",
+        "roles": [
+          "ITADM"
+        ],
+        "companyId": 1,
+        "permissions": [
+          "core.about.view",
+          "core.flag.view"
+        ],
+        "environment": "test"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET session without identity": {
+    "status": 401,
+    "body": {
+      "error": {
+        "code": "UNAUTHENTICATED",
+        "message": "Sign in first: no user identity was supplied.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET about as SYSADM": {
+    "status": 200,
+    "body": {
+      "data": {
+        "version": "<semver>",
+        "buildId": "dev",
+        "commit": "<commit>",
+        "builtAt": null,
+        "deployedAt": null,
+        "environment": "test",
+        "node": "<node>",
+        "migrations": [
+          {
+            "id": "20261030000001_core_feature_flags",
+            "appliedAt": "<time>"
+          },
+          {
+            "id": "20261030000002_core_audit_and_outbox",
+            "appliedAt": "<time>"
+          },
+          {
+            "id": "20261030000003_seed_reference_feature_flags",
+            "appliedAt": "<time>"
+          },
+          {
+            "id": "20261030000004_seed_flag_p0003",
+            "appliedAt": "<time>"
+          }
+        ]
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET about as PM": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Your role does not include core.about.view. Ask a system administrator for access.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET list default": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "id": 1,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 3,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "environment",
+          "environment": "development",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 4,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 2,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 5,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "environment",
+          "environment": "development",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 6,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 7,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 8,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "environment",
+          "environment": "development",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 9,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        }
+      ],
+      "meta": {
+        "page": 1,
+        "pageSize": 25,
+        "total": 9,
+        "totalPages": 1
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET list page 2 size 2": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "id": 4,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 2,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        }
+      ],
+      "meta": {
+        "page": 2,
+        "pageSize": 2,
+        "total": 9,
+        "totalPages": 5
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET list search p0003": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "id": 7,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 8,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "environment",
+          "environment": "development",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 9,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        }
+      ],
+      "meta": {
+        "page": 1,
+        "pageSize": 25,
+        "total": 3,
+        "totalPages": 1
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET list pageSize too large": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Some fields are invalid. Fix them and try again.",
+        "details": [
+          {
+            "field": "pageSize",
+            "message": "Too big: expected number to be <=200"
+          }
+        ],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET list as PM": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Your role does not include core.flag.view. Ask a system administrator for access.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET evaluate": {
+    "status": 200,
+    "body": {
+      "data": {
+        "ff.prog.p0001": true,
+        "ff.nope": false
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET evaluate other company": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "You can only evaluate flags for your own company.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET evaluate without keys": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Some fields are invalid. Fix them and try again.",
+        "details": [
+          {
+            "field": "keys",
+            "message": "Invalid input: expected string, received undefined"
+          }
+        ],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH create company override": {
+    "status": 200,
+    "body": {
+      "data": {
+        "id": 10,
+        "key": "ff.prog.p0001",
+        "enabled": false,
+        "version": 1
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH update without version": {
+    "status": 409,
+    "body": {
+      "error": {
+        "code": "VERSION_CONFLICT",
+        "message": "ff.prog.p0001 was changed by someone else (you have version none, current is 1). Refresh the list and try again.",
+        "details": [
+          {
+            "field": "version",
+            "message": "current version is 1"
+          }
+        ],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH update with version": {
+    "status": 200,
+    "body": {
+      "data": {
+        "id": 10,
+        "key": "ff.prog.p0001",
+        "enabled": true,
+        "version": 2
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH stale version": {
+    "status": 409,
+    "body": {
+      "error": {
+        "code": "VERSION_CONFLICT",
+        "message": "ff.prog.p0001 was changed by someone else (you have version 1, current is 2). Refresh the list and try again.",
+        "details": [
+          {
+            "field": "version",
+            "message": "current version is 2"
+          }
+        ],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH validation errors": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Some fields are invalid. Fix them and try again.",
+        "details": [
+          {
+            "field": "enabled",
+            "message": "Invalid input: expected boolean, received string"
+          },
+          {
+            "field": "reason",
+            "message": "Give a reason of at least 5 characters"
+          }
+        ],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH missing project id": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Some fields are invalid. Fix them and try again.",
+        "details": [
+          {
+            "field": "scope.projectId",
+            "message": "companyId and projectId are required for a project override"
+          }
+        ],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH other company": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "You can only change overrides for your own company.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH as ITADM": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "FORBIDDEN",
+        "message": "Your role does not include core.flag.configure. Ask a system administrator for access.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH undefined flag": {
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Feature flag ff.nope is not defined. Flags are created by a reference-seed migration.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "PATCH environment default": {
+    "status": 200,
+    "body": {
+      "data": {
+        "id": 11,
+        "key": "ff.prog.p0002",
+        "enabled": true,
+        "version": 1
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET list after changes": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "id": 1,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 10,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "company",
+          "environment": null,
+          "companyId": 1,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": "tester",
+          "changedAt": "<time>",
+          "version": 2,
+          "remarks": "contract snapshot"
+        },
+        {
+          "id": 3,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "environment",
+          "environment": "development",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 4,
+          "key": "ff.prog.p0001",
+          "description": "Part 00.01 discovery audit outputs",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 2,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 5,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "environment",
+          "environment": "development",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 11,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "environment",
+          "environment": "production",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": "tester",
+          "changedAt": "<time>",
+          "version": 1,
+          "remarks": "contract snapshot"
+        },
+        {
+          "id": 6,
+          "key": "ff.prog.p0002",
+          "description": "Part 00.02 engineering baseline and feature flags",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 7,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "default",
+          "environment": null,
+          "companyId": null,
+          "projectId": null,
+          "enabled": false,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 8,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "environment",
+          "environment": "development",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        },
+        {
+          "id": 9,
+          "key": "ff.prog.p0003",
+          "description": "Part 00.03 CI/CD, quality gates and release engineering",
+          "level": "environment",
+          "environment": "test",
+          "companyId": null,
+          "projectId": null,
+          "enabled": true,
+          "defaultEnabled": false,
+          "changedBy": null,
+          "changedAt": null,
+          "version": 1,
+          "remarks": null
+        }
+      ],
+      "meta": {
+        "page": 1,
+        "pageSize": 50,
+        "total": 11,
+        "totalPages": 1
+      }
+    },
+    "hasCorrelationHeader": true
+  },
+  "GET unknown API route": {
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "No such API route.",
+        "details": [],
+        "correlationId": "<id>"
+      }
+    },
+    "hasCorrelationHeader": true
+  }
+}

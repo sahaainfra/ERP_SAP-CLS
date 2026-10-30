@@ -1,4 +1,4 @@
-import { forbidden, unauthorized } from './errors.js';
+import { forbidden, unauthorized } from '../http/errors.js';
 
 /**
  * Thin adapter until the IAM module (part 02.x) exists (recorded as D-001 in docs/erp/DEFECTS.md).
@@ -6,8 +6,8 @@ import { forbidden, unauthorized } from './errors.js';
  * in staging and production.
  */
 const ROLE_PERMISSIONS = {
-  SYSADM: ['core.flag.view', 'core.flag.configure', 'core.about.view'],
-  ITADM: ['core.flag.view', 'core.about.view'],
+  SYSADM: ['core.flag.view', 'core.flag.configure', 'core.about.view', 'core.arch.view', 'core.health.view'],
+  ITADM: ['core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view'],
 };
 
 export function authenticate(config) {
@@ -31,6 +31,13 @@ export function permissionsOf(actor) {
 
 export function hasPermission(actor, permission) {
   return permissionsOf(actor).includes(permission);
+}
+
+/** Service-layer guard: protects jobs, imports and other modules that call a service without HTTP. Deny by default. */
+export function assertPermission(actor, permission) {
+  if (!hasPermission(actor, permission)) {
+    throw forbidden(`Your role does not include ${permission}. Ask a system administrator for access.`);
+  }
 }
 
 /** Deny by default. */

@@ -9,6 +9,8 @@ const schema = z.object({
   ERP_ENVIRONMENT: z.enum(ENVIRONMENTS).optional(),
   AUTH_MODE: z.enum(['dev-headers', 'iam']).default('dev-headers'),
   ERP_DEMO_SEED: z.enum(['true', 'false']).default('false'),
+  STORAGE_PATH: z.string().min(1).optional(),
+  HEALTH_TOKEN: z.string().min(16, 'must be at least 16 characters').optional(),
 });
 
 export class ConfigError extends Error {
@@ -40,6 +42,8 @@ export function loadConfig(env = process.env) {
     databasePath: c.DATABASE_PATH,
     authMode: c.AUTH_MODE,
     demoSeed: c.ERP_DEMO_SEED === 'true',
+    storagePath: c.STORAGE_PATH ?? null,
+    healthToken: c.HEALTH_TOKEN ?? null,
   };
   const prodLike = nodeEnv === 'production' || nodeEnv === 'staging';
   if (config.demoSeed && prodLike) {

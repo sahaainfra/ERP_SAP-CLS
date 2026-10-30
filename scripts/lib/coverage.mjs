@@ -1,4 +1,6 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 /** Parse lcov text into { file: { found, hit } } using line coverage (DA records). */
 export function parseLcov(text) {
@@ -24,11 +26,14 @@ export function parseLcov(text) {
  * Gate coverage of the changed files (FR-02). Only files that appear in the coverage data and match
  * `include` are judged; a changed file with no coverage data counts as 0 %. Returns { failures, checked }.
  */
-export function gateCoverage({ lcov, changed, minPercent, include = (f) => /^(src\/server|scripts\/lib)\//.test(f) && /\.m?js$/.test(f) && f !== 'src/server/index.js' }) {
+// Gated: server and shared code, script libraries, and the client platform files that are plain JavaScript
+// (React components are covered by the E2E suite). The server entry point runs as its own process.
+export const GATED = /^(src\/(server|shared)|scripts\/lib)\/.+\.m?js$|^src\/client\/platform\/(api\/client|shell\/registry|markdown|format|query\/keys)\.js$/;
+export function gateCoverage({ lcov, changed, minPercent, include = (f) => GATED.test(f) && f !== 'src/server/index.js' }) {
   const cov = parseLcov(lcov);
   const byRelative = new Map();
   for (const [abs, v] of Object.entries(cov)) {
-    const i = abs.search(/(src\/server|scripts\/lib)\//);
+    const i = abs.search(/(src\/(server|shared|client\/platform)|scripts\/lib)\//);
     if (i >= 0) byRelative.set(abs.slice(i), v);
   }
   const checked = [];
@@ -48,9 +53,10 @@ export function changedFiles(root, base) {
     const out = execFileSync('git', ['diff', '--name-only', `${base}...HEAD`], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     const dirty = execFileSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' })
       .split('\n')
-      .map((l) => l.slice(3).trim())
-      .filter(Boolean);
-    return [...new Set([...out.split('\n').filter(Boolean), ...dirty])];
+      .filter(Boolean)
+      .map((l) => l.slice(3).trim().split(' -> ').pop().replace(/^"|"$/g, ''));
+    // A renamed or deleted file is reported under its old name too; only files that still exist can be judged.
+    return [...new Set([...out.split('\n').filter(Boolean), ...dirty])].filter((f) => existsSync(join(root, f)));
   } catch {
     return null;
   }

@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
-import { appliedMigrations, listMigrations, migrateDown, migrateUp } from '../src/server/db.js';
-import { isEnabled, resolveFlag, setFlag } from '../src/server/flags.js';
+import { appliedMigrations, listMigrations, migrateDown, migrateUp } from '../src/server/platform/db/index.js';
+import { isEnabled, resolveFlag, setFlag } from '../src/server/modules/core/feature-flags/service.js';
 import { memoryDb } from './helpers.js';
 
 function seededDb() {

@@ -2,7 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
-import { listMigrations } from '../../src/server/db.js';
+import { listMigrations } from '../../src/server/platform/db/index.js';
 import { verifyArtifact } from './package.mjs';
 
 const SMOKE_HEADERS = { 'x-erp-user': 'smoke-test', 'x-erp-roles': 'ITADM', 'x-erp-company': '1' };

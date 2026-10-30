@@ -2,8 +2,8 @@
 // registers a deterministic run() here; outputs are stored in golden/outputs/<id>.json
 // and compared byte-for-byte by `npm run erp:golden` and `npm run erp:regression`.
 import { DatabaseSync } from 'node:sqlite';
-import { migrateUp } from '../src/server/db.js';
-import { resolveFlag } from '../src/server/flags.js';
+import { migrateUp } from '../src/server/platform/db/index.js';
+import { resolveFlag } from '../src/server/modules/core/feature-flags/service.js';
 
 function flagEvaluationMatrix() {
   const db = new DatabaseSync(':memory:');

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ConfigError, loadConfig } from '../src/server/config.js';
+import { ConfigError, loadConfig } from '../src/server/platform/config/index.js';
 import { DatabaseSync } from 'node:sqlite';
-import { migrateUp } from '../src/server/db.js';
+import { migrateUp } from '../src/server/platform/db/index.js';
 import { seedDemo } from '../seeds/demo/index.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');

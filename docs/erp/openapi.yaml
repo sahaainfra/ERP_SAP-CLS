@@ -5,7 +5,9 @@ info:
   description: >
     Part 00.02 endpoints. Authentication is the development adapter (headers X-Erp-User, X-Erp-Roles,
     X-Erp-Company) until the IAM module exists (defect D-001). Errors use
-    { error: { code, message, details[{field,message}], correlationId } }.
+    { error: { code, message, details[{field,message}], correlationId } }; the codes are listed on the Architecture page
+    (VALIDATION_ERROR, BAD_JSON, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, VERSION_CONFLICT, PAYLOAD_TOO_LARGE,
+    BUSINESS_RULE, RATE_LIMITED, INTERNAL_ERROR, SERVICE_UNAVAILABLE).
 servers:
   - url: http://localhost:3000
 paths:
@@ -14,6 +16,26 @@ paths:
       summary: Liveness check (public)
       responses:
         '200': { description: ok }
+  /health/live:
+    get:
+      summary: Liveness (public). The process is up.
+      responses:
+        '200': { description: '{ status: ok }' }
+  /health/ready:
+    get:
+      summary: Readiness for ITADM and SYSADM (core.health.view) or a monitoring token in X-Health-Token
+      responses:
+        '200': { description: '{ status: ok or degraded, checks: { database, queue, storage } }, each check { status, detail, ms }' }
+        '401': { description: no identity and no valid token }
+        '403': { description: missing core.health.view }
+        '503': { description: a dependency failed; the body names which one }
+  /api/v1/core/architecture:
+    get:
+      summary: Architecture guide, module map, error codes and pagination contract (needs core.arch.view; flag ff.core.p0101)
+      responses:
+        '200': { description: '{ data: { markdown, modules[], errorCodes[], pagination, health } }' }
+        '403': { description: missing core.arch.view }
+        '404': { description: the flag ff.core.p0101 is OFF for the company }
   /api/v1/core/session:
     get:
       summary: Current user, roles, company, permissions and environment
@@ -34,6 +56,9 @@ paths:
         - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
         - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 25 } }
         - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: sort, in: query, schema: { type: string }, description: 'comma list, - prefix for descending; allowed: key, environment, changed_at, version' }
+        - { name: 'filter[environment]', in: query, schema: { type: string } }
+        - { name: 'filter[key]', in: query, schema: { type: string } }
       responses:
         '200': { description: '{ data: [...], meta: { page, pageSize, total, totalPages } }' }
         '400': { description: invalid query }

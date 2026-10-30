@@ -21,3 +21,6 @@ Single steps: `npm test`, `npm run test:e2e`, `npm run erp:schema-diff`, `npm ru
 
 ## Release and deploy
 `npm run package`, `npm run deploy`, `npm run rollback`, `npm run rehearse` and `npm run release` are described in `docs/erp/RELEASE.md`. Administrators can see the running version and build under Administration > About.
+
+## How the code is organised
+Read `docs/erp/ARCHITECTURE.md` (or Administration > Architecture in the app): layers, folder structure, request pipeline, error codes, pagination contract and how to add a module.
