@@ -94,6 +94,8 @@ test('CSV export downloads a file', async ({ page }) => {
 test('no horizontal page scroll and themes apply', async ({ page }) => {
   await open(page, identity('SYSADM', '91'));
   await expect(page.getByRole('switch').first()).toBeVisible();
+  // Wider fonts (as on Linux runners) must not cause sideways scrolling either.
+  await page.addStyleTag({ content: '* { font-family: Verdana, sans-serif !important; }' });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   for (const theme of ['dark', 'high-contrast']) {

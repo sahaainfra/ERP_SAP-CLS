@@ -50,6 +50,8 @@ test('the build ID never appears on the business-facing flags page', async ({ pa
 test('no horizontal scroll and the migrations table adapts on a phone', async ({ page }) => {
   await open(page, 'SYSADM');
   await expect(page.getByTestId('about-build')).toBeVisible();
+  // Wider fonts (as on Linux runners) must not cause sideways scrolling either.
+  await page.addStyleTag({ content: '* { font-family: Verdana, sans-serif !important; }' });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
