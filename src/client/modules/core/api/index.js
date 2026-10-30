@@ -112,7 +112,7 @@ export const useChangeRequests = (params = {}) =>
     retry: false,
   });
 export const useActOnRequest = () =>
-  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all]);
+  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all]);
 
 export const useDocumentTypes = () =>
   useQuery({ queryKey: queryKeys.core.numbering.types(), queryFn: () => unwrap(api.get('/core/document-types')), retry: false });
@@ -154,3 +154,53 @@ export const useCreateCalendar = () => useWrite((body) => unwrap(api.post('/core
 export const useAddHoliday = () => useWrite(({ calendarId, ...body }) => unwrap(api.post(`/core/holiday-calendars/${calendarId}/holidays`, body, idem())), [queryKeys.core.holidays.all]);
 export const useDeleteHoliday = () => useWrite((id) => unwrap(api.delete(`/core/holidays/${id}`, idem())), [queryKeys.core.holidays.all]);
 export const useImportHolidays = () => useWrite(({ calendarId, rows }) => unwrap(api.post(`/core/holiday-calendars/${calendarId}/import`, { rows }, idem())), [queryKeys.core.holidays.all]);
+
+// ---- Part 01.04: event bus, dead letters, background jobs and schedules ----
+const LIVE = 5000; // the console refreshes itself, so lag and failures are seen as they happen
+
+export const useEventMetrics = () =>
+  useQuery({ queryKey: queryKeys.core.ops.metrics(), queryFn: () => unwrap(api.get('/core/events/metrics')), refetchInterval: LIVE, retry: false });
+export const useEventTypes = () =>
+  useQuery({ queryKey: queryKeys.core.ops.types(), queryFn: () => unwrap(api.get('/core/events/types')), retry: false });
+export const useEvents = (params) =>
+  useQuery({
+    queryKey: queryKeys.core.ops.events(params),
+    queryFn: () => api.get(`/core/events?page=${params.page}&pageSize=${params.pageSize ?? 25}&q=${encodeURIComponent(params.q ?? '')}`),
+    placeholderData: (previous) => previous,
+    refetchInterval: LIVE,
+    retry: false,
+  });
+export const useDeadLetters = (params) =>
+  useQuery({
+    queryKey: queryKeys.core.ops.dlq(params),
+    queryFn: () => api.get(`/core/events/dlq?page=${params.page}&pageSize=25&filter[status]=${params.status}`),
+    placeholderData: (previous) => previous,
+    refetchInterval: LIVE,
+    retry: false,
+  });
+export const useRedrive = () => useWrite(({ id, reason }) => unwrap(api.post(`/core/events/dlq/${id}/redrive`, { reason }, idem())), [queryKeys.core.ops.all]);
+export const useDiscard = () => useWrite(({ id, reason }) => unwrap(api.post(`/core/events/dlq/${id}/discard`, { reason }, idem())), [queryKeys.core.ops.all]);
+export const useReplay = () => useWrite((body) => unwrap(api.post('/core/events/replay', body, idem())), [queryKeys.core.ops.all]);
+
+export const useJobs = (params) =>
+  useQuery({
+    queryKey: queryKeys.core.ops.jobs(params),
+    queryFn: () => api.get(`/core/jobs?page=${params.page}&pageSize=25${params.status ? `&filter[status]=${params.status}` : ''}`),
+    placeholderData: (previous) => previous,
+    refetchInterval: LIVE,
+    retry: false,
+  });
+export const useCancelJob = () => useWrite(({ id, reason }) => unwrap(api.post(`/core/jobs/${id}/cancel`, { reason }, idem())), [queryKeys.core.ops.all]);
+export const useRetryJob = () => useWrite(({ id, reason }) => unwrap(api.post(`/core/jobs/${id}/retry`, { reason }, idem())), [queryKeys.core.ops.all]);
+
+export const useSchedules = () =>
+  useQuery({ queryKey: queryKeys.core.ops.schedules(), queryFn: () => unwrap(api.get('/core/schedules')), refetchInterval: LIVE * 3, retry: false });
+export const useCronPreview = (cron) =>
+  useQuery({
+    queryKey: queryKeys.core.ops.cron({ cron }),
+    queryFn: () => unwrap(api.get(`/core/schedules/preview?cron=${encodeURIComponent(cron)}&count=5`)),
+    enabled: Boolean(cron?.trim()),
+    retry: false,
+  });
+export const useRequestScheduleChange = () =>
+  useWrite(({ id, ...body }) => unwrap(api.post(`/core/schedules/${id}/change-requests`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.ops.all]);

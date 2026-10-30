@@ -15,6 +15,14 @@ Validation is "yes" when the controller method calls a validator before the serv
 | POST | /api/v1/core/change-requests/:id/act | permission core.requests.view | no |
 | POST | /api/v1/core/change-requests/:id/resubmit | permission core.requests.view | no |
 | POST | /api/v1/core/change-requests/:id/withdraw | permission core.requests.view | no |
+| GET | /api/v1/core/events/metrics | permission core.events.view | no |
+| GET | /api/v1/core/events/types | permission core.events.view | no |
+| GET | /api/v1/core/events/consumers | permission core.events.view | no |
+| GET | /api/v1/core/events/dlq | permission core.events.view | no |
+| POST | /api/v1/core/events/dlq/:id/redrive | permission core.events.redrive | no |
+| POST | /api/v1/core/events/dlq/:id/discard | permission core.events.redrive | no |
+| POST | /api/v1/core/events/replay | permission core.events.replay | no |
+| GET | /api/v1/core/events | permission core.events.view | no |
 | GET | /api/v1/core/feature-flags | permission core.flag.view | yes |
 | GET | /api/v1/core/feature-flags/evaluate | any authenticated user | yes |
 | PATCH | /api/v1/core/feature-flags/:key | permission core.flag.configure | yes |
@@ -36,6 +44,14 @@ Validation is "yes" when the controller method calls a validator before the serv
 | POST | /api/v1/core/integrity/run | permission core.integrity.run | no |
 | GET | /api/v1/core/integrity/summary | permission core.integrity.view | no |
 | GET | /api/v1/core/integrity/runs | permission core.integrity.view | yes |
+| GET | /api/v1/core/jobs/types | permission core.jobs.view | no |
+| GET | /api/v1/core/jobs | permission core.jobs.view | no |
+| GET | /api/v1/core/jobs/:id | permission core.jobs.view | no |
+| POST | /api/v1/core/jobs/:id/cancel | permission core.jobs.manage | no |
+| POST | /api/v1/core/jobs/:id/retry | permission core.jobs.manage | no |
+| GET | /api/v1/core/schedules/preview | permission core.schedule.view | no |
+| GET | /api/v1/core/schedules | permission core.schedule.view | no |
+| POST | /api/v1/core/schedules/:id/change-requests | permission core.schedule.manage | no |
 | GET | /api/v1/core/document-types | permission core.numbering.view | no |
 | POST | /api/v1/core/document-types | permission core.numbering.configure | no |
 | PATCH | /api/v1/core/document-types/:id | permission core.numbering.configure | no |

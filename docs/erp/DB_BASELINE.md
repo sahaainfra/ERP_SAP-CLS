@@ -173,6 +173,23 @@ Indexes:
 - ix_core_document_types_module: module
 - ux_core_document_types_code (unique): code
 
+## core_event_types
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| type | TEXT | yes |  |  |
+| version | INTEGER | yes |  | 1 |
+| schema_json | TEXT | yes |  |  |
+| owner_module | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_at | TEXT |  |  |  |
+
+Indexes:
+- ix_core_event_types_owner: owner_module
+- ux_core_event_types_type (unique): type, version
+
 ## core_feature_flags
 
 | Column | Type | Not null | Key | Default |
@@ -308,6 +325,33 @@ Indexes:
 - ix_core_idempotency_expiry: expires_at
 - ux_core_idempotency_scope (unique): user_id, endpoint, key
 
+## core_inbox
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| consumer | TEXT | yes |  |  |
+| event_id | TEXT | yes |  |  |
+| outbox_id | INTEGER | yes |  |  |
+| event_type | TEXT | yes |  |  |
+| company_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| attempts | INTEGER | yes |  | 0 |
+| next_attempt_at | TEXT | yes |  |  |
+| last_error | TEXT |  |  |  |
+| processed_at | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolution | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_at | TEXT |  |  |  |
+
+Foreign keys: outbox_id -> core_outbox(id)
+
+Indexes:
+- ix_core_inbox_outbox: outbox_id
+- ix_core_inbox_due: status, next_attempt_at
+- ux_core_inbox_consumer_event (unique): consumer, event_id
+
 ## core_integrity_runs
 
 | Column | Type | Not null | Key | Default |
@@ -340,6 +384,41 @@ Indexes:
 - ix_core_integrity_runs_company: company_id
 - ix_core_integrity_runs_check: check_code, run_at
 - ix_core_integrity_runs_run: run_id
+
+## core_jobs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| job_id | TEXT | yes |  |  |
+| type | TEXT | yes |  |  |
+| params_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'QUEUED' |
+| progress | INTEGER | yes |  | 0 |
+| progress_message | TEXT |  |  |  |
+| attempts | INTEGER | yes |  | 0 |
+| max_attempts | INTEGER | yes |  | 3 |
+| run_after | TEXT | yes |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| heartbeat_at | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| result_json | TEXT |  |  |  |
+| log_json | TEXT | yes |  | '[]' |
+| cancel_requested | INTEGER | yes |  | 0 |
+| created_by | TEXT | yes |  |  |
+| company_id | INTEGER |  |  |  |
+| schedule_code | TEXT |  |  |  |
+| scheduled_for | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_at | TEXT |  |  |  |
+
+Indexes:
+- ux_core_jobs_schedule_run (unique): schedule_code, scheduled_for
+- ix_core_jobs_company: company_id
+- ix_core_jobs_type: type, status
+- ix_core_jobs_due: status, run_after
+- ux_core_jobs_job_id (unique): job_id
 
 ## core_number_counters
 
@@ -503,6 +582,18 @@ Indexes:
 - ix_core_periods_company_dates: company_id, start_date, end_date
 - ux_core_periods_fy_no (unique): fy_id, period_no
 
+## core_projection_event_counts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| company_id | INTEGER | yes | PK |  |
+| event_type | TEXT | yes | PK |  |
+| total | INTEGER | yes |  | 0 |
+| last_event_at | TEXT |  |  |  |
+
+Indexes:
+- sqlite_autoindex_core_projection_event_counts_1 (unique): company_id, event_type
+
 ## core_sample_documents
 
 | Column | Type | Not null | Key | Default |
@@ -531,3 +622,36 @@ Indexes:
 - ix_core_sample_documents_project: project_id
 - ix_core_sample_documents_company_status: company_id, status
 - ux_core_sample_documents_doc_no (unique): company_id, doc_no
+
+## core_schedules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| cron | TEXT | yes |  |  |
+| job_type | TEXT | yes |  |  |
+| params_json | TEXT | yes |  | '{}' |
+| enabled | INTEGER | yes |  | 1 |
+| last_run_at | TEXT |  |  |  |
+| next_run_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_core_schedules_company: company_id
+- ix_core_schedules_due: enabled, next_run_at
+- ux_core_schedules_code (unique): code

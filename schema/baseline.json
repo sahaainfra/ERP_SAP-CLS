@@ -829,6 +829,67 @@
     ],
     "fks": []
   },
+  "table:core_event_types": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "schema_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "owner_module",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_feature_flags": {
     "columns": [
       {
@@ -1458,6 +1519,118 @@
     ],
     "fks": []
   },
+  "table:core_inbox": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "consumer",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "event_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "outbox_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "event_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "attempts",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "next_attempt_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_error",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "processed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "resolved_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "resolution",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "outbox_id->core_outbox.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:core_integrity_runs": {
     "columns": [
       {
@@ -1616,6 +1789,172 @@
       },
       {
         "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_jobs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "job_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "params_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'QUEUED'",
+        "pk": 0
+      },
+      {
+        "name": "progress",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "progress_message",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "attempts",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "max_attempts",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "3",
+        "pk": 0
+      },
+      {
+        "name": "run_after",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "finished_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "heartbeat_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "error",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "result_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "log_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "cancel_requested",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "schedule_code",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "scheduled_for",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
         "type": "TEXT",
         "notnull": 0,
         "dflt": null,
@@ -2349,6 +2688,39 @@
       "fy_id->core_financial_years.id:NO ACTION/NO ACTION"
     ]
   },
+  "table:core_projection_event_counts": {
+    "columns": [
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "event_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 2
+      },
+      {
+        "name": "total",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "last_event_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_sample_documents": {
     "columns": [
       {
@@ -2487,6 +2859,172 @@
     ],
     "fks": []
   },
+  "table:core_schedules": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "description",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "cron",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "job_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "params_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "enabled",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "last_run_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "next_run_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "index:ix_core_audit_log_entity": {
     "sql": "CREATE INDEX ix_core_audit_log_entity ON core_audit_log (entity, entity_id)"
   },
@@ -2511,6 +3049,9 @@
   "index:ix_core_document_types_module": {
     "sql": "CREATE INDEX ix_core_document_types_module ON core_document_types (module)"
   },
+  "index:ix_core_event_types_owner": {
+    "sql": "CREATE INDEX ix_core_event_types_owner ON core_event_types (owner_module)"
+  },
   "index:ix_core_feature_flags_company": {
     "sql": "CREATE INDEX ix_core_feature_flags_company ON core_feature_flags (company_id)"
   },
@@ -2532,6 +3073,12 @@
   "index:ix_core_idempotency_expiry": {
     "sql": "CREATE INDEX ix_core_idempotency_expiry ON core_idempotency_keys (expires_at)"
   },
+  "index:ix_core_inbox_due": {
+    "sql": "CREATE INDEX ix_core_inbox_due ON core_inbox (status, next_attempt_at)"
+  },
+  "index:ix_core_inbox_outbox": {
+    "sql": "CREATE INDEX ix_core_inbox_outbox ON core_inbox (outbox_id)"
+  },
   "index:ix_core_integrity_runs_check": {
     "sql": "CREATE INDEX ix_core_integrity_runs_check ON core_integrity_runs (check_code, run_at)"
   },
@@ -2540,6 +3087,15 @@
   },
   "index:ix_core_integrity_runs_run": {
     "sql": "CREATE INDEX ix_core_integrity_runs_run ON core_integrity_runs (run_id)"
+  },
+  "index:ix_core_jobs_company": {
+    "sql": "CREATE INDEX ix_core_jobs_company ON core_jobs (company_id)"
+  },
+  "index:ix_core_jobs_due": {
+    "sql": "CREATE INDEX ix_core_jobs_due ON core_jobs (status, run_after)"
+  },
+  "index:ix_core_jobs_type": {
+    "sql": "CREATE INDEX ix_core_jobs_type ON core_jobs (type, status)"
   },
   "index:ix_core_number_issues_company": {
     "sql": "CREATE INDEX ix_core_number_issues_company ON core_number_issues (company_id, status)"
@@ -2571,6 +3127,12 @@
   "index:ix_core_sample_documents_project": {
     "sql": "CREATE INDEX ix_core_sample_documents_project ON core_sample_documents (project_id)"
   },
+  "index:ix_core_schedules_company": {
+    "sql": "CREATE INDEX ix_core_schedules_company ON core_schedules (company_id)"
+  },
+  "index:ix_core_schedules_due": {
+    "sql": "CREATE INDEX ix_core_schedules_due ON core_schedules (enabled, next_run_at)"
+  },
   "index:ux_core_backfill_runs_name": {
     "sql": "CREATE UNIQUE INDEX ux_core_backfill_runs_name ON core_backfill_runs (name)"
   },
@@ -2579,6 +3141,9 @@
   },
   "index:ux_core_document_types_code": {
     "sql": "CREATE UNIQUE INDEX ux_core_document_types_code ON core_document_types (code)"
+  },
+  "index:ux_core_event_types_type": {
+    "sql": "CREATE UNIQUE INDEX ux_core_event_types_type ON core_event_types (type, version)"
   },
   "index:ux_core_feature_flags_scope": {
     "sql": "CREATE UNIQUE INDEX ux_core_feature_flags_scope ON core_feature_flags (key, COALESCE(environment, ''), COALESCE(company_id, 0), COALESCE(project_id, 0))"
@@ -2594,6 +3159,15 @@
   },
   "index:ux_core_idempotency_scope": {
     "sql": "CREATE UNIQUE INDEX ux_core_idempotency_scope ON core_idempotency_keys (user_id, endpoint, key)"
+  },
+  "index:ux_core_inbox_consumer_event": {
+    "sql": "CREATE UNIQUE INDEX ux_core_inbox_consumer_event ON core_inbox (consumer, event_id)"
+  },
+  "index:ux_core_jobs_job_id": {
+    "sql": "CREATE UNIQUE INDEX ux_core_jobs_job_id ON core_jobs (job_id)"
+  },
+  "index:ux_core_jobs_schedule_run": {
+    "sql": "CREATE UNIQUE INDEX ux_core_jobs_schedule_run ON core_jobs (schedule_code, scheduled_for) WHERE schedule_code IS NOT NULL"
   },
   "index:ux_core_number_issues_number": {
     "sql": "CREATE UNIQUE INDEX ux_core_number_issues_number ON core_number_issues (series_id, number)"
@@ -2612,5 +3186,8 @@
   },
   "index:ux_core_sample_documents_doc_no": {
     "sql": "CREATE UNIQUE INDEX ux_core_sample_documents_doc_no ON core_sample_documents (company_id, doc_no)"
+  },
+  "index:ux_core_schedules_code": {
+    "sql": "CREATE UNIQUE INDEX ux_core_schedules_code ON core_schedules (code)"
   }
 }

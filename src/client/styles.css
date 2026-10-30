@@ -146,3 +146,18 @@ details ul { margin: var(--erp-space-2) 0; padding-left: var(--erp-space-6); }
 .chip-status-soft-closed, .chip-state-future { background: var(--erp-color-status-neutral-bg); color: var(--erp-color-status-neutral-fg); }
 .chip-status-closed, .chip-state-past { background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); }
 .form-grid input, .form-grid select, .form-grid textarea { max-width: 100%; }
+
+/* ---- Part 01.04: operations console ---- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: var(--erp-space-4); margin: var(--erp-space-4) 0; }
+.tile { border: 1px solid var(--erp-color-border, currentColor); border-radius: var(--erp-radius-md, 6px); padding: var(--erp-space-4); min-width: 0; }
+.tile a { display: grid; gap: var(--erp-space-1); color: inherit; text-decoration: none; }
+.tile > span, .tile a > span { display: block; }
+.tile-value { font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+.tile-label { font: var(--erp-type-label); }
+.tile-ok { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
+.tile-warn, .tile-neutral { background: var(--erp-color-status-neutral-bg); color: var(--erp-color-status-neutral-fg); }
+.tile-error { background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); }
+.payload { margin: 0; max-width: 100%; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.8125rem; }
+.state-warn { background: var(--erp-color-status-neutral-bg); color: var(--erp-color-status-neutral-fg); padding: var(--erp-space-3); border-radius: var(--erp-radius-md, 6px); overflow-wrap: anywhere; }
+progress { width: 6rem; max-width: 100%; vertical-align: middle; }
+details summary { cursor: pointer; }

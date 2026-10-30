@@ -251,3 +251,67 @@ paths:
     get:
       summary: Is a date a holiday for a state or site
       responses: { '200': { description: '{ data: { isHoliday, matches } }' } }
+  /api/v1/core/events:
+    get:
+      summary: The event log, newest first, with masked data (core.events.view; company and system events only)
+      responses: { '200': { description: '{ data, meta }' }, '400': { description: unknown filter or page size } }
+  /api/v1/core/events/metrics:
+    get:
+      summary: Throughput, relay and delivery lag, dead letters and per-consumer counts (core.events.view)
+      responses: { '200': { description: '{ data: { events, inbox, consumers } }' } }
+  /api/v1/core/events/types:
+    get:
+      summary: The event catalogue with versions and schemas
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/events/consumers:
+    get:
+      summary: Registered consumers and what they listen to
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/events/dlq:
+    get:
+      summary: 'Dead letters (filter[status] = DEAD, DISCARDED or PENDING; filter[consumer])'
+      responses: { '200': { description: '{ data, meta }; payloads masked' } }
+  /api/v1/core/events/dlq/{id}/redrive:
+    post:
+      summary: Put a dead letter back in the queue with fresh attempts (core.events.redrive, Idempotency-Key and reason required)
+      responses: { '200': { description: '{ data }' }, '403': { description: missing permission }, '404': { description: not found in your scope }, '422': { description: not a dead letter } }
+  /api/v1/core/events/dlq/{id}/discard:
+    post:
+      summary: Discard a dead letter on purpose (core.events.redrive, Idempotency-Key and reason required)
+      responses: { '200': { description: '{ data }' }, '422': { description: not a dead letter } }
+  /api/v1/core/events/replay:
+    post:
+      summary: 'Queue a replay as a background job (body: types[], from, to, consumer, reset, reason; core.events.replay, Idempotency-Key required)'
+      responses: { '202': { description: '{ data: job }' }, '404': { description: unknown consumer }, '400': { description: invalid range or pattern } }
+  /api/v1/core/jobs:
+    get:
+      summary: Background jobs (filter[status], filter[type]; core.jobs.view; company and system jobs only)
+      responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/core/jobs/types:
+    get:
+      summary: Registered job types
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/jobs/{id}:
+    get:
+      summary: One job with progress, log and result
+      responses: { '200': { description: '{ data }' }, '404': { description: not found in your scope } }
+  /api/v1/core/jobs/{id}/cancel:
+    post:
+      summary: Cancel a queued job, or ask a running one to stop (core.jobs.manage, Idempotency-Key required)
+      responses: { '200': { description: '{ data }' }, '422': { description: already finished } }
+  /api/v1/core/jobs/{id}/retry:
+    post:
+      summary: Queue a failed or cancelled job again (core.jobs.manage, Idempotency-Key required)
+      responses: { '201': { description: '{ data: new job }' }, '422': { description: job is not failed or cancelled } }
+  /api/v1/core/schedules:
+    get:
+      summary: Schedules with last and next run (core.schedule.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/schedules/preview:
+    get:
+      summary: The next run times for a cron expression (IST)
+      responses: { '200': { description: '{ data: { nextRuns } }' }, '400': { description: invalid expression } }
+  /api/v1/core/schedules/{id}/change-requests:
+    post:
+      summary: Ask to change a schedule's cron or enabled flag (core.schedule.manage; approved by the System Administrator; Idempotency-Key required)
+      responses: { '201': { description: request raised }, '409': { description: an open request exists }, '422': { description: nothing would change } }

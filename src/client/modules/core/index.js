@@ -7,6 +7,10 @@ import FinancialYearsPage from './pages/FinancialYearsPage.jsx';
 import HolidaysPage from './pages/HolidaysPage.jsx';
 import NumberingPage from './pages/NumberingPage.jsx';
 import ParametersPage from './pages/ParametersPage.jsx';
+import DeadLettersPage from './pages/DeadLettersPage.jsx';
+import JobsPage from './pages/JobsPage.jsx';
+import OperationsPage from './pages/OperationsPage.jsx';
+import SchedulesPage from './pages/SchedulesPage.jsx';
 import FlagsPage from './pages/FlagsPage.jsx';
 
 // Module "core" registers its pages once. The shell builds navigation and routing from the registry.
@@ -23,5 +27,9 @@ registerModule({
     { path: '/admin/numbering', label: 'Numbering', permission: 'core.numbering.view', flag: 'ff.core.p0103', Page: NumberingPage },
     { path: '/admin/parameters', label: 'Parameters', permission: 'core.param.view', flag: 'ff.core.p0103', Page: ParametersPage },
     { path: '/admin/holidays', label: 'Holidays', flag: 'ff.core.p0103', Page: HolidaysPage },
+    { path: '/admin/operations', label: 'Operations', permission: 'core.events.view', flag: 'ff.core.p0104', Page: OperationsPage },
+    { path: '/admin/operations/dead-letters', label: 'Dead Letters', permission: 'core.events.view', flag: 'ff.core.p0104', Page: DeadLettersPage },
+    { path: '/admin/operations/jobs', label: 'Jobs', permission: 'core.jobs.view', flag: 'ff.core.p0104', Page: JobsPage },
+    { path: '/admin/operations/schedules', label: 'Schedules', permission: 'core.schedule.view', flag: 'ff.core.p0104', Page: SchedulesPage },
   ],
 });

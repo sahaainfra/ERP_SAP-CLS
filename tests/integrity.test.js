@@ -219,7 +219,7 @@ test('API: summary lists every check with its last result; a violation seeded in
   assert.equal(by.invalid_status_values.status, 'fail');
   assert.equal(by.negative_quantities.status, 'fail');
   assert.equal(by.orphan_foreign_keys.status, 'pass', 'the 01.03 tables declare foreign keys, so the check now has something to check');
-  assert.ok(!JSON.stringify(after).includes('-7'), 'the negative amount itself is never shown');
+  assert.ok(!/[:[,"]-7[",\]}]/.test(JSON.stringify(after)), 'the negative amount itself is never shown (a "-7" inside a random run id is not the amount)');
   await api.close();
 });
 

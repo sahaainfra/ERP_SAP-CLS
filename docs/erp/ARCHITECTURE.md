@@ -51,7 +51,7 @@ src/client/
 docs/erp/                     DECISIONS, DEFECTS, DISCOVERY/<part>, COMPLETION/<part>, PROGRESS.csv
 ```
 
-The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`, `platform/integrity`, `platform/parameters`, `platform/approvals`. The one module so far is `modules/core`.
+The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`, `platform/integrity`, `platform/parameters`, `platform/approvals`, `platform/jobs`, `platform/runtime`. The one module so far is `modules/core`.
 
 A module owns its tables. Other modules read through its service or react to its events; they never write into its tables.
 
@@ -169,3 +169,17 @@ Platform libraries added: `platform/parameters` (typed parameter registry and re
 - **Parameters**: modules declare definitions with `defineParameter`; values are stored per scope (system, company, project, site) with effective dates. The most specific scope in force on the date wins. A write closes the old row and keeps it as history, the past is never rewritten, and the cache is emptied on every write.
 - **Holidays**: calendars per company, state or site; `isHoliday` and `isWorkingDay` (weekly off from the `core.calendar.week_off_days` parameter) are exported for scheduling modules.
 - **Pages** (behind `ff.core.p0103`): Company Settings, Financial Years, Numbering, Parameters, Holidays under `/admin/...`.
+
+## 13. Domain events, the outbox and background jobs (part 01.04)
+
+Platform libraries added: `platform/events` (publish, catalogue, bus, masking), `platform/jobs` (job runner and scheduler) and `platform/runtime` (one bus, runner and scheduler per database, and the polling workers). Browser and server share `src/shared/cron.js`.
+
+- **Publishing**: `publishEvent(db, {...})` inserts into `core_outbox` in the caller's transaction, so a rolled-back change leaves no event (BR-01). The envelope holds eventId, type, version, occurredAt, companyId, projectId, siteId, entity, entityId, actorId, correlationId and data. A type in the catalogue (`eventTypes.define`, mirrored to `core_event_types`) has its `data` validated against its schema and takes the catalogue version.
+- **Delivery**: `bus.relayOnce()` creates one `core_inbox` row per subscribed consumer and eventId (unique, so the same event is never queued twice) and marks the outbox row published. `bus.deliverOnce()` runs due rows; a handler and the "processed" mark share one transaction. A failing handler is retried after 30 s, 1 min, 2 min and so on up to 1 h and is a dead letter after its `maxAttempts` (default 5). Handlers are synchronous so their database effects stay atomic.
+- **Dead letters**: `core_inbox` rows with status DEAD. An administrator re-drives (fresh attempts) or discards (kept, with who and why); both are audited and announced as events.
+- **Replay**: `bus.replay({ types, from, to, consumer, reset })` re-runs history through handlers with `ctx.replay === true`, without touching the inbox. A handler must skip notifications and calls to outside systems when `ctx.replay` is set (BR-03). The API runs it as the job `core.event_replay`.
+- **Jobs**: `jobs.register(type, handler)`, `jobs.enqueue(type, params)`. A claim is one `UPDATE ... RETURNING`; progress, log lines, cancellation (`ctx.isCancelled()`), retries with back-off, and a stale-job recovery are built in. A job that exhausts its attempts raises `core.job.failed`.
+- **Schedules**: `scheduler.define({ code, cron, jobType })` seeds a schedule once (an edited row is never overwritten). `tick()` advances `next_run_at` with a compare-and-swap and the job row is unique per (schedule, slot), so several instances queue a slot once. Cron is five fields in IST. A slot missed during downtime runs once.
+- **Workers**: `src/server/index.js` starts the polling loops (`startWorkers`); tests drive the same functions directly.
+- **Console** (behind `ff.core.p0104`): Operations monitor, Dead Letters, Jobs and Schedules under `/admin/operations/...`. The monitor refreshes every five seconds.
+- **For other modules**: declare event types with `eventTypes.define`, subscribe with `runtimeOf(db).bus.subscribe(pattern, handler, { consumer })`, register job types with `runtimeOf(db).jobs.register`, and add schedules with `runtimeOf(db).scheduler.define`. Consumers must be idempotent; the inbox guards against duplicates, not against a handler writing outside its transaction.

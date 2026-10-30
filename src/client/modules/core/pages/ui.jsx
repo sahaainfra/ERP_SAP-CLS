@@ -95,3 +95,43 @@ export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, 
 }
 
 export const can = (session, permission) => Boolean(session?.permissions?.includes(permission));
+
+/** Move to another page of the shell without a reload (the shell listens for popstate). */
+export function navigateTo(path) {
+  window.history.pushState(null, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
+export const Link = ({ to, children }) => (
+  <a href={to} onClick={(e) => { e.preventDefault(); navigateTo(to); }}>{children}</a>
+);
+
+/** A KPI tile: value, caption and a status colour; becomes a link when `to` is given (drill-down). */
+export function Tile({ label, value, status = 'neutral', to, hint, testId }) {
+  const body = (
+    <>
+      <span className="tile-value" data-testid={testId}>{value}</span>
+      <span className="tile-label">{label}</span>
+      {hint && <span className="muted small">{hint}</span>}
+    </>
+  );
+  return <div className={`tile tile-${status}`}>{to ? <Link to={to}>{body}</Link> : body}</div>;
+}
+
+export function downloadCsv(filename, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function Pager({ meta, page, setPage, noun }) {
+  if (!meta) return null;
+  return (
+    <div className="pager">
+      <span>{meta.total} {noun}, page {meta.page} of {meta.totalPages}</span>
+      <button type="button" className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+      <button type="button" className="btn" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>Next</button>
+    </div>
+  );
+}

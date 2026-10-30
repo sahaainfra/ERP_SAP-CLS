@@ -4,6 +4,13 @@ import { notFound } from '../../platform/http/errors.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
 import { createApprovalEngine } from '../../platform/approvals/index.js';
 import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
+import { runtimeOf } from '../../platform/runtime/index.js';
+import { syncEventTypes } from '../../platform/events/index.js';
+import { registerOperations } from './operations.js';
+import { eventRoutes } from './events/routes.js';
+import { createEventService } from './events/service.js';
+import { jobRoutes } from './jobs/routes.js';
+import { createJobService, createScheduleChangeHandler } from './jobs/service.js';
 import { aboutRoutes } from './about/routes.js';
 import { createAboutService } from './about/service.js';
 import { architectureRoutes } from './architecture/routes.js';
@@ -36,8 +43,8 @@ parameterRegistry.define({ key: 'core.calendar.week_off_days', dataType: 'json',
 
 // What the integrity checks need to know about this module's tables.
 integrityRegistry.register({
-  technicalTables: ['core_number_counters', 'core_change_request_steps'],
-  companyOptional: ['core_feature_flags', 'core_integrity_runs', 'core_backfill_runs', 'core_document_types', 'core_parameters'],
+  technicalTables: ['core_number_counters', 'core_change_request_steps', 'core_event_types', 'core_inbox', 'core_jobs', 'core_projection_event_counts'],
+  companyOptional: ['core_feature_flags', 'core_integrity_runs', 'core_backfill_runs', 'core_document_types', 'core_parameters', 'core_schedules'],
   statuses: {
     core_integrity_runs: ['pass', 'fail', 'not_applicable'],
     core_backfill_runs: ['running', 'completed', 'failed'],
@@ -45,6 +52,8 @@ integrityRegistry.register({
     core_change_requests: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'],
     core_number_issues: ['ISSUED', 'CANCELLED'],
     core_sample_documents: ['DRAFT', 'SUBMITTED', 'CANCELLED'],
+    core_inbox: ['PENDING', 'PROCESSED', 'DEAD', 'DISCARDED'],
+    core_jobs: ['QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED'],
   },
   // A gap-free series must have no missing number, cancelled ones included.
   sequences: [{ table: 'core_number_issues', groupBy: ['series_id', 'period_key'], seq: 'seq', where: 'series_id IN (SELECT id FROM core_number_series WHERE gap_free = 1)' }],
@@ -52,7 +61,7 @@ integrityRegistry.register({
 
 /** The feature flag that hides everything this part added until an administrator turns it on for the company. */
 const flagGate = (isFlagOn, key) => (req, _res, next) =>
-  isFlagOn(req.actor, key) ? next() : next(notFound(`System configuration is not enabled for your company yet (feature flag ${key} is OFF).`));
+  isFlagOn(req.actor, key) ? next() : next(notFound(`This is not enabled for your company yet (feature flag ${key} is OFF).`));
 
 /**
  * Module "core": the reference implementation of the layered architecture
@@ -68,11 +77,11 @@ export const core = {
     'core_feature_flags', 'core_audit_log', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
     'core_company_settings', 'core_financial_years', 'core_periods', 'core_parameters', 'core_holiday_calendars', 'core_holidays',
     'core_document_types', 'core_number_series', 'core_number_counters', 'core_number_issues', 'core_change_requests', 'core_change_request_steps',
-    'core_sample_documents', 'core_schema_migrations',
+    'core_sample_documents', 'core_event_types', 'core_inbox', 'core_jobs', 'core_schedules', 'core_projection_event_counts', 'core_schema_migrations',
   ],
   resources: [
     'session', 'about', 'feature-flags', 'architecture', 'integrity', 'display-settings', 'company-settings', 'financial-years', 'periods',
-    'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents',
+    'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents', 'events', 'jobs', 'schedules',
   ],
   /** Build the module's services and attach its routes to the authenticated /api/v1 router. */
   mount(api, { db, config, buildInfo, modules }) {
@@ -83,7 +92,12 @@ export const core = {
 
     const settings = createSettingsService({ db });
     const store = createParameterStore(db, parameterRegistry);
-    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler } });
+    const runtime = runtimeOf(db);
+    // A database older than part 01.04 (the frozen legacy dataset of the contract test) has no tables to write to yet.
+    const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_schedules'").get());
+    if (migrated) syncEventTypes(db);
+    registerOperations({ db, ...runtime, persist: migrated });
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler) } });
     const opts = { idempotent, idempotentRequired };
 
     api.use('/core', sessionRoutes({ config }));
@@ -92,6 +106,14 @@ export const core = {
     api.use('/core', integrityRoutes(createIntegrityService({ db, isFlagOn }), opts));
     api.use('/core', featureFlagRoutes(flags, opts));
     api.use('/core', displaySettingsRoutes(settings));
+
+    // Event bus, jobs and schedules (part 01.04): hidden while ff.core.p0104 is OFF for the company.
+    const operations = Router();
+    const mine = (req) => ['/events', '/jobs', '/schedules'].some((p) => req.path === p || req.path.startsWith(`${p}/`));
+    operations.use((req, res, next) => (mine(req) ? flagGate(isFlagOn, 'ff.core.p0104')(req, res, next) : next()));
+    operations.use(eventRoutes(createEventService({ db, bus: runtime.bus, jobs: runtime.jobs }), opts));
+    operations.use(jobRoutes(createJobService({ db, jobs: runtime.jobs, scheduler: runtime.scheduler, approvals }), opts));
+    api.use('/core', operations);
 
     // System configuration (part 01.03): everything below is hidden while ff.core.p0103 is OFF for the company.
     const configuration = Router();

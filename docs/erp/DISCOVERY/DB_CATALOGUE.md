@@ -26,6 +26,13 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | core_change_requests | 20261030000009_core_numbering_and_approvals.up.sql | id, company_id, type, title, target_type, target_id, payload_json, reason, status, chain_json, current_step, requested_by, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
 | core_change_request_steps | 20261030000009_core_numbering_and_approvals.up.sql | id, request_id, step_no, role_code, decision, decided_by, decided_at, comment |
 | core_sample_documents | 20261030000009_core_numbering_and_approvals.up.sql | id, company_id, project_id, site_id, doc_no, doc_date, status, title, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_event_types | 20261030000011_core_events_and_jobs.up.sql | id, type, version, schema_json, owner_module, description, created_at, updated_at |
+| core_inbox | 20261030000011_core_events_and_jobs.up.sql | id, consumer, event_id, outbox_id, event_type, company_id, status, attempts, next_attempt_at, last_error, processed_at, resolved_by, resolution, created_at, updated_at |
+| core_jobs | 20261030000011_core_events_and_jobs.up.sql | id, job_id, type, params_json, status, progress, progress_message, attempts, max_attempts, run_after, started_at, finished_at, heartbeat_at, error, result_json, log_json, cancel_requested, created_by, company_id, schedule_code, scheduled_for, created_at, updated_at |
+| core_schedules | 20261030000011_core_events_and_jobs.up.sql | id, company_id, code, description, cron, job_type, params_json, enabled, last_run_at, next_run_at, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_projection_event_counts | 20261030000011_core_events_and_jobs.up.sql | company_id, event_type, total, last_event_at |
+| core_change_requests | 20261030000013_core_change_request_types.up.sql | id, company_id, type, title, target_type, target_id, payload_json, reason, status, chain_json, current_step, requested_by, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_change_request_steps | 20261030000013_core_change_request_types.up.sql | id, request_id, step_no, role_code, decision, decided_by, decided_at, comment |
 
 ## Indexes
 
@@ -73,6 +80,23 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | ux_core_sample_documents_doc_no | core_sample_documents | yes | 20261030000009_core_numbering_and_approvals.up.sql |
 | ix_core_sample_documents_company_status | core_sample_documents | no | 20261030000009_core_numbering_and_approvals.up.sql |
 | ix_core_sample_documents_project | core_sample_documents | no | 20261030000009_core_numbering_and_approvals.up.sql |
+| ux_core_event_types_type | core_event_types | yes | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_event_types_owner | core_event_types | no | 20261030000011_core_events_and_jobs.up.sql |
+| ux_core_inbox_consumer_event | core_inbox | yes | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_inbox_due | core_inbox | no | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_inbox_outbox | core_inbox | no | 20261030000011_core_events_and_jobs.up.sql |
+| ux_core_jobs_job_id | core_jobs | yes | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_jobs_due | core_jobs | no | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_jobs_type | core_jobs | no | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_jobs_company | core_jobs | no | 20261030000011_core_events_and_jobs.up.sql |
+| ux_core_jobs_schedule_run | core_jobs | yes | 20261030000011_core_events_and_jobs.up.sql |
+| ux_core_schedules_code | core_schedules | yes | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_schedules_due | core_schedules | no | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_schedules_company | core_schedules | no | 20261030000011_core_events_and_jobs.up.sql |
+| ix_core_change_requests_company_status | core_change_requests | no | 20261030000013_core_change_request_types.up.sql |
+| ix_core_change_requests_type | core_change_requests | no | 20261030000013_core_change_request_types.up.sql |
+| ix_core_change_requests_target | core_change_requests | no | 20261030000013_core_change_request_types.up.sql |
+| ix_core_change_request_steps_request | core_change_request_steps | no | 20261030000013_core_change_request_types.up.sql |
 
 Views, triggers and functions: none.
 
@@ -99,6 +123,13 @@ erDiagram
   core_change_requests
   core_change_request_steps
   core_sample_documents
+  core_event_types
+  core_inbox
+  core_jobs
+  core_schedules
+  core_projection_event_counts
+  core_change_requests
+  core_change_request_steps
 ```
 
 No foreign keys exist yet; tables are independent until the organisation tables (02.02) are built.
