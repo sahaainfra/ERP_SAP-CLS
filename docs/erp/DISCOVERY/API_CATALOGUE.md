@@ -10,6 +10,25 @@ Validation is "yes" when the controller method calls a validator before the serv
 | GET | /health/ready | administrators or monitoring token | no |
 | GET | /api/v1/core/about | permission core.about.view | no |
 | GET | /api/v1/core/architecture | permission core.arch.view | no |
+| GET | /api/v1/core/formulas | any authenticated user | no |
+| POST | /api/v1/core/formulas | any authenticated user | no |
+| GET | /api/v1/core/formulas/:code | any authenticated user | no |
+| POST | /api/v1/core/formulas/:code/versions | any authenticated user | no |
+| PATCH | /api/v1/core/formulas/:code/versions/:version | any authenticated user | no |
+| GET | /api/v1/core/formulas/:code/versions/:version/check | any authenticated user | no |
+| POST | /api/v1/core/formulas/:code/versions/:version/shadow | any authenticated user | no |
+| POST | /api/v1/core/formulas/:code/versions/:version/shadow/stop | any authenticated user | no |
+| POST | /api/v1/core/formulas/:code/versions/:version/activation-requests | any authenticated user | no |
+| POST | /api/v1/core/formulas/:code/test | any authenticated user | no |
+| POST | /api/v1/core/formulas/:code/compare | any authenticated user | no |
+| GET | /api/v1/core/formulas/:code/shadow-summary | any authenticated user | no |
+| GET | /api/v1/core/calc-traces | any authenticated user | no |
+| GET | /api/v1/core/uoms | any authenticated user | no |
+| POST | /api/v1/core/uoms | any authenticated user | no |
+| GET | /api/v1/core/uom-conversions | any authenticated user | no |
+| POST | /api/v1/core/uom-conversions | any authenticated user | no |
+| DELETE | /api/v1/core/uom-conversions/:id | any authenticated user | no |
+| POST | /api/v1/core/calc/convert | any authenticated user | no |
 | GET | /api/v1/core/change-requests | permission core.requests.view | no |
 | GET | /api/v1/core/change-requests/:id | permission core.requests.view | no |
 | POST | /api/v1/core/change-requests/:id/act | permission core.requests.view | no |
@@ -82,6 +101,12 @@ Validation is "yes" when the controller method calls a validator before the serv
 | GET | /api/v1/core/parameters/resolve | permission core.param.view | no |
 | GET | /api/v1/core/parameters | permission core.param.view | no |
 | POST | /api/v1/core/parameters | any authenticated user | no |
+| GET | /api/v1/core/sample-bills | any authenticated user | no |
+| POST | /api/v1/core/sample-bills | any authenticated user | no |
+| GET | /api/v1/core/sample-bills/:id | any authenticated user | no |
+| PATCH | /api/v1/core/sample-bills/:id | any authenticated user | no |
+| POST | /api/v1/core/sample-bills/:id/submit | any authenticated user | no |
+| POST | /api/v1/core/sample-bills/:id/recalculate | any authenticated user | no |
 | GET | /api/v1/core/sample-documents | permission core.sample.use | no |
 | GET | /api/v1/core/sample-documents/number-preview | permission core.sample.use | no |
 | POST | /api/v1/core/sample-documents | permission core.sample.use | no |

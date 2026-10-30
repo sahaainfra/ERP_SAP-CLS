@@ -112,7 +112,7 @@ export const useChangeRequests = (params = {}) =>
     retry: false,
   });
 export const useActOnRequest = () =>
-  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all, queryKeys.core.files.all]);
+  useWrite(({ id, ...body }) => unwrap(api.post(`/core/change-requests/${id}/act`, body, idem())), [queryKeys.core.requests.all, queryKeys.core.fy.all, queryKeys.core.numbering.all, queryKeys.core.ops.all, queryKeys.core.files.all, queryKeys.core.calc.all]);
 
 export const useDocumentTypes = () =>
   useQuery({ queryKey: queryKeys.core.numbering.types(), queryFn: () => unwrap(api.get('/core/document-types')), retry: false });
@@ -230,3 +230,51 @@ export const useSampleDocuments = (page) =>
   useQuery({ queryKey: queryKeys.core.sampleDocs.list({ page }), queryFn: () => api.get(`/core/sample-documents?page=${page}&pageSize=10`), placeholderData: (previous) => previous, retry: false });
 export const useCreateSampleDocument = () => useWrite((body) => unwrap(api.post('/core/sample-documents', body, idem())), [queryKeys.core.sampleDocs.all]);
 export const useSubmitSampleDocument = () => useWrite(({ id, version }) => unwrap(api.post(`/core/sample-documents/${id}/submit`, { version }, idem())), [queryKeys.core.sampleDocs.all, queryKeys.core.files.all]);
+
+// ---- Part 01.06: calculation engine, formula registry, units and the sample bill ----
+export const useFormulas = ({ q = '', owner = '' }) =>
+  useQuery({
+    queryKey: queryKeys.core.calc.formulas({ q, owner }),
+    queryFn: () => api.get(`/core/formulas?pageSize=200&q=${encodeURIComponent(q)}${owner ? `&filter[owner_module]=${owner}` : ''}`),
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+export const useFormula = (code) =>
+  useQuery({ queryKey: queryKeys.core.calc.formula(code), queryFn: () => unwrap(api.get(`/core/formulas/${code}`)), enabled: Boolean(code), retry: false });
+export const useTestFormula = () => useMutation({ mutationFn: ({ code, ...body }) => unwrap(api.post(`/core/formulas/${code}/test`, body)) });
+export const useCompareVersions = () => useMutation({ mutationFn: ({ code, ...body }) => unwrap(api.post(`/core/formulas/${code}/compare`, body)) });
+export const useCreateFormula = () => useWrite((body) => unwrap(api.post('/core/formulas', body, idem())), [queryKeys.core.calc.all]);
+export const useCreateVersion = () => useWrite(({ code, ...body }) => unwrap(api.post(`/core/formulas/${code}/versions`, body, idem())), [queryKeys.core.calc.all]);
+/** `versionNo` is the formula version in the path; `rowVersion` is the optimistic-lock number the API calls `version`. */
+export const useUpdateVersion = () => useWrite(({ code, versionNo, rowVersion, ...body }) => unwrap(api.patch(`/core/formulas/${code}/versions/${versionNo}`, { version: rowVersion, ...body }, idem())), [queryKeys.core.calc.all]);
+export const useStartShadow = () => useWrite(({ code, version, reason }) => unwrap(api.post(`/core/formulas/${code}/versions/${version}/shadow`, { reason }, idem())), [queryKeys.core.calc.all]);
+export const useStopShadow = () => useWrite(({ code, version, reason }) => unwrap(api.post(`/core/formulas/${code}/versions/${version}/shadow/stop`, { reason }, idem())), [queryKeys.core.calc.all]);
+export const useRequestActivation = () =>
+  useWrite(({ code, version, reason }) => unwrap(api.post(`/core/formulas/${code}/versions/${version}/activation-requests`, { reason }, idem())), [queryKeys.core.calc.all, queryKeys.core.requests.all]);
+export const useShadowSummary = (code, candidate) =>
+  useQuery({
+    queryKey: queryKeys.core.calc.shadow(code, candidate),
+    queryFn: () => unwrap(api.get(`/core/formulas/${code}/shadow-summary${candidate ? `?candidate=${candidate}` : ''}`)),
+    enabled: Boolean(code),
+    refetchInterval: 10_000,
+    retry: false,
+  });
+export const useCalcTraces = (entity, entityId, enabled = true) =>
+  useQuery({ queryKey: queryKeys.core.calc.traces(entity, entityId), queryFn: () => unwrap(api.get(`/core/calc-traces?entity=${entity}&entityId=${entityId}`)), enabled: enabled && Boolean(entityId), retry: false });
+export const useUoms = () => useQuery({ queryKey: queryKeys.core.calc.uoms(), queryFn: () => unwrap(api.get('/core/uoms')), retry: false });
+export const useConversions = (itemCode = '') =>
+  useQuery({ queryKey: queryKeys.core.calc.conversions(itemCode), queryFn: () => unwrap(api.get(`/core/uom-conversions${itemCode ? `?itemCode=${encodeURIComponent(itemCode)}` : ''}`)), retry: false });
+export const useConvertUnits = () => useMutation({ mutationFn: (body) => unwrap(api.post('/core/calc/convert', body)) });
+export const useCreateConversion = () => useWrite((body) => unwrap(api.post('/core/uom-conversions', body, idem())), [queryKeys.core.calc.all]);
+export const useRemoveConversion = () => useWrite((id) => unwrap(api.delete(`/core/uom-conversions/${id}`, idem(), {})), [queryKeys.core.calc.all]);
+
+export const useSampleBills = (page) =>
+  useQuery({ queryKey: queryKeys.core.calc.bills({ page }), queryFn: () => api.get(`/core/sample-bills?page=${page}&pageSize=10`), placeholderData: (previous) => previous, retry: false });
+export const useCreateBill = () => useWrite((body) => unwrap(api.post('/core/sample-bills', body, idem())), [queryKeys.core.calc.all]);
+export const useUpdateBill = () => useWrite(({ id, ...body }) => unwrap(api.patch(`/core/sample-bills/${id}`, body, idem())), [queryKeys.core.calc.all]);
+export const useSubmitBill = () => useWrite(({ id, version }) => unwrap(api.post(`/core/sample-bills/${id}/submit`, { version }, idem())), [queryKeys.core.calc.all]);
+export const useRecalculateBill = () => useWrite((id) => unwrap(api.post(`/core/sample-bills/${id}/recalculate`, {}, idem())), [queryKeys.core.calc.all]);
+
+/** Pending approval requests of every kind, for the approvals inbox. */
+export const usePendingRequests = () =>
+  useQuery({ queryKey: queryKeys.core.requests.list({ status: 'SUBMITTED', inbox: true }), queryFn: () => api.get('/core/change-requests?page=1&pageSize=100&filter[status]=SUBMITTED'), refetchInterval: 10_000, retry: false });

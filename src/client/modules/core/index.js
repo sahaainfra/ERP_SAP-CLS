@@ -13,6 +13,10 @@ import OperationsPage from './pages/OperationsPage.jsx';
 import SchedulesPage from './pages/SchedulesPage.jsx';
 import FileSettingsPage from './pages/FileSettingsPage.jsx';
 import SampleDocumentsPage from './pages/SampleDocumentsPage.jsx';
+import ApprovalsPage from './pages/ApprovalsPage.jsx';
+import FormulaRegistryPage from './pages/FormulaRegistryPage.jsx';
+import SampleBillsPage from './pages/SampleBillsPage.jsx';
+import ShadowReportPage from './pages/ShadowReportPage.jsx';
 import FlagsPage from './pages/FlagsPage.jsx';
 
 // Module "core" registers its pages once. The shell builds navigation and routing from the registry.
@@ -35,5 +39,9 @@ registerModule({
     { path: '/admin/operations/schedules', label: 'Schedules', permission: 'core.schedule.view', flag: 'ff.core.p0104', Page: SchedulesPage },
     { path: '/admin/file-storage', label: 'File Storage', permission: 'core.files.admin', flag: 'ff.core.p0105', Page: FileSettingsPage },
     { path: '/admin/sample-documents', label: 'Sample Documents', permission: 'core.sample.use', flag: 'ff.core.p0105', Page: SampleDocumentsPage },
+    { path: '/admin/formulas', label: 'Formulas', permission: 'core.calc.view', flag: 'ff.core.p0106', Page: FormulaRegistryPage },
+    { path: '/admin/formulas/shadow', label: 'Shadow Report', permission: 'core.calc.view', flag: 'ff.core.p0106', Page: ShadowReportPage },
+    { path: '/admin/sample-bills', label: 'Sample Bills', permission: 'core.sample.use', flag: 'ff.core.p0106', Page: SampleBillsPage },
+    { path: '/admin/approvals', label: 'Approvals', permission: 'core.requests.view', flag: 'ff.core.p0106', Page: ApprovalsPage },
   ],
 });

@@ -1,0 +1,211 @@
+[
+  {
+    "from": "BAG",
+    "itemCode": "CEMENT_OPC53",
+    "path": [
+      {
+        "factor": "50",
+        "from": "BAG",
+        "source": "item",
+        "to": "KG"
+      },
+      {
+        "factor": "0.001",
+        "from": "KG",
+        "source": "generic",
+        "to": "MT"
+      }
+    ],
+    "qty": "100",
+    "result": "5.000",
+    "scale": 3,
+    "to": "MT"
+  },
+  {
+    "from": "MT",
+    "itemCode": "CEMENT_OPC53",
+    "path": [
+      {
+        "factor": "1000",
+        "from": "MT",
+        "source": "generic",
+        "to": "KG"
+      },
+      {
+        "factor": "0.02",
+        "from": "KG",
+        "source": "item",
+        "to": "BAG"
+      }
+    ],
+    "qty": "1",
+    "result": "20.000",
+    "scale": 3,
+    "to": "BAG"
+  },
+  {
+    "from": "BAG",
+    "itemCode": "CEMENT_OPC53",
+    "path": [
+      {
+        "factor": "50",
+        "from": "BAG",
+        "source": "item",
+        "to": "KG"
+      }
+    ],
+    "qty": "37",
+    "result": "1850.000",
+    "scale": 3,
+    "to": "KG"
+  },
+  {
+    "from": "NOS",
+    "itemCode": "STEEL_TMT12",
+    "path": [
+      {
+        "factor": "10.656",
+        "from": "NOS",
+        "source": "item",
+        "to": "KG"
+      }
+    ],
+    "qty": "250",
+    "result": "2664.000",
+    "scale": 3,
+    "to": "KG"
+  },
+  {
+    "from": "MT",
+    "itemCode": "STEEL_TMT12",
+    "path": [
+      {
+        "factor": "1000",
+        "from": "MT",
+        "source": "generic",
+        "to": "KG"
+      },
+      {
+        "factor": "0.09384384",
+        "from": "KG",
+        "source": "item",
+        "to": "NOS"
+      }
+    ],
+    "qty": "1",
+    "result": "93.844",
+    "scale": 3,
+    "to": "NOS"
+  },
+  {
+    "from": "NOS",
+    "itemCode": "STEEL_TMT16",
+    "path": [
+      {
+        "factor": "18.944",
+        "from": "NOS",
+        "source": "item",
+        "to": "KG"
+      },
+      {
+        "factor": "0.001",
+        "from": "KG",
+        "source": "generic",
+        "to": "MT"
+      }
+    ],
+    "qty": "120",
+    "result": "2.273",
+    "scale": 3,
+    "to": "MT"
+  },
+  {
+    "from": "MT",
+    "itemCode": null,
+    "path": [
+      {
+        "factor": "1000",
+        "from": "MT",
+        "source": "generic",
+        "to": "KG"
+      }
+    ],
+    "qty": "2.5",
+    "result": "2500.000",
+    "scale": 3,
+    "to": "KG"
+  },
+  {
+    "from": "KG",
+    "itemCode": null,
+    "path": [
+      {
+        "factor": "0.001",
+        "from": "KG",
+        "source": "generic",
+        "to": "MT"
+      }
+    ],
+    "qty": "1250",
+    "result": "1.250",
+    "scale": 3,
+    "to": "MT"
+  },
+  {
+    "from": "SQM",
+    "itemCode": null,
+    "path": [
+      {
+        "factor": "10.76391042",
+        "from": "SQM",
+        "source": "generic",
+        "to": "SQFT"
+      }
+    ],
+    "qty": "100",
+    "result": "1076.391",
+    "scale": 3,
+    "to": "SQFT"
+  },
+  {
+    "from": "CUM",
+    "itemCode": null,
+    "path": [
+      {
+        "factor": "1000",
+        "from": "CUM",
+        "source": "generic",
+        "to": "L"
+      }
+    ],
+    "qty": "3",
+    "result": "3000.000",
+    "scale": 3,
+    "to": "L"
+  },
+  {
+    "from": "M",
+    "itemCode": null,
+    "path": [
+      {
+        "factor": "1000",
+        "from": "M",
+        "source": "generic",
+        "to": "MM"
+      }
+    ],
+    "qty": "0.333",
+    "result": "333.000",
+    "scale": 3,
+    "to": "MM"
+  },
+  {
+    "from": "KG",
+    "itemCode": null,
+    "path": [],
+    "qty": "5",
+    "result": "5.000",
+    "scale": 3,
+    "to": "KG"
+  }
+]

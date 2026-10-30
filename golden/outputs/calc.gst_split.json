@@ -1,0 +1,282 @@
+[
+  {
+    "inputs": {
+      "gst_percent": "0",
+      "supply": "intra",
+      "taxable": "0.00"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.00",
+      "sgst": "0.00",
+      "tax_total": "0.00",
+      "total": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "5",
+      "supply": "inter",
+      "taxable": "0.00"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.00",
+      "sgst": "0.00",
+      "tax_total": "0.00",
+      "total": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "5",
+      "supply": "intra",
+      "taxable": "0.01"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.00",
+      "sgst": "0.00",
+      "tax_total": "0.00",
+      "total": "0.01"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "12",
+      "supply": "inter",
+      "taxable": "0.01"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.00",
+      "sgst": "0.00",
+      "tax_total": "0.00",
+      "total": "0.01"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "12",
+      "supply": "intra",
+      "taxable": "1.00"
+    },
+    "outputs": {
+      "cgst": "0.06",
+      "igst": "0.00",
+      "sgst": "0.06",
+      "tax_total": "0.12",
+      "total": "1.12"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "18",
+      "supply": "inter",
+      "taxable": "1.00"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.18",
+      "sgst": "0.00",
+      "tax_total": "0.18",
+      "total": "1.18"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "18",
+      "supply": "intra",
+      "taxable": "99.99"
+    },
+    "outputs": {
+      "cgst": "9.00",
+      "igst": "0.00",
+      "sgst": "9.00",
+      "tax_total": "18.00",
+      "total": "117.99"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "28",
+      "supply": "inter",
+      "taxable": "99.99"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "28.00",
+      "sgst": "0.00",
+      "tax_total": "28.00",
+      "total": "127.99"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "28",
+      "supply": "intra",
+      "taxable": "100.00"
+    },
+    "outputs": {
+      "cgst": "14.00",
+      "igst": "0.00",
+      "sgst": "14.00",
+      "tax_total": "28.00",
+      "total": "128.00"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "2.5",
+      "supply": "inter",
+      "taxable": "100.00"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "2.50",
+      "sgst": "0.00",
+      "tax_total": "2.50",
+      "total": "102.50"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "2.5",
+      "supply": "intra",
+      "taxable": "1265.43"
+    },
+    "outputs": {
+      "cgst": "15.82",
+      "igst": "0.00",
+      "sgst": "15.82",
+      "tax_total": "31.64",
+      "total": "1297.07"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "0.1",
+      "supply": "inter",
+      "taxable": "1265.43"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "1.27",
+      "sgst": "0.00",
+      "tax_total": "1.27",
+      "total": "1266.70"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "0.1",
+      "supply": "intra",
+      "taxable": "5000.50"
+    },
+    "outputs": {
+      "cgst": "2.50",
+      "igst": "0.00",
+      "sgst": "2.50",
+      "tax_total": "5.00",
+      "total": "5005.50"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "0",
+      "supply": "inter",
+      "taxable": "5000.50"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.00",
+      "sgst": "0.00",
+      "tax_total": "0.00",
+      "total": "5000.50"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "0",
+      "supply": "intra",
+      "taxable": "123456.78"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.00",
+      "sgst": "0.00",
+      "tax_total": "0.00",
+      "total": "123456.78"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "5",
+      "supply": "inter",
+      "taxable": "123456.78"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "6172.84",
+      "sgst": "0.00",
+      "tax_total": "6172.84",
+      "total": "129629.62"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "5",
+      "supply": "intra",
+      "taxable": "0.05"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.00",
+      "sgst": "0.00",
+      "tax_total": "0.00",
+      "total": "0.05"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "12",
+      "supply": "inter",
+      "taxable": "0.05"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "0.01",
+      "sgst": "0.00",
+      "tax_total": "0.01",
+      "total": "0.06"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "12",
+      "supply": "intra",
+      "taxable": "17.95"
+    },
+    "outputs": {
+      "cgst": "1.08",
+      "igst": "0.00",
+      "sgst": "1.08",
+      "tax_total": "2.16",
+      "total": "20.11"
+    }
+  },
+  {
+    "inputs": {
+      "gst_percent": "18",
+      "supply": "inter",
+      "taxable": "17.95"
+    },
+    "outputs": {
+      "cgst": "0.00",
+      "igst": "3.23",
+      "sgst": "0.00",
+      "tax_total": "3.23",
+      "total": "21.18"
+    }
+  }
+]

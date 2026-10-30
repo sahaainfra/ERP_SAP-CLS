@@ -22,6 +22,16 @@ export const queryKeys = {
       settings: () => ['core', 'files', 'settings'],
       overview: () => ['core', 'files', 'overview'],
     },
+    calc: {
+      all: ['core', 'calc'],
+      formulas: (p) => ['core', 'calc', 'formulas', p],
+      formula: (code) => ['core', 'calc', 'formula', code],
+      shadow: (code, candidate) => ['core', 'calc', 'shadow', code, candidate],
+      traces: (entity, id) => ['core', 'calc', 'traces', entity, id],
+      uoms: () => ['core', 'calc', 'uoms'],
+      conversions: (item) => ['core', 'calc', 'conversions', item],
+      bills: (p) => ['core', 'calc', 'bills', p],
+    },
     sampleDocs: { all: ['core', 'sample-documents'], list: (p) => ['core', 'sample-documents', 'list', p] },
     ops: {
       all: ['core', 'ops'],

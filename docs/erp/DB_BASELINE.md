@@ -52,6 +52,46 @@ Indexes:
 - ix_core_backfill_runs_company: company_id
 - ux_core_backfill_runs_name (unique): name
 
+## core_calc_shadow_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| formula_code | TEXT | yes |  |  |
+| baseline_version | INTEGER | yes |  |  |
+| candidate_version | INTEGER | yes |  |  |
+| inputs_json | TEXT | yes |  |  |
+| baseline_json | TEXT | yes |  |  |
+| candidate_json | TEXT | yes |  |  |
+| differs | INTEGER | yes |  |  |
+| candidate_error | TEXT |  |  |  |
+| computed_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+
+Indexes:
+- ix_core_calc_shadow_formula: formula_code, candidate_version, differs
+
+## core_calc_traces
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| formula_code | TEXT | yes |  |  |
+| formula_version | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| field | TEXT | yes |  | '' |
+| inputs_json | TEXT | yes |  |  |
+| result_json | TEXT | yes |  |  |
+| steps_json | TEXT | yes |  |  |
+| computed_by | TEXT |  |  |  |
+| computed_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+
+Indexes:
+- ix_core_calc_traces_formula: formula_code, formula_version, computed_at
+- ix_core_calc_traces_entity: company_id, entity, entity_id
+
 ## core_change_request_steps
 
 | Column | Type | Not null | Key | Default |
@@ -345,6 +385,47 @@ Indexes:
 - ix_core_financial_years_dates: company_id, start_date, end_date
 - ix_core_financial_years_company_status: company_id, status
 - ux_core_financial_years_code (unique): company_id, code
+
+## core_formulas
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| formula_version | INTEGER | yes |  |  |
+| description | TEXT | yes |  |  |
+| owner_module | TEXT | yes |  |  |
+| financial | INTEGER | yes |  | 0 |
+| expression | TEXT | yes |  |  |
+| inputs_json | TEXT | yes |  |  |
+| outputs_json | TEXT | yes |  |  |
+| rounding_policy | TEXT | yes |  | 'half_up' |
+| tests_json | TEXT | yes |  | '[]' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| activated_at | TEXT |  |  |  |
+| activated_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_core_formulas_company: company_id, status
+- ix_core_formulas_owner: owner_module
+- ix_core_formulas_status: code, status, effective_from
+- ux_core_formulas_code_version (unique): code, formula_version
 
 ## core_holiday_calendars
 
@@ -690,6 +771,41 @@ Indexes:
 Indexes:
 - sqlite_autoindex_core_projection_event_counts_1 (unique): company_id, event_type
 
+## core_sample_bills
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| quantity | INTEGER | yes |  |  |
+| unit_rate | INTEGER | yes |  |  |
+| gst_percent | INTEGER | yes |  |  |
+| supply | TEXT | yes |  |  |
+| taxable_amount | INTEGER | yes |  |  |
+| cgst_amount | INTEGER | yes |  |  |
+| sgst_amount | INTEGER | yes |  |  |
+| igst_amount | INTEGER | yes |  |  |
+| total_amount | INTEGER | yes |  |  |
+| formula_pins_json | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_core_sample_bills_company: company_id, status
+
 ## core_sample_documents
 
 | Column | Type | Not null | Key | Default |
@@ -751,3 +867,59 @@ Indexes:
 - ix_core_schedules_company: company_id
 - ix_core_schedules_due: enabled, next_run_at
 - ux_core_schedules_code (unique): code
+
+## core_uom_conversions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| item_code | TEXT |  |  |  |
+| from_uom | TEXT | yes |  |  |
+| to_uom | TEXT | yes |  |  |
+| factor | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_core_uom_conversions_company: company_id
+- ix_core_uom_conversions_item: item_code
+- ux_core_uom_conversions_pair (unique): , from_uom, to_uom
+
+## core_uoms
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| dimension | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_core_uoms_company: company_id
+- ux_core_uoms_code (unique): code

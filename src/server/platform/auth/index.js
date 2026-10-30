@@ -11,7 +11,7 @@ const ROLE_PERMISSIONS = {
     'core.settings.view', 'core.settings.configure', 'core.fy.view', 'core.fy.configure', 'core.period.request_reopen',
     'core.numbering.view', 'core.numbering.configure', 'core.numbering.issue', 'core.numbering.preview',
     'core.param.view', 'core.param.configure', 'core.holiday.configure', 'core.requests.view', 'core.sample.use',
-    'core.events.view', 'core.jobs.view', 'core.schedule.view', 'core.files.admin', 'core.files.configure',
+    'core.events.view', 'core.jobs.view', 'core.schedule.view', 'core.files.admin', 'core.files.configure', 'core.calc.view', 'core.calc.manage',
   ],
   ITADM: ['core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view', 'core.integrity.run', 'core.param.view', 'core.param.configure_system', 'core.numbering.view',
     'core.events.view', 'core.events.redrive', 'core.events.replay', 'core.jobs.view', 'core.jobs.manage', 'core.schedule.view', 'core.schedule.manage', 'core.requests.view', 'core.files.admin'],
@@ -19,6 +19,8 @@ const ROLE_PERMISSIONS = {
   ACCMGR: ['core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.request_reopen', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
   CFO: ['core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
   DIR: ['core.fy.view', 'core.requests.view'],
+  // Project controls: views the calculation registry and approves new versions of the project formulas.
+  PCMGR: ['core.calc.view', 'core.requests.view'],
   PM: ['core.sample.use', 'core.numbering.preview'],
 };
 

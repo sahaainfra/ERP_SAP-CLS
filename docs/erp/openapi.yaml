@@ -372,3 +372,95 @@ paths:
     post:
       summary: Ask to change types, size limits, retention classes or link life (core.files.configure; approved by the IT Administrator)
       responses: { '201': { description: request raised }, '409': { description: an open request exists }, '422': { description: nothing would change } }
+  /api/v1/core/formulas:
+    get:
+      summary: The formula registry, one row per formula (core.calc.view; q, filter[owner_module], filter[status])
+      responses: { '200': { description: '{ data: [{ code, ownerModule, currentVersion, latestVersion, hasDraft, hasShadow }], meta }' } }
+    post:
+      summary: Register a new formula as version 1, a draft (core.calc.manage)
+      responses: { '201': { description: '{ data: version }' }, '400': { description: syntax, unknown name or undeclared output }, '409': { description: code exists } }
+  /api/v1/core/formulas/{code}:
+    get:
+      summary: All versions of a formula with their state, and the approval chain for a new version
+      responses: { '200': { description: '{ data: { code, approvalChain, versions } }' }, '404': { description: unknown formula } }
+  /api/v1/core/formulas/{code}/versions:
+    post:
+      summary: Draft a new version, by default a copy of the latest (core.calc.manage). Only one draft at a time
+      responses: { '201': { description: '{ data: version }' }, '409': { description: a draft exists } }
+  /api/v1/core/formulas/{code}/versions/{version}:
+    patch:
+      summary: Edit a draft (optimistic lock in body.version). A version that is no longer a draft cannot be edited
+      responses: { '200': { description: '{ data: version }' }, '409': { description: not a draft, or stale } }
+  /api/v1/core/formulas/{code}/versions/{version}/check:
+    get:
+      summary: Problems with the definition and the result of the version's own test cases
+      responses: { '200': { description: '{ data: { problems, tests } }' } }
+  /api/v1/core/formulas/{code}/versions/{version}/shadow:
+    post:
+      summary: Run a draft beside the active version from now on (needs passing tests; Idempotency-Key; core.calc.manage)
+      responses: { '200': { description: '{ data: version }' }, '422': { description: no tests, failing tests or nothing active to compare with } }
+  /api/v1/core/formulas/{code}/versions/{version}/shadow/stop:
+    post:
+      summary: Stop shadow mode; the version is retired
+      responses: { '200': { description: '{ data: version }' } }
+  /api/v1/core/formulas/{code}/versions/{version}/activation-requests:
+    post:
+      summary: Ask for a draft or shadow version to become active (tests pass, date today or later). Approved by the owner manager, then the CFO for financial formulas
+      responses: { '201': { description: approval request }, '409': { description: an open request exists }, '422': { description: tests, date or definition } }
+  /api/v1/core/formulas/{code}/test:
+    post:
+      summary: 'The test bench: evaluate a stored version, the version in force on a date, or an unsaved draft definition. Keeps nothing (core.calc.view)'
+      responses: { '200': { description: '{ data: { result, trace, formula } }' }, '422': { description: invalid input, naming the step } }
+  /api/v1/core/formulas/{code}/compare:
+    post:
+      summary: Run two versions on pasted cases and recent real inputs and report every difference (core.calc.view)
+      responses: { '200': { description: '{ data: { summary, results } }' } }
+  /api/v1/core/formulas/{code}/shadow-summary:
+    get:
+      summary: What the live shadow run has found for a version so far
+      responses: { '200': { description: '{ data: { runs, differing, errors, latestDifferences } }' } }
+  /api/v1/core/calc-traces:
+    get:
+      summary: 'The calculations behind a record (query: entity, entityId); needs view permission on the record'
+      responses: { '200': { description: '{ data: [trace] }' }, '403': { description: no view permission on the record }, '404': { description: record not found in your company } }
+  /api/v1/core/uoms:
+    get:
+      summary: Units of measure
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Add a unit (core.calc.manage)
+      responses: { '201': { description: '{ data }' }, '409': { description: exists } }
+  /api/v1/core/uom-conversions:
+    get:
+      summary: Conversion factors, generic and for one item (query itemCode)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Add a factor (1 from = factor to); an item factor beats a generic one for the same pair
+      responses: { '201': { description: '{ data }' }, '409': { description: pair exists }, '404': { description: unknown unit } }
+  /api/v1/core/uom-conversions/{id}:
+    delete:
+      summary: Remove a factor (soft delete)
+      responses: { '200': { description: '{ data: { id, deleted } }' } }
+  /api/v1/core/calc/convert:
+    post:
+      summary: Convert a quantity between units, with the route taken (core.calc.view)
+      responses: { '200': { description: '{ data: { result, path } }' }, '422': { description: no conversion } }
+  /api/v1/core/sample-bills:
+    get:
+      summary: Sample bills with their calculated amounts and the formula versions used (core.sample.use)
+      responses: { '200': { description: '{ data, meta }' } }
+    post:
+      summary: Create a bill; every amount is calculated by the server
+      responses: { '201': { description: '{ data: bill }' } }
+  /api/v1/core/sample-bills/{id}:
+    patch:
+      summary: Change a draft bill's inputs and recalculate (optimistic lock)
+      responses: { '200': { description: '{ data: bill }' }, '422': { description: bill is submitted } }
+  /api/v1/core/sample-bills/{id}/submit:
+    post:
+      summary: Submit a bill; amounts and formula versions are fixed (Idempotency-Key required)
+      responses: { '200': { description: '{ data: bill }' } }
+  /api/v1/core/sample-bills/{id}/recalculate:
+    post:
+      summary: Calculate again - a draft with the versions in force today, a submitted bill with the versions it was calculated with
+      responses: { '200': { description: '{ data: bill with recalculation }' } }

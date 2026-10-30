@@ -46,11 +46,16 @@ def db_catalogue(root):
 
 
 def calculation_registry(root):
-    reg = os.path.join(root, "golden", "registry.mjs")
-    ids = re.findall(r"id: '([^']+)'", _read(reg)) if os.path.exists(reg) else []
+    out = os.path.join(root, "golden", "outputs")
+    ids = sorted(f[:-5] for f in os.listdir(out) if f.endswith(".json")) if os.path.isdir(out) else []
     lines = ["# CALCULATION_REGISTRY", "",
              "Golden outputs live in `golden/outputs/<id>.json`; compare with `npm run erp:golden`.", "",
              "| Id | Golden output |", "|---|---|"]
     lines += ["| %s | golden/outputs/%s.json |" % (c, c) for c in ids] or ["| none | |"]
-    lines += ["", "No money, tax, retention, stock or payroll calculations exist yet; each later part registers its own."]
+    builtins = os.path.join(root, "src", "server", "platform", "calc", "builtins.js")
+    codes = re.findall(r"code: '([^']+)'", _read(builtins)) if os.path.exists(builtins) else []
+    lines += ["", "Business calculations are formulas in the registry (Administration > Calculations, `src/server/platform/calc/builtins.js`), evaluated by the one engine (part 01.06).", "",
+              "| Formula | Version in code |", "|---|---|"]
+    lines += ["| %s | 1 |" % c for c in codes] or ["| none | |"]
+    lines += ["", "Each later part registers its own formulas and golden outputs."]
     return "\n".join(lines) + "\n"

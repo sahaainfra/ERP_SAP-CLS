@@ -1,0 +1,106 @@
+[
+  {
+    "inputs": {
+      "opening_qty": "100",
+      "opening_value": "5000.00",
+      "receipt_qty": "50",
+      "receipt_rate": "60.5"
+    },
+    "outputs": {
+      "average_rate": "53.5000",
+      "new_qty": "150.000",
+      "new_value": "8025.00"
+    }
+  },
+  {
+    "inputs": {
+      "opening_qty": "0",
+      "opening_value": "0",
+      "receipt_qty": "7",
+      "receipt_rate": "33.3333"
+    },
+    "outputs": {
+      "average_rate": "33.3329",
+      "new_qty": "7.000",
+      "new_value": "233.33"
+    }
+  },
+  {
+    "inputs": {
+      "opening_qty": "0",
+      "opening_value": "0",
+      "receipt_qty": "0",
+      "receipt_rate": "10"
+    },
+    "outputs": {
+      "average_rate": "0.0000",
+      "new_qty": "0.000",
+      "new_value": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "opening_qty": "12.345",
+      "opening_value": "999.99",
+      "receipt_qty": "0.001",
+      "receipt_rate": "0.0001"
+    },
+    "outputs": {
+      "average_rate": "80.9971",
+      "new_qty": "12.346",
+      "new_value": "999.99"
+    }
+  },
+  {
+    "inputs": {
+      "opening_qty": "1000",
+      "opening_value": "123456.78",
+      "receipt_qty": "333.333",
+      "receipt_rate": "87.6543"
+    },
+    "outputs": {
+      "average_rate": "114.5062",
+      "new_qty": "1333.333",
+      "new_value": "152674.85"
+    }
+  },
+  {
+    "inputs": {
+      "opening_qty": "3",
+      "opening_value": "10.00",
+      "receipt_qty": "3",
+      "receipt_rate": "3.3333"
+    },
+    "outputs": {
+      "average_rate": "3.3333",
+      "new_qty": "6.000",
+      "new_value": "20.00"
+    }
+  },
+  {
+    "inputs": {
+      "opening_qty": "250.5",
+      "opening_value": "41666.25",
+      "receipt_qty": "100",
+      "receipt_rate": "170.1234"
+    },
+    "outputs": {
+      "average_rate": "167.4140",
+      "new_qty": "350.500",
+      "new_value": "58678.59"
+    }
+  },
+  {
+    "inputs": {
+      "opening_qty": "1",
+      "opening_value": "0.01",
+      "receipt_qty": "2",
+      "receipt_rate": "0.0050"
+    },
+    "outputs": {
+      "average_rate": "0.0067",
+      "new_qty": "3.000",
+      "new_value": "0.02"
+    }
+  }
+]

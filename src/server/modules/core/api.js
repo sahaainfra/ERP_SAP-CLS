@@ -9,3 +9,4 @@ export { assertPeriodOpen, findFinancialYear, PERIOD_MODULES } from './financial
 export { cancelNumber, issueNumber, previewNumber } from './numbering/service.js';
 export { holidaysOn, isHoliday, isWorkingDay } from './holidays/service.js';
 export { createParameterStore, defineParameter, parameterRegistry } from '../../platform/parameters/api.js';
+export { calcOf } from '../../platform/calc/index.js';

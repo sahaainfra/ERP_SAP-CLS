@@ -177,3 +177,10 @@ details summary { cursor: pointer; }
 .row-selected td { background: var(--erp-color-status-neutral-bg); }
 .checks { display: flex; flex-wrap: wrap; gap: var(--erp-space-2) var(--erp-space-4); }
 fieldset { min-width: 0; margin: 0 0 var(--erp-space-4); }
+
+/* ---- Part 01.06: calculation engine ---- */
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.875rem; }
+textarea.mono { width: 100%; max-width: 100%; box-sizing: border-box; }
+.dialog-wide { max-width: min(48rem, 96vw); }
+.trace h4 { margin: var(--erp-space-4) 0 var(--erp-space-2); }
+.trace code { overflow-wrap: anywhere; }

@@ -1,0 +1,110 @@
+[
+  {
+    "inputs": {
+      "gross": "100000.00",
+      "retention_percent": "5",
+      "tds_percent": "2"
+    },
+    "outputs": {
+      "net_payable": "93000.00",
+      "retention": "5000.00",
+      "tds": "2000.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "12345.67",
+      "retention_percent": "2.5",
+      "tds_percent": "1"
+    },
+    "outputs": {
+      "net_payable": "11914.03",
+      "retention": "308.64",
+      "tds": "123.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "250.00",
+      "retention_percent": "1",
+      "tds_percent": "1"
+    },
+    "outputs": {
+      "net_payable": "245.50",
+      "retention": "2.50",
+      "tds": "2.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "0.00",
+      "retention_percent": "5",
+      "tds_percent": "2"
+    },
+    "outputs": {
+      "net_payable": "0.00",
+      "retention": "0.00",
+      "tds": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "50.00",
+      "retention_percent": "1",
+      "tds_percent": "1"
+    },
+    "outputs": {
+      "net_payable": "49.50",
+      "retention": "0.50",
+      "tds": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "150.00",
+      "retention_percent": "1",
+      "tds_percent": "1"
+    },
+    "outputs": {
+      "net_payable": "146.50",
+      "retention": "1.50",
+      "tds": "2.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "250.00",
+      "retention_percent": "0.5",
+      "tds_percent": "1"
+    },
+    "outputs": {
+      "net_payable": "246.75",
+      "retention": "1.25",
+      "tds": "2.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "99999999.99",
+      "retention_percent": "10",
+      "tds_percent": "10"
+    },
+    "outputs": {
+      "net_payable": "79999999.99",
+      "retention": "10000000.00",
+      "tds": "10000000.00"
+    }
+  },
+  {
+    "inputs": {
+      "gross": "1234.55",
+      "retention_percent": "2.5",
+      "tds_percent": "0.1"
+    },
+    "outputs": {
+      "net_payable": "1202.69",
+      "retention": "30.86",
+      "tds": "1.00"
+    }
+  }
+]

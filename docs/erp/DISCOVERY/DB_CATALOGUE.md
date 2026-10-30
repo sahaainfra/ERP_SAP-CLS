@@ -36,6 +36,12 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | core_files | 20261030000014_core_files.up.sql | id, company_id, storage_key, original_name, extension, mime, category, size_bytes, scan_status, scan_detail, scanned_at, linked_entity, linked_id, supersedes_id, version_no, retention_class, exif_json, exif_stripped, thumbnail_key, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
 | core_file_uploads | 20261030000014_core_files.up.sql | id, upload_id, company_id, user_id, file_name, declared_size, received, meta_json, status, file_id, expires_at, created_at, updated_at |
 | core_file_settings | 20261030000014_core_files.up.sql | id, company_id, settings_json, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_formulas | 20261030000016_core_calculation_engine.up.sql | id, company_id, code, formula_version, description, owner_module, financial, expression, inputs_json, outputs_json, rounding_policy, tests_json, effective_from, effective_to, status, activated_at, activated_by, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_calc_traces | 20261030000016_core_calculation_engine.up.sql | id, company_id, formula_code, formula_version, entity, entity_id, field, inputs_json, result_json, steps_json, computed_by, computed_at |
+| core_calc_shadow_results | 20261030000016_core_calculation_engine.up.sql | id, company_id, formula_code, baseline_version, candidate_version, inputs_json, baseline_json, candidate_json, differs, candidate_error, computed_at |
+| core_uoms | 20261030000016_core_calculation_engine.up.sql | id, company_id, code, name, dimension, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_uom_conversions | 20261030000016_core_calculation_engine.up.sql | id, company_id, item_code, from_uom, to_uom, factor, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
+| core_sample_bills | 20261030000016_core_calculation_engine.up.sql | id, company_id, title, quantity, unit_rate, gst_percent, supply, taxable_amount, cgst_amount, sgst_amount, igst_amount, total_amount, formula_pins_json, status, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks |
 
 ## Indexes
 
@@ -109,6 +115,19 @@ Row counts are not recorded: the catalogue is generated from migrations, not fro
 | ix_core_file_uploads_expiry | core_file_uploads | no | 20261030000014_core_files.up.sql |
 | ix_core_file_uploads_file | core_file_uploads | no | 20261030000014_core_files.up.sql |
 | ux_core_file_settings_company | core_file_settings | yes | 20261030000014_core_files.up.sql |
+| ux_core_formulas_code_version | core_formulas | yes | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_formulas_status | core_formulas | no | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_formulas_owner | core_formulas | no | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_formulas_company | core_formulas | no | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_calc_traces_entity | core_calc_traces | no | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_calc_traces_formula | core_calc_traces | no | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_calc_shadow_formula | core_calc_shadow_results | no | 20261030000016_core_calculation_engine.up.sql |
+| ux_core_uoms_code | core_uoms | yes | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_uoms_company | core_uoms | no | 20261030000016_core_calculation_engine.up.sql |
+| ux_core_uom_conversions_pair | core_uom_conversions | yes | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_uom_conversions_item | core_uom_conversions | no | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_uom_conversions_company | core_uom_conversions | no | 20261030000016_core_calculation_engine.up.sql |
+| ix_core_sample_bills_company | core_sample_bills | no | 20261030000016_core_calculation_engine.up.sql |
 
 Views, triggers and functions: none.
 
@@ -145,6 +164,12 @@ erDiagram
   core_files
   core_file_uploads
   core_file_settings
+  core_formulas
+  core_calc_traces
+  core_calc_shadow_results
+  core_uoms
+  core_uom_conversions
+  core_sample_bills
 ```
 
 No foreign keys exist yet; tables are independent until the organisation tables (02.02) are built.

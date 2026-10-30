@@ -30,8 +30,8 @@ test('T-01 migration up, down, up on a populated database leaves schema and row 
   db.prepare("INSERT INTO core_outbox (event_type, aggregate_id, payload) VALUES ('x.y.z', '1', '{}')").run();
   const before = databaseChecksums(db);
   const all = appliedMigrations(db);
-  const reverted = migrateDown(db, 11); // seed p0105, files, request types, seed p0104, events and jobs, seed p0103, numbering, configuration, seed p0102, the foundation tables, seed p0101
-  assert.equal(reverted.length, 11);
+  const reverted = migrateDown(db, 13); // seed p0106, calculation engine, seed p0105, files, request types, seed p0104, events and jobs, seed p0103, numbering, configuration, seed p0102, the foundation tables, seed p0101
+  assert.equal(reverted.length, 13);
   assert.ok(!appliedMigrations(db).includes(all.at(-1)));
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name = 'core_idempotency_keys'").get().n, 0, 'the down migration removed what the up migration added');
   migrateUp(db);

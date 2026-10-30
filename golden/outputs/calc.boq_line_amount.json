@@ -1,0 +1,110 @@
+[
+  {
+    "inputs": {
+      "quantity": "12.5",
+      "rate": "101.2345"
+    },
+    "outputs": {
+      "amount": "1265.43"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "3",
+      "rate": "0.005"
+    },
+    "outputs": {
+      "amount": "0.02"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0",
+      "rate": "99.9999"
+    },
+    "outputs": {
+      "amount": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "1000",
+      "rate": "1"
+    },
+    "outputs": {
+      "amount": "1000.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0.001",
+      "rate": "0.5"
+    },
+    "outputs": {
+      "amount": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "7.777",
+      "rate": "13.3333"
+    },
+    "outputs": {
+      "amount": "103.69"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "250.125",
+      "rate": "88.8888"
+    },
+    "outputs": {
+      "amount": "22233.31"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "1",
+      "rate": "2.3450"
+    },
+    "outputs": {
+      "amount": "2.35"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "1",
+      "rate": "2.3550"
+    },
+    "outputs": {
+      "amount": "2.36"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "99999.999",
+      "rate": "99999.9999"
+    },
+    "outputs": {
+      "amount": "9999999890.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0.5",
+      "rate": "0.0001"
+    },
+    "outputs": {
+      "amount": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "45.250",
+      "rate": "1180.5000"
+    },
+    "outputs": {
+      "amount": "53417.63"
+    }
+  }
+]
