@@ -14,11 +14,15 @@ import { createMfaService } from './mfa.js';
 import { createNotifier } from './notify.js';
 import { authRoutes, securityRoutes } from './routes.js';
 import { createUserStore } from './users.js';
+import { fileEntities } from '../../platform/files/entities.js';
+import { hasPermission } from '../../platform/auth/index.js';
+import { createUserAdminService, userHandlers } from './usermgmt/service.js';
+import { invitationRoutes, meRoutes, userRoutes } from './usermgmt/routes.js';
 import { ENTITIES } from './org/entities.js';
 import { orgRoutes } from './org/routes.js';
 import { createOrgService, orgHandlers } from './org/service.js';
 
-export { orgHandlers };
+export { orgHandlers, userHandlers };
 
 // Part 02.01: authentication. Events this module publishes:
 const obj = (properties = {}, required = []) => ({ type: 'object', properties, required });
@@ -47,16 +51,41 @@ IAM_EVENTS.push(
   ['iam.project.manager_changed', 'The project manager of a project changed.', obj({ code: str }, ['code'])],
   ['iam.site.in_charge_changed', 'The in-charge of a site changed.', obj({ code: str }, ['code'])],
 );
+// Part 02.03: user management events.
+IAM_EVENTS.push(
+  ['iam.user.created', 'A user account was created (Invited, with no password and no access).', obj({ username: str, userType: str }, ['username'])],
+  ['iam.user.updated', 'The details of a user were changed.', obj({ username: str, fields: { type: 'array' } }, ['username'])],
+  ['iam.user.invited', 'An invitation to set a password was sent (or sent again).', obj({ username: str, channel: str, resend: { type: 'boolean' } }, ['username', 'channel'])],
+  ['iam.user.activated', 'A person accepted their invitation and set a password: Onboarding until a role is approved, then Active.', obj({ username: str, lifecycle: str }, ['username', 'lifecycle'])],
+  ['iam.user.suspended', 'A user was suspended and their sessions ended.', obj({ username: str, sessionsEnded: { type: 'number' } }, ['username'])],
+  ['iam.user.reactivated', 'A suspended or deactivated user was reactivated.', obj({ username: str, lifecycle: str }, ['username', 'lifecycle'])],
+  ['iam.user.deactivated', 'A user was deactivated: sessions ended, roles taken away, open items handed to a successor.', obj({ username: str, sessionsEnded: { type: 'number' }, successor: str }, ['username'])],
+  ['iam.user.roles_changed', 'Roles were granted (after approval) or taken away.', obj({ username: str, granted: { type: 'array' }, revoked: { type: 'array' }, requestId: { type: 'number' } }, ['username'])],
+  ['iam.user.profile_updated', 'A person changed their own profile.', obj({ username: str, fields: { type: 'array' } }, ['username'])],
+  ['iam.user.imported', 'A file of users was imported.', obj({ created: { type: 'number' }, skipped: { type: 'number' } }, ['created'])],
+);
 for (const [type, description, schema] of IAM_EVENTS) eventTypes.define({ type, version: 1, schema, owner: 'iam', description });
 
 integrityRegistry.register({
   technicalTables: ['iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets'],
   companyOptional: ['org_companies'],
   statuses: {
-    iam_users: ['ACTIVE', 'DISABLED'], org_companies: ['ACTIVE', 'INACTIVE'], org_branches: ['ACTIVE', 'INACTIVE'], org_departments: ['ACTIVE', 'INACTIVE'], org_designations: ['ACTIVE', 'INACTIVE'],
+    iam_users: ['ACTIVE', 'DISABLED'], iam_invitations: ['PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED', 'SUPERSEDED'], org_companies: ['ACTIVE', 'INACTIVE'], org_branches: ['ACTIVE', 'INACTIVE'], org_departments: ['ACTIVE', 'INACTIVE'], org_designations: ['ACTIVE', 'INACTIVE'],
     org_projects: ['DRAFT', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CLOSED'], org_sites: ['DRAFT', 'ACTIVE', 'INACTIVE'], org_locations: ['ACTIVE', 'INACTIVE'], org_cost_centres: ['ACTIVE', 'INACTIVE'],
   },
   uniqueKeys: [{ table: 'org_projects', columns: ['company_id', 'code'] }, { table: 'org_locations', columns: ['company_id', 'code'] }, { table: 'org_designations', columns: ['company_id', 'code'] }],
+});
+
+// The profile photo and signature of a person are files of the document service, attached to the person's own record.
+fileEntities.register({
+  entity: 'iam_user_profile',
+  label: 'User profile',
+  resolve(db, actor, id) {
+    const u = db.prepare('SELECT id, company_id FROM iam_users WHERE id = ? AND is_active = 1 AND deleted_at IS NULL').get(id);
+    if (!u) return null;
+    const own = actor.userId === u.id;
+    return { companyId: u.company_id, projectId: null, siteId: null, canView: own || hasPermission(actor, 'iam.user.view'), canEdit: own || hasPermission(actor, 'iam.user.manage'), locked: false };
+  },
 });
 
 /** The approval handler for authentication policy changes; the shared approval engine (in core) calls it when a request is approved. */
@@ -69,8 +98,8 @@ export const iam = {
   routePrefix: '/api/v1/iam',
   ownerPart: '02.x',
   status: 'Authentication (02.01) and organisation (02.02)',
-  tables: ['iam_users', 'iam_credentials', 'iam_mfa_factors', 'iam_devices', 'iam_auth_policy', 'iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'org_companies', 'org_branches', 'org_departments', 'org_designations', 'org_projects', 'org_sites', 'org_locations', 'org_cost_centres', 'org_assignments'],
-  resources: ['auth', 'me', 'admin', 'org'],
+  tables: ['iam_users', 'iam_credentials', 'iam_mfa_factors', 'iam_devices', 'iam_auth_policy', 'iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_user_profiles', 'iam_invitations', 'iam_role_grants', 'org_companies', 'org_branches', 'org_departments', 'org_designations', 'org_projects', 'org_sites', 'org_locations', 'org_cost_centres', 'org_assignments'],
+  resources: ['auth', 'me', 'admin', 'org', 'users', 'invitations'],
 
   mount(api, { db, config, publicApi }) {
     const identity = identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined });
@@ -82,6 +111,8 @@ export const iam = {
     const mfa = createMfaService({ db, identity, notifier });
     const auth = createAuthService({ db, identity, users, mfa, notifier });
     const idempotentRequired = idempotency(db, { required: true });
+    /** @type {ReturnType<typeof createUserAdminService>} */
+    let userAdmin;
 
     if (migrated) {
       const runtime = runtimeOf(db);
@@ -100,6 +131,8 @@ export const iam = {
         { maxAttempts: 2, description: 'Deletes ended sessions and their refresh tokens after 30 days, reset codes and throttles after 30 days, and login history after 400 days.' },
       );
       runtime.jobs.register('iam.org_effective_apply', (ctx) => { const r = createOrgService({ db, approvals: null, clock: () => identity.now() }).applyDueAssignments(); ctx.log(`Applied ${r.applied} scheduled organisation change(s)`); return r; }, { maxAttempts: 2, description: 'Applies scheduled changes of department head, project manager and site in-charge whose effective date has come.' });
+      runtime.jobs.register('iam.invitation_expiry', (ctx) => { const r = userAdmin.expireInvitations(); ctx.log(`Marked ${r.expired} invitation(s) as expired`); return r; }, { maxAttempts: 2, description: 'Marks invitations whose link has expired. The person stays Invited and can be invited again.' });
+      runtime.scheduler.define({ code: 'iam.invitation_expiry_daily', cron: '20 0 * * *', jobType: 'iam.invitation_expiry', description: 'Daily expiry of unused invitations (00:20 IST)' });
       runtime.scheduler.define({ code: 'iam.org_effective_daily', cron: '10 0 * * *', jobType: 'iam.org_effective_apply', description: 'Daily application of effective-dated organisation changes (00:10 IST)' });
       runtime.scheduler.define({ code: 'iam.session_purge_daily', cron: '45 3 * * *', jobType: 'iam.session_purge', description: 'Daily clean-up of ended sessions (03:45 IST)' });
     }
@@ -107,20 +140,30 @@ export const iam = {
     // Sign-in routes: no token yet. AUTH_MODE=iam is the switch that makes them the way in, so the feature flag does not gate them.
     const refreshMaxAgeSec = 72 * 3600;
     publicApi.use('/iam', authRoutes({ auth, config, identity, refreshMaxAgeSec }));
+    publicApi.use('/iam', invitationRoutes({ invitationInfo: (t) => userAdmin.invitationInfo(t), accept: (t, b, c) => userAdmin.accept(t, b, c) }));
 
     // Everything behind sign-in is hidden while ff.iam.p0201 is OFF for the company.
-    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers, ...userHandlers } });
     const orgService = createOrgService({ db, approvals, clock: () => identity.now() });
     const orgRouter = Router();
     orgRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0202') ? next() : next(notFound('The organisation master is not enabled for your company yet (feature flag ff.iam.p0202 is OFF).'))));
     orgRouter.use(orgRoutes(orgService, { idempotentRequired }));
     api.use('/iam/org', orgRouter);
-    const service = createSecurityService({ db, identity, users, auth, mfa, approvals });
+    userAdmin = createUserAdminService({ db, identity, auth, approvals, orgService, notifier, config });
+    const userRouter = Router();
+    userRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0203') ? next() : next(notFound('User management is not enabled for your company yet (feature flag ff.iam.p0203 is OFF).'))));
+    userRouter.use(userRoutes(userAdmin, { idempotentRequired }));
+    api.use('/iam/users', userRouter);
+    const meRouter = Router();
+    meRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0203') ? next() : next(notFound('Profile editing is not enabled for your company yet (feature flag ff.iam.p0203 is OFF).'))));
+    meRouter.use(meRoutes(userAdmin));
+    api.use('/iam', meRouter);
+    const service = createSecurityService({ db, identity, users, auth, mfa, approvals, profileExtras: (actor) => userAdmin.profileExtras(actor) });
     const router = Router();
     router.use((req, _res, next) => (req.path.startsWith('/me') || req.path.startsWith('/admin') || req.path === '/auth/password/change' ? (flagService.isOn(req.actor, 'ff.iam.p0201') ? next() : next(notFound('Sign-in management is not enabled for your company yet (feature flag ff.iam.p0201 is OFF).'))) : next()));
     router.use(securityRoutes(service, auth, { idempotentRequired }));
     api.use('/iam', router);
-    return { users, auth, mfa, identity, service, orgService };
+    return { users, auth, mfa, identity, service, orgService, userAdmin };
   },
 };
 

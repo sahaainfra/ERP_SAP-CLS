@@ -14,6 +14,7 @@ const schema = z.object({
   FILE_URL_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
   VAULT_KEY: z.string().min(32, 'must be at least 32 characters').optional(),
   AUTH_SECRET: z.string().min(32, 'must be at least 32 characters').optional(),
+  APP_URL: z.string().url('must be a full URL such as https://erp.example.com').optional(),
   CLAMAV_HOST: z.string().min(1).optional(),
   CLAMAV_PORT: z.coerce.number().int().min(1).max(65535).default(3310),
 });
@@ -52,6 +53,7 @@ export function loadConfig(env = process.env) {
     fileUrlSecret: c.FILE_URL_SECRET ?? null,
     vaultKey: c.VAULT_KEY ?? null,
     authSecret: c.AUTH_SECRET ?? null,
+    appUrl: (c.APP_URL ?? '').replace(/\/+$/, '') || null,
     clamav: c.CLAMAV_HOST ? { host: c.CLAMAV_HOST, port: c.CLAMAV_PORT } : null,
   };
   const prodLike = nodeEnv === 'production' || nodeEnv === 'staging';

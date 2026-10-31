@@ -29,7 +29,7 @@ export function createPolicyChangeHandler({ identity }) {
 }
 
 /** The signed-in person's own sessions and devices, and the administrator's view of everyone's (FR-07, FR-08). */
-export function createSecurityService({ db, identity, users, auth, mfa, approvals }) {
+export function createSecurityService({ db, identity, users, auth, mfa, approvals, profileExtras = (/** @type {any} */ _actor) => ({}) }) {
   const now = () => identity.now();
   const company = (actor) => companyScope(actor).params._company_scope;
   const own = (actor) => {
@@ -49,7 +49,7 @@ export function createSecurityService({ db, identity, users, auth, mfa, approval
       const policy = identity.policies.for(u.company_id);
       const cred = users.credentials(u.id);
       return {
-        ...users.present(u), mfa: mfa.summary(u.id), mfaRequired: auth.privileged(u, policy), passwordChangedAt: cred.changed_at, passwordExpiresAt: cred.expires_at,
+        ...users.present(u), ...profileExtras(actor), mfa: mfa.summary(u.id), mfaRequired: auth.privileged(u, policy), passwordChangedAt: cred.changed_at, passwordExpiresAt: cred.expires_at,
         policy: { minPasswordLength: policy.password.minLength, rememberDeviceDays: policy.mfa.rememberDeviceDays, idleMinutes: policy.session.idleMinutes },
       };
     },

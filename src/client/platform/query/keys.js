@@ -78,6 +78,16 @@ export const queryKeys = {
     adminSessions: (p) => ['iam', 'admin', 'sessions', p],
     adminUsers: (p) => ['iam', 'admin', 'users', p],
     adminEvents: (p) => ['iam', 'admin', 'events', p],
+    users: {
+      all: ['iam', 'users'],
+      list: (p) => ['iam', 'users', 'list', p],
+      item: (id) => ['iam', 'users', 'item', id],
+      roles: () => ['iam', 'users', 'roles'],
+      sessions: (id) => ['iam', 'users', 'sessions', id],
+      events: (id, page) => ['iam', 'users', 'events', id, page],
+      timeline: (id) => ['iam', 'users', 'timeline', id],
+      check: (id) => ['iam', 'users', 'check', id],
+    },
     org: {
       all: ['iam', 'org'],
       list: (entity, p) => ['iam', 'org', 'list', entity, p],

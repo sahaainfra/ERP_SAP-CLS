@@ -446,6 +446,32 @@ export function createOrgService({ db, approvals, clock }) {
       return { applied: due.length };
     },
 
+    /** The department, project and site roles a person holds now or has waiting (used before a person is deactivated, part 02.03). */
+    holdingsOf(companyId, userId) {
+      const label = { DEPARTMENT: ['org_departments', 'department head'], PROJECT: ['org_projects', 'project manager'], SITE: ['org_sites', 'site in-charge'] };
+      return db.prepare('SELECT a.id, a.entity_type, a.entity_id, a.role, a.applied, a.effective_from FROM org_assignments a WHERE a.company_id = ? AND a.user_id = ? AND a.is_active = 1 AND a.effective_to IS NULL ORDER BY a.entity_type, a.entity_id').all(companyId, userId)
+        .map((a) => {
+          const row = db.prepare(`SELECT code, name FROM ${label[a.entity_type][0]} WHERE id = ?`).get(a.entity_id);
+          return { id: a.id, entityType: a.entity_type, entityId: a.entity_id, role: a.role, kind: label[a.entity_type][1], code: row?.code ?? null, name: row?.name ?? null, pending: !a.applied, effectiveFrom: a.effective_from };
+        });
+    },
+
+    /** Hand every role held by one person to another, from today (the caller has checked the right to do so). Runs inside the caller's transaction. */
+    reassignHoldings(actorName, companyId, fromUserId, toUserId, reason) {
+      let moved = 0;
+      for (const a of db.prepare('SELECT * FROM org_assignments WHERE company_id = ? AND user_id = ? AND is_active = 1 AND effective_to IS NULL').all(companyId, fromUserId)) {
+        if (!a.applied) {
+          db.prepare('UPDATE org_assignments SET user_id = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(toUserId, actorName, new Date(clock()).toISOString(), a.id);
+        } else {
+          const created = db.prepare('INSERT INTO org_assignments (company_id, entity_type, entity_id, role, user_id, effective_from, applied, reason, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)')
+            .run(companyId, a.entity_type, a.entity_id, a.role, toUserId, today() < a.effective_from ? a.effective_from : today(), reason, actorName, 'org_assignment');
+          applyAssignment(db.prepare('SELECT * FROM org_assignments WHERE id = ?').get(Number(created.lastInsertRowid)), actorName);
+        }
+        moved += 1;
+      }
+      return moved;
+    },
+
     history(actor, key, id) {
       assertPermission(actor, 'org.view');
       const row = load(actor, key, id);

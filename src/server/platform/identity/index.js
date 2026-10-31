@@ -6,6 +6,7 @@ import { DEV_AUTH_SECRET, hashToken, verifyJwt } from './tokens.js';
 
 export { DEFAULT_POLICY, mergePolicy, policyProblems, passwordProblems, isBreached } from './policy.js';
 export { createPasswordHasher } from './password.js';
+export { userBlockers } from './blockers.js';
 export { hashToken, newPublicId, newToken, signJwt, verifyJwt } from './tokens.js';
 
 const POLICY_CACHE_MS = 15_000;
@@ -37,7 +38,9 @@ function createResolver({ db, secret, policyFor, now }) {
         throw unauthorized('You were signed out because the session timed out. Sign in again.');
       }
       if (now() - Date.parse(s.last_seen_at) > TOUCH_EVERY_MS) db.prepare('UPDATE iam_sessions SET last_seen_at = ? WHERE id = ?').run(stamp, s.id);
-      return { user: s.username, roles: JSON.parse(s.roles_json), companyId: s.company_id, userId: s.user_id, sessionId: s.public_id, authMethod: s.auth_method };
+      const roles = JSON.parse(s.roles_json);
+      // No approved role means the restricted onboarding state (part 02.03): the person is known but holds no access yet.
+      return { user: s.username, roles, companyId: s.company_id, userId: s.user_id, sessionId: s.public_id, authMethod: s.auth_method, onboarding: roles.length === 0 };
     },
   };
 }

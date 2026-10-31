@@ -5,8 +5,12 @@ import { allRoutes, defaultRoute, findRoute, routesFor } from './platform/shell/
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
 import LoginPage from './modules/iam/pages/LoginPage.jsx';
 import ContextSwitcher from './modules/iam/components/ContextSwitcher.jsx';
+import ThemeSync from './modules/iam/components/ThemeSync.jsx';
+import AcceptInvitePage from './modules/iam/pages/AcceptInvitePage.jsx';
 
 const THEME_KEY = 'erp.theme';
+const THEME_EVENT = 'erp-theme';
+const THEMES = ['light', 'dark', 'high-contrast'];
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
 const currentPath = () => (findRoute(window.location.pathname) ? window.location.pathname : defaultRoute());
@@ -33,6 +37,13 @@ function Shell({ iam, user }) {
   const [path, setPath] = useState(currentPath);
   const session = useSession();
   const firstIdentity = useRef(true);
+
+  // The profile page and the saved profile choose the theme (part 02.03).
+  useEffect(() => {
+    const onTheme = (e) => THEMES.includes(e.detail) && setTheme(e.detail);
+    window.addEventListener(THEME_EVENT, onTheme);
+    return () => window.removeEventListener(THEME_EVENT, onTheme);
+  }, []);
 
   useEffect(() => {
     const onPop = () => setPath(currentPath());
@@ -66,8 +77,11 @@ function Shell({ iam, user }) {
 
   const s = session.data;
   const devIdentity = !iam && s?.environment !== 'production';
-  const nav = s ? routesFor(s.permissions) : [];
-  const route = findRoute(path) ?? allRoutes()[0];
+  // A person with no approved role (restricted onboarding, part 02.03) gets a welcome page, their profile and their security pages.
+  const onboarding = Boolean(iam && s && s.roles.length === 0);
+  const nav = (s ? routesFor(s.permissions) : []).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
+  const found = findRoute(path);
+  const route = onboarding ? (found?.onboarding ? found : findRoute('/welcome')) : (found ?? allRoutes()[0]);
 
   return (
     <>
@@ -83,7 +97,8 @@ function Shell({ iam, user }) {
           })}
         </nav>
         <span className="spacer" />
-        <FlagGate flag="ff.iam.p0202"><ContextSwitcher /></FlagGate>
+        {!onboarding && <FlagGate flag="ff.iam.p0202"><ContextSwitcher /></FlagGate>}
+        {iam && <FlagGate flag="ff.iam.p0203"><ThemeSync /></FlagGate>}
         <label className="shell-field">
           <span>Theme</span>
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>
@@ -135,6 +150,8 @@ export default function App({ authMode = 'dev-headers' }) {
   const user = useSyncExternalStore(onAuthChange, signedInUser);
   const wasSignedIn = useRef(false);
 
+  // An invitation link is opened before anybody is signed in, in either mode.
+  if (window.location.pathname === '/accept-invite') return <AcceptInvitePage />;
   if (authMode !== 'iam') return <Shell iam={false} user={null} />;
   if (!user) {
     const notice = wasSignedIn.current ? 'signed-out' : '';

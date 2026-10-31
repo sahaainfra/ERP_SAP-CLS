@@ -12,6 +12,9 @@ export function createUserStore({ db, identity }) {
     id: u.id, username: u.username, email: u.email, mobile: u.mobile, displayName: u.display_name, roles: JSON.parse(u.roles_json), companyId: u.company_id, status: u.status, lastLoginAt: u.last_login_at,
   });
 
+  /** The profile row of part 02.03: a person created with a role is Active, one without a role is Onboarding. */
+  const profile = (id, companyId, roles, actor) => db.prepare("INSERT INTO iam_user_profiles (company_id, user_id, lifecycle, created_by, source_type) VALUES (?, ?, ?, ?, 'user_profile') ON CONFLICT (user_id) DO NOTHING").run(companyId, id, roles.length > 0 ? 'ACTIVE' : 'ONBOARDING', actor);
+
   const store = {
     present,
 
@@ -39,6 +42,7 @@ export function createUserStore({ db, identity }) {
         const id = Number(res.lastInsertRowid);
         db.prepare('INSERT INTO iam_credentials (company_id, user_id, password_hash, algo, expires_at, must_change, history_json, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
           .run(companyId, id, hash, 'argon2id', expires, mustChange ? 1 : 0, JSON.stringify([hash]), actor, 'iam_user');
+        profile(id, companyId, roles, actor);
         writeAudit(db, { entity: 'iam_users', entityId: id, action: 'create', newValues: { username, roles, companyId }, actor });
         return present(store.byId(id));
       });
@@ -52,6 +56,7 @@ export function createUserStore({ db, identity }) {
         const id = Number(res.lastInsertRowid);
         db.prepare('INSERT INTO iam_credentials (company_id, user_id, password_hash, algo, history_json, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?)')
           .run(companyId, id, passwordHash, passwordHash.split('$')[0] || 'legacy', JSON.stringify([]), actor, 'legacy_import');
+        profile(id, companyId, roles, actor);
         writeAudit(db, { entity: 'iam_users', entityId: id, action: 'import', newValues: { username, roles, algo: passwordHash.split('$')[0] }, actor });
         return present(store.byId(id));
       });

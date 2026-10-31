@@ -7,6 +7,7 @@ import { ROOT } from './platform/db/index.js';
 import { authenticate, hasPermission } from './platform/auth/index.js';
 import { identityOf } from './platform/identity/index.js';
 import { HttpError, errorHandler, forbidden, unauthorized } from './platform/http/errors.js';
+import { onboardingGate } from './platform/http/onboarding.js';
 import { createLogger, setAppLogger } from './platform/http/logger.js';
 import { instrumentDb } from './platform/observability/dbstats.js';
 import { metrics } from './platform/observability/metrics.js';
@@ -92,6 +93,7 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
 
   const api = express.Router();
   api.use(authenticate(config, identity.resolver));
+  api.use(onboardingGate);
   api.use((req, _res, next) => {
     const ctx = currentContext();
     if (ctx) ctx.user = pseudonym(req.actor?.user);

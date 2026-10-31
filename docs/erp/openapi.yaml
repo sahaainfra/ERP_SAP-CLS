@@ -8,7 +8,7 @@ info:
     { error: { code, message, details[{field,message}], correlationId } }; the codes are listed on the Architecture page
     (VALIDATION_ERROR, BAD_JSON, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, VERSION_CONFLICT, PAYLOAD_TOO_LARGE,
     BUSINESS_RULE, RATE_LIMITED, INTERNAL_ERROR, SERVICE_UNAVAILABLE) plus IDEMPOTENCY_KEY_REUSED (422) and
-    REQUEST_IN_PROGRESS (409) on endpoints that accept an Idempotency-Key.
+    REQUEST_IN_PROGRESS (409) on endpoints that accept an Idempotency-Key, plus ONBOARDING_RESTRICTED (403: a person with no approved role may reach only their profile), DUPLICATE_USER (409) and INVITATION_EXPIRED (410).
 servers:
   - url: http://localhost:3000
 paths:
@@ -640,7 +640,10 @@ paths:
       responses: { '200': { description: session }, '401': { description: PIN wrong } }
   /api/v1/iam/me:
     get:
-      summary: Your profile, second steps and password dates (signed in)
+      summary: Your profile, second steps and password dates, language, preferences, photo and signature (signed in)
+      responses: { '200': { description: '{ data }' } }
+    patch:
+      summary: Change your own name, language, theme, notification choices, photo or signature (version required); open to a person with no role (ff.iam.p0203)
       responses: { '200': { description: '{ data }' } }
   /api/v1/iam/me/sessions:
     get:
@@ -804,3 +807,89 @@ paths:
     post:
       summary: Test a coordinate (latitude, longitude, toleranceM) against the site's geofence (org.view)
       responses: { '200': { description: '{ data: { method, inside, strictlyInside, edgeDistanceM, toleranceM } }' } }
+  /api/v1/iam/users:
+    get:
+      summary: Users of your company: search, filter[status|type|departmentId|projectId|role], sort, 25/50/100 per page (iam.user.view; the mobile number is masked without iam.user.manage)
+      responses: { '200': { description: '{ data: [user], meta }' } }
+    post:
+      summary: Create a user in the Invited state, optionally sending the invitation (iam.user.manage; Idempotency-Key required); 409 DUPLICATE_USER on a matching email, mobile, username or employee link
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/iam/users/roles:
+    get:
+      summary: The role codes a role request may name, and which are privileged (iam.user.view)
+      responses: { '200': { description: '{ data: [{ code, privileged }] }' } }
+  /api/v1/iam/users/duplicates:
+    get:
+      summary: People who already use an email, mobile number or employee code (iam.user.view); used by the invite form while typing
+      responses: { '200': { description: '{ data: [match] }' } }
+  /api/v1/iam/users/import/template:
+    get:
+      summary: The CSV template for a bulk import (text/csv)
+      responses: { '200': { description: 'text/csv' } }
+  /api/v1/iam/users/import:
+    post:
+      summary: Check (mode=validate, writes nothing) or import (mode=commit, Idempotency-Key required) a CSV file sent as text/csv; row-level errors; skipInvalid=true imports only the valid rows; invite=true sends invitations (iam.user.manage)
+      responses: { '200': { description: '{ data: { total, valid, invalid, errors[{row,field,message}], created } }' } }
+  /api/v1/iam/users/bulk:
+    post:
+      summary: Invite or suspend up to 200 selected users; each is reported separately (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { requested, succeeded, failed, results } }' } }
+  /api/v1/iam/users/{id}:
+    get:
+      summary: One user with role history, approval requests, live sessions and organisation roles (iam.user.view)
+      responses: { '200': { description: '{ data }' } }
+    patch:
+      summary: Change details (version required; email, mobile, language, type, employee code, department, home project) (iam.user.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/sessions:
+    get:
+      summary: Live sessions of the user (iam.user.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/login-events:
+    get:
+      summary: Login history of the user, paged (iam.user.view)
+      responses: { '200': { description: '{ data: [event], meta }' } }
+  /api/v1/iam/users/{id}/timeline:
+    get:
+      summary: The audit trail of the user (iam.user.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/deactivation-check:
+    get:
+      summary: What the person still holds (approval requests raised, approval steps only they can decide, organisation roles, items registered by other modules) and what a successor can take over (iam.user.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/invite:
+    post:
+      summary: Send or resend the invitation (email, text message or WhatsApp); replaces the earlier link; at most 5 in 24 hours and one every 30 seconds (iam.user.manage; Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/invitation:
+    delete:
+      summary: Withdraw the pending invitation (iam.user.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/suspend:
+    post:
+      summary: Suspend an Active or Onboarding user: sessions end at once (iam.user.suspend; reason required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/reactivate:
+    post:
+      summary: Reactivate a Suspended user (iam.user.suspend) or a Deactivated one (iam.user.manage; returns with no role)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/deactivate:
+    post:
+      summary: Deactivate: sessions end, roles are taken away, open items go to successorId; refused with the blockers listed (iam.user.manage; reason required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/users/{id}/role-requests:
+    post:
+      summary: Ask for roles: an approval request (chain SYSADM; privileged roles SYSADM then ITADM; from a system administrator ITADM, plus DIR for privileged roles) (iam.user.manage)
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/users/{id}/roles/revoke:
+    post:
+      summary: Take roles away at once (audited); a person left with none returns to Onboarding (iam.user.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/invitations/{token}:
+    get:
+      summary: Is the invitation link still good? (no sign-in; 410 INVITATION_EXPIRED otherwise)
+      responses: { '200': { description: '{ data: { displayName, username, expiresAt, minPasswordLength } }' } }
+  /api/v1/iam/invitations/{token}/accept:
+    post:
+      summary: Choose a password with the invitation link (no sign-in); the person becomes Onboarding, or Active if a role was already approved
+      responses: { '200': { description: '{ data: { accepted, status, username } }' } }

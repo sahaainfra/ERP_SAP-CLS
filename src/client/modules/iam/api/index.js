@@ -15,7 +15,7 @@ function useWrite(fn, invalidate = [queryKeys.iam.all]) {
   });
 }
 
-export const useMe = () => useQuery({ queryKey: queryKeys.iam.me(), queryFn: () => unwrap(api.get('/iam/me')), retry: false });
+export const useMe = () => useQuery({ queryKey: queryKeys.iam.me(), queryFn: () => unwrap(api.get('/iam/me')), retry: false, refetchOnMount: 'always' });
 export const useMySessions = () => useQuery({ queryKey: queryKeys.iam.sessions(), queryFn: () => unwrap(api.get('/iam/me/sessions')), retry: false });
 export const useMyDevices = () => useQuery({ queryKey: queryKeys.iam.devices(), queryFn: () => unwrap(api.get('/iam/me/devices')), retry: false });
 export const useMyEvents = () => useQuery({ queryKey: queryKeys.iam.events(), queryFn: () => unwrap(api.get('/iam/me/login-events')), retry: false });

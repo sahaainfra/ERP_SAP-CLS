@@ -7,14 +7,14 @@ import { forbidden, unauthorized } from '../http/errors.js';
  */
 const ROLE_PERMISSIONS = {
   SYSADM: [
-    'org.view', 'org.company.manage', 'org.hr.manage',
+    'org.view', 'org.company.manage', 'org.hr.manage', 'iam.user.view', 'iam.user.manage', 'iam.user.suspend',
     'core.flag.view', 'core.flag.configure', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view',
     'core.settings.view', 'core.settings.configure', 'core.fy.view', 'core.fy.configure', 'core.period.request_reopen',
     'core.numbering.view', 'core.numbering.configure', 'core.numbering.issue', 'core.numbering.preview',
     'core.param.view', 'core.param.configure', 'core.holiday.configure', 'core.requests.view', 'core.sample.use',
     'core.events.view', 'core.jobs.view', 'core.schedule.view', 'core.files.admin', 'core.files.configure', 'core.calc.view', 'core.calc.manage', 'core.ops.view', 'core.connectors.view', 'iam.security.view', 'iam.security.manage',
   ],
-  ITADM: ['org.view', 'core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view', 'core.integrity.run', 'core.param.view', 'core.param.configure_system', 'core.numbering.view',
+  ITADM: ['org.view', 'iam.user.view', 'iam.user.suspend', 'core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view', 'core.integrity.run', 'core.param.view', 'core.param.configure_system', 'core.numbering.view',
     'core.events.view', 'core.events.redrive', 'core.events.replay', 'core.jobs.view', 'core.jobs.manage', 'core.schedule.view', 'core.schedule.manage', 'core.requests.view', 'core.files.admin', 'core.ops.view', 'core.ops.manage', 'core.connectors.view', 'core.connectors.configure', 'iam.security.view', 'iam.security.manage'],
   // Finance: open and close periods, post into a soft-closed period, ask for a reopen, see the settings and the approval requests.
   ACCMGR: ['org.view', 'org.costcentre.manage', 'core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.request_reopen', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
@@ -22,11 +22,14 @@ const ROLE_PERMISSIONS = {
   DIR: ['org.view', 'core.fy.view', 'core.requests.view'],
   // Project controls: views the calculation registry and approves new versions of the project formulas.
   // Human resources: departments and designations; asks for geofence changes. Project director: approves activations.
-  HRMGR: ['org.view', 'org.hr.manage', 'org.geofence.request', 'core.requests.view'],
+  HRMGR: ['org.view', 'org.hr.manage', 'iam.user.view', 'iam.user.manage', 'iam.user.suspend', 'org.geofence.request', 'core.requests.view'],
   PD: ['org.view', 'org.project.manage', 'org.site.manage', 'core.requests.view'],
   PCMGR: ['org.view', 'org.project.manage', 'org.site.manage', 'core.calc.view', 'core.requests.view'],
   PM: ['org.view', 'org.project.manage', 'org.site.manage', 'org.geofence.request', 'core.sample.use', 'core.numbering.preview'],
 };
+
+/** Every role code the permission map knows: what a role request may name. */
+export const ROLE_CODES = Object.freeze(Object.keys(ROLE_PERMISSIONS));
 
 export function authenticate(config, resolver = null) {
   return (req, _res, next) => {

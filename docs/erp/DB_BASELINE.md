@@ -1266,6 +1266,45 @@ Indexes:
 - ix_iam_devices_company: company_id
 - ux_iam_devices_user_fingerprint (unique): user_id, device_fingerprint
 
+## iam_invitations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| token_hash | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| sent_to | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| expires_at | TEXT | yes |  |  |
+| accepted_at | TEXT |  |  |  |
+| sent_by | TEXT |  |  |  |
+| resend_count | INTEGER | yes |  | 0 |
+| delivered | INTEGER | yes |  | 0 |
+| delivery_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_invitations_company: company_id, status, expires_at
+- ix_iam_invitations_user: user_id, status
+- ux_iam_invitations_pending (unique): user_id
+- ux_iam_invitations_token (unique): token_hash
+
 ## iam_login_events
 
 | Column | Type | Not null | Key | Default |
@@ -1372,6 +1411,39 @@ Indexes:
 - ix_iam_refresh_tokens_session: session_id, status
 - ux_iam_refresh_tokens_hash (unique): token_hash
 
+## iam_role_grants
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| role_code | TEXT | yes |  |  |
+| action | TEXT | yes |  |  |
+| request_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| granted_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_role_grants_company: company_id
+- ix_iam_role_grants_request: request_id
+- ix_iam_role_grants_user: user_id, id
+
 ## iam_sessions
 
 | Column | Type | Not null | Key | Default |
@@ -1399,6 +1471,51 @@ Indexes:
 - ix_iam_sessions_device: device_id
 - ix_iam_sessions_user: user_id, revoked_at
 - ux_iam_sessions_public (unique): public_id
+
+## iam_user_profiles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| lifecycle | TEXT | yes |  | 'ACTIVE' |
+| user_type | TEXT | yes |  | 'INTERNAL' |
+| language | TEXT | yes |  | 'en' |
+| employee_id | INTEGER |  |  |  |
+| employee_code | TEXT |  |  |  |
+| department_id | INTEGER |  |  |  |
+| home_project_id | INTEGER |  |  |  |
+| photo_file_id | INTEGER |  |  |  |
+| signature_file_id | INTEGER |  |  |  |
+| preferences_json | TEXT | yes |  | '{}' |
+| lifecycle_at | TEXT |  |  |  |
+| lifecycle_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: signature_file_id -> core_files(id), photo_file_id -> core_files(id), home_project_id -> org_projects(id), department_id -> org_departments(id), user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_user_profiles_signature: signature_file_id
+- ix_iam_user_profiles_photo: photo_file_id
+- ix_iam_user_profiles_project: home_project_id
+- ix_iam_user_profiles_department: department_id
+- ix_iam_user_profiles_type: company_id, user_type
+- ix_iam_user_profiles_lifecycle: company_id, lifecycle
+- ux_iam_user_profiles_employee (unique): company_id, employee_code
+- ux_iam_user_profiles_user (unique): user_id
 
 ## iam_users
 
@@ -1428,6 +1545,7 @@ Indexes:
 | remarks | TEXT |  |  |  |
 
 Indexes:
+- ix_iam_users_company_name: company_id, display_name
 - ix_iam_users_company: company_id, status
 - ux_iam_users_mobile (unique): mobile
 - ux_iam_users_email (unique): email

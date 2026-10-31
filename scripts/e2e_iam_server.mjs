@@ -27,7 +27,7 @@ for (const [suffix, companyId] of [['d', 1], ['m', 2]]) {
   db.prepare("INSERT INTO core_connectors (company_id, code, name, type, provider, environment, config_json, status, created_by) VALUES (?, ?, 'Mail', 'email', 'sandbox', 'development', '{\"fromAddress\":\"noreply@example.com\"}', 'ENABLED', 'e2e')").run(companyId, mail);
   if (companyId !== 1) db.prepare("INSERT INTO iam_auth_policy (company_id, settings_json, created_by, source_type) VALUES (?, ?, 'e2e', 'seed')").run(companyId, JSON.stringify({ notify: { connector: mail } }));
   const people = [
-    ['admin', ['SYSADM']], ['itadm', ['ITADM']], ['field', ['PM']], ['lock', ['PM']], ['reset', ['PM']], ['spare', ['PM']], ['watch', ['PM']],
+    ['admin', ['SYSADM']], ['itadm', ['ITADM']], ['hr', ['HRMGR']], ['approver', ['SYSADM']], ['field', ['PM']], ['lock', ['PM']], ['reset', ['PM']], ['spare', ['PM']], ['watch', ['PM']],
   ];
   for (const [name, roles] of people) {
     await users.create({ companyId, username: `${name}-${suffix}`, email: `${name}-${suffix}@example.com`, displayName: `${name[0].toUpperCase()}${name.slice(1)} ${String(suffix).toUpperCase()}`, roles, password: PASSWORD });

@@ -11,7 +11,7 @@ import { mountFiles } from './files/index.js';
 import { mountCalc } from './calc/index.js';
 import { mountOps } from './ops/index.js';
 import { connectorChangeHandlerFor, mountConnectors } from './connectors/index.js';
-import { orgHandlers, policyChangeHandlerFor } from '../iam/index.js';
+import { orgHandlers, policyChangeHandlerFor, userHandlers } from '../iam/index.js';
 import { opsConfigChangeHandler } from './ops/service.js';
 import { formulaActivationHandler } from './calc/service.js';
 import { fileSettingsChangeHandler } from './files/service.js';
@@ -111,7 +111,7 @@ export const core = {
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_schedules'").get());
     if (migrated) syncEventTypes(db);
     registerOperations({ db, ...runtime, persist: migrated });
-    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers, ...userHandlers } });
     const opts = { idempotent, idempotentRequired };
 
     api.use('/core', sessionRoutes({ config }));

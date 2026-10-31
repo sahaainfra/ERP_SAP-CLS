@@ -5951,6 +5951,195 @@
       "user_id->iam_users.id:NO ACTION/NO ACTION"
     ]
   },
+  "table:iam_invitations": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "token_hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "channel",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sent_to",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "expires_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "accepted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sent_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "resend_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "delivered",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "delivery_note",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "user_id->iam_users.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:iam_login_events": {
     "columns": [
       {
@@ -6355,6 +6544,161 @@
       "session_id->iam_sessions.id:NO ACTION/NO ACTION"
     ]
   },
+  "table:iam_role_grants": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "role_code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "action",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "request_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "granted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "request_id->core_change_requests.id:NO ACTION/NO ACTION",
+      "user_id->iam_users.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:iam_sessions": {
     "columns": [
       {
@@ -6465,6 +6809,213 @@
     ],
     "fks": [
       "device_id->iam_devices.id:NO ACTION/NO ACTION",
+      "user_id->iam_users.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:iam_user_profiles": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "lifecycle",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "user_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'INTERNAL'",
+        "pk": 0
+      },
+      {
+        "name": "language",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'en'",
+        "pk": 0
+      },
+      {
+        "name": "employee_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "employee_code",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "home_project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "photo_file_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "signature_file_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "preferences_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "lifecycle_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "lifecycle_reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "department_id->org_departments.id:NO ACTION/NO ACTION",
+      "home_project_id->org_projects.id:NO ACTION/NO ACTION",
+      "photo_file_id->core_files.id:NO ACTION/NO ACTION",
+      "signature_file_id->core_files.id:NO ACTION/NO ACTION",
       "user_id->iam_users.id:NO ACTION/NO ACTION"
     ]
   },
@@ -6831,6 +7382,12 @@
   "index:ix_iam_devices_company": {
     "sql": "CREATE INDEX ix_iam_devices_company ON iam_devices (company_id)"
   },
+  "index:ix_iam_invitations_company": {
+    "sql": "CREATE INDEX ix_iam_invitations_company ON iam_invitations (company_id, status, expires_at)"
+  },
+  "index:ix_iam_invitations_user": {
+    "sql": "CREATE INDEX ix_iam_invitations_user ON iam_invitations (user_id, status)"
+  },
   "index:ix_iam_login_events_company": {
     "sql": "CREATE INDEX ix_iam_login_events_company ON iam_login_events (company_id, at)"
   },
@@ -6852,6 +7409,15 @@
   "index:ix_iam_refresh_tokens_session": {
     "sql": "CREATE INDEX ix_iam_refresh_tokens_session ON iam_refresh_tokens (session_id, status)"
   },
+  "index:ix_iam_role_grants_company": {
+    "sql": "CREATE INDEX ix_iam_role_grants_company ON iam_role_grants (company_id)"
+  },
+  "index:ix_iam_role_grants_request": {
+    "sql": "CREATE INDEX ix_iam_role_grants_request ON iam_role_grants (request_id)"
+  },
+  "index:ix_iam_role_grants_user": {
+    "sql": "CREATE INDEX ix_iam_role_grants_user ON iam_role_grants (user_id, id)"
+  },
   "index:ix_iam_sessions_company": {
     "sql": "CREATE INDEX ix_iam_sessions_company ON iam_sessions (company_id, revoked_at)"
   },
@@ -6861,8 +7427,29 @@
   "index:ix_iam_sessions_user": {
     "sql": "CREATE INDEX ix_iam_sessions_user ON iam_sessions (user_id, revoked_at)"
   },
+  "index:ix_iam_user_profiles_department": {
+    "sql": "CREATE INDEX ix_iam_user_profiles_department ON iam_user_profiles (department_id)"
+  },
+  "index:ix_iam_user_profiles_lifecycle": {
+    "sql": "CREATE INDEX ix_iam_user_profiles_lifecycle ON iam_user_profiles (company_id, lifecycle)"
+  },
+  "index:ix_iam_user_profiles_photo": {
+    "sql": "CREATE INDEX ix_iam_user_profiles_photo ON iam_user_profiles (photo_file_id)"
+  },
+  "index:ix_iam_user_profiles_project": {
+    "sql": "CREATE INDEX ix_iam_user_profiles_project ON iam_user_profiles (home_project_id)"
+  },
+  "index:ix_iam_user_profiles_signature": {
+    "sql": "CREATE INDEX ix_iam_user_profiles_signature ON iam_user_profiles (signature_file_id)"
+  },
+  "index:ix_iam_user_profiles_type": {
+    "sql": "CREATE INDEX ix_iam_user_profiles_type ON iam_user_profiles (company_id, user_type)"
+  },
   "index:ix_iam_users_company": {
     "sql": "CREATE INDEX ix_iam_users_company ON iam_users (company_id, status)"
+  },
+  "index:ix_iam_users_company_name": {
+    "sql": "CREATE INDEX ix_iam_users_company_name ON iam_users (company_id, display_name)"
   },
   "index:ix_org_assignments_company_id": {
     "sql": "CREATE INDEX ix_org_assignments_company_id ON org_assignments (company_id)"
@@ -8544,6 +9131,12 @@
   "index:ux_iam_devices_user_fingerprint": {
     "sql": "CREATE UNIQUE INDEX ux_iam_devices_user_fingerprint ON iam_devices (user_id, device_fingerprint)"
   },
+  "index:ux_iam_invitations_pending": {
+    "sql": "CREATE UNIQUE INDEX ux_iam_invitations_pending ON iam_invitations (user_id) WHERE status = 'PENDING'"
+  },
+  "index:ux_iam_invitations_token": {
+    "sql": "CREATE UNIQUE INDEX ux_iam_invitations_token ON iam_invitations (token_hash)"
+  },
   "index:ux_iam_password_resets_hash": {
     "sql": "CREATE UNIQUE INDEX ux_iam_password_resets_hash ON iam_password_resets (token_hash)"
   },
@@ -8552,6 +9145,12 @@
   },
   "index:ux_iam_sessions_public": {
     "sql": "CREATE UNIQUE INDEX ux_iam_sessions_public ON iam_sessions (public_id)"
+  },
+  "index:ux_iam_user_profiles_employee": {
+    "sql": "CREATE UNIQUE INDEX ux_iam_user_profiles_employee ON iam_user_profiles (company_id, employee_code) WHERE employee_code IS NOT NULL"
+  },
+  "index:ux_iam_user_profiles_user": {
+    "sql": "CREATE UNIQUE INDEX ux_iam_user_profiles_user ON iam_user_profiles (user_id)"
   },
   "index:ux_iam_users_email": {
     "sql": "CREATE UNIQUE INDEX ux_iam_users_email ON iam_users (email) WHERE email IS NOT NULL"

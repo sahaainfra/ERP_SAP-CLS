@@ -36,6 +36,9 @@ export const ERROR_CODES = [
   { code: 'DUPLICATE_FILE', status: 409, meaning: 'A file with identical content is already attached to this record.', action: 'Use the existing file, or upload a changed version.' },
   { code: 'LINK_EXPIRED', status: 410, meaning: 'A signed download link has expired.', action: 'Open the file again from its record to get a fresh link.' },
   { code: 'FILE_REJECTED', status: 422, meaning: 'The file type, content or size is not allowed.', action: 'Check the allowed types and size limits on the File Storage Settings page and upload a permitted file.' },
+  { code: 'ONBOARDING_RESTRICTED', status: 403, meaning: 'The account is known but holds no approved role yet, so only the profile is available.', action: 'Ask an administrator to request a role for you; it takes effect when the request is approved.' },
+  { code: 'DUPLICATE_USER', status: 409, meaning: 'A person with the same email, mobile number, username or employee link already has an account.', action: 'Use the existing account (reactivate it if it was deactivated) instead of creating another.' },
+  { code: 'INVITATION_EXPIRED', status: 410, meaning: 'An invitation link has expired, was replaced by a newer one or was already used.', action: 'Ask an administrator to send a new invitation.' },
   { code: 'FILE_NOT_AVAILABLE', status: 409, meaning: 'The file has not passed the virus scan (still scanning, quarantined or scan failed), so it cannot be opened.', action: 'Wait for the scan to finish; ask an administrator if it stays unavailable.' },
 ];
 

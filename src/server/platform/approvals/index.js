@@ -134,6 +134,31 @@ export function createApprovalEngine({ db, handlers }) {
       });
     },
 
+    /**
+     * Hand the open requests raised by one person to another (a person is being deactivated, part 02.03). The successor must not have
+     * decided a step of the request, or the segregation of duties would be broken. Returns how many requests moved. Runs inside the
+     * caller's transaction.
+     */
+    reassignRequester(actor, { from, to, reason }) {
+      const open = db.prepare("SELECT id FROM core_change_requests WHERE company_id = ? AND requested_by = ? AND status IN ('SUBMITTED', 'RETURNED') AND is_active = 1").all(actor.companyId, from);
+      for (const { id } of open) {
+        const touched = db.prepare('SELECT 1 FROM core_change_request_steps WHERE request_id = ? AND decided_by = ? AND decision = ?').get(id, to, 'APPROVED');
+        if (touched) throw unprocessable(`Request ${id} already has a step approved by ${to}, so ${to} cannot take it over. Choose another person to take over.`);
+      }
+      for (const { id } of open) {
+        db.prepare('UPDATE core_change_requests SET requested_by = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(to, actor.user, new Date().toISOString(), id);
+        writeAudit(db, { entity: 'core_change_requests', entityId: id, action: 'reassign_requester', oldValues: { requestedBy: from }, newValues: { requestedBy: to }, reason, actor: actor.user });
+      }
+      return open.length;
+    },
+
+    /** Every request still waiting (submitted or returned) in a company, with the role its current step needs. */
+    openRequests(companyId) {
+      return db.prepare("SELECT * FROM core_change_requests WHERE company_id = ? AND status IN ('SUBMITTED', 'RETURNED') AND is_active = 1 ORDER BY id").all(companyId).map((r) => ({
+        id: r.id, type: r.type, title: r.title, status: r.status, requestedBy: r.requested_by, targetType: r.target_type, targetId: r.target_id, stepRole: r.status === 'SUBMITTED' ? JSON.parse(r.chain_json)[r.current_step - 1] : null,
+      }));
+    },
+
     /** Is there an open request of this type for the same target? (A second one would be a conflict.) */
     hasOpen(companyId, type, targetType, targetId) {
       return Boolean(db.prepare("SELECT 1 FROM core_change_requests WHERE company_id = ? AND type = ? AND target_type = ? AND target_id = ? AND status IN ('SUBMITTED', 'RETURNED') AND is_active = 1").get(companyId, type, targetType, targetId));
