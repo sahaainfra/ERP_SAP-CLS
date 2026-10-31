@@ -1,7 +1,7 @@
 // Starts the API in sign-in mode (AUTH_MODE=iam) on a fresh database for the sign-in E2E tests, with people to sign in as.
 // Desktop and mobile runs share the database, so each gets its own company and its own users (suffix d and m).
 import { rmSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from '../src/server/app.js';
 import { createUserStore } from '../src/server/modules/iam/users.js';
@@ -12,9 +12,10 @@ import { startWorkers } from '../src/server/platform/runtime/index.js';
 import '../src/server/modules/registry.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-for (const suffix of ['', '-wal', '-shm']) rmSync(join(root, `data/e2e-iam.sqlite${suffix}`), { force: true });
 
 const config = loadConfig();
+// a fresh database each start: the one DATABASE_PATH names (never another run's file, which may be open in another server)
+for (const suffix of ['', '-wal', '-shm']) rmSync(`${resolve(root, config.databasePath)}${suffix}`, { force: true });
 const db = openDatabase(config.databasePath);
 migrateUp(db);
 const identity = identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined });

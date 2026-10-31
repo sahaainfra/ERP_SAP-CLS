@@ -98,7 +98,7 @@ tr:last-child td { border-bottom: 0; }
   .num { text-align: left; }
 }
 
-.shellbar select, .shellbar input { color: var(--erp-color-text-primary); }
+.shellbar select, .shellbar input, .shellbar .btn { color: var(--erp-color-text-primary); }
 
 .shellbar nav { display: flex; flex-wrap: wrap; gap: var(--erp-space-2) var(--erp-space-5); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--erp-space-4); margin: var(--erp-space-5) 0; }
@@ -238,3 +238,5 @@ textarea.mono { width: 100%; max-width: 100%; box-sizing: border-box; }
 .profile-picture { display: block; max-width: 160px; max-height: 120px; border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); object-fit: contain; }
 fieldset.field { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); margin: 0; }
 fieldset.field label { display: block; }
+
+.field .muted, .field .field-error { overflow-wrap: anywhere; min-width: 0; }
