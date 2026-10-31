@@ -1,16 +1,17 @@
 import { assertPermission } from '../../../platform/auth/index.js';
-import { authzOf, LEGACY_ROLE_PERMISSIONS, PERMISSIONS_02_04, permissionRegistry, fieldRegistry, recordResolvers, isSensitiveKey } from '../../../platform/authz/index.js';
+import { authzOf, LEGACY_ROLE_PERMISSIONS, PERMISSIONS_SINCE_LEGACY, permissionRegistry, fieldRegistry, recordResolvers, isSensitiveKey } from '../../../platform/authz/index.js';
 import { companyScope } from '../../../platform/db/scope.js';
-import { transaction } from '../../../platform/db/index.js';
+import { inTransaction, transaction } from '../../../platform/db/index.js';
 import { writeAudit } from '../../../platform/audit/index.js';
 import { publishEvent } from '../../../platform/events/index.js';
 import { badRequest, conflict, notFound, unprocessable } from '../../../platform/http/errors.js';
 import { likePattern, orderBySql, pageResponse } from '../../../platform/pagination/index.js';
+import { sodOf } from '../../../platform/sod/index.js';
 import { setLifecycle } from '../usermgmt/service.js';
 import { assignmentChain, roleChangeChain } from './chains.js';
 
 const istDate = (ms) => new Date(ms + 19_800_000).toISOString().slice(0, 10);
-const NEW_PERMISSIONS = new Set(PERMISSIONS_02_04);
+const NEW_PERMISSIONS = new Set(PERMISSIONS_SINCE_LEGACY);
 const unique = (list) => [...new Set(list)].sort();
 const SCOPE_TABLE = { BRANCH: ['org_branches', 'branch'], DEPARTMENT: ['org_departments', 'department'], PROJECT: ['org_projects', 'project'], SITE: ['org_sites', 'site'] };
 
@@ -55,6 +56,8 @@ export const accessHandlers = {
       if (!user || ['SUSPENDED', 'DEACTIVATED'].includes(user.lifecycle)) throw unprocessable(`${p.username} is ${(user?.lifecycle ?? 'not available').toLowerCase()}, so the role cannot be assigned. Reactivate the account and ask again.`);
       const role = db.prepare("SELECT * FROM iam_roles WHERE id = ? AND is_active = 1 AND status = 'ACTIVE' AND (company_id IS NULL OR company_id = ?)").get(p.roleId, request.companyId);
       if (!role) throw unprocessable(`The role ${p.roleCode} is no longer active, so it cannot be assigned.`);
+      // the check is made again at approval: what the person holds may have changed since the request (part 02.05)
+      sodOf(db).assertAssignable({ companyId: request.companyId, userId: user.id, roles: JSON.parse(user.roles_json), extra: [{ roleId: role.id, scopeType: p.scopeType, scopeIds: p.scopeIds }] });
       const res = db.prepare("INSERT INTO iam_assignments (company_id, user_id, role_id, scope_type, scope_ids_json, effective_from, effective_to, status, reason, request_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, ?, 'role_assignment')")
         .run(request.companyId, user.id, role.id, p.scopeType, JSON.stringify(p.scopeIds), p.effectiveFrom, p.effectiveTo, request.reason, request.id, request.requestedBy);
       db.prepare("INSERT INTO iam_role_grants (company_id, user_id, role_code, action, request_id, reason, granted_by, created_by, source_type) VALUES (?, ?, ?, 'GRANTED', ?, ?, ?, ?, 'role_grant')").run(request.companyId, user.id, role.code, request.id, request.reason, actor.user, actor.user);
@@ -62,6 +65,7 @@ export const accessHandlers = {
       writeAudit(db, { entity: 'iam_users', entityId: user.id, action: 'assignment_approved', newValues: { role: role.code, scopeType: p.scopeType, scopeIds: p.scopeIds, effectiveFrom: p.effectiveFrom, effectiveTo: p.effectiveTo }, reason: request.reason, actor: actor.user });
       publishEvent(db, { type: 'iam.assignment.created', entity: 'assignment', entityId: Number(res.lastInsertRowid), actorId: actor.user, companyId: request.companyId, data: { username: user.username, role: role.code, scopeType: p.scopeType, requestId: request.id } });
       authzOf(db).invalidate();
+      sodOf(db).scanUser(request.companyId, user.id);
     },
   },
 };
@@ -190,6 +194,9 @@ export function createAccessService({ db, identity, approvals }) {
         for (const k of input.permissions.allow) if (input.permissions.deny.includes(k)) problems.push({ field: 'permissions', message: `${k} is both allowed and denied.` });
       }
       for (const m of input.masks ?? []) if (!fieldRegistry.get(m.entity, m.field)) problems.push({ field: 'masks', message: `${m.entity}.${m.field} is not a declared sensitive field.` });
+      if (input.permissions) {
+        for (const h of sodOf(db).conflictsWithinPermissions(c, input.permissions.allow).filter((x) => x.rule.severity === 'BLOCK')) problems.push({ field: 'permissions', message: `${h.rule.code} ${h.rule.name}: one role may not carry both ${h.a.join(', ')} and ${h.b.join(', ')}.` });
+      }
       if (problems.length) throw badRequest('The change is not valid.', problems);
       if (input.activate && r.status === 'ACTIVE') throw unprocessable('The role is already active.');
       if (input.retire) {
@@ -274,20 +281,22 @@ export function createAccessService({ db, identity, approvals }) {
       const same = db.prepare("SELECT 1 FROM iam_assignments WHERE user_id = ? AND role_id = ? AND scope_type = ? AND scope_ids_json = ? AND status = 'ACTIVE' AND is_active = 1 AND (effective_to IS NULL OR effective_to >= ?)").get(user.id, role.id, input.scopeType, JSON.stringify([...input.scopeIds].sort((x, y) => x - y)), istDate(now()));
       if (same) throw conflict(`${user.display_name} already holds ${role.code} for that scope.`);
       if (approvals.hasOpen(c, 'iam_assignment', 'iam_user', user.id)) throw conflict(`There is already an open assignment request for ${user.display_name}. Decide or withdraw it first.`);
+      // a blocking conflict stops the request here, naming it; a warning goes back with the request (part 02.05)
+      const sodWarnings = sodOf(db).assertAssignable({ companyId: c, userId: user.id, roles: JSON.parse(user.roles_json), extra: [{ roleId: role.id, scopeType: input.scopeType, scopeIds: input.scopeIds }] });
       const policy = identity.policies.for(c);
       const chain = assignmentChain({ codes: [role.code], privilegedCodes: policy.mfa.requiredRoles, sensitive: privilegedRole(role.id), bySysadm: actor.roles.includes('SYSADM') });
       const where = input.scopeType === 'COMPANY' ? 'company-wide' : input.scopeType === 'OWN' ? 'own records' : `${input.scopeType.toLowerCase()} ${scopeNames(c, input.scopeType, input.scopeIds).join(', ')}`;
-      return approvals.submit(actor, {
+      return { sodWarnings, ...approvals.submit(actor, {
         type: 'iam_assignment', title: `Give ${role.code} to ${user.username} (${where})`, targetType: 'iam_user', targetId: user.id, reason: input.reason, chain,
         payload: { userId: user.id, username: user.username, roleId: role.id, roleCode: role.code, scopeType: input.scopeType, scopeIds: [...input.scopeIds].sort((x, y) => x - y), effectiveFrom: input.effectiveFrom, effectiveTo: input.effectiveTo },
-      });
+      }) };
     },
 
     /** Taking access away only lowers it, so it is immediate, audited and needs no approval. */
     endAssignment(actor, id, { reason }) {
       assertPermission(actor, 'iam.assignment.manage');
       const c = cid(actor);
-      return transaction(db, () => {
+      return inTransaction(db, () => {
         const a = db.prepare("SELECT a.*, u.username, r.code AS role_code FROM iam_assignments a JOIN iam_users u ON u.id = a.user_id JOIN iam_roles r ON r.id = a.role_id WHERE a.id = ? AND a.company_id = ? AND a.is_active = 1").get(id, c);
         if (!a) throw notFound('That assignment does not exist.');
         if (a.status !== 'ACTIVE') throw unprocessable('That assignment has already ended.');

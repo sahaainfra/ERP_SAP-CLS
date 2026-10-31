@@ -1,6 +1,7 @@
 import { ROLE_CODES, assertPermission, hasPermission } from '../../../platform/auth/index.js';
+import { sodOf } from '../../../platform/sod/index.js';
 import { companyScope } from '../../../platform/db/scope.js';
-import { transaction } from '../../../platform/db/index.js';
+import { inTransaction, transaction } from '../../../platform/db/index.js';
 import { writeAudit } from '../../../platform/audit/index.js';
 import { publishEvent } from '../../../platform/events/index.js';
 import { HttpError, badRequest, conflict, notFound, unprocessable } from '../../../platform/http/errors.js';
@@ -58,10 +59,13 @@ export const userHandlers = {
       }
       const before = JSON.parse(u.roles_json);
       const granted = add.filter((r) => !before.includes(r));
+      // the check is made again at approval (part 02.05)
+      sodOf(db).assertAssignable({ companyId: request.companyId, userId: u.id, roles: before, extra: granted.map((code) => ({ code, scopeType: 'COMPANY', scopeIds: [] })) });
       const after = [...before, ...granted];
       db.prepare('UPDATE iam_users SET roles_json = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(JSON.stringify(after), actor.user, iso(Date.now()), u.id);
       for (const role of granted) writeGrant(db, u, role, 'GRANTED', { requestId: request.id, reason: request.reason, by: actor.user });
       if (u.lifecycle === 'ONBOARDING' && after.length > 0) setLifecycle(db, u.id, 'ACTIVE', { by: actor.user, reason: 'A role was approved' });
+      sodOf(db).scanUser(request.companyId, u.id);
       writeAudit(db, { entity: 'iam_users', entityId: u.id, action: 'roles_granted', oldValues: { roles: before }, newValues: { roles: after }, reason: request.reason, actor: actor.user });
       publishEvent(db, { type: 'iam.user.roles_changed', entity: 'user', entityId: u.id, actorId: actor.user, companyId: u.company_id, data: { username: u.username, granted, revoked: [], requestId: request.id } });
     },
@@ -464,13 +468,14 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
       const policy = identity.policies.for(r.company_id);
       const privileged = add.some((x) => policy.mfa.requiredRoles.includes(x));
       const chain = assignmentChain({ codes: add, privilegedCodes: policy.mfa.requiredRoles, bySysadm: actor.roles.includes('SYSADM') });
-      return approvals.submit(actor, { type: 'user_role_assignment', title: `Give ${add.join(', ')} to ${r.username}`, targetType: 'iam_user', targetId: id, payload: { userId: id, username: r.username, add, privileged }, reason, chain });
+      const sodWarnings = sodOf(db).assertAssignable({ companyId: r.company_id, userId: id, roles: held, extra: add.map((code) => ({ code, scopeType: 'COMPANY', scopeIds: [] })) });
+      return { sodWarnings, ...approvals.submit(actor, { type: 'user_role_assignment', title: `Give ${add.join(', ')} to ${r.username}`, targetType: 'iam_user', targetId: id, payload: { userId: id, username: r.username, add, privileged }, reason, chain }) };
     },
 
     /** Taking a role away only lowers access, so it is direct (audited) rather than approved. */
     revokeRoles(actor, id, { roles, reason, version }) {
       assertPermission(actor, 'iam.user.manage');
-      return transaction(db, () => {
+      return inTransaction(db, () => {
         const r = rowOf(actor, id);
         if (version !== undefined && r.version !== version) throw conflict(`${r.display_name} was changed by someone else. Refresh the page and try again.`);
         if (r.id === actor.userId) throw unprocessable('You cannot take roles away from your own account.');
@@ -630,7 +635,7 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
     const raised = open.filter((q) => q.requestedBy === r.username);
     if (raised.length) blockers.push({ type: 'approval requests raised by this person', count: raised.length, hint: 'Someone else takes them over so they can still be decided.', reassignable: true, items: raised.map((q) => ({ id: q.id, title: q.title })) });
     const roles = JSON.parse(r.roles_json);
-    const stuck = open.filter((q) => q.stepRole && q.requestedBy !== r.username && q.stepRole.split('|').some((x) => roles.includes(x)) && q.stepRole.split('|').every((x) => roleHolders(r.company_id, x, r.id) === 0));
+    const stuck = open.filter((q) => q.stepRole && q.requestedBy !== r.username && !q.stepRole.startsWith('@') && q.stepRole.split('|').some((x) => roles.includes(x)) && q.stepRole.split('|').every((x) => roleHolders(r.company_id, x, r.id) === 0));
     if (stuck.length) blockers.push({ type: 'approval steps only this person can decide', count: stuck.length, hint: 'Give the role to another person first (a role request), then deactivate.', reassignable: false, items: stuck.map((q) => ({ id: q.id, title: q.title, role: q.stepRole })) });
     const holdings = orgService.holdingsOf(r.company_id, r.id);
     if (holdings.length) blockers.push({ type: 'organisation roles (department head, project manager, site in-charge)', count: holdings.length, hint: 'They pass to the person you choose, from today.', reassignable: true, items: holdings.map((h) => ({ kind: h.kind, code: h.code, name: h.name, pending: h.pending })) });

@@ -221,7 +221,7 @@ test('parameter writes are refused for unknown keys, wrong scopes, bad values, a
   assert.equal((await api.call('GET', `${C}/parameters`, pm)).status, 403);
   assert.equal((await api.call('GET', `${C}/parameters/definitions`, acc)).status, 200);
   const defs = (await api.call('GET', `${C}/parameters/definitions`, sys)).json.data;
-  assert.deepEqual(defs.map((d) => d.key), ['core.calendar.week_off_days', 'core.export.max_rows', 'core.session.timeout_minutes', 'core.ui.default_page_size']);
+  assert.deepEqual(defs.map((d) => d.key), ['core.calendar.week_off_days', 'core.export.max_rows', 'core.session.timeout_minutes', 'core.ui.default_page_size', 'iam.dormant.action', 'iam.dormant.days', 'iam.elevation.max_hours']);
   await api.close();
 });
 

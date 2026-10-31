@@ -19,13 +19,22 @@ import { hasPermission } from '../../platform/auth/index.js';
 import { createUserAdminService, userHandlers } from './usermgmt/service.js';
 import { authzOf, recordResolvers } from '../../platform/authz/index.js';
 import { accessHandlers, createAccessService } from './access/service.js';
+import { elevationHandlers, createElevationService } from './privileged/elevation.js';
+import { createReviewService } from './privileged/reviews.js';
+import { privilegedRoutes } from './privileged/routes.js';
+import { createSodService, sodHandlers } from './privileged/sod.js';
+import { parameterRegistry } from '../../platform/parameters/index.js';
+import { sodOf } from '../../platform/sod/index.js';
 import { accessRoutes } from './access/routes.js';
 import { invitationRoutes, meRoutes, userRoutes } from './usermgmt/routes.js';
 import { ENTITIES } from './org/entities.js';
 import { orgRoutes } from './org/routes.js';
 import { createOrgService, orgHandlers } from './org/service.js';
 
+/** Approved requests of part 02.05: a change to a segregation-of-duties rule, and an elevation of access. */
+export const privilegedHandlers = { ...sodHandlers, ...elevationHandlers };
 export { accessHandlers, orgHandlers, userHandlers };
+export { elevationLogger } from './privileged/elevation.js';
 
 // Part 02.01: authentication. Events this module publishes:
 const obj = (properties = {}, required = []) => ({ type: 'object', properties, required });
@@ -74,13 +83,29 @@ IAM_EVENTS.push(
   ['iam.assignment.created', 'A role was assigned to a person for a scope after approval.', obj({ username: str, role: str, scopeType: str, requestId: { type: 'number' } }, ['username', 'role'])],
   ['iam.assignment.ended', 'A role assignment was ended.', obj({ username: str, role: str, scopeType: str }, ['username', 'role'])],
 );
+// Part 02.05: segregation of duties, elevated access, access reviews.
+const num = { type: 'number' };
+IAM_EVENTS.push(
+  ['iam.sod.violation_detected', 'A segregation-of-duties conflict was found, warned of or blocked.', obj({ rule: str, outcome: str, source: str, user: str }, ['rule', 'outcome'])],
+  ['iam.sod.rule_changed', 'A segregation-of-duties rule was added, changed or switched off after approval.', obj({ code: str, severity: str, active: { type: 'boolean' }, requestId: num }, ['code'])],
+  ['iam.elevation.requested', 'Someone asked for elevated access for a limited time.', obj({ username: str, role: str, hours: num, financial: { type: 'boolean' } }, ['username', 'role'])],
+  ['iam.elevation.started', 'An approved elevation began.', obj({ username: str, role: str, endsAt: str }, ['username', 'role'])],
+  ['iam.elevation.ended', 'An elevation reached its end time.', obj({ username: str, role: str }, ['username', 'role'])],
+  ['iam.elevation.revoked', 'An elevation was taken away before its end time.', obj({ username: str, role: str }, ['username', 'role'])],
+  ['iam.review.started', 'An access review campaign began.', obj({ code: str, scope: str, lines: num, reviewers: num }, ['code'])],
+  ['iam.review.closed', 'An access review campaign was closed and its revokes applied.', obj({ code: str, certified: num, revoked: num, applied: num }, ['code'])],
+  ['iam.account.dormant_suspended', 'An account with no sign-in for too long was suspended.', obj({ username: str, days: num }, ['username'])],
+);
+parameterRegistry.define({ key: 'iam.dormant.days', dataType: 'integer', default: 90, min: 30, max: 730, scopes: ['system', 'company'], description: 'Days without a sign-in after which an account counts as dormant.' });
+parameterRegistry.define({ key: 'iam.dormant.action', dataType: 'string', default: 'report', scopes: ['system', 'company'], description: 'What the daily check does with a dormant account: "report" lists it, "suspend" also suspends it and ends its sessions.' });
+parameterRegistry.define({ key: 'iam.elevation.max_hours', dataType: 'integer', default: 24, min: 1, max: 72, scopes: ['system', 'company'], description: 'The longest time elevated access may be asked for, in hours.' });
 for (const [type, description, schema] of IAM_EVENTS) eventTypes.define({ type, version: 1, schema, owner: 'iam', description });
 
 integrityRegistry.register({
-  technicalTables: ['iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets'],
+  technicalTables: ['iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_sod_actions', 'iam_elevation_log'],
   companyOptional: ['org_companies', 'iam_permissions', 'iam_roles', 'iam_role_permissions', 'iam_field_masks', 'iam_role_mapping'],
   statuses: {
-    iam_users: ['ACTIVE', 'DISABLED'], iam_invitations: ['PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED', 'SUPERSEDED'], iam_roles: ['DRAFT', 'ACTIVE', 'RETIRED'], iam_assignments: ['ACTIVE', 'ENDED'], org_companies: ['ACTIVE', 'INACTIVE'], org_branches: ['ACTIVE', 'INACTIVE'], org_departments: ['ACTIVE', 'INACTIVE'], org_designations: ['ACTIVE', 'INACTIVE'],
+    iam_users: ['ACTIVE', 'DISABLED'], iam_invitations: ['PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED', 'SUPERSEDED'], iam_roles: ['DRAFT', 'ACTIVE', 'RETIRED'], iam_assignments: ['ACTIVE', 'ENDED'], iam_sod_violations: ['OPEN', 'RESOLVED', 'ACCEPTED', 'BLOCKED'], iam_elevations: ['REQUESTED', 'ACTIVE', 'REJECTED', 'CANCELLED', 'EXPIRED', 'REVOKED'], iam_access_campaigns: ['OPEN', 'CLOSED', 'CANCELLED'], iam_access_reviews: ['OPEN', 'COMPLETED', 'CANCELLED'], org_companies: ['ACTIVE', 'INACTIVE'], org_branches: ['ACTIVE', 'INACTIVE'], org_departments: ['ACTIVE', 'INACTIVE'], org_designations: ['ACTIVE', 'INACTIVE'],
     org_projects: ['DRAFT', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CLOSED'], org_sites: ['DRAFT', 'ACTIVE', 'INACTIVE'], org_locations: ['ACTIVE', 'INACTIVE'], org_cost_centres: ['ACTIVE', 'INACTIVE'],
   },
   uniqueKeys: [{ table: 'org_projects', columns: ['company_id', 'code'] }, { table: 'org_locations', columns: ['company_id', 'code'] }, { table: 'org_designations', columns: ['company_id', 'code'] }],
@@ -114,8 +139,8 @@ export const iam = {
   routePrefix: '/api/v1/iam',
   ownerPart: '02.x',
   status: 'Authentication (02.01) and organisation (02.02)',
-  tables: ['iam_users', 'iam_credentials', 'iam_mfa_factors', 'iam_devices', 'iam_auth_policy', 'iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_user_profiles', 'iam_invitations', 'iam_role_grants', 'iam_permissions', 'iam_roles', 'iam_role_permissions', 'iam_field_masks', 'iam_assignments', 'iam_role_mapping', 'org_companies', 'org_branches', 'org_departments', 'org_designations', 'org_projects', 'org_sites', 'org_locations', 'org_cost_centres', 'org_assignments'],
-  resources: ['auth', 'me', 'admin', 'org', 'users', 'invitations', 'permissions', 'roles', 'assignments', 'effective', 'legacy-comparison'],
+  tables: ['iam_users', 'iam_credentials', 'iam_mfa_factors', 'iam_devices', 'iam_auth_policy', 'iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_user_profiles', 'iam_invitations', 'iam_role_grants', 'iam_permissions', 'iam_roles', 'iam_role_permissions', 'iam_field_masks', 'iam_assignments', 'iam_role_mapping', 'org_companies', 'org_branches', 'org_departments', 'org_designations', 'org_projects', 'org_sites', 'org_locations', 'org_cost_centres', 'org_assignments', 'iam_sod_rules', 'iam_sod_violations', 'iam_sod_actions', 'iam_elevations', 'iam_elevation_log', 'iam_access_campaigns', 'iam_access_reviews', 'iam_access_review_items'],
+  resources: ['auth', 'me', 'admin', 'org', 'users', 'invitations', 'permissions', 'roles', 'assignments', 'effective', 'legacy-comparison', 'sod-rules', 'sod-violations', 'dormant-accounts', 'elevations', 'access-reviews'],
 
   mount(api, { db, config, publicApi }) {
     const identity = identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined });
@@ -159,7 +184,7 @@ export const iam = {
     publicApi.use('/iam', invitationRoutes({ invitationInfo: (t) => userAdmin.invitationInfo(t), accept: (t, b, c) => userAdmin.accept(t, b, c) }));
 
     // Everything behind sign-in is hidden while ff.iam.p0201 is OFF for the company.
-    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers, ...userHandlers, ...accessHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers } });
     const orgService = createOrgService({ db, approvals, clock: () => identity.now() });
     const orgRouter = Router();
     orgRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0202') ? next() : next(notFound('The organisation master is not enabled for your company yet (feature flag ff.iam.p0202 is OFF).'))));
@@ -186,12 +211,32 @@ export const iam = {
       runtimeOf(db).jobs.register('iam.assignment_sync', (ctx) => { const r = access.syncLifecycle(); ctx.log(`Moved ${r.moved} person(s) between Onboarding and Active`); return r; }, { maxAttempts: 2, description: 'Starts and ends the effect of dated role assignments on onboarding state.' });
       runtimeOf(db).scheduler.define({ code: 'iam.assignment_sync_daily', cron: '30 0 * * *', jobType: 'iam.assignment_sync', description: 'Daily start and end of dated role assignments (00:30 IST)' });
     }
+    // Segregation of duties, elevated access and access reviews (part 02.05), behind ff.iam.p0205.
+    const sodService = createSodService({ db, identity, auth, approvals, access, userAdmin });
+    const elevations = createElevationService({ db, identity, approvals });
+    const reviews = createReviewService({ db, identity });
+    const privilegedRouter = Router();
+    privilegedRouter.use(['/sod-rules', '/sod-violations', '/dormant-accounts', '/elevation-roles', '/elevations', '/access-reviews'], (req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0205') ? next() : next(notFound('Segregation of duties and access reviews are not enabled for your company yet (feature flag ff.iam.p0205 is OFF).'))));
+    privilegedRouter.use(privilegedRoutes({ sod: sodService, elevations, reviews }, { idempotentRequired }));
+    api.use('/iam', privilegedRouter);
+    if (migrated) {
+      const runtime = runtimeOf(db);
+      runtime.jobs.register('iam.elevation_expiry', (ctx) => { const r = elevations.expireDue(); ctx.log(`Ended ${r.expired} elevation(s), lapsed ${r.lapsed} unanswered request(s)`); return r; }, { maxAttempts: 2, description: 'Marks elevations whose end time has come as expired (access already ends at that moment) and lets unanswered requests lapse after a day.' });
+      runtime.jobs.register('iam.sod_scan', (ctx) => {
+        const out = [];
+        for (const c of db.prepare('SELECT id FROM org_companies WHERE is_active = 1').all()) out.push({ company: c.id, sod: sodOf(db).scanCompany(c.id), dormant: sodService.scanDormant(c.id) });
+        ctx.log(`Scanned ${out.length} company(ies) for conflicts and dormant accounts`);
+        return { companies: out.length };
+      }, { maxAttempts: 2, description: 'Looks for people who hold conflicting duties, and for dormant accounts (suspending them where the policy says so).' });
+      runtime.scheduler.define({ code: 'iam.elevation_expiry_5min', cron: '*/5 * * * *', jobType: 'iam.elevation_expiry', description: 'Every five minutes: mark elevations that have reached their end' });
+      runtime.scheduler.define({ code: 'iam.sod_scan_daily', cron: '0 1 * * *', jobType: 'iam.sod_scan', description: 'Daily check of segregation of duties and dormant accounts (01:00 IST)' });
+    }
     const service = createSecurityService({ db, identity, users, auth, mfa, approvals, profileExtras: (actor) => userAdmin.profileExtras(actor) });
     const router = Router();
     router.use((req, _res, next) => (req.path.startsWith('/me') || req.path.startsWith('/admin') || req.path === '/auth/password/change' ? (flagService.isOn(req.actor, 'ff.iam.p0201') ? next() : next(notFound('Sign-in management is not enabled for your company yet (feature flag ff.iam.p0201 is OFF).'))) : next()));
     router.use(securityRoutes(service, auth, { idempotentRequired }));
     api.use('/iam', router);
-    return { users, auth, mfa, identity, service, orgService, userAdmin, access };
+    return { users, auth, mfa, identity, service, orgService, userAdmin, access, sodService, elevations, reviews };
   },
 };
 

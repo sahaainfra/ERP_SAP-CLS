@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { timingSafeEqual } from 'node:crypto';
 import { ROOT } from './platform/db/index.js';
 import { authenticate, hasPermission } from './platform/auth/index.js';
+import { elevationLogger } from './modules/iam/privileged/elevation.js';
 import { identityOf } from './platform/identity/index.js';
 import { authzOf } from './platform/authz/index.js';
 import { HttpError, errorHandler, forbidden, unauthorized } from './platform/http/errors.js';
@@ -97,6 +98,7 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   const api = express.Router();
   api.use(authenticate(config, identity.resolver, authz));
   api.use(onboardingGate);
+  api.use(elevationLogger(db));
   api.use((req, _res, next) => {
     const ctx = currentContext();
     if (ctx) ctx.user = pseudonym(req.actor?.user);

@@ -1,7 +1,7 @@
 import { createAuthz } from './engine.js';
 
 export { createAuthz } from './engine.js';
-export { CONFIDENTIALITY_LEVELS, DIRECTOR_APPROVED_ROLES, PERMISSIONS_02_04, ROLE_TEMPLATES, SENSITIVE_ACTIONS, TEMPLATE_PERMISSIONS } from './templates.js';
+export { CONFIDENTIALITY_LEVELS, DIRECTOR_APPROVED_ROLES, PERMISSIONS_02_04, PERMISSIONS_02_05, PERMISSIONS_SINCE_LEGACY, ROLE_TEMPLATES, SENSITIVE_ACTIONS, TEMPLATE_PERMISSIONS } from './templates.js';
 export { LEGACY_ROLE_PERMISSIONS } from './legacy.js';
 export { MASK_RULES, fieldRegistry, hierarchyRegistry, isSensitiveKey, parseKey, permissionRegistry, recordResolvers } from './registry.js';
 

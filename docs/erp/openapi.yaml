@@ -950,3 +950,110 @@ paths:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)
       responses: { '200': { description: '{ data: [mapping] }' } }
+  /api/v1/iam/sod-rules:
+    get:
+      summary: List the segregation-of-duties rules (iam.sod.view)
+      responses: { '200': { description: '{ data: [rule], meta }' } }
+    post:
+      summary: Ask for a new rule - an approval request for the auditor or the director (iam.sod.manage; Idempotency-Key required)
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/sod-rules/test:
+    get:
+      summary: Try the rules on a person (userId), with one more role (roleId) or an action - what holds now, what would be blocked (iam.sod.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/sod-rules/{id}:
+    get:
+      summary: One rule with its open violations and requests (iam.sod.view)
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Ask to change a rule (approval request; iam.sod.manage)
+      responses: { '200': { description: '{ data: request }' } }
+    delete:
+      summary: Ask to switch a rule off (approval request; iam.sod.manage)
+      responses: { '200': { description: '{ data: request }' } }
+  /api/v1/iam/sod-violations:
+    get:
+      summary: The violation report with a summary - standing conflicts, warned, detected and blocked transactions (iam.sod.view)
+      responses: { '200': { description: '{ data: [violation], meta, summary }' } }
+  /api/v1/iam/sod-violations/scan:
+    post:
+      summary: Check every person now (iam.sod.resolve)
+      responses: { '200': { description: '{ data: { users, conflicts } }' } }
+  /api/v1/iam/sod-violations/{id}:
+    get:
+      summary: One violation with what the person holds (iam.sod.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/sod-violations/{id}/resolve:
+    post:
+      summary: Take a role away (REMOVE_ROLE, needs the right to) or accept the risk with a reason (ACCEPT, iam.sod.resolve)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/dormant-accounts:
+    get:
+      summary: People with no sign-in for the policy days, and the policy (iam.sod.view)
+      responses: { '200': { description: '{ data: [account], meta, policy }' } }
+  /api/v1/iam/dormant-accounts/scan:
+    post:
+      summary: Apply the dormant-account policy now (iam.sod.resolve)
+      responses: { '200': { description: '{ data: { policy, dormant, suspended, skipped } }' } }
+  /api/v1/iam/elevation-roles:
+    get:
+      summary: Roles that can be asked for (iam.elevation.request)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/elevations:
+    get:
+      summary: Elevations - yours, those waiting for you, or all with iam.elevation.view
+      responses: { '200': { description: '{ data: [elevation], meta }' } }
+    post:
+      summary: Ask for elevated access with a reason and hours; an approval request (iam.elevation.request; Idempotency-Key required)
+      responses: { '201': { description: '{ data: elevation, with sodWarnings }' } }
+  /api/v1/iam/elevations/{id}:
+    get:
+      summary: One elevation with its approval, request log and the audit entries made during it
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/elevations/{id}/decision:
+    post:
+      summary: Approve or reject at the current step; the last approval starts the elevation
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/elevations/{id}/cancel:
+    post:
+      summary: The requester withdraws a waiting request
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/elevations/{id}/revoke:
+    post:
+      summary: End an elevation now (iam.elevation.revoke)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/access-reviews:
+    get:
+      summary: Review campaigns with progress (iam.review.view)
+      responses: { '200': { description: '{ data: [campaign], meta }' } }
+    post:
+      summary: Start a campaign - privileged roles, a department or everything (iam.review.manage)
+      responses: { '201': { description: '{ data: campaign, unassigned }' } }
+  /api/v1/iam/access-reviews/mine:
+    get:
+      summary: The signed-in reviewer's lines in open campaigns (iam.review.decide)
+      responses: { '200': { description: '{ data: [line], meta, campaigns }' } }
+  /api/v1/iam/access-reviews/decisions:
+    post:
+      summary: Certify or revoke one or many lines; a revoke needs a comment (iam.review.decide)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/access-reviews/{id}:
+    get:
+      summary: One campaign with its reviewers (iam.review.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/access-reviews/{id}/items:
+    get:
+      summary: The lines of a campaign (iam.review.view, or your own)
+      responses: { '200': { description: '{ data: [line], meta }' } }
+  /api/v1/iam/access-reviews/{id}/reassign:
+    post:
+      summary: Hand a reviewer's lines to another person (iam.review.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/access-reviews/{id}/close:
+    post:
+      summary: Close the campaign - refused while any line is undecided; applies the revokes (iam.review.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/access-reviews/{id}/cancel:
+    post:
+      summary: Cancel an open campaign; nothing is changed (iam.review.manage)
+      responses: { '200': { description: '{ data }' } }

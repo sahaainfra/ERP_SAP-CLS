@@ -104,10 +104,11 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
    * their masks, clearance and reportees. `roles` are codes the person holds company-wide outside the assignment table (the stored
    * role list of part 02.03, or the roles of a development header).
    */
-  function resolve({ companyId, userId = null, roles = [] }) {
+  function resolve({ companyId, userId = null, roles = [], extra = [] }) {
     const ck = `${companyId}|${userId ?? ''}|${[...roles].sort().join(',')}`;
-    const hit = effective.get(ck);
-    if (hit && now() - hit.at < ttlMs) return hit.value;
+    const hit = extra.length === 0 ? effective.get(ck) : null;
+    // a cached answer is good for ttlMs, and never past the moment an elevation starts or ends
+    if (hit && now() - hit.at < ttlMs && now() < hit.value.validUntil) return hit.value;
     const table = roleTable(companyId);
     const today = istDate(now());
     const holdings = [];
@@ -120,6 +121,25 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
         const role = table.byId.get(a.role_id);
         if (role && role.status === 'ACTIVE') holdings.push({ role, scopeType: a.scope_type, scopeIds: asSet(a.scope_ids_json), assignmentId: a.id, via: 'assignment' });
       }
+    }
+    // Time-boxed elevations (part 02.05): in force between their start and end to the second.
+    let validUntil = Infinity;
+    const elevations = [];
+    if (userId && has('iam_elevations')) {
+      const stamp = new Date(now()).toISOString();
+      for (const el of db.prepare("SELECT id, role_id, scope_type, scope_ids_json, starts_at, ends_at FROM iam_elevations WHERE user_id = ? AND company_id = ? AND status = 'ACTIVE' AND is_active = 1 AND ends_at > ?").all(userId, companyId, stamp)) {
+        const role = table.byId.get(el.role_id);
+        if (!role || role.status !== 'ACTIVE') continue;
+        if (el.starts_at > stamp) { validUntil = Math.min(validUntil, Date.parse(el.starts_at)); continue; }
+        validUntil = Math.min(validUntil, Date.parse(el.ends_at));
+        holdings.push({ role, scopeType: el.scope_type, scopeIds: asSet(el.scope_ids_json), assignmentId: null, via: 'elevation', elevationId: el.id });
+        elevations.push({ id: el.id, role: role.code, endsAt: el.ends_at });
+      }
+    }
+    // a role being considered (the check before it is given), never cached
+    for (const x of extra) {
+      const role = x.roleId ? table.byId.get(x.roleId) : table.byCode.get(x.code) ?? templateRole(x.code);
+      if (role) holdings.push({ role, scopeType: x.scopeType ?? 'COMPANY', scopeIds: x.scopeIds ?? [], assignmentId: null, via: 'proposed' });
     }
     const grants = new Map(); // key -> { allow: scope, deny: scope, sources: [] }
     const grant = (key) => {
@@ -172,13 +192,15 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
       perms: perms.sort(),
       anywhere: anywhere.sort(),
       roles: [...companyRoles].sort(),
-      holdings: holdings.map((h) => ({ role: h.role.code, roleName: h.role.name, scopeType: h.scopeType, scopeIds: h.scopeIds, assignmentId: h.assignmentId, via: h.via })),
+      holdings: holdings.map((h) => ({ role: h.role.code, roleName: h.role.name, scopeType: h.scopeType, scopeIds: h.scopeIds, assignmentId: h.assignmentId, via: h.via, elevationId: h.elevationId ?? null })),
+      elevations,
+      validUntil,
       assignmentCount: holdings.length,
       clearance: CONFIDENTIALITY_LEVELS[clearance],
       maskRules,
       reportees,
     };
-    effective.set(ck, { at: now(), value });
+    if (extra.length === 0) effective.set(ck, { at: now(), value });
     return value;
   }
 
@@ -192,7 +214,7 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
       }
     }
     const keys = [...grants.keys()].sort();
-    return { companyId: actor.companyId, userId: actor.userId ?? null, grants, perms: keys, anywhere: keys, roles: [...(actor.roles ?? [])], holdings: [], assignmentCount: (actor.roles ?? []).length, clearance: 'internal', maskRules: new Map(), reportees: new Set() };
+    return { companyId: actor.companyId, userId: actor.userId ?? null, grants, perms: keys, anywhere: keys, roles: [...(actor.roles ?? [])], holdings: [], elevations: [], validUntil: 0, assignmentCount: (actor.roles ?? []).length, clearance: 'internal', maskRules: new Map(), reportees: new Set() };
   }
 
   // ---- what a request carries ----
@@ -200,7 +222,7 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
   function enrich(actor) {
     if (!actor || actor.companyId == null) {
       // no company: nothing can be granted, but the actor still has to be a well-formed one
-      if (actor && !actor.grants) actor.grants = { grants: new Map(), perms: [], anywhere: [], roles: [], holdings: [], assignmentCount: 0, clearance: 'public', maskRules: new Map(), reportees: new Set() };
+      if (actor && !actor.grants) actor.grants = { grants: new Map(), perms: [], anywhere: [], roles: [], holdings: [], elevations: [], validUntil: 0, assignmentCount: 0, clearance: 'public', maskRules: new Map(), reportees: new Set() };
       return actor;
     }
     let e;
@@ -212,6 +234,7 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
       e = fallback(actor);
     }
     actor.grants = e;
+    actor.elevated = e.elevations ?? [];
     if (actor.userId) {
       actor.roles = [...new Set([...(actor.roles ?? []), ...e.roles])];
       actor.onboarding = e.assignmentCount === 0 && actor.roles.length === 0;

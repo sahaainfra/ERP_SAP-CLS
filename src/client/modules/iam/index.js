@@ -14,6 +14,10 @@ import ProfilePage from './pages/ProfilePage.jsx';
 import RolesPage from './pages/RolesPage.jsx';
 import UsersPage from './pages/UsersPage.jsx';
 import WelcomePage from './pages/WelcomePage.jsx';
+import AccessReviewsPage, { MyAccessReviewPage } from './pages/AccessReviewsPage.jsx';
+import ElevationPage, { ElevationApprovalsPage } from './pages/ElevationPage.jsx';
+import SodRulesPage from './pages/SodRulesPage.jsx';
+import SodViolationsPage from './pages/SodViolationsPage.jsx';
 
 // Module "iam" registers its pages once (part 02.01). The sign-in screen is not a route: the shell shows it before anything else.
 registerModule({
@@ -30,6 +34,12 @@ registerModule({
     { path: '/admin/assignments', label: 'Assignments', permission: 'iam.assignment.view', flag: 'ff.iam.p0204', Page: AssignmentsPage },
     { path: '/admin/effective-access', label: 'Effective Permissions', permission: 'iam.role.view', flag: 'ff.iam.p0204', Page: EffectivePage },
     { path: '/admin/legacy-access', label: 'Legacy Access Comparison', permission: 'iam.role.view', flag: 'ff.iam.p0204', Page: LegacyAccessPage },
+    { path: '/admin/sod/rules', label: 'SoD Rules', permission: 'iam.sod.view', flag: 'ff.iam.p0205', Page: SodRulesPage },
+    { path: '/admin/sod/violations', label: 'SoD Violations', permission: 'iam.sod.view', flag: 'ff.iam.p0205', Page: SodViolationsPage },
+    { path: '/account/elevation', label: 'Request Elevated Access', permission: 'iam.elevation.request', flag: 'ff.iam.p0205', Page: ElevationPage },
+    { path: '/admin/elevation-approvals', label: 'Elevation Approvals', permission: 'iam.elevation.request', flag: 'ff.iam.p0205', Page: ElevationApprovalsPage },
+    { path: '/admin/access-reviews', label: 'Access Reviews', permission: 'iam.review.view', flag: 'ff.iam.p0205', Page: AccessReviewsPage },
+    { path: '/account/access-review', label: 'My Access Review', permission: 'iam.review.decide', flag: 'ff.iam.p0205', Page: MyAccessReviewPage },
     { path: '/admin/security/policy', label: 'Authentication Policy', permission: 'iam.security.view', flag: 'ff.iam.p0201', Page: PolicyPage },
     { path: '/admin/organisation', label: 'Organisation', permission: 'org.view', flag: 'ff.iam.p0202', Page: OrganisationPage },
     { path: '/admin/projects', label: 'Projects & Sites', permission: 'org.view', flag: 'ff.iam.p0202', Page: ProjectsPage },

@@ -1,7 +1,8 @@
-import { transaction } from '../db/index.js';
+import { inTransaction, transaction } from '../db/index.js';
 import { writeAudit } from '../audit/index.js';
 import { publishEvent } from '../events/index.js';
 import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from '../http/errors.js';
+import { sodOf } from '../sod/index.js';
 
 /**
  * A thin stand-in for the workflow engine of part 04.01, so approval-controlled configuration changes cannot be made
@@ -43,7 +44,7 @@ export function createApprovalEngine({ db, handlers }) {
     /** Raise a request. `chain` is the list of roles that must approve, in order. */
     submit(actor, { type, title, targetType, targetId, payload, reason, chain }) {
       if (!handlers[type]) throw new Error(`No handler for request type ${type}`);
-      return transaction(db, () => {
+      return inTransaction(db, () => {
         const res = db
           .prepare(
             `INSERT INTO core_change_requests (company_id, type, title, target_type, target_id, payload_json, reason, status, chain_json, current_step, requested_by, created_by, source_type)
@@ -51,6 +52,8 @@ export function createApprovalEngine({ db, handlers }) {
           )
           .run(actor.companyId, type, title, targetType, targetId, JSON.stringify(payload), reason, JSON.stringify(chain), actor.user, actor.user);
         const id = Number(res.lastInsertRowid);
+        // who raised it, for the segregation-of-duties rules (part 02.05)
+        sodOf(db).record({ companyId: actor.companyId, actor, action: 'change_request.create', subject: { type: 'change_request', id } });
         writeAudit(db, { entity: 'core_change_requests', entityId: id, action: 'submit', newValues: { type, chain, reason }, reason, actor: actor.user });
         publishEvent(db, { type: 'core.change_request.submitted', entity: 'change_request', entityId: id, actorId: actor.user, companyId: actor.companyId, data: { type, targetType, targetId } });
         return presentFull(id, actor.companyId);
@@ -79,14 +82,16 @@ export function createApprovalEngine({ db, handlers }) {
 
     /** Approve, reject or return the request at its current step. */
     act(actor, id, { action, comment, version }) {
-      return transaction(db, () => {
+      // a refusal on segregation-of-duties grounds is kept as a record even though the decision is rolled back
+      return sodOf(db).attempt(() => transaction(db, () => {
         const r = loadRequest(id, actor.companyId);
         if (r.status !== 'SUBMITTED') throw unprocessable(`This request is ${r.status.toLowerCase()}, so it can no longer be decided.`);
         if (version !== undefined && version !== r.version) throw conflict('This request was changed by someone else. Refresh it and decide again.');
         const chain = JSON.parse(r.chain_json);
         const role = chain[r.current_step - 1];
         // a step written 'ITADM|DIR' is decided by either role
-        if (!role.split('|').some((x) => actor.roles.includes(x))) throw forbidden(`Step ${r.current_step} of this request needs the ${role.replace('|', ' or ')} role. Your roles do not include it.`);
+        if (role.startsWith('@') ? actor.user !== role.slice(1) : !role.split('|').some((x) => actor.roles.includes(x))) throw forbidden(role.startsWith('@') ? `Step ${r.current_step} of this request is for ${role.slice(1)} (the requester's manager). You are not that person.` : `Step ${r.current_step} of this request needs the ${role.replace('|', ' or ')} role. Your roles do not include it.`);
+        if (action === 'approve') sodOf(db).guardAction({ companyId: r.company_id, actor, action: 'change_request.approve', subject: { type: 'change_request', id } });
         if (actor.user === r.requested_by) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You raised this request, so someone else must approve it.');
         const decided = db.prepare('SELECT decided_by FROM core_change_request_steps WHERE request_id = ? AND decision = ?').all(id, 'APPROVED').map((s) => s.decided_by);
         if (decided.includes(actor.user)) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You already approved an earlier step of this request; a different person must approve this step.');
@@ -96,6 +101,7 @@ export function createApprovalEngine({ db, handlers }) {
         const now = new Date().toISOString();
         db.prepare('INSERT INTO core_change_request_steps (request_id, step_no, role_code, decision, decided_by, decided_at, comment) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, r.current_step, role, decision, actor.user, now, comment ?? null);
 
+        if (action === 'approve') sodOf(db).record({ companyId: r.company_id, actor, action: 'change_request.approve', subject: { type: 'change_request', id } });
         let status = 'SUBMITTED';
         let step = r.current_step;
         if (decision === 'REJECTED') status = 'REJECTED';
@@ -108,7 +114,7 @@ export function createApprovalEngine({ db, handlers }) {
         writeAudit(db, { entity: 'core_change_requests', entityId: id, action: decision.toLowerCase(), newValues: { step: r.current_step, role, status }, reason: comment ?? null, actor: actor.user });
         publishEvent(db, { type: `core.change_request.${status === 'APPROVED' ? 'approved' : decision === 'APPROVED' ? 'advanced' : decision.toLowerCase()}`, entity: 'change_request', entityId: id, actorId: actor.user, companyId: r.company_id, data: { type: r.type, status, step: r.current_step } });
         return presentFull(id, actor.companyId);
-      });
+      }));
     },
 
     /** The requester takes a returned request back, with a revised reason, to start the chain again. */
@@ -125,7 +131,7 @@ export function createApprovalEngine({ db, handlers }) {
 
     /** The requester withdraws a request that is still open. */
     withdraw(actor, id) {
-      return transaction(db, () => {
+      return inTransaction(db, () => {
         const r = loadRequest(id, actor.companyId);
         if (r.requested_by !== actor.user) throw forbidden('Only the person who raised a request can withdraw it.');
         if (!['SUBMITTED', 'RETURNED'].includes(r.status)) throw unprocessable(`This request is ${r.status.toLowerCase()} and cannot be withdrawn.`);

@@ -247,7 +247,7 @@ test('AC-06 nobody can approve their own request, approve twice in one chain, or
   const own = await act(api, id, { roles: 'SYSADM,ACCMGR', user: 'ravi', company: '1' }, { action: 'approve' });
   assert.equal(own.status, 403);
   assert.equal(own.json.error.code, 'SEGREGATION_OF_DUTIES');
-  assert.match(own.json.error.message, /someone else must approve/);
+  assert.match(own.json.error.message, /SOD-01.*someone else/);
   const wrongRole = await act(api, id, cfo(), { action: 'approve' });
   assert.equal(wrongRole.status, 403);
   assert.match(wrongRole.json.error.message, /Step 1 .* needs the ACCMGR role/);

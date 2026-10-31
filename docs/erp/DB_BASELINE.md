@@ -1171,6 +1171,117 @@ Foreign keys: connector_id -> core_connectors(id)
 Indexes:
 - ux_core_webhook_receipts_delivery (unique): connector_id, delivery_id
 
+## iam_access_campaigns
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| campaign_code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| scope | TEXT | yes |  |  |
+| department_id | INTEGER |  |  |  |
+| due_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| summary_json | TEXT | yes |  | '{}' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: department_id -> org_departments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_iam_access_campaigns_department: department_id
+- ux_iam_access_campaigns_code (unique): company_id, campaign_code
+
+## iam_access_review_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| review_id | INTEGER | yes |  |  |
+| assignment_id | INTEGER |  |  |  |
+| user_id | INTEGER | yes |  |  |
+| source | TEXT | yes |  |  |
+| role_code | TEXT | yes |  |  |
+| role_name | TEXT | yes |  | '' |
+| scope_text | TEXT | yes |  | '' |
+| privileged | INTEGER | yes |  | 0 |
+| last_login_at | TEXT |  |  |  |
+| decision | TEXT | yes |  | 'PENDING' |
+| comment | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| decided_by | TEXT |  |  |  |
+| applied_at | TEXT |  |  |  |
+| applied_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id), assignment_id -> iam_assignments(id), review_id -> iam_access_reviews(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_iam_access_review_items_user: user_id
+- ix_iam_access_review_items_assignment: assignment_id
+- ix_iam_access_review_items_review: review_id, decision
+- ix_iam_access_review_items_company_id: company_id
+
+## iam_access_reviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| campaign_id | INTEGER | yes |  |  |
+| campaign_code | TEXT | yes |  |  |
+| scope | TEXT | yes |  |  |
+| reviewer_id | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| due_date | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: reviewer_id -> iam_users(id), campaign_id -> iam_access_campaigns(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_iam_access_reviews_company_id: company_id
+- ix_iam_access_reviews_reviewer: reviewer_id, status
+- ux_iam_access_reviews_reviewer (unique): campaign_id, reviewer_id
+
 ## iam_assignments
 
 | Column | Type | Not null | Key | Default |
@@ -1304,6 +1415,69 @@ Foreign keys: user_id -> iam_users(id)
 Indexes:
 - ix_iam_devices_company: company_id
 - ux_iam_devices_user_fingerprint (unique): user_id, device_fingerprint
+
+## iam_elevation_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| elevation_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| at | TEXT | yes |  |  |
+| method | TEXT | yes |  |  |
+| route | TEXT | yes |  |  |
+| status | INTEGER | yes |  |  |
+| correlation_id | TEXT |  |  |  |
+| duration_ms | INTEGER |  |  |  |
+
+Foreign keys: elevation_id -> iam_elevations(id)
+
+Indexes:
+- ix_iam_elevation_log_elevation: elevation_id, id
+
+## iam_elevations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| role_id | INTEGER | yes |  |  |
+| scope_type | TEXT | yes |  | 'COMPANY' |
+| scope_ids_json | TEXT | yes |  | '[]' |
+| reason | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'REQUESTED' |
+| requested_hours | INTEGER | yes |  |  |
+| requested_start | TEXT |  |  |  |
+| financial | INTEGER | yes |  | 0 |
+| approved_by | TEXT |  |  |  |
+| starts_at | TEXT |  |  |  |
+| ends_at | TEXT |  |  |  |
+| revoked_at | TEXT |  |  |  |
+| revoked_by | TEXT |  |  |  |
+| revoke_reason | TEXT |  |  |  |
+| request_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), role_id -> iam_roles(id), user_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_iam_elevations_company: company_id, status, ends_at
+- ix_iam_elevations_request: request_id
+- ix_iam_elevations_role: role_id
+- ix_iam_elevations_user: user_id, status
 
 ## iam_field_masks
 
@@ -1669,6 +1843,104 @@ Indexes:
 - ix_iam_sessions_device: device_id
 - ix_iam_sessions_user: user_id, revoked_at
 - ux_iam_sessions_public (unique): public_id
+
+## iam_sod_actions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| action_key | TEXT | yes |  |  |
+| subject_type | TEXT | yes |  |  |
+| subject_id | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| period | TEXT |  |  |  |
+| vendor_ref | TEXT |  |  |  |
+| amount_paise | INTEGER |  |  |  |
+| at | TEXT | yes |  |  |
+
+Indexes:
+- ix_iam_sod_actions_user: company_id, user_ref, action_key
+- ix_iam_sod_actions_subject: company_id, subject_type, subject_id
+
+## iam_sod_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| description | TEXT | yes |  | '' |
+| kind | TEXT | yes |  |  |
+| set_a_json | TEXT | yes |  | '[]' |
+| set_b_json | TEXT | yes |  | '[]' |
+| scope | TEXT | yes |  | 'USER' |
+| severity | TEXT | yes |  | 'BLOCK' |
+| conditions_json | TEXT | yes |  | '{}' |
+| active | INTEGER | yes |  | 1 |
+| catalogue_ref | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_iam_sod_rules_code (unique): company_id, code
+
+## iam_sod_violations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rule_id | INTEGER | yes |  |  |
+| user_id | INTEGER |  |  |  |
+| user_ref | TEXT | yes |  |  |
+| source | TEXT | yes |  |  |
+| outcome | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| document_type | TEXT |  |  |  |
+| document_id | TEXT |  |  |  |
+| detail_json | TEXT | yes |  | '{}' |
+| detected_at | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| resolved_at | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolution | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id), rule_id -> iam_sod_rules(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_iam_sod_violations_user: user_id
+- ix_iam_sod_violations_rule: rule_id, status
+- ix_iam_sod_violations_company: company_id, status, detected_at
+- ux_iam_sod_violations_standing (unique): rule_id, user_id
 
 ## iam_user_profiles
 
