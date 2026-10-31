@@ -267,7 +267,7 @@ test('Forgotten password gives the same answer for any name; a project manager h
   await page.goto('/admin/security/policy');
   await expect(page.getByRole('heading', { name: 'You do not have access to the authentication policy' })).toBeVisible();
   await page.goto('/admin/security/login-history');
-  await expect(page.getByRole('heading', { name: 'Login History' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Login History', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'You do not have access to the login history' })).toBeVisible();
   await noOverflow(page);
   expect(errors).toEqual([]);

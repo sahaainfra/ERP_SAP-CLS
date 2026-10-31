@@ -27,6 +27,8 @@ Every migration is additive, idempotent and reversible (`.up.sql` and `.down.sql
 | 20261030000021_seed_flag_core_p0108 | 01.08 | reference-seed rows for `ff.core.p0108` (default OFF; ON in development and test) | deletes those seed rows |
 | 20261030000022_iam_authentication | 02.01 | tables `iam_users` (thin stand-in for the user master of 02.03), `iam_credentials` (Argon2id hash, history, lock state), `iam_mfa_factors` (encrypted TOTP seed, phone factors, backup codes), `iam_devices` (remembered devices and PINs), `iam_auth_policy` (per-company policy), `iam_sessions`, `iam_refresh_tokens`, `iam_login_events`, `iam_login_throttle` and `iam_password_resets` (technical), and their indexes | drops the ten tables |
 | 20261030000023_seed_flag_iam_p0201 | 02.01 | reference-seed rows for `ff.iam.p0201` (default OFF; ON in development and test) | deletes those seed rows |
+| 20261030000024_iam_organisation | 02.02 | tables `org_companies` (company 1 seeded), `org_branches`, `org_departments`, `org_designations`, `org_projects`, `org_sites` (geofence columns), `org_locations`, `org_cost_centres` and `org_assignments` (effective-dated holders); unique codes per parent, checks for geofence radius, coordinates, dates and cost-centre links, indexes on every foreign key and list filter | drops the nine tables |
+| 20261030000025_seed_flag_iam_p0202 | 02.02 | reference-seed rows for `ff.iam.p0202` (default OFF; ON in development and test) | deletes those seed rows |
 
 Existing objects altered or dropped: none. Schema-diff against `schema/baseline.json`: clean.
 

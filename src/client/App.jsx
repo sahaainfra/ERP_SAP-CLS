@@ -4,9 +4,10 @@ import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from 
 import { allRoutes, defaultRoute, findRoute, routesFor } from './platform/shell/registry.js';
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
 import LoginPage from './modules/iam/pages/LoginPage.jsx';
+import ContextSwitcher from './modules/iam/components/ContextSwitcher.jsx';
 
 const THEME_KEY = 'erp.theme';
-const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR'];
+const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
 const currentPath = () => (findRoute(window.location.pathname) ? window.location.pathname : defaultRoute());
 
@@ -82,6 +83,7 @@ function Shell({ iam, user }) {
           })}
         </nav>
         <span className="spacer" />
+        <FlagGate flag="ff.iam.p0202"><ContextSwitcher /></FlagGate>
         <label className="shell-field">
           <span>Theme</span>
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>

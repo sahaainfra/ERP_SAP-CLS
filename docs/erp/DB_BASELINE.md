@@ -1432,3 +1432,313 @@ Indexes:
 - ux_iam_users_mobile (unique): mobile
 - ux_iam_users_email (unique): email
 - ux_iam_users_username (unique): username
+
+## org_assignments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity_type | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| role | TEXT | yes |  |  |
+| user_id | INTEGER |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| applied | INTEGER | yes |  | 1 |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_org_assignments_company_id: company_id
+- ix_org_assignments_pending: applied, effective_from
+- ix_org_assignments_user: user_id
+- ix_org_assignments_entity: entity_type, entity_id, effective_from
+
+## org_branches
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| parent_id | INTEGER |  |  |  |
+| kind | TEXT | yes |  | 'BRANCH' |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| state_code | TEXT |  |  |  |
+| address | TEXT |  |  |  |
+| gstin | TEXT |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> org_branches(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_org_branches_parent: parent_id
+- ux_org_branches_code (unique): company_id, , code
+
+## org_companies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| legal_name | TEXT | yes |  |  |
+| short_name | TEXT | yes |  |  |
+| gstin_primary | TEXT |  |  |  |
+| pan | TEXT |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ux_org_companies_code (unique): code
+
+## org_cost_centres
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| parent_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| type | TEXT | yes |  | 'COST' |
+| linked_type | TEXT |  |  |  |
+| linked_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> org_cost_centres(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_org_cost_centres_link: linked_type, linked_id
+- ix_org_cost_centres_parent: parent_id
+- ux_org_cost_centres_code (unique): company_id, , code
+
+## org_departments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| parent_id | INTEGER |  |  |  |
+| branch_id | INTEGER |  |  |  |
+| kind | TEXT | yes |  | 'DEPARTMENT' |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| head_user_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: head_user_id -> iam_users(id), branch_id -> org_branches(id), parent_id -> org_departments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_org_departments_head: head_user_id
+- ix_org_departments_branch: branch_id
+- ix_org_departments_parent: parent_id
+- ux_org_departments_code (unique): company_id, , code
+
+## org_designations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| grade | TEXT |  |  |  |
+| level | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_org_designations_code (unique): company_id, code
+
+## org_locations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| type | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| state_code | TEXT |  |  |  |
+| address | TEXT |  |  |  |
+| latitude | REAL |  |  |  |
+| longitude | REAL |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_org_locations_code (unique): company_id, code
+
+## org_projects
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| branch_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| type | TEXT | yes |  |  |
+| client_name | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| start_date | TEXT |  |  |  |
+| end_date | TEXT |  |  |  |
+| pm_user_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: pm_user_id -> iam_users(id), branch_id -> org_branches(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_org_projects_status: company_id, status
+- ix_org_projects_pm: pm_user_id
+- ix_org_projects_branch: branch_id
+- ux_org_projects_code (unique): company_id, code
+
+## org_sites
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| site_type | TEXT | yes |  | 'SITE' |
+| status | TEXT | yes |  | 'DRAFT' |
+| address | TEXT |  |  |  |
+| latitude | REAL |  |  |  |
+| longitude | REAL |  |  |  |
+| geofence_type | TEXT | yes |  | 'NONE' |
+| geofence_radius_m | INTEGER |  |  |  |
+| geofence_polygon_json | TEXT |  |  |  |
+| working_start | TEXT |  |  |  |
+| working_end | TEXT |  |  |  |
+| in_charge_user_id | INTEGER |  |  |  |
+| timezone | TEXT | yes |  | 'Asia/Kolkata' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: in_charge_user_id -> iam_users(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_org_sites_in_charge: in_charge_user_id
+- ix_org_sites_company: company_id, status
+- ux_org_sites_code (unique): org_project_id, code

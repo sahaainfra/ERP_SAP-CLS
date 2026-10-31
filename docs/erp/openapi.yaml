@@ -726,3 +726,81 @@ paths:
     get:
       summary: Login history; filters user, result, from, to, q (iam.security.view)
       responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/iam/org/context:
+    get:
+      summary: The company, projects and sites the signed-in person may work in (any signed-in user)
+      responses: { '200': { description: '{ data: { companies, projects, sites } }' } }
+  /api/v1/iam/org/tree:
+    get:
+      summary: The whole organisation of the company as nested trees (org.view)
+      responses: { '200': { description: '{ data: { company, branches, departments, projects, locations, costCentres } }' } }
+  /api/v1/iam/org/lookups/users:
+    get:
+      summary: Active users of the company to pick as head, manager or in-charge (org.view)
+      responses: { '200': { description: '{ data: [{ id, username, displayName }] }' } }
+  /api/v1/iam/org/geofence/test:
+    post:
+      summary: Test a coordinate against an unsaved geofence shape (org.view)
+      responses: { '200': { description: '{ data: { method, inside, strictlyInside, edgeDistanceM, toleranceM } }' } }
+  /api/v1/iam/org/{entity}:
+    get:
+      summary: List companies, branches, departments, designations, projects, sites, locations or cost-centres; q, sort, page, pageSize, filter[...] (org.view)
+      responses: { '200': { description: '{ data, meta }' } }
+    post:
+      summary: Create one (the entity's manage permission; Idempotency-Key required). Projects and sites start as drafts
+      responses: { '201': { description: '{ data }' }, '409': { description: 'code already used under the same parent' } }
+  /api/v1/iam/org/{entity}/{id}:
+    get:
+      summary: One record (org.view)
+      responses: { '200': { description: '{ data }' } }
+    patch:
+      summary: Change fields; send the version. The geofence of a site that is not a draft cannot be edited here (409 or 422)
+      responses: { '200': { description: '{ data }' }, '409': { description: 'version conflict' } }
+  /api/v1/iam/org/{entity}/{id}/descendants:
+    get:
+      summary: The record and everything below it, with depth (branches, departments, cost-centres)
+      responses: { '200': { description: '{ data: [{ id, code, name, parentId, depth }] }' } }
+  /api/v1/iam/org/{entity}/{id}/blockers:
+    get:
+      summary: Open records that would block deactivation
+      responses: { '200': { description: '{ data: [{ type, count, hint }] }' } }
+  /api/v1/iam/org/{entity}/{id}/deactivate:
+    post:
+      summary: Deactivate (reason and version; Idempotency-Key required); 422 lists every blocker
+      responses: { '200': { description: '{ data }' }, '422': { description: 'blocked by open records' } }
+  /api/v1/iam/org/{entity}/{id}/activate:
+    post:
+      summary: Reactivate a record that is not approval-controlled (projects and sites go through an activation request)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/org/{entity}/{id}/assignments:
+    post:
+      summary: Change the head, project manager or in-charge from a date; a future date waits (Idempotency-Key required)
+      responses: { '201': { description: '{ data: { applied, effectiveFrom } }' } }
+  /api/v1/iam/org/{entity}/{id}/history:
+    get:
+      summary: Effective-dated assignments and the audit trail
+      responses: { '200': { description: '{ data: { assignments, audit } }' } }
+  /api/v1/iam/org/{entity}/{id}/requests:
+    get:
+      summary: Approval requests raised for a project or site, with their steps
+      responses: { '200': { description: '{ data: [request] }' } }
+  /api/v1/iam/org/projects/{id}/status:
+    post:
+      summary: Put on hold, resume, complete or close a project (reason and version); a first activation is refused here
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/org/projects/{id}/activation-requests:
+    post:
+      summary: Ask for a draft project to be activated; chain PD then PCMGR (Idempotency-Key required)
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/org/sites/{id}/activation-requests:
+    post:
+      summary: Ask for a draft or inactive site to be activated; the project must be active; chain PD then PCMGR
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/org/sites/{id}/geofence/change-requests:
+    post:
+      summary: Ask to change the geofence of a site that is not a draft; reason mandatory; chain SYSADM (org.geofence.request)
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/org/sites/{id}/geofence/test:
+    post:
+      summary: Test a coordinate (latitude, longitude, toleranceM) against the site's geofence (org.view)
+      responses: { '200': { description: '{ data: { method, inside, strictlyInside, edgeDistanceM, toleranceM } }' } }

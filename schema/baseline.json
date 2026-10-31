@@ -6864,6 +6864,1578 @@
   "index:ix_iam_users_company": {
     "sql": "CREATE INDEX ix_iam_users_company ON iam_users (company_id, status)"
   },
+  "index:ix_org_assignments_company_id": {
+    "sql": "CREATE INDEX ix_org_assignments_company_id ON org_assignments (company_id)"
+  },
+  "index:ix_org_assignments_entity": {
+    "sql": "CREATE INDEX ix_org_assignments_entity ON org_assignments (entity_type, entity_id, effective_from)"
+  },
+  "index:ix_org_assignments_pending": {
+    "sql": "CREATE INDEX ix_org_assignments_pending ON org_assignments (applied, effective_from)"
+  },
+  "index:ix_org_assignments_user": {
+    "sql": "CREATE INDEX ix_org_assignments_user ON org_assignments (user_id)"
+  },
+  "index:ix_org_branches_parent": {
+    "sql": "CREATE INDEX ix_org_branches_parent ON org_branches (parent_id)"
+  },
+  "index:ix_org_cost_centres_link": {
+    "sql": "CREATE INDEX ix_org_cost_centres_link ON org_cost_centres (linked_type, linked_id)"
+  },
+  "index:ix_org_cost_centres_parent": {
+    "sql": "CREATE INDEX ix_org_cost_centres_parent ON org_cost_centres (parent_id)"
+  },
+  "index:ix_org_departments_branch": {
+    "sql": "CREATE INDEX ix_org_departments_branch ON org_departments (branch_id)"
+  },
+  "index:ix_org_departments_head": {
+    "sql": "CREATE INDEX ix_org_departments_head ON org_departments (head_user_id)"
+  },
+  "index:ix_org_departments_parent": {
+    "sql": "CREATE INDEX ix_org_departments_parent ON org_departments (parent_id)"
+  },
+  "index:ix_org_projects_branch": {
+    "sql": "CREATE INDEX ix_org_projects_branch ON org_projects (branch_id)"
+  },
+  "index:ix_org_projects_pm": {
+    "sql": "CREATE INDEX ix_org_projects_pm ON org_projects (pm_user_id)"
+  },
+  "index:ix_org_projects_status": {
+    "sql": "CREATE INDEX ix_org_projects_status ON org_projects (company_id, status)"
+  },
+  "index:ix_org_sites_company": {
+    "sql": "CREATE INDEX ix_org_sites_company ON org_sites (company_id, status)"
+  },
+  "index:ix_org_sites_in_charge": {
+    "sql": "CREATE INDEX ix_org_sites_in_charge ON org_sites (in_charge_user_id)"
+  },
+  "table:org_assignments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "role",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "effective_from",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "effective_to",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "applied",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "user_id->iam_users.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:org_branches": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "parent_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'BRANCH'",
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "state_code",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "address",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "gstin",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "parent_id->org_branches.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:org_companies": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "legal_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "short_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "gstin_primary",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "pan",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:org_cost_centres": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "parent_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'COST'",
+        "pk": 0
+      },
+      {
+        "name": "linked_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "linked_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "parent_id->org_cost_centres.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:org_departments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "parent_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "branch_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'DEPARTMENT'",
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "head_user_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "branch_id->org_branches.id:NO ACTION/NO ACTION",
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "head_user_id->iam_users.id:NO ACTION/NO ACTION",
+      "parent_id->org_departments.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:org_designations": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "grade",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "level",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:org_locations": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "state_code",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "address",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "latitude",
+        "type": "REAL",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "longitude",
+        "type": "REAL",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:org_projects": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "branch_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "client_name",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'DRAFT'",
+        "pk": 0
+      },
+      {
+        "name": "start_date",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "end_date",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "pm_user_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "branch_id->org_branches.id:NO ACTION/NO ACTION",
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "pm_user_id->iam_users.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:org_sites": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "org_project_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'SITE'",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'DRAFT'",
+        "pk": 0
+      },
+      {
+        "name": "address",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "latitude",
+        "type": "REAL",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "longitude",
+        "type": "REAL",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "geofence_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'NONE'",
+        "pk": 0
+      },
+      {
+        "name": "geofence_radius_m",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "geofence_polygon_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "working_start",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "working_end",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "in_charge_user_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "timezone",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'Asia/Kolkata'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "in_charge_user_id->iam_users.id:NO ACTION/NO ACTION",
+      "org_project_id->org_projects.id:NO ACTION/NO ACTION"
+    ]
+  },
   "trigger:trg_core_formulas_immutable": {
     "sql": "CREATE TRIGGER trg_core_formulas_immutable BEFORE UPDATE OF code, formula_version, expression, inputs_json, outputs_json, rounding_policy, tests_json, owner_module, financial, effective_from ON core_formulas WHEN OLD.status <> 'DRAFT' BEGIN SELECT RAISE(ABORT, 'A formula version that is no longer a draft cannot be changed: create a new version'); END"
   },
@@ -6989,5 +8561,29 @@
   },
   "index:ux_iam_users_username": {
     "sql": "CREATE UNIQUE INDEX ux_iam_users_username ON iam_users (username)"
+  },
+  "index:ux_org_branches_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_branches_code ON org_branches (company_id, COALESCE(parent_id, 0), code)"
+  },
+  "index:ux_org_companies_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_companies_code ON org_companies (code)"
+  },
+  "index:ux_org_cost_centres_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_cost_centres_code ON org_cost_centres (company_id, COALESCE(parent_id, 0), code)"
+  },
+  "index:ux_org_departments_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_departments_code ON org_departments (company_id, COALESCE(parent_id, 0), code)"
+  },
+  "index:ux_org_designations_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_designations_code ON org_designations (company_id, code)"
+  },
+  "index:ux_org_locations_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_locations_code ON org_locations (company_id, code)"
+  },
+  "index:ux_org_projects_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_projects_code ON org_projects (company_id, code)"
+  },
+  "index:ux_org_sites_code": {
+    "sql": "CREATE UNIQUE INDEX ux_org_sites_code ON org_sites (org_project_id, code)"
   }
 }

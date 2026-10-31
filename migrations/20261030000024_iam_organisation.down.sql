@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS org_assignments;
+DROP TABLE IF EXISTS org_cost_centres;
+DROP TABLE IF EXISTS org_locations;
+DROP TABLE IF EXISTS org_sites;
+DROP TABLE IF EXISTS org_projects;
+DROP TABLE IF EXISTS org_designations;
+DROP TABLE IF EXISTS org_departments;
+DROP TABLE IF EXISTS org_branches;
+DROP TABLE IF EXISTS org_companies;
