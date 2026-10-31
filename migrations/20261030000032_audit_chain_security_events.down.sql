@@ -1,0 +1,12 @@
+DROP TRIGGER IF EXISTS trg_core_audit_log_no_update;
+DROP TRIGGER IF EXISTS trg_core_audit_log_no_delete;
+DROP TRIGGER IF EXISTS trg_core_audit_chain_no_update;
+DROP TRIGGER IF EXISTS trg_core_audit_chain_no_delete;
+DROP TRIGGER IF EXISTS trg_core_security_events_no_update;
+DROP TRIGGER IF EXISTS trg_core_security_events_no_delete;
+DROP TRIGGER IF EXISTS trg_core_audit_segments_no_update;
+DROP TRIGGER IF EXISTS trg_core_audit_segments_no_delete;
+DROP TABLE IF EXISTS core_audit_segments;
+DROP TABLE IF EXISTS core_audit_verifications;
+DROP TABLE IF EXISTS core_security_events;
+DROP TABLE IF EXISTS core_audit_chain;

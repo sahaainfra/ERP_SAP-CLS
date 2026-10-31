@@ -1,5 +1,5 @@
 import { parameterRegistry } from '../parameters/index.js';
-import { PERMISSIONS_02_04, PERMISSIONS_02_05, SENSITIVE_ACTIONS } from './templates.js';
+import { PERMISSIONS_02_04, PERMISSIONS_02_05, PERMISSIONS_02_06, SENSITIVE_ACTIONS } from './templates.js';
 
 // What modules declare to the authorisation engine (part 02.04): permission keys, sensitive fields, the records the explainer can
 // look up, and which entities let a manager see their reportees' records. Declared once when a module loads; the engine seeds the
@@ -39,6 +39,7 @@ function createPermissionRegistry() {
 export const permissionRegistry = createPermissionRegistry();
 permissionRegistry.registerAll(PERMISSIONS_02_04);
 permissionRegistry.registerAll(PERMISSIONS_02_05);
+permissionRegistry.registerAll(PERMISSIONS_02_06);
 
 const RULES = ['hide', 'partial', 'show'];
 export const MASK_RULES = RULES;

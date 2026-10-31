@@ -6,6 +6,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { ROOT } from './platform/db/index.js';
 import { authenticate, hasPermission } from './platform/auth/index.js';
 import { elevationLogger } from './modules/iam/privileged/elevation.js';
+import { recordSecurityEvent } from './platform/audit/index.js';
 import { identityOf } from './platform/identity/index.js';
 import { authzOf } from './platform/authz/index.js';
 import { HttpError, errorHandler, forbidden, unauthorized } from './platform/http/errors.js';
@@ -99,9 +100,26 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   api.use(authenticate(config, identity.resolver, authz));
   api.use(onboardingGate);
   api.use(elevationLogger(db));
+  // a refused request is a security event (part 02.06, FR-04)
+  api.use((req, res, next) => {
+    res.on('finish', () => {
+      if (res.statusCode !== 403 || !req.actor) return;
+      try {
+        recordSecurityEvent(db, { companyId: req.actor.companyId, userId: req.actor.userId ?? null, username: req.actor.user, type: 'authz.denied', severity: 'WARNING', details: { method: req.method, route: `${req.baseUrl.replace(/^\/api\/v1/, '')}${req.route?.path ?? req.path}`.slice(0, 200) }, ip: req.ip ?? null, correlationId: req.correlationId ?? null });
+      } catch { /* the log must never break a response */ }
+    });
+    next();
+  });
   api.use((req, _res, next) => {
     const ctx = currentContext();
-    if (ctx) ctx.user = pseudonym(req.actor?.user);
+    if (ctx) {
+      ctx.user = pseudonym(req.actor?.user);
+      // where the work came from, for the audit trail and the security event log (part 02.06)
+      ctx.companyId = req.actor?.companyId ?? null;
+      ctx.userId = req.actor?.userId ?? null;
+      ctx.ip = req.ip ?? null;
+      ctx.device = String(req.get('user-agent') ?? '').slice(0, 200) || null;
+    }
     next();
   });
   mountModules(api, { db, config, buildInfo, publicApi, storagePath: storage });

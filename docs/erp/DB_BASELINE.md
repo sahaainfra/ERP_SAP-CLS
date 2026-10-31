@@ -62,6 +62,28 @@ Indexes:
 - ix_core_alerts_rule: rule_code, dedupe_key, status
 - ix_core_alerts_status: status, fired_at
 
+## core_audit_chain
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| audit_id | INTEGER |  | PK |  |
+| seq | INTEGER | yes |  |  |
+| company_id | INTEGER |  |  |  |
+| occurred_at | TEXT | yes |  |  |
+| actor_id | INTEGER |  |  |  |
+| on_behalf_of | TEXT |  |  |  |
+| ip | TEXT |  |  |  |
+| device | TEXT |  |  |  |
+| changes_json | TEXT | yes |  | '{}' |
+| prev_hash | TEXT | yes |  |  |
+| hash | TEXT | yes |  |  |
+
+Foreign keys: company_id -> org_companies(id), audit_id -> core_audit_log(id)
+
+Indexes:
+- ix_core_audit_chain_company: company_id, seq
+- sqlite_autoindex_core_audit_chain_1 (unique): seq
+
 ## core_audit_log
 
 | Column | Type | Not null | Key | Default |
@@ -79,6 +101,34 @@ Indexes:
 
 Indexes:
 - ix_core_audit_log_entity: entity, entity_id
+
+## core_audit_segments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| period | TEXT |  | PK |  |
+| first_seq | INTEGER | yes |  |  |
+| last_seq | INTEGER | yes |  |  |
+| entry_count | INTEGER | yes |  |  |
+| head_hash | TEXT | yes |  |  |
+| sealed_at | TEXT | yes |  |  |
+
+Indexes:
+- sqlite_autoindex_core_audit_segments_1 (unique): period
+
+## core_audit_verifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT | yes |  |  |
+| trigger | TEXT | yes |  |  |
+| checked | INTEGER | yes |  |  |
+| ok | INTEGER | yes |  |  |
+| broken_seq | INTEGER |  |  |  |
+| problem | TEXT |  |  |  |
+| head_hash | TEXT |  |  |  |
 
 ## core_backfill_runs
 
@@ -1067,6 +1117,30 @@ Indexes:
 - ix_core_schedules_company: company_id
 - ix_core_schedules_due: enabled, next_run_at
 - ux_core_schedules_code (unique): code
+
+## core_security_events
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| occurred_at | TEXT | yes |  |  |
+| user_id | INTEGER |  |  |  |
+| username | TEXT |  |  |  |
+| type | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| details_json | TEXT | yes |  | '{}' |
+| ip | TEXT |  |  |  |
+| correlation_id | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_core_security_events_source (unique): source_type, source_id
+- ix_core_security_events_type: type, occurred_at
+- ix_core_security_events_company: company_id, occurred_at
 
 ## core_slo_definitions
 

@@ -1,5 +1,6 @@
 import { useEffect, useId } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
+import { logExport } from '../../../platform/audit/index.js';
 
 // Small pieces the configuration pages share: page title, load states, field errors and a modal form.
 
@@ -119,6 +120,8 @@ export function Tile({ label, value, status = 'neutral', to, hint, testId }) {
 }
 
 export function downloadCsv(filename, text, type = 'text/csv;charset=utf-8') {
+  // the server keeps a record of who exported what, from which page and how many rows (part 02.06)
+  logExport({ report: filename, format: 'csv', rows: Math.max(0, String(text).split('\n').length - 2), filters: Object.fromEntries(new URLSearchParams(window.location.search)), sensitive: window.location.pathname.startsWith('/admin') });
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = Object.assign(document.createElement('a'), { href: url, download: filename });
   a.click();

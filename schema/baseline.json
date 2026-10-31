@@ -289,6 +289,91 @@
     ],
     "fks": []
   },
+  "table:core_audit_chain": {
+    "columns": [
+      {
+        "name": "audit_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "seq",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "occurred_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "actor_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "on_behalf_of",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "ip",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "device",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "changes_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "prev_hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "audit_id->core_audit_log.id:NO ACTION/NO ACTION",
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:core_audit_log": {
     "columns": [
       {
@@ -359,6 +444,121 @@
         "type": "TEXT",
         "notnull": 1,
         "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_audit_segments": {
+    "columns": [
+      {
+        "name": "period",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "first_seq",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_seq",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entry_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "head_hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sealed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_audit_verifications": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "finished_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "trigger",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "checked",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "ok",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "broken_seq",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "problem",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "head_hash",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
         "pk": 0
       }
     ],
@@ -5000,6 +5200,97 @@
     ],
     "fks": []
   },
+  "table:core_security_events": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "occurred_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "username",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "severity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "details_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "ip",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "correlation_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:core_slo_definitions": {
     "columns": [
       {
@@ -9474,6 +9765,9 @@
   "index:ix_core_alerts_status": {
     "sql": "CREATE INDEX ix_core_alerts_status ON core_alerts (status, fired_at)"
   },
+  "index:ix_core_audit_chain_company": {
+    "sql": "CREATE INDEX ix_core_audit_chain_company ON core_audit_chain (company_id, seq)"
+  },
   "index:ix_core_audit_log_entity": {
     "sql": "CREATE INDEX ix_core_audit_log_entity ON core_audit_log (entity, entity_id)"
   },
@@ -9650,6 +9944,12 @@
   },
   "index:ix_core_schedules_due": {
     "sql": "CREATE INDEX ix_core_schedules_due ON core_schedules (enabled, next_run_at)"
+  },
+  "index:ix_core_security_events_company": {
+    "sql": "CREATE INDEX ix_core_security_events_company ON core_security_events (company_id, occurred_at)"
+  },
+  "index:ix_core_security_events_type": {
+    "sql": "CREATE INDEX ix_core_security_events_type ON core_security_events (type, occurred_at)"
   },
   "index:ix_core_slo_definitions_company": {
     "sql": "CREATE INDEX ix_core_slo_definitions_company ON core_slo_definitions (company_id, enabled)"
@@ -11394,8 +11694,32 @@
       "org_project_id->org_projects.id:NO ACTION/NO ACTION"
     ]
   },
+  "trigger:trg_core_audit_chain_no_delete": {
+    "sql": "CREATE TRIGGER trg_core_audit_chain_no_delete BEFORE DELETE ON core_audit_chain BEGIN SELECT RAISE(ABORT, 'The audit trail is append-only: rows cannot be deleted.'); END"
+  },
+  "trigger:trg_core_audit_chain_no_update": {
+    "sql": "CREATE TRIGGER trg_core_audit_chain_no_update BEFORE UPDATE ON core_audit_chain BEGIN SELECT RAISE(ABORT, 'The audit trail is append-only: rows cannot be changed.'); END"
+  },
+  "trigger:trg_core_audit_log_no_delete": {
+    "sql": "CREATE TRIGGER trg_core_audit_log_no_delete BEFORE DELETE ON core_audit_log BEGIN SELECT RAISE(ABORT, 'The audit trail is append-only: rows cannot be deleted.'); END"
+  },
+  "trigger:trg_core_audit_log_no_update": {
+    "sql": "CREATE TRIGGER trg_core_audit_log_no_update BEFORE UPDATE ON core_audit_log BEGIN SELECT RAISE(ABORT, 'The audit trail is append-only: rows cannot be changed.'); END"
+  },
+  "trigger:trg_core_audit_segments_no_delete": {
+    "sql": "CREATE TRIGGER trg_core_audit_segments_no_delete BEFORE DELETE ON core_audit_segments BEGIN SELECT RAISE(ABORT, 'A sealed audit segment cannot be deleted.'); END"
+  },
+  "trigger:trg_core_audit_segments_no_update": {
+    "sql": "CREATE TRIGGER trg_core_audit_segments_no_update BEFORE UPDATE ON core_audit_segments BEGIN SELECT RAISE(ABORT, 'A sealed audit segment cannot be changed.'); END"
+  },
   "trigger:trg_core_formulas_immutable": {
     "sql": "CREATE TRIGGER trg_core_formulas_immutable BEFORE UPDATE OF code, formula_version, expression, inputs_json, outputs_json, rounding_policy, tests_json, owner_module, financial, effective_from ON core_formulas WHEN OLD.status <> 'DRAFT' BEGIN SELECT RAISE(ABORT, 'A formula version that is no longer a draft cannot be changed: create a new version'); END"
+  },
+  "trigger:trg_core_security_events_no_delete": {
+    "sql": "CREATE TRIGGER trg_core_security_events_no_delete BEFORE DELETE ON core_security_events BEGIN SELECT RAISE(ABORT, 'The security event log is append-only: rows cannot be deleted.'); END"
+  },
+  "trigger:trg_core_security_events_no_update": {
+    "sql": "CREATE TRIGGER trg_core_security_events_no_update BEFORE UPDATE ON core_security_events BEGIN SELECT RAISE(ABORT, 'The security event log is append-only: rows cannot be changed.'); END"
   },
   "index:ux_core_alert_rules_code": {
     "sql": "CREATE UNIQUE INDEX ux_core_alert_rules_code ON core_alert_rules (code)"
@@ -11480,6 +11804,9 @@
   },
   "index:ux_core_schedules_code": {
     "sql": "CREATE UNIQUE INDEX ux_core_schedules_code ON core_schedules (code)"
+  },
+  "index:ux_core_security_events_source": {
+    "sql": "CREATE UNIQUE INDEX ux_core_security_events_source ON core_security_events (source_type, source_id) WHERE source_type IS NOT NULL"
   },
   "index:ux_core_slo_definitions_journey": {
     "sql": "CREATE UNIQUE INDEX ux_core_slo_definitions_journey ON core_slo_definitions (journey)"

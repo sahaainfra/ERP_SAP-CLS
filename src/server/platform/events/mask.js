@@ -10,3 +10,6 @@ export function maskPayload(value) {
   }
   return value;
 }
+
+/** Is this (snake_case) field name one whose value must not be shown? */
+export const isSensitiveKey = (key) => SENSITIVE.test(key);

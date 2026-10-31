@@ -946,6 +946,42 @@ paths:
     get:
       summary: Each user's access before the role engine and now, with lost, gained and new-only differences, a verdict and the role mapping (iam.role.view)
       responses: { '200': { description: '{ data: [row], meta, summary, clean, mapping }' } }
+  /api/v1/core/audit:
+    get:
+      summary: The audit trail of the company with field-level changes (entity, id, user, action, from, to, q) (core.audit.view)
+      responses: { '200': { description: '{ data: [entry], meta }' } }
+  /api/v1/core/audit/entities:
+    get:
+      summary: Kinds of record in the trail (core.audit.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/audit/history:
+    get:
+      summary: The History tab of one record (entity, id) - for the auditor or anyone who may view that kind of record; values masked
+      responses: { '200': { description: '{ data: [entry] }' } }
+  /api/v1/core/audit/verification:
+    get:
+      summary: Chain status and the last checks (core.audit.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/audit/verify:
+    post:
+      summary: Walk the whole chain now and record the result (core.audit.verify)
+      responses: { '200': { description: '{ data: { ok, checked, brokenSeq, problem } }' } }
+  /api/v1/core/audit/segments:
+    get:
+      summary: Sealed months and the retention (core.audit.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/audit/segments/{period}/export:
+    get:
+      summary: One sealed month as newline-delimited JSON; the closing hash is in x-audit-head-hash (core.audit.view)
+      responses: { '200': { description: 'application/x-ndjson' } }
+  /api/v1/core/audit/export-log:
+    post:
+      summary: Record that the caller exported or printed a report - name, format, rows and filters (Idempotency-Key required)
+      responses: { '201': { description: '{ data: { logged } }' } }
+  /api/v1/core/security-events:
+    get:
+      summary: Security events with a 24 hour summary (severity, type, user, from, to, q) (core.security.view)
+      responses: { '200': { description: '{ data: [event], meta, summary, types }' } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)

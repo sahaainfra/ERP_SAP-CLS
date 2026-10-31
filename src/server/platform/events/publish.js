@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { securityTap } from '../audit/security.js';
 import { currentContext } from '../observability/context.js';
 import { formatTraceparent } from '../observability/tracing.js';
 import { EventSchemaError, eventTypes } from './registry.js';
@@ -36,5 +37,6 @@ export function publishEvent(db, { type, entity, entityId, version = null, actor
     data,
   };
   db.prepare('INSERT INTO core_outbox (event_type, aggregate_id, payload) VALUES (?, ?, ?)').run(type, String(entityId), JSON.stringify(payload));
+  securityTap(db, payload); // events that matter to security are also in the security event log (part 02.06)
   return payload;
 }

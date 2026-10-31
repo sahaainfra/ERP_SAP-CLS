@@ -1,6 +1,6 @@
 import { createHash, randomInt } from 'node:crypto';
 import { transaction } from '../../platform/db/index.js';
-import { writeAudit } from '../../platform/audit/index.js';
+import { recordSecurityEvent, writeAudit } from '../../platform/audit/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { HttpError, badRequest, unauthorized, unprocessable } from '../../platform/http/errors.js';
 import { hashToken, isBreached, newPublicId, newToken, passwordProblems, signJwt, verifyJwt } from '../../platform/identity/index.js';
@@ -47,8 +47,11 @@ export function createAuthService({ db, identity, users, mfa, notifier }) {
 
   /** @param {{ user?: any, username?: any, result: string, ctx?: { ip?: string, userAgent?: string, country?: string | null, correlationId?: string }, device?: any, reason?: string | null, session?: string | null, companyId?: number | null }} e */
   function record({ user = null, username = null, result, ctx = {}, device = null, reason = null, session = null, companyId = null }) {
-    db.prepare('INSERT INTO iam_login_events (company_id, user_id, username_attempted, result, ip, user_agent, device_label, device_fingerprint, geo_country, reason, session_public_id, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    const res = db.prepare('INSERT INTO iam_login_events (company_id, user_id, username_attempted, result, ip, user_agent, device_label, device_fingerprint, geo_country, reason, session_public_id, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .run(user?.company_id ?? companyId, user?.id ?? null, user ? user.username : String(username ?? '').slice(0, 100), result, ctx.ip ?? null, (ctx.userAgent ?? '').slice(0, 300), device?.name ?? null, device?.fingerprint ?? null, ctx.country ?? null, reason, session, iso(now()));
+    // failed attempts are also security events (part 02.06); successes, lockouts and token reuse arrive as domain events
+    const failed = { failure: 'login.failure', mfa_failed: 'mfa.failed', pin_failed: 'pin.failed' }[result];
+    if (failed) recordSecurityEvent(db, { companyId: user?.company_id ?? companyId, userId: user?.id ?? null, username: user ? user.username : String(username ?? '').slice(0, 100), type: failed, severity: 'WARNING', details: { reason }, ip: ctx.ip ?? null, correlationId: ctx.correlationId ?? null, sourceType: 'iam_login_events', sourceId: Number(res.lastInsertRowid), occurredAt: iso(now()) });
   }
 
   // ---- CAPTCHA after a few failures (FR-04): a signed sum, no third party ----

@@ -3,6 +3,7 @@ import { Field, FormDialog, Link, Pager, QueryState, can, errorInfo, usePageTitl
 import { useRequestRuleChange, useSodRule, useSodRules, useSodTest, useSwitchOffRule } from '../api/privileged.js';
 import { useRoles } from '../api/access.js';
 import { useUsers } from '../api/users.js';
+import RecordHistory from '../../../platform/audit/RecordHistory.jsx';
 import { SeverityChip } from '../components/privilegedCommon.jsx';
 
 const lines = (text) => String(text ?? '').split(/[\n,]+/).map((x) => x.trim()).filter(Boolean);
@@ -28,6 +29,7 @@ function RuleDetail({ id, onClose, manage, onChange, onSwitchOff }) {
           </dl>
           {r.requests.length > 0 && <><h3>Changes asked for</h3><ul>{r.requests.map((x) => <li key={x.id}>#{x.id} {x.title}: <strong>{x.status.toLowerCase()}</strong></li>)}</ul></>}
           {manage && <div className="actions"><button type="button" className="btn" onClick={() => onChange(r)}>Propose a change</button>{r.active && <button type="button" className="btn" onClick={() => onSwitchOff(r)}>Switch off</button>}</div>}
+          <RecordHistory entity="iam_sod_rules" id={r.id} />
         </>
       )}
     </aside>

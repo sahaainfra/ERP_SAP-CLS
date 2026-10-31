@@ -61,7 +61,7 @@ export function createSampleDocumentService({ db }) {
         const id = repo.insert(companyId, { title, docDate, projectId }, actor.user);
         assignIfDue(actor, repo.find(id, companyId), 'create', projectCode);
         const d = repo.find(id, companyId);
-        writeAudit(db, { entity: 'core_sample_documents', entityId: id, action: 'create', newValues: { docNo: d.doc_no, docDate }, actor: actor.user, correlationId });
+        writeAudit(db, { entity: 'core_sample_documents', entityId: id, action: 'create', newValues: { docNo: d.doc_no, docDate, title, status: d.status }, actor: actor.user, correlationId });
         publishEvent(db, { type: 'core.sample_document.created', entity: 'sample_document', entityId: id, actorId: actor.user, companyId, data: { docNo: d.doc_no } });
         return present(d);
       });
@@ -78,7 +78,7 @@ export function createSampleDocumentService({ db }) {
         assignIfDue(actor, d, 'submit', projectCode);
         if (!repo.transition(id, d.version, 'SUBMITTED', actor.user, new Date().toISOString())) throw conflict('The document was changed by someone else. Refresh and try again.');
         const fresh = repo.find(id, companyId);
-        writeAudit(db, { entity: 'core_sample_documents', entityId: id, action: 'submit', newValues: { docNo: fresh.doc_no }, actor: actor.user, correlationId });
+        writeAudit(db, { entity: 'core_sample_documents', entityId: id, action: 'submit', oldValues: { status: d.status, docNo: d.doc_no }, newValues: { status: fresh.status, docNo: fresh.doc_no }, actor: actor.user, correlationId });
         publishEvent(db, { type: 'core.sample_document.submitted', entity: 'sample_document', entityId: id, actorId: actor.user, companyId, data: { docNo: fresh.doc_no } });
         return present(fresh);
       });
@@ -95,7 +95,7 @@ export function createSampleDocumentService({ db }) {
         assertPeriodOpen(db, { companyId, module: MODULE, date: d.doc_date, actor });
         if (!repo.transition(id, d.version, 'CANCELLED', actor.user, new Date().toISOString())) throw conflict('The document was changed by someone else. Refresh and try again.');
         if (d.doc_no) cancelNumber(db, { companyId, docType: DOC_TYPE, number: d.doc_no, actor: actor.user });
-        writeAudit(db, { entity: 'core_sample_documents', entityId: id, action: 'cancel', newValues: { docNo: d.doc_no }, reason, actor: actor.user, correlationId });
+        writeAudit(db, { entity: 'core_sample_documents', entityId: id, action: 'cancel', oldValues: { status: d.status, docNo: d.doc_no }, newValues: { status: 'CANCELLED', docNo: d.doc_no }, reason, actor: actor.user, correlationId });
         publishEvent(db, { type: 'core.sample_document.cancelled', entity: 'sample_document', entityId: id, actorId: actor.user, companyId, data: { docNo: d.doc_no } });
         return present(repo.find(id, companyId));
       });
