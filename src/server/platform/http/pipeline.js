@@ -73,12 +73,13 @@ export function requestLogger(logger, { metrics = defaultMetrics } = {}) {
 }
 
 /** The shared request pipeline: correlation ID, trace, headers, request log and metrics, body limit and JSON parsing. */
-export function applyPipeline(app, { logger, bodyLimit = BODY_LIMIT, metrics = defaultMetrics, tracer = defaultTracer }) {
+export function applyPipeline(app, { logger, bodyLimit = BODY_LIMIT, metrics = defaultMetrics, tracer = defaultTracer, headers = securityHeaders, before = [] }) {
   app.disable('x-powered-by');
   app.use(correlationMiddleware);
   app.use(observabilityMiddleware({ tracer }));
-  app.use(securityHeaders);
+  app.use(headers);
   app.use(requestLogger(logger, { metrics }));
+  for (const mw of before) app.use(mw);
   // Webhooks are signed over the exact bytes received, so those requests keep their raw body beside the parsed one.
   app.use(express.json({ limit: bodyLimit, verify: (req, _res, buf) => { if (req.originalUrl.includes('/webhooks/')) req.rawBody = buf; } }));
 }

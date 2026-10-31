@@ -121,4 +121,10 @@ export const parseUserList = (q) => {
   if (bad.length) throw badRequest('Some fields are invalid. Fix them and try again.', bad);
   return list;
 };
+/** The people export: the same search and filters as the list, and the approval (once there is one) for a bulk export. */
+export const parseUserExport = (b) => {
+  const body = parse(z.object({ q: z.string().max(100).default(''), filters: z.record(z.string(), z.string().max(100)).default({}), approvalId: z.number().int().positive().optional() }).strict(), b);
+  const list = parseUserList({ q: body.q, pageSize: '200', ...Object.fromEntries(Object.entries(body.filters).map(([k, v]) => [`filter[${k}]`, v])) });
+  return { list, approvalId: body.approvalId ?? null, filters: body.filters, q: body.q };
+};
 export const parseHistoryList = (q) => parseListQuery(q, { sortable: ['at'], filterable: ['result'], defaultSort: [{ column: 'at', dir: 'desc' }] });

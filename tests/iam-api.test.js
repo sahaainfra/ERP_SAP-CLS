@@ -262,7 +262,8 @@ test('the refresh token travels in an HttpOnly SameSite=Strict cookie and needs 
   assert.equal(body.data.refreshToken, undefined, 'a browser never sees the refresh token in the body');
   const jar = cookie.split(';')[0];
   const noHeader = await fetch(`${app.api.base}${C}/auth/refresh`, { method: 'POST', headers: { cookie: jar, 'content-type': 'application/json' }, body: '{}' });
-  assert.equal(noHeader.status, 400, 'a cookie alone is refused: a cross-site form cannot send the header');
+  assert.equal(noHeader.status, 403, 'a cookie alone is refused: a cross-site form cannot send the header');
+  assert.equal((await noHeader.json()).error.code, 'CSRF');
   const ok = await fetch(`${app.api.base}${C}/auth/refresh`, { method: 'POST', headers: { cookie: jar, 'x-erp-csrf': '1', 'content-type': 'application/json' }, body: '{}' });
   assert.equal(ok.status, 200);
   assert.notEqual(ok.headers.get('set-cookie').split(';')[0], jar, 'rotated');

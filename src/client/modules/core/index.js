@@ -24,6 +24,8 @@ import ShadowReportPage from './pages/ShadowReportPage.jsx';
 import FlagsPage from './pages/FlagsPage.jsx';
 import AuditExplorerPage from './pages/AuditExplorerPage.jsx';
 import SecurityEventsPage from './pages/SecurityEventsPage.jsx';
+import RouteRegistryPage from './pages/RouteRegistryPage.jsx';
+import SecuritySettingsPage from './pages/SecuritySettingsPage.jsx';
 
 // Module "core" registers its pages once. The shell builds navigation and routing from the registry.
 registerModule({
@@ -33,6 +35,8 @@ registerModule({
     { path: '/admin/feature-flags', label: 'Feature Flags', permission: 'core.flag.view', Page: FlagsPage },
     { path: '/admin/audit', label: 'Audit Explorer', permission: 'core.audit.view', flag: 'ff.iam.p0206', Page: AuditExplorerPage },
     { path: '/admin/security-events', label: 'Security Events', permission: 'core.security.view', flag: 'ff.iam.p0206', Page: SecurityEventsPage },
+    { path: '/admin/security/routes', label: 'Route Registry', permission: 'core.routes.view', flag: 'ff.iam.p0207', Page: RouteRegistryPage },
+    { path: '/admin/security/settings', label: 'Security Settings', permission: 'core.routes.view', flag: 'ff.iam.p0207', Page: SecuritySettingsPage },
     { path: '/admin/about', label: 'About', permission: 'core.about.view', Page: AboutPage },
     { path: '/admin/data-health', label: 'Data Health', permission: 'core.integrity.view', flag: 'ff.core.p0102', Page: DataHealthPage },
     { path: '/admin/architecture', label: 'Architecture', permission: 'core.arch.view', flag: 'ff.core.p0101', Page: ArchitecturePage },

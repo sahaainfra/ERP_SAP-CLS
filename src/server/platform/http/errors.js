@@ -30,6 +30,8 @@ export const ERROR_CODES = [
   { code: 'VERSION_CONFLICT', status: 409, meaning: 'The record changed since it was read (optimistic locking) or its state does not allow the action.', action: 'Refresh the record and apply the change again.' },
   { code: 'PAYLOAD_TOO_LARGE', status: 413, meaning: 'The request body is over the size limit.', action: 'Send less data, or use the document service for files.' },
   { code: 'BUSINESS_RULE', status: 422, meaning: 'A business rule refused the action (for example a closed period).', action: 'Follow the explanation in the message.' },
+  { code: 'CORS_FORBIDDEN', status: 403, meaning: 'The request came from an origin that is not on the allow-list.', action: 'Use the application from its own address, or ask an administrator to add the origin under Security Settings.' },
+  { code: 'CSRF', status: 403, meaning: 'A request that changes data carried a session cookie but not the header that proves it came from this application.', action: 'Reload the application and try again.' },
   { code: 'RATE_LIMITED', status: 429, meaning: 'Too many requests in a short time.', action: 'Wait and retry with back-off.' },
   { code: 'INTERNAL_ERROR', status: 500, meaning: 'An unexpected server error; details are in the server log under the correlation ID.', action: 'Retry once, then report the correlation ID.' },
   { code: 'SERVICE_UNAVAILABLE', status: 503, meaning: 'A dependency (database, queue or storage) is down.', action: 'Retry later; administrators see which dependency failed on the readiness check.' },
@@ -65,6 +67,7 @@ export function errorHandler(logger = createLogger()) {
   return (err, req, res, _next) => {
     const d = describe(err);
     if (!d.known) logger.error({ msg: 'unhandled error', correlationId: req.correlationId, traceId: req.span?.traceId ?? null, route: req.route?.path ?? null, error: String(err?.message ?? err), stack: err?.stack });
+    if (err?.retryAfterSec) res.set('retry-after', String(err.retryAfterSec));
     res.status(d.status).json({ error: { code: d.code, message: d.message, details: d.details, correlationId: req.correlationId } });
   };
 }

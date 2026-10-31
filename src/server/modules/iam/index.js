@@ -25,6 +25,7 @@ import { privilegedRoutes } from './privileged/routes.js';
 import { createSodService, sodHandlers } from './privileged/sod.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { sodOf } from '../../platform/sod/index.js';
+import { createExportGuard, securityHandlers } from '../../platform/security/index.js';
 import { accessRoutes } from './access/routes.js';
 import { invitationRoutes, meRoutes, userRoutes } from './usermgmt/routes.js';
 import { ENTITIES } from './org/entities.js';
@@ -184,13 +185,13 @@ export const iam = {
     publicApi.use('/iam', invitationRoutes({ invitationInfo: (t) => userAdmin.invitationInfo(t), accept: (t, b, c) => userAdmin.accept(t, b, c) }));
 
     // Everything behind sign-in is hidden while ff.iam.p0201 is OFF for the company.
-    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers, ...securityHandlers } });
     const orgService = createOrgService({ db, approvals, clock: () => identity.now() });
     const orgRouter = Router();
     orgRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0202') ? next() : next(notFound('The organisation master is not enabled for your company yet (feature flag ff.iam.p0202 is OFF).'))));
     orgRouter.use(orgRoutes(orgService, { idempotentRequired }));
     api.use('/iam/org', orgRouter);
-    userAdmin = createUserAdminService({ db, identity, auth, approvals, orgService, notifier, config });
+    userAdmin = createUserAdminService({ db, identity, auth, approvals, orgService, notifier, config, exportGuard: createExportGuard({ db, approvals }) });
     const userRouter = Router();
     userRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0203') ? next() : next(notFound('User management is not enabled for your company yet (feature flag ff.iam.p0203 is OFF).'))));
     userRouter.use(userRoutes(userAdmin, { idempotentRequired }));

@@ -1,3 +1,4 @@
+import './platform/security/routes.js'; // wraps Router.use so mounted routers are recorded: must load before any router is built
 import express from 'express';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,6 +22,8 @@ import { applyPipeline } from './platform/http/pipeline.js';
 import { runReadiness } from './platform/health/index.js';
 import { loadBuildInfo } from './modules/core/about/service.js';
 import { mountModules } from './modules/registry.js';
+import { createFlagService } from './modules/core/api.js';
+import { assertDeclared, buildRegistry, cors, csrfGuard, enforcePolicy, persistRegistry, securityHeaders, securityOf } from './platform/security/index.js';
 
 const sameToken = (a, b) => {
   const x = Buffer.from(a);
@@ -37,7 +40,16 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   const authz = authzOf(db, { now: identity.now });
   setAppLogger(logger);
   instrumentDb(db, { metrics, tracer });
-  applyPipeline(app, { logger });
+  // The secure request pipeline (part 02.07): headers, CORS allow-list, cookie-session CSRF guard and the per-address rate limit run
+  // before anything else; the Authorise stage (route policy) and the per-person rate limit run right after sign-in.
+  const sec = securityOf(db, { now: identity.now });
+  const flags = createFlagService({ db, environment: config.environment });
+  const rateClass = (req) => sec.policy.find(req.method, req.originalUrl.split('?')[0])?.rate ?? (req.method === 'GET' ? 'read' : 'write');
+  applyPipeline(app, {
+    logger,
+    headers: securityHeaders({ settings: sec.settings, config }),
+    before: [cors({ settings: sec.settings, config }), csrfGuard(), (req, _res, next) => { try { if (req.originalUrl.startsWith('/api/')) sec.limiter.check(req, rateClass(req), 'ip'); next(); } catch (err) { next(err); } }],
+  });
 
   // Legacy liveness path: kept as is (contract snapshot). New code uses /health/live.
   app.get('/api/health', (_req, res) => res.json({ status: 'ok', environment: config.environment }));
@@ -122,6 +134,9 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
     }
     next();
   });
+  // the Authorise stage and the per-person limit come after the logging stages above, so a refusal here is logged as a security event too
+  api.use(enforcePolicy({ policy: sec.policy, isFlagOn: (actor, key) => flags.isOn(actor, key) }));
+  api.use((req, _res, next) => { try { sec.limiter.check(req, req.routePolicy?.rate ?? (req.method === 'GET' ? 'read' : 'write'), 'user'); next(); } catch (err) { next(err); } });
   mountModules(api, { db, config, buildInfo, publicApi, storagePath: storage });
   app.use('/api/v1', publicApi);
   app.use('/api/v1', api);
@@ -134,5 +149,11 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   }
 
   app.use(errorHandler(logger));
+  // The route registry (part 02.07, FR-01): every live route against the route policy; an undeclared route stops a staging or production start.
+  const built = buildRegistry(app, sec.policy);
+  assertDeclared(built, { environment: config.environment, log: (text) => logger.warn({ msg: 'route policy', problem: text }) });
+  persistRegistry(db, built);
+  sec.registry = built;
+  sec.app = app;
   return app;
 }

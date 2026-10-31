@@ -4,7 +4,7 @@ import { createRateLimiter } from '../../../platform/integrations/breaker.js';
 import { IMPORT_TEMPLATE } from './import.js';
 import {
   parseAccept, parseBulk, parseCreate, parseDeactivate, parseDuplicates, parseHistoryList, parseId, parseImport, parseInvite, parseMePatch, parsePatch, parseReasonVersion, parseRoleRequest, parseRoleRevoke,
-  parseToken, parseUserList,
+  parseToken, parseUserExport, parseUserList,
 } from './validators.js';
 
 const ctxOf = (req) => ({ correlationId: req.correlationId });
@@ -21,6 +21,12 @@ export function userRoutes(service, { idempotentRequired }) {
   r.get('/', (req, res) => res.json(service.list(req.actor, parseUserList(req.query))));
   r.get('/roles', (req, res) => res.json({ data: service.roles(req.actor) }));
   r.get('/duplicates', (req, res) => res.json({ data: service.findDuplicates(req.actor, parseDuplicates(req.query)) }));
+  // A download of people's records: needs iam.user.export, is limited in size, needs an approval above the threshold and is logged (FR-08).
+  r.post('/export', idempotentRequired, (req, res) => {
+    const out = service.exportUsers(req.actor, parseUserExport(req.body));
+    if (out.status === 'APPROVAL_REQUIRED') return res.status(202).json({ data: out });
+    return res.type('text/csv').set({ 'content-disposition': 'attachment; filename="users.csv"', 'x-export-rows': String(out.rows) }).send(out.csv);
+  });
   r.get('/import/template', (req, res) => {
     res.type('text/csv').set('content-disposition', 'attachment; filename="users-import-template.csv"').send(IMPORT_TEMPLATE);
   });

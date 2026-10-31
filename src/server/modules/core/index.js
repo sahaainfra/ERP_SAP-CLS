@@ -11,6 +11,8 @@ import { mountFiles } from './files/index.js';
 import { mountCalc } from './calc/index.js';
 import { mountOps } from './ops/index.js';
 import { mountAudit } from './audit/index.js';
+import { mountSecurity } from './security/index.js';
+import { securityHandlers } from '../../platform/security/index.js';
 import { connectorChangeHandlerFor, mountConnectors } from './connectors/index.js';
 import { accessHandlers, orgHandlers, policyChangeHandlerFor, privilegedHandlers, userHandlers } from '../iam/index.js';
 import { opsConfigChangeHandler } from './ops/service.js';
@@ -52,7 +54,7 @@ parameterRegistry.define({ key: 'core.calendar.week_off_days', dataType: 'json',
 
 // What the integrity checks need to know about this module's tables.
 integrityRegistry.register({
-  technicalTables: ['core_audit_chain', 'core_security_events', 'core_audit_verifications', 'core_audit_segments', 'core_number_counters', 'core_change_request_steps', 'core_event_types', 'core_inbox', 'core_jobs', 'core_projection_event_counts', 'core_file_uploads', 'core_calc_traces', 'core_calc_shadow_results', 'core_alerts', 'core_metric_samples', 'core_client_events', 'core_integration_logs', 'core_webhook_receipts'],
+  technicalTables: ['core_route_registry', 'core_security_settings', 'core_audit_chain', 'core_security_events', 'core_audit_verifications', 'core_audit_segments', 'core_number_counters', 'core_change_request_steps', 'core_event_types', 'core_inbox', 'core_jobs', 'core_projection_event_counts', 'core_file_uploads', 'core_calc_traces', 'core_calc_shadow_results', 'core_alerts', 'core_metric_samples', 'core_client_events', 'core_integration_logs', 'core_webhook_receipts'],
   companyOptional: ['core_feature_flags', 'core_integrity_runs', 'core_backfill_runs', 'core_document_types', 'core_parameters', 'core_schedules', 'core_formulas', 'core_uoms', 'core_uom_conversions', 'core_slo_definitions', 'core_alert_rules'],
   statuses: {
     core_integrity_runs: ['pass', 'fail', 'not_applicable'],
@@ -89,13 +91,13 @@ export const core = {
   ownerPart: '01.x',
   status: 'Reference implementation',
   tables: [
-    'core_feature_flags', 'core_audit_log', 'core_audit_chain', 'core_security_events', 'core_audit_verifications', 'core_audit_segments', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
+    'core_feature_flags', 'core_audit_log', 'core_route_registry', 'core_security_settings', 'core_audit_chain', 'core_security_events', 'core_audit_verifications', 'core_audit_segments', 'core_outbox', 'core_idempotency_keys', 'core_integrity_runs', 'core_backfill_runs',
     'core_company_settings', 'core_financial_years', 'core_periods', 'core_parameters', 'core_holiday_calendars', 'core_holidays',
     'core_document_types', 'core_number_series', 'core_number_counters', 'core_number_issues', 'core_change_requests', 'core_change_request_steps',
     'core_sample_documents', 'core_event_types', 'core_inbox', 'core_jobs', 'core_schedules', 'core_projection_event_counts', 'core_files', 'core_file_uploads', 'core_file_settings', 'core_formulas', 'core_calc_traces', 'core_calc_shadow_results', 'core_uoms', 'core_uom_conversions', 'core_sample_bills', 'core_slo_definitions', 'core_alert_rules', 'core_alerts', 'core_metric_samples', 'core_client_events', 'core_connectors', 'core_connector_secrets', 'core_integration_logs', 'core_webhook_receipts', 'core_schema_migrations',
   ],
   resources: [
-    'session', 'audit', 'security-events', 'about', 'feature-flags', 'architecture', 'integrity', 'display-settings', 'company-settings', 'financial-years', 'periods',
+    'session', 'audit', 'security-events', 'routes', 'security-settings', 'about', 'feature-flags', 'architecture', 'integrity', 'display-settings', 'company-settings', 'financial-years', 'periods',
     'change-requests', 'document-types', 'number-series', 'numbering', 'parameters', 'holiday-calendars', 'holidays', 'sample-documents', 'events', 'jobs', 'schedules', 'files', 'formulas', 'calc-traces', 'uoms', 'uom-conversions', 'calc', 'sample-bills', 'ops', 'connectors', 'integration-logs', 'webhooks',
   ],
   /** Build the module's services and attach its routes to the authenticated /api/v1 router. */
@@ -112,7 +114,7 @@ export const core = {
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_schedules'").get());
     if (migrated) syncEventTypes(db);
     registerOperations({ db, ...runtime, persist: migrated });
-    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers, ...securityHandlers } });
     const opts = { idempotent, idempotentRequired };
 
     api.use('/core', sessionRoutes({ config }));
@@ -135,6 +137,7 @@ export const core = {
 
     // The audit trail engine and security event log (part 02.06): hidden while ff.iam.p0206 is OFF for the company.
     mountAudit({ api, db, runtime, opts, isFlagOn, persist: migrated });
+    mountSecurity({ api, db, config, approvals, opts, isFlagOn });
 
     // Observability (part 01.07): hidden while ff.core.p0107 is OFF for the company.
     mountOps({ api, db, runtime, approvals, opts, isFlagOn, storagePath, persist: migrated });

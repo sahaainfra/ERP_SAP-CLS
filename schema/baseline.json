@@ -4702,6 +4702,116 @@
     ],
     "fks": []
   },
+  "table:core_route_registry": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "method",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "path",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "module",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "guard",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "permission_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "scope_resolver",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'company'",
+        "pk": 0
+      },
+      {
+        "name": "schema_ref",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "limit_class",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "is_public",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "audit_flag",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "last_test_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_test_result",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_test_detail",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "registered_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_sample_bills": {
     "columns": [
       {
@@ -5290,6 +5400,46 @@
     "fks": [
       "company_id->org_companies.id:NO ACTION/NO ACTION"
     ]
+  },
+  "table:core_security_settings": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "settings_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      }
+    ],
+    "fks": []
   },
   "table:core_slo_definitions": {
     "columns": [
@@ -9930,6 +10080,9 @@
   "index:ix_core_periods_company_dates": {
     "sql": "CREATE INDEX ix_core_periods_company_dates ON core_periods (company_id, start_date, end_date)"
   },
+  "index:ix_core_route_registry_module": {
+    "sql": "CREATE INDEX ix_core_route_registry_module ON core_route_registry (module, guard)"
+  },
   "index:ix_core_sample_bills_company": {
     "sql": "CREATE INDEX ix_core_sample_bills_company ON core_sample_bills (company_id, status)"
   },
@@ -11798,6 +11951,9 @@
   },
   "index:ux_core_periods_fy_no": {
     "sql": "CREATE UNIQUE INDEX ux_core_periods_fy_no ON core_periods (fy_id, period_no)"
+  },
+  "index:ux_core_route_registry_route": {
+    "sql": "CREATE UNIQUE INDEX ux_core_route_registry_route ON core_route_registry (method, path)"
   },
   "index:ux_core_sample_documents_doc_no": {
     "sql": "CREATE UNIQUE INDEX ux_core_sample_documents_doc_no ON core_sample_documents (company_id, doc_no)"

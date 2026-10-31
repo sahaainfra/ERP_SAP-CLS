@@ -19,6 +19,8 @@
     "seed:demo": "node --env-file-if-exists=.env scripts/seed_demo.mjs",
     "erp:discover": "python scripts/erp_discover.py",
     "erp:schema-diff": "node scripts/schema_diff.mjs",
+    "erp:route-check": "node scripts/route_check.mjs",
+    "erp:rotate-vault-key": "node scripts/rotate_vault_key.mjs",
     "erp:golden": "node scripts/golden.mjs",
     "erp:regression": "node scripts/regression.mjs",
     "test:coverage": "node scripts/test_coverage.mjs",

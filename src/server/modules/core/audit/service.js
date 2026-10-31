@@ -12,7 +12,7 @@ const HISTORY_PERMISSION = {
   iam_users: 'iam.user.view', iam_user_profiles: 'iam.user.view', iam_roles: 'iam.role.view', iam_assignments: 'iam.assignment.view',
   org_companies: 'org.view', org_branches: 'org.view', org_departments: 'org.view', org_designations: 'org.view', org_projects: 'org.view', org_sites: 'org.view', org_locations: 'org.view', org_cost_centres: 'org.view',
   iam_sod_rules: 'iam.sod.view', iam_sod_violations: 'iam.sod.view', iam_elevations: 'iam.elevation.view', iam_access_campaigns: 'iam.review.view',
-  core_change_requests: 'core.requests.view', core_feature_flags: 'core.flag.view', core_connectors: 'core.connectors.view', core_formulas: 'core.calc.view', core_number_series: 'core.numbering.view',
+  core_change_requests: 'core.requests.view', core_security_settings: 'core.routes.view', core_feature_flags: 'core.flag.view', core_connectors: 'core.connectors.view', core_formulas: 'core.calc.view', core_number_series: 'core.numbering.view',
 };
 
 const present = (r) => ({

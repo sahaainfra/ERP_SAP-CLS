@@ -62,6 +62,36 @@ jobs:
       - run: npm run erp:audit
       - run: npm run erp:secret-scan
 
+  # A pull request that adds or raises a dependency with a known vulnerability, or a licence we cannot ship, is refused (part 02.07, FR-06).
+  dependency-review:
+    name: dependency-review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  # Container image scan. The repository has no Dockerfile yet (defect D-110); the job scans one as soon as it exists.
+  container-scan:
+    name: container-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan the image
+        if: ${{ hashFiles('Dockerfile') != '' }}
+        run: |
+          docker build -t erp:scan .
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.58.0 image --severity HIGH,CRITICAL --exit-code 1 erp:scan
+      - name: No Dockerfile
+        if: ${{ hashFiles('Dockerfile') == '' }}
+        run: echo "No Dockerfile in the repository, nothing to scan (defect D-110)."
+
   # Not blocking until code scanning is enabled in the repository settings (defect D-012); the job then
   # fails at upload with "Code scanning is not enabled". Remove continue-on-error once it is enabled.
   codeql:

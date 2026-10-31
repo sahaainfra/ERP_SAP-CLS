@@ -9,6 +9,7 @@ import { likePattern, orderBySql, pageResponse } from '../../../platform/paginat
 import { hashToken, newToken, passwordProblems, userBlockers } from '../../../platform/identity/index.js';
 import { authzOf } from '../../../platform/authz/index.js';
 import { assignmentChain } from '../access/chains.js';
+import { toCsv } from '../../../platform/security/csv.js';
 import { normaliseEmail, normaliseMobile } from './validators.js';
 import { parseImportCsv } from './import.js';
 
@@ -76,7 +77,7 @@ export const userHandlers = {
  * User management (part 02.03): accounts, invitations, lifecycle, role requests, the deactivation wizard, bulk import and the
  * person's own profile. `identity`, `users` and `auth` are the services of part 02.01; sign-in itself is never reimplemented here.
  */
-export function createUserAdminService({ db, identity, auth, approvals, orgService, notifier, config }) {
+export function createUserAdminService({ db, identity, auth, approvals, orgService, notifier, config, exportGuard = null }) {
   const authz = authzOf(db);
   const now = () => identity.now();
   const cid = (actor) => companyScope(actor).params._company_scope;
@@ -492,6 +493,22 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
         publishEvent(db, { type: 'iam.user.roles_changed', entity: 'user', entityId: id, actorId: actor.user, companyId: r.company_id, data: { username: r.username, granted: [], revoked: gone, requestId: 0 } });
         return service.get(actor, id);
       });
+    },
+
+    /**
+     * A CSV of the people the list shows (FR-08 of part 02.07). Above the threshold in the security settings the export waits for an
+     * approved request; the CSV leaves only after the permission, size and approval checks, and the export is logged.
+     */
+    exportUsers(actor, { list, approvalId, filters, q }) {
+      assertPermission(actor, 'iam.user.view');
+      const total = service.list(actor, { ...list, limit: 1, offset: 0 }).meta.total;
+      const decision = exportGuard.authorize(actor, { report: 'users.csv', permission: 'iam.user.export', rows: total, personal: true, filters: { q, ...filters }, approvalId });
+      if (decision.status === 'APPROVAL_REQUIRED') return { status: 'APPROVAL_REQUIRED', rows: total, threshold: exportGuard.threshold(), request: decision.request };
+      const rows = [];
+      for (let offset = 0; offset < total; offset += 200) rows.push(...service.list(actor, { ...list, limit: 200, offset }).data);
+      const csv = toCsv(['Username', 'Name', 'Employee code', 'Department', 'Status', 'Type', 'Roles', 'Last sign-in'], rows.map((u) => [u.username, u.displayName, u.employeeCode ?? '', u.departmentName ?? '', u.status, u.userType, u.roles.join(' '), u.lastLoginAt ?? '']));
+      transaction(db, () => exportGuard.complete(actor, { report: 'users.csv', format: 'csv', rows: total, filters: { q, ...filters }, personal: true, approvalId: decision.approvalId ?? null }));
+      return { status: 'OK', rows: total, csv };
     },
 
     // ---- bulk actions ----

@@ -982,6 +982,26 @@ paths:
     get:
       summary: Security events with a 24 hour summary (severity, type, user, from, to, q) (core.security.view)
       responses: { '200': { description: '{ data: [event], meta, summary, types }' } }
+  /api/v1/core/routes:
+    get:
+      summary: Every route with its protection, permission, scope, rate class and last test result; summary and modules (core.routes.view)
+      responses: { '200': { description: '{ data: [route], meta, summary, modules }' } }
+  /api/v1/core/routes/self-test:
+    post:
+      summary: Call every non-public route with no sign-in and with no permission and record the results (core.security.configure)
+      responses: { '200': { description: '{ data: { tested, passed, failed, skipped, failures } }' } }
+  /api/v1/core/security-settings:
+    get:
+      summary: The effective rate limits, headers, CORS list and export threshold, the defaults, a waiting request and whether each secret is set (core.routes.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/core/security-settings/change-requests:
+    post:
+      summary: Ask to change the security settings; an approval request for the system administrator or the director (core.security.configure; Idempotency-Key required)
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/users/export:
+    post:
+      summary: CSV of the people the list shows; 202 with an approval request above the threshold, then again with approvalId once approved (iam.user.export; Idempotency-Key required)
+      responses: { '200': { description: 'text/csv, or { data: { status, request } }' } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)

@@ -1021,6 +1021,30 @@ Indexes:
 Indexes:
 - sqlite_autoindex_core_projection_event_counts_1 (unique): company_id, event_type
 
+## core_route_registry
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| method | TEXT | yes |  |  |
+| path | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| guard | TEXT | yes |  |  |
+| permission_key | TEXT |  |  |  |
+| scope_resolver | TEXT | yes |  | 'company' |
+| schema_ref | TEXT |  |  |  |
+| limit_class | TEXT | yes |  |  |
+| is_public | INTEGER | yes |  | 0 |
+| audit_flag | INTEGER | yes |  | 0 |
+| last_test_at | TEXT |  |  |  |
+| last_test_result | TEXT |  |  |  |
+| last_test_detail | TEXT |  |  |  |
+| registered_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+
+Indexes:
+- ix_core_route_registry_module: module, guard
+- ux_core_route_registry_route (unique): method, path
+
 ## core_sample_bills
 
 | Column | Type | Not null | Key | Default |
@@ -1141,6 +1165,16 @@ Indexes:
 - ux_core_security_events_source (unique): source_type, source_id
 - ix_core_security_events_type: type, occurred_at
 - ix_core_security_events_company: company_id, occurred_at
+
+## core_security_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| version | INTEGER | yes |  | 1 |
+| settings_json | TEXT | yes |  |  |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
 
 ## core_slo_definitions
 
