@@ -15,7 +15,7 @@ export const useUsers = (opts) => {
   const params = listParams(opts);
   return useQuery({ queryKey: queryKeys.iam.users.list(params), queryFn: () => api.get(`${base}?${qs(params)}`), placeholderData: (p) => p, retry: false });
 };
-export const useUser = (id) => useQuery({ queryKey: queryKeys.iam.users.item(id), queryFn: () => unwrap(api.get(`${base}/${id}`)), enabled: Boolean(id), retry: false });
+export const useUser = (id) => useQuery({ queryKey: queryKeys.iam.users.item(id), queryFn: () => unwrap(api.get(`${base}/${id}`)), enabled: Boolean(id), retry: false, refetchOnMount: 'always' });
 export const useUserRoles = () => useQuery({ queryKey: queryKeys.iam.users.roles(), queryFn: () => unwrap(api.get(`${base}/roles`)), retry: false, staleTime: 300_000 });
 export const useUserSessions = (id) => useQuery({ queryKey: queryKeys.iam.users.sessions(id), queryFn: () => unwrap(api.get(`${base}/${id}/sessions`)), enabled: Boolean(id), retry: false });
 export const useUserLoginEvents = (id, page = 1) => useQuery({ queryKey: queryKeys.iam.users.events(id, page), queryFn: () => api.get(`${base}/${id}/login-events?${qs({ page, pageSize: 25 })}`), enabled: Boolean(id), placeholderData: (p) => p, retry: false });

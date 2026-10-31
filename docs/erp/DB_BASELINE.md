@@ -1171,6 +1171,45 @@ Foreign keys: connector_id -> core_connectors(id)
 Indexes:
 - ux_core_webhook_receipts_delivery (unique): connector_id, delivery_id
 
+## iam_assignments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| role_id | INTEGER | yes |  |  |
+| scope_type | TEXT | yes |  | 'COMPANY' |
+| scope_ids_json | TEXT | yes |  | '[]' |
+| effective_from | TEXT |  |  |  |
+| effective_to | TEXT |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| reason | TEXT |  |  |  |
+| request_id | INTEGER |  |  |  |
+| ended_at | TEXT |  |  |  |
+| ended_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: request_id -> core_change_requests(id), role_id -> iam_roles(id), user_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_iam_assignments_company: company_id, status
+- ix_iam_assignments_request: request_id
+- ix_iam_assignments_role: role_id, status
+- ix_iam_assignments_user: user_id, status
+
 ## iam_auth_policy
 
 | Column | Type | Not null | Key | Default |
@@ -1265,6 +1304,36 @@ Foreign keys: user_id -> iam_users(id)
 Indexes:
 - ix_iam_devices_company: company_id
 - ux_iam_devices_user_fingerprint (unique): user_id, device_fingerprint
+
+## iam_field_masks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| role_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| field | TEXT | yes |  |  |
+| rule | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: role_id -> iam_roles(id)
+
+Indexes:
+- ix_iam_field_masks_field: entity, field
+- ux_iam_field_masks (unique): role_id, entity, field
 
 ## iam_invitations
 
@@ -1394,6 +1463,36 @@ Indexes:
 - ix_iam_password_resets_user: user_id
 - ux_iam_password_resets_hash (unique): token_hash
 
+## iam_permissions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| perm_key | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| entity | TEXT | yes |  |  |
+| action | TEXT | yes |  |  |
+| description | TEXT | yes |  | '' |
+| sensitive | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_iam_permissions_module: module, entity
+- ux_iam_permissions_key (unique): perm_key
+
 ## iam_refresh_tokens
 
 | Column | Type | Not null | Key | Default |
@@ -1443,6 +1542,105 @@ Indexes:
 - ix_iam_role_grants_company: company_id
 - ix_iam_role_grants_request: request_id
 - ix_iam_role_grants_user: user_id, id
+
+## iam_role_mapping
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| legacy_role | TEXT | yes |  |  |
+| new_role_id | INTEGER |  |  |  |
+| mapping_type | TEXT | yes |  | 'ALIAS' |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: new_role_id -> iam_roles(id)
+
+Indexes:
+- ix_iam_role_mapping_role: new_role_id
+- ux_iam_role_mapping (unique): legacy_role
+
+## iam_role_permissions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| role_id | INTEGER | yes |  |  |
+| perm_key | TEXT | yes |  |  |
+| effect | TEXT | yes |  | 'allow' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: role_id -> iam_roles(id)
+
+Indexes:
+- ix_iam_role_permissions_key: perm_key
+- ux_iam_role_permissions (unique): role_id, perm_key
+
+## iam_roles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| description | TEXT | yes |  | '' |
+| kind | TEXT | yes |  | 'CUSTOM' |
+| category | TEXT | yes |  | 'CUSTOM' |
+| is_system | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| department_id | INTEGER |  |  |  |
+| parent_template_id | INTEGER |  |  |  |
+| clearance | TEXT | yes |  | 'internal' |
+| authority_json | TEXT | yes |  | '{}' |
+| grants_hash | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_template_id -> iam_roles(id), department_id -> org_departments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_iam_roles_template: parent_template_id
+- ix_iam_roles_department: department_id
+- ix_iam_roles_company: company_id, status
+- ux_iam_roles_code (unique): , code
 
 ## iam_sessions
 

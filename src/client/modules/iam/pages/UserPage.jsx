@@ -246,7 +246,17 @@ function Assignments({ u, manage, onRevoke }) {
       {u.roles.length === 0 ? <p className="muted" data-testid="no-roles">No approved role yet: this person has no access beyond their own profile.</p>
         : <p data-testid="role-list">{u.roles.map((r) => <span key={r} className="chip chip-pass" style={{ marginRight: 6 }}>{roleLabel(r)}</span>)}</p>}
       {manage && u.roles.length > 0 && <button type="button" className="btn btn-small" onClick={onRevoke}>Take roles away</button>}
-      <p className="muted small">Roles are granted by an approved request. Scoped assignments by project and site arrive with part 02.04.</p>
+      <p className="muted small">Roles are granted by an approved request. To give a role for one project or site, or for a period, use <Link to={`/admin/assignments?userId=${u.id}`}>Assignments</Link>; to see what this person can do and why, open <Link to={`/admin/effective-access?userId=${u.id}`}>Effective Permissions</Link>.</p>
+      <h2>Scoped assignments</h2>
+      {(u.assignments ?? []).length === 0 ? <p className="muted">None. Roles above apply to the whole company.</p> : (
+        <div className="table-wrap">
+          <table>
+            <caption className="sr-only">Role assignments of this person</caption>
+            <thead><tr><th>Role</th><th>Held for</th><th>From</th><th>To</th><th>Status</th></tr></thead>
+            <tbody>{u.assignments.map((a) => <tr key={a.id}><td data-label="Role">{a.roleCode}</td><td data-label="Held for">{a.scopeType === 'COMPANY' ? 'The whole company' : `${a.scopeType.toLowerCase()} ${a.scopeIds.join(', ')}`}</td><td data-label="From">{a.effectiveFrom ?? 'Approval'}</td><td data-label="To">{a.effectiveTo ?? 'No end'}</td><td data-label="Status">{a.status === 'ENDED' ? 'Ended' : 'Active'}</td></tr>)}</tbody>
+          </table>
+        </div>
+      )}
       <h2>Organisation roles</h2>
       {u.holdings.length === 0 ? <p className="muted">Not a department head, project manager or site in-charge.</p>
         : <ul>{u.holdings.map((h) => <li key={h.id}>{h.kind}: {h.code} {h.name}{h.pending ? ` (from ${h.effectiveFrom})` : ''}</li>)}</ul>}

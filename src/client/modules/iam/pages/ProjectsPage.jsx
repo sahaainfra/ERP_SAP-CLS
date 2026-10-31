@@ -5,6 +5,20 @@ import { useOrgDeactivate, useOrgItem, useOrgUpdate, useProjectStatus, useReques
 import GeofenceEditor from '../components/GeofenceEditor.jsx';
 import { AssignDialog, HistoryPanel, ReasonDialog, RequestsPanel } from '../components/ObjectPanels.jsx';
 import OrgList, { FieldInput, StatusChip, labelOf, readForm } from '../components/OrgList.jsx';
+import { useAccess } from '../../../platform/access/Can.jsx';
+import { canWith } from '../../../platform/access/index.js';
+
+/**
+ * What the person may do here (part 02.04): a role held for one project lets them work on that project only, so a button for a record
+ * asks about the record, and a button that adds a company-level record asks about the whole company. Without the role engine, the session.
+ */
+function useMay(session) {
+  const access = useAccess();
+  return {
+    on: (permission, record) => (access ? canWith(access, permission, record) : can(session, permission)),
+    company: (permission) => (access ? access.companyWide.includes(permission) : can(session, permission)),
+  };
+}
 
 const PROJECT_TYPES = [['BUILDING', 'Building'], ['ROAD', 'Road'], ['BRIDGE', 'Bridge'], ['INDUSTRIAL', 'Industrial'], ['EPC', 'EPC'], ['WATER', 'Water'], ['RAIL', 'Rail'], ['OTHER', 'Other']];
 const SITE_TYPES = [['SITE', 'Site'], ['CAMP', 'Camp'], ['STORE', 'Store'], ['PLANT', 'Plant'], ['OFFICE', 'Office']];
@@ -83,7 +97,8 @@ function ProjectObject({ id, session, back, openSite }) {
   const status = useProjectStatus();
   const request = useRequestActivation('projects');
   const p = q.data;
-  const manage = can(session, 'org.project.manage');
+  const may = useMay(session);
+  const manage = may.on('org.project.manage', { projectId: id });
   const moves = { ACTIVE: [['ON_HOLD', 'Put on hold'], ['COMPLETED', 'Mark completed']], ON_HOLD: [['ACTIVE', 'Resume'], ['COMPLETED', 'Mark completed']], COMPLETED: [['CLOSED', 'Close']] }[p?.status] ?? [];
   return (
     <section aria-labelledby="page-title">
@@ -115,7 +130,7 @@ function ProjectObject({ id, session, back, openSite }) {
                 <Row label="Project manager">{p.pmName}</Row><Row label="Created by">{p.createdBy}</Row>
               </dl>
             )}
-            {tab === 'sites' && <OrgList entity="sites" title="Sites" noun="site" newLabel="New site" columns={SITE_COLUMNS} fields={SITE_FIELDS} fixedFilters={{ projectId: String(p.id) }} defaults={{ projectId: p.id }} controlled canManage={can(session, 'org.site.manage') && p.status !== 'CLOSED'} onOpen={(r) => openSite(r.id)} hint="A site belongs to exactly one project. A new site is a draft until it is activated through approval." />}
+            {tab === 'sites' && <OrgList entity="sites" title="Sites" noun="site" newLabel="New site" columns={SITE_COLUMNS} fields={SITE_FIELDS} fixedFilters={{ projectId: String(p.id) }} defaults={{ projectId: p.id }} controlled canManage={may.on('org.site.manage', { projectId: id }) && p.status !== 'CLOSED'} onOpen={(r) => openSite(r.id)} hint="A site belongs to exactly one project. A new site is a draft until it is activated through approval." />}
             {tab === 'approvals' && <RequestsPanel entity="projects" id={p.id} />}
             {tab === 'timeline' && <HistoryPanel entity="projects" id={p.id} canManage={manage} />}
           </div>
@@ -149,8 +164,9 @@ function SiteObject({ id, session, back, openProject }) {
   const geofence = useRequestGeofence();
   const [saveError, setSaveError] = useState(null);
   const s = q.data;
-  const manage = can(session, 'org.site.manage');
-  const mayRequest = can(session, 'org.geofence.request');
+  const may = useMay(session);
+  const manage = may.on('org.site.manage', { siteId: id, projectId: s?.projectId });
+  const mayRequest = may.on('org.geofence.request', { siteId: id, projectId: s?.projectId });
   const value = draft ?? s?.geofence;
   const dirty = draft && JSON.stringify(draft) !== JSON.stringify(s.geofence);
   const valid = Boolean(draft && draft.type !== 'NONE') || draft?.type === 'NONE';
@@ -232,13 +248,14 @@ function SiteObject({ id, session, back, openProject }) {
 export default function ProjectsPage({ session }) {
   usePageTitle('Projects & Sites');
   const [sel, setSel] = useState(null);
+  const may = useMay(session);
   if (sel?.kind === 'project') return <ProjectObject id={sel.id} session={session} back={() => setSel(null)} openSite={(id) => setSel({ kind: 'site', id })} />;
   if (sel?.kind === 'site') return <SiteObject id={sel.id} session={session} back={() => setSel(null)} openProject={(id) => setSel({ kind: 'project', id })} />;
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Projects</nav>
       <div className="page-head"><h1 id="page-title">Projects &amp; Sites</h1></div>
-      <OrgList entity="projects" title="Projects" noun="project" columns={PROJECT_COLUMNS} fields={PROJECT_FIELDS} controlled canManage={can(session, 'org.project.manage')} onOpen={(r) => setSel({ kind: 'project', id: r.id })} filters={[{ name: 'type', label: 'Type', options: PROJECT_TYPES }]}
+      <OrgList entity="projects" title="Projects" noun="project" columns={PROJECT_COLUMNS} fields={PROJECT_FIELDS} controlled canManage={may.company('org.project.manage')} onOpen={(r) => setSel({ kind: 'project', id: r.id })} filters={[{ name: 'type', label: 'Type', options: PROJECT_TYPES }]}
         hint="The basic project master. A new project is a draft until the project director and project control approve it; later parts enrich it." />
       <h2>Sites</h2>
       <OrgList entity="sites" title="Sites" noun="site" columns={[{ key: 'code', label: 'Code', sort: 'code' }, { key: 'projectCode', label: 'Project' }, ...SITE_COLUMNS.slice(1)]} fields={SITE_FIELDS} controlled canManage={false} onOpen={(r) => setSel({ kind: 'site', id: r.id })} filters={[{ name: 'siteType', label: 'Type', options: SITE_TYPES }]} hint="Every site of every project. Add a site from its project." />

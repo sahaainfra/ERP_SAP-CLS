@@ -1,9 +1,10 @@
 /** Data access for core_sample_documents. */
 export function createSampleDocumentRepository(db) {
   return {
-    list(companyId, limit, offset) {
-      const total = db.prepare('SELECT COUNT(*) AS n FROM core_sample_documents WHERE company_id = ? AND is_active = 1').get(companyId).n;
-      const rows = db.prepare('SELECT * FROM core_sample_documents WHERE company_id = ? AND is_active = 1 ORDER BY id DESC LIMIT ? OFFSET ?').all(companyId, limit, offset);
+    /** `scope` is a SQL condition from the permission engine limiting the list to the actor's projects (never user text). */
+    list(companyId, limit, offset, scope = '1 = 1') {
+      const total = db.prepare(`SELECT COUNT(*) AS n FROM core_sample_documents WHERE company_id = ? AND is_active = 1 AND ${scope}`).get(companyId).n;
+      const rows = db.prepare(`SELECT * FROM core_sample_documents WHERE company_id = ? AND is_active = 1 AND ${scope} ORDER BY id DESC LIMIT ? OFFSET ?`).all(companyId, limit, offset);
       return { rows, total };
     },
     find: (id, companyId) => db.prepare('SELECT * FROM core_sample_documents WHERE id = ? AND company_id = ? AND is_active = 1').get(id, companyId),

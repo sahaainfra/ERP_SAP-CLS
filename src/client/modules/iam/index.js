@@ -7,7 +7,11 @@ import PolicyPage from './pages/PolicyPage.jsx';
 import ProjectsPage from './pages/ProjectsPage.jsx';
 import SecurityPage from './pages/SecurityPage.jsx';
 import SessionsPage from './pages/SessionsPage.jsx';
+import AssignmentsPage from './pages/AssignmentsPage.jsx';
+import EffectivePage from './pages/EffectivePage.jsx';
+import LegacyAccessPage from './pages/LegacyAccessPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
+import RolesPage from './pages/RolesPage.jsx';
 import UsersPage from './pages/UsersPage.jsx';
 import WelcomePage from './pages/WelcomePage.jsx';
 
@@ -22,6 +26,10 @@ registerModule({
     { path: '/account/security', label: 'Security & MFA', flag: 'ff.iam.p0201', onboarding: true, Page: SecurityPage },
     { path: '/account/sessions', label: 'My Sessions', flag: 'ff.iam.p0201', onboarding: true, Page: SessionsPage },
     { path: '/admin/users', label: 'Users', permission: 'iam.user.view', flag: 'ff.iam.p0203', Page: UsersPage },
+    { path: '/admin/roles', label: 'Roles', permission: 'iam.role.view', flag: 'ff.iam.p0204', Page: RolesPage },
+    { path: '/admin/assignments', label: 'Assignments', permission: 'iam.assignment.view', flag: 'ff.iam.p0204', Page: AssignmentsPage },
+    { path: '/admin/effective-access', label: 'Effective Permissions', permission: 'iam.role.view', flag: 'ff.iam.p0204', Page: EffectivePage },
+    { path: '/admin/legacy-access', label: 'Legacy Access Comparison', permission: 'iam.role.view', flag: 'ff.iam.p0204', Page: LegacyAccessPage },
     { path: '/admin/security/policy', label: 'Authentication Policy', permission: 'iam.security.view', flag: 'ff.iam.p0201', Page: PolicyPage },
     { path: '/admin/organisation', label: 'Organisation', permission: 'org.view', flag: 'ff.iam.p0202', Page: OrganisationPage },
     { path: '/admin/projects', label: 'Projects & Sites', permission: 'org.view', flag: 'ff.iam.p0202', Page: ProjectsPage },

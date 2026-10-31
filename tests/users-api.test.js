@@ -262,7 +262,7 @@ test('a privileged role needs two approvals by other people, and the chain depen
   const raj = Number(app.api.db.prepare("SELECT id FROM iam_users WHERE username = 'raj'").get().id);
   assert.equal((await hr.post(`${I}/users/${raj}/role-requests`, { roles: ['NOSUCHROLE'], reason: 'Nothing like it exists' })).status, 400);
   const asked = await hr.post(`${I}/users/${raj}/role-requests`, { roles: ['SYSADM'], reason: 'Takes over administration' });
-  assert.deepEqual(asked.json.data.chain, ['SYSADM', 'ITADM']);
+  assert.deepEqual(asked.json.data.chain, ['SYSADM', 'ITADM|DIR']);
   assert.equal((await hr.post(`${I}/users/${raj}/role-requests`, { roles: ['PM'], reason: 'A second request at once' })).status, 409, 'one open request per person');
   assert.equal((await app.decide(it, asked.json.data.id)).status, 403, 'step one needs a system administrator');
   assert.equal((await app.decide(sys, asked.json.data.id)).status, 200);

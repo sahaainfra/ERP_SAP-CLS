@@ -1,0 +1,18 @@
+import { createAuthz } from './engine.js';
+
+export { createAuthz } from './engine.js';
+export { CONFIDENTIALITY_LEVELS, DIRECTOR_APPROVED_ROLES, PERMISSIONS_02_04, ROLE_TEMPLATES, SENSITIVE_ACTIONS, TEMPLATE_PERMISSIONS } from './templates.js';
+export { LEGACY_ROLE_PERMISSIONS } from './legacy.js';
+export { MASK_RULES, fieldRegistry, hierarchyRegistry, isSensitiveKey, parseKey, permissionRegistry, recordResolvers } from './registry.js';
+
+const instances = new WeakMap();
+
+/** The authorisation engine of a database, created once (options apply the first time only: tests pass a clock). */
+export function authzOf(db, options = {}) {
+  let a = instances.get(db);
+  if (!a) {
+    a = createAuthz({ db, ...options });
+    instances.set(db, a);
+  }
+  return a;
+}

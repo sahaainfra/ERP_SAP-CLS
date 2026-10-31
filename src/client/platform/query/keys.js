@@ -78,6 +78,17 @@ export const queryKeys = {
     adminSessions: (p) => ['iam', 'admin', 'sessions', p],
     adminUsers: (p) => ['iam', 'admin', 'users', p],
     adminEvents: (p) => ['iam', 'admin', 'events', p],
+    access: {
+      permissions: () => ['iam', 'access', 'permissions'],
+      maskFields: () => ['iam', 'access', 'mask-fields'],
+      roles: (p) => ['iam', 'access', 'roles', p],
+      role: (id) => ['iam', 'access', 'role', id],
+      compare: (a, b) => ['iam', 'access', 'compare', a, b],
+      assignments: (p) => ['iam', 'access', 'assignments', p],
+      effective: (p) => ['iam', 'access', 'effective', p],
+      legacy: (p) => ['iam', 'access', 'legacy', p],
+      mine: () => ['iam', 'access', 'mine'],
+    },
     users: {
       all: ['iam', 'users'],
       list: (p) => ['iam', 'users', 'list', p],

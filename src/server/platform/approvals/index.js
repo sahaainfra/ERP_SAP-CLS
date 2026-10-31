@@ -85,7 +85,8 @@ export function createApprovalEngine({ db, handlers }) {
         if (version !== undefined && version !== r.version) throw conflict('This request was changed by someone else. Refresh it and decide again.');
         const chain = JSON.parse(r.chain_json);
         const role = chain[r.current_step - 1];
-        if (!actor.roles.includes(role)) throw forbidden(`Step ${r.current_step} of this request needs the ${role} role. Your roles do not include it.`);
+        // a step written 'ITADM|DIR' is decided by either role
+        if (!role.split('|').some((x) => actor.roles.includes(x))) throw forbidden(`Step ${r.current_step} of this request needs the ${role.replace('|', ' or ')} role. Your roles do not include it.`);
         if (actor.user === r.requested_by) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You raised this request, so someone else must approve it.');
         const decided = db.prepare('SELECT decided_by FROM core_change_request_steps WHERE request_id = ? AND decision = ?').all(id, 'APPROVED').map((s) => s.decided_by);
         if (decided.includes(actor.user)) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You already approved an earlier step of this request; a different person must approve this step.');

@@ -1,10 +1,11 @@
-import { assertPermission, hasPermission } from '../../../platform/auth/index.js';
+import { assertPermission, assertPermissionAnywhere, hasPermission } from '../../../platform/auth/index.js';
+import { authzOf } from '../../../platform/authz/index.js';
 import { companyScope } from '../../../platform/db/scope.js';
 import { transaction } from '../../../platform/db/index.js';
 import { assertVersion } from '../../../platform/db/repository.js';
 import { writeAudit } from '../../../platform/audit/index.js';
 import { publishEvent } from '../../../platform/events/index.js';
-import { badRequest, conflict, notFound, unprocessable } from '../../../platform/http/errors.js';
+import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../../platform/http/errors.js';
 import { likePattern, orderBySql, pageResponse } from '../../../platform/pagination/index.js';
 import { geofenceProblems, orgBlockers, testPoint } from '../../../platform/org/index.js';
 import { gstinProblem, isStateCode } from '../../../../shared/gst.js';
@@ -21,7 +22,6 @@ const GEOFENCE_FIELDS = ['latitude', 'longitude', 'geofenceType', 'geofenceRadiu
 
 const camel = (s) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 const istDate = (ms) => new Date(ms + 19_800_000).toISOString().slice(0, 10);
-const maskPan = (p) => (p ? `${p.slice(0, 2)}${'*'.repeat(6)}${p.slice(-2)}` : p);
 const sameJson = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
 const centroid = (polygon) => {
@@ -72,7 +72,39 @@ export const orgHandlers = {
   },
 };
 
+// The entities whose records belong to a project or a site, so a role held for part of the company reaches only its own part (part 02.04).
+const SCOPED = new Set(['projects', 'sites', 'cost-centres']);
+
 export function createOrgService({ db, approvals, clock }) {
+  const authz = authzOf(db);
+  const forbiddenFor = (perm, noun) => forbidden(`Your role does not include ${perm} for this ${noun}. It is outside the projects and sites your assignments cover.`);
+  /** What a record is, for the permission engine: which project and site it sits in. */
+  function resourceOf(key, row) {
+    if (key === 'projects') return { companyId: row.company_id, projectId: row.id };
+    if (key === 'sites') return { companyId: row.company_id, projectId: row.org_project_id, siteId: row.id };
+    if (key === 'cost-centres') {
+      const siteProject = row.linked_type === 'SITE' ? db.prepare('SELECT org_project_id FROM org_sites WHERE id = ?').get(row.linked_id)?.org_project_id : null;
+      return { companyId: row.company_id, projectId: row.linked_type === 'PROJECT' ? row.linked_id : (siteProject ?? null), siteId: row.linked_type === 'SITE' ? row.linked_id : null };
+    }
+    return { companyId: row.company_id };
+  }
+  /** The actor may do `perm` on this record (a role held company-wide, or a scoped assignment that covers it). */
+  const guard = (actor, perm, key, row) => {
+    if (!authz.check(actor, perm, resourceOf(key, row)).allowed) throw forbiddenFor(perm, ENTITIES[key].noun);
+  };
+  /** A SQL condition limiting a list of a scoped entity to what the actor's assignments cover. */
+  function scopeCondition(actor, key) {
+    if (key === 'projects') return authz.scopeFilter(actor, 'org.view', { project: 't.id' });
+    if (key === 'sites') return authz.scopeFilter(actor, 'org.view', { project: 't.org_project_id', site: 't.id' });
+    const p = authz.scopeFilter(actor, 'org.view', { project: 't.linked_id' });
+    if (p.unrestricted) return p;
+    const s = authz.scopeFilter(actor, 'org.view', { site: 't.linked_id' });
+    // a cost centre of a site is covered by a grant on the site's project
+    const sp = authz.scopeFilter(actor, 'org.view', { project: 's2.org_project_id' });
+    return { sql: `((t.linked_type = 'PROJECT' AND ${p.sql}) OR (t.linked_type = 'SITE' AND (${s.sql} OR t.linked_id IN (SELECT s2.id FROM org_sites s2 WHERE ${sp.sql}))))`, unrestricted: false };
+  }
+  /** Reading needs org.view: for the whole company, or for a scoped entity anywhere (the list is then limited to the scope). */
+  const mayRead = (actor, key) => (SCOPED.has(key) ? assertPermissionAnywhere(actor, 'org.view') : assertPermission(actor, 'org.view'));
   const cid = (actor) => companyScope(actor).params._company_scope;
   const today = () => istDate(clock());
   const tableColumns = new Map();
@@ -89,6 +121,7 @@ export function createOrgService({ db, approvals, clock }) {
     const scope = scopeSql(key, actor);
     const row = db.prepare(`${select(key)} WHERE t.id = :id AND ${scope} AND ${live}`).get(scope.includes(':c') ? { id, c: cid(actor) } : { id });
     if (!row) throw notFound(`That ${ENTITIES[key].noun} does not exist.`);
+    if (SCOPED.has(key) && !authz.check(actor, 'org.view', resourceOf(key, row)).allowed) throw notFound(`That ${ENTITIES[key].noun} does not exist.`);
     return row;
   }
 
@@ -102,7 +135,7 @@ export function createOrgService({ db, approvals, clock }) {
     }
     for (const [k, v] of Object.entries(row)) if (!known.has(k) && !HIDDEN.has(k)) out[camel(k)] = v;
     if (key === 'sites') out.geofence = geofenceOf(row);
-    if (key === 'companies' && !raw && !hasPermission(actor, 'org.company.manage')) out.pan = maskPan(out.pan);
+    if (key === 'companies' && !raw) return authz.mask(actor, 'org_company', out);
     return out;
   }
 
@@ -244,12 +277,12 @@ export function createOrgService({ db, approvals, clock }) {
 
   const service = {
     list(actor, key, query) {
-      assertPermission(actor, 'org.view');
+      mayRead(actor, key);
       const e = ENTITIES[key];
       const scope = scopeSql(key, actor);
       const params = { q: likePattern(query.q) };
       if (scope.includes(':c')) params.c = cid(actor);
-      const where = [scope, live, `(${e.search.map((c) => `${c} LIKE :q ESCAPE '\\'`).join(' OR ')})`];
+      const where = [scope, live, ...(SCOPED.has(key) ? [scopeCondition(actor, key).sql] : []), `(${e.search.map((c) => `${c} LIKE :q ESCAPE '\\'`).join(' OR ')})`];
       for (const [name, value] of Object.entries(query.filters)) {
         where.push(`${e.filterable[name]} = :f_${name}`);
         params[`f_${name}`] = value;
@@ -261,13 +294,16 @@ export function createOrgService({ db, approvals, clock }) {
     },
 
     get(actor, key, id) {
-      assertPermission(actor, 'org.view');
+      mayRead(actor, key);
       return present(key, load(actor, key, id), actor);
     },
 
     create(actor, key, input, ctx) {
       const e = ENTITIES[key];
-      assertPermission(actor, e.permission);
+      if (key === 'sites') {
+        assertPermissionAnywhere(actor, e.permission);
+        if (!authz.check(actor, e.permission, { companyId: actor.companyId, projectId: input.projectId }).allowed) throw forbiddenFor(e.permission, 'project');
+      } else assertPermission(actor, e.permission);
       const companyId = key === 'companies' ? null : cid(actor);
       if (companyId != null && !db.prepare('SELECT 1 FROM org_companies WHERE id = ? AND is_active = 1').get(companyId)) {
         throw unprocessable(`Company ${companyId} has no company record yet. A system administrator creates it under Organisation, then its data can be added.`);
@@ -299,12 +335,13 @@ export function createOrgService({ db, approvals, clock }) {
 
     update(actor, key, id, body, ctx) {
       const e = ENTITIES[key];
-      assertPermission(actor, e.permission);
+      (SCOPED.has(key) ? assertPermissionAnywhere : assertPermission)(actor, e.permission);
       const { version, reason, ...input } = body;
       if (Object.keys(input).length === 0) throw badRequest('Nothing to change: send at least one field.');
       return transaction(db, () => {
         /** @type {any} */
         const row = load(actor, key, id);
+        if (SCOPED.has(key)) guard(actor, e.permission, key, row);
         assertVersion(row.version, version, `The ${e.noun} ${row.code}`, 'Refresh the page and try again.');
         const before = currentApi(key, row);
         if (key === 'projects' && row.status === 'CLOSED') throw unprocessable('A closed project cannot be edited.');
@@ -329,18 +366,19 @@ export function createOrgService({ db, approvals, clock }) {
     },
 
     blockers(actor, key, id) {
-      assertPermission(actor, 'org.view');
+      mayRead(actor, key);
       const row = load(actor, key, id);
       return builtInBlockers(key, row);
     },
 
     deactivate(actor, key, id, { reason, version }, ctx) {
       const e = ENTITIES[key];
-      assertPermission(actor, e.permission);
+      (SCOPED.has(key) ? assertPermissionAnywhere : assertPermission)(actor, e.permission);
       if (key === 'projects') throw unprocessable('A project is not deactivated: complete and then close it with the status action.');
       return transaction(db, () => {
         /** @type {any} */
         const row = load(actor, key, id);
+        if (SCOPED.has(key)) guard(actor, e.permission, key, row);
         assertVersion(row.version, version, `The ${e.noun} ${row.code}`, 'Refresh the page and try again.');
         if (row.status === 'INACTIVE') throw unprocessable(`The ${e.noun} ${row.code} is already inactive.`);
         const blockers = builtInBlockers(key, row);
@@ -354,11 +392,12 @@ export function createOrgService({ db, approvals, clock }) {
 
     activate(actor, key, id, { reason, version }, ctx) {
       const e = ENTITIES[key];
-      assertPermission(actor, e.permission);
+      (SCOPED.has(key) ? assertPermissionAnywhere : assertPermission)(actor, e.permission);
       if (e.controlled) throw unprocessable(`A ${e.noun} is activated only through an approval request (project director, then project control). Raise one from its page.`);
       return transaction(db, () => {
         /** @type {any} */
         const row = load(actor, key, id);
+        if (SCOPED.has(key)) guard(actor, e.permission, key, row);
         assertVersion(row.version, version, `The ${e.noun} ${row.code}`, 'Refresh the page and try again.');
         if (row.status !== 'INACTIVE') throw unprocessable(`The ${e.noun} ${row.code} is already active.`);
         db.prepare("UPDATE " + e.table + " SET status = 'ACTIVE', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, new Date(clock()).toISOString(), id);
@@ -370,9 +409,10 @@ export function createOrgService({ db, approvals, clock }) {
 
     /** ON_HOLD, resume, COMPLETED, CLOSED. A first activation, and any other route to ACTIVE from DRAFT, is an approval. */
     projectStatus(actor, id, { status, reason, version }, ctx) {
-      assertPermission(actor, ENTITIES.projects.permission);
+      assertPermissionAnywhere(actor, ENTITIES.projects.permission);
       return transaction(db, () => {
         const row = load(actor, 'projects', id);
+        guard(actor, ENTITIES.projects.permission, 'projects', row);
         assertVersion(row.version, version, `The project ${row.code}`, 'Refresh the page and try again.');
         if (row.status === 'DRAFT' && status === 'ACTIVE') throw unprocessable('A new project is activated only through an approval request (project director, then project control).');
         if (!(STATUS_MOVES[row.status] ?? []).includes(status)) throw unprocessable(`A project that is ${row.status} cannot move to ${status}.`);
@@ -388,7 +428,7 @@ export function createOrgService({ db, approvals, clock }) {
     },
 
     descendants(actor, key, id) {
-      assertPermission(actor, 'org.view');
+      mayRead(actor, key);
       const e = ENTITIES[key];
       if (!e.parent) throw notFound(`A ${e.noun} has no hierarchy.`);
       load(actor, key, id);
@@ -402,10 +442,11 @@ export function createOrgService({ db, approvals, clock }) {
       const e = ENTITIES[key];
       const spec = assignedSpec(key);
       if (!spec) throw notFound(`A ${e.noun} has no assigned person.`);
-      assertPermission(actor, e.permission);
+      (SCOPED.has(key) ? assertPermissionAnywhere : assertPermission)(actor, e.permission);
       return transaction(db, () => {
         /** @type {any} */
         const row = load(actor, key, id);
+        if (SCOPED.has(key)) guard(actor, e.permission, key, row);
         if (userId != null && !userRow(userId, row.company_id)) throw badRequest('Some fields are invalid.', [{ field: 'userId', message: 'That user does not exist, is disabled or belongs to another company.' }]);
         const open = db.prepare('SELECT * FROM org_assignments WHERE entity_type = ? AND entity_id = ? AND role = ? AND applied = 1 AND effective_to IS NULL AND is_active = 1').get(ENTITY_TYPE[key], id, spec.assigned);
         if (open && (open.user_id ?? null) === userId && effectiveFrom <= today()) throw unprocessable('That person already holds this role.');
@@ -426,10 +467,11 @@ export function createOrgService({ db, approvals, clock }) {
     },
 
     cancelAssignment(actor, key, id, assignmentId) {
-      assertPermission(actor, ENTITIES[key].permission);
+      (SCOPED.has(key) ? assertPermissionAnywhere : assertPermission)(actor, ENTITIES[key].permission);
       return transaction(db, () => {
         /** @type {any} */
         const row = load(actor, key, id);
+        if (SCOPED.has(key)) guard(actor, ENTITIES[key].permission, key, row);
         const a = db.prepare('SELECT * FROM org_assignments WHERE id = ? AND entity_type = ? AND entity_id = ? AND is_active = 1').get(assignmentId, ENTITY_TYPE[key], id);
         if (!a) throw notFound('That scheduled change does not exist.');
         if (a.applied) throw unprocessable('That change has already taken effect and is part of the history.');
@@ -473,7 +515,7 @@ export function createOrgService({ db, approvals, clock }) {
     },
 
     history(actor, key, id) {
-      assertPermission(actor, 'org.view');
+      mayRead(actor, key);
       const row = load(actor, key, id);
       const e = ENTITIES[key];
       const assignments = ENTITY_TYPE[key]
@@ -489,8 +531,9 @@ export function createOrgService({ db, approvals, clock }) {
     requestActivation(actor, key, id, { reason }) {
       const e = ENTITIES[key];
       if (!e.controlled) throw notFound(`A ${e.noun} is not activated by approval.`);
-      assertPermission(actor, e.permission);
+      (SCOPED.has(key) ? assertPermissionAnywhere : assertPermission)(actor, e.permission);
       const row = load(actor, key, id);
+      if (SCOPED.has(key)) guard(actor, e.permission, key, row);
       if (!['DRAFT', 'INACTIVE'].includes(row.status) || (key === 'projects' && row.status !== 'DRAFT')) throw unprocessable(`The ${e.noun} ${row.code} is ${row.status}, so there is nothing to activate.`);
       if (key === 'sites') {
         const p = db.prepare('SELECT status FROM org_projects WHERE id = ?').get(row.org_project_id);
@@ -504,8 +547,9 @@ export function createOrgService({ db, approvals, clock }) {
     },
 
     requestGeofenceChange(actor, id, { geofence, reason }) {
-      assertPermission(actor, 'org.geofence.request');
+      assertPermissionAnywhere(actor, 'org.geofence.request');
       const row = load(actor, 'sites', id);
+      guard(actor, 'org.geofence.request', 'sites', row);
       if (row.status === 'DRAFT') throw unprocessable('A draft site is edited directly; approval is needed only once the site is active or has been active.');
       const problems = geofenceProblems(geofence);
       if (problems.length) throw badRequest('The geofence is not valid.', problems.map((message) => ({ field: 'geofence', message })));
@@ -520,7 +564,7 @@ export function createOrgService({ db, approvals, clock }) {
     },
 
     requestsFor(actor, key, id) {
-      assertPermission(actor, 'org.view');
+      mayRead(actor, key);
       load(actor, key, id);
       const target = targetOf[key];
       if (!target) return [];
@@ -530,13 +574,13 @@ export function createOrgService({ db, approvals, clock }) {
 
     // ---- geofence tests (T-01) ----
     testSite(actor, id, { latitude, longitude, toleranceM }) {
-      assertPermission(actor, 'org.view');
+      assertPermissionAnywhere(actor, 'org.view');
       const row = load(actor, 'sites', id);
       if (row.geofence_type === 'NONE') throw unprocessable('This site has no geofence to test against. Draw one first.');
       return service.testShape(actor, { geofence: geofenceOf(row), latitude, longitude, toleranceM });
     },
     testShape(actor, { geofence, latitude, longitude, toleranceM }) {
-      assertPermission(actor, 'org.view');
+      assertPermissionAnywhere(actor, 'org.view');
       const problems = geofenceProblems(geofence);
       if (problems.length) throw badRequest('The geofence is not valid.', problems.map((message) => ({ field: 'geofence', message })));
       return testPoint(geofence, { lat: latitude, lng: longitude }, toleranceM);
@@ -546,8 +590,10 @@ export function createOrgService({ db, approvals, clock }) {
     context(actor) {
       const c = cid(actor);
       const company = db.prepare('SELECT id, code, legal_name, short_name FROM org_companies WHERE id = ? AND is_active = 1').get(c);
-      const projects = db.prepare("SELECT id, code, name, status FROM org_projects WHERE company_id = ? AND is_active = 1 AND status != 'CLOSED' ORDER BY code").all(c);
-      const sites = db.prepare("SELECT s.id, s.code, s.name, s.status, s.org_project_id AS project_id, s.site_type FROM org_sites s WHERE s.company_id = ? AND s.is_active = 1 AND s.status != 'INACTIVE' ORDER BY s.code").all(c);
+      const pf = authz.scopeFilter(actor, 'org.view', { project: 't.id' }).sql;
+      const sf = authz.scopeFilter(actor, 'org.view', { project: 't.org_project_id', site: 't.id' }).sql;
+      const projects = db.prepare(`SELECT t.id, t.code, t.name, t.status FROM org_projects t WHERE t.company_id = ? AND t.is_active = 1 AND t.status != 'CLOSED' AND ${pf} ORDER BY t.code`).all(c);
+      const sites = db.prepare(`SELECT t.id, t.code, t.name, t.status, t.org_project_id AS project_id, t.site_type FROM org_sites t WHERE t.company_id = ? AND t.is_active = 1 AND t.status != 'INACTIVE' AND ${sf} ORDER BY t.code`).all(c);
       return {
         companies: company ? [{ id: company.id, code: company.code, name: company.short_name, legalName: company.legal_name }] : [],
         projects: projects.map((p) => ({ id: p.id, code: p.code, name: p.name, status: p.status })),

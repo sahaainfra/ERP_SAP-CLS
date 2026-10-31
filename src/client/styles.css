@@ -240,3 +240,7 @@ fieldset.field { border: 1px solid var(--erp-color-border-subtle); border-radius
 fieldset.field label { display: block; }
 
 .field .muted, .field .field-error { overflow-wrap: anywhere; min-width: 0; }
+
+/* Role engine pages (part 02.04): a form of long choices stays inside a phone screen */
+.form-grid > * { min-width: 0; }
+.field select, .field input:not([type=checkbox]):not([type=radio]), .field textarea { max-width: 100%; }

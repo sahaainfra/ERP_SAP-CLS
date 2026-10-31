@@ -78,7 +78,7 @@ function Shell({ iam, user }) {
   const s = session.data;
   const devIdentity = !iam && s?.environment !== 'production';
   // A person with no approved role (restricted onboarding, part 02.03) gets a welcome page, their profile and their security pages.
-  const onboarding = Boolean(iam && s && s.roles.length === 0);
+  const onboarding = Boolean(iam && s?.onboarding === true);
   const nav = (s ? routesFor(s.permissions) : []).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
   const found = findRoute(path);
   const route = onboarding ? (found?.onboarding ? found : findRoute('/welcome')) : (found ?? allRoutes()[0]);

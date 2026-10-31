@@ -1,37 +1,26 @@
 import { forbidden, unauthorized } from '../http/errors.js';
+import { TEMPLATE_PERMISSIONS } from '../authz/templates.js';
 
 /**
  * Thin adapter until the IAM module (part 02.x) exists (recorded as D-001 in docs/erp/DEFECTS.md).
  * dev-headers mode trusts X-Erp-User, X-Erp-Roles and X-Erp-Company; config.js refuses it
  * in staging and production.
  */
-const ROLE_PERMISSIONS = {
-  SYSADM: [
-    'org.view', 'org.company.manage', 'org.hr.manage', 'iam.user.view', 'iam.user.manage', 'iam.user.suspend',
-    'core.flag.view', 'core.flag.configure', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view',
-    'core.settings.view', 'core.settings.configure', 'core.fy.view', 'core.fy.configure', 'core.period.request_reopen',
-    'core.numbering.view', 'core.numbering.configure', 'core.numbering.issue', 'core.numbering.preview',
-    'core.param.view', 'core.param.configure', 'core.holiday.configure', 'core.requests.view', 'core.sample.use',
-    'core.events.view', 'core.jobs.view', 'core.schedule.view', 'core.files.admin', 'core.files.configure', 'core.calc.view', 'core.calc.manage', 'core.ops.view', 'core.connectors.view', 'iam.security.view', 'iam.security.manage',
-  ],
-  ITADM: ['org.view', 'iam.user.view', 'iam.user.suspend', 'core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view', 'core.integrity.run', 'core.param.view', 'core.param.configure_system', 'core.numbering.view',
-    'core.events.view', 'core.events.redrive', 'core.events.replay', 'core.jobs.view', 'core.jobs.manage', 'core.schedule.view', 'core.schedule.manage', 'core.requests.view', 'core.files.admin', 'core.ops.view', 'core.ops.manage', 'core.connectors.view', 'core.connectors.configure', 'iam.security.view', 'iam.security.manage'],
-  // Finance: open and close periods, post into a soft-closed period, ask for a reopen, see the settings and the approval requests.
-  ACCMGR: ['org.view', 'org.costcentre.manage', 'core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.request_reopen', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
-  CFO: ['org.view', 'core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
-  DIR: ['org.view', 'core.fy.view', 'core.requests.view'],
-  // Project controls: views the calculation registry and approves new versions of the project formulas.
-  // Human resources: departments and designations; asks for geofence changes. Project director: approves activations.
-  HRMGR: ['org.view', 'org.hr.manage', 'iam.user.view', 'iam.user.manage', 'iam.user.suspend', 'org.geofence.request', 'core.requests.view'],
-  PD: ['org.view', 'org.project.manage', 'org.site.manage', 'core.requests.view'],
-  PCMGR: ['org.view', 'org.project.manage', 'org.site.manage', 'core.calc.view', 'core.requests.view'],
-  PM: ['org.view', 'org.project.manage', 'org.site.manage', 'org.geofence.request', 'core.sample.use', 'core.numbering.preview'],
-};
 
-/** Every role code the permission map knows: what a role request may name. */
+/**
+ * The permissions of each system role as defined in code (platform/authz/templates.js). Requests carry the engine's computed grants
+ * (actor.grants); this table answers for an actor that has none, such as a service call made with a hand-built actor.
+ */
+const ROLE_PERMISSIONS = TEMPLATE_PERMISSIONS;
+
+/** Every system role code: what a role request may name. */
 export const ROLE_CODES = Object.freeze(Object.keys(ROLE_PERMISSIONS));
 
-export function authenticate(config, resolver = null) {
+/**
+ * Who is calling. With the role engine (part 02.04) every request's actor is given its computed grants (`actor.grants`: what each of
+ * its roles allows and denies, and where) before any route runs; without one the actor is checked against the role templates.
+ */
+export function authenticate(config, resolver = null, authz = null) {
   return (req, _res, next) => {
     if (config.authMode === 'iam') {
       // Part 02.01: a signed access token whose session is still live. The roles come from the user record, never from the token.
@@ -39,6 +28,7 @@ export function authenticate(config, resolver = null) {
       if (!token) return next(unauthorized('Sign in first: no sign-in token was supplied.'));
       try {
         req.actor = resolver.resolve(token);
+        if (authz) authz.enrich(req.actor);
       } catch (err) {
         return next(err);
       }
@@ -53,16 +43,34 @@ export function authenticate(config, resolver = null) {
       .filter(Boolean);
     const company = Number.parseInt(req.get('x-erp-company') ?? '', 10);
     req.actor = { user, roles, companyId: Number.isInteger(company) ? company : null };
+    if (authz) authz.enrich(req.actor);
     next();
   };
 }
 
+/** Every permission the actor holds anywhere, company-wide or only for part of the company (what a menu and a page ask). */
 export function permissionsOf(actor) {
+  if (actor.grants) return actor.grants.anywhere;
   return [...new Set(actor.roles.flatMap((r) => ROLE_PERMISSIONS[r] ?? []))].sort();
 }
 
+/** The permissions held for the whole company. A grant scoped to a project or site does not count here: it is honoured only by code that checks the record. */
+export const companyPermissionsOf = (actor) => (actor.grants ? actor.grants.perms : permissionsOf(actor));
+
+/** Held for the whole company. Deny by default: this is the check every route that does not look at a record makes. */
 export function hasPermission(actor, permission) {
+  return companyPermissionsOf(actor).includes(permission);
+}
+
+/** Held for the whole company or for part of it: the first question of code that then limits what it shows to the actor's scope. */
+export function hasPermissionAnywhere(actor, permission) {
   return permissionsOf(actor).includes(permission);
+}
+
+export function assertPermissionAnywhere(actor, permission) {
+  if (!hasPermissionAnywhere(actor, permission)) {
+    throw forbidden(`Your role does not include ${permission}. Ask a system administrator for access.`);
+  }
 }
 
 /** Service-layer guard: protects jobs, imports and other modules that call a service without HTTP. Deny by default. */
@@ -71,6 +79,12 @@ export function assertPermission(actor, permission) {
     throw forbidden(`Your role does not include ${permission}. Ask a system administrator for access.`);
   }
 }
+
+/** For a route whose service then limits the answer to the actor's scope: held for the whole company or for part of it. */
+export const requirePermissionAnywhere = (permission) => (req, _res, next) => {
+  if (hasPermissionAnywhere(req.actor, permission)) return next();
+  next(forbidden(`Your role does not include ${permission}. Ask a system administrator for access.`));
+};
 
 /** Deny by default. */
 export const requirePermission = (permission) => (req, _res, next) => {

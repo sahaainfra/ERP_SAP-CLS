@@ -6,6 +6,8 @@ import { publishEvent } from '../../../platform/events/index.js';
 import { HttpError, badRequest, conflict, notFound, unprocessable } from '../../../platform/http/errors.js';
 import { likePattern, orderBySql, pageResponse } from '../../../platform/pagination/index.js';
 import { hashToken, newToken, passwordProblems, userBlockers } from '../../../platform/identity/index.js';
+import { authzOf } from '../../../platform/authz/index.js';
+import { assignmentChain } from '../access/chains.js';
 import { normaliseEmail, normaliseMobile } from './validators.js';
 import { parseImportCsv } from './import.js';
 
@@ -24,8 +26,6 @@ const COLS = `u.id, u.company_id, u.username, u.email, u.mobile, u.display_name,
 const FROM = 'FROM iam_users u LEFT JOIN iam_user_profiles p ON p.user_id = u.id LEFT JOIN org_departments d ON d.id = p.department_id LEFT JOIN org_projects pr ON pr.id = p.home_project_id';
 const LIVE = 'u.is_active = 1 AND u.deleted_at IS NULL';
 const SORT = { displayName: 'u.display_name', username: 'u.username', status: LC, lastLoginAt: 'u.last_login_at', createdAt: 'u.created_at' };
-
-const maskMobile = (m) => (m ? `${m.slice(0, 3)}${'•'.repeat(Math.max(0, m.length - 7))}${m.slice(-4)}` : m);
 
 function ensureProfile(db, user, by) {
   db.prepare("INSERT INTO iam_user_profiles (company_id, user_id, lifecycle, created_by, source_type) VALUES (?, ?, ?, ?, 'user_profile') ON CONFLICT (user_id) DO NOTHING")
@@ -73,6 +73,7 @@ export const userHandlers = {
  * person's own profile. `identity`, `users` and `auth` are the services of part 02.01; sign-in itself is never reimplemented here.
  */
 export function createUserAdminService({ db, identity, auth, approvals, orgService, notifier, config }) {
+  const authz = authzOf(db);
   const now = () => identity.now();
   const cid = (actor) => companyScope(actor).params._company_scope;
   const canManage = (actor) => hasPermission(actor, 'iam.user.manage');
@@ -86,7 +87,7 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
     return r;
   };
   const roleHolders = (companyId, role, exceptId) =>
-    db.prepare(`SELECT COUNT(*) AS n ${FROM} WHERE u.company_id = ? AND ${LIVE} AND ${LC} = 'ACTIVE' AND u.id != ? AND EXISTS (SELECT 1 FROM json_each(u.roles_json) WHERE value = ?)`).get(companyId, exceptId, role).n;
+    db.prepare(`SELECT COUNT(*) AS n FROM (SELECT u.id ${FROM} WHERE u.company_id = ? AND ${LIVE} AND ${LC} = 'ACTIVE' AND u.id != ? AND EXISTS (SELECT 1 FROM json_each(u.roles_json) WHERE value = ?) UNION SELECT u.id ${FROM} JOIN iam_assignments a ON a.user_id = u.id JOIN iam_roles ar ON ar.id = a.role_id WHERE u.company_id = ? AND ${LIVE} AND ${LC} = 'ACTIVE' AND u.id != ? AND ar.code = ? AND a.status = 'ACTIVE' AND a.scope_type = 'COMPANY' AND a.is_active = 1)`).get(companyId, exceptId, role, companyId, exceptId, role).n;
   const credentialOf = (id) => db.prepare('SELECT 1 FROM iam_credentials WHERE user_id = ? AND is_active = 1').get(id);
   const invitationOf = (id) => db.prepare("SELECT * FROM iam_invitations WHERE user_id = ? ORDER BY id DESC LIMIT 1").get(id);
   const invitationView = (i) => {
@@ -97,13 +98,13 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
 
   function present(actor, r, { invitation = undefined } = {}) {
     const manage = canManage(actor);
-    return {
-      id: r.id, username: r.username, displayName: r.display_name, email: r.email, mobile: manage ? r.mobile : maskMobile(r.mobile), language: r.language, userType: r.user_type,
+    return authz.mask(actor, 'iam_user', {
+      id: r.id, username: r.username, displayName: r.display_name, email: r.email, mobile: r.mobile, language: r.language, userType: r.user_type,
       status: r.lifecycle, roles: JSON.parse(r.roles_json), employeeCode: r.employee_code, employeeId: r.employee_id, departmentId: r.department_id, departmentName: r.department_name,
       projectId: r.home_project_id, projectName: r.project_name, lastLoginAt: r.last_login_at, createdAt: r.created_at, createdBy: r.created_by, updatedAt: r.updated_at, version: r.version,
       statusChangedAt: r.lifecycle_at, statusReason: r.lifecycle_reason, ...(invitation === undefined ? {} : { invitation }),
       canManage: manage, canSuspend: hasPermission(actor, 'iam.user.suspend'),
-    };
+    });
   }
 
   // ---- duplicates (FR-07, BR-01) ----
@@ -228,7 +229,9 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
       const requests = db.prepare("SELECT id FROM core_change_requests WHERE company_id = ? AND target_type = 'iam_user' AND target_id = ? AND is_active = 1 ORDER BY id DESC LIMIT 30").all(r.company_id, id).map((q) => approvals.get(actor, q.id));
       const mfaFactors = db.prepare("SELECT COUNT(*) AS n FROM iam_mfa_factors WHERE user_id = ? AND type != 'backup' AND verified_at IS NOT NULL AND is_active = 1").get(id).n;
       const live = db.prepare('SELECT COUNT(*) AS n FROM iam_sessions WHERE user_id = ? AND revoked_at IS NULL AND expires_at > ?').get(id, iso(now())).n;
-      return { ...present(actor, r, { invitation: invitationView(invitationOf(id)) }), grants, requests, mfaEnrolled: mfaFactors > 0, liveSessions: live, holdings: orgService.holdingsOf(r.company_id, id), hasPassword: Boolean(credentialOf(id)) };
+      const assignments = db.prepare('SELECT a.id, a.scope_type, a.scope_ids_json, a.effective_from, a.effective_to, a.status, a.reason, a.created_at, ro.code, ro.name FROM iam_assignments a JOIN iam_roles ro ON ro.id = a.role_id WHERE a.user_id = ? AND a.is_active = 1 ORDER BY a.id DESC LIMIT 50').all(id)
+        .map((a) => ({ id: a.id, roleCode: a.code, roleName: a.name, scopeType: a.scope_type, scopeIds: JSON.parse(a.scope_ids_json), effectiveFrom: a.effective_from, effectiveTo: a.effective_to, status: a.status, reason: a.reason, at: a.created_at }));
+      return { ...present(actor, r, { invitation: invitationView(invitationOf(id)) }), assignments, grants, requests, mfaEnrolled: mfaFactors > 0, liveSessions: live, holdings: orgService.holdingsOf(r.company_id, id), hasPassword: Boolean(credentialOf(id)) };
     },
 
     sessions(actor, id) {
@@ -435,6 +438,10 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
           moved.successor = s.username;
         }
         for (const role of roles) writeGrant(db, r, role, 'REVOKED', { reason: `Deactivated: ${reason}`, by: actor.user });
+        for (const a of db.prepare("SELECT a.id, ro.code FROM iam_assignments a JOIN iam_roles ro ON ro.id = a.role_id WHERE a.user_id = ? AND a.status = 'ACTIVE'").all(id)) {
+          db.prepare("UPDATE iam_assignments SET status = 'ENDED', ended_at = ?, ended_by = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(iso(now()), actor.user, actor.user, iso(now()), a.id);
+          writeGrant(db, r, a.code, 'REVOKED', { reason: `Deactivated: ${reason}`, by: actor.user });
+        }
         db.prepare("UPDATE iam_users SET roles_json = '[]', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, iso(now()), id);
         db.prepare("UPDATE iam_invitations SET status = 'REVOKED', updated_by = ?, updated_at = ?, version = version + 1 WHERE user_id = ? AND status = 'PENDING'").run(actor.user, iso(now()), id);
         setLifecycle(db, id, 'DEACTIVATED', { by: actor.user, reason, at: new Date(now()) });
@@ -456,9 +463,7 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
       if (approvals.hasOpen(r.company_id, 'user_role_assignment', 'iam_user', id)) throw conflict(`There is already an open role request for ${r.display_name}. Decide or withdraw it first.`);
       const policy = identity.policies.for(r.company_id);
       const privileged = add.some((x) => policy.mfa.requiredRoles.includes(x));
-      const bySysadm = actor.roles.includes('SYSADM');
-      // A privileged role needs two people other than the requester: the system administrator and the IT administrator (or, from a system administrator, the IT administrator and a director).
-      const chain = privileged ? (bySysadm ? ['ITADM', 'DIR'] : ['SYSADM', 'ITADM']) : bySysadm ? ['ITADM'] : ['SYSADM'];
+      const chain = assignmentChain({ codes: add, privilegedCodes: policy.mfa.requiredRoles, bySysadm: actor.roles.includes('SYSADM') });
       return approvals.submit(actor, { type: 'user_role_assignment', title: `Give ${add.join(', ')} to ${r.username}`, targetType: 'iam_user', targetId: id, payload: { userId: id, username: r.username, add, privileged }, reason, chain });
     },
 
@@ -476,6 +481,7 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
         const left = held.filter((x) => !gone.includes(x));
         db.prepare('UPDATE iam_users SET roles_json = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(JSON.stringify(left), actor.user, iso(now()), id);
         for (const role of gone) writeGrant(db, r, role, 'REVOKED', { reason, by: actor.user });
+        authz.invalidate();
         if (left.length === 0 && r.lifecycle === 'ACTIVE') setLifecycle(db, id, 'ONBOARDING', { by: actor.user, reason: 'The last role was taken away', at: new Date(now()) });
         writeAudit(db, { entity: 'iam_users', entityId: id, action: 'roles_revoked', oldValues: { roles: held }, newValues: { roles: left }, reason, actor: actor.user });
         publishEvent(db, { type: 'iam.user.roles_changed', entity: 'user', entityId: id, actorId: actor.user, companyId: r.company_id, data: { username: r.username, granted: [], revoked: gone, requestId: 0 } });
@@ -624,7 +630,7 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
     const raised = open.filter((q) => q.requestedBy === r.username);
     if (raised.length) blockers.push({ type: 'approval requests raised by this person', count: raised.length, hint: 'Someone else takes them over so they can still be decided.', reassignable: true, items: raised.map((q) => ({ id: q.id, title: q.title })) });
     const roles = JSON.parse(r.roles_json);
-    const stuck = open.filter((q) => q.stepRole && roles.includes(q.stepRole) && q.requestedBy !== r.username && roleHolders(r.company_id, q.stepRole, r.id) === 0);
+    const stuck = open.filter((q) => q.stepRole && q.requestedBy !== r.username && q.stepRole.split('|').some((x) => roles.includes(x)) && q.stepRole.split('|').every((x) => roleHolders(r.company_id, x, r.id) === 0));
     if (stuck.length) blockers.push({ type: 'approval steps only this person can decide', count: stuck.length, hint: 'Give the role to another person first (a role request), then deactivate.', reassignable: false, items: stuck.map((q) => ({ id: q.id, title: q.title, role: q.stepRole })) });
     const holdings = orgService.holdingsOf(r.company_id, r.id);
     if (holdings.length) blockers.push({ type: 'organisation roles (department head, project manager, site in-charge)', count: holdings.length, hint: 'They pass to the person you choose, from today.', reassignable: true, items: holdings.map((h) => ({ kind: h.kind, code: h.code, name: h.name, pending: h.pending })) });

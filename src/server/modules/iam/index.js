@@ -17,12 +17,15 @@ import { createUserStore } from './users.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { hasPermission } from '../../platform/auth/index.js';
 import { createUserAdminService, userHandlers } from './usermgmt/service.js';
+import { authzOf, recordResolvers } from '../../platform/authz/index.js';
+import { accessHandlers, createAccessService } from './access/service.js';
+import { accessRoutes } from './access/routes.js';
 import { invitationRoutes, meRoutes, userRoutes } from './usermgmt/routes.js';
 import { ENTITIES } from './org/entities.js';
 import { orgRoutes } from './org/routes.js';
 import { createOrgService, orgHandlers } from './org/service.js';
 
-export { orgHandlers, userHandlers };
+export { accessHandlers, orgHandlers, userHandlers };
 
 // Part 02.01: authentication. Events this module publishes:
 const obj = (properties = {}, required = []) => ({ type: 'object', properties, required });
@@ -64,13 +67,20 @@ IAM_EVENTS.push(
   ['iam.user.profile_updated', 'A person changed their own profile.', obj({ username: str, fields: { type: 'array' } }, ['username'])],
   ['iam.user.imported', 'A file of users was imported.', obj({ created: { type: 'number' }, skipped: { type: 'number' } }, ['created'])],
 );
+// Part 02.04: roles and assignments.
+IAM_EVENTS.push(
+  ['iam.role.created', 'A custom role was created (a draft, or a copy of a template).', obj({ code: str, clonedFrom: str }, ['code'])],
+  ['iam.role.changed', 'What a custom role grants, its masks, clearance or status changed after approval.', obj({ code: str, status: str, requestId: { type: 'number' } }, ['code'])],
+  ['iam.assignment.created', 'A role was assigned to a person for a scope after approval.', obj({ username: str, role: str, scopeType: str, requestId: { type: 'number' } }, ['username', 'role'])],
+  ['iam.assignment.ended', 'A role assignment was ended.', obj({ username: str, role: str, scopeType: str }, ['username', 'role'])],
+);
 for (const [type, description, schema] of IAM_EVENTS) eventTypes.define({ type, version: 1, schema, owner: 'iam', description });
 
 integrityRegistry.register({
   technicalTables: ['iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets'],
-  companyOptional: ['org_companies'],
+  companyOptional: ['org_companies', 'iam_permissions', 'iam_roles', 'iam_role_permissions', 'iam_field_masks', 'iam_role_mapping'],
   statuses: {
-    iam_users: ['ACTIVE', 'DISABLED'], iam_invitations: ['PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED', 'SUPERSEDED'], org_companies: ['ACTIVE', 'INACTIVE'], org_branches: ['ACTIVE', 'INACTIVE'], org_departments: ['ACTIVE', 'INACTIVE'], org_designations: ['ACTIVE', 'INACTIVE'],
+    iam_users: ['ACTIVE', 'DISABLED'], iam_invitations: ['PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED', 'SUPERSEDED'], iam_roles: ['DRAFT', 'ACTIVE', 'RETIRED'], iam_assignments: ['ACTIVE', 'ENDED'], org_companies: ['ACTIVE', 'INACTIVE'], org_branches: ['ACTIVE', 'INACTIVE'], org_departments: ['ACTIVE', 'INACTIVE'], org_designations: ['ACTIVE', 'INACTIVE'],
     org_projects: ['DRAFT', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CLOSED'], org_sites: ['DRAFT', 'ACTIVE', 'INACTIVE'], org_locations: ['ACTIVE', 'INACTIVE'], org_cost_centres: ['ACTIVE', 'INACTIVE'],
   },
   uniqueKeys: [{ table: 'org_projects', columns: ['company_id', 'code'] }, { table: 'org_locations', columns: ['company_id', 'code'] }, { table: 'org_designations', columns: ['company_id', 'code'] }],
@@ -88,6 +98,12 @@ fileEntities.register({
   },
 });
 
+// What the permission explainer can look up (part 02.04): a record's company, project, site, department and owner.
+recordResolvers.register('project', (db, id) => { const p = db.prepare('SELECT id, company_id, branch_id, code, name FROM org_projects WHERE id = ? AND is_active = 1').get(id); return p && { companyId: p.company_id, projectId: p.id, branchId: p.branch_id ?? undefined, label: `Project ${p.code} ${p.name}` }; });
+recordResolvers.register('site', (db, id) => { const s = db.prepare('SELECT s.id, s.company_id, s.org_project_id, s.code, s.name, p.branch_id FROM org_sites s JOIN org_projects p ON p.id = s.org_project_id WHERE s.id = ? AND s.is_active = 1').get(id); return s && { companyId: s.company_id, projectId: s.org_project_id, siteId: s.id, branchId: s.branch_id ?? undefined, label: `Site ${s.code} ${s.name}` }; });
+recordResolvers.register('department', (db, id) => { const d = db.prepare('SELECT id, company_id, branch_id, code, name FROM org_departments WHERE id = ? AND is_active = 1').get(id); return d && { companyId: d.company_id, departmentId: d.id, branchId: d.branch_id ?? undefined, label: `Department ${d.code} ${d.name}` }; });
+recordResolvers.register('user', (db, id) => { const u = db.prepare('SELECT u.id, u.company_id, u.display_name, p.department_id FROM iam_users u LEFT JOIN iam_user_profiles p ON p.user_id = u.id WHERE u.id = ? AND u.is_active = 1').get(id); return u && { companyId: u.company_id, departmentId: u.department_id ?? undefined, ownerUserId: u.id, label: `User ${u.display_name}` }; });
+
 /** The approval handler for authentication policy changes; the shared approval engine (in core) calls it when a request is approved. */
 export const policyChangeHandlerFor = (db, config) => createPolicyChangeHandler({ identity: identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined }) });
 
@@ -98,8 +114,8 @@ export const iam = {
   routePrefix: '/api/v1/iam',
   ownerPart: '02.x',
   status: 'Authentication (02.01) and organisation (02.02)',
-  tables: ['iam_users', 'iam_credentials', 'iam_mfa_factors', 'iam_devices', 'iam_auth_policy', 'iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_user_profiles', 'iam_invitations', 'iam_role_grants', 'org_companies', 'org_branches', 'org_departments', 'org_designations', 'org_projects', 'org_sites', 'org_locations', 'org_cost_centres', 'org_assignments'],
-  resources: ['auth', 'me', 'admin', 'org', 'users', 'invitations'],
+  tables: ['iam_users', 'iam_credentials', 'iam_mfa_factors', 'iam_devices', 'iam_auth_policy', 'iam_sessions', 'iam_refresh_tokens', 'iam_login_events', 'iam_login_throttle', 'iam_password_resets', 'iam_user_profiles', 'iam_invitations', 'iam_role_grants', 'iam_permissions', 'iam_roles', 'iam_role_permissions', 'iam_field_masks', 'iam_assignments', 'iam_role_mapping', 'org_companies', 'org_branches', 'org_departments', 'org_designations', 'org_projects', 'org_sites', 'org_locations', 'org_cost_centres', 'org_assignments'],
+  resources: ['auth', 'me', 'admin', 'org', 'users', 'invitations', 'permissions', 'roles', 'assignments', 'effective', 'legacy-comparison'],
 
   mount(api, { db, config, publicApi }) {
     const identity = identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined });
@@ -143,7 +159,7 @@ export const iam = {
     publicApi.use('/iam', invitationRoutes({ invitationInfo: (t) => userAdmin.invitationInfo(t), accept: (t, b, c) => userAdmin.accept(t, b, c) }));
 
     // Everything behind sign-in is hidden while ff.iam.p0201 is OFF for the company.
-    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers, ...userHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { auth_policy_change: createPolicyChangeHandler({ identity }), ...orgHandlers, ...userHandlers, ...accessHandlers } });
     const orgService = createOrgService({ db, approvals, clock: () => identity.now() });
     const orgRouter = Router();
     orgRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0202') ? next() : next(notFound('The organisation master is not enabled for your company yet (feature flag ff.iam.p0202 is OFF).'))));
@@ -158,12 +174,24 @@ export const iam = {
     meRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0203') ? next() : next(notFound('Profile editing is not enabled for your company yet (feature flag ff.iam.p0203 is OFF).'))));
     meRouter.use(meRoutes(userAdmin));
     api.use('/iam', meRouter);
+    // Roles, scoped assignments and the explainer (part 02.04), behind ff.iam.p0204. What each person holds is computed per request
+    // in the authenticate step (platform/authz); this only manages the roles and assignments that computation reads.
+    if (migrated) authzOf(db).seed();
+    const access = createAccessService({ db, identity, approvals });
+    const accessRouter = Router();
+    accessRouter.use(['/permissions', '/mask-fields', '/roles', '/assignments', '/effective', '/legacy-comparison', '/legacy-mapping'], (req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0204') ? next() : next(notFound('Roles and assignments are not enabled for your company yet (feature flag ff.iam.p0204 is OFF).'))));
+    accessRouter.use(accessRoutes(access, { idempotentRequired }));
+    api.use('/iam', accessRouter);
+    if (migrated) {
+      runtimeOf(db).jobs.register('iam.assignment_sync', (ctx) => { const r = access.syncLifecycle(); ctx.log(`Moved ${r.moved} person(s) between Onboarding and Active`); return r; }, { maxAttempts: 2, description: 'Starts and ends the effect of dated role assignments on onboarding state.' });
+      runtimeOf(db).scheduler.define({ code: 'iam.assignment_sync_daily', cron: '30 0 * * *', jobType: 'iam.assignment_sync', description: 'Daily start and end of dated role assignments (00:30 IST)' });
+    }
     const service = createSecurityService({ db, identity, users, auth, mfa, approvals, profileExtras: (actor) => userAdmin.profileExtras(actor) });
     const router = Router();
     router.use((req, _res, next) => (req.path.startsWith('/me') || req.path.startsWith('/admin') || req.path === '/auth/password/change' ? (flagService.isOn(req.actor, 'ff.iam.p0201') ? next() : next(notFound('Sign-in management is not enabled for your company yet (feature flag ff.iam.p0201 is OFF).'))) : next()));
     router.use(securityRoutes(service, auth, { idempotentRequired }));
     api.use('/iam', router);
-    return { users, auth, mfa, identity, service, orgService, userAdmin };
+    return { users, auth, mfa, identity, service, orgService, userAdmin, access };
   },
 };
 

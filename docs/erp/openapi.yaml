@@ -8,7 +8,7 @@ info:
     { error: { code, message, details[{field,message}], correlationId } }; the codes are listed on the Architecture page
     (VALIDATION_ERROR, BAD_JSON, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, VERSION_CONFLICT, PAYLOAD_TOO_LARGE,
     BUSINESS_RULE, RATE_LIMITED, INTERNAL_ERROR, SERVICE_UNAVAILABLE) plus IDEMPOTENCY_KEY_REUSED (422) and
-    REQUEST_IN_PROGRESS (409) on endpoints that accept an Idempotency-Key, plus ONBOARDING_RESTRICTED (403: a person with no approved role may reach only their profile), DUPLICATE_USER (409) and INVITATION_EXPIRED (410).
+    REQUEST_IN_PROGRESS (409) on endpoints that accept an Idempotency-Key, plus ONBOARDING_RESTRICTED (403: a person with no approved role may reach only their profile), DUPLICATE_USER (409) and INVITATION_EXPIRED (410). A permission held for part of the company (a scoped assignment) lets a route answer for that part only; a record outside it is NOT_FOUND.
 servers:
   - url: http://localhost:3000
 paths:
@@ -893,3 +893,60 @@ paths:
     post:
       summary: Choose a password with the invitation link (no sign-in); the person becomes Onboarding, or Active if a role was already approved
       responses: { '200': { description: '{ data: { accepted, status, username } }' } }
+  /api/v1/iam/permissions:
+    get:
+      summary: The permission registry: key, module, entity, action, sensitive, and how many roles allow it (iam.role.view)
+      responses: { '200': { description: '{ data: [permission] }' } }
+  /api/v1/iam/mask-fields:
+    get:
+      summary: The sensitive fields a role can mask, with the default rule (iam.role.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/me/access:
+    get:
+      summary: The signed-in person's own access: permissions held company-wide and anywhere, scoped project and site IDs, roles held and clearance (for the menu and can(permission, record))
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/roles:
+    get:
+      summary: Roles (system and custom): search, filter[kind|status|category], sort, 25/50/100 per page, with permission count and people holding each (iam.role.view)
+      responses: { '200': { description: '{ data: [role], meta }' } }
+    post:
+      summary: Create a custom role as a draft, optionally a copy of another role (iam.role.manage; Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/iam/roles/compare:
+    get:
+      summary: Compare two roles: permissions only in one, in both, and field masks (iam.role.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/roles/{id}:
+    get:
+      summary: One role with its permissions, masks, people holding it and approval requests (iam.role.view)
+      responses: { '200': { description: '{ data }' } }
+    patch:
+      summary: Rename or describe a custom role (version required); a system role is locked (iam.role.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/roles/{id}/change-requests:
+    post:
+      summary: Ask to change what a custom role grants, its masks or clearance, or to activate or retire it; chain ITADM, plus DIR for a role with a sensitive permission (iam.role.manage; Idempotency-Key required)
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/assignments:
+    get:
+      summary: Role assignments: person, role, scope, dates, status; search and filter (iam.assignment.view)
+      responses: { '200': { description: '{ data: [assignment], meta }' } }
+    post:
+      summary: Ask for a role to be given to a person for a scope (company, branch, department, project, site or own records) and period; an approval request, nothing is granted before it is approved (iam.assignment.manage; Idempotency-Key required)
+      responses: { '201': { description: '{ data: request }' } }
+  /api/v1/iam/assignments/{id}/end:
+    post:
+      summary: End an assignment at once (audited); a person left with no role returns to Onboarding (iam.assignment.manage)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/effective:
+    get:
+      summary: Every permission for a person (userId), optionally tested against one record (recordType, recordId): allowed or refused, the reason and the roles that grant or deny it (iam.role.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/legacy-comparison:
+    get:
+      summary: Each user's access before the role engine and now, with lost, gained and new-only differences, a verdict and the role mapping (iam.role.view)
+      responses: { '200': { description: '{ data: [row], meta, summary, clean, mapping }' } }
+  /api/v1/iam/legacy-mapping:
+    get:
+      summary: How each role that existed before maps to a system role (iam.role.view)
+      responses: { '200': { description: '{ data: [mapping] }' } }
