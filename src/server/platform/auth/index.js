@@ -11,10 +11,10 @@ const ROLE_PERMISSIONS = {
     'core.settings.view', 'core.settings.configure', 'core.fy.view', 'core.fy.configure', 'core.period.request_reopen',
     'core.numbering.view', 'core.numbering.configure', 'core.numbering.issue', 'core.numbering.preview',
     'core.param.view', 'core.param.configure', 'core.holiday.configure', 'core.requests.view', 'core.sample.use',
-    'core.events.view', 'core.jobs.view', 'core.schedule.view', 'core.files.admin', 'core.files.configure', 'core.calc.view', 'core.calc.manage', 'core.ops.view', 'core.connectors.view',
+    'core.events.view', 'core.jobs.view', 'core.schedule.view', 'core.files.admin', 'core.files.configure', 'core.calc.view', 'core.calc.manage', 'core.ops.view', 'core.connectors.view', 'iam.security.view', 'iam.security.manage',
   ],
   ITADM: ['core.flag.view', 'core.about.view', 'core.arch.view', 'core.health.view', 'core.integrity.view', 'core.integrity.run', 'core.param.view', 'core.param.configure_system', 'core.numbering.view',
-    'core.events.view', 'core.events.redrive', 'core.events.replay', 'core.jobs.view', 'core.jobs.manage', 'core.schedule.view', 'core.schedule.manage', 'core.requests.view', 'core.files.admin', 'core.ops.view', 'core.ops.manage', 'core.connectors.view', 'core.connectors.configure'],
+    'core.events.view', 'core.events.redrive', 'core.events.replay', 'core.jobs.view', 'core.jobs.manage', 'core.schedule.view', 'core.schedule.manage', 'core.requests.view', 'core.files.admin', 'core.ops.view', 'core.ops.manage', 'core.connectors.view', 'core.connectors.configure', 'iam.security.view', 'iam.security.manage'],
   // Finance: open and close periods, post into a soft-closed period, ask for a reopen, see the settings and the approval requests.
   ACCMGR: ['core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.request_reopen', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
   CFO: ['core.settings.view', 'core.fy.view', 'core.period.manage', 'core.period.post_soft_closed', 'core.numbering.view', 'core.numbering.preview', 'core.requests.view', 'core.sample.use', 'core.param.view'],
@@ -24,8 +24,19 @@ const ROLE_PERMISSIONS = {
   PM: ['core.sample.use', 'core.numbering.preview'],
 };
 
-export function authenticate(config) {
+export function authenticate(config, resolver = null) {
   return (req, _res, next) => {
+    if (config.authMode === 'iam') {
+      // Part 02.01: a signed access token whose session is still live. The roles come from the user record, never from the token.
+      const token = /^Bearer (.+)$/i.exec(req.get('authorization') ?? '')?.[1];
+      if (!token) return next(unauthorized('Sign in first: no sign-in token was supplied.'));
+      try {
+        req.actor = resolver.resolve(token);
+      } catch (err) {
+        return next(err);
+      }
+      return next();
+    }
     if (config.authMode !== 'dev-headers') return next(unauthorized('No authentication method is available.'));
     const user = req.get('x-erp-user');
     if (!user) return next(unauthorized('Sign in first: no user identity was supplied.'));

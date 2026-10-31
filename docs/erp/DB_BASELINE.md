@@ -1170,3 +1170,265 @@ Foreign keys: connector_id -> core_connectors(id)
 
 Indexes:
 - ux_core_webhook_receipts_delivery (unique): connector_id, delivery_id
+
+## iam_auth_policy
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| settings_json | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ux_iam_auth_policy_company (unique): company_id
+
+## iam_credentials
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| password_hash | TEXT | yes |  |  |
+| algo | TEXT | yes |  |  |
+| changed_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| expires_at | TEXT |  |  |  |
+| must_change | INTEGER | yes |  | 0 |
+| history_json | TEXT | yes |  | '[]' |
+| failed_count | INTEGER | yes |  | 0 |
+| locked_until | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_credentials_company: company_id
+- ux_iam_credentials_user (unique): user_id
+
+## iam_devices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| device_fingerprint | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| platform | TEXT |  |  |  |
+| token_hash | TEXT |  |  |  |
+| trusted_until | TEXT |  |  |  |
+| pin_hash | TEXT |  |  |  |
+| pin_failed | INTEGER | yes |  | 0 |
+| registered_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| last_seen_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_devices_company: company_id
+- ux_iam_devices_user_fingerprint (unique): user_id, device_fingerprint
+
+## iam_login_events
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| user_id | INTEGER |  |  |  |
+| username_attempted | TEXT |  |  |  |
+| result | TEXT | yes |  |  |
+| ip | TEXT |  |  |  |
+| user_agent | TEXT |  |  |  |
+| device_label | TEXT |  |  |  |
+| device_fingerprint | TEXT |  |  |  |
+| geo_country | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| session_public_id | TEXT |  |  |  |
+| at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+
+Foreign keys: user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_login_events_result: company_id, result, at
+- ix_iam_login_events_company: company_id, at
+- ix_iam_login_events_user: user_id, at
+
+## iam_login_throttle
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| key | TEXT |  | PK |  |
+| failed_count | INTEGER | yes |  | 0 |
+| locked_until | TEXT |  |  |  |
+| last_failed_at | TEXT |  |  |  |
+
+Indexes:
+- sqlite_autoindex_iam_login_throttle_1 (unique): key
+
+## iam_mfa_factors
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| type | TEXT | yes |  |  |
+| secret_encrypted | TEXT |  |  |  |
+| phone | TEXT |  |  |  |
+| meta_json | TEXT | yes |  | '{}' |
+| verified_at | TEXT |  |  |  |
+| last_used_at | TEXT |  |  |  |
+| last_counter | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_mfa_factors_company: company_id
+- ix_iam_mfa_factors_user: user_id, type
+
+## iam_password_resets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| user_id | INTEGER | yes |  |  |
+| token_hash | TEXT | yes |  |  |
+| expires_at | TEXT | yes |  |  |
+| used_at | TEXT |  |  |  |
+| ip | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+
+Foreign keys: user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_password_resets_user: user_id
+- ux_iam_password_resets_hash (unique): token_hash
+
+## iam_refresh_tokens
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| session_id | INTEGER | yes |  |  |
+| token_hash | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| used_at | TEXT |  |  |  |
+
+Foreign keys: session_id -> iam_sessions(id)
+
+Indexes:
+- ix_iam_refresh_tokens_session: session_id, status
+- ux_iam_refresh_tokens_hash (unique): token_hash
+
+## iam_sessions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| public_id | TEXT | yes |  |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| device_id | INTEGER |  |  |  |
+| ip | TEXT |  |  |  |
+| user_agent | TEXT |  |  |  |
+| auth_method | TEXT | yes |  | 'password' |
+| mfa_at | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| last_seen_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| expires_at | TEXT | yes |  |  |
+| revoked_at | TEXT |  |  |  |
+| revoked_reason | TEXT |  |  |  |
+| revoked_by | TEXT |  |  |  |
+
+Foreign keys: device_id -> iam_devices(id), user_id -> iam_users(id)
+
+Indexes:
+- ix_iam_sessions_company: company_id, revoked_at
+- ix_iam_sessions_device: device_id
+- ix_iam_sessions_user: user_id, revoked_at
+- ux_iam_sessions_public (unique): public_id
+
+## iam_users
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| username | TEXT | yes |  |  |
+| email | TEXT |  |  |  |
+| mobile | TEXT |  |  |  |
+| display_name | TEXT | yes |  |  |
+| roles_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'ACTIVE' |
+| last_login_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Indexes:
+- ix_iam_users_company: company_id, status
+- ux_iam_users_mobile (unique): mobile
+- ux_iam_users_email (unique): email
+- ux_iam_users_username (unique): username

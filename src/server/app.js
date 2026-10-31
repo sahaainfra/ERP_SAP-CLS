@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { timingSafeEqual } from 'node:crypto';
 import { ROOT } from './platform/db/index.js';
 import { authenticate, hasPermission } from './platform/auth/index.js';
+import { identityOf } from './platform/identity/index.js';
 import { HttpError, errorHandler, forbidden, unauthorized } from './platform/http/errors.js';
 import { createLogger, setAppLogger } from './platform/http/logger.js';
 import { instrumentDb } from './platform/observability/dbstats.js';
@@ -24,8 +25,10 @@ const sameToken = (a, b) => {
 };
 
 /** Composition root: pipeline, health, the authenticated /api/v1 router with every module, static client, error handler. */
-export function createApp({ config, db, logger = createLogger(), buildInfo = loadBuildInfo(), storagePath = null }) {
+export function createApp({ config, db, logger = createLogger(), buildInfo = loadBuildInfo(), storagePath = null, identityOptions = {} }) {
   const app = express();
+  // Who is calling (part 02.01): used by every authenticated route when AUTH_MODE=iam; created up front so tests can set its clock and hash cost.
+  const identity = identityOf(db, { authSecret: config.authSecret ?? undefined, vaultKey: config.vaultKey ?? undefined, ...identityOptions });
   setAppLogger(logger);
   instrumentDb(db, { metrics, tracer });
   applyPipeline(app, { logger });
@@ -44,7 +47,7 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
     };
     const token = req.get('x-health-token');
     if (config.healthToken && token && sameToken(token, config.healthToken)) return respond();
-    authenticate(config)(req, res, (err) => {
+    authenticate(config, identity.resolver)(req, res, (err) => {
       if (err) return next(err.status === 401 ? unauthorized('Readiness is restricted: sign in as an administrator or send the monitoring token.') : err);
       if (!hasPermission(req.actor, 'core.health.view')) {
         return next(forbidden('Your role does not include core.health.view. Ask a system administrator for access.'));
@@ -80,7 +83,7 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
     };
     const token = req.get('x-health-token');
     if (config.healthToken && token && sameToken(token, config.healthToken)) return respond();
-    authenticate(config)(req, res, (err) => {
+    authenticate(config, identity.resolver)(req, res, (err) => {
       if (err) return next(err.status === 401 ? unauthorized('Metrics are restricted: sign in as an administrator or send the monitoring token.') : err);
       if (!hasPermission(req.actor, 'core.ops.view')) return next(forbidden('Your role does not include core.ops.view. Ask a system administrator for access.'));
       respond();
@@ -88,7 +91,7 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   });
 
   const api = express.Router();
-  api.use(authenticate(config));
+  api.use(authenticate(config, identity.resolver));
   api.use((req, _res, next) => {
     const ctx = currentContext();
     if (ctx) ctx.user = pseudonym(req.actor?.user);

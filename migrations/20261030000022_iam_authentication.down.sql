@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS iam_password_resets;
+DROP TABLE IF EXISTS iam_login_throttle;
+DROP TABLE IF EXISTS iam_login_events;
+DROP TABLE IF EXISTS iam_refresh_tokens;
+DROP TABLE IF EXISTS iam_sessions;
+DROP TABLE IF EXISTS iam_auth_policy;
+DROP TABLE IF EXISTS iam_devices;
+DROP TABLE IF EXISTS iam_mfa_factors;
+DROP TABLE IF EXISTS iam_credentials;
+DROP TABLE IF EXISTS iam_users;

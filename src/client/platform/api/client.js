@@ -37,6 +37,7 @@ export function createApiClient({
   retries = 2,
   backoffMs = 200,
   onFailure = () => {},
+  onUnauthorized = null,
 } = {}) {
   const fail = (err, path) => {
     try {
@@ -51,6 +52,7 @@ export function createApiClient({
     const canRetry = method === 'GET' || method === 'HEAD';
     const maxAttempts = canRetry ? retries + 1 : 1;
     let lastError;
+    let reauthed = false;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       let res;
       try {
@@ -83,6 +85,14 @@ export function createApiClient({
         /* not JSON (for example an HTML error page from a proxy): json stays undefined */
       }
       if (res.ok) return json;
+      // A 401 on a signed-in call: the access token may just have expired. Get a new one once and send the same call again.
+      if (res.status === 401 && onUnauthorized && !reauthed && !path.startsWith('/iam/auth/')) {
+        reauthed = true;
+        if (await onUnauthorized()) {
+          attempt -= 1;
+          continue;
+        }
+      }
       lastError = normaliseError(res, json, correlationId, attempt);
       if (RETRYABLE_STATUS.has(res.status) && attempt < maxAttempts) {
         await sleep(backoffMs * 2 ** (attempt - 1));

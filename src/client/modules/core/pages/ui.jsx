@@ -118,8 +118,8 @@ export function Tile({ label, value, status = 'neutral', to, hint, testId }) {
   return <div className={`tile tile-${status}`}>{to ? <Link to={to}>{body}</Link> : body}</div>;
 }
 
-export function downloadCsv(filename, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+export function downloadCsv(filename, text, type = 'text/csv;charset=utf-8') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
   const a = Object.assign(document.createElement('a'), { href: url, download: filename });
   a.click();
   URL.revokeObjectURL(url);

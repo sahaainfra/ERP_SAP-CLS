@@ -184,3 +184,14 @@ textarea.mono { width: 100%; max-width: 100%; box-sizing: border-box; }
 .dialog-wide { max-width: min(48rem, 96vw); }
 .trace h4 { margin: var(--erp-space-4) 0 var(--erp-space-2); }
 .trace code { overflow-wrap: anywhere; }
+
+/* ---- Part 02.01: sign-in and account security ---- */
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: var(--erp-space-4); }
+.login-card { width: min(28rem, 100%); background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border, currentColor); border-radius: var(--erp-radius-md, 6px); padding: var(--erp-space-5); }
+.login-card h1 { margin-top: 0; }
+.login-lang { display: flex; gap: var(--erp-space-3); justify-content: flex-end; }
+.login-lang .is-on { font-weight: 700; }
+.qr { background: #fff; padding: var(--erp-space-2); border-radius: var(--erp-radius-md, 6px); display: block; }
+.codes { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: var(--erp-space-2); }
+.codes li { font-family: ui-monospace, monospace; }
+.shell-user { display: inline-flex; gap: var(--erp-space-3); align-items: center; }

@@ -578,3 +578,151 @@ paths:
     post:
       summary: Inbound webhook (no sign-in). Headers x-timestamp, x-signature (HMAC-SHA256 of timestamp.body), optional x-delivery-id; a replay answers 200 with duplicate true
       responses: { '200': { description: '{ data: { received, duplicate, deliveryId } }' }, '401': { description: bad or missing signature }, '404': { description: unknown, off or unconfigured }, '429': { description: too many deliveries } }
+  /api/v1/iam/auth/config:
+    get:
+      summary: How people sign in here (public)
+      responses: { '200': { description: '{ data: { mode, passwordMinLength, rememberDeviceDays, sso } }' } }
+  /api/v1/iam/auth/login:
+    post:
+      summary: Sign in with username, email or mobile and a password (public). Answers ok, mfa_required, mfa_enrolment_required or password_change_required; every failure is the same 401
+      responses: { '200': { description: '{ data: { status, accessToken, expiresIn, user, session, challengeToken, factors } }; the refresh token is set as an HttpOnly cookie' }, '401': { description: sign-in failed (never says why) }, '429': { description: too many attempts } }
+  /api/v1/iam/auth/captcha:
+    post:
+      summary: Whether a sign-in name needs a CAPTCHA, and the question (public; same answer for names that do not exist)
+      responses: { '200': { description: '{ data: { required, challenge } }' } }
+  /api/v1/iam/auth/mfa/verify:
+    post:
+      summary: Second step - totp, backup, sms or whatsapp code (public, needs the challengeToken)
+      responses: { '200': { description: '{ data: { status: ok, ... } }' }, '401': { description: code wrong or expired } }
+  /api/v1/iam/auth/mfa/send:
+    post:
+      summary: Send a one-time code to the chosen text or WhatsApp factor (public, needs the challengeToken)
+      responses: { '200': { description: '{ data: { sent } }' } }
+  /api/v1/iam/auth/mfa/enrol/begin:
+    post:
+      summary: Start authenticator set-up during sign-in for a role that needs one (public, needs the challengeToken)
+      responses: { '200': { description: '{ data: { secret, uri, qr } }' } }
+  /api/v1/iam/auth/mfa/enrol/confirm:
+    post:
+      summary: Confirm the first code; completes the sign-in and returns the backup codes once
+      responses: { '200': { description: '{ data: { status: ok, backupCodes, ... } }' }, '401': { description: code wrong } }
+  /api/v1/iam/auth/password/required-change:
+    post:
+      summary: Set a new password when the sign-in says one is required (public, needs the challengeToken)
+      responses: { '200': { description: next step of the sign-in }, '422': { description: password not acceptable } }
+  /api/v1/iam/auth/password/forgot:
+    post:
+      summary: Send a reset code to the email on file; the same answer whether or not the account exists (public)
+      responses: { '200': { description: '{ data: { sent } }' } }
+  /api/v1/iam/auth/password/reset:
+    post:
+      summary: Set a new password with the reset code; ends every session of the person (public)
+      responses: { '200': { description: '{ data: { reset } }' }, '422': { description: code wrong or expired, or password not acceptable } }
+  /api/v1/iam/auth/password/change:
+    post:
+      summary: Change your own password; ends your other sessions (needs sign-in)
+      responses: { '200': { description: '{ data: { changed, otherSessionsEnded } }' }, '422': { description: current password wrong or new one not acceptable } }
+  /api/v1/iam/auth/refresh:
+    post:
+      summary: A new access token and a replaced refresh token (cookie with x-erp-csrf, or refreshToken in the body); reuse of a replaced token ends the session
+      responses: { '200': { description: '{ data: { status: ok, accessToken, ... } }' }, '401': { description: token unknown, expired or reused } }
+  /api/v1/iam/auth/resume:
+    post:
+      summary: Pick the session up again from the cookie on page load; "nobody signed in" is a 200
+      responses: { '200': { description: '{ data: { status: ok | signed_out } }' } }
+  /api/v1/iam/auth/logout:
+    post:
+      summary: End the session (by access token or refresh cookie) and clear the cookie
+      responses: { '200': { description: '{ data: { ok } }' } }
+  /api/v1/iam/auth/pin-unlock:
+    post:
+      summary: Open a session on a remembered device with its PIN (public); not for roles that need a second step
+      responses: { '200': { description: session }, '401': { description: PIN wrong } }
+  /api/v1/iam/me:
+    get:
+      summary: Your profile, second steps and password dates (signed in)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/iam/me/sessions:
+    get:
+      summary: Your active sessions
+      responses: { '200': { description: '{ data: [session] }' } }
+  /api/v1/iam/me/sessions/{id}:
+    delete:
+      summary: Sign out one of your sessions
+      responses: { '200': { description: '{ data: { ended } }' }, '404': { description: not yours } }
+  /api/v1/iam/me/sessions/sign-out-others:
+    post:
+      summary: Sign out every session but this one (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { ended } }' } }
+  /api/v1/iam/me/devices:
+    get:
+      summary: Your registered devices
+      responses: { '200': { description: '{ data: [device] }' } }
+  /api/v1/iam/me/devices/{id}:
+    delete:
+      summary: Forget a device; its sessions end
+      responses: { '200': { description: '{ data: { removed } }' } }
+  /api/v1/iam/me/devices/{id}/pin:
+    post:
+      summary: Set the quick-unlock PIN of a remembered device (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { set } }' }, '422': { description: PIN too simple, device not remembered, or role needs a second step } }
+  /api/v1/iam/me/login-events:
+    get:
+      summary: Your recent sign-in activity
+      responses: { '200': { description: '{ data: [event] }' } }
+  /api/v1/iam/me/mfa/totp/begin:
+    post:
+      summary: Start authenticator set-up (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { secret, uri, qr } }' } }
+  /api/v1/iam/me/mfa/totp/confirm:
+    post:
+      summary: Confirm the first code; returns the backup codes once (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { backupCodes } }' }, '422': { description: code wrong } }
+  /api/v1/iam/me/mfa/phone/begin:
+    post:
+      summary: Send a verification code to a mobile number by text or WhatsApp (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { sent } }' }, '503': { description: the connector could not send } }
+  /api/v1/iam/me/mfa/phone/confirm:
+    post:
+      summary: Confirm the phone code (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { ok } }' }, '422': { description: code wrong or expired } }
+  /api/v1/iam/me/mfa/backup-codes:
+    post:
+      summary: Replace the backup codes (Idempotency-Key required)
+      responses: { '200': { description: '{ data: { backupCodes } }' } }
+  /api/v1/iam/me/mfa/{id}:
+    delete:
+      summary: Remove a second step; a role that needs one cannot remove the last
+      responses: { '200': { description: '{ data: { removed } }' }, '422': { description: last factor of a role that needs one } }
+  /api/v1/iam/admin/policy:
+    get:
+      summary: The authentication policy, its change history and whether a change is open (iam.security.view)
+      responses: { '200': { description: '{ data: { settings, history, openRequest } }' } }
+  /api/v1/iam/admin/policy/change-requests:
+    post:
+      summary: Ask to change the policy; the other administrator approves (iam.security.manage; Idempotency-Key required)
+      responses: { '201': { description: change request }, '409': { description: a request is already open }, '422': { description: nothing would change } }
+  /api/v1/iam/admin/sessions:
+    get:
+      summary: Active sessions of the company (iam.security.view)
+      responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/iam/admin/sessions/{id}/revoke:
+    post:
+      summary: Force a sign-out of one session with a reason (iam.security.manage; Idempotency-Key required)
+      responses: { '200': { description: '{ data: { ended } }' } }
+  /api/v1/iam/admin/users:
+    get:
+      summary: Users with second-step, lock and session state (iam.security.view)
+      responses: { '200': { description: '{ data, meta }' } }
+  /api/v1/iam/admin/users/{username}/sign-out:
+    post:
+      summary: Sign a person out everywhere (iam.security.manage; Idempotency-Key required)
+      responses: { '200': { description: '{ data: { ended } }' } }
+  /api/v1/iam/admin/users/{username}/unlock:
+    post:
+      summary: Clear a lockout (iam.security.manage; Idempotency-Key required)
+      responses: { '200': { description: '{ data: { unlocked } }' } }
+  /api/v1/iam/admin/login-events:
+    get:
+      summary: Login history; filters user, result, from, to, q (iam.security.view)
+      responses: { '200': { description: '{ data, meta }' } }

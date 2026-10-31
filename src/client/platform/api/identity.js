@@ -1,5 +1,6 @@
 // Development identity (AUTH_MODE=dev-headers). Replaced by real sign-in in the IAM module (defect D-001).
 // This is the only file that knows how the API is authenticated; everything else goes through the client.
+import { accessToken, authMode } from './auth.js';
 const IDENTITY_KEY = 'erp.dev.identity';
 export const DEFAULT_IDENTITY = { user: 'sysadmin', roles: 'SYSADM', company: '1' };
 
@@ -20,6 +21,7 @@ export function saveIdentity(identity) {
 }
 
 export function authHeaders() {
+  if (authMode() === 'iam') return accessToken() ? { authorization: `Bearer ${accessToken()}` } : {};
   const id = loadIdentity();
   return { 'x-erp-user': id.user, 'x-erp-roles': id.roles, 'x-erp-company': id.company };
 }

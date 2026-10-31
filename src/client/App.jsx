@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { loadIdentity, saveIdentity } from './platform/api/index.js';
+import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
 import { allRoutes, defaultRoute, findRoute, routesFor } from './platform/shell/registry.js';
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
+import LoginPage from './modules/iam/pages/LoginPage.jsx';
 
 const THEME_KEY = 'erp.theme';
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR'];
@@ -23,7 +24,8 @@ function FlagGate({ flag, children }) {
   return on ? children : null;
 }
 
-export default function App() {
+/** The application shell for a person who is known: navigation, theme, the page. In development mode the person is a chosen identity. */
+function Shell({ iam, user }) {
   const qc = useQueryClient();
   const [theme, setTheme] = useState(loadTheme);
   const [identity, setIdentity] = useState(loadIdentity);
@@ -55,13 +57,14 @@ export default function App() {
 
   // A different (development) identity sees different data: drop everything cached for the old one.
   useEffect(() => {
+    if (iam) return;
     saveIdentity(identity);
     if (firstIdentity.current) firstIdentity.current = false;
     else qc.resetQueries();
-  }, [identity, qc]);
+  }, [identity, qc, iam]);
 
   const s = session.data;
-  const devIdentity = s?.environment !== 'production';
+  const devIdentity = !iam && s?.environment !== 'production';
   const nav = s ? routesFor(s.permissions) : [];
   const route = findRoute(path) ?? allRoutes()[0];
 
@@ -87,10 +90,16 @@ export default function App() {
             <option value="high-contrast">High contrast</option>
           </select>
         </label>
+        {iam && user && (
+          <span className="shell-user">
+            <span data-testid="signed-in-as">{user.displayName}</span>
+            <button type="button" className="btn btn-small" onClick={() => signOut().then(() => qc.clear())}>Sign out</button>
+          </span>
+        )}
       </header>
       {devIdentity && (
         <div className="devbar" role="group" aria-label="Development identity">
-          <span>Development identity (replaced by sign-in in part 02.x):</span>
+          <span>Development identity (replaced by sign-in when AUTH_MODE=iam):</span>
           <label className="shell-field"><span>User</span>
             <input value={identity.user} onChange={(e) => setIdentity({ ...identity, user: e.target.value })} />
           </label>
@@ -117,4 +126,18 @@ export default function App() {
       </main>
     </>
   );
+}
+
+/** Sign-in mode shows the sign-in screen until there is a session; development mode goes straight to the shell. */
+export default function App({ authMode = 'dev-headers' }) {
+  const user = useSyncExternalStore(onAuthChange, signedInUser);
+  const wasSignedIn = useRef(false);
+
+  if (authMode !== 'iam') return <Shell iam={false} user={null} />;
+  if (!user) {
+    const notice = wasSignedIn.current ? 'signed-out' : '';
+    return <LoginPage notice={notice} />;
+  }
+  wasSignedIn.current = true;
+  return <Shell iam user={user} />;
 }

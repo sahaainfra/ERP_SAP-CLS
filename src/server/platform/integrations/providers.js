@@ -144,7 +144,7 @@ export function registerBuiltinProviders(registry) {
       send: {
         validate: emailProblems,
         async run(ctx, payload) {
-          const message = { id: `sbx-${sandboxMailbox.length + 1}-${Date.now().toString(36)}`, from: ctx.config.fromAddress, to: [].concat(payload.to), subject: payload.subject, at: new Date().toISOString(), connector: ctx.connector.code };
+          const message = { id: `sbx-${sandboxMailbox.length + 1}-${Date.now().toString(36)}`, from: ctx.config.fromAddress, to: [].concat(payload.to), subject: payload.subject, text: payload.text, at: new Date().toISOString(), connector: ctx.connector.code };
           sandboxMailbox.push(message);
           if (sandboxMailbox.length > 200) sandboxMailbox.shift();
           return { httpStatus: 200, data: { messageId: message.id, accepted: message.to.length } };

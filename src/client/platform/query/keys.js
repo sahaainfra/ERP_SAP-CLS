@@ -68,4 +68,15 @@ export const queryKeys = {
     parameters: { all: ['core', 'parameters'], definitions: () => ['core', 'parameters', 'definitions'], list: (p) => ['core', 'parameters', 'list', p] },
     holidays: { all: ['core', 'holidays'], calendars: () => ['core', 'holidays', 'calendars'], one: (id, p) => ['core', 'holidays', 'one', id, p] },
   },
+  iam: {
+    all: ['iam'],
+    me: () => ['iam', 'me'],
+    sessions: () => ['iam', 'sessions'],
+    devices: () => ['iam', 'devices'],
+    events: () => ['iam', 'events'],
+    policy: () => ['iam', 'policy'],
+    adminSessions: (p) => ['iam', 'admin', 'sessions', p],
+    adminUsers: (p) => ['iam', 'admin', 'users', p],
+    adminEvents: (p) => ['iam', 'admin', 'events', p],
+  },
 };
