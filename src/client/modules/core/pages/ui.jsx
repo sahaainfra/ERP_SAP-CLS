@@ -2,6 +2,7 @@ import { useEffect, useId } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
 import { confirmLeave } from '../../../platform/forms/guard.js';
+import { QueryError } from '../../../platform/feedback/states.jsx';
 
 // Small pieces the configuration pages share: page title, load states, field errors and a modal form.
 
@@ -27,26 +28,11 @@ export function Loading({ label }) {
   );
 }
 
-/** Forbidden, error or nothing at all for a failed query; null while it is fine. */
+/** Forbidden, error or nothing at all for a failed query; null while it is fine. Draws the standard states (part 03.04). */
 export function QueryState({ query, what, permission }) {
   if (query.isPending) return <Loading label={`Loading ${what}`} />;
   if (!query.isError) return null;
-  if (query.error.status === 403) {
-    return (
-      <div className="state" role="alert">
-        <h2>You do not have access to {what}</h2>
-        <p>{/^an? /.test(String(permission)) ? `This needs ${permission}.` : `This needs the ${permission} permission.`} Ask a system administrator to grant it.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="state state-error" role="alert">
-      <h2>Could not load {what}</h2>
-      <p>{query.error.message}</p>
-      {query.error.correlationId && <p className="muted">Correlation ID: <code>{query.error.correlationId}</code></p>}
-      <button type="button" className="btn" onClick={() => query.refetch()}>Try again</button>
-    </div>
-  );
+  return <QueryError error={query.error} what={what} permission={permission} onRetry={() => query.refetch()} />;
 }
 
 export function FieldError({ error, name }) {

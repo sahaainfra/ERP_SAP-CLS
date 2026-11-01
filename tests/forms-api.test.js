@@ -177,7 +177,7 @@ test('AC-02 the reference form: the server recomputes every amount with the engi
   assert.equal((await api.call('PUT', `${U}/sample-requests/${r.id}`, { ...pm, headers: key('u3'), body: { ...request(w), version: sent.json.data.version } })).status, 422, 'a submitted request is not edited');
   // cancel keeps the number; audit and events tell the whole story
   assert.equal((await api.call('POST', `${U}/sample-requests/${r.id}/cancel`, { ...pm, headers: key('c'), body: { version: sent.json.data.version } })).status, 400, 'a reason is needed');
-  const cancelled = await api.call('POST', `${U}/sample-requests/${r.id}/cancel`, { ...pm, headers: key('c2'), body: { version: sent.json.data.version, reason: 'Entered against the wrong footing' } });
+  const cancelled = await api.call('POST', `${U}/sample-requests/${r.id}/cancel`, { ...pm, headers: key('c2'), body: { version: sent.json.data.version, reasonCode: 'WRONG_PROJECT', reason: 'Entered against the wrong footing' } });
   assert.equal(cancelled.json.data.status, 'CANCELLED');
   assert.equal(cancelled.json.data.docNo, sent.json.data.docNo);
   assert.deepEqual(api.db.prepare("SELECT action FROM core_audit_log WHERE entity = 'ui_sample_requests' ORDER BY id").all().map((a) => a.action), ['create', 'update', 'submit', 'cancel']);

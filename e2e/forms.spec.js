@@ -131,12 +131,13 @@ test('Reference form AC-02 T-01: context auto-fill, dependent lookups, 50 rows p
   await page.locator('#f-lines-2-quantity').fill('3.5');
   // submit: saved, recalculated by the server and numbered
   await page.getByRole('button', { name: 'Submit', exact: true }).click();
-  await expect(page.getByTestId('form-notice')).toContainText(/Submitted as MR\/2026-27\/0001/);
+  await expect(page.getByTestId('toast-success')).toContainText('Submitted as MR/2026-27/0001');
   await expect(page.getByRole('heading', { name: 'MR/2026-27/0001' })).toBeVisible();
-  await expect(page.getByText('This request is submitted and can no longer be changed.')).toBeVisible();
+  await expect(page.getByTestId('op-header')).toContainText('Awaiting ACCMGR');
+  await page.getByRole('tab', { name: 'Lines' }).click();
   await expect(page.getByTestId('total-amount')).toHaveText('1,53,70,000.00');
   await noOverflow(page);
-  await page.getByRole('button', { name: 'Back to the list' }).click();
+  await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Sample Material Requests' }).click();
   await expect(page.getByText('1 requests, page 1 of 1')).toBeVisible();
   // the same title again for the same project and date is flagged while typing
   await page.getByRole('button', { name: 'New request' }).first().click();
@@ -209,5 +210,5 @@ test('T-04 a request completed with the keyboard alone', async ({ page, request 
   await expect(page.getByTestId('total-amount')).toHaveText('23,125.00');
   await tabTo(page, (el) => el.tagName === 'BUTTON' && el.textContent.trim() === 'Submit');
   await page.keyboard.press('Enter');
-  await expect(page.getByTestId('form-notice')).toContainText(/Submitted as MR\/2026-27\/0001/);
+  await expect(page.getByTestId('toast-success')).toContainText('Submitted as MR/2026-27/0001');
 });

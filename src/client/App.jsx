@@ -10,6 +10,7 @@ import Icon from './platform/design/Icon.jsx';
 import { APPEARANCE_EVENT, THEMES, announceAppearance, applyAppearance, storedAppearance } from './platform/design/appearance.js';
 import AcceptInvitePage from './modules/iam/pages/AcceptInvitePage.jsx';
 import { confirmLeave } from './platform/forms/guard.js';
+import { FeedbackProvider } from './platform/feedback/Feedback.jsx';
 
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
@@ -77,7 +78,7 @@ function Shell({ iam, user }) {
   const route = onboarding ? (found?.onboarding ? found : findRoute('/welcome')) : (found ?? allRoutes()[0]);
 
   return (
-    <>
+    <FeedbackProvider>
       <a href="#main" className="skip">Skip to content</a>
       <header className="shellbar">
         <strong>ERP</strong>
@@ -134,7 +135,7 @@ function Shell({ iam, user }) {
           </div>
         )}
       </main>
-    </>
+    </FeedbackProvider>
   );
 }
 

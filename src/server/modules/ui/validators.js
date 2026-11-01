@@ -50,5 +50,6 @@ export const parseDraftList = (q) => parseListQuery(q, { sortable: ['savedAt', '
 export const parseDuplicateCheck = (b) => parse(z.object({ fields: z.record(z.string(), z.union([z.string().max(300), z.number(), z.boolean(), z.null()])) }).strict(), b);
 export const parseCreateFrom = (q) => parse(z.object({ source: z.string().regex(/^[a-z]+\.[a-z_]+$/, 'Name the source, such as core.sample_document'), id: z.coerce.number().int().positive() }).strict(), q);
 
-export const parseRequestAction = (b) => parse(z.object({ version: z.number().int().positive(), reason: z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500).optional() }).strict(), b);
+export const parseRequestAction = (b) => parse(z.object({ version: z.number().int().positive(), reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/, 'Choose a reason').optional(), reason: z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500).optional() }).strict(), b);
+export const parseDecision = (b) => parse(z.object({ action: z.enum(['approve', 'reject', 'return']), version: z.number({ error: 'Send the version of the approval you saw' }).int().positive(), reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/, 'Choose a reason').optional(), comment: z.string().trim().max(500).optional() }).strict(), b);
 export const parseId = (v) => parse(z.coerce.number().int().positive(), v);

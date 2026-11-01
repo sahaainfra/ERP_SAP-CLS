@@ -29,7 +29,7 @@ async function boot() {
   };
   const login = async (username) => (await http('POST', `${I}/auth/login`, { body: { username, password: PW, deviceId: 'device-aaaaaaaa', deviceName: 'Laptop' } })).json?.data?.accessToken ?? null;
   const as = async (username, roles) => {
-    store.create({ companyId: 1, username, email: `${username}@example.com`, displayName: `${username} Kumar`, roles, password: PW });
+    await store.create({ companyId: 1, username, email: `${username}@example.com`, displayName: `${username} Kumar`, roles, password: PW });
     const me = { username, token: await login(username), get: (p) => http('GET', p, { token: me.token }), post: (p, body = {}) => http('POST', p, { token: me.token, body, headers: idem() }), put: (p, body) => http('PUT', p, { token: me.token, body, headers: idem() }), del: (p, body) => http('DELETE', p, { token: me.token, body, headers: idem() }), relogin: async () => { me.token = await login(username); return me; } };
     assert.ok(me.token, `${username} signs in`);
     return me;

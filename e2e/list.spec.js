@@ -34,7 +34,7 @@ async function world(request, code) {
   const project = await post('/iam/org/projects', 'PM', company, { code: `${code}-P`, name: 'NH-48 Widening', type: 'ROAD' });
   for (let i = 1; i <= 12; i += 1) {
     const r = await post('/ui/sample-requests', 'PM', company, { title: `Lot ${i} ${i % 2 ? 'cement' : 'steel'}`, docDate: `2026-10-${String(i + 10).padStart(2, '0')}`, requiredBy: '2026-11-20', projectId: project.id, lines: [{ description: 'Cement OPC 53', uom: 'BAG', quantity: String(i * 10), unitRate: '400' }] }, i % 3 === 0 ? 'e2e-other' : 'e2e-pm');
-    if (i <= 8) await post(`/ui/sample-requests/${r.id}/submit`, 'PM', company, { version: r.version });
+    if (i <= 8) await post(`/ui/sample-requests/${r.id}/submit`, 'PM', company, { version: r.version }, i % 3 === 0 ? 'e2e-other' : 'e2e-pm'); // only the person who raised a request submits it
   }
   return { company };
 }
@@ -62,15 +62,16 @@ test('List Report on the reference register: filters, totals, columns kept, a de
   await expect(page.getByText('2 requests, page 1 of 1')).toBeVisible();
   await page.getByRole('button', { name: /Remove the filter Total/ }).click();
   await expect(page.getByText('4 requests, page 1 of 1')).toBeVisible();
-  // bulk submit two drafts; the result names them
-  page.on('dialog', (d) => d.accept());
+  // bulk submit two drafts, one of them somebody else's: one is done, one is refused, and the result says which and why
   await page.getByRole('checkbox', { name: 'Select every row on this page' }).check();
   await page.locator('tbody input[type=checkbox]').nth(0).uncheck();
   await page.locator('tbody input[type=checkbox]').nth(1).uncheck();
   await expect(page.getByTestId('bulk-bar')).toContainText('2 selected');
   await page.getByRole('button', { name: 'Submit selected' }).click();
-  await expect(page.getByTestId('bulk-result')).toContainText('Submit selected: 2 done.');
-  await expect(page.getByText('2 requests, page 1 of 1')).toBeVisible();
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Submit selected' }).click();
+  await expect(page.getByTestId('bulk-result')).toContainText('Submit selected: 1 done, 1 not done.');
+  await expect(page.getByTestId('bulk-result')).toContainText('Only e2e-other, who raised this request, can submit it');
+  await expect(page.getByText('3 requests, page 1 of 1')).toBeVisible();
   // hide a column; it stays hidden after a reload (kept per person)
   await page.getByRole('button', { name: 'Clear all' }).click();
   await page.getByTestId('column-chooser').locator('summary').click();
@@ -85,7 +86,7 @@ test('List Report on the reference register: filters, totals, columns kept, a de
   await page.getByRole('button', { name: 'Save view' }).click();
   await expect(page.getByTestId('list-notice')).toContainText('View "Submitted by value" saved.');
   await page.reload();
-  await expect(page.getByText('10 requests, page 1 of 1')).toBeVisible();
+  await expect(page.getByText('9 requests, page 1 of 1')).toBeVisible();
   await expect(page.getByTestId('views-menu').locator('summary')).toContainText('View: Submitted by value');
   await expect(list.getByRole('columnheader', { name: 'Site' })).toHaveCount(0);
   await expect(list.getByRole('columnheader', { name: /Total/ })).toHaveAttribute('aria-sort', 'ascending');
@@ -93,7 +94,7 @@ test('List Report on the reference register: filters, totals, columns kept, a de
   await page.getByTestId('export-menu').locator('summary').click();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'XLSX' }).click()]);
   expect(download.suggestedFilename()).toMatch(/^ui-sample_requests-\d{8}-\d{4}\.xlsx$/);
-  await expect(page.getByTestId('list-notice')).toContainText('Exported 10 rows as XLSX');
+  await expect(page.getByTestId('list-notice')).toContainText('Exported 9 rows as XLSX');
   // a row link opens the request (and would open in a new tab with a middle click)
   const first = list.locator('tbody tr').first().locator('a').first();
   await expect(first).toHaveAttribute('href', /\/admin\/sample-requests\?open=\d+/);

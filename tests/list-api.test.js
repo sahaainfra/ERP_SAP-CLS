@@ -244,6 +244,7 @@ test('FR-05 bulk submit and cancel run each request on its own and report succes
   await api.call('PUT', '/api/v1/core/company-settings', { roles: 'SYSADM', user: 'sys1', headers: key('cs'), body: { legalName: 'Company 1 Pvt Ltd', reason: 'initial set-up' } });
   await api.call('POST', '/api/v1/core/financial-years', { roles: 'SYSADM', user: 'sys1', headers: key('fy'), body: { startDate: '2026-04-01' } });
   await api.call('POST', '/api/v1/core/number-series', { roles: 'SYSADM', user: 'sys1', headers: key('ns'), body: { docType: 'SAMPLE_MR', name: 'Sample material requests', prefix: 'MR', format: '{PREFIX}/{FY}/{SEQ:4}', resetRule: 'financial_year', reason: 'initial set-up' } });
+  api.db.prepare("UPDATE ui_sample_requests SET requested_by = 'pm1'").run(); // a bulk action works on one's own requests
   const drafts = api.db.prepare("SELECT id FROM ui_sample_requests WHERE status = 'DRAFT' ORDER BY id").all().map((r) => r.id);
   const submitted = api.db.prepare("SELECT id FROM ui_sample_requests WHERE status = 'SUBMITTED' ORDER BY id").all().map((r) => r.id);
   const out = await api.call('POST', `${U}/sample-requests/bulk`, { ...pm, headers: key('b1'), body: { action: 'submit', ids: [...drafts, submitted[0], 99999] } });
@@ -254,7 +255,7 @@ test('FR-05 bulk submit and cancel run each request on its own and report succes
   assert.match(out.json.data.results.find((r) => r.id === 99999).message, /does not exist/);
   assert.ok(out.json.data.results.filter((r) => r.ok).every((r) => /^Submitted as MR\/2026-27\/\d{4}$/.test(r.message)));
   assert.equal((await api.call('POST', `${U}/sample-requests/bulk`, { ...pm, headers: key('b2'), body: { action: 'cancel', ids: [submitted[0]] } })).status, 400, 'a cancel needs a reason');
-  const cancelled = await api.call('POST', `${U}/sample-requests/bulk`, { ...pm, headers: key('b3'), body: { action: 'cancel', ids: [submitted[0]], reason: 'Duplicate of an earlier request' } });
+  const cancelled = await api.call('POST', `${U}/sample-requests/bulk`, { ...pm, headers: key('b3'), body: { action: 'cancel', ids: [submitted[0]], reasonCode: 'DUPLICATE', reason: 'Duplicate of an earlier request' } });
   assert.equal(cancelled.json.data.done, 1);
   assert.equal((await api.call('POST', `${U}/sample-requests/bulk`, { ...pm, headers: json, body: { action: 'submit', ids: [1] } })).status, 400, 'bulk needs an idempotency key');
   assert.equal((await api.call('POST', `${U}/sample-requests/bulk`, { roles: 'EMP', user: 'e1', headers: key('b4'), body: { action: 'submit', ids: [1] } })).status, 403);

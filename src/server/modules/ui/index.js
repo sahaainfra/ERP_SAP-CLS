@@ -7,10 +7,14 @@ import { lookupRegistry, lookupRoutes } from '../../platform/lookups/index.js';
 import { createFlagService } from '../core/api.js';
 import { createDraftService } from './drafts.js';
 import { createFormService } from './forms.js';
-import { formRoutes, listRoutes, uiRoutes } from './routes.js';
+import { formRoutes, listRoutes, objectRoutes, uiRoutes } from './routes.js';
 import { createExportService, createSavedViewService, describeFor } from './lists.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
+import { createObjectService } from './objects.js';
 import { createSampleRequestService } from './sample-requests.js';
+import { sampleRequestHandlers } from './sample-request-object.js';
+import { createApprovalEngine } from '../../platform/approvals/index.js';
+import { parameterRegistry } from '../../platform/parameters/index.js';
 import { createUiService } from './service.js';
 
 // Part 03.01: events this module publishes.
@@ -29,9 +33,17 @@ for (const [verb, description] of [['created', 'A sample material request was sa
 const listEventSchema = { type: 'object', properties: { list: { type: 'string' } }, required: ['list'] };
 eventTypes.define({ type: 'ui.saved_view.changed', version: 1, schema: listEventSchema, owner: 'ui', description: 'A saved list view was created, changed or deleted.' });
 eventTypes.define({ type: 'ui.export.completed', version: 1, schema: listEventSchema, owner: 'ui', description: 'A background export of a list finished; the file is under My Exports.' });
+// Part 03.04: the Object Page's events and the approval clock.
+for (const [verb, description] of [['approved', 'A sample material request was approved at its last step.'], ['rejected', 'A sample material request was rejected and cancelled; it keeps its number.'], ['returned', 'A sample material request was returned to its requester as a draft.']]) {
+  eventTypes.define({ type: `ui.sample_request.${verb}`, version: 1, schema: requestSchema, owner: 'ui', description });
+}
+/** @type {any} */
+const commentSchema = { type: 'object', properties: { type: { type: 'string' } }, required: ['type'] };
+eventTypes.define({ type: 'ui.comment.created', version: 1, schema: commentSchema, owner: 'ui', description: 'A comment was added to a record\'s discussion (people mentioned are in the data).' });
+parameterRegistry.define({ key: 'ui.approval.sla_hours', dataType: 'integer', default: 24, min: 1, max: 720, scopes: ['system', 'company'], description: 'Hours an approver has for one step of an approval before it shows as overdue on the Object Page.' });
 integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED', 'EXPIRED'] } });
 integrityRegistry.register({
-  companyOptional: ['ui_form_metadata'], // a shared definition has no company; a company-specific version would
+  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents'], // the shared definitions, reasons and requirements have no company; a company's own would
   statuses: { ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
@@ -43,8 +55,8 @@ export const ui = {
   routePrefix: '/api/v1/ui',
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
-  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs'],
-  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports'],
+  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents'],
+  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes'],
 
   mount(api, { db, config, storagePath }) {
     const flags = createFlagService({ db, environment: config.environment });
@@ -53,7 +65,9 @@ export const ui = {
     router.use(['/preferences', '/style-guide'], gate('ff.ui.p0301', 'Screen preferences and the style guide are'));
     router.use(uiRoutes(createUiService({ db, config })));
     const drafts = createDraftService({ db });
-    const requests = createSampleRequestService({ db, drafts });
+    const approvals = createApprovalEngine({ db, handlers: sampleRequestHandlers });
+    const objects = createObjectService({ db, approvals });
+    const requests = createSampleRequestService({ db, drafts, approvals, objects });
     const idempotentRequired = idempotency(db, { required: true });
     // Part 03.03: the List Report's routes come first, so /sample-requests/export is not read as a record id.
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ui_export_jobs'").get());
@@ -70,6 +84,11 @@ export const ui = {
     lists.use(['/lists', '/saved-views', '/exports', '/sample-requests/export', '/sample-requests/bulk'], gate('ff.ui.p0303', 'Saved views, list exports and bulk actions are'));
     lists.use(listRoutes({ views: createSavedViewService({ db }), exports, requests, describe: (actor, code) => describeFor(actor, code, hidden[code]) }, { idempotentRequired }));
     router.use(lists);
+    // Part 03.04: the Object Page's routes (the record's own GET and actions are under /sample-requests).
+    const objectsRouter = Router();
+    objectsRouter.use(['/objects', '/reason-codes', '/sample-requests/:id/decision'], gate('ff.ui.p0304', 'The Object Page, its approvals and discussion are'));
+    objectsRouter.use(objectRoutes({ objects, reasonCodes: (actor, forAction) => objects.reasonCodes(actor, forAction) }, { idempotent: idempotency(db) }));
+    router.use(objectsRouter);
     const framework = Router();
     framework.use(gate('ff.ui.p0302', 'Drafts, form definitions and the reference form are'));
     framework.use(formRoutes({ drafts, forms: createFormService({ db }), requests }, { idempotent: idempotency(db), idempotentRequired }));

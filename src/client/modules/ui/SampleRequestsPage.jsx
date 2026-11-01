@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFromSource, useFormDefinition, useSampleRequest, useSampleRequestActions, useSampleRequestBulk } from './api.js';
+import ObjectPage from '../../platform/object/ObjectPage.jsx';
+import { Banner, useToast } from '../../platform/feedback/Feedback.jsx';
 import { navigateTo, QueryState, usePageTitle } from '../core/pages/ui.jsx';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { formatDateTime } from '../../platform/format.js';
+import { formatBusinessDate } from '../../platform/forms/index.js';
 import {
-  ActionBar, DraftBanner, DuplicateWarning, ErrorSummary, FileField, FormSection, LineGrid, MetaField, ReadOnlyField, computeCell, draftStatus, fetchLookup,
+  ActionBar, DraftBanner, DuplicateWarning, ErrorSummary, FormSection, LineGrid, MetaField, ReadOnlyField, computeCell, draftStatus, fetchLookup,
   newRow, useDraft, useForm, useFormContext, useUnsavedGuard,
 } from '../../platform/forms/index.js';
 import { formatNumberInput, total as sumOf } from '../../../shared/forms/numbers.js';
@@ -108,7 +111,7 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
       draft.consumed();
       reset(fromRecord(saved));
       setNotice(thenSubmit ? `Submitted as ${saved.docNo}.` : `Saved. Total ${formatNumberInput(saved.total)} for ${saved.lineCount} item(s), as calculated by the server.`);
-      if (!id) onDone(saved.id, thenSubmit ? `Submitted as ${saved.docNo}.` : 'Saved as a draft request.');
+      onDone(saved.id, thenSubmit ? `Submitted as ${saved.docNo}.` : 'Saved as a draft request.');
     } catch (err) {
       failed(err);
     } finally {
@@ -116,13 +119,7 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
     }
   };
   const saveDraft = async () => { setNotice(''); const d = await draft.save('manual'); if (d) { markSaved(); setNotice('Draft kept. You can close this page and resume it later from My Drafts.'); } };
-  const cancelRecord = async () => {
-    const reason = window.prompt('Why is this request being cancelled? (at least 5 characters)');
-    if (!reason) return;
-    setBusy('cancel');
-    try { const r = await actions.cancel(rec.id, rec.version, reason); reset(fromRecord(r)); setNotice(`Cancelled. ${r.docNo ? `${r.docNo} keeps its number.` : ''}`); } catch (err) { failed(err); } finally { setBusy(''); }
-  };
-  const leave = () => onDone(null);
+  const leave = () => onDone(id ?? null, null);
 
   // dependent lookups and defaults from masters (FR-04, FR-05)
   const onProject = (v) => update((cur) => ({ ...cur, projectId: v, siteId: '', costCentreId: '' }));
@@ -150,10 +147,10 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
         onBlur={draft.onBlur} error={errors[name]} readOnly={readOnly} parentValue={f.parent ? values[f.parent] : undefined} parentLabel={f.parent ? def.fields[f.parent].label.toLowerCase() : undefined} siteId={values.siteId || undefined} />
     );
   };
-  const title = rec ? (rec.docNo ?? `Draft request #${rec.id}`) : 'New sample material request';
+  const title = rec ? `Change ${rec.docNo ?? `draft request #${rec.id}`}` : 'New sample material request';
   return (
     <section aria-labelledby="form-title" className="ff-form" data-testid="request-form">
-      <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Reference &rsaquo; <a href="/admin/sample-requests" onClick={(e) => { e.preventDefault(); leave(); }}>Sample Material Requests</a> &rsaquo; {title}</nav>
+      <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Reference &rsaquo; <a href="/admin/sample-requests" onClick={(e) => { e.preventDefault(); onDone(null); }}>Sample Material Requests</a> &rsaquo; {title}</nav>
       <div className="page-head">
         <h1 id="form-title">{title}</h1>
         {rec && <StatusBadge status={rec.status} />}
@@ -180,14 +177,10 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
           {!readOnly && <button type="button" className="btn" onClick={saveDraft} disabled={Boolean(busy) || !dirty}><Icon name="erp.state.draft" size={16} />Save draft</button>}
           {!readOnly && <button type="submit" className="btn" disabled={Boolean(busy)}><Icon name="erp.action.save" size={16} />{busy === 'save' ? 'Saving...' : 'Save'}</button>}
           {!readOnly && <button type="button" className="btn btn-primary" onClick={() => save({ thenSubmit: true })} disabled={Boolean(busy)}><Icon name="erp.action.submit" size={16} />{busy === 'submit' ? 'Submitting...' : 'Submit'}</button>}
-          {rec && rec.status !== 'CANCELLED' && <button type="button" className="btn" onClick={cancelRecord} disabled={Boolean(busy)}>Cancel request</button>}
-          <button type="button" className="btn" onClick={leave}>{readOnly || !dirty ? 'Back to the list' : 'Cancel'}</button>
+          <button type="button" className="btn" onClick={leave}>{id ? 'Back to the request' : 'Back to the list'}</button>
         </ActionBar>
       </form>
-      {/* outside the request form: the attachment list has its own dialog form */}
-      <FormSection id="files" title="Attachments" columns={1} collapsible defaultOpen={Boolean(rec)}>
-        <FileField id="f-files" label="Files of this request" entity={rec ? 'sample_request' : undefined} entityId={rec?.id} readOnly={rec?.status === 'CANCELLED'} hint="Drawings, photos of the site, the indent sheet." />
-      </FormSection>
+      <p className="muted small">Documents, photos and drawings are attached on the request's Attachments tab once it is saved.</p>
       {rowFiles && (
         <dialog open className="dialog" aria-labelledby="row-files-title">
           <h2 id="row-files-title">Files of row: {rowFiles.description}</h2>
@@ -197,6 +190,65 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
         </dialog>
       )}
     </section>
+  );
+}
+
+const APPROVAL_LABEL = { APPROVED: 'Approved', REJECTED: 'Rejected', RETURNED: 'Returned', CANCELLED: 'Withdrawn' };
+const showMoney = (v) => (/^•+$/.test(String(v)) ? v : formatNumberInput(v));
+
+/** A request on the Object Page (part 03.04, AC-01): header, key figures, the buttons the server allows, and every tab. */
+function RequestObject({ def, id, notice, onEdit, onBack }) {
+  const toast = useToast();
+  const query = useSampleRequest(id);
+  const actions = useSampleRequestActions();
+  const rec = query.data;
+  const values = useMemo(() => (rec ? fromRecord(rec) : null), [rec]);
+  const [rowFiles, setRowFiles] = useState(null);
+  const columns = useMemo(() => def.grids.lines.columns.map((c) => (c.type === 'lookup' ? { ...c, valueKey: 'code' } : c)), [def]);
+  const told = useRef(false); // the notice of the save that brought us here is shown once, though React may run the effect twice
+  useEffect(() => { if (notice && !told.current) { told.current = true; toast.success(notice); } }, []);
+  const onAction = async (action, p) => {
+    if (action.id === 'submit') return actions.submit(id, rec.version);
+    if (action.id === 'cancel') return actions.cancel(id, rec.version, p.reason, p.reasonCode);
+    return actions.decide(id, { action: action.id, reasonCode: p.reasonCode, comment: p.reason, version: rec.approval.version });
+  };
+  const details = (r) => (
+    <div data-testid="request-details">
+      {r.status === 'DRAFT' && r.approval?.status === 'RETURNED' && <Banner tone="warning" title="Returned for changes." testId="returned-banner">An approver sent this request back. Read the reason on the Approvals tab, change the request and submit it again; it keeps its number.</Banner>}
+      {r.status === 'CANCELLED' && <Banner tone="info" title="Cancelled." testId="cancelled-banner">{r.docNo ? `${r.docNo} keeps its number.` : 'It never got a number.'} A cancelled request cannot be changed or submitted.</Banner>}
+      {def.sections.filter((x) => !x.grid).map((sec) => (
+        <FormSection key={sec.id} id={sec.id} title={sec.title} columns={sec.columns}>
+          {sec.fields.map((name) => {
+            const fd = def.fields[name];
+            if (!isShown(fd, values)) return null;
+            if (name === 'requestedBy') return <ReadOnlyField key={name} id="f-requestedBy" label={fd.label} text={r.requestedBy} />;
+            return <MetaField key={name} name={name} def={fd} value={values[name]} onChange={() => {}} readOnly />;
+          })}
+        </FormSection>
+      ))}
+    </div>
+  );
+  const lines = (r) => (
+    <div data-testid="request-lines">
+      <LineGrid id="lines" label={def.grids.lines.label} columns={columns} rows={r.lines.map((l) => newRow({ id: l.id, description: l.description, uom: l.uom, quantity: l.quantity, unitRate: l.unitRate, amount: l.amount, neededOn: l.neededOn ?? '', comment: l.comment ?? '' }))} onChange={() => {}} readOnly maxRows={def.grids.lines.maxRows}
+        rowExtra={(row) => (row.id ? <button type="button" className="btn btn-small" onClick={() => setRowFiles(row)} aria-label={`Files of row ${row.description}`}><Icon name="erp.action.attach" size={16} />Files</button> : null)} />
+      {rowFiles && (
+        <dialog open className="dialog" aria-labelledby="row-files-title">
+          <h2 id="row-files-title">Files of row: {rowFiles.description}</h2>
+          <FileUploader entity="sample_request_line" entityId={rowFiles.id} disabled={rec?.status === 'CANCELLED'} />
+          <AttachmentList entity="sample_request_line" entityId={rowFiles.id} canEdit={rec?.status !== 'CANCELLED'} />
+          <div className="actions"><button type="button" className="btn" onClick={() => setRowFiles(null)}>Close</button></div>
+        </dialog>
+      )}
+    </div>
+  );
+  return (
+    <ObjectPage type="sample_request" id={id} query={query} title="Request" section="Administration &rsaquo; Reference" listLabel="Sample Material Requests" listPath="/admin/sample-requests"
+      heading={(r) => r.docNo ?? `Draft request #${r.id}`} subtitle={(r) => r.title}
+      chips={(r) => [{ status: r.status, label: r.status === 'DRAFT' ? 'Draft' : r.status === 'SUBMITTED' ? 'Submitted' : 'Cancelled' }, ...(r.approval && r.status !== 'CANCELLED' ? [r.approval.status === 'SUBMITTED' ? { status: 'IN_REVIEW', label: `Awaiting ${r.approval.chain[r.approval.currentStep - 1].replace('|', ' or ')}` } : { status: r.approval.status === 'CANCELLED' ? 'CANCELLED' : r.approval.status, label: APPROVAL_LABEL[r.approval.status] }] : [])]}
+      figures={(r) => [{ label: 'Total (₹)', value: showMoney(r.total) }, { label: 'Items', value: r.lineCount }, { label: 'Required by', value: formatBusinessDate(r.requiredBy) }, { label: 'Project / site', value: `${r.projectCode}${r.siteCode ? ` / ${r.siteCode}` : ''}` }]}
+      meta={(r) => [{ label: 'Requested by', value: r.requestedBy }, { label: 'Request date', value: formatBusinessDate(r.docDate) }, { label: 'Created', value: formatDateTime(r.createdAt) }, ...(r.submittedAt ? [{ label: 'Submitted', value: formatDateTime(r.submittedAt) }] : []), { label: 'Priority', value: r.priority === 'URGENT' ? 'Urgent' : 'Normal' }]}
+      renderDetails={details} renderLines={lines} attachmentEntity="sample_request" onAction={onAction} onEdit={onEdit} onBack={onBack} navigate={navigateTo} />
   );
 }
 
@@ -221,7 +273,7 @@ function RequestList({ onOpen, onNew, notice, session }) {
         empty={{ title: 'No sample material requests yet', text: 'Start one to see context auto-fill, dependent lookups, the line grid and drafts working.' }}
         bulkActions={[
           { id: 'submit', label: 'Submit selected', permission: 'core.sample.use', confirm: (n) => `Submit ${n} request(s)? Each draft gets its number; requests that are not drafts are left as they are.`, run: (ids) => bulk('submit', ids) },
-          { id: 'cancel', label: 'Cancel selected', permission: 'core.sample.use', confirm: (n) => `Cancel ${n} request(s)? Numbered requests keep their numbers.`, run: (ids) => { const reason = window.prompt('Why are these requests being cancelled? (at least 5 characters)'); if (!reason) return Promise.resolve({ results: [] }); return bulk('cancel', ids, reason); } },
+          { id: 'cancel', label: 'Cancel selected', permission: 'core.sample.use', reasonFor: 'cancel', confirm: (n) => `Cancel ${n} request(s)? Only the person who raised a request can cancel it; numbered requests keep their numbers.`, run: (ids, p) => bulk('cancel', ids, p) },
         ]}
         rowActions={(r) => [
           { label: 'Open', onSelect: () => onOpen(r.id) },
@@ -233,24 +285,34 @@ function RequestList({ onOpen, onNew, notice, session }) {
   );
 }
 
+const readView = () => {
+  const p = params();
+  if (p.get('open')) return { mode: 'open', id: Number(p.get('open')) };
+  if (p.get('edit')) return { mode: 'edit', id: Number(p.get('edit')) };
+  if (p.get('new')) return { mode: 'new', id: null };
+  return null;
+};
+
 export default function SampleRequestsPage({ session }) {
   usePageTitle('Sample Material Requests');
   const def = useFormDefinition(SAMPLE_REQUEST_FORM);
-  const [view, setView] = useState(() => { const p = params(); return p.get('open') ? { id: Number(p.get('open')) } : p.get('new') ? { id: null, isNew: true } : null; });
+  const [view, setView] = useState(readView);
   const [notice, setNotice] = useState('');
   useEffect(() => {
-    const onPop = () => { const p = params(); setView(p.get('open') ? { id: Number(p.get('open')) } : p.get('new') ? { id: null, isNew: true } : null); };
+    const onPop = () => setView(readView());
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
   const go = (path, next, force = false) => { if (navigateTo(path, { force })) setView(next); };
+  const open = (id, message = '', force = false) => { setNotice(message ?? ''); go(`/admin/sample-requests?open=${id}`, { mode: 'open', id }, force); };
   const definition = useMemo(() => def.data, [def.data]);
   if (!definition) return <QueryState query={def} what="the form definition" permission="a signed-in account" />;
+  if (view?.mode === 'open') return <RequestObject key={view.id} def={definition} id={view.id} notice={notice} onEdit={() => go(`/admin/sample-requests?edit=${view.id}`, { mode: 'edit', id: view.id })} onBack={() => { setNotice(''); go('/admin/sample-requests', null); }} />;
   if (view) {
     return (
-      <RequestForm key={view.id ?? 'new'} def={definition} id={view.id}
-        initialNotice={notice} onDone={(savedId, message) => { if (savedId) { setNotice(message ?? ''); go(`/admin/sample-requests?open=${savedId}`, { id: savedId }, true); } else { setNotice(''); go('/admin/sample-requests', null); } }} />
+      <RequestForm key={`${view.mode}-${view.id ?? 'new'}`} def={definition} id={view.id}
+        initialNotice="" onDone={(savedId, message) => { if (savedId) open(savedId, message, true); else { setNotice(''); go('/admin/sample-requests', null); } }} />
     );
   }
-  return <RequestList session={session} notice={notice} onOpen={(id) => go(`/admin/sample-requests?open=${id}`, { id })} onNew={() => go('/admin/sample-requests?new=1', { id: null, isNew: true })} />;
+  return <RequestList session={session} notice={notice} onOpen={(id) => open(id)} onNew={() => go('/admin/sample-requests?new=1', { mode: 'new', id: null })} />;
 }

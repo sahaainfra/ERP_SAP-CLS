@@ -88,6 +88,8 @@ const MANUAL = [
   [/^\/api\/v1\/ui\/style-guide$/, { g: 'record', k: 'ui.styleguide.view' }],
   [/^\/api\/v1\/ui\/(drafts|forms|form-registry|saved-views|exports)(\/|$)/, { g: 'self' }],
   [/^\/api\/v1\/ui\/lists\//, { g: 'record' }],
+  [/^\/api\/v1\/ui\/objects\//, { g: 'record' }], // the record type's own permission and data scope decide (platform/objects)
+  [/^\/api\/v1\/ui\/reason-codes$/, { g: 'self' }],
   [/^\/api\/v1\/ui\/(duplicate-check|create-from)\//, { g: 'record' }],
   [/^\/api\/v1\/ui\/sample-requests/, { k: 'core.sample.use' }],
   [/^\/api\/v1\/(core|iam)\/lookups$/, { g: 'self' }],

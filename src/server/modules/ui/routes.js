@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { parse } from '../../platform/validation/index.js';
 import { parseSampleRequest } from './sample-requests.js';
 import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
+import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
 import {
-  parseCreateFrom, parseDraftBulkDelete, parseDraftDelete, parseDraftList, parseDraftSave, parseDuplicateCheck, parseEntityKey, parseFormCode, parseId, parsePreferences, parseRequestAction,
+  parseCreateFrom, parseDraftBulkDelete, parseDraftDelete, parseDraftList, parseDraftSave, parseDuplicateCheck, parseEntityKey, parseFormCode, parseId, parsePreferences, parseRequestAction, parseDecision,
 } from './validators.js';
 
 /** The ui module's routes (part 03.01), mounted at /api/v1/ui. */
@@ -41,11 +42,12 @@ export function formRoutes({ drafts, forms, requests }, { idempotent, idempotent
   r.get('/sample-requests/:id', (req, res) => res.json({ data: requests.get(req.actor, parseId(req.params.id)) }));
   r.put('/sample-requests/:id', idempotent, (req, res) => res.json({ data: requests.update(req.actor, parseId(req.params.id), parseSampleRequest(req.body), version(req.body), req.correlationId) }));
   r.post('/sample-requests/:id/submit', idempotentRequired, (req, res) => res.json({ data: requests.submit(req.actor, parseId(req.params.id), parseRequestAction(req.body), req.correlationId) }));
+  r.post('/sample-requests/:id/decision', idempotentRequired, (req, res) => res.json({ data: requests.decide(req.actor, parseId(req.params.id), parseDecision(req.body)) }));
   r.post('/sample-requests/:id/cancel', idempotentRequired, (req, res) => res.json({ data: requests.cancel(req.actor, parseId(req.params.id), parseRequestAction(req.body), req.correlationId) }));
   return r;
 }
 
-const bulkBody = (b) => parse(z.object({ action: z.enum(['submit', 'cancel']), ids: z.array(z.number().int().positive()).min(1, 'Select at least one request').max(200), reason: z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500).optional() }).strict()
+const bulkBody = (b) => parse(z.object({ action: z.enum(['submit', 'cancel']), ids: z.array(z.number().int().positive()).min(1, 'Select at least one request').max(200), reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/).optional(), reason: z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500).optional() }).strict()
   .refine((v) => v.action !== 'cancel' || v.reason, { message: 'Give a reason of at least 5 characters', path: ['reason'] }), b);
 
 /** Send an export: the file itself (direct), or 202 with the queued job (large exports, FR-06). */
@@ -67,5 +69,28 @@ export function listRoutes({ views, exports, requests, describe }, { idempotentR
   r.get('/exports/:id/download', (req, res) => sendExport(res, { kind: 'file', ...exports.download(req.actor, parseId(req.params.id)) }));
   r.get('/sample-requests/export', (req, res) => sendExport(res, exports.start(req.actor, 'ui.sample_requests', req.query)));
   r.post('/sample-requests/bulk', idempotentRequired, (req, res) => res.json({ data: requests.bulk(req.actor, bulkBody(req.body), req.correlationId) }));
+  return r;
+}
+
+/** The Object Page's shared routes (part 03.04): the parts of a record every module's record page has, for any registered record type. */
+export function objectRoutes({ objects, reasonCodes }, { idempotent }) {
+  const r = Router();
+  const at = (req) => parseTypeId(req.params.type, req.params.id);
+  r.get('/reason-codes', (req, res) => res.json({ data: reasonCodes(req.actor, parseReasonFor(req.query).for) }));
+  r.get('/objects/:type/:id/approvals', (req, res) => res.json({ data: objects.approvalsOf(req.actor, ...at(req)) }));
+  r.get('/objects/:type/:id/timeline', (req, res) => res.json({ data: objects.timeline(req.actor, ...at(req)) }));
+  r.get('/objects/:type/:id/related', (req, res) => res.json({ data: objects.related(req.actor, ...at(req)) }));
+  r.get('/objects/:type/:id/comments', (req, res) => res.json({ data: objects.comments(req.actor, ...at(req)) }));
+  r.post('/objects/:type/:id/comments', idempotent, (req, res) => res.status(201).json({ data: objects.addComment(req.actor, ...at(req), parseComment(req.body)) }));
+  r.get('/objects/:type/:id/documents', (req, res) => res.json({ data: objects.documents(req.actor, ...at(req)) }));
+  r.post('/objects/:type/:id/documents', idempotent, (req, res) => res.status(201).json({ data: objects.linkDocument(req.actor, ...at(req), parseDocumentLink(req.body)) }));
+  r.delete('/objects/:type/:id/documents/:linkId', (req, res) => res.json({ data: objects.unlinkDocument(req.actor, ...at(req), parseId(req.params.linkId)) }));
+  r.get('/objects/:type/:id/versions', (req, res) => res.json({ data: objects.versions(req.actor, ...at(req)) }));
+  r.get('/objects/:type/:id/compare', (req, res) => res.json({ data: objects.compare(req.actor, ...at(req), parseCompare(req.query)) }));
+  r.get('/objects/:type/:id/print', (req, res) => {
+    const out = objects.print(req.actor, ...at(req));
+    res.set({ 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' });
+    res.send(out.buffer);
+  });
   return r;
 }

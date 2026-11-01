@@ -1071,6 +1071,30 @@ paths:
     get: { summary: 'Export the current view (?format=xlsx|csv|pdf and the list query); 202 with a job above core.export.max_rows', responses: { '200': { description: 'the file' }, '202': { description: '{ data: export job }' } } }
   /api/v1/ui/sample-requests/bulk:
     post: { summary: 'Submit or cancel several requests ({ action, ids, reason }); each result named (Idempotency-Key required)', responses: { '200': { description: '{ data: { results, done, failed } }' } } }
+  /api/v1/ui/objects/{type}/{id}/approvals:
+    get: { summary: 'The approval rounds of a record: steps, who can decide, the clock of the open step, history', responses: { '200': { description: '{ data: { rounds, evidence } }' } } }
+  /api/v1/ui/objects/{type}/{id}/timeline:
+    get: { summary: 'Audit entries, approval decisions and comments of a record in one list, newest first, masked for the viewer', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/objects/{type}/{id}/comments:
+    get: { summary: 'The discussion of a record', responses: { '200': { description: '{ data }' } } }
+    post: { summary: 'Add a comment ({ body }); @username mentions people in the company', responses: { '201': { description: '{ data }' } } }
+  /api/v1/ui/objects/{type}/{id}/documents:
+    get: { summary: 'The required documents of the record and which files satisfy them', responses: { '200': { description: '{ data: { requirements, complete } }' } } }
+    post: { summary: 'Say that a file of the record is a required document ({ requirementCode, fileId })', responses: { '201': { description: '{ data }' } } }
+  /api/v1/ui/objects/{type}/{id}/documents/{linkId}:
+    delete: { summary: 'Remove the link between a file and a required document', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/objects/{type}/{id}/related:
+    get: { summary: 'Source and derived records (trace links)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/objects/{type}/{id}/versions:
+    get: { summary: 'The saved versions of a record (original and amendments)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/objects/{type}/{id}/compare:
+    get: { summary: 'Two versions side by side (?from=&to= a version number or current): changed header and line fields marked', responses: { '200': { description: '{ data: { header, lines, summary } }' } } }
+  /api/v1/ui/objects/{type}/{id}/print:
+    get: { summary: 'The record as a PDF (audited; commercial values masked for those who may not see them)', responses: { '200': { description: 'the PDF' } } }
+  /api/v1/ui/reason-codes:
+    get: { summary: 'Reason codes for cancel, reject or return (?for=)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/sample-requests/{id}/decision:
+    post: { summary: 'Approve, reject or return the open approval ({ action, version of the approval, reasonCode, comment }); Idempotency-Key required', responses: { '200': { description: '{ data: the record }' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)

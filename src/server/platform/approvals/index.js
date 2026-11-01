@@ -111,6 +111,8 @@ export function createApprovalEngine({ db, handlers }) {
 
         db.prepare('UPDATE core_change_requests SET status = ?, current_step = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(status, step, actor.user, now, id);
         if (status === 'APPROVED') handlers[r.type].apply(db, { ...present({ ...r, status }), companyId: r.company_id }, actor); // throws => the whole decision rolls back
+        // a type may also react to a rejection or a return (part 03.04: the record it governs is cancelled or reopened), in the same transaction
+        else if ((status === 'REJECTED' || status === 'RETURNED') && handlers[r.type].decided) handlers[r.type].decided(db, { ...present({ ...r, status }), companyId: r.company_id }, status, comment ?? null, actor);
         writeAudit(db, { entity: 'core_change_requests', entityId: id, action: decision.toLowerCase(), newValues: { step: r.current_step, role, status }, reason: comment ?? null, actor: actor.user });
         publishEvent(db, { type: `core.change_request.${status === 'APPROVED' ? 'approved' : decision === 'APPROVED' ? 'advanced' : decision.toLowerCase()}`, entity: 'change_request', entityId: id, actorId: actor.user, companyId: r.company_id, data: { type: r.type, status, step: r.current_step } });
         return presentFull(id, actor.companyId);

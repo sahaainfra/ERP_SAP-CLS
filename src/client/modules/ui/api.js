@@ -46,12 +46,13 @@ export function useSampleRequestActions() {
     create: (body) => unwrap(api.post('/ui/sample-requests', body, idem())).then(done),
     update: (id, body) => unwrap(api.put(`/ui/sample-requests/${id}`, body, idem())).then(done),
     submit: (id, version) => unwrap(api.post(`/ui/sample-requests/${id}/submit`, { version }, idem())).then(done),
-    cancel: (id, version, reason) => unwrap(api.post(`/ui/sample-requests/${id}/cancel`, { version, reason }, idem())).then(done),
+    cancel: (id, version, reason, reasonCode) => unwrap(api.post(`/ui/sample-requests/${id}/cancel`, { version, reason, reasonCode }, idem())).then(done),
+    decide: (id, body) => unwrap(api.post(`/ui/sample-requests/${id}/decision`, body, idem())).then(done),
   };
 }
 
 // ---- part 03.03: bulk actions and list exports ----
 export function useSampleRequestBulk() {
-  return (action, ids, reason) => unwrap(api.post('/ui/sample-requests/bulk', { action, ids, ...(reason ? { reason } : {}) }, idem()));
+  return (action, ids, { reason, reasonCode } = {}) => unwrap(api.post('/ui/sample-requests/bulk', { action, ids, ...(reason ? { reason } : {}), ...(reasonCode ? { reasonCode } : {}) }, idem()));
 }
 export const useMyExports = () => useQuery({ queryKey: ['ui', 'exports'], queryFn: () => unwrap(api.get('/ui/exports')), retry: false, refetchInterval: (q) => ((q.state.data ?? []).some((e) => ['QUEUED', 'RUNNING'].includes(e.status)) ? 3000 : false) });

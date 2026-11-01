@@ -15,6 +15,8 @@ import { dec } from '../../../shared/decimal.js';
 import { fromUnits, toUnits } from '../../../shared/money.js';
 import { SAMPLE_REQUEST_FORM, sampleRequestSchema } from '../../../shared/forms/sample-request.js';
 import { moneyColumn, rupees } from './lists.js';
+import { missingDocuments, recordVersion } from './objects.js';
+import { APPROVAL_TYPE, TYPE, allowedActionsOf, approvalChain, latestApproval, snapshotOf } from './sample-request-object.js';
 
 const DOC_TYPE = 'SAMPLE_MR';
 const LINE = 'boq.line_amount';
@@ -107,7 +109,7 @@ duplicateChecks.register({
  * that differs is refused (section 6). The project, site, cost centre and department must exist, be active, belong together and be
  * inside the person's scope. Numbered when submitted (document type SAMPLE_MR, 01.03). Saving the request consumes the draft.
  */
-export function createSampleRequestService({ db, drafts }) {
+export function createSampleRequestService({ db, drafts, approvals, objects }) {
   const authz = authzOf(db);
   const engine = calcOf(db);
   const header = (id, c) => db.prepare('SELECT r.*, p.code AS project_code, s.code AS site_code FROM ui_sample_requests r JOIN org_projects p ON p.id = r.project_id LEFT JOIN org_sites s ON s.id = r.site_id WHERE r.id = ? AND r.company_id = ? AND r.deleted_at IS NULL').get(id, c);
@@ -187,7 +189,23 @@ export function createSampleRequestService({ db, drafts }) {
     for (const gone of existing.values()) db.prepare('UPDATE ui_sample_request_lines SET deleted_at = ?, deleted_by = ?, is_active = 0, version = version + 1 WHERE id = ?').run(at, actor.user, gone.id);
   }
 
+  const ownerOnly = (actor, r, what) => {
+    if (actor.user !== r.requested_by) throw forbidden(`Only ${r.requested_by}, who raised this request, can ${what} it.`);
+  };
   const maskRuleOf = (actor) => authz.maskRule(actor, 'ui_sample_request', 'total');
+  const maskLine = (actor, l) => {
+    const rule = maskRuleOf(actor);
+    if (rule === 'show') return l;
+    const out = { ...l };
+    for (const k of ['unitRate', 'amount']) { if (rule === 'hide') delete out[k]; else out[k] = '•••'; }
+    return out;
+  };
+  const countsOf = (r) => ({
+    attachments: db.prepare("SELECT COUNT(*) AS n FROM core_files WHERE company_id = ? AND linked_entity = 'sample_request' AND linked_id = ? AND deleted_at IS NULL").get(r.company_id, r.id).n,
+    comments: db.prepare("SELECT COUNT(*) AS n FROM ui_record_comments WHERE company_id = ? AND entity_type = 'sample_request' AND entity_id = ? AND deleted_at IS NULL").get(r.company_id, r.id).n,
+    approvals: db.prepare("SELECT COUNT(*) AS n FROM core_change_requests WHERE company_id = ? AND target_type = 'sample_request' AND target_id = ? AND is_active = 1").get(r.company_id, r.id).n,
+    versions: db.prepare("SELECT COUNT(*) AS n FROM ui_record_versions WHERE company_id = ? AND entity_type = 'sample_request' AND entity_id = ?").get(r.company_id, r.id).n,
+  });
   const maskRow = (actor, row) => {
     const rule = maskRuleOf(actor);
     if (rule === 'show') return row;
@@ -229,7 +247,7 @@ export function createSampleRequestService({ db, drafts }) {
     },
 
     /** Bulk submit or cancel (FR-05): each request on its own, so one refusal does not stop the rest; the result names each one. */
-    bulk(actor, { action, ids, reason }, correlationId) {
+    bulk(actor, { action, ids, reason, reasonCode }, correlationId) {
       assertPermissionAnywhere(actor, PERMISSION);
       const results = [];
       for (const id of ids) {
@@ -237,7 +255,7 @@ export function createSampleRequestService({ db, drafts }) {
         const label = r ? (r.doc_no ?? `Draft #${r.id}`) : `#${id}`;
         try {
           if (!r || !visible(actor, r)) throw notFound('That request does not exist.');
-          const done = action === 'submit' ? service.submit(actor, id, { version: r.version }, correlationId) : service.cancel(actor, id, { version: r.version, reason }, correlationId);
+          const done = action === 'submit' ? service.submit(actor, id, { version: r.version }, correlationId) : service.cancel(actor, id, { version: r.version, reason, reasonCode }, correlationId);
           results.push({ id, label: done.docNo ?? label, ok: true, message: action === 'submit' ? `Submitted as ${done.docNo}` : 'Cancelled' });
         } catch (err) {
           results.push({ id, label, ok: false, message: err.message });
@@ -248,10 +266,19 @@ export function createSampleRequestService({ db, drafts }) {
 
     maskedColumns: (actor) => (maskRuleOf(actor) === 'show' ? [] : ['total']),
 
+    /** The record and `allowedActions[]` computed here, for this viewer (part 03.04: the Object Page draws its buttons from them). */
     get(actor, id) {
       assertPermissionAnywhere(actor, PERMISSION);
       const r = requestOrThrow(actor, id);
-      return { ...presentHeader(r), lines: linesOf(id).map(presentLine), formulaPins: JSON.parse(r.formula_pins_json) };
+      const appr = latestApproval(db, r.company_id, id);
+      return {
+        ...maskRow(actor, presentHeader(r)),
+        lines: linesOf(id).map((l) => maskLine(actor, presentLine(l))),
+        formulaPins: JSON.parse(r.formula_pins_json),
+        allowedActions: allowedActionsOf(db, actor, r),
+        approval: appr ? { id: appr.id, status: appr.status, currentStep: appr.current_step, chain: JSON.parse(appr.chain_json), version: appr.version } : null,
+        counts: countsOf(r),
+      };
     },
 
     create(actor, v, correlationId) {
@@ -279,6 +306,7 @@ export function createSampleRequestService({ db, drafts }) {
       assertPermissionAnywhere(actor, PERMISSION);
       const before = requestOrThrow(actor, id);
       if (before.status !== 'DRAFT') throw unprocessable(`Only a draft can be changed; this request is ${before.status.toLowerCase()}.`);
+      ownerOnly(actor, before, 'change');
       if (version !== before.version) throw conflict('The request was changed by someone else. Reload it to see their change, then make yours again.');
       checkReferences(actor, v);
       return transaction(db, () => {
@@ -295,41 +323,71 @@ export function createSampleRequestService({ db, drafts }) {
       });
     },
 
+    /** Number the request (once: an amendment keeps its number), keep a snapshot of this version and send it to its approvers. */
     submit(actor, id, { version }, correlationId) {
       assertPermissionAnywhere(actor, PERMISSION);
       return transaction(db, () => {
         const r = requestOrThrow(actor, id);
         if (r.status !== 'DRAFT') throw unprocessable(`Only a draft can be submitted; this request is ${r.status.toLowerCase()}.`);
+        ownerOnly(actor, r, 'submit');
         if (version !== r.version) throw conflict('The request was changed by someone else. Reload it, then submit.');
-        let number;
-        try {
-          number = issueNumber(db, { companyId: r.company_id, docType: DOC_TYPE, date: r.doc_date, projectId: r.project_id, point: 'submit', refType: 'sample_request', refId: id, actor: actor.user }).number;
-        } catch (err) {
-          if (err?.code && /NUMBER|FINANCIAL_YEAR|DOCUMENT_TYPE/.test(err.code)) throw unprocessable(err.message);
-          throw err;
+        const missing = missingDocuments(db, { companyId: r.company_id, type: TYPE, docType: DOC_TYPE, id, stage: 'submit' });
+        if (missing.length) throw unprocessable(`Attach ${missing.map((m) => m.label.toLowerCase()).join(' and ')} before submitting.`);
+        let number = r.doc_no;
+        if (!number) {
+          try {
+            number = issueNumber(db, { companyId: r.company_id, docType: DOC_TYPE, date: r.doc_date, projectId: r.project_id, point: 'submit', refType: 'sample_request', refId: id, actor: actor.user }).number;
+          } catch (err) {
+            if (err?.code && /NUMBER|FINANCIAL_YEAR|DOCUMENT_TYPE/.test(err.code)) throw unprocessable(err.message);
+            throw err;
+          }
         }
         const at = new Date().toISOString();
         db.prepare("UPDATE ui_sample_requests SET status = 'SUBMITTED', doc_no = ?, submitted_at = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ? AND version = ?").run(number, at, actor.user, at, id, version);
-        writeAudit(db, { entity: 'ui_sample_requests', entityId: id, action: 'submit', oldValues: { status: 'DRAFT' }, newValues: { status: 'SUBMITTED', docNo: number }, actor: actor.user, correlationId, companyId: cid(actor) });
+        const versionNo = recordVersion(db, { companyId: r.company_id, type: TYPE, id, snapshot: snapshotOf(db, id), actor: actor.user, projectId: r.project_id, siteId: r.site_id });
+        approvals.submit(actor, { type: APPROVAL_TYPE, title: `Approve sample material request ${number}`, targetType: 'sample_request', targetId: id, payload: { docNo: number }, reason: `Approval of ${number}${versionNo > 1 ? ` (amendment ${versionNo - 1})` : ''}`, chain: approvalChain(r.total_amount) });
+        writeAudit(db, { entity: 'ui_sample_requests', entityId: id, action: 'submit', oldValues: { status: 'DRAFT' }, newValues: { status: 'SUBMITTED', docNo: number, versionNo }, actor: actor.user, correlationId, companyId: cid(actor) });
         publishEvent(db, { type: 'ui.sample_request.submitted', entity: 'sample_request', entityId: id, actorId: actor.user, companyId: cid(actor), data: { docNo: number, total: fromUnits(r.total_amount, 'money').toFixed(2) } });
         return service.get(actor, id);
       });
     },
 
-    cancel(actor, id, { version, reason }, correlationId) {
+    /** Cancel with a reason code (BR-02). An open approval is withdrawn; a numbered request keeps its number. */
+    cancel(actor, id, { version, reasonCode, reason }, correlationId) {
       assertPermissionAnywhere(actor, PERMISSION);
-      if (!reason) throw badRequest('Some fields are invalid.', [{ field: 'reason', message: 'Give a reason of at least 5 characters' }]);
+      const why = objects.checkReason(actor, 'cancel', { reasonCode, reason });
       return transaction(db, () => {
         const r = requestOrThrow(actor, id);
         if (r.status === 'CANCELLED') throw unprocessable('This request is already cancelled.');
+        ownerOnly(actor, r, 'cancel');
         if (version !== r.version) throw conflict('The request was changed by someone else. Reload it, then cancel.');
         const at = new Date().toISOString();
         db.prepare("UPDATE ui_sample_requests SET status = 'CANCELLED', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ? AND version = ?").run(actor.user, at, id, version);
+        const appr = latestApproval(db, r.company_id, id);
+        if (appr?.status === 'SUBMITTED') approvals.withdraw(actor, appr.id);
         if (r.doc_no) cancelNumber(db, { companyId: r.company_id, docType: DOC_TYPE, number: r.doc_no, actor: actor.user });
-        writeAudit(db, { entity: 'ui_sample_requests', entityId: id, action: 'cancel', oldValues: { status: r.status, docNo: r.doc_no }, newValues: { status: 'CANCELLED', docNo: r.doc_no }, reason, actor: actor.user, correlationId, companyId: cid(actor) });
+        writeAudit(db, { entity: 'ui_sample_requests', entityId: id, action: 'cancel', oldValues: { status: r.status, docNo: r.doc_no }, newValues: { status: 'CANCELLED', docNo: r.doc_no, reasonCode: why.code }, reason: `${why.label}: ${why.text}`, actor: actor.user, correlationId, companyId: cid(actor) });
         publishEvent(db, { type: 'ui.sample_request.cancelled', entity: 'sample_request', entityId: id, actorId: actor.user, companyId: cid(actor), data: { docNo: r.doc_no } });
         return service.get(actor, id);
       });
+    },
+
+    /** The approver's decision on the open approval: approve (a comment is optional), reject or return (a reason code and words are needed). */
+    decide(actor, id, { action, reasonCode, comment, version }) {
+      assertPermissionAnywhere(actor, PERMISSION);
+      const r = requestOrThrow(actor, id);
+      const appr = latestApproval(db, r.company_id, id);
+      if (r.status !== 'SUBMITTED' || appr?.status !== 'SUBMITTED') throw unprocessable('Nothing is waiting for a decision on this request.');
+      let text = comment ?? null;
+      if (action === 'approve') {
+        const missing = missingDocuments(db, { companyId: r.company_id, type: TYPE, docType: DOC_TYPE, id, stage: 'approve' });
+        if (missing.length) throw unprocessable(`Attach ${missing.map((m) => m.label.toLowerCase()).join(' and ')} before approving.`);
+      } else {
+        const why = objects.checkReason(actor, action, { reasonCode, reason: comment });
+        text = `${why.label}: ${why.text}`;
+      }
+      approvals.act(actor, appr.id, { action, comment: text, version });
+      return service.get(actor, id);
     },
   };
   return service;

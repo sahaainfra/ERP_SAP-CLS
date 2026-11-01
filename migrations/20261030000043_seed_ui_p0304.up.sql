@@ -1,0 +1,22 @@
+-- Reference seed (part 03.04): the feature flag (OFF by default, ON in development and test), the shared reason codes and the documents
+-- the sample material request needs.
+INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, environment, enabled, created_by, source_type)
+VALUES ('ff.ui.p0304', 'Part 03.04 object page, approval panel, attachments, timeline and feedback states', 0, NULL, 0, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, environment, enabled, created_by, source_type)
+SELECT 'ff.ui.p0304', 'Part 03.04 object page, approval panel, attachments, timeline and feedback states', 0, env.name, 1, 'migration', 'reference_seed'
+FROM (SELECT 'development' AS name UNION ALL SELECT 'test') AS env;
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'cancel', 'DUPLICATE', 'Duplicate of another request', 0, 10, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'cancel', 'WRONG_PROJECT', 'Raised against the wrong project or site', 0, 20, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'cancel', 'NO_LONGER_NEEDED', 'The material is no longer needed', 0, 30, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'cancel', 'SUPERSEDED', 'Replaced by a new request', 0, 40, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'cancel', 'OTHER', 'Another reason (explain)', 1, 50, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'reject', 'NOT_JUSTIFIED', 'Quantity or need not justified', 0, 10, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'reject', 'OVER_BUDGET', 'Over the budget for this work', 0, 20, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'reject', 'WRONG_SPEC', 'Wrong specification', 0, 30, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'reject', 'OTHER', 'Another reason (explain)', 1, 40, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'return', 'MISSING_DOCUMENT', 'A required document is missing', 0, 10, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'return', 'CORRECT_QUANTITY', 'Correct the quantities or rates', 0, 20, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'return', 'CLARIFY_SPEC', 'Clarify the specification', 0, 30, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_reason_codes (company_id, applies_to, code, label, needs_text, sort_order, created_by, source_type) VALUES (NULL, 'return', 'OTHER', 'Another reason (explain)', 1, 40, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_required_documents (company_id, doc_type, code, label, description, required_at, sort_order, created_by, source_type) VALUES (NULL, 'SAMPLE_MR', 'INDENT', 'Signed indent sheet', 'The indent signed by the site engineer, scanned or photographed.', 'approve', 10, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_required_documents (company_id, doc_type, code, label, description, required_at, sort_order, created_by, source_type) VALUES (NULL, 'SAMPLE_MR', 'SITE_PHOTO', 'Photo of the stock at site', 'Optional: shows the stock in hand.', 'optional', 20, 'migration', 'reference_seed');

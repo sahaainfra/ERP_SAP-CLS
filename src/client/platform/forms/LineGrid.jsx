@@ -77,11 +77,14 @@ export function LineGrid({ id, label, columns, rows, onChange, errors = {}, maxR
     const err = errors[path];
     const common = { id: cid, 'aria-label': `${col.label}, row ${r + 1}`, 'aria-invalid': err ? true : undefined, 'aria-describedby': err ? `${cid}-err` : undefined, onFocus: () => setCurrent(r), onKeyDown: onKeyDown(r, col.key), onPaste: onPaste(r, col.key), onBlur };
     if (col.computed) {
-      const v = computeCell(col, row);
+      const given = readOnly && row[col.key] !== undefined ? String(row[col.key]) : null; // the server's own figure, masked or not
+      if (given !== null && /^•+$/.test(given)) return <output id={cid} className="ff-cell-out" aria-label={`${col.label}, row ${r + 1}, hidden for your role`}>{given}</output>;
+      const v = given ?? computeCell(col, row);
       return <output id={cid} className="ff-cell-out" aria-label={`${col.label}, row ${r + 1}`}>{v === '' ? '-' : formatNumberInput(v, { scale: col.scale ?? 2 })}</output>;
     }
     if (readOnly) {
       const v = row[col.key];
+      if (typeof v === 'string' && /^•+$/.test(v)) return <span className="ff-cell-text num" title="Hidden for your role">{v}</span>;
       if (['quantity', 'currency', 'number'].includes(col.type)) return <span className="ff-cell-text num">{v === '' || v == null ? '' : formatNumberInput(v, { scale: col.scale ?? SCALES[col.type], trim: col.type === 'currency' && col.scale > 2 })}</span>;
       return <span className="ff-cell-text">{col.type === 'date' ? formatBusinessDate(v) : v}</span>;
     }
@@ -102,7 +105,8 @@ export function LineGrid({ id, label, columns, rows, onChange, errors = {}, maxR
     );
   };
 
-  const sums = Object.fromEntries(totals.map((c) => [c.key, total(rows.map((row) => computeCell(c, row)), c.scale ?? 2)]));
+  const hidden = (c) => readOnly && rows.some((row) => /^•+$/.test(String(row[c.key] ?? '')));
+  const sums = Object.fromEntries(totals.map((c) => [c.key, hidden(c) ? '•••' : total(rows.map((row) => (readOnly && row[c.key] !== undefined ? row[c.key] : computeCell(c, row))), c.scale ?? 2)]));
   const rowErrors = (r) => Object.entries(errors).filter(([p]) => p.startsWith(`${id}.${r}.`));
   return (
     <div className="ff-gridbox" data-field={fieldId(id)}>
@@ -153,7 +157,7 @@ export function LineGrid({ id, label, columns, rows, onChange, errors = {}, maxR
               <tr>
                 {!readOnly && <td />}
                 <th scope="row" colSpan={1 + columns.findIndex((c) => c.total)} className="ff-freeze">Total ({rows.length} {rows.length === 1 ? 'row' : 'rows'})</th>
-                {columns.slice(columns.findIndex((c) => c.total)).map((c) => <td key={c.key} className="num" data-testid={c.total ? `total-${c.key}` : undefined}>{c.total ? <strong>{formatNumberInput(sums[c.key], { scale: c.scale ?? 2 })}</strong> : ''}</td>)}
+                {columns.slice(columns.findIndex((c) => c.total)).map((c) => <td key={c.key} className="num" data-testid={c.total ? `total-${c.key}` : undefined}>{c.total ? <strong>{sums[c.key] === '•••' ? '•••' : formatNumberInput(sums[c.key], { scale: c.scale ?? 2 })}</strong> : ''}</td>)}
                 {rowExtra && <td />}
               </tr>
             </tfoot>

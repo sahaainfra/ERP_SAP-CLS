@@ -41,7 +41,7 @@ test('Company Settings: the Accounts Manager can read but not change', async ({ 
 });
 
 test('Financial Years: create a year, see twelve open periods, soft-close one module', async ({ page }, info) => {
-  const errors = await open(page, 'SYSADM', '/admin/financial-years', company(info, '35', '36'));
+  const errors = await open(page, 'SYSADM', '/admin/financial-years', company(info, '8035', '8036'));
   await expect(page.getByRole('heading', { name: 'No financial year yet' })).toBeVisible();
   await page.getByRole('button', { name: 'Create financial year' }).click();
   const dlg = page.getByRole('dialog', { name: 'Create financial year' });
@@ -52,7 +52,7 @@ test('Financial Years: create a year, see twelve open periods, soft-close one mo
   await expect(page.locator('tbody tr')).toHaveCount(12);
   // The Accounts Manager, not the System Administrator, controls period status: open a second page as that role.
   const acc = await page.context().newPage();
-  await open(acc, 'ACCMGR', '/admin/financial-years', company(info, '35', '36'), 'e2e-acc');
+  await open(acc, 'ACCMGR', '/admin/financial-years', company(info, '8035', '8036'), 'e2e-acc');
   await acc.getByRole('button', { name: 'Change finance status for Apr 2026' }).click();
   const change = acc.getByRole('dialog', { name: /finance/ });
   await change.getByLabel('New status').selectOption('Soft-closed');

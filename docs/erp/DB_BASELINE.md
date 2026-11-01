@@ -2549,6 +2549,158 @@ Indexes:
 - ix_ui_form_metadata_company: company_id, status
 - ux_ui_form_metadata_code (unique): , form_code, form_version
 
+## ui_reason_codes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| applies_to | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| needs_text | INTEGER | yes |  | 0 |
+| sort_order | INTEGER | yes |  | 100 |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_reason_codes_company: company_id
+- ux_ui_reason_codes_code (unique): , applies_to, code
+
+## ui_record_comments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity_type | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| body | TEXT | yes |  |  |
+| mentions_json | TEXT | yes |  | '[]' |
+| author_ref | TEXT | yes |  |  |
+| author_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: author_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_record_comments_author: author_id
+- ix_ui_record_comments_record: company_id, entity_type, entity_id, created_at
+
+## ui_record_documents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity_type | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| requirement_code | TEXT | yes |  |  |
+| file_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_record_documents_record: company_id, entity_type, entity_id
+- ix_ui_record_documents_file: file_id
+- ux_ui_record_documents_link (unique): company_id, entity_type, entity_id, requirement_code, file_id
+
+## ui_record_versions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity_type | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| snapshot_json | TEXT | yes |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_ui_record_versions_no (unique): company_id, entity_type, entity_id, version_no
+
+## ui_required_documents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| doc_type | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| required_at | TEXT | yes |  | 'approve' |
+| sort_order | INTEGER | yes |  | 100 |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_required_documents_company: company_id
+- ux_ui_required_documents_code (unique): , doc_type, code
+
 ## ui_sample_request_lines
 
 | Column | Type | Not null | Key | Default |

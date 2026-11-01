@@ -7,6 +7,8 @@ import { formatNumberInput } from '../../../shared/forms/numbers.js';
 import { formatBusinessDate, todayIst } from '../forms/dates.js';
 import { formatDateTime } from '../format.js';
 import { confirmLeave } from '../forms/guard.js';
+import { ConfirmDialog } from '../feedback/Dialogs.jsx';
+import { QueryError } from '../feedback/states.jsx';
 import { NO_VALUE, OPERATOR_LABELS, PAGE_SIZES, datePresets, describeFilters, moveColumn, nextSort, removeFilter, setFilter, toQuery, viewConfig, visibleColumns, windowOf } from './state.js';
 
 // The List Report (part 03.03): every register's list. The server does the work (BR-01): search, filters with operators, sort, pages of
@@ -137,7 +139,7 @@ function ColumnChooser({ all, order, hidden, onChange, onReset }) {
  *   rowHref={(row) => url} onOpen={(row) => ...}          row click opens the record; the link also opens in a new tab
  *   cardFields={['docNo', 'title', 'status', 'total']}      what a phone shows
  *   statusKey="status" mineFilter={{ key: 'createdBy' }} dateKey="docDate"
- *   bulkActions={[{ id, label, permission, confirm, run: async (ids) => ({ results: [{ id, ok, message }] }) }]}
+ *   bulkActions={[{ id, label, permission, confirm, reasonFor?: 'cancel', run: async (ids, { reasonCode, reason }) => ({ results: [{ id, ok, message }] }) }]}
  *   rowActions={(row) => [{ label, onSelect }]} newAction={{ label, onClick }} session={session} empty={{ title, text }} />
  */
 export default function ListReport({ listCode, endpoint, title, rowHref, onOpen, cardFields, statusKey, mineFilter, dateKey, bulkActions = [], rowActions, newAction, session, empty, permission }) {
@@ -151,6 +153,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
   const [selected, setSelected] = useState(() => new Set());
   const [notice, setNotice] = useState('');
   const [bulkResult, setBulkResult] = useState(null);
+  const [bulkAsk, setBulkAsk] = useState(null); // the bulk action waiting for confirmation
   const [scrollTop, setScrollTop] = useState(0);
   const resizing = useRef(null);
   const columns = desc.data?.columns ?? [];
@@ -200,12 +203,11 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
   const can = (p) => !p || Boolean(session?.permissions?.includes(p));
   const actions = bulkActions.filter((a) => can(a.permission));
   const allOnPage = rows.length > 0 && rows.every((r) => selected.has(r.id));
-  const runBulk = async (a) => {
+  const runBulk = async (a, payload = {}) => {
     const ids = [...selected];
-    if (a.confirm && !window.confirm(typeof a.confirm === 'function' ? a.confirm(ids.length) : a.confirm)) return;
     setBulkResult(null);
     try {
-      const out = await a.run(ids);
+      const out = await a.run(ids, payload);
       const ok = out.results.filter((r) => r.ok).length;
       setBulkResult({ label: a.label, ok, failed: out.results.filter((r) => !r.ok) });
       setSelected(new Set());
@@ -273,8 +275,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
 
   if (desc.isError || (list.isError && !list.data)) {
     const err = desc.error ?? list.error;
-    if (err.status === 403) return <div className="state" role="alert"><h2>You do not have access to {title}</h2><p>This needs the {permission} permission. Ask a system administrator to grant it.</p></div>;
-    return <div className="state state-error" role="alert"><h2>Could not load {title}</h2><p>{err.message}</p>{err.correlationId && <p className="muted">Correlation ID: <code>{err.correlationId}</code></p>}<button type="button" className="btn" onClick={() => (desc.isError ? desc.refetch() : list.refetch())}>Try again</button></div>;
+    return <QueryError error={err} what={title} permission={permission} onRetry={() => (desc.isError ? desc.refetch() : list.refetch())} />;
   }
   if (!state || !desc.data) return <div className="skeleton" aria-busy="true" aria-label={`Loading ${title}`}>{[0, 1, 2, 3].map((i) => <div key={i} className="skeleton-row" />)}</div>;
 
@@ -323,10 +324,12 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
       {actions.length > 0 && selected.size > 0 && (
         <div className="toolbar lr-bulk" role="group" aria-label="Actions for the selected rows" data-testid="bulk-bar">
           <strong>{selected.size} selected</strong>
-          {actions.map((a) => <button key={a.id} type="button" className="btn" onClick={() => runBulk(a)}>{a.label}</button>)}
+          {actions.map((a) => <button key={a.id} type="button" className="btn" onClick={() => (a.confirm || a.reasonFor ? setBulkAsk(a) : runBulk(a))}>{a.label}</button>)}
           <button type="button" className="btn" onClick={() => setSelected(new Set())}>Clear selection</button>
         </div>
       )}
+      <ConfirmDialog open={Boolean(bulkAsk)} title={bulkAsk ? `${bulkAsk.label}?` : ''} text={bulkAsk ? (typeof bulkAsk.confirm === 'function' ? bulkAsk.confirm(selected.size) : bulkAsk.confirm) : ''} confirmLabel={bulkAsk?.label} danger={Boolean(bulkAsk?.reasonFor)} reasonFor={bulkAsk?.reasonFor ?? null}
+        onCancel={() => setBulkAsk(null)} onConfirm={async (payload) => { const a = bulkAsk; setBulkAsk(null); await runBulk(a, payload); }} />
       {bulkResult && (
         <div className={`state ${bulkResult.failed.length ? 'state-error' : ''}`} role="status" data-testid="bulk-result">
           <strong>{bulkResult.label}: {bulkResult.ok} done{bulkResult.failed.length ? `, ${bulkResult.failed.length} not done` : ''}.</strong>
