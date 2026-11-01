@@ -108,7 +108,7 @@ export function Bell({ count, to, go }) {
   );
 }
 
-export function UserMenu({ name, theme, setTheme, language, setLanguage, profileRoute, go, onSignOut }) {
+export function UserMenu({ name, theme, setTheme, language, setLanguage, profileRoute, go, onSignOut, deviceMenu = null }) {
   const { open, setOpen, box, button } = usePopover();
   return (
     <span className="sh-menu" ref={box}>
@@ -124,10 +124,30 @@ export function UserMenu({ name, theme, setTheme, language, setLanguage, profile
           <label className="shell-field"><span>Theme</span>
             <select value={theme} onChange={(e) => setTheme(e.target.value)}>{THEMES.map((t) => <option key={t} value={t}>{THEME_LABEL[t] ?? t}</option>)}</select>
           </label>
+          {deviceMenu}
           {onSignOut && <button type="button" role="menuitem" className="btn btn-small" onClick={() => { setOpen(false); onSignOut(); }}>Sign out</button>}
         </div>
       )}
     </span>
+  );
+}
+
+/**
+ * The bottom navigation of a phone (part 03.06, FR-01): Home, My Work, Scan, Messages and More, each a thumb-sized target. An item is there only
+ * when its page exists for the person (Messages appears once the Messages part registers a page). More opens the whole menu.
+ */
+export function BottomNav({ items, path, go, moreOpen, onMore }) {
+  return (
+    <nav className="sh-bottom" aria-label="Quick destinations" data-testid="bottom-nav">
+      {items.map((i) => (
+        <a key={i.key} href={i.route} onClick={go(i.route)} aria-current={i.route.split('?')[0] === path ? 'page' : undefined} data-testid={`bottom-${i.key}`}>
+          <Icon name={i.icon} size={22} /><span>{i.label}</span>
+        </a>
+      ))}
+      <button type="button" aria-label={moreOpen ? 'Close menu' : 'Open menu'} aria-expanded={moreOpen} aria-controls="sh-nav" onClick={onMore} data-testid="bottom-more">
+        <Icon name="erp.action.more" size={22} /><span>More</span>
+      </button>
+    </nav>
   );
 }
 

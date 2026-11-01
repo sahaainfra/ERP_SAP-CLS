@@ -8,6 +8,7 @@ import { objectTypes } from '../../platform/objects/index.js';
 import { createParameterStore } from '../../platform/parameters/index.js';
 import { parse } from '../../platform/validation/index.js';
 import { compareSnapshots } from '../../../shared/forms/compare.js';
+import { todayIST } from '../../../shared/dates.js';
 
 // Part 03.04: the services every record shares on the Object Page: discussion, timeline, documents checklist, related records,
 // versions and their comparison, reason codes, the approvals view and print. A module registers its record type (platform/objects);
@@ -45,7 +46,7 @@ export const missingDocuments = (db, { companyId, type, docType, id, stage }) =>
   documentChecklist(db, { companyId, type, docType, id }).filter((r) => (r.requiredAt === 'submit' || (stage === 'approve' && r.requiredAt === 'approve')) && !r.satisfied).map((r) => ({ code: r.code, label: r.label }));
 
 export function createObjectService({ db, approvals }) {
-  const params = createParameterStore(db);
+  const params = { get: (key, ctx) => createParameterStore(db).get(key, ctx) }; // read afresh: a changed value applies at once (found in 03.06)
   const must = (actor, type, id) => {
     const def = objectTypes.get(type);
     if (!def) throw notFound(`There is no record type called ${type}.`);
@@ -62,7 +63,7 @@ export function createObjectService({ db, approvals }) {
 
   /** The approval rounds of a record: each request raised for it, its steps, who can decide the open one and the SLA of the open step. */
   function approvalRounds(actor, def, id) {
-    const hours = Number(params.get('ui.approval.sla_hours', { companyId: cid(actor), date: nowIso().slice(0, 10) }));
+    const hours = Number(params.get('ui.approval.sla_hours', { companyId: cid(actor), date: todayIST() }));
     const rows = db.prepare('SELECT id FROM core_change_requests WHERE company_id = ? AND target_type = ? AND target_id = ? AND is_active = 1 ORDER BY id').all(cid(actor), def.approvalTarget, id);
     return rows.map(({ id: rid }) => {
       const r = approvals.get(actor, rid);

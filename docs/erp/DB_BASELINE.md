@@ -2553,6 +2553,38 @@ Indexes:
 - ix_ui_favourites_user: company_id, user_ref, sort_order
 - ux_ui_favourites_ref (unique): company_id, user_ref, ref_key
 
+## ui_field_tiles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| nav_code | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| label_hi | TEXT |  |  |  |
+| sort_order | INTEGER | yes |  | 100 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: nav_code -> ui_navigation_entries(code), company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_field_tiles_company: company_id, sort_order
+- ix_ui_field_tiles_nav: nav_code
+- ux_ui_field_tiles_code (unique): , code
+
 ## ui_form_metadata
 
 | Column | Type | Not null | Key | Default |
@@ -2630,6 +2662,41 @@ Indexes:
 - ix_ui_navigation_company: company_id
 - ix_ui_navigation_parent: parent_code, sort_order
 - sqlite_autoindex_ui_navigation_entries_1 (unique): code
+
+## ui_push_subscriptions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| endpoint | TEXT | yes |  |  |
+| p256dh | TEXT | yes |  |  |
+| auth | TEXT | yes |  |  |
+| user_agent | TEXT |  |  |  |
+| device_label | TEXT |  |  |  |
+| expires_at | TEXT |  |  |  |
+| last_used_at | TEXT |  |  |  |
+| failure_count | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_push_subscriptions_user: company_id, user_ref, is_active
+- ux_ui_push_subscriptions_endpoint (unique): endpoint
 
 ## ui_reason_codes
 

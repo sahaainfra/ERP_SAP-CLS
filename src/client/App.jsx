@@ -12,7 +12,9 @@ import AcceptInvitePage from './modules/iam/pages/AcceptInvitePage.jsx';
 import { confirmLeave } from './platform/forms/guard.js';
 import { FeedbackProvider } from './platform/feedback/Feedback.jsx';
 import AppShell from './platform/shell/AppShell.jsx';
-import { useShellMode } from './platform/shell/api.js';
+import { useFlag, useShellMode } from './platform/shell/api.js';
+import { landsOnField } from '../shared/device/breakpoints.js';
+import { pwa } from './platform/device/pwa.js';
 import { Skeleton } from './platform/feedback/states.jsx';
 
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
@@ -35,6 +37,7 @@ function Shell({ iam, user }) {
   const [path, setPath] = useState(currentPath);
   const session = useSession();
   const firstIdentity = useRef(true);
+  const lastWho = useRef(null);
 
   // Theme, density and language (part 03.01): applied to <html> so every component follows at once; the saved preferences, the
   // Appearance panel and the theme menu below all announce a change, and the shell keeps its copy in step.
@@ -73,6 +76,10 @@ function Shell({ iam, user }) {
     saveIdentity(identity);
     if (firstIdentity.current) firstIdentity.current = false;
     else qc.resetQueries();
+    // another person's data is not kept for the new one (only when the identity really changed, not each time the page starts)
+    const who = `${identity.user}|${identity.roles}|${identity.company}`;
+    if (lastWho.current !== null && lastWho.current !== who) pwa.clearApiCache();
+    lastWho.current = who;
   }, [identity, qc, iam]);
 
   const s = session.data;
@@ -83,16 +90,18 @@ function Shell({ iam, user }) {
   const nav = (s ? routesFor(s.permissions) : []).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
   const shellOn = mode === 'on';
   const found = findRoute(path.split('?')[0]);
-  const fallback = shellOn ? findRoute(onboarding ? '/welcome' : '/home') : allRoutes()[0];
+  const field = useFlag('ff.ui.p0306', shellOn);
+  const fallback = shellOn ? findRoute(onboarding ? '/welcome' : field.on && landsOnField(s?.roles) ? '/field' : '/home') : allRoutes()[0];
   const route = onboarding ? (found?.onboarding ? found : findRoute('/welcome')) : (found ?? fallback);
   // the address the person is really on: '/' and, for a person still being onboarded, a page they cannot use are shown as their landing page
   const shown = path === '/' || (found?.onboardingOnly && !onboarding) ? fallback?.path ?? path : onboarding && !found?.onboarding ? '/welcome' : path;
+  const landing = shellOn && path === '/' && !onboarding && !field.known; // the landing page depends on a flag that is still being asked
   useEffect(() => {
-    if (s && mode !== 'loading' && shown !== path) {
+    if (s && mode !== 'loading' && !landing && shown !== path) {
       window.history.replaceState(null, '', shown);
       setPath(shown);
     }
-  }, [s, mode, shown, path]);
+  }, [s, mode, landing, shown, path]);
 
   const identityBar = devIdentity ? (
     <div className="devbar" role="group" aria-label="Development identity">
@@ -119,14 +128,14 @@ function Shell({ iam, user }) {
     </div>
   );
 
-  if (s && mode === 'loading') return <FeedbackProvider><main id="main"><Skeleton label="Loading" rows={3} /></main></FeedbackProvider>;
+  if (s && (mode === 'loading' || landing)) return <FeedbackProvider><main id="main"><Skeleton label="Loading" rows={3} /></main></FeedbackProvider>;
   if (s && shellOn) {
     return (
       <FeedbackProvider>
         <AppShell
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
-          onSignOut={iam && user ? () => signOut().then(() => qc.clear()) : null} identityBar={identityBar}
+          onSignOut={iam && user ? () => { pwa.clearApiCache(); return signOut().then(() => qc.clear()); } : null} identityBar={identityBar}
           extras={<FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>}
         />
       </FeedbackProvider>

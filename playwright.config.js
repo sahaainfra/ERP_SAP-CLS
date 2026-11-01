@@ -11,7 +11,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
-  use: { baseURL: `http://localhost:${PORT}`, channel, trace: 'retain-on-failure' },
+  // a fake camera and no permission prompts, so the camera and scanner flows (part 03.06) run without a device
+  use: { baseURL: `http://localhost:${PORT}`, channel, trace: 'retain-on-failure', launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] } },
   projects: [
     { name: 'desktop', use: { viewport: { width: 1280, height: 800 } } },
     { name: 'mobile', use: { viewport: { width: 360, height: 740 }, hasTouch: true } },

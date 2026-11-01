@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { NoPermission, EmptyState, Skeleton, ErrorState } from '../feedback/states.jsx';
-import { useBell, useFavourites, useNavigation, useRecent } from './api.js';
+import { useBell, useFavourites, useFlagOn, useNavigation, useRecent } from './api.js';
+import { landsOnField } from '../../../shared/device/breakpoints.js';
+import { useLayout } from '../device/layout.js';
+import { useLowBandwidth } from '../device/lowBandwidth.js';
+import PwaBanners from '../device/PwaBanners.jsx';
+import DeviceMenu from '../device/DeviceMenu.jsx';
 import ContextSwitcher, { OPEN_CONTEXT_EVENT, readContext } from './ContextSwitcher.jsx';
 import CommandPalette, { ShortcutHelp } from './CommandPalette.jsx';
-import { Bell, Breadcrumbs, QuickCreate, Sidebar, UserMenu, useStoredFlag } from './ShellParts.jsx';
+import { BottomNav, Bell, Breadcrumbs, QuickCreate, Sidebar, UserMenu, useStoredFlag } from './ShellParts.jsx';
 import { accountGroup, consoleGroup, entryFor, forOnboarding, guard, shortcutMap, sidebarGroups, titleFor } from './nav.js';
 
 const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable);
-const isPhone = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
 
 /** What a page that cannot be drawn says (FR-08): the missing right, a flag that is OFF, a project to choose, or no such page. */
 function GuardState({ verdict, path, go }) {
@@ -54,7 +58,12 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const bell = useBell(Boolean(approvalsEntry));
   const [context, setContext] = useState(readContext);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [collapsed, setCollapsed] = useStoredFlag('erp.shell.collapsed', false);
+  const device = useFlagOn('ff.ui.p0306'); // layouts, install and device capabilities (part 03.06)
+  const layout = useLayout();
+  useLowBandwidth(); // keeps the page's low-bandwidth mark (the data saver, a slow connection, or the person's choice) in step
+  // the menu is a rail on a tablet unless the person chose otherwise
+  const [storedCollapsed, setCollapsed] = useStoredFlag('erp.shell.collapsed', null);
+  const collapsed = storedCollapsed ?? (device && layout === 'tablet');
   const [palette, setPalette] = useState(false);
   const [help, setHelp] = useState(false);
   const mainRef = useRef(null);
@@ -101,10 +110,16 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const verdict = guard(nav, path, { knownRoute, context });
   const profile = entryFor(nav, '/account/profile') ?? accountGroup(nav)?.pages.find((p) => p.code === 'profile');
   const groups = sidebarGroups(nav);
-  const phone = isPhone();
+  const phone = layout === 'phone';
+  const home = (landsOnField(session?.roles) && entryFor(nav, '/field')) || entryFor(nav, '/home');
+  const work = nav.groups.find((g) => g.code === 'g-mywork')?.pages[0];
+  const scan = entryFor(nav, '/field/scan');
+  const messages = nav.groups.find((g) => g.code === 'g-messages')?.pages[0];
+  const bottom = [home && { key: 'home', label: 'Home', icon: 'erp.group.home', route: home.route }, work && { key: 'work', label: 'My Work', icon: 'erp.action.inbox', route: work.route }, scan && { key: 'scan', label: 'Scan', icon: 'erp.action.scan', route: scan.route }, messages && { key: 'messages', label: 'Messages', icon: 'erp.group.collab', route: messages.route }].filter(Boolean);
+  const openMenu = () => { if (!menuOpen) window.scrollTo(0, 0); setMenuOpen((o) => !o); };
 
   return (
-    <div className="app-shell" data-collapsed={collapsed}>
+    <div className="app-shell" data-collapsed={collapsed} data-device={device ? 'on' : 'off'} data-layout={layout}>
       <a href="#main" className="skip">Skip to content</a>
       <header className="sh-header">
         <button type="button" className="sh-icon sh-burger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="sh-nav" onClick={() => setMenuOpen((o) => !o)}>
@@ -122,8 +137,9 @@ export default function AppShell({ path, go, route, session, onboarding, display
         {!onboarding && <ContextSwitcher context={context} onChange={setContext} />}
         {!onboarding && <QuickCreate items={nav.quickCreate} go={goTo} />}
         {!onboarding && <Bell count={bell.data?.unread ?? 0} to={approvalsEntry?.route} go={goTo} />}
-        <UserMenu name={displayName} theme={theme} setTheme={setTheme} language={language} setLanguage={setLanguage} profileRoute={profile?.route} go={goTo} onSignOut={onSignOut} />
+        <UserMenu name={displayName} theme={theme} setTheme={setTheme} language={language} setLanguage={setLanguage} profileRoute={profile?.route} go={goTo} onSignOut={onSignOut} deviceMenu={device ? <DeviceMenu /> : null} />
       </header>
+      {device && <PwaBanners />}
       {identityBar}
       <div className="sh-body">
         <Sidebar groups={groups} account={accountGroup(nav)} consoleGroup={consoleGroup(nav)} path={path.split('?')[0]} go={goTo} language={language} open={menuOpen} onClose={() => setMenuOpen(false)} collapsed={collapsed && !phone} />
@@ -132,6 +148,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
           {verdict.ok && route ? <route.Page session={session} /> : <GuardState verdict={verdict.ok ? { reason: 'unknown' } : verdict} path={path} go={goTo} />}
         </main>
       </div>
+      {device && phone && <BottomNav items={bottom} path={path.split('?')[0]} go={goTo} moreOpen={menuOpen} onMore={openMenu} />}
       <CommandPalette open={palette} onClose={() => setPalette(false)} nav={nav} favourites={favs.data ?? []} recent={recent.data ?? []} go={open} />
       <ShortcutHelp open={help} onClose={() => setHelp(false)} nav={nav} />
     </div>

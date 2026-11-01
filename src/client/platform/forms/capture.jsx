@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { FileUploader, AttachmentList } from '../../modules/core/components/Attachments.jsx';
 import Icon from '../design/Icon.jsx';
 import { FieldShell } from './fields.jsx';
+import { positionProblem, readPosition } from '../device/location.js';
+import LocationNotice from '../device/LocationNotice.jsx';
+import { compressImage, describePhoto, limitsFor } from '../device/camera.js';
+import { useDeviceSettings } from '../device/api.js';
+import { useLowBandwidth } from '../device/lowBandwidth.js';
 
 // Capture fields of the data-entry framework (part 03.02, FR-01): signature, GPS position, photo, QR or barcode, and files through the
 // file service (01.05). They use the device's own capabilities and say plainly when the device or the browser cannot do something.
@@ -72,17 +77,19 @@ export function SignaturePad({ id, label, value, onChange, error, hint, required
 
 /** The device's position. The value is { lat, lng, accuracy } (strings with 6 decimals), or null. Can be typed when there is no GPS. */
 export function GpsField({ id, label, value, onChange, error, hint, required, disabled, readOnly }) {
-  const [state, setState] = useState({ busy: false, message: '' });
+  const [state, setState] = useState({ busy: false, message: '', hints: [] });
   const v = value ?? null;
   const text = v?.lat ? `${v.lat}, ${v.lng}${v.accuracy ? ` (within ${v.accuracy} m)` : ''}` : '';
-  const capture = () => {
-    if (!navigator.geolocation) { setState({ busy: false, message: 'This device or browser cannot give a position. Type the coordinates instead.' }); return; }
-    setState({ busy: true, message: 'Finding your position...' });
-    navigator.geolocation.getCurrentPosition(
-      (p) => { onChange({ lat: p.coords.latitude.toFixed(6), lng: p.coords.longitude.toFixed(6), accuracy: String(Math.round(p.coords.accuracy)) }); setState({ busy: false, message: 'Position captured.' }); },
-      (err) => setState({ busy: false, message: err.code === 1 ? 'Location permission was refused. Allow it in the browser, or type the coordinates.' : 'The position could not be found. Try again in the open, or type the coordinates.' }),
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 },
-    );
+  // read once, on this button (part 03.06, BR-01): never followed in the background
+  const capture = async () => {
+    setState({ busy: true, message: 'Finding your position...', hints: [] });
+    try {
+      const p = await readPosition();
+      onChange({ lat: p.lat.toFixed(6), lng: p.lng.toFixed(6), accuracy: String(Math.round(p.accuracy ?? 0)), capturedAt: p.capturedAt, hints: p.hints.map((h) => h.code) });
+      setState({ busy: false, message: `Position captured. ${p.rating.text}`, hints: p.hints });
+    } catch (err) {
+      setState({ busy: false, message: positionProblem(err.reason), hints: [] });
+    }
   };
   if (readOnly) return <FieldShell id={id} label={label} readOnly text={text} />;
   return (
@@ -98,6 +105,8 @@ export function GpsField({ id, label, value, onChange, error, hint, required, di
             {v?.lat && <button type="button" className="btn btn-small" onClick={() => onChange(null)} disabled={disabled}>Clear</button>}
             <span className="muted small" aria-live="polite">{state.message || (v?.accuracy ? `Within ${v.accuracy} m` : '')}</span>
           </div>
+          {state.hints.length > 0 && <ul className="loc-hints small" role="status" data-testid="gps-hints">{state.hints.map((h) => <li key={h.code}>{h.message}</li>)}</ul>}
+          <LocationNotice purpose="this record" />
         </div>
       )}
     </FieldShell>
@@ -110,6 +119,8 @@ export function GpsField({ id, label, value, onChange, error, hint, required, di
  */
 export function PhotoField({ id, label, value, onChange, error, hint, required, disabled, readOnly, entity, entityId }) {
   const input = useRef(null);
+  const settings = useDeviceSettings();
+  const low = useLowBandwidth();
   if (entity && entityId) {
     return (
       <FieldShell id={id} label={label} hint={hint} error={error} group>
@@ -117,12 +128,18 @@ export function PhotoField({ id, label, value, onChange, error, hint, required, 
       </FieldShell>
     );
   }
-  const pickFile = (file) => {
+  // made smaller before it goes anywhere, with the time and position the camera wrote into it kept as evidence (part 03.06, BR-02)
+  const pickFile = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) { onChange({ error: 'Choose a photo (JPEG, PNG or WebP).' }); return; }
-    const reader = new FileReader();
-    reader.onload = () => onChange({ name: file.name, size: file.size, type: file.type, preview: reader.result });
-    reader.readAsDataURL(file);
+    try {
+      const p = await compressImage(file, limitsFor(settings.data, low.low));
+      const reader = new FileReader();
+      reader.onload = () => onChange({ name: p.name, size: p.bytes, originalSize: p.originalBytes, type: 'image/jpeg', preview: reader.result, width: p.width, height: p.height, takenAt: p.takenAt, gps: p.gps, summary: describePhoto(p) });
+      reader.readAsDataURL(p.blob);
+    } catch (err) {
+      onChange({ error: err.message || 'The photo could not be prepared. Try again.' });
+    }
   };
   const shown = value?.preview ? <img className="ff-photo-img" src={value.preview} alt={`Photo for ${label}: ${value.name}`} /> : '';
   if (readOnly) return <FieldShell id={id} label={label} readOnly text={shown} />;
@@ -135,7 +152,7 @@ export function PhotoField({ id, label, value, onChange, error, hint, required, 
           <div className="ff-multi-actions">
             <button type="button" className="btn btn-small" onClick={() => input.current?.click()} disabled={disabled}><Icon name="erp.action.camera" size={16} />{value?.preview ? 'Retake' : 'Take or choose a photo'}</button>
             {value?.preview && <button type="button" className="btn btn-small" onClick={() => onChange(null)} disabled={disabled}>Remove</button>}
-            {value?.size ? <span className="muted small">{value.name}, {Math.ceil(value.size / 1024)} KB</span> : null}
+            {value?.size ? <span className="muted small" data-testid="photo-summary">{value.name}: {value.summary ?? `${Math.ceil(value.size / 1024)} KB`}</span> : null}
           </div>
         </div>
       )}

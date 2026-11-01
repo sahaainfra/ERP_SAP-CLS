@@ -110,6 +110,7 @@ export function createShellService({ db, flags, approvals }) {
     const on = flags.evaluate(actor, { keys: flagList(rows) });
     const groups = rows.filter((r) => r.kind === 'group');
     const byParent = new Map(groups.map((g) => [g.code, { code: g.code, label: g.label, labelHi: g.label_hi, icon: g.icon, placement: g.placement, shortcut: g.shortcut, pages: [] }]));
+    const fieldTiles = new Map(db.prepare('SELECT code, nav_code, label, label_hi, sort_order FROM ui_field_tiles WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').all(actor.companyId).map((t) => [t.nav_code, { code: t.code, label: t.label, labelHi: t.label_hi, order: t.sort_order }]));
     const denied = [];
     const quickCreate = [];
     for (const r of rows.filter((x) => x.kind === 'page')) {
@@ -122,7 +123,7 @@ export function createShellService({ db, flags, approvals }) {
         continue;
       }
       const page = presentEntry(r);
-      group.pages.push({ code: page.code, label: page.label, labelHi: page.labelHi, route: page.route, icon: page.icon, keywords: page.keywords ?? '', mobileVisible: page.mobileVisible, requiresContext: page.requiresContext, onboarding: r.onboarding, shortcut: page.shortcut, tile: page.tile, quickCreate: page.quickCreate });
+      group.pages.push({ code: page.code, label: page.label, labelHi: page.labelHi, route: page.route, icon: page.icon, keywords: page.keywords ?? '', mobileVisible: page.mobileVisible, requiresContext: page.requiresContext, onboarding: r.onboarding, shortcut: page.shortcut, tile: page.tile, quickCreate: page.quickCreate, field: fieldTiles.get(page.code) ?? null });
       if (page.quickCreate) quickCreate.push({ code: page.code, label: page.quickCreate.label, route: page.quickCreate.route, icon: 'erp.action.create' });
     }
     return { groups: [...byParent.values()].filter((g) => g.pages.length > 0), quickCreate, denied, etag: `${rows.length}-${rows.reduce((m, r) => (r.updated_at && r.updated_at > m ? r.updated_at : m), '')}` };

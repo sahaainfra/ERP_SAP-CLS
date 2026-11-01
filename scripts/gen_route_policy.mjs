@@ -92,6 +92,8 @@ const MANUAL = [
   [/^\/api\/v1\/ui\/reason-codes$/, { g: 'self' }],
   [/^\/api\/v1\/ui\/navigation\/(registry|changes)/, { k: 'ui.nav.manage' }],
   [/^\/api\/v1\/ui\/(navigation|favourites|recent|context-options|context|launchpad|bell)(\/|$)/, { g: 'self' }], // the shell serves every signed-in person what they may see (part 03.05)
+  [/^\/api\/v1\/ui\/(device-settings|push-subscriptions|push\/test)(\/|$)/, { g: 'self' }], // a person's own camera settings and devices (part 03.06)
+  [/^\/api\/v1\/ui\/qr\/resolve$/, { g: 'record' }], // the record a code names is checked by its own permission and data scope
   [/^\/api\/v1\/ui\/(duplicate-check|create-from)\//, { g: 'record' }],
   [/^\/api\/v1\/ui\/sample-requests/, { k: 'core.sample.use' }],
   [/^\/api\/v1\/(core|iam)\/lookups$/, { g: 'self' }],

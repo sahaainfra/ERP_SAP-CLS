@@ -7,7 +7,9 @@ import { lookupRegistry, lookupRoutes } from '../../platform/lookups/index.js';
 import { createFlagService } from '../core/api.js';
 import { createDraftService } from './drafts.js';
 import { createFormService } from './forms.js';
-import { formRoutes, listRoutes, objectRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { deviceRoutes, formRoutes, listRoutes, objectRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { createDeviceService } from './device.js';
+import { loadVapid, sendPush } from '../../platform/push/index.js';
 import { createShellService, navHandlers } from './shell.js';
 import { createExportService, createSavedViewService, describeFor } from './lists.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
@@ -45,10 +47,20 @@ eventTypes.define({ type: 'ui.comment.created', version: 1, schema: commentSchem
 /** @type {any} */
 const navSchema = { type: 'object', properties: { code: { type: 'string' }, fields: { type: 'array' }, request: { type: 'number' } }, required: ['code'] };
 eventTypes.define({ type: 'ui.navigation.changed', version: 1, schema: navSchema, owner: 'ui', description: 'A navigation registry entry was changed after another administrator approved the request.' });
+// Part 03.06: the camera's limits and the push subscription event.
+/** @type {any} */
+const pushSchema = { type: 'object', properties: { change: { type: 'string' } }, required: ['change'] };
+eventTypes.define({ type: 'ui.push_subscription.changed', version: 1, schema: pushSchema, owner: 'ui', description: 'A person subscribed a device to push notifications or removed one.' });
+for (const [key, def, min, max, description] of [
+  ['ui.device.image_max_px', 1600, 640, 4096, 'The longest side, in pixels, a photo taken in the application is reduced to before it is uploaded. The original EXIF time and position are kept.'],
+  ['ui.device.image_quality', 80, 40, 95, 'JPEG quality (percent) of a photo taken in the application.'],
+  ['ui.device.low_bandwidth_image_px', 1024, 480, 2048, 'The longest side, in pixels, of a photo when the device is in low-bandwidth mode (data saver or a slow connection).'],
+  ['ui.device.low_bandwidth_quality', 60, 30, 90, 'JPEG quality (percent) of a photo in low-bandwidth mode.'],
+]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
 parameterRegistry.define({ key: 'ui.approval.sla_hours', dataType: 'integer', default: 24, min: 1, max: 720, scopes: ['system', 'company'], description: 'Hours an approver has for one step of an approval before it shows as overdue on the Object Page.' });
 integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED', 'EXPIRED'] } });
 integrityRegistry.register({
-  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries'], // the shared definitions, reasons and requirements have no company; a company's own would
+  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles'], // the shared definitions, reasons and requirements have no company; a company's own would
   statuses: { ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
@@ -60,8 +72,8 @@ export const ui = {
   routePrefix: '/api/v1/ui',
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
-  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context'],
-  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell'],
+  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles'],
+  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr'],
 
   mount(api, { db, config, storagePath }) {
     const flags = createFlagService({ db, environment: config.environment });
@@ -99,6 +111,14 @@ export const ui = {
     shellRouter.use(['/navigation', '/favourites', '/recent', '/context-options', '/context', '/launchpad', '/bell'], gate('ff.ui.p0305', 'The application shell is'));
     shellRouter.use(shellRoutes(createShellService({ db, flags, approvals }), { idempotent: idempotency(db) }));
     router.use(shellRouter);
+    // Part 03.06: camera settings, push subscriptions and the QR resolver.
+    const vapid = loadVapid({ config, dir: storagePath ?? config.storagePath ?? 'data' });
+    const pushService = vapid ? { vapid, send: (sub, message) => sendPush(sub, message, { vapid }) } : null;
+    const allowHosts = config.environment === 'test' ? String(process.env.PUSH_ALLOW_HOSTS ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean) : [];
+    const deviceRouter = Router();
+    deviceRouter.use(['/device-settings', '/push', '/push-subscriptions', '/qr'], gate('ff.ui.p0306', 'Device capabilities are'));
+    deviceRouter.use(deviceRoutes(createDeviceService({ db, push: pushService, allowHosts }), { idempotent: idempotency(db) }));
+    router.use(deviceRouter);
     const framework = Router();
     framework.use(gate('ff.ui.p0302', 'Drafts, form definitions and the reference form are'));
     framework.use(formRoutes({ drafts, forms: createFormService({ db }), requests }, { idempotent: idempotency(db), idempotentRequired }));

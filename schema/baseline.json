@@ -10338,6 +10338,12 @@
   "index:ix_ui_favourites_user": {
     "sql": "CREATE INDEX ix_ui_favourites_user ON ui_favourites (company_id, user_ref, sort_order)"
   },
+  "index:ix_ui_field_tiles_company": {
+    "sql": "CREATE INDEX ix_ui_field_tiles_company ON ui_field_tiles (company_id, sort_order)"
+  },
+  "index:ix_ui_field_tiles_nav": {
+    "sql": "CREATE INDEX ix_ui_field_tiles_nav ON ui_field_tiles (nav_code)"
+  },
   "index:ix_ui_form_metadata_company": {
     "sql": "CREATE INDEX ix_ui_form_metadata_company ON ui_form_metadata (company_id, status)"
   },
@@ -10346,6 +10352,9 @@
   },
   "index:ix_ui_navigation_parent": {
     "sql": "CREATE INDEX ix_ui_navigation_parent ON ui_navigation_entries (parent_code, sort_order)"
+  },
+  "index:ix_ui_push_subscriptions_user": {
+    "sql": "CREATE INDEX ix_ui_push_subscriptions_user ON ui_push_subscriptions (company_id, user_ref, is_active)"
   },
   "index:ix_ui_reason_codes_company": {
     "sql": "CREATE INDEX ix_ui_reason_codes_company ON ui_reason_codes (company_id)"
@@ -12537,6 +12546,154 @@
       "company_id->org_companies.id:NO ACTION/NO ACTION"
     ]
   },
+  "table:ui_field_tiles": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "nav_code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "label",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "label_hi",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sort_order",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "100",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "nav_code->ui_navigation_entries.code:NO ACTION/NO ACTION"
+    ]
+  },
   "table:ui_form_metadata": {
     "columns": [
       {
@@ -12928,6 +13085,181 @@
     "fks": [
       "company_id->org_companies.id:NO ACTION/NO ACTION",
       "parent_code->ui_navigation_entries.code:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:ui_push_subscriptions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "endpoint",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "p256dh",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "auth",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_agent",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "device_label",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "expires_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_used_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "failure_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
     ]
   },
   "table:ui_reason_codes": {
@@ -14882,11 +15214,17 @@
   "index:ux_ui_favourites_ref": {
     "sql": "CREATE UNIQUE INDEX ux_ui_favourites_ref ON ui_favourites (company_id, user_ref, ref_key)"
   },
+  "index:ux_ui_field_tiles_code": {
+    "sql": "CREATE UNIQUE INDEX ux_ui_field_tiles_code ON ui_field_tiles (COALESCE(company_id, 0), code)"
+  },
   "index:ux_ui_form_metadata_code": {
     "sql": "CREATE UNIQUE INDEX ux_ui_form_metadata_code ON ui_form_metadata (COALESCE(company_id, 0), form_code, form_version)"
   },
   "index:ux_ui_navigation_route": {
     "sql": "CREATE UNIQUE INDEX ux_ui_navigation_route ON ui_navigation_entries (route) WHERE route IS NOT NULL AND is_active = 1"
+  },
+  "index:ux_ui_push_subscriptions_endpoint": {
+    "sql": "CREATE UNIQUE INDEX ux_ui_push_subscriptions_endpoint ON ui_push_subscriptions (endpoint)"
   },
   "index:ux_ui_reason_codes_code": {
     "sql": "CREATE UNIQUE INDEX ux_ui_reason_codes_code ON ui_reason_codes (COALESCE(company_id, 0), applies_to, code)"

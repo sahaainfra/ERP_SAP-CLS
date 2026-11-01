@@ -45,7 +45,8 @@ test('Style guide: themes side by side, the contrast report, typography with the
     return { control: box.querySelector('input').getBoundingClientRect().height, font: parseFloat(getComputedStyle(box.querySelector('td')).fontSize) };
   }));
   expect(sizes[0].control).toBe(44);
-  expect(sizes[1].control).toBe(28);
+  // compact is 28 px where a mouse is used; on a phone every control keeps 44 px so a thumb can hit it (part 03.06, FR-05)
+  expect(sizes[1].control).toBe(info.project.name === 'mobile' ? 44 : 28);
   expect(sizes[0].font).toBeGreaterThan(sizes[1].font);
   // icons
   await page.getByRole('searchbox', { name: 'Search icons' }).fill('crane');

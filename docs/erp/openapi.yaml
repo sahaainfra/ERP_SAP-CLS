@@ -1125,6 +1125,18 @@ paths:
     get: { summary: 'Home: tiles for the role, favourites, recent records and what is waiting (approvals, drafts, exports)', responses: { '200': { description: '{ data }' } } }
   /api/v1/ui/bell:
     get: { summary: 'The count shown on the bell: approval requests waiting for the person', responses: { '200': { description: '{ data: { unread, source } }' } } }
+  /api/v1/ui/device-settings:
+    get: { summary: 'The camera limits of the company (longest side and quality, smaller for low bandwidth) and whether push is available with its public key', responses: { '200': { description: '{ data: { image, lowBandwidth, push } }' } } }
+  /api/v1/ui/push-subscriptions:
+    get: { summary: 'The devices the signed-in person has allowed to receive notifications', responses: { '200': { description: '{ data }' } } }
+    post: { summary: 'Remember a browser\'s push subscription ({ endpoint, keys, deviceLabel }); only browser vendors\' push services are accepted; Idempotency-Key', responses: { '201': { description: '{ data }' } } }
+    delete: { summary: 'Forget one of the person\'s browsers by its address ({ endpoint })', responses: { '200': { description: '{ data: { id } }' } } }
+  /api/v1/ui/push-subscriptions/{id}:
+    delete: { summary: 'Forget one of the person\'s devices by its row', responses: { '200': { description: '{ data: { id } }' } } }
+  /api/v1/ui/push/test:
+    post: { summary: 'Send a test notification to the person\'s own devices; a device the push service has dropped is forgotten; Idempotency-Key', responses: { '200': { description: '{ data: { results } }' } } }
+  /api/v1/ui/qr/resolve:
+    get: { summary: 'The record a scanned code names (?code=): its type, id, title and route, if the person may open it; 404 when unknown or not theirs', responses: { '200': { description: '{ data: { status, type, id, title, route } }' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)

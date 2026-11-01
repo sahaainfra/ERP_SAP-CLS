@@ -1,3 +1,4 @@
+import { useSwipe, usePullToRefresh } from '../device/gestures.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, authHeaders } from '../api/index.js';
@@ -142,6 +143,24 @@ function ColumnChooser({ all, order, hidden, onChange, onReset }) {
  *   bulkActions={[{ id, label, permission, confirm, reasonFor?: 'cancel', run: async (ids, { reasonCode, reason }) => ({ results: [{ id, ok, message }] }) }]}
  *   rowActions={(row) => [{ label, onSelect }]} newAction={{ label, onClick }} session={session} empty={{ title, text }} />
  */
+/** A row of the phone's card list: swipe it left (or press Actions) to show what can be done with it, swipe right to hide them. */
+function CardRow({ rowHref, onOpenRow, actions, selectable, selected, onSelect, fields, label }) {
+  const [shown, setShown] = useState(false);
+  const swipe = useSwipe((dir) => setShown(dir === 'left'));
+  return (
+    <li className={`lr-card ${shown ? 'is-swiped' : ''}`} {...swipe} data-testid="list-card">
+      {selectable && <input type="checkbox" aria-label={`Select ${label}`} checked={selected} onChange={onSelect} />}
+      <a href={rowHref} onClick={onOpenRow} className="lr-card-link">{fields}</a>
+      {actions.length > 0 && <button type="button" className="btn btn-small lr-card-more" aria-expanded={shown} aria-label={`Actions for ${label}`} onClick={() => setShown((v) => !v)}>Actions</button>}
+      {shown && (
+        <div className="lr-card-actions" role="group" aria-label={`Actions for ${label}`}>
+          {actions.map((a) => <button key={a.label} type="button" className="btn" disabled={a.disabled} onClick={() => { setShown(false); a.onSelect(); }}>{a.label}</button>)}
+        </div>
+      )}
+    </li>
+  );
+}
+
 export default function ListReport({ listCode, endpoint, title, rowHref, onOpen, cardFields, statusKey, mineFilter, dateKey, bulkActions = [], rowActions, newAction, session, empty, permission, contextFilters = [] }) {
   const qc = useQueryClient();
   const narrow = useMedia('(max-width: 767px)');
@@ -183,6 +202,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
   const query = state ? toQuery(withContext(state)) : '';
   const list = useQuery({ queryKey: ['list', endpoint, query], queryFn: () => api.get(`${endpoint}?${query}`), enabled: Boolean(state), retry: false, placeholderData: (prev) => prev });
   const rows = list.data?.data ?? [];
+  const pull = usePullToRefresh(() => list.refetch(), { enabled: Boolean(state) });
   const meta = list.data?.meta;
   const shown = state ? visibleColumns(columns, state) : [];
 
@@ -347,19 +367,19 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
           {state.filters.length || state.q ? <button type="button" className="btn" onClick={() => update({ filters: [], q: '' })}>Clear the filters</button> : newAction && can(newAction.permission) && <button type="button" className="btn btn-primary" onClick={newAction.onClick}>{newAction.label}</button>}
         </div>
       )}
+      {(pull.offset > 0 || pull.refreshing) && <p className="pull-indicator" role="status" style={{ height: pull.offset }}>{pull.refreshing ? 'Refreshing...' : pull.ready ? 'Let go to refresh' : 'Pull down to refresh'}</p>}
       {rows.length > 0 && narrow && (
         <ul className="lr-cards" aria-label={title} data-testid="list-cards">
           {rows.map((r) => (
-            <li key={r.id} className="lr-card">
-              {actions.length > 0 && <input type="checkbox" aria-label={`Select ${r[firstKey] ?? r.id}`} checked={selected.has(r.id)} onChange={() => setSelected((s) => { const n = new Set(s); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })} />}
-              <a href={rowHref?.(r)} onClick={open(r)} className="lr-card-link">
-                {(cardFields ?? shown.slice(0, 4).map((c) => c.key)).map((k, i) => {
-                  const c = columns.find((x) => x.key === k);
-                  if (!c) return null;
-                  return <span key={k} className={i === 0 ? 'lr-card-title' : 'lr-card-field'}>{i > 0 && <span className="muted small">{c.label}: </span>}{c.key === statusKey ? <StatusBadge status={r[k]} /> : formatCell(c, r[k]) || (i === 0 ? `#${r.id}` : '')}</span>;
-                })}
-              </a>
-            </li>
+            <CardRow
+              key={r.id} label={String(r[firstKey] ?? r.id)} rowHref={rowHref?.(r)} onOpenRow={open(r)} actions={rowActions ? rowActions(r) : []}
+              selectable={actions.length > 0} selected={selected.has(r.id)} onSelect={() => setSelected((s0) => { const n = new Set(s0); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })}
+              fields={(cardFields ?? shown.slice(0, 4).map((c) => c.key)).map((k, i) => {
+                const c = columns.find((x) => x.key === k);
+                if (!c) return null;
+                return <span key={k} className={i === 0 ? 'lr-card-title' : 'lr-card-field'}>{i > 0 && <span className="muted small">{c.label}: </span>}{c.key === statusKey ? <StatusBadge status={r[k]} /> : formatCell(c, r[k]) || (i === 0 ? `#${r.id}` : '')}</span>;
+              })}
+            />
           ))}
         </ul>
       )}

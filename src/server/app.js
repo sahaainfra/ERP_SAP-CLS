@@ -1,7 +1,7 @@
 import './platform/security/routes.js'; // wraps Router.use so mounted routers are recorded: must load before any router is built
 import express from 'express';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { timingSafeEqual } from 'node:crypto';
 import { ROOT } from './platform/db/index.js';
@@ -144,7 +144,8 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
 
   const dist = join(ROOT, 'dist');
   if (existsSync(dist)) {
-    app.use(express.static(dist));
+    // the service worker and the manifest are always asked for again, so a new version of the app is noticed (part 03.06)
+    app.use(express.static(dist, { setHeaders: (res, file) => { if (['sw.js', 'manifest.webmanifest'].includes(basename(file))) res.setHeader('Cache-Control', 'no-cache'); } }));
     app.get(/^\/(?!api\/|health\/).*/, (_req, res) => res.sendFile(join(dist, 'index.html')));
   }
 

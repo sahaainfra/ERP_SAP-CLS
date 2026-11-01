@@ -22,7 +22,10 @@ const headers = (roles, companyId, user) => ({ 'x-erp-user': user, 'x-erp-roles'
 test('Monitor: key figures, consumers, the event log with masked data, and the catalogue', async ({ page, request }, info) => {
   const companyId = company(info, '51', '52');
   // Raise real events: saving the company settings writes core.company_settings.changed in the same transaction.
-  const saved = await request.put('/api/v1/core/company-settings', { headers: headers('SYSADM', companyId, 'e2e-sys'), data: { legalName: 'Ops Test Pvt Ltd', pan: 'AAPCS1234F', reason: 'events for the monitor' } });
+  // the company id is fixed, and another spec may have used the same number for a company of its own: send the version of the settings if there are some
+  const current = await request.get('/api/v1/core/company-settings', { headers: headers('SYSADM', companyId, 'e2e-sys') });
+  const version = current.ok() ? (await current.json()).data?.version : undefined;
+  const saved = await request.put('/api/v1/core/company-settings', { headers: headers('SYSADM', companyId, 'e2e-sys'), data: { legalName: 'Ops Test Pvt Ltd', pan: 'AAPCS1234F', reason: 'events for the monitor', ...(version ? { version } : {}) } });
   expect(saved.status()).toBe(200);
   const errors = await open(page, 'ITADM', '/admin/operations', companyId);
   await expect(page.getByRole('heading', { name: 'Events & Jobs Monitor' })).toBeVisible();

@@ -59,6 +59,13 @@ export function useDecideChange() {
   });
 }
 
+/** Whether a feature flag is ON for the person: false until it is known (so a part that is still loading is drawn as if it were off). */
+export function useFlag(key, enabled = true) {
+  const q = useQuery({ queryKey: queryKeys.core.flags.evaluate([key]), queryFn: async () => (await api.get(`/core/feature-flags/evaluate?keys=${encodeURIComponent(key)}`)).data, enabled, retry: false });
+  return { on: q.data?.[key] === true, known: q.isSuccess || q.isError };
+}
+export const useFlagOn = (key, enabled = true) => useFlag(key, enabled).on;
+
 /** Whether the application shell of part 03.05 is switched on: 'loading' until the flag is known, then 'on' or 'off'. */
 export function useShellMode(enabled = true) {
   const q = useQuery({ queryKey: queryKeys.core.flags.evaluate(['ff.ui.p0305']), queryFn: async () => (await api.get('/core/feature-flags/evaluate?keys=ff.ui.p0305')).data, enabled, retry: false });

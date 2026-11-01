@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { parse } from '../../platform/validation/index.js';
 import { parseSampleRequest } from './sample-requests.js';
 import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
+import { parseQr, parseSubscription, parseUnsubscribe } from './device.js';
 import { parseContext, parseFavourite, parseFavouriteOrder, parseNavChange, parseNavImport, parseVisit } from './shell.js';
 import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
 import {
@@ -118,3 +119,16 @@ export function shellRoutes(shell, { idempotent }) {
   return r;
 }
 const parseCode = (v) => parse(z.string().regex(/^[a-z][a-z0-9-]{0,59}$/, 'Not a navigation code'), v);
+
+/** The device routes (part 03.06): camera settings, push subscriptions of the signed-in person's own browsers, and the QR resolver. */
+export function deviceRoutes(device, { idempotent }) {
+  const r = Router();
+  r.get('/device-settings', (req, res) => res.json({ data: device.settings(req.actor) }));
+  r.get('/push-subscriptions', (req, res) => res.json({ data: device.subscriptions(req.actor) }));
+  r.post('/push-subscriptions', idempotent, (req, res) => res.status(201).json({ data: device.subscribe(req.actor, parseSubscription(req.body), String(req.get('user-agent') ?? '')) }));
+  r.delete('/push-subscriptions', (req, res) => res.json({ data: device.unsubscribe(req.actor, parseUnsubscribe(req.body)) }));
+  r.delete('/push-subscriptions/:id', (req, res) => res.json({ data: device.unsubscribe(req.actor, { id: parseId(req.params.id) }) }));
+  r.post('/push/test', idempotent, async (req, res) => res.json({ data: await device.sendTest(req.actor) }));
+  r.get('/qr/resolve', (req, res) => res.json({ data: device.qrResolve(req.actor, parseQr(req.query).code) }));
+  return r;
+}

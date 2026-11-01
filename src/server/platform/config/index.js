@@ -17,6 +17,9 @@ const schema = z.object({
   APP_URL: z.string().url('must be a full URL such as https://erp.example.com').optional(),
   CLAMAV_HOST: z.string().min(1).optional(),
   CLAMAV_PORT: z.coerce.number().int().min(1).max(65535).default(3310),
+  PUSH_VAPID_PUBLIC_KEY: z.string().regex(/^[A-Za-z0-9_-]{86,90}$/, 'must be the public VAPID key (65 bytes, base64url)').optional(),
+  PUSH_VAPID_PRIVATE_KEY: z.string().regex(/^[A-Za-z0-9_-]{42,46}$/, 'must be the private VAPID key (32 bytes, base64url)').optional(),
+  PUSH_SUBJECT: z.string().min(8).optional(),
 });
 
 export class ConfigError extends Error {
@@ -55,6 +58,8 @@ export function loadConfig(env = process.env) {
     authSecret: c.AUTH_SECRET ?? null,
     appUrl: (c.APP_URL ?? '').replace(/\/+$/, '') || null,
     clamav: c.CLAMAV_HOST ? { host: c.CLAMAV_HOST, port: c.CLAMAV_PORT } : null,
+    // Web Push (part 03.06): the application's VAPID key pair; without it a production system offers no push, development makes its own
+    push: c.PUSH_VAPID_PUBLIC_KEY && c.PUSH_VAPID_PRIVATE_KEY ? { publicKey: c.PUSH_VAPID_PUBLIC_KEY, privateKey: c.PUSH_VAPID_PRIVATE_KEY, subject: c.PUSH_SUBJECT ?? c.APP_URL ?? 'mailto:admin@example.com' } : null,
   };
   const prodLike = nodeEnv === 'production' || nodeEnv === 'staging';
   if (config.demoSeed && prodLike) {
@@ -75,6 +80,9 @@ export function loadConfig(env = process.env) {
   }
   if (prodLike && !config.vaultKey) {
     problems.push(`VAULT_KEY is required when NODE_ENV=${nodeEnv}: it encrypts the credentials of external connectors and must be the same on every instance (at least 32 characters). Losing it makes the stored credentials unreadable.`);
+  }
+  if (Boolean(c.PUSH_VAPID_PUBLIC_KEY) !== Boolean(c.PUSH_VAPID_PRIVATE_KEY)) {
+    problems.push('PUSH_VAPID_PUBLIC_KEY and PUSH_VAPID_PRIVATE_KEY must be set together.');
   }
   if (config.databasePath === ':memory:' && nodeEnv !== 'test') {
     problems.push('DATABASE_PATH=:memory: is only allowed when NODE_ENV=test.');

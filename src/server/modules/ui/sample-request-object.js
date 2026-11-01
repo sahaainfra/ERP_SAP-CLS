@@ -3,6 +3,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { toPdf } from '../../platform/export/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
+import { qrRegistry } from '../../platform/qr/index.js';
 import { formatINR, fromUnits } from '../../../shared/money.js';
 import { cancelNumber } from '../core/numbering/service.js';
 import { missingDocuments } from './objects.js';
@@ -157,3 +158,17 @@ objectTypes.register({
   print: printOf,
 });
 
+
+// Part 03.06: the scanner opens a sample request from its printed number or from an ERP:SAMPLE_REQUEST:<id> code, if the person may open it.
+qrRegistry.register({
+  type: 'SAMPLE_REQUEST',
+  label: 'Sample material request',
+  match: ({ code, typed }) => typed?.type === 'SAMPLE_REQUEST' || /^MR\/\d{4}-\d{2}\/\d{1,8}$/.test(code),
+  resolve(db, actor, { code, typed }) {
+    const row = typed?.type === 'SAMPLE_REQUEST'
+      ? db.prepare('SELECT id, doc_no, title FROM ui_sample_requests WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(typed.ref) || 0, actor.companyId)
+      : db.prepare('SELECT id, doc_no, title FROM ui_sample_requests WHERE doc_no = ? AND company_id = ? AND deleted_at IS NULL').get(code, actor.companyId);
+    if (!row || !objectTypes.get(TYPE).access(db, actor, row.id)) return null;
+    return { id: row.id, title: row.doc_no ? `${row.doc_no}: ${row.title}` : row.title, route: `/admin/sample-requests?open=${row.id}` };
+  },
+});
