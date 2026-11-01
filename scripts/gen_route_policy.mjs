@@ -90,6 +90,8 @@ const MANUAL = [
   [/^\/api\/v1\/ui\/lists\//, { g: 'record' }],
   [/^\/api\/v1\/ui\/objects\//, { g: 'record' }], // the record type's own permission and data scope decide (platform/objects)
   [/^\/api\/v1\/ui\/reason-codes$/, { g: 'self' }],
+  [/^\/api\/v1\/ui\/navigation\/(registry|changes)/, { k: 'ui.nav.manage' }],
+  [/^\/api\/v1\/ui\/(navigation|favourites|recent|context-options|context|launchpad|bell)(\/|$)/, { g: 'self' }], // the shell serves every signed-in person what they may see (part 03.05)
   [/^\/api\/v1\/ui\/(duplicate-check|create-from)\//, { g: 'record' }],
   [/^\/api\/v1\/ui\/sample-requests/, { k: 'core.sample.use' }],
   [/^\/api\/v1\/(core|iam)\/lookups$/, { g: 'self' }],

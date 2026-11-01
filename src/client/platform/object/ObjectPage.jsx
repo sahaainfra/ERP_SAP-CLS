@@ -7,6 +7,7 @@ import { useToast } from '../feedback/Feedback.jsx';
 import { QueryError, Skeleton } from '../feedback/states.jsx';
 import { AttachmentPanel, ApprovalPanel, ComparePanel, DiscussionPanel, RelatedPanel, TimelinePanel } from './panels.jsx';
 import { useRefreshObject } from './api.js';
+import { recordVisit, useFavouriteActions, useFavourites, useShellMode } from '../shell/api.js';
 
 // The Object Page (part 03.04): the same look for every record. A sticky header (number, status chips, key figures, owner and dates, the
 // buttons the server allows right now), then the tabs Details, Lines, Attachments, Approvals, Timeline, Discussion, Related (and
@@ -26,6 +27,20 @@ const currentTab = (valid) => {
  *   onAction={(action, { reasonCode, reason, version }) => Promise} onEdit={() => ...} onBack={() => ...} navigate={(path) => ...}
  *   title="Request" section="Administration" listLabel="Sample Material Requests" listPath="/admin/sample-requests" />
  */
+/** Keep this record among the person's favourites (part 03.05); nothing is drawn while the shell's favourites are switched off. */
+function RecordFavourite({ type, id, label, enabled }) {
+  const favs = useFavourites(enabled);
+  const { add, remove } = useFavouriteActions();
+  if (!favs.data) return null;
+  const mine = favs.data.find((f) => f.kind === 'record' && f.entity === type && f.entityId === Number(id));
+  return (
+    <button type="button" className="btn btn-small" aria-pressed={Boolean(mine)} disabled={add.isPending || remove.isPending} data-testid="record-favourite"
+      onClick={() => (mine ? remove.mutate(mine.id) : add.mutate({ entity: type, entityId: Number(id) }))}>
+      <Icon name="erp.action.pin" size={14} /> {mine ? 'Remove from favourites' : `Add ${label} to favourites`}
+    </button>
+  );
+}
+
 export default function ObjectPage({ type, id, query, heading, subtitle, chips, figures, meta, renderDetails, renderLines, attachmentEntity, onAction, onEdit, onBack, navigate, title, section = 'Administration', listLabel = 'List', listPath = '/' }) {
   const toast = useToast();
   const refresh = useRefreshObject(type, id);
@@ -43,6 +58,11 @@ export default function ObjectPage({ type, id, query, heading, subtitle, chips, 
   const active = tab ?? currentTab(tabs);
   const tablist = useRef(null);
   useEffect(() => { if (rec) document.title = `${heading(rec)} - ${title} - ERP`; }, [rec, heading, title]);
+  // opening a record puts it among the person's recent records (part 03.05)
+  const shellOn = useShellMode() === 'on';
+  const recId = rec?.id;
+  const recTitle = rec ? heading(rec) : '';
+  useEffect(() => { if (shellOn && recId) recordVisit({ entity: type, entityId: Number(id), title: recTitle, route: `${listPath}?open=${id}` }); }, [shellOn, recId, recTitle, type, id, listPath]);
 
   const choose = (t) => {
     setTab(t);
@@ -111,7 +131,7 @@ export default function ObjectPage({ type, id, query, heading, subtitle, chips, 
   const canEditFiles = rec.status === 'DRAFT' || rec.status === 'SUBMITTED';
   return (
     <section className="op" aria-labelledby="op-title" data-testid="object-page">
-      <nav aria-label="Breadcrumb" className="breadcrumb">{section} &rsaquo; <a href={listPath} onClick={(e) => { e.preventDefault(); onBack(); }}>{listLabel}</a> &rsaquo; {heading(rec)}</nav>
+      <nav aria-label="Breadcrumb" className="breadcrumb breadcrumb-object"><span className="bc-section">{section} &rsaquo; </span><a href={listPath} onClick={(e) => { e.preventDefault(); onBack(); }}>{listLabel}</a> &rsaquo; {heading(rec)}</nav>
       <header className="op-head" data-testid="op-header">
         <div className="op-title-row">
           <h1 id="op-title">{heading(rec)}</h1>
@@ -128,6 +148,7 @@ export default function ObjectPage({ type, id, query, heading, subtitle, chips, 
               {a.id === 'print' && <Icon name="erp.action.print" size={16} />}{a.id === 'edit' && <Icon name="erp.action.edit" size={16} />}{a.label}
             </button>
           ))}
+          <RecordFavourite type={type} id={id} label={title.toLowerCase()} enabled={shellOn} />
         </div>
         {off.length > 0 && (
           <details className="op-why"><summary>Why are some actions off?</summary>

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { setTheme } from './shell-helpers.js';
 
 // The database is shared by both viewport projects (run in order), so each test uses its own scope.
 const identity = (roles, company = '1', user = 'e2e-user') => ({ user, roles, company });
@@ -8,7 +9,7 @@ async function open(page, id) {
   const errors = [];
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(String(e)));
-  await page.goto('/');
+  await page.goto('/admin/feature-flags');
   return errors;
 }
 
@@ -61,7 +62,7 @@ test('ITADM can view but the toggles are disabled with a reason', async ({ page 
 
 test('a role without access sees the no-permission state', async ({ page }) => {
   await open(page, identity('PM', '51'));
-  await expect(page.getByRole('heading', { name: 'You do not have access to feature flags' })).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
 });
 
 test('search narrows the list and shows an empty state with a clear action', async ({ page }) => {
@@ -100,7 +101,7 @@ test('no horizontal page scroll and themes apply', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   for (const theme of ['dark', 'high-contrast']) {
-    await page.getByLabel('Theme').selectOption(theme);
+    await setTheme(page, theme);
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
   }
 });

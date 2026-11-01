@@ -129,6 +129,5 @@ test('Holidays: add a calendar and a holiday, a duplicate date is refused, then 
 
 test('the new pages show the no-access state for a role without the permission', async ({ page }, info) => {
   await open(page, 'PM', '/admin/numbering', company(info, '43', '44'));
-  await expect(page.getByRole('heading', { name: 'Document Types & Numbering' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'You do not have access to document types' })).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
 });

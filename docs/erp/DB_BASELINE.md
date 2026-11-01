@@ -2518,6 +2518,41 @@ Indexes:
 - ix_ui_export_jobs_status: company_id, status
 - ix_ui_export_jobs_owner: company_id, user_ref, created_at
 
+## ui_favourites
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| ref_key | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| nav_code | TEXT |  |  |  |
+| entity | TEXT |  |  |  |
+| entity_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| route | TEXT | yes |  |  |
+| sort_order | INTEGER | yes |  | 100 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_favourites_user: company_id, user_ref, sort_order
+- ux_ui_favourites_ref (unique): company_id, user_ref, ref_key
+
 ## ui_form_metadata
 
 | Column | Type | Not null | Key | Default |
@@ -2549,6 +2584,53 @@ Indexes:
 - ix_ui_form_metadata_company: company_id, status
 - ux_ui_form_metadata_code (unique): , form_code, form_version
 
+## ui_navigation_entries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| parent_code | TEXT |  |  |  |
+| kind | TEXT | yes |  |  |
+| placement | TEXT | yes |  | 'sidebar' |
+| label | TEXT | yes |  |  |
+| label_hi | TEXT |  |  |  |
+| route | TEXT |  |  |  |
+| icon | TEXT |  |  |  |
+| permission_key | TEXT |  |  |  |
+| feature_flag | TEXT |  |  |  |
+| sort_order | INTEGER | yes |  | 100 |
+| keywords | TEXT |  |  |  |
+| mobile_visible | INTEGER | yes |  | 1 |
+| requires_context | TEXT |  |  |  |
+| onboarding | TEXT | yes |  | 'none' |
+| shortcut | TEXT |  |  |  |
+| tile | INTEGER | yes |  | 0 |
+| quick_create_label | TEXT |  |  |  |
+| quick_create_route | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_code -> ui_navigation_entries(code), company_id -> org_companies(id)
+
+Indexes:
+- ux_ui_navigation_route (unique): route
+- ix_ui_navigation_company: company_id
+- ix_ui_navigation_parent: parent_code, sort_order
+- sqlite_autoindex_ui_navigation_entries_1 (unique): code
+
 ## ui_reason_codes
 
 | Column | Type | Not null | Key | Default |
@@ -2577,6 +2659,39 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_ui_reason_codes_company: company_id
 - ux_ui_reason_codes_code (unique): , applies_to, code
+
+## ui_recent_records
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| route | TEXT | yes |  |  |
+| visited_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| visit_count | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_recent_records_user: company_id, user_ref, visited_at
+- ux_ui_recent_records_ref (unique): company_id, user_ref, entity, entity_id
 
 ## ui_record_comments
 
@@ -2818,6 +2933,36 @@ Indexes:
 - ix_ui_saved_views_owner: owner_user_id
 - ix_ui_saved_views_list: company_id, list_code, is_shared
 - ux_ui_saved_views_name (unique): company_id, owner_ref, list_code, name
+
+## ui_user_context
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| context_project_id | INTEGER |  |  |  |
+| context_site_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: context_site_id -> org_sites(id), context_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_user_context_site: context_site_id
+- ix_ui_user_context_project: context_project_id
+- ux_ui_user_context_user (unique): company_id, user_ref
 
 ## ui_user_preferences
 

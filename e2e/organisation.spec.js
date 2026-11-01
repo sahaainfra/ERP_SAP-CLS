@@ -228,11 +228,11 @@ test('Project and site: create, approve activation, draw and test a geofence, th
   await expect(page.locator('.tile').filter({ hasText: 'Geofence' })).toContainText('100 m circle');
 
   // the shell's context switcher lists the project and its site
+  await page.getByTestId('context-button').click();
   const switcher = page.getByRole('group', { name: 'Working context' });
   await expect(switcher).toBeVisible();
-  await switcher.getByLabel('Project').selectOption({ label: code });
-  await expect(switcher.getByLabel('Site')).toBeEnabled();
-  await expect(switcher.getByLabel('Site').locator('option', { hasText: 'S1' })).toHaveCount(1);
+  await expect(switcher.getByRole('option', { name: new RegExp(`^${code}`) })).toBeVisible();
+  await expect(switcher.getByRole('option', { name: /S1/ })).toHaveCount(1);
 
   if (info.project.name === 'mobile') await noOverflow(page);
   expect(errors).toEqual([]);

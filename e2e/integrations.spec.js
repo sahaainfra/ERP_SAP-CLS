@@ -127,7 +127,7 @@ test('Integrations: SYSADM can view but not act; a project manager has no access
 
   const pm = await context.newPage();
   await open(pm, 'PM', '/admin/integrations', companyId, 'e2e-pm');
-  await expect(pm.getByRole('heading', { name: 'You do not have access to connectors' })).toBeVisible();
+  await expect(pm.getByTestId('no-permission')).toBeVisible();
   await pm.close();
 
   const cfo = await context.newPage();

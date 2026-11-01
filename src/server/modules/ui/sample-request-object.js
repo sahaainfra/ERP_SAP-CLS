@@ -124,6 +124,7 @@ objectTypes.register({
   type: TYPE,
   label: 'Sample material request',
   permission: PERMISSION,
+  route: (id) => `/admin/sample-requests?open=${id}`,
   approvalTarget: 'sample_request',
   documentType: DOC_TYPE,
   attachmentEntity: 'sample_request',

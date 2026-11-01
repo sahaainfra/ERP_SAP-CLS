@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { counterAt, totpAt } from '../src/server/platform/identity/totp.js';
+import { menu, signOut } from './shell-helpers.js';
 
 // These tests run against the API in sign-in mode (AUTH_MODE=iam, port 3101, scripts/e2e_iam_server.mjs). Desktop and mobile share
 // its database, so each uses its own company and users (suffix d and m).
@@ -105,14 +106,14 @@ test('A privileged role must set up an authenticator before it gets in; later si
   state[s].backup = codes;
   await page.getByRole('button', { name: 'I have saved these codes' }).click();
   await expect(page.getByTestId('signed-in-as')).toHaveText(new RegExp(`Admin ${s}`, 'i'));
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Authentication Policy' })).toBeVisible();
+  await expect((await menu(page)).getByRole('link', { name: 'Authentication Policy' })).toBeVisible();
 
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Security & MFA' }).click();
+  await (await menu(page)).getByRole('link', { name: 'Security & MFA' }).click();
   await expect(page.getByRole('heading', { name: 'Security & MFA' })).toBeVisible();
   await expect(page.getByTestId('backup-left')).toHaveText('10');
   await expect(page.getByText('Set up', { exact: true }).first()).toBeVisible();
 
-  await page.getByRole('button', { name: 'Sign out', exact: true }).first().click();
+  await signOut(page);
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
   await signIn(page, `admin-${s}`);
   await expect(page.getByRole('heading', { name: 'Second step' })).toBeVisible();
@@ -138,7 +139,7 @@ test('My Sessions & Devices: remember a device, set a PIN, unlock with it; an ad
   await signIn(page, `field-${s}`, PW, { remember: true });
   await expect(page.getByTestId('signed-in-as')).toBeVisible();
 
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'My Sessions' }).click();
+  await (await menu(page)).getByRole('link', { name: 'My Sessions' }).click();
   await expect(page.getByRole('heading', { name: 'My Sessions & Devices' })).toBeVisible();
   await expect(page.getByTestId('session-current')).toContainText('This session');
   await page.getByRole('button', { name: 'Set PIN' }).click();
@@ -151,7 +152,7 @@ test('My Sessions & Devices: remember a device, set a PIN, unlock with it; an ad
   await expect(page.getByTestId('sessions-notice')).toContainText('PIN saved');
   await expect(page.locator('[data-testid^=device-]').first()).toContainText('Set');
 
-  await page.getByRole('button', { name: 'Sign out', exact: true }).first().click();
+  await signOut(page);
   await expect(page.getByRole('heading', { name: 'Unlock with PIN' })).toBeVisible();
   await page.getByLabel('PIN', { exact: true }).fill('0000');
   await page.getByRole('button', { name: 'Unlock' }).click();
@@ -166,7 +167,7 @@ test('My Sessions & Devices: remember a device, set a PIN, unlock with it; an ad
   for (const row of list.data) {
     expect((await api(request, `/iam/admin/sessions/${row.id}/revoke`, { token: it.token, data: { reason: 'lost phone reported' } })).status()).toBe(200);
   }
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Security & MFA' }).click();
+  await (await menu(page)).getByRole('link', { name: 'Security & MFA' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'You were signed out' })).toBeVisible();
   await noOverflow(page);
   expect(errors).toEqual([]);
@@ -187,7 +188,7 @@ test('Authentication Policy and Login History: a change is a request the other a
   await page.getByRole('button', { name: 'Verify' }).click();
   await expect(page.getByTestId('signed-in-as')).toBeVisible();
 
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Authentication Policy' }).click();
+  await (await menu(page)).getByRole('link', { name: 'Authentication Policy' }).click();
   await expect(page.getByRole('heading', { name: 'Authentication Policy' })).toBeVisible();
   await expect(page.getByTestId('policy-session').locator('input[name="session.idleMinutes"]')).toHaveValue('30');
   await page.getByTestId('policy-session').locator('input[name="session.idleMinutes"]').fill('20');
@@ -204,11 +205,11 @@ test('Authentication Policy and Login History: a change is a request the other a
   expect(pending.chain).toEqual(['ITADM']);
   expect((await api(request, `/core/change-requests/${pending.id}/act`, { token: state[s].it, data: { action: 'approve', comment: 'ok' } })).status()).toBe(200);
   await page.reload();
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Authentication Policy' }).click();
+  await (await menu(page)).getByRole('link', { name: 'Authentication Policy' }).click();
   await expect(page.getByTestId('policy-session').locator('input[name="session.idleMinutes"]')).toHaveValue('20');
   await expect(page.getByRole('cell', { name: /change approved/ }).first()).toBeVisible();
 
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Login History' }).click();
+  await (await menu(page)).getByRole('link', { name: 'Login History' }).click();
   await expect(page.getByRole('heading', { name: 'Login History' })).toBeVisible();
   await page.getByPlaceholder('Exact username').fill(`watch-${s}`);
   await page.locator('#main select').first().selectOption('suspicious');
@@ -243,7 +244,7 @@ test('Forgotten password gives the same answer for any name; a project manager h
   const errors = watch(page);
   await page.goto('/admin/security/policy');
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Authentication Policy' })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0); // a signed-out visitor has no menu
 
   await page.getByRole('button', { name: 'Forgot password?' }).click();
   await page.getByLabel('Username, email or mobile').fill(`reset-${s}@example.com`);
@@ -263,12 +264,11 @@ test('Forgotten password gives the same answer for any name; a project manager h
 
   await signIn(page, `spare-${s}`);
   await expect(page.getByTestId('signed-in-as')).toBeVisible();
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Authentication Policy' })).toHaveCount(0);
+  await expect((await menu(page)).getByRole('link', { name: 'Authentication Policy' })).toHaveCount(0);
   await page.goto('/admin/security/policy');
-  await expect(page.getByRole('heading', { name: 'You do not have access to the authentication policy' })).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
   await page.goto('/admin/security/login-history');
-  await expect(page.getByRole('heading', { name: 'Login History', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'You do not have access to the login history' })).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
   await noOverflow(page);
   expect(errors).toEqual([]);
 });

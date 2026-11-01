@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import sharp from 'sharp';
 import { counterAt, totpAt } from '../src/server/platform/identity/totp.js';
+import { menu } from './shell-helpers.js';
 
 // The first test runs in development-header mode (port 3100), each project in its own company created through the API. The
 // others run against the sign-in server (port 3101, scripts/e2e_iam_server.mjs), each project with its own people (suffix d and m).
@@ -250,8 +251,7 @@ test.describe('Invitation to access', () => {
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(page.getByTestId('welcome-card')).toBeVisible();
     await expect(page.getByRole('heading', { name: /^Welcome, Site Engineer/ })).toBeVisible();
-    const nav = page.getByRole('navigation', { name: 'Main' });
-    await expect(nav.getByRole('link')).toHaveText(['Welcome', 'My Profile', 'Security & MFA', 'My Sessions']);
+    await expect((await menu(page)).getByRole('link')).toHaveText(['Welcome', 'My Profile', 'Security & MFA', 'My Sessions']);
     await page.goto('/admin/users');
     await expect(page.getByTestId('welcome-card')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Users', exact: true })).toHaveCount(0);
@@ -266,10 +266,10 @@ test.describe('Invitation to access', () => {
     expect((await api(request, `/core/change-requests/${asked.data.id}/act`, { token: approver, data: { action: 'approve', comment: 'checked and fine' } })).status()).toBe(200);
     await page.reload();
     await expect(page.getByTestId('welcome-card')).toHaveCount(0);
-    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Projects & Sites' })).toBeVisible();
+    await expect((await menu(page)).getByRole('link', { name: 'Projects & Sites' })).toBeVisible();
 
     // profile: details, language and theme, a photo through the document service
-    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'My Profile' }).click();
+    await (await menu(page)).getByRole('link', { name: 'My Profile' }).click();
     await expect(page.getByRole('heading', { name: 'My Profile', exact: true })).toBeVisible();
     await page.getByLabel('Full name *').fill('Site Engineer Kumar');
     await page.getByLabel('Preferred language').selectOption('hi');

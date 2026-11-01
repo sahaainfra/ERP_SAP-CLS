@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { counterAt, totpAt } from '../src/server/platform/identity/totp.js';
+import { menu } from './shell-helpers.js';
 
 // A person assigned to one project, signed in for real (port 3101, scripts/e2e_iam_server.mjs): the pages show that project only.
 // Runs last, because sign-in is limited to 30 attempts a minute per address and the sign-in specs use most of that.
@@ -55,11 +56,10 @@ test('a person assigned to one project sees that project only, and the pages say
   await page.getByLabel('Username, email or mobile').fill(`scoped-${s}`);
   await page.getByLabel('Password', { exact: true }).fill(PW);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  await expect(nav.getByRole('link', { name: 'Projects & Sites' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Users' })).toHaveCount(0);
-  await expect(nav.getByRole('link', { name: 'Roles' })).toHaveCount(0);
-  await nav.getByRole('link', { name: 'Projects & Sites' }).click();
+  await expect((await menu(page)).getByRole('link', { name: 'Projects & Sites' })).toBeVisible();
+  await expect((await menu(page)).getByRole('link', { name: 'Users' })).toHaveCount(0);
+  await expect((await menu(page)).getByRole('link', { name: 'Roles' })).toHaveCount(0);
+  await (await menu(page)).getByRole('link', { name: 'Projects & Sites' }).click();
   await expect(page.getByRole('heading', { name: 'Projects & Sites', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: `ALPHA-${s}` })).toBeVisible();
   await expect(page.getByRole('link', { name: `BRAVO-${s}` })).toHaveCount(0);

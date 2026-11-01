@@ -78,7 +78,7 @@ test('Operations Health: SYSADM views but cannot act; a project manager has no a
 
   const pm = await context.newPage();
   await open(pm, 'PM', '/admin/operations/health', companyId, 'e2e-pm');
-  await expect(pm.getByRole('heading', { name: 'You do not have access to operations health' })).toBeVisible();
+  await expect(pm.getByTestId('no-permission')).toBeVisible();
   await pm.close();
 
   // A real script error in the browser reaches the server as a redacted report.

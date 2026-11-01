@@ -1,3 +1,4 @@
+import { contextFiltersFor, useWorkContext } from '../../platform/shell/useWorkContext.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createFromSource, useFormDefinition, useSampleRequest, useSampleRequestActions, useSampleRequestBulk } from './api.js';
 import ObjectPage from '../../platform/object/ObjectPage.jsx';
@@ -258,6 +259,7 @@ function RequestObject({ def, id, notice, onEdit, onBack }) {
  */
 function RequestList({ onOpen, onNew, notice, session }) {
   const bulk = useSampleRequestBulk();
+  const contextFilters = contextFiltersFor(useWorkContext());
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Reference &rsaquo; Sample Material Requests</nav>
@@ -265,7 +267,7 @@ function RequestList({ onOpen, onNew, notice, session }) {
       <p className="muted">The reference register of the List Report and of the data-entry framework: filter, save a view, choose columns, select requests to submit or cancel together, and export the current view to Excel, CSV or PDF. A new request fills itself from your working project and site.</p>
       {notice && <p role="status" className="notice">{notice}</p>}
       <ListReport
-        listCode="ui.sample_requests" endpoint="/ui/sample-requests" title="Requests" permission="core.sample.use" session={session}
+        listCode="ui.sample_requests" endpoint="/ui/sample-requests" title="Requests" permission="core.sample.use" session={session} contextFilters={contextFilters}
         rowHref={(r) => `/admin/sample-requests?open=${r.id}`} onOpen={(r) => onOpen(r.id)}
         cardFields={['docNo', 'title', 'status', 'projectCode', 'docDate', 'total']}
         statusKey="status" mineFilter={{ key: 'requestedBy' }} dateKey="docDate"

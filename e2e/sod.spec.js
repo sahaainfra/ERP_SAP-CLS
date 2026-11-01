@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { menu } from './shell-helpers.js';
 
 // Development-header mode (port 3100); each project works in its own company, created through the API first.
 // The flows that need a signed-in reviewer or requester (elevation, review campaign end to end) are covered by tests/sod-api.test.js.
@@ -95,7 +96,7 @@ test('SoD violations: the report, a scan, the dormant tab and the person without
   // an ordinary employee has no menu entry and the page explains
   const emp = await page.context().newPage();
   await open(emp, company, 'EMP', '/admin/sod/violations', 'e2e-emp');
-  await expect(emp.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
+  await expect((await menu(emp)).getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
   await emp.close();
 });
 

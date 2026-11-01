@@ -7,7 +7,8 @@ import { lookupRegistry, lookupRoutes } from '../../platform/lookups/index.js';
 import { createFlagService } from '../core/api.js';
 import { createDraftService } from './drafts.js';
 import { createFormService } from './forms.js';
-import { formRoutes, listRoutes, objectRoutes, uiRoutes } from './routes.js';
+import { formRoutes, listRoutes, objectRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { createShellService, navHandlers } from './shell.js';
 import { createExportService, createSavedViewService, describeFor } from './lists.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { createObjectService } from './objects.js';
@@ -40,10 +41,14 @@ for (const [verb, description] of [['approved', 'A sample material request was a
 /** @type {any} */
 const commentSchema = { type: 'object', properties: { type: { type: 'string' } }, required: ['type'] };
 eventTypes.define({ type: 'ui.comment.created', version: 1, schema: commentSchema, owner: 'ui', description: 'A comment was added to a record\'s discussion (people mentioned are in the data).' });
+// Part 03.05: the navigation registry's events.
+/** @type {any} */
+const navSchema = { type: 'object', properties: { code: { type: 'string' }, fields: { type: 'array' }, request: { type: 'number' } }, required: ['code'] };
+eventTypes.define({ type: 'ui.navigation.changed', version: 1, schema: navSchema, owner: 'ui', description: 'A navigation registry entry was changed after another administrator approved the request.' });
 parameterRegistry.define({ key: 'ui.approval.sla_hours', dataType: 'integer', default: 24, min: 1, max: 720, scopes: ['system', 'company'], description: 'Hours an approver has for one step of an approval before it shows as overdue on the Object Page.' });
 integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED', 'EXPIRED'] } });
 integrityRegistry.register({
-  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents'], // the shared definitions, reasons and requirements have no company; a company's own would
+  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries'], // the shared definitions, reasons and requirements have no company; a company's own would
   statuses: { ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
@@ -55,8 +60,8 @@ export const ui = {
   routePrefix: '/api/v1/ui',
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
-  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents'],
-  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes'],
+  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context'],
+  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell'],
 
   mount(api, { db, config, storagePath }) {
     const flags = createFlagService({ db, environment: config.environment });
@@ -65,7 +70,7 @@ export const ui = {
     router.use(['/preferences', '/style-guide'], gate('ff.ui.p0301', 'Screen preferences and the style guide are'));
     router.use(uiRoutes(createUiService({ db, config })));
     const drafts = createDraftService({ db });
-    const approvals = createApprovalEngine({ db, handlers: sampleRequestHandlers });
+    const approvals = createApprovalEngine({ db, handlers: { ...sampleRequestHandlers, ...navHandlers } });
     const objects = createObjectService({ db, approvals });
     const requests = createSampleRequestService({ db, drafts, approvals, objects });
     const idempotentRequired = idempotency(db, { required: true });
@@ -89,6 +94,11 @@ export const ui = {
     objectsRouter.use(['/objects', '/reason-codes', '/sample-requests/:id/decision'], gate('ff.ui.p0304', 'The Object Page, its approvals and discussion are'));
     objectsRouter.use(objectRoutes({ objects, reasonCodes: (actor, forAction) => objects.reasonCodes(actor, forAction) }, { idempotent: idempotency(db) }));
     router.use(objectsRouter);
+    // Part 03.05: the application shell's routes.
+    const shellRouter = Router();
+    shellRouter.use(['/navigation', '/favourites', '/recent', '/context-options', '/context', '/launchpad', '/bell'], gate('ff.ui.p0305', 'The application shell is'));
+    shellRouter.use(shellRoutes(createShellService({ db, flags, approvals }), { idempotent: idempotency(db) }));
+    router.use(shellRouter);
     const framework = Router();
     framework.use(gate('ff.ui.p0302', 'Drafts, form definitions and the reference form are'));
     framework.use(formRoutes({ drafts, forms: createFormService({ db }), requests }, { idempotent: idempotency(db), idempotentRequired }));

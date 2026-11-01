@@ -1095,6 +1095,36 @@ paths:
     get: { summary: 'Reason codes for cancel, reject or return (?for=)', responses: { '200': { description: '{ data }' } } }
   /api/v1/ui/sample-requests/{id}/decision:
     post: { summary: 'Approve, reject or return the open approval ({ action, version of the approval, reasonCode, comment }); Idempotency-Key required', responses: { '200': { description: '{ data: the record }' } } }
+  /api/v1/ui/navigation:
+    get: { summary: 'The menu for the signed-in person: groups and pages they may open, quick-create entries, denied entries with the reason', responses: { '200': { description: '{ data: { groups, quickCreate, denied, etag } }' } } }
+  /api/v1/ui/navigation/registry:
+    get: { summary: 'The whole registry with its options and the changes waiting for approval (ui.nav.manage)', responses: { '200': { description: '{ data: { entries, pending, options } }' } } }
+  /api/v1/ui/navigation/registry/export:
+    get: { summary: 'The registry settings as a file (audited)', responses: { '200': { description: '{ data: { exportedAt, entries } }' } } }
+  /api/v1/ui/navigation/registry/import:
+    post: { summary: 'Import settings: each difference becomes a change request, nothing is written directly; Idempotency-Key', responses: { '201': { description: '{ data: { requested, unchanged, errors } }' } } }
+  /api/v1/ui/navigation/registry/{code}/history:
+    get: { summary: 'The audited changes of one entry, newest first', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/navigation/changes:
+    post: { summary: 'Request a change to one entry ({ code, changes, reason, version }); another system administrator approves it in the approval engine; Idempotency-Key', responses: { '201': { description: '{ data: the change request }' } } }
+  /api/v1/ui/favourites:
+    get: { summary: 'The person\'s favourites in their order', responses: { '200': { description: '{ data }' } } }
+    post: { summary: 'Add a page ({ navCode }) or a record ({ entity, entityId }); Idempotency-Key', responses: { '201': { description: '{ data }' } } }
+  /api/v1/ui/favourites/order:
+    put: { summary: 'Set the order of the person\'s favourites ({ ids })', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/favourites/{id}:
+    delete: { summary: 'Remove one of the person\'s favourites', responses: { '200': { description: '{ data: { id } }' } } }
+  /api/v1/ui/recent:
+    get: { summary: 'Records the person opened last, newest first, only those they can still open', responses: { '200': { description: '{ data }' } } }
+    post: { summary: 'Note that the person opened a record ({ entity, entityId, title, route })', responses: { '201': { description: '{ data }' } } }
+  /api/v1/ui/context-options:
+    get: { summary: 'The company, projects and sites in the person\'s scope and the choice they made last', responses: { '200': { description: '{ data: { companies, projects, sites, selected } }' } } }
+  /api/v1/ui/context:
+    put: { summary: 'Choose the project and site to work in ({ projectId, siteId }); checked against the person\'s scope', responses: { '200': { description: '{ data: context options }' } } }
+  /api/v1/ui/launchpad:
+    get: { summary: 'Home: tiles for the role, favourites, recent records and what is waiting (approvals, drafts, exports)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/bell:
+    get: { summary: 'The count shown on the bell: approval requests waiting for the person', responses: { '200': { description: '{ data: { unread, source } }' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)

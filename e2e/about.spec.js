@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { menu } from './shell-helpers.js';
 
 async function open(page, roles, path = '/admin/about', company = '1') {
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), { user: 'e2e-about', roles, company });
@@ -27,14 +28,14 @@ test('IT administrators can view it too', async ({ page }) => {
 
 test('other roles get the no-permission state and no build data', async ({ page }) => {
   await open(page, 'PM');
-  await expect(page.getByRole('heading', { name: 'You do not have access to build information' })).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
   await expect(page.getByTestId('about-build')).toHaveCount(0);
 });
 
 test('the shell navigation moves between Feature Flags and About without a reload', async ({ page }) => {
   await open(page, 'SYSADM', '/admin/feature-flags');
   await expect(page.getByRole('heading', { name: 'Feature Flags' })).toBeVisible();
-  await page.getByRole('link', { name: 'About' }).click();
+  await (await menu(page)).getByRole('link', { name: 'About', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/about$/);
   await expect(page.getByTestId('about-build')).toBeVisible();
   await page.goBack();

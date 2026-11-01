@@ -103,6 +103,6 @@ test('Schedules: ITADM previews a cron and asks for a change; SYSADM approves it
 
 test('PM gets the no-access state and no navigation to the console', async ({ page }, info) => {
   await open(page, 'PM', '/admin/operations', company(info, '59', '60'), 'e2e-pm');
-  await expect(page.getByRole('heading', { name: 'You do not have access to the monitor' })).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Operations' })).toHaveCount(0);
 });

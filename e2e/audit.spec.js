@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { menu } from './shell-helpers.js';
 
 // Development-header mode (port 3100); each project works in its own company, created through the API first.
 const pick = (info, desktop, mobile) => (info.project.name === 'desktop' ? desktop : mobile);
@@ -89,9 +90,9 @@ test('Security Events: severity filters, the refused request appears, and people
   expect(errors).toEqual([]);
 
   // a system administrator may read security events but not the audit trail
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Audit Explorer' })).toHaveCount(0);
+  await expect((await menu(page)).getByRole('link', { name: 'Audit Explorer' })).toHaveCount(0);
   await page.goto('/admin/audit');
-  await expect(page.getByText(/core\.audit\.view|not allowed|permission/i).first()).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
 });
 
 test('Record History: the rule page shows its own history', async ({ page, request }, info) => {

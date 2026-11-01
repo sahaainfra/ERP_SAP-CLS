@@ -15,6 +15,7 @@ import { mountSecurity } from './security/index.js';
 import { securityHandlers } from '../../platform/security/index.js';
 import { connectorChangeHandlerFor, mountConnectors } from './connectors/index.js';
 import { sampleRequestHandlers } from '../ui/sample-request-object.js';
+import { navHandlers } from '../ui/shell.js';
 import { accessHandlers, orgHandlers, policyChangeHandlerFor, privilegedHandlers, userHandlers } from '../iam/index.js';
 import { opsConfigChangeHandler } from './ops/service.js';
 import { formulaActivationHandler } from './calc/service.js';
@@ -116,7 +117,7 @@ export const core = {
     const migrated = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_schedules'").get());
     if (migrated) syncEventTypes(db);
     registerOperations({ db, ...runtime, persist: migrated });
-    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers, ...securityHandlers, ...sampleRequestHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { period_reopen: periodReopenHandler, number_series_change: seriesChangeHandler, schedule_change: createScheduleChangeHandler(runtime.scheduler), file_settings_change: fileSettingsChangeHandler, formula_activation: formulaActivationHandler, ops_config_change: opsConfigChangeHandler, connector_change: connectorChangeHandlerFor(db, config), auth_policy_change: policyChangeHandlerFor(db, config), ...orgHandlers, ...userHandlers, ...accessHandlers, ...privilegedHandlers, ...securityHandlers, ...sampleRequestHandlers, ...navHandlers } });
     const opts = { idempotent, idempotentRequired };
 
     api.use('/core', sessionRoutes({ config }));

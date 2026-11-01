@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { menu } from './shell-helpers.js';
 
 // Development-header mode (port 3100); each project works in its own company, created through the API first.
 const pick = (info, desktop, mobile) => (info.project.name === 'desktop' ? desktop : mobile);
@@ -138,6 +139,6 @@ test('Security Settings: a change is a request, approved by someone else; the hi
   // an ordinary employee has no entry and the API says why
   const emp = await page.context().newPage();
   await open(emp, company, 'EMP', '/admin/security/settings', 'e2e-emp');
-  await expect(emp.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Security Settings' })).toHaveCount(0);
+  await expect((await menu(emp)).getByRole('link', { name: 'Security Settings' })).toHaveCount(0);
   await emp.close();
 });

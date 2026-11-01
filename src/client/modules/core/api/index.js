@@ -58,7 +58,7 @@ export function useSetFlag() {
   return useMutation({
     mutationFn: ({ key, scope, enabled, reason, version }) =>
       api.patch(`/core/feature-flags/${key}`, { scope, enabled, reason, version }, { headers: { 'idempotency-key': globalThis.crypto.randomUUID() } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.core.flags.all }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.core.flags.all }); qc.invalidateQueries({ queryKey: ['shell'] }); }, // the menu follows the flags (part 03.05)
     onError: (err) => {
       if (err.status === 409) qc.invalidateQueries({ queryKey: queryKeys.core.flags.all });
     },

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { menu, setTheme, userMenu } from './shell-helpers.js';
 
 // Development-header mode (port 3100). The style guide and the theme menu of the shell (part 03.01).
 const pick = (info, desktop, mobile) => (info.project.name === 'desktop' ? desktop : mobile);
@@ -21,7 +22,7 @@ test('Style guide: themes side by side, the contrast report, typography with the
   await open(page, 'SYSADM', '/admin/design-system', pick(info, 'e2e-ds-d', 'e2e-ds-m'));
   await expect(page.getByRole('heading', { name: 'Design System', exact: true })).toBeVisible();
   await expect(page).toHaveTitle(/Design System/);
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Design System' })).toBeVisible();
+  await expect((await menu(page)).getByRole('link', { name: 'Design System' })).toBeVisible();
   for (const t of ['light', 'dark', 'high-contrast']) await expect(page.getByTestId(`preview-${t}`)).toBeVisible();
   // each preview really carries its own theme: the dark one has a dark page colour
   const bg = await page.getByTestId('preview-dark').evaluate((el) => getComputedStyle(el).backgroundColor);
@@ -71,12 +72,12 @@ test('T-02 the theme changes every component at once, without a reload, and the 
   const surface = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   const light = await surface();
   const saved = page.waitForResponse((r) => r.url().includes('/api/v1/ui/preferences') && r.request().method() === 'PATCH');
-  await page.getByLabel('Theme').selectOption('dark');
+  await setTheme(page, 'dark');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   expect(await surface()).not.toBe(light);
   expect(await page.evaluate(() => window.__notReloaded)).toBe(true);
   expect((await saved).status()).toBe(200);
-  await page.getByLabel('Theme').selectOption('high-contrast');
+  await setTheme(page, 'high-contrast');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'high-contrast');
   expect(await surface()).toBe('rgb(255, 255, 255)');
   expect(errors).toEqual([]);
@@ -88,7 +89,7 @@ test('T-02 the theme changes every component at once, without a reload, and the 
   const other = await second.newPage();
   await open(other, 'PM', '/admin/projects', user);
   await expect(other.locator('html')).toHaveAttribute('data-theme', 'high-contrast');
-  await expect(other.getByLabel('Theme')).toHaveValue('high-contrast');
+  await expect((await userMenu(other)).getByLabel('Theme')).toHaveValue('high-contrast');
   await noOverflow(other);
   await second.close();
 });

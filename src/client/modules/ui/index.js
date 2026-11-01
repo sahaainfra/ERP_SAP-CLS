@@ -7,6 +7,9 @@ import SampleRequestsPage from './SampleRequestsPage.jsx';
 import MyExportsPage from './MyExportsPage.jsx';
 import ListReportDocsPage from './ListReportDocsPage.jsx';
 import ObjectPageDocsPage from './ObjectPageDocsPage.jsx';
+import LaunchpadPage from './LaunchpadPage.jsx';
+import NavigationRegistryPage from './NavigationRegistryPage.jsx';
+import ConsolePage from './ConsolePage.jsx';
 
 // Module "ui" (part 03.01): the design system. The style guide is listed for those with ui.styleguide.view; outside production the
 // server also lets every signed-in person open it by its address. Part 03.02 adds the form components gallery, each person's drafts
@@ -15,6 +18,9 @@ registerModule({
   code: 'ui',
   label: 'Design System',
   routes: [
+    { path: '/home', label: 'Home', icon: 'erp.group.home', flag: 'ff.ui.p0305', Page: LaunchpadPage },
+    { path: '/admin/navigation', label: 'Navigation Registry', icon: 'erp.action.sort', permission: 'ui.nav.manage', flag: 'ff.ui.p0305', Page: NavigationRegistryPage },
+    { path: '/admin/console', label: 'Technical Console', icon: 'erp.tech.devapi', permission: 'ui.console.view', flag: 'ff.ui.p0305', Page: ConsolePage },
     { path: '/admin/design-system', label: 'Design System', icon: 'erp.group.admin', permission: 'ui.styleguide.view', flag: 'ff.ui.p0301', Page: StyleGuidePage },
     { path: '/admin/design-system/forms', label: 'Form Components', icon: 'erp.action.edit', permission: 'ui.styleguide.view', flag: 'ff.ui.p0302', Page: FormsGalleryPage },
     { path: '/account/drafts', label: 'My Drafts', icon: 'erp.state.draft', flag: 'ff.ui.p0302', Page: MyDraftsPage },

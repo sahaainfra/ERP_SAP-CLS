@@ -142,7 +142,7 @@ function ColumnChooser({ all, order, hidden, onChange, onReset }) {
  *   bulkActions={[{ id, label, permission, confirm, reasonFor?: 'cancel', run: async (ids, { reasonCode, reason }) => ({ results: [{ id, ok, message }] }) }]}
  *   rowActions={(row) => [{ label, onSelect }]} newAction={{ label, onClick }} session={session} empty={{ title, text }} />
  */
-export default function ListReport({ listCode, endpoint, title, rowHref, onOpen, cardFields, statusKey, mineFilter, dateKey, bulkActions = [], rowActions, newAction, session, empty, permission }) {
+export default function ListReport({ listCode, endpoint, title, rowHref, onOpen, cardFields, statusKey, mineFilter, dateKey, bulkActions = [], rowActions, newAction, session, empty, permission, contextFilters = [] }) {
   const qc = useQueryClient();
   const narrow = useMedia('(max-width: 767px)');
   const desc = useQuery({ queryKey: ['ui', 'list', listCode], queryFn: () => unwrap(api.get(`/ui/lists/${listCode}`)), staleTime: 5 * 60_000, retry: false });
@@ -178,7 +178,9 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
     if (def) setView(def);
   }, [state, desc.data, views.isPending, views.data, prefs.isPending, prefs.data, listCode]);
 
-  const query = state ? toQuery(state) : '';
+  // the working context (part 03.05) narrows the list on top of the person's own filters: { key, op, value } rows of the page
+  const withContext = (st) => ({ ...st, filters: [...st.filters.filter((f) => !contextFilters.some((c) => c.key === f.key && c.op === f.op)), ...contextFilters] });
+  const query = state ? toQuery(withContext(state)) : '';
   const list = useQuery({ queryKey: ['list', endpoint, query], queryFn: () => api.get(`${endpoint}?${query}`), enabled: Boolean(state), retry: false, placeholderData: (prev) => prev });
   const rows = list.data?.data ?? [];
   const meta = list.data?.meta;
@@ -222,7 +224,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
     setExporting(format);
     setNotice('');
     try {
-      const res = await fetch(`/api/v1${endpoint}/export?${toQuery({ ...state, page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+      const res = await fetch(`/api/v1${endpoint}/export?${toQuery({ ...withContext(state), page: 1 }, { format })}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
       if (res.status === 202) {
         const job = (await res.json()).data;
         setNotice(`The export has ${job.rows} rows, so it is being prepared in the background. It will appear under My Exports when ready.`);
@@ -298,6 +300,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
         <span className="spacer" />
         {newAction && can(newAction.permission) && <button type="button" className="btn btn-primary" onClick={newAction.onClick}><Icon name="erp.action.create" size={16} />{newAction.label}</button>}
       </div>
+      {contextFilters.length > 0 && <p className="muted small" data-testid="list-context">Showing the working context only: {contextFilters.map((c) => c.value).join(' / ')}. Choose All projects in the context at the top of the page to see everything.</p>}
       <div className="lr-quick" role="group" aria-label="Quick filters">
         {statusCol?.options?.map(([v, l]) => {
           const on = state.filters.some((f) => f.key === statusKey && f.op === 'in' && f.value.split(',').includes(v));

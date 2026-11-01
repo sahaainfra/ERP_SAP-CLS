@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { counterAt, totpAt } from '../src/server/platform/identity/totp.js';
+import { menu } from './shell-helpers.js';
 
 // Elevated access, signed in for real (port 3101, scripts/e2e_iam_server.mjs): a project manager asks for the auditor role for an hour,
 // the IT administrator approves, the access appears; the person then sees the auditor's pages. Runs last (sign-in is limited per minute).
@@ -35,10 +36,9 @@ test('a project manager asks for the auditor role, the IT administrator approves
   await page.getByLabel('Username, email or mobile').fill(`elev-${s}`);
   await page.getByLabel('Password', { exact: true }).fill(PW);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  await expect(nav.getByRole('link', { name: 'Request Elevated Access' })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
-  await nav.getByRole('link', { name: 'Request Elevated Access' }).click();
+  await expect((await menu(page)).getByRole('link', { name: 'Request Elevated Access' })).toBeVisible();
+  await expect((await menu(page)).getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
+  await (await menu(page)).getByRole('link', { name: 'Request Elevated Access' }).click();
   await expect(page.getByRole('heading', { name: 'Request Elevated Access' })).toBeVisible();
   await page.locator('select[name=roleId]').selectOption({ label: 'AUD - Internal Auditor' });
   await page.locator('input[name=hours]').fill('1');
@@ -48,7 +48,7 @@ test('a project manager asks for the auditor role, the IT administrator approves
   await expect(page.locator('[data-testid^=elevation-]').filter({ hasText: 'Waiting for approval' }).first()).toBeVisible();
 
   // asking is not having
-  await expect(nav.getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
+  await expect((await menu(page)).getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
 
   // the IT administrator approves through the API, as the approvals page would
   const it = await enrolledToken(request, `elevit-${s}`);
@@ -63,12 +63,12 @@ test('a project manager asks for the auditor role, the IT administrator approves
   const row = page.getByTestId(`elevation-${mine.id}`);
   await expect(row).toContainText('Active');
   await expect(row).toContainText('left');
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'SoD Violations' })).toBeVisible();
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'SoD Violations' }).click();
+  await expect((await menu(page)).getByRole('link', { name: 'SoD Violations' })).toBeVisible();
+  await (await menu(page)).getByRole('link', { name: 'SoD Violations' }).click();
   await expect(page.getByRole('heading', { name: 'Violations & Dormant Accounts' })).toBeVisible();
 
   // everything done while elevated is logged
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Request Elevated Access' }).click();
+  await (await menu(page)).getByRole('link', { name: 'Request Elevated Access' }).click();
   await page.getByRole('button', { name: `Open request ${mine.id}` }).click();
   await expect(page.getByTestId('elevation-detail')).toContainText('sod-violations');
 
@@ -78,6 +78,6 @@ test('a project manager asks for the auditor role, the IT administrator approves
   await page.reload();
   await page.getByRole('button', { name: `Open request ${mine.id}` }).waitFor();
   await expect(page.getByTestId(`elevation-${mine.id}`)).toContainText('Revoked');
-  await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
+  await expect((await menu(page)).getByRole('link', { name: 'SoD Violations' })).toHaveCount(0);
   expect(errors).toEqual([]);
 });

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { setTheme } from './shell-helpers.js';
 
 async function open(page, roles, path = '/admin/data-health', company = '1', user = 'e2e-health') {
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), { user, roles, company });
@@ -58,7 +59,7 @@ test('SYSADM can read the report but the run button is disabled with a reason', 
 
 test('other roles get the no-permission state and no check data; the nav entry is hidden', async ({ page }) => {
   await open(page, 'PM', '/admin/data-health', '76', 'pm-user');
-  await expect(page.getByRole('heading', { name: 'You do not have access to Data Health' })).toBeVisible();
+  await expect(page.getByTestId('no-permission')).toBeVisible();
   await expect(page.getByTestId('checks-table')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Data Health' })).toHaveCount(0);
 });
@@ -81,7 +82,7 @@ test('turning the feature flag OFF hides the entry and the page at once', async 
   });
   expect(res.status()).toBe(200);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Data Health is not enabled' })).toBeVisible();
+  await expect(page.getByTestId('flag-off')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Data Health' })).toHaveCount(0);
 });
 
@@ -114,7 +115,7 @@ test('no horizontal scroll with wide fonts, in every theme', async ({ page }) =>
   await expect(page.getByTestId('checks-table')).toBeVisible();
   await page.addStyleTag({ content: '* { font-family: Verdana, sans-serif !important; }' });
   for (const theme of ['light', 'dark', 'high-contrast']) {
-    await page.getByLabel('Theme').selectOption(theme);
+    await setTheme(page, theme);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, theme).toBeLessThanOrEqual(0);
   }

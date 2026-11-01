@@ -80,6 +80,16 @@ export function createApprovalEngine({ db, handlers }) {
       return presentFull(id, actor.companyId);
     },
 
+    /** How many open requests wait for this person's decision at their current step (the bell and the launchpad of part 03.05). */
+    awaitingCount(actor) {
+      const open = db.prepare("SELECT chain_json, current_step, requested_by FROM core_change_requests WHERE company_id = ? AND status = 'SUBMITTED' AND is_active = 1").all(actor.companyId);
+      return open.filter((r) => {
+        if (r.requested_by === actor.user) return false;
+        const role = JSON.parse(r.chain_json)[r.current_step - 1] ?? '';
+        return role.startsWith('@') ? actor.user === role.slice(1) : role.split('|').some((x) => (actor.roles ?? []).includes(x));
+      }).length;
+    },
+
     /** Approve, reject or return the request at its current step. */
     act(actor, id, { action, comment, version }) {
       // a refusal on segregation-of-duties grounds is kept as a record even though the decision is rolled back

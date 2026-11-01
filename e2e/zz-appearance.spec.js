@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { menu, userMenu } from './shell-helpers.js';
 
 // T-02 signed in for real (port 3101, scripts/e2e_iam_server.mjs): a person sets their appearance in My Profile on one device and
 // finds it on another after signing in there. Runs last: sign-in is limited per minute and per address.
@@ -25,7 +26,7 @@ test('T-02 appearance chosen in My Profile applies at once and follows the perso
   page.on('console', (m) => m.type() === 'error' && !/Failed to load resource|status of (401|403|404)/.test(m.text()) && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(String(e)));
   await signIn(page, user);
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'My Profile' }).click();
+  await (await menu(page)).getByRole('link', { name: 'My Profile' }).click();
   const look = page.getByTestId('appearance');
   await expect(look.getByRole('heading', { name: 'Appearance' })).toBeVisible();
   await expect(look.getByRole('button', { name: 'Save appearance' })).toBeEnabled(); // nothing is saved yet, so the current look can be kept
@@ -49,7 +50,7 @@ test('T-02 appearance chosen in My Profile applies at once and follows the perso
   await signIn(other, user);
   await expect(other.locator('html')).toHaveAttribute('data-theme', 'high-contrast');
   await expect(other.locator('html')).toHaveAttribute('data-density', 'compact');
-  await expect(other.getByLabel('Theme')).toHaveValue('high-contrast');
+  await expect((await userMenu(other)).getByLabel('Theme')).toHaveValue('high-contrast');
   expect(await other.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
   await b.close();
 });

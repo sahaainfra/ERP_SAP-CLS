@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
-import { allRoutes, defaultRoute, findRoute, routesFor } from './platform/shell/registry.js';
+import { allRoutes, findRoute, routesFor } from './platform/shell/registry.js';
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
 import LoginPage from './modules/iam/pages/LoginPage.jsx';
 import ContextSwitcher from './modules/iam/components/ContextSwitcher.jsx';
@@ -11,10 +11,14 @@ import { APPEARANCE_EVENT, THEMES, announceAppearance, applyAppearance, storedAp
 import AcceptInvitePage from './modules/iam/pages/AcceptInvitePage.jsx';
 import { confirmLeave } from './platform/forms/guard.js';
 import { FeedbackProvider } from './platform/feedback/Feedback.jsx';
+import AppShell from './platform/shell/AppShell.jsx';
+import { useShellMode } from './platform/shell/api.js';
+import { Skeleton } from './platform/feedback/states.jsx';
 
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
-const currentPath = () => (findRoute(window.location.pathname) ? window.location.pathname : defaultRoute());
+// An address that is no page of the application is '/': the old top bar sends it to its first page, the shell (part 03.05) to Home.
+const currentPath = () => (findRoute(window.location.pathname.split('?')[0]) ? window.location.pathname : '/');
 
 /** Shows its children only while a feature flag is ON for the signed-in user. */
 function FlagGate({ flag, children }) {
@@ -54,10 +58,12 @@ function Shell({ iam, user }) {
   }, [path]);
 
   const go = (to) => (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (!confirmLeave()) return; // a form with unsaved changes asks first (part 03.02)
     window.history.pushState(null, '', to);
     setPath(to);
+    // pages that keep their own view of the address (a record open, a form new) listen for popstate and follow it
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
 
@@ -70,12 +76,62 @@ function Shell({ iam, user }) {
   }, [identity, qc, iam]);
 
   const s = session.data;
+  const mode = useShellMode(Boolean(s));
   const devIdentity = !iam && s?.environment !== 'production';
   // A person with no approved role (restricted onboarding, part 02.03) gets a welcome page, their profile and their security pages.
   const onboarding = Boolean(iam && s?.onboarding === true);
   const nav = (s ? routesFor(s.permissions) : []).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
-  const found = findRoute(path);
-  const route = onboarding ? (found?.onboarding ? found : findRoute('/welcome')) : (found ?? allRoutes()[0]);
+  const shellOn = mode === 'on';
+  const found = findRoute(path.split('?')[0]);
+  const fallback = shellOn ? findRoute(onboarding ? '/welcome' : '/home') : allRoutes()[0];
+  const route = onboarding ? (found?.onboarding ? found : findRoute('/welcome')) : (found ?? fallback);
+  // the address the person is really on: '/' and, for a person still being onboarded, a page they cannot use are shown as their landing page
+  const shown = path === '/' || (found?.onboardingOnly && !onboarding) ? fallback?.path ?? path : onboarding && !found?.onboarding ? '/welcome' : path;
+  useEffect(() => {
+    if (s && mode !== 'loading' && shown !== path) {
+      window.history.replaceState(null, '', shown);
+      setPath(shown);
+    }
+  }, [s, mode, shown, path]);
+
+  const identityBar = devIdentity ? (
+    <div className="devbar" role="group" aria-label="Development identity">
+      <span>Development identity (replaced by sign-in when AUTH_MODE=iam):</span>
+      <label className="shell-field"><span>User</span>
+        <input value={identity.user} onChange={(e) => setIdentity({ ...identity, user: e.target.value })} />
+      </label>
+      <label className="shell-field"><span>Role</span>
+        <select value={identity.roles} onChange={(e) => setIdentity({ ...identity, roles: e.target.value })}>
+          {ROLES.map((r) => <option key={r}>{r}</option>)}
+        </select>
+      </label>
+      <label className="shell-field"><span>Company</span>
+        <input type="number" min="1" value={identity.company} onChange={(e) => setIdentity({ ...identity, company: e.target.value })} />
+      </label>
+    </div>
+  ) : null;
+  const unreachable = session.isError && (
+    <div className="state state-error" role="alert">
+      <h2>Could not reach the server</h2>
+      <p>{session.error.message}</p>
+      {session.error.correlationId && <p className="muted">Correlation ID: <code>{session.error.correlationId}</code></p>}
+      <button type="button" className="btn" onClick={() => session.refetch()}>Try again</button>
+    </div>
+  );
+
+  if (s && mode === 'loading') return <FeedbackProvider><main id="main"><Skeleton label="Loading" rows={3} /></main></FeedbackProvider>;
+  if (s && shellOn) {
+    return (
+      <FeedbackProvider>
+        <AppShell
+          path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
+          theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
+          onSignOut={iam && user ? () => signOut().then(() => qc.clear()) : null} identityBar={identityBar}
+          extras={<FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>}
+        />
+      </FeedbackProvider>
+    );
+  }
 
   return (
     <FeedbackProvider>
@@ -108,32 +164,10 @@ function Shell({ iam, user }) {
           </span>
         )}
       </header>
-      {devIdentity && (
-        <div className="devbar" role="group" aria-label="Development identity">
-          <span>Development identity (replaced by sign-in when AUTH_MODE=iam):</span>
-          <label className="shell-field"><span>User</span>
-            <input value={identity.user} onChange={(e) => setIdentity({ ...identity, user: e.target.value })} />
-          </label>
-          <label className="shell-field"><span>Role</span>
-            <select value={identity.roles} onChange={(e) => setIdentity({ ...identity, roles: e.target.value })}>
-              {ROLES.map((r) => <option key={r}>{r}</option>)}
-            </select>
-          </label>
-          <label className="shell-field"><span>Company</span>
-            <input type="number" min="1" value={identity.company} onChange={(e) => setIdentity({ ...identity, company: e.target.value })} />
-          </label>
-        </div>
-      )}
+      {identityBar}
       <main id="main">
         {s && route && <route.Page session={s} />}
-        {session.isError && (
-          <div className="state state-error" role="alert">
-            <h2>Could not reach the server</h2>
-            <p>{session.error.message}</p>
-            {session.error.correlationId && <p className="muted">Correlation ID: <code>{session.error.correlationId}</code></p>}
-            <button type="button" className="btn" onClick={() => session.refetch()}>Try again</button>
-          </div>
-        )}
+        {unreachable}
       </main>
     </FeedbackProvider>
   );

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { parse } from '../../platform/validation/index.js';
 import { parseSampleRequest } from './sample-requests.js';
 import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
+import { parseContext, parseFavourite, parseFavouriteOrder, parseNavChange, parseNavImport, parseVisit } from './shell.js';
 import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
 import {
   parseCreateFrom, parseDraftBulkDelete, parseDraftDelete, parseDraftList, parseDraftSave, parseDuplicateCheck, parseEntityKey, parseFormCode, parseId, parsePreferences, parseRequestAction, parseDecision,
@@ -94,3 +95,26 @@ export function objectRoutes({ objects, reasonCodes }, { idempotent }) {
   });
   return r;
 }
+
+/** The application shell's routes (part 03.05): the navigation registry, favourites, recent records, working context and the launchpad. */
+export function shellRoutes(shell, { idempotent }) {
+  const r = Router();
+  r.get('/navigation', (req, res) => res.json({ data: shell.navigation(req.actor) }));
+  r.get('/navigation/registry', (req, res) => res.json({ data: shell.registry(req.actor) }));
+  r.get('/navigation/registry/export', (req, res) => res.json({ data: shell.exportSettings(req.actor) }));
+  r.post('/navigation/registry/import', idempotent, (req, res) => res.status(201).json({ data: shell.importSettings(req.actor, parseNavImport(req.body)) }));
+  r.get('/navigation/registry/:code/history', (req, res) => res.json({ data: shell.history(req.actor, parseCode(req.params.code)) }));
+  r.post('/navigation/changes', idempotent, (req, res) => res.status(201).json({ data: shell.propose(req.actor, parseNavChange(req.body)) }));
+  r.get('/favourites', (req, res) => res.json({ data: shell.favourites(req.actor) }));
+  r.post('/favourites', idempotent, (req, res) => res.status(201).json({ data: shell.addFavourite(req.actor, parseFavourite(req.body)) }));
+  r.put('/favourites/order', (req, res) => res.json({ data: shell.orderFavourites(req.actor, parseFavouriteOrder(req.body)) }));
+  r.delete('/favourites/:id', (req, res) => res.json({ data: shell.removeFavourite(req.actor, parseId(req.params.id)) }));
+  r.get('/recent', (req, res) => res.json({ data: shell.recent(req.actor) }));
+  r.post('/recent', (req, res) => res.status(201).json({ data: shell.visit(req.actor, parseVisit(req.body)) }));
+  r.get('/context-options', (req, res) => res.json({ data: shell.contextOptions(req.actor) }));
+  r.put('/context', (req, res) => res.json({ data: shell.setContext(req.actor, parseContext(req.body)) }));
+  r.get('/launchpad', (req, res) => res.json({ data: shell.launchpad(req.actor) }));
+  r.get('/bell', (req, res) => res.json({ data: shell.bell(req.actor) }));
+  return r;
+}
+const parseCode = (v) => parse(z.string().regex(/^[a-z][a-z0-9-]{0,59}$/, 'Not a navigation code'), v);

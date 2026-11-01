@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { menu } from './shell-helpers.js';
 
 // Both viewport projects share one database, so each test uses its own company per project.
 const company = (info, desktop, mobile) => (info.project.name === 'desktop' ? desktop : mobile);
@@ -102,7 +103,7 @@ test('T-01 a file that fails the virus scan is quarantined, cannot be opened, an
   await expect(page.getByTestId('scan-notes.txt')).toHaveText('Quarantined', { timeout: 20_000 });
   await expect(page.getByRole('button', { name: 'Open notes.txt' })).toBeDisabled();
   await expect(page.getByText('failed the virus scan and cannot be opened')).toBeVisible();
-  await page.getByRole('link', { name: 'File Storage' }).click();
+  await (await menu(page)).getByRole('link', { name: 'File Storage', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'File Storage Settings' })).toBeVisible();
   await expect(page.getByTestId('tile-infected')).toHaveText('1');
   await expect(page.getByTestId('attention-notes.txt')).toContainText('Quarantined');
@@ -186,6 +187,6 @@ test('AC-06 file settings: SYSADM asks, ITADM approves, and the limit changes; P
 
   const pm = await page.context().newPage();
   await open(pm, 'PM', '/admin/file-storage', companyId, 'e2e-pm');
-  await expect(pm.getByRole('heading', { name: 'You do not have access to the file overview' })).toBeVisible();
+  await expect(pm.getByTestId('no-permission')).toBeVisible();
   expect(errors.filter((e) => !/403/.test(e))).toEqual([]);
 });
