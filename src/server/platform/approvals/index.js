@@ -82,12 +82,17 @@ export function createApprovalEngine({ db, handlers }) {
 
     /** How many open requests wait for this person's decision at their current step (the bell and the launchpad of part 03.05). */
     awaitingCount(actor) {
-      const open = db.prepare("SELECT chain_json, current_step, requested_by FROM core_change_requests WHERE company_id = ? AND status = 'SUBMITTED' AND is_active = 1").all(actor.companyId);
+      return this.awaiting(actor).length;
+    },
+
+    /** The open requests that wait for this person's decision at their current step, oldest first (the approvals widgets of part 03.07). */
+    awaiting(actor) {
+      const open = db.prepare("SELECT id, type, title, target_type, target_id, chain_json, current_step, requested_by, created_at FROM core_change_requests WHERE company_id = ? AND status = 'SUBMITTED' AND is_active = 1 ORDER BY id").all(actor.companyId);
       return open.filter((r) => {
         if (r.requested_by === actor.user) return false;
         const role = JSON.parse(r.chain_json)[r.current_step - 1] ?? '';
         return role.startsWith('@') ? actor.user === role.slice(1) : role.split('|').some((x) => (actor.roles ?? []).includes(x));
-      }).length;
+      }).map((r) => ({ id: r.id, type: r.type, title: r.title, targetType: r.target_type, targetId: r.target_id, requestedBy: r.requested_by, createdAt: r.created_at, step: r.current_step }));
     },
 
     /** Approve, reject or return the request at its current step. */

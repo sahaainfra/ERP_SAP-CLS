@@ -2439,6 +2439,41 @@ Indexes:
 - ix_org_sites_company: company_id, status
 - ux_org_sites_code (unique): org_project_id, code
 
+## ui_dashboards
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| owner_type | TEXT | yes |  |  |
+| owner_ref | TEXT | yes |  |  |
+| permission_key | TEXT | yes |  | 'self' |
+| layout_json | TEXT | yes |  | '[]' |
+| filters_json | TEXT | yes |  | '{}' |
+| is_default | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_dashboards_owner_ref: owner_type, owner_ref
+- ix_ui_dashboards_company: company_id, code
+- ux_ui_dashboards_owner (unique): , code, owner_type, owner_ref
+
 ## ui_drafts
 
 | Column | Type | Not null | Key | Default |
@@ -3063,3 +3098,44 @@ Foreign keys: user_id -> iam_users(id), company_id -> org_companies(id)
 Indexes:
 - ix_ui_user_preferences_user: user_id
 - ux_ui_user_preferences_person (unique): company_id, user_ref
+
+## ui_widgets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| title_hi | TEXT |  |  |  |
+| description | TEXT |  |  |  |
+| type | TEXT | yes |  |  |
+| data_endpoint | TEXT | yes |  |  |
+| params_schema_json | TEXT | yes |  | '{}' |
+| permission_key | TEXT | yes |  |  |
+| default_w | INTEGER | yes |  | 4 |
+| default_h | INTEGER | yes |  | 1 |
+| refresh_sec | INTEGER | yes |  | 60 |
+| drill_route | TEXT |  |  |  |
+| sort_order | INTEGER | yes |  | 100 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_widgets_company: company_id
+- ix_ui_widgets_module: module, sort_order
+- sqlite_autoindex_ui_widgets_1 (unique): code

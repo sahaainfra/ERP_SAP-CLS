@@ -102,7 +102,7 @@ test('FR-01 on a phone the bottom navigation has Home, My Work, Scan and More; M
   await expect(page.getByTestId('bottom-scan')).toHaveAttribute('aria-current', 'page');
   expect(await smallTargets(page), 'Scanner').toEqual([]);
   await page.getByTestId('bottom-work').click();
-  await expect(page.getByRole('heading', { name: 'My Drafts', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My Work', level: 1 })).toBeVisible();
   const nav = await menu(page);
   await expect(nav.getByRole('link', { name: 'Field Home' })).toBeVisible();
   await nav.getByRole('link', { name: 'Field Home' }).click();

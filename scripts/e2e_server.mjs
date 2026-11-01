@@ -4,5 +4,6 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-for (const suffix of ['', '-wal', '-shm']) rmSync(join(root, `data/e2e.sqlite${suffix}`), { force: true });
+const database = process.env.DATABASE_PATH ?? 'data/e2e.sqlite'; // the one the run names, so a second run can use its own file
+for (const suffix of ['', '-wal', '-shm']) rmSync(join(root, `${database}${suffix}`), { force: true });
 await import('../src/server/index.js');

@@ -50,6 +50,22 @@ export function setFilter(filters, next) {
 }
 export const removeFilter = (filters, key, op) => filters.filter((f) => !(f.key === key && (!op || f.op === op)));
 
+/**
+ * The filters an address carries (part 03.07, FR-05): `?filter[status][in]=DRAFT,SUBMITTED&filter[projectCode]=ALP` becomes
+ * [{ key, op, value }], the form a list state holds, so a widget's drill-down opens the list with the same filters it counted.
+ */
+export function filtersFromSearch(search) {
+  const out = [];
+  for (const [name, value] of new URLSearchParams(search ?? '')) {
+    const m = /^filter\[([A-Za-z][A-Za-z0-9_]*)\](?:\[([a-z]+)\])?$/.exec(name);
+    if (!m) continue;
+    const op = m[2] ?? 'eq';
+    if (!(op in OPERATOR_LABELS) || (value === '' && !NO_VALUE.has(op))) continue;
+    out.push({ key: m[1], op, value: NO_VALUE.has(op) ? '' : value });
+  }
+  return out.filter((f, i) => !out.slice(i + 1).some((g) => g.key === f.key && g.op === f.op)); // the later one of a key and operator wins
+}
+
 /** Cycle a column's sort: none -> ascending -> descending -> none, keeping it as the only sort. */
 export function nextSort(current, key) {
   if (current === key) return `-${key}`;

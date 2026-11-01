@@ -7,7 +7,9 @@ import { lookupRegistry, lookupRoutes } from '../../platform/lookups/index.js';
 import { createFlagService } from '../core/api.js';
 import { createDraftService } from './drafts.js';
 import { createFormService } from './forms.js';
-import { deviceRoutes, formRoutes, listRoutes, objectRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { dashboardRoutes, deviceRoutes, formRoutes, listRoutes, objectRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { createWidgetService, dashboardHandlers } from './widgets.js';
+import { registerWidgetProviders } from './widget-providers.js';
 import { createDeviceService } from './device.js';
 import { loadVapid, sendPush } from '../../platform/push/index.js';
 import { createShellService, navHandlers } from './shell.js';
@@ -47,6 +49,12 @@ eventTypes.define({ type: 'ui.comment.created', version: 1, schema: commentSchem
 /** @type {any} */
 const navSchema = { type: 'object', properties: { code: { type: 'string' }, fields: { type: 'array' }, request: { type: 'number' } }, required: ['code'] };
 eventTypes.define({ type: 'ui.navigation.changed', version: 1, schema: navSchema, owner: 'ui', description: 'A navigation registry entry was changed after another administrator approved the request.' });
+// Part 03.07: the providers of the widgets of this module, the target of the timeliness gauge and the dashboard event.
+registerWidgetProviders();
+/** @type {any} */
+const dashboardSchema = { type: 'object', properties: { code: { type: 'string' }, role: { type: 'string' }, removed: { type: 'boolean' } }, required: ['code'] };
+eventTypes.define({ type: 'ui.dashboard.changed', version: 1, schema: dashboardSchema, owner: 'ui', description: 'The default dashboard of a role was set, changed or removed after another administrator approved the request.' });
+parameterRegistry.define({ key: 'ui.widget.timeliness_target', dataType: 'integer', default: 90, min: 50, max: 100, scopes: ['system', 'company'], description: 'The share (percent) of approvals that should be decided within the allowed time; the gauge on the dashboards turns amber under it and red well under it.' });
 // Part 03.06: the camera's limits and the push subscription event.
 /** @type {any} */
 const pushSchema = { type: 'object', properties: { change: { type: 'string' } }, required: ['change'] };
@@ -60,7 +68,7 @@ for (const [key, def, min, max, description] of [
 parameterRegistry.define({ key: 'ui.approval.sla_hours', dataType: 'integer', default: 24, min: 1, max: 720, scopes: ['system', 'company'], description: 'Hours an approver has for one step of an approval before it shows as overdue on the Object Page.' });
 integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED', 'EXPIRED'] } });
 integrityRegistry.register({
-  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles'], // the shared definitions, reasons and requirements have no company; a company's own would
+  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards'], // the shared definitions, reasons and requirements have no company; a company's own would
   statuses: { ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
@@ -72,8 +80,8 @@ export const ui = {
   routePrefix: '/api/v1/ui',
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
-  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles'],
-  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr'],
+  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards'],
+  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr', 'widgets', 'dashboards'],
 
   mount(api, { db, config, storagePath }) {
     const flags = createFlagService({ db, environment: config.environment });
@@ -82,7 +90,7 @@ export const ui = {
     router.use(['/preferences', '/style-guide'], gate('ff.ui.p0301', 'Screen preferences and the style guide are'));
     router.use(uiRoutes(createUiService({ db, config })));
     const drafts = createDraftService({ db });
-    const approvals = createApprovalEngine({ db, handlers: { ...sampleRequestHandlers, ...navHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { ...sampleRequestHandlers, ...navHandlers, ...dashboardHandlers } });
     const objects = createObjectService({ db, approvals });
     const requests = createSampleRequestService({ db, drafts, approvals, objects });
     const idempotentRequired = idempotency(db, { required: true });
@@ -109,8 +117,14 @@ export const ui = {
     // Part 03.05: the application shell's routes.
     const shellRouter = Router();
     shellRouter.use(['/navigation', '/favourites', '/recent', '/context-options', '/context', '/launchpad', '/bell'], gate('ff.ui.p0305', 'The application shell is'));
-    shellRouter.use(shellRoutes(createShellService({ db, flags, approvals }), { idempotent: idempotency(db) }));
+    const shell = createShellService({ db, flags, approvals });
+    shellRouter.use(shellRoutes(shell, { idempotent: idempotency(db) }));
     router.use(shellRouter);
+    // Part 03.07: widgets and dashboards.
+    const dashboardRouter = Router();
+    dashboardRouter.use(['/widgets', '/dashboards'], gate('ff.ui.p0307', 'Dashboards and widgets are'));
+    dashboardRouter.use(dashboardRoutes(createWidgetService({ db, approvals, shell }), { idempotent: idempotency(db) }));
+    router.use(dashboardRouter);
     // Part 03.06: camera settings, push subscriptions and the QR resolver.
     const vapid = loadVapid({ config, dir: storagePath ?? config.storagePath ?? 'data' });
     const pushService = vapid ? { vapid, send: (sub, message) => sendPush(sub, message, { vapid }) } : null;

@@ -12,14 +12,19 @@ import NavigationRegistryPage from './NavigationRegistryPage.jsx';
 import ConsolePage from './ConsolePage.jsx';
 import FieldHomePage from './FieldHomePage.jsx';
 import ScannerPage from './ScannerPage.jsx';
+import { MyWorkPage, RequestsOverviewPage } from './DashboardPages.jsx';
+import DashboardDesignerPage from './DashboardDesignerPage.jsx';
 
 // Module "ui" (part 03.01): the design system. The style guide is listed for those with ui.styleguide.view; outside production the
-// server also lets every signed-in person open it by its address. Part 03.02 adds the form components gallery, each person's drafts
+// server also lets every signed-in person open it by its address. Part 03.07 adds My Work, the Requests Overview and the Dashboard Designer. Part 03.02 adds the form components gallery, each person's drafts
 // and the reference form of the data-entry framework.
 registerModule({
   code: 'ui',
   label: 'Design System',
   routes: [
+    { path: '/work', label: 'My Work', icon: 'erp.group.home', flag: 'ff.ui.p0307', Page: MyWorkPage },
+    { path: '/admin/sample-requests/overview', label: 'Requests Overview', icon: 'erp.insights.metrics', permission: 'core.sample.use', flag: 'ff.ui.p0307', Page: RequestsOverviewPage },
+    { path: '/admin/dashboards', label: 'Dashboard Designer', icon: 'erp.action.settings', permission: 'ui.dashboard.manage', flag: 'ff.ui.p0307', Page: DashboardDesignerPage },
     { path: '/field', label: 'Field Home', icon: 'erp.field.field', flag: 'ff.ui.p0306', Page: FieldHomePage },
     { path: '/field/scan', label: 'Scan', icon: 'erp.action.scan', flag: 'ff.ui.p0306', Page: ScannerPage },
     { path: '/home', label: 'Home', icon: 'erp.group.home', flag: 'ff.ui.p0305', Page: LaunchpadPage },

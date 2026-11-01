@@ -4,6 +4,7 @@ import { parse } from '../../platform/validation/index.js';
 import { parseSampleRequest } from './sample-requests.js';
 import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
 import { parseQr, parseSubscription, parseUnsubscribe } from './device.js';
+import { parseDashboardCode, parseHistory, parsePersonal, parseRoleDefault, parseWidgetCode, parseWidgetQuery } from './widgets.js';
 import { parseContext, parseFavourite, parseFavouriteOrder, parseNavChange, parseNavImport, parseVisit } from './shell.js';
 import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
 import {
@@ -130,5 +131,20 @@ export function deviceRoutes(device, { idempotent }) {
   r.delete('/push-subscriptions/:id', (req, res) => res.json({ data: device.unsubscribe(req.actor, { id: parseId(req.params.id) }) }));
   r.post('/push/test', idempotent, async (req, res) => res.json({ data: await device.sendTest(req.actor) }));
   r.get('/qr/resolve', (req, res) => res.json({ data: device.qrResolve(req.actor, parseQr(req.query).code) }));
+  return r;
+}
+
+/** The dashboard and widget routes (part 03.07): the catalogue, the data of one widget, and dashboards with a person's own copy and the defaults of roles. */
+export function dashboardRoutes(service, { idempotent }) {
+  const r = Router();
+  r.get('/widgets', (req, res) => res.json({ data: service.catalogue(req.actor) }));
+  r.get('/widgets/:code/data', (req, res) => res.json({ data: service.data(req.actor, parseWidgetCode(req.params.code), parseWidgetQuery(req.query)) }));
+  r.get('/dashboards', (req, res) => res.json({ data: service.list(req.actor) }));
+  r.get('/dashboards/:code', (req, res) => res.json({ data: service.resolve(req.actor, parseDashboardCode(req.params.code)) }));
+  r.put('/dashboards/:code/personal', (req, res) => res.json({ data: service.savePersonal(req.actor, parseDashboardCode(req.params.code), parsePersonal(req.body)) }));
+  r.delete('/dashboards/:code/personal', (req, res) => res.json({ data: service.resetPersonal(req.actor, parseDashboardCode(req.params.code)) }));
+  r.get('/dashboards/:code/role-defaults', (req, res) => res.json({ data: service.roleDefaults(req.actor, parseDashboardCode(req.params.code)) }));
+  r.post('/dashboards/:code/role-defaults', idempotent, (req, res) => res.status(201).json({ data: service.proposeRoleDefault(req.actor, parseDashboardCode(req.params.code), parseRoleDefault(req.body)) }));
+  r.get('/dashboards/:code/history', (req, res) => res.json({ data: service.history(req.actor, parseDashboardCode(req.params.code), parseHistory(req.query).role) }));
   return r;
 }

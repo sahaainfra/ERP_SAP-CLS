@@ -10,7 +10,7 @@ import { formatDateTime } from '../format.js';
 import { confirmLeave } from '../forms/guard.js';
 import { ConfirmDialog } from '../feedback/Dialogs.jsx';
 import { QueryError } from '../feedback/states.jsx';
-import { NO_VALUE, OPERATOR_LABELS, PAGE_SIZES, datePresets, describeFilters, moveColumn, nextSort, removeFilter, setFilter, toQuery, viewConfig, visibleColumns, windowOf } from './state.js';
+import { NO_VALUE, OPERATOR_LABELS, PAGE_SIZES, datePresets, describeFilters, filtersFromSearch, moveColumn, nextSort, removeFilter, setFilter, toQuery, viewConfig, visibleColumns, windowOf } from './state.js';
 
 // The List Report (part 03.03): every register's list. The server does the work (BR-01): search, filters with operators, sort, pages of
 // 25-200, the total count and the totals of numeric columns over the whole filtered set. The component adds the filter bar (quick
@@ -193,12 +193,17 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
     const saved = prefs.data?.tableSettings?.[listCode] ?? {};
     const def = (views.data ?? []).find((v) => v.isDefault && v.mine) ?? (views.data ?? []).find((v) => v.isDefault);
     const base = { q: '', sort: desc.data.defaultSort ?? '', page: 1, pageSize: saved.pageSize ?? 25, filters: [], columns: saved.columns ?? [], hidden: saved.hidden ?? [], widths: saved.widths ?? {} };
-    setState(def ? { ...base, ...def.config, page: 1 } : base);
+    // the address may carry filters (a widget's drill-down, part 03.07): they apply on top of the view and beat the working context
+    const fromAddress = filtersFromSearch(window.location.search);
+    const start = def ? { ...base, ...def.config, page: 1 } : base;
+    setState(fromAddress.length ? { ...start, filters: [...(start.filters ?? []).filter((x) => !fromAddress.some((f) => f.key === x.key && f.op === x.op)), ...fromAddress] } : start);
     if (def) setView(def);
   }, [state, desc.data, views.isPending, views.data, prefs.isPending, prefs.data, listCode]);
 
   // the working context (part 03.05) narrows the list on top of the person's own filters: { key, op, value } rows of the page
-  const withContext = (st) => ({ ...st, filters: [...st.filters.filter((f) => !contextFilters.some((c) => c.key === f.key && c.op === f.op)), ...contextFilters] });
+  const addressKeys = useMemo(() => new Set(filtersFromSearch(window.location.search).map((f) => f.key)), []);
+  const ctxFilters = contextFilters.filter((c) => !addressKeys.has(c.key));
+  const withContext = (st) => ({ ...st, filters: [...st.filters.filter((f) => !ctxFilters.some((c) => c.key === f.key && c.op === f.op)), ...ctxFilters] });
   const query = state ? toQuery(withContext(state)) : '';
   const list = useQuery({ queryKey: ['list', endpoint, query], queryFn: () => api.get(`${endpoint}?${query}`), enabled: Boolean(state), retry: false, placeholderData: (prev) => prev });
   const rows = list.data?.data ?? [];
@@ -320,7 +325,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
         <span className="spacer" />
         {newAction && can(newAction.permission) && <button type="button" className="btn btn-primary" onClick={newAction.onClick}><Icon name="erp.action.create" size={16} />{newAction.label}</button>}
       </div>
-      {contextFilters.length > 0 && <p className="muted small" data-testid="list-context">Showing the working context only: {contextFilters.map((c) => c.value).join(' / ')}. Choose All projects in the context at the top of the page to see everything.</p>}
+      {ctxFilters.length > 0 && <p className="muted small" data-testid="list-context">Showing the working context only: {ctxFilters.map((c) => c.value).join(' / ')}. Choose All projects in the context at the top of the page to see everything.</p>}
       <div className="lr-quick" role="group" aria-label="Quick filters">
         {statusCol?.options?.map(([v, l]) => {
           const on = state.filters.some((f) => f.key === statusKey && f.op === 'in' && f.value.split(',').includes(v));

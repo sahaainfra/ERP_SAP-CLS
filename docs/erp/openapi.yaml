@@ -1137,6 +1137,22 @@ paths:
     post: { summary: 'Send a test notification to the person\'s own devices; a device the push service has dropped is forgotten; Idempotency-Key', responses: { '200': { description: '{ data: { results } }' } } }
   /api/v1/ui/qr/resolve:
     get: { summary: 'The record a scanned code names (?code=): its type, id, title and route, if the person may open it; 404 when unknown or not theirs', responses: { '200': { description: '{ data: { status, type, id, title, route } }' } } }
+  /api/v1/ui/widgets:
+    get: { summary: 'The widgets the person\'s role may put on a dashboard (code, module, titles, type, default size, refresh seconds, drill route)', responses: { '200': { description: '{ data: [widget] }' } } }
+  /api/v1/ui/widgets/{code}/data:
+    get: { summary: 'The data of one widget inside the person\'s permission and data scope (?from, ?to, ?projectId, ?siteId, ?params as JSON); 403 when the role lacks the widget\'s permission or the project is out of scope; a result with nothing is empty, never a sample', responses: { '200': { description: '{ data: { code, type, asOf, filters, data } }' } } }
+  /api/v1/ui/dashboards:
+    get: { summary: 'The dashboards the person may open', responses: { '200': { description: '{ data: [{ code, name, hasPersonal }] }' } } }
+  /api/v1/ui/dashboards/{code}:
+    get: { summary: 'The dashboard as the person sees it: their own copy, else the default of their role, else the standard layout; widgets their role may not use are left out and counted', responses: { '200': { description: '{ data: { code, name, source, layout, omitted, filters, version, hasPersonal, canManage } }' } } }
+  /api/v1/ui/dashboards/{code}/personal:
+    put: { summary: 'Save the person\'s own layout ({ layout, filters, version? }); 409 when it was changed on another device', responses: { '200': { description: '{ data: dashboard }' } } }
+    delete: { summary: 'Give the person\'s own layout up, to see the default of their role again', responses: { '200': { description: '{ data: dashboard }' } } }
+  /api/v1/ui/dashboards/{code}/role-defaults:
+    get: { summary: 'The standard layout, the default of each role, the requests waiting for approval and the widget catalogue (ui.dashboard.manage)', responses: { '200': { description: '{ data }' } } }
+    post: { summary: 'Ask for the default of a role to be set, changed or removed ({ role, layout, filters, name?, remove?, reason }); another administrator approves it; Idempotency-Key (ui.dashboard.manage)', responses: { '201': { description: '{ data: request }' } } }
+  /api/v1/ui/dashboards/{code}/history:
+    get: { summary: 'The audited changes of one role\'s default (?role=), newest first (ui.dashboard.manage)', responses: { '200': { description: '{ data: [entry] }' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)
