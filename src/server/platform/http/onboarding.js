@@ -12,6 +12,7 @@ export const ONBOARDING_OPEN = [
   /^\/core\/session$/,
   /^\/core\/feature-flags\/evaluate$/,
   /^\/core\/files(\/|$)/,
+  /^\/ui\/preferences$/, // their own theme, density and language (part 03.01; found missing in 03.02, D-121)
 ];
 
 export function onboardingGate(req, _res, next) {

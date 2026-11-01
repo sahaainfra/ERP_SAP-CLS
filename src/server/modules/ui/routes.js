@@ -1,0 +1,71 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { parse } from '../../platform/validation/index.js';
+import { parseSampleRequest } from './sample-requests.js';
+import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
+import {
+  parseCreateFrom, parseDraftBulkDelete, parseDraftDelete, parseDraftList, parseDraftSave, parseDuplicateCheck, parseEntityKey, parseFormCode, parseId, parsePreferences, parseRequestAction,
+} from './validators.js';
+
+/** The ui module's routes (part 03.01), mounted at /api/v1/ui. */
+export function uiRoutes(service) {
+  const r = Router();
+  r.get('/preferences', (req, res) => res.json({ data: service.get(req.actor) }));
+  r.patch('/preferences', (req, res) => res.json({ data: service.update(req.actor, parsePreferences(req.body)) }));
+  r.get('/style-guide', (req, res) => res.json({ data: service.styleGuide(req.actor) }));
+  return r;
+}
+
+const version = (b) => parse(z.object({ version: z.number({ error: 'Send the version you loaded' }).int().positive() }).passthrough(), b).version;
+
+/** The data-entry framework's routes (part 03.02): drafts, form definitions, duplicate checks, create-from and the reference form. */
+export function formRoutes({ drafts, forms, requests }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  r.get('/drafts', (req, res) => res.json(drafts.list(req.actor, parseDraftList(req.query))));
+  r.post('/drafts/discard', (req, res) => res.json({ data: drafts.removeMany(req.actor, parseDraftBulkDelete(req.body).ids) }));
+  const key = (req) => [parseFormCode(req.params.formCode), parseEntityKey(req.params.entityId)];
+  for (const path of ['/drafts/:formCode', '/drafts/:formCode/:entityId']) {
+    r.get(path, (req, res) => res.json({ data: drafts.get(req.actor, ...key(req)) }));
+    r.put(path, (req, res) => res.json({ data: drafts.save(req.actor, ...key(req), parseDraftSave(req.body)) }));
+    r.delete(path, (req, res) => res.json({ data: drafts.remove(req.actor, ...key(req), parseDraftDelete(req.body)) }));
+  }
+
+  r.get('/forms', (req, res) => res.json({ data: forms.list(req.actor) }));
+  r.get('/forms/:code', (req, res) => res.json({ data: forms.get(req.actor, parseFormCode(req.params.code)) }));
+  r.get('/form-registry', (req, res) => res.json({ data: forms.registry(req.actor) }));
+  r.post('/duplicate-check/:name', (req, res) => res.json({ data: forms.duplicates(req.actor, req.params.name, parseDuplicateCheck(req.body).fields) }));
+  r.get('/create-from/:target', (req, res) => res.json({ data: forms.createFrom(req.actor, parseFormCode(req.params.target), parseCreateFrom(req.query)) }));
+
+  r.get('/sample-requests', (req, res) => res.json(requests.list(req.actor, req.query)));
+  r.post('/sample-requests', idempotent, (req, res) => res.status(201).json({ data: requests.create(req.actor, parseSampleRequest(req.body), req.correlationId) }));
+  r.get('/sample-requests/:id', (req, res) => res.json({ data: requests.get(req.actor, parseId(req.params.id)) }));
+  r.put('/sample-requests/:id', idempotent, (req, res) => res.json({ data: requests.update(req.actor, parseId(req.params.id), parseSampleRequest(req.body), version(req.body), req.correlationId) }));
+  r.post('/sample-requests/:id/submit', idempotentRequired, (req, res) => res.json({ data: requests.submit(req.actor, parseId(req.params.id), parseRequestAction(req.body), req.correlationId) }));
+  r.post('/sample-requests/:id/cancel', idempotentRequired, (req, res) => res.json({ data: requests.cancel(req.actor, parseId(req.params.id), parseRequestAction(req.body), req.correlationId) }));
+  return r;
+}
+
+const bulkBody = (b) => parse(z.object({ action: z.enum(['submit', 'cancel']), ids: z.array(z.number().int().positive()).min(1, 'Select at least one request').max(200), reason: z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500).optional() }).strict()
+  .refine((v) => v.action !== 'cancel' || v.reason, { message: 'Give a reason of at least 5 characters', path: ['reason'] }), b);
+
+/** Send an export: the file itself (direct), or 202 with the queued job (large exports, FR-06). */
+const sendExport = (res, out) => {
+  if (out.kind === 'job') return res.status(202).json({ data: out });
+  res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+  return res.send(out.buffer);
+};
+
+/** The List Report's routes (part 03.03): list descriptions, saved views, exports and the reference register's export and bulk actions. */
+export function listRoutes({ views, exports, requests, describe }, { idempotentRequired }) {
+  const r = Router();
+  r.get('/lists/:code', (req, res) => res.json({ data: describe(req.actor, String(req.params.code)) }));
+  r.get('/saved-views', (req, res) => res.json({ data: views.list(req.actor, parseViewList(req.query).list) }));
+  r.post('/saved-views', (req, res) => res.status(201).json({ data: views.create(req.actor, parseViewCreate(req.body)) }));
+  r.patch('/saved-views/:id', (req, res) => res.json({ data: views.update(req.actor, parseId(req.params.id), parseViewUpdate(req.body)) }));
+  r.delete('/saved-views/:id', (req, res) => res.json({ data: views.remove(req.actor, parseId(req.params.id), parseVersionBody(req.body)) }));
+  r.get('/exports', (req, res) => res.json({ data: exports.mine(req.actor) }));
+  r.get('/exports/:id/download', (req, res) => sendExport(res, { kind: 'file', ...exports.download(req.actor, parseId(req.params.id)) }));
+  r.get('/sample-requests/export', (req, res) => sendExport(res, exports.start(req.actor, 'ui.sample_requests', req.query)));
+  r.post('/sample-requests/bulk', idempotentRequired, (req, res) => res.json({ data: requests.bulk(req.actor, bulkBody(req.body), req.correlationId) }));
+  return r;
+}

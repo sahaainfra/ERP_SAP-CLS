@@ -31,6 +31,7 @@ import { invitationRoutes, meRoutes, userRoutes } from './usermgmt/routes.js';
 import { ENTITIES } from './org/entities.js';
 import { orgRoutes } from './org/routes.js';
 import { createOrgService, orgHandlers } from './org/service.js';
+import './forms.js'; // lookups and duplicate checks for forms (part 03.02)
 
 /** Approved requests of part 02.05: a change to a segregation-of-duties rule, and an elevation of access. */
 export const privilegedHandlers = { ...sodHandlers, ...elevationHandlers };

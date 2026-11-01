@@ -601,7 +601,7 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
       if (!u) return {};
       const prefs = JSON.parse(u.preferences_json);
       return {
-        language: u.language, userType: u.user_type, lifecycle: u.lifecycle, employeeCode: u.employee_code, departmentName: u.department_name, projectName: u.project_name, mobile: u.mobile,
+        language: u.language, userType: u.user_type, lifecycle: u.lifecycle, employeeCode: u.employee_code, departmentId: u.department_id ?? null, departmentName: u.department_name, projectName: u.project_name, mobile: u.mobile,
         photoFileId: u.photo_file_id, signatureFileId: u.signature_file_id, version: u.version, onboarding: JSON.parse(u.roles_json).length === 0,
         preferences: { theme: prefs.theme ?? 'light', notifications: { email: true, sms: false, whatsapp: false, inApp: true, ...(prefs.notifications ?? {}) } },
       };

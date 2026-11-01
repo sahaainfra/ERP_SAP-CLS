@@ -43,7 +43,8 @@ export const CHECKS = [
       for (const k of keys) {
         const t = byName.get(k.table);
         const cols = k.columns.map(ident);
-        const sql = `SELECT ${cols.join(', ')}, COUNT(*) AS n FROM ${ident(k.table)} ${where(activeConditions(t))} GROUP BY ${cols.join(', ')} HAVING COUNT(*) > 1`;
+        // a key with an empty part (a draft not numbered yet) collides with nothing, as in a SQL unique index
+        const sql = `SELECT ${cols.join(', ')}, COUNT(*) AS n FROM ${ident(k.table)} ${where([...activeConditions(t), ...cols.map((c) => `${c} IS NOT NULL`)])} GROUP BY ${cols.join(', ')} HAVING COUNT(*) > 1`;
         const dupes = db.prepare(sql).all();
         failures += dupes.length;
         for (const d of dupes.slice(0, SAMPLE_LIMIT - samples.length)) samples.push({ table: k.table, key: Object.fromEntries(cols.map((c) => [c, d[c]])), rows: d.n });

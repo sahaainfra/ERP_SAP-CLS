@@ -6,9 +6,9 @@ import { Field, Link, QueryState, errorInfo, usePageTitle } from '../../core/pag
 import { useMe } from '../api/index.js';
 import { useUpdateMe } from '../api/users.js';
 import { LANGUAGES, UserStatusChip, typeLabel } from '../components/userCommon.jsx';
+import AppearancePanel from '../../ui/AppearancePanel.jsx';
+import { useFeatureFlag } from '../../core/api/index.js';
 
-export const THEME_EVENT = 'erp-theme';
-const THEMES = [['light', 'Light'], ['dark', 'Dark'], ['high-contrast', 'High contrast']];
 const CHANNELS = [['email', 'Email'], ['sms', 'Text message'], ['whatsapp', 'WhatsApp'], ['inApp', 'In the application']];
 const transport = browserTransport(authHeaders);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -57,9 +57,10 @@ function PictureField({ label, kind, userId, fileId, onChange, hint }) {
   );
 }
 
-/** My Profile: personal details, language, theme, notifications, photo and the signature used on printed documents. */
-export default function ProfilePage() {
+/** My Profile: personal details, language, appearance (part 03.01), notifications, photo and the signature used on printed documents. */
+export default function ProfilePage({ session }) {
   usePageTitle('My Profile');
+  const appearance = useFeatureFlag('ff.ui.p0301');
   const me = useMe();
   const save = useUpdateMe();
   const qc = useQueryClient();
@@ -71,8 +72,7 @@ export default function ProfilePage() {
     setError(null);
     setNotice('');
     try {
-      const out = await save.mutateAsync({ ...body, version: u.version });
-      if (out.preferences?.theme) window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: out.preferences.theme }));
+      await save.mutateAsync({ ...body, version: u.version });
       await qc.invalidateQueries({ queryKey: ['iam', 'me'] });
       setNotice(ok);
     } catch (err) {
@@ -101,18 +101,15 @@ export default function ProfilePage() {
               patch({
                 displayName: String(f.get('displayName')).trim(),
                 language: String(f.get('language')),
-                preferences: { theme: String(f.get('theme')), notifications: Object.fromEntries(CHANNELS.map(([k]) => [k, f.get(`n_${k}`) === 'on'])) },
+                preferences: { notifications: Object.fromEntries(CHANNELS.map(([k]) => [k, f.get(`n_${k}`) === 'on'])) },
               }, 'Your profile was saved.').catch(() => {});
             }}
           >
             <h2 id="personal-title">Personal settings</h2>
             <div className="form-grid" key={u.version}>
               <Field label="Full name *" name="displayName" error={error}><input name="displayName" required maxLength={120} defaultValue={u.displayName} /></Field>
-              <Field label="Preferred language" name="language" error={error}>
+              <Field label="Preferred language" name="language" error={error} hint="For messages, notifications and printed documents. The language of the screens is under Appearance.">
                 <select name="language" defaultValue={u.language}>{LANGUAGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-              </Field>
-              <Field label="Theme" name="theme" error={error}>
-                <select name="theme" defaultValue={u.preferences?.theme ?? 'light'}>{THEMES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
               </Field>
               <fieldset className="field"><legend>Notify me by</legend>
                 {CHANNELS.map(([k, l]) => <label key={k}><input type="checkbox" name={`n_${k}`} defaultChecked={Boolean(u.preferences?.notifications?.[k])} /> {l}</label>)}
@@ -121,6 +118,8 @@ export default function ProfilePage() {
             </div>
             <div className="actions"><button type="submit" className="btn btn-primary" disabled={save.isPending}>{save.isPending ? 'Saving...' : 'Save'}</button></div>
           </form>
+
+          {appearance && <AppearancePanel session={session} />}
 
           <div className="card">
             <h2>Your details</h2>

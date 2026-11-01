@@ -1002,6 +1002,75 @@ paths:
     post:
       summary: CSV of the people the list shows; 202 with an approval request above the threshold, then again with approvalId once approved (iam.user.export; Idempotency-Key required)
       responses: { '200': { description: 'text/csv, or { data: { status, request } }' } }
+  /api/v1/ui/preferences:
+    get:
+      summary: The signed-in person's theme, density, language, start page and table settings (defaults until they choose)
+      responses: { '200': { description: '{ data }' } }
+    patch:
+      summary: Change one's own preferences; version for optimistic locking (409 when another device changed them first)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/ui/style-guide:
+    get:
+      summary: Every design token, the contrast report and the icon registry counts (everyone outside production; ui.styleguide.view in production)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/ui/drafts:
+    get:
+      summary: The signed-in person's drafts (search, form filter, sort, pages of 25/50/100)
+      responses: { '200': { description: '{ data, meta, forms }' } }
+  /api/v1/ui/drafts/discard:
+    post:
+      summary: Discard several of one's own drafts ({ ids })
+      responses: { '200': { description: '{ data: { discarded, notFound } }' } }
+  /api/v1/ui/drafts/{formCode}:
+    get: { summary: "One's draft of a new record of the form, or null", responses: { '200': { description: '{ data }' } } }
+    put: { summary: 'Save the draft ({ payload, title, savedBy, version }); 409 when a newer copy was saved elsewhere; 422 above 256 KB', responses: { '200': { description: '{ data }' } } }
+    delete: { summary: 'Discard the draft (audited)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/drafts/{formCode}/{entityId}:
+    get: { summary: "One's draft of changes to an existing record", responses: { '200': { description: '{ data }' } } }
+    put: { summary: 'Save it', responses: { '200': { description: '{ data }' } } }
+    delete: { summary: 'Discard it', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/forms:
+    get: { summary: 'Active form definitions', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/forms/{code}:
+    get: { summary: 'A form definition (sections, fields, rules, lookups, grid) and where it can start from', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/form-registry:
+    get: { summary: 'Forms, lookups, duplicate checks and create-from pairs offered by this server', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/duplicate-check/{name}:
+    post: { summary: 'Similar records for what has been typed ({ fields }); never blocks', responses: { '200': { description: '{ data: { matches } }' } } }
+  /api/v1/ui/create-from/{target}:
+    get: { summary: 'Values to start a new record from a source (?source=&id=)', responses: { '200': { description: '{ data: { values, note } }' } } }
+  /api/v1/ui/sample-requests:
+    get: { summary: 'Sample material requests in the person\'s scope on the List Report contract (q, filter[key][op], sort, pageSize 25-200; meta.totals)', responses: { '200': { description: '{ data, meta }' } } }
+    post: { summary: 'Create a draft request; amounts recomputed with the engine; 422 when the client total differs', responses: { '201': { description: '{ data }' } } }
+  /api/v1/ui/sample-requests/{id}:
+    get: { summary: 'A request with its lines', responses: { '200': { description: '{ data }' } } }
+    put: { summary: 'Change a draft request (version)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/sample-requests/{id}/submit:
+    post: { summary: 'Submit and number (Idempotency-Key required)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/sample-requests/{id}/cancel:
+    post: { summary: 'Cancel with a reason; keeps its number (Idempotency-Key required)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/iam/lookups/{name}:
+    get: { summary: 'Generic lookup (projects, sites, cost-centres, departments, users): ?q=&page=&pageSize=&parent=&id=; { id, code, name, extra } rows and meta.columns', responses: { '200': { description: '{ data, meta }' } } }
+  /api/v1/core/lookups/{name}:
+    get: { summary: 'Generic lookup (uoms)', responses: { '200': { description: '{ data, meta }' } } }
+  /api/v1/core/holidays:
+    get: { summary: 'Holidays between two dates for a place (?from=&to=&siteId=&stateCode=; at most 400 days)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/lists/{code}:
+    get: { summary: 'Columns of a list: label, type, sortable, filterable, operators, totals; masked columns marked', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/saved-views:
+    get: { summary: "One's own views of a list and the shared views aimed at one (?list=)", responses: { '200': { description: '{ data }' } } }
+    post: { summary: 'Save a view ({ list, name, isShared, shareScope: { roles, projects }, isDefault, config }); sharing needs ui.view.share', responses: { '201': { description: '{ data }' } } }
+  /api/v1/ui/saved-views/{id}:
+    patch: { summary: 'Change one of one\'s views (version)', responses: { '200': { description: '{ data }' } } }
+    delete: { summary: 'Delete one of one\'s views', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/exports:
+    get: { summary: "One's background exports (last 50)", responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/exports/{id}/download:
+    get: { summary: 'The file of a finished export (the requester only; kept 7 days)', responses: { '200': { description: 'the file' } } }
+  /api/v1/ui/sample-requests/export:
+    get: { summary: 'Export the current view (?format=xlsx|csv|pdf and the list query); 202 with a job above core.export.max_rows', responses: { '200': { description: 'the file' }, '202': { description: '{ data: export job }' } } }
+  /api/v1/ui/sample-requests/bulk:
+    post: { summary: 'Submit or cancel several requests ({ action, ids, reason }); each result named (Idempotency-Key required)', responses: { '200': { description: '{ data: { results, done, failed } }' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)

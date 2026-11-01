@@ -1,4 +1,4 @@
-import { parseCalendarCreate, parseCalendarUpdate, parseCheck, parseHolidayCreate, parseHolidayUpdate, parseId, parseImport, parseRange } from './validators.js';
+import { parseCalendarCreate, parseCalendarUpdate, parseCheck, parseHolidayCreate, parseHolidayUpdate, parseId, parseImport, parseRange, parseBetween } from './validators.js';
 
 export function createHolidayController(service) {
   return {
@@ -10,6 +10,7 @@ export function createHolidayController(service) {
     updateHoliday: (req, res) => res.json({ data: service.updateHoliday(req.actor, parseId(req.params.id), parseHolidayUpdate(req.body), req.correlationId) }),
     deleteHoliday: (req, res) => res.json({ data: service.deleteHoliday(req.actor, parseId(req.params.id), req.correlationId) }),
     importHolidays: (req, res) => res.json({ data: service.importHolidays(req.actor, parseId(req.params.id), parseImport(req.body).rows, req.correlationId) }),
+    between: (req, res) => res.json({ data: service.between(req.actor, parseBetween(req.query)) }),
     check: (req, res) => res.json({ data: service.check(req.actor, parseCheck(req.query)) }),
   };
 }

@@ -663,7 +663,7 @@ test('T-01 every documented route that needs a sign-in refuses a person with no 
     const m = /^ {4}(get|post|patch|put|delete):\s*$/.exec(line);
     if (m && path) routes.push([m[1].toUpperCase(), path.replace(/\{[^}]+\}/g, '1')]);
   }
-  const open = [/^\/api\/v1\/iam\/me(\/|$)/, /^\/api\/v1\/iam\/auth\/password\/change$/, /^\/api\/v1\/core\/session$/, /^\/api\/v1\/core\/feature-flags\/evaluate$/, /^\/api\/v1\/core\/files(\/|$)/];
+  const open = [/^\/api\/v1\/iam\/me(\/|$)/, /^\/api\/v1\/iam\/auth\/password\/change$/, /^\/api\/v1\/core\/session$/, /^\/api\/v1\/core\/feature-flags\/evaluate$/, /^\/api\/v1\/core\/files(\/|$)/, /^\/api\/v1\/ui\/preferences$/];
   let gated = 0;
   // the open routes include ones that end the caller's own session, so they are tried after the closed ones
   const ordered = [...routes].sort((x, y) => Number(open.some((re) => re.test(x[1]))) - Number(open.some((re) => re.test(y[1]))));

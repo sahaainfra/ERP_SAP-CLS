@@ -45,4 +45,5 @@ export const parseHolidayCreate = (b) => parse(z.object({ date: realDate, name: 
 export const parseHolidayUpdate = (b) => parse(z.object({ name: z.string().trim().min(2).max(120).optional(), type: z.enum(HOLIDAY_TYPES).optional(), version: z.number().int().positive() }), b);
 // Rows are checked one by one in the service so a bad row is reported with its row number.
 export const parseImport = (b) => parse(z.object({ rows: z.array(z.object({ date: z.string(), name: z.string().trim(), type: z.string().default('company') })).max(1000) }), b);
+export const parseBetween = (q) => parse(z.object({ from: realDate, to: realDate, stateCode: state.optional(), siteId: intId.optional() }).strict(), q);
 export const parseCheck = (q) => parse(z.object({ date: realDate, stateCode: state.optional(), siteId: intId.optional() }), q);

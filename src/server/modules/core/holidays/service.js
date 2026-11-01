@@ -163,6 +163,15 @@ export function createHolidayService({ db }) {
       });
     },
 
+    /** The holidays between two dates for a place (any signed-in user: the date picker marks them, part 03.02). At most 400 days. */
+    between(actor, { from, to, stateCode, siteId }) {
+      if (to < from) throw badRequest('Some fields are invalid.', [{ field: 'to', message: 'The end date cannot be before the start date.' }]);
+      if ((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000 > 400) throw badRequest('Some fields are invalid.', [{ field: 'to', message: 'Ask for at most 400 days at a time.' }]);
+      const companyId = companyOf(actor);
+      const calendars = repo.applicable(companyId, stateCode ?? null, siteId ?? null);
+      return repo.holidaysBetween(calendars.map((c) => c.id), from, to).map((h) => ({ date: h.holiday_date, name: h.name, type: h.type, calendar: h.calendar }));
+    },
+
     /** Is a date a holiday for a place? (any signed-in user: used by screens that grey out days). */
     check(actor, { date, stateCode, siteId }) {
       const companyId = companyOf(actor);

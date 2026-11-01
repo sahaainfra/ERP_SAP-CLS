@@ -15,7 +15,7 @@ const newSeries = (api, body) => api.call('POST', `${C}/number-series`, { ...sys
 test('FR-03 document types are registered with module, retention, workflow and when they are numbered', async () => {
   const api = await startApi();
   const list = await api.call('GET', `${C}/document-types`, sys);
-  assert.deepEqual(list.json.data.map((t) => t.code), ['SAMPLE_DOC'], 'the one type this part owns is seeded');
+  assert.deepEqual(list.json.data.map((t) => t.code), ['SAMPLE_DOC', 'SAMPLE_MR'], 'the reference types are seeded: the sample document of this part and the sample material request of 03.02');
   const made = await newType(api, { code: 'TAX_INVOICE', name: 'Tax invoice', module: 'fin', retentionClass: 'statutory', statutory: true, assignAt: 'approval', workflowCode: 'FIN_INVOICE', templateId: 'tpl-invoice' });
   assert.equal(made.status, 201);
   assert.deepEqual([made.json.data.assignAt, made.json.data.statutory, made.json.data.workflowCode], ['approval', true, 'FIN_INVOICE']);

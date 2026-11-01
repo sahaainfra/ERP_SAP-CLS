@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import erp from './eslint-rules/no-hardcoded-color.js';
 
 export default [
   { ignores: ['node_modules/**', 'dist/**', '.deploy*/**', 'artifacts/**', 'coverage/**', 'reports/**', 'data/**', 'test-results/**', 'playwright-report/**'] },
@@ -14,5 +15,12 @@ export default [
       globals: { ...globals.browser },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+  },
+  // part 03.01, BR-01: colours in component code come from the design tokens
+  {
+    files: ['src/client/**/*.{js,jsx}'],
+    ignores: ['src/client/platform/design/icon-map.js'],
+    plugins: { erp },
+    rules: { 'erp/no-hardcoded-color': 'error' },
   },
 ];

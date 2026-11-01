@@ -49,6 +49,10 @@ export function createHolidayRepository(db) {
            WHERE company_id = :c AND is_active = 1 AND ((state_code IS NULL AND site_id IS NULL) OR (state_code = :s) OR (site_id = :site))`,
         )
         .all({ c: companyId, s: stateCode ?? null, site: siteId ?? null }),
+    holidaysBetween: (calendarIds, from, to) =>
+      calendarIds.length
+        ? db.prepare(`SELECT h.holiday_date, h.name, h.type, c.name AS calendar FROM core_holidays h JOIN core_holiday_calendars c ON c.id = h.calendar_id WHERE h.calendar_id IN (${calendarIds.map(() => '?').join(',')}) AND h.holiday_date >= ? AND h.holiday_date <= ? AND h.is_active = 1 ORDER BY h.holiday_date`).all(...calendarIds, from, to)
+        : [],
     holidayMatches: (calendarIds, date) =>
       calendarIds.length
         ? db.prepare(`SELECT h.name, h.type, c.name AS calendar FROM core_holidays h JOIN core_holiday_calendars c ON c.id = h.calendar_id WHERE h.calendar_id IN (${calendarIds.map(() => '?').join(',')}) AND h.holiday_date = ? AND h.is_active = 1`).all(...calendarIds, date)

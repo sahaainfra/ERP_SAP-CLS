@@ -1,6 +1,7 @@
 import { useEffect, useId } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
+import { confirmLeave } from '../../../platform/forms/guard.js';
 
 // Small pieces the configuration pages share: page title, load states, field errors and a modal form.
 
@@ -34,7 +35,7 @@ export function QueryState({ query, what, permission }) {
     return (
       <div className="state" role="alert">
         <h2>You do not have access to {what}</h2>
-        <p>This needs the {permission} permission. Ask a system administrator to grant it.</p>
+        <p>{/^an? /.test(String(permission)) ? `This needs ${permission}.` : `This needs the ${permission} permission.`} Ask a system administrator to grant it.</p>
       </div>
     );
   }
@@ -97,10 +98,13 @@ export function FormDialog({ dialogRef, title, children, onSubmit, error, busy, 
 
 export const can = (session, permission) => Boolean(session?.permissions?.includes(permission));
 
-/** Move to another page of the shell without a reload (the shell listens for popstate). */
-export function navigateTo(path) {
+/** Move to another page of the shell without a reload (the shell listens for popstate). A form with unsaved changes asks first,
+ * unless the move is the form's own (`force`, for example after it saved). Returns false when the person chose to stay. */
+export function navigateTo(path, { force = false } = {}) {
+  if (!force && !confirmLeave()) return false;
   window.history.pushState(null, '', path);
   window.dispatchEvent(new PopStateEvent('popstate'));
+  return true;
 }
 
 export const Link = ({ to, children }) => (

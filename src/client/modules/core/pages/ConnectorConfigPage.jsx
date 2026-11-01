@@ -157,12 +157,14 @@ function ViewConnector({ id, session }) {
   const submitChange = async (e) => {
     e.preventDefault();
     setError(null);
-    const f = new FormData(e.currentTarget);
+    const formEl = e.currentTarget; // React drops currentTarget once the handler awaits
+    const f = new FormData(formEl);
     const { config, secrets, secretExpiry, limits } = readForm(f, provider);
     try {
       await change.mutateAsync({ id, changes: { name: String(f.get('name')).trim(), provider: provider.provider, environment: String(f.get('environment')), config, ...limits, enabled: f.get('enabled') === 'on' }, secrets, secretExpiry, reason: String(f.get('reason')) });
       setNotice('Change requested. It takes effect when approved under Approvals; nothing changes before then.');
-      e.currentTarget.reset();
+      // the requested values stay on screen while the change waits for approval; only the secret and the reason are cleared
+      formEl.querySelectorAll('input[name^="secret_"], textarea[name="reason"]').forEach((el) => { el.value = ''; });
     } catch (err) {
       setError(errorInfo(err));
     }

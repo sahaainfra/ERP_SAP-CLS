@@ -1,4 +1,4 @@
-import { assertPermission } from '../auth/index.js';
+import { assertPermission, assertPermissionAnywhere } from '../auth/index.js';
 import { writeAudit, recordSecurityEvent } from '../audit/index.js';
 import { publishEvent } from '../events/index.js';
 import { unprocessable } from '../http/errors.js';
@@ -24,10 +24,11 @@ export function createExportGuard({ db, approvals }) {
      * raised, or is the one already waiting). Throws when the permission is missing, the export is too large or the approval
      * given is not valid.
      */
-    authorize(actor, { report, permission, rows, personal, filters = {}, approvalId = null }) {
-      assertPermission(actor, permission);
+    authorize(actor, { report, permission, rows, personal, filters = {}, approvalId = null, anywhere = false, background = false }) {
+      // `anywhere`: a register whose query is already limited to the actor's scope (part 03.03); `background`: a job may exceed the direct limit
+      (anywhere ? assertPermissionAnywhere : assertPermission)(actor, permission);
       const max = maxRows(actor.companyId);
-      if (rows > max) throw unprocessable(`This export has ${rows} rows; the most a download may hold is ${max}. Narrow the filters and export in parts.`);
+      if (rows > max && !background) throw unprocessable(`This export has ${rows} rows; the most a download may hold is ${max}. Narrow the filters and export in parts.`);
       const threshold = settings.get().settings.exports.personalApprovalThreshold;
       if (!personal || rows <= threshold) return { status: 'OK' };
       if (!approvalId) {
@@ -47,6 +48,7 @@ export function createExportGuard({ db, approvals }) {
       if (db.prepare("SELECT 1 FROM core_audit_log WHERE entity = 'export_grant' AND action = 'used' AND entity_id = ?").get(String(approvalId))) throw unprocessable('That approval was already used for an export. Ask again.');
       return { status: 'OK', approvalId };
     },
+    maxRows: (companyId) => maxRows(companyId),
     /** Record a finished export: the audit trail, the security log (personal data) and the event. */
     complete(actor, { report, format = 'csv', rows, filters = {}, personal = false, approvalId = null }) {
       writeAudit(db, { entity: 'report', entityId: report, action: 'export', newValues: { format, rows, filters, personal, approval: approvalId }, actor: actor.user, companyId: actor.companyId });

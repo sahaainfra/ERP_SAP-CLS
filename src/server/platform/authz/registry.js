@@ -1,5 +1,5 @@
 import { parameterRegistry } from '../parameters/index.js';
-import { PERMISSIONS_02_04, PERMISSIONS_02_05, PERMISSIONS_02_06, PERMISSIONS_02_07, SENSITIVE_ACTIONS } from './templates.js';
+import { PERMISSIONS_02_04, PERMISSIONS_02_05, PERMISSIONS_02_06, PERMISSIONS_02_07, PERMISSIONS_03_01, PERMISSIONS_03_03, SENSITIVE_ACTIONS } from './templates.js';
 
 // What modules declare to the authorisation engine (part 02.04): permission keys, sensitive fields, the records the explainer can
 // look up, and which entities let a manager see their reportees' records. Declared once when a module loads; the engine seeds the
@@ -41,6 +41,8 @@ permissionRegistry.registerAll(PERMISSIONS_02_04);
 permissionRegistry.registerAll(PERMISSIONS_02_05);
 permissionRegistry.registerAll(PERMISSIONS_02_06);
 permissionRegistry.registerAll(PERMISSIONS_02_07);
+permissionRegistry.registerAll(PERMISSIONS_03_01);
+permissionRegistry.registerAll(PERMISSIONS_03_03);
 
 const RULES = ['hide', 'partial', 'show'];
 export const MASK_RULES = RULES;
@@ -75,6 +77,7 @@ fieldRegistry
   .register({ entity: 'iam_user', field: 'mobile', label: 'Mobile number', format: 'mobile', description: 'Shown in full to those who manage users' })
   .register({ entity: 'org_company', field: 'pan', label: 'PAN', format: 'pan', description: 'Shown in full to those who manage companies' })
   .register({ entity: 'employee', field: 'salary', label: 'Salary', defaultRule: 'hide', format: 'amount', description: 'Declared now so a role can be set up before the employee master (07.01) exists' })
+  .register({ entity: 'ui_sample_request', field: 'total', label: 'Request total (commercial value)', format: 'amount', description: 'Shown in full to the commercial roles (part 03.03); masked in lists, totals and exports for the others' })
   .register({ entity: 'employee', field: 'bank_account', label: 'Bank account number', format: 'tail4', description: 'Declared for the employee master (07.01)' });
 
 function createRecordResolvers() {

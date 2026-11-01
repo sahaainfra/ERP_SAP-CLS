@@ -273,11 +273,17 @@ test.describe('Invitation to access', () => {
     await expect(page.getByRole('heading', { name: 'My Profile', exact: true })).toBeVisible();
     await page.getByLabel('Full name *').fill('Site Engineer Kumar');
     await page.getByLabel('Preferred language').selectOption('hi');
-    await page.locator('select[name=theme]').selectOption('dark');
     await page.getByLabel('Text message').check();
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByTestId('profile-notice')).toContainText('Your profile was saved');
+    // the theme is part of Appearance (part 03.01): shown at once, kept on the server
+    const look = page.getByTestId('appearance');
+    await look.getByLabel('Dark').check();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await look.getByRole('radio', { name: /^Compact/ }).check();
+    await expect(page.locator('html')).toHaveAttribute('data-density', 'compact');
+    await look.getByRole('button', { name: 'Save appearance' }).click();
+    await expect(page.getByTestId('appearance-notice')).toContainText('every device');
     const png = await sharp({ create: { width: 24, height: 24, channels: 3, background: '#335' } }).png().toBuffer();
     await page.getByLabel('Choose a photo').setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: png });
     await expect(page.getByTestId('profile-notice')).toContainText('Your photo was saved', { timeout: 20_000 });
@@ -286,6 +292,7 @@ test.describe('Invitation to access', () => {
     await expect(page.getByLabel('Full name *')).toHaveValue('Site Engineer Kumar');
     await expect(page.getByLabel('Preferred language')).toHaveValue('hi');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('html')).toHaveAttribute('data-density', 'compact');
     await expect(page.getByTestId('picture-photo').getByRole('img')).toBeVisible();
     if (info.project.name === 'mobile') await noOverflow(page);
 

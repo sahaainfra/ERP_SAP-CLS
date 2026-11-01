@@ -9,6 +9,7 @@ export function holidayRoutes(service, { idempotent }) {
   r.get('/holiday-calendars', c.listCalendars);
   r.get('/holiday-calendars/:id', c.getCalendar);
   r.get('/holidays/check', c.check);
+  r.get('/holidays', c.between);
   r.post('/holiday-calendars', requirePermission('core.holiday.configure'), idempotent, c.createCalendar);
   r.patch('/holiday-calendars/:id', requirePermission('core.holiday.configure'), idempotent, c.updateCalendar);
   r.post('/holiday-calendars/:id/holidays', requirePermission('core.holiday.configure'), idempotent, c.addHoliday);

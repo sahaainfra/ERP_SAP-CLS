@@ -84,6 +84,15 @@ for (const r of routes) {
 const ORG_MANAGE = ['org.company.manage', 'org.costcentre.manage', 'org.hr.manage', 'org.project.manage', 'org.site.manage'];
 const MANUAL = [
   [/^\/api\/v1\/core\/audit\/export-log$/, { g: 'self' }],
+  [/^\/api\/v1\/ui\/preferences$/, { g: 'self' }],
+  [/^\/api\/v1\/ui\/style-guide$/, { g: 'record', k: 'ui.styleguide.view' }],
+  [/^\/api\/v1\/ui\/(drafts|forms|form-registry|saved-views|exports)(\/|$)/, { g: 'self' }],
+  [/^\/api\/v1\/ui\/lists\//, { g: 'record' }],
+  [/^\/api\/v1\/ui\/(duplicate-check|create-from)\//, { g: 'record' }],
+  [/^\/api\/v1\/ui\/sample-requests/, { k: 'core.sample.use' }],
+  [/^\/api\/v1\/(core|iam)\/lookups$/, { g: 'self' }],
+  [/^\/api\/v1\/(core|iam)\/lookups\/:name$/, { g: 'record' }],
+  [/^\/api\/v1\/core\/holidays$/, { g: 'self' }],
   [/^\/api\/v1\/core\/audit\/history$/, { g: 'record', k: 'core.audit.view' }],
   [/^\/api\/v1\/core\/audit\/segments\/:period\/export$/, { k: 'core.audit.view' }],
   [/^\/api\/v1\/core\/calc-traces$/, { g: 'self' }],
@@ -127,6 +136,7 @@ const RATE = (m, p) => {
   // refresh and resume carry a long random token and happen on every page load, so they are ordinary writes, not guessable sign-ins
   if (/\/auth\/(login|captcha|password\/(forgot|reset|required-change)|pin-unlock)$/.test(p)) return 'auth';
   if (/\/auth\/mfa\/|\/me\/mfa\//.test(p)) return 'otp';
+  if (/\/ui\/exports$/.test(p)) return 'read'; // the list of one's own exports (polled while one is being prepared), not an export
   if (/export|\/template$/.test(p)) return 'export';
   if (/webhooks/.test(p)) return 'webhook';
   return m === 'GET' ? 'read' : 'write';

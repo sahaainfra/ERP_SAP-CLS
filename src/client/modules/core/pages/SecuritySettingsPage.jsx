@@ -22,12 +22,13 @@ export default function SecuritySettingsPage() {
 
   const submit = async (e) => {
     e.preventDefault();
+    const formEl = e.currentTarget; // React drops currentTarget once the handler awaits
     setError(null); setNotice('');
     try {
-      const reason = String(new FormData(e.currentTarget).get('reason'));
+      const reason = String(new FormData(formEl).get('reason'));
       const out = await request.mutateAsync({ settings: { ...form, cors: { allowedOrigins: form.cors.allowedOrigins } }, reason });
       setNotice(`Request ${out.id} was raised. It needs the system administrator or the director to approve it on the Approvals page; the settings stay as they are until then.`);
-      e.currentTarget.reset();
+      formEl.reset();
     } catch (err) { setError(errorInfo(err)); }
   };
   const loadFile = async (e) => {

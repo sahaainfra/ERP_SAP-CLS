@@ -104,13 +104,14 @@ export default function AssignmentsPage({ session }) {
           aria-labelledby="assign-title"
           onSubmit={async (e) => {
             e.preventDefault();
-            const f = new FormData(e.currentTarget);
+            const formEl = e.currentTarget; // React drops currentTarget once the handler awaits
+            const f = new FormData(formEl);
             setError(null);
             setNotice('');
             try {
               const out = await request.mutateAsync({ userId: Number(f.get('userId')), roleId: Number(f.get('roleId')), scopeType, scopeIds, effectiveFrom: String(f.get('effectiveFrom') || '') || null, effectiveTo: String(f.get('effectiveTo') || '') || null, reason: String(f.get('reason')) });
               setNotice(`Request ${out.id} was raised: ${out.title}. It needs ${out.chain.map((c) => c.replace('|', ' or ')).join(' then ')} to approve it on the Approvals page.`);
-              e.currentTarget.reset();
+              formEl.reset();
               setScopeType('COMPANY');
               setScopeIds([]);
             } catch (err) { setError(errorInfo(err)); }

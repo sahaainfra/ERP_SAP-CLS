@@ -29,7 +29,8 @@ test('ITADM runs the checks: the summary updates, nothing fails, tables with not
   await expect(page.getByTestId('count-fail')).toHaveText('0');
   await expect(page.getByTestId('last-run')).toContainText('Last run');
   await expect(page.getByTestId('last-run')).toContainText('e2e-health');
-  await expect(page.getByTestId('check-header_line_totals')).toContainText('Nothing to check yet');
+  // a document with lines (the sample material request of 03.02) may already exist in the shared database: either state is right
+  await expect(page.getByTestId('check-header_line_totals')).toContainText(/Nothing to check yet|Passed/);
   await expect(page.getByTestId('check-invalid_status_values')).toContainText('Passed');
   expect(errors).toEqual([]);
 });

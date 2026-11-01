@@ -45,6 +45,7 @@ import { createSampleDocumentService } from './sample-documents/service.js';
 import { sessionRoutes } from './session/routes.js';
 import { displaySettingsRoutes, settingsRoutes } from './settings/routes.js';
 import { createSettingsService } from './settings/service.js';
+import './forms.js'; // lookups and create-from for forms (part 03.02)
 
 // Platform parameters this module owns (part 01.03). Others are defined by the modules that use them.
 parameterRegistry.define({ key: 'core.session.timeout_minutes', dataType: 'integer', default: 30, min: 5, max: 480, scopes: ['system', 'company'], description: 'Minutes of inactivity before a user is signed out.' });

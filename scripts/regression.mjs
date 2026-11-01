@@ -24,6 +24,8 @@ const all = [
   { id: 'coverage-gate', title: 'Coverage gate for changed files', cmd: [node, 'scripts/coverage_gate.mjs'] },
   { id: 'migration-check', title: 'Migration up/down check on a schema copy', cmd: [node, 'scripts/migration_check.mjs'] },
   { id: 'db-lint', title: 'Schema lint (standard columns, FK indexes, integer money, registry, baseline)', cmd: [node, 'scripts/db_lint.mjs'] },
+  { id: 'design-tokens', title: 'Design tokens and icon map generated from their sources; contrast passes (part 03.01)', cmd: [node, 'scripts/build_tokens.mjs', '--check'] },
+  { id: 'icon-map', title: 'Icon map generated from the icon registry (part 03.01)', cmd: [node, 'scripts/build_icons.mjs', '--check'] },
   { id: 'route-check', title: 'Route registry: every route declared with its permission (part 02.07)', cmd: [node, 'scripts/route_check.mjs'] },
   { id: 'db-check', title: 'Data-integrity suite (Critical failures block)', cmd: [node, 'scripts/db_check.mjs', '--fresh'] },
   { id: 'schema-diff', title: 'Schema-diff against locked baseline', cmd: [node, 'scripts/schema_diff.mjs'] },

@@ -63,13 +63,14 @@ export default function ElevationPage({ session }) {
           aria-labelledby="elev-title"
           onSubmit={async (ev) => {
             ev.preventDefault();
-            const f = new FormData(ev.currentTarget);
+            const formEl = ev.currentTarget; // React drops currentTarget once the handler awaits
+            const f = new FormData(formEl);
             setError(null);
             setNotice('');
             try {
               const out = await request.mutateAsync({ roleId: Number(f.get('roleId')), scopeType, scopeIds: [], hours: Number(f.get('hours')), reason: String(f.get('reason')) });
               setNotice(`Request ${out.id} was sent: ${out.request.chain.map((c) => (c.startsWith('@') ? 'your manager' : c.replace('|', ' or '))).join(', then ')} will decide.${out.sodWarnings?.length ? ` Note: ${out.sodWarnings.map((w) => w.name).join(', ')} will be recorded.` : ''}`);
-              ev.currentTarget.reset();
+              formEl.reset();
             } catch (err) { setError(errorInfo(err)); }
           }}
         >

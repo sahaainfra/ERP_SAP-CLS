@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useCreateSampleDocument, useSampleDocuments, useSubmitSampleDocument } from '../api/index.js';
 import { AttachmentList, FileUploader } from '../components/Attachments.jsx';
 import { formatDate } from '../../../platform/format.js';
-import { Field, FormDialog, Pager, QueryState, errorInfo, usePageTitle } from './ui.jsx';
+import { Field, FormDialog, Pager, QueryState, errorInfo, navigateTo, usePageTitle } from './ui.jsx';
 
 /**
  * The reference record page: a numbered sample document with an attachments panel (part 01.05). A real module's record
@@ -68,7 +68,10 @@ export default function SampleDocumentsPage() {
                     <td data-label="Title">{d.title}</td>
                     <td data-label="Date">{formatDate(d.docDate)}</td>
                     <td data-label="Status"><span className={`chip ${d.status === 'DRAFT' ? 'chip-off' : 'chip-on'}`}>{d.status}</span></td>
-                    <td>{d.status === 'DRAFT' && <button type="button" className="link" onClick={() => submitDoc(d)} aria-label={`Submit ${d.docNo}`}>Submit</button>}</td>
+                    <td>
+                      {d.status === 'DRAFT' && <button type="button" className="link" onClick={() => submitDoc(d)} aria-label={`Submit ${d.docNo}`}>Submit</button>}
+                      {d.status !== 'CANCELLED' && <> <button type="button" className="link" onClick={() => navigateTo(`/admin/sample-requests?new=1&source=core.sample_document&id=${d.id}`)} aria-label={`Start a material request from ${d.docNo}`}>Start a material request</button></>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

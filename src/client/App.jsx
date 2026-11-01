@@ -5,23 +5,15 @@ import { allRoutes, defaultRoute, findRoute, routesFor } from './platform/shell/
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
 import LoginPage from './modules/iam/pages/LoginPage.jsx';
 import ContextSwitcher from './modules/iam/components/ContextSwitcher.jsx';
-import ThemeSync from './modules/iam/components/ThemeSync.jsx';
+import AppearanceSync from './modules/ui/AppearanceSync.jsx';
+import Icon from './platform/design/Icon.jsx';
+import { APPEARANCE_EVENT, THEMES, announceAppearance, applyAppearance, storedAppearance } from './platform/design/appearance.js';
 import AcceptInvitePage from './modules/iam/pages/AcceptInvitePage.jsx';
+import { confirmLeave } from './platform/forms/guard.js';
 
-const THEME_KEY = 'erp.theme';
-const THEME_EVENT = 'erp-theme';
-const THEMES = ['light', 'dark', 'high-contrast'];
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
 const currentPath = () => (findRoute(window.location.pathname) ? window.location.pathname : defaultRoute());
-
-function loadTheme() {
-  try {
-    return localStorage.getItem(THEME_KEY) ?? 'light';
-  } catch {
-    return 'light';
-  }
-}
 
 /** Shows its children only while a feature flag is ON for the signed-in user. */
 function FlagGate({ flag, children }) {
@@ -32,18 +24,26 @@ function FlagGate({ flag, children }) {
 /** The application shell for a person who is known: navigation, theme, the page. In development mode the person is a chosen identity. */
 function Shell({ iam, user }) {
   const qc = useQueryClient();
-  const [theme, setTheme] = useState(loadTheme);
+  const [look, setLook] = useState(storedAppearance);
+  const theme = look.theme;
   const [identity, setIdentity] = useState(loadIdentity);
   const [path, setPath] = useState(currentPath);
   const session = useSession();
   const firstIdentity = useRef(true);
 
-  // The profile page and the saved profile choose the theme (part 02.03).
+  // Theme, density and language (part 03.01): applied to <html> so every component follows at once; the saved preferences, the
+  // Appearance panel and the theme menu below all announce a change, and the shell keeps its copy in step.
   useEffect(() => {
-    const onTheme = (e) => THEMES.includes(e.detail) && setTheme(e.detail);
-    window.addEventListener(THEME_EVENT, onTheme);
-    return () => window.removeEventListener(THEME_EVENT, onTheme);
+    applyAppearance(look);
+    const onChange = (e) => setLook((cur) => ({ ...cur, ...Object.fromEntries(Object.entries(e.detail ?? {}).filter(([k]) => ['theme', 'density', 'language'].includes(k))) }));
+    window.addEventListener(APPEARANCE_EVENT, onChange);
+    return () => window.removeEventListener(APPEARANCE_EVENT, onChange);
   }, []);
+  const setTheme = (next) => {
+    if (!THEMES.includes(next)) return;
+    applyAppearance({ theme: next });
+    announceAppearance({ theme: next });
+  };
 
   useEffect(() => {
     const onPop = () => setPath(currentPath());
@@ -54,18 +54,11 @@ function Shell({ iam, user }) {
 
   const go = (to) => (e) => {
     e.preventDefault();
+    if (!confirmLeave()) return; // a form with unsaved changes asks first (part 03.02)
     window.history.pushState(null, '', to);
     setPath(to);
   };
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try {
-      localStorage.setItem(THEME_KEY, theme);
-    } catch {
-      /* theme still applies for this page load */
-    }
-  }, [theme]);
 
   // A different (development) identity sees different data: drop everything cached for the old one.
   useEffect(() => {
@@ -91,14 +84,14 @@ function Shell({ iam, user }) {
         <nav aria-label="Main">
           {nav.map((r) => {
             const link = (
-              <a key={r.path} href={r.path} onClick={go(r.path)} aria-current={r.path === path ? 'page' : undefined}>{r.label}</a>
+              <a key={r.path} href={r.path} onClick={go(r.path)} aria-current={r.path === path ? 'page' : undefined}>{r.icon && <Icon name={r.icon} size={16} />}{r.label}</a>
             );
             return r.flag ? <FlagGate key={r.path} flag={r.flag}>{link}</FlagGate> : link;
           })}
         </nav>
         <span className="spacer" />
         {!onboarding && <FlagGate flag="ff.iam.p0202"><ContextSwitcher /></FlagGate>}
-        {iam && <FlagGate flag="ff.iam.p0203"><ThemeSync /></FlagGate>}
+        {s && <FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>}
         <label className="shell-field">
           <span>Theme</span>
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>
