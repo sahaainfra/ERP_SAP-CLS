@@ -147,7 +147,7 @@ test('FR-01 FR-08 AC-04 a new version of a definition: edit the steps, see the d
   await sys.getByRole('button', { name: 'Add a step' }).click();
   await steps.nth(2).getByLabel('Name').fill('Store check');
   await steps.nth(2).getByLabel('Code').fill('STORE');
-  await steps.nth(2).getByLabel('Role', { exact: true }).selectOption('SK');
+  await steps.nth(2).locator('select').nth(3).selectOption('SK');
   await expect(sys.getByTestId('wf-diagram')).toContainText('Store check');
   await expect(sys.getByTestId('wf-step-STORE')).toContainText('SK');
   await sys.getByRole('button', { name: 'Save draft' }).click();
@@ -175,6 +175,7 @@ test('FR-01 FR-08 AC-04 a new version of a definition: edit the steps, see the d
     await expect(p.getByTestId('wi-notice')).toContainText('approved');
   }
   await sys.goto('/admin/workflows');
+  await sys.getByRole('search', { name: 'Filter the definitions' }).getByLabel('Document type').selectOption('ENG_SAMPLE_DOC');
   await sys.getByLabel('Status').selectOption('ACTIVE');
   await expect(sys.getByRole('region', { name: 'Definitions', exact: true }).locator('tbody tr')).toHaveCount(1);
   // an active version is read-only
