@@ -5,6 +5,7 @@ import { parseSampleRequest } from './sample-requests.js';
 import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
 import { parseQr, parseSubscription, parseUnsubscribe } from './device.js';
 import { parseDashboardCode, parseHistory, parsePersonal, parseRoleDefault, parseWidgetCode, parseWidgetQuery } from './widgets.js';
+import { parseCatalogueParams, parseChanges, parseHistory as parseTranslationHistory, parseImportQuery, parseLocalePrefs, parseTranslationList } from './translations.js';
 import { parseAnalytics, parseClick, parseCommands, parseEntityParam, parseReindex, parseSearch } from './search.js';
 import { parseContext, parseFavourite, parseFavouriteOrder, parseNavChange, parseNavImport, parseVisit } from './shell.js';
 import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
@@ -162,3 +163,26 @@ export function searchRoutes(service, { shell, idempotent }) {
   r.post('/search/reindex/:entity', idempotent, (req, res) => res.status(202).json({ data: service.requestReindex(req.actor, parseEntityParam(req.params.entity), parseReindex(req.body)) }));
   return r;
 }
+
+/** Part 03.09: the text of the screens (any signed-in person reads it; the system administrator manages wording) and each person's number and time format. */
+export function translationRoutes(service, { idempotent, xlsxBody }) {
+  const r = Router();
+  r.get('/locale-preferences', (req, res) => res.json({ data: service.localePrefs(req.actor) }));
+  r.put('/locale-preferences', (req, res) => res.json({ data: service.saveLocalePrefs(req.actor, parseLocalePrefs(req.body)) }));
+  r.get('/translations', (req, res) => res.json({ data: service.list(req.actor, parseTranslationList(req.query)) }));
+  r.get('/translations/missing', (req, res) => res.json({ data: service.missing(req.actor) }));
+  r.get('/translations/pending', (req, res) => res.json({ data: service.pending(req.actor) }));
+  r.get('/translations/history', (req, res) => res.json({ data: service.history(req.actor, parseTranslationHistory(req.query)) }));
+  r.get('/translations/export', (req, res) => {
+    const out = service.exportXlsx(req.actor);
+    res.set({ 'content-type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer);
+  });
+  r.post('/translations/changes', idempotent, (req, res) => res.status(201).json({ data: service.propose(req.actor, parseChanges(req.body)) }));
+  r.post('/translations/import', xlsxBody, async (req, res) => {
+    const q = parseImportQuery(req.query);
+    res.status(q.commit === '1' ? 201 : 200).json({ data: await service.importXlsx(req.actor, Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0), { commit: q.commit === '1', reason: q.reason }) });
+  });
+  r.get('/translations/:lang/:namespace', (req, res) => res.json({ data: service.strings(req.actor, parseCatalogueParams(req.params)) }));
+  return r;
+}
+

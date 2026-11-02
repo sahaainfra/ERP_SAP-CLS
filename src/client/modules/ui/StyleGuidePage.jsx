@@ -68,7 +68,7 @@ export default function StyleGuidePage() {
               <tbody>{rows.map((r) => (
                 <tr key={`${r.theme}${r.fg}${r.bg}`}>
                   <td data-label="Theme">{r.theme}</td><td data-label="Text"><code>{r.fg}</code></td><td data-label="Background"><code>{r.bg}</code></td>
-                  <td data-label="Sample"><span data-theme={r.theme} style={{ color: `var(--erp-color-${kebab(r.fg)})`, background: `var(--erp-color-${kebab(r.bg)})`, padding: '2px 8px', display: 'inline-block' }}>Aa 123</span></td>
+                  <td data-label="Sample"><span data-theme={r.theme} style={/border/.test(r.fg) ? { border: `3px solid var(--erp-color-${kebab(r.fg)})`, color: 'var(--erp-color-text-primary)', background: `var(--erp-color-${kebab(r.bg)})`, padding: '2px 8px', display: 'inline-block' } : { color: `var(--erp-color-${kebab(r.fg)})`, background: `var(--erp-color-${kebab(r.bg)})`, padding: '2px 8px', display: 'inline-block' }}>Aa 123</span></td>
                   <td data-label="Ratio" className="num">{r.ratio.toFixed(2)}:1</td>
                   <td data-label="AA"><StatusBadge status={r.aa ? 'PASS' : 'FAIL'} label={r.aa ? 'Pass' : 'Fail'} /></td>
                   <td data-label="AAA">{r.aaa ? 'Yes' : 'No'}</td>

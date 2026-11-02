@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import Icon from '../design/Icon.jsx';
 import { NoPermission, EmptyState, Skeleton, ErrorState } from '../feedback/states.jsx';
 import { useBell, useFavourites, useFlagOn, useNavigation, useRecent } from './api.js';
+import { useT } from '../i18n/index.js';
+import I18nSync from '../i18n/I18nSync.jsx';
 import { landsOnField } from '../../../shared/device/breakpoints.js';
 import { useLayout } from '../device/layout.js';
 import { useLowBandwidth } from '../device/lowBandwidth.js';
@@ -16,30 +18,31 @@ const typing = (el) => el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagNam
 
 /** What a page that cannot be drawn says (FR-08): the missing right, a flag that is OFF, a project to choose, or no such page. */
 function GuardState({ verdict, path, go }) {
+  const t = useT('shell');
   if (verdict.reason === 'permission') {
-    return <NoPermission what={verdict.label ?? 'This page'} permission={verdict.permissionKey} />;
+    return <NoPermission what={verdict.label ?? t('guard.page')} permission={verdict.permissionKey} />;
   }
   if (verdict.reason === 'flag') {
     return (
       <div className="state" role="status" data-testid="flag-off">
-        <h2>{verdict.label ?? 'This page'} is not switched on yet</h2>
-        <p>It is released step by step and is not available for your company yet (feature flag <code>{verdict.featureFlag}</code> is OFF). Ask a system administrator when it will be.</p>
-        <a className="btn" href="/home" onClick={go('/home')}>Go to Home</a>
+        <h2>{t('guard.flagTitle', { page: verdict.label ?? t('guard.page') })}</h2>
+        <p>{t('guard.flagBody', { flag: verdict.featureFlag })}</p>
+        <a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>
       </div>
     );
   }
   if (verdict.reason === 'context') {
-    const need = verdict.need === 'site' ? 'site' : 'project';
+    const need = t(verdict.need === 'site' ? 'need.site' : 'need.project');
     return (
       <div className="state" role="status" data-testid="context-needed">
-        <h2>Choose a {need} first</h2>
-        <p>{verdict.entry.label} works on one {need} at a time. Pick one in the working context at the top of the page.</p>
-        <button type="button" className="btn btn-primary" onClick={() => window.dispatchEvent(new CustomEvent(OPEN_CONTEXT_EVENT))}>Choose a {need}</button>
+        <h2>{t('guard.contextTitle', { need })}</h2>
+        <p>{t('guard.contextBody', { page: verdict.entry.label, need })}</p>
+        <button type="button" className="btn btn-primary" onClick={() => window.dispatchEvent(new CustomEvent(OPEN_CONTEXT_EVENT))}>{t('guard.contextAction', { need })}</button>
       </div>
     );
   }
   return (
-    <EmptyState title="That page does not exist" message={`There is nothing at ${path}. It may have been renamed.`} action={<a className="btn" href="/home" onClick={go('/home')}>Go to Home</a>} />
+    <EmptyState title={t('guard.missingTitle')} message={t('guard.missingBody', { path })} action={<a className="btn" href="/home" onClick={go('/home')}>{t('guard.home')}</a>} />
   );
 }
 
@@ -49,6 +52,7 @@ function GuardState({ verdict, path, go }) {
  * registry, so the menu never shows what the person cannot use and no page's own list of links is needed.
  */
 export default function AppShell({ path, go, route, session, onboarding, displayName, theme, setTheme, language, setLanguage, onSignOut, identityBar, extras }) {
+  const t = useT('shell');
   const navQuery = useNavigation();
   const fullNav = navQuery.data;
   const nav = useMemo(() => (fullNav ? forOnboarding(fullNav, onboarding) : null), [fullNav, onboarding]);
@@ -102,10 +106,10 @@ export default function AppShell({ path, go, route, session, onboarding, display
 
   if (navQuery.isError) {
     return (
-      <div className="app-shell"><main id="main"><ErrorState title="The menu could not be loaded" error={navQuery.error} onRetry={() => navQuery.refetch()} /></main></div>
+      <div className="app-shell"><main id="main"><ErrorState title={t('menu.error')} error={navQuery.error} onRetry={() => navQuery.refetch()} /></main></div>
     );
   }
-  if (!nav) return <div className="app-shell"><main id="main"><Skeleton label="Loading the menu" rows={4} /></main></div>;
+  if (!nav) return <div className="app-shell"><main id="main"><Skeleton label={t('menu.loading')} rows={4} /></main></div>;
 
   const knownRoute = Boolean(route);
   const verdict = guard(nav, path, { knownRoute, context });
@@ -116,22 +120,23 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const work = nav.groups.find((g) => g.code === 'g-mywork')?.pages[0];
   const scan = entryFor(nav, '/field/scan');
   const messages = nav.groups.find((g) => g.code === 'g-messages')?.pages[0];
-  const bottom = [home && { key: 'home', label: 'Home', icon: 'erp.group.home', route: home.route }, work && { key: 'work', label: 'My Work', icon: 'erp.action.inbox', route: work.route }, scan && { key: 'scan', label: 'Scan', icon: 'erp.action.scan', route: scan.route }, messages && { key: 'messages', label: 'Messages', icon: 'erp.group.collab', route: messages.route }].filter(Boolean);
+  const bottom = [home && { key: 'home', label: t('bottom.home'), icon: 'erp.group.home', route: home.route }, work && { key: 'work', label: t('bottom.work'), icon: 'erp.action.inbox', route: work.route }, scan && { key: 'scan', label: t('bottom.scan'), icon: 'erp.action.scan', route: scan.route }, messages && { key: 'messages', label: t('bottom.messages'), icon: 'erp.group.collab', route: messages.route }].filter(Boolean);
   const openMenu = () => { if (!menuOpen) window.scrollTo(0, 0); setMenuOpen((o) => !o); };
 
   return (
     <div className="app-shell" data-collapsed={collapsed} data-device={device ? 'on' : 'off'} data-layout={layout}>
-      <a href="#main" className="skip">Skip to content</a>
+      <I18nSync />
+      <a href="#main" className="skip">{t('skip')}</a>
       <header className="sh-header">
-        <button type="button" className="sh-icon sh-burger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="sh-nav" onClick={() => setMenuOpen((o) => !o)}>
+        <button type="button" className="sh-icon sh-burger" aria-label={menuOpen ? t('menu.close') : t('menu.open')} aria-expanded={menuOpen} aria-controls="sh-nav" onClick={() => setMenuOpen((o) => !o)}>
           <Icon name="erp.action.more" size={20} />
         </button>
-        <button type="button" className="sh-icon sh-collapse" aria-label={collapsed ? 'Expand menu' : 'Collapse menu'} aria-pressed={collapsed} onClick={() => setCollapsed(!collapsed)} title={collapsed ? 'Expand menu' : 'Collapse menu'}>
+        <button type="button" className="sh-icon sh-collapse" aria-label={collapsed ? t('menu.expand') : t('menu.collapse')} aria-pressed={collapsed} onClick={() => setCollapsed(!collapsed)} title={collapsed ? t('menu.expand') : t('menu.collapse')}>
           <Icon name={collapsed ? 'erp.action.next' : 'erp.action.previous'} size={18} />
         </button>
-        <a className="sh-brand" href="/home" onClick={goTo('/home')} aria-label="ERP home"><strong>ERP</strong></a>
-        <button type="button" className="sh-search" onClick={() => setPalette(true)} aria-label="Search or go to" aria-keyshortcuts="Control+K" data-testid="search-trigger">
-          <Icon name="erp.action.search" size={16} /><span className="sh-search-text">Search or go to…</span><kbd className="sh-kbd">Ctrl K</kbd>
+        <a className="sh-brand" href="/home" onClick={goTo('/home')} aria-label={t('brand.aria')}><strong>ERP</strong></a>
+        <button type="button" className="sh-search" onClick={() => setPalette(true)} aria-label={t('search.aria')} aria-keyshortcuts="Control+K" data-testid="search-trigger">
+          <Icon name="erp.action.search" size={16} /><span className="sh-search-text">{t('search.button')}</span><kbd className="sh-kbd">Ctrl K</kbd>
         </button>
         <span className="spacer" />
         {extras}

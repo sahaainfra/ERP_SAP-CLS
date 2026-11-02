@@ -259,7 +259,7 @@ test('FR-04 FR-07 header and keyboard: search or go to, quick create, g-shortcut
   await (await userMenu(page)).getByLabel('Language').selectOption('hi');
   await expect(page.locator('html')).toHaveAttribute('lang', 'hi');
   await expect((await menu(page)).getByRole('region', { name: 'खरीद' })).toBeVisible();
-  await (await userMenu(page)).getByLabel('Language').selectOption('en');
+  await (await userMenu(page)).getByLabel('भाषा').selectOption('en'); // the label is Hindi now
   await expect((await menu(page)).getByRole('region', { name: 'Procurement' })).toBeVisible();
   if (desktop) {
     // the menu collapses to icons and comes back

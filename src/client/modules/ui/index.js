@@ -16,6 +16,7 @@ import { MyWorkPage, RequestsOverviewPage } from './DashboardPages.jsx';
 import DashboardDesignerPage from './DashboardDesignerPage.jsx';
 import AdvancedSearchPage from './AdvancedSearchPage.jsx';
 import SearchAdminPage from './SearchAdminPage.jsx';
+import TranslationsPage from './TranslationsPage.jsx';
 
 // Module "ui" (part 03.01): the design system. The style guide is listed for those with ui.styleguide.view; outside production the
 // server also lets every signed-in person open it by its address. Part 03.07 adds My Work, the Requests Overview and the Dashboard Designer. Part 03.02 adds the form components gallery, each person's drafts
@@ -26,6 +27,7 @@ registerModule({
   routes: [
     { path: '/search', label: 'Advanced Search', icon: 'erp.action.search', flag: 'ff.ui.p0308', Page: AdvancedSearchPage },
     { path: '/admin/search', label: 'Search Administration', icon: 'erp.action.settings', permission: 'ui.search.analytics', flag: 'ff.ui.p0308', Page: SearchAdminPage },
+    { path: '/admin/translations', label: 'Translations', icon: 'erp.action.edit', permission: 'ui.translation.manage', flag: 'ff.ui.p0309', Page: TranslationsPage },
     { path: '/work', label: 'My Work', icon: 'erp.group.home', flag: 'ff.ui.p0307', Page: MyWorkPage },
     { path: '/admin/sample-requests/overview', label: 'Requests Overview', icon: 'erp.insights.metrics', permission: 'core.sample.use', flag: 'ff.ui.p0307', Page: RequestsOverviewPage },
     { path: '/admin/dashboards', label: 'Dashboard Designer', icon: 'erp.action.settings', permission: 'ui.dashboard.manage', flag: 'ff.ui.p0307', Page: DashboardDesignerPage },

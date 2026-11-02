@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Banner } from '../feedback/Feedback.jsx';
 import { pwa, usePwa } from './pwa.js';
+import { useT } from '../i18n/index.js';
 
 /**
  * The two notices of the installable app (part 03.06, FR-03): a newer version is ready (a button reloads into it), and the app can be installed
@@ -8,21 +9,20 @@ import { pwa, usePwa } from './pwa.js';
  */
 export default function PwaBanners() {
   const s = usePwa();
+  const t = useT('field');
   useEffect(() => { pwa.register(); }, []);
   const showInstall = s.registered && !s.standalone && !s.dismissed && (s.installEvent || s.ios);
   return (
     <div className="pwa-banners">
       {s.updateReady && (
-        <Banner tone="info" title="A new version is ready" testId="pwa-update" action={{ label: 'Reload now', onClick: () => pwa.applyUpdate() }}>
-          Reload to use it. Anything you have not saved on this page is kept as a draft where drafts are offered.
+        <Banner tone="info" title={t('pwa.updateTitle')} testId="pwa-update" action={{ label: t('pwa.reload'), onClick: () => pwa.applyUpdate() }}>
+          {t('pwa.updateBody')}
         </Banner>
       )}
       {showInstall && (
-        <Banner tone="info" title="Install the app on this device" testId="pwa-install" onClose={() => pwa.dismissInstall()}
-          action={s.installEvent ? { label: 'Install', onClick: () => pwa.install() } : null}>
-          {s.installEvent
-            ? 'It opens like any app, from the home screen, and the app itself loads without a connection.'
-            : 'In Safari tap Share, then Add to Home Screen. It then opens like any app and the app itself loads without a connection.'}
+        <Banner tone="info" title={t('pwa.installTitle')} testId="pwa-install" onClose={() => pwa.dismissInstall()}
+          action={s.installEvent ? { label: t('pwa.install'), onClick: () => pwa.install() } : null}>
+          {s.installEvent ? t('pwa.installBody') : t('pwa.installIos')}
         </Banner>
       )}
     </div>

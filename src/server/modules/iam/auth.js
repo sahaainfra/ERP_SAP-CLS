@@ -1,4 +1,5 @@
 import { createHash, randomInt } from 'node:crypto';
+import { localisationOf } from '../../platform/i18n/index.js';
 import { transaction } from '../../platform/db/index.js';
 import { recordSecurityEvent, writeAudit } from '../../platform/audit/index.js';
 import { publishEvent } from '../../platform/events/index.js';
@@ -27,6 +28,8 @@ const typedCode = () => {
  * here, in one place: lockout, CAPTCHA, MFA, devices, sessions and the suspicious-login checks.
  */
 export function createAuthService({ db, identity, users, mfa, notifier }) {
+  /** The translator for a person's own language (part 03.09: messages go out in the language of their recipient). */
+  const msg = (user) => { const loc = localisationOf(db); return loc.translator(user.company_id, loc.languageOf({ companyId: user.company_id, userId: user.id, username: user.username })); };
   const { hasher, policies, secret } = identity;
   const now = () => identity.now();
 
@@ -164,7 +167,8 @@ export function createAuthService({ db, identity, users, mfa, notifier }) {
       return { publicId, refreshToken };
     });
     if (reasons.length && user.email) {
-      void notifier.email(user.company_id, user.email, 'New sign-in to your ERP account', `We noticed a sign-in that looks unusual: ${reasons.join(', ')}.\nTime: ${stamp}\nDevice: ${device.name}\nIf this was not you, change your password and ask an administrator to sign out your sessions.`);
+      const t = msg(user);
+      void notifier.email(user.company_id, user.email, t('notify', 'signin.subject'), t('notify', 'signin.body', { reasons: reasons.join(', '), time: stamp, device: device.name }));
     }
     return { status: 'ok', ...issueAccess(user, out.publicId, policy), refreshToken: out.refreshToken, deviceToken, user: users.present(user), session: { id: out.publicId }, suspicious: reasons };
   }
@@ -380,7 +384,8 @@ export function createAuthService({ db, identity, users, mfa, notifier }) {
       const code = typedCode();
       db.prepare('UPDATE iam_password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(iso(now()), user.id);
       db.prepare('INSERT INTO iam_password_resets (user_id, token_hash, expires_at, ip, created_at) VALUES (?, ?, ?, ?, ?)').run(user.id, hashToken(code), iso(now() + RESET_MINUTES * 60_000), ctx.ip ?? null, iso(now()));
-      await notifier.email(user.company_id, user.email, 'Your ERP password reset code', `Your password reset code is ${code}. It works once, for ${RESET_MINUTES} minutes. If you did not ask for it, ignore this message.`);
+      const t = msg(user);
+      await notifier.email(user.company_id, user.email, t('notify', 'reset.subject'), t('notify', 'reset.body', { code, minutes: RESET_MINUTES }));
       return sent;
     },
 

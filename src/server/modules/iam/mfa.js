@@ -1,4 +1,5 @@
 import { createHash, randomInt } from 'node:crypto';
+import { localisationOf } from '../../platform/i18n/index.js';
 import QRCode from 'qrcode';
 import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
@@ -25,6 +26,8 @@ function backupCodes() {
  * The TOTP seed is stored encrypted with the vault; it is shown once, at enrolment, so it can be typed in by hand.
  */
 export function createMfaService({ db, identity, notifier }) {
+  /** The translator for a person's own language (part 03.09: messages go out in the language of their recipient). */
+  const msg = (user) => { const loc = localisationOf(db); return loc.translator(user.company_id, loc.languageOf({ companyId: user.company_id, userId: user.id, username: user.username })); };
   const now = () => identity.now();
   const slot = (userId) => `iam/${userId}/totp`;
   const factors = (userId) => db.prepare("SELECT * FROM iam_mfa_factors WHERE user_id = ? AND is_active = 1 AND type != 'backup'").all(userId);
@@ -95,7 +98,7 @@ export function createMfaService({ db, identity, notifier }) {
         db.prepare('INSERT INTO iam_mfa_factors (company_id, user_id, type, phone, meta_json, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?)')
           .run(user.company_id, user.id, channel, phone, JSON.stringify({ otpHash: sha(code), expires: iso(now() + OTP_MINUTES * 60_000), tries: 0 }), user.username, 'mfa_enrolment');
       });
-      const sent = await notifier.phone(user.company_id, channel, phone, `Your ERP verification code is ${code}. It works for ${OTP_MINUTES} minutes.`);
+      const sent = await notifier.phone(user.company_id, channel, phone, msg(user)('notify', 'verify.body', { code, minutes: OTP_MINUTES }));
       if (!sent.delivered) throw new HttpError(503, 'SERVICE_UNAVAILABLE', `The ${channel === 'sms' ? 'text message' : 'WhatsApp'} could not be sent (${sent.reason}). Ask an administrator to check the ${channel} connector.`);
       return { sent: true, expiresInMinutes: OTP_MINUTES };
     },
@@ -128,7 +131,7 @@ export function createMfaService({ db, identity, notifier }) {
       if (!f) throw notFound('That second step is not available.');
       const code = String(randomInt(100000, 1000000));
       db.prepare('UPDATE iam_mfa_factors SET meta_json = ? WHERE id = ?').run(JSON.stringify({ otpHash: sha(code), expires: iso(now() + OTP_MINUTES * 60_000), tries: 0 }), f.id);
-      const sent = await notifier.phone(user.company_id, f.type, f.phone, `Your ERP sign-in code is ${code}. It works for ${OTP_MINUTES} minutes.`);
+      const sent = await notifier.phone(user.company_id, f.type, f.phone, msg(user)('notify', 'otp.body', { code, minutes: OTP_MINUTES }));
       return { sent: sent.delivered, message: sent.delivered ? 'A code has been sent.' : 'The code could not be sent. Use your authenticator app or a backup code.' };
     },
 

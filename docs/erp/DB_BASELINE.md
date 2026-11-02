@@ -2831,6 +2831,35 @@ Indexes:
 - ix_ui_form_metadata_company: company_id, status
 - ux_ui_form_metadata_code (unique): , form_code, form_version
 
+## ui_locale_preferences
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_id | INTEGER |  |  |  |
+| user_ref | TEXT | yes |  |  |
+| number_style | TEXT |  |  |  |
+| time_format | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_ui_locale_preferences_person (unique): company_id, user_ref
+
 ## ui_navigation_entries
 
 | Column | Type | Not null | Key | Default |
@@ -3215,6 +3244,36 @@ Indexes:
 - ix_ui_saved_views_owner: owner_user_id
 - ix_ui_saved_views_list: company_id, list_code, is_shared
 - ux_ui_saved_views_name (unique): company_id, owner_ref, list_code, name
+
+## ui_translations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| namespace | TEXT | yes |  |  |
+| msg_key | TEXT | yes |  |  |
+| lang | TEXT | yes |  |  |
+| text | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_translations_lang: company_id, lang, namespace
+- ux_ui_translations_key (unique): company_id, namespace, msg_key, lang
 
 ## ui_user_context
 

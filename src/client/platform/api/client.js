@@ -47,7 +47,7 @@ export function createApiClient({
     }
     return err;
   };
-  async function request(method, path, body, { signal, headers = {} } = {}) {
+  async function request(method, path, body, { signal, headers = {}, raw = false } = {}) {
     const correlationId = newId();
     const canRetry = method === 'GET' || method === 'HEAD';
     const maxAttempts = canRetry ? retries + 1 : 1;
@@ -60,7 +60,7 @@ export function createApiClient({
           method,
           signal,
           headers: { 'content-type': 'application/json', ...getAuthHeaders(), ...headers, 'x-correlation-id': correlationId },
-          body: body === undefined ? undefined : JSON.stringify(body),
+          body: body === undefined ? undefined : raw ? body : JSON.stringify(body), // `raw`: a file sent as it is (the translator's workbook)
         });
       } catch (err) {
         if (err?.name === 'AbortError') throw err;

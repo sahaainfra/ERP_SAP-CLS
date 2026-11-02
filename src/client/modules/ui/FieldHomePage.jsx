@@ -1,6 +1,6 @@
 import { useNavigation, useLaunchpad } from '../../platform/shell/api.js';
 import { flatPages } from '../../platform/shell/nav.js';
-import { storedAppearance } from '../../platform/design/appearance.js';
+import { useLang, useT } from '../../platform/i18n/index.js';
 import { useOnline } from '../../platform/device/layout.js';
 import { useSyncQueue } from '../../platform/device/syncQueue.js';
 import { useLowBandwidth } from '../../platform/device/lowBandwidth.js';
@@ -29,25 +29,26 @@ export default function FieldHomePage() {
   const online = useOnline();
   const queue = useSyncQueue();
   const low = useLowBandwidth();
-  const language = storedAppearance().language;
+  const language = useLang();
+  const t = useT('field');
   const pull = usePullToRefresh(async () => { await Promise.all([nav.refetch(), lp.refetch()]); });
   const tiles = flatPages(nav.data).filter((p) => p.field).sort((a, b) => a.field.order - b.field.order);
-  const text = (t) => (language === 'hi' && t.field.labelHi) || t.field.label;
+  const text = (tile) => (language === 'hi' && tile.field.labelHi) || tile.field.label;
   const pending = lp.data?.pending;
 
   return (
     <section aria-labelledby="page-title" className="field-home">
-      <div className="page-head"><h1 id="page-title">Field Home</h1></div>
-      {(pull.offset > 0 || pull.refreshing) && <p className="pull-indicator" role="status" style={{ height: pull.offset }}>{pull.refreshing ? 'Refreshing...' : pull.ready ? 'Let go to refresh' : 'Pull down to refresh'}</p>}
-      <ul className="field-status" aria-label="Status of this device">
-        <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? 'Online' : 'Offline: what you do waits on this device until you are back online'}</li>
-        <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> {queue.length === 0 ? 'Nothing is waiting to be sent' : `${queue.length} waiting to be sent`}</li>
-        {low.low && <li data-testid="field-lowbw"><Icon name="erp.action.info" size={18} /> Low-bandwidth mode is on: photos are smaller</li>}
+      <div className="page-head"><h1 id="page-title">{t('title')}</h1></div>
+      {(pull.offset > 0 || pull.refreshing) && <p className="pull-indicator" role="status" style={{ height: pull.offset }}>{pull.refreshing ? t('pull.refreshing') : pull.ready ? t('pull.ready') : t('pull.pull')}</p>}
+      <ul className="field-status" aria-label={t('status.aria')}>
+        <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? t('online') : t('offline')}</li>
+        <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> {queue.length === 0 ? t('sync.none') : t('sync.some', { count: queue.length })}</li>
+        {low.low && <li data-testid="field-lowbw"><Icon name="erp.action.info" size={18} /> {t('lowbw')}</li>}
       </ul>
-      <QueryState query={nav} what="the quick actions" />
-      {nav.data && tiles.length === 0 && <EmptyState title="No quick actions for your role yet" message="The pages you may open are in the menu. Quick actions appear here as they are set up for your role." />}
+      <QueryState query={nav} what={t('tiles.what')} />
+      {nav.data && tiles.length === 0 && <EmptyState title={t('empty.title')} message={t('empty.body')} />}
       {tiles.length > 0 && (
-        <ul className="field-tiles" aria-label="Quick actions">
+        <ul className="field-tiles" aria-label={t('tiles.aria')}>
           {tiles.map((t) => (
             <li key={t.field.code}>
               <a href={t.route} onClick={go(t.route)} data-testid={`field-tile-${t.field.code}`}><Icon name={t.icon ?? 'erp.action.info'} size={32} /><strong>{text(t)}</strong></a>
@@ -56,9 +57,9 @@ export default function FieldHomePage() {
         </ul>
       )}
       {pending && (pending.approvals > 0 || pending.drafts > 0) && (
-        <p className="muted" data-testid="field-pending">Waiting for you: {[pending.approvals > 0 && `${pending.approvals} approval${pending.approvals === 1 ? '' : 's'}`, pending.drafts > 0 && `${pending.drafts} draft${pending.drafts === 1 ? '' : 's'}`].filter(Boolean).join(', ')}.</p>
+        <p className="muted" data-testid="field-pending">{t('pending.line', { items: [pending.approvals > 0 && t('pending.approvals', { count: pending.approvals }), pending.drafts > 0 && t('pending.drafts', { count: pending.drafts })].filter(Boolean).join(', ') })}</p>
       )}
-      <LocationNotice purpose="a punch, a daily progress report or an inspection" />
+      <LocationNotice purpose={t('location.purpose')} />
     </section>
   );
 }

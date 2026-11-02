@@ -1,4 +1,5 @@
 import { authzOf } from '../../platform/authz/index.js';
+import { amountInWords } from '../../../shared/i18n/words.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { toPdf } from '../../platform/export/index.js';
@@ -115,6 +116,8 @@ function printOf(db, actor, id) {
   const footer = [
     `Project ${r.project_code} ${r.project_name}${r.site_code ? `, site ${r.site_code}` : ''}. Requested by ${r.requested_by}. Required by ${r.required_by}. Priority ${r.priority.toLowerCase()}.`,
     `Status ${r.status.toLowerCase()}${approval ? `, approval ${approval.status.toLowerCase()}` : ''}. Total ${total}.`,
+    // the amount in words (part 03.09, BR-02); the printed page is English because the standard PDF fonts have no Devanagari (D-164)
+    ...(/^\d+(\.\d+)?$/.test(String(snap.header.total ?? '')) ? [`Amount in words: ${amountInWords(snap.header.total, 'en')}`] : []),
     `Printed by ${actor.user} at ${new Date(Date.now() + 19_800_000).toISOString().replace('T', ' ').slice(0, 16)} (IST)`,
   ];
   const buffer = toPdf({ title: `Sample material request ${r.doc_no ?? `(draft ${r.id})`}: ${r.title}`, columns: [{ key: 'no', label: '#', type: 'number' }, { key: 'description', label: 'Description', type: 'text' }, { key: 'uom', label: 'Unit', type: 'text' }, { key: 'quantity', label: 'Quantity', type: 'number' }, { key: 'unitRate', label: 'Rate', type: 'money' }, { key: 'amount', label: 'Amount', type: 'money' }, { key: 'neededOn', label: 'Needed on', type: 'date' }], rows, footer });

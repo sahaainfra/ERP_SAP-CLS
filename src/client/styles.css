@@ -642,8 +642,8 @@ tr.op-changed del, .op-delta del { color: var(--erp-color-status-error-fg); }
 }
 .sh-palette input { width: 100%; min-height: 44px; padding: 0 var(--erp-space-3); font: var(--erp-type-body-lg); }
 .sh-palette ul { list-style: none; margin: 0; padding: 0; }
-.sh-palette li button { display: flex; align-items: center; gap: var(--erp-space-3); width: 100%; min-height: 40px; padding: 0 var(--erp-space-3); border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
-.sh-palette li[aria-selected='true'] button { background: var(--erp-color-bg-selected); }
+.sh-palette li.sh-palette-item { display: flex; align-items: center; gap: var(--erp-space-3); width: 100%; min-height: 40px; padding: 0 var(--erp-space-3); border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
+.sh-palette li[aria-selected='true'] { background: var(--erp-color-bg-selected); }
 .sh-palette-empty { padding: var(--erp-space-3); }
 .sh-keys { display: grid; grid-template-columns: auto 1fr; gap: var(--erp-space-2) var(--erp-space-5); margin: 0; }
 .sh-keys dd { margin: 0; }
@@ -685,7 +685,7 @@ kbd { font: var(--erp-type-caption); border: 1px solid var(--erp-color-border-co
 /* touch ergonomics (FR-05): on a touch screen or a phone every control is at least 44 px, whatever density was chosen */
 @media (pointer: coarse), (max-width: 767px) {
   :root, [data-density] { --erp-control-h: 44px; --erp-row-h: 48px; --erp-cell-py: 12px; }
-  .btn, .btn-small, .sh-icon, .sh-user, .sh-chip, .sh-search, .lr-chip, .sh-options button, .sh-palette li button { min-height: 44px; }
+  .btn, .btn-small, .sh-icon, .sh-user, .sh-chip, .sh-search, .lr-chip, .sh-options button, .sh-palette li.sh-palette-item { min-height: 44px; }
   .btn-small { padding-inline: 12px; }
   .sh-icon { min-width: 44px; }
   .sh-nav li a, .sh-group h2 button { min-height: 44px; }
@@ -863,7 +863,7 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .sh-palette-main { display: flex; flex-direction: column; flex: 1; min-width: 0; padding: var(--erp-space-1) 0; }
 .sh-palette-title, .sh-palette-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sh-palette mark, .srch-row mark { background: var(--erp-color-status-warning-bg); color: inherit; border-radius: 2px; padding: 0 1px; font-weight: 600; }
-.sh-palette li[role='option'] button { min-height: 44px; }
+.sh-palette li.sh-palette-item { min-height: 44px; }
 .srch-form { display: grid; gap: var(--erp-space-4); grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); align-items: end; margin-bottom: var(--erp-space-4); }
 .srch-form .srch-q { grid-column: 1 / -1; }
 .srch-form .srch-q input { width: 100%; min-height: 44px; font: var(--erp-type-body-lg); }
@@ -884,3 +884,7 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .srch-two { display: grid; gap: var(--erp-space-5); grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
 .srch-tools details[open] { flex-basis: 100%; }
 .srch-menu { display: grid; gap: var(--erp-space-2); margin-top: var(--erp-space-2); padding: var(--erp-space-3); background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-md); }
+.wd-cal-row { display: contents; }
+
+/* part 03.09, FR-05: a person who asked for less motion gets none, whatever a component animates */
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }

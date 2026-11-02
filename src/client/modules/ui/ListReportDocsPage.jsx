@@ -43,7 +43,7 @@ export default function ListReportDocsPage() {
       <div className="page-head"><h1 id="page-title">List Report</h1><span className="spacer" /><button type="button" className="btn btn-primary" onClick={() => navigateTo('/admin/sample-requests')}>Open the reference register</button></div>
       <p className="muted">One component for every register: the server searches, filters, sorts, pages and totals (nothing is filtered in the browser); the component adds the filter bar, saved views, the column chooser, bulk actions, exports and a card layout on phones. Sample Material Requests uses it.</p>
       <h2>Using it in a page</h2>
-      <pre className="doc-code"><code>{`import ListReport from '../../platform/list/ListReport.jsx';
+      <pre className="doc-code" tabIndex={0}><code>{`import ListReport from '../../platform/list/ListReport.jsx';
 
 <ListReport listCode="ui.sample_requests" endpoint="/ui/sample-requests" title="Requests"
   permission="core.sample.use" session={session}
@@ -58,7 +58,7 @@ export default function ListReportDocsPage() {
         </table>
       </div>
       <h2>On the server</h2>
-      <pre className="doc-code"><code>{`import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
+      <pre className="doc-code" tabIndex={0}><code>{`import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 
 export const myList = defineList({ code: 'mod.things', label: 'Things', permission: 'mod.thing.view',
   from: 'mod_things t', where: 't.deleted_at IS NULL', searchable: ['t.name'], defaultSort: '-createdAt',

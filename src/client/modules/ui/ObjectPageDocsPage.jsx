@@ -54,7 +54,7 @@ export default function ObjectPageDocsPage() {
       <p className="muted">Every record looks and behaves the same: a sticky header with the number, status chips and key figures; the buttons the server allows right now (a button that is off says why); and the tabs Details, Lines, Attachments, Approvals, Timeline, Discussion and Related, plus Amendments once the record has been submitted. A request in Sample Material Requests is the working example.</p>
 
       <h2>Using it in a record page</h2>
-      <pre className="doc-code"><code>{`import ObjectPage from '../../platform/object/ObjectPage.jsx';
+      <pre className="doc-code" tabIndex={0}><code>{`import ObjectPage from '../../platform/object/ObjectPage.jsx';
 
 <ObjectPage type="sample_request" id={id} query={useSampleRequest(id)} title="Request"
   heading={(r) => r.docNo} subtitle={(r) => r.title}

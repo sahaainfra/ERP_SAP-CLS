@@ -30,7 +30,7 @@ for (const [suffix, companyId] of [['d', 1], ['m', 2]]) {
   if (companyId !== 1) db.prepare("INSERT OR IGNORE INTO org_companies (id, company_id, code, legal_name, short_name, created_by, source_type) VALUES (?, ?, 'SECOND', 'Second Infra Pvt Ltd', 'Second', 'e2e', 'seed')").run(companyId, companyId);
   if (companyId !== 1) db.prepare("INSERT INTO iam_auth_policy (company_id, settings_json, created_by, source_type) VALUES (?, ?, 'e2e', 'seed')").run(companyId, JSON.stringify({ notify: { connector: mail } }));
   const people = [
-    ['admin', ['SYSADM']], ['itadm', ['ITADM']], ['hr', ['HRMGR']], ['approver', ['SYSADM']], ['dir', ['DIR']], ['scoped', []], ['pmx', ['PM']], ['scopeadm', ['SYSADM']], ['scopeit', ['ITADM']], ['field', ['PM']], ['lock', ['PM']], ['reset', ['PM']], ['spare', ['PM']], ['watch', ['PM']], ['elev', ['PM']], ['elevit', ['ITADM']], ['appear', ['PM']],
+    ['admin', ['SYSADM']], ['itadm', ['ITADM']], ['hr', ['HRMGR']], ['approver', ['SYSADM']], ['dir', ['DIR']], ['scoped', []], ['pmx', ['PM']], ['scopeadm', ['SYSADM']], ['scopeit', ['ITADM']], ['field', ['PM']], ['lock', ['PM']], ['reset', ['PM']], ['spare', ['PM']], ['watch', ['PM']], ['elev', ['PM']], ['elevit', ['ITADM']], ['appear', ['PM']], ['format', ['PM']],
   ];
   for (const [name, roles] of people) {
     await users.create({ companyId, username: `${name}-${suffix}`, email: `${name}-${suffix}@example.com`, displayName: `${name[0].toUpperCase()}${name.slice(1)} ${String(suffix).toUpperCase()}`, roles, password: PASSWORD });

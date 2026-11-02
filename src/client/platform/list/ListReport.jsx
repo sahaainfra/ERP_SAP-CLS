@@ -400,7 +400,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
                   return (
                     <th key={c.key} scope="col" aria-sort={dir} className={`${i === 0 ? 'lr-freeze ' : ''}${['money', 'number'].includes(c.type) ? 'num' : ''}`} style={state.widths[c.key] ? { width: state.widths[c.key], minWidth: state.widths[c.key] } : undefined}>
                       {c.sortable ? <button type="button" className="lr-sort" onClick={() => update({ sort: nextSort(state.sort, c.key) })}>{c.label}<span aria-hidden="true">{dir === 'ascending' ? ' ▲' : dir === 'descending' ? ' ▼' : ''}</span></button> : c.label}
-                      <span className="lr-resize" role="separator" aria-orientation="vertical" aria-label={`Resize ${c.label}`} tabIndex={0} onPointerDown={startResize(c.key)} onKeyDown={resizeKey(c.key)} />
+                      <span className="lr-resize" role="separator" aria-orientation="vertical" aria-label={`Resize ${c.label}`} aria-valuenow={state.widths[c.key] ?? 160} aria-valuemin={60} aria-valuemax={800} tabIndex={0} onPointerDown={startResize(c.key)} onKeyDown={resizeKey(c.key)} />
                     </th>
                   );
                 })}

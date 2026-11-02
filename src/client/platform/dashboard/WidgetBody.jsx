@@ -1,3 +1,5 @@
+import { currentPrefs } from '../i18n/index.js';
+import { formatCompact, formatMoney } from '../../../shared/i18n/format.js';
 import Chart from '../charts/Chart.jsx';
 import Icon from '../design/Icon.jsx';
 import { EmptyState } from '../feedback/states.jsx';
@@ -19,14 +21,16 @@ const Open = ({ to, onDrill, children, className = '' }) => (
   to ? <a className={className} href={to} onClick={(e) => { e.preventDefault(); onDrill(to); }}>{children}</a> : <span className={className}>{children}</span>
 );
 
-const money = ({ unit, value }) => `${unit}${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// a money figure: the whole amount below a lakh, then ₹ 2.32 L or ₹ 1.25 Cr (the whole amount stays in the tooltip and for screen readers)
+const money = ({ value }) => (Math.abs(Number(value)) >= 100000 ? formatCompact(String(value), currentPrefs()) : formatMoney(String(value), currentPrefs()));
+const moneyFull = ({ value }) => formatMoney(String(value), currentPrefs());
 
 function Kpi({ data, onDrill }) {
   if (data.masked) return <p className="muted wd-masked"><Icon name="erp.action.lock" size={16} /> Hidden for your role.</p>;
   const up = data.trendPct !== null && data.trendPct !== undefined && data.trendPct >= 0;
   return (
     <Open to={data.drill} onDrill={onDrill} className="wd-kpi">
-      <span className="wd-kpi-value" data-testid="kpi-value">{data.kind === 'money' ? money(data) : formatCount(data.value)}</span>
+      <span className="wd-kpi-value" data-testid="kpi-value" title={data.kind === 'money' ? moneyFull(data) : undefined}>{data.kind === 'money' ? <><span aria-hidden="true">{money(data)}</span><span className="sr-only">{moneyFull(data)}</span></> : formatCount(data.value)}</span>
       {data.kind !== 'money' && data.unit && <span className="wd-kpi-unit">{data.unit}</span>}
       {data.trendPct !== null && data.trendPct !== undefined && (
         <span className={`wd-trend ${up ? 'is-up' : 'is-down'}`}>{up ? '▲' : '▼'} {Math.abs(data.trendPct)}% <span className="muted">vs the period before ({data.kind === 'money' ? money({ ...data, value: data.previous }) : formatCount(data.previous)})</span></span>
@@ -120,10 +124,14 @@ function Calendar({ data, onDrill, setLocal }) {
         <button type="button" className="btn btn-small" aria-label="Next month" onClick={() => setLocal({ month: shiftMonth(data.month, 1) })}><Icon name="erp.action.next" size={14} /></button>
       </div>
       <div className="wd-cal-grid" role="grid" aria-label={monthLabel(data.month)}>
-        {WEEK.map((d) => <span key={d} className="wd-cal-dow" role="columnheader">{d}</span>)}
-        {cells.map((d, i) => (d === null ? <span key={`b${i}`} role="gridcell" /> : (
-          <span key={d} role="gridcell" className={`wd-cal-day${d === data.today ? ' is-today' : ''}${at(d).length ? ' has-event' : ''}`} aria-label={`${d}${at(d).length ? `: ${at(d).map((e) => e.label).join('; ')}` : ''}`}>{Number(d.slice(8))}</span>
-        )))}
+        <div className="wd-cal-row" role="row">{WEEK.map((d) => <span key={d} className="wd-cal-dow" role="columnheader">{d}</span>)}</div>
+        {Array.from({ length: Math.ceil(cells.length / 7) }, (_, w) => (
+          <div key={w} className="wd-cal-row" role="row">
+            {cells.slice(w * 7, w * 7 + 7).map((d, i) => (d === null ? <span key={`b${w}-${i}`} role="gridcell" /> : (
+              <span key={d} role="gridcell" className={`wd-cal-day${d === data.today ? ' is-today' : ''}${at(d).length ? ' has-event' : ''}`} aria-label={`${d}${at(d).length ? `: ${at(d).map((e) => e.label).join('; ')}` : ''}`}>{Number(d.slice(8))}</span>
+            )))}
+          </div>
+        ))}
       </div>
       {data.events.length === 0 ? <p className="muted small">Nothing is scheduled this month.</p> : (
         <ul className="wd-events small">

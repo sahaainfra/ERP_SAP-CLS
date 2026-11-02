@@ -3,6 +3,7 @@ import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
 import { confirmLeave } from '../../../platform/forms/guard.js';
 import { QueryError } from '../../../platform/feedback/states.jsx';
+import { useT } from '../../../platform/i18n/index.js';
 
 // Small pieces the configuration pages share: page title, load states, field errors and a modal form.
 
@@ -22,7 +23,7 @@ export function errorInfo(err) {
 
 export function Loading({ label }) {
   return (
-    <div className="skeleton" aria-busy="true" aria-label={label}>
+    <div className="skeleton" role="status" aria-busy="true" aria-label={label}>
       {[0, 1, 2].map((i) => <div key={i} className="skeleton-row" />)}
     </div>
   );
@@ -119,12 +120,13 @@ export function downloadCsv(filename, text, type = 'text/csv;charset=utf-8') {
 }
 
 export function Pager({ meta, page, setPage, noun }) {
+  const t = useT('common');
   if (!meta) return null;
   return (
     <div className="pager">
-      <span>{meta.total} {noun}, page {meta.page} of {meta.totalPages}</span>
-      <button type="button" className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-      <button type="button" className="btn" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>Next</button>
+      <span>{t('pager.summary', { total: meta.total, noun, page: meta.page, pages: meta.totalPages })}</span>
+      <button type="button" className="btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>{t('previous')}</button>
+      <button type="button" className="btn" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>{t('next')}</button>
     </div>
   );
 }

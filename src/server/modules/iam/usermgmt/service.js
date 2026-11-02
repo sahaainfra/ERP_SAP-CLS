@@ -1,4 +1,5 @@
 import { ROLE_CODES, assertPermission, hasPermission } from '../../../platform/auth/index.js';
+import { localisationOf } from '../../../platform/i18n/index.js';
 import { sodOf } from '../../../platform/sod/index.js';
 import { companyScope } from '../../../platform/db/scope.js';
 import { inTransaction, transaction } from '../../../platform/db/index.js';
@@ -162,8 +163,10 @@ export function createUserAdminService({ db, identity, auth, approvals, orgServi
   // ---- invitations (FR-02) ----
   async function deliver(companyId, inv, user, token) {
     const link = `${baseUrl()}/accept-invite?token=${token}`;
-    const text = `Hello ${user.display_name},\n\nYou have been invited to the construction ERP. Open this link to choose your password:\n${link}\n\nThe link works until ${inv.expires_at.slice(0, 10)}. If you were not expecting this, ignore it.`;
-    const out = inv.channel === 'email' ? await notifier.email(companyId, inv.sent_to, 'You are invited to the ERP', text) : await notifier.phone(companyId, inv.channel, inv.sent_to, text);
+    const loc = localisationOf(db);
+    const t = loc.translator(companyId, loc.languageOf({ companyId, userId: user.id, username: user.username }));
+    const text = t('notify', 'invite.body', { name: user.display_name, link, until: inv.expires_at.slice(0, 10) });
+    const out = inv.channel === 'email' ? await notifier.email(companyId, inv.sent_to, t('notify', 'invite.subject'), text) : await notifier.phone(companyId, inv.channel, inv.sent_to, text);
     db.prepare('UPDATE iam_invitations SET delivered = ?, delivery_note = ? WHERE id = ?').run(out.delivered ? 1 : 0, out.delivered ? null : `Not delivered (${out.reason}). Check the connector, then resend.`, inv.id);
     return { out, link };
   }

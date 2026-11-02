@@ -1167,6 +1167,25 @@ paths:
     get: { summary: 'What people searched for in the last ?days (default 30): totals, share with no result, median and p95 time, most searched, searches that found nothing (ui.search.analytics)', responses: { '200': { description: '{ data }' }, '403': { description: 'no right' } } }
   /api/v1/ui/search/reindex/{entity}:
     post: { summary: 'Rebuild the index of one kind (or all) as a background job ({ reason }, Idempotency-Key). Audited. One rebuild of a kind at a time (ui.search.reindex, the IT administrator)', responses: { '202': { description: '{ data: { entity, types, jobId } }' }, '400': { description: 'reason missing or a rebuild is already running' }, '403': { description: 'no right' }, '404': { description: 'no such kind' } } }
+  /api/v1/ui/translations/{lang}/{namespace}:
+    get: { summary: 'The text of one language (en or hi) for one area of the screens (common, shell, palette, field, format, notify) or all of them (namespace all): the built-in text with the company\'s own wording over it; Hindi falls back to English. Any signed-in person (ff.ui.p0309)', responses: { '200': { description: '{ data: { lang, namespace, strings } | { lang, namespaces }, etag } }' }, '400': { description: 'unknown language or area' } } }
+  /api/v1/ui/translations:
+    get: { summary: 'Every text with its English and Hindi, whether the company changed it; filters lang, namespace, q, show (all|missing|overridden), page, pageSize (ui.translation.manage)', responses: { '200': { description: '{ data: { rows, meta, namespaces } }' }, '403': { description: 'no right' } } }
+  /api/v1/ui/translations/missing:
+    get: { summary: 'The missing-key report: English texts with no Hindi, Hindi texts with other placeholders, overrides of texts that no longer exist, and the count per area (ui.translation.manage)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/translations/pending:
+    get: { summary: 'Wording changes waiting for approval (ui.translation.manage)', responses: { '200': { description: '{ data: [request] }' } } }
+  /api/v1/ui/translations/history:
+    get: { summary: 'The audited changes of one text (?namespace=&key=) (ui.translation.manage)', responses: { '200': { description: '{ data: [entry] }' } } }
+  /api/v1/ui/translations/export:
+    get: { summary: 'An .xlsx workbook of every text (Namespace, Key, English, Hindi, Note) for translators; audited (ui.translation.manage)', responses: { '200': { description: 'the workbook' } } }
+  /api/v1/ui/translations/changes:
+    post: { summary: 'Ask for the wording of one or more texts to change ({ changes: [{ namespace, key, lang, text | null }], reason }); null means back to the standard wording. Another system administrator approves it through /core/change-requests/{id}/act. Placeholders must match the English; one open request at a time (409)', responses: { '201': { description: '{ data: request }' }, '400': { description: 'a text is not valid' }, '409': { description: 'a request is already waiting' }, '422': { description: 'nothing differs from the text in force' } } }
+  /api/v1/ui/translations/import:
+    post: { summary: 'A translator\'s .xlsx (body: the file, content-type application/octet-stream). Without ?commit=1 it only reports what would change and the problems per row; with ?commit=1&reason= it makes one change request for the whole file, refused while the file has problems (ui.translation.manage)', responses: { '200': { description: 'preview { rows, changes, errors, sample, committed: false }' }, '201': { description: 'committed: { ..., request }' }, '400': { description: 'not a workbook, a column missing or no reason' }, '422': { description: 'the file has problems, or nothing differs' } } }
+  /api/v1/ui/locale-preferences:
+    get: { summary: 'The person\'s own choice of number grouping and hour format, the company default and what is in force', responses: { '200': { description: '{ data: { numberStyle, timeFormat, defaults, effective, version } }' } } }
+    put: { summary: 'Choose indian or international grouping and a 12- or 24-hour clock (null returns to the company default); version-checked (409), audited', responses: { '200': { description: '{ data }' }, '409': { description: 'changed on another device' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)
