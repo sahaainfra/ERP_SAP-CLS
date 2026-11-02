@@ -80,6 +80,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     db.prepare('INSERT INTO wf_history (company_id, instance_id, task_id, cycle, step_code, event, actor, comment, data_json, at, project_id, site_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .run(inst.company_id, inst.id, task?.id ?? null, inst.cycle, step === undefined ? (task?.step_code ?? inst.current_step) : step, event, actor, comment, JSON.stringify(data), iso(), inst.project_id, inst.site_id, actor, 'workflow');
   }
+  /** @param {any} inst @param {any} action @param {any} actor @param {any} [o] */
   const audit = (inst, action, actor, { reason = null, oldValues, newValues } = {}) => writeAudit(db, { entity: 'wf_instances', entityId: inst.id, action, oldValues, newValues: { docType: inst.doc_type, docId: inst.doc_id, ...(newValues ?? {}) }, reason, actor });
   const emit = (inst, type, actor, data = {}) => publishEvent(db, { type, entity: 'workflow_instance', entityId: inst.id, actorId: actor, companyId: inst.company_id, projectId: inst.project_id, siteId: inst.site_id, data: { instanceId: inst.id, docType: inst.doc_type, docId: inst.doc_id, ...data } });
   const notify = (inst, actor, template, recipients, extra = {}) => {
@@ -202,6 +203,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   }
 
   /** Close an instance with an outcome, tell the module (its hook runs in this transaction) and everyone else (the event). */
+  /** @param {any} inst @param {any} status @param {any} actor @param {any} comment @param {any} [o] */
   function finish(inst, status, actor, comment, { hook = true, event } = {}) {
     db.prepare("UPDATE wf_tasks SET status = 'CANCELLED', updated_at = ?, version = version + 1 WHERE instance_id = ? AND status IN ('OPEN', 'ADMIN_QUEUE')").run(iso(), inst.id);
     const out = bump(inst, { status, completed_at: iso(), completed_reason: comment, needs_admin: 0 });
@@ -240,6 +242,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   const actedBefore = (inst, actor, task) => Boolean(db.prepare("SELECT 1 FROM wf_tasks WHERE instance_id = ? AND superseded = 0 AND status = 'DONE' AND action = 'approve' AND id != ? AND updated_by = ?").get(inst.id, task.id, actor.user));
 
   // ---- submit ----
+  /** @param {any} actor @param {any} o */
   function submit(actor, { docType, docId, context = {}, amendsDocId = null, comment = null, startAt = 0 }) {
     const t = typeOf(docType);
     docId = String(docId);
@@ -273,6 +276,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   }
 
   /** The originator takes a returned document back into approval: from the first step, or from the step that returned it. */
+  /** @param {any} actor @param {any} instanceId @param {any} [o] */
   function resubmit(actor, instanceId, { comment = null, context } = {}) {
     return inTransaction(db, () => {
       const inst = loadInstance(instanceId, actor.companyId);
@@ -540,6 +544,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   };
 
   /** Tasks for the inbox of part 04.03 (FR-05): mine = assigned | delegated | watching | started | admin. */
+  /** @param {any} actor @param {any} [o] */
   function listTasks(actor, { mine = 'assigned', status, limit = 25, offset = 0 } = {}) {
     const open = status ?? 'OPEN';
     let rows;
@@ -582,6 +587,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   }
   const openCount = (actor) => listTasks(actor, { limit: 1 }).total;
 
+  /** @param {any} actor @param {any} [o] */
   function listInstances(actor, { docType, status, q, running, limit = 25, offset = 0, sort = 'recent' } = {}) {
     const where = ['i.company_id = :c', 'i.is_active = 1', authz.scopeFilter(actor, 'eng.workflow.view', { project: 'i.project_id', site: 'i.site_id' }).sql];
     const p = { c: actor.companyId, limit, offset };
@@ -599,6 +605,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   }
 
   /** The monitor report: running instances by type, stuck and overdue ones, the time approvals take. */
+  /** @param {any} actor @param {any} [o] */
   function monitor(actor, { docType, from, to } = {}) {
     const scope = authz.scopeFilter(actor, 'eng.workflow.view', { project: 'i.project_id', site: 'i.site_id' }).sql;
     const p = { c: actor.companyId, now: iso(), from: from ?? '0000', to: to ?? '9999' };

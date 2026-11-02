@@ -68,6 +68,7 @@ export function createSampleDocService({ db, engine }) {
 
   return {
     present,
+    /** @param {any} actor @param {any} [o] */
     list(actor, { status, q, limit = 25, offset = 0 } = {}) {
       const where = ['d.company_id = :c', 'd.is_active = 1', authz.scopeFilter(actor, PERMISSION, { project: 'd.project_id', site: 'd.site_id' }).sql];
       const p = { c: actor.companyId, limit, offset };
@@ -107,6 +108,7 @@ export function createSampleDocService({ db, engine }) {
       });
     },
     /** Send it into approval (or back, after a return). The total is recomputed here and the engine is given the facts its conditions read. */
+    /** @param {any} actor @param {any} id @param {any} [o] */
     submit(actor, id, { comment } = {}) {
       return transaction(db, () => {
         const d = load(actor, id);

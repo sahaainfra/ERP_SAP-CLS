@@ -39,6 +39,7 @@ export const definitionBody = z.object({
 }).strict();
 
 /** Check a definition (the server-side rules the editor mirrors) and return it with its defaults filled. Throws a 400 naming each problem. */
+/** @param {any} input @param {any} [o] */
 export function normaliseDefinition(input, { forDocType } = {}) {
   const parsed = definitionBody.safeParse(input);
   if (!parsed.success) throw badRequest('The workflow definition is not valid.', parsed.error.issues.map((i) => ({ field: i.path.join('.'), message: i.message })));

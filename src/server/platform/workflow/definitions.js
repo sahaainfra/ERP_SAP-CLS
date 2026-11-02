@@ -75,6 +75,7 @@ export function createDefinitionService({ db, engine }) {
   return {
     present,
     /** The definitions and the document types that have none yet (they start with the module's default when first used). */
+    /** @param {any} actor @param {any} [o] */
     list(actor, { docType, status, q, limit = 25, offset = 0 } = {}) {
       const where = ['company_id = :c', 'is_active = 1'];
       const p = { c: actor.companyId, limit, offset };
