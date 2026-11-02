@@ -5660,9 +5660,7 @@
         "pk": 0
       }
     ],
-    "fks": [
-      "company_id->org_companies.id:NO ACTION/NO ACTION"
-    ]
+    "fks": []
   },
   "table:core_search_queries": {
     "columns": [
@@ -5842,9 +5840,7 @@
         "pk": 0
       }
     ],
-    "fks": [
-      "company_id->org_companies.id:NO ACTION/NO ACTION"
-    ]
+    "fks": []
   },
   "table:core_search_secret": {
     "columns": [

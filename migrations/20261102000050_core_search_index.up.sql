@@ -1,11 +1,12 @@
 -- Part 03.08: global search. One row per searchable record (the record's title, code, a short subtitle, the words of its text, its place in the
 -- organisation and the permission needed to see it), a full-text index over it (SQLite FTS5 with the trigram tokenizer: substring and partial-code
 -- matching), a separate index of sensitive values that are searched only by people allowed to see them, and the log of searches (for the
--- analytics of queries that found nothing).
+-- analytics of queries that found nothing). company_id has no foreign key: the index is a projection of records that carry their own, and a record of a
+-- company that has no organisation row yet (a test company) must still be indexed rather than fail its event.
 
 CREATE TABLE IF NOT EXISTS core_search_index (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  company_id     INTEGER NOT NULL REFERENCES org_companies (id),
+  company_id     INTEGER NOT NULL,
   entity         TEXT    NOT NULL,
   entity_id      INTEGER NOT NULL,
   project_id     INTEGER,
@@ -62,7 +63,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS core_search_secret USING fts5 (value, index_i
 -- The searches people ran: what was typed, how many results, how long it took and what they opened. Kept for a retention period.
 CREATE TABLE IF NOT EXISTS core_search_queries (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  company_id     INTEGER NOT NULL REFERENCES org_companies (id),
+  company_id     INTEGER NOT NULL,
   user_ref       TEXT    NOT NULL,
   q              TEXT    NOT NULL,
   q_norm         TEXT    NOT NULL,

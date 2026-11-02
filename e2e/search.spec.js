@@ -186,7 +186,7 @@ test('BR-02 FR-06 Search Administration: index status, a rebuild with a reason, 
   await page.getByRole('button', { name: 'Rebuild', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Rebuild of Sample material requests queued' })).toBeVisible();
   await expect(page.getByText('Rebuild sample_request').first()).toBeVisible();
-  await expect(page.getByText('SUCCEEDED', { exact: false }).or(page.getByText('Succeeded'))).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('Succeeded').first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('cell', { name: 'zzunfound' }).first()).toBeVisible();
   await noOverflow(page);
   expect(errors).toEqual([]);

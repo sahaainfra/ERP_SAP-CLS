@@ -290,3 +290,13 @@ test('T-01 a person assigned to project A never sees project B in any result, co
   assert.deepEqual(all(byNumber), [], 'not even by the exact document number');
   await api.close();
 });
+
+test('a record of a company that has no organisation row yet is indexed, not dead-lettered (the index carries no company foreign key)', async () => {
+  const api = await startApi();
+  api.db.prepare("INSERT INTO core_sample_documents (company_id, doc_date, title, status, created_by) VALUES (77, '2026-10-31', 'Orphan company document', 'DRAFT', 't')").run();
+  const id = Number(api.db.prepare('SELECT MAX(id) AS id FROM core_sample_documents').get().id);
+  const idx = (await import('../src/server/platform/search/index.js')).createSearchIndex({ db: api.db });
+  assert.equal(idx.upsert('sample_document', id), 'added');
+  assert.equal(api.db.prepare("SELECT COUNT(*) AS n FROM core_search_index WHERE company_id = 77").get().n, 1);
+  await api.close();
+});

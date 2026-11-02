@@ -1224,8 +1224,6 @@ Indexes:
 | source_id | TEXT |  |  |  |
 | remarks | TEXT |  |  |  |
 
-Foreign keys: company_id -> org_companies(id)
-
 Indexes:
 - ix_core_search_index_status: company_id, entity, status
 - ix_core_search_index_scope: company_id, permission_key, project_id, site_id
@@ -1262,8 +1260,6 @@ Indexes:
 | source_type | TEXT |  |  |  |
 | source_id | TEXT |  |  |  |
 | remarks | TEXT |  |  |  |
-
-Foreign keys: company_id -> org_companies(id)
 
 Indexes:
 - ix_core_search_queries_norm: company_id, q_norm
