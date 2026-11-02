@@ -7,7 +7,8 @@ import { lookupRegistry, lookupRoutes } from '../../platform/lookups/index.js';
 import { createFlagService } from '../core/api.js';
 import { createDraftService } from './drafts.js';
 import { createFormService } from './forms.js';
-import { translationRoutes } from './routes.js';
+import { pageMigrationRoutes, translationRoutes } from './routes.js';
+import { createPageMigrationService, pageRouteHandlers } from './page-migration.js';
 import { createTranslationService, translationHandlers } from './translations.js';
 import { dashboardRoutes, deviceRoutes, formRoutes, listRoutes, objectRoutes, searchRoutes, shellRoutes, uiRoutes } from './routes.js';
 import { createWidgetService, dashboardHandlers } from './widgets.js';
@@ -81,6 +82,10 @@ const localeSchema = { type: 'object', properties: { numberStyle: { type: 'strin
 eventTypes.define({ type: 'ui.locale.changed', version: 1, schema: localeSchema, owner: 'ui', description: 'A person changed their number grouping or hour format.' });
 parameterRegistry.define({ key: 'ui.locale.number_style', dataType: 'string', default: 'indian', allowed: ['indian', 'international'], scopes: ['system', 'company'], description: 'How amounts are grouped when a person has not chosen: "indian" (12,34,56,789.00) or "international" (123,456,789.00).' });
 parameterRegistry.define({ key: 'ui.locale.time_format', dataType: 'string', default: '24', allowed: ['12', '24'], scopes: ['system', 'company'], description: 'The hour format when a person has not chosen: 24 (14:05) or 12 (2:05 PM).' });
+// Part 03.10: the screen migration tracker's event.
+/** @type {any} */
+const migrationSchema = { type: 'object', properties: { code: { type: 'string' }, change: { type: 'string' } }, required: ['code', 'change'] };
+eventTypes.define({ type: 'ui.page_migration.changed', version: 1, schema: migrationSchema, owner: 'ui', description: 'A page of the application was migrated, verified, reopened or scheduled, a defect was raised or resolved on it, or its old address was registered.' });
 // Part 03.06: the camera's limits and the push subscription event.
 /** @type {any} */
 const pushSchema = { type: 'object', properties: { change: { type: 'string' } }, required: ['change'] };
@@ -96,7 +101,7 @@ integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', '
 // Part 03.08: the full-text indexes are the engine's own tables (and their shadow tables), not business records.
 integrityRegistry.register({ technicalTables: ['core_search_fts', 'core_search_fts_data', 'core_search_fts_idx', 'core_search_fts_docsize', 'core_search_fts_config', 'core_search_secret', 'core_search_secret_data', 'core_search_secret_idx', 'core_search_secret_docsize', 'core_search_secret_config', 'core_search_secret_content'] });
 integrityRegistry.register({
-  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_translations', 'ui_locale_preferences'], // the shared definitions, reasons and requirements have no company; a company's own would
+  companyOptional: ['ui_page_migration', 'ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_translations', 'ui_locale_preferences', 'ui_page_migration'], // the shared definitions, reasons and requirements have no company; a company's own would
   statuses: { ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
@@ -109,7 +114,7 @@ export const ui = {
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
   tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries'],
-  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr', 'widgets', 'dashboards', 'search', 'translations', 'locale-preferences'],
+  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr', 'widgets', 'dashboards', 'search', 'translations', 'locale-preferences', 'page-migration'],
 
   mount(api, { db, config, storagePath }) {
     const flags = createFlagService({ db, environment: config.environment });
@@ -118,7 +123,7 @@ export const ui = {
     router.use(['/preferences', '/style-guide'], gate('ff.ui.p0301', 'Screen preferences and the style guide are'));
     router.use(uiRoutes(createUiService({ db, config })));
     const drafts = createDraftService({ db });
-    const approvals = createApprovalEngine({ db, handlers: { ...sampleRequestHandlers, ...navHandlers, ...dashboardHandlers, ...translationHandlers } });
+    const approvals = createApprovalEngine({ db, handlers: { ...sampleRequestHandlers, ...navHandlers, ...dashboardHandlers, ...translationHandlers, ...pageRouteHandlers } });
     const objects = createObjectService({ db, approvals });
     const requests = createSampleRequestService({ db, drafts, approvals, objects });
     const idempotentRequired = idempotency(db, { required: true });
@@ -153,6 +158,11 @@ export const ui = {
     dashboardRouter.use(['/widgets', '/dashboards'], gate('ff.ui.p0307', 'Dashboards and widgets are'));
     dashboardRouter.use(dashboardRoutes(createWidgetService({ db, approvals, shell }), { idempotent: idempotency(db) }));
     router.use(dashboardRouter);
+    // Part 03.10: the migration tracker and the redirects of old addresses.
+    const migrationRouter = Router();
+    migrationRouter.use('/page-migration', gate('ff.ui.p0310', 'The screen migration tracker is'));
+    migrationRouter.use(pageMigrationRoutes(createPageMigrationService({ db, approvals }), { idempotent: idempotency(db) }));
+    router.use(migrationRouter);
     // Part 03.09: the text of the screens, wording overrides and number formats.
     const localeRouter = Router();
     localeRouter.use(['/translations', '/locale-preferences'], gate('ff.ui.p0309', 'Translations and number formats are'));

@@ -62,7 +62,7 @@ input[type='search'] { min-width: min(20rem, 100%); }
 .btn:disabled { color: var(--erp-color-text-disabled); cursor: not-allowed; }
 .btn-primary:disabled { background: var(--erp-color-bg-surface-sunken); border-color: var(--erp-color-border-subtle); }
 
-.table-wrap { overflow-x: auto; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
+.table-wrap { position: relative; overflow-x: auto; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: var(--erp-cell-py) var(--erp-cell-px); font-size: var(--erp-density-font-size); border-bottom: 1px solid var(--erp-color-border-subtle); vertical-align: top; }
 th { font: var(--erp-type-label); background: var(--erp-color-bg-surface-sunken); }

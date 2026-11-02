@@ -11054,6 +11054,18 @@
   "index:ix_ui_navigation_parent": {
     "sql": "CREATE INDEX ix_ui_navigation_parent ON ui_navigation_entries (parent_code, sort_order)"
   },
+  "index:ix_ui_page_migration_company": {
+    "sql": "CREATE INDEX ix_ui_page_migration_company ON ui_page_migration (company_id)"
+  },
+  "index:ix_ui_page_migration_module": {
+    "sql": "CREATE INDEX ix_ui_page_migration_module ON ui_page_migration (module, status)"
+  },
+  "index:ix_ui_page_migration_old_route": {
+    "sql": "CREATE INDEX ix_ui_page_migration_old_route ON ui_page_migration (old_route)"
+  },
+  "index:ix_ui_page_migration_status": {
+    "sql": "CREATE INDEX ix_ui_page_migration_status ON ui_page_migration (status)"
+  },
   "index:ix_ui_push_subscriptions_user": {
     "sql": "CREATE INDEX ix_ui_push_subscriptions_user ON ui_push_subscriptions (company_id, user_ref, is_active)"
   },
@@ -14114,6 +14126,230 @@
       "parent_code->ui_navigation_entries.code:NO ACTION/NO ACTION"
     ]
   },
+  "table:ui_page_migration": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "page_code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "module",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "label",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "old_route",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "new_route",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "page_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'NOT_STARTED'",
+        "pk": 0
+      },
+      {
+        "name": "owner_role",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "migrated_in_part",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "migrated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "migrated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "verified_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "verified_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "scheduled_part",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "defects_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "notes",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:ui_push_subscriptions": {
     "columns": [
       {
@@ -16608,6 +16844,9 @@
   },
   "index:ux_ui_navigation_route": {
     "sql": "CREATE UNIQUE INDEX ux_ui_navigation_route ON ui_navigation_entries (route) WHERE route IS NOT NULL AND is_active = 1"
+  },
+  "index:ux_ui_page_migration_new_route": {
+    "sql": "CREATE UNIQUE INDEX ux_ui_page_migration_new_route ON ui_page_migration (new_route)"
   },
   "index:ux_ui_push_subscriptions_endpoint": {
     "sql": "CREATE UNIQUE INDEX ux_ui_push_subscriptions_endpoint ON ui_push_subscriptions (endpoint)"

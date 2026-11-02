@@ -2903,6 +2903,52 @@ Indexes:
 - ix_ui_navigation_parent: parent_code, sort_order
 - sqlite_autoindex_ui_navigation_entries_1 (unique): code
 
+## ui_page_migration
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| page_code | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| old_route | TEXT | yes |  |  |
+| new_route | TEXT | yes |  |  |
+| page_type | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'NOT_STARTED' |
+| owner_role | TEXT | yes |  |  |
+| migrated_in_part | TEXT |  |  |  |
+| migrated_by | TEXT |  |  |  |
+| migrated_at | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| scheduled_part | TEXT |  |  |  |
+| defects_json | TEXT | yes |  | '[]' |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ui_page_migration_old_route: old_route
+- ux_ui_page_migration_new_route (unique): new_route
+- ix_ui_page_migration_company: company_id
+- ix_ui_page_migration_status: status
+- ix_ui_page_migration_module: module, status
+- sqlite_autoindex_ui_page_migration_1 (unique): page_code
+
 ## ui_push_subscriptions
 
 | Column | Type | Not null | Key | Default |

@@ -6,6 +6,7 @@ import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } fro
 import { parseQr, parseSubscription, parseUnsubscribe } from './device.js';
 import { parseDashboardCode, parseHistory, parsePersonal, parseRoleDefault, parseWidgetCode, parseWidgetQuery } from './widgets.js';
 import { parseCatalogueParams, parseChanges, parseHistory as parseTranslationHistory, parseImportQuery, parseLocalePrefs, parseTranslationList } from './translations.js';
+import { parseDefect, parseExportQuery, parseModuleParam, parsePageCode, parseResolve, parseRouteChange, parseSignoff, parseTrackerQuery, parseTransition } from './page-migration.js';
 import { parseAnalytics, parseClick, parseCommands, parseEntityParam, parseReindex, parseSearch } from './search.js';
 import { parseContext, parseFavourite, parseFavouriteOrder, parseNavChange, parseNavImport, parseVisit } from './shell.js';
 import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
@@ -183,6 +184,24 @@ export function translationRoutes(service, { idempotent, xlsxBody }) {
     res.status(q.commit === '1' ? 201 : 200).json({ data: await service.importXlsx(req.actor, Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0), { commit: q.commit === '1', reason: q.reason }) });
   });
   r.get('/translations/:lang/:namespace', (req, res) => res.json({ data: service.strings(req.actor, parseCatalogueParams(req.params)) }));
+  return r;
+}
+
+/** Part 03.10: the screen migration tracker, the redirects of old addresses and the sign-off of modules. */
+export function pageMigrationRoutes(service, { idempotent }) {
+  const r = Router();
+  r.get('/page-migration', (req, res) => res.json({ data: service.list(req.actor, parseTrackerQuery(req.query)) }));
+  r.get('/page-migration/redirects', (req, res) => res.json({ data: service.redirects() }));
+  r.get('/page-migration/pending', (req, res) => res.json({ data: service.pending(req.actor) }));
+  r.get('/page-migration/export', (req, res) => {
+    const out = service.exportRows(req.actor, parseExportQuery(req.query));
+    res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer);
+  });
+  r.post('/page-migration/modules/:module/signoff', idempotent, (req, res) => res.json({ data: service.signoffModule(req.actor, parseModuleParam(req.params.module), parseSignoff(req.body)) }));
+  r.post('/page-migration/:code/defects', idempotent, (req, res) => res.status(201).json({ data: service.addDefect(req.actor, parsePageCode(req.params.code), parseDefect(req.body)) }));
+  r.post('/page-migration/:code/defects/:defectId/resolve', idempotent, (req, res) => res.json({ data: service.resolveDefect(req.actor, parsePageCode(req.params.code), String(req.params.defectId).slice(0, 12), parseResolve(req.body)) }));
+  r.post('/page-migration/:code/status', idempotent, (req, res) => res.json({ data: service.transition(req.actor, parsePageCode(req.params.code), parseTransition(req.body)) }));
+  r.post('/page-migration/:code/route', idempotent, (req, res) => res.status(201).json({ data: service.proposeRoute(req.actor, parsePageCode(req.params.code), parseRouteChange(req.body)) }));
   return r;
 }
 
