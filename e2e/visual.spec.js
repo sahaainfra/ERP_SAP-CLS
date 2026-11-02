@@ -35,9 +35,10 @@ for (const theme of THEMES) {
         await expect(page.locator('main')).toBeVisible();
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(250);
+        // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
+        if (VOLATILE.has(p.route)) await page.evaluate(() => document.querySelectorAll('main > *:not(:first-child), .sh-crumbs').forEach((el) => { el.style.visibility = 'hidden'; }));
         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
           animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01,
-          mask: VOLATILE.has(p.route) ? [page.locator('main > *:not(:first-child)'), page.locator('.sh-crumbs')] : [],
         });
       }
     }
