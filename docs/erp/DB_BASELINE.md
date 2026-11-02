@@ -1142,6 +1142,186 @@ Indexes:
 - ix_core_schedules_due: enabled, next_run_at
 - ux_core_schedules_code (unique): code
 
+## core_search_fts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| code | - |  |  |  |
+| title | - |  |  |  |
+| subtitle | - |  |  |  |
+| body | - |  |  |  |
+| phon | - |  |  |  |
+
+## core_search_fts_config
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| k | - | yes | PK |  |
+| v | - |  |  |  |
+
+Indexes:
+- sqlite_autoindex_core_search_fts_config_1 (unique): k
+
+## core_search_fts_data
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| block | BLOB |  |  |  |
+
+## core_search_fts_docsize
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| sz | BLOB |  |  |  |
+
+## core_search_fts_idx
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| segid | - | yes | PK |  |
+| term | - | yes | PK |  |
+| pgno | - |  |  |  |
+
+Indexes:
+- sqlite_autoindex_core_search_fts_idx_1 (unique): segid, term
+
+## core_search_index
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| branch_id | INTEGER |  |  |  |
+| department_id | INTEGER |  |  |  |
+| owner_user_id | INTEGER |  |  |  |
+| code | TEXT |  |  |  |
+| code_key | TEXT |  |  |  |
+| title | TEXT | yes |  |  |
+| title_lc | TEXT | yes |  |  |
+| subtitle | TEXT |  |  |  |
+| body | TEXT | yes |  | '' |
+| phon | TEXT | yes |  | '' |
+| status | TEXT |  |  |  |
+| doc_date | TEXT |  |  |  |
+| permission_key | TEXT | yes |  |  |
+| route | TEXT | yes |  |  |
+| indexed_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_core_search_index_status: company_id, entity, status
+- ix_core_search_index_scope: company_id, permission_key, project_id, site_id
+- ix_core_search_index_title: company_id, title_lc
+- ix_core_search_index_code: company_id, code_key
+- ux_core_search_index_record (unique): company_id, entity, entity_id
+
+## core_search_queries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| q | TEXT | yes |  |  |
+| q_norm | TEXT | yes |  |  |
+| source | TEXT | yes |  | 'palette' |
+| types | TEXT |  |  |  |
+| result_count | INTEGER | yes |  | 0 |
+| took_ms | INTEGER | yes |  | 0 |
+| clicked_entity | TEXT |  |  |  |
+| clicked_id | INTEGER |  |  |  |
+| clicked_pos | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_core_search_queries_norm: company_id, q_norm
+- ix_core_search_queries_user: company_id, user_ref, created_at
+- ix_core_search_queries_company: company_id, created_at
+
+## core_search_secret
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| value | - |  |  |  |
+| index_id | - |  |  |  |
+| field_key | - |  |  |  |
+
+## core_search_secret_config
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| k | - | yes | PK |  |
+| v | - |  |  |  |
+
+Indexes:
+- sqlite_autoindex_core_search_secret_config_1 (unique): k
+
+## core_search_secret_content
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| c0 | - |  |  |  |
+| c1 | - |  |  |  |
+| c2 | - |  |  |  |
+
+## core_search_secret_data
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| block | BLOB |  |  |  |
+
+## core_search_secret_docsize
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| sz | BLOB |  |  |  |
+
+## core_search_secret_idx
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| segid | - | yes | PK |  |
+| term | - | yes | PK |  |
+| pgno | - |  |  |  |
+
+Indexes:
+- sqlite_autoindex_core_search_secret_idx_1 (unique): segid, term
+
 ## core_security_events
 
 | Column | Type | Not null | Key | Default |

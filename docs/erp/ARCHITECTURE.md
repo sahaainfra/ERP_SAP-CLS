@@ -51,7 +51,7 @@ src/client/
 docs/erp/                     DECISIONS, DEFECTS, DISCOVERY/<part>, COMPLETION/<part>, PROGRESS.csv
 ```
 
-The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`, `platform/integrity`, `platform/parameters`, `platform/approvals`, `platform/jobs`, `platform/runtime`, `platform/files`, `platform/calc`, `platform/observability`, `platform/integrations`, `platform/identity`, `platform/widgets`. The modules are `modules/core` and `modules/iam`. The first module so far is `modules/core`.
+The platform libraries by their paths: `platform/config`, `platform/db`, `platform/http`, `platform/auth`, `platform/validation`, `platform/pagination`, `platform/money`, `platform/health`, `platform/audit`, `platform/events`, `platform/integrity`, `platform/parameters`, `platform/approvals`, `platform/jobs`, `platform/runtime`, `platform/files`, `platform/calc`, `platform/observability`, `platform/integrations`, `platform/identity`, `platform/widgets`, `platform/search`. The modules are `modules/core` and `modules/iam`. The first module so far is `modules/core`.
 
 A module owns its tables. Other modules read through its service or react to its events; they never write into its tables.
 
@@ -413,3 +413,15 @@ Dashboards are lists of widgets, each widget draws one figure, chart or list fro
 - **Client** (`src/client/platform/dashboard`, `platform/charts`): `layout.js` (pure: place, move, resize, spans by width, filter query), `Dashboard.jsx` (filter bar, widget frame with loading, empty, error with correlation ID and no-permission states, "Updated" time, refresh and drill, the grid with drag-and-drop and keyboard buttons), `DashboardView.jsx` (a dashboard for the signed-in person with Customise, Save and Reset), `WidgetBody.jsx` (one body per widget type), `charts/Chart.jsx` and `scale.js` (bar, stacked, line, area, donut, gauge, heat map and Gantt in SVG from the `--erp-chart-1..8` tokens with tooltip, legend, table fallback, CSV and PNG).
 - **Drill-down:** the address of a point carries the list filters (`?filter[status][in]=DRAFT,SUBMITTED&filter[projectCode]=ALP`); the List Report reads them (`filtersFromSearch`) so the list shows the same rows and count as the widget.
 - **Pages:** My Work (`/work`), Requests Overview (`/admin/sample-requests/overview`) and the Dashboard Designer (`/admin/dashboards`, permission `ui.dashboard.manage`, a Config page).
+
+## 32. Global search and command palette (part 03.08)
+
+Search finds records, pages and actions inside each person's rights. Behind feature flag `ff.ui.p0308`.
+
+- **Registries** (`platform/search/registry.js`): `searchEntities.register({ type, label, permission, table, load(db, id), route, events, statuses, secretFields })` says what a module lets people find; `load` returns the record as a document (title, code, subtitle, words, project and site, status, date, permission key, and `secrets` for values that have a field mask). `commandRegistry.register({ code, label, permission, route | clientAction, contexts })` declares palette actions. The `ui`, `iam` and `core` modules register 12 types (`modules/*/search.js`, `ui/search-entities.js`) and 16 commands (`ui/search-commands.js`).
+- **Index** (`platform/search/index.js`, tables `core_search_index`, `core_search_fts`, `core_search_secret`): one row per record, a trigram full-text index (substring and partial-code matching, Hindi and Latin through a phonetic key), sensitive values apart. The consumer `ui.search_index` re-indexes the record each event names (handlers are synchronous, in the inbox transaction); `ui.search_reconcile` (every five minutes) indexes what changed without an event (`updated_at` newer than `indexed_at`) and drops orphans; `ui.search_reindex` rebuilds a kind on request; `ui.search_purge` removes old search text.
+- **Query** (`platform/search/query.js`, `modules/ui/search.js`): the person's rights become SQL (one `(permission_key = ? AND scopeFilter)` clause per key held); six matching tiers; hits are read again from their record before they are returned; ranking is tier, then favourites and recent records, then bm25. Everything is bound parameters; full-text phrases are quoted.
+- **API** (`/api/v1/ui/search`, `/search/types`, `/search/commands`, `/search/click`, `/search/status`, `/search/analytics`, `POST /search/reindex/:entity`).
+- **Client** (`platform/search/api.js`, `platform/shell/CommandPalette.jsx`, `modules/ui/AdvancedSearchPage.jsx`, `SearchAdminPage.jsx`): the palette (Ctrl/Cmd+K, grouped results, `>` for actions), Advanced Search (`/search`) and Search Administration (`/admin/search`).
+- **Performance:** `npm run erp:search-perf` fills 100 000 records and times the API; the p95 of the worst query shape is 169 ms against the 400 ms standard (`docs/erp/perf/search.json`).
+

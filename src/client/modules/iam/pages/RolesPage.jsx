@@ -25,7 +25,7 @@ function RoleList({ session, onOpen }) {
   const manage = can(session, 'iam.role.manage');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(() => new URLSearchParams(window.location.search).get('q') ?? ''); // global search opens the page with the role's code (part 03.08)
   const [sort, setSort] = useState('code');
   const [filter, setFilter] = useState({});
   const [picked, setPicked] = useState([]);

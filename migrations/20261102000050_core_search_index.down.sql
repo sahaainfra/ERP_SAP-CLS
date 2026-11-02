@@ -1,0 +1,10 @@
+DROP INDEX IF EXISTS ix_core_search_queries_norm;
+DROP INDEX IF EXISTS ix_core_search_queries_user;
+DROP INDEX IF EXISTS ix_core_search_queries_company;
+DROP TABLE IF EXISTS core_search_queries;
+DROP TABLE IF EXISTS core_search_secret;
+DROP TRIGGER IF EXISTS trg_core_search_fts_au;
+DROP TRIGGER IF EXISTS trg_core_search_fts_ad;
+DROP TRIGGER IF EXISTS trg_core_search_fts_ai;
+DROP TABLE IF EXISTS core_search_fts;
+DROP TABLE IF EXISTS core_search_index;

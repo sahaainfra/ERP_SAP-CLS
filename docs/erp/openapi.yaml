@@ -1153,6 +1153,20 @@ paths:
     post: { summary: 'Ask for the default of a role to be set, changed or removed ({ role, layout, filters, name?, remove?, reason }); another administrator approves it; Idempotency-Key (ui.dashboard.manage)', responses: { '201': { description: '{ data: request }' } } }
   /api/v1/ui/dashboards/{code}/history:
     get: { summary: 'The audited changes of one role\'s default (?role=), newest first (ui.dashboard.manage)', responses: { '200': { description: '{ data: [entry] }' } } }
+  /api/v1/ui/search:
+    get: { summary: 'Global search (ff.ui.p0308). Grouped by kind for the palette, or one page of the chosen kinds. Query: q, types (comma list), status (comma list), projectId, siteId, from, to (dates), sort (relevance|updated|title), perGroup (1-20), page and pageSize (10|25|50|100) for a paged list, source (palette|page), log (0|1). Every hit is inside the right and data scope of the caller and is read again from its record; sensitive values are matched only for roles that see them in full', responses: { '200': { description: '{ data: { query, took, counts: { kind: n }, mode: grouped|page, total, groups: [{ type, label, labelHi, icon, total, items }] | page, pageSize, capped, items: [{ id, entity, entityId, title, subtitle, code, status, route, projectCode, match }] } }' }, '400': { description: 'a parameter is not valid' } } }
+  /api/v1/ui/search/types:
+    get: { summary: 'The kinds of record the caller\'s role can search, with their statuses and date label', responses: { '200': { description: '{ data: [{ type, label, labelHi, icon, statuses, dateLabel }] }' } } }
+  /api/v1/ui/search/commands:
+    get: { summary: 'The palette actions the caller may run (?route= puts those of that page first)', responses: { '200': { description: '{ data: [{ code, label, labelHi, keywords, icon, group, route, clientAction, here }] }' } } }
+  /api/v1/ui/search/click:
+    post: { summary: 'Say which result was opened ({ entity, entityId, position }): marks the search for the analytics and adds the record to the recent records. 404 if the caller cannot see it', responses: { '200': { description: '{ data: { entity, entityId } }' }, '404': { description: 'not found or not open to you' } } }
+  /api/v1/ui/search/status:
+    get: { summary: 'The state of the index per kind (records, indexed, waiting, last indexed) and the latest rebuild jobs (ui.search.analytics or ui.search.reindex)', responses: { '200': { description: '{ data: { types, jobs, canReindex } }' }, '403': { description: 'no right' } } }
+  /api/v1/ui/search/analytics:
+    get: { summary: 'What people searched for in the last ?days (default 30): totals, share with no result, median and p95 time, most searched, searches that found nothing (ui.search.analytics)', responses: { '200': { description: '{ data }' }, '403': { description: 'no right' } } }
+  /api/v1/ui/search/reindex/{entity}:
+    post: { summary: 'Rebuild the index of one kind (or all) as a background job ({ reason }, Idempotency-Key). Audited. One rebuild of a kind at a time (ui.search.reindex, the IT administrator)', responses: { '202': { description: '{ data: { entity, types, jobId } }' }, '400': { description: 'reason missing or a rebuild is already running' }, '403': { description: 'no right' }, '404': { description: 'no such kind' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)

@@ -7,7 +7,7 @@ import { lookupRegistry, lookupRoutes } from '../../platform/lookups/index.js';
 import { createFlagService } from '../core/api.js';
 import { createDraftService } from './drafts.js';
 import { createFormService } from './forms.js';
-import { dashboardRoutes, deviceRoutes, formRoutes, listRoutes, objectRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { dashboardRoutes, deviceRoutes, formRoutes, listRoutes, objectRoutes, searchRoutes, shellRoutes, uiRoutes } from './routes.js';
 import { createWidgetService, dashboardHandlers } from './widgets.js';
 import { registerWidgetProviders } from './widget-providers.js';
 import { createDeviceService } from './device.js';
@@ -21,6 +21,11 @@ import { sampleRequestHandlers } from './sample-request-object.js';
 import { createApprovalEngine } from '../../platform/approvals/index.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { createUiService } from './service.js';
+import { searchEntities } from '../../platform/search/registry.js';
+import { createParameterStore } from '../../platform/parameters/index.js';
+import { RECONCILE_JOB, REINDEX_JOB, createSearchApi } from './search.js';
+import './search-entities.js';
+import './search-commands.js';
 
 // Part 03.01: events this module publishes.
 /** @type {any} */
@@ -55,6 +60,16 @@ registerWidgetProviders();
 const dashboardSchema = { type: 'object', properties: { code: { type: 'string' }, role: { type: 'string' }, removed: { type: 'boolean' } }, required: ['code'] };
 eventTypes.define({ type: 'ui.dashboard.changed', version: 1, schema: dashboardSchema, owner: 'ui', description: 'The default dashboard of a role was set, changed or removed after another administrator approved the request.' });
 parameterRegistry.define({ key: 'ui.widget.timeliness_target', dataType: 'integer', default: 90, min: 50, max: 100, scopes: ['system', 'company'], description: 'The share (percent) of approvals that should be decided within the allowed time; the gauge on the dashboards turns amber under it and red well under it.' });
+// Part 03.08: global search. Its events, its parameters and (below, in mount) its consumer, jobs and routes.
+/** @type {any} */
+const searchSchema = { type: 'object', properties: { types: { type: 'array' } }, required: ['types'] };
+eventTypes.define({ type: 'ui.search.reindex_requested', version: 1, schema: searchSchema, owner: 'ui', description: 'An administrator asked for the search index of a type of record (or all) to be rebuilt.' });
+eventTypes.define({ type: 'ui.search.reindexed', version: 1, schema: searchSchema, owner: 'ui', description: 'The search index of a type of record (or all) was rebuilt from its source.' });
+for (const [key, def, min, max, description] of [
+  ['ui.search.min_query_length', 2, 1, 5, 'The fewest letters a search needs before it looks for words inside records; a shorter search finds only titles and codes that start with it.'],
+  ['ui.search.results_per_group', 5, 1, 10, 'How many results of each kind the command palette shows before "show all".'],
+  ['ui.search.retention_days', 90, 7, 730, 'Days the text people searched for is kept for the search analytics, then removed.'],
+]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
 // Part 03.06: the camera's limits and the push subscription event.
 /** @type {any} */
 const pushSchema = { type: 'object', properties: { change: { type: 'string' } }, required: ['change'] };
@@ -67,8 +82,10 @@ for (const [key, def, min, max, description] of [
 ]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
 parameterRegistry.define({ key: 'ui.approval.sla_hours', dataType: 'integer', default: 24, min: 1, max: 720, scopes: ['system', 'company'], description: 'Hours an approver has for one step of an approval before it shows as overdue on the Object Page.' });
 integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED', 'EXPIRED'] } });
+// Part 03.08: the full-text indexes are the engine's own tables (and their shadow tables), not business records.
+integrityRegistry.register({ technicalTables: ['core_search_fts', 'core_search_fts_data', 'core_search_fts_idx', 'core_search_fts_docsize', 'core_search_fts_config', 'core_search_secret', 'core_search_secret_data', 'core_search_secret_idx', 'core_search_secret_docsize', 'core_search_secret_config', 'core_search_secret_content'] });
 integrityRegistry.register({
-  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards'], // the shared definitions, reasons and requirements have no company; a company's own would
+  companyOptional: ['ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries'], // the shared definitions, reasons and requirements have no company; a company's own would
   statuses: { ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
@@ -80,8 +97,8 @@ export const ui = {
   routePrefix: '/api/v1/ui',
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
-  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards'],
-  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr', 'widgets', 'dashboards'],
+  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries'],
+  resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr', 'widgets', 'dashboards', 'search'],
 
   mount(api, { db, config, storagePath }) {
     const flags = createFlagService({ db, environment: config.environment });
@@ -125,6 +142,28 @@ export const ui = {
     dashboardRouter.use(['/widgets', '/dashboards'], gate('ff.ui.p0307', 'Dashboards and widgets are'));
     dashboardRouter.use(dashboardRoutes(createWidgetService({ db, approvals, shell }), { idempotent: idempotency(db) }));
     router.use(dashboardRouter);
+    // Part 03.08: global search and the command palette.
+    const searchReady = Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'core_search_index'").get());
+    const searchApi = createSearchApi({ db, flags, runtime });
+    if (searchReady) {
+      runtime.bus.subscribe(searchEntities.eventPatterns(), (event) => searchApi.index.onEvent(event), { consumer: 'ui.search_index', reset: () => searchApi.index.clear() });
+      runtime.jobs.register(REINDEX_JOB, (ctx) => searchApi.runReindex(ctx), { maxAttempts: 1, description: 'Rebuilds the search index of a type of record from its source, with progress.' });
+      runtime.jobs.register(RECONCILE_JOB, (ctx) => { const r = searchApi.index.reconcile(); ctx.log(`Checked ${r.checked}, indexed ${r.indexed}, removed ${r.removed}`); return r; }, { maxAttempts: 2, description: 'Indexes the records that changed or appeared without an event, and drops the ones that are gone.' });
+      runtime.jobs.register('ui.search_purge', (ctx) => {
+        let removed = 0;
+        for (const c of db.prepare('SELECT id FROM org_companies').all()) removed += searchApi.index.purgeQueries(Number(createParameterStore(db).get('ui.search.retention_days', { companyId: c.id, date: new Date().toISOString().slice(0, 10) })));
+        ctx.log(`Removed ${removed} old search(es)`);
+        return { removed };
+      }, { maxAttempts: 1, description: 'Removes the text of searches older than the retention period.' });
+      runtime.scheduler.define({ code: 'ui.search_reconcile_5min', cron: '*/5 * * * *', jobType: RECONCILE_JOB, description: 'Every five minutes: index what changed without an event' });
+      runtime.scheduler.define({ code: 'ui.search_purge_daily', cron: '30 1 * * *', jobType: 'ui.search_purge', description: 'Daily removal of old search text (01:30 IST)' });
+      // a first build for records that existed before search did, without holding up the start
+      if (config.environment !== 'test' && searchEntities.list().some((d) => searchApi.index.stale(d.type, 1).length > 0) && !db.prepare("SELECT 1 FROM core_jobs WHERE type = ? AND status IN ('QUEUED', 'RUNNING')").get(RECONCILE_JOB)) runtime.jobs.enqueue(RECONCILE_JOB, {}, { createdBy: 'system' });
+    }
+    const searchRouter = Router();
+    searchRouter.use('/search', gate('ff.ui.p0308', 'Search and the command palette are'));
+    searchRouter.use(searchRoutes(searchApi, { shell, idempotent: idempotency(db) }));
+    router.use(searchRouter);
     // Part 03.06: camera settings, push subscriptions and the QR resolver.
     const vapid = loadVapid({ config, dir: storagePath ?? config.storagePath ?? 'data' });
     const pushService = vapid ? { vapid, send: (sub, message) => sendPush(sub, message, { vapid }) } : null;

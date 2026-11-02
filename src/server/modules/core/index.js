@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import './search.js';
 import { idempotency } from '../../platform/http/idempotency.js';
 import { notFound } from '../../platform/http/errors.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';

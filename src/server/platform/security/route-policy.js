@@ -292,6 +292,13 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/ui/dashboards', g: 'record', k: null, s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/ui/dashboards/:code', g: 'record', k: null, s: 'parseDashboardCode', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/ui/dashboards/:code/history', g: 'permission', k: 'ui.dashboard.manage', s: 'parseDashboardCode', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/ui/search', g: 'record', k: null, s: 'parseSearch', scope: 'company', rate: 'read', audit: false }, // each hit is filtered by the right and scope of its own type (part 03.08)
+  { m: 'GET', p: '/api/v1/ui/search/types', g: 'record', k: null, s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/ui/search/commands', g: 'record', k: null, s: 'parseCommands', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/ui/search/click', g: 'record', k: null, s: 'parseClick', scope: 'company', rate: 'write', audit: false },
+  { m: 'GET', p: '/api/v1/ui/search/status', g: 'permission', k: 'ui.search.analytics', s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/ui/search/analytics', g: 'permission', k: 'ui.search.analytics', s: 'parseAnalytics', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/ui/search/reindex/:entity', g: 'permission', k: 'ui.search.reindex', s: 'parseReindex', scope: 'company', rate: 'write', audit: true },
   { m: 'DELETE', p: '/api/v1/ui/dashboards/:code/personal', g: 'record', k: null, s: 'parseDashboardCode', scope: 'company', rate: 'write', audit: true },
   { m: 'PUT', p: '/api/v1/ui/dashboards/:code/personal', g: 'record', k: null, s: 'parseDashboardCode', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/ui/dashboards/:code/role-defaults', g: 'permission', k: 'ui.dashboard.manage', s: 'parseDashboardCode', scope: 'company', rate: 'read', audit: false },

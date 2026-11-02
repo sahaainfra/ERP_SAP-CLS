@@ -1,0 +1,8 @@
+-- Reference seed (part 03.08): the feature flag (OFF by default, ON in development and test) and the pages of global search in the navigation registry.
+INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, environment, enabled, created_by, source_type)
+VALUES ('ff.ui.p0308', 'Part 03.08 global search and command palette', 0, NULL, 0, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, environment, enabled, created_by, source_type)
+SELECT 'ff.ui.p0308', 'Part 03.08 global search and command palette', 0, env.name, 1, 'migration', 'reference_seed'
+FROM (SELECT 'development' AS name UNION ALL SELECT 'test') AS env;
+INSERT OR IGNORE INTO ui_navigation_entries (code, parent_code, kind, placement, label, label_hi, route, icon, permission_key, feature_flag, sort_order, keywords, mobile_visible, onboarding, shortcut, tile, created_by, source_type) VALUES ('search', 'g-mywork', 'page', 'sidebar', 'Advanced Search', 'उन्नत खोज', '/search', 'erp.action.search', 'self', 'ff.ui.p0308', 8, 'search find advanced filter records documents projects people', 1, 'none', NULL, 1, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_navigation_entries (code, parent_code, kind, placement, label, label_hi, route, icon, permission_key, feature_flag, sort_order, keywords, mobile_visible, onboarding, shortcut, tile, created_by, source_type) VALUES ('admin-search', 'g-administration', 'page', 'sidebar', 'Search Administration', 'खोज प्रशासन', '/admin/search', 'erp.action.settings', 'ui.search.analytics', 'ff.ui.p0308', 34, 'search index reindex rebuild analytics queries no result', 1, 'none', NULL, 1, 'migration', 'reference_seed');

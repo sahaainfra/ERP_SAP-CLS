@@ -5,6 +5,7 @@ import { parseSampleRequest } from './sample-requests.js';
 import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
 import { parseQr, parseSubscription, parseUnsubscribe } from './device.js';
 import { parseDashboardCode, parseHistory, parsePersonal, parseRoleDefault, parseWidgetCode, parseWidgetQuery } from './widgets.js';
+import { parseAnalytics, parseClick, parseCommands, parseEntityParam, parseReindex, parseSearch } from './search.js';
 import { parseContext, parseFavourite, parseFavouriteOrder, parseNavChange, parseNavImport, parseVisit } from './shell.js';
 import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
 import {
@@ -146,5 +147,18 @@ export function dashboardRoutes(service, { idempotent }) {
   r.get('/dashboards/:code/role-defaults', (req, res) => res.json({ data: service.roleDefaults(req.actor, parseDashboardCode(req.params.code)) }));
   r.post('/dashboards/:code/role-defaults', idempotent, (req, res) => res.status(201).json({ data: service.proposeRoleDefault(req.actor, parseDashboardCode(req.params.code), parseRoleDefault(req.body)) }));
   r.get('/dashboards/:code/history', (req, res) => res.json({ data: service.history(req.actor, parseDashboardCode(req.params.code), parseHistory(req.query).role) }));
+  return r;
+}
+
+/** Part 03.08: global search, the commands of the palette and the administration of the index. */
+export function searchRoutes(service, { shell, idempotent }) {
+  const r = Router();
+  r.get('/search', (req, res) => res.json({ data: service.search(req.actor, parseSearch(req.query)) }));
+  r.get('/search/types', (req, res) => res.json({ data: service.typesFor(req.actor) }));
+  r.get('/search/commands', (req, res) => res.json({ data: service.commands(req.actor, parseCommands(req.query)) }));
+  r.post('/search/click', (req, res) => res.json({ data: service.click(req.actor, parseClick(req.body), shell) }));
+  r.get('/search/status', (req, res) => res.json({ data: service.status(req.actor) }));
+  r.get('/search/analytics', (req, res) => res.json({ data: service.analytics(req.actor, parseAnalytics(req.query)) }));
+  r.post('/search/reindex/:entity', idempotent, (req, res) => res.status(202).json({ data: service.requestReindex(req.actor, parseEntityParam(req.params.entity), parseReindex(req.body)) }));
   return r;
 }

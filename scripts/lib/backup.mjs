@@ -36,7 +36,9 @@ export function databaseChecksums(db) {
   for (const name of names) {
     const h = createHash('sha256');
     let rows = 0;
-    for (const row of db.prepare(`SELECT * FROM "${name}" ORDER BY rowid`).iterate()) {
+    // a WITHOUT ROWID table (the full-text index keeps its settings in one) is read in the order of its first column
+    const order = /WITHOUT ROWID/i.test(db.prepare('SELECT sql FROM sqlite_master WHERE name = ?').get(name)?.sql ?? '') ? '1' : 'rowid';
+    for (const row of db.prepare(`SELECT * FROM "${name}" ORDER BY ${order}`).iterate()) {
       h.update(JSON.stringify(Object.values(row)));
       h.update('\n');
       rows++;

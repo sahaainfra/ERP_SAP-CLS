@@ -58,6 +58,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const bell = useBell(Boolean(approvalsEntry));
   const [context, setContext] = useState(readContext);
   const [menuOpen, setMenuOpen] = useState(false);
+  const searchOn = useFlagOn('ff.ui.p0308'); // global search and the command palette (part 03.08)
   const device = useFlagOn('ff.ui.p0306'); // layouts, install and device capabilities (part 03.06)
   const layout = useLayout();
   useLowBandwidth(); // keeps the page's low-bandwidth mark (the data saver, a slow connection, or the person's choice) in step
@@ -149,7 +150,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
         </main>
       </div>
       {device && phone && <BottomNav items={bottom} path={path.split('?')[0]} go={goTo} moreOpen={menuOpen} onMore={openMenu} />}
-      <CommandPalette open={palette} onClose={() => setPalette(false)} nav={nav} favourites={favs.data ?? []} recent={recent.data ?? []} go={open} />
+      <CommandPalette open={palette} onClose={() => setPalette(false)} nav={nav} favourites={favs.data ?? []} recent={recent.data ?? []} go={open} searchOn={searchOn} path={path} language={language} actions={{ setTheme, setLanguage, openHelp: () => setHelp(true) }} />
       <ShortcutHelp open={help} onClose={() => setHelp(false)} nav={nav} />
     </div>
   );

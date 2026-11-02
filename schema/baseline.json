@@ -5310,6 +5310,684 @@
     ],
     "fks": []
   },
+  "table:core_search_fts": {
+    "columns": [
+      {
+        "name": "code",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "title",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "subtitle",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "body",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "phon",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_fts_config": {
+    "columns": [
+      {
+        "name": "k",
+        "type": "",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "v",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_fts_data": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "block",
+        "type": "BLOB",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_fts_docsize": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "sz",
+        "type": "BLOB",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_fts_idx": {
+    "columns": [
+      {
+        "name": "segid",
+        "type": "",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "term",
+        "type": "",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 2
+      },
+      {
+        "name": "pgno",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_index": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "branch_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "owner_user_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "title",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "title_lc",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "subtitle",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "body",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "phon",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_date",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "permission_key",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "route",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "indexed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:core_search_queries": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "q",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "q_norm",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'palette'",
+        "pk": 0
+      },
+      {
+        "name": "types",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "result_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "took_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "clicked_entity",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "clicked_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "clicked_pos",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:core_search_secret": {
+    "columns": [
+      {
+        "name": "value",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "index_id",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "field_key",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_secret_config": {
+    "columns": [
+      {
+        "name": "k",
+        "type": "",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "v",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_secret_content": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "c0",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "c1",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "c2",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_secret_data": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "block",
+        "type": "BLOB",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_secret_docsize": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "sz",
+        "type": "BLOB",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
+  "table:core_search_secret_idx": {
+    "columns": [
+      {
+        "name": "segid",
+        "type": "",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "term",
+        "type": "",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 2
+      },
+      {
+        "name": "pgno",
+        "type": "",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": []
+  },
   "table:core_security_events": {
     "columns": [
       {
@@ -10098,6 +10776,27 @@
   "index:ix_core_schedules_due": {
     "sql": "CREATE INDEX ix_core_schedules_due ON core_schedules (enabled, next_run_at)"
   },
+  "index:ix_core_search_index_code": {
+    "sql": "CREATE INDEX ix_core_search_index_code ON core_search_index (company_id, code_key)"
+  },
+  "index:ix_core_search_index_scope": {
+    "sql": "CREATE INDEX ix_core_search_index_scope ON core_search_index (company_id, permission_key, project_id, site_id)"
+  },
+  "index:ix_core_search_index_status": {
+    "sql": "CREATE INDEX ix_core_search_index_status ON core_search_index (company_id, entity, status)"
+  },
+  "index:ix_core_search_index_title": {
+    "sql": "CREATE INDEX ix_core_search_index_title ON core_search_index (company_id, title_lc)"
+  },
+  "index:ix_core_search_queries_company": {
+    "sql": "CREATE INDEX ix_core_search_queries_company ON core_search_queries (company_id, created_at)"
+  },
+  "index:ix_core_search_queries_norm": {
+    "sql": "CREATE INDEX ix_core_search_queries_norm ON core_search_queries (company_id, q_norm)"
+  },
+  "index:ix_core_search_queries_user": {
+    "sql": "CREATE INDEX ix_core_search_queries_user ON core_search_queries (company_id, user_ref, created_at)"
+  },
   "index:ix_core_security_events_company": {
     "sql": "CREATE INDEX ix_core_security_events_company ON core_security_events (company_id, occurred_at)"
   },
@@ -11975,6 +12674,15 @@
   },
   "trigger:trg_core_formulas_immutable": {
     "sql": "CREATE TRIGGER trg_core_formulas_immutable BEFORE UPDATE OF code, formula_version, expression, inputs_json, outputs_json, rounding_policy, tests_json, owner_module, financial, effective_from ON core_formulas WHEN OLD.status <> 'DRAFT' BEGIN SELECT RAISE(ABORT, 'A formula version that is no longer a draft cannot be changed: create a new version'); END"
+  },
+  "trigger:trg_core_search_fts_ad": {
+    "sql": "CREATE TRIGGER trg_core_search_fts_ad AFTER DELETE ON core_search_index BEGIN INSERT INTO core_search_fts (core_search_fts, rowid, code, title, subtitle, body, phon) VALUES ('delete', old.id, old.code, old.title, old.subtitle, old.body, old.phon); END"
+  },
+  "trigger:trg_core_search_fts_ai": {
+    "sql": "CREATE TRIGGER trg_core_search_fts_ai AFTER INSERT ON core_search_index BEGIN INSERT INTO core_search_fts (rowid, code, title, subtitle, body, phon) VALUES (new.id, new.code, new.title, new.subtitle, new.body, new.phon); END"
+  },
+  "trigger:trg_core_search_fts_au": {
+    "sql": "CREATE TRIGGER trg_core_search_fts_au AFTER UPDATE OF code, title, subtitle, body, phon ON core_search_index BEGIN INSERT INTO core_search_fts (core_search_fts, rowid, code, title, subtitle, body, phon) VALUES ('delete', old.id, old.code, old.title, old.subtitle, old.body, old.phon); INSERT INTO core_search_fts (rowid, code, title, subtitle, body, phon) VALUES (new.id, new.code, new.title, new.subtitle, new.body, new.phon); END"
   },
   "trigger:trg_core_security_events_no_delete": {
     "sql": "CREATE TRIGGER trg_core_security_events_no_delete BEFORE DELETE ON core_security_events BEGIN SELECT RAISE(ABORT, 'The security event log is append-only: rows cannot be deleted.'); END"
@@ -15492,6 +16200,9 @@
   },
   "index:ux_core_schedules_code": {
     "sql": "CREATE UNIQUE INDEX ux_core_schedules_code ON core_schedules (code)"
+  },
+  "index:ux_core_search_index_record": {
+    "sql": "CREATE UNIQUE INDEX ux_core_search_index_record ON core_search_index (company_id, entity, entity_id)"
   },
   "index:ux_core_security_events_source": {
     "sql": "CREATE UNIQUE INDEX ux_core_security_events_source ON core_security_events (source_type, source_id) WHERE source_type IS NOT NULL"

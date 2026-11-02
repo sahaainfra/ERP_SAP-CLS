@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import './search.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
 import { createApprovalEngine } from '../../platform/approvals/index.js';
 import { createFlagService } from '../core/api.js';

@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-11-02T11:02:13.515Z",
+  "rows": 100000,
+  "queries": {
+    "whole document number": {
+      "n": 43,
+      "p50Ms": 137,
+      "p95Ms": 169,
+      "maxMs": 194
+    },
+    "part of a number": {
+      "n": 43,
+      "p50Ms": 13,
+      "p95Ms": 16,
+      "maxMs": 21
+    },
+    "one word": {
+      "n": 43,
+      "p50Ms": 67,
+      "p95Ms": 120,
+      "maxMs": 149
+    },
+    "two words": {
+      "n": 43,
+      "p50Ms": 68,
+      "p95Ms": 139,
+      "maxMs": 165
+    },
+    "a Hindi name": {
+      "n": 43,
+      "p50Ms": 91,
+      "p95Ms": 138,
+      "maxMs": 191
+    },
+    "a Latin name by sound": {
+      "n": 43,
+      "p50Ms": 47,
+      "p95Ms": 93,
+      "maxMs": 147
+    },
+    "a typing mistake": {
+      "n": 43,
+      "p50Ms": 39,
+      "p95Ms": 102,
+      "maxMs": 139
+    },
+    "matches nothing": {
+      "n": 43,
+      "p50Ms": 9,
+      "p95Ms": 17,
+      "maxMs": 75
+    }
+  },
+  "plans": {
+    "exactNumber": [
+      "SEARCH i USING INDEX ix_core_search_index_code (company_id=? AND code_key=?)"
+    ],
+    "titlePrefix": [
+      "SEARCH i USING INDEX ix_core_search_index_title (company_id=? AND title_lc>? AND title_lc<?)"
+    ],
+    "fulltext": [
+      "SCAN core_search_fts VIRTUAL TABLE INDEX 0:M5",
+      "SEARCH i USING INTEGER PRIMARY KEY (rowid=?)"
+    ]
+  },
+  "worstP95Ms": 169,
+  "meetsStandard": true
+}
