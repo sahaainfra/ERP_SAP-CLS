@@ -4,13 +4,13 @@ import { pageCode, registeredPages } from './pages.js';
 // Development-header mode (port 3100). Part 03.10, FR-05, T-01: the visual regression baseline. Every page of the application, as a super administrator
 // sees it, in the light, dark and high-contrast themes at 360, 768 and 1280 px wide: the first screen of each page is compared with the stored image.
 // A page whose content changes from run to run (times, counts of what other tests did) is compared with its content masked, so what is checked is the
-// frame, the header, the headings, the colours and the layout. The baselines are of the Linux image the tests run on; change them on purpose with
+// frame, the header, the headings, the colours and the layout. The file is named a0 so that it runs first, on a database no other test has used. The baselines are of the Linux image the tests run on; change them on purpose with
 // `npm run test:visual:update` and review the images in the pull request.
 const H = (roles, company, user) => ({ 'x-erp-user': user, 'x-erp-roles': roles, 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}` });
 const THEMES = ['light', 'dark', 'high-contrast'];
 const SIZES = [{ width: 360, height: 740 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }];
 // pages whose content is the state of the whole system or of the clock: only their frame is compared
-const VOLATILE = new Set(['/admin/audit', '/admin/security-events', '/admin/operations', '/admin/operations/health', '/admin/operations/jobs', '/admin/operations/schedules', '/admin/operations/dead-letters', '/admin/integrations/log', '/admin/data-health', '/admin/about', '/admin/architecture',
+const VOLATILE = new Set(['/admin/audit', '/admin/security-events', '/admin/operations', '/admin/operations/health', '/admin/operations/jobs', '/admin/operations/schedules', '/admin/operations/dead-letters', '/admin/integrations/log', '/admin/data-health', '/admin/about', '/admin/architecture', '/admin/security/routes',
   '/admin/migration', '/account/sessions', '/admin/security/login-history', '/work', '/home', '/admin/console', '/admin/feature-flags', '/admin/formulas/shadow', '/admin/sample-requests/overview', '/field']);
 const pages = registeredPages().filter((p) => !p.onboardingOnly);
 

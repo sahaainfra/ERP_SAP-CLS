@@ -1207,7 +1207,7 @@ Indexes:
 | subtitle | TEXT |  |  |  |
 | body | TEXT | yes |  | '' |
 | phon | TEXT | yes |  | '' |
-| status | TEXT |  |  |  |
+| record_status | TEXT |  |  |  |
 | doc_date | TEXT |  |  |  |
 | permission_key | TEXT | yes |  |  |
 | route | TEXT | yes |  |  |
@@ -1225,7 +1225,7 @@ Indexes:
 | remarks | TEXT |  |  |  |
 
 Indexes:
-- ix_core_search_index_status: company_id, entity, status
+- ix_core_search_index_status: company_id, entity, record_status
 - ix_core_search_index_scope: company_id, permission_key, project_id, site_id
 - ix_core_search_index_title: company_id, title_lc
 - ix_core_search_index_code: company_id, code_key

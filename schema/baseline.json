@@ -5548,7 +5548,7 @@
         "pk": 0
       },
       {
-        "name": "status",
+        "name": "record_status",
         "type": "TEXT",
         "notnull": 0,
         "dflt": null,
@@ -10779,7 +10779,7 @@
     "sql": "CREATE INDEX ix_core_search_index_scope ON core_search_index (company_id, permission_key, project_id, site_id)"
   },
   "index:ix_core_search_index_status": {
-    "sql": "CREATE INDEX ix_core_search_index_status ON core_search_index (company_id, entity, status)"
+    "sql": "CREATE INDEX ix_core_search_index_status ON core_search_index (company_id, entity, record_status)"
   },
   "index:ix_core_search_index_title": {
     "sql": "CREATE INDEX ix_core_search_index_title ON core_search_index (company_id, title_lc)"

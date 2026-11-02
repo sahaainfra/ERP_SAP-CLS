@@ -52,7 +52,7 @@ export function createSearchService({ db }) {
     where.push(types.length ? `i.entity IN (${types.map((_, n) => `:t${n}`).join(', ')})` : '1 = 0');
     if (p.projectId) { where.push('i.project_id = :project'); params.project = p.projectId; }
     if (p.siteId) { where.push('i.site_id = :site'); params.site = p.siteId; }
-    if (p.status?.length) { p.status.forEach((s, n) => { params[`s${n}`] = s; }); where.push(`i.status IN (${p.status.map((_, n) => `:s${n}`).join(', ')})`); }
+    if (p.status?.length) { p.status.forEach((s, n) => { params[`s${n}`] = s; }); where.push(`i.record_status IN (${p.status.map((_, n) => `:s${n}`).join(', ')})`); }
     const day = "COALESCE(i.doc_date, substr(i.updated_at, 1, 10), substr(i.created_at, 1, 10))";
     if (p.from) { where.push(`${day} >= :from`); params.from = p.from; }
     if (p.to) { where.push(`${day} <= :to`); params.to = p.to; }

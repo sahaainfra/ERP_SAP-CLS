@@ -28,10 +28,10 @@ export function createSearchIndex({ db, now = () => new Date() }) {
       company_id: doc.companyId, entity: def.type, entity_id: id, project_id: doc.projectId ?? null, site_id: doc.siteId ?? null, branch_id: doc.branchId ?? null,
       department_id: doc.departmentId ?? null, owner_user_id: doc.ownerUserId ?? null, code: doc.code ? String(doc.code) : null, code_key: codeKey(doc.code) || null,
       title: title || `${def.label} ${id}`, title_lc: normalise(title), subtitle, body: (body + extra).slice(0, MAX_BODY + 500), phon: phoneticText(readable).slice(0, MAX_PHON),
-      status: doc.status ?? null, doc_date: doc.docDate ?? null, permission_key: doc.permissionKey ?? (typeof def.permission === 'string' ? def.permission : ''), route: doc.route ?? def.route(id),
+      record_status: doc.status ?? null, doc_date: doc.docDate ?? null, permission_key: doc.permissionKey ?? (typeof def.permission === 'string' ? def.permission : ''), route: doc.route ?? def.route(id),
     };
   }
-  const COLUMNS = ['project_id', 'site_id', 'branch_id', 'department_id', 'owner_user_id', 'code', 'code_key', 'title', 'title_lc', 'subtitle', 'body', 'phon', 'status', 'doc_date', 'permission_key', 'route'];
+  const COLUMNS = ['project_id', 'site_id', 'branch_id', 'department_id', 'owner_user_id', 'code', 'code_key', 'title', 'title_lc', 'subtitle', 'body', 'phon', 'record_status', 'doc_date', 'permission_key', 'route'];
 
   function removeRow(id) {
     db.prepare('DELETE FROM core_search_secret WHERE index_id = ?').run(id);

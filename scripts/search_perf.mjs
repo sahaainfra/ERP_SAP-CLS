@@ -42,7 +42,7 @@ const projects = [];
 for (let p = 1; p <= 50; p += 1) projects.push(Number(db.prepare("INSERT INTO org_projects (company_id, code, name, type, status, created_by, source_type) VALUES (1, ?, ?, 'ROAD', 'ACTIVE', 'perf', 'perf')").run(`P${String(p).padStart(2, '0')}`, `Project ${p}`).lastInsertRowid));
 const words = ['cement', 'steel', 'tmt bar', 'shuttering', 'excavator', 'aggregate', 'bitumen', 'formwork', 'footing', 'girder', 'culvert', 'hume pipe', 'binding wire', 'curing', 'anchor bolt', 'diesel', 'sand', 'plywood'];
 const names = ['Rajesh Sharma', 'Suresh Kumar', 'Anil Verma', 'सुरेश कुमार', 'Mohan Das', 'Priya Nair', 'Vikas Singh', 'Deepak Gupta'];
-const insert = db.prepare("INSERT INTO core_search_index (company_id, entity, entity_id, project_id, code, code_key, title, title_lc, subtitle, body, phon, status, doc_date, permission_key, route, created_by, source_type) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'perf', 'perf')");
+const insert = db.prepare("INSERT INTO core_search_index (company_id, entity, entity_id, project_id, code, code_key, title, title_lc, subtitle, body, phon, record_status, doc_date, permission_key, route, created_by, source_type) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'perf', 'perf')");
 const t0 = Date.now();
 db.exec('BEGIN');
 for (let i = 1; i <= rows; i += 1) {

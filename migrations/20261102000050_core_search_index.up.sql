@@ -1,7 +1,8 @@
 -- Part 03.08: global search. One row per searchable record (the record's title, code, a short subtitle, the words of its text, its place in the
 -- organisation and the permission needed to see it), a full-text index over it (SQLite FTS5 with the trigram tokenizer: substring and partial-code
 -- matching), a separate index of sensitive values that are searched only by people allowed to see them, and the log of searches (for the
--- analytics of queries that found nothing). company_id has no foreign key: the index is a projection of records that carry their own, and a record of a
+-- analytics of queries that found nothing). record_status is the status the record has in its own module (any of its own values), which is why it is
+-- not called status: the data-integrity check of the standard workflow states must not judge it. company_id has no foreign key: the index is a projection of records that carry their own, and a record of a
 -- company that has no organisation row yet (a test company) must still be indexed rather than fail its event.
 
 CREATE TABLE IF NOT EXISTS core_search_index (
@@ -21,7 +22,7 @@ CREATE TABLE IF NOT EXISTS core_search_index (
   subtitle       TEXT,
   body           TEXT    NOT NULL DEFAULT '',
   phon           TEXT    NOT NULL DEFAULT '',
-  status         TEXT,
+  record_status  TEXT,
   doc_date       TEXT,
   permission_key TEXT    NOT NULL,
   route          TEXT    NOT NULL,
@@ -42,7 +43,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_core_search_index_record ON core_search_ind
 CREATE INDEX IF NOT EXISTS ix_core_search_index_code ON core_search_index (company_id, code_key);
 CREATE INDEX IF NOT EXISTS ix_core_search_index_title ON core_search_index (company_id, title_lc);
 CREATE INDEX IF NOT EXISTS ix_core_search_index_scope ON core_search_index (company_id, permission_key, project_id, site_id);
-CREATE INDEX IF NOT EXISTS ix_core_search_index_status ON core_search_index (company_id, entity, status);
+CREATE INDEX IF NOT EXISTS ix_core_search_index_status ON core_search_index (company_id, entity, record_status);
 
 -- The full-text index of the rows above (external content: it holds no second copy of the text).
 CREATE VIRTUAL TABLE IF NOT EXISTS core_search_fts USING fts5 (code, title, subtitle, body, phon, content = 'core_search_index', content_rowid = 'id', tokenize = 'trigram');
