@@ -173,7 +173,7 @@ export function createPathService({ db, engine }) {
 }
 
 // ================================================================ SLA settings and the calendar
-export function createSlaService({ db, engine, paths }) {
+export function createSlaService({ db, engine }) {
   const authz = authzOf(db);
   const store = createParameterStore(db);
   const mustManage = (actor) => { if (!authz.check(actor, 'eng.matrix.manage').allowed) throw forbidden('Only someone who maintains the approval matrix (eng.matrix.manage) can do this.'); };

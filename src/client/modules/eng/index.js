@@ -1,4 +1,10 @@
 import { registerModule } from '../../platform/shell/registry.js';
+import ApprovalMatrixPage from './ApprovalMatrixPage.jsx';
+import ApprovalSimulatorPage from './ApprovalSimulatorPage.jsx';
+import AuthorityLimitsPage from './AuthorityLimitsPage.jsx';
+import DelegationsPage from './DelegationsPage.jsx';
+import EscalationPage from './EscalationPage.jsx';
+import MatrixEditorPage from './MatrixEditorPage.jsx';
 import SampleDocsPage from './SampleDocsPage.jsx';
 import WorkflowDefinitionsPage from './WorkflowDefinitionsPage.jsx';
 import WorkflowEditorPage from './WorkflowEditorPage.jsx';
@@ -14,6 +20,12 @@ registerModule({
     { path: '/admin/workflows/editor', label: 'Workflow Definition Editor', icon: 'erp.action.edit', permission: 'eng.workflow.view', flag: 'ff.eng.p0401', Page: WorkflowEditorPage },
     { path: '/admin/workflows/monitor', label: 'Workflow Monitor', icon: 'erp.insights.metrics', permission: 'eng.workflow.view', flag: 'ff.eng.p0401', Page: WorkflowMonitorPage },
     { path: '/workflow/instance', label: 'Workflow Instance', icon: 'erp.action.inbox', flag: 'ff.eng.p0401', Page: WorkflowInstancePage },
+    { path: '/admin/approval-matrix', label: 'Approval Matrix', icon: 'erp.action.settings', permission: 'eng.matrix.view', flag: 'ff.eng.p0402', Page: ApprovalMatrixPage },
+    { path: '/admin/approval-matrix/editor', label: 'Matrix Rule Editor', icon: 'erp.action.edit', permission: 'eng.matrix.view', flag: 'ff.eng.p0402', Page: MatrixEditorPage },
+    { path: '/admin/authority-limits', label: 'Authority Limits', icon: 'erp.insights.metrics', permission: 'eng.matrix.view', flag: 'ff.eng.p0402', Page: AuthorityLimitsPage },
+    { path: '/admin/approval-simulator', label: 'Approval Simulator', icon: 'erp.action.search', permission: 'eng.matrix.view', flag: 'ff.eng.p0402', Page: ApprovalSimulatorPage },
+    { path: '/workflow/delegations', label: 'Delegations', icon: 'erp.action.inbox', permission: 'eng.delegation.use', flag: 'ff.eng.p0402', Page: DelegationsPage },
+    { path: '/admin/escalation', label: 'Escalation Paths & SLA', icon: 'erp.action.settings', permission: 'eng.matrix.view', flag: 'ff.eng.p0402', Page: EscalationPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });

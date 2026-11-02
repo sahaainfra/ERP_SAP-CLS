@@ -58,6 +58,20 @@ worst.push(time('list, one document type and status', () => engine.listInstances
 worst.push(time('my tasks (role PM, 100 per call)', () => engine.listTasks(approver, { mine: 'assigned', limit: 25 })));
 worst.push(time('monitor', () => engine.monitor(actor, {})));
 worst.push(time('one instance with tasks and history', (i) => engine.get(actor, 1 + i * 37)));
+// part 04.02: resolving the matrix of a document, with 50 projects each having a matrix of its own for 30 document types and four versions
+const matrixSvc = (await import('../src/server/modules/eng/matrix.js')).createMatrixService({ db, engine, limits: (await import('../src/server/modules/eng/controls.js')).createLimitService({ db, engine }), paths: (await import('../src/server/modules/eng/controls.js')).createPathService({ db, engine }) });
+matrixSvc.ensureDefaults(1);
+db.exec('BEGIN');
+const base = db.prepare("SELECT * FROM wf_matrix WHERE company_id = 1 AND doc_type = 'PO'").get();
+const baseRules = db.prepare('SELECT * FROM wf_matrix_rules WHERE matrix_id = ?').all(base.id);
+for (const project of projects) for (let v = 1; v <= 4; v += 1) {
+  const m = Number(db.prepare("INSERT INTO wf_matrix (company_id, doc_type, scope_type, scope_id, matrix_version, name, status, effective_from, created_by, source_type) VALUES (1, 'PO', 'PROJECT', ?, ?, 'perf', 'ACTIVE', ?, 'perf', 'perf')").run(project, v, `2026-0${v}-01`).lastInsertRowid);
+  for (const r of baseRules) db.prepare('INSERT INTO wf_matrix_rules (company_id, matrix_id, priority, name, condition_json, steps_json, created_by, source_type) VALUES (1, ?, ?, ?, ?, ?, ?, ?)').run(m, r.priority, r.name, r.condition_json, r.steps_json, 'perf', 'perf');
+}
+db.exec('COMMIT');
+worst.push(time('resolve the matrix of a document', (i) => matrixSvc.resolve({ companyId: 1, docType: 'PO', context: { amount: 100_000 + i * 50_000 }, projectId: projects[i % projects.length], date: '2026-11-02' })));
+worst.push(time('list the matrix versions (page 1)', () => matrixSvc.list(actor, { limit: 25, offset: 0 })));
+worst.push(time('simulate', (i) => matrixSvc.simulate(actor, { docType: 'PO', context: { amount: 100_000 + i * 50_000 }, projectId: projects[i % projects.length] })));
 console.log('\nQuery plans:');
 for (const [label, sql] of [
   ['instances by status', "SELECT * FROM wf_instances WHERE company_id = 1 AND status = 'RUNNING' AND is_active = 1 ORDER BY id DESC LIMIT 25"],

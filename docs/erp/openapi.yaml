@@ -1430,3 +1430,83 @@ paths:
     post:
       summary: Make a linked new document from an approved one
       responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/matrix:
+    get:
+      summary: Matrix versions, filtered (eng.matrix.view)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Make a draft version of a document type's matrix (eng.matrix.manage)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/matrix/simulate:
+    post:
+      summary: The chain a described document would get, on the version in force or on a draft (eng.matrix.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/history/{docType}:
+    get:
+      summary: Every version of the matrix of a document type
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{a}/compare/{b}:
+    get:
+      summary: Rule-by-rule difference of two versions
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{id}:
+    get:
+      summary: One version with its rules
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a draft's rules (optimistic lock on version)
+      responses: { '200': { description: '{ data }' } }
+    delete:
+      summary: Delete a draft
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{id}/validate:
+    post:
+      summary: Check a version for gaps, duplicate priorities and rules never reached
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{id}/activate:
+    post:
+      summary: Ask for a version to take effect from a date; refused while it leaves gaps (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/authority-limits:
+    get:
+      summary: The grid of limits by role and document type, with what waits for approval
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/authority-limits/history:
+    get:
+      summary: Changes of limits
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/authority-limits/changes:
+    post:
+      summary: Ask for a set of limit changes from a date (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/delegations:
+    get:
+      summary: My delegations, or everyone's with scope=all (eng.delegation.admin)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Delegate approvals for a period (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/delegations/{id}:
+    get:
+      summary: One delegation
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/delegations/{id}/revoke:
+    post:
+      summary: End a delegation
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/escalation-paths:
+    get:
+      summary: The escalation hierarchy
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/escalation-paths/changes:
+    post:
+      summary: Ask for a change of the hierarchy (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/sla-settings:
+    get:
+      summary: SLA settings by document type
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/sla-settings/changes:
+    post:
+      summary: Ask for a change of SLA settings (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }

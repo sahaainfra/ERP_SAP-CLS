@@ -126,7 +126,7 @@ export const eng = {
     // part 04.02: what routes a document, how long a task has, who stands in and who a late task climbs to
     const limits = createLimitService({ db, engine });
     const paths = createPathService({ db, engine });
-    const sla = createSlaService({ db, engine, paths });
+    const sla = createSlaService({ db, engine });
     const delegations = createDelegationService({ db, engine, limits });
     const matrix = createMatrixService({ db, engine, limits, paths });
     const on = (companyId) => flags.isOn({ companyId }, 'ff.eng.p0402');
