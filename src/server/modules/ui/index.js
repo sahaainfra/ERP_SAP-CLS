@@ -102,7 +102,7 @@ integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', '
 integrityRegistry.register({ technicalTables: ['core_search_fts', 'core_search_fts_data', 'core_search_fts_idx', 'core_search_fts_docsize', 'core_search_fts_config', 'core_search_secret', 'core_search_secret_data', 'core_search_secret_idx', 'core_search_secret_docsize', 'core_search_secret_config', 'core_search_secret_content'] });
 integrityRegistry.register({
   companyOptional: ['ui_page_migration', 'ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_translations', 'ui_locale_preferences', 'ui_page_migration'], // the shared definitions, reasons and requirements have no company; a company's own would
-  statuses: { ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
+  statuses: { ui_page_migration: ['NOT_STARTED', 'MIGRATED', 'VERIFIED', 'SCHEDULED'], ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
 
