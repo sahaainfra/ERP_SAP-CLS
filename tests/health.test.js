@@ -1,4 +1,7 @@
 import { test } from 'node:test';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import assert from 'node:assert/strict';
 import { startApi } from './helpers.js';
 
@@ -59,7 +62,10 @@ test('AC-03 queue stopped (outbox unreadable): 503 naming the queue, other check
 });
 
 test('AC-03 storage unavailable: 503 naming storage', async () => {
-  const api = await fresh({}, { storagePath: 'Z:/this/folder/does/not/exist' });
+  // a folder inside a plain file can never exist or be created, on any operating system
+  const blocker = join(mkdtempSync(join(tmpdir(), 'erp-health-')), 'a-file');
+  writeFileSync(blocker, 'not a folder');
+  const api = await fresh({}, { storagePath: join(blocker, 'storage') });
   const r = await api.call('GET', READY, { roles: 'ITADM' });
   assert.equal(r.status, 503);
   assert.equal(r.json.checks.storage.status, 'fail');
