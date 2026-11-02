@@ -81,7 +81,9 @@ export function createDefinitionService({ db, engine }) {
       if (docType) { where.push('doc_type = :t'); p.t = docType; }
       if (status) { where.push('status = :s'); p.s = status; }
       if (q) { where.push('(name LIKE :q OR doc_type LIKE :q)'); p.q = `%${q}%`; }
-      const { limit: _l, offset: _o, ...pc } = p;
+      const pc = { ...p };
+    delete pc.limit;
+    delete pc.offset;
       const total = db.prepare(`SELECT COUNT(*) AS n FROM wf_definitions WHERE ${where.join(' AND ')}`).get(pc).n;
       const rows = db.prepare(`SELECT * FROM wf_definitions WHERE ${where.join(' AND ')} ORDER BY doc_type, version DESC LIMIT :limit OFFSET :offset`).all(p).map((r) => present(r, { withSteps: false }));
       const used = new Set(db.prepare('SELECT DISTINCT doc_type FROM wf_definitions WHERE company_id = ?').all(actor.companyId).map((r) => r.doc_type));

@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS wf_task_attachments (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_wf_task_attachments ON wf_task_attachments (task_id, file_id);
 CREATE INDEX IF NOT EXISTS ix_wf_task_attachments_file ON wf_task_attachments (file_id);
+CREATE INDEX IF NOT EXISTS ix_wf_task_attachments_company_id ON wf_task_attachments (company_id);
 
 -- The history is append-only: a row is never changed or removed.
 CREATE TABLE IF NOT EXISTS wf_history (
@@ -171,6 +172,7 @@ CREATE TABLE IF NOT EXISTS wf_history (
   remarks     TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_wf_history_instance ON wf_history (instance_id, id);
+CREATE INDEX IF NOT EXISTS ix_wf_history_company_id ON wf_history (company_id);
 CREATE INDEX IF NOT EXISTS ix_wf_history_task ON wf_history (task_id);
 CREATE TRIGGER IF NOT EXISTS trg_wf_history_no_update BEFORE UPDATE ON wf_history BEGIN SELECT RAISE(ABORT, 'The workflow history cannot be changed'); END;
 CREATE TRIGGER IF NOT EXISTS trg_wf_history_no_delete BEFORE DELETE ON wf_history BEGIN SELECT RAISE(ABORT, 'The workflow history cannot be removed'); END;

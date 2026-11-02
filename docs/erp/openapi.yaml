@@ -1315,3 +1315,118 @@ paths:
     post:
       summary: Cancel an open campaign; nothing is changed (iam.review.manage)
       responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/submit:
+    post:
+      summary: Submit a document into approval; resolves the chain from the active definition (Idempotency-Key required)
+      responses: { '201': { description: '{ data: instance with steps, tasks, history }' } }
+  /api/v1/workflow/tasks:
+    get:
+      summary: The task inbox data, mine=assigned|delegated|watching|started|admin
+      responses: { '200': { description: '{ data: { rows, total } }' } }
+  /api/v1/workflow/tasks/count:
+    get:
+      summary: How many tasks wait for the signed-in person
+      responses: { '200': { description: '{ data: { open } }' } }
+  /api/v1/workflow/tasks/{id}/act:
+    post:
+      summary: Approve, reject, return (returnToStep), clarify, answer or delegate a task (Idempotency-Key required)
+      responses: { '200': { description: '{ data: instance }' } }
+  /api/v1/workflow/tasks/{id}/assign:
+    post:
+      summary: Assign a task waiting in the administrators' queue (eng.workflow.admin)
+      responses: { '200': { description: '{ data: instance }' } }
+  /api/v1/workflow/instances:
+    get:
+      summary: Instances, filtered, within the caller's scope (eng.workflow.view)
+      responses: { '200': { description: '{ data: { rows, total } }' } }
+  /api/v1/workflow/instances/{id}:
+    get:
+      summary: One instance with steps, tasks, history and the actions allowed to the caller
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/withdraw:
+    post:
+      summary: The originator withdraws before the first action (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/cancel:
+    post:
+      summary: Cancel with a reason (eng.workflow.cancel)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/resubmit:
+    post:
+      summary: The originator takes a returned document back into approval
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/watch:
+    post:
+      summary: Watch a document
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/unwatch:
+    post:
+      summary: Stop watching a document
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/documents/{docType}/{docId}:
+    get:
+      summary: The latest approval of a document (the Approvals tab)
+      responses: { '200': { description: '{ data | null }' } }
+  /api/v1/workflow/documents/{docType}/{docId}/history:
+    get:
+      summary: Every approval round of a document
+      responses: { '200': { description: '{ data: [instance] }' } }
+  /api/v1/workflow/monitor:
+    get:
+      summary: Running, stuck, overdue and cycle time by document type; format=json|csv|xlsx (eng.workflow.view)
+      responses: { '200': { description: '200' } }
+  /api/v1/workflow/definitions:
+    get:
+      summary: Definitions and their versions (eng.workflow.view)
+      responses: { '200': { description: '{ data: { rows, total, docTypes } }' } }
+    post:
+      summary: Create a draft version (eng.workflow.define)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/definitions/draft:
+    post:
+      summary: A draft from the active version of a document type
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/definitions/options:
+    get:
+      summary: The roles, resolvers, system actions and operators the editor offers
+      responses: { '200': { description: '200' } }
+  /api/v1/workflow/definitions/{id}:
+    get:
+      summary: One definition with its steps
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a draft (optimistic lock on version)
+      responses: { '200': { description: '{ data }' } }
+    delete:
+      summary: Delete a draft or a rejected version
+      responses: { '200': { description: '200' } }
+  /api/v1/workflow/definitions/{id}/activate:
+    post:
+      summary: Ask for a draft to become active, which starts its approval chain
+      responses: { '202': { description: '{ data: { definition, instance } }' } }
+  /api/v1/workflow/definitions/{a}/compare/{b}:
+    get:
+      summary: Step-by-step difference of two versions
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/eng/sample-docs:
+    get:
+      summary: Sample documents (eng.sample.use)
+      responses: { '200': { description: '{ data: { rows, total } }' } }
+    post:
+      summary: Create a sample document as a draft
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/{id}:
+    get:
+      summary: One sample document with its approval
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a draft or returned sample document
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/{id}/submit:
+    post:
+      summary: Submit a sample document into approval (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/{id}/amend:
+    post:
+      summary: Make a linked new document from an approved one
+      responses: { '201': { description: '{ data }' } }

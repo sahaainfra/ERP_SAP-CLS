@@ -73,7 +73,9 @@ export function createSampleDocService({ db, engine }) {
       const p = { c: actor.companyId, limit, offset };
       if (status) { where.push('d.status = :s'); p.s = status; }
       if (q) { where.push('(d.title LIKE :q OR d.doc_no LIKE :q)'); p.q = `%${q}%`; }
-      const { limit: _l, offset: _o, ...pc } = p;
+      const pc = { ...p };
+    delete pc.limit;
+    delete pc.offset;
       const total = db.prepare(`SELECT COUNT(*) AS n FROM eng_sample_docs d WHERE ${where.join(' AND ')}`).get(pc).n;
       return { rows: db.prepare(`SELECT d.* FROM eng_sample_docs d WHERE ${where.join(' AND ')} ORDER BY d.id DESC LIMIT :limit OFFSET :offset`).all(p).map(present), total };
     },

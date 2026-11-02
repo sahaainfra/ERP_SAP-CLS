@@ -9,6 +9,7 @@ import { runtimeOf } from '../../platform/runtime/index.js';
 import { workSources } from '../../platform/widgets/index.js';
 import { createDefinitionService, createLegacyAdapter, workflowOf } from '../../platform/workflow/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
+import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { createSampleDocService } from './sample-docs.js';
 import { sampleDocRoutes, workflowRoutes } from './routes.js';
@@ -75,6 +76,9 @@ workSources.register({
   },
 });
 
+// the files an approver adds to a task (a note, a site photo, a signed copy) go through the file service like every other attachment
+fileEntities.register({ entity: 'wf_task', label: 'Workflow task', resolve: (db, actor, id) => workflowOf(db).taskAccess(actor, id) });
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -88,6 +92,8 @@ export const eng = {
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
   mount(api, { db, config }) {
+    // a database that has not been migrated this far (the contract recording of part 01.x) has no engine to mount
+    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'wf_definitions'").get()) return;
     const flags = createFlagService({ db, environment: config.environment });
     const gate = (key, what) => (req, _res, next) => (flags.isOn(req.actor, key) ? next() : next(notFound(`${what} not enabled for your company yet (feature flag ${key} is OFF).`)));
     const engine = workflowOf(db);

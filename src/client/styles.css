@@ -888,3 +888,22 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 
 /* part 03.09, FR-05: a person who asked for less motion gets none, whatever a component animates */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+
+/* Workflow engine (part 04.01): the read-only step diagram and the pages that use it. */
+.wf-diagram { display: flex; flex-direction: column; gap: var(--erp-space-3); list-style: none; padding: 0; margin: var(--erp-space-4) 0; }
+.wf-step { position: relative; display: flex; flex-direction: column; gap: var(--erp-space-1); padding: var(--erp-space-3); background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border); border-radius: var(--erp-radius-md); }
+.wf-step-active { border-color: var(--erp-color-brand-primary); background: var(--erp-color-brand-primary-tint); }
+.wf-step-skipped { opacity: 0.8; border-style: dashed; }
+.wf-step-no { align-self: flex-start; min-width: 1.5rem; text-align: center; border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface-sunken); color: var(--erp-color-border-strong); font-weight: 600; }
+.wf-step:not(:last-child)::after { content: '↓'; position: absolute; left: 50%; bottom: calc(-1 * var(--erp-space-3)); transform: translate(-50%, 50%); line-height: 1; color: var(--erp-color-border-strong); }
+@media (min-width: 900px) {
+  .wf-diagram { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
+  .wf-step { flex: 1 1 11rem; max-width: 15rem; }
+  .wf-step:not(:last-child)::after { content: '→'; left: auto; right: calc(-1 * var(--erp-space-3)); bottom: 50%; transform: translate(50%, 50%); }
+}
+.wf-tabs { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); margin: var(--erp-space-4) 0; }
+.wf-timeline { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--erp-space-2); }
+.wf-timeline li { padding-left: var(--erp-space-3); border-left: 3px solid var(--erp-color-border); }
+.wf-editor-step { border: 1px solid var(--erp-color-border); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); margin: var(--erp-space-3) 0; background: var(--erp-color-bg-surface); }
+.wf-editor-step legend { font-weight: 600; }
+.wf-inline { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; }

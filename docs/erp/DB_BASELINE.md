@@ -1455,6 +1455,42 @@ Foreign keys: connector_id -> core_connectors(id)
 Indexes:
 - ux_core_webhook_receipts_delivery (unique): connector_id, delivery_id
 
+## eng_sample_docs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| amount | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| locked | INTEGER | yes |  | 0 |
+| amends_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| instance_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: instance_id -> wf_instances(id), amends_id -> eng_sample_docs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_eng_sample_docs_amends: amends_id
+- ix_eng_sample_docs_instance: instance_id
+- ix_eng_sample_docs_status: company_id, status
+- ux_eng_sample_docs_no (unique): company_id, doc_no
+
 ## iam_access_campaigns
 
 | Column | Type | Not null | Key | Default |
@@ -3420,3 +3456,227 @@ Indexes:
 - ix_ui_widgets_company: company_id
 - ix_ui_widgets_module: module, sort_order
 - sqlite_autoindex_ui_widgets_1 (unique): code
+
+## wf_definitions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| version | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| steps_json | TEXT | yes |  |  |
+| activation_instance_id | INTEGER |  |  |  |
+| activated_at | TEXT |  |  |  |
+| activated_by | TEXT |  |  |  |
+| retired_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| row_version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_definitions_status: company_id, status
+- ix_wf_definitions_activation: activation_instance_id
+- ux_wf_definitions_active (unique): company_id, doc_type
+- ux_wf_definitions_version (unique): company_id, doc_type, version
+
+## wf_history
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| instance_id | INTEGER | yes |  |  |
+| task_id | INTEGER |  |  |  |
+| cycle | INTEGER | yes |  | 1 |
+| step_code | TEXT |  |  |  |
+| event | TEXT | yes |  |  |
+| actor | TEXT | yes |  |  |
+| comment | TEXT |  |  |  |
+| data_json | TEXT | yes |  | '{}' |
+| at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: task_id -> wf_tasks(id), instance_id -> wf_instances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_history_task: task_id
+- ix_wf_history_company_id: company_id
+- ix_wf_history_instance: instance_id, id
+
+## wf_instances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| doc_id | TEXT | yes |  |  |
+| doc_ref | TEXT |  |  |  |
+| title | TEXT |  |  |  |
+| definition_id | INTEGER | yes |  |  |
+| definition_version | INTEGER | yes |  |  |
+| steps_json | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'RUNNING' |
+| current_step | TEXT |  |  |  |
+| cycle | INTEGER | yes |  | 1 |
+| context_json | TEXT | yes |  | '{}' |
+| previous_instance_id | INTEGER |  |  |  |
+| needs_admin | INTEGER | yes |  | 0 |
+| submitted_by | TEXT | yes |  |  |
+| submitted_at | TEXT | yes |  |  |
+| completed_at | TEXT |  |  |  |
+| completed_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: previous_instance_id -> wf_instances(id), definition_id -> wf_definitions(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_wf_instances_running (unique): company_id, doc_type, doc_id
+- ix_wf_instances_previous: previous_instance_id
+- ix_wf_instances_submitter: company_id, submitted_by
+- ix_wf_instances_definition: definition_id
+- ix_wf_instances_status: company_id, status, doc_type
+- ix_wf_instances_doc: company_id, doc_type, doc_id
+
+## wf_task_attachments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_id | INTEGER | yes |  |  |
+| file_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), task_id -> wf_tasks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_task_attachments_company_id: company_id
+- ix_wf_task_attachments_file: file_id
+- ux_wf_task_attachments (unique): task_id, file_id
+
+## wf_tasks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| instance_id | INTEGER | yes |  |  |
+| step_code | TEXT | yes |  |  |
+| step_no | INTEGER | yes |  |  |
+| cycle | INTEGER | yes |  | 1 |
+| kind | TEXT | yes |  | 'APPROVAL' |
+| assignee_user_id | TEXT |  |  |  |
+| assignee_role | TEXT |  |  |  |
+| scope_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'OPEN' |
+| due_at | TEXT |  |  |  |
+| acted_at | TEXT |  |  |  |
+| action | TEXT |  |  |  |
+| comment | TEXT |  |  |  |
+| on_behalf_of | TEXT |  |  |  |
+| delegated_from | TEXT |  |  |  |
+| clarification | TEXT | yes |  | 'NONE' |
+| reminded_at | TEXT |  |  |  |
+| escalated_at | TEXT |  |  |  |
+| superseded | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: instance_id -> wf_instances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_tasks_due: status, due_at
+- ix_wf_tasks_role: company_id, assignee_role, status
+- ix_wf_tasks_user: company_id, assignee_user_id, status
+- ix_wf_tasks_instance: instance_id, step_no, status
+
+## wf_watchers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| instance_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: instance_id -> wf_instances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_watchers_user: company_id, user_ref
+- ux_wf_watchers (unique): instance_id, user_ref

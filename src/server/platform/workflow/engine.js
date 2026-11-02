@@ -16,7 +16,6 @@ import { systemActions, workflowResolvers, workflowTypes } from './registry.js';
  */
 const HOUR = 3_600_000;
 const ADMIN_ROLE_PERMISSION = 'eng.workflow.admin';
-const DONE = ['APPROVED', 'REJECTED', 'CANCELLED', 'WITHDRAWN'];
 const SOD = (message) => new HttpError(403, 'SEGREGATION_OF_DUTIES', message);
 const needsComment = (comment, what) => { if (!comment || comment.trim().length < 5) throw badRequest(`Give a comment of at least 5 characters when you ${what}.`, [{ field: 'comment', message: 'is required' }]); };
 
@@ -33,17 +32,28 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   };
   const today = () => iso().slice(0, 10);
 
-  /** The people who hold a role in a part of the company now (their assignment covers it). */
+  /** The people who hold a role in a part of the company now: by an assignment that covers it, or by the roles recorded on their account (the whole company). */
   function holders(companyId, role, scope = {}) {
     const rows = db.prepare(`SELECT DISTINCT u.username, a.scope_type, a.scope_ids_json FROM iam_assignments a JOIN iam_users u ON u.id = a.user_id JOIN iam_roles r ON r.id = a.role_id
       WHERE a.company_id = ? AND r.code = ? AND a.status = 'ACTIVE' AND a.is_active = 1 AND u.status = 'ACTIVE' AND u.is_active = 1 AND (a.effective_from IS NULL OR a.effective_from <= ?) AND (a.effective_to IS NULL OR a.effective_to >= ?)`).all(companyId, role, today(), today());
-    return [...new Set(rows.filter((a) => {
+    const byAssignment = rows.filter((a) => {
       const ids = JSON.parse(a.scope_ids_json || '[]').map(Number);
       if (a.scope_type === 'COMPANY') return true;
       if (a.scope_type === 'PROJECT') return scope.projectId ? ids.includes(Number(scope.projectId)) : false;
       if (a.scope_type === 'SITE') return scope.siteId ? ids.includes(Number(scope.siteId)) : false;
       return !scope.projectId && !scope.siteId;
-    }).map((a) => a.username))];
+    }).map((a) => a.username);
+    const byAccount = db.prepare("SELECT u.username FROM iam_users u WHERE u.company_id = ? AND u.status = 'ACTIVE' AND u.is_active = 1 AND EXISTS (SELECT 1 FROM json_each(u.roles_json) j WHERE j.value = ?)").all(companyId, role).map((u) => u.username);
+    return [...new Set([...byAssignment, ...byAccount])];
+  }
+
+  /** The roles a person holds for any part of the company: those on their account or session and those of their assignments. */
+  function heldRoles(actor) {
+    const set = new Set(actor.roles ?? []);
+    if (actor.userId && iamMode(actor.companyId)) {
+      for (const r of db.prepare("SELECT DISTINCT r.code FROM iam_assignments a JOIN iam_roles r ON r.id = a.role_id WHERE a.user_id = ? AND a.company_id = ? AND a.status = 'ACTIVE' AND a.is_active = 1 AND (a.effective_from IS NULL OR a.effective_from <= ?) AND (a.effective_to IS NULL OR a.effective_to >= ?)").all(actor.userId, actor.companyId, today(), today())) set.add(r.code);
+    }
+    return [...set];
   }
 
   // ---- loading ----
@@ -213,7 +223,8 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   function isAssignee(actor, task) {
     if (task.assignee_user_id) return task.assignee_user_id === actor.user;
     const roles = String(task.assignee_role ?? '').split('|').filter(Boolean);
-    if (!roles.some((r) => (actor.roles ?? []).includes(r))) return false;
+    const held = heldRoles(actor);
+    if (!roles.some((r) => held.includes(r))) return false;
     const scope = JSON.parse(task.scope_json || '{}');
     if (!iamMode(task.company_id) || !(scope.projectId || scope.siteId)) return true;
     return roles.some((r) => holders(task.company_id, r, scope).includes(actor.user));
@@ -326,7 +337,9 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
       if (action !== 'approve') needsComment(comment, action === 'reject' ? 'reject a document' : 'return a document');
       if (action === 'approve' && asked) throw unprocessable('A question on this task is still waiting for an answer from the person who raised the document.');
       if (action === 'approve') {
-        const attached = [...new Set((input.attachments ?? []).map(Number))];
+        // the files the approver uploaded to the task (they are linked to it by the file service) count as attached as soon as they are clean
+        const uploaded = db.prepare("SELECT id FROM core_files WHERE company_id = ? AND linked_entity = 'wf_task' AND linked_id = ? AND scan_status = 'CLEAN' AND deleted_at IS NULL").all(actor.companyId, task.id).map((f) => f.id);
+        const attached = [...new Set([...(input.attachments ?? []).map(Number), ...uploaded])];
         for (const fileId of attached) if (!db.prepare("SELECT 1 FROM core_files WHERE id = ? AND company_id = ? AND scan_status = 'CLEAN' AND deleted_at IS NULL").get(fileId, actor.companyId)) throw unprocessable(`The file ${fileId} was not found or has not passed the virus scan, so it cannot be attached.`);
         const total = db.prepare('SELECT COUNT(*) AS n FROM wf_task_attachments WHERE task_id = ? AND is_active = 1').get(task.id).n + attached.filter((f) => !db.prepare('SELECT 1 FROM wf_task_attachments WHERE task_id = ? AND file_id = ?').get(task.id, f)).length;
         if (step.requireAttachment && total === 0) throw unprocessable('This step needs an attachment (a note, a report, a signed copy) before you approve. Attach it and approve again.');
@@ -460,7 +473,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   const takesPart = (actor, inst) => inst.submitted_by === actor.user
     || Boolean(db.prepare("SELECT 1 FROM wf_tasks WHERE instance_id = ? AND (assignee_user_id = ? OR delegated_from = ? OR updated_by = ?) LIMIT 1").get(inst.id, actor.user, actor.user, actor.user))
     || Boolean(db.prepare('SELECT 1 FROM wf_watchers WHERE instance_id = ? AND user_ref = ?').get(inst.id, actor.user))
-    || db.prepare("SELECT assignee_role FROM wf_tasks WHERE instance_id = ? AND assignee_role IS NOT NULL").all(inst.id).some((t) => String(t.assignee_role).split('|').some((r) => (actor.roles ?? []).includes(r)));
+    || db.prepare('SELECT * FROM wf_tasks WHERE instance_id = ? AND assignee_role IS NOT NULL AND assignee_user_id IS NULL').all(inst.id).some((t) => isAssignee(actor, t));
   const mayView = (actor, inst) => authz.check(actor, 'eng.workflow.view', { companyId: inst.company_id, projectId: inst.project_id, siteId: inst.site_id }).allowed;
   function assertCanSee(actor, inst) {
     if (inst.company_id !== actor.companyId || !(takesPart(actor, inst) || mayView(actor, inst))) throw notFound('That workflow instance does not exist.');
@@ -531,7 +544,21 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     const open = status ?? 'OPEN';
     let rows;
     if (mine === 'assigned') {
-      rows = db.prepare("SELECT t.* FROM wf_tasks t JOIN wf_instances i ON i.id = t.instance_id WHERE t.company_id = ? AND t.status = ? AND t.superseded = 0 AND i.status = 'RUNNING' AND i.submitted_by != ? ORDER BY t.due_at, t.id").all(actor.companyId, open, actor.user).filter((t) => isAssignee(actor, t));
+      // tasks for me by name or by a role I hold, narrowed in SQL. In a company with people in the identity tables a role may be held for part of the
+      // company only, so the scope of each task is checked as well and the page and the total count only what I may decide.
+      const roles = heldRoles(actor);
+      const p = { c: actor.companyId, s: open, u: actor.user };
+      roles.forEach((r, i) => { p[`r${i}`] = r; });
+      const named = roles.map((_, i) => `:r${i}`).join(', ');
+      const alternatives = roles.map((_, i) => `instr('|' || t.assignee_role || '|', '|' || :r${i} || '|') > 0`).join(' OR ');
+      const mineSql = `(t.assignee_user_id = :u OR (t.assignee_user_id IS NULL AND (${named ? `t.assignee_role IN (${named}) OR (t.assignee_role LIKE '%|%' AND (${alternatives}))` : '0'})))`;
+      const from = `FROM wf_tasks t JOIN wf_instances i ON i.id = t.instance_id WHERE t.company_id = :c AND t.status = :s AND t.superseded = 0 AND i.status = 'RUNNING' AND i.submitted_by != :u AND ${mineSql}`;
+      if (!iamMode(actor.companyId)) {
+        const total = db.prepare(`SELECT COUNT(*) AS n ${from}`).get(p).n;
+        rows = db.prepare(`SELECT t.* ${from} ORDER BY t.due_at, t.id LIMIT :limit OFFSET :offset`).all({ ...p, limit, offset });
+        return { rows: rows.map((t) => { const i = loadInstance(t.instance_id, actor.companyId); return { ...presentTask(t, i, actor), instance: present(i) }; }), total };
+      }
+      rows = db.prepare(`SELECT t.* ${from} ORDER BY t.due_at, t.id`).all(p).filter((t) => isAssignee(actor, t));
     } else if (mine === 'delegated') {
       rows = db.prepare("SELECT t.* FROM wf_tasks t WHERE t.company_id = ? AND t.delegated_from IS NOT NULL AND (t.assignee_user_id = ? OR t.delegated_from = ?) ORDER BY t.id DESC").all(actor.companyId, actor.user, actor.user);
     } else if (mine === 'admin') {
@@ -563,7 +590,9 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     if (running) where.push("i.status = 'RUNNING'");
     if (q) { where.push("(i.doc_ref LIKE :q OR i.title LIKE :q OR i.submitted_by LIKE :q OR i.doc_id = :qe)"); p.q = `%${q}%`; p.qe = q; }
     const order = sort === 'oldest' ? 'i.id ASC' : 'i.id DESC';
-    const { limit: _l, offset: _o, ...pc } = p;
+    const pc = { ...p };
+    delete pc.limit;
+    delete pc.offset;
     const total = db.prepare(`SELECT COUNT(*) AS n FROM wf_instances i WHERE ${where.join(' AND ')}`).get(pc).n;
     const rows = db.prepare(`SELECT i.* FROM wf_instances i WHERE ${where.join(' AND ')} ORDER BY ${order} LIMIT :limit OFFSET :offset`).all(p);
     return { rows: rows.map((i) => ({ ...present(i), openTasks: db.prepare("SELECT COUNT(*) AS n FROM wf_tasks WHERE instance_id = ? AND status IN ('OPEN', 'ADMIN_QUEUE') AND superseded = 0").get(i.id).n })), total };
@@ -587,7 +616,8 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
       FROM wf_instances i WHERE ${base} AND i.status = 'RUNNING' AND (i.needs_admin = 1 OR EXISTS (SELECT 1 FROM wf_tasks t WHERE t.instance_id = i.id AND t.status = 'OPEN' AND t.superseded = 0 AND t.due_at < :now))
       ORDER BY i.needs_admin DESC, dueAt LIMIT 100`).all(p).map((r) => ({ ...r, needsAdmin: r.needsAdmin === 1, reason: r.needsAdmin === 1 ? 'Waiting for a workflow administrator to assign a task' : 'A task is past its due time' }));
     const sum = (k) => byType.reduce((n, r) => n + (r[k] ?? 0), 0);
-    const { now: _n, ...pn } = p;
+    const pn = { ...p };
+    delete pn.now;
     const completed = db.prepare(`SELECT ROUND(AVG((julianday(i.completed_at) - julianday(i.submitted_at)) * 24), 2) AS h FROM wf_instances i WHERE ${base} AND i.status = 'APPROVED'`).get(pn).h;
     return { totals: { running: sum('running'), stuck: sum('stuck'), overdue: sum('overdue'), approved: sum('approved'), rejected: sum('rejected'), returned: sum('returned'), cancelled: sum('cancelled'), avgCycleHours: completed }, byType, attention };
   }
@@ -620,10 +650,18 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     });
   }
 
+  /** What the file service needs to know about a task a file is being attached to: who may see it and who may add to it (the person who must decide on it). */
+  function taskAccess(actor, taskId) {
+    const t = db.prepare('SELECT * FROM wf_tasks WHERE id = ?').get(Number(taskId));
+    if (!t || t.company_id !== actor.companyId) return null;
+    const inst = refresh(t.instance_id);
+    return { companyId: t.company_id, projectId: inst.project_id, siteId: inst.site_id, canView: takesPart(actor, inst) || mayView(actor, inst), canEdit: !whyNot(actor, t, inst), locked: t.status === 'DONE' };
+  }
+
   /** BR-03: is the document inside an approval or approved, so that it must not be changed? */
   const isLocked = (companyId, docType, docId) => Boolean(db.prepare("SELECT 1 FROM wf_instances WHERE company_id = ? AND doc_type = ? AND doc_id = ? AND status IN ('RUNNING', 'APPROVED') AND is_active = 1").get(companyId, docType, String(docId)));
   /** The legacy adapter keeps the originator in step when a person is replaced. */
   const reassignOriginator = (companyId, docType, docId, to) => db.prepare("UPDATE wf_instances SET submitted_by = ? WHERE company_id = ? AND doc_type = ? AND doc_id = ? AND status IN ('RUNNING', 'RETURNED')").run(to, companyId, docType, String(docId));
 
-  return { submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
+  return { taskAccess, submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
 }
