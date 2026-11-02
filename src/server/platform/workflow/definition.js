@@ -30,11 +30,11 @@ const step = z.object({
   notify: z.array(approver).max(8).default([]),
   action: z.string().max(60).nullable().default(null),
 }).strict();
-const settings = z.object({ resubmit: z.enum(['first', 'returning_step']).default('first'), distinctApprovers: z.boolean().default(true) }).strict();
+const settings = z.object({ resubmit: z.enum(['first', 'returning_step']).default('first'), distinctApprovers: z.boolean().default(true), matrix: z.boolean().default(false) }).strict();
 export const definitionBody = z.object({
   docType: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,59}$/),
   name: z.string().trim().min(3).max(120),
-  settings: settings.default({ resubmit: 'first', distinctApprovers: true }),
+  settings: settings.default({ resubmit: 'first', distinctApprovers: true, matrix: false }),
   steps: z.array(step).min(1).max(20),
 }).strict();
 

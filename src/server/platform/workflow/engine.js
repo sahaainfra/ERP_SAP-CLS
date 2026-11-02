@@ -21,6 +21,8 @@ const needsComment = (comment, what) => { if (!comment || comment.trim().length 
 
 export function createWorkflowEngine({ db, now = () => new Date() }) {
   const authz = authzOf(db);
+  /** What the approval matrix, SLA calendar, delegation and escalation of part 04.02 plug in (all optional: the engine works without them). */
+  const policy = { chain: null, sla: null, delegation: null, escalation: null };
   const iso = () => now().toISOString();
   const has = (t) => Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(t));
   const iamCache = new Map();
@@ -140,26 +142,38 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     return slots;
   }
 
+  /** The amount the document carries for the authority checks, in paise (context.amount is in rupees). */
+  const amountOf = (inst) => { const a = Number(JSON.parse(inst.context_json).amount); return Number.isFinite(a) ? Math.round(a * 100) : null; };
   const slaHoursOf = (inst, step) => {
     if (step.slaHours) return step.slaHours;
     try { return Number(createParameterStore(db).get('eng.workflow.default_sla_hours', { companyId: inst.company_id, date: today() })); } catch { return 48; }
   };
 
-  function makeTask(inst, step, stepNo, slot, kind, actor) {
-    const due = new Date(now().getTime() + slaHoursOf(inst, step) * HOUR).toISOString();
+  function makeTask(inst, step, stepNo, slot, kind, actor, extra = {}) {
+    const sla = policy.sla ? policy.sla({ companyId: inst.company_id, docType: inst.doc_type, step, from: now(), projectId: inst.project_id }) : null;
+    const due = sla?.dueAt ?? new Date(now().getTime() + slaHoursOf(inst, step) * HOUR).toISOString();
     const empty = Boolean(slot.empty);
-    const res = db.prepare(`INSERT INTO wf_tasks (company_id, instance_id, step_code, step_no, cycle, kind, assignee_user_id, assignee_role, scope_json, status, due_at, project_id, site_id, created_by, source_type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'workflow')`)
-      .run(inst.company_id, inst.id, step.code, stepNo, inst.cycle, kind, slot.user ?? null, slot.role ?? null, JSON.stringify(slot.scope ?? {}), empty ? 'ADMIN_QUEUE' : 'OPEN', due, inst.project_id, inst.site_id, actor);
+    // a person who has delegated this kind of document for these dates has the task made for the delegate, who decides on their behalf
+    let user = slot.user ?? null;
+    let delegatedFrom = null;
+    if (user && !empty && policy.delegation) {
+      const d = policy.delegation.forUser({ companyId: inst.company_id, user, docType: inst.doc_type, date: today(), amount: amountOf(inst) });
+      if (d && d.delegate !== inst.submitted_by) { delegatedFrom = user; user = d.delegate; }
+    }
+    const scope = { ...(slot.scope ?? {}), ...(sla ? { sla: { hours: sla.hours, remindAt: sla.remindAt, secondAt: sla.secondAt } } : {}), ...extra };
+    const empty0 = empty;
+    const res = db.prepare(`INSERT INTO wf_tasks (company_id, instance_id, step_code, step_no, cycle, kind, assignee_user_id, assignee_role, scope_json, status, due_at, delegated_from, project_id, site_id, created_by, source_type)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'workflow')`)
+      .run(inst.company_id, inst.id, step.code, stepNo, inst.cycle, kind, user, slot.role ?? null, JSON.stringify(scope), empty0 ? 'ADMIN_QUEUE' : 'OPEN', due, delegatedFrom, inst.project_id, inst.site_id, actor);
     const task = db.prepare('SELECT * FROM wf_tasks WHERE id = ?').get(Number(res.lastInsertRowid));
-    hist(inst, { event: empty ? 'ADMIN_QUEUE' : 'TASK_CREATED', actor, task, comment: empty ? slot.why : null, data: { assignee: slot.user ?? slot.role ?? null } });
+    hist(inst, { event: empty ? 'ADMIN_QUEUE' : 'TASK_CREATED', actor, task, comment: empty ? slot.why : null, data: { assignee: user ?? slot.role ?? null, ...(delegatedFrom ? { delegatedFrom } : {}) } });
     if (empty) {
       emit(inst, 'workflow.task.unassigned', actor, { taskId: task.id, step: step.code, why: slot.why });
       notify(inst, actor, 'workflow.task.unassigned', ['permission:eng.workflow.admin'], { taskId: task.id, step: step.code, why: slot.why });
       audit(inst, 'admin_queue', actor, { reason: slot.why, newValues: { taskId: task.id, step: step.code } });
     } else {
-      emit(inst, 'workflow.task.created', actor, { taskId: task.id, step: step.code, assignee: slot.user ?? slot.role });
-      notify(inst, actor, 'workflow.task.assigned', [slot.user ? `user:${slot.user}` : `role:${slot.role}`], { taskId: task.id, step: step.code });
+      emit(inst, 'workflow.task.created', actor, { taskId: task.id, step: step.code, assignee: user ?? slot.role });
+      notify(inst, actor, 'workflow.task.assigned', [user ? `user:${user}` : `role:${slot.role}`], { taskId: task.id, step: step.code });
     }
     return task;
   }
@@ -222,7 +236,8 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   const addWatcher = (inst, user, actor) => db.prepare('INSERT OR IGNORE INTO wf_watchers (company_id, instance_id, user_ref, project_id, site_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?)').run(inst.company_id, inst.id, user, inst.project_id, inst.site_id, actor, 'workflow');
 
   // ---- who may act on a task ----
-  function isAssignee(actor, task) {
+  /** Is this person, in their own right, the one the task is for? */
+  function isDirectAssignee(actor, task) {
     if (task.assignee_user_id) return task.assignee_user_id === actor.user;
     const roles = String(task.assignee_role ?? '').split('|').filter(Boolean);
     const held = heldRoles(actor);
@@ -231,6 +246,21 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     if (!iamMode(task.company_id) || !(scope.projectId || scope.siteId)) return true;
     return roles.some((r) => holders(task.company_id, r, scope).includes(actor.user));
   }
+  /** The delegation (if any) that lets this person decide the task for its owner: dates, document type and the amount cap all hold. */
+  function delegationFor(actor, task) {
+    if (!policy.delegation) return null;
+    const row = db.prepare('SELECT doc_type, context_json FROM wf_instances WHERE id = ?').get(task.instance_id);
+    if (!row) return null;
+    const a = Number(JSON.parse(row.context_json).amount);
+    const amount = Number.isFinite(a) ? Math.round(a * 100) : null;
+    for (const d of policy.delegation.activeFor({ companyId: task.company_id, delegate: actor.user, docType: row.doc_type, date: today() })) {
+      if (d.maxAmount != null && amount != null && amount > d.maxAmount) continue;
+      if (task.assignee_user_id ? task.assignee_user_id === d.delegator : String(task.assignee_role ?? '').split('|').some((r) => d.delegatorRoles.includes(r))) return d;
+    }
+    return null;
+  }
+  const isAssignee = (actor, task) => isDirectAssignee(actor, task) || Boolean(delegationFor(actor, task));
+
   /** Why this person may not decide this task, or null when they may. */
   function whyNot(actor, task, inst) {
     if (task.status !== 'OPEN') return task.status === 'ADMIN_QUEUE' ? 'Nobody has been assigned to this task yet; a workflow administrator must assign it.' : `This task is already ${task.status.toLowerCase()}.`;
@@ -261,12 +291,20 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
       }
       const def = activeDefinition(actor.companyId, docType);
       const merged = { ...context };
+      // part 04.02: a definition that routes by the approval matrix gets its chain from the rule that fits the document (first full match wins)
+      let stepsJson = def.steps_json;
+      let matrixTrace = null;
+      if (unpackSteps(def.steps_json).settings.matrix && policy.chain) {
+        const resolved = policy.chain({ companyId: actor.companyId, docType, context: merged, projectId: doc.projectId ?? null, departmentId: doc.departmentId ?? null, submittedBy: actor.user, date: today() });
+        if (resolved?.error) throw unprocessable(resolved.error);
+        if (resolved) { stepsJson = packSteps({ settings: unpackSteps(def.steps_json).settings, steps: resolved.steps }); matrixTrace = resolved.trace; }
+      }
       const res = db.prepare(`INSERT INTO wf_instances (company_id, doc_type, doc_id, doc_ref, title, definition_id, definition_version, steps_json, status, context_json, previous_instance_id, submitted_by, submitted_at, project_id, site_id, created_by, source_type, source_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RUNNING', ?, ?, ?, ?, ?, ?, ?, 'workflow', ?)`)
-        .run(actor.companyId, docType, docId, doc.ref ?? null, doc.title ?? null, def.id, def.version, def.steps_json, JSON.stringify(merged), previous?.id ?? null, actor.user, iso(), doc.projectId ?? null, doc.siteId ?? null, actor.user, String(def.id));
+        .run(actor.companyId, docType, docId, doc.ref ?? null, doc.title ?? null, def.id, def.version, stepsJson, JSON.stringify(merged), previous?.id ?? null, actor.user, iso(), doc.projectId ?? null, doc.siteId ?? null, actor.user, String(def.id));
       let inst = refresh(Number(res.lastInsertRowid));
       addWatcher(inst, actor.user, actor.user);
-      hist(inst, { event: 'SUBMITTED', actor: actor.user, comment, step: null, data: { definitionVersion: def.version, amends: previous?.id ?? null } });
+      hist(inst, { event: 'SUBMITTED', actor: actor.user, comment, step: null, data: { definitionVersion: def.version, amends: previous?.id ?? null, ...(matrixTrace ? { matrix: matrixTrace } : {}) } });
       audit(inst, 'submit', actor.user, { reason: comment, newValues: { definitionVersion: def.version } });
       emit(inst, 'workflow.instance.submitted', actor.user, { definitionVersion: def.version });
       t.hooks.onSubmitted?.(db, { instance: present(inst), actor, comment });
@@ -351,7 +389,8 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
         if (missing.length) throw unprocessable(`Tick every item of the checklist before you approve: ${missing.join('; ')}.`);
         for (const fileId of attached) db.prepare('INSERT OR IGNORE INTO wf_task_attachments (company_id, task_id, file_id, created_by, source_type) VALUES (?, ?, ?, ?, ?)').run(actor.companyId, task.id, fileId, actor.user, 'workflow');
       }
-      const onBehalf = task.delegated_from && task.assignee_user_id === actor.user ? task.delegated_from : null;
+      const viaDelegation = isDirectAssignee(actor, task) ? null : delegationFor(actor, task);
+      const onBehalf = viaDelegation ? viaDelegation.delegator : task.delegated_from && task.assignee_user_id === actor.user ? task.delegated_from : null;
       db.prepare("UPDATE wf_tasks SET status = 'DONE', action = ?, comment = ?, acted_at = ?, on_behalf_of = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?")
         .run(action, comment ?? null, iso(), onBehalf, actor.user, iso(), task.id);
       task = db.prepare('SELECT * FROM wf_tasks WHERE id = ?').get(task.id);
@@ -365,8 +404,18 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
       if (action === 'return') { returnDocument(inst, task, step, actor, comment, input.returnToStep); return get(actor, inst.id, { trusted: true }); }
       // approve: does the step have what it needs?
       const siblings = db.prepare("SELECT * FROM wf_tasks WHERE instance_id = ? AND step_code = ? AND superseded = 0 AND status != 'CANCELLED'").all(inst.id, task.step_code);
-      const stepDone = step.mode === 'parallel_all' ? siblings.every((s) => s.status === 'DONE' && s.action === 'approve') : true;
-      if (!stepDone) { hist(inst, { event: 'WAITING', actor: actor.user, task, data: { waitingFor: siblings.filter((s) => s.status !== 'DONE').length } }); return get(actor, inst.id, { trusted: true }); }
+      // an escalation task (part 04.02) is another person who may answer for the same slot: whichever of the two decides, the slot is done
+      const escalatedFrom = (t) => JSON.parse(t.scope_json || '{}').escalatedFrom ?? null;
+      const slots = siblings.filter((t) => escalatedFrom(t) == null);
+      const decided = (t) => (t.status === 'DONE' && t.action === 'approve') || siblings.some((e) => escalatedFrom(e) === t.id && e.status === 'DONE' && e.action === 'approve');
+      const stepDone = step.mode === 'parallel_all' ? slots.every(decided) : true;
+      if (!stepDone) {
+        // the other half of this slot is no longer needed
+        const mate = escalatedFrom(task) ?? task.id;
+        db.prepare("UPDATE wf_tasks SET status = 'SKIPPED', updated_at = ?, version = version + 1 WHERE instance_id = ? AND superseded = 0 AND status = 'OPEN' AND id != ? AND (id = ? OR json_extract(scope_json, '$.escalatedFrom') = ?)").run(iso(), inst.id, task.id, mate, mate);
+        hist(inst, { event: 'WAITING', actor: actor.user, task, data: { waitingFor: slots.filter((t) => !decided(t)).length } });
+        return get(actor, inst.id, { trusted: true });
+      }
       if (step.mode !== 'parallel_all') db.prepare("UPDATE wf_tasks SET status = 'SKIPPED', updated_at = ?, version = version + 1 WHERE instance_id = ? AND step_code = ? AND superseded = 0 AND id != ? AND status IN ('OPEN', 'ADMIN_QUEUE')").run(iso(), inst.id, task.step_code, task.id);
       inst = bump(inst, { needs_admin: db.prepare("SELECT 1 FROM wf_tasks WHERE instance_id = ? AND status = 'ADMIN_QUEUE'").get(inst.id) ? 1 : 0 });
       advance(inst, steps.findIndex((s) => s.code === task.step_code) + 1, actor.user);
@@ -476,6 +525,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   // ---- reading ----
   const takesPart = (actor, inst) => inst.submitted_by === actor.user
     || Boolean(db.prepare("SELECT 1 FROM wf_tasks WHERE instance_id = ? AND (assignee_user_id = ? OR delegated_from = ? OR updated_by = ?) LIMIT 1").get(inst.id, actor.user, actor.user, actor.user))
+    || db.prepare('SELECT * FROM wf_tasks WHERE instance_id = ? AND assignee_user_id IS NOT NULL').all(inst.id).some((t) => delegationFor(actor, t) !== null)
     || Boolean(db.prepare('SELECT 1 FROM wf_watchers WHERE instance_id = ? AND user_ref = ?').get(inst.id, actor.user))
     || db.prepare('SELECT * FROM wf_tasks WHERE instance_id = ? AND assignee_role IS NOT NULL AND assignee_user_id IS NULL').all(inst.id).some((t) => isAssignee(actor, t));
   const mayView = (actor, inst) => authz.check(actor, 'eng.workflow.view', { companyId: inst.company_id, projectId: inst.project_id, siteId: inst.site_id }).allowed;
@@ -496,7 +546,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   function present(i) {
     const t = workflowTypes.get(i.doc_type);
     return {
-      id: i.id, docType: i.doc_type, docLabel: t?.label ?? i.doc_type, docId: i.doc_id, docRef: i.doc_ref, title: i.title, route: t?.route?.(i.doc_id) ?? null, status: i.status, currentStep: i.current_step, cycle: i.cycle,
+      id: i.id, companyId: i.company_id, docType: i.doc_type, docLabel: t?.label ?? i.doc_type, docId: i.doc_id, docRef: i.doc_ref, title: i.title, route: t?.route?.(i.doc_id) ?? null, status: i.status, currentStep: i.current_step, cycle: i.cycle,
       definitionId: i.definition_id, definitionVersion: i.definition_version, submittedBy: i.submitted_by, submittedAt: i.submitted_at, completedAt: i.completed_at, completedReason: i.completed_reason,
       needsAdmin: i.needs_admin === 1, previousInstanceId: i.previous_instance_id, projectId: i.project_id, siteId: i.site_id, context: JSON.parse(i.context_json), version: i.version,
     };
@@ -551,14 +601,17 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     if (mine === 'assigned') {
       // tasks for me by name or by a role I hold, narrowed in SQL. In a company with people in the identity tables a role may be held for part of the
       // company only, so the scope of each task is checked as well and the page and the total count only what I may decide.
-      const roles = heldRoles(actor);
+      // what delegators have handed over (part 04.02): their tasks, and tasks for their roles, are also candidates; each is checked below
+      const delegations = policy.delegation ? policy.delegation.activeFor({ companyId: actor.companyId, delegate: actor.user, docType: null, date: today() }) : [];
+      const roles = [...new Set([...heldRoles(actor), ...delegations.flatMap((d) => d.delegatorRoles)])];
       const p = { c: actor.companyId, s: open, u: actor.user };
+      delegations.forEach((d, i) => { p[`d${i}`] = d.delegator; });
       roles.forEach((r, i) => { p[`r${i}`] = r; });
       const named = roles.map((_, i) => `:r${i}`).join(', ');
       const alternatives = roles.map((_, i) => `instr('|' || t.assignee_role || '|', '|' || :r${i} || '|') > 0`).join(' OR ');
-      const mineSql = `(t.assignee_user_id = :u OR (t.assignee_user_id IS NULL AND (${named ? `t.assignee_role IN (${named}) OR (t.assignee_role LIKE '%|%' AND (${alternatives}))` : '0'})))`;
+      const mineSql = `(t.assignee_user_id = :u${delegations.map((_, i) => ` OR t.assignee_user_id = :d${i}`).join('')} OR (t.assignee_user_id IS NULL AND (${named ? `t.assignee_role IN (${named}) OR (t.assignee_role LIKE '%|%' AND (${alternatives}))` : '0'})))`;
       const from = `FROM wf_tasks t JOIN wf_instances i ON i.id = t.instance_id WHERE t.company_id = :c AND t.status = :s AND t.superseded = 0 AND i.status = 'RUNNING' AND i.submitted_by != :u AND ${mineSql}`;
-      if (!iamMode(actor.companyId)) {
+      if (!iamMode(actor.companyId) && delegations.length === 0) {
         const total = db.prepare(`SELECT COUNT(*) AS n ${from}`).get(p).n;
         rows = db.prepare(`SELECT t.* ${from} ORDER BY t.due_at, t.id LIMIT :limit OFFSET :offset`).all({ ...p, limit, offset });
         return { rows: rows.map((t) => { const i = loadInstance(t.instance_id, actor.companyId); return { ...presentTask(t, i, actor), instance: present(i) }; }), total };
@@ -629,32 +682,57 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     return { totals: { running: sum('running'), stuck: sum('stuck'), overdue: sum('overdue'), approved: sum('approved'), rejected: sum('rejected'), returned: sum('returned'), cancelled: sum('cancelled'), avgCycleHours: completed }, byType, attention };
   }
 
-  /** Reminders and escalations for tasks past their time (a scheduled job). */
+  /**
+   * Reminders and escalations (a scheduled job). A task has three points in its time: the reminder (by default half way), the due time, where it climbs one
+   * level of the management hierarchy (another person may then answer for the same slot), and twice the time, where it climbs to the director. One step
+   * is taken for a task on each sweep. The points come from the SLA settings of the document type (part 04.02) and count working hours.
+   */
   function sweepSla() {
     return inTransaction(db, () => {
+      const nowMs = now().getTime();
       const at = iso();
       let reminded = 0;
       let escalated = 0;
-      const graceHours = (companyId) => { try { return Number(createParameterStore(db).get('eng.workflow.escalation_hours', { companyId, date: today() })); } catch { return 24; } };
-      for (const t of db.prepare("SELECT t.* FROM wf_tasks t JOIN wf_instances i ON i.id = t.instance_id WHERE t.status = 'OPEN' AND t.superseded = 0 AND i.status = 'RUNNING' AND t.due_at IS NOT NULL AND t.due_at <= ?").all(at)) {
+      const open = db.prepare("SELECT t.* FROM wf_tasks t JOIN wf_instances i ON i.id = t.instance_id WHERE t.status = 'OPEN' AND t.superseded = 0 AND i.status = 'RUNNING' AND t.due_at IS NOT NULL").all();
+      for (const t of open) {
+        const scope = JSON.parse(t.scope_json || '{}');
+        const dueMs = new Date(t.due_at).getTime();
+        const remindMs = scope.sla?.remindAt ? new Date(scope.sla.remindAt).getTime() : dueMs;
+        const secondMs = scope.sla?.secondAt ? new Date(scope.sla.secondAt).getTime() : null;
         const inst = refresh(t.instance_id);
-        if (!t.reminded_at) {
+        const who = t.assignee_user_id ? `user:${t.assignee_user_id}` : `role:${t.assignee_role}`;
+        if (!t.reminded_at && nowMs >= Math.min(remindMs, dueMs)) {
           db.prepare('UPDATE wf_tasks SET reminded_at = ?, version = version + 1 WHERE id = ?').run(at, t.id);
           hist(inst, { event: 'REMINDER', actor: 'system', task: t });
           emit(inst, 'workflow.task.reminder', 'system', { taskId: t.id, step: t.step_code });
-          notify(inst, 'system', 'workflow.task.reminder', [t.assignee_user_id ? `user:${t.assignee_user_id}` : `role:${t.assignee_role}`], { taskId: t.id });
+          notify(inst, 'system', 'workflow.task.reminder', [who], { taskId: t.id });
           reminded += 1;
-        } else if (!t.escalated_at && new Date(t.due_at).getTime() + graceHours(t.company_id) * HOUR <= now().getTime()) {
-          db.prepare('UPDATE wf_tasks SET escalated_at = ?, version = version + 1 WHERE id = ?').run(at, t.id);
-          hist(inst, { event: 'ESCALATED', actor: 'system', task: t, comment: 'the task is long overdue' });
-          audit(inst, 'escalate', 'system', { newValues: { taskId: t.id } });
-          emit(inst, 'workflow.task.escalated', 'system', { taskId: t.id, step: t.step_code });
-          notify(inst, 'system', 'workflow.task.escalated', ['permission:eng.workflow.admin', `user:${inst.submitted_by}`], { taskId: t.id });
+        } else if (scope.escalatedFrom == null && !t.escalated_at && nowMs >= dueMs) {
+          escalate(inst, t, 1, at);
+          escalated += 1;
+        } else if (scope.escalatedFrom == null && t.escalated_at && !scope.level2 && secondMs != null && nowMs >= secondMs) {
+          escalate(inst, t, 2, at);
           escalated += 1;
         }
       }
       return { reminded, escalated };
     });
+  }
+
+  /** Climb one level: another person (the next level of the hierarchy, or the director at the second point) may now answer for the slot; the first stays open. */
+  function escalate(inst, t, level, at) {
+    const scope = JSON.parse(t.scope_json || '{}');
+    if (level === 1) db.prepare('UPDATE wf_tasks SET escalated_at = ?, version = version + 1 WHERE id = ?').run(at, t.id);
+    else db.prepare('UPDATE wf_tasks SET scope_json = ?, version = version + 1 WHERE id = ?').run(JSON.stringify({ ...scope, level2: at }), t.id);
+    const target = policy.escalation ? policy.escalation.next({ companyId: inst.company_id, docType: inst.doc_type, projectId: inst.project_id, fromRole: t.assignee_role, fromUser: t.assignee_user_id, level, submittedBy: inst.submitted_by }) : null;
+    if (target?.role && !(target.role === t.assignee_role && level === 1)) {
+      const step = stepsOf(inst).find((s) => s.code === t.step_code);
+      makeTask(inst, step, t.step_no, { role: target.role, scope: { projectId: inst.project_id ?? undefined, siteId: inst.site_id ?? undefined } }, t.kind, 'system', { escalatedFrom: t.id, escalationLevel: level });
+    }
+    hist(inst, { event: 'ESCALATED', actor: 'system', task: t, comment: level === 1 ? 'the time allowed has passed' : 'twice the time allowed has passed', data: { level, to: target?.role ?? null, levelName: target?.levelName ?? null } });
+    audit(inst, 'escalate', 'system', { newValues: { taskId: t.id, level, to: target?.role ?? null } });
+    emit(inst, 'workflow.task.escalated', 'system', { taskId: t.id, step: t.step_code, level });
+    notify(inst, 'system', 'workflow.task.escalated', [...(target?.role ? [`role:${target.role}`] : ['permission:eng.workflow.admin']), `user:${inst.submitted_by}`], { taskId: t.id, level });
   }
 
   /** What the file service needs to know about a task a file is being attached to: who may see it and who may add to it (the person who must decide on it). */
@@ -670,5 +748,5 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   /** The legacy adapter keeps the originator in step when a person is replaced. */
   const reassignOriginator = (companyId, docType, docId, to) => db.prepare("UPDATE wf_instances SET submitted_by = ? WHERE company_id = ? AND doc_type = ? AND doc_id = ? AND status IN ('RUNNING', 'RETURNED')").run(to, companyId, docType, String(docId));
 
-  return { taskAccess, submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
+  return { configure: (p) => Object.assign(policy, p), setClock: (fn) => { now = fn; }, taskAccess, submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
 }

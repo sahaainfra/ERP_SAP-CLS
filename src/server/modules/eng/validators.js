@@ -65,3 +65,36 @@ export { STEP_MODES };
 const rupees = z.string().regex(/^\d{1,12}(\.\d{1,2})?$/, 'Use an amount such as 1250000.00');
 export const parseSampleDoc = (b) => parse(z.object({ title: text(120).min(3), amount: rupees, projectId: id.optional(), version: z.number().int().min(1).optional() }).strict(), b);
 export const parseSampleQuery = (q) => parse(z.object({ status: z.enum(['DRAFT', 'IN_APPROVAL', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED']).optional(), q: text(80).optional(), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+
+// ---- part 04.02: the approval matrix, authority limits, delegations, escalation and SLA ----
+const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date such as 2026-11-30').refine((v) => !Number.isNaN(Date.parse(v)), 'Not a real date');
+const docTypeCode = z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,59}$/);
+const roleCode = z.string().regex(/^(MANAGER|[A-Z][A-Z0-9_-]{1,19}(\|[A-Z][A-Z0-9_-]{1,19})*)$/, 'a role code such as PM or ITADM|DIR');
+const condition = z.object({ field: z.string().regex(/^[A-Za-z][A-Za-z0-9_.]{0,59}$/), op: z.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in']), value: z.union([z.string().max(100), z.number(), z.boolean(), z.array(z.union([z.string().max(100), z.number()])).max(30)]) }).strict();
+const ruleStep = z.object({
+  code: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,23}$/).optional(), name: text(80).optional(), role: roleCode, authority: z.boolean().optional(), group: z.string().max(20).optional(),
+  groupMode: z.enum(['all', 'any']).optional(), slaHours: z.number().int().min(1).max(720).nullable().optional(), when: condition.nullable().optional(), requireAttachment: z.boolean().optional(), checklist: z.array(text(120)).max(12).optional(),
+}).strict();
+const matrixRule = z.object({ priority: z.number().int().min(1).max(10000), name: text(100).min(2), conditions: z.array(condition).max(12).default([]), steps: z.array(ruleStep).min(1).max(12) }).strict();
+export const parseMatrixQuery = (q) => parse(z.object({ docType: docTypeCode.optional(), status: z.enum(['DRAFT', 'PENDING', 'ACTIVE', 'RETIRED', 'REJECTED']).optional(), scopeType: z.enum(['COMPANY', 'DEPARTMENT', 'PROJECT']).optional(), q: text(80).optional(), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseMatrixCreate = (b) => parse(z.object({ docType: docTypeCode, scopeType: z.enum(['COMPANY', 'DEPARTMENT', 'PROJECT']).default('COMPANY'), scopeId: z.number().int().min(0).default(0), name: text(120).optional(), copyOf: id.optional(), rules: z.array(matrixRule).min(1).max(60).optional() }).strict(), b);
+export const parseMatrixUpdate = (b) => parse(z.object({ name: text(120).optional(), rules: z.array(matrixRule).min(1).max(60), version: z.number().int().min(1).optional() }).strict(), b);
+export const parseActivate = (b) => parse(z.object({ effectiveFrom: date }).strict(), b);
+export const parseSimulate = (b) => parse(z.object({ docType: docTypeCode, context: context.default({}), projectId: id.nullable().optional(), departmentId: id.nullable().optional(), date: date.optional(), matrixId: id.nullable().optional() }).strict(), b);
+export const parseLimitChanges = (b) => parse(z.object({
+  changes: z.array(z.object({ role: z.string().regex(/^[A-Z][A-Z0-9_-]{1,19}$/), docType: docTypeCode, maxAmount: z.union([z.string().regex(/^\d{1,13}(\.\d{1,2})?$/), z.number().min(0)]).nullable() }).strict()).min(1).max(100),
+  effectiveFrom: date, reason: text(500).min(5),
+}).strict(), b);
+export const parseLimitHistory = (q) => parse(z.object({ docType: docTypeCode.optional(), role: z.string().max(20).optional(), limit: z.coerce.number().int().min(1).max(200).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseDelegationQuery = (q) => parse(z.object({ scope: z.enum(['mine', 'all']).default('mine'), status: z.enum(['PENDING', 'ACTIVE', 'REVOKED', 'REJECTED']).optional(), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseDelegation = (b) => parse(z.object({
+  delegate: text(60).min(2), docTypes: z.array(docTypeCode).max(40).default([]), from: date, to: date, reason: text(500).min(5), maxAmount: z.union([z.string().regex(/^\d{1,13}(\.\d{1,2})?$/), z.number().min(0)]).nullable().optional(), onBehalfOf: text(60).optional(),
+}).strict(), b);
+export const parseRevoke = (b) => parse(z.object({ reason: text(500).min(5) }).strict(), b);
+export const parsePathChange = (b) => parse(z.object({
+  scopeType: z.enum(['COMPANY', 'DEPARTMENT', 'PROJECT']).default('COMPANY'), scopeId: z.number().int().min(0).default(0),
+  levels: z.array(z.object({ level: text(40).min(2), roles: z.array(z.string().regex(/^[A-Z][A-Z0-9_-]{1,19}$/)).min(1).max(8) }).strict()).min(2).max(8), effectiveFrom: date, reason: text(500).min(5),
+}).strict(), b);
+export const parseSlaChange = (b) => parse(z.object({
+  settings: z.array(z.object({ docType: z.union([docTypeCode, z.literal('*')]), hours: z.number().int().min(1).max(720), remindPct: z.number().int().min(1).max(100), escalatePct: z.number().int().min(50).max(1000), secondPct: z.number().int().min(100).max(2000) }).strict()).min(1).max(60), effectiveFrom: date, reason: text(500).min(5),
+}).strict(), b);

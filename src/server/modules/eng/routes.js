@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
-export function workflowRoutes({ engine, definitions, monitorFile }, { idempotent, idempotentRequired }) {
+export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla }, { idempotent, idempotentRequired }) {
   const r = Router();
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   r.get('/doc-types', (req, res) => ok(res, definitions.options().docTypes));
@@ -39,6 +39,28 @@ export function workflowRoutes({ engine, definitions, monitorFile }, { idempoten
   r.put('/definitions/:id', idempotent, (req, res) => { const b = parseDefinitionUpdate(req.body); ok(res, definitions.update(req.actor, parseId(req.params.id), b.definition, b.version)); });
   r.delete('/definitions/:id', idempotent, (req, res) => ok(res, definitions.remove(req.actor, parseId(req.params.id))));
   r.post('/definitions/:id/activate', idempotentRequired, (req, res) => ok(res, definitions.activate(req.actor, parseId(req.params.id)), 202));
+  // part 04.02: the approval matrix
+  r.get('/matrix', (req, res) => ok(res, matrix.list(req.actor, parseMatrixQuery(req.query))));
+  r.post('/matrix', idempotent, (req, res) => ok(res, matrix.create(req.actor, parseMatrixCreate(req.body)), 201));
+  r.post('/matrix/simulate', (req, res) => ok(res, matrix.simulate(req.actor, parseSimulate(req.body))));
+  r.get('/matrix/history/:docType', (req, res) => ok(res, matrix.history(req.actor, parseDocType(req.params.docType))));
+  r.get('/matrix/:a/compare/:b', (req, res) => ok(res, matrix.compare(req.actor, parseId(req.params.a), parseId(req.params.b))));
+  r.get('/matrix/:id', (req, res) => ok(res, matrix.get(req.actor, parseId(req.params.id))));
+  r.put('/matrix/:id', idempotent, (req, res) => { const b = parseMatrixUpdate(req.body); ok(res, matrix.update(req.actor, parseId(req.params.id), b)); });
+  r.delete('/matrix/:id', idempotent, (req, res) => ok(res, matrix.remove(req.actor, parseId(req.params.id))));
+  r.post('/matrix/:id/validate', (req, res) => ok(res, matrix.validate(req.actor, parseId(req.params.id))));
+  r.post('/matrix/:id/activate', idempotentRequired, (req, res) => ok(res, matrix.activate(req.actor, parseId(req.params.id), parseActivate(req.body)), 202));
+  r.get('/authority-limits', (req, res) => ok(res, limits.grid(req.actor)));
+  r.get('/authority-limits/history', (req, res) => ok(res, limits.history(req.actor, parseLimitHistory(req.query))));
+  r.post('/authority-limits/changes', idempotentRequired, (req, res) => ok(res, limits.propose(req.actor, parseLimitChanges(req.body)), 202));
+  r.get('/delegations', (req, res) => ok(res, delegations.list(req.actor, parseDelegationQuery(req.query))));
+  r.post('/delegations', idempotentRequired, (req, res) => ok(res, delegations.create(req.actor, parseDelegation(req.body)), 201));
+  r.get('/delegations/:id', (req, res) => ok(res, delegations.get(req.actor, parseId(req.params.id))));
+  r.post('/delegations/:id/revoke', idempotent, (req, res) => ok(res, delegations.revoke(req.actor, parseId(req.params.id), parseRevoke(req.body))));
+  r.get('/escalation-paths', (req, res) => ok(res, paths.list(req.actor)));
+  r.post('/escalation-paths/changes', idempotentRequired, (req, res) => ok(res, paths.propose(req.actor, parsePathChange(req.body)), 202));
+  r.get('/sla-settings', (req, res) => ok(res, sla.list(req.actor)));
+  r.post('/sla-settings/changes', idempotentRequired, (req, res) => ok(res, sla.propose(req.actor, parseSlaChange(req.body)), 202));
   return r;
 }
 

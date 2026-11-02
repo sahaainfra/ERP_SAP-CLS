@@ -13,6 +13,9 @@ import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { createSampleDocService } from './sample-docs.js';
 import { sampleDocRoutes, workflowRoutes } from './routes.js';
+import { createDelegationService, createLimitService, createPathService, createSlaService } from './controls.js';
+import { createMatrixService } from './matrix.js';
+import './changes.js';
 
 // Part 04.01: the events of the workflow engine. A module that submits a document hears the outcome from its hooks (same transaction) and the rest of
 // the system from these.
@@ -79,6 +82,27 @@ workSources.register({
 // the files an approver adds to a task (a note, a site photo, a signed copy) go through the file service like every other attachment
 fileEntities.register({ entity: 'wf_task', label: 'Workflow task', resolve: (db, actor, id) => workflowOf(db).taskAccess(actor, id) });
 
+// Part 04.02: the events of the matrix, limits, settings and delegations, and the parameters of the calendar and of long delegations.
+/** @type {any} */
+const changeSchema = { type: 'object', properties: {}, required: [] };
+for (const [type, description] of [
+  ['workflow.matrix.activated', 'A version of the approval matrix was approved and will route documents from its effective date.'],
+  ['workflow.authority_limits.changed', 'A set of authority limits was approved and takes effect from its date.'],
+  ['workflow.settings.changed', 'The escalation hierarchy or the SLA settings were changed after their approval chain approved them.'],
+  ['workflow.delegation.activated', 'A delegation of more than the allowed days was approved by the delegator\'s manager.'],
+  ['workflow.delegation.created', 'A person delegated their approvals to another for a period.'],
+  ['workflow.delegation.revoked', 'A delegation was ended before its time.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, def, min, max, description] of [
+  ['eng.workflow.working_day_start_hour', 9, 0, 23, 'The hour (IST) the working day of approvals starts; the time allowed for an approval counts only working hours.'],
+  ['eng.workflow.working_day_end_hour', 18, 1, 24, 'The hour (IST) the working day of approvals ends.'],
+  ['eng.delegation.approval_days', 15, 1, 365, 'A delegation longer than this many days needs the approval of the delegator\'s manager.'],
+]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'wf_matrix', columns: ['company_id', 'doc_type', 'scope_type', 'scope_id', 'matrix_version'] }],
+  statuses: { wf_matrix: ['DRAFT', 'PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], wf_authority_limits: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], wf_delegations: ['PENDING', 'ACTIVE', 'REVOKED', 'REJECTED'], wf_escalation_paths: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], wf_sla_settings: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -88,7 +112,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
   mount(api, { db, config }) {
@@ -99,6 +123,19 @@ export const eng = {
     const engine = workflowOf(db);
     createLegacyAdapter({ db, engine, flags });
     const definitions = createDefinitionService({ db, engine });
+    // part 04.02: what routes a document, how long a task has, who stands in and who a late task climbs to
+    const limits = createLimitService({ db, engine });
+    const paths = createPathService({ db, engine });
+    const sla = createSlaService({ db, engine, paths });
+    const delegations = createDelegationService({ db, engine, limits });
+    const matrix = createMatrixService({ db, engine, limits, paths });
+    const on = (companyId) => flags.isOn({ companyId }, 'ff.eng.p0402');
+    engine.configure({
+      chain: (c) => (on(c.companyId) ? matrix.resolve(c) : null),
+      sla: (c) => (on(c.companyId) ? sla.forTask(c) : null),
+      delegation: { activeFor: (c) => (on(c.companyId) ? delegations.activeFor(c) : []), forUser: (c) => (on(c.companyId) ? delegations.forUser(c) : null) },
+      escalation: { next: (c) => (on(c.companyId) ? paths.next(c) : null) },
+    });
     const docs = createSampleDocService({ db, engine });
     const runtime = runtimeOf(db);
     runtime.jobs.register('eng.workflow_sla', (ctx) => { const r = engine.sweepSla(); ctx.log(`Reminded ${r.reminded}, escalated ${r.escalated}`); return r; }, { maxAttempts: 1, description: 'Sends reminders for tasks past their due time and escalates the ones long overdue.' });
@@ -116,7 +153,8 @@ export const eng = {
     const idem = { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) };
     const wf = Router();
     wf.use(gate('ff.eng.p0401', 'The workflow engine is'));
-    wf.use(workflowRoutes({ engine, definitions, monitorFile }, idem));
+    wf.use(['/matrix', '/authority-limits', '/delegations', '/escalation-paths', '/sla-settings'], gate('ff.eng.p0402', 'The approval matrix is'));
+    wf.use(workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla }, idem));
     api.use('/workflow', wf);
     const sample = Router();
     sample.use(gate('ff.eng.p0401', 'The workflow engine is'));

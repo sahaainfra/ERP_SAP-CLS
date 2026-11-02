@@ -29,7 +29,7 @@ workflowTypes.register({
   },
   defaultDefinition: {
     name: 'Sample document approval',
-    settings: { resubmit: 'first', distinctApprovers: true },
+    settings: { resubmit: 'first', distinctApprovers: true, matrix: true },
     steps: [
       { code: 'MANAGER', name: 'Project manager', type: 'approval', mode: 'single', approvers: [{ kind: 'role', role: 'PM' }], slaHours: 24, requireAttachment: false, checklist: [], when: null, notify: [], action: null },
       { code: 'FINANCE', name: 'Accounts manager', type: 'approval', mode: 'single', approvers: [{ kind: 'role', role: 'ACCMGR' }], slaHours: 24, requireAttachment: false, checklist: [], when: null, notify: [], action: null },
