@@ -13,7 +13,7 @@ export default function StepDiagram({ steps, label = 'Workflow steps' }) {
   return (
     <ol className="wf-diagram" aria-label={label} data-testid="wf-diagram">
       {steps.map((s, i) => (
-        <li key={s.code} className={`wf-step wf-step-${(s.state ?? 'PENDING').toLowerCase()}`} data-testid={`wf-step-${s.code}`}>
+        <li key={`${s.code}-${i}`} className={`wf-step wf-step-${(s.state ?? 'PENDING').toLowerCase()}`} data-testid={`wf-step-${s.code}`}>
           <span className="wf-step-no" aria-hidden="true">{i + 1}</span>
           <strong>{s.name}</strong>
           <span className="muted small">{TYPE[s.type]}{s.type === 'approval' || s.type === 'review' ? `, ${MODE[s.mode]}` : ''}</span>

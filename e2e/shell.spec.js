@@ -80,7 +80,7 @@ test('T-01 FR-01 FR-02 three roles see exactly the entries they may open; the te
   await expect(pmNav.getByRole('region', { name: 'Stores' })).toHaveCount(0); // a group with nothing for this role is not drawn
   // the accounts manager: approvals are in My Work; still no administration
   const accNav = await menu(acc);
-  await expect(accNav.getByRole('region', { name: 'My Work' }).getByRole('link', { name: 'Approvals' })).toBeVisible();
+  await expect(accNav.getByRole('region', { name: 'My Work' }).getByRole('link', { name: 'Approvals', exact: true })).toBeVisible();
   await expect(accNav.getByRole('link', { name: 'Navigation Registry' })).toHaveCount(0);
   // the system administrator: administration and the console, which is its own section
   const sysNav = await menu(sys);
