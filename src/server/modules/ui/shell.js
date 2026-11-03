@@ -1,3 +1,4 @@
+import { notificationsOf } from '../../platform/notify/index.js';
 import { workflowOf } from '../../platform/workflow/index.js';
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
@@ -367,6 +368,8 @@ export function createShellService({ db, flags, approvals }) {
 
   /** What the notification bell shows until the notification service (04.06) exists: the requests waiting for this person. */
   const bell = (actor) => {
+    // part 04.06: with the notification engine on, the bell counts the unread notifications of the centre (the tasks waiting for a decision are among them)
+    try { if (actor.companyId && flags.isOn(actor, 'ff.eng.p0406')) return { unread: notificationsOf(db).unread(actor.companyId, actor.user), source: 'notifications' }; } catch { /* the notification tables are not there yet */ }
     let workflow = 0;
     try { workflow = workflowOf(db).openCount(actor); } catch { /* the engine's tables are not there yet */ }
     return { unread: approvals.awaitingCount(actor) + workflow, source: 'approvals' };

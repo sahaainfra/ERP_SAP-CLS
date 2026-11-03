@@ -406,7 +406,7 @@ export function createProtocolService({ db, engine }) {
           const climbed = e.workflow_instance_id ? engine.escalateInstance(e.workflow_instance_id) : 0;
           writeAudit(db, { entity: 'pcs_exceptions', entityId: e.id, action: 'escalate', newValues: { to, regulariseBy: e.regularise_by, tasks: climbed }, actor: 'system', companyId: e.company_id });
           event(db, 'pcs.exception.escalated', 'pcs_exception', e.id, null, e.company_id, { exceptionNo: e.exception_no, control: e.control_code, regulariseBy: e.regularise_by, to }, { projectId: e.project_id, siteId: e.site_id });
-          if (e.workflow_instance_id) event(db, 'workflow.notification.requested', 'wf_instance', e.workflow_instance_id, null, e.company_id, { instanceId: e.workflow_instance_id, docType: EXCEPTION_DOC, docId: String(e.id), template: 'pcs.exception.escalated', recipients: [`role:${to}`, `role:${e.owner_role}`, `user:${e.raised_by}`] });
+          if (e.workflow_instance_id) event(db, 'workflow.notification.requested', 'wf_instance', e.workflow_instance_id, null, e.company_id, { instanceId: e.workflow_instance_id, docType: EXCEPTION_DOC, docId: String(e.id), template: 'pcs.exception.escalated', control: e.control_code, recipients: [`role:${to}`, `role:${e.owner_role}`, `user:${e.raised_by}`] });
         }
         return { escalated: late.length };
       });

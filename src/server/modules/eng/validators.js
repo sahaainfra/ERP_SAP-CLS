@@ -181,3 +181,32 @@ export const parseLedgerQuery = (q) => parse(z.object({
 export const parseScoreQuery = (q) => parse(z.object({ by: z.enum(['person', 'role', 'project']).default('person'), projectId: id.optional(), processCode: processCode.optional(), from: date.optional(), to: date.optional() }).strict(), q);
 export const parseScoreExport = (q) => parse(z.object({ by: z.enum(['person', 'role', 'project']).default('person'), projectId: id.optional(), processCode: processCode.optional(), from: date.optional(), to: date.optional(), format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }).strict(), q);
 export const parseMeQuery = (q) => parse(z.object({ projectId: id.optional(), from: date.optional(), to: date.optional() }).strict(), q);
+
+// ---- part 04.06: notifications ----
+const NTF_CATEGORY = z.enum(['approvals', 'tasks', 'alerts', 'mentions', 'system', 'security', 'statutory']);
+const NTF_CHANNEL = z.enum(['IN_APP', 'EMAIL', 'SMS', 'WHATSAPP', 'PUSH']);
+const NTF_LANG = z.enum(['en', 'hi']);
+const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use a time such as 22:00');
+const templateCode = z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/, 'A template code such as workflow.task.assigned');
+export const parseNotificationQuery = (q) => parse(z.object({
+  state: z.enum(['inbox', 'unread', 'archived']).default('inbox'), category: NTF_CATEGORY.optional(), q: text(80).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseReadAll = (b) => parse(z.object({ category: NTF_CATEGORY.optional() }).strict(), b ?? {});
+export const parsePreferencesBody = (b) => parse(z.object({
+  categories: z.partialRecord(NTF_CATEGORY, z.object({ IN_APP: z.boolean().optional(), EMAIL: z.boolean().optional(), SMS: z.boolean().optional(), WHATSAPP: z.boolean().optional(), PUSH: z.boolean().optional() }).strict()).optional(),
+  digest: z.enum(['INSTANT', 'HOURLY', 'DAILY']).optional(), quietHours: z.object({ start: hhmm, end: hhmm }).strict().nullable().optional(), version: z.number().int().min(1).optional(),
+}).strict(), b);
+export const parseTemplateCode = (v) => parse(templateCode, v);
+export const parseTemplateQuery = (q) => parse(z.object({ category: NTF_CATEGORY.optional(), q: text(60).optional() }).strict(), q);
+export const parseTemplateChange = (b) => parse(z.object({
+  code: templateCode, reason: text(500).min(5, 'Give a reason of at least 5 characters'),
+  changes: z.array(z.object({ channel: NTF_CHANNEL, lang: NTF_LANG, subject: text(200).optional(), body: text(2000).min(1) }).strict()).min(1).max(10),
+}).strict(), b);
+export const parseTemplatePreview = (b) => parse(z.object({ code: templateCode.optional(), channel: NTF_CHANNEL, lang: NTF_LANG, subject: text(200).optional(), body: text(2000).min(1), variables: z.array(z.string().regex(/^[A-Za-z][A-Za-z0-9_]*$/)).max(30).optional() }).strict(), b);
+export const parseDeliveryQuery = (q) => parse(z.object({
+  channel: NTF_CHANNEL.optional(), status: z.enum(['PENDING', 'DEFERRED', 'SENT', 'DELIVERED', 'FAILED', 'SKIPPED']).optional(), user: text(60).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseDeliverySummary = (q) => parse(z.object({ from: date.optional(), to: date.optional() }).strict(), q);
+export const parseDeliveryExport = (q) => parse(z.object({ channel: NTF_CHANNEL.optional(), status: z.enum(['PENDING', 'DEFERRED', 'SENT', 'DELIVERED', 'FAILED', 'SKIPPED']).optional(), from: date.optional(), to: date.optional(), format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }).strict(), q);

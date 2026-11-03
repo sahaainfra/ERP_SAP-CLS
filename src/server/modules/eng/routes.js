@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -151,5 +151,30 @@ export function accountabilityRoutes({ service, exportFile }, { idempotentRequir
   r.get('/scores/export', (req, res) => { const out = exportFile(req.actor, parseScoreExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
   r.get('/scores', (req, res) => ok(res, service.scores.list(req.actor, parseScoreQuery(req.query))));
   r.get('/me', (req, res) => ok(res, service.me(req.actor, parseMeQuery(req.query))));
+  return r;
+}
+
+/** /api/v1/ntf: the notification engine (part 04.06): a person's notifications and preferences, the templates, the delivery log. */
+export function notificationRoutes({ service, deliveriesFile }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/notifications', (req, res) => ok(res, service.centre.list(req.actor, parseNotificationQuery(req.query))));
+  r.get('/notifications/counts', (req, res) => ok(res, service.centre.counts(req.actor)));
+  r.post('/notifications/read-all', idempotent, (req, res) => ok(res, service.centre.readAll(req.actor, parseReadAll(req.body))));
+  r.post('/notifications/test', idempotent, (req, res) => ok(res, service.centre.test(req.actor), 201));
+  r.post('/notifications/:id/read', idempotent, (req, res) => ok(res, service.centre.mark(req.actor, parseId(req.params.id), true)));
+  r.post('/notifications/:id/unread', idempotent, (req, res) => ok(res, service.centre.mark(req.actor, parseId(req.params.id), false)));
+  r.post('/notifications/:id/archive', idempotent, (req, res) => ok(res, service.centre.archive(req.actor, parseId(req.params.id), true)));
+  r.post('/notifications/:id/unarchive', idempotent, (req, res) => ok(res, service.centre.archive(req.actor, parseId(req.params.id), false)));
+  r.get('/preferences', (req, res) => ok(res, service.preferences.get(req.actor)));
+  r.put('/preferences', idempotent, (req, res) => ok(res, service.preferences.save(req.actor, parsePreferencesBody(req.body))));
+  r.get('/templates', (req, res) => ok(res, service.templates.list(req.actor, parseTemplateQuery(req.query))));
+  r.post('/templates/preview', (req, res) => ok(res, service.templates.preview(req.actor, parseTemplatePreview(req.body))));
+  r.post('/templates/changes', idempotentRequired, (req, res) => ok(res, service.templates.propose(req.actor, parseTemplateChange(req.body)), 202));
+  r.get('/templates/:code', (req, res) => ok(res, service.templates.get(req.actor, parseTemplateCode(req.params.code))));
+  r.get('/deliveries/summary', (req, res) => ok(res, service.deliveries.summary(req.actor, parseDeliverySummary(req.query))));
+  r.get('/deliveries/export', (req, res) => { const out = deliveriesFile(req.actor, parseDeliveryExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.get('/deliveries', (req, res) => ok(res, service.deliveries.list(req.actor, parseDeliveryQuery(req.query))));
+  r.post('/deliveries/:id/retry', idempotent, (req, res) => ok(res, service.deliveries.retry(req.actor, parseId(req.params.id))));
   return r;
 }
