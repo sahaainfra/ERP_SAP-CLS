@@ -270,7 +270,7 @@ for (const [type, description] of [
   ['alr.flag.set', 'A rule flagged a record (the flag is for the module that owns the record to act on).'],
 ]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
 integrityRegistry.register({
-  uniqueKeys: [],
+  uniqueKeys: [], companyOptional: ['alr_rules'],
   statuses: { alr_rules: ['LIBRARY', 'PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], alr_alerts: ['OPEN', 'ACKNOWLEDGED', 'RESOLVED'] },
 });
 defineList({
@@ -299,7 +299,7 @@ export const eng = {
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
   tables: ['alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
-  companyOptional: ['pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
+  companyOptional: ['alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
   mount(api, { db, config, publicApi }) {

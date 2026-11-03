@@ -131,6 +131,144 @@ Indexes:
 - ix_acc_templates_company: company_id
 - ux_acc_templates (unique): , process_code
 
+## alr_alerts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| rule_version | INTEGER | yes |  | 1 |
+| entity | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| entity_label | TEXT |  |  |  |
+| route | TEXT |  |  |  |
+| severity | TEXT | yes |  |  |
+| message | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| owner_user_ref | TEXT |  |  |  |
+| recipients_json | TEXT | yes |  | '[]' |
+| occurrences | INTEGER | yes |  | 1 |
+| first_seen_at | TEXT | yes |  |  |
+| last_seen_at | TEXT | yes |  |  |
+| last_notified_at | TEXT |  |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| acknowledged_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolution | TEXT |  |  |  |
+| escalated_at | TEXT |  |  |  |
+| deliveries_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_alr_alerts_project: company_id, project_id, status
+- ix_alr_alerts_owner: company_id, owner_user_ref, status
+- ix_alr_alerts_key: company_id, rule_code, entity, entity_id, id
+- ix_alr_alerts_list: company_id, status, severity
+- ix_alr_alerts_company_id: company_id, id
+
+## alr_rule_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| rule_version | INTEGER | yes |  | 1 |
+| trigger | TEXT | yes |  |  |
+| started_at | TEXT | yes |  |  |
+| finished_at | TEXT |  |  |  |
+| matched | INTEGER | yes |  | 0 |
+| created | INTEGER | yes |  | 0 |
+| throttled | INTEGER | yes |  | 0 |
+| actions_done | INTEGER | yes |  | 0 |
+| errors | INTEGER | yes |  | 0 |
+| error_text | TEXT |  |  |  |
+| duration_ms | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_alr_runs_rule: company_id, rule_code, id
+- ix_alr_runs_company_id: company_id, id
+
+## alr_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| trigger_type | TEXT | yes |  |  |
+| event_type | TEXT |  |  |  |
+| schedule | TEXT |  |  |  |
+| dataset | TEXT |  |  |  |
+| condition_json | TEXT | yes |  | '{}' |
+| actions_json | TEXT | yes |  | '[]' |
+| message_template | TEXT | yes |  |  |
+| throttle_minutes | INTEGER | yes |  | 1440 |
+| severity | TEXT | yes |  | 'WARNING' |
+| owner_module | TEXT | yes |  |  |
+| owner_role | TEXT | yes |  | 'SYSADM' |
+| external | INTEGER | yes |  | 0 |
+| enabled | INTEGER | yes |  | 0 |
+| rule_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| last_run_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_alr_rules_code: company_id, code, status
+- ix_alr_rules_event: event_type, status, enabled
+- ix_alr_rules_company: company_id, status, enabled
+- ux_alr_rules_version (unique): , code, rule_version
+
 ## comm_channels
 
 | Column | Type | Not null | Key | Default |
