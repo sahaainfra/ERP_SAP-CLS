@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { eventTypes } from '../../platform/events/index.js';
-import { toCsv, toXlsx } from '../../platform/export/index.js';
+import { FORMATS, toCsv, toXlsx, writeExport } from '../../platform/export/index.js';
 import { notFound } from '../../platform/http/errors.js';
 import { idempotency } from '../../platform/http/idempotency.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
@@ -12,7 +12,9 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { createSampleDocService } from './sample-docs.js';
-import { approvalLinkRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { createProtocolService } from './protocol.js';
+import { protocolOf } from '../../platform/protocol/index.js';
 import { createDelegationService, createLimitService, createPathService, createSlaService } from './controls.js';
 import { createMatrixService } from './matrix.js';
 import { createInboxService } from './inbox.js';
@@ -122,6 +124,31 @@ defineList({
   },
 });
 
+// Part 04.04: the Protocol & Control Engine's events, parameters and its place in the integrity checks.
+for (const [type, description] of [
+  ['pcs.exception.raised', 'An exception was sent into approval for an action a control point stopped.'],
+  ['pcs.exception.approved', 'An exception was approved (or an emergency exception was regularised).'],
+  ['pcs.exception.rejected', 'An exception was rejected; for an emergency exception that was already used, the action must be reversed or corrected.'],
+  ['pcs.exception.escalated', 'An emergency exception was not regularised in time and climbed to the next level.'],
+  ['pcs.control.changed', 'The mode or settings of a control point changed (for a control in ENFORCE, after its approval).'],
+  ['pcs.control.created', 'A control point was defined.'],
+  ['pcs.reason_code.changed', 'A reason code was added, changed or switched off for a company.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, def, min, max, description] of [
+  ['eng.pcs.observe_days', 14, 0, 365, 'BR-01: the days a control point must have been observed (mode OBSERVE) before it may be put into ENFORCE.'],
+  ['eng.pcs.regularise_hours', 72, 1, 720, 'BR-02: the hours an emergency exception has to be approved (regularised) before it climbs to the next level.'],
+  ['eng.pcs.pass_sample_percent', 10, 0, 100, 'The share of passing checks written to the check log (blocks, warnings and exceptions are always written).'],
+  ['eng.pcs.exception_valid_days', 30, 1, 365, 'The days an approved exception can be used for its action before it lapses.'],
+]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'pcs_control_points', columns: ['company_id', 'code'] }, { table: 'pcs_exceptions', columns: ['company_id', 'exception_no'] }],
+  statuses: { pcs_exceptions: ['DRAFT', 'PENDING', 'APPROVED', 'USED', 'REJECTED', 'RETURNED', 'CANCELLED'], pcs_control_changes: ['PENDING', 'ACTIVE', 'REJECTED'] },
+});
+defineList({
+  code: 'pcs.exceptions', label: 'Exceptions Register', from: 'pcs_exceptions e', defaultSort: 'newest',
+  columns: { status: { sql: 'e.status', type: 'enum', label: 'Status' }, control: { sql: 'e.control_code', type: 'text', label: 'Control' }, projectId: { sql: 'e.project_id', type: 'id', label: 'Project' }, minValue: { sql: 'e.value_at_risk', type: 'text', label: 'Value at least' }, sort: { sql: 'e.id', type: 'text', label: 'Order' } },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -131,7 +158,8 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  companyOptional: ['pcs_reason_codes'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
   mount(api, { db, config, publicApi }) {
@@ -156,11 +184,24 @@ export const eng = {
       delegation: { activeFor: (c) => (on(c.companyId) ? delegations.activeFor(c) : []), forUser: (c) => (on(c.companyId) ? delegations.forUser(c) : null) },
       escalation: { next: (c) => (on(c.companyId) ? paths.next(c) : null) },
     });
-    const docs = createSampleDocService({ db, engine });
+    const controlsOn = (companyId) => flags.isOn({ companyId }, 'ff.eng.p0404');
+    const docs = createSampleDocService({ db, engine, controlsOn });
+    const protocolService = createProtocolService({ db, engine });
     const runtime = runtimeOf(db);
     runtime.jobs.register('eng.workflow_sla', (ctx) => { const r = engine.sweepSla(); ctx.log(`Reminded ${r.reminded}, escalated ${r.escalated}`); return r; }, { maxAttempts: 1, description: 'Sends reminders for tasks past their due time and escalates the ones long overdue.' });
     runtime.scheduler.define({ code: 'eng.workflow_sla_15min', cron: '*/15 * * * *', jobType: 'eng.workflow_sla', description: 'Every 15 minutes: reminders and escalations of overdue workflow tasks' });
 
+    runtime.jobs.register('eng.pcs_emergency', (ctx) => { const r = protocolService.exceptions.sweepEmergencies(); ctx.log(`Escalated ${r.escalated} emergency exception(s)`); return r; }, { maxAttempts: 1, description: 'Escalates emergency exceptions that were not regularised within their window.' });
+    runtime.scheduler.define({ code: 'eng.pcs_emergency_15min', cron: '*/15 * * * *', jobType: 'eng.pcs_emergency', description: 'Every 15 minutes: emergency exceptions past their time to be regularised climb to the next level' });
+    const exceptionsFile = (actor, q) => {
+      const list = protocolService.exceptions.list(actor, { ...q, limit: 100, offset: 0, sort: 'newest' });
+      const rows = list.rows.map((e) => ({ no: e.no, control: e.control, entity: e.entityRef ?? `${e.entity} ${e.entityId}`, reason: e.reasonCode, value: Number(e.valueAtRisk), status: e.status, emergency: e.emergency ? 'Yes' : 'No', raisedBy: e.raisedBy, raised: e.createdAt.slice(0, 10), ageDays: e.ageDays }));
+      const columns = [['no', 'Exception'], ['control', 'Control'], ['entity', 'For'], ['reason', 'Reason'], ['value', 'Value at risk (INR)'], ['status', 'Status'], ['emergency', 'Emergency'], ['raisedBy', 'Raised by'], ['raised', 'Raised on'], ['ageDays', 'Age (days)']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'pcs_exceptions', entityId: 'register', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      const footer = [`Exceptions register. Generated by ${actor.user} on ${todayIST()}.${q.status || q.control ? ` Filters: ${[q.status, q.control].filter(Boolean).join(', ')}.` : ''}`];
+      const out = writeExport(q.format, { columns, rows, footer, sheetName: 'Exceptions', title: 'Exceptions register' });
+      return { buffer: out, type: FORMATS[q.format], fileName: `exceptions-${todayIST()}.${q.format}` };
+    };
     const monitorFile = (actor, q) => {
       const m = engine.monitor(actor, q);
       const rows = m.byType.map((r) => ({ type: r.label, running: r.running, stuck: r.stuck, overdue: r.overdue, approved: r.approved, rejected: r.rejected, returned: r.returned, cancelled: r.cancelled, avg: r.avgCycleHours ?? '' }));
@@ -176,6 +217,13 @@ export const eng = {
     wf.use(['/matrix', '/authority-limits', '/delegations', '/escalation-paths', '/sla-settings'], gate('ff.eng.p0402', 'The approval matrix is'));
     wf.use(['/inbox', '/approval-policies', '/links'], gate('ff.eng.p0403', 'The approval inbox is'));
     wf.use(workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, idem));
+    const pcs = Router();
+    pcs.use(gate('ff.eng.p0404', 'The Protocol & Control Engine is'));
+    pcs.use(protocolRoutes({ service: protocolService, exportFile: exceptionsFile }, idem));
+    api.use('/pcs', pcs);
+    try {
+      widgetRegistry.register({ code: 'controls.exceptions', provider: (ctx) => { const w = protocolService.widget(ctx.actor); return { value: w.value, unit: w.value === 1 ? 'exception' : 'exceptions', previous: null, trendPct: null, target: null, status: w.overdue > 0 ? 'red' : w.value > 0 ? 'amber' : 'green', note: w.overdue > 0 ? `${w.overdue} emergency exception(s) past the time to regularise.` : `${w.valueAtRisk} at risk.`, drill: '/controls/dashboard' }; } });
+    } catch { /* registered once per process */ }
     publicApi.use(approvalLinkRoutes({ inbox, isOn: (companyId) => flags.isOn({ companyId }, 'ff.eng.p0403'), companyOfToken: (t) => inbox.companyOfToken(t) }));
     // the widget of the approvals waiting in the workflow engine (part 03.07 framework)
     try {

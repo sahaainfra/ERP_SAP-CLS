@@ -23,7 +23,8 @@ export const PERMISSIONS_03_09 = ['ui.translation.manage'];
 export const PERMISSIONS_03_10 = ['ui.migration.view', 'ui.migration.signoff'];
 export const PERMISSIONS_04_01 = ['eng.workflow.view', 'eng.workflow.define', 'eng.workflow.cancel', 'eng.workflow.admin', 'eng.sample.use'];
 export const PERMISSIONS_04_02 = ['eng.matrix.view', 'eng.matrix.manage', 'eng.delegation.use', 'eng.delegation.admin'];
-export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02]);
+export const PERMISSIONS_04_04 = ['eng.pcs.view', 'eng.pcs.manage', 'eng.pcs.raise', 'eng.pcs.emergency'];
+export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04]);
 
 /** Permission keys that are privileged: a role holding any of them is a privileged role (its changes need the extra approver). */
 export const SENSITIVE_ACTIONS = ['manage', 'configure', 'configure_system', 'redrive', 'replay', 'issue', 'post_soft_closed'];
@@ -121,6 +122,15 @@ const ADDED_04_02 = {
   ITADM: ['eng.matrix.view', 'eng.delegation.admin'],
   DIR: ['eng.matrix.view'], CFO: ['eng.matrix.view'], AUD: ['eng.matrix.view'], ACCMGR: ['eng.matrix.view'], PROCMGR: ['eng.matrix.view'], PCMGR: ['eng.matrix.view'], HRMGR: ['eng.matrix.view', 'eng.delegation.admin'],
 };
+// Part 04.04. The system administrator and the process owners configure controls and reason codes (changes of a control in ENFORCE mode go through an approval chain);
+// the roles that watch the business read the register and the dashboard; every internal role may raise an exception where a control blocks it, and the roles that
+// run the site and the company may raise an emergency exception that is regularised afterwards.
+const ADDED_04_04 = {
+  SYSADM: ['eng.pcs.view', 'eng.pcs.manage', 'eng.pcs.emergency'],
+  ITADM: ['eng.pcs.view'],
+  DIR: ['eng.pcs.view', 'eng.pcs.emergency'], CFO: ['eng.pcs.view'], AUD: ['eng.pcs.view'], PCMGR: ['eng.pcs.view'], PD: ['eng.pcs.view', 'eng.pcs.emergency'], PM: ['eng.pcs.view', 'eng.pcs.emergency'],
+  ACCMGR: ['eng.pcs.view'], PROCMGR: ['eng.pcs.view'], HRMGR: ['eng.pcs.view'], QCMGR: ['eng.pcs.view'], STOREMGR: ['eng.pcs.view'], COMMGR: ['eng.pcs.view'], HSEMGR: ['eng.pcs.view'],
+};
 // Part 04.01. The system administrator defines workflows (the maker; activation needs the process owner and the IT administrator), cancels instances
 // and resolves tasks nobody could be found for; the IT administrator validates and resolves tasks; the auditor and the director read every instance.
 const ADDED_04_01 = {
@@ -137,8 +147,8 @@ const SHARES_VIEWS = new Set(['SYSADM', 'PM', 'PD', 'PCMGR', 'ACCMGR', 'CFO', 'H
 const internalRole = (code, category) => category !== EXT && code !== 'EMP' && code !== 'GUARD';
 
 function permissionsOfTemplate(code, category) {
-  const extra = [...(ADDED_02_05[code] ?? []), ...(ADDED_04_01[code] ?? []), ...(ADDED_04_02[code] ?? []), ...(internalRole(code, category) ? ['eng.delegation.use'] : []), ...(USES_SAMPLE_DOCS.has(code) ? ['eng.sample.use'] : []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
-  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02]);
+  const extra = [...(ADDED_02_05[code] ?? []), ...(ADDED_04_01[code] ?? []), ...(ADDED_04_02[code] ?? []), ...(ADDED_04_04[code] ?? []), ...(internalRole(code, category) ? ['eng.pcs.raise'] : []), ...(internalRole(code, category) ? ['eng.delegation.use'] : []), ...(USES_SAMPLE_DOCS.has(code) ? ['eng.sample.use'] : []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
+  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04]);
   if (code === 'AUD') return unique([...AUDITOR_READS, ...ADDED.AUD, ...extra]);
   if (LEGACY_ROLE_PERMISSIONS[code]) return unique([...LEGACY_ROLE_PERMISSIONS[code], ...(ADDED[code] ?? []), ...extra]);
   if (category === EXT || code === 'EMP') return [];

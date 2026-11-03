@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -84,6 +84,7 @@ export function sampleDocRoutes({ docs }, { idempotent, idempotentRequired }) {
   r.get('/sample-docs/:id', (req, res) => ok(res, docs.get(req.actor, parseId(req.params.id))));
   r.put('/sample-docs/:id', idempotent, (req, res) => { const b = parseSampleDoc(req.body); ok(res, docs.update(req.actor, parseId(req.params.id), b)); });
   r.post('/sample-docs/:id/submit', idempotentRequired, (req, res) => ok(res, docs.submit(req.actor, parseId(req.params.id), parseComment(req.body)), 201));
+  r.post('/sample-docs/import', idempotentRequired, (req, res) => ok(res, docs.importRows(req.actor, parseSampleImport(req.body).rows), 201));
   r.post('/sample-docs/:id/amend', idempotentRequired, (req, res) => ok(res, docs.amend(req.actor, parseId(req.params.id)), 201));
   return r;
 }
@@ -106,5 +107,30 @@ export function approvalLinkRoutes({ inbox, isOn, companyOfToken }) {
   const gate = (token) => { const c = companyOfToken(token); if (c == null || !isOn(c)) throw new HttpError(410, 'LINK_INVALID', 'This link has expired, was already used, or is not valid. Open the approval from your inbox instead.'); };
   r.get('/workflow/links/:token', (req, res, next) => { try { limit(req); const t = parseLinkToken(req.params.token); gate(t); res.json({ data: inbox.peekLink(t) }); } catch (e) { next(e); } });
   r.post('/workflow/links/:token/decide', (req, res, next) => { try { limit(req); const t = parseLinkToken(req.params.token); gate(t); res.json({ data: inbox.decideLink(t, parseLinkDecide(req.body), null, 'link') }); } catch (e) { next(e); } });
+  return r;
+}
+
+/** /api/v1/pcs: the Protocol & Control Engine (part 04.04): control points, exceptions, reason codes, the dashboard and the control cycle of an object. */
+export function protocolRoutes({ service, exportFile }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/control-points', (req, res) => ok(res, service.controls.list(req.actor, parseControlQuery(req.query))));
+  r.get('/control-points/options', (req, res) => ok(res, service.controls.options()));
+  r.post('/control-points', idempotent, (req, res) => ok(res, service.controls.create(req.actor, parseControlCreate(req.body)), 201));
+  r.get('/control-points/:code', (req, res) => ok(res, service.controls.get(req.actor, parseControlCode(req.params.code))));
+  r.put('/control-points/:code', idempotentRequired, (req, res) => { const out = service.controls.update(req.actor, parseControlCode(req.params.code), parseControlUpdate(req.body)); ok(res, out, out.applied ? 200 : 202); });
+  r.delete('/control-points/:code', idempotent, (req, res) => ok(res, service.controls.remove(req.actor, parseControlCode(req.params.code))));
+  r.get('/reason-codes', (req, res) => { const q = parseReasonQuery(req.query); ok(res, service.reasons.list(req.actor, { actionType: q.actionType, all: q.all })); });
+  r.post('/reason-codes', idempotent, (req, res) => ok(res, service.reasons.save(req.actor, parseReasonSave(req.body)), 201));
+  r.put('/reason-codes', idempotent, (req, res) => ok(res, service.reasons.save(req.actor, parseReasonSave(req.body))));
+  r.get('/exceptions', (req, res) => ok(res, service.exceptions.list(req.actor, parseExceptionQuery(req.query))));
+  r.get('/exceptions/export', (req, res) => { const out = exportFile(req.actor, parseExceptionExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.post('/exceptions', idempotent, (req, res) => ok(res, service.exceptions.create(req.actor, parseExceptionCreate(req.body)), 201));
+  r.get('/exceptions/:id', (req, res) => ok(res, service.exceptions.get(req.actor, parseId(req.params.id))));
+  r.put('/exceptions/:id', idempotent, (req, res) => ok(res, service.exceptions.update(req.actor, parseId(req.params.id), parseExceptionUpdate(req.body))));
+  r.post('/exceptions/:id/submit', idempotentRequired, (req, res) => ok(res, service.exceptions.submit(req.actor, parseId(req.params.id), parseComment(req.body)), 201));
+  r.post('/exceptions/:id/cancel', idempotentRequired, (req, res) => ok(res, service.exceptions.cancel(req.actor, parseId(req.params.id), parseCancel(req.body))));
+  r.get('/dashboard', (req, res) => ok(res, service.dashboard(req.actor, parseDashboardQuery(req.query))));
+  r.get('/cycle/:entity/:id', (req, res) => { const t = parseCycleTarget(req.params); ok(res, service.cycle(req.actor, t.entity, t.id)); });
   return r;
 }

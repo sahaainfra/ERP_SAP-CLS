@@ -113,3 +113,45 @@ export const parsePolicyChange = (b) => parse(z.object({
   policies: z.array(z.object({ docType: docTypeCode, bulkEligible: z.boolean(), bulkMaxAmount: z.number().min(0).nullable(), linkEligible: z.boolean(), linkReauthAmount: z.number().min(0).nullable(), linkExpiryMinutes: z.number().int().min(5).max(1440) }).strict()).min(1).max(60),
   effectiveFrom: date, reason: text(500).min(5),
 }).strict(), b);
+
+// ---- part 04.04: the Protocol & Control Engine ----
+const STAGE = z.enum(['PLAN', 'VERIFY', 'APPROVE', 'EXECUTE', 'RECORD', 'MONITOR', 'RECONCILE', 'CLOSE']);
+const MODE = z.enum(['OFF', 'OBSERVE', 'WARN', 'ENFORCE']);
+const ENFORCEMENT = z.enum(['BLOCK', 'EXCEPTION', 'WARN', 'MONITOR']);
+const ACTION = z.enum(['cancel', 'reject', 'return', 'reverse', 'deviate', 'override']);
+const controlCode = z.string().regex(/^CP-[A-Z]{2,8}-\d{2,3}$/, 'Use the form CP-<MODULE>-nn, for example CP-PROC-05');
+const ownerCode = z.string().regex(/^[A-Z][A-Z0-9_]{1,19}$/, 'A role code such as PM');
+const thresholds = z.record(z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,39}$/), z.union([z.number(), z.string().max(60), z.boolean()])).refine((o) => Object.keys(o).length <= 20, 'At most 20 thresholds');
+const rule = z.object({ field: z.string().regex(/^[A-Za-z][A-Za-z0-9_.]{0,59}$/), op: z.enum(['gt', 'gte', 'lt', 'lte', 'eq', 'ne', 'in']), threshold: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,39}$/).optional(), value: z.union([z.string().max(60), z.number(), z.boolean(), z.array(z.union([z.string(), z.number()]))]).optional() }).strict()
+  .refine((r) => r.threshold !== undefined || r.value !== undefined, { message: 'Give a value or the name of a threshold', path: ['value'] });
+export const parseControlCode = (v) => parse(controlCode, v);
+export const parseControlQuery = (q) => parse(z.object({ module: z.string().regex(/^[a-z][a-z0-9_]{1,19}$/).optional(), mode: MODE.optional(), stage: STAGE.optional(), q: text(80).optional() }).strict(), q);
+export const parseControlCreate = (b) => parse(z.object({
+  code: controlCode, module: z.string().regex(/^[a-z][a-z0-9_]{1,19}$/, 'Lower-case letters, such as proc'), stage: STAGE, description: text(300).min(10), enforcement: ENFORCEMENT, rule, thresholds: thresholds.optional(),
+  evidenceRequired: z.boolean().default(false), escalationLevel: z.number().int().min(1).max(3).default(1), ownerRole: ownerCode, emergencyAllowed: z.boolean().default(false),
+}).strict(), b);
+export const parseControlUpdate = (b) => parse(z.object({
+  mode: MODE.optional(), enforcement: ENFORCEMENT.optional(), thresholds: thresholds.optional(), evidenceRequired: z.boolean().optional(), escalationLevel: z.number().int().min(1).max(3).optional(), ownerRole: ownerCode.optional(),
+  emergencyAllowed: z.boolean().optional(), description: text(300).min(10).optional(), version: z.number().int().min(1).optional(), reason: text(500).optional(),
+}).strict(), b);
+export const parseReasonQuery = (q) => parse(z.object({ actionType: ACTION.optional(), all: z.enum(['true', 'false']).transform((v) => v === 'true').optional() }).strict(), q);
+export const parseReasonSave = (b) => parse(z.object({
+  actionType: ACTION, code: z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/, 'Capital letters, digits and underscores, such as WRONG_ACCOUNT'), label: text(120).min(3), requiresEvidence: z.boolean().default(false), needsText: z.boolean().default(false),
+  sortOrder: z.number().int().min(1).max(999).optional(), active: z.boolean().default(true), version: z.number().int().min(1).optional(),
+}).strict(), b);
+export const parseExceptionQuery = (q) => parse(z.object({
+  status: z.enum(['OPEN', 'DRAFT', 'PENDING', 'APPROVED', 'USED', 'REJECTED', 'RETURNED', 'CANCELLED']).optional(), control: controlCode.optional(), projectId: id.optional(), minValue: z.coerce.number().min(0).optional(), maxValue: z.coerce.number().min(0).optional(),
+  raisedBy: text(60).optional(), emergency: z.enum(['true', 'false']).transform((v) => v === 'true').optional(), q: text(80).optional(), sort: z.enum(['newest', 'oldest', 'value', 'status']).default('newest'),
+  limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseExceptionExport = (q) => parse(z.object({
+  status: z.enum(['OPEN', 'DRAFT', 'PENDING', 'APPROVED', 'USED', 'REJECTED', 'RETURNED', 'CANCELLED']).optional(), control: controlCode.optional(), projectId: id.optional(), q: text(80).optional(), format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx'),
+}).strict(), q);
+export const parseExceptionCreate = (b) => parse(z.object({
+  controlCode, entity: z.string().regex(/^[a-z][a-z0-9_]{1,39}$/), entityId: z.union([z.string().trim().min(1).max(60), z.number().int()]).transform(String), entityRef: text(80).optional(),
+  reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/), justification: text(2000).min(20, 'Justify in at least 20 characters: the approvers read it'), emergency: z.boolean().default(false),
+}).strict(), b);
+export const parseExceptionUpdate = (b) => parse(z.object({ reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/), justification: text(2000).min(20, 'Justify in at least 20 characters: the approvers read it'), version: z.number().int().min(1).optional() }).strict(), b);
+export const parseDashboardQuery = (q) => parse(z.object({ projectId: id.optional(), days: z.coerce.number().int().min(7).max(365).default(90) }).strict(), q);
+export const parseCycleTarget = (p) => parse(z.object({ entity: z.string().regex(/^[a-z][a-z0-9_]{1,39}$/), id: z.string().trim().min(1).max(60) }).strict(), p);
+export const parseSampleImport = (b) => parse(z.object({ rows: z.array(z.object({ title: text(120).min(3), amount: rupees, projectId: id.optional() }).strict()).min(1).max(200) }).strict(), b);

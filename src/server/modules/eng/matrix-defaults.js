@@ -15,6 +15,13 @@ const bands = (list, above) => [
 const fmt = (n) => (n >= CR ? `₹${n / CR} Cr` : n >= L ? `₹${n / L} L` : `₹${n / 1000} k`);
 
 export const DEFAULT_MATRICES = [
+  { docType: 'PCS_EXCEPTION', label: 'Control exception', owner: 'SYSADM', financial: false, rules: [
+    rule('Level 3 control', [{ field: 'level', op: 'eq', value: 3 }], ['DIR']),
+    rule('Level 2 control, ₹10 L or more at risk', [{ field: 'level', op: 'eq', value: 2 }, { field: 'amount', op: 'gte', value: 10 * L }], ['PD', 'DIR']),
+    rule('Level 2 control', [{ field: 'level', op: 'eq', value: 2 }], ['PD']),
+    rule('Level 1 control, ₹10 L or more at risk', [{ field: 'amount', op: 'gte', value: 10 * L }], ['PM', 'DIR']),
+    rule('Level 1 control', [], ['PM']),
+  ] },
   { docType: 'PR', label: 'Purchase requisition', owner: 'PROCMGR', financial: true, rules: [rule('Up to ₹5 L', [amount('lte', 5 * L)], ['PM']), rule('Up to ₹25 L', [amount('lte', 25 * L)], ['PD']), rule('Above ₹25 L', [], ['PROCMGR'])] },
   { docType: 'PO', label: 'Purchase order', owner: 'PROCMGR', financial: true, rules: bands([[5 * L, ['PROCMGR']], [25 * L, ['PROCMGR', 'PM']], [CR, ['PROCMGR', 'PM', 'PD']]], ['PROCMGR', 'PM', 'PD', 'DIR']) },
   { docType: 'SO', label: 'Service order', owner: 'PROCMGR', financial: true, rules: bands([[5 * L, ['PROCMGR']], [25 * L, ['PROCMGR', 'PM']], [CR, ['PROCMGR', 'PM', 'PD']]], ['PROCMGR', 'PM', 'PD', 'DIR']) },

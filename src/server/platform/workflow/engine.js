@@ -735,6 +735,21 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     notify(inst, 'system', 'workflow.task.escalated', [...(target?.role ? [`role:${target.role}`] : ['permission:eng.workflow.admin']), `user:${inst.submitted_by}`], { taskId: t.id, level });
   }
 
+  /** Part 04.04: climb one level for the open tasks of an instance that have not climbed yet (an emergency exception that was not regularised in time). Returns how many tasks climbed. */
+  function escalateInstance(instanceId) {
+    return inTransaction(db, () => {
+      const inst = refresh(instanceId);
+      if (!inst || inst.status !== 'RUNNING') return 0;
+      let n = 0;
+      for (const t of db.prepare("SELECT * FROM wf_tasks WHERE instance_id = ? AND status = 'OPEN' AND superseded = 0").all(instanceId)) {
+        if (JSON.parse(t.scope_json || '{}').escalatedFrom != null || t.escalated_at) continue;
+        escalate(inst, t, 1, iso());
+        n += 1;
+      }
+      return n;
+    });
+  }
+
   /** One task for the approval drawer (part 04.03): the task with what this person may do with it, and the instance it belongs to. */
   function taskDetail(actor, taskId) {
     const t = loadTask(taskId, actor.companyId);
@@ -762,5 +777,5 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   const stepOf = (instanceId, code) => { const i = db.prepare('SELECT steps_json FROM wf_instances WHERE id = ?').get(instanceId); return i ? unpackSteps(i.steps_json).steps.find((x) => x.code === code) ?? null : null; };
   const instanceRow = (id) => db.prepare('SELECT * FROM wf_instances WHERE id = ?').get(id);
 
-  return { clock: () => now(), stepOf, instanceRow, taskDetail, configure: (p) => Object.assign(policy, p), setClock: (fn) => { now = fn; }, taskAccess, submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
+  return { clock: () => now(), stepOf, instanceRow, taskDetail, configure: (p) => Object.assign(policy, p), setClock: (fn) => { now = fn; }, taskAccess, submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, escalateInstance, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
 }

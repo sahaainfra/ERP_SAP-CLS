@@ -19,7 +19,7 @@ const cid = (actor) => actor.companyId;
 export const parseComment = (b) => parse(z.object({ body: z.string().trim().min(1, 'Write something').max(2000, 'Use at most 2000 characters') }).strict(), b);
 export const parseDocumentLink = (b) => parse(z.object({ requirementCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/, 'Use the code of a required document'), fileId: z.number().int().positive() }).strict(), b);
 export const parseCompare = (q) => parse(z.object({ from: z.union([z.literal('current'), z.coerce.number().int().positive()]), to: z.union([z.literal('current'), z.coerce.number().int().positive()]) }).strict(), q);
-export const parseReasonFor = (q) => parse(z.object({ for: z.enum(['cancel', 'reject', 'return']) }).strict(), q);
+export const parseReasonFor = (q) => parse(z.object({ for: z.enum(['cancel', 'reject', 'return', 'reverse', 'deviate', 'override']) }).strict(), q);
 export const parseTypeId = (type, id) => [parse(z.string().regex(/^[a-z][a-z_]*$/), type), parse(z.coerce.number().int().positive(), id)];
 
 /** Record a snapshot of a record (a submit). Version numbers count up per record; version 1 is the original. */
@@ -201,6 +201,14 @@ export function createObjectService({ db, approvals }) {
 
     // ---- reason codes ----
     reasonCodes(actor, forAction) {
+      // part 04.04: the reason codes are one master (pcs_reason_codes); a database without it, or without codes for the action, still has the list of part 03.04
+      if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pcs_reason_codes'").get()) {
+        const rows = db.prepare('SELECT * FROM pcs_reason_codes WHERE action_type = ? AND (company_id IS NULL OR company_id = ?) AND deleted_at IS NULL ORDER BY sort_order, code').all(forAction, cid(actor));
+        const merged = new Map();
+        for (const r of rows) if (r.company_id != null || !merged.has(r.code)) merged.set(r.code, r);
+        const list = [...merged.values()].filter((r) => r.is_active === 1).sort((a, b) => a.sort_order - b.sort_order || a.code.localeCompare(b.code));
+        if (list.length) return list.map((r) => ({ code: r.code, label: r.label, needsText: r.needs_text === 1, requiresEvidence: r.requires_evidence === 1 }));
+      }
       return db.prepare('SELECT code, label, needs_text FROM ui_reason_codes WHERE applies_to = ? AND (company_id IS NULL OR company_id = ?) AND is_active = 1 AND deleted_at IS NULL ORDER BY sort_order, code').all(forAction, cid(actor)).map((r) => ({ code: r.code, label: r.label, needsText: r.needs_text === 1 }));
     },
 
