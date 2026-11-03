@@ -88,17 +88,18 @@ workflowTypes.register({
   docType: CONFIG_DOC,
   route: () => '/admin/escalation',
   describe: (db, companyId, id) => {
-    const r = db.prepare('SELECT 1 FROM wf_escalation_paths WHERE batch_id = ? AND company_id = ? UNION SELECT 1 FROM wf_sla_settings WHERE batch_id = ? AND company_id = ?').get(Number(id), companyId, Number(id), companyId);
-    return r ? { ref: `Settings #${id}`, title: 'Change of escalation paths or SLA settings' } : null;
+    const r = db.prepare('SELECT 1 FROM wf_escalation_paths WHERE batch_id = ? AND company_id = ? UNION SELECT 1 FROM wf_sla_settings WHERE batch_id = ? AND company_id = ? UNION SELECT 1 FROM wf_approval_policies WHERE batch_id = ? AND company_id = ?').get(Number(id), companyId, Number(id), companyId, Number(id), companyId);
+    return r ? { ref: `Settings #${id}`, title: 'Change of escalation paths, SLA or approval settings' } : null;
   },
   ...common('Escalation and SLA settings change',
     (db, batchId, actor, companyId) => {
       const paths = activateBatch(db, 'wf_escalation_paths', batchId, actor, ['scope_type', 'scope_id']);
       const sla = activateBatch(db, 'wf_sla_settings', batchId, actor, ['doc_type']);
-      writeAudit(db, { entity: 'wf_escalation_paths', entityId: batchId, action: 'activate', newValues: { paths: paths.length, sla: sla.length }, actor: actor.user });
-      event(db, 'workflow.settings.changed', 'workflow_settings', batchId, actor, companyId, { paths: paths.length, sla: sla.length });
+      const pol = activateBatch(db, 'wf_approval_policies', batchId, actor, ['doc_type']);
+      writeAudit(db, { entity: 'wf_escalation_paths', entityId: batchId, action: 'activate', newValues: { paths: paths.length, sla: sla.length, policies: pol.length }, actor: actor.user });
+      event(db, 'workflow.settings.changed', 'workflow_settings', batchId, actor, companyId, { paths: paths.length, sla: sla.length, policies: pol.length });
     },
-    (db, batchId, actor, to) => { rejectBatch(db, 'wf_escalation_paths', batchId, actor, to); rejectBatch(db, 'wf_sla_settings', batchId, actor, to); }),
+    (db, batchId, actor, to) => { rejectBatch(db, 'wf_escalation_paths', batchId, actor, to); rejectBatch(db, 'wf_sla_settings', batchId, actor, to); rejectBatch(db, 'wf_approval_policies', batchId, actor, to); }),
 });
 
 workflowTypes.register({

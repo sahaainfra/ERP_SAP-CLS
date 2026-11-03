@@ -1,14 +1,25 @@
 import { Router } from 'express';
-import { parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { HttpError } from '../../platform/http/errors.js';
+import { parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
-export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla }, { idempotent, idempotentRequired }) {
+export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
   const r = Router();
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   r.get('/doc-types', (req, res) => ok(res, definitions.options().docTypes));
   r.post('/submit', idempotentRequired, (req, res) => ok(res, engine.submit(req.actor, parseSubmit(req.body)), 201));
   r.get('/tasks', (req, res) => ok(res, engine.listTasks(req.actor, parseTaskQuery(req.query))));
   r.get('/tasks/count', (req, res) => ok(res, { open: engine.openCount(req.actor) }));
+  // part 04.03: the approval inbox
+  r.get('/inbox', (req, res) => ok(res, inbox.inbox(req.actor, parseInboxQuery(req.query))));
+  r.get('/inbox/counts', (req, res) => ok(res, inbox.counts(req.actor)));
+  r.get('/inbox/submissions', (req, res) => ok(res, inbox.submissions(req.actor, parseSubmissionsQuery(req.query))));
+  r.post('/tasks/bulk-act', idempotentRequired, (req, res) => ok(res, inbox.bulkAct(req.actor, parseBulkAct(req.body))));
+  r.get('/tasks/:id/evidence', async (req, res, next) => { try { ok(res, await inbox.evidenceFor(req.actor, parseId(req.params.id))); } catch (e) { next(e); } });
+  r.post('/tasks/:id/links', idempotent, (req, res) => ok(res, inbox.issueLink(req.actor, parseId(req.params.id), parseLinkIssue(req.body)), 201));
+  r.post('/links/:token/confirm', idempotentRequired, (req, res) => ok(res, inbox.decideLink(parseLinkToken(req.params.token), parseLinkDecide(req.body), req.actor, 'link+session')));
+  r.get('/approval-policies', (req, res) => ok(res, inbox.listPolicies(req.actor)));
+  r.post('/approval-policies/changes', idempotentRequired, (req, res) => ok(res, inbox.proposePolicies(req.actor, parsePolicyChange(req.body)), 202));
   r.post('/tasks/:id/act', idempotentRequired, (req, res) => ok(res, engine.act(req.actor, parseId(req.params.id), parseAct(req.body))));
   r.post('/tasks/:id/assign', idempotent, (req, res) => ok(res, engine.assign(req.actor, parseId(req.params.id), parseAssign(req.body))));
   r.get('/instances', (req, res) => ok(res, engine.listInstances(req.actor, parseInstanceQuery(req.query))));
@@ -74,5 +85,26 @@ export function sampleDocRoutes({ docs }, { idempotent, idempotentRequired }) {
   r.put('/sample-docs/:id', idempotent, (req, res) => { const b = parseSampleDoc(req.body); ok(res, docs.update(req.actor, parseId(req.params.id), b)); });
   r.post('/sample-docs/:id/submit', idempotentRequired, (req, res) => ok(res, docs.submit(req.actor, parseId(req.params.id), parseComment(req.body)), 201));
   r.post('/sample-docs/:id/amend', idempotentRequired, (req, res) => ok(res, docs.amend(req.actor, parseId(req.params.id)), 201));
+  return r;
+}
+
+/**
+ * The two routes a secure link opens before anybody is signed in (part 04.03, FR-06). The token is the proof of access: for one task and one person, short-lived, used
+ * once. Each answer for a token that is not valid is the same, so a guess learns nothing; attempts are counted per address.
+ */
+export function approvalLinkRoutes({ inbox, isOn, companyOfToken }) {
+  const r = Router();
+  const hits = new Map();
+  const limit = (req) => {
+    const now = Date.now();
+    const key = req.ip ?? 'unknown';
+    const list = (hits.get(key) ?? []).filter((t) => now - t < 60_000);
+    list.push(now);
+    hits.set(key, list);
+    if (list.length > 30) throw new HttpError(429, 'RATE_LIMITED', 'Too many attempts. Wait a minute and try again.');
+  };
+  const gate = (token) => { const c = companyOfToken(token); if (c == null || !isOn(c)) throw new HttpError(410, 'LINK_INVALID', 'This link has expired, was already used, or is not valid. Open the approval from your inbox instead.'); };
+  r.get('/workflow/links/:token', (req, res, next) => { try { limit(req); const t = parseLinkToken(req.params.token); gate(t); res.json({ data: inbox.peekLink(t) }); } catch (e) { next(e); } });
+  r.post('/workflow/links/:token/decide', (req, res, next) => { try { limit(req); const t = parseLinkToken(req.params.token); gate(t); res.json({ data: inbox.decideLink(t, parseLinkDecide(req.body), null, 'link') }); } catch (e) { next(e); } });
   return r;
 }

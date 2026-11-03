@@ -10,6 +10,8 @@
  *    - hooks: onSubmitted, onApproved, onRejected, onReturned, onResubmitted, onCancelled (db, { instance, actor, comment }); each runs in the same
  *      transaction as the decision, so a failure undoes the decision, and each is how a module sets its status and locks the record.
  *
+ *    summarise(db, actor, docId) -> { fields: [{ label, value, format? }], lines: { columns: [{ key, label, format? }], rows: [] } } | null   (part 04.03: the document at a glance in the task drawer)
+ *
  *  workflowResolvers.register(name, (ctx) => [user | { user } | { role }])
  *    ctx = { db, companyId, instance: { docType, docId, submittedBy, context }, step }. An empty list sends the task to the workflow administrators.
  *    The approval matrix of part 04.02 registers its resolver here.
@@ -26,7 +28,7 @@ export const workflowTypes = {
     if (!NAME.test(def.docType ?? '')) throw new Error(`Workflow document type "${def.docType}" must be letters, digits and underscores`);
     if (types.has(def.docType)) throw new Error(`Workflow document type ${def.docType} is already registered`);
     if (!def.defaultDefinition?.steps?.length) throw new Error(`Workflow document type ${def.docType} needs a default definition`);
-    types.set(def.docType, { hooks: {}, processOwner: 'SYSADM', route: () => null, describe: () => null, ...def });
+    types.set(def.docType, { hooks: {}, processOwner: 'SYSADM', route: () => null, describe: () => null, summarise: () => null, ...def });
   },
   get: (docType) => types.get(docType) ?? null,
   list: () => [...types.values()].sort((a, b) => a.docType.localeCompare(b.docType)),

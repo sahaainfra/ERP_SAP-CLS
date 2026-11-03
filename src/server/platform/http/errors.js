@@ -42,6 +42,8 @@ export const ERROR_CODES = [
   { code: 'DUPLICATE_USER', status: 409, meaning: 'A person with the same email, mobile number, username or employee link already has an account.', action: 'Use the existing account (reactivate it if it was deactivated) instead of creating another.' },
   { code: 'INVITATION_EXPIRED', status: 410, meaning: 'An invitation link has expired, was replaced by a newer one or was already used.', action: 'Ask an administrator to send a new invitation.' },
   { code: 'FILE_NOT_AVAILABLE', status: 409, meaning: 'The file has not passed the virus scan (still scanning, quarantined or scan failed), so it cannot be opened.', action: 'Wait for the scan to finish; ask an administrator if it stays unavailable.' },
+  { code: 'LINK_INVALID', status: 410, meaning: 'An approval link has expired, was already used, or is not valid.', action: 'Open the approval from the inbox instead.' },
+  { code: 'REAUTH_REQUIRED', status: 401, meaning: 'The amount is above the threshold for approving from a link, so the approver must sign in again.', action: 'Sign in as yourself and open the link again.' },
 ];
 
 /** Map errors raised by body parsing (not HttpError) to the standard envelope. */

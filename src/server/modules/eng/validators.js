@@ -98,3 +98,18 @@ export const parsePathChange = (b) => parse(z.object({
 export const parseSlaChange = (b) => parse(z.object({
   settings: z.array(z.object({ docType: z.union([docTypeCode, z.literal('*')]), hours: z.number().int().min(1).max(720), remindPct: z.number().int().min(1).max(100), escalatePct: z.number().int().min(50).max(1000), secondPct: z.number().int().min(100).max(2000) }).strict()).min(1).max(60), effectiveFrom: date, reason: text(500).min(5),
 }).strict(), b);
+
+// ---- part 04.03: the approval inbox ----
+export const parseInboxQuery = (q) => parse(z.object({
+  docType: docTypeCode.optional(), projectId: id.optional(), sla: z.enum(['ON_TRACK', 'DUE_SOON', 'OVERDUE']).optional(), q: text(80).optional(), bulk: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+  sort: z.enum(['urgency', 'age', 'amount']).default('urgency'), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseSubmissionsQuery = (q) => parse(z.object({ kind: z.enum(['submitted', 'watching']).default('submitted'), status: z.enum(['RUNNING', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED', 'WITHDRAWN']).optional(), q: text(80).optional(), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseBulkAct = (b) => parse(z.object({ taskIds: z.array(id).min(1).max(50), action: z.literal('approve').default('approve'), comment: text(1000).optional() }).strict(), b);
+export const parseLinkIssue = (b) => parse(z.object({ channel: z.enum(['SELF']).default('SELF') }).strict(), b ?? {});
+export const parseLinkToken = (v) => parse(z.string().regex(/^[A-Za-z0-9_-]{40,64}$/, 'Not a valid link'), v);
+export const parseLinkDecide = (b) => parse(z.object({ action: z.enum(['approve', 'reject']), comment: text(1000).optional() }).strict().refine((v) => v.action === 'approve' || (v.comment ?? '').length >= 5, { message: 'Give a comment of at least 5 characters when you reject', path: ['comment'] }), b);
+export const parsePolicyChange = (b) => parse(z.object({
+  policies: z.array(z.object({ docType: docTypeCode, bulkEligible: z.boolean(), bulkMaxAmount: z.number().min(0).nullable(), linkEligible: z.boolean(), linkReauthAmount: z.number().min(0).nullable(), linkExpiryMinutes: z.number().int().min(5).max(1440) }).strict()).min(1).max(60),
+  effectiveFrom: date, reason: text(500).min(5),
+}).strict(), b);

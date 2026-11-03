@@ -40,7 +40,7 @@ export function createLimitService({ db, engine }) {
       if (!db.prepare('SELECT 1 FROM wf_authority_limits WHERE company_id = ? LIMIT 1').get(companyId)) {
         for (const l of DEFAULT_LIMITS) db.prepare("INSERT INTO wf_authority_limits (company_id, role_code, doc_type, max_amount, status, effective_from, created_by, source_type) VALUES (?, ?, ?, ?, 'ACTIVE', '2000-01-01', 'system', 'default_limit')").run(companyId, l.role, l.docType, l.max == null ? null : l.max * 100);
       }
-      seeded.add(companyId);
+      if (!db.isTransaction) seeded.add(companyId); // inside a transaction the rows may still be rolled back
     },
     /** What a role may approve for a document type on a date, in paise; null when it has no limit (none is set, or it is set to unlimited). */
     limitFor({ companyId, role, docType, date = day() }) {
@@ -126,7 +126,7 @@ export function createPathService({ db, engine }) {
       if (!db.prepare('SELECT 1 FROM wf_escalation_paths WHERE company_id = ? LIMIT 1').get(companyId)) {
         db.prepare("INSERT INTO wf_escalation_paths (company_id, scope_type, scope_id, levels_json, status, effective_from, created_by, source_type) VALUES (?, 'COMPANY', 0, ?, 'ACTIVE', '2000-01-01', 'system', 'default_path')").run(companyId, JSON.stringify(DEFAULT_LEVELS));
       }
-      seeded.add(companyId);
+      if (!db.isTransaction) seeded.add(companyId); // inside a transaction the rows may still be rolled back
     },
     /** The first role above `fromRole` in the hierarchy for which `enough` holds (used when a role's authority limit is below the amount). */
     climb({ companyId, projectId, fromRole, enough }) {
@@ -162,7 +162,7 @@ export function createPathService({ db, engine }) {
         const all = levels.flatMap((l) => l.roles);
         if (new Set(all).size !== all.length) problems.push({ field: 'levels', message: 'a role can stand at one level only' });
         if (problems.length) throw badRequest('The hierarchy is not valid.', problems);
-        if (db.prepare("SELECT 1 FROM wf_escalation_paths WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId) || db.prepare("SELECT 1 FROM wf_sla_settings WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId)) throw conflict('Another change of escalation or SLA settings is waiting for approval. Ask for it to be decided first.');
+        if (db.prepare("SELECT 1 FROM wf_escalation_paths WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId) || db.prepare("SELECT 1 FROM wf_sla_settings WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId) || db.prepare("SELECT 1 FROM wf_approval_policies WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId)) throw conflict('Another change of escalation, SLA or approval settings is waiting for approval. Ask for it to be decided first.');
         const id = Number(db.prepare("INSERT INTO wf_escalation_paths (company_id, scope_type, scope_id, levels_json, status, effective_from, reason, created_by, source_type) VALUES (?, ?, ?, ?, 'PENDING', ?, ?, ?, 'path_editor')").run(actor.companyId, scopeType, scopeType === 'COMPANY' ? 0 : scopeId, JSON.stringify(levels), effectiveFrom, reason, actor.user).lastInsertRowid);
         const batch = asBatch(db, 'wf_escalation_paths', [id]);
         const instance = engine.submit(actor, { docType: CONFIG_DOC, docId: String(batch), comment: reason, context: { owner: 'CFO', maxAmount: 0, effectiveFrom } });
@@ -214,7 +214,7 @@ export function createSlaService({ db, engine }) {
         db.prepare("INSERT INTO wf_sla_settings (company_id, doc_type, sla_hours, remind_pct, escalate_pct, second_pct, status, effective_from, created_by, source_type) VALUES (?, '*', ?, ?, ?, ?, 'ACTIVE', '2000-01-01', 'system', 'default_sla')").run(companyId, DEFAULT_SLA.sla, DEFAULT_SLA.remind, DEFAULT_SLA.escalate, DEFAULT_SLA.second);
         for (const [docType, hours] of Object.entries(SLA_BY_DOC)) db.prepare("INSERT INTO wf_sla_settings (company_id, doc_type, sla_hours, remind_pct, escalate_pct, second_pct, status, effective_from, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', '2000-01-01', 'system', 'default_sla')").run(companyId, docType, hours, DEFAULT_SLA.remind, DEFAULT_SLA.escalate, DEFAULT_SLA.second);
       }
-      seeded.add(companyId);
+      if (!db.isTransaction) seeded.add(companyId); // inside a transaction the rows may still be rolled back
     },
     settingsFor(companyId, docType, date = day()) {
       this.ensureDefaults(companyId);
@@ -238,7 +238,7 @@ export function createSlaService({ db, engine }) {
       this.ensureDefaults(actor.companyId);
       return inTransaction(db, () => {
         if (effectiveFrom < day()) throw unprocessable('A change takes effect from today or a later date.');
-        if (db.prepare("SELECT 1 FROM wf_escalation_paths WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId) || db.prepare("SELECT 1 FROM wf_sla_settings WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId)) throw conflict('Another change of escalation or SLA settings is waiting for approval. Ask for it to be decided first.');
+        if (db.prepare("SELECT 1 FROM wf_escalation_paths WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId) || db.prepare("SELECT 1 FROM wf_sla_settings WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId) || db.prepare("SELECT 1 FROM wf_approval_policies WHERE company_id = ? AND status = 'PENDING'").get(actor.companyId)) throw conflict('Another change of escalation, SLA or approval settings is waiting for approval. Ask for it to be decided first.');
         const ids = [];
         settings.forEach((s, i) => {
           if (!(s.docType === '*' || DEFAULT_MATRICES.some((d) => d.docType === s.docType) || workflowTypes.get(s.docType))) throw badRequest('Some settings are not valid.', [{ field: `settings.${i}.docType`, message: `${s.docType} is not a document type` }]);

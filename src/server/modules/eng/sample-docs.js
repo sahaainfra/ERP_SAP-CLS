@@ -4,6 +4,7 @@ import { authzOf } from '../../platform/authz/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { workflowTypes } from '../../platform/workflow/registry.js';
+import { evidenceProviders } from '../../platform/workflow/evidence.js';
 import { formatINR, fromUnits, toUnits } from '../../../shared/money.js';
 
 /**
@@ -26,6 +27,11 @@ workflowTypes.register({
   describe(db, companyId, id) {
     const d = db.prepare('SELECT * FROM eng_sample_docs WHERE id = ? AND company_id = ? AND is_active = 1').get(Number(id), companyId);
     return d ? { ref: d.doc_no, title: d.title, originator: d.requested_by, projectId: d.project_id, siteId: d.site_id } : null;
+  },
+  summarise(db, actor, id) {
+    const d = db.prepare('SELECT * FROM eng_sample_docs WHERE id = ? AND is_active = 1').get(Number(id));
+    if (!d) return null;
+    return { fields: [{ label: 'Number', value: d.doc_no }, { label: 'Title', value: d.title }, { label: 'Amount', value: d.amount / 100, format: 'inr' }, { label: 'Raised by', value: d.requested_by }, { label: 'Status', value: d.status.replace('_', ' ').toLowerCase() }, ...(d.amends_id ? [{ label: 'Amends', value: `document ${d.amends_id}` }] : [])], lines: null };
   },
   defaultDefinition: {
     name: 'Sample document approval',
@@ -135,3 +141,23 @@ export function createSampleDocService({ db, engine }) {
     },
   };
 }
+
+// The evidence the sample document shows an approver (part 04.03): how the request compares with what this person asked for before. A procurement document would
+// add its budget, commitments, rates and stock the same way.
+evidenceProviders.register(SAMPLE_DOC_TYPE, ({ db, instance }) => {
+  const d = db.prepare('SELECT * FROM eng_sample_docs WHERE id = ? AND company_id = ?').get(Number(instance.docId), instance.companyId);
+  if (!d) return { sections: [] };
+  const recent = db.prepare("SELECT doc_no, title, amount, status FROM eng_sample_docs WHERE company_id = ? AND requested_by = ? AND id != ? AND is_active = 1 ORDER BY id DESC LIMIT 5").all(d.company_id, d.requested_by, d.id);
+  const avg = recent.length ? recent.reduce((n, r) => n + r.amount, 0) / recent.length : null;
+  return {
+    sections: [
+      { code: 'request', title: 'The request', kind: 'metrics', items: [
+        { label: 'Amount', value: d.amount / 100, format: 'inr' },
+        { label: 'Average of the last five by the same person', value: avg == null ? 'No earlier request' : avg / 100, format: avg == null ? 'text' : 'inr' },
+        ...(avg ? [{ label: 'Against that average', value: Math.round(((d.amount - avg) / avg) * 1000) / 10, format: 'percent', tone: d.amount > avg * 2 ? 'warning' : 'success' }] : []),
+      ] },
+      { code: 'recent', title: `Earlier requests by ${d.requested_by}`, kind: 'table', columns: [{ key: 'no', label: 'Number' }, { key: 'title', label: 'Title' }, { key: 'amount', label: 'Amount', format: 'inr' }, { key: 'status', label: 'Status' }], rows: recent.map((r) => ({ no: r.doc_no, title: r.title, amount: r.amount / 100, status: r.status.replace('_', ' ').toLowerCase() })), empty: 'This person has not raised another request.' },
+    ],
+    flags: avg && d.amount > avg * 3 ? [{ code: 'out_of_pattern', label: 'Much larger than their usual request', severity: 'medium' }] : [],
+  };
+});

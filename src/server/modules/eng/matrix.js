@@ -61,7 +61,7 @@ export function createMatrixService({ db, engine, limits, paths }) {
         paths.ensureDefaults(companyId);
       });
     }
-    seeded.add(companyId);
+    if (!db.isTransaction) seeded.add(companyId); // inside a transaction the rows may still be rolled back
   }
 
   // ---- finding the matrix and the rule ----

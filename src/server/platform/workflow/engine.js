@@ -537,7 +537,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     const why = actor ? whyNot(actor, t, inst) : null;
     return {
       id: t.id, step: t.step_code, stepNo: t.step_no, kind: t.kind, assigneeUser: t.assignee_user_id, assigneeRole: t.assignee_role, status: t.status, dueAt: t.due_at, overdue: t.status === 'OPEN' && t.due_at < iso(),
-      actedAt: t.acted_at, action: t.action, comment: t.comment, onBehalfOf: t.on_behalf_of, delegatedFrom: t.delegated_from, clarification: t.clarification, escalatedAt: t.escalated_at, superseded: t.superseded === 1, version: t.version,
+      createdAt: t.created_at, remindedAt: t.reminded_at, remindAt: JSON.parse(t.scope_json || '{}').sla?.remindAt ?? null, secondAt: JSON.parse(t.scope_json || '{}').sla?.secondAt ?? null, escalationOf: JSON.parse(t.scope_json || '{}').escalatedFrom ?? null, actedAt: t.acted_at, action: t.action, comment: t.comment, onBehalfOf: t.on_behalf_of, delegatedFrom: t.delegated_from, clarification: t.clarification, escalatedAt: t.escalated_at, superseded: t.superseded === 1, version: t.version,
       attachments: db.prepare('SELECT file_id FROM wf_task_attachments WHERE task_id = ? AND is_active = 1').all(t.id).map((a) => a.file_id),
       canAct: actor ? !why : undefined, whyNot: actor && why ? why : undefined,
       canAnswer: actor ? t.clarification === 'ASKED' && inst.submitted_by === actor.user : undefined,
@@ -735,6 +735,16 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
     notify(inst, 'system', 'workflow.task.escalated', [...(target?.role ? [`role:${target.role}`] : ['permission:eng.workflow.admin']), `user:${inst.submitted_by}`], { taskId: t.id, level });
   }
 
+  /** One task for the approval drawer (part 04.03): the task with what this person may do with it, and the instance it belongs to. */
+  function taskDetail(actor, taskId) {
+    const t = loadTask(taskId, actor.companyId);
+    const inst = loadInstance(t.instance_id, actor.companyId);
+    assertCanSee(actor, inst);
+    const why = whyNot(actor, t, inst);
+    const step = stepsOf(inst).find((s) => s.code === t.step_code);
+    return { task: presentTask(t, inst, actor), instance: present(inst), step, canAct: !why, whyNot: why, mine: isAssignee(actor, t), steps: stepsOf(inst) };
+  }
+
   /** What the file service needs to know about a task a file is being attached to: who may see it and who may add to it (the person who must decide on it). */
   function taskAccess(actor, taskId) {
     const t = db.prepare('SELECT * FROM wf_tasks WHERE id = ?').get(Number(taskId));
@@ -748,5 +758,9 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
   /** The legacy adapter keeps the originator in step when a person is replaced. */
   const reassignOriginator = (companyId, docType, docId, to) => db.prepare("UPDATE wf_instances SET submitted_by = ? WHERE company_id = ? AND doc_type = ? AND doc_id = ? AND status IN ('RUNNING', 'RETURNED')").run(to, companyId, docType, String(docId));
 
-  return { configure: (p) => Object.assign(policy, p), setClock: (fn) => { now = fn; }, taskAccess, submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
+  /** The step of an instance by code, and the raw row of an instance (for the approval inbox, part 04.03). */
+  const stepOf = (instanceId, code) => { const i = db.prepare('SELECT steps_json FROM wf_instances WHERE id = ?').get(instanceId); return i ? unpackSteps(i.steps_json).steps.find((x) => x.code === code) ?? null : null; };
+  const instanceRow = (id) => db.prepare('SELECT * FROM wf_instances WHERE id = ?').get(id);
+
+  return { clock: () => now(), stepOf, instanceRow, taskDetail, configure: (p) => Object.assign(policy, p), setClock: (fn) => { now = fn; }, taskAccess, submit, resubmit, act, withdraw, cancel, assign, watch, get, forDocument, history, listTasks, openCount, listInstances, monitor, sweepSla, isLocked, abandon, reassignOriginator, activeDefinition, present, loadInstance, iamMode, holders };
 }

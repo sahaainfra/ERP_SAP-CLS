@@ -12,9 +12,12 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { createSampleDocService } from './sample-docs.js';
-import { sampleDocRoutes, workflowRoutes } from './routes.js';
+import { approvalLinkRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createDelegationService, createLimitService, createPathService, createSlaService } from './controls.js';
 import { createMatrixService } from './matrix.js';
+import { createInboxService } from './inbox.js';
+import { defineList } from '../../platform/list/index.js';
+import { widgetRegistry } from '../../platform/widgets/index.js';
 import './changes.js';
 
 // Part 04.01: the events of the workflow engine. A module that submits a document hears the outcome from its hooks (same transaction) and the rest of
@@ -103,6 +106,22 @@ integrityRegistry.register({
   statuses: { wf_matrix: ['DRAFT', 'PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], wf_authority_limits: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], wf_delegations: ['PENDING', 'ACTIVE', 'REVOKED', 'REJECTED'], wf_escalation_paths: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], wf_sla_settings: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
 });
 
+// Part 04.03: the inbox's events and the list its saved views belong to.
+for (const [type, description] of [
+  ['workflow.bulk.approved', 'An approver approved several documents at once from the inbox; each was checked on its own.'],
+  ['workflow.link.issued', 'A secure approval link was made for an approver\'s task (the token itself is never in the event).'],
+  ['workflow.link.used', 'A task was decided from a secure link.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({ statuses: { wf_approval_policies: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], wf_link_tokens: ['ISSUED', 'USED', 'EXPIRED', 'REVOKED'] } });
+// the inbox is served by its own query (what a person may decide depends on roles and delegations); this list gives it saved views, shared and personal
+defineList({
+  code: 'workflow.inbox', label: 'My Approvals', from: 'wf_tasks t', defaultSort: 'urgency',
+  columns: {
+    docType: { sql: 't.step_code', type: 'text', label: 'Document type' }, projectId: { sql: 't.project_id', type: 'id', label: 'Project' }, sla: { sql: 't.status', type: 'enum', label: 'Time' },
+    bulk: { sql: 't.kind', type: 'enum', label: 'Bulk approval' }, sort: { sql: 't.id', type: 'text', label: 'Order' },
+  },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -112,10 +131,10 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
-  mount(api, { db, config }) {
+  mount(api, { db, config, publicApi }) {
     // a database that has not been migrated this far (the contract recording of part 01.x) has no engine to mount
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'wf_definitions'").get()) return;
     const flags = createFlagService({ db, environment: config.environment });
@@ -129,6 +148,7 @@ export const eng = {
     const sla = createSlaService({ db, engine });
     const delegations = createDelegationService({ db, engine, limits });
     const matrix = createMatrixService({ db, engine, limits, paths });
+    const inbox = createInboxService({ db, engine, limits, matrixOptions: () => matrix.docTypes() });
     const on = (companyId) => flags.isOn({ companyId }, 'ff.eng.p0402');
     engine.configure({
       chain: (c) => (on(c.companyId) ? matrix.resolve(c) : null),
@@ -154,7 +174,13 @@ export const eng = {
     const wf = Router();
     wf.use(gate('ff.eng.p0401', 'The workflow engine is'));
     wf.use(['/matrix', '/authority-limits', '/delegations', '/escalation-paths', '/sla-settings'], gate('ff.eng.p0402', 'The approval matrix is'));
-    wf.use(workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla }, idem));
+    wf.use(['/inbox', '/approval-policies', '/links'], gate('ff.eng.p0403', 'The approval inbox is'));
+    wf.use(workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, idem));
+    publicApi.use(approvalLinkRoutes({ inbox, isOn: (companyId) => flags.isOn({ companyId }, 'ff.eng.p0403'), companyOfToken: (t) => inbox.companyOfToken(t) }));
+    // the widget of the approvals waiting in the workflow engine (part 03.07 framework)
+    try {
+      widgetRegistry.register({ code: 'workflow.inbox', provider: (ctx) => { const c = inbox.counts(ctx.actor); return { value: c.pending, unit: c.pending === 1 ? 'document' : 'documents', previous: null, trendPct: null, target: null, status: c.pending === 0 ? 'green' : c.overdue > 0 ? 'red' : 'amber', note: c.overdue > 0 ? `${c.overdue} past their time.` : null, drill: '/approvals' }; } });
+    } catch { /* registered once per process */ }
     api.use('/workflow', wf);
     const sample = Router();
     sample.use(gate('ff.eng.p0401', 'The workflow engine is'));

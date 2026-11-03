@@ -3,6 +3,7 @@ import { createWorkflowEngine } from './engine.js';
 export { createDefinitionService, DEFINITION_DOC_TYPE } from './definitions.js';
 export { meets, normaliseDefinition, packSteps, unpackSteps } from './definition.js';
 export { ADAPTED_TYPES, createLegacyAdapter, legacyAdapterOf, legacyDocType, legacyFlag } from './legacy.js';
+export { evidenceProviders } from './evidence.js';
 export { systemActions, workflowResolvers, workflowTypes } from './registry.js';
 import './resolvers.js';
 export { createWorkflowEngine } from './engine.js';
