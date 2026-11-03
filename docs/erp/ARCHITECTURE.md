@@ -527,3 +527,20 @@ Behind feature flag `ff.eng.p0406`; the engine is `platform/notify`, the sockets
 - **Screens** follow what they show (`useLiveRefresh(rooms, keys)`): the sample documents, the approval inbox, the workflow instance and the notification centre refresh the affected data when something in their rooms changes.
 - **Pages**: Notification Centre `/notifications` and the bell drawer, My Notification Preferences `/notifications/preferences`, Notification Templates `/admin/notification-templates`, Delivery Log `/admin/notification-deliveries`.
 - **Permissions**: `ntf.template.view` and `ntf.template.edit` (SYSADM; the IT administrator reads), `ntf.delivery.view` (ITADM, AUD), `ntf.delivery.retry` (ITADM); a person's own notifications and preferences need none.
+
+## 41. The communication gateway (part 04.07)
+
+Behind feature flag `ff.eng.p0407`; the gateway is `platform/comm` (`commOf(db)`; providers in `platform/comm/providers.js`), the module side is `modules/eng/communication.js`, routes under `/api/v1/comm`. Receipts and replies arrive at the hub's signed webhook `/api/v1/core/webhooks/:connector` (ADR-184).
+
+- **Sending** (`send`, `process`, `sendNow`): `send()` checks and queues, or writes the message down as BLOCKED with the reason (channel off, no connector, bad address, no text, no opt-in, opted out, DLT template missing or not matching, WhatsApp without an approved template or a session of the last 24 hours). `process()` (job `comm.dispatch`, every minute) sends the queued, most urgent first, at the pace set for the channel; it tries the first connector, then the second (failover, ADR-185); a rate-limited connector defers the message; other failures retry after 1, 5, 30 and 120 minutes, up to `comm.max_attempts`. The route tried is kept on the message.
+- **Consent** (`comm_consents`, BR-01): commercial messages need an OPT_IN; an OPT_OUT stops everything except a code or a message marked essential (security, statutory). `STOP` and `START` keywords in a reply change it; every change is audited and published.
+- **DLT and WhatsApp**: a text message must name a registered template (`{#var#}` stands for each variable) and match it, or it is blocked before the operator can refuse it; the DLT identities travel with the call. WhatsApp templates are read from the provider (`POST /comm/whatsapp/templates/sync`).
+- **One-time codes** (`comm.otp.send/verify`, BR-02, ADR-186): a six-digit code, only its HMAC kept (with a server secret), five minutes, five tries, a wait before a resend and a limit per hour; the log holds the text with the code replaced; the stored text of a code is wiped. Sign-in MFA (02.01) asks this service; its connectors stay the deliverer.
+- **Receipts and replies** (`handleWebhook`, consumer `comm.webhook`): a status moves forward only (a late DELIVERED does not undo READ); an inbound message joins the conversation of the e-mail reply token, the message it answers, or the last message sent to that number about a record, and publishes `comm.message.received`.
+- **The notification engine** (04.06): with the flag on, its e-mail, SMS and WhatsApp gateways call `sendNow`, so consent, DLT, failover and the log apply; the delivery log follows the receipts (consumer `ntf.receipts`). With the flag off the old direct path is used.
+- **Channel Settings** (`comm_channels`, `comm_dlt_templates`): a change of the connectors, sender, pace or DLT templates is a workflow document `COMM_CONFIG` approved by the system administrator or a director (one change at a time; what is in force stays until then).
+- **Retention**: job `comm.purge` (02:10) removes messages older than `comm.retention_days` and spent code records. The text of a failed message stays for Send again until then (a code is never kept).
+- **Pages**: Communication Log `/admin/communication-log`, Channel Settings `/admin/communication-channels`, Consent Register `/admin/communication-consents`.
+- **Permissions**: `comm.log.view`, `comm.channel.view`, `comm.channel.edit`, `comm.consent.view`, `comm.consent.edit`.
+- **Events**: `comm.message.sent`, `.delivered`, `.read`, `.failed`, `.received`, `comm.consent.changed`.
+

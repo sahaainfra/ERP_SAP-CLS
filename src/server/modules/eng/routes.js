@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -176,5 +176,27 @@ export function notificationRoutes({ service, deliveriesFile }, { idempotent, id
   r.get('/deliveries/export', (req, res) => { const out = deliveriesFile(req.actor, parseDeliveryExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
   r.get('/deliveries', (req, res) => ok(res, service.deliveries.list(req.actor, parseDeliveryQuery(req.query))));
   r.post('/deliveries/:id/retry', idempotent, (req, res) => ok(res, service.deliveries.retry(req.actor, parseId(req.params.id))));
+  return r;
+}
+
+/** /api/v1/comm: the communication gateway (part 04.07): the log, the channel settings, consent and one-time codes. Providers' receipts arrive at /api/v1/core/webhooks/:connector (the hub, 01.08). */
+export function communicationRoutes({ service, messagesFile }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/messages/summary', (req, res) => ok(res, service.messages.summary(req.actor, parseMessageSummary(req.query))));
+  r.get('/messages/export', (req, res) => { const out = messagesFile(req.actor, parseMessageExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.get('/messages', (req, res) => ok(res, service.messages.list(req.actor, parseMessageQuery(req.query))));
+  r.get('/messages/:id', (req, res) => ok(res, service.messages.get(req.actor, parseId(req.params.id))));
+  r.post('/messages/:id/retry', idempotent, (req, res) => ok(res, service.messages.retry(req.actor, parseId(req.params.id))));
+  r.get('/channels', (req, res) => ok(res, service.channels.get(req.actor)));
+  r.post('/channels/changes', idempotentRequired, (req, res) => ok(res, service.channels.propose(req.actor, parseChannelChange(req.body)), 202));
+  r.post('/channels/sample', idempotentRequired, async (req, res, next) => { try { ok(res, await service.channels.sample(req.actor, parseSample(req.body)), 201); } catch (e) { next(e); } });
+  r.post('/whatsapp/templates/sync', idempotent, async (req, res, next) => { try { ok(res, await service.channels.syncWhatsapp(req.actor)); } catch (e) { next(e); } });
+  r.get('/consents', (req, res) => ok(res, service.consents.list(req.actor, parseConsentQuery(req.query))));
+  r.post('/consents', idempotent, (req, res) => ok(res, service.consents.set(req.actor, parseConsent(req.body)), 201));
+  r.post('/consents/import', idempotentRequired, (req, res) => ok(res, service.consents.import(req.actor, parseConsentImport(req.body).rows), 201));
+  r.get('/consents/:id/history', (req, res) => ok(res, service.consents.history(req.actor, parseId(req.params.id))));
+  r.post('/otp/send', idempotentRequired, async (req, res, next) => { try { ok(res, await service.otps.send(req.actor, parseOtpSend(req.body)), 201); } catch (e) { next(e); } });
+  r.post('/otp/verify', idempotent, (req, res) => ok(res, service.otps.verify(req.actor, parseOtpVerify(req.body))));
   return r;
 }

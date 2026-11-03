@@ -210,3 +210,26 @@ export const parseDeliveryQuery = (q) => parse(z.object({
 }).strict(), q);
 export const parseDeliverySummary = (q) => parse(z.object({ from: date.optional(), to: date.optional() }).strict(), q);
 export const parseDeliveryExport = (q) => parse(z.object({ channel: NTF_CHANNEL.optional(), status: z.enum(['PENDING', 'DEFERRED', 'SENT', 'DELIVERED', 'FAILED', 'SKIPPED']).optional(), from: date.optional(), to: date.optional(), format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }).strict(), q);
+
+// ---- part 04.07: the communication gateway ----
+const COMM_CHANNEL = z.enum(['EMAIL', 'SMS', 'WHATSAPP', 'PUSH']);
+const connectorCode = z.string().regex(/^[a-z0-9][a-z0-9._-]{1,59}$/i, 'A connector code');
+export const parseMessageQuery = (q) => parse(z.object({
+  channel: COMM_CHANNEL.optional(), status: z.enum(['QUEUED', 'SENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'BLOCKED', 'RECEIVED', 'CANCELLED']).optional(), direction: z.enum(['OUT', 'IN']).optional(), purpose: z.enum(['TRANSACTIONAL', 'COMMERCIAL', 'OTP']).optional(),
+  entity: text(60).optional(), id: text(60).optional(), contactType: text(30).optional(), contactId: text(60).optional(), address: text(120).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseMessageSummary = (q) => parse(z.object({ from: date.optional(), to: date.optional() }).strict(), q);
+export const parseMessageExport = (q) => parse(z.object({ channel: COMM_CHANNEL.optional(), status: z.enum(['QUEUED', 'SENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'BLOCKED', 'RECEIVED', 'CANCELLED']).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(), format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }).strict(), q);
+export const parseChannelChange = (b) => parse(z.object({
+  channels: z.array(z.object({ channel: COMM_CHANNEL, primaryConnector: connectorCode.nullable().optional(), secondaryConnector: connectorCode.nullable().optional(), senderId: z.string().regex(/^[A-Za-z0-9]{3,11}$/, 'Three to eleven letters or digits').nullable().optional(), dltEntityId: z.string().regex(/^[0-9]{10,25}$/, 'The DLT entity ID is digits').nullable().optional(), ratePerMinute: z.number().int().min(1).max(6000).default(60), enabled: z.boolean().default(true) }).strict()).max(4).default([]),
+  dltTemplates: z.array(z.object({ templateCode: z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/), dltTemplateId: z.string().regex(/^[0-9]{10,30}$/, 'The DLT template ID is digits'), senderId: z.string().regex(/^[A-Za-z0-9]{3,11}$/).nullable().optional(), bodyPattern: text(1000).min(5) }).strict()).max(50).default([]),
+  reason: text(500).min(5, 'Give a reason of at least 5 characters'),
+}).strict().refine((v) => v.channels.length + v.dltTemplates.length > 0, { message: 'Change at least one channel or DLT template' }), b);
+export const parseSample = (b) => parse(z.object({ channel: COMM_CHANNEL, to: text(120).min(3) }).strict(), b);
+export const parseConsentQuery = (q) => parse(z.object({ channel: COMM_CHANNEL.optional(), status: z.enum(['OPT_IN', 'OPT_OUT']).optional(), contactType: text(30).optional(), source: text(30).optional(), q: text(80).optional(), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+const consentBody = z.object({ contactType: z.enum(['USER', 'EMPLOYEE', 'VENDOR', 'CLIENT', 'SUBCONTRACTOR', 'OTHER']).default('OTHER'), contactId: text(60).optional(), contactName: text(120).optional(), address: text(120).min(3), channel: COMM_CHANNEL, status: z.enum(['OPT_IN', 'OPT_OUT']), source: z.enum(['PORTAL', 'FORM', 'ADMIN', 'API']).optional() }).strict();
+export const parseConsent = (b) => parse(consentBody, b);
+export const parseConsentImport = (b) => parse(z.object({ rows: z.array(consentBody.omit({ source: true })).min(1).max(500) }).strict(), b);
+export const parseOtpSend = (b) => parse(z.object({ purpose: z.enum(['APPROVAL_LINK', 'PAYMENT_CONFIRM', 'OTHER']), channel: z.enum(['EMAIL', 'SMS', 'WHATSAPP']) }).strict(), b);
+export const parseOtpVerify = (b) => parse(z.object({ otpId: id, code: z.string().regex(/^[0-9]{6}$/, 'The code is six digits') }).strict(), b);

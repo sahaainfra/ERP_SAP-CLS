@@ -9,6 +9,9 @@ import AuthorityLimitsPage from './AuthorityLimitsPage.jsx';
 import DelegationsPage from './DelegationsPage.jsx';
 import EscalationPage from './EscalationPage.jsx';
 import MatrixEditorPage from './MatrixEditorPage.jsx';
+import CommunicationLogPage from './CommunicationLogPage.jsx';
+import ChannelSettingsPage from './ChannelSettingsPage.jsx';
+import ConsentRegisterPage from './ConsentRegisterPage.jsx';
 import DeliveryLogPage from './DeliveryLogPage.jsx';
 import NotificationPreferencesPage from './NotificationPreferencesPage.jsx';
 import NotificationTemplatesPage from './NotificationTemplatesPage.jsx';
@@ -56,6 +59,9 @@ registerModule({
     { path: '/notifications/preferences', label: 'Notification Preferences', icon: 'erp.action.settings', flag: 'ff.eng.p0406', Page: NotificationPreferencesPage },
     { path: '/admin/notification-templates', label: 'Notification Templates', icon: 'erp.action.settings', permission: 'ntf.template.view', flag: 'ff.eng.p0406', Page: NotificationTemplatesPage },
     { path: '/admin/notification-deliveries', label: 'Delivery Log', icon: 'erp.insights.metrics', permission: 'ntf.delivery.view', flag: 'ff.eng.p0406', Page: DeliveryLogPage },
+    { path: '/admin/communication-log', label: 'Communication Log', icon: 'erp.insights.metrics', permission: 'comm.log.view', flag: 'ff.eng.p0407', Page: CommunicationLogPage },
+    { path: '/admin/communication-channels', label: 'Channel Settings', icon: 'erp.action.settings', permission: 'comm.channel.view', flag: 'ff.eng.p0407', Page: ChannelSettingsPage },
+    { path: '/admin/communication-consents', label: 'Consent Register', icon: 'erp.action.list', permission: 'comm.consent.view', flag: 'ff.eng.p0407', Page: ConsentRegisterPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });

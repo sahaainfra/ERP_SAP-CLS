@@ -26,7 +26,8 @@ export const PERMISSIONS_04_02 = ['eng.matrix.view', 'eng.matrix.manage', 'eng.d
 export const PERMISSIONS_04_04 = ['eng.pcs.view', 'eng.pcs.manage', 'eng.pcs.raise', 'eng.pcs.emergency'];
 export const PERMISSIONS_04_05 = ['acc.raci.view', 'acc.raci.maintain', 'acc.ledger.view', 'acc.report.view'];
 export const PERMISSIONS_04_06 = ['ntf.template.view', 'ntf.template.edit', 'ntf.delivery.view', 'ntf.delivery.retry'];
-export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06]);
+export const PERMISSIONS_04_07 = ['comm.channel.view', 'comm.channel.edit', 'comm.log.view', 'comm.consent.view', 'comm.consent.edit'];
+export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07]);
 
 /** Permission keys that are privileged: a role holding any of them is a privileged role (its changes need the extra approver). */
 export const SENSITIVE_ACTIONS = ['manage', 'configure', 'configure_system', 'redrive', 'replay', 'issue', 'post_soft_closed'];
@@ -124,6 +125,14 @@ const ADDED_04_02 = {
   ITADM: ['eng.matrix.view', 'eng.delegation.admin'],
   DIR: ['eng.matrix.view'], CFO: ['eng.matrix.view'], AUD: ['eng.matrix.view'], ACCMGR: ['eng.matrix.view'], PROCMGR: ['eng.matrix.view'], PCMGR: ['eng.matrix.view'], HRMGR: ['eng.matrix.view', 'eng.delegation.admin'],
 };
+// Part 04.07. The IT administrator sets up the channels (a change is approved by the system administrator or a director); the system administrator, the auditor and the IT administrator read
+// the communication log; those who deal with vendors, clients and staff keep the consent of the contacts they write to.
+const ADDED_04_07 = {
+  ITADM: ['comm.channel.view', 'comm.channel.edit', 'comm.log.view', 'comm.consent.view', 'comm.consent.edit'],
+  SYSADM: ['comm.channel.view', 'comm.log.view', 'comm.consent.view', 'comm.consent.edit'],
+  AUD: ['comm.channel.view', 'comm.log.view', 'comm.consent.view'], DIR: ['comm.consent.view'],
+  PROCMGR: ['comm.consent.view', 'comm.consent.edit'], COMMGR: ['comm.consent.view', 'comm.consent.edit'], HRMGR: ['comm.consent.view', 'comm.consent.edit'],
+};
 // Part 04.06. The system administrator writes the templates of notifications (a new version is approved by the IT administrator); the IT administrator reads the templates and the
 // delivery log and may retry a failed delivery; everyone has their own notifications and preferences without a permission.
 const ADDED_04_06 = { SYSADM: ['ntf.template.view', 'ntf.template.edit'], ITADM: ['ntf.template.view', 'ntf.delivery.view', 'ntf.delivery.retry'], AUD: ['ntf.delivery.view'] };
@@ -161,8 +170,8 @@ const SHARES_VIEWS = new Set(['SYSADM', 'PM', 'PD', 'PCMGR', 'ACCMGR', 'CFO', 'H
 const internalRole = (code, category) => category !== EXT && code !== 'EMP' && code !== 'GUARD';
 
 function permissionsOfTemplate(code, category) {
-  const extra = [...(ADDED_02_05[code] ?? []), ...(ADDED_04_01[code] ?? []), ...(ADDED_04_02[code] ?? []), ...(ADDED_04_04[code] ?? []), ...(ADDED_04_05[code] ?? []), ...(ADDED_04_06[code] ?? []), ...(internalRole(code, category) ? ['eng.pcs.raise'] : []), ...(internalRole(code, category) ? ['eng.delegation.use'] : []), ...(USES_SAMPLE_DOCS.has(code) ? ['eng.sample.use'] : []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
-  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06]);
+  const extra = [...(ADDED_02_05[code] ?? []), ...(ADDED_04_01[code] ?? []), ...(ADDED_04_02[code] ?? []), ...(ADDED_04_04[code] ?? []), ...(ADDED_04_05[code] ?? []), ...(ADDED_04_06[code] ?? []), ...(ADDED_04_07[code] ?? []), ...(internalRole(code, category) ? ['eng.pcs.raise'] : []), ...(internalRole(code, category) ? ['eng.delegation.use'] : []), ...(USES_SAMPLE_DOCS.has(code) ? ['eng.sample.use'] : []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
+  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07]);
   if (code === 'AUD') return unique([...AUDITOR_READS, ...ADDED.AUD, ...extra]);
   if (LEGACY_ROLE_PERMISSIONS[code]) return unique([...LEGACY_ROLE_PERMISSIONS[code], ...(ADDED[code] ?? []), ...extra]);
   if (category === EXT || code === 'EMP') return [];

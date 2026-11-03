@@ -166,7 +166,7 @@ function createNotifications(db) {
         const body = render(inApp.body, data);
         const res = db.prepare(`INSERT INTO ntf_notifications (company_id, user_ref, template_code, title, body, link, category, priority, in_app, event_key, data_json, project_id, site_id, created_by, source_type, source_id)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-          .run(n.companyId, user, n.templateCode, title, body, n.link ?? null, category, priority, want.IN_APP ? 1 : 0, key, JSON.stringify({ category, ...(n.refs ?? {}) }), scope.projectId, scope.siteId, n.actor ?? 'system', n.sourceType ?? 'notify', n.sourceId == null ? null : String(n.sourceId));
+          .run(n.companyId, user, n.templateCode, title, body, n.link ?? null, category, priority, want.IN_APP ? 1 : 0, key, JSON.stringify({ category, ...(n.refs ?? {}), vars: data }), scope.projectId, scope.siteId, n.actor ?? 'system', n.sourceType ?? 'notify', n.sourceId == null ? null : String(n.sourceId));
         const id = Number(res.lastInsertRowid);
         out.ids.push(id);
         out.created += 1;

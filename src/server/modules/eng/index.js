@@ -13,11 +13,15 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { createSampleDocService } from './sample-docs.js';
-import { notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
-import { registerDefaultGateways } from './notify-gateways.js';
+import { createPushSender, registerDefaultGateways } from './notify-gateways.js';
+import { createCommunicationService, deliveryReceiptConsumer, webhookConsumer } from './communication.js';
+import { commOf } from '../../platform/comm/index.js';
+import { registerCommProviders } from '../../platform/comm/providers.js';
+import { integrationsOf } from '../../platform/integrations/index.js';
 import { notificationsOf } from '../../platform/notify/index.js';
 import { realtimeOf } from '../../platform/realtime/index.js';
 import { createDelegationService, createLimitService, createPathService, createSlaService } from './controls.js';
@@ -185,6 +189,36 @@ defineList({
   columns: { category: { sql: 'n.category', type: 'enum', label: 'Category' }, state: { sql: 'n.read_at', type: 'text', label: 'State' }, sort: { sql: 'n.id', type: 'text', label: 'Order' } },
 });
 
+// Part 04.07: the communication gateway.
+for (const [type, description] of [
+  ['comm.message.sent', 'The communication gateway handed a message to a provider (after the failover, if the first connector failed).'],
+  ['comm.message.delivered', 'A provider reported a message delivered to the person\'s device or mailbox.'],
+  ['comm.message.read', 'A provider reported a message read (WhatsApp).'],
+  ['comm.message.failed', 'A message could not be sent or the provider reported that it failed.'],
+  ['comm.message.received', 'A person replied by WhatsApp, text message or e-mail; the reply is linked to the record the conversation is about.'],
+  ['comm.consent.changed', 'A person opted in or out of a channel (by a form, an administrator, an import or the STOP keyword).'],
+  ['comm.channel.changed', 'The channel settings (connectors, failover, sender identity, DLT templates) were changed after their approval.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, def, min, max, description] of [
+  ['comm.max_attempts', 5, 1, 10, 'The rounds of sending a message (each round tries every connector of the channel) before it is marked failed.'],
+  ['comm.otp.resend_seconds', 30, 0, 600, 'The seconds a person must wait before another one-time code is sent for the same purpose and address.'],
+  ['comm.otp.max_per_hour', 5, 1, 100, 'The one-time codes sent to one address for one purpose in an hour.'],
+  ['comm.otp.max_attempts', 5, 1, 10, 'BR-02: the wrong tries allowed on one code before it is locked.'],
+  ['comm.retention_days', 365, 30, 3650, 'The days a message and its status are kept in the communication log (DPDP Act: no longer than the purpose needs).'],
+]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'comm_consents', columns: ['company_id', 'address', 'channel'] }],
+  statuses: { comm_messages: ['QUEUED', 'SENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'BLOCKED', 'RECEIVED', 'CANCELLED'], comm_channels: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], comm_dlt_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], comm_otps: ['PENDING', 'VERIFIED', 'EXPIRED', 'LOCKED', 'REPLACED', 'UNDELIVERED'] },
+});
+defineList({
+  code: 'comm.messages', label: 'Communication log', from: 'comm_messages m', defaultSort: 'newest',
+  columns: { channel: { sql: 'm.channel', type: 'enum', label: 'Channel' }, status: { sql: 'm.status', type: 'enum', label: 'Status' }, entity: { sql: 'm.related_entity', type: 'text', label: 'Record' }, sort: { sql: 'm.id', type: 'text', label: 'Order' } },
+});
+defineList({
+  code: 'comm.consents', label: 'Consent register', from: 'comm_consents c', defaultSort: 'newest',
+  columns: { channel: { sql: 'c.channel', type: 'enum', label: 'Channel' }, status: { sql: 'c.status', type: 'enum', label: 'Status' }, sort: { sql: 'c.id', type: 'text', label: 'Order' } },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -194,7 +228,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -240,7 +274,32 @@ export const eng = {
     };
     // part 04.06: the notification engine, the real-time layer and the people who follow what the modules say
     registerRealtimeRecords(db);
-    registerDefaultGateways({ db, config });
+    registerCommProviders(integrationsOf(db, { vaultKey: config.vaultKey ?? undefined }).providers);
+    const gateway = commOf(db);
+    gateway.setPepper(config.authSecret ?? 'dev-otp-pepper');
+    gateway.setPushSender(createPushSender({ db, config }));
+    registerDefaultGateways({ db, config, commOn: (companyId) => flags.isOn({ companyId }, 'ff.eng.p0407') });
+    const commService = createCommunicationService({ db, engine });
+    runtime.bus.subscribe('core.webhook.received', webhookConsumer(db), { consumer: 'comm.webhook' });
+    runtime.bus.subscribe(['comm.message.delivered', 'comm.message.failed'], deliveryReceiptConsumer(db), { consumer: 'ntf.receipts' });
+    runtime.jobs.register('comm.dispatch', async (ctx) => { const r = await gateway.process(100); ctx.log(`Sent ${r.sent}, retrying ${r.retrying}, failed ${r.failed}, held for pace ${r.deferred}`); return r; }, { maxAttempts: 1, description: 'Sends the queued messages in order of priority through the connectors of their channel, with failover.' });
+    runtime.scheduler.define({ code: 'comm.dispatch_minute', cron: '* * * * *', jobType: 'comm.dispatch', description: 'Every minute: send the queued messages on e-mail, text message, WhatsApp and push' });
+    runtime.jobs.register('comm.purge', (ctx) => {
+      const days = Number(createParameterStore(db).get('comm.retention_days', { date: todayIST() }));
+      const cut = new Date(Date.now() - days * 86_400_000).toISOString();
+      const m = db.prepare("DELETE FROM comm_messages WHERE created_at < ? AND status NOT IN ('QUEUED', 'SENDING')").run(cut).changes;
+      const o = db.prepare("DELETE FROM comm_otps WHERE created_at < ? AND status != 'PENDING'").run(new Date(Date.now() - 30 * 86_400_000).toISOString()).changes;
+      ctx.log(`Removed ${m} message(s) and ${o} old code record(s)`);
+      return { messages: Number(m), otps: Number(o) };
+    }, { maxAttempts: 1, description: 'Removes messages older than the retention period and spent one-time code records.' });
+    runtime.scheduler.define({ code: 'comm.purge_daily', cron: '10 2 * * *', jobType: 'comm.purge', description: 'Daily 02:10: remove old messages and spent code records' });
+    const messagesFile = (actor, q) => {
+      const list = commService.messages.list(actor, { ...q, limit: 100, offset: 0 });
+      const rows = list.rows.map((m) => ({ at: m.at.slice(0, 19).replace('T', ' '), channel: m.channel, direction: m.direction, to: m.to ?? '', template: m.template ?? '', status: m.status, record: m.relatedEntity ? `${m.relatedEntity} ${m.relatedId}` : '', connector: m.connector ?? '', error: m.blockReason ?? m.error ?? '' }));
+      const columns = [['at', 'When (UTC)'], ['channel', 'Channel'], ['direction', 'Direction'], ['to', 'Address'], ['template', 'Template'], ['status', 'Status'], ['record', 'Record'], ['connector', 'Connector'], ['error', 'Reason']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'comm_messages', entityId: 'log', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Communication log. Generated by ${actor.user} on ${todayIST()}. Addresses are partly hidden.`], sheetName: 'Messages', title: 'Communication log' }), type: FORMATS[q.format], fileName: `communication-${todayIST()}.${q.format}` };
+    };
     const ntfService = createNotificationService({ db, engine });
     runtime.bus.subscribe(['workflow.notification.requested', 'workflow.instance.approved', 'workflow.instance.rejected'], workflowNotificationConsumer(db), { consumer: 'ntf.notify' });
     runtime.bus.subscribe(REALTIME_PATTERNS, realtimeConsumer(db), { consumer: 'ntf.realtime' });
@@ -283,6 +342,10 @@ export const eng = {
     wf.use(['/matrix', '/authority-limits', '/delegations', '/escalation-paths', '/sla-settings'], gate('ff.eng.p0402', 'The approval matrix is'));
     wf.use(['/inbox', '/approval-policies', '/links'], gate('ff.eng.p0403', 'The approval inbox is'));
     wf.use(workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, idem));
+    const comms = Router();
+    comms.use(gate('ff.eng.p0407', 'The communication gateway is'));
+    comms.use(communicationRoutes({ service: commService, messagesFile }, idem));
+    api.use('/comm', comms);
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));

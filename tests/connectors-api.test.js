@@ -284,7 +284,7 @@ test('the catalogue lists the types, their providers, settings and credentials, 
   assert.deepEqual(cat.map((t) => t.type), ['email', 'sms', 'whatsapp', 'gsp', 'bank', 'biometric', 'maps', 'ocr', 'ai', 'storage']);
   assert.deepEqual(cat.filter((t) => t.needsCfo).map((t) => t.type), ['gsp', 'bank']);
   const email = cat[0];
-  assert.deepEqual(email.providers.map((p) => p.provider), ['sandbox', 'http_api']);
+  assert.deepEqual(email.providers.map((p) => p.provider), ['sandbox', 'http_api', 'sendgrid']);
   assert.ok(email.providers[1].secrets.some((s) => s.name === 'api_key' && s.required));
   await api.close();
 });

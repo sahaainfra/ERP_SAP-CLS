@@ -131,6 +131,252 @@ Indexes:
 - ix_acc_templates_company: company_id
 - ux_acc_templates (unique): , process_code
 
+## comm_channels
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| channel | TEXT | yes |  |  |
+| primary_connector | TEXT |  |  |  |
+| secondary_connector | TEXT |  |  |  |
+| sender_id | TEXT |  |  |  |
+| dlt_entity_id | TEXT |  |  |  |
+| rate_per_minute | INTEGER | yes |  | 60 |
+| enabled | INTEGER | yes |  | 1 |
+| channel_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| batch_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| instance_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: instance_id -> wf_instances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_comm_channels_instance: instance_id
+- ix_comm_channels_batch: batch_id
+- ix_comm_channels_active: company_id, channel, status
+- ux_comm_channels (unique): company_id, channel, channel_version
+
+## comm_consents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| contact_type | TEXT | yes |  |  |
+| contact_id | TEXT |  |  |  |
+| contact_name | TEXT |  |  |  |
+| address | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| source | TEXT | yes |  |  |
+| changed_at | TEXT | yes |  |  |
+| changed_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_comm_consents_status: company_id, status, channel
+- ix_comm_consents_contact: company_id, contact_type, contact_id
+- ux_comm_consents (unique): company_id, address, channel
+
+## comm_dlt_templates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| template_code | TEXT | yes |  |  |
+| dlt_template_id | TEXT | yes |  |  |
+| sender_id | TEXT |  |  |  |
+| body_pattern | TEXT | yes |  |  |
+| dlt_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| batch_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_comm_dlt_batch: batch_id
+- ix_comm_dlt_active: company_id, template_code, status
+- ux_comm_dlt (unique): company_id, template_code, dlt_version
+
+## comm_messages
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| channel | TEXT | yes |  |  |
+| direction | TEXT | yes |  | 'OUT' |
+| purpose | TEXT | yes |  | 'TRANSACTIONAL' |
+| priority | INTEGER | yes |  | 2 |
+| to_address | TEXT | yes |  |  |
+| from_address | TEXT |  |  |  |
+| template_code | TEXT |  |  |  |
+| provider_template_id | TEXT |  |  |  |
+| subject | TEXT |  |  |  |
+| body_redacted | TEXT | yes |  | '' |
+| payload_json | TEXT |  |  |  |
+| attachments_json | TEXT | yes |  | '[]' |
+| related_entity | TEXT |  |  |  |
+| related_id | TEXT |  |  |  |
+| conversation_key | TEXT |  |  |  |
+| contact_type | TEXT |  |  |  |
+| contact_id | TEXT |  |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| block_reason | TEXT |  |  |  |
+| connector_code | TEXT |  |  |  |
+| provider_msg_id | TEXT |  |  |  |
+| reply_token | TEXT |  |  |  |
+| attempts | INTEGER | yes |  | 0 |
+| route_json | TEXT | yes |  | '[]' |
+| last_error | TEXT |  |  |  |
+| next_attempt_at | TEXT |  |  |  |
+| sent_at | TEXT |  |  |  |
+| delivered_at | TEXT |  |  |  |
+| read_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_comm_messages_contact: company_id, contact_type, contact_id, created_at
+- ix_comm_messages_token: reply_token
+- ix_comm_messages_log: company_id, id
+- ix_comm_messages_provider: company_id, provider_msg_id
+- ix_comm_messages_conversation: company_id, conversation_key, id
+- ix_comm_messages_related: company_id, related_entity, related_id, created_at
+- ix_comm_messages_address: company_id, to_address, channel, created_at
+- ix_comm_messages_company: company_id, channel, status, created_at
+- ix_comm_messages_queue: status, priority, next_attempt_at
+
+## comm_otps
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| address | TEXT | yes |  |  |
+| user_ref | TEXT |  |  |  |
+| subject_ref | TEXT | yes |  | '' |
+| code_hash | TEXT | yes |  |  |
+| expires_at | TEXT | yes |  |  |
+| attempts | INTEGER | yes |  | 0 |
+| max_attempts | INTEGER | yes |  | 5 |
+| verified_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| sent_at | TEXT |  |  |  |
+| message_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: message_id -> comm_messages(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_comm_otps_message: message_id
+- ix_comm_otps_address: company_id, address, created_at
+- ix_comm_otps_subject: company_id, purpose, subject_ref, status
+
+## comm_wa_templates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| language | TEXT | yes |  | 'en' |
+| category | TEXT | yes |  | 'UTILITY' |
+| provider_status | TEXT | yes |  | 'PENDING' |
+| template_code | TEXT |  |  |  |
+| variables_json | TEXT | yes |  | '[]' |
+| synced_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_comm_wa_code: company_id, template_code, provider_status
+- ux_comm_wa (unique): company_id, name, language
+
 ## core_alert_rules
 
 | Column | Type | Not null | Key | Default |

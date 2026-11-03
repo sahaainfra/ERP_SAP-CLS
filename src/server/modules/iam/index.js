@@ -13,6 +13,7 @@ import { createPolicyChangeHandler, createSecurityService } from './admin.js';
 import { createAuthService } from './auth.js';
 import { createMfaService } from './mfa.js';
 import { createNotifier } from './notify.js';
+import { commOf } from '../../platform/comm/index.js';
 import { authRoutes, securityRoutes } from './routes.js';
 import { createUserStore } from './users.js';
 import { fileEntities } from '../../platform/files/entities.js';
@@ -152,7 +153,7 @@ export const iam = {
     const flagService = createFlagService({ db, environment: config.environment });
     const users = createUserStore({ db, identity });
     const notifier = createNotifier({ identity, integrations });
-    const mfa = createMfaService({ db, identity, notifier });
+    const mfa = createMfaService({ db, identity, notifier, otp: commOf(db).otp });
     const auth = createAuthService({ db, identity, users, mfa, notifier });
     const idempotentRequired = idempotency(db, { required: true });
     /** @type {ReturnType<typeof createUserAdminService>} */
