@@ -6,6 +6,7 @@ import { useAmendSampleDoc, useCreateSampleDoc, useSampleDoc, useSampleDocs, use
 import ControlCycle from '../../platform/protocol/ControlCycle.jsx';
 import RaiseExceptionDialog from '../../platform/protocol/RaiseExceptionDialog.jsx';
 import { exceptionFromError } from '../../platform/protocol/api.js';
+import { useLiveRefresh } from '../../platform/realtime/socket.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { INST_STATUS, useSearch } from './common.js';
 
@@ -89,6 +90,8 @@ export default function SampleDocsPage({ session }) {
   const [notice, setNotice] = useState('');
   const list = useSampleDocs({ ...filters, limit: PAGE, offset: (page - 1) * PAGE });
   const data = list.data;
+  // the rows on screen follow their records: a change of one of them refreshes the list and the open document
+  useLiveRefresh((data?.rows ?? []).map((r) => `record:sample_doc:${r.id}`), [['eng', 'sample-docs'], ['eng', 'sample-doc'], ['workflow']]);
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE)) : 1;
   if (list.error?.status === 403) return <NoPermission what="the sample documents" permission="eng.sample.use" />;
   return (

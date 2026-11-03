@@ -2468,6 +2468,189 @@ Indexes:
 - ux_iam_users_email (unique): email
 - ux_iam_users_username (unique): username
 
+## ntf_deliveries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| notification_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| address | TEXT |  |  |  |
+| subject | TEXT | yes |  | '' |
+| body | TEXT | yes |  | '' |
+| status | TEXT | yes |  | 'PENDING' |
+| provider_msg_id | TEXT |  |  |  |
+| attempts | INTEGER | yes |  | 0 |
+| last_error | TEXT |  |  |  |
+| delivered_at | TEXT |  |  |  |
+| next_attempt_at | TEXT |  |  |  |
+| deliver_after | TEXT |  |  |  |
+| digest_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: digest_id -> ntf_notifications(id), notification_id -> ntf_notifications(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ntf_deliveries_digest_id: digest_id
+- ix_ntf_deliveries_digest: status, user_ref, deliver_after
+- ix_ntf_deliveries_due: status, next_attempt_at
+- ix_ntf_deliveries_status: company_id, status, channel, created_at
+- ix_ntf_deliveries_notification: notification_id
+
+## ntf_notifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| template_code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| body | TEXT | yes |  | '' |
+| link | TEXT |  |  |  |
+| category | TEXT | yes |  |  |
+| priority | TEXT | yes |  | 'NORMAL' |
+| in_app | INTEGER | yes |  | 1 |
+| read_at | TEXT |  |  |  |
+| archived_at | TEXT |  |  |  |
+| event_key | TEXT |  |  |  |
+| data_json | TEXT | yes |  | '{}' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ntf_notifications_category: company_id, user_ref, category
+- ix_ntf_notifications_user: company_id, user_ref, in_app, archived_at, read_at, created_at
+- ux_ntf_notifications_key (unique): company_id, user_ref, event_key
+
+## ntf_preferences
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| channels_json | TEXT | yes |  | '{}' |
+| digest | TEXT | yes |  | 'INSTANT' |
+| quiet_hours_json | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_ntf_preferences (unique): company_id, user_ref, category
+
+## ntf_realtime_events
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| room | TEXT | yes |  |  |
+| event_type | TEXT | yes |  |  |
+| entity | TEXT |  |  |  |
+| entity_id | TEXT |  |  |  |
+| data_json | TEXT | yes |  | '{}' |
+| occurred_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ntf_realtime_time: occurred_at
+- ix_ntf_realtime_room: company_id, room, id
+
+## ntf_templates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| lang | TEXT | yes |  |  |
+| subject | TEXT | yes |  | '' |
+| body | TEXT | yes |  |  |
+| variables_json | TEXT | yes |  | '[]' |
+| template_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'ACTIVE' |
+| reason | TEXT |  |  |  |
+| instance_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: instance_id -> wf_instances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ntf_templates_instance: instance_id
+- ix_ntf_templates_company: company_id
+- ix_ntf_templates_lookup: code, channel, lang, status
+- ux_ntf_templates (unique): , code, channel, lang, template_version
+
 ## org_assignments
 
 | Column | Type | Not null | Key | Default |

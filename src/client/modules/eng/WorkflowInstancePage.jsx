@@ -1,3 +1,4 @@
+import { useLiveRefresh } from '../../platform/realtime/socket.js';
 import { useState } from 'react';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ConfirmDialog } from '../../platform/feedback/Dialogs.jsx';
@@ -109,6 +110,7 @@ export default function WorkflowInstancePage() {
   usePageTitle('Workflow Instance');
   const id = Number(useSearch().get('id')) || null;
   const query = useInstance(id);
+  useLiveRefresh(id ? [`record:workflow_instance:${id}`] : [], [['workflow']]);
   const action = useInstanceAction();
   const [tab, setTab] = useState('steps');
   const [notice, setNotice] = useState('');

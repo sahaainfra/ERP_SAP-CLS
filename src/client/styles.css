@@ -921,3 +921,17 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .wf-step-pending { border-style: dashed; opacity: 0.85; }
 .pcs-two { display: grid; gap: var(--erp-space-5); grid-template-columns: 1fr; }
 @media (min-width: 900px) { .pcs-two { grid-template-columns: 1fr 1fr; } }
+
+/* Notifications (part 04.06): the bell drawer and the centre. */
+.ntf-bell { position: relative; display: inline-flex; }
+.ntf-panel { position: absolute; right: 0; top: calc(100% + var(--erp-space-2)); width: min(24rem, calc(100vw - 2rem)); max-height: 70vh; overflow: auto; z-index: 40; padding: var(--erp-space-3); background: var(--erp-color-bg-surface); color: var(--erp-color-text); border: 1px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-md); box-shadow: var(--erp-shadow-popover, 0 4px 12px var(--erp-color-border-strong)); }
+.ntf-panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--erp-space-3); }
+.ntf-panel-head h2 { margin: 0; font-size: 1rem; }
+.ntf-panel-foot { margin: var(--erp-space-3) 0 0; font-size: 0.875rem; }
+.ntf-list { list-style: none; margin: var(--erp-space-3) 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.ntf-item { display: flex; gap: var(--erp-space-2); align-items: flex-start; justify-content: space-between; padding: var(--erp-space-2) var(--erp-space-3); border: 1px solid var(--erp-color-border); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
+.ntf-unread { border-left: 4px solid var(--erp-color-brand-primary); background: var(--erp-color-brand-primary-tint); }
+.ntf-open { display: flex; flex-direction: column; gap: var(--erp-space-1); flex: 1; text-align: left; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.ntf-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }
+.ntf-day h2 { font-size: 1rem; margin: var(--erp-space-4) 0 0; }
+@media (max-width: 600px) { .ntf-item { flex-direction: column; } .ntf-panel { position: fixed; left: 1rem; right: 1rem; top: 3.5rem; width: auto; } }

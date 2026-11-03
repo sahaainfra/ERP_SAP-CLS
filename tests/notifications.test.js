@@ -264,7 +264,7 @@ test('T-03 FR-05 FR-06 quiet hours hold back non-urgent messages for a digest; a
   let r = await n.dispatchDue();
   assert.equal(r.retrying, 1);
   let clockAt = new Date('2026-11-05T09:00:00Z').getTime();
-  for (let i = 0; i < 4; i += 1) { clockAt += 3 * 3_600_000; const t = clockAt; engine.setClock(() => new Date(t)); r = await n.dispatchDue(); }
+  for (let i = 0; i < 4; i += 1) { clockAt += 3 * 3_600_000; const t = clockAt; engine.setClock(() => new Date(t)); await n.dispatchDue(); }
   const failed = api.db.prepare("SELECT * FROM ntf_deliveries WHERE status = 'FAILED'").get();
   assert.equal(failed.attempts, 5);
   assert.match(failed.last_error, /Connection refused/);

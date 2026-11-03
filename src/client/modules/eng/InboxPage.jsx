@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../../platform/feedback/Dialogs.jsx';
 import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { formatDateTime, formatINR } from '../../platform/format.js';
 import { useBulkAct, useInbox } from '../../platform/workflow/api.js';
+import { useLiveRefresh } from '../../platform/realtime/socket.js';
 import { Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 
 // My Approvals (part 04.03, section 7.1): every task waiting for my decision, from every module, most urgent first, with the time left shown in words and colour.
@@ -56,6 +57,8 @@ export default function InboxPage() {
   const bulk = useBulkAct();
   const set = (patch) => { setFilters((f) => ({ ...f, ...patch })); setPage(1); setPicked([]); };
   const data = query.data;
+  // the tasks on screen follow their documents: a decision elsewhere removes or changes a row here
+  useLiveRefresh([...new Set((data?.rows ?? []).map((r) => `record:workflow_instance:${r.instanceId}`))], [['workflow']]);
   const pages = data ? Math.max(1, Math.ceil(data.total / PAGE)) : 1;
   const eligible = data?.rows.filter((r) => r.bulkEligible) ?? [];
   const toggle = (id) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);

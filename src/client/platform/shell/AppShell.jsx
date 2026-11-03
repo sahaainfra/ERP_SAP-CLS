@@ -1,3 +1,4 @@
+import NotificationBell from '../notifications/NotificationBell.jsx';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { NoPermission, EmptyState, Skeleton, ErrorState } from '../feedback/states.jsx';
@@ -59,7 +60,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const favs = useFavourites(Boolean(nav));
   const recent = useRecent(Boolean(nav));
   const approvalsEntry = entryFor(nav, '/admin/approvals');
-  const bell = useBell(Boolean(approvalsEntry));
+  const bell = useBell(Boolean(nav));
   const [context, setContext] = useState(readContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const searchOn = useFlagOn('ff.ui.p0308'); // global search and the command palette (part 03.08)
@@ -142,7 +143,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
         {extras}
         {!onboarding && <ContextSwitcher context={context} onChange={setContext} />}
         {!onboarding && <QuickCreate items={nav.quickCreate} go={goTo} />}
-        {!onboarding && <Bell count={bell.data?.unread ?? 0} to={approvalsEntry?.route} go={goTo} />}
+        {!onboarding && (bell.data?.source === 'notifications' ? <NotificationBell count={bell.data.unread} user={session?.user} go={goTo} /> : approvalsEntry && <Bell count={bell.data?.unread ?? 0} to={approvalsEntry.route} go={goTo} />)}
         <UserMenu name={displayName} theme={theme} setTheme={setTheme} language={language} setLanguage={setLanguage} profileRoute={profile?.route} go={goTo} onSignOut={onSignOut} deviceMenu={device ? <DeviceMenu /> : null} />
       </header>
       {device && <PwaBanners />}

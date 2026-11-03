@@ -64,7 +64,7 @@ export function workflowNotificationConsumer(db) {
     const control = inst.doc_type === 'PCS_EXCEPTION' ? db.prepare('SELECT control_code FROM pcs_exceptions WHERE id = ?').get(Number(inst.doc_id))?.control_code ?? '' : '';
     const data = { docLabel: workflowTypes.get(inst.doc_type)?.label ?? inst.doc_type, docRef: inst.doc_ref ?? inst.doc_id, docTitle: inst.title ?? '', step, actor: event.actorId === 'system' || !event.actorId ? 'The system' : event.actorId, dueAt: istText(task?.due_at), comment, level: event.data.level ?? '', control };
     const link = task && /task\.(assigned|reminder|escalated)$/.test(template) ? `/approvals/task?id=${task.id}` : `/workflow/instance?id=${inst.id}`;
-    n.notify({ companyId: event.companyId ?? inst.company_id, templateCode: template, recipients, data, link, priority: /escalated|unassigned/.test(template) ? 'HIGH' : 'NORMAL', projectId: inst.project_id, siteId: inst.site_id, sourceType: 'event', sourceId: event.eventId, actor: event.actorId ?? 'system', refs: { instanceId: inst.id } });
+    n.notify({ companyId: event.companyId ?? inst.company_id, templateCode: template, recipients, data, link, priority: /escalated|unassigned/.test(template) ? 'HIGH' : 'NORMAL', projectId: inst.project_id, siteId: inst.site_id, sourceType: 'event', sourceId: event.eventId, eventKey: /instance\.(approved|rejected)$/.test(template) ? `wf:${inst.id}:${template}` : undefined, actor: event.actorId ?? 'system', refs: { instanceId: inst.id } });
   };
 }
 

@@ -9,6 +9,10 @@ import AuthorityLimitsPage from './AuthorityLimitsPage.jsx';
 import DelegationsPage from './DelegationsPage.jsx';
 import EscalationPage from './EscalationPage.jsx';
 import MatrixEditorPage from './MatrixEditorPage.jsx';
+import DeliveryLogPage from './DeliveryLogPage.jsx';
+import NotificationPreferencesPage from './NotificationPreferencesPage.jsx';
+import NotificationTemplatesPage from './NotificationTemplatesPage.jsx';
+import NotificationsPage from './NotificationsPage.jsx';
 import AccountabilityReportPage from './AccountabilityReportPage.jsx';
 import MyAccountabilityPage from './MyAccountabilityPage.jsx';
 import RaciMatrixPage from './RaciMatrixPage.jsx';
@@ -48,6 +52,10 @@ registerModule({
     { path: '/admin/raci', label: 'RACI Matrix', icon: 'erp.action.settings', permission: 'acc.raci.view', flag: 'ff.eng.p0405', Page: RaciMatrixPage },
     { path: '/accountability', label: 'My Accountability', icon: 'erp.insights.metrics', flag: 'ff.eng.p0405', Page: MyAccountabilityPage },
     { path: '/reports/accountability', label: 'Accountability Report', icon: 'erp.insights.metrics', permission: 'acc.report.view', flag: 'ff.eng.p0405', Page: AccountabilityReportPage },
+    { path: '/notifications', label: 'Notifications', icon: 'erp.action.inbox', flag: 'ff.eng.p0406', Page: NotificationsPage },
+    { path: '/notifications/preferences', label: 'Notification Preferences', icon: 'erp.action.settings', flag: 'ff.eng.p0406', Page: NotificationPreferencesPage },
+    { path: '/admin/notification-templates', label: 'Notification Templates', icon: 'erp.action.settings', permission: 'ntf.template.view', flag: 'ff.eng.p0406', Page: NotificationTemplatesPage },
+    { path: '/admin/notification-deliveries', label: 'Delivery Log', icon: 'erp.insights.metrics', permission: 'ntf.delivery.view', flag: 'ff.eng.p0406', Page: DeliveryLogPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });

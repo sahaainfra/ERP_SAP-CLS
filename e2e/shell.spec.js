@@ -173,8 +173,8 @@ test('FR-06 the launchpad: what is waiting, tiles for the role, favourites in th
   const errors = watch(acc);
   // the approver: one request waiting, on the card and on the bell
   await expect(acc.getByTestId('pending-approvals')).toHaveAttribute('data-count', '1');
-  await expect(acc.getByTestId('bell-count')).toHaveText('1');
-  await expect(acc.getByRole('link', { name: '1 approval waiting for you' })).toBeVisible();
+  // the bell is the notification centre's (part 04.06): it counts what the person was told, and this request (of the earlier approval service) tells nobody
+  await expect(acc.getByRole('button', { name: 'No unread notifications' })).toBeVisible();
   await expect(acc.getByTestId('tile-admin-approvals')).toBeVisible();
   await expect(acc.getByTestId('tile-admin-users')).toHaveCount(0);
   await expect(acc.getByTestId('no-favourites')).toBeVisible();
