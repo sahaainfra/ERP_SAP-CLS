@@ -139,7 +139,7 @@ export function createProtocolService({ db, engine }) {
   const reasonRow = (r) => ({ id: r.id, actionType: r.action_type, code: r.code, label: r.label, requiresEvidence: r.requires_evidence === 1, needsText: r.needs_text === 1, sortOrder: r.sort_order, active: r.is_active === 1, scope: r.company_id == null ? 'system' : 'company', version: r.version });
   const reasons = {
     /** The codes of one action type (or all) as a company sees them: its own rows replace the shared ones with the same code. */
-    list(actor, { actionType, all = false } = {}) {
+    list(actor, /** @type {any} */ { actionType, all = false } = {}) {
       const rows = db.prepare(`SELECT * FROM pcs_reason_codes WHERE (company_id IS NULL OR company_id = ?) AND deleted_at IS NULL ${actionType ? 'AND action_type = ?' : ''} ORDER BY action_type, sort_order, code`).all(...[actor.companyId, ...(actionType ? [actionType] : [])]);
       const merged = new Map();
       for (const r of rows) { const k = `${r.action_type}|${r.code}`; if (r.company_id != null || !merged.has(k)) merged.set(k, r); }
@@ -191,7 +191,7 @@ export function createProtocolService({ db, engine }) {
     return c;
   };
   const controls = {
-    list(actor, { module, mode, stage, q } = {}) {
+    list(actor, /** @type {any} */ { module, mode, stage, q } = {}) {
       need(actor, 'eng.pcs.view', 'see the control points');
       protocol.flush();
       ensureAll(actor.companyId);
@@ -238,7 +238,8 @@ export function createProtocolService({ db, engine }) {
         const c = loadControl(actor, code);
         if (b.version !== undefined && b.version !== c.version) throw conflict('This control was changed by someone else. Refresh it and try again.');
         if (c.pending_change_id) throw conflict('A change of this control is already waiting for its approval.');
-        const { version, reason, ...ch } = b;
+        const { reason, ...ch } = b;
+        delete ch.version;
         const to = ch.mode ?? c.mode;
         const stats = observeStats(c);
         if (to === 'ENFORCE' && c.mode !== 'ENFORCE') {
@@ -294,7 +295,7 @@ export function createProtocolService({ db, engine }) {
   const evidenceIds = (id) => db.prepare("SELECT id FROM core_files WHERE linked_entity = 'pcs_exception' AND linked_id = ? AND is_active = 1 AND deleted_at IS NULL AND scan_status != 'INFECTED' ORDER BY id").all(id).map((r) => r.id);
   const reasonFor = (actor, code) => reasons.list(actor).find((r) => r.code === code && (r.actionType === 'override' || r.actionType === 'deviate'));
   const exceptions = {
-    list(actor, { status, control, projectId, minValue, maxValue, raisedBy, emergency, q, open, sort = 'newest', limit = 25, offset = 0 } = {}) {
+    list(actor, /** @type {any} */ { status, control, projectId, minValue, maxValue, raisedBy, emergency, q, sort = 'newest', limit = 25, offset = 0 } = {}) {
       protocol.flush();
       const p = {};
       const where = ['e.company_id = :c', 'e.is_active = 1', scopeSql(actor, p)];
@@ -303,8 +304,8 @@ export function createProtocolService({ db, engine }) {
       else if (status) { where.push('e.status = :st'); p.st = status; }
       if (control) { where.push('e.control_code = :ctl'); p.ctl = control; }
       if (projectId) { where.push('e.project_id = :pr'); p.pr = projectId; }
-      if (minValue != null) { where.push('e.value_at_risk >= :mn'); p.mn = toUnits(minValue, 'money'); }
-      if (maxValue != null) { where.push('e.value_at_risk <= :mx'); p.mx = toUnits(maxValue, 'money'); }
+      if (minValue != null) { where.push('e.value_at_risk >= :mn'); p.mn = toUnits(Number(minValue).toFixed(2), 'money'); }
+      if (maxValue != null) { where.push('e.value_at_risk <= :mx'); p.mx = toUnits(Number(maxValue).toFixed(2), 'money'); }
       if (raisedBy) { where.push('e.raised_by = :rb'); p.rb = raisedBy; }
       if (emergency != null) { where.push('e.emergency = :em'); p.em = emergency ? 1 : 0; }
       if (q) { where.push('(e.exception_no LIKE :q OR e.entity_ref LIKE :q OR e.justification LIKE :q OR e.control_code LIKE :q)'); p.q = `%${q}%`; }
@@ -364,7 +365,7 @@ export function createProtocolService({ db, engine }) {
       });
     },
     /** Send it into approval; the evidence the control or the reason asks for must be attached. After a return it goes into approval again. */
-    submit(actor, id, { comment } = {}) {
+    submit(actor, id, /** @type {any} */ { comment } = {}) {
       return transaction(db, () => {
         const e = loadException(actor, id);
         if (e.raised_by !== actor.user) throw forbidden(`Only ${e.raised_by}, who raised this exception, can submit it.`);
@@ -413,7 +414,7 @@ export function createProtocolService({ db, engine }) {
   };
 
   // ---- the dashboard (FR-07) and the register's export ----
-  const dashboard = (actor, { projectId, days = 90 } = {}) => {
+  const dashboard = (actor, /** @type {any} */ { projectId, days = 90 } = {}) => {
     protocol.flush();
     const p = {};
     const scope = scopeSql(actor, p);
@@ -424,7 +425,8 @@ export function createProtocolService({ db, engine }) {
     const open = db.prepare(`SELECT e.*, c.owner_role FROM pcs_exceptions e JOIN pcs_control_points c ON c.id = e.control_id WHERE ${w} AND e.status IN ('PENDING', 'APPROVED', 'RETURNED')`).all(p);
     const nowMs = Date.parse(protocol.nowIso());
     const age = (e) => Math.floor((nowMs - Date.parse(e.created_at)) / 86_400_000);
-    const buckets = [['0 to 7 days', 0, 7], ['8 to 30 days', 8, 30], ['31 to 90 days', 31, 90], ['Over 90 days', 91, 1e9]].map(([label, lo, hi]) => { const m = open.filter((e) => age(e) >= lo && age(e) <= hi); return { label, count: m.length, valueAtRisk: rupees(m.reduce((n, e) => n + e.value_at_risk, 0)).toFixed(2), from: lo, to: hi }; });
+    /** @type {any[][]} */ const spans = [['0 to 7 days', 0, 7], ['8 to 30 days', 8, 30], ['31 to 90 days', 31, 90], ['Over 90 days', 91, 1e9]];
+    const buckets = spans.map(([label, lo, hi]) => { const m = open.filter((e) => age(e) >= lo && age(e) <= hi); return { label, count: m.length, valueAtRisk: rupees(m.reduce((n, e) => n + e.value_at_risk, 0)).toFixed(2), from: lo, to: hi }; });
     const since = new Date(nowMs - days * 86_400_000).toISOString();
     const trend = db.prepare(`SELECT strftime('%Y-%W', e.created_at) AS week, MIN(substr(e.created_at, 1, 10)) AS from_day, COUNT(*) AS raised, COALESCE(SUM(e.value_at_risk), 0) AS value FROM pcs_exceptions e WHERE ${w} AND e.created_at >= :since GROUP BY week ORDER BY week`).all({ ...p, since }).map((r) => ({ week: r.week, from: r.from_day, raised: r.raised, valueAtRisk: rupees(r.value).toFixed(2) }));
     const failing = db.prepare(`SELECT r.control_code AS control, c.description, c.mode, COUNT(*) AS fails, COALESCE(SUM(r.value_at_risk), 0) AS value FROM pcs_check_results r JOIN pcs_control_points c ON c.id = r.control_id

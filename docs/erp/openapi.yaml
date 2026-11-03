@@ -1554,3 +1554,72 @@ paths:
     post:
       summary: Ask for a change of the approval settings from a date (Idempotency-Key required)
       responses: { '202': { description: '{ data }' } }
+  /api/v1/pcs/control-points:
+    get:
+      summary: The control points of the company with their mode and what each would have stopped (filters: module, mode, stage, q)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Define a control point written as data; it starts OFF
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/pcs/control-points/options:
+    get:
+      summary: Stages, enforcements, modes and roles for the forms
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/control-points/{code}:
+    get:
+      summary: One control point with its observation figures, its changes and what it found lately
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a control point (Idempotency-Key required). A control in or going to ENFORCE is changed through its approval chain (202) and goes to ENFORCE only after the days of observation set by eng.pcs.observe_days (422 before)
+      responses: { '200': { description: '{ data }' } }
+    delete:
+      summary: Remove a control point written as data (it must be OFF)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/reason-codes:
+    get:
+      summary: The reason codes as the company sees them, for every action type (all=true includes switched-off ones)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Add a reason code for the company, or switch a shared one off for it
+      responses: { '201': { description: '{ data }' } }
+    put:
+      summary: Change a reason code of the company (version for optimistic locking)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/exceptions:
+    get:
+      summary: The exceptions register: filters status, control, project, value, emergency, words; the raiser sees their own, a watcher those of their scope
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Start an exception for an action a control stopped; the server finds the failed check and takes the value at risk from it
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/export:
+    get:
+      summary: Export the register as xlsx, csv or pdf with the filters and permissions of the list
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/{id}:
+    get:
+      summary: One exception with its evidence, the checks, and its approval
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change the reason or the justification of a draft or returned exception
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/{id}/submit:
+    post:
+      summary: Send an exception into approval (evidence required where the control or reason asks) (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/{id}/cancel:
+    post:
+      summary: Cancel an exception that has not been used, with a reason (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/dashboard:
+    get:
+      summary: Tiles, trend, top failing controls, ageing, by control and by person, and the rollout of modes
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/cycle/{entity}/{id}:
+    get:
+      summary: The stages of Plan, Verify, Approve, Execute, Record, Monitor, Reconcile and Close a business object has passed, with what the controls said
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/import:
+    post:
+      summary: Create and submit sample documents from rows; each row goes through the same control checks as the screen, and a row a control stops stays a draft (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }

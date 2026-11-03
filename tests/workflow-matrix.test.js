@@ -75,6 +75,7 @@ const BANDS = [
   ['EQH', { monthlyAmount: 4 * L }, 'PMSUP > PM'], ['EQH', { monthlyAmount: 6 * L }, 'PMSUP > PM > PLANTMGR'],
   ['FA', { action: 'capitalisation', amount: 50 * L }, 'ACCMGR > CFO'], ['FA', { action: 'disposal', amount: 5 * L }, 'ACCMGR > CFO'], ['FA', { action: 'disposal', amount: 20 * L }, 'ACCMGR > CFO > DIR'],
   ['PAYROLL', {}, 'HRMGR > CFO'], ['BID', {}, 'DIR'], ['ESTIMATE', {}, 'DIR'], ['CLAIM', {}, 'COMMGR > PD > DIR'], ['ROLECHG', {}, 'ITADM|DIR'],
+  ['PCS_EXCEPTION', { level: 1, amount: 1000 }, 'PM'], ['PCS_EXCEPTION', { level: 1, amount: 2_000_000 }, 'PM > DIR'], ['PCS_EXCEPTION', { level: 2, amount: 1000 }, 'PD'], ['PCS_EXCEPTION', { level: 2, amount: 2_000_000 }, 'PD > DIR'], ['PCS_EXCEPTION', { level: 3, amount: 1000 }, 'DIR'],
 ];
 
 test('T-01 AC-01 FR-04 each default band of the reference resolves to the chain it names, for every listed document type', async () => {

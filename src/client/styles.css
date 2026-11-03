@@ -915,3 +915,9 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .mob-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); margin: var(--erp-space-4) 0; }
 .mob-actions .mob-btn { flex: 1 1 8rem; }
 .link-page { max-width: 36rem; margin: 0 auto; padding: var(--erp-space-5) var(--erp-page-padding-mobile); }
+
+/* Protocol & Control Engine (part 04.04): the control cycle, and the dashboard's two columns. */
+.wf-step-done { border-color: var(--erp-color-brand-primary); }
+.wf-step-pending { border-style: dashed; opacity: 0.85; }
+.pcs-two { display: grid; gap: var(--erp-space-5); grid-template-columns: 1fr; }
+@media (min-width: 900px) { .pcs-two { grid-template-columns: 1fr 1fr; } }

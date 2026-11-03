@@ -22,7 +22,6 @@ export const ENFORCEMENTS = Object.freeze(['BLOCK', 'EXCEPTION', 'WARN', 'MONITO
 export const MODES = Object.freeze(['OFF', 'OBSERVE', 'WARN', 'ENFORCE']);
 export const ACTION_TYPES = Object.freeze(['cancel', 'reject', 'return', 'reverse', 'deviate', 'override']);
 export const CONTROL_CODE = /^CP-[A-Z]{2,8}-\d{2,3}$/;
-const iso = () => new Date().toISOString();
 
 const defs = new Map();
 export const controlRegistry = {
@@ -131,6 +130,7 @@ function createProtocol(db) {
    * Evaluate a control for an action. Returns { outcome: 'pass' | 'warn' | 'block' | 'exception_required', result, mode, message, details, observed, exceptionId }.
    * `consume` marks the exception that lets the action through as used (enforce() does it); a plain check only looks.
    * @param {any} actor @param {string} code @param {any} context @param {any} [opts]
+   * @returns {any}
    */
   function check(actor, code, context, { consume = false, source } = {}) {
     if (!actor?.companyId) throw unprocessable('A control is checked for a company.');
@@ -142,7 +142,7 @@ function createProtocol(db) {
     const base = { control: code, mode: row.mode, enforcement: row.enforcement, stage: row.stage };
     if (row.mode === 'OFF') return { ...base, outcome: 'pass', result: 'PASS', message: null, details: {}, logged: false };
     const verdict = evaluate(row, actor, context);
-    const value = toUnits(Number(context.valueAtRisk ?? context.amount ?? 0) || 0, 'money');
+    const value = toUnits((Number(context.valueAtRisk ?? context.amount ?? 0) || 0).toFixed(2), 'money');
     const log = (result, extra = {}) => record({ company: actor.companyId, control: row.id, code, entity, entityId, result, mode: row.mode, details: JSON.stringify({ message: verdict.message, ...verdict.details, ref: context.ref ?? verdict.details?.ref ?? null, ...extra }), source: source ?? context.source ?? 'api', user: actor.user ?? null, value, at: nowIso(), project: context.projectId ?? null, site: context.siteId ?? null });
     if (verdict.pass) {
       const pct = param('eng.pcs.pass_sample_percent', actor.companyId);

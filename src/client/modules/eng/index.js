@@ -9,6 +9,10 @@ import AuthorityLimitsPage from './AuthorityLimitsPage.jsx';
 import DelegationsPage from './DelegationsPage.jsx';
 import EscalationPage from './EscalationPage.jsx';
 import MatrixEditorPage from './MatrixEditorPage.jsx';
+import ControlPointsPage from './ControlPointsPage.jsx';
+import ControlsDashboardPage from './ControlsDashboardPage.jsx';
+import ExceptionsPage from './ExceptionsPage.jsx';
+import ReasonCodesPage from './ReasonCodesPage.jsx';
 import SampleDocsPage from './SampleDocsPage.jsx';
 import WorkflowDefinitionsPage from './WorkflowDefinitionsPage.jsx';
 import WorkflowEditorPage from './WorkflowEditorPage.jsx';
@@ -34,6 +38,10 @@ registerModule({
     { path: '/approvals/task', label: 'Approval Task', icon: 'erp.action.info', flag: 'ff.eng.p0403', Page: ApprovalTaskPage },
     { path: '/approvals/submissions', label: 'My Submissions & Watch List', icon: 'erp.action.list', flag: 'ff.eng.p0403', Page: SubmissionsPage },
     { path: '/field/approvals', label: 'Approvals (phone)', icon: 'erp.field.field', flag: 'ff.eng.p0403', Page: MobileApprovalsPage },
+    { path: '/admin/controls', label: 'Control Points', icon: 'erp.action.settings', permission: 'eng.pcs.view', flag: 'ff.eng.p0404', Page: ControlPointsPage },
+    { path: '/admin/reason-codes', label: 'Reason Codes', icon: 'erp.action.list', permission: 'eng.pcs.view', flag: 'ff.eng.p0404', Page: ReasonCodesPage },
+    { path: '/controls/exceptions', label: 'Exceptions Register', icon: 'erp.action.list', flag: 'ff.eng.p0404', Page: ExceptionsPage },
+    { path: '/controls/dashboard', label: 'Controls Dashboard', icon: 'erp.insights.metrics', permission: 'eng.pcs.view', flag: 'ff.eng.p0404', Page: ControlsDashboardPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });

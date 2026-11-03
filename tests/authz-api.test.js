@@ -406,8 +406,8 @@ test('T-04 the legacy comparison shows nobody lost access or gained any that is 
   assert.deepEqual(byName.stranger.unmapped, ['SUPPLIER']);
   assert.equal(byName.nobody.result, 'SAME');
   const pmOnly = d.data.find((r) => r.roles.length === 1 && r.roles[0] === 'PM');
-  assert.deepEqual(pmOnly.newOnly, ['eng.delegation.use', 'eng.sample.use', 'iam.elevation.request', 'iam.review.decide', 'ui.view.share'], 'a project manager gains only the rights to use the sample document (04.01), to delegate (04.02), to ask for elevated access, to decide a review and to share list views (03.03)');
-  assert.equal(pmOnly.after - pmOnly.before, 5);
+  assert.deepEqual(pmOnly.newOnly, ['eng.delegation.use', 'eng.pcs.emergency', 'eng.pcs.raise', 'eng.pcs.view', 'eng.sample.use', 'iam.elevation.request', 'iam.review.decide', 'ui.view.share'], 'a project manager gains only the rights to use the sample document (04.01), to delegate (04.02), to see and raise control exceptions (04.04), to ask for elevated access, to decide a review and to share list views (03.03)');
+  assert.equal(pmOnly.after - pmOnly.before, 8);
   assert.equal((await sys.get(`${I}/legacy-comparison?filter[result]=UNMAPPED`)).json.meta.total, 1);
   const map = (await sys.get(`${I}/legacy-mapping`)).json.data;
   assert.equal(map.length, 9);

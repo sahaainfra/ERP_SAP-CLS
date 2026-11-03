@@ -82,6 +82,7 @@ workflowTypes.register({
   },
 });
 
+/** @param {{ db: any, engine: any, controlsOn?: (companyId: number) => boolean }} o */
 export function createSampleDocService({ db, engine, controlsOn = () => false }) {
   const protocol = protocolOf(db);
   const authz = authzOf(db);

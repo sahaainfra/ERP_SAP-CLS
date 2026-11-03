@@ -14,7 +14,6 @@ import { createFlagService } from '../core/api.js';
 import { createSampleDocService } from './sample-docs.js';
 import { approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
-import { protocolOf } from '../../platform/protocol/index.js';
 import { createDelegationService, createLimitService, createPathService, createSlaService } from './controls.js';
 import { createMatrixService } from './matrix.js';
 import { createInboxService } from './inbox.js';
@@ -141,6 +140,7 @@ for (const [key, def, min, max, description] of [
   ['eng.pcs.exception_valid_days', 30, 1, 365, 'The days an approved exception can be used for its action before it lapses.'],
 ]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
 integrityRegistry.register({
+  companyOptional: ['pcs_reason_codes'],
   uniqueKeys: [{ table: 'pcs_control_points', columns: ['company_id', 'code'] }, { table: 'pcs_exceptions', columns: ['company_id', 'exception_no'] }],
   statuses: { pcs_exceptions: ['DRAFT', 'PENDING', 'APPROVED', 'USED', 'REJECTED', 'RETURNED', 'CANCELLED'], pcs_control_changes: ['PENDING', 'ACTIVE', 'REJECTED'] },
 });
