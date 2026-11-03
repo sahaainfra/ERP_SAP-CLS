@@ -177,7 +177,7 @@ export function createTaskService({ db, engine }) {
       if (assigneesOther) need(actor, 'tsk.task.assign', 'give a task to someone else', { companyId: actor.companyId, projectId: b.projectId ?? null });
       if (b.projectId && !may(actor, 'org.view', { companyId: actor.companyId, projectId: b.projectId })) throw forbidden('You have no access to that project.');
       const assignees = b.assignees?.length ? b.assignees : [actor.user];
-      const r = core.create({ companyId: actor.companyId, ...b, assignees, origin: 'manual', assigner: actor.user, actor: actor.user, requiresAcceptance: assigneesOther && b.requiresAcceptance });
+      const r = core.create({ companyId: actor.companyId, ...b, assignees, origin: 'manual', assigner: actor.user, actor: actor.user, trusted: [actor.user], requiresAcceptance: assigneesOther && b.requiresAcceptance });
       return tasks.get(actor, r.id);
     },
     /** FR-03: a senior raises an instruction by topic; the matrix gives the department, role and person; acceptance is required. */
@@ -191,7 +191,7 @@ export function createTaskService({ db, engine }) {
         const r = core.create({
           companyId: actor.companyId, title: b.title, description: b.description, entity: b.entity, entityId: b.entityId, entityLabel: b.entityLabel, projectId: b.projectId, siteId: b.siteId, departmentId: rt.department?.id ?? b.departmentId, topicCode: b.topicCode,
           priority: b.priority ?? topic?.defaultPriority ?? 'MEDIUM', startDate: b.startDate, dueDate: due, assignees: [rt.employee], watchers: b.watchers ?? [], checklist: b.checklist, dependsOn: b.dependsOn,
-          requiresEvidence: b.requiresEvidence ?? topic?.requiresEvidence, requiresVerification: b.requiresVerification ?? topic?.requiresVerification, requiresAcceptance: true, origin: 'instruction', assigner: actor.user, actor: actor.user,
+          requiresEvidence: b.requiresEvidence ?? topic?.requiresEvidence, requiresVerification: b.requiresVerification ?? topic?.requiresVerification, requiresAcceptance: true, origin: 'instruction', assigner: actor.user, actor: actor.user, trusted: [actor.user],
           routing: { via: rt.via, department: rt.department?.name ?? null, role: rt.role, employee: rt.employee, failed: rt.failed, trail: rt.trail }, source: { type: 'instruction', id: b.topicCode ?? 'free' },
         });
         if (rt.failed) writeAudit(db, { entity: 'tsk_tasks', entityId: r.id, action: 'routing_failed', newValues: { reason: rt.failed, sentTo: rt.employee, via: rt.via }, actor: actor.user, companyId: actor.companyId });

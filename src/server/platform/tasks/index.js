@@ -147,8 +147,9 @@ function createTasks(db) {
     if (o.startDate && o.dueDate && o.dueDate < o.startDate) problems.push({ field: 'dueDate', message: 'The due date is before the start date.' });
     problems.push(...checkRecurrence(o.recurrence));
     if (o.recurrence && !o.dueDate) problems.push({ field: 'dueDate', message: 'A recurring task needs the date of its first occurrence.' });
-    for (const [i, u] of o.assignees.entries()) if (!userRow(o.companyId, u)) problems.push({ field: `assignees.${i}`, message: `${u} is not an active person of this company.` });
-    for (const [i, u] of o.watchers.entries()) if (!userRow(o.companyId, u)) problems.push({ field: `watchers.${i}`, message: `${u} is not an active person of this company.` });
+    const known = (u) => (o.trusted ?? []).includes(u) || userRow(o.companyId, u); // a person may always give a task to themselves, even a sign-in the user table does not list (development identities)
+    for (const [i, u] of o.assignees.entries()) if (!known(u)) problems.push({ field: `assignees.${i}`, message: `${u} is not an active person of this company.` });
+    for (const [i, u] of o.watchers.entries()) if (!known(u)) problems.push({ field: `watchers.${i}`, message: `${u} is not an active person of this company.` });
     if (o.departmentId && !db.prepare('SELECT 1 FROM org_departments WHERE id = ? AND company_id = ?').get(o.departmentId, o.companyId)) problems.push({ field: 'departmentId', message: 'There is no such department.' });
     if (o.projectId && !db.prepare('SELECT 1 FROM org_projects WHERE id = ? AND company_id = ?').get(o.projectId, o.companyId)) problems.push({ field: 'projectId', message: 'There is no such project.' });
     for (const [i, id] of o.dependsOn.entries()) if (!db.prepare('SELECT 1 FROM tsk_tasks WHERE id = ? AND company_id = ? AND is_active = 1').get(id, o.companyId)) problems.push({ field: `dependsOn.${i}`, message: 'That task does not exist.' });
