@@ -9,6 +9,9 @@ import AuthorityLimitsPage from './AuthorityLimitsPage.jsx';
 import DelegationsPage from './DelegationsPage.jsx';
 import EscalationPage from './EscalationPage.jsx';
 import MatrixEditorPage from './MatrixEditorPage.jsx';
+import AlertRulesPage from './AlertRulesPage.jsx';
+import RuleBuilderPage from './RuleBuilderPage.jsx';
+import AlertCentrePage from './AlertCentrePage.jsx';
 import MyTasksPage from './MyTasksPage.jsx';
 import TaskPage from './TaskPage.jsx';
 import NewTaskPage from './NewTaskPage.jsx';
@@ -72,6 +75,9 @@ registerModule({
     { path: '/tasks/new', label: 'New Task / Senior Instruction', icon: 'erp.action.create', flag: 'ff.eng.p0408', Page: NewTaskPage },
     { path: '/tasks/team', label: 'Team Tasks', icon: 'erp.insights.metrics', permission: 'tsk.team.view', flag: 'ff.eng.p0408', Page: TeamTasksPage },
     { path: '/admin/task-routing', label: 'Department Responsibility Matrix', icon: 'erp.action.settings', permission: 'tsk.routing.view', flag: 'ff.eng.p0408', Page: ResponsibilityMatrixPage },
+    { path: '/alerts', label: 'Alert Centre', icon: 'erp.action.notify', flag: 'ff.eng.p0409', Page: AlertCentrePage },
+    { path: '/admin/alert-rules', label: 'Alert Rules', icon: 'erp.action.settings', permission: 'alr.rule.view', flag: 'ff.eng.p0409', Page: AlertRulesPage },
+    { path: '/admin/alert-rules/editor', label: 'Rule Builder', icon: 'erp.action.edit', permission: 'alr.rule.view', flag: 'ff.eng.p0409', Page: RuleBuilderPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });
