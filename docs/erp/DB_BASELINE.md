@@ -3440,6 +3440,264 @@ Indexes:
 - ix_pcs_reason_codes_company: company_id
 - ux_pcs_reason_codes (unique): , action_type, code
 
+## tsk_assignees
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| role | TEXT | yes |  |  |
+| accepted_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: task_id -> tsk_tasks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tsk_assignees_user: company_id, user_ref, role, is_active
+- ux_tsk_assignees (unique): task_id, user_ref, role
+
+## tsk_checklist_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_id | INTEGER | yes |  |  |
+| position | INTEGER | yes |  | 0 |
+| text | TEXT | yes |  |  |
+| done | INTEGER | yes |  | 0 |
+| done_by | TEXT |  |  |  |
+| done_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: task_id -> tsk_tasks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tsk_checklist_task: task_id, position
+- ix_tsk_checklist_items_company_id: company_id
+
+## tsk_comments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_id | INTEGER | yes |  |  |
+| body | TEXT | yes |  |  |
+| author_ref | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: task_id -> tsk_tasks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tsk_comments_task: task_id, id
+- ix_tsk_comments_company_id: company_id
+
+## tsk_dependencies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_id | INTEGER | yes |  |  |
+| depends_on_task_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: depends_on_task_id -> tsk_tasks(id), task_id -> tsk_tasks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tsk_dependencies_on: depends_on_task_id
+- ux_tsk_dependencies (unique): task_id, depends_on_task_id
+- ix_tsk_dependencies_company_id: company_id
+
+## tsk_escalations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_id | INTEGER | yes |  |  |
+| level | INTEGER | yes |  |  |
+| to_role | TEXT |  |  |  |
+| to_user | TEXT |  |  |  |
+| days_late | INTEGER | yes |  | 0 |
+| at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: task_id -> tsk_tasks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tsk_escalations_task: task_id, level
+- ix_tsk_escalations_company_id: company_id
+
+## tsk_routing_matrix
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| topic_code | TEXT | yes |  |  |
+| topic_name | TEXT | yes |  |  |
+| department_id | INTEGER | yes |  |  |
+| role_code | TEXT | yes |  |  |
+| fallback_user_ref | TEXT |  |  |  |
+| raci_process_code | TEXT |  |  |  |
+| default_priority | TEXT | yes |  | 'MEDIUM' |
+| default_due_days | INTEGER | yes |  | 7 |
+| requires_evidence | INTEGER | yes |  | 0 |
+| requires_verification | INTEGER | yes |  | 0 |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| matrix_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| batch_id | INTEGER |  |  |  |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: department_id -> org_departments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tsk_routing_batch: batch_id
+- ix_tsk_routing_department: department_id
+- ix_tsk_routing_topic: company_id, topic_code, status, effective_from
+
+## tsk_tasks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| entity | TEXT |  |  |  |
+| entity_id | TEXT |  |  |  |
+| entity_label | TEXT |  |  |  |
+| department_id | INTEGER |  |  |  |
+| topic_code | TEXT |  |  |  |
+| priority | TEXT | yes |  | 'MEDIUM' |
+| start_date | TEXT |  |  |  |
+| due_date | TEXT |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| blocked_reason | TEXT |  |  |  |
+| recurrence_rule | TEXT |  |  |  |
+| series_id | INTEGER |  |  |  |
+| requires_acceptance | INTEGER | yes |  | 0 |
+| requires_evidence | INTEGER | yes |  | 0 |
+| requires_verification | INTEGER | yes |  | 0 |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| completed_by | TEXT |  |  |  |
+| completed_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| origin | TEXT | yes |  | 'manual' |
+| assigner | TEXT | yes |  |  |
+| routing_json | TEXT |  |  |  |
+| escalation_level | INTEGER | yes |  | 0 |
+| last_reminded_at | TEXT |  |  |  |
+| last_escalated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: department_id -> org_departments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tsk_tasks_source: company_id, source_type, source_id
+- ix_tsk_tasks_series: series_id
+- ix_tsk_tasks_assigner: company_id, assigner, status
+- ix_tsk_tasks_department: department_id
+- ix_tsk_tasks_project: company_id, project_id, status
+- ix_tsk_tasks_record: company_id, entity, entity_id
+- ix_tsk_tasks_log: company_id, id
+- ix_tsk_tasks_list: company_id, status, due_date
+- ux_tsk_tasks_no (unique): company_id, task_no
+
 ## ui_dashboards
 
 | Column | Type | Not null | Key | Default |

@@ -935,3 +935,12 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .ntf-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }
 .ntf-day h2 { font-size: 1rem; margin: var(--erp-space-4) 0 0; }
 @media (max-width: 600px) { .ntf-item { flex-direction: column; } .ntf-panel { position: fixed; left: 1rem; right: 1rem; top: 3.5rem; width: auto; } }
+
+/* Part 04.08: tasks. The board is a row of columns that scrolls sideways inside its own box on a phone; the calendar is a seven-column grid of days. */
+.tsk-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: var(--erp-space-3); overflow-x: auto; padding-bottom: var(--erp-space-2); }
+.tsk-col ul, .tsk-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.tsk-card { display: grid; gap: 2px; padding: var(--erp-space-2); border: 1px solid var(--erp-color-border-subtle); border-radius: 6px; }
+.tsk-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.tsk-day { min-height: 84px; padding: 4px; border: 1px solid var(--erp-color-border-subtle); border-radius: 4px; overflow: hidden; overflow-wrap: anywhere; font-size: 0.85em; }
+.tsk-day-empty { border-style: dashed; opacity: 0.5; }
+@media (max-width: 600px) { .tsk-cal { grid-template-columns: 1fr; } .tsk-day-empty { display: none; } .tsk-day { min-height: 0; } }

@@ -9,6 +9,11 @@ import AuthorityLimitsPage from './AuthorityLimitsPage.jsx';
 import DelegationsPage from './DelegationsPage.jsx';
 import EscalationPage from './EscalationPage.jsx';
 import MatrixEditorPage from './MatrixEditorPage.jsx';
+import MyTasksPage from './MyTasksPage.jsx';
+import TaskPage from './TaskPage.jsx';
+import NewTaskPage from './NewTaskPage.jsx';
+import TeamTasksPage from './TeamTasksPage.jsx';
+import ResponsibilityMatrixPage from './ResponsibilityMatrixPage.jsx';
 import CommunicationLogPage from './CommunicationLogPage.jsx';
 import ChannelSettingsPage from './ChannelSettingsPage.jsx';
 import ConsentRegisterPage from './ConsentRegisterPage.jsx';
@@ -62,6 +67,11 @@ registerModule({
     { path: '/admin/communication-log', label: 'Communication Log', icon: 'erp.insights.metrics', permission: 'comm.log.view', flag: 'ff.eng.p0407', Page: CommunicationLogPage },
     { path: '/admin/communication-channels', label: 'Channel Settings', icon: 'erp.action.settings', permission: 'comm.channel.view', flag: 'ff.eng.p0407', Page: ChannelSettingsPage },
     { path: '/admin/communication-consents', label: 'Consent Register', icon: 'erp.action.list', permission: 'comm.consent.view', flag: 'ff.eng.p0407', Page: ConsentRegisterPage },
+    { path: '/tasks', label: 'My Tasks', icon: 'erp.action.inbox', flag: 'ff.eng.p0408', Page: MyTasksPage },
+    { path: '/tasks/task', label: 'Task', icon: 'erp.action.info', flag: 'ff.eng.p0408', Page: TaskPage },
+    { path: '/tasks/new', label: 'New Task / Senior Instruction', icon: 'erp.action.create', flag: 'ff.eng.p0408', Page: NewTaskPage },
+    { path: '/tasks/team', label: 'Team Tasks', icon: 'erp.insights.metrics', permission: 'tsk.team.view', flag: 'ff.eng.p0408', Page: TeamTasksPage },
+    { path: '/admin/task-routing', label: 'Department Responsibility Matrix', icon: 'erp.action.settings', permission: 'tsk.routing.view', flag: 'ff.eng.p0408', Page: ResponsibilityMatrixPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });
