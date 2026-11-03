@@ -3457,6 +3457,41 @@ Indexes:
 - ix_ui_widgets_module: module, sort_order
 - sqlite_autoindex_ui_widgets_1 (unique): code
 
+## wf_authority_limits
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| role_code | TEXT | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| max_amount | INTEGER |  |  |  |
+| currency | TEXT | yes |  | 'INR' |
+| status | TEXT | yes |  | 'PENDING' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| batch_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_authority_batch: batch_id
+- ix_wf_authority_resolve: company_id, doc_type, role_code, status, effective_from
+
 ## wf_definitions
 
 | Column | Type | Not null | Key | Default |
@@ -3493,6 +3528,79 @@ Indexes:
 - ix_wf_definitions_activation: activation_instance_id
 - ux_wf_definitions_active (unique): company_id, doc_type
 - ux_wf_definitions_version (unique): company_id, doc_type, version
+
+## wf_delegations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| delegator | TEXT | yes |  |  |
+| delegate | TEXT | yes |  |  |
+| doc_types_json | TEXT | yes |  | '[]' |
+| delegator_roles_json | TEXT | yes |  | '[]' |
+| max_amount | INTEGER |  |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| instance_id | INTEGER |  |  |  |
+| revoked_by | TEXT |  |  |  |
+| revoked_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_delegations_instance: instance_id
+- ix_wf_delegations_delegator: company_id, delegator, status
+- ix_wf_delegations_delegate: company_id, delegate, status, from_date
+
+## wf_escalation_paths
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| scope_type | TEXT | yes |  | 'COMPANY' |
+| scope_id | INTEGER | yes |  | 0 |
+| levels_json | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| batch_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_escalation_batch: batch_id
+- ix_wf_escalation_resolve: company_id, scope_type, scope_id, status, effective_from
 
 ## wf_history
 
@@ -3576,6 +3684,111 @@ Indexes:
 - ix_wf_instances_definition: definition_id
 - ix_wf_instances_status: company_id, status, doc_type
 - ix_wf_instances_doc: company_id, doc_type, doc_id
+
+## wf_matrix
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| scope_type | TEXT | yes |  | 'COMPANY' |
+| scope_id | INTEGER | yes |  | 0 |
+| matrix_version | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| effective_from | TEXT |  |  |  |
+| effective_to | TEXT |  |  |  |
+| activation_instance_id | INTEGER |  |  |  |
+| activated_at | TEXT |  |  |  |
+| activated_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_matrix_activation: activation_instance_id
+- ix_wf_matrix_resolve: company_id, doc_type, status, effective_from
+- ux_wf_matrix_version (unique): company_id, doc_type, scope_type, scope_id, matrix_version
+
+## wf_matrix_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| matrix_id | INTEGER | yes |  |  |
+| priority | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| condition_json | TEXT | yes |  | '[]' |
+| steps_json | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: matrix_id -> wf_matrix(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_matrix_rules_company: company_id
+- ux_wf_matrix_rules_priority (unique): matrix_id, priority
+
+## wf_sla_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| sla_hours | INTEGER | yes |  |  |
+| remind_pct | INTEGER | yes |  | 50 |
+| escalate_pct | INTEGER | yes |  | 100 |
+| second_pct | INTEGER | yes |  | 200 |
+| status | TEXT | yes |  | 'PENDING' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| batch_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_sla_batch: batch_id
+- ix_wf_sla_resolve: company_id, doc_type, status, effective_from
 
 ## wf_task_attachments
 
