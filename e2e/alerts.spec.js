@@ -106,7 +106,7 @@ test('FR-01 FR-05 the Rule Builder: a rule is built, tried on today\'s data and 
   await form.getByRole('button', { name: 'Add a condition' }).click();
   const cond = pm.getByTestId('cond-0');
   await cond.getByLabel('Field').selectOption('daysLate');
-  await cond.getByLabel('Is', { exact: true }).selectOption('gte');
+  await cond.getByRole('combobox', { name: 'Is', exact: true }).selectOption('gte');
   await cond.getByLabel('Value').fill('3');
   await form.getByLabel('Message (may use {{fields}} of what it looks at)').fill('{{taskNo}} {{title}} is {{daysLate}} days late');
   await form.getByLabel('Severity').selectOption('CRITICAL');

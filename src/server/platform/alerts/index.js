@@ -199,9 +199,10 @@ function createAlerts(db) {
   function dryRun(rule) {
     const t0 = Date.now();
     const ev = evaluate(rule);
-    const items = ev.rows.map((row) => {
+    // the outcome is worked out for every match (the counts must agree with a run); the words of the actions only for the first 200 that are shown
+    const items = ev.rows.map((row, n) => {
       const o = outcomeOf(rule, row);
-      return { entity: row.entity, entityId: String(row.id), label: row.label, projectId: row.projectId, severity: rule.severity, message: row.message, outcome: o.kind, actions: o.kind === 'THROTTLED' ? [] : rule.actions.map((a) => actionSummary(rule, row, a)) };
+      return { entity: row.entity, entityId: String(row.id), label: row.label, projectId: row.projectId, severity: rule.severity, message: row.message, outcome: o.kind, actions: o.kind === 'THROTTLED' || n >= 200 ? [] : rule.actions.map((a) => actionSummary(rule, row, a)) };
     });
     return { looked: ev.total, matched: items.length, wouldCreate: items.filter((i) => i.outcome === 'NEW').length, wouldRepeat: items.filter((i) => i.outcome === 'REPEAT').length, throttled: items.filter((i) => i.outcome === 'THROTTLED').length, items: items.slice(0, 200), error: ev.error, durationMs: Date.now() - t0 };
   }
