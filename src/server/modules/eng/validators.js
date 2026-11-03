@@ -233,3 +233,40 @@ export const parseConsent = (b) => parse(consentBody, b);
 export const parseConsentImport = (b) => parse(z.object({ rows: z.array(consentBody.omit({ source: true })).min(1).max(500) }).strict(), b);
 export const parseOtpSend = (b) => parse(z.object({ purpose: z.enum(['APPROVAL_LINK', 'PAYMENT_CONFIRM', 'OTHER']), channel: z.enum(['EMAIL', 'SMS', 'WHATSAPP']) }).strict(), b);
 export const parseOtpVerify = (b) => parse(z.object({ otpId: id, code: z.string().regex(/^[0-9]{6}$/, 'The code is six digits') }).strict(), b);
+
+// Inputs of the task API (part 04.08).
+const TASK_PRIORITY = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']);
+const TASK_STATUS = z.enum(['OPEN', 'ACCEPTED', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'VERIFIED', 'CLOSED', 'CANCELLED']);
+const user = z.string().trim().min(1).max(60);
+const recurrence = z.object({ freq: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']), interval: z.number().int().min(1).max(52).default(1), until: date.optional() }).strict();
+const taskBody = {
+  title: text(200).min(3, 'Give the task a title of at least 3 characters'), description: text(4000).optional(), entity: text(60).optional(), entityId: text(60).optional(), entityLabel: text(200).optional(),
+  projectId: id.optional(), siteId: id.optional(), departmentId: id.optional(), priority: TASK_PRIORITY.optional(), startDate: date.optional(), dueDate: date.optional(),
+  watchers: z.array(user).max(20).optional(), checklist: z.array(text(300).min(1)).max(50).optional(), dependsOn: z.array(id).max(20).optional(),
+  requiresEvidence: z.boolean().optional(), requiresVerification: z.boolean().optional(),
+};
+export const parseTskQuery = (q) => parse(z.object({
+  view: z.enum(['assigned', 'watching', 'created', 'team', 'all']).default('assigned'), status: z.union([z.literal('open'), z.literal('finished'), TASK_STATUS]).optional(), priority: TASK_PRIORITY.optional(),
+  projectId: id.optional(), departmentId: id.optional(), entity: text(60).optional(), entityId: text(60).optional(), origin: z.enum(['manual', 'auto', 'instruction']).optional(), topicCode: text(60).optional(),
+  assignee: user.optional(), overdue: z.enum(['1', 'true']).optional().transform((v) => Boolean(v)), from: date.optional(), to: date.optional(), q: text(80).optional(),
+  sort: z.enum(['due', 'priority', 'newest']).default('due'), limit: z.coerce.number().int().min(1).max(200).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseTaskCreate = (b) => parse(z.object({ ...taskBody, assignees: z.array(user).max(10).optional(), requiresAcceptance: z.boolean().optional(), recurrence: recurrence.optional() }).strict(), b);
+export const parseInstruction = (b) => parse(z.object({ ...taskBody, topicCode: z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/, 'Use lower-case words such as safety.ppe').max(60) }).strict(), b);
+export const parseRoutePreview = (q) => parse(z.object({ topicCode: text(60).optional(), projectId: id.optional(), siteId: id.optional(), departmentId: id.optional() }).strict(), q);
+export const parseTaskUpdate = (b) => parse(z.object({ title: text(200).min(3).optional(), description: text(4000).optional(), priority: TASK_PRIORITY.optional(), startDate: date.optional(), dueDate: date.optional(), requiresEvidence: z.boolean().optional(), requiresVerification: z.boolean().optional(), version: z.number().int().min(1).optional() }).strict(), b);
+export const parseTaskAct = (b) => parse(z.object({ reason: text(1000).optional() }).strict(), b ?? {});
+export const parseTaskComment = (b) => parse(z.object({ body: text(2000).min(1, 'Write a comment') }).strict(), b);
+export const parseTaskChecklist = (b) => parse(z.object({ add: text(300).min(1).optional(), toggle: z.object({ id, done: z.boolean() }).strict().optional(), remove: id.optional() }).strict().refine((v) => Object.keys(v).length === 1, 'Do one thing at a time: add, toggle or remove'), b);
+export const parseTaskDepend = (b) => parse(z.object({ add: id.optional(), remove: id.optional() }).strict().refine((v) => Object.keys(v).length === 1, 'Add or remove one dependency'), b);
+export const parseTaskPeople = (b) => parse(z.object({ assignees: z.array(user).min(1).max(10).optional(), watchers: z.array(user).max(20).optional() }).strict().refine((v) => Object.keys(v).length > 0, 'Name the people'), b);
+export const parseTaskDashboard = (q) => parse(z.object({ projectId: id.optional(), departmentId: id.optional() }).strict(), q);
+export const parseRoutingChange = (b) => parse(z.object({
+  rows: z.array(z.object({
+    topicCode: z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/, 'Use lower-case words such as safety.ppe').max(60), topicName: text(120).min(3), departmentId: id, role: z.string().regex(/^[A-Z][A-Z0-9_]{1,19}$/),
+    fallbackUser: user.nullable().optional(), raciProcess: text(60).nullable().optional(), defaultPriority: TASK_PRIORITY.default('MEDIUM'), defaultDueDays: z.number().int().min(0).max(365).default(7),
+    requiresEvidence: z.boolean().default(false), requiresVerification: z.boolean().default(false), effectiveFrom: date,
+  }).strict()).min(1).max(100),
+  reason: text(500).min(5, 'Give a reason of at least 5 characters'),
+}).strict(), b);
+export const parseTaskExport = (q) => parse(z.object({ view: z.enum(['assigned', 'watching', 'created', 'team', 'all']).default('assigned'), status: z.union([z.literal('open'), z.literal('finished'), TASK_STATUS]).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseRoutePreview, parseRoutingChange, parseTaskAct, parseTaskChecklist, parseTaskComment, parseTaskCreate, parseTaskDashboard, parseTaskDepend, parseTaskExport, parseTaskPeople, parseTskQuery, parseTaskUpdate, parseInstruction, parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -198,5 +198,28 @@ export function communicationRoutes({ service, messagesFile }, { idempotent, ide
   r.get('/consents/:id/history', (req, res) => ok(res, service.consents.history(req.actor, parseId(req.params.id))));
   r.post('/otp/send', idempotentRequired, async (req, res, next) => { try { ok(res, await service.otps.send(req.actor, parseOtpSend(req.body)), 201); } catch (e) { next(e); } });
   r.post('/otp/verify', idempotent, (req, res) => ok(res, service.otps.verify(req.actor, parseOtpVerify(req.body))));
+  return r;
+}
+
+/** /api/v1/tsk: tasks (part 04.08): your own, your team's, instructions from seniors, and the department responsibility matrix. Other modules make tasks through tasksOf(db).create. */
+export function taskRoutes({ service, tasksFile }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/tasks/counts', (req, res) => ok(res, service.tasks.counts(req.actor)));
+  r.get('/tasks/route', (req, res) => ok(res, service.tasks.routePreview(req.actor, parseRoutePreview(req.query))));
+  r.get('/tasks/export', (req, res) => { const out = tasksFile(req.actor, parseTaskExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.get('/tasks', (req, res) => ok(res, service.tasks.list(req.actor, parseTskQuery(req.query))));
+  r.post('/tasks', idempotentRequired, (req, res) => ok(res, service.tasks.create(req.actor, parseTaskCreate(req.body)), 201));
+  r.post('/instructions', idempotentRequired, (req, res) => ok(res, service.tasks.instruct(req.actor, parseInstruction(req.body)), 201));
+  r.get('/tasks/:id', (req, res) => ok(res, service.tasks.get(req.actor, parseId(req.params.id))));
+  r.patch('/tasks/:id', idempotent, (req, res) => ok(res, service.tasks.update(req.actor, parseId(req.params.id), parseTaskUpdate(req.body))));
+  for (const action of ['accept', 'start', 'block', 'unblock', 'complete', 'verify', 'close', 'reopen', 'cancel']) r.post(`/tasks/:id/${action}`, idempotent, (req, res) => ok(res, service.tasks.act(req.actor, parseId(req.params.id), action, parseTaskAct(req.body))));
+  r.post('/tasks/:id/comments', idempotent, (req, res) => ok(res, service.tasks.comment(req.actor, parseId(req.params.id), parseTaskComment(req.body).body), 201));
+  r.post('/tasks/:id/checklist', idempotent, (req, res) => ok(res, service.tasks.checklist(req.actor, parseId(req.params.id), parseTaskChecklist(req.body))));
+  r.post('/tasks/:id/dependencies', idempotent, (req, res) => ok(res, service.tasks.depend(req.actor, parseId(req.params.id), parseTaskDepend(req.body))));
+  r.put('/tasks/:id/people', idempotent, (req, res) => ok(res, service.tasks.people(req.actor, parseId(req.params.id), parseTaskPeople(req.body))));
+  r.get('/dashboard', (req, res) => ok(res, service.dashboard(req.actor, parseTaskDashboard(req.query))));
+  r.get('/routing', (req, res) => ok(res, service.routing.list(req.actor)));
+  r.post('/routing/changes', idempotentRequired, (req, res) => ok(res, service.routing.propose(req.actor, parseRoutingChange(req.body)), 202));
   return r;
 }

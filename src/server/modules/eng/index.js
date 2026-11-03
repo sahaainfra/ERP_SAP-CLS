@@ -12,14 +12,16 @@ import { createDefinitionService, createLegacyAdapter, workflowOf } from '../../
 import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
-import { createSampleDocService } from './sample-docs.js';
-import { communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
+import { taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
 import { createPushSender, registerDefaultGateways } from './notify-gateways.js';
 import { createCommunicationService, deliveryReceiptConsumer, webhookConsumer } from './communication.js';
 import { commOf } from '../../platform/comm/index.js';
+import { tasksOf } from '../../platform/tasks/index.js';
+import { createTaskService } from './tasks.js';
 import { registerCommProviders } from '../../platform/comm/providers.js';
 import { integrationsOf } from '../../platform/integrations/index.js';
 import { notificationsOf } from '../../platform/notify/index.js';
@@ -219,6 +221,44 @@ defineList({
   columns: { channel: { sql: 'c.channel', type: 'enum', label: 'Channel' }, status: { sql: 'c.status', type: 'enum', label: 'Status' }, sort: { sql: 'c.id', type: 'text', label: 'Order' } },
 });
 
+// Part 04.08: task management.
+for (const [type, description] of [
+  ['tsk.task.created', 'A task was made (by a person, a senior\'s instruction or another module).'],
+  ['tsk.task.accepted', 'The person given a task accepted it.'],
+  ['tsk.task.started', 'Work on a task began.'],
+  ['tsk.task.blocked', 'A task was marked blocked, with the reason.'],
+  ['tsk.task.completed', 'A task was finished by the person who did it (it may still need verification).'],
+  ['tsk.task.verified', 'The person who gave a task checked and verified it.'],
+  ['tsk.task.closed', 'A task was closed.'],
+  ['tsk.task.reopened', 'A finished task was sent back with a reason.'],
+  ['tsk.task.cancelled', 'A task was cancelled, with the reason.'],
+  ['tsk.task.escalated', 'A late task climbed a level of the escalation path (it is an input to the performance review).'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, def, min, max, description] of [
+  ['tsk.dependency_block', 1, 0, 1, 'BR-02: 1 stops a task from starting or completing before the tasks it depends on are done; 0 only warns.'],
+  ['tsk.escalate_level1_days', 1, 1, 30, 'The days a task is overdue before it climbs to the next level of the escalation path.'],
+  ['tsk.escalate_level2_days', 3, 1, 60, 'The days a task is overdue before it climbs to the top of the escalation path.'],
+]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'tsk_tasks', columns: ['company_id', 'task_no'] }, { table: 'tsk_assignees', columns: ['task_id', 'user_ref', 'role'] }],
+  statuses: { tsk_tasks: ['OPEN', 'ACCEPTED', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'VERIFIED', 'CLOSED', 'CANCELLED'], tsk_routing_matrix: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+defineList({
+  code: 'tsk.tasks', label: 'Tasks', from: 'tsk_tasks t', defaultSort: 'newest',
+  columns: { status: { sql: 't.status', type: 'enum', label: 'Status' }, priority: { sql: 't.priority', type: 'enum', label: 'Priority' }, entity: { sql: 't.entity', type: 'text', label: 'Record' }, sort: { sql: 't.id', type: 'text', label: 'Order' } },
+});
+// "My work": the open tasks of a person join the approvals (part 03.07).
+workSources.register({
+  code: 'tsk.tasks',
+  kind: 'task',
+  label: 'Tasks',
+  list: (db, actor) => {
+    if (!actor.companyId) return [];
+    return db.prepare("SELECT t.id, t.task_no, t.title, t.due_date FROM tsk_tasks t JOIN tsk_assignees a ON a.task_id = t.id AND a.role = 'ASSIGNEE' AND a.is_active = 1 WHERE t.company_id = ? AND a.user_ref = ? AND t.is_active = 1 AND t.status NOT IN ('DONE', 'VERIFIED', 'CLOSED', 'CANCELLED') ORDER BY t.due_date IS NULL, t.due_date, t.id LIMIT 50").all(actor.companyId, actor.user)
+      .map((t) => ({ id: `tsk-${t.id}`, title: `${t.task_no} ${t.title}`, due: t.due_date, route: `/tasks/task?id=${t.id}` }));
+  },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -228,7 +268,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -346,6 +386,31 @@ export const eng = {
     comms.use(gate('ff.eng.p0407', 'The communication gateway is'));
     comms.use(communicationRoutes({ service: commService, messagesFile }, idem));
     api.use('/comm', comms);
+
+    // part 04.08: tasks, the instructions of seniors and the department responsibility matrix
+    const taskService = createTaskService({ db, engine });
+    runtime.jobs.register('tsk.sweep', (ctx) => { const r = taskService.sweep(); ctx.log(`Repeated ${r.repeated}, reminded ${r.reminded}, escalated ${r.escalated}`); return r; }, { maxAttempts: 1, description: 'Makes the next occurrence of recurring tasks, reminds people of tasks due, and escalates overdue tasks along the escalation path.' });
+    runtime.scheduler.define({ code: 'tsk.sweep_hourly', cron: '5 * * * *', jobType: 'tsk.sweep', description: 'Hourly at :05: recurring tasks, reminders and escalation of overdue tasks' });
+    // a document of the sample module that is sent back or rejected leaves a task for the person who wrote it (FR-02)
+    runtime.bus.subscribe(['workflow.instance.rejected', 'workflow.instance.returned'], (event) => {
+      const inst = db.prepare('SELECT * FROM wf_instances WHERE id = ?').get(Number(event.data.instanceId));
+      if (!inst || inst.doc_type !== SAMPLE_DOC_TYPE || !flags.isOn({ companyId: inst.company_id }, 'ff.eng.p0408')) return;
+      const returned = event.type.endsWith('returned');
+      const author = db.prepare("SELECT 1 FROM iam_users WHERE company_id = ? AND username = ? AND is_active = 1").get(inst.company_id, inst.submitted_by);
+      if (!author) return;
+      tasksOf(db).create({ companyId: inst.company_id, title: `${returned ? 'Correct and resubmit' : 'Review the rejection of'} ${inst.doc_ref ?? inst.doc_id}`, description: `${inst.title ?? ''} was ${returned ? 'returned' : 'rejected'}. Read the reason in its approval history.`, entity: 'workflow_instance', entityId: inst.id, entityLabel: `${inst.doc_ref ?? inst.doc_id}`, projectId: inst.project_id, siteId: inst.site_id, priority: 'MEDIUM', dueDate: new Date(Date.parse(tasksOf(db).today()) + 3 * 86_400_000).toISOString().slice(0, 10), assignees: [inst.submitted_by], origin: 'auto', assigner: 'system', actor: 'system', notify: false, source: { type: 'workflow_instance', id: `${inst.id}:${event.type}` } });
+    }, { consumer: 'tsk.auto' });
+    const tasksFile = (actor, q) => {
+      const list = taskService.tasks.list(actor, { view: q.view, status: q.status, limit: 200, offset: 0, sort: 'due' });
+      const rows = list.rows.map((t) => ({ taskNo: t.taskNo, title: t.title, status: t.status, priority: t.priority, due: t.dueDate ?? '', assignees: t.assignees.map((a) => a.user).join(', '), assigner: t.assigner, record: t.entityLabel ?? '', overdue: t.overdue ? `${t.daysLate} day(s)` : '' }));
+      const columns = [['taskNo', 'Task'], ['title', 'Title'], ['status', 'Status'], ['priority', 'Priority'], ['due', 'Due'], ['assignees', 'Assigned to'], ['assigner', 'Given by'], ['record', 'Record'], ['overdue', 'Overdue']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'tsk_tasks', entityId: 'list', action: 'export', newValues: { rows: rows.length, format: q.format, view: q.view }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Tasks. Generated by ${actor.user} on ${todayIST()}.`], sheetName: 'Tasks', title: 'Tasks' }), type: FORMATS[q.format], fileName: `tasks-${todayIST()}.${q.format}` };
+    };
+    const tsks = Router();
+    tsks.use(gate('ff.eng.p0408', 'Task management is'));
+    tsks.use(taskRoutes({ service: taskService, tasksFile }, idem));
+    api.use('/tsk', tsks);
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));
