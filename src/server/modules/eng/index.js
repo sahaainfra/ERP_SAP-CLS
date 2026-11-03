@@ -208,7 +208,7 @@ for (const [key, def, min, max, description] of [
 ]) parameterRegistry.define({ key, dataType: 'integer', default: def, min, max, scopes: ['system', 'company'], description });
 integrityRegistry.register({
   uniqueKeys: [{ table: 'comm_consents', columns: ['company_id', 'address', 'channel'] }],
-  statuses: { comm_consents: ['OPT_IN', 'OPT_OUT'], comm_otps: ['PENDING', 'VERIFIED', 'LOCKED', 'EXPIRED', 'REPLACED', 'UNDELIVERED'], comm_messages: ['QUEUED', 'SENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'BLOCKED', 'RECEIVED', 'CANCELLED'], comm_channels: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], comm_dlt_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], comm_otps: ['PENDING', 'VERIFIED', 'EXPIRED', 'LOCKED', 'REPLACED', 'UNDELIVERED'] },
+  statuses: { comm_consents: ['OPT_IN', 'OPT_OUT'], comm_messages: ['QUEUED', 'SENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'BLOCKED', 'RECEIVED', 'CANCELLED'], comm_channels: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], comm_dlt_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], comm_otps: ['PENDING', 'VERIFIED', 'EXPIRED', 'LOCKED', 'REPLACED', 'UNDELIVERED'] },
 });
 defineList({
   code: 'comm.messages', label: 'Communication log', from: 'comm_messages m', defaultSort: 'newest',
