@@ -344,7 +344,7 @@ export function createTaskService({ db, engine }) {
       return {
         rows,
         departments: db.prepare("SELECT d.id, d.name, u.username AS head FROM org_departments d LEFT JOIN iam_users u ON u.id = d.head_user_id WHERE d.company_id = ? AND d.status = 'ACTIVE' ORDER BY d.name").all(actor.companyId),
-        processes: db.prepare('SELECT code, name FROM acc_raci_templates WHERE company_id IS NULL OR company_id = ? ORDER BY name').all(actor.companyId),
+        processes: db.prepare('SELECT process_code AS code, name FROM acc_raci_templates WHERE company_id IS NULL OR company_id = ? ORDER BY name').all(actor.companyId),
         pendingBatch: rows.find((r) => r.status === 'PENDING')?.batchId ?? null, canEdit: may(actor, 'tsk.routing.edit'),
       };
     },

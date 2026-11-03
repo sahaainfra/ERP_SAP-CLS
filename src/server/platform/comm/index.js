@@ -56,9 +56,9 @@ export function dltMatches(pattern, body) {
 
 function createComm(db) {
   const engine = workflowOf(db);
-  const params = createParameterStore(db);
   const now = () => engine.clock();
-  const param = (key, companyId) => params.get(key, { companyId, date: now().toISOString().slice(0, 10) });
+  // a store of its own for each read: the settings are changed through another store, whose cache this one cannot see
+  const param = (key, companyId) => createParameterStore(db).get(key, { companyId, date: now().toISOString().slice(0, 10) });
   const hubOf = () => integrationsOf(db);
   const notif = notificationsOf(db);
   let pushSender = null;

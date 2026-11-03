@@ -58,13 +58,13 @@ export function checkRecurrence(rule) {
 
 function createTasks(db) {
   const engine = workflowOf(db);
-  const params = createParameterStore(db);
   const notif = notificationsOf(db);
   const acc = accountabilityOf(db);
   const clock = () => engine.clock();
   const nowIso = () => clock().toISOString();
   const today = () => new Date(clock().getTime() + 5.5 * 3_600_000).toISOString().slice(0, 10);
-  const param = (key, companyId) => params.get(key, { companyId, date: today() });
+  // a store of its own for each read: the settings are changed through another store, whose cache this one cannot see
+  const param = (key, companyId) => createParameterStore(db).get(key, { companyId, date: today() });
   const link = (id) => `/tasks/task?id=${id}`;
 
   const userRow = (companyId, name) => db.prepare("SELECT username, display_name FROM iam_users WHERE company_id = ? AND username = ? AND is_active = 1 AND status = 'ACTIVE'").get(companyId, name);
@@ -135,7 +135,9 @@ function createTasks(db) {
 
   /** Make a task. Returns { id, existing } (an automatic task with the same source is made once). */
   function create(input) {
-    const o = { priority: 'MEDIUM', origin: 'manual', assignees: [], watchers: [], checklist: [], dependsOn: [], notify: true, ...input };
+    const o = { ...input };
+    o.priority ??= 'MEDIUM'; o.origin ??= 'manual'; o.notify ??= true; // a caller may pass a field as undefined: the default still applies
+    for (const k of ['assignees', 'watchers', 'checklist', 'dependsOn']) o[k] ??= [];
     const problems = [];
     if (!o.companyId) problems.push({ field: 'companyId', message: 'is required' });
     if (!o.title || !String(o.title).trim()) problems.push({ field: 'title', message: 'Give the task a title.' });
