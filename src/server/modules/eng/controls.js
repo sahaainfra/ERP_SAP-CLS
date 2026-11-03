@@ -69,6 +69,7 @@ export function createLimitService({ db, engine }) {
       const docTypes = [...new Set([...DEFAULT_MATRICES.map((d) => d.docType), ...workflowTypes.list().map((t) => t.docType)])].filter((d) => !d.startsWith('WF_') && !d.startsWith('LEGACY_'));
       return { cells: [...cells.values()], roles: [...new Set([...cells.values()].map((c) => c.role))].sort(), docTypes: docTypes.sort(), allRoles: ROLE_TEMPLATES.map((r) => r.code).sort() };
     },
+    /** @param {any} actor @param {any} [o] */
     history(actor, { docType, role, limit = 50, offset = 0 } = {}) {
       this.ensureDefaults(actor.companyId);
       const where = ['company_id = :c', 'is_active = 1'];
@@ -279,6 +280,7 @@ export function createDelegationService({ db, engine, limits }) {
         .find((x) => { const t = JSON.parse(x.doc_types_json); return (t.length === 0 || t.includes(docType)) && (x.max_amount == null || amount == null || amount <= x.max_amount); });
       return d ? { delegate: d.delegate, id: d.id } : null;
     },
+    /** @param {any} actor @param {any} [o] */
     list(actor, { scope = 'mine', status, limit = 25, offset = 0 } = {}) {
       const where = ['company_id = :c', 'is_active = 1'];
       const p = { c: actor.companyId };

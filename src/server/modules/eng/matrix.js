@@ -202,6 +202,7 @@ export function createMatrixService({ db, engine, limits, paths }) {
       for (const d of DEFAULT_MATRICES) if (!reg.has(d.docType)) reg.set(d.docType, d.label);
       return [...reg.entries()].map(([docType, label]) => ({ docType, label })).sort((a, b) => a.label.localeCompare(b.label));
     },
+    /** @param {any} actor @param {any} [o] */
     list(actor, { docType, status, scopeType, q, limit = 25, offset = 0 } = {}) {
       ensureDefaults(actor.companyId);
       const where = ['m.company_id = :c', 'm.is_active = 1'];
@@ -228,7 +229,7 @@ export function createMatrixService({ db, engine, limits, paths }) {
         let source = rules;
         if (!source) {
           const base = copyOf ? db.prepare('SELECT * FROM wf_matrix WHERE id = ? AND company_id = ?').get(copyOf, actor.companyId) : matrixFor({ companyId: actor.companyId, docType, projectId: scopeType === 'PROJECT' ? sid : null, departmentId: scopeType === 'DEPARTMENT' ? sid : null, date: day() })
-            ?? matrixFor({ companyId: actor.companyId, docType, date: day() });
+            ?? matrixFor({ companyId: actor.companyId, docType, projectId: null, departmentId: null, date: day() });
           source = base ? rulesOf(base.id).map(({ priority, name: n, conditions, steps }) => ({ priority, name: n, conditions, steps })) : [];
           if (!source.length) throw unprocessable(`There is no matrix for ${docType} to start from; give the first rules.`);
         }
