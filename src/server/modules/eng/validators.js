@@ -155,3 +155,29 @@ export const parseExceptionUpdate = (b) => parse(z.object({ reasonCode: z.string
 export const parseDashboardQuery = (q) => parse(z.object({ projectId: id.optional(), days: z.coerce.number().int().min(7).max(365).default(90) }).strict(), q);
 export const parseCycleTarget = (p) => parse(z.object({ entity: z.string().regex(/^[a-z][a-z0-9_]{1,39}$/), id: z.string().trim().min(1).max(60) }).strict(), p);
 export const parseSampleImport = (b) => parse(z.object({ rows: z.array(z.object({ title: text(120).min(3), amount: rupees, projectId: id.optional() }).strict()).min(1).max(200) }).strict(), b);
+
+// ---- part 04.05: accountability (RACI) and the action ledger ----
+const SCOPE = z.enum(['COMPANY', 'DEPARTMENT', 'PROJECT', 'SITE', 'WBS']);
+const processCode = z.string().regex(/^[A-Z][A-Z0-9_]{1,29}$/, 'A process code such as PO_ISSUE');
+const personRef = z.string().trim().min(2).max(60);
+const raciLetter = z.enum(['R', 'A', 'C', 'I']);
+const LEDGER_ACTION = z.enum(['created', 'submitted', 'verified', 'approved', 'rejected', 'modified', 'executed', 'recorded', 'reconciled', 'cancelled', 'reversed', 'closed']);
+export const parseRaciScope = (q) => parse(z.object({ scopeType: SCOPE.default('COMPANY'), scopeId: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseRaciHistory = (q) => parse(z.object({ scopeType: SCOPE.default('COMPANY'), scopeId: z.coerce.number().int().min(0).default(0), processCode: processCode.optional() }).strict(), q);
+export const parseRaciChange = (b) => parse(z.object({
+  scopeType: SCOPE, scopeId: z.number().int().min(0).default(0), effectiveFrom: date.optional(), reason: text(500).min(5, 'Give a reason of at least 5 characters'),
+  processes: z.array(z.object({ processCode, assignments: z.array(z.object({ user: personRef.optional(), role: z.string().regex(/^[A-Z][A-Z0-9_]{1,19}$/).optional(), raci: raciLetter }).strict()).min(1).max(30) }).strict()).min(1).max(40),
+}).strict(), b);
+export const parseApplyTemplate = (b) => parse(z.object({
+  scopeType: SCOPE, scopeId: z.number().int().min(0).default(0), effectiveFrom: date.optional(), reason: text(500).min(5, 'Give a reason of at least 5 characters'),
+  processCodes: z.array(processCode).max(40).optional(), people: z.record(z.string().regex(/^[A-Z][A-Z0-9_]{1,19}$/), personRef).default({}),
+}).strict(), b);
+export const parseGapQuery = (q) => parse(z.object({ projectId: id.optional(), all: z.enum(['true', 'false']).transform((v) => v === 'true').optional() }).strict(), q);
+export const parseResolveQuery = (q) => parse(z.object({ processCode, projectId: id.optional(), siteId: id.optional(), departmentId: id.optional(), date: date.optional() }).strict(), q);
+export const parseLedgerQuery = (q) => parse(z.object({
+  user: personRef.optional(), project: id.optional(), action: LEDGER_ACTION.optional(), entity: text(60).optional(), process: processCode.optional(), outcome: text(30).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseScoreQuery = (q) => parse(z.object({ by: z.enum(['person', 'role', 'project']).default('person'), projectId: id.optional(), processCode: processCode.optional(), from: date.optional(), to: date.optional() }).strict(), q);
+export const parseScoreExport = (q) => parse(z.object({ by: z.enum(['person', 'role', 'project']).default('person'), projectId: id.optional(), processCode: processCode.optional(), from: date.optional(), to: date.optional(), format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }).strict(), q);
+export const parseMeQuery = (q) => parse(z.object({ projectId: id.optional(), from: date.optional(), to: date.optional() }).strict(), q);

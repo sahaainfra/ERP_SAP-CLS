@@ -12,8 +12,9 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { createSampleDocService } from './sample-docs.js';
-import { approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
+import { createAccountabilityService } from './accountability.js';
 import { createDelegationService, createLimitService, createPathService, createSlaService } from './controls.js';
 import { createMatrixService } from './matrix.js';
 import { createInboxService } from './inbox.js';
@@ -149,6 +150,20 @@ defineList({
   columns: { status: { sql: 'e.status', type: 'enum', label: 'Status' }, control: { sql: 'e.control_code', type: 'text', label: 'Control' }, projectId: { sql: 'e.project_id', type: 'id', label: 'Project' }, minValue: { sql: 'e.value_at_risk', type: 'text', label: 'Value at least' }, sort: { sql: 'e.id', type: 'text', label: 'Order' } },
 });
 
+// Part 04.05: accountability and the action ledger.
+for (const [type, description] of [
+  ['acc.raci.proposed', 'A change of the RACI of a live project was sent for the approval of its project manager and project director.'],
+  ['acc.raci.changed', 'A RACI change took effect (at once, or after its approval); the responsibility of the processes it names changed from its date.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  technicalTables: ['acc_ledger_cursors'], companyOptional: ['acc_raci_templates'],
+  statuses: { acc_raci_assignments: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+defineList({
+  code: 'acc.ledger', label: 'Action ledger', from: 'acc_action_ledger l', defaultSort: 'newest',
+  columns: { action: { sql: 'l.action', type: 'enum', label: 'Action' }, entity: { sql: 'l.entity', type: 'text', label: 'Object' }, projectId: { sql: 'l.project_id', type: 'id', label: 'Project' }, sort: { sql: 'l.id', type: 'text', label: 'Order' } },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -158,8 +173,8 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
-  companyOptional: ['pcs_reason_codes'],
+  tables: ['acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  companyOptional: ['pcs_reason_codes', 'acc_raci_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
   mount(api, { db, config, publicApi }) {
@@ -202,6 +217,17 @@ export const eng = {
       const out = writeExport(q.format, { columns, rows, footer, sheetName: 'Exceptions', title: 'Exceptions register' });
       return { buffer: out, type: FORMATS[q.format], fileName: `exceptions-${todayIST()}.${q.format}` };
     };
+    const accService = createAccountabilityService({ db, engine });
+    runtime.jobs.register('eng.ledger_sync', (ctx) => { const n = accService.sync(); ctx.log(`Wrote ${n} ledger entr${n === 1 ? 'y' : 'ies'}`); return { written: n }; }, { maxAttempts: 2, description: 'Reads the events and the audit trail from where the ledger stopped and writes the action ledger.' });
+    runtime.scheduler.define({ code: 'eng.ledger_sync_5min', cron: '*/5 * * * *', jobType: 'eng.ledger_sync', description: 'Every 5 minutes: the action ledger catches up with the workflow, the modules and the audit trail' });
+    const scoresFile = (actor, q) => {
+      const out = accService.scores.list(actor, q);
+      const rows = out.rows.map((r) => ({ who: r.label, actions: r.actions, onTime: r.onTime, late: r.late, onTimePct: r.onTimePct ?? '', exceptions: r.exceptionsRaised, returns: r.returnsReceived, rejects: r.rejectsReceived, overdue: r.overdueOpen, score: r.score }));
+      const columns = [['who', { person: 'Person', role: 'Role', project: 'Project' }[q.by]], ['actions', 'Actions'], ['onTime', 'On time'], ['late', 'Late'], ['onTimePct', 'On time %'], ['exceptions', 'Exceptions raised'], ['returns', 'Returns received'], ['rejects', 'Rejections received'], ['overdue', 'Open and overdue'], ['score', 'Score']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'acc_action_ledger', entityId: 'scores', action: 'export', newValues: { rows: rows.length, by: q.by, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      const footer = [`Accountability report by ${q.by}. Generated by ${actor.user} on ${todayIST()}. ${out.note}`];
+      return { buffer: writeExport(q.format, { columns, rows, footer, sheetName: 'Accountability', title: 'Accountability report' }), type: FORMATS[q.format], fileName: `accountability-${q.by}-${todayIST()}.${q.format}` };
+    };
     const monitorFile = (actor, q) => {
       const m = engine.monitor(actor, q);
       const rows = m.byType.map((r) => ({ type: r.label, running: r.running, stuck: r.stuck, overdue: r.overdue, approved: r.approved, rejected: r.rejected, returned: r.returned, cancelled: r.cancelled, avg: r.avgCycleHours ?? '' }));
@@ -217,6 +243,13 @@ export const eng = {
     wf.use(['/matrix', '/authority-limits', '/delegations', '/escalation-paths', '/sla-settings'], gate('ff.eng.p0402', 'The approval matrix is'));
     wf.use(['/inbox', '/approval-policies', '/links'], gate('ff.eng.p0403', 'The approval inbox is'));
     wf.use(workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, idem));
+    const acc = Router();
+    acc.use(gate('ff.eng.p0405', 'Accountability is'));
+    acc.use(accountabilityRoutes({ service: accService, exportFile: scoresFile }, idem));
+    api.use('/acc', acc);
+    try {
+      widgetRegistry.register({ code: 'accountability.mine', provider: (ctx) => { const m = accService.me(ctx.actor); const n = m.overdue.length; return { value: n, unit: n === 1 ? 'item overdue' : 'items overdue', previous: null, trendPct: null, target: null, status: n > 0 ? 'red' : 'green', note: `Accountable for ${m.counts.accountable} process(es)${m.score.onTimePct == null ? '' : `; ${m.score.onTimePct} % on time`}.`, drill: '/accountability' }; } });
+    } catch { /* registered once per process */ }
     const pcs = Router();
     pcs.use(gate('ff.eng.p0404', 'The Protocol & Control Engine is'));
     pcs.use(protocolRoutes({ service: protocolService, exportFile: exceptionsFile }, idem));

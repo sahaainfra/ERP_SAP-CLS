@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -132,5 +132,24 @@ export function protocolRoutes({ service, exportFile }, { idempotent, idempotent
   r.post('/exceptions/:id/cancel', idempotentRequired, (req, res) => ok(res, service.exceptions.cancel(req.actor, parseId(req.params.id), parseCancel(req.body))));
   r.get('/dashboard', (req, res) => ok(res, service.dashboard(req.actor, parseDashboardQuery(req.query))));
   r.get('/cycle/:entity/:id', (req, res) => { const t = parseCycleTarget(req.params); ok(res, service.cycle(req.actor, t.entity, t.id)); });
+  return r;
+}
+
+/** /api/v1/acc: accountability (part 04.05): the RACI of a scope, its gaps, the action ledger, the scores and My Accountability. */
+export function accountabilityRoutes({ service, exportFile }, { idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/raci/scopes', (req, res) => ok(res, service.raci.scopes(req.actor)));
+  r.get('/raci/templates', (req, res) => ok(res, service.raci.templates(req.actor)));
+  r.get('/raci/gaps', (req, res) => { const q = parseGapQuery(req.query); ok(res, service.raci.gaps(req.actor, { projectId: q.projectId, onlyGaps: !q.all })); });
+  r.get('/raci/resolve', (req, res) => ok(res, service.raci.resolve(req.actor, parseResolveQuery(req.query))));
+  r.get('/raci/history', (req, res) => ok(res, service.raci.history(req.actor, parseRaciHistory(req.query))));
+  r.get('/raci', (req, res) => ok(res, service.raci.get(req.actor, parseRaciScope(req.query))));
+  r.post('/raci/changes', idempotentRequired, (req, res) => { const out = service.raci.propose(req.actor, parseRaciChange(req.body)); ok(res, out, out.applied ? 200 : 202); });
+  r.post('/raci/apply-template', idempotentRequired, (req, res) => { const out = service.raci.applyTemplate(req.actor, parseApplyTemplate(req.body)); ok(res, out, out.applied ? 200 : 202); });
+  r.get('/ledger', (req, res) => ok(res, service.ledger.list(req.actor, parseLedgerQuery(req.query))));
+  r.get('/scores/export', (req, res) => { const out = exportFile(req.actor, parseScoreExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.get('/scores', (req, res) => ok(res, service.scores.list(req.actor, parseScoreQuery(req.query))));
+  r.get('/me', (req, res) => ok(res, service.me(req.actor, parseMeQuery(req.query))));
   return r;
 }
