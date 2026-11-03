@@ -222,4 +222,10 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-215 | Communication | The DLT template check compares the text with a pattern; it does not check the registered header (sender ID) against the operator's list or the length limits of a variable. | Low | Operator sandbox check | 04.07 | Open |
 | D-216 | Communication | The text of the three new pages is English only (see D-163). | Medium | Add the pages to the translation catalogue | 03.09 | Open |
 | D-217 | Communication | The pace limit is counted in memory per server process; with several servers each allows the full rate. | Low | Share the counter through Redis with the real-time layer (D-207) | 01.x | Open |
+| D-218 | Tasks | Alerts (04.09), meetings (10.05), NCR (18.04) and HSE (19.x) do not exist yet, so only the workflow's sample document makes tasks on its own; each calls `tasksOf(db).create` when it is built. | Medium | Each part calls the service | 04.09 | Open |
+| D-219 | Tasks | The project task board is the board layout of My Tasks filtered by project; the Project 360 tab and the task count on the project card arrive with 10.08. | Low | Add the tab | 10.08 | Open |
+| D-220 | Tasks | Recurrence is daily, weekly or monthly every N periods; days of the week and "the last working day" are not supported. | Low | Extend the rule | 04.09 | Open |
+| D-221 | Tasks | Escalation adds watchers and notifies; it does not offer a one-click reassign to the person it climbed to, and it is not yet an input of the performance score (07.11 reads `tsk.task.escalated`). | Medium | Reassign action and the score | 07.11 | Open |
+| D-222 | Tasks | The text of the five new pages is English only (see D-163). | Medium | Add the pages to the translation catalogue | 03.09 | Open |
+| D-223 | Tasks | The people of a task are chosen from the lookup of people, which needs the right to see the organisation; a person without it can give a task only to themselves. | Low | A people lookup limited to the project | 02.04 | Open |
 
