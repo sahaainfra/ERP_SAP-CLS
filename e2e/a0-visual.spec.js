@@ -10,7 +10,7 @@ const H = (roles, company, user) => ({ 'x-erp-user': user, 'x-erp-roles': roles,
 const THEMES = ['light', 'dark', 'high-contrast'];
 const SIZES = [{ width: 360, height: 740 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }];
 // pages whose content is the state of the whole system or of the clock: only their frame is compared
-const VOLATILE = new Set(['/admin/audit', '/admin/security-events', '/admin/operations', '/admin/operations/health', '/admin/operations/jobs', '/admin/operations/schedules', '/admin/operations/dead-letters', '/admin/integrations/log', '/admin/data-health', '/admin/about', '/admin/architecture', '/admin/security/routes',
+const VOLATILE = new Set(['/admin/navigation', '/admin/audit', '/admin/security-events', '/admin/operations', '/admin/operations/health', '/admin/operations/jobs', '/admin/operations/schedules', '/admin/operations/dead-letters', '/admin/integrations/log', '/admin/data-health', '/admin/about', '/admin/architecture', '/admin/security/routes',
   '/admin/migration', '/account/sessions', '/admin/security/login-history', '/work', '/home', '/admin/console', '/admin/feature-flags', '/admin/formulas/shadow', '/admin/sample-requests/overview', '/field']);
 const pages = registeredPages().filter((p) => !p.onboardingOnly);
 
