@@ -30,6 +30,7 @@ test('T-01 FR-01 FR-08 the inbox shows only my tasks (and what is delegated to m
   const api = await startApi();
   await setupCompany(api);
   const engine = workflowOf(api.db);
+  engine.setClock(() => new Date('2026-11-04T05:30:00Z')); // a Wednesday, 11:00 in India: the working-hours calendar must not decide this test (it failed at 09:23)
   const wfs = [];
   for (const [amount, title] of [['10000.00', 'Cement'], ['20000.00', 'Steel'], ['30000.00', 'Sand']]) wfs.push(await submit(api, pd, await make(api, pd, amount, title)));
   const mine = await inbox(api, pm);
