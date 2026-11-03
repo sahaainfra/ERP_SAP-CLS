@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS alr_rule_runs;
+DROP TABLE IF EXISTS alr_alerts;
+DROP TABLE IF EXISTS alr_rules;

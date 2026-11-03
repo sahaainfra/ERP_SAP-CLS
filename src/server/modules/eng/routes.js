@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseRoutePreview, parseRoutingChange, parseTaskAct, parseTaskChecklist, parseTaskComment, parseTaskCreate, parseTaskDashboard, parseTaskDepend, parseTaskExport, parseTaskPeople, parseTskQuery, parseTaskUpdate, parseInstruction, parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseAdopt, parseAlertAct, parseAlertBulk, parseAlertDraft, parseAlertExport, parseAlertQuery, parseAlertRule, parseEnable, parseRuleCode, parseRunsQuery, parseRoutePreview, parseRoutingChange, parseTaskAct, parseTaskChecklist, parseTaskComment, parseTaskCreate, parseTaskDashboard, parseTaskDepend, parseTaskExport, parseTaskPeople, parseTskQuery, parseTaskUpdate, parseInstruction, parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -221,5 +221,29 @@ export function taskRoutes({ service, tasksFile }, { idempotent, idempotentRequi
   r.get('/dashboard', (req, res) => ok(res, service.dashboard(req.actor, parseTaskDashboard(req.query))));
   r.get('/routing', (req, res) => ok(res, service.routing.list(req.actor)));
   r.post('/routing/changes', idempotentRequired, (req, res) => ok(res, service.routing.propose(req.actor, parseRoutingChange(req.body)), 202));
+  return r;
+}
+
+/** /api/v1/alr: the alert rules and the alerts they raise (part 04.09). */
+export function alertRoutes({ service, alertsFile }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/builder', (req, res) => ok(res, service.rules.builder(req.actor)));
+  r.get('/runs', (req, res) => ok(res, service.rules.runs(req.actor, parseRunsQuery(req.query))));
+  r.get('/rules', (req, res) => ok(res, service.rules.list(req.actor)));
+  r.post('/rules', idempotentRequired, (req, res) => { const out = service.rules.propose(req.actor, parseAlertRule(req.body)); ok(res, out, out.status === 'PENDING' ? 202 : 201); });
+  r.post('/rules/dry-run', idempotent, (req, res) => ok(res, service.rules.dryRun(req.actor, null, parseAlertDraft(req.body))));
+  r.post('/rules/library/:code/adopt', idempotentRequired, (req, res) => { const out = service.rules.adopt(req.actor, parseRuleCode(req.params.code), parseAdopt(req.body)); ok(res, out, out.status === 'PENDING' ? 202 : 201); });
+  r.get('/rules/:code', (req, res) => ok(res, service.rules.get(req.actor, parseRuleCode(req.params.code))));
+  r.post('/rules/:code/dry-run', idempotent, (req, res) => ok(res, service.rules.dryRun(req.actor, parseRuleCode(req.params.code))));
+  r.post('/rules/:code/enabled', idempotentRequired, (req, res) => { const b = parseEnable(req.body); ok(res, service.rules.setEnabled(req.actor, parseRuleCode(req.params.code), b.enabled, b.reason)); });
+  r.post('/rules/:code/run', idempotentRequired, (req, res) => ok(res, service.rules.run(req.actor, parseRuleCode(req.params.code))));
+  r.get('/alerts/summary', (req, res) => ok(res, service.alerts.summary(req.actor)));
+  r.get('/alerts/export', (req, res) => { const out = alertsFile(req.actor, parseAlertExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.get('/alerts', (req, res) => ok(res, service.alerts.list(req.actor, parseAlertQuery(req.query))));
+  r.post('/alerts/bulk', idempotentRequired, (req, res) => ok(res, service.alerts.bulk(req.actor, parseAlertBulk(req.body))));
+  r.get('/alerts/:id', (req, res) => ok(res, service.alerts.get(req.actor, parseId(req.params.id))));
+  r.post('/alerts/:id/ack', idempotent, (req, res) => ok(res, service.alerts.act(req.actor, parseId(req.params.id), 'ack', parseAlertAct(req.body).note)));
+  r.post('/alerts/:id/resolve', idempotent, (req, res) => ok(res, service.alerts.act(req.actor, parseId(req.params.id), 'resolve', parseAlertAct(req.body).note)));
   return r;
 }

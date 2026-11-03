@@ -270,3 +270,29 @@ export const parseRoutingChange = (b) => parse(z.object({
   reason: text(500).min(5, 'Give a reason of at least 5 characters'),
 }).strict(), b);
 export const parseTaskExport = (q) => parse(z.object({ view: z.enum(['assigned', 'watching', 'created', 'team', 'all']).default('assigned'), status: z.union([z.literal('open'), z.literal('finished'), TASK_STATUS]).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
+
+// Inputs of the alert rules API (part 04.09).
+const alertCondition = z.object({ field: z.string().regex(/^[A-Za-z][A-Za-z0-9_.]{0,59}$/), op: z.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'nin', 'contains', 'empty', 'notEmpty']), value: z.union([z.string().max(200), z.number(), z.boolean(), z.null(), z.array(z.union([z.string().max(100), z.number()])).max(50)]).optional() }).strict();
+const alertAction = z.object({
+  type: z.enum(['notify', 'task', 'escalate', 'webhook', 'flag']), to: z.array(z.string().regex(/^(owner|assignee|assigner|role|role:[A-Z][A-Z0-9_]{1,19}|user:[A-Za-z0-9_.@-]{1,60}|permission:[a-z][a-z0-9_.]{1,60})$/)).max(10).optional(), channels: z.array(z.enum(['EMAIL', 'SMS', 'WHATSAPP'])).max(3).optional(),
+  title: text(200).optional(), assignee: text(60).optional(), dueDays: z.number().int().min(0).max(365).optional(), priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(), role: z.string().regex(/^[A-Z][A-Z0-9_]{1,19}$/).optional(),
+  connector: text(60).optional(), path: text(200).optional(), method: z.enum(['POST', 'PUT']).optional(), flag: text(40).optional(),
+}).strict();
+const ruleBody = {
+  code: z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$/, 'Use lower-case words joined by dots, for example task.overdue').max(60), name: text(120).min(3), description: text(500).optional(),
+  triggerType: z.enum(['EVENT', 'SCHEDULE']), eventType: text(80).optional(), schedule: text(20).optional(), dataset: text(60).optional(),
+  condition: z.object({ all: z.array(alertCondition).max(20).optional(), any: z.array(alertCondition).max(20).optional() }).strict().default({}),
+  actions: z.array(alertAction).min(1).max(10), messageTemplate: text(500).min(3), throttleMinutes: z.number().int().min(0).max(525600).default(1440), severity: z.enum(['INFO', 'WARNING', 'CRITICAL']).default('WARNING'),
+  ownerModule: text(40).min(2), ownerRole: z.string().regex(/^[A-Z][A-Z0-9_]{1,19}$/).optional(), enabled: z.boolean().default(false),
+};
+export const parseAlertRule = (b) => parse(z.object({ ...ruleBody, reason: text(500).min(5, 'Give a reason of at least 5 characters'), version: z.number().int().min(1).optional() }).strict(), b);
+export const parseAlertDraft = (b) => parse(z.object(ruleBody).strict(), b);
+export const parseAdopt = (b) => parse(z.object({ enabled: z.boolean().default(true), reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseEnable = (b) => parse(z.object({ enabled: z.boolean(), reason: text(500).optional() }).strict(), b);
+export const parseRuleCode = (v) => parse(z.string().regex(/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$/).max(60), v);
+export const parseRunsQuery = (q) => parse(z.object({ code: text(60).optional(), onlyErrors: z.enum(['1', 'true']).optional().transform((v) => Boolean(v)), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseAlertQuery = (q) => parse(z.object({ view: z.enum(['mine', 'project', 'all']).default('mine'), status: z.union([z.literal('open'), z.enum(['OPEN', 'ACKNOWLEDGED', 'RESOLVED'])]).optional(), severity: z.enum(['INFO', 'WARNING', 'CRITICAL']).optional(), rule: text(60).optional(), projectId: id.optional(), entity: text(60).optional(), entityId: text(60).optional(), q: text(80).optional(), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseAlertAct = (b) => parse(z.object({ note: text(1000).optional() }).strict(), b ?? {});
+export const parseAlertBulk = (b) => parse(z.object({ ids: z.array(id).min(1).max(100), action: z.enum(['ack', 'resolve']), note: text(1000).optional() }).strict(), b);
+export const parseAlertExport = (q) => parse(z.object({ view: z.enum(['mine', 'project', 'all']).default('mine'), status: z.union([z.literal('open'), z.enum(['OPEN', 'ACKNOWLEDGED', 'RESOLVED'])]).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
+

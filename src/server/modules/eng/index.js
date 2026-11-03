@@ -13,7 +13,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
-import { taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -22,6 +22,8 @@ import { createCommunicationService, deliveryReceiptConsumer, webhookConsumer } 
 import { commOf } from '../../platform/comm/index.js';
 import { tasksOf } from '../../platform/tasks/index.js';
 import { createTaskService } from './tasks.js';
+import { createAlertService } from './alerts.js';
+import { alertsOf } from '../../platform/alerts/index.js';
 import { registerCommProviders } from '../../platform/comm/providers.js';
 import { integrationsOf } from '../../platform/integrations/index.js';
 import { notificationsOf } from '../../platform/notify/index.js';
@@ -259,6 +261,34 @@ workSources.register({
   },
 });
 
+// Part 04.09: the automation and alert rules engine.
+for (const [type, description] of [
+  ['alr.alert.raised', 'A rule raised an alert for a record (not repeated within the rule\'s throttle window).'],
+  ['alr.alert.acknowledged', 'A person acknowledged an alert.'],
+  ['alr.alert.resolved', 'A person resolved an alert and wrote what was done.'],
+  ['alr.rule.changed', 'An alert rule was created, changed (after its approval, if it sends messages outside), switched on or off.'],
+  ['alr.flag.set', 'A rule flagged a record (the flag is for the module that owns the record to act on).'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  uniqueKeys: [],
+  statuses: { alr_rules: ['LIBRARY', 'PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], alr_alerts: ['OPEN', 'ACKNOWLEDGED', 'RESOLVED'] },
+});
+defineList({
+  code: 'alr.alerts', label: 'Alerts', from: 'alr_alerts a', defaultSort: 'newest',
+  columns: { status: { sql: 'a.status', type: 'enum', label: 'Status' }, severity: { sql: 'a.severity', type: 'enum', label: 'Severity' }, rule: { sql: 'a.rule_code', type: 'text', label: 'Rule' }, sort: { sql: 'a.id', type: 'text', label: 'Order' } },
+});
+// "My work": the open alerts of a person join the tasks and approvals (part 03.07).
+workSources.register({
+  code: 'alr.alerts',
+  kind: 'task',
+  label: 'Alerts',
+  list: (db, actor) => {
+    if (!actor.companyId) return [];
+    return db.prepare("SELECT a.id, a.message, a.route FROM alr_alerts a WHERE a.company_id = ? AND a.status = 'OPEN' AND a.is_active = 1 AND (a.owner_user_ref = ? OR EXISTS (SELECT 1 FROM json_each(a.recipients_json) j WHERE j.value = ?)) ORDER BY CASE a.severity WHEN 'CRITICAL' THEN 0 WHEN 'WARNING' THEN 1 ELSE 2 END, a.id DESC LIMIT 20").all(actor.companyId, actor.user, actor.user)
+      .map((a) => ({ id: `alr-${a.id}`, title: a.message.slice(0, 120), due: null, route: '/alerts' }));
+  },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -268,7 +298,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -411,6 +441,32 @@ export const eng = {
     tsks.use(gate('ff.eng.p0408', 'Task management is'));
     tsks.use(taskRoutes({ service: taskService, tasksFile }, idem));
     api.use('/tsk', tsks);
+
+    // part 04.09: the alert rules; event rules listen through the bus (a consumer takes the types of the rules in force), schedule rules run from a job every 15 minutes
+    const alertService = createAlertService({ db, engine });
+    const alertCore = alertsOf(db);
+    const listenTo = () => { for (const r of db.prepare("SELECT DISTINCT event_type FROM alr_rules WHERE trigger_type = 'EVENT' AND status IN ('ACTIVE', 'PENDING') AND event_type IS NOT NULL").all()) runtime.bus.subscribe(r.event_type, (event) => { alertCore.handleEvent(event); }, { consumer: 'alr.events' }); };
+    listenTo();
+    runtime.bus.subscribe('alr.rule.changed', () => { listenTo(); }, { consumer: 'alr.listen' });
+    runtime.jobs.register('alr.run', (ctx) => { const n = alertCore.runDue(); ctx.log(`Ran ${n} schedule rule(s)`); return { ran: n }; }, { maxAttempts: 1, description: 'Runs the alert rules whose schedule has come: hourly, daily at an hour or weekly on a day.' });
+    runtime.scheduler.define({ code: 'alr.run_quarter_hour', cron: '*/15 * * * *', jobType: 'alr.run', description: 'Every 15 minutes: run the alert rules that are due' });
+    runtime.jobs.register('alr.webhook', async (ctx) => {
+      const p = ctx.params;
+      const out = await integrationsOf(db).hub.call(p.connector, 'request', { method: p.method, path: p.path, body: p.body }, { companyId: p.companyId, actor: { user: 'system' }, idempotencyKey: `alr-${p.alertId}-${p.connector}-${p.path}` });
+      ctx.log(`Called ${p.connector} for alert ${p.alertId}`);
+      return { logId: out?.logId ?? null };
+    }, { maxAttempts: 4, description: 'Calls the webhook an alert rule asked for.' });
+    const alertsFile = (actor, q) => {
+      const list = alertService.alerts.list(actor, { view: q.view, status: q.status, limit: 100, offset: 0 });
+      const rows = list.rows.map((a) => ({ id: a.id, severity: a.severity, status: a.status, rule: a.ruleCode, message: a.message, record: a.label ?? '', since: a.firstSeenAt.slice(0, 19).replace('T', ' '), times: a.occurrences, owner: a.owner ?? '' }));
+      const columns = [['id', 'Alert'], ['severity', 'Severity'], ['status', 'Status'], ['rule', 'Rule'], ['message', 'Message'], ['record', 'Record'], ['since', 'Since (UTC)'], ['times', 'Times'], ['owner', 'Owner']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'alr_alerts', entityId: 'list', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Alerts. Generated by ${actor.user} on ${todayIST()}.`], sheetName: 'Alerts', title: 'Alerts' }), type: FORMATS[q.format], fileName: `alerts-${todayIST()}.${q.format}` };
+    };
+    const alrs = Router();
+    alrs.use(gate('ff.eng.p0409', 'Alert rules are'));
+    alrs.use(alertRoutes({ service: alertService, alertsFile }, idem));
+    api.use('/alr', alrs);
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));
