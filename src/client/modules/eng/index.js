@@ -1,4 +1,8 @@
 import { registerModule } from '../../platform/shell/registry.js';
+import ApprovalTaskPage from './ApprovalTaskPage.jsx';
+import InboxPage from './InboxPage.jsx';
+import MobileApprovalsPage from './MobileApprovalsPage.jsx';
+import SubmissionsPage from './SubmissionsPage.jsx';
 import ApprovalMatrixPage from './ApprovalMatrixPage.jsx';
 import ApprovalSimulatorPage from './ApprovalSimulatorPage.jsx';
 import AuthorityLimitsPage from './AuthorityLimitsPage.jsx';
@@ -26,6 +30,10 @@ registerModule({
     { path: '/admin/approval-simulator', label: 'Approval Simulator', icon: 'erp.action.search', permission: 'eng.matrix.view', flag: 'ff.eng.p0402', Page: ApprovalSimulatorPage },
     { path: '/workflow/delegations', label: 'Delegations', icon: 'erp.action.inbox', permission: 'eng.delegation.use', flag: 'ff.eng.p0402', Page: DelegationsPage },
     { path: '/admin/escalation', label: 'Escalation Paths & SLA', icon: 'erp.action.settings', permission: 'eng.matrix.view', flag: 'ff.eng.p0402', Page: EscalationPage },
+    { path: '/approvals', label: 'My Approvals', icon: 'erp.action.inbox', flag: 'ff.eng.p0403', Page: InboxPage },
+    { path: '/approvals/task', label: 'Approval Task', icon: 'erp.action.info', flag: 'ff.eng.p0403', Page: ApprovalTaskPage },
+    { path: '/approvals/submissions', label: 'My Submissions & Watch List', icon: 'erp.action.list', flag: 'ff.eng.p0403', Page: SubmissionsPage },
+    { path: '/field/approvals', label: 'Approvals (phone)', icon: 'erp.field.field', flag: 'ff.eng.p0403', Page: MobileApprovalsPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });

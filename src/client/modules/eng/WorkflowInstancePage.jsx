@@ -14,7 +14,7 @@ import { EVENT, INST_STATUS, TASK_STATUS, useSearch } from './common.js';
 // Approvals tab links here.
 const TABS = [['steps', 'Steps and tasks'], ['timeline', 'Timeline'], ['attachments', 'Attachments'], ['related', 'Related'], ['details', 'Details']];
 
-function TaskCard({ task, wf, step, onDone, onError }) {
+export function TaskCard({ task, wf, step, onDone, onError }) {
   const act = useAct();
   const assign = useAssign();
   const [comment, setComment] = useState('');

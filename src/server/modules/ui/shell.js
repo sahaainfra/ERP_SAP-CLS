@@ -1,3 +1,4 @@
+import { workflowOf } from '../../platform/workflow/index.js';
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { hasPermission, hasPermissionAnywhere } from '../../platform/auth/index.js';
@@ -365,7 +366,11 @@ export function createShellService({ db, flags, approvals }) {
   }
 
   /** What the notification bell shows until the notification service (04.06) exists: the requests waiting for this person. */
-  const bell = (actor) => ({ unread: approvals.awaitingCount(actor), source: 'approvals' });
+  const bell = (actor) => {
+    let workflow = 0;
+    try { workflow = workflowOf(db).openCount(actor); } catch { /* the engine's tables are not there yet */ }
+    return { unread: approvals.awaitingCount(actor) + workflow, source: 'approvals' };
+  };
 
   return { navigation, registry, propose, history, exportSettings, importSettings, favourites, addFavourite, removeFavourite, orderFavourites, visit, recent, contextOptions, setContext, launchpad, bell };
 }

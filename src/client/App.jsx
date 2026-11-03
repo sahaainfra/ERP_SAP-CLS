@@ -1,3 +1,4 @@
+import ApproveLinkPage from './modules/eng/ApproveLinkPage.jsx';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
@@ -193,6 +194,8 @@ export default function App({ authMode = 'dev-headers' }) {
 
   // An invitation link is opened before anybody is signed in, in either mode.
   if (window.location.pathname === '/accept-invite') return <AcceptInvitePage />;
+  // a secure approval link is opened before anybody is signed in (part 04.03)
+  if (window.location.pathname === '/approve-link') return <ApproveLinkPage />;
   if (authMode !== 'iam') return <Shell iam={false} user={null} />;
   if (!user) {
     const notice = wasSignedIn.current ? 'signed-out' : '';

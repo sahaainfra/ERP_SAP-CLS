@@ -1510,3 +1510,47 @@ paths:
     post:
       summary: Ask for a change of SLA settings (Idempotency-Key required)
       responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/inbox:
+    get:
+      summary: My approvals across every module, most urgent first, with filters and counts
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/inbox/counts:
+    get:
+      summary: Counts for the bell and the widget
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/inbox/submissions:
+    get:
+      summary: The documents I raised, or follow, with where each stands
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/tasks/bulk-act:
+    post:
+      summary: Approve several tasks at once; each is checked against the policy of its document type and the answer lists what was refused and why (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/tasks/{id}/evidence:
+    get:
+      summary: The task, the document at a glance, the evidence sections and risk flags, computed when asked
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/tasks/{id}/links:
+    post:
+      summary: Make a secure approval link for my own task; the token is shown once and only its hash is kept
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/links/{token}:
+    get:
+      summary: Before sign-in - what a secure link shows (the document at a glance); the same answer for every link that is not good
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/links/{token}/decide:
+    post:
+      summary: Before sign-in - approve or reject from a secure link, once; above the policy amount it answers 401 REAUTH_REQUIRED
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/links/{token}/confirm:
+    post:
+      summary: Signed in as the person the link was made for - approve or reject from a secure link, once (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/approval-policies:
+    get:
+      summary: Bulk and link approval settings by document type
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/approval-policies/changes:
+    post:
+      summary: Ask for a change of the approval settings from a date (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }

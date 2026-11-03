@@ -66,3 +66,16 @@ export const usePaths = () => useQuery({ queryKey: [...KEY, 'paths'], queryFn: (
 export const useSla = () => useQuery({ queryKey: [...KEY, 'sla'], queryFn: () => unwrap(api.get(`${W}/sla-settings`)), retry: false });
 export const useProposePath = () => useWrite((body) => unwrap(api.post(`${W}/escalation-paths/changes`, body, idem())));
 export const useProposeSla = () => useWrite((body) => unwrap(api.post(`${W}/sla-settings/changes`, body, idem())));
+
+// Part 04.03: the approval inbox, the evidence panel, bulk approval, secure links, approval policies.
+export const useInbox = (filters) => useQuery({ queryKey: [...KEY, 'inbox', filters], queryFn: () => unwrap(api.get(`${W}/inbox?${qs(filters)}`)), retry: false, placeholderData: (prev) => prev, refetchInterval: 60_000 });
+export const useInboxCounts = () => useQuery({ queryKey: [...KEY, 'inbox', 'counts'], queryFn: () => unwrap(api.get(`${W}/inbox/counts`)), retry: false });
+export const useSubmissions = (filters) => useQuery({ queryKey: [...KEY, 'submissions', filters], queryFn: () => unwrap(api.get(`${W}/inbox/submissions?${qs(filters)}`)), retry: false, placeholderData: (prev) => prev });
+export const useEvidence = (taskId) => useQuery({ queryKey: [...KEY, 'evidence', taskId], queryFn: () => unwrap(api.get(`${W}/tasks/${taskId}/evidence`)), enabled: Boolean(taskId), retry: false });
+export const useBulkAct = () => useWrite((body) => unwrap(api.post(`${W}/tasks/bulk-act`, body, idem())), [['eng']]);
+export const useIssueLink = () => useWrite((taskId) => unwrap(api.post(`${W}/tasks/${taskId}/links`, {}, idem())));
+export const peekLink = (token) => unwrap(api.get(`${W}/links/${encodeURIComponent(token)}`));
+export const decideLink = (token, body) => unwrap(api.post(`${W}/links/${encodeURIComponent(token)}/decide`, body));
+export const confirmLink = (token, body) => unwrap(api.post(`${W}/links/${encodeURIComponent(token)}/confirm`, body, idem()));
+export const usePolicies = () => useQuery({ queryKey: [...KEY, 'policies'], queryFn: () => unwrap(api.get(`${W}/approval-policies`)), retry: false });
+export const useProposePolicies = () => useWrite((body) => unwrap(api.post(`${W}/approval-policies/changes`, body, idem())));

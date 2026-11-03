@@ -907,3 +907,11 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .wf-editor-step { border: 1px solid var(--erp-color-border); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); margin: var(--erp-space-3) 0; background: var(--erp-color-bg-surface); }
 .wf-editor-step legend { font-weight: 600; }
 .wf-inline { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; }
+
+/* Approval inbox (part 04.03): phone cards with large touch targets and the secure-link page. */
+.mob-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--erp-space-3); }
+.mob-card { display: flex; flex-direction: column; align-items: flex-start; gap: var(--erp-space-1); width: 100%; min-height: 4.5rem; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.mob-btn { min-height: 3rem; min-width: 3rem; font-size: 1rem; }
+.mob-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); margin: var(--erp-space-4) 0; }
+.mob-actions .mob-btn { flex: 1 1 8rem; }
+.link-page { max-width: 36rem; margin: 0 auto; padding: var(--erp-space-5) var(--erp-page-padding-mobile); }

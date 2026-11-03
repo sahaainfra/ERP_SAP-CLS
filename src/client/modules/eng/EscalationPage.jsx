@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { useUnsavedGuard } from '../../platform/forms/guard.js';
-import { useDefinitionOptions, usePaths, useProposePath, useProposeSla, useSla } from '../../platform/workflow/api.js';
+import { useDefinitionOptions, usePaths, usePolicies, useProposePath, useProposePolicies, useProposeSla, useSla } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 
 // Escalation Paths & SLA settings (part 04.02, section 7.6): the management hierarchy a late task climbs (Site, Project, Regional, Head office, Director) and the time
@@ -115,6 +115,57 @@ function Sla({ canManage }) {
   );
 }
 
+function Policies({ canManage }) {
+  const pol = usePolicies();
+  const propose = useProposePolicies();
+  const [edits, setEdits] = useState({});
+  const [when, setWhen] = useState(today());
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState(null);
+  useUnsavedGuard(Object.keys(edits).length > 0);
+  if (pol.isPending) return <Skeleton label="Loading the approval settings" rows={2} />;
+  if (pol.isError) return <ErrorState title="The approval settings could not be loaded" error={pol.error} onRetry={() => pol.refetch()} />;
+  const rows = pol.data.filter((p) => p.status === 'ACTIVE');
+  const pending = pol.data.some((p) => p.status === 'PENDING');
+  const val = (r, k) => (edits[r.docType] && k in edits[r.docType] ? edits[r.docType][k] : r[k]);
+  const set = (r, k, v) => setEdits({ ...edits, [r.docType]: { ...edits[r.docType], [k]: v } });
+  const num = (v) => (v === '' || v === null ? null : Number(v));
+  const changes = Object.entries(edits).map(([docType, e]) => { const r = rows.find((x) => x.docType === docType); const m = { ...r, ...e }; return { docType, bulkEligible: Boolean(m.bulkEligible), bulkMaxAmount: num(m.bulkMaxAmount), linkEligible: Boolean(m.linkEligible), linkReauthAmount: num(m.linkReauthAmount), linkExpiryMinutes: Number(m.linkExpiryMinutes) }; });
+  const send = (e) => {
+    e.preventDefault();
+    propose.mutate({ policies: changes, effectiveFrom: when, reason }, { onSuccess: (r) => { setEdits({}); navigateTo(`/workflow/instance?id=${r.instance.id}`, { force: true }); }, onError: (er) => setError(errorInfo(er)) });
+  };
+  return (
+    <section aria-labelledby="ep-pol" data-testid="approval-policies">
+      <h2 id="ep-pol">Approving in bulk and from a link</h2>
+      <p className="muted small">Which kinds of document may be approved together from the inbox (and up to what amount), and which may be approved from a secure link (how long it lives, and above what amount the approver must sign in again). A document with risk flags is never approved in bulk.</p>
+      {pending && <p className="notice" role="note">A change of these settings is waiting for approval.</p>}
+      <div className="table-wrap" tabIndex={0} role="region" aria-label="Approval policies">
+        <table className="grid">
+          <thead><tr><th>Document type</th><th>In bulk</th><th className="num">Bulk limit (₹)</th><th>From a link</th><th className="num">Sign in above (₹)</th><th className="num">Link lives (minutes)</th></tr></thead>
+          <tbody>{rows.map((r) => (
+            <tr key={r.id} data-testid={`pol-${r.docType}`}>
+              <th scope="row" data-label="Document type">{r.docType}</th>
+              <td data-label="In bulk"><input type="checkbox" disabled={!canManage} aria-label={`${r.docType} may be approved in bulk`} checked={Boolean(val(r, 'bulkEligible'))} onChange={(e) => set(r, 'bulkEligible', e.target.checked)} /></td>
+              <td className="num" data-label="Bulk limit (₹)"><input type="number" min={0} size={9} disabled={!canManage} aria-label={`Bulk limit of ${r.docType} in rupees`} placeholder="no limit" value={val(r, 'bulkMaxAmount') ?? ''} onChange={(e) => set(r, 'bulkMaxAmount', e.target.value)} /></td>
+              <td data-label="From a link"><input type="checkbox" disabled={!canManage} aria-label={`${r.docType} may be approved from a link`} checked={Boolean(val(r, 'linkEligible'))} onChange={(e) => set(r, 'linkEligible', e.target.checked)} /></td>
+              <td className="num" data-label="Sign in above (₹)"><input type="number" min={0} size={9} disabled={!canManage} aria-label={`Sign-in amount of ${r.docType} in rupees`} placeholder="never" value={val(r, 'linkReauthAmount') ?? ''} onChange={(e) => set(r, 'linkReauthAmount', e.target.value)} /></td>
+              <td className="num" data-label="Link lives (minutes)"><input type="number" min={5} max={1440} size={5} disabled={!canManage} aria-label={`Link life of ${r.docType} in minutes`} value={val(r, 'linkExpiryMinutes')} onChange={(e) => set(r, 'linkExpiryMinutes', e.target.value)} /></td>
+            </tr>))}</tbody>
+        </table>
+      </div>
+      {canManage && (
+        <form className="form-grid" onSubmit={send} aria-label="Ask for a change of the approval settings">
+          <Field label="Takes effect from" name="effectiveFrom" error={error}><input type="date" min={today()} value={when} onChange={(e) => setWhen(e.target.value)} /></Field>
+          <Field label="Reason" name="reason" error={error}><input value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>
+          {error && <p role="alert" className="error">{error.form}{error.correlationId && <> (<code>{error.correlationId}</code>)</>}</p>}
+          <div className="actions"><button type="submit" className="btn btn-primary" disabled={changes.length === 0 || reason.trim().length < 5 || propose.isPending}>Ask for approval</button>{changes.length > 0 && <button type="button" className="btn" onClick={() => setEdits({})}>Discard the changes</button>}</div>
+        </form>
+      )}
+    </section>
+  );
+}
+
 export default function EscalationPage({ session }) {
   usePageTitle('Escalation Paths & SLA');
   const options = useDefinitionOptions();
@@ -127,6 +178,7 @@ export default function EscalationPage({ session }) {
       <p className="muted">How long an approver has, and who the task climbs to when the time passes. Changes are asked for here and approved by the system administrator and the chief financial officer.</p>
       <Paths canManage={canManage} options={options.data ?? {}} />
       <Sla canManage={canManage} />
+      <Policies canManage={canManage} />
       <p className="muted small"><Link to="/admin/approval-matrix">Approval Matrix</Link> · <Link to="/admin/workflows/monitor">Workflow Monitor</Link></p>
     </section>
   );
