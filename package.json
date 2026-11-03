@@ -47,6 +47,7 @@
     "erp:acc-perf": "node scripts/acc_perf.mjs",
     "erp:ntf-perf": "node scripts/ntf_perf.mjs",
     "erp:comm-perf": "node scripts/comm_perf.mjs",
+    "erp:tsk-perf": "node scripts/tsk_perf.mjs",
     "migration:new": "node scripts/new_migration.mjs",
     "backfill": "node --env-file-if-exists=.env scripts/backfill.mjs",
     "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",
