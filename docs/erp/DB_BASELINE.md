@@ -3457,6 +3457,43 @@ Indexes:
 - ix_ui_widgets_module: module, sort_order
 - sqlite_autoindex_ui_widgets_1 (unique): code
 
+## wf_approval_policies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| bulk_eligible | INTEGER | yes |  | 0 |
+| bulk_max_amount | INTEGER |  |  |  |
+| link_eligible | INTEGER | yes |  | 0 |
+| link_reauth_amount | INTEGER |  |  |  |
+| link_expiry_minutes | INTEGER | yes |  | 60 |
+| status | TEXT | yes |  | 'PENDING' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| batch_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_policies_batch: batch_id
+- ix_wf_policies_resolve: company_id, doc_type, status, effective_from
+
 ## wf_authority_limits
 
 | Column | Type | Not null | Key | Default |
@@ -3684,6 +3721,46 @@ Indexes:
 - ix_wf_instances_definition: definition_id
 - ix_wf_instances_status: company_id, status, doc_type
 - ix_wf_instances_doc: company_id, doc_type, doc_id
+
+## wf_link_tokens
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| task_id | INTEGER | yes |  |  |
+| instance_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| roles_json | TEXT | yes |  | '[]' |
+| token_hash | TEXT | yes |  |  |
+| channel | TEXT | yes |  | 'SELF' |
+| status | TEXT | yes |  | 'ISSUED' |
+| reauth_required | INTEGER | yes |  | 0 |
+| expires_at | TEXT | yes |  |  |
+| used_at | TEXT |  |  |  |
+| used_action | TEXT |  |  |  |
+| used_via | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: instance_id -> wf_instances(id), task_id -> wf_tasks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_wf_link_tokens_company: company_id, user_ref, status
+- ix_wf_link_tokens_instance: instance_id
+- ix_wf_link_tokens_task: task_id, status
+- ux_wf_link_tokens_hash (unique): token_hash
 
 ## wf_matrix
 
