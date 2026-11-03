@@ -234,4 +234,4 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-227 | Alerts | A webhook action is queued as a job and its failure retries four times; the alert does not show whether the call finally succeeded (the integration log does). | Low | Write the outcome back to the alert | 04.x | Open |
 | D-228 | Alerts | The text of the three new pages is English only (see D-163). | Medium | Add the pages to the translation catalogue | 03.09 | Open |
 | D-229 | Alerts | Alerts are visible to their owner, those told, and those who manage the project; a rule cannot yet choose a department or a site as the audience. | Low | Audience by scope | 04.x | Open |
-
+| D-230 | Controls | The protocol engine reads the setting of the observation days with the UTC date while the parameter service wants the India date; between 18:30 and 24:00 UTC (00:00 to 05:30 in India) `e2e/controls.spec.js` fails at its set-up. Found in the regression of part 04.09; not changed by it. | Medium | Use one calendar day for both | 04.04 | Open |
