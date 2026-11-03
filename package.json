@@ -44,6 +44,7 @@
     "erp:search-perf": "node scripts/search_perf.mjs",
     "erp:workflow-perf": "node scripts/workflow_perf.mjs",
     "erp:pcs-perf": "node scripts/pcs_perf.mjs",
+    "erp:acc-perf": "node scripts/acc_perf.mjs",
     "migration:new": "node scripts/new_migration.mjs",
     "backfill": "node --env-file-if-exists=.env scripts/backfill.mjs",
     "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",
