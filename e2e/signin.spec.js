@@ -167,8 +167,10 @@ test('My Sessions & Devices: remember a device, set a PIN, unlock with it; an ad
   for (const row of list.data) {
     expect((await api(request, `/iam/admin/sessions/${row.id}/revoke`, { token: it.token, data: { reason: 'lost phone reported' } })).status()).toBe(200);
   }
-  await (await menu(page)).getByRole('link', { name: 'Security & MFA' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'You were signed out' })).toBeVisible();
+  // the next thing the person does shows the sign-in screen; a screen that already noticed (it asks the server often) shows it without that
+  const signedOut = page.getByRole('status').filter({ hasText: 'You were signed out' });
+  await page.locator('#sh-nav').getByRole('link', { name: 'Security & MFA' }).click({ timeout: 4000 }).catch(() => {});
+  await expect(signedOut).toBeVisible({ timeout: 15_000 });
   await noOverflow(page);
   expect(errors).toEqual([]);
 });
