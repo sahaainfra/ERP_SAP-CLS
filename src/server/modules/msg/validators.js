@@ -16,9 +16,10 @@ export const parseSettings = (b) => parse(z.object({ pinned: z.boolean().optiona
 export const parseRename = (b) => parse(z.object({ title: text(120).min(1, 'Give the conversation a name') }).strict(), b);
 export const parseArchive = (b) => parse(z.object({ archived: z.boolean() }).strict(), b);
 export const parseRead = (b) => parse(z.object({ upTo: id.optional() }).strict(), b ?? {});
-export const parseMessages = (q) => parse(z.object({ before: id.optional(), limit: z.coerce.number().int().min(1).max(100).default(40) }).strict(), q);
+export const parseMessages = (q) => parse(z.object({ before: id.optional(), around: id.optional(), limit: z.coerce.number().int().min(1).max(100).default(40) }).strict(), q);
 export const parseSend = (b) => parse(z.object({
   body: z.string().max(4000).default(''), kind: z.enum(['TEXT', 'VOICE']).default('TEXT'), replyToId: id.optional(), clientId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional(),
+  voice: z.object({ durationMs: z.number().int().min(0).max(3_600_000), waveform: z.array(z.number().int().min(0).max(100)).max(80).default([]) }).strict().optional(),
   attachments: z.array(id).max(10).default([]), recordLinks: z.array(z.object({ entity: ENTITY, id: z.union([z.string().trim().min(1).max(60), z.number().int()]).transform(String) }).strict()).max(5).default([]),
 }).strict(), b);
 export const parseEdit = (b) => parse(z.object({ body: z.string().max(4000) }).strict(), b);

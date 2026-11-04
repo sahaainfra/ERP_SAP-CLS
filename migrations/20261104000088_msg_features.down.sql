@@ -1,0 +1,14 @@
+DROP TRIGGER IF EXISTS trg_msg_members_back;
+DROP TRIGGER IF EXISTS trg_msg_members_left;
+DROP TRIGGER IF EXISTS trg_msg_members_joined;
+DROP TABLE IF EXISTS msg_config;
+DROP TABLE IF EXISTS msg_calls;
+DROP TABLE IF EXISTS msg_member_periods;
+DROP TABLE IF EXISTS msg_holds;
+DROP TABLE IF EXISTS msg_presence;
+DROP TABLE IF EXISTS msg_user_settings;
+DROP TABLE IF EXISTS msg_voice;
+DROP TABLE IF EXISTS msg_hidden;
+DROP TABLE IF EXISTS msg_pins;
+DROP TABLE IF EXISTS msg_stars;
+DROP TABLE IF EXISTS msg_receipts;

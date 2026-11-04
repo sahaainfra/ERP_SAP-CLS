@@ -11,6 +11,7 @@ import { objectTypes } from '../../platform/objects/index.js';
 import { createParameterStore } from '../../platform/parameters/index.js';
 import { realtimeConversations, realtimeOf } from '../../platform/realtime/index.js';
 import { todayIST } from '../../../shared/dates.js';
+import { activeConfig } from './config.js';
 
 // The unified Messages app (part 05.01). One thread index (`msg_conversations`) for direct, group, department, project, site, team and record-linked conversations made here, and for the external threads of the
 // communication gateway (04.07), which are indexed from `comm_messages` and read through it without being copied (BR-03: nothing moves, so nothing is lost; `verify` counts and checksums it). A person sees a
@@ -32,7 +33,10 @@ export function createMessageService({ db }) {
   const params = (actor) => {
     const store = createParameterStore(db);
     const ctx = { companyId: actor.companyId, date: todayIST() };
-    return { editWindowMinutes: Number(store.get('msg.edit_window_minutes', ctx)), retentionDays: Number(store.get('msg.deleted_content_retention_days', ctx)), maxMembers: Number(store.get('msg.group_max_members', ctx)) };
+    const cfg = activeConfig(db, actor.companyId);
+    const set = cfg.version > 0; // an approved messaging setting (05.02) wins over the parameter
+    const edit = set ? cfg.editWindowMinutes : Number(store.get('msg.edit_window_minutes', ctx));
+    return { editWindowMinutes: edit, deleteWindowMinutes: set ? cfg.deleteWindowMinutes : edit, retentionDays: set ? cfg.deletedContentRetentionDays : Number(store.get('msg.deleted_content_retention_days', ctx)), maxMembers: Number(store.get('msg.group_max_members', ctx)), cfg };
   };
   const names = new Map();
   const nameOf = (companyId, u) => { const k = `${companyId}:${u}`; if (!names.has(k)) names.set(k, db.prepare('SELECT display_name FROM iam_users WHERE company_id = ? AND username = ?').get(companyId, u)?.display_name ?? u); return names.get(k); };
@@ -126,7 +130,8 @@ export function createMessageService({ db }) {
       reactions: deleted ? [] : (ctx.reactions.get(m.id) ?? []).map((r) => ({ ...r, mine: r.users.includes(actor.user), users: undefined })),
       createdAt: m.created_at, editedAt: m.edited_at, mine,
       canEdit: !deleted && mine && m.kind !== 'SYSTEM' && p.editWindowMinutes > 0 && Date.now() - Date.parse(m.created_at) <= p.editWindowMinutes * 60_000,
-      canDelete: !deleted && m.kind !== 'SYSTEM' && (mine ? p.editWindowMinutes > 0 && Date.now() - Date.parse(m.created_at) <= p.editWindowMinutes * 60_000 : ctx.admin),
+      canDelete: !deleted && m.kind !== 'SYSTEM' && (mine ? p.deleteWindowMinutes > 0 && Date.now() - Date.parse(m.created_at) <= p.deleteWindowMinutes * 60_000 : ctx.admin),
+      starred: ctx.stars.has(m.id), pinned: ctx.pins.has(m.id), voice: ctx.voice.get(m.id) ?? null, receipt: mine ? (ctx.receipts.get(m.id) ?? { state: 'sent', delivered: 0, read: 0, of: ctx.recipients }) : null,
     };
   }
   function context(actor, rows, conv) {
@@ -141,7 +146,25 @@ export function createMessageService({ db }) {
     const fileIds = [...new Set(rows.flatMap((r) => JSON.parse(r.attachments_json || '[]')))];
     const files = new Map();
     if (fileIds.length) for (const f of db.prepare(`SELECT id, original_name, size_bytes, mime, category, scan_status FROM core_files WHERE id IN (${fileIds.map(() => '?').join(',')}) AND company_id = ? AND is_active = 1`).all(...fileIds, actor.companyId)) files.set(f.id, { id: f.id, name: f.original_name, size: f.size_bytes, mime: f.mime, category: f.category, scan: f.scan_status });
-    return { params: params(actor), byId: new Map(rows.map((r) => [r.id, r])), reactions, files, admin: mayManage(actor, conv) };
+    const stars = new Set(); const pins = new Set(); const voice = new Map(); const receipts = new Map();
+    const recipients = Math.max(0, db.prepare('SELECT COUNT(*) AS n FROM msg_members WHERE conversation_id = ? AND left_at IS NULL AND is_active = 1 AND user_ref != ?').get(conv.id, actor.user).n);
+    if (ids.length) {
+      const q = ids.map(() => '?').join(',');
+      for (const r of db.prepare(`SELECT message_id FROM msg_stars WHERE user_ref = ? AND message_id IN (${q}) AND is_active = 1`).all(actor.user, ...ids)) stars.add(r.message_id);
+      for (const r of db.prepare(`SELECT message_id FROM msg_pins WHERE conversation_id = ? AND message_id IN (${q}) AND is_active = 1`).all(conv.id, ...ids)) pins.add(r.message_id);
+      for (const r of db.prepare(`SELECT message_id, duration_ms, waveform_json FROM msg_voice WHERE message_id IN (${q})`).all(...ids)) voice.set(r.message_id, { durationMs: r.duration_ms, waveform: JSON.parse(r.waveform_json) });
+      const mineIds = rows.filter((r) => r.sender_ref === actor.user && r.kind !== 'SYSTEM').map((r) => r.id);
+      if (mineIds.length) {
+        const cfg = activeConfig(db, actor.companyId);
+        const iShare = cfg.enforceReadReceipts || (db.prepare('SELECT share_read_receipts AS s FROM msg_user_settings WHERE company_id = ? AND user_ref = ?').get(actor.companyId, actor.user)?.s ?? 1) === 1;
+        for (const r of db.prepare(`SELECT r.message_id, COUNT(r.delivered_at) AS d, SUM(CASE WHEN r.read_at IS NOT NULL AND (? = 1 OR COALESCE(us.share_read_receipts, 1) = 1) THEN 1 ELSE 0 END) AS rd
+          FROM msg_receipts r LEFT JOIN msg_user_settings us ON us.company_id = r.company_id AND us.user_ref = r.user_ref WHERE r.message_id IN (${mineIds.map(() => '?').join(',')}) GROUP BY r.message_id`).all(cfg.enforceReadReceipts ? 1 : 0, ...mineIds)) {
+          const read = iShare ? (r.rd ?? 0) : 0;
+          receipts.set(r.message_id, { state: recipients > 0 && read >= recipients ? 'read' : recipients > 0 && r.d >= recipients ? 'delivered' : 'sent', delivered: r.d, read, of: recipients });
+        }
+      }
+    }
+    return { params: params(actor), byId: new Map(rows.map((r) => [r.id, r])), reactions, files, admin: mayManage(actor, conv), stars, pins, voice, receipts, recipients };
   }
   function titleFor(actor, c) {
     if (c.conv_type === 'DIRECT') { const other = c.direct_key.split('|').find((u) => u !== actor.user) ?? actor.user; return nameOf(actor.companyId, other); }
@@ -160,6 +183,14 @@ export function createMessageService({ db }) {
     }
     return { id: c.id, type: c.conv_type, title: titleFor(actor, c), projectId: c.project_id, siteId: c.site_id, departmentId: c.department_id, entity: c.entity, entityId: c.entity_id, channel: c.external_channel, archived: Boolean(me?.archived) || c.is_archived === 1, pinned: Boolean(me?.pinned),
       muted: Boolean(me?.muted_until && Date.parse(me.muted_until) > Date.now()), mentionOnly: Boolean(me?.mention_only), unread, lastActivityAt: c.last_activity_at, last, messageCount: c.message_count, readOnly: c.conv_type === 'EXTERNAL' };
+  }
+
+  /** The stretches in which this person was not a member (they left and came back): what was said then is never shown to them. [[from, to], ...] */
+  function gapsOf(convId, user) {
+    const periods = db.prepare('SELECT started_at, ended_at FROM msg_member_periods WHERE conversation_id = ? AND user_ref = ? ORDER BY started_at, id').all(convId, user);
+    const gaps = [];
+    for (let i = 1; i < periods.length; i += 1) if (periods[i - 1].ended_at && periods[i].started_at > periods[i - 1].ended_at) gaps.push([periods[i - 1].ended_at, periods[i].started_at]);
+    return gaps;
   }
 
   const conversations = {
@@ -294,7 +325,16 @@ export function createMessageService({ db }) {
       let m = memberRow(c.id, actor.user);
       if (!m && c.conv_type === 'EXTERNAL') { db.prepare("INSERT INTO msg_members (company_id, conversation_id, user_ref, member_role, member_source, created_by, source_type) VALUES (?, ?, ?, 'MEMBER', 'AUTO', ?, 'msg_member')").run(c.company_id, c.id, actor.user, actor.user); m = memberRow(c.id, actor.user); }
       const top = upTo ?? c.last_message_id ?? 0;
-      if (top > m.last_read_message_id) db.prepare('UPDATE msg_members SET last_read_message_id = ?, updated_at = ? WHERE id = ?').run(top, nowIso(), m.id);
+      if (top > m.last_read_message_id) {
+        db.prepare('UPDATE msg_members SET last_read_message_id = ?, updated_at = ? WHERE id = ?').run(top, nowIso(), m.id);
+        if (c.conv_type !== 'EXTERNAL') {
+          const at = nowIso();
+          db.prepare(`INSERT INTO msg_receipts (company_id, message_id, user_ref, delivered_at, read_at, created_by, source_type)
+            SELECT company_id, id, ?, ?, ?, ?, 'msg_receipt' FROM msg_messages WHERE conversation_id = ? AND id > ? AND id <= ? AND sender_ref != ? AND kind != 'SYSTEM'
+            ON CONFLICT (message_id, user_ref) DO UPDATE SET read_at = COALESCE(msg_receipts.read_at, excluded.read_at), delivered_at = COALESCE(msg_receipts.delivered_at, excluded.delivered_at)`).run(actor.user, at, at, actor.user, c.id, m.last_read_message_id, top, actor.user);
+          hub.publish({ companyId: actor.companyId, rooms: [`conv:${c.id}`], type: 'msg.receipt.updated', entity: 'msg_conversation', entityId: c.id, data: { conversationId: c.id, user: actor.user, upTo: top, state: 'read' } });
+        }
+      }
       hub.publish({ companyId: actor.companyId, rooms: [`user:${actor.user}`], type: 'msg.conversation.updated', entity: 'msg_conversation', entityId: c.id, data: { conversationId: c.id, read: true } });
       return { id: c.id, lastRead: Math.max(top, m.last_read_message_id) };
     },
@@ -380,14 +420,23 @@ export function createMessageService({ db }) {
     hub.publish({ companyId: c.company_id, rooms: [`conv:${c.id}`], type: 'msg.message.created', entity: 'msg_message', entityId: id, data: { conversationId: c.id, messageId: id } });
   }
   const messages = {
-    /** @param {any} actor @param {any} id @param {{ before?: number, limit?: number }} [o] */
-    list(actor, id, { before, limit = 40 } = {}) {
+    /** @param {any} actor @param {any} id @param {{ before?: number, around?: number, limit?: number }} [o] */
+    list(actor, id, { before, around, limit = 40 } = {}) {
       const c = must(actor, id);
       if (c.conv_type === 'EXTERNAL') {
         const rows = db.prepare(`SELECT * FROM comm_messages WHERE company_id = ? AND conversation_key = ? ${before ? 'AND id < ?' : ''} ORDER BY id DESC LIMIT ?`).all(...[c.company_id, c.external_key, ...(before ? [before] : []), limit + 1]);
         return { rows: rows.slice(0, limit).reverse().map((r) => ({ ...externalMessage(r), conversationId: c.id })), hasMore: rows.length > limit, readOnly: true, lastRead: memberRow(c.id, actor.user)?.last_read_message_id ?? 0 };
       }
-      const rows = db.prepare(`SELECT * FROM msg_messages WHERE conversation_id = ? AND is_active = 1 ${before ? 'AND id < ?' : ''} ORDER BY id DESC LIMIT ?`).all(...[c.id, ...(before ? [before] : []), limit + 1]);
+      const gapSql = gapsOf(c.id, actor.user).map(([a, b]) => ` AND NOT (created_at >= '${a}' AND created_at < '${b}')`).join('');
+      const hidden = ' AND id NOT IN (SELECT message_id FROM msg_hidden WHERE user_ref = ? AND is_active = 1)';
+      if (around) {
+        const before2 = db.prepare(`SELECT * FROM msg_messages WHERE conversation_id = ? AND is_active = 1 AND id <= ?${gapSql}${hidden} ORDER BY id DESC LIMIT ?`).all(c.id, around, actor.user, Math.ceil(limit / 2) + 1);
+        const after2 = db.prepare(`SELECT * FROM msg_messages WHERE conversation_id = ? AND is_active = 1 AND id > ?${gapSql}${hidden} ORDER BY id ASC LIMIT ?`).all(c.id, around, Math.floor(limit / 2));
+        const win = [...before2.reverse(), ...after2];
+        const ctx2 = context(actor, win, c);
+        return { rows: win.map((m) => present(actor, m, ctx2)), hasMore: true, readOnly: false, lastRead: memberRow(c.id, actor.user)?.last_read_message_id ?? 0, archived: c.is_archived === 1, around };
+      }
+      const rows = db.prepare(`SELECT * FROM msg_messages WHERE conversation_id = ? AND is_active = 1 ${before ? 'AND id < ?' : ''}${gapSql}${hidden} ORDER BY id DESC LIMIT ?`).all(...[c.id, ...(before ? [before] : []), actor.user, limit + 1]);
       const page = rows.slice(0, limit).reverse();
       const ctx = context(actor, page, c);
       return { rows: page.map((m) => present(actor, m, ctx)), hasMore: rows.length > limit, readOnly: false, lastRead: memberRow(c.id, actor.user)?.last_read_message_id ?? 0, archived: c.is_archived === 1 };
@@ -404,10 +453,13 @@ export function createMessageService({ db }) {
       if (!body && !files.length && !linksIn.length) throw unprocessable('Write something, or attach a file or a record.', [{ field: 'body', message: 'is empty' }]);
       if (b.clientId) { const dup = db.prepare('SELECT * FROM msg_messages WHERE conversation_id = ? AND client_id = ?').get(c.id, b.clientId); if (dup) return { ...present(actor, dup, context(actor, [dup], c)), replayed: true }; }
       // files: uploaded by this person to this conversation through the file service
+      const lim = params(actor).cfg;
       for (const fid of files) {
-        const f = db.prepare("SELECT id, linked_entity, linked_id, created_by, scan_status FROM core_files WHERE id = ? AND company_id = ? AND is_active = 1").get(fid, actor.companyId);
+        const f = db.prepare("SELECT id, linked_entity, linked_id, created_by, scan_status, size_bytes, category FROM core_files WHERE id = ? AND company_id = ? AND is_active = 1").get(fid, actor.companyId);
         if (!f || f.linked_entity !== 'msg_conversation' || f.linked_id !== c.id || f.created_by !== actor.user) throw unprocessable('Attach files that you uploaded to this conversation.', [{ field: 'attachments', message: 'unknown file' }]);
         if (f.scan_status === 'INFECTED') throw unprocessable('A file failed the virus scan and cannot be sent.');
+        if (f.size_bytes > lim.maxFileMb * 1024 * 1024) throw unprocessable(`A file can be at most ${lim.maxFileMb} MB here.`, [{ field: 'attachments', message: `at most ${lim.maxFileMb} MB` }]);
+        if (f.category === 'video' && f.size_bytes > lim.maxVideoMb * 1024 * 1024) throw unprocessable(`A video can be at most ${lim.maxVideoMb} MB here.`, [{ field: 'attachments', message: `video at most ${lim.maxVideoMb} MB` }]);
       }
       // records: the sender must be able to open each (BR of FR-05); the card is drawn per reader
       const links = [];
@@ -427,11 +479,13 @@ export function createMessageService({ db }) {
         if (m && !m.left_at) mentioned.push(u.username); else outsiders.push(u.username);
       }
       if (outsiders.length) throw unprocessable(`${outsiders.map((o) => `@${o}`).join(', ')} ${outsiders.length === 1 ? 'is' : 'are'} not in this conversation, so the message was not sent. Add them first.`, outsiders.map((o) => ({ field: 'body', message: `@${o} is not a member` })));
+      if (b.voice && b.voice.durationMs > lim.maxVoiceSeconds * 1000) throw unprocessable(`A voice note can be at most ${lim.maxVoiceSeconds} seconds.`, [{ field: 'voice', message: `at most ${lim.maxVoiceSeconds} seconds` }]);
       const kind = b.kind === 'VOICE' ? 'VOICE' : files.length && !body ? 'FILE' : 'TEXT';
       return transaction(db, () => {
         const at = nowIso();
         const mid = Number(db.prepare(`INSERT INTO msg_messages (company_id, conversation_id, sender_ref, kind, body, reply_to_id, forwarded_from_id, mentions_json, attachments_json, record_links_json, client_id, project_id, site_id, created_by, created_at, source_type)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'msg_message')`).run(actor.companyId, c.id, actor.user, kind, body, replyTo?.id ?? null, b.forwardedFromId ?? null, JSON.stringify(mentioned), JSON.stringify(files), JSON.stringify(links), b.clientId ?? null, c.project_id, c.site_id, actor.user, at).lastInsertRowid);
+        if (kind === 'VOICE' && b.voice) db.prepare('INSERT INTO msg_voice (company_id, message_id, duration_ms, waveform_json, created_by, source_type) VALUES (?, ?, ?, ?, ?, \'msg_voice\')').run(actor.companyId, mid, Math.round(b.voice.durationMs), JSON.stringify((b.voice.waveform ?? []).slice(0, 80)), actor.user);
         bump(c, mid, at);
         db.prepare('UPDATE msg_members SET last_read_message_id = ? WHERE conversation_id = ? AND user_ref = ? AND last_read_message_id < ?').run(mid, c.id, actor.user, mid);
         writeAudit(db, { entity: 'msg_messages', entityId: mid, action: 'create', newValues: { conversation: c.id, kind, excerpt: excerpt(body, 60), files: files.length, links: links.length }, actor: actor.user, companyId: actor.companyId });
@@ -479,9 +533,9 @@ export function createMessageService({ db }) {
       if (m.status === 'DELETED') throw conflict('This message is already deleted.');
       if (m.kind === 'SYSTEM') throw unprocessable('A system message cannot be deleted.');
       const p = params(actor);
-      const inWindow = p.editWindowMinutes > 0 && Date.now() - Date.parse(m.created_at) <= p.editWindowMinutes * 60_000;
+      const inWindow = p.deleteWindowMinutes > 0 && Date.now() - Date.parse(m.created_at) <= p.deleteWindowMinutes * 60_000;
       const own = m.sender_ref === actor.user;
-      if (own && !inWindow && !mayManage(actor, c)) throw unprocessable(`A message can be deleted for ${p.editWindowMinutes} minute(s) after it was sent; that time is over.`);
+      if (own && !inWindow && !mayManage(actor, c)) throw unprocessable(`A message can be deleted for everyone for ${p.deleteWindowMinutes} minute(s) after it was sent; that time is over.`);
       if (!own && !mayManage(actor, c)) throw forbidden('Only the sender, or an administrator of the conversation, can delete a message.');
       if (!own && !reason) throw unprocessable('Say why you are deleting a message written by someone else.', [{ field: 'reason', message: 'is required' }]);
       return transaction(db, () => {
@@ -540,8 +594,16 @@ export function createMessageService({ db }) {
     purge(companyId) {
       const days = Number(createParameterStore(db).get('msg.deleted_content_retention_days', { companyId, date: todayIST() }));
       const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
-      const r = db.prepare("UPDATE msg_messages SET body = '', attachments_json = '[]', record_links_json = '[]', mentions_json = '[]', updated_at = ? WHERE company_id = ? AND status = 'DELETED' AND deleted_at < ? AND (body != '' OR attachments_json != '[]')").run(nowIso(), companyId, cutoff);
-      return { purged: Number(r.changes) };
+      const held = "AND conversation_id NOT IN (SELECT conversation_id FROM msg_holds WHERE released_at IS NULL AND is_active = 1)"; // a conversation under legal hold keeps everything
+      const r = db.prepare(`UPDATE msg_messages SET body = '', attachments_json = '[]', record_links_json = '[]', mentions_json = '[]', updated_at = ? WHERE company_id = ? AND status = 'DELETED' AND deleted_at < ? AND (body != '' OR attachments_json != '[]') ${held}`).run(nowIso(), companyId, cutoff);
+      // retention of messages as such (0 = keep): older ones are removed the same way, as "deleted by retention"
+      const keep = activeConfig(db, companyId).retentionDays;
+      let expired = 0;
+      if (keep > 0) {
+        const old = new Date(Date.now() - keep * 86_400_000).toISOString();
+        expired = Number(db.prepare(`UPDATE msg_messages SET status = 'DELETED', delete_reason = 'retention', deleted_at = ?, body = '', attachments_json = '[]', record_links_json = '[]', mentions_json = '[]', updated_at = ? WHERE company_id = ? AND status = 'ACTIVE' AND kind != 'SYSTEM' AND created_at < ? ${held}`).run(nowIso(), nowIso(), companyId, old).changes);
+      }
+      return { purged: Number(r.changes), expired };
     },
     /** AUD: the messages of one conversation as a file, with deleted ones marked; audited. */
     exportConversation(actor, id) {
@@ -585,7 +647,7 @@ export function createMessageService({ db }) {
     });
   } catch { /* registered once per process */ }
 
-  return { conversations, members, messages, admin, people, records, params, indexExternal, reconcileFor };
+  return { conversations, members, messages, admin, people, records, params, indexExternal, reconcileFor, internals: { must, canOpen, convRow, memberRow, isAdmin, mayManage, context, present, nameOf, person, anywhere, gapsOf, touchUsers, systemMessage, summarize } };
 }
 
 const services = new WeakMap();

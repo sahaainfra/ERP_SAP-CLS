@@ -3327,6 +3327,78 @@ Indexes:
 - ux_iam_users_email (unique): email
 - ux_iam_users_username (unique): username
 
+## msg_calls
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| conversation_id | INTEGER | yes |  |  |
+| initiated_by | TEXT | yes |  |  |
+| call_type | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'RINGING' |
+| provider | TEXT | yes |  | 'WEBRTC' |
+| provider_room_id | TEXT |  |  |  |
+| started_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| answered_at | TEXT |  |  |  |
+| ended_at | TEXT |  |  |  |
+| participants_json | TEXT | yes |  | '[]' |
+| invited_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: conversation_id -> msg_conversations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_calls_company_id: company_id
+- ix_msg_calls_company: company_id, status, id
+- ix_msg_calls_conv: conversation_id, id
+
+## msg_config
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| config_json | TEXT | yes |  |  |
+| config_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| effective_from | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_config_instance: instance_id
+- ux_msg_config_pending (unique): company_id
+- ux_msg_config_active (unique): company_id
+- ux_msg_config_version (unique): company_id, config_version
+
 ## msg_conversations
 
 | Column | Type | Not null | Key | Default |
@@ -3371,6 +3443,81 @@ Indexes:
 - ux_msg_conv_external (unique): company_id, external_key
 - ux_msg_conv_record (unique): company_id, entity, entity_id
 - ux_msg_conv_direct (unique): company_id, direct_key
+
+## msg_hidden
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| message_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: message_id -> msg_messages(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_hidden_company_id: company_id
+- ux_msg_hidden_one (unique): message_id, user_ref
+
+## msg_holds
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| conversation_id | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| released_at | TEXT |  |  |  |
+| released_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: conversation_id -> msg_conversations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_holds_company_id: company_id
+- ux_msg_holds_active (unique): conversation_id
+
+## msg_member_periods
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| conversation_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| started_at | TEXT | yes |  |  |
+| ended_at | TEXT |  |  |  |
+
+Foreign keys: conversation_id -> msg_conversations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_periods_company_id: company_id
+- ix_msg_periods_member: conversation_id, user_ref, started_at
 
 ## msg_members
 
@@ -3452,6 +3599,64 @@ Indexes:
 - ux_msg_messages_client (unique): conversation_id, client_id
 - ix_msg_messages_conv: conversation_id, id
 
+## msg_pins
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| conversation_id | INTEGER | yes |  |  |
+| message_id | INTEGER | yes |  |  |
+| pinned_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: message_id -> msg_messages(id), conversation_id -> msg_conversations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_pins_company_id: company_id
+- ix_msg_pins_message: message_id
+- ux_msg_pins_one (unique): conversation_id, message_id
+
+## msg_presence
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ONLINE' |
+| last_seen_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_msg_presence_one (unique): company_id, user_ref
+
 ## msg_reactions
 
 | Column | Type | Not null | Key | Default |
@@ -3480,6 +3685,124 @@ Foreign keys: message_id -> msg_messages(id), company_id -> org_companies(id)
 Indexes:
 - ix_msg_reactions_company_id: company_id
 - ux_msg_reactions_one (unique): message_id, user_ref, emoji
+
+## msg_receipts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| message_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| delivered_at | TEXT |  |  |  |
+| read_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: message_id -> msg_messages(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_receipts_user: company_id, user_ref, message_id
+- ux_msg_receipts_one (unique): message_id, user_ref
+
+## msg_stars
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| message_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| starred_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: message_id -> msg_messages(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_stars_user: company_id, user_ref, starred_at
+- ux_msg_stars_one (unique): message_id, user_ref
+
+## msg_user_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| show_last_seen | INTEGER | yes |  | 1 |
+| share_read_receipts | INTEGER | yes |  | 1 |
+| show_online | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_user_settings_company_id: company_id
+- ux_msg_user_settings_one (unique): company_id, user_ref
+
+## msg_voice
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| message_id | INTEGER | yes |  |  |
+| duration_ms | INTEGER | yes |  |  |
+| waveform_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: message_id -> msg_messages(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_msg_voice_company_id: company_id
+- ux_msg_voice_message (unique): message_id
 
 ## ntf_deliveries
 
