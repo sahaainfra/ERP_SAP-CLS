@@ -195,7 +195,20 @@ CREATE TABLE IF NOT EXISTS msg_member_periods (
   conversation_id INTEGER NOT NULL REFERENCES msg_conversations (id),
   user_ref        TEXT    NOT NULL,
   started_at      TEXT    NOT NULL,
-  ended_at        TEXT
+  ended_at        TEXT,
+  project_id  INTEGER,
+  site_id     INTEGER,
+  created_by  TEXT,
+  created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_by  TEXT,
+  updated_at  TEXT,
+  version     INTEGER NOT NULL DEFAULT 1,
+  is_active   INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+  deleted_at  TEXT,
+  deleted_by  TEXT,
+  source_type TEXT,
+  source_id   TEXT,
+  remarks     TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_msg_periods_member ON msg_member_periods (conversation_id, user_ref, started_at);
 CREATE INDEX IF NOT EXISTS ix_msg_periods_company_id ON msg_member_periods (company_id);
