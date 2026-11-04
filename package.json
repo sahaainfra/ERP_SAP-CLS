@@ -52,6 +52,7 @@
     "erp:doc-perf": "node scripts/doc_perf.mjs",
     "erp:tpl-perf": "node scripts/tpl_perf.mjs",
     "erp:sig-perf": "node scripts/sig_perf.mjs",
+    "erp:xl-perf": "node scripts/xl_perf.mjs",
     "migration:new": "node scripts/new_migration.mjs",
     "backfill": "node --env-file-if-exists=.env scripts/backfill.mjs",
     "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",

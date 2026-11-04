@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS xl_job_errors;
+DROP TABLE IF EXISTS xl_jobs;
+DROP TABLE IF EXISTS xl_templates;

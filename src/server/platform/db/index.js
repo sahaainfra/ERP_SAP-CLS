@@ -14,8 +14,25 @@ export function openDatabase(path) {
   return db;
 }
 
-/** Run fn inside a transaction; rolls back on throw. */
+let savepoints = 0;
+/**
+ * Run fn inside a transaction; rolls back on throw. Called inside a transaction already (a bulk import that calls the service of a module, which has a
+ * transaction of its own) it is a savepoint: the inner work is undone if it throws, and the outer transaction decides the rest.
+ */
 export function transaction(db, fn) {
+  if (db.isTransaction) {
+    savepoints += 1;
+    const name = `sp_${savepoints}`;
+    db.exec(`SAVEPOINT ${name}`);
+    try {
+      const result = fn();
+      db.exec(`RELEASE ${name}`);
+      return result;
+    } catch (err) {
+      db.exec(`ROLLBACK TO ${name}; RELEASE ${name}`);
+      throw err;
+    }
+  }
   db.exec('BEGIN IMMEDIATE');
   try {
     const result = fn();

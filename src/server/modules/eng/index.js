@@ -14,7 +14,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
-import { signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { excelRoutes, signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -27,6 +27,8 @@ import { createAlertService } from './alerts.js';
 import { bind as bindDocuments, createDocumentService } from './documents.js';
 import { createDocumentOps } from './documents-ops.js';
 import { createDocumentConfig } from './documents-config.js';
+import { bind as bindExcel, createExcelService } from './excel.js';
+import { bindAdapters } from './xl-adapters.js';
 import { bind as bindSignatures, createSignatureService } from './signatures.js';
 import { bind as bindTemplates, createTemplateService } from './templates.js';
 import { createLocalStorage } from '../../platform/files/storage.js';
@@ -373,6 +375,24 @@ defineList({
   columns: { method: { sql: 's.method', type: 'enum', label: 'Method' }, status: { sql: 's.status', type: 'enum', label: 'Status' }, sort: { sql: 's.id', type: 'text', label: 'Order' } },
 });
 
+// Part 04.13: the Excel import and export engine.
+for (const [type, description] of [
+  ['xl.job.uploaded', 'A filled import template was uploaded and queued for its check.'],
+  ['xl.job.validated', 'An import file was checked; the preview and the row errors are ready.'],
+  ['xl.job.committed', 'An import was committed: its records were created or updated through the module that owns them.'],
+  ['xl.job.failed', 'A commit stopped on a row; nothing was saved (or, in chunked mode, the chunks before it were).'],
+  ['xl.job.cancelled', 'An import job was cancelled before it was committed.'],
+  ['xl.template.changed', 'An import template was changed after its approval.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  companyOptional: [],
+  statuses: { xl_jobs: ['UPLOADED', 'VALIDATING', 'FAILED', 'PREVIEW', 'COMMITTING', 'COMMITTED', 'PARTIAL', 'CANCELLED'], xl_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+defineList({
+  code: 'xl.jobs', label: 'Import jobs', from: 'xl_jobs j', defaultSort: 'newest',
+  columns: { status: { sql: 'j.status', type: 'enum', label: 'Status' }, type: { sql: 'j.import_type', type: 'enum', label: 'Import' }, sort: { sql: 'j.id', type: 'text', label: 'Order' } },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -382,7 +402,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['xl_templates', 'xl_jobs', 'xl_job_errors', 'sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['doc_types', 'doc_folder_templates', 'alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -611,6 +631,17 @@ export const eng = {
     sigRouter.use(signatureRoutes({ service: sigService, registerFile }, idem));
     api.use('/sig', sigRouter);
     publicApi.use(verifyPublicRoutes({ service: sigService, fileBody: express.raw({ type: () => true, limit: '25mb' }), isOn: (companyId) => companyId === null || flags.isOn({ companyId }, 'ff.eng.p0412') }));
+
+    // part 04.13: the Excel import and export engine
+    const excelService = createExcelService({ db, engine, storage: docStorage, jobs: runtime.jobs });
+    bindExcel(db, excelService);
+    bindAdapters(db, { sampleDocs: docs });
+    runtime.jobs.register('xl.validate', (ctx) => excelService.job.validate(ctx), { maxAttempts: 2, description: 'Checks an uploaded import file row by row and prepares the preview and the error list.' });
+    runtime.jobs.register('xl.commit', (ctx) => excelService.job.runCommit(ctx), { maxAttempts: 1, description: 'Commits a checked import: creates or updates the records through the module that owns them, all or nothing or in chunks.' });
+    const xlRouter = Router();
+    xlRouter.use(gate('ff.eng.p0413', 'The Excel engine is'));
+    xlRouter.use(excelRoutes({ service: excelService, fileBody: express.raw({ type: () => true, limit: '12mb' }) }, idem));
+    api.use('/xl', xlRouter);
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));

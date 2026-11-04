@@ -368,3 +368,14 @@ export const parseSigExport = (q) => parse(z.object({ method: SIG_METHOD.optiona
 const placement = z.object({ page: z.enum(['first', 'last']), anchor: z.enum(['top', 'bottom']), width: z.number().min(60).max(300), height: z.number().min(30).max(120), perRow: z.number().int().min(1).max(6), margin: z.number().min(10).max(80) }).strict();
 export const parseSigConfig = (b) => parse(z.object({ publicFields: z.array(z.string().max(20)).max(12), signApprovals: z.boolean(), placements: z.record(z.string().max(30), placement).default({}), reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
 export const parseVerifyCode = (v) => parse(z.string().regex(/^[A-Za-z0-9]{8,24}$/), v);
+
+
+// Inputs of the Excel engine API (part 04.13).
+const XL_TYPE = z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/);
+export const parseXlType = (v) => parse(XL_TYPE, v);
+export const parseXlUpload = (q) => parse(z.object({ type: XL_TYPE, onExisting: z.enum(['ERROR', 'UPDATE', 'SKIP']).default('ERROR'), fileName: text(200).min(1).default('import.xlsx') }).strict(), q);
+export const parseXlJobs = (q) => parse(z.object({ importType: XL_TYPE.optional(), status: z.enum(['UPLOADED', 'VALIDATING', 'FAILED', 'PREVIEW', 'COMMITTING', 'COMMITTED', 'PARTIAL', 'CANCELLED']).optional(), scope: z.enum(['mine', 'all']).default('all'), from: date.optional(), to: date.optional(), q: text(80).optional(), sort: z.enum(['newest', 'oldest', 'type', 'status']).default('newest'), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseXlPage = (q) => parse(z.object({ limit: z.coerce.number().int().min(1).max(500).default(50), offset: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'xlsx']).default('json') }).strict(), q);
+export const parseXlCommit = (b) => parse(z.object({ mode: z.enum(['ALL_OR_NOTHING', 'CHUNKED']).optional(), skipInvalid: z.boolean().default(false), version: z.number().int().min(1).optional() }).strict(), b ?? {});
+export const parseXlDesigner = (b) => parse(z.object({ importType: XL_TYPE, columns: z.record(z.string().max(40), z.object({ label: text(60).min(1).optional(), help: text(300).optional(), required: z.boolean().optional() }).strict()).default({}), instructions: text(2000).default(''), settings: z.object({ allowChunked: z.boolean().default(false), chunkSize: z.number().int().min(10).max(5000).default(500), maxRows: z.number().int().min(10).max(20000).optional() }).strict().default({ allowChunked: false, chunkSize: 500 }), reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseXlExport = (q) => parse(z.object({ format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'), status: text(20).optional(), importType: XL_TYPE.optional() }).strict(), q);
