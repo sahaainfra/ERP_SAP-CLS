@@ -37,6 +37,8 @@ const safeName = (s) => String(s).replace(/[^\w.-]+/g, '_').slice(0, 80);
 const services = new WeakMap();
 export const bind = (db, service) => services.set(db, service);
 const bound = (db) => services.get(db);
+/** The template service of a database, for the parts that build on it (the signatures of 04.12). */
+export const templateServiceOf = bound;
 
 /** Where the data of a document comes from. A module registers its own source for its document type (it reads its own tables); until it does, the records published with `records.publish` are used. */
 export const templateSources = new Map();

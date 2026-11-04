@@ -357,3 +357,14 @@ export const parseTplRecordQuery = (q) => parse(z.object({ docType: DOCTYPE.opti
 export const parseTplRule = (b) => parse(z.object({ workflowDocType: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,59}$/), docType: DOCTYPE, templateCode: TPL_CODE.optional(), enabled: z.boolean() }).strict(), b);
 export const parseTplLink = (q) => parse(z.object({ exp: z.coerce.number().int(), sig: z.string().min(20).max(80) }).strict(), q);
 export const parseTplVerify = (v) => parse(z.string().regex(/^[A-Za-z0-9]{8,24}$/), v);
+
+// Inputs of the signature API (part 04.12).
+const SIG_METHOD = z.enum(['APPROVAL', 'IMAGE', 'ESIGN', 'DSC']);
+export const parseSigSign = (b) => parse(z.object({ method: SIG_METHOD, label: text(60).optional() }).strict(), b);
+export const parseSigReason = (b) => parse(z.object({ reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseSigProfile = (b) => parse(z.object({ image: z.string().max(200_000) }).strict(), b);
+export const parseSigQuery = (q) => parse(z.object({ method: SIG_METHOD.optional(), status: z.enum(['SIGNED', 'REVOKED']).optional(), docType: z.string().regex(/^[A-Z][A-Z0-9_]{1,29}$/).optional(), projectId: id.optional(), signer: text(60).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(), sort: z.enum(['newest', 'oldest', 'number', 'signer']).default('newest'), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseSigExport = (q) => parse(z.object({ method: SIG_METHOD.optional(), status: z.enum(['SIGNED', 'REVOKED']).optional(), docType: z.string().regex(/^[A-Z][A-Z0-9_]{1,29}$/).optional(), projectId: id.optional(), signer: text(60).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
+const placement = z.object({ page: z.enum(['first', 'last']), anchor: z.enum(['top', 'bottom']), width: z.number().min(60).max(300), height: z.number().min(30).max(120), perRow: z.number().int().min(1).max(6), margin: z.number().min(10).max(80) }).strict();
+export const parseSigConfig = (b) => parse(z.object({ publicFields: z.array(z.string().max(20)).max(12), signApprovals: z.boolean(), placements: z.record(z.string().max(30), placement).default({}), reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseVerifyCode = (v) => parse(z.string().regex(/^[A-Za-z0-9]{8,24}$/), v);

@@ -14,7 +14,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
-import { documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -27,6 +27,7 @@ import { createAlertService } from './alerts.js';
 import { bind as bindDocuments, createDocumentService } from './documents.js';
 import { createDocumentOps } from './documents-ops.js';
 import { createDocumentConfig } from './documents-config.js';
+import { bind as bindSignatures, createSignatureService } from './signatures.js';
 import { bind as bindTemplates, createTemplateService } from './templates.js';
 import { createLocalStorage } from '../../platform/files/storage.js';
 import { alertsOf } from '../../platform/alerts/index.js';
@@ -356,6 +357,22 @@ defineList({
   columns: { type: { sql: 'g.doc_type', type: 'enum', label: 'Document type' }, purpose: { sql: 'g.purpose', type: 'enum', label: 'Purpose' }, sort: { sql: 'g.id', type: 'text', label: 'Order' } },
 });
 
+// Part 04.12: digital signature and QR verification.
+for (const [type, description] of [
+  ['sig.document.signed', 'A generated document was signed (electronic approval, signature image, eSign or DSC).'],
+  ['sig.signature.revoked', 'A signature of a generated document was revoked; verification shows it.'],
+  ['sig.document.cancelled', 'A generated document was cancelled; verification says so.'],
+  ['sig.verification.failed', 'A file that was checked against a document by its QR code did not match: it is not what was issued.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'sig_verifications', columns: ['code'] }],
+  statuses: { sig_signatures: ['SIGNED', 'REVOKED'], sig_verifications: ['ACTIVE', 'CANCELLED'], sig_config: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+defineList({
+  code: 'sig.signatures', label: 'Signatures', from: 'sig_signatures s', defaultSort: 'newest',
+  columns: { method: { sql: 's.method', type: 'enum', label: 'Method' }, status: { sql: 's.status', type: 'enum', label: 'Status' }, sort: { sql: 's.id', type: 'text', label: 'Order' } },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -365,7 +382,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['doc_types', 'doc_folder_templates', 'alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -575,6 +592,25 @@ export const eng = {
     tplRouter.use(templateRoutes({ service: tplService, generatedFile }, idem));
     api.use('/tpl', tplRouter);
     publicApi.use(templatePublicRoutes({ service: tplService }));
+
+    // part 04.12: signatures, the stamped copy, the register and the public verification
+    const sigService = createSignatureService({ db, engine, storage: docStorage, jobs: runtime.jobs, publicUrl: config.publicUrl });
+    bindSignatures(db, sigService);
+    runtime.jobs.register('sig.stamp', (ctx) => sigService.signer.stamp(ctx.params.id), { maxAttempts: 3, description: 'Draws the signatures of a generated document on a copy of it (the original is never changed).' });
+    runtime.bus.subscribe(['workflow.instance.approved'], (e) => sigService.signer.onApproved(e), { consumer: 'sig.approvals' });
+    runtime.bus.subscribe(['tpl.document.generated'], (e) => sigService.signer.onGenerated(e), { consumer: 'sig.generated' });
+    const registerFile = (actor, q) => {
+      const list = sigService.register.list(actor, { ...q, limit: 100, offset: 0, sort: 'newest' });
+      const rows = list.rows.map((x) => ({ docNo: x.docNo, type: x.typeLabel, version: x.version, signer: x.name, method: x.methodLabel, status: x.status, signedAt: x.signedAt, documentStatus: x.documentStatus, checks: x.verifications, reference: x.digest.slice(0, 12) }));
+      const columns = [['docNo', 'Number'], ['type', 'Document'], ['version', 'Version'], ['signer', 'Signer'], ['method', 'Method'], ['status', 'Status'], ['signedAt', 'Signed at'], ['documentStatus', 'Document'], ['checks', 'Checks'], ['reference', 'Reference']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'sig_signatures', entityId: 'list', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Signature register. Exported by ${actor.user} on ${todayIST()}. Only the signatures you may see are listed.`], sheetName: 'Signatures', title: 'Signature register' }), type: FORMATS[q.format], fileName: `signatures-${todayIST()}.${q.format}` };
+    };
+    const sigRouter = Router();
+    sigRouter.use(gate('ff.eng.p0412', 'Signatures are'));
+    sigRouter.use(signatureRoutes({ service: sigService, registerFile }, idem));
+    api.use('/sig', sigRouter);
+    publicApi.use(verifyPublicRoutes({ service: sigService, fileBody: express.raw({ type: () => true, limit: '25mb' }), isOn: (companyId) => companyId === null || flags.isOn({ companyId }, 'ff.eng.p0412') }));
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));

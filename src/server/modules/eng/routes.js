@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseTplBulk, parseTplCatalogue, parseTplCreate, parseTplDeliver, parseTplGenerate, parseTplGeneratedExport, parseTplGeneratedQuery, parseTplLink, parseTplPreview, parseTplQuery, parseTplRecord, parseTplRecordQuery, parseTplRule, parseTplUpdate, parseTplValidate, parseTplVerify, parseAcknowledge, parseAnnotation, parseAnnotationSet, parseFolderTemplate, parseBulkQuery, parseCompare, parseContentQuery, parseDistribute, parseDocConfig, parseDocCreate, parseDocExport, parseDocNote, parseDocQuery, parseDocUpdate, parseFolderCreate, parseFolderQuery, parseReason, parseRevision, parseShare, parseZip, parseAdopt, parseAlertAct, parseAlertBulk, parseAlertDraft, parseAlertExport, parseAlertQuery, parseAlertRule, parseEnable, parseRuleCode, parseRunsQuery, parseRoutePreview, parseRoutingChange, parseTaskAct, parseTaskChecklist, parseTaskComment, parseTaskCreate, parseTaskDashboard, parseTaskDepend, parseTaskExport, parseTaskPeople, parseTskQuery, parseTaskUpdate, parseInstruction, parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseSigConfig, parseSigExport, parseSigProfile, parseSigQuery, parseSigReason, parseSigSign, parseVerifyCode, parseTplBulk, parseTplCatalogue, parseTplCreate, parseTplDeliver, parseTplGenerate, parseTplGeneratedExport, parseTplGeneratedQuery, parseTplLink, parseTplPreview, parseTplQuery, parseTplRecord, parseTplRecordQuery, parseTplRule, parseTplUpdate, parseTplValidate, parseTplVerify, parseAcknowledge, parseAnnotation, parseAnnotationSet, parseFolderTemplate, parseBulkQuery, parseCompare, parseContentQuery, parseDistribute, parseDocConfig, parseDocCreate, parseDocExport, parseDocNote, parseDocQuery, parseDocUpdate, parseFolderCreate, parseFolderQuery, parseReason, parseRevision, parseShare, parseZip, parseAdopt, parseAlertAct, parseAlertBulk, parseAlertDraft, parseAlertExport, parseAlertQuery, parseAlertRule, parseEnable, parseRuleCode, parseRunsQuery, parseRoutePreview, parseRoutingChange, parseTaskAct, parseTaskChecklist, parseTaskComment, parseTaskCreate, parseTaskDashboard, parseTaskDepend, parseTaskExport, parseTaskPeople, parseTskQuery, parseTaskUpdate, parseInstruction, parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -336,5 +336,38 @@ export function templatePublicRoutes({ service }) {
     } catch (e) { next(e); }
   });
   r.get('/tpl/verify/:code', (req, res) => res.status(200).json({ data: service.generated.verify(parseTplVerify(req.params.code)) }));
+  return r;
+}
+
+/** Part 04.12: signatures, the register, the settings (signed-in people). */
+export function signatureRoutes({ service, registerFile }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/register', (req, res) => ok(res, service.register.list(req.actor, parseSigQuery(req.query))));
+  r.get('/register/export', (req, res) => { const out = registerFile(req.actor, parseSigExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.get('/documents/:id', (req, res) => ok(res, service.signer.detail(req.actor, parseId(req.params.id))));
+  r.post('/documents/:id/sign', idempotentRequired, async (req, res, next) => { try { ok(res, await service.signer.sign(req.actor, parseId(req.params.id), parseSigSign(req.body), req.ip), 201); } catch (e) { next(e); } });
+  r.post('/documents/:id/cancel', idempotentRequired, (req, res) => ok(res, service.signer.cancel(req.actor, parseId(req.params.id), parseSigReason(req.body).reason)));
+  r.get('/documents/:id/signed', async (req, res, next) => { try { const out = await service.signer.content(req.actor, parseId(req.params.id)); res.status(200).set(out.headers); out.stream.on('error', next).pipe(res); } catch (e) { next(e); } });
+  r.post('/signatures/:id/revoke', idempotentRequired, async (req, res, next) => { try { ok(res, await service.signer.revoke(req.actor, parseId(req.params.id), parseSigReason(req.body).reason)); } catch (e) { next(e); } });
+  r.get('/verify/:code', (req, res) => ok(res, service.signer.detailByCode(req.actor, parseVerifyCode(req.params.code))));
+  r.get('/profile', (req, res) => ok(res, service.profile.get(req.actor)));
+  r.put('/profile', idempotent, async (req, res, next) => { try { ok(res, await service.profile.put(req.actor, parseSigProfile(req.body).image)); } catch (e) { next(e); } });
+  r.delete('/profile', idempotent, (req, res) => ok(res, service.profile.remove(req.actor)));
+  r.get('/config', (req, res) => ok(res, service.config.get(req.actor)));
+  r.post('/config/changes', idempotentRequired, (req, res) => ok(res, service.config.propose(req.actor, parseSigConfig(req.body)), 202));
+  return r;
+}
+
+/** The public check (no sign-in): what a QR code leads to, and the comparison of a file with the stored hash. `fileBody` reads the raw file. */
+export function verifyPublicRoutes({ service, fileBody, isOn }) {
+  const r = Router();
+  r.use('/verify/:code', (req, res, next) => (isOn(service.companyOfCode(req.params.code)) ? next() : next(new HttpError(404, 'NOT_FOUND', 'No document of this system carries this code.'))));
+  r.get('/verify/:code', (req, res) => res.status(200).json({ data: service.signer.verify(parseVerifyCode(req.params.code)) }));
+  r.post('/verify/:code/file', fileBody, (req, res) => {
+    const code = parseVerifyCode(req.params.code);
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) throw new HttpError(400, 'VALIDATION_FAILED', 'Send the file to compare as the body of the request.', [{ field: 'file', message: 'The file is empty.' }]);
+    res.status(200).json({ data: service.signer.verify(code, { file: req.body }) });
+  });
   return r;
 }
