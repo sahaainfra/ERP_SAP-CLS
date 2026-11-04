@@ -3925,6 +3925,239 @@ Indexes:
 - ix_pcs_reason_codes_company: company_id
 - ux_pcs_reason_codes (unique): , action_type, code
 
+## tpl_auto_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| workflow_doc_type | TEXT | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| template_code | TEXT |  |  |  |
+| enabled | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_tpl_auto_rules (unique): company_id, workflow_doc_type, doc_type
+
+## tpl_bulk_jobs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| template_code | TEXT |  |  |  |
+| total | INTEGER | yes |  |  |
+| done | INTEGER | yes |  | 0 |
+| failed | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'QUEUED' |
+| job_id | TEXT |  |  |  |
+| entity_ids_json | TEXT | yes |  |  |
+| results_json | TEXT | yes |  | '[]' |
+| purpose | TEXT | yes |  | 'OFFICIAL' |
+| pdfa | INTEGER | yes |  | 0 |
+| requested_by | TEXT | yes |  |  |
+| started_at | TEXT |  |  |  |
+| finished_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tpl_bulk_job: job_id
+- ix_tpl_bulk_company: company_id, created_at
+
+## tpl_deliveries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| generated_doc_id | INTEGER | yes |  |  |
+| channel | TEXT | yes |  |  |
+| recipient | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'QUEUED' |
+| comm_message_id | INTEGER |  |  |  |
+| sent_at | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| link_expires_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: generated_doc_id -> tpl_generated_docs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tpl_deliveries_message: comm_message_id
+- ix_tpl_deliveries_company: company_id, status, created_at
+- ix_tpl_deliveries_doc: generated_doc_id, created_at
+
+## tpl_generated_docs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| template_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| doc_number | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| file_id | INTEGER | yes |  |  |
+| hash | TEXT | yes |  |  |
+| pages | INTEGER | yes |  | 1 |
+| pdfa | INTEGER | yes |  | 0 |
+| purpose | TEXT | yes |  | 'OFFICIAL' |
+| reason | TEXT |  |  |  |
+| verify_code | TEXT | yes |  |  |
+| is_current | INTEGER | yes |  | 1 |
+| superseded_by | INTEGER |  |  |  |
+| bulk_job_id | INTEGER |  |  |  |
+| generated_by | TEXT | yes |  |  |
+| generated_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: superseded_by -> tpl_generated_docs(id), file_id -> core_files(id), template_id -> tpl_templates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tpl_generated_superseded: superseded_by
+- ix_tpl_generated_bulk: bulk_job_id
+- ix_tpl_generated_project: company_id, project_id, doc_type, generated_at
+- ix_tpl_generated_list: company_id, generated_at, id
+- ix_tpl_generated_file: file_id
+- ix_tpl_generated_template: template_id
+- ux_tpl_generated_verify (unique): verify_code
+- ux_tpl_generated_version (unique): company_id, doc_type, entity_id, version_no
+
+## tpl_records
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| data_json | TEXT | yes |  |  |
+| approved | INTEGER | yes |  | 0 |
+| is_sample | INTEGER | yes |  | 0 |
+| record_version | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tpl_records_project: company_id, project_id, doc_type
+- ux_tpl_records_doc_no (unique): company_id, doc_no
+- ux_tpl_records_key (unique): company_id, doc_type, entity_id
+
+## tpl_templates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| doc_type | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| template_version | INTEGER | yes |  | 1 |
+| name | TEXT | yes |  |  |
+| html | TEXT | yes |  |  |
+| css | TEXT | yes |  | '' |
+| orientation | TEXT | yes |  | 'portrait' |
+| brand_json | TEXT | yes |  | '{}' |
+| variables_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| is_default | INTEGER | yes |  | 0 |
+| change_note | TEXT |  |  |  |
+| instance_id | INTEGER |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| effective_from | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tpl_templates_instance: instance_id
+- ix_tpl_templates_company: company_id, doc_type, status
+- ux_tpl_templates_open (unique): , code
+- ux_tpl_templates_active (unique): , code
+- ux_tpl_templates_version (unique): , code, template_version
+
 ## tsk_assignees
 
 | Column | Type | Not null | Key | Default |

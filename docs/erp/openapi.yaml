@@ -1623,3 +1623,94 @@ paths:
     post:
       summary: Create and submit sample documents from rows; each row goes through the same control checks as the screen, and a row a control stops stays a draft (Idempotency-Key required)
       responses: { '201': { description: '{ data }' } }
+  /api/v1/tpl/templates:
+    get:
+      summary: List the templates, the shared standard formats and the company's own versions (tpl.template.view); filters docType, status, q
+      responses: { '200': { description: '{ data: { rows, total, docTypes, canEdit } }' } }
+    post:
+      summary: Make a draft template, a new code or the next version of a code; the HTML is checked against the variable catalogue of the document type (tpl.template.edit, Idempotency-Key required)
+      responses: { '201': { description: the draft }, '409': { description: a draft of the code already exists }, '422': { description: a variable is not in the catalogue, or the HTML is outside the allowed subset } }
+  /api/v1/tpl/templates/catalogue:
+    get:
+      summary: The variables, the groups and the standard format of a document type (query docType)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/tpl/templates/validate:
+    post:
+      summary: Check a template without saving it; returns every problem with its line (body docType, html, css)
+      responses: { '200': { description: '{ data: { ok, problems, warnings, variables } }' } }
+  /api/v1/tpl/templates/preview:
+    post:
+      summary: Draw a template with the sample record or a real record as a PDF watermarked PREVIEW; nothing is stored (body templateId or docType and html; recordId)
+      responses: { '200': { description: application/pdf }, '403': { description: no right to see templates, or to print the record } }
+  /api/v1/tpl/templates/{id}:
+    get:
+      summary: One template with its HTML, style, letterhead and versions
+      responses: { '200': { description: '{ data }' } }
+    patch:
+      summary: Change a draft (rowVersion for optimistic locking)
+      responses: { '200': { description: the draft }, '409': { description: changed by someone else, or not a draft } }
+    delete:
+      summary: Discard a draft
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/tpl/templates/{id}/submit:
+    post:
+      summary: Send the draft to the process owner of its document type for approval (maker-checker); the maker cannot approve it (Idempotency-Key required)
+      responses: { '202': { description: in review, with the workflow instance } }
+  /api/v1/tpl/records:
+    get:
+      summary: The approved records documents are made from (tpl.document.generate); pay and identity fields are masked without tpl.document.generate_sensitive
+      responses: { '200': { description: '{ data: { rows } }' } }
+    put:
+      summary: A module hands over the approved data of a document; totals are recomputed and a different total sent is refused (tpl.record.publish, Idempotency-Key required)
+      responses: { '200': { description: the record }, '409': { description: an official document exists and no reason was given }, '422': { description: the data does not pass the checks } }
+  /api/v1/tpl/generate:
+    post:
+      summary: Generate an official document (PDF with a QR verification code) from approved data and the active template (body docType, entityId, templateCode, purpose, pdfa, reason; Idempotency-Key required). A new version of an existing document needs a reason.
+      responses: { '201': { description: the generated document }, '403': { description: no right to generate here }, '409': { description: a document exists and no reason, or no approved template }, '422': { description: not approved data or a sample }}
+  /api/v1/tpl/generate/bulk:
+    post:
+      summary: Generate up to 1000 documents as one background job; every record is checked with the caller's rights first and nothing starts if one is refused (Idempotency-Key required)
+      responses: { '202': { description: the job, QUEUED } }
+  /api/v1/tpl/generate/bulk/{id}:
+    get:
+      summary: Progress and result of a bulk generation
+      responses: { '200': { description: '{ data: { status, total, done, failed, results } }' } }
+  /api/v1/tpl/generated:
+    get:
+      summary: The generated documents the caller may see, with filters, the count by document type and the deliveries sent (tpl.document.view)
+      responses: { '200': { description: '{ data: { rows, total, summary } }' } }
+  /api/v1/tpl/generated/export:
+    get:
+      summary: The same list as xlsx, csv or pdf, honouring the filters and the caller's visibility
+      responses: { '200': { description: file } }
+  /api/v1/tpl/generated/{id}:
+    get:
+      summary: One generated document with its versions and its delivery log (a payslip is not said to exist to someone without the right)
+      responses: { '200': { description: '{ data }' }, '404': { description: not found or not visible } }
+  /api/v1/tpl/generated/{id}/content:
+    get:
+      summary: The PDF for a signed-in person; each opening is written to the audit trail and the delivery log (query download=1 to save)
+      responses: { '200': { description: application/pdf } }
+  /api/v1/tpl/generated/{id}/file:
+    get:
+      summary: The PDF for a signed link (exp, sig) sent in an e-mail or WhatsApp message; no sign-in, valid 7 days, the signature covers the expiry
+      responses: { '200': { description: application/pdf }, '403': { description: link not valid }, '410': { description: link expired } }
+  /api/v1/tpl/generated/{id}/deliver:
+    post:
+      summary: Deliver by EMAIL, WHATSAPP (through the communication gateway), MESSAGE or PORTAL (published as an event for the owning module); one delivery row for each recipient (tpl.document.deliver, Idempotency-Key required)
+      responses: { '201': { description: '{ data: { deliveries } }' } }
+  /api/v1/tpl/deliveries:
+    get:
+      summary: The delivery log (not the downloads)
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/tpl/rules:
+    get:
+      summary: The approval milestones that generate a document by themselves
+      responses: { '200': { description: '{ data: { rows, workflowTypes } }' } }
+    put:
+      summary: Switch on or off the generation of a document when a workflow document type is approved (tpl.rule.edit)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/tpl/verify/{code}:
+    get:
+      summary: Public, no sign-in. What a QR code on a document says: genuine or not, the version, whether it is the current one (04.12 builds the verification page on this)
+      responses: { '200': { description: '{ data: { valid, current, message, document } }' } }
