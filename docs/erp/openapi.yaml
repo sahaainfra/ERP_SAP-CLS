@@ -1827,3 +1827,50 @@ paths:
     get:
       summary: Export a registered list (xlsx, csv or pdf), limited to what the caller may see, sensitive columns masked, formulas made inert
       responses: { '200': { description: file }, '403': { description: no right }, '404': { description: unknown list } }
+  /api/v1/col/comments:
+    get:
+      summary: The threaded discussion of a record (query entity, id) with reactions, files, who may edit or delete, the settings and the comments written before part 04.14 (read only)
+      responses: { '200': { description: '{ data: { comments, legacy, total, settings, canModerate } }' }, '403': { description: no right to the record type }, '404': { description: the record does not exist for this person } }
+    post:
+      summary: Post a comment or a reply ({ entity, id, body, parentId? }; Idempotency-Key required). A mention of a person who cannot see the record refuses the comment
+      responses: { '201': { description: '{ data: { id, mentions, ignored } }' }, '422': { description: a mentioned person cannot see the record, or the text is too long } }
+  /api/v1/col/comments/{id}:
+    patch:
+      summary: Edit a comment inside the edit window (author only; version for optimistic locking)
+      responses: { '200': { description: edited }, '403': { description: not the author }, '409': { description: changed meanwhile }, '422': { description: the window is over } }
+    delete:
+      summary: Delete a comment (author, or a moderator with a reason); the text stays in the audit trail
+      responses: { '200': { description: deleted }, '403': { description: neither the author nor a moderator }, '422': { description: a reason is needed } }
+  /api/v1/col/comments/{id}/reactions:
+    post:
+      summary: Add or take back a reaction ({ reaction like|ack|eyes|thanks, on })
+      responses: { '200': { description: '{ data: { count, mine } }' }, '422': { description: reactions are switched off } }
+  /api/v1/col/timeline:
+    get:
+      summary: The activity timeline of a record (query entity, id, kinds, from, to, q, limit, offset) merging audit, approvals, workflow, comments, documents, tasks and messages, newest first, with the count of each kind
+      responses: { '200': { description: '{ data: { rows, total, counts, kinds } }' } }
+  /api/v1/col/feed:
+    get:
+      summary: The project activity feed (query projectId, kinds, from, to, q, limit, offset); without projectId the projects the person may pick
+      responses: { '200': { description: '{ data: { rows, total, counts, projects } }' }, '403': { description: no col.activity.view for that project } }
+  /api/v1/col/trace:
+    get:
+      summary: What a record came from (upstream) and what came from it (downstream) to a depth of 1 to 8, with status and amount; records the person cannot open appear as restricted
+      responses: { '200': { description: '{ data: { root, upstream, downstream, totals, truncated, canLink } }' } }
+  /api/v1/col/trace/links:
+    post:
+      summary: Link two records by hand ({ from, to, relation, reason of 10 characters or more }); permission col.trace.link and access to both records
+      responses: { '201': { description: linked }, '409': { description: already linked } }
+  /api/v1/col/trace/links/{id}:
+    delete:
+      summary: Remove a link that was made by hand (a link made by the system cannot be removed)
+      responses: { '200': { description: removed }, '422': { description: made by the system } }
+  /api/v1/col/mentions:
+    get:
+      summary: The mentions inbox of the person (query unread, limit, offset), only for records they can still open
+      responses: { '200': { description: '{ data: { rows, total, unread } }' } }
+  /api/v1/col/mentions/read:
+    post:
+      summary: Mark mentions as read ({ ids } or { all: true })
+      responses: { '200': { description: '{ data: { marked } }' } }
+

@@ -269,6 +269,134 @@ Indexes:
 - ix_alr_rules_company: company_id, status, enabled
 - ux_alr_rules_version (unique): , code, rule_version
 
+## col_comments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| entity_label | TEXT |  |  |  |
+| parent_id | INTEGER |  |  |  |
+| body | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| edited_at | TEXT |  |  |  |
+| edit_count | INTEGER | yes |  | 0 |
+| delete_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> col_comments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_col_comments_project: company_id, project_id, id
+- ix_col_comments_parent: parent_id
+- ix_col_comments_record: company_id, entity, entity_id, id
+
+## col_mentions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| comment_id | INTEGER | yes |  |  |
+| mentioned_user | TEXT | yes |  |  |
+| read_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: comment_id -> col_comments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_col_mentions_inbox: company_id, mentioned_user, read_at, id
+- ux_col_mentions_comment_user (unique): comment_id, mentioned_user
+
+## col_reactions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| comment_id | INTEGER | yes |  |  |
+| reaction | TEXT | yes |  |  |
+| reacted_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: comment_id -> col_comments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_col_reactions_company_id: company_id
+- ux_col_reactions_one (unique): comment_id, reacted_by, reaction
+
+## col_trace_links
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| from_entity | TEXT | yes |  |  |
+| from_id | TEXT | yes |  |  |
+| to_entity | TEXT | yes |  |  |
+| to_id | TEXT | yes |  |  |
+| relation | TEXT | yes |  | 'DERIVED' |
+| link_kind | TEXT | yes |  | 'SERVICE' |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_col_trace_to: company_id, to_entity, to_id
+- ix_col_trace_from: company_id, from_entity, from_id
+- ux_col_trace_pair (unique): company_id, from_entity, from_id, to_entity, to_id, relation
+
 ## comm_channels
 
 | Column | Type | Not null | Key | Default |
