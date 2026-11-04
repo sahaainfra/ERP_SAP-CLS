@@ -6,13 +6,14 @@ import { formatDate, formatDateTime, formatINR } from '../format.js';
 import { useLiveRefresh } from '../realtime/socket.js';
 import { fetchFileUrl } from '../../modules/core/api/index.js';
 import { api } from '../api/index.js';
-import { useConversation, useConversations, useMessageActions, useMessages, usePeople, uploadToConversation } from './api.js';
+import { markDelivered, sendTyping, useCalls, useConversation, useConversations, useFeatureActions, useMessageActions, useMessages, usePeople, uploadToConversation } from './api.js';
+import { Gallery, PinsBar, PresenceLine, Privacy, ReceiptDetails, SearchFilters, SearchResults, StarredList, Ticks, TypingLine, VoicePlayer, useTyping } from './Features.jsx';
 
 // The parts of the Messages app (part 05.01) that the page and the mini chat windows share: the conversation list, a conversation (bubbles, date separators, replies, reactions, record cards, files, voice notes,
 // composer with mentions, emoji and a record picker, drafts) and its details (members, shared files, linked records, my settings). Nothing here decides who may see what: the server does, for every call.
 export const EMOJI = ['👍', '❤️', '😂', '😮', '🙏', '✅'];
 const TYPE_LABEL = { DIRECT: 'Direct', GROUP: 'Group', TEAM: 'Team', PROJECT: 'Project', SITE: 'Site', DEPARTMENT: 'Department', RECORD: 'Record', EXTERNAL: 'External' };
-export const VIEWS = [['all', 'All'], ['unread', 'Unread'], ['pinned', 'Pinned'], ['archived', 'Archived']];
+export const VIEWS = [['all', 'All'], ['unread', 'Unread'], ['pinned', 'Pinned'], ['starred', 'Starred'], ['archived', 'Archived']];
 const errorText = (e) => `${e?.message ?? 'Something went wrong'}${e?.correlationId ? ` (Correlation ID: ${e.correlationId})` : ''}`;
 const draftKey = (user, id) => `erp.msg.draft.${user}.${id}`;
 const lsGet = (k) => { try { return localStorage.getItem(k) ?? ''; } catch { return ''; } };
@@ -23,7 +24,8 @@ const Mentions = ({ text }) => text.split(/((?:^|(?<=[^\w@]))@[A-Za-z0-9._-]{2,4
 
 // ---- the list ----
 export function ConversationList({ activeId, onOpen, filters, setFilters, session }) {
-  const q = useConversations(filters);
+  const q = useConversations(filters.view === 'starred' ? { ...filters, view: 'all' } : filters);
+  const [sf, setSf] = useState({ sender: '', from: '', to: '', kind: '' });
   useLiveRefresh(session?.user ? [`user:${session.user}`] : [], [['msg']]);
   const d = q.data;
   return (
@@ -35,10 +37,13 @@ export function ConversationList({ activeId, onOpen, filters, setFilters, sessio
       <div className="toolbar" role="group" aria-label="Show">
         {VIEWS.map(([k, l]) => <button key={k} type="button" className={`lr-chip${filters.view === k ? ' is-on' : ''}`} aria-pressed={filters.view === k} onClick={() => setFilters({ ...filters, view: k })}>{l}{k === 'unread' && d?.counts.unread ? ` (${d.counts.unread})` : ''}</button>)}
       </div>
-      {q.isPending && <Skeleton label="Loading conversations" rows={4} />}
-      {q.isError && <QueryError error={q.error} what="the conversations" permission="" onRetry={q.refetch} />}
-      {d && d.rows.length === 0 && <EmptyState compact title={filters.q || filters.view !== 'all' ? 'No conversation matches' : 'No conversations yet'} message={filters.view === 'all' && !filters.q ? 'Start one with the New button: a person, a group, a project or a record.' : 'Try another filter.'} />}
-      {d && d.rows.length > 0 && (
+      <SearchFilters filters={sf} setFilters={setSf} />
+      {filters.view === 'starred' ? <StarredList onOpen={onOpen} /> : <SearchResults filters={{ q: filters.q, ...sf }} onOpen={onOpen} />}
+      {filters.view !== 'starred' && q.isPending && <Skeleton label="Loading conversations" rows={4} />}
+      {filters.view !== 'starred' && q.isError && <QueryError error={q.error} what="the conversations" permission="" onRetry={q.refetch} />}
+      <Privacy />
+      {filters.view !== 'starred' && d && d.rows.length === 0 && <EmptyState compact title={filters.q || filters.view !== 'all' ? 'No conversation matches' : 'No conversations yet'} message={filters.view === 'all' && !filters.q ? 'Start one with the New button: a person, a group, a project or a record.' : 'Try another filter.'} />}
+      {filters.view !== 'starred' && d && d.rows.length > 0 && (
         <ul className="msg-rows" aria-label="Conversations">
           {d.rows.map((c) => (
             <li key={c.id}>
@@ -74,14 +79,15 @@ function FileChip({ f }) {
   const open = async () => { const w = window.open('', '_blank'); try { const link = await fetchFileUrl(f.id, {}); if (w) w.location.href = link.url; } catch { w?.close(); } };
   return <button type="button" className="msg-file" onClick={open} data-testid="msg-file"><Icon name="erp.action.attach" size={14} /> {f.name} <span className="muted small">{Math.max(1, Math.round(f.size / 1024))} KB</span></button>;
 }
-function Bubble({ m, actions, onReply, readOnly, forwardTargets }) {
+function Bubble({ m, actions, fx, onReply, readOnly, forwardTargets, highlight }) {
   const [edit, setEdit] = useState(null);
+  const [who, setWho] = useState(false);
   const [menu, setMenu] = useState(false);
   const [error, setError] = useState(null);
   const run = async (fn) => { setError(null); try { await fn(); setEdit(null); setMenu(false); } catch (e) { setError(e); } };
   if (m.kind === 'SYSTEM') return <li className="msg-system" data-testid="msg-system"><span>{m.body}</span></li>;
   return (
-    <li className={`msg-bubble${m.mine ? ' is-mine' : ''}${m.deleted ? ' is-deleted' : ''}`} data-testid="msg" data-id={m.id}>
+    <li className={`msg-bubble${m.mine ? ' is-mine' : ''}${m.deleted ? ' is-deleted' : ''}${highlight ? ' is-highlight' : ''}`} id={`msg-${m.id}`} data-testid="msg" data-id={m.id}>
       {!m.mine && <strong className="msg-sender">{m.sender.name}</strong>}
       {m.forwarded && <span className="muted small" data-testid="msg-forwarded">Forwarded</span>}
       {m.replyTo && <blockquote className="msg-quote"><strong>{m.replyTo.sender.name}</strong> {m.replyTo.excerpt}</blockquote>}
@@ -92,13 +98,14 @@ function Bubble({ m, actions, onReply, readOnly, forwardTargets }) {
           <div className="actions"><button className="btn btn-primary btn-small" type="submit">Save</button><button className="btn btn-small" type="button" onClick={() => setEdit(null)}>Cancel</button></div>
         </form>
       ) : <>
-        {m.kind === 'VOICE' && m.attachments[0] && <FileChip f={{ ...m.attachments[0], name: `Voice note · ${m.attachments[0].name}` }} />}
+        {m.kind === 'VOICE' && m.attachments[0] && <VoicePlayer m={m} />}
         {m.body && <p className="msg-text"><Mentions text={m.body} /></p>}
         {m.kind !== 'VOICE' && m.attachments.map((f) => <FileChip key={f.id} f={f} />)}
         {m.links.map((l, i) => <Card key={i} l={l} />)}
         {m.readOnly && m.subject && <p className="muted small">{m.subject}</p>}
       </>}
-      <span className="msg-meta muted small">{timeOf(m.createdAt)}{m.editedAt ? ' · edited' : ''}{m.readOnly ? ` · ${m.channel} ${m.direction === 'IN' ? 'received' : String(m.deliveryStatus).toLowerCase()}` : ''}</span>
+      <span className="msg-meta muted small">{m.starred && <span aria-label="Starred" title="Starred">★ </span>}{m.pinned && <span aria-label="Pinned" title="Pinned">📌 </span>}{timeOf(m.createdAt)}{m.editedAt ? ' · edited' : ''}{m.readOnly ? ` · ${m.channel} ${m.direction === 'IN' ? 'received' : String(m.deliveryStatus).toLowerCase()}` : ''} {m.mine && !m.deleted && <Ticks receipt={m.receipt} onClick={() => setWho(!who)} />}</span>
+      {who && <ReceiptDetails messageId={m.id} />}
       {!m.deleted && m.reactions.length > 0 && <span className="msg-reactions">{m.reactions.map((r) => <button key={r.emoji} type="button" className={`lr-chip${r.mine ? ' is-on' : ''}`} aria-pressed={r.mine} aria-label={`${r.emoji} ${r.count}`} onClick={() => actions.react.mutate({ id: m.id, emoji: r.emoji, on: !r.mine })}>{r.emoji} {r.count}</button>)}</span>}
       {!readOnly && !m.deleted && (
         <div className="msg-actions">
@@ -108,6 +115,10 @@ function Bubble({ m, actions, onReply, readOnly, forwardTargets }) {
               <div role="group" aria-label="React">{EMOJI.map((e) => <button key={e} type="button" role="menuitem" className="btn btn-small" onClick={() => { actions.react.mutate({ id: m.id, emoji: e, on: !m.reactions.find((r) => r.emoji === e)?.mine }); setMenu(false); }}>{e}</button>)}</div>
               <button type="button" role="menuitem" className="btn btn-small" onClick={() => { onReply(m); setMenu(false); }}>Reply</button>
               {m.canEdit && <button type="button" role="menuitem" className="btn btn-small" onClick={() => { setEdit(m.body); setMenu(false); }}>Edit</button>}
+              <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-star" onClick={() => run(() => fx.star.mutateAsync({ id: m.id, on: !m.starred }))}>{m.starred ? 'Remove the star' : 'Star'}</button>
+              <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-pin" onClick={() => run(() => fx.pin.mutateAsync({ id: m.id, on: !m.pinned }))}>{m.pinned ? 'Unpin' : 'Pin to the conversation'}</button>
+              {m.mine && <button type="button" role="menuitem" className="btn btn-small" onClick={() => setWho(!who)}>Who has read it</button>}
+              <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-hide" onClick={() => run(() => fx.hide.mutateAsync(m.id))}>Delete for me</button>
               {forwardTargets.length > 0 && <label className="msg-forward"><span className="sr-only">Forward to</span><select defaultValue="" onChange={(e) => { if (e.target.value) run(() => actions.forward.mutateAsync({ id: m.id, conversationIds: [Number(e.target.value)] })); }}><option value="">Forward to...</option>{forwardTargets.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>}
               {m.canDelete && <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-delete" onClick={() => { const reason = m.mine ? undefined : window.prompt('Why are you deleting this message?') ?? ''; if (m.mine || reason) run(() => actions.remove.mutateAsync({ id: m.id, reason })); }}>Delete for everyone</button>}
             </div>
@@ -132,7 +143,9 @@ function Composer({ id, session, actions, replyTo, setReplyTo, members, compact 
   const [recording, setRecording] = useState(null);
   const input = useRef(null);
   useEffect(() => { setText(lsGet(draftKey(user, id))); setFiles([]); setLinks([]); setReplyTo(null); }, [id, user, setReplyTo]);
-  const change = (v) => { setText(v); lsSet(draftKey(user, id), v); };
+  const lastTyping = useRef(0);
+  const change = (v) => { setText(v); lsSet(draftKey(user, id), v); if (v && Date.now() - lastTyping.current > 3000) { lastTyping.current = Date.now(); sendTyping(id); } };
+  const [voice, setVoice] = useState(null);
   const mention = /(?:^|\s)@([A-Za-z0-9._-]*)$/.exec(text);
   const suggestions = mention ? members.filter((m) => m.username !== user && (m.username.toLowerCase().startsWith(mention[1].toLowerCase()) || m.name.toLowerCase().includes(mention[1].toLowerCase()))).slice(0, 5) : [];
   const attach = async (list) => {
@@ -145,8 +158,25 @@ function Composer({ id, session, actions, replyTo, setReplyTo, members, compact 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const rec = new MediaRecorder(stream);
       const chunks = [];
+      const peaks = [];
+      const started = Date.now();
+      let meter = null;
+      try { // the loudness every tenth of a second becomes the waveform of the note
+        const ctx = new (globalThis.AudioContext ?? globalThis.webkitAudioContext)();
+        const an = ctx.createAnalyser(); an.fftSize = 512;
+        ctx.createMediaStreamSource(stream).connect(an);
+        const buf = new Uint8Array(an.fftSize);
+        meter = setInterval(() => { an.getByteTimeDomainData(buf); let max = 0; for (const v of buf) max = Math.max(max, Math.abs(v - 128)); peaks.push(Math.min(100, Math.round((max / 128) * 140))); }, 100);
+        rec.addEventListener('stop', () => { clearInterval(meter); ctx.close().catch(() => {}); });
+      } catch { /* a note without a waveform is still a note */ }
       rec.ondataavailable = (e) => chunks.push(e.data);
-      rec.onstop = async () => { stream.getTracks().forEach((t) => t.stop()); setRecording(null); await attach([new File(chunks, `voice-${Date.now()}.webm`, { type: 'audio/webm' })]); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop()); setRecording(null);
+        const step = Math.max(1, Math.ceil(peaks.length / 40));
+        const wave = []; for (let i = 0; i < peaks.length; i += step) wave.push(Math.max(...peaks.slice(i, i + step)));
+        setVoice({ durationMs: Date.now() - started, waveform: wave.length ? wave : [20, 40, 60, 40, 20] });
+        await attach([new File(chunks, `voice-${Date.now()}.webm`, { type: 'audio/webm' })]);
+      };
       rec.start(); setRecording(rec);
     } catch { setError(new Error('The microphone could not be used.')); }
   };
@@ -155,9 +185,10 @@ function Composer({ id, session, actions, replyTo, setReplyTo, members, compact 
     if (!text.trim() && !files.length && !links.length) return;
     setError(null);
     try {
-      const voice = files.length === 1 && files[0].kind === 'VOICE' && !text.trim();
-      await actions.send.mutateAsync({ body: text.trim(), attachments: files.map((f) => f.id), recordLinks: links.map((l) => ({ entity: l.entity, id: l.id })), replyToId: replyTo?.id, kind: voice ? 'VOICE' : 'TEXT', clientId: globalThis.crypto.randomUUID().replace(/-/g, '') });
-      change(''); setFiles([]); setLinks([]); setReplyTo(null);
+      const isVoice = files.length === 1 && files[0].kind === 'VOICE' && !text.trim();
+      const voiceMeta = voice;
+      await actions.send.mutateAsync({ body: text.trim(), attachments: files.map((f) => f.id), recordLinks: links.map((l) => ({ entity: l.entity, id: l.id })), replyToId: replyTo?.id, kind: isVoice ? 'VOICE' : 'TEXT', voice: isVoice && voiceMeta ? voiceMeta : undefined, clientId: globalThis.crypto.randomUUID().replace(/-/g, '') });
+      change(''); setFiles([]); setLinks([]); setReplyTo(null); setVoice(null);
     } catch (er) { setError(er); }
   };
   return (
@@ -199,32 +230,43 @@ function RecordPicker({ onPick }) {
 }
 
 // ---- a conversation ----
-export function ConversationView({ id, session, compact = false, onBack, onDetails, onPopOut, onClose, onMinimise }) {
+export function ConversationView({ id, session, around, compact = false, onBack, onDetails, onPopOut, onClose, onMinimise }) {
   const conv = useConversation(id);
-  const msgs = useMessages(id);
+  const msgs = useMessages(id, around);
   const actions = useMessageActions(id);
+  const fx = useFeatureActions(id);
+  const typing = useTyping(id, session?.user);
+  const [jump, setJump] = useState(around ?? null);
   const [replyTo, setReplyTo] = useState(null);
   const bottom = useRef(null);
   const list = useConversations({ view: 'all', limit: 30 });
   useLiveRefresh(id ? [`conv:${id}`] : [], [['msg']]);
   const rows = msgs.data?.rows ?? [];
   const lastId = rows.length ? rows[rows.length - 1].id : 0;
-  useEffect(() => { bottom.current?.scrollIntoView?.({ block: 'end' }); }, [lastId, id]);
+  useEffect(() => { if (jump && document.getElementById(`msg-${jump}`)) document.getElementById(`msg-${jump}`).scrollIntoView?.({ block: 'center' }); else bottom.current?.scrollIntoView?.({ block: 'end' }); }, [lastId, id, jump, msgs.data]);
+  useEffect(() => { setJump(around ?? null); }, [around, id]);
+  useEffect(() => { if (msgs.data && lastId > 0 && !msgs.data.readOnly) markDelivered(id, lastId); }, [lastId, id]); // the sender is told that this screen has the messages
   useEffect(() => { if (msgs.data && lastId > (msgs.data.lastRead ?? 0) && !actions.read.isPending) actions.read.mutate(); }, [lastId, msgs.data?.lastRead]);
   const forwardTargets = (list.data?.rows ?? []).filter((c) => c.id !== id && !c.readOnly && !c.archived).slice(0, 12);
   const c = conv.data;
   const memberList = c?.members ?? [];
+  const others = c?.type === 'DIRECT' || (c?.members?.length ?? 0) <= 12 ? memberList.filter((m) => m.username !== session?.user).map((m) => m.username) : [];
+  const calls = useCalls(c && c.type !== 'EXTERNAL' ? id : null);
+  const startCall = async (type) => { try { const r = await fx.startCall.mutateAsync(type); window.history.pushState(null, '', `/collab/call?call=${r.call.id}`); window.dispatchEvent(new PopStateEvent('popstate')); } catch (e) { window.alert(errorText(e)); } };
   let lastDay = '';
   return (
     <section className={`msg-conv${compact ? ' is-compact' : ''}`} aria-label={c ? `Conversation with ${c.title}` : 'Conversation'} data-testid="msg-conversation">
       <header className="msg-conv-head">
         {onBack && <button type="button" className="btn" onClick={onBack} aria-label="Back to the conversations" data-testid="msg-back"><Icon name="erp.action.previous" size={18} /></button>}
-        <div className="msg-conv-title"><h2>{c?.title ?? 'Conversation'}</h2><span className="muted small">{c ? `${TYPE_LABEL[c.type]}${c.type !== 'EXTERNAL' && c.members ? ` · ${c.members.length} member(s)` : ''}${c.archived ? ' · archived' : ''}` : ''}</span></div>
+        <div className="msg-conv-title"><h2>{c?.title ?? 'Conversation'}</h2><span className="muted small">{c ? `${TYPE_LABEL[c.type]}${c.type !== 'EXTERNAL' && c.members ? ` · ${c.members.length} member(s)` : ''}${c.archived ? ' · archived' : ''}` : ''}</span>{others.length > 0 && <PresenceLine users={others} />}</div>
+        {c && c.type !== 'EXTERNAL' && !compact && <><button type="button" className="btn" onClick={() => startCall('AUDIO')} aria-label="Start a voice call" disabled={fx.startCall.isPending} data-testid="call-audio">📞</button><button type="button" className="btn" onClick={() => startCall('VIDEO')} aria-label="Start a video call" disabled={fx.startCall.isPending} data-testid="call-video">🎥</button></>}
         {onDetails && <button type="button" className="btn" onClick={onDetails} aria-label="Conversation details" data-testid="msg-details"><Icon name="erp.action.info" size={18} /></button>}
         {onPopOut && <button type="button" className="btn" onClick={onPopOut} aria-label="Open in a small window" data-testid="msg-popout"><Icon name="erp.action.next" size={18} /></button>}
         {onMinimise && <button type="button" className="btn" onClick={onMinimise} aria-label="Minimise">–</button>}
         {onClose && <button type="button" className="btn" onClick={onClose} aria-label="Close this window">×</button>}
       </header>
+      {calls.data?.active && <p className="notice msg-call-banner" role="status" data-testid="call-banner">A call is going on. <a href={`/collab/call?call=${calls.data.active}`} onClick={(e) => { e.preventDefault(); window.history.pushState(null, '', `/collab/call?call=${calls.data.active}`); window.dispatchEvent(new PopStateEvent('popstate')); }}>Join the call</a></p>}
+      {c && c.type !== 'EXTERNAL' && <PinsBar id={id} onJump={(mid) => { setJump(mid); document.getElementById(`msg-${mid}`)?.scrollIntoView?.({ block: 'center' }); }} />}
       {(conv.isError || msgs.isError) && <QueryError error={conv.error ?? msgs.error} what="this conversation" permission="" onRetry={() => { conv.refetch(); msgs.refetch(); }} />}
       {msgs.isPending && !msgs.isError && <Skeleton label="Loading messages" rows={3} />}
       {msgs.data && (
@@ -237,16 +279,27 @@ export function ConversationView({ id, session, compact = false, onBack, onDetai
             return (
               <Fragment key={m.id}>
                 {sep && <li className="msg-day" role="separator" aria-label={formatDate(m.createdAt)}><span>{day === dayKey(new Date().toISOString()) ? 'Today' : formatDate(m.createdAt)}</span></li>}
-                <Bubble m={m} actions={actions} onReply={setReplyTo} readOnly={msgs.data.readOnly || c?.archived} forwardTargets={forwardTargets} />
+                <Bubble m={m} actions={actions} fx={fx} highlight={jump === m.id} onReply={setReplyTo} readOnly={msgs.data.readOnly || c?.archived} forwardTargets={forwardTargets} />
               </Fragment>
             );
           })}
           <li ref={bottom} aria-hidden="true" />
         </ol>
       )}
+      <TypingLine names={typing} />
       {msgs.data && !msgs.data.readOnly && !c?.archived && <Composer id={id} session={session} actions={actions} replyTo={replyTo} setReplyTo={setReplyTo} members={memberList} compact={compact} />}
       {msgs.data?.readOnly && <p className="muted small msg-readonly" data-testid="msg-readonly">This is a thread of the communication gateway. It is shown here read-only; reply from the communication centre.</p>}
       {c?.archived && <p className="muted small msg-readonly">This conversation is archived.</p>}
+    </section>
+  );
+}
+
+function CallHistory({ id }) {
+  const q = useCalls(id);
+  const rows = q.data?.rows ?? [];
+  return (
+    <section aria-labelledby="md-calls"><h3 id="md-calls">Calls</h3>
+      {rows.length === 0 ? <p className="muted small">No calls yet.</p> : <ul aria-label="Calls" data-testid="call-history">{rows.map((r) => <li key={r.id}>{r.type === 'VIDEO' ? 'Video' : 'Voice'} call by {r.startedBy.name}, {r.status.toLowerCase()}{r.durationSeconds != null ? `, ${Math.floor(r.durationSeconds / 60)} min ${r.durationSeconds % 60} s` : ''} <span className="muted small">{formatDateTime(r.startedAt)}</span></li>)}</ul>}
     </section>
   );
 }
@@ -301,6 +354,8 @@ export function Details({ id, session, onClose, onLeft }) {
           {!['DIRECT'].includes(c.type) && !(c.autoMembership) && <button type="button" className="btn btn-small" onClick={async () => { if (window.confirm('Leave this conversation?')) { const r = await run(() => actions.removeMember.mutateAsync(session?.user)); if (r) onLeft?.(); } }} data-testid="leave">Leave the conversation</button>}
         </section>
       )}
+      {c.type !== 'EXTERNAL' && <Gallery id={id} />}
+      {c.type !== 'EXTERNAL' && <CallHistory id={id} />}
       <section aria-labelledby="md-files"><h3 id="md-files">Shared files</h3>
         {c.files.length === 0 ? <p className="muted small">No files shared yet.</p> : <ul aria-label="Files">{c.files.map((f) => <li key={f.id}><FileChip f={f} /></li>)}</ul>}
       </section>

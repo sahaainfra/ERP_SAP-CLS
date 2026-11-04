@@ -80,6 +80,21 @@ test('BR-01 AC-04 project and site channels take their members from active assig
     // and returns when an assignment covers the project again
     api.db.prepare("UPDATE iam_assignments SET status = 'ACTIVE' WHERE user_id = ?").run(seAlpha.id);
     assert.equal((await seAlpha.get(`${M}/conversations/${id}/messages`)).status, 200);
+    // part 05.02: search, presence, calls and holds keep to the same boundary
+    const outsider = await person('pm-outside', ['PM'], [b]);
+    const bravoCh = await pdAll.post(`${M}/conversations`, { type: 'PROJECT', projectId: b });
+    assert.equal(bravoCh.status, 201);
+    await pmBravo.post(`${M}/conversations/${bravoCh.json.data.id}/messages`, { body: 'Bravo secret rate sheet' });
+    await pdAll.post(`${M}/conversations/${id}/messages`, { body: 'Alpha pour schedule' });
+    const found = async (who, q) => (await who.get(`${M}/search?q=${encodeURIComponent(q)}`)).json.data.rows;
+    assert.equal((await found(seAlpha, 'secret')).length, 0, 'another project\'s channel is not searched');
+    assert.equal((await found(seAlpha, 'Alpha pour')).length, 1);
+    assert.equal((await found(outsider, 'Alpha pour')).length, 0);
+    assert.deepEqual((await seAlpha.get(`${M}/presence?users=pm-outside`)).json.data.rows, [], 'presence only of people one shares a conversation with');
+    assert.equal((await outsider.post(`${M}/conversations/${id}/calls`, { type: 'AUDIO' })).status, 404, 'no call in a conversation one is not in');
+    assert.equal((await outsider.get(`${M}/conversations/${id}/media`)).status, 404);
+    assert.equal((await seAlpha.get(`${M}/holds`)).status, 403);
+    assert.equal((await seAlpha.get(`${M}/config`)).status, 403);
     // an automatic member cannot leave (mute or archive instead)
     assert.equal((await seAlpha.post(`${M}/conversations/${id}/read`, {})).status, 200);
   } finally { await api.close(); rmSync(storage, { recursive: true, force: true }); }
