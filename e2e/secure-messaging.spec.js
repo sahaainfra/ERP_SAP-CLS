@@ -106,7 +106,7 @@ test('AC-01 AC-05 FR-01 FR-07 the licence register and the policy: the gate is c
   const pol = (await api(request, c, 'SYSADM', sys, 'get', '/sec/policy')).pending.instanceId;
   await act(request, c, 'ITADM', it, pol);
   await p0.page.reload();
-  await expect(p0.page.getByText('Secure messaging is on', { exact: false })).toBeVisible();
+  await expect(p0.page.getByTestId('sp-enabled')).toBeChecked();
   await expect(p0.page.getByTestId('sp-history-row').first()).toContainText('In force');
   await noOverflow(p0.page);
   // the IT administrator sees the devices section; a person without the right does not see the page
