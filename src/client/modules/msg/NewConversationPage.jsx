@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePeople, useCreateConversation } from '../../platform/messages/api.js';
+import { ensureDevice, secApi, useSecureReady } from '../../platform/secure/engine.js';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 
@@ -18,9 +19,17 @@ export default function NewConversationPage({ session }) {
   const [error, setError] = useState(null);
   const people = usePeople(who);
   const create = useCreateConversation();
+  const ready = useSecureReady();
+  const kinds = ready.data?.ready && ready.data?.canCreate ? [...KINDS, ['SECURE', 'A secure conversation (end-to-end encrypted)']] : KINDS;
   const go = async (e) => {
     e.preventDefault(); setError(null);
     try {
+      if (kind === 'SECURE') {
+        await ensureDevice(session); // this browser needs its keys before it can start one
+        const made = await secApi.create({ members: chosen, ...(title.trim() ? { title: title.trim() } : {}) });
+        navigateTo(`/collab/messages?c=${made.id}`, { force: true });
+        return;
+      }
       const body = { type: kind, members: chosen };
       if (title.trim()) body.title = title.trim();
       if (kind === 'PROJECT') body.projectId = Number(place);
@@ -37,16 +46,17 @@ export default function NewConversationPage({ session }) {
       <h1 id="nc-title">New conversation</h1>
       <form className="card form-grid" onSubmit={go} noValidate aria-label="New conversation">
         <Field label="What for" name="type" error={error}>
-          <select value={kind} onChange={(e) => { setKind(e.target.value); setChosen([]); setPlace(''); }} data-testid="nc-kind">{KINDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+          <select value={kind} onChange={(e) => { setKind(e.target.value); setChosen([]); setPlace(''); }} data-testid="nc-kind">{kinds.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
         </Field>
-        {['GROUP', 'PROJECT', 'SITE', 'DEPARTMENT', 'RECORD'].includes(kind) && <Field label={kind === 'GROUP' ? 'Name of the group *' : 'Name (optional)'} name="title" error={error}><input value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} data-testid="nc-title" /></Field>}
+        {['GROUP', 'PROJECT', 'SITE', 'DEPARTMENT', 'RECORD', 'SECURE'].includes(kind) && <Field label={kind === 'GROUP' ? 'Name of the group *' : 'Name (optional)'} name="title" error={error}><input value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} data-testid="nc-title" /></Field>}
         {lookup && <LookupField id="nc-place" label={kind === 'PROJECT' ? 'Project' : 'Department'} lookup={lookup} valueKey="id" value={place} onChange={setPlace} />}
         {kind === 'SITE' && <Field label="Site number" name="siteId" error={error}><input inputMode="numeric" value={place} onChange={(e) => setPlace(e.target.value)} /></Field>}
         {kind === 'RECORD' && <>
           <Field label="Kind of record" name="entity" error={error}><select value={entity} onChange={(e) => setEntity(e.target.value)}><option value="sample_doc">Sample document</option><option value="sample_request">Sample material request</option></select></Field>
           <Field label="Record number (its id)" name="entityId" error={error}><input value={entityId} onChange={(e) => setEntityId(e.target.value)} data-testid="nc-entity" /></Field>
         </>}
-        {['DIRECT', 'GROUP', 'RECORD'].includes(kind) && (
+        {kind === 'SECURE' && <p className="notice small" data-testid="nc-secure-note">Everything in this conversation is encrypted on your device. Each person needs secure messaging set up on one of their devices first; the people of a secure group cannot be changed later.</p>}
+        {['DIRECT', 'GROUP', 'RECORD', 'SECURE'].includes(kind) && (
           <div>
             <Field label={kind === 'DIRECT' ? 'Who' : 'Add people'} name="members" error={error}><input type="search" value={who} onChange={(e) => setWho(e.target.value)} data-testid="nc-who" placeholder="Search by name" /></Field>
             {who && <ul aria-label="People" className="msg-people">{(people.data ?? []).filter((p) => !chosen.includes(p.username) && p.username !== session?.user).map((p) => <li key={p.username}><button type="button" className="btn btn-small" onClick={() => { setChosen(kind === 'DIRECT' ? [p.username] : [...chosen, p.username]); setWho(''); }} data-testid={`pick-${p.username}`}>{p.name} <span className="muted small">@{p.username}</span></button></li>)}</ul>}

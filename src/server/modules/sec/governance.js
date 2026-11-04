@@ -120,7 +120,7 @@ export function createGovernanceService({ db, engine, root = process.cwd() }) {
   };
 
   const register = {
-    list(actor, { q, status, licence } = {}) {
+    list(actor, /** @type {{ q?: string, status?: string, licence?: string }} */ { q, status, licence } = {}) {
       if (!anywhere(actor, 'sec.licence.view')) throw forbidden('You may not see the open-source licence register (permission sec.licence.view).');
       ensureRegister(actor.companyId);
       let rows = db.prepare('SELECT * FROM oss_register WHERE company_id = ? AND is_active = 1 ORDER BY component').all(actor.companyId).map(reg);

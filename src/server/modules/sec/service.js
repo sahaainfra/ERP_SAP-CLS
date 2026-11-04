@@ -85,7 +85,7 @@ export function createSecureService({ db }) {
     },
     mine(actor) { return { rows: db.prepare('SELECT * FROM sec_devices WHERE company_id = ? AND lower(user_ref) = lower(?) AND is_active = 1 ORDER BY device_no').all(actor.companyId, actor.user).map(deviceView) }; },
     /** For the IT administrator: the devices of everyone (public data only), to revoke a lost one. */
-    all(actor, { user } = {}) {
+    all(actor, /** @type {{ user?: string }} */ { user } = {}) {
       if (!anywhere(actor, 'sec.device.manage')) throw forbidden('You may not see the devices of other people (permission sec.device.manage).');
       const rows = user ? db.prepare('SELECT * FROM sec_devices WHERE company_id = ? AND lower(user_ref) = lower(?) AND is_active = 1 ORDER BY user_ref, device_no').all(actor.companyId, user)
         : db.prepare('SELECT * FROM sec_devices WHERE company_id = ? AND is_active = 1 ORDER BY user_ref, device_no LIMIT 500').all(actor.companyId);

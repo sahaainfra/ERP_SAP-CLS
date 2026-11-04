@@ -4,6 +4,7 @@ import StatusBadge from '../design/StatusBadge.jsx';
 import { EmptyState, QueryError, Skeleton } from '../feedback/states.jsx';
 import { formatDate, formatDateTime, formatINR } from '../format.js';
 import { useLiveRefresh } from '../realtime/socket.js';
+import SecureConversation from '../secure/SecureConversation.jsx';
 import { fetchFileUrl } from '../../modules/core/api/index.js';
 import { api } from '../api/index.js';
 import { markDelivered, sendTyping, useCalls, useConversation, useConversations, useFeatureActions, useMessageActions, useMessages, usePeople, uploadToConversation } from './api.js';
@@ -50,11 +51,11 @@ export function ConversationList({ activeId, onOpen, filters, setFilters, sessio
               <button type="button" className={`msg-row${activeId === c.id ? ' is-active' : ''}`} aria-current={activeId === c.id ? 'true' : undefined} onClick={() => onOpen(c.id)} data-testid={`conv-${c.id}`}>
                 <span className="msg-avatar" aria-hidden="true">{c.title.slice(0, 1).toUpperCase()}</span>
                 <span className="msg-row-main">
-                  <span className="msg-row-top"><strong>{c.title}</strong><span className="muted small">{c.last ? formatListTime(c.last.at) : ''}</span></span>
+                  <span className="msg-row-top"><strong>{c.secure && <span className="msg-lock" title="Secure conversation, end-to-end encrypted" data-testid="secure-label"><Icon name="erp.action.lock" size={14} /><span className="sr-only">Secure conversation. </span></span>}{c.title}</strong><span className="muted small">{c.last ? formatListTime(c.last.at) : ''}</span></span>
                   <span className="msg-row-bottom"><span className="msg-preview">{c.last ? `${c.last.sender === c.title ? '' : `${c.last.sender}: `}${c.last.excerpt}` : 'No messages yet'}</span>
                     {c.pinned && <Icon name="erp.action.pin" size={14} />}{c.muted && <span className="muted small" title="Muted">muted</span>}
                     {c.unread > 0 && <span className="op-count" aria-label={`${c.unread} unread`} data-testid={`unread-${c.id}`}>{c.unread}</span>}</span>
-                  <span className="muted small">{TYPE_LABEL[c.type]}{c.readOnly ? ` · ${c.channel ?? 'read only'}` : ''}</span>
+                  <span className="muted small">{c.secure ? 'Secure · end-to-end encrypted' : TYPE_LABEL[c.type]}{c.readOnly ? ` · ${c.channel ?? 'read only'}` : ''}</span>
                 </span>
               </button>
             </li>
@@ -67,7 +68,7 @@ export function ConversationList({ activeId, onOpen, filters, setFilters, sessio
 const formatListTime = (iso) => (dayKey(iso) === dayKey(new Date().toISOString()) ? timeOf(iso) : formatDate(iso));
 
 // ---- a message ----
-function Card({ l }) {
+export function Card({ l }) {
   if (l.restricted) return <div className="msg-card is-restricted" data-testid="record-card" data-restricted="true"><Icon name="erp.action.lock" size={16} /> Restricted record</div>;
   return (
     <a className="msg-card" href={l.route ?? '#'} data-testid="record-card" data-restricted="false" onClick={(e) => { if (l.route) { e.preventDefault(); window.history.pushState(null, '', l.route); window.dispatchEvent(new PopStateEvent('popstate')); } }}>
@@ -212,7 +213,7 @@ function Composer({ id, session, actions, replyTo, setReplyTo, members, compact 
     </form>
   );
 }
-function RecordPicker({ onPick }) {
+export function RecordPicker({ onPick }) {
   const [types, setTypes] = useState(null);
   const [type, setType] = useState('');
   const [q, setQ] = useState('');
@@ -254,6 +255,7 @@ export function ConversationView({ id, session, around, compact = false, onBack,
   const calls = useCalls(c && c.type !== 'EXTERNAL' ? id : null);
   const startCall = async (type) => { try { const r = await fx.startCall.mutateAsync(type); window.history.pushState(null, '', `/collab/call?call=${r.call.id}`); window.dispatchEvent(new PopStateEvent('popstate')); } catch (e) { window.alert(errorText(e)); } };
   let lastDay = '';
+  if (c?.secure) return <SecureConversation id={id} c={c} session={session} compact={compact} onBack={onBack} onDetails={onDetails} onPopOut={onPopOut} onClose={onClose} onMinimise={onMinimise} />;
   return (
     <section className={`msg-conv${compact ? ' is-compact' : ''}`} aria-label={c ? `Conversation with ${c.title}` : 'Conversation'} data-testid="msg-conversation">
       <header className="msg-conv-head">
