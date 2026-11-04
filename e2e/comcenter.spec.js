@@ -99,7 +99,7 @@ test('AC-01 AC-02 FR-02 FR-03 FR-05 the Center, an instruction with acknowledgem
   await b.page.getByTestId('action-go').click();
   await expect(b.page.getByTestId('action-made')).toContainText('was made');
   await expect(b.page.getByTestId('action-link')).toBeVisible();
-  await b.page.getByRole('button', { name: 'Close' }).click();
+  await b.page.getByTestId('action-made').getByRole('button', { name: 'Close' }).click();
   await expect(b.page.getByTestId('action-chips').first()).toContainText('Task');
   // the register: 1 of 2 acknowledged, the recipients, the export
   const r = await open(browser, info, c, 'PM', pm, '/collab/instructions');
