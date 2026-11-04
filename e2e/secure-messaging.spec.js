@@ -126,7 +126,7 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   const [sys, it, dir, pd, pm] = [`e2e-csys${t}`, `e2e-cit${t}`, `e2e-cdir${t}`, `e2e-cpd${t}`, `e2e-cpm${t}`];
   people(c, [[sys, ['SYSADM'], 'Sam Admin'], [it, ['ITADM'], 'Ira IT'], [dir, ['DIR'], 'Dina Director'], [pd, ['PD'], 'Pooja Director'], [pm, ['PM'], 'Meera Manager']]);
   await gate(request, c, sys, it, dir);
-  const secret = `Quote the bridge pier at floor price ${tag}7731`;
+  const words = `Quote the bridge pier at floor price ${tag}7731`;
 
   // Meera sets up her first device from the Safety Number page
   const m1 = await open(browser, info, c, 'PM', pm, '/collab/safety-number');
@@ -147,9 +147,9 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   await expect(a.page.getByTestId('msg-conversation')).toHaveAttribute('data-secure', 'true');
   await expect(a.page.getByTestId('secure-banner')).toContainText('End-to-end encrypted');
   await expect(a.page.getByTestId('secure-notice')).toContainText('cannot read them');
-  await a.page.getByTestId('compose-input').fill(secret);
+  await a.page.getByTestId('compose-input').fill(words);
   await a.page.getByTestId('compose-send').click();
-  await expect(a.page.getByTestId('smsg').filter({ hasText: secret })).toBeVisible();
+  await expect(a.page.getByTestId('smsg').filter({ hasText: words })).toBeVisible();
   // an encrypted file
   await a.page.getByTestId('compose-file').setInputFiles([{ name: 'pier-loads.txt', mimeType: 'text/plain', buffer: Buffer.from(`PIER LOADS ${tag} confidential 9912 kN`) }]);
   await expect(a.page.getByTestId('smsg-file')).toContainText('pier-loads.txt', { timeout: 20_000 });
@@ -159,7 +159,7 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   await m1.page.goto('/collab/messages');
   await expect(m1.page.getByTestId('secure-label').first()).toBeVisible({ timeout: 20_000 });
   await m1.page.locator('[data-testid^="conv-"]').first().click();
-  await expect(m1.page.getByTestId('smsg').filter({ hasText: secret })).toBeVisible({ timeout: 20_000 });
+  await expect(m1.page.getByTestId('smsg').filter({ hasText: words })).toBeVisible({ timeout: 20_000 });
   await expect(m1.page.getByTestId('smsg-file')).toBeVisible({ timeout: 40_000 });
   const dl = m1.page.waitForEvent('download');
   await m1.page.getByTestId('smsg-file').click();
@@ -173,7 +173,7 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   db.exec('PRAGMA busy_timeout = 8000;');
   for (const table of db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((r) => r.name)) {
     for (const col of db.prepare(`PRAGMA table_info(${table})`).all().map((x) => x.name)) {
-      for (const needle of [secret, `${tag}7731`, 'confidential 9912']) expect(db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE CAST("${col}" AS TEXT) LIKE ?`).get(`%${needle}%`).n, `${table}.${col}`).toBe(0);
+      for (const needle of [words, `${tag}7731`, 'confidential 9912']) expect(db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE CAST("${col}" AS TEXT) LIKE ?`).get(`%${needle}%`).n, `${table}.${col}`).toBe(0);
     }
   }
   db.close();
@@ -210,7 +210,7 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   await expect(m1.page.getByTestId('smsg').filter({ hasText: 'After the new device' })).toBeVisible({ timeout: 20_000 });
   await m2.page.goto(`/collab/messages?c=${conv}`);
   await expect(m2.page.getByTestId('smsg').filter({ hasText: 'After the new device' })).toBeVisible({ timeout: 20_000 });
-  await expect(m2.page.getByTestId('smsg').filter({ hasText: secret })).toHaveCount(0); // the second device never had what was sent before it existed
+  await expect(m2.page.getByTestId('smsg').filter({ hasText: words })).toHaveCount(0); // the second device never had what was sent before it existed
   // Meera's reply reaches Pooja
   await m2.page.getByTestId('compose-input').fill('Understood');
   await m2.page.getByTestId('compose-send').click();

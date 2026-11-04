@@ -4450,6 +4450,43 @@ Indexes:
 - ix_org_sites_company: company_id, status
 - ux_org_sites_code (unique): org_project_id, code
 
+## oss_register
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| component | TEXT | yes |  |  |
+| component_version | TEXT | yes |  | '' |
+| licence | TEXT | yes |  |  |
+| usage | TEXT | yes |  | '' |
+| obligations | TEXT | yes |  | '' |
+| compliance_status | TEXT | yes |  | 'TO_REVIEW' |
+| entry_source | TEXT | yes |  | 'MANUAL' |
+| review_id | INTEGER |  |  |  |
+| reviewed_by | TEXT |  |  |  |
+| reviewed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: review_id -> sec_licence_reviews(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_oss_review: review_id
+- ix_oss_status: company_id, compliance_status
+- ux_oss_component (unique): company_id, component
+
 ## pcs_check_results
 
 | Column | Type | Not null | Key | Default |
@@ -4682,6 +4719,214 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_pcs_reason_codes_company: company_id
 - ux_pcs_reason_codes (unique): , action_type, code
+
+## sec_conversations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| conversation_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| pair_key | TEXT |  |  |  |
+| disappear_seconds | INTEGER | yes |  | 0 |
+| policy_version | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: conversation_id -> msg_conversations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sec_conv_company_id: company_id
+- ux_sec_conv_pair (unique): company_id, pair_key
+- ux_sec_conv_conversation (unique): conversation_id
+
+## sec_devices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| device_no | INTEGER | yes |  |  |
+| device_name | TEXT | yes |  |  |
+| platform | TEXT |  |  |  |
+| registration_id | INTEGER | yes |  |  |
+| identity_key | TEXT | yes |  |  |
+| fingerprint | TEXT | yes |  |  |
+| revoked_at | TEXT |  |  |  |
+| revoked_by | TEXT |  |  |  |
+| revoke_reason | TEXT |  |  |  |
+| last_seen_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sec_devices_company_id: company_id
+- ix_sec_devices_user: company_id, user_ref, revoked_at
+- ux_sec_devices_no (unique): company_id, user_ref, device_no
+
+## sec_envelopes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| conversation_id | INTEGER | yes |  |  |
+| message_uid | TEXT | yes |  |  |
+| sender_user | TEXT | yes |  |  |
+| sender_device_id | INTEGER | yes |  |  |
+| recipient_user | TEXT | yes |  |  |
+| recipient_device_id | INTEGER | yes |  |  |
+| ciphertext | TEXT | yes |  |  |
+| size_bytes | INTEGER | yes |  | 0 |
+| delivered_at | TEXT |  |  |  |
+| expires_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: recipient_device_id -> sec_devices(id), sender_device_id -> sec_devices(id), conversation_id -> msg_conversations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sec_env_company_id: company_id
+- ix_sec_env_conversation: conversation_id
+- ix_sec_env_expiry: expires_at
+- ix_sec_env_unread: company_id, recipient_user, delivered_at
+- ix_sec_env_sender: sender_device_id
+- ix_sec_env_device: recipient_device_id, id
+- ux_sec_env_one (unique): conversation_id, message_uid, recipient_device_id
+
+## sec_licence_reviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| review_version | INTEGER | yes |  |  |
+| subject | TEXT | yes |  |  |
+| document_json | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| decided_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sec_review_status: company_id, status
+- ux_sec_review_version (unique): company_id, review_version
+
+## sec_policy
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| config_json | TEXT | yes |  |  |
+| config_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| effective_from | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sec_policy_status: company_id, status
+- ux_sec_policy_version (unique): company_id, config_version
+
+## sec_prekeys
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| device_id | INTEGER | yes |  |  |
+| key_id | INTEGER | yes |  |  |
+| public_key | TEXT | yes |  |  |
+| signature | TEXT |  |  |  |
+| signed | INTEGER | yes |  | 0 |
+| used_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: device_id -> sec_devices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sec_prekeys_company_id: company_id
+- ix_sec_prekeys_free: device_id, signed, used_at
+- ux_sec_prekeys_key (unique): device_id, signed, key_id
 
 ## sig_config
 

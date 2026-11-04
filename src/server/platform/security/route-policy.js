@@ -711,7 +711,7 @@ export const ROUTE_POLICY = [
   { m: 'PUT', p: '/api/v1/sec/conversations/:id/disappearing', g: 'self', k: null, s: 'parseDisappear', scope: 'own', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/sec/envelopes', g: 'self', k: null, s: 'parseEnvelopes', scope: 'own', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/sec/envelopes', g: 'self', k: null, s: 'parseFetch', scope: 'own', rate: 'read', audit: false },
-  { m: 'POST', p: '/api/v1/sec/envelopes/ack', g: 'self', k: null, s: 'parseAck', scope: 'own', rate: 'write', audit: false },
+  { m: 'POST', p: '/api/v1/sec/envelopes/ack', g: 'self', k: null, s: 'parseAck', scope: 'own', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/sec/cards', g: 'self', k: null, s: 'parseCard', scope: 'own', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/sec/policy', g: 'permission', k: 'sec.policy.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/sec/policy/changes', g: 'permission', k: 'sec.policy.edit', s: 'parsePolicy', scope: 'company', rate: 'write', audit: true },

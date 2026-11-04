@@ -147,7 +147,7 @@ test('AC-01 BR-01 the gate: nothing works until the licence review is approved a
 test('T-01 FR-02 FR-03 BR-01 two devices per person: the database holds only ciphertext, and the right devices decrypt', async () => {
   const t = await setup();
   await t.enable();
-  const secret = 'TOP-SECRET-slurry-pump-rate-4711-INR';
+  const words = 'TOP-SECRET-slurry-pump-rate-4711-INR';
   const a = await new Device(t, pd, 'Pooja phone').register();
   const b1 = await new Device(t, pm, 'Meera phone').register();
   const b2 = await new Device(t, pm, 'Meera laptop').register();
@@ -163,15 +163,15 @@ test('T-01 FR-02 FR-03 BR-01 two devices per person: the database holds only cip
   assert.equal(list.secure.kind, 'ONE_TO_ONE');
   assert.equal(list.last.excerpt, 'Encrypted message');
   // the plain message API refuses to carry text into it
-  const plain = await t.api.call('POST', `/api/v1/msg/conversations/${conv}/messages`, { ...pd, headers: key('p'), body: { body: secret } });
+  const plain = await t.api.call('POST', `/api/v1/msg/conversations/${conv}/messages`, { ...pd, headers: key('p'), body: { body: words } });
   assert.equal(plain.status, 422);
   // send
-  const sent = await a.send(conv, { v: 1, t: 'text', body: secret });
+  const sent = await a.send(conv, { v: 1, t: 'text', body: words });
   assert.equal(sent.r.status, 201, JSON.stringify(sent.r.json));
   assert.equal(sent.sealed.length, 2, 'one envelope for each device of the other person');
   assert.equal((await t.api.call('GET', '/api/v1/msg/conversations', { ...pm, headers: key('l') })).json.data.rows.find((c) => c.id === conv).unread, 1, 'one unread secure message');
   // T-01: look for the words in every column of every table of the database
-  const texts = [secret, 'slurry-pump', '4711'];
+  const texts = [words, 'slurry-pump', '4711'];
   const tables = t.api.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((r) => r.name);
   for (const table of tables) {
     const cols = t.api.db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
@@ -186,8 +186,8 @@ test('T-01 FR-02 FR-03 BR-01 two devices per person: the database holds only cip
   // both devices of the other person read it; nobody else can
   const got1 = await b1.receive();
   const got2 = await b2.receive();
-  assert.equal(got1[0].payload.body, secret);
-  assert.equal(got2[0].payload.body, secret);
+  assert.equal(got1[0].payload.body, words);
+  assert.equal(got2[0].payload.body, words);
   assert.equal(got1[0].sender, 'pd1');
   // after delivery the ciphertext is gone, the delivery facts stay
   const after1 = t.api.db.prepare('SELECT ciphertext, delivered_at FROM sec_envelopes WHERE conversation_id = ?').all(conv);

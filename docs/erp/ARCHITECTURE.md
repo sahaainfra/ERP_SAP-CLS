@@ -672,7 +672,7 @@ Behind feature flag `ff.msg.p0502`, inside the `msg` module (`features.js` the s
 
 ## 52. Secure messaging and licence compliance (part 05.03)
 
-Behind feature flag `ff.msg.p0503`; module `sec` (`service.js`, `governance.js`, `routes.js`, `validators.js`, `index.js`), shared crypto `src/shared/e2e.js`, tables `sec_devices`, `sec_prekeys`, `sec_conversations`, `sec_envelopes`, `sec_policy`, `sec_licence_reviews`, `oss_register` (migrations 90 and 91).
+Behind feature flag `ff.msg.p0503`; a module of its own, `modules/sec` (`service.js`, `governance.js`, `routes.js`, `validators.js`, `index.js`), shared crypto `src/shared/e2e.js`, tables `sec_devices`, `sec_prekeys`, `sec_conversations`, `sec_envelopes`, `sec_policy`, `sec_licence_reviews`, `oss_register` (migrations 90 and 91).
 
 - **Protocol `erp-e2e-v1`** (ADR-231): per device an ECDSA identity key, an ECDH signed pre-key and one-time pre-keys (private keys stay in the browser as non-extractable CryptoKeys); a message is encrypted once (AES-GCM) and its content key wrapped per receiving device by an HKDF key from ephemeral-static ECDH; each envelope is signed by the sender's identity key. No ratchet (D-276).
 - **Relay** (ADR-233): `POST /sec/envelopes` needs an envelope for every active device of every member (else 409 with the devices expected); `GET /sec/envelopes` and `POST /sec/envelopes/ack` empty the ciphertext on delivery; job `sec.purge` removes disappeared messages, old delivery metadata and unfetched envelopes.
