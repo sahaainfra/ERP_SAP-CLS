@@ -2125,3 +2125,96 @@ paths:
     get:
       summary: Export the settings and history as JSON
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/sec/devices:
+    post:
+      summary: Register a device: public identity key, signed pre-key (signature checked) and one-time pre-keys; refused until the licence review is approved and the policy is on
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+    get:
+      summary: The person's own devices
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/all:
+    get:
+      summary: Devices of everyone (permission sec.device.manage)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/{id}/revoke:
+    post:
+      summary: Revoke a lost device (owner or sec.device.manage); undelivered envelopes for it are dropped
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/{id}/prekeys:
+    post:
+      summary: More one-time pre-keys or a new signed pre-key for an own device
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/{id}/prekeys/count:
+    get:
+      summary: How many one-time pre-keys are left
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/prekeys/{userId}:
+    get:
+      summary: Public keys of a person's devices (consume=1 uses one-time keys)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/ready:
+    get:
+      summary: Whether secure messaging is usable and the caller may start a conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations:
+    post:
+      summary: Make a secure conversation ({ members, title, disappearSeconds }); the people need a device and the caller a role of the policy
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations/{id}:
+    get:
+      summary: A secure conversation: members, disappearing time, policy limits
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations/{id}/bundles:
+    get:
+      summary: Keys of every device of every member except the sender's device
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations/{id}/disappearing:
+    put:
+      summary: Set the disappearing time within the policy
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/envelopes:
+    post:
+      summary: Store the encrypted envelopes of one message (one per device; 409 when the device list changed); Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+    get:
+      summary: Envelopes waiting for an own device (device, since, limit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/envelopes/ack:
+    post:
+      summary: Confirm delivery: the ciphertext is emptied
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/cards:
+    get:
+      summary: A record card drawn for the caller (restricted when the caller may not open it)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/policy:
+    get:
+      summary: The secure messaging policy in force, the version waiting and history (sec.policy.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/policy/changes:
+    post:
+      summary: Propose a policy change: maker-checker, dated, reason (sec.policy.edit); 202
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/policy/export:
+    get:
+      summary: Export the policy and its history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences:
+    get:
+      summary: The open-source licence register (filters q, status, licence) and the reviews
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+    post:
+      summary: Add or change a component (status changes only by an approved review)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences/scan:
+    post:
+      summary: Read package.json and installed licences into the register
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences/export:
+    get:
+      summary: Register as CSV
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences/reviews:
+    post:
+      summary: Send the licence review for approval (ITADM, then DIR); 202
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }

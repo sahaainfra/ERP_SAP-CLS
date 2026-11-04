@@ -668,3 +668,15 @@ Behind feature flag `ff.msg.p0502`, inside the `msg` module (`features.js` the s
 - **Retention and legal hold** (FR-09, ADR-228): job `msg.purge` uses `retentionDays` and skips held conversations; holds need `msg.legal_hold.manage`.
 - **Settings** (ADR-230): `msg_config` versions (PENDING, SCHEDULED, ACTIVE, RETIRED, REJECTED), workflow type `MSG_CONFIG` (maker-checker), `activeConfig()` promotes scheduled versions that are due; page `/admin/messaging`.
 - **Real-time** : `realtimeConversations` supplies the `conv:<id>` rooms; `emitTransient` is new in `platform/realtime`.
+
+
+## 52. Secure messaging and licence compliance (part 05.03)
+
+Behind feature flag `ff.msg.p0503`; module `sec` (`service.js`, `governance.js`, `routes.js`, `validators.js`, `index.js`), shared crypto `src/shared/e2e.js`, tables `sec_devices`, `sec_prekeys`, `sec_conversations`, `sec_envelopes`, `sec_policy`, `sec_licence_reviews`, `oss_register` (migrations 90 and 91).
+
+- **Protocol `erp-e2e-v1`** (ADR-231): per device an ECDSA identity key, an ECDH signed pre-key and one-time pre-keys (private keys stay in the browser as non-extractable CryptoKeys); a message is encrypted once (AES-GCM) and its content key wrapped per receiving device by an HKDF key from ephemeral-static ECDH; each envelope is signed by the sender's identity key. No ratchet (D-276).
+- **Relay** (ADR-233): `POST /sec/envelopes` needs an envelope for every active device of every member (else 409 with the devices expected); `GET /sec/envelopes` and `POST /sec/envelopes/ack` empty the ciphertext on delivery; job `sec.purge` removes disappeared messages, old delivery metadata and unfetched envelopes.
+- **Devices** (FR-02, BR-02): `POST /sec/devices` (signed pre-key verified), `GET /sec/prekeys/:userId` (public keys; one-time keys are used only by `GET /conversations/:id/bundles`), revoke by owner or `sec.device.manage`.
+- **Gate and approvals** (ADR-232): `secureReady` = policy on and licence approved; workflows `OSS_LICENCE_REVIEW` (ITADM, DIR) and `SEC_POLICY` (ITADM or DIR, maker not approver).
+- **Unified app**: a secure conversation is a GROUP row of `msg_conversations` flagged by `sec_conversations`; `msg` shows the lock label and "Encrypted message", refuses plaintext sends and member changes, and never has secure text in `msg_messages`.
+- **Browser** (`platform/secure`): IndexedDB store, `engine.js` (set-up, sync, send, trust, attachments), `SecureConversation.jsx`.
