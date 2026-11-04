@@ -20,7 +20,6 @@ const pm = as('PM', 'pm1');
 const se = as('SE', 'se1');
 const se2 = as('SE', 'se2');
 const aud = as('AUD', 'aud1');
-const dir = as('DIR', 'dir1');
 const sys = as('SYSADM', 'sys1');
 const itadm = as('ITADM', 'it1');
 const opened = [];
