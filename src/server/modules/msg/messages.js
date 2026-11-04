@@ -45,6 +45,8 @@ export function createMessageService({ db }) {
 
   // ---- who is in a conversation ----
   const convRow = (id) => db.prepare('SELECT * FROM msg_conversations WHERE id = ? AND is_active = 1').get(id);
+  /** Part 05.03: is this one of the secure (end-to-end encrypted) conversations? Their messages are envelopes of the sec module, never rows here, so the text of one is never in this table. */
+  const secureRow = (convId) => (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'sec_conversations'").get() ? db.prepare('SELECT * FROM sec_conversations WHERE conversation_id = ? AND is_active = 1').get(convId) : null);
   const memberRow = (convId, user) => db.prepare('SELECT * FROM msg_members WHERE conversation_id = ? AND user_ref = ? AND is_active = 1').get(convId, user);
   const isMember = (conv, user) => { const m = memberRow(conv.id, user); return Boolean(m && !m.left_at); };
   /** May this person open this conversation? A member; for an external thread, whoever may read the communication log. */
@@ -176,13 +178,16 @@ export function createMessageService({ db }) {
       const r = db.prepare('SELECT * FROM comm_messages WHERE company_id = ? AND conversation_key = ? ORDER BY id DESC LIMIT 1').get(c.company_id, c.external_key);
       last = r ? { excerpt: excerpt(r.body_redacted || r.subject), at: r.created_at, sender: r.direction === 'IN' ? r.to_address : 'ERP', deleted: false } : null;
       unread = db.prepare("SELECT COUNT(*) AS n FROM comm_messages WHERE company_id = ? AND conversation_key = ? AND direction = 'IN' AND id > ?").get(c.company_id, c.external_key, me?.last_read_message_id ?? 0).n;
+    } else if (secureRow(c.id)) {
+      last = { excerpt: 'Encrypted message', at: c.last_activity_at, sender: '', deleted: false };
+      unread = db.prepare('SELECT COUNT(DISTINCT message_uid) AS n FROM sec_envelopes WHERE conversation_id = ? AND recipient_user = ? AND sender_user != ? AND delivered_at IS NULL AND is_active = 1').get(c.id, actor.user, actor.user).n;
     } else {
       const r = c.last_message_id ? db.prepare('SELECT * FROM msg_messages WHERE id = ?').get(c.last_message_id) : null;
       last = r ? { excerpt: r.status === 'DELETED' ? 'message deleted' : excerpt(r.body) || (r.kind === 'VOICE' ? 'Voice note' : r.kind === 'FILE' ? 'Attachment' : ''), at: r.created_at, sender: nameOf(actor.companyId, r.sender_ref), deleted: r.status === 'DELETED' } : null;
       unread = db.prepare("SELECT COUNT(*) AS n FROM msg_messages WHERE conversation_id = ? AND id > ? AND sender_ref != ? AND status = 'ACTIVE' AND kind != 'SYSTEM'").get(c.id, me?.last_read_message_id ?? 0, actor.user).n;
     }
     return { id: c.id, type: c.conv_type, title: titleFor(actor, c), projectId: c.project_id, siteId: c.site_id, departmentId: c.department_id, entity: c.entity, entityId: c.entity_id, channel: c.external_channel, archived: Boolean(me?.archived) || c.is_archived === 1, pinned: Boolean(me?.pinned),
-      muted: Boolean(me?.muted_until && Date.parse(me.muted_until) > Date.now()), mentionOnly: Boolean(me?.mention_only), unread, lastActivityAt: c.last_activity_at, last, messageCount: c.message_count, readOnly: c.conv_type === 'EXTERNAL' };
+      muted: Boolean(me?.muted_until && Date.parse(me.muted_until) > Date.now()), mentionOnly: Boolean(me?.mention_only), unread, lastActivityAt: c.last_activity_at, last, messageCount: c.message_count, readOnly: c.conv_type === 'EXTERNAL', secure: (() => { const x = secureRow(c.id); return x ? { kind: x.kind, disappearSeconds: x.disappear_seconds } : null; })() };
   }
 
   /** The stretches in which this person was not a member (they left and came back): what was said then is never shown to them. [[from, to], ...] */
@@ -355,6 +360,7 @@ export function createMessageService({ db }) {
   const members = {
     add(actor, id, { users: names }) {
       const c = must(actor, id);
+      if (secureRow(c.id)) throw unprocessable('The members of a secure conversation are fixed when it is made: their keys decide who can read. Make a new secure conversation to include someone else.');
       if (['DIRECT', 'EXTERNAL'].includes(c.conv_type)) throw unprocessable('People cannot be added to this kind of conversation.');
       if (!mayManage(actor, c)) throw forbidden('Only an administrator of the conversation can add people.');
       const p = params(actor);
@@ -445,6 +451,7 @@ export function createMessageService({ db }) {
     send(actor, id, b) {
       const c = must(actor, id);
       if (c.conv_type === 'EXTERNAL') throw unprocessable('External threads are read-only here. Reply from the communication centre.');
+      if (secureRow(c.id)) throw unprocessable('This is a secure conversation: its messages are encrypted on your device and sent through the secure messaging service.');
       if (c.is_archived) throw unprocessable('This conversation is archived. Unarchive it to write in it.');
       const body = String(b.body ?? '').trim();
       if (body.length > MAX_BODY) throw unprocessable(`A message can have at most ${MAX_BODY} characters.`, [{ field: 'body', message: `at most ${MAX_BODY} characters` }]);
@@ -647,7 +654,7 @@ export function createMessageService({ db }) {
     });
   } catch { /* registered once per process */ }
 
-  return { conversations, members, messages, admin, people, records, params, indexExternal, reconcileFor, internals: { must, canOpen, convRow, memberRow, isAdmin, mayManage, context, present, nameOf, person, anywhere, gapsOf, touchUsers, systemMessage, summarize } };
+  return { conversations, members, messages, admin, people, records, params, indexExternal, reconcileFor, internals: { secureRow, bumpActivity: (convId, at) => db.prepare('UPDATE msg_conversations SET last_activity_at = ?, message_count = message_count + 1, updated_at = ? WHERE id = ?').run(at, nowIso(), convId), must, canOpen, convRow, memberRow, isAdmin, mayManage, context, present, nameOf, person, anywhere, gapsOf, touchUsers, systemMessage, summarize } };
 }
 
 const services = new WeakMap();
