@@ -5909,3 +5909,129 @@ Foreign keys: instance_id -> wf_instances(id), company_id -> org_companies(id)
 Indexes:
 - ix_wf_watchers_user: company_id, user_ref
 - ux_wf_watchers (unique): instance_id, user_ref
+
+## xl_job_errors
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| job_id | INTEGER | yes |  |  |
+| sheet | TEXT | yes |  |  |
+| row_no | INTEGER | yes |  |  |
+| column_key | TEXT |  |  |  |
+| column_label | TEXT |  |  |  |
+| value | TEXT |  |  |  |
+| message | TEXT | yes |  |  |
+| code | TEXT | yes |  | 'INVALID' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: job_id -> xl_jobs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_xl_job_errors_job: job_id, row_no, id
+- ix_xl_job_errors_company_id: company_id
+
+## xl_jobs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| import_type | TEXT | yes |  |  |
+| template_version | INTEGER | yes |  | 0 |
+| file_id | INTEGER |  |  |  |
+| file_name | TEXT | yes |  |  |
+| file_hash | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'UPLOADED' |
+| mode | TEXT | yes |  | 'ALL_OR_NOTHING' |
+| on_existing | TEXT | yes |  | 'ERROR' |
+| total_rows | INTEGER | yes |  | 0 |
+| valid_rows | INTEGER | yes |  | 0 |
+| error_rows | INTEGER | yes |  | 0 |
+| create_rows | INTEGER | yes |  | 0 |
+| update_rows | INTEGER | yes |  | 0 |
+| skip_rows | INTEGER | yes |  | 0 |
+| committed_rows | INTEGER | yes |  | 0 |
+| progress | INTEGER | yes |  | 0 |
+| core_job_id | TEXT |  |  |  |
+| last_error | TEXT |  |  |  |
+| result_json | TEXT | yes |  | '{}' |
+| started_by | TEXT | yes |  |  |
+| started_at | TEXT | yes |  |  |
+| validated_at | TEXT |  |  |  |
+| committed_by | TEXT |  |  |  |
+| committed_at | TEXT |  |  |  |
+| cancelled_at | TEXT |  |  |  |
+| actor_json | TEXT | yes |  | '{}' |
+| commit_actor_json | TEXT | yes |  | '{}' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_xl_jobs_user: company_id, started_by, started_at
+- ix_xl_jobs_filter: company_id, import_type, status
+- ix_xl_jobs_list: company_id, started_at, id
+- ix_xl_jobs_file: file_id
+- ix_xl_jobs_company_id: company_id
+
+## xl_templates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| import_type | TEXT | yes |  |  |
+| template_version | INTEGER | yes |  | 1 |
+| columns_json | TEXT | yes |  | '{}' |
+| instructions | TEXT | yes |  | '' |
+| settings_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_xl_templates_instance: instance_id
+- ux_xl_templates_pending (unique): company_id, import_type
+- ux_xl_templates_active (unique): company_id, import_type
+- ux_xl_templates_version (unique): company_id, import_type, template_version

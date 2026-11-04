@@ -1772,3 +1772,58 @@ paths:
     post:
       summary: Propose a change of the signature settings; it takes effect when a director or another administrator approves (sig.config.edit; Idempotency-Key required)
       responses: { '202': { description: waiting for approval }, '409': { description: a change already waits } }
+  /api/v1/xl/templates:
+    get:
+      summary: The imports the caller may open, with their columns, version and whether they may be exported (xl.import.use)
+      responses: { '200': { description: '{ data: { types } }' } }
+  /api/v1/xl/templates/{type}/download:
+    get:
+      summary: The template workbook of an import (protected header, instructions, drop-down lists, type and version); needs the import's own permission
+      responses: { '200': { description: xlsx }, '403': { description: no right to this import } }
+  /api/v1/xl/templates/{type}/export:
+    get:
+      summary: The data of an import type in the form of its template, with sensitive columns masked
+      responses: { '200': { description: xlsx } }
+  /api/v1/xl/designer:
+    get:
+      summary: Each import with its wording, required flags, settings, a change waiting for approval and the history of versions (xl.template.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/xl/designer/changes:
+    post:
+      summary: Propose a change of a template (labels, help, instructions, required, chunked commit); it takes effect when a second person approves (xl.template.edit; Idempotency-Key required)
+      responses: { '202': { description: waiting for approval }, '409': { description: a change already waits } }
+  /api/v1/xl/jobs:
+    post:
+      summary: Upload a filled template (the raw .xlsx as the body; query type, onExisting ERROR|UPDATE|SKIP, fileName; Idempotency-Key required). The file is scanned and a job checks it; nothing is saved.
+      responses: { '202': { description: the job }, '400': { description: empty, too large or not .xlsx }, '403': { description: no right to this import }, '422': { description: refused by the virus scan } }
+    get:
+      summary: The history of import jobs (own; all with xl.job.view_all) with filters and the count by status
+      responses: { '200': { description: '{ data: { rows, total, summary } }' } }
+  /api/v1/xl/jobs/{id}:
+    get:
+      summary: One job with its status, counts, mode, progress, structure problems and result
+      responses: { '200': { description: '{ data }' }, '404': { description: not found or not yours } }
+  /api/v1/xl/jobs/{id}/preview:
+    get:
+      summary: A page of the rows as read, with what each will do (create, update, skip, error), sensitive columns masked
+      responses: { '200': { description: '{ data: { columns, rows, total } }' } }
+  /api/v1/xl/jobs/{id}/errors:
+    get:
+      summary: The row-level errors (sheet, row, column, value, reason); format=xlsx gives the error file to correct and upload again
+      responses: { '200': { description: json or xlsx } }
+  /api/v1/xl/jobs/{id}/commit:
+    post:
+      summary: Commit a checked job (skipInvalid to leave the rows with errors out, mode CHUNKED where the template allows it, version for optimistic locking; Idempotency-Key required). Runs as a background job; all or nothing.
+      responses: { '202': { description: committing }, '409': { description: rows have errors, not in a committable state or changed }, '422': { description: nothing to import or chunked not enabled } }
+  /api/v1/xl/jobs/{id}/cancel:
+    post:
+      summary: Cancel a job that is not committed; nothing was saved
+      responses: { '200': { description: '{ data }' }, '409': { description: committing or committed } }
+  /api/v1/xl/exports:
+    get:
+      summary: The lists the caller may export
+      responses: { '200': { description: '{ data: { exports } }' } }
+  /api/v1/xl/exports/{code}:
+    get:
+      summary: Export a registered list (xlsx, csv or pdf), limited to what the caller may see, sensitive columns masked, formulas made inert
+      responses: { '200': { description: file }, '403': { description: no right }, '404': { description: unknown list } }

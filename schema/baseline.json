@@ -16046,6 +16046,30 @@
   "index:ix_wf_watchers_user": {
     "sql": "CREATE INDEX ix_wf_watchers_user ON wf_watchers (company_id, user_ref)"
   },
+  "index:ix_xl_job_errors_company_id": {
+    "sql": "CREATE INDEX ix_xl_job_errors_company_id ON xl_job_errors (company_id)"
+  },
+  "index:ix_xl_job_errors_job": {
+    "sql": "CREATE INDEX ix_xl_job_errors_job ON xl_job_errors (job_id, row_no, id)"
+  },
+  "index:ix_xl_jobs_company_id": {
+    "sql": "CREATE INDEX ix_xl_jobs_company_id ON xl_jobs (company_id)"
+  },
+  "index:ix_xl_jobs_file": {
+    "sql": "CREATE INDEX ix_xl_jobs_file ON xl_jobs (file_id)"
+  },
+  "index:ix_xl_jobs_filter": {
+    "sql": "CREATE INDEX ix_xl_jobs_filter ON xl_jobs (company_id, import_type, status)"
+  },
+  "index:ix_xl_jobs_list": {
+    "sql": "CREATE INDEX ix_xl_jobs_list ON xl_jobs (company_id, started_at DESC, id DESC)"
+  },
+  "index:ix_xl_jobs_user": {
+    "sql": "CREATE INDEX ix_xl_jobs_user ON xl_jobs (company_id, started_by, started_at DESC)"
+  },
+  "index:ix_xl_templates_instance": {
+    "sql": "CREATE INDEX ix_xl_templates_instance ON xl_templates (instance_id)"
+  },
   "table:ntf_deliveries": {
     "columns": [
       {
@@ -27256,6 +27280,15 @@
   "index:ux_wf_watchers": {
     "sql": "CREATE UNIQUE INDEX ux_wf_watchers ON wf_watchers (instance_id, user_ref)"
   },
+  "index:ux_xl_templates_active": {
+    "sql": "CREATE UNIQUE INDEX ux_xl_templates_active ON xl_templates (company_id, import_type) WHERE status = 'ACTIVE' AND is_active = 1"
+  },
+  "index:ux_xl_templates_pending": {
+    "sql": "CREATE UNIQUE INDEX ux_xl_templates_pending ON xl_templates (company_id, import_type) WHERE status = 'PENDING' AND is_active = 1"
+  },
+  "index:ux_xl_templates_version": {
+    "sql": "CREATE UNIQUE INDEX ux_xl_templates_version ON xl_templates (company_id, import_type, template_version)"
+  },
   "table:wf_approval_policies": {
     "columns": [
       {
@@ -29785,6 +29818,645 @@
     "fks": [
       "company_id->org_companies.id:NO ACTION/NO ACTION",
       "instance_id->wf_instances.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:xl_job_errors": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "job_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sheet",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "row_no",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "column_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "column_label",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "value",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'INVALID'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "job_id->xl_jobs.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:xl_jobs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "import_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "file_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "file_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "file_hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'UPLOADED'",
+        "pk": 0
+      },
+      {
+        "name": "mode",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ALL_OR_NOTHING'",
+        "pk": 0
+      },
+      {
+        "name": "on_existing",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ERROR'",
+        "pk": 0
+      },
+      {
+        "name": "total_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "valid_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "error_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "create_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "update_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "skip_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "committed_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "progress",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "core_job_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_error",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "result_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "started_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "validated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "committed_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "committed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "cancelled_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "actor_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "commit_actor_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "file_id->core_files.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:xl_templates": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "import_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "columns_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "instructions",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "settings_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "instance_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
     ]
   }
 }
