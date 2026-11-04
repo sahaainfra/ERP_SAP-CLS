@@ -72,14 +72,24 @@ test('screenshots of the messaging feature pages', async ({ browser, request }, 
   await a.page.screenshot({ path: `${OUT}/03-search-results${sfx}.png` });
   const s = await open(browser, info, c, 'SYSADM', `shot-sys${tag.toLowerCase()}`, '/admin/messaging');
   await expect(s.page.getByRole('heading', { name: 'Messaging Settings', level: 1 })).toBeVisible();
-  await s.page.screenshot({ path: `${OUT}/04-messaging-settings${sfx}.png`, fullPage: true });
+  await s.page.screenshot({ path: `${OUT}/04-messaging-settings${sfx}.png` });
   await s.page.getByTestId('ms-editWindowMinutes').fill('30');
   await s.page.getByTestId('ms-reason').fill('Longer window agreed with the director');
   await s.page.getByTestId('ms-submit').click();
   await expect(s.page.getByTestId('ms-pending')).toBeVisible();
-  await s.page.screenshot({ path: `${OUT}/05-messaging-settings-pending${sfx}.png`, fullPage: true });
+  await s.page.screenshot({ path: `${OUT}/05-messaging-settings-pending${sfx}.png` });
   const call = await api(request, c, 'PD', pd, 'post', `/msg/conversations/${conv.id}/calls`, { type: 'AUDIO' });
-  const k = await open(browser, info, c, 'PD', pd, `/collab/call?call=${call.id}`);
+  const k = await open(browser, info, c, 'PD', pd, '/collab/messages');
+  // a headless browser has no microphone or camera: give the page a silent tone and a blank picture so the in-call screen can be shown
+  await k.page.addInitScript(() => {
+    navigator.mediaDevices.getUserMedia = async (want) => {
+      const ctx = new AudioContext(); const dest = ctx.createMediaStreamDestination(); ctx.createOscillator().connect(dest);
+      const stream = new MediaStream(dest.stream.getAudioTracks());
+      if (want?.video) { const cv = document.createElement('canvas'); cv.width = 320; cv.height = 240; cv.getContext('2d').fillRect(0, 0, 320, 240); cv.captureStream().getVideoTracks().forEach((t) => stream.addTrack(t)); }
+      return stream;
+    };
+  });
+  await k.page.goto(`/collab/call?call=${call.call.id}`);
   await k.page.waitForTimeout(2500);
   await k.page.screenshot({ path: `${OUT}/06-call-screen${sfx}.png` });
 });
