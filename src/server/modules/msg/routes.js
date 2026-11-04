@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import { parseCallStart, parseDelivered, parseHold, parseHoldList, parseMedia, parseMeSettings, parseOn, parsePaging, parsePresenceBeat, parsePresenceGet, parseSearch, parseSignal } from './validators.js';
+import { parseMsgConfig } from './config.js';
 import { parseAddMembers, parseArchive, parseConvCreate, parseConvList, parseDelete, parseEdit, parseForward, parseId, parseMemberName, parseMemberRole, parseMessages, parsePeople, parseRead, parseRecordSearch, parseReact, parseRename, parseSend, parseSettings } from './validators.js';
 
 /** Part 05.01: the Messages API. Every route needs a signed-in person; membership of the conversation (BR-01) is checked in the service. */
-export function messageRoutes({ service }, { idempotent }) {
+export function messageRoutes({ service, features, config }, { idempotent, idempotentRequired }) {
   const r = Router();
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   r.get('/people', (req, res) => ok(res, { rows: service.people(req.actor, parsePeople(req.query).q) }));
@@ -27,5 +29,34 @@ export function messageRoutes({ service }, { idempotent }) {
   r.post('/messages/:id/forward', idempotent, (req, res) => ok(res, service.messages.forward(req.actor, parseId(req.params.id), parseForward(req.body)), 201));
   r.get('/verify', (req, res) => ok(res, service.admin.verify(req.actor)));
   r.get('/conversations/:id/export', (req, res) => { const out = service.admin.exportConversation(req.actor, parseId(req.params.id)); res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store' }).send(out.text); });
+  // ---- part 05.02 ----
+  r.get('/me/settings', (req, res) => ok(res, features.me.get(req.actor)));
+  r.put('/me/settings', idempotent, (req, res) => ok(res, features.me.set(req.actor, parseMeSettings(req.body))));
+  r.post('/presence', (req, res) => ok(res, features.presence.heartbeat(req.actor, parsePresenceBeat(req.body))));
+  r.get('/presence', (req, res) => ok(res, { rows: features.presence.get(req.actor, parsePresenceGet(req.query).users) }));
+  r.post('/conversations/:id/typing', (req, res) => ok(res, features.typing(req.actor, parseId(req.params.id))));
+  r.post('/conversations/:id/delivered', (req, res) => ok(res, features.receipts.delivered(req.actor, parseId(req.params.id), parseDelivered(req.body))));
+  r.get('/messages/:id/receipts', (req, res) => ok(res, features.receipts.of(req.actor, parseId(req.params.id))));
+  r.get('/search', (req, res) => ok(res, features.search.run(req.actor, parseSearch(req.query))));
+  r.post('/messages/:id/star', idempotent, (req, res) => ok(res, features.marks.star(req.actor, parseId(req.params.id), parseOn(req.body))));
+  r.get('/starred', (req, res) => ok(res, features.marks.starred(req.actor, parsePaging(req.query))));
+  r.post('/messages/:id/pin', idempotent, (req, res) => ok(res, features.marks.pin(req.actor, parseId(req.params.id), parseOn(req.body))));
+  r.get('/conversations/:id/pins', (req, res) => ok(res, features.marks.pins(req.actor, parseId(req.params.id))));
+  r.post('/messages/:id/hide', idempotent, (req, res) => ok(res, features.marks.hide(req.actor, parseId(req.params.id))));
+  r.get('/conversations/:id/media', (req, res) => ok(res, features.gallery.media(req.actor, parseId(req.params.id), parseMedia(req.query))));
+  r.get('/holds', (req, res) => ok(res, features.holds.list(req.actor, parseHoldList(req.query))));
+  r.post('/conversations/:id/hold', idempotent, (req, res) => ok(res, features.holds.place(req.actor, parseId(req.params.id), parseHold(req.body)), 201));
+  r.post('/holds/:id/release', idempotent, (req, res) => ok(res, features.holds.release(req.actor, parseId(req.params.id), parseHold(req.body))));
+  r.get('/calls/ringing', (req, res) => ok(res, features.calls.ringing(req.actor)));
+  r.get('/calls/:id', (req, res) => ok(res, features.calls.get(req.actor, parseId(req.params.id))));
+  r.post('/calls/:id/join', idempotent, (req, res) => ok(res, features.calls.join(req.actor, parseId(req.params.id))));
+  r.post('/calls/:id/decline', idempotent, (req, res) => ok(res, features.calls.decline(req.actor, parseId(req.params.id))));
+  r.post('/calls/:id/end', idempotent, (req, res) => ok(res, features.calls.end(req.actor, parseId(req.params.id))));
+  r.post('/calls/:id/signal', (req, res) => ok(res, features.calls.signal(req.actor, parseId(req.params.id), parseSignal(req.body))));
+  r.get('/conversations/:id/calls', (req, res) => ok(res, features.calls.list(req.actor, parseId(req.params.id))));
+  r.post('/conversations/:id/calls', idempotent, (req, res) => ok(res, features.calls.start(req.actor, parseId(req.params.id), parseCallStart(req.body)), 201));
+  r.get('/config', (req, res) => ok(res, config.get(req.actor)));
+  r.post('/config/changes', idempotentRequired, (req, res) => ok(res, config.propose(req.actor, parseMsgConfig(req.body)), 202));
+  r.get('/config/export', (req, res) => { const out = config.export(req.actor); res.status(200).set({ 'content-type': 'application/json', 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store' }).send(out.text); });
   return r;
 }

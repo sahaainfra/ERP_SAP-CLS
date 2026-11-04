@@ -31,3 +31,17 @@ export const parseMemberRole = (b) => parse(z.object({ role: z.enum(['ADMIN', 'M
 export const parseMemberName = (v) => parse(USER, v);
 export const parsePeople = (q) => parse(z.object({ q: text(60).optional() }).strict(), q);
 export const parseRecordSearch = (q) => parse(z.object({ type: ENTITY, q: text(60).optional() }).strict(), q);
+
+// ---- part 05.02 ----
+export const parseOn = (b) => parse(z.object({ on: z.boolean().default(true) }).strict(), b ?? {});
+export const parseMeSettings = (b) => parse(z.object({ showLastSeen: z.boolean().optional(), shareReadReceipts: z.boolean().optional(), showOnline: z.boolean().optional() }).strict().refine((o) => Object.keys(o).length > 0, 'Say what to change'), b);
+export const parsePresenceBeat = (b) => parse(z.object({ status: z.enum(['ONLINE', 'AWAY']).default('ONLINE') }).strict(), b ?? {});
+export const parsePresenceGet = (q) => parse(z.object({ users: z.string().max(2000).transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean)).pipe(z.array(USER).max(60)) }).strict(), q);
+export const parseDelivered = (b) => parse(z.object({ upTo: id.optional() }).strict(), b ?? {});
+export const parseSearch = (q) => parse(z.object({ q: text(100).optional(), sender: USER.optional(), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), kind: z.enum(['images', 'files', 'links', 'voice']).optional(), conversationId: z.coerce.number().int().min(1).optional(), limit: z.coerce.number().int().min(1).max(100).default(30), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parsePaging = (q) => parse(z.object({ limit: z.coerce.number().int().min(1).max(100).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseMedia = (q) => parse(z.object({ kind: z.enum(['photos', 'documents', 'links']).default('photos'), limit: z.coerce.number().int().min(1).max(100).default(60), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseHold = (b) => parse(z.object({ reason: text(300).min(5, 'Say why (at least 5 characters)') }).strict(), b);
+export const parseHoldList = (q) => parse(z.object({ conversationId: z.coerce.number().int().min(1).optional() }).strict(), q);
+export const parseCallStart = (b) => parse(z.object({ type: z.enum(['AUDIO', 'VIDEO']) }).strict(), b);
+export const parseSignal = (b) => parse(z.object({ to: USER, kind: z.enum(['offer', 'answer', 'candidate', 'bye']), data: z.any().optional() }).strict(), b);

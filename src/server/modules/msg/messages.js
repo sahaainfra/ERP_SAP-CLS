@@ -431,7 +431,7 @@ export function createMessageService({ db }) {
       const hidden = ' AND id NOT IN (SELECT message_id FROM msg_hidden WHERE user_ref = ? AND is_active = 1)';
       if (around) {
         const before2 = db.prepare(`SELECT * FROM msg_messages WHERE conversation_id = ? AND is_active = 1 AND id <= ?${gapSql}${hidden} ORDER BY id DESC LIMIT ?`).all(c.id, around, actor.user, Math.ceil(limit / 2) + 1);
-        const after2 = db.prepare(`SELECT * FROM msg_messages WHERE conversation_id = ? AND is_active = 1 AND id > ?${gapSql}${hidden} ORDER BY id ASC LIMIT ?`).all(c.id, around, Math.floor(limit / 2));
+        const after2 = db.prepare(`SELECT * FROM msg_messages WHERE conversation_id = ? AND is_active = 1 AND id > ?${gapSql}${hidden} ORDER BY id ASC LIMIT ?`).all(c.id, around, actor.user, Math.floor(limit / 2));
         const win = [...before2.reverse(), ...after2];
         const ctx2 = context(actor, win, c);
         return { rows: win.map((m) => present(actor, m, ctx2)), hasMore: true, readOnly: false, lastRead: memberRow(c.id, actor.user)?.last_read_message_id ?? 0, archived: c.is_archived === 1, around };

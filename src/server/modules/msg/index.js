@@ -6,6 +6,9 @@ import { integrityRegistry } from '../../platform/integrity/index.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { createFlagService } from '../core/api.js';
+import { workflowOf } from '../../platform/workflow/index.js';
+import { bindConfig, createMsgConfigService } from './config.js';
+import { bindFeatures, createFeatureService } from './features.js';
 import { bind, createMessageService } from './messages.js';
 import { messageRoutes } from './routes.js';
 
@@ -14,6 +17,9 @@ const schema = { type: 'object', properties: {}, required: [] };
 for (const [type, description] of [
   ['msg.conversation.created', 'A conversation was made (direct, group, project, site, department, team or record-linked).'],
   ['msg.message.created', 'A message was sent in a conversation.'],
+  ['msg.call.started', 'A voice or video call was started in a conversation.'],
+  ['msg.call.ended', 'A call ended; the conversation shows how long it lasted.'],
+  ['msg.hold.placed', 'A legal hold was placed on a conversation: nothing in it is removed by retention.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'msg', description });
 for (const [key, dataType, def, min, max, description] of [
   ['msg.edit_window_minutes', 'integer', 15, 0, 1440, 'Minutes after sending during which a message can be edited or deleted for everyone by its sender (0 switches both off).'],
@@ -31,21 +37,26 @@ export const msg = {
   routePrefix: '/api/v1/msg',
   ownerPart: '05.x',
   status: 'Unified Messages app: direct, group, project, site, department and record conversations, external threads in one index (05.01)',
-  tables: ['msg_conversations', 'msg_members', 'msg_messages', 'msg_reactions'],
+  tables: ['msg_conversations', 'msg_members', 'msg_messages', 'msg_reactions', 'msg_receipts', 'msg_stars', 'msg_pins', 'msg_hidden', 'msg_voice', 'msg_user_settings', 'msg_presence', 'msg_holds', 'msg_member_periods', 'msg_calls', 'msg_config'],
   companyOptional: [],
   resources: ['conversations', 'messages', 'people', 'unread', 'verify'],
 
-  mount(api, { db, config }) {
+  mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'msg_conversations'").get()) return;
-    const flags = createFlagService({ db, environment: config.environment });
+    const flags = createFlagService({ db, environment: appConfig.environment });
     const gate = (key, what) => (req, _res, next) => (flags.isOn(req.actor, key) ? next() : next(notFound(`${what} not enabled for your company yet (feature flag ${key} is OFF).`)));
     const service = createMessageService({ db });
     bind(db, service);
+    const features = createFeatureService({ db, base: service });
+    bindFeatures(db, features);
+    const config = createMsgConfigService({ db, engine: workflowOf(db) });
+    bindConfig(db, config);
     const runtime = runtimeOf(db);
-    runtime.jobs.register('msg.purge', () => { let purged = 0; for (const c of todayCompanies(db)) purged += service.admin.purge(c).purged; return { purged }; }, { maxAttempts: 1, description: 'Blanks the text of deleted messages that are older than the retention period.' });
+    runtime.jobs.register('msg.purge', () => { let purged = 0; let expired = 0; for (const c of todayCompanies(db)) { const r = service.admin.purge(c); purged += r.purged; expired += r.expired; } return { purged, expired }; }, { maxAttempts: 1, description: 'Blanks the text of deleted messages that are older than the retention period.' });
     const router = Router();
     router.use(gate('ff.msg.p0501', 'The Messages app is'));
-    router.use(messageRoutes({ service }, { idempotent: idempotency(db) }));
+    router.use(['/me', '/presence', '/search', '/starred', '/holds', '/calls', '/config', /\/(typing|delivered|pins|media|hold|calls)$/, /\/messages\/\d+\/(receipts|star|pin|hide)$/], gate('ff.msg.p0502', 'The messaging features are'));
+    router.use(messageRoutes({ service, features, config }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/msg', router);
   },
 };

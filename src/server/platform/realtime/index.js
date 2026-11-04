@@ -96,6 +96,14 @@ function createHub(db) {
     }
     return ids;
   }
+  /** Send an event that is not kept in the log (typing, call signals): it reaches whoever is in the room now and is never replayed. */
+  function emitTransient({ companyId, rooms, type, entity = null, entityId = null, data = {} }) {
+    if (!emitter) return;
+    for (const room of rooms) {
+      const ev = { id: 0, room, type, entity, entityId: entityId == null ? null : String(entityId), data, at: new Date().toISOString(), transient: true };
+      queueMicrotask(() => { Promise.resolve(emitter({ companyId, room, event: ev })).catch(() => {}); });
+    }
+  }
   /** What a person missed in a room since the last event number they saw (they may see it now). { events, gap, latest } */
   function replay(actor, room, since, limit = 500) {
     if (!mayStay(actor, room)) return { events: [], gap: false, latest: since };
@@ -113,5 +121,5 @@ function createHub(db) {
     db.prepare("INSERT INTO ntf_realtime_events (company_id, room, event_type, data_json, created_by, source_type) VALUES ((SELECT COALESCE(MIN(id), 1) FROM org_companies), '*purge', 'purge', ?, 'system', 'realtime')").run(JSON.stringify({ upTo: top }));
     return { removed };
   }
-  return { canJoin, mayStay, publish, replay, purge, parseRoom, setEmitter(fn) { emitter = fn; }, attached: () => Boolean(emitter) };
+  return { canJoin, mayStay, publish, emitTransient, replay, purge, parseRoom, setEmitter(fn) { emitter = fn; }, attached: () => Boolean(emitter) };
 }

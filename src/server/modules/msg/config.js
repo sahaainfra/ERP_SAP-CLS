@@ -20,7 +20,7 @@ export const parseMsgConfig = (b) => parse(z.object({
   editWindowMinutes: z.number().int().min(0).max(1440), deleteWindowMinutes: z.number().int().min(0).max(1440), deletedContentRetentionDays: z.number().int().min(0).max(3650), retentionDays: z.number().int().min(0).max(36500),
   maxFileMb: z.number().int().min(1).max(100), maxVideoMb: z.number().int().min(1).max(500), maxVoiceSeconds: z.number().int().min(10).max(1800), enforceReadReceipts: z.boolean(), callsEnabled: z.boolean(),
   callProvider: z.enum(['WEBRTC', 'EXTERNAL']), providerBaseUrl: z.string().trim().max(300).regex(/^(https:\/\/[^\s]+)?$/, 'Use an https:// address').default(''), stunUrls: z.array(url).max(5).default([]), turnUrls: z.array(url).max(5).default([]),
-  turnSecret: z.string().max(200).default(''), turnTtlSeconds: z.number().int().min(60).max(86_400).default(3600), maxCallParticipants: z.number().int().min(2).max(8), recording: z.literal('OFF', { errorMap: () => ({ message: 'Calls are never recorded' }) }).default('OFF'),
+  turnSecret: z.string().max(200).default(''), turnTtlSeconds: z.number().int().min(60).max(86_400).default(3600), maxCallParticipants: z.number().int().min(2).max(8), recording: z.literal('OFF', 'Calls are never recorded').default('OFF'),
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date such as 2026-11-04'), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(500),
 }).strict().refine((o) => o.callProvider !== 'EXTERNAL' || o.providerBaseUrl, { message: 'An external provider needs its https:// address', path: ['providerBaseUrl'] }), b);
 
