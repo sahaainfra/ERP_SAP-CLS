@@ -1873,4 +1873,63 @@ paths:
     post:
       summary: Mark mentions as read ({ ids } or { all: true })
       responses: { '200': { description: '{ data: { marked } }' } }
+  /api/v1/off/devices:
+    post:
+      summary: Register this browser for offline work ({ deviceId, name, platform }); registering again is the same device; a revoked device is refused with wipe
+      responses: { '201': { description: the device }, '403': { description: DEVICE_REVOKED with details[0].wipe } }
+    get:
+      summary: The person's devices; all of them with all=true and off.device.manage (query status, q, limit, offset)
+      responses: { '200': { description: '{ data: { rows, total, counts, canManage } }' } }
+  /api/v1/off/devices/{id}/revoke:
+    post:
+      summary: Revoke a device ({ reason }); the IT administrator any device, a person their own. Its next contact is told to wipe its local data
+      responses: { '200': { description: the device }, '404': { description: not found or not yours }, '409': { description: already revoked } }
+  /api/v1/off/devices/wiped:
+    post:
+      summary: The device confirms that its local data was removed
+      responses: { '200': { description: the device with status WIPED } }
+  /api/v1/off/masters:
+    get:
+      summary: The master data and the offline forms with their rules for this person (query since for a delta, codes); includes expiresAt after which the copy is not to be used
+      responses: { '200': { description: '{ data: { serverTime, expiresAt, forms, masters, settings } }' }, '403': { description: DEVICE_REVOKED } }
+  /api/v1/off/sync:
+    post:
+      summary: Send a batch of offline commands ({ deviceId, deviceTime, commands[{ id, seq, type, op, ref, entityId, values, baseVersion, baseValues, createdAt, gps }] }); the same id again returns the first answer; the result of each is APPLIED, REJECTED, DEFERRED, CONFLICT or NEEDS_CONFIRMATION; driftMs and a warning are returned
+      responses: { '200': { description: '{ data: { serverTime, driftMs, driftWarning, results, counts } }' }, '403': { description: DEVICE_REVOKED }, '404': { description: DEVICE_UNKNOWN }, '422': { description: more than the batch limit } }
+  /api/v1/off/commands:
+    get:
+      summary: The commands of the person and what became of them (query status, all with off.sync.view_all)
+      responses: { '200': { description: '{ data: { rows, total, counts } }' } }
+  /api/v1/off/commands/{id}:
+    get:
+      summary: One command with what the phone sent
+      responses: { '200': { description: the command }, '404': { description: not found or not yours } }
+  /api/v1/off/commands/{id}/resolve:
+    post:
+      summary: Resolve a conflict ({ choice MINE|SERVER|MERGE, fields { key: mine|server|typed value } })
+      responses: { '200': { description: RESOLVED }, '409': { description: not in conflict }, '422': { description: a side is missing or the result fails validation } }
+  /api/v1/off/confirmations:
+    get:
+      summary: Old offline commands waiting for a supervisor (permission off.sync.confirm, for the supervisor's projects)
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/off/commands/{id}/confirm:
+    post:
+      summary: Confirm or decline an old command ({ decision CONFIRM|DECLINE, reason }); not by its author
+      responses: { '200': { description: APPLIED or DECLINED }, '403': { description: own command or no right for the project }, '409': { description: not waiting } }
+  /api/v1/off/uploads:
+    post:
+      summary: Start (or resume) a photo upload for a command ({ deviceId, commandId, fileName, totalSize, chunkSize }); the answer lists the chunks already received
+      responses: { '201': { description: the upload }, '404': { description: the command is not known to the server yet } }
+  /api/v1/off/uploads/{id}:
+    get:
+      summary: The state of an upload (received chunks, status)
+      responses: { '200': { description: the upload } }
+  /api/v1/off/uploads/{id}/chunks/{index}:
+    put:
+      summary: One chunk of the file (raw bytes, at most 1 MB)
+      responses: { '200': { description: the upload }, '422': { description: the chunk has the wrong size } }
+  /api/v1/off/uploads/{id}/complete:
+    post:
+      summary: Assemble the file, check its type, size and for viruses, and attach it to the record the command made; completing twice is the same file
+      responses: { '200': { description: the upload with fileId }, '409': { description: the record is not saved yet }, '422': { description: refused } }
 

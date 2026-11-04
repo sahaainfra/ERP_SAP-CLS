@@ -161,7 +161,7 @@ export function createOfflineService({ db, storage }) {
   // ---- commands ----
   const rowView = (r) => ({ id: r.id, commandId: r.command_id, seq: r.seq, type: r.command_type, op: r.op, status: r.status, entityId: r.server_entity_id, error: r.error_message, conflict: r.conflict_json ? JSON.parse(r.conflict_json) : null,
     clientCreatedAt: r.client_created_at, effectiveAt: r.effective_at, receivedAt: r.received_at, processedAt: r.processed_at, confirmedBy: r.confirmed_by, resolution: r.resolution, resolvedBy: r.resolved_by, user: r.user_ref, label: JSON.parse(r.payload_json || '{}').label ?? null });
-  const resultOf = (r, replayed = false) => ({ commandId: r.command_id, status: r.status, entityId: r.server_entity_id, version: r.result_json ? JSON.parse(r.result_json).version ?? null : null, replayed, error: r.error_message, conflict: r.conflict_json ? JSON.parse(r.conflict_json) : null, retry: r.status === 'DEFERRED' });
+  const resultOf = (r, replayed = false) => ({ logId: r.id, commandId: r.command_id, status: r.status, entityId: r.server_entity_id, version: r.result_json ? JSON.parse(r.result_json).version ?? null : null, replayed, error: r.error_message, conflict: r.conflict_json ? JSON.parse(r.conflict_json) : null, retry: r.status === 'DEFERRED' });
   const FIELD_LABEL = (form, key) => form.fields.find((f) => f.key === key)?.label ?? key;
   const sameValue = (a, b) => String(a ?? '') === String(b ?? '');
 

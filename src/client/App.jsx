@@ -2,6 +2,7 @@ import ApproveLinkPage from './modules/eng/ApproveLinkPage.jsx';
 import VerifyPage from './modules/eng/VerifyPage.jsx';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { startOffline, unsentCount, wipeOnSignOut } from './platform/offline/engine.js';
 import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
 import { allRoutes, findRoute, routesFor } from './platform/shell/registry.js';
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
@@ -95,6 +96,10 @@ function Shell({ iam, user }) {
   const found = findRoute(path.split('?')[0]);
   const field = useFlag('ff.ui.p0306', shellOn);
   const migration = useFlag('ff.ui.p0310', shellOn);
+  // the offline field engine (part 04.15) starts for the signed-in person when its flag is on
+  const offlineFlag = useFlag('ff.eng.p0415', Boolean(s));
+  const offlineUser = s ? (iam && user ? user.username ?? user.id ?? null : identity.user) : null;
+  useEffect(() => { if (offlineFlag.on && offlineUser) startOffline(String(offlineUser)).catch(() => {}); }, [offlineFlag.on, offlineUser]);
   const toNewAddress = useCallback((to) => { window.history.replaceState(null, '', to); setPath(to); }, []);
   useLegacyRedirect({ ready: shellOn && migration.on, go: toNewAddress }); // an old address leads to the page that replaced it (part 03.10)
   const fallback = shellOn ? findRoute(onboarding ? '/welcome' : field.on && landsOnField(s?.roles) ? '/field' : '/home') : allRoutes()[0];
@@ -141,7 +146,7 @@ function Shell({ iam, user }) {
         <AppShell
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
-          onSignOut={iam && user ? () => { pwa.clearApiCache(); return signOut().then(() => qc.clear()); } : null} identityBar={identityBar}
+          onSignOut={iam && user ? () => { if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve(); pwa.clearApiCache(); return signOut().then(() => wipeOnSignOut()).then(() => qc.clear()); } : null} identityBar={identityBar}
           extras={<FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>}
         />
       </FeedbackProvider>

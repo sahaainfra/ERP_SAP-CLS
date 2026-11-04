@@ -987,3 +987,11 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .op-trace li { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-2) var(--erp-space-3); overflow-wrap: anywhere; }
 .op-trace li.is-restricted { color: var(--erp-color-text-muted); border-style: dashed; }
 .op-kind-workflow, .op-kind-document, .op-kind-task, .op-kind-message { display: inline-block; }
+
+/* Part 04.15: offline forms, sync status, conflicts */
+.field-form .btn-large, .sync-status .btn-large, .conflict .btn-large { min-height: 3rem; }
+.field-form { max-width: 40rem; }
+.field-tiles .is-disabled { display: flex; flex-direction: column; gap: var(--erp-space-1); align-items: flex-start; padding: var(--erp-space-4); border: 1px dashed var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); color: var(--erp-color-text-muted); }
+.conflict { margin-block-end: var(--erp-space-4); }
+.conflict-field { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); margin-block-end: var(--erp-space-3); }
+.conflict-field .choice { display: flex; gap: var(--erp-space-2); align-items: center; min-height: 2.75rem; }
