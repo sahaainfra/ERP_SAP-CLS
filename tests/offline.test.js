@@ -192,7 +192,7 @@ test('BR-02 a command older than the configured age waits for a supervisor, who 
 });
 
 test('T-03 BR-03 a revoked device is told to wipe itself at its next contact, whatever it asks; it cannot come back', async () => {
-  const { api, reg, sync, create, call } = await setup();
+  const { api, reg, create, call } = await setup();
   const d = await reg();
   assert.equal((await call(se, 'POST', `/devices/${d.id}/revoke`, { reason: '' })).status, 400);
   assert.equal((await call(pd, 'POST', `/devices/${d.id}/revoke`, { reason: 'Not mine to revoke' })).status, 404, 'another field user cannot');

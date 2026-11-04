@@ -5,7 +5,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import '../src/server/modules/registry.js';
 import { createLogger } from '../src/server/platform/http/logger.js';
-import { runtimeOf } from '../src/server/platform/runtime/index.js';
 import { identityOf } from '../src/server/platform/identity/index.js';
 import { createUserStore } from '../src/server/modules/iam/users.js';
 import { startApi } from './helpers.js';
