@@ -13,18 +13,19 @@ export default function MessagesPage({ session }) {
   usePageTitle('Messages');
   const layout = useLayout();
   const [active, setActive] = useState(fromUrl);
-  const [details, setDetails] = useState(true);
+  const [details, setDetails] = useState(null); // null: the default for the width (open on a computer, closed on a tablet and a phone)
   const [filters, setFilters] = useState({ view: 'all', q: '' });
   useEffect(() => {
     const onPop = () => setActive(fromUrl());
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
-  const open = (id) => { window.history.pushState(null, '', id ? `/collab/messages?c=${id}` : '/collab/messages'); setActive(id); if (layout !== 'desktop') setDetails(false); };
+  const open = (id) => { window.history.pushState(null, '', id ? `/collab/messages?c=${id}` : '/collab/messages'); setActive(id); setDetails(null); };
   const phone = layout === 'phone';
   const showList = !phone || !active;
   const showConv = !phone || Boolean(active);
-  const showDetails = Boolean(active) && details && (layout === 'desktop' || (layout === 'tablet') || phone);
+  const detailsOpen = details ?? layout === 'desktop';
+  const showDetails = Boolean(active) && detailsOpen;
   return (
     <section aria-labelledby="msg-title" className={`msg-app msg-${layout}`} data-testid="messages" data-layout={layout}>
       <div className="page-head"><h1 id="msg-title">Messages</h1>
@@ -34,7 +35,7 @@ export default function MessagesPage({ session }) {
         {showList && <div className="msg-pane msg-pane-list"><ConversationList activeId={active} onOpen={open} filters={filters} setFilters={setFilters} session={session} /></div>}
         {showConv && (
           <div className="msg-pane msg-pane-conv">
-            {active ? <ConversationView id={active} session={session} onBack={phone ? () => open(null) : undefined} onDetails={() => setDetails(!details)} onPopOut={layout === 'desktop' ? () => { chatWindows.open(active); open(null); } : undefined} />
+            {active ? <ConversationView id={active} session={session} onBack={phone ? () => open(null) : undefined} onDetails={() => setDetails(!detailsOpen)} onPopOut={layout === 'desktop' ? () => { chatWindows.open(active); open(null); } : undefined} />
               : <EmptyState title="Choose a conversation" message="Pick one from the list, or start a new one." action={{ label: 'New conversation', onClick: () => navigateTo('/collab/messages/new') }} />}
           </div>
         )}
