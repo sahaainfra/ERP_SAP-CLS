@@ -13,8 +13,8 @@ import { createDefinitionService, createLegacyAdapter, workflowOf } from '../../
 import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
-import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
-import { excelRoutes, signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { SAMPLE_DOC_TYPE, createSampleDocService, registerSampleDocObject } from './sample-docs.js';
+import { collabRoutes, excelRoutes, signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -28,6 +28,7 @@ import { bind as bindDocuments, createDocumentService } from './documents.js';
 import { createDocumentOps } from './documents-ops.js';
 import { createDocumentConfig } from './documents-config.js';
 import { bind as bindExcel, createExcelService } from './excel.js';
+import { bind as bindCollab, createCollabService, RELATIONS as TRACE_RELATIONS } from './collab.js';
 import { bindAdapters } from './xl-adapters.js';
 import { bind as bindSignatures, createSignatureService } from './signatures.js';
 import { bind as bindTemplates, createTemplateService } from './templates.js';
@@ -77,7 +78,7 @@ const definitionSchema = { type: 'object', properties: { docType: { type: 'strin
 eventTypes.define({ type: 'workflow.definition.activated', version: 1, schema: definitionSchema, owner: 'eng', description: 'A new version of a workflow definition became the active one after its approval chain approved it.' });
 /** @type {any} */
 const sampleSchema = { type: 'object', properties: { docNo: { type: 'string' }, status: { type: 'string' } }, required: ['docNo', 'status'] };
-for (const [verb, description] of [['created', 'A sample document was saved as a draft.'], ['approved', 'A sample document was approved and locked.'], ['rejected', 'A sample document was rejected.'], ['returned', 'A sample document was returned to its originator.'], ['cancelled', 'A sample document\'s approval was cancelled.']]) {
+for (const [verb, description] of [['created', 'A sample document was saved as a draft.'], ['approved', 'A sample document was approved and locked.'], ['rejected', 'A sample document was rejected.'], ['returned', 'A sample document was returned to its originator.'], ['amended', 'An approved sample document was amended: a new document linked to it was made.'], ['cancelled', 'A sample document\'s approval was cancelled.']]) {
   eventTypes.define({ type: `eng.sample_doc.${verb}`, version: 1, schema: sampleSchema, owner: 'eng', description });
 }
 parameterRegistry.define({ key: 'eng.workflow.default_sla_hours', dataType: 'integer', default: 48, min: 1, max: 2160, scopes: ['system', 'company'], description: 'Hours an approver has for a step whose definition gives no time of its own, before the task shows as overdue and a reminder goes out.' });
@@ -375,6 +376,24 @@ defineList({
   columns: { method: { sql: 's.method', type: 'enum', label: 'Method' }, status: { sql: 's.status', type: 'enum', label: 'Status' }, sort: { sql: 's.id', type: 'text', label: 'Order' } },
 });
 
+// Part 04.14: comments, mentions, activity timeline and record trace links.
+for (const [type, description] of [
+  ['col.comment.created', 'A comment or reply was posted on a record.'],
+  ['col.comment.edited', 'A comment was edited inside its edit window.'],
+  ['col.comment.deleted', 'A comment was deleted by its author or a moderator.'],
+  ['col.trace.linked', 'Two records were linked by hand, with a reason.'],
+  ['col.trace.requested', 'A module asks for a trace link between two records it has just connected: data { from: { entity, id }, to: { entity, id }, relation }.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, dataType, def, min, max, description] of [
+  ['col.comment.edit_window_minutes', 'integer', 15, 0, 1440, 'Minutes after posting during which the author may edit a comment (0 switches editing off).'],
+  ['col.comment.max_length', 'integer', 2000, 100, 10000, 'The most characters a comment may have.'],
+]) parameterRegistry.define({ key, dataType, default: def, min, max, scopes: ['system', 'company'], description });
+parameterRegistry.define({ key: 'col.reactions.enabled', dataType: 'boolean', default: true, scopes: ['system', 'company'], description: 'Whether people can react to comments with one click (like, acknowledged, seen, thanks).' });
+integrityRegistry.register({
+  companyOptional: [],
+  statuses: { col_comments: ['ACTIVE', 'DELETED'] },
+});
+
 // Part 04.13: the Excel import and export engine.
 for (const [type, description] of [
   ['xl.job.uploaded', 'A filled import template was uploaded and queued for its check.'],
@@ -402,7 +421,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['xl_templates', 'xl_jobs', 'xl_job_errors', 'sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['col_comments', 'col_mentions', 'col_reactions', 'col_trace_links', 'xl_templates', 'xl_jobs', 'xl_job_errors', 'sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['doc_types', 'doc_folder_templates', 'alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -642,6 +661,25 @@ export const eng = {
     xlRouter.use(gate('ff.eng.p0413', 'The Excel engine is'));
     xlRouter.use(excelRoutes({ service: excelService, fileBody: express.raw({ type: () => true, limit: '12mb' }) }, idem));
     api.use('/xl', xlRouter);
+
+    // part 04.14: comments, mentions, activity timeline and record trace links
+    const collabService = createCollabService({ db });
+    bindCollab(db, collabService);
+    registerSampleDocObject();
+    runtime.bus.subscribe('col.trace.requested', (event) => {
+      const d = event.data ?? {};
+      if (!d.from?.entity || !d.to?.entity || !event.companyId) return;
+      collabService.trace.add(event.actorId ?? 'system', { companyId: event.companyId, from: { entity: String(d.from.entity), id: String(d.from.id) }, to: { entity: String(d.to.entity), id: String(d.to.id) }, relation: TRACE_RELATIONS.includes(d.relation) ? d.relation : 'DERIVED', projectId: event.projectId ?? null, siteId: event.siteId ?? null, sourceType: 'event' });
+    }, { consumer: 'col.trace' });
+    runtime.bus.subscribe('eng.sample_doc.amended', (event) => {
+      const d = event.data ?? {};
+      if (!d.amendsId || !event.companyId) return;
+      collabService.trace.add(event.actorId ?? 'system', { companyId: event.companyId, from: { entity: 'sample_doc', id: String(d.amendsId) }, to: { entity: 'sample_doc', id: String(event.entityId) }, relation: 'AMENDS', projectId: event.projectId ?? null, siteId: event.siteId ?? null, sourceType: 'eng.sample_doc' });
+    }, { consumer: 'col.trace.sample_doc' });
+    const colRouter = Router();
+    colRouter.use(gate('ff.eng.p0414', 'Comments, timeline and trace are'));
+    colRouter.use(collabRoutes({ service: collabService }, idem));
+    api.use('/col', colRouter);
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));

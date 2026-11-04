@@ -973,3 +973,17 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .verify-facts dd { margin: 0; overflow-wrap: anywhere; }
 .verify-file { margin-top: var(--erp-space-4); border-top: 1px solid var(--erp-color-border-subtle); padding-top: var(--erp-space-3); }
 .sig-preview { display: block; max-width: 220px; max-height: 80px; border: 1px solid var(--erp-color-border-subtle); background: var(--erp-color-bg-surface); }
+
+/* Part 04.14: comments, mentions, activity timeline and trace */
+.col-comment .col-actions { margin-block-start: var(--erp-space-2); }
+.col-comment.is-deleted { color: var(--erp-color-text-muted); }
+.col-replies { margin-block-start: var(--erp-space-3); margin-inline-start: var(--erp-space-4); }
+.col-mention { color: var(--erp-color-text-link); }
+.col-composer .field { max-width: 40rem; }
+.col-filters { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); align-items: flex-end; }
+.col-mentions { margin-block-end: var(--erp-space-4); }
+.col-mentions .is-unread { border-inline-start: 4px solid var(--erp-color-status-info-fg); }
+.op-trace { list-style: none; margin: 0 0 var(--erp-space-4); padding: 0; display: flex; flex-direction: column; gap: var(--erp-space-2); }
+.op-trace li { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-2) var(--erp-space-3); overflow-wrap: anywhere; }
+.op-trace li.is-restricted { color: var(--erp-color-text-muted); border-style: dashed; }
+.op-kind-workflow, .op-kind-document, .op-kind-task, .op-kind-message { display: inline-block; }

@@ -379,3 +379,21 @@ export const parseXlPage = (q) => parse(z.object({ limit: z.coerce.number().int(
 export const parseXlCommit = (b) => parse(z.object({ mode: z.enum(['ALL_OR_NOTHING', 'CHUNKED']).optional(), skipInvalid: z.boolean().default(false), version: z.number().int().min(1).optional() }).strict(), b ?? {});
 export const parseXlDesigner = (b) => parse(z.object({ importType: XL_TYPE, columns: z.record(z.string().max(40), z.object({ label: text(60).min(1).optional(), help: text(300).optional(), required: z.boolean().optional() }).strict()).default({}), instructions: text(2000).default(''), settings: z.object({ allowChunked: z.boolean().default(false), chunkSize: z.number().int().min(10).max(5000).default(500), maxRows: z.number().int().min(10).max(20000).optional() }).strict().default({ allowChunked: false, chunkSize: 500 }), reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
 export const parseXlExport = (q) => parse(z.object({ format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'), status: text(20).optional(), importType: XL_TYPE.optional() }).strict(), q);
+
+// ---- part 04.14: comments, mentions, timeline and trace links ----
+const COL_ENTITY = z.string().regex(/^[a-z][a-z_]*$/, 'Use the record type, such as sample_request').max(60);
+const COL_ID = z.union([z.string().trim().min(1).max(60), z.number().int()]).transform(String);
+const COL_KINDS = z.string().max(120).transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean)).pipe(z.array(z.enum(['audit', 'approval', 'workflow', 'comment', 'document', 'task', 'message'])).max(7));
+const COL_DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}([T ][0-9:.]+Z?)?$/, 'Use a date such as 2026-11-04');
+const COL_REF = z.object({ entity: COL_ENTITY, id: COL_ID }).strict();
+export const parseColRecord = (q) => parse(z.object({ entity: COL_ENTITY, id: COL_ID }).strict(), q);
+export const parseColComment = (b) => parse(z.object({ entity: COL_ENTITY, id: COL_ID, body: z.string().trim().min(1, 'Write something').max(10_000), parentId: z.number().int().min(1).optional() }).strict(), b);
+export const parseColEdit = (b) => parse(z.object({ body: z.string().trim().min(1, 'Write something').max(10_000), version: z.number().int().min(1).optional() }).strict(), b);
+export const parseColDelete = (b) => parse(z.object({ reason: text(300).optional() }).strict(), b ?? {});
+export const parseColReaction = (b) => parse(z.object({ reaction: z.enum(['like', 'ack', 'eyes', 'thanks']), on: z.boolean().default(true) }).strict(), b);
+export const parseColTimeline = (q) => parse(z.object({ entity: COL_ENTITY, id: COL_ID, kinds: COL_KINDS.optional(), from: COL_DATE.optional(), to: COL_DATE.optional(), q: text(100).optional(), limit: z.coerce.number().int().min(1).max(200).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseColFeed = (q) => parse(z.object({ projectId: z.coerce.number().int().min(1).optional(), kinds: COL_KINDS.optional(), from: COL_DATE.optional(), to: COL_DATE.optional(), q: text(100).optional(), limit: z.coerce.number().int().min(1).max(200).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseColTrace = (q) => parse(z.object({ entity: COL_ENTITY, id: COL_ID, depth: z.coerce.number().int().min(1).max(8).default(3) }).strict(), q);
+export const parseColLink = (b) => parse(z.object({ from: COL_REF, to: COL_REF, relation: z.enum(['DERIVED', 'AMENDS', 'FULFILS', 'SETTLES', 'REFERS']).default('REFERS'), reason: text(500).min(10, 'Give the reason for linking these records (at least 10 characters)') }).strict(), b);
+export const parseColMentions = (q) => parse(z.object({ unread: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'), limit: z.coerce.number().int().min(1).max(100).default(30), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseColRead = (b) => parse(z.object({ ids: z.array(z.number().int().min(1)).max(200).default([]), all: z.boolean().default(false) }).strict().refine((o) => o.all || o.ids.length > 0, 'Choose the mentions to mark as read'), b);

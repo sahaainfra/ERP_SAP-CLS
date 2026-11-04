@@ -2,6 +2,7 @@ import { inTransaction as transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
 import { publishEvent } from '../../platform/events/index.js';
+import { objectTypes } from '../../platform/objects/index.js';
 import { conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { workflowTypes } from '../../platform/workflow/registry.js';
 import { evidenceProviders } from '../../platform/workflow/evidence.js';
@@ -194,6 +195,7 @@ export function createSampleDocService({ db, engine, controlsOn = () => false })
           .run(d.company_id, number(d.company_id), d.title, d.amount, actor.user, d.project_id, d.site_id, d.id, actor.user, String(d.id));
         const n = db.prepare('SELECT * FROM eng_sample_docs WHERE id = ?').get(Number(res.lastInsertRowid));
         writeAudit(db, { entity: 'eng_sample_docs', entityId: n.id, action: 'amend', newValues: { amends: d.doc_no }, actor: actor.user });
+        publishEvent(db, { type: 'eng.sample_doc.amended', entity: 'sample_doc', entityId: n.id, actorId: actor.user, companyId: n.company_id, projectId: n.project_id, siteId: n.site_id, data: { docNo: n.doc_no, status: n.status, amendsId: d.id } });
         return present(n);
       });
     },
@@ -219,3 +221,28 @@ evidenceProviders.register(SAMPLE_DOC_TYPE, ({ db, instance }) => {
     flags: avg && d.amount > avg * 3 ? [{ code: 'out_of_pattern', label: 'Much larger than their usual request', severity: 'medium' }] : [],
   };
 });
+
+/** The sample document as an object type (part 04.14): its Discussion, Timeline and Trace tabs work through the shared registry like any other record. */
+export function registerSampleDocObject() {
+  if (objectTypes.get('sample_doc')) return;
+  objectTypes.register({
+    type: 'sample_doc',
+    label: 'Sample document',
+    permission: PERMISSION,
+    route: (id) => `/engine/sample-docs?open=${id}`,
+    approvalTarget: null,
+    documentType: SAMPLE_DOC_TYPE,
+    attachmentEntity: 'sample_doc',
+    access(db, actor, id) {
+      const d = db.prepare('SELECT company_id, project_id, site_id, status FROM eng_sample_docs WHERE id = ? AND company_id = ? AND is_active = 1').get(id, actor.companyId);
+      if (!d || !authzOf(db).check(actor, PERMISSION, { companyId: d.company_id, projectId: d.project_id, siteId: d.site_id ?? undefined }).allowed) return null;
+      return { companyId: d.company_id, projectId: d.project_id, siteId: d.site_id, status: d.status };
+    },
+    auditEntities: (id) => [{ entity: 'eng_sample_docs', id }],
+    summary(db, actor, id) {
+      const d = db.prepare('SELECT doc_no, title, amount, status FROM eng_sample_docs WHERE id = ? AND company_id = ?').get(id, actor.companyId);
+      return d ? { label: `${d.doc_no ?? `#${id}`}: ${d.title}`, status: d.status, amount: fromUnits(d.amount, 'money').toFixed(2) } : null;
+    },
+    projectRecords: (db, companyId, projectId, limit) => db.prepare('SELECT id FROM eng_sample_docs WHERE company_id = ? AND project_id = ? AND is_active = 1 ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((r) => r.id),
+  });
+}

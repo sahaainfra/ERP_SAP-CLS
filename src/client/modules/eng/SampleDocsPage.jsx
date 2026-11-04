@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { CollabTabs } from '../../platform/collab/CollabTabs.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { formatDateTime } from '../../platform/format.js';
@@ -45,6 +47,7 @@ function Detail({ id, session, onClose, setNotice }) {
   const [error, setError] = useState(null);
   const [blocked, setBlocked] = useState(null);
   const [dialog, setDialog] = useState(false);
+  const collab = useFlagOn('ff.eng.p0414');
   const d = query.data;
   if (query.isPending) return <Skeleton label="Loading the document" rows={3} />;
   if (query.isError) return <ErrorState title="The document could not be loaded" error={query.error} onRetry={() => query.refetch()} />;
@@ -77,6 +80,7 @@ function Detail({ id, session, onClose, setNotice }) {
       {w ? (
         <p data-testid="sd-approval">The approval is <strong>{INST_STATUS[w.status][1].toLowerCase()}</strong>{w.status === 'RUNNING' ? `, at step ${w.steps.find((s) => s.code === w.currentStep)?.name ?? w.currentStep}` : w.completedAt ? ` (${formatDateTime(w.completedAt)})` : ''}. <Link to={`/workflow/instance?id=${w.id}`}>Open the approval</Link></p>
       ) : <p className="muted">This document has not been submitted into approval.</p>}
+      {collab && <CollabTabs entity="sample_doc" id={d.id} />}
     </article>
   );
 }

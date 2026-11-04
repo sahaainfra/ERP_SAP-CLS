@@ -138,6 +138,11 @@ objectTypes.register({
     return { companyId: r.company_id, projectId: r.project_id, siteId: r.site_id, status: r.status };
   },
   auditEntities: (id) => [{ entity: 'ui_sample_requests', id }],
+  summary(db, actor, id) {
+    const r = db.prepare('SELECT doc_no, title, status FROM ui_sample_requests WHERE id = ? AND company_id = ?').get(id, actor.companyId);
+    return r ? { label: r.doc_no ? `${r.doc_no}: ${r.title}` : r.title, status: r.status } : null;
+  },
+  projectRecords: (db, companyId, projectId, limit) => db.prepare('SELECT id FROM ui_sample_requests WHERE company_id = ? AND project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((r) => r.id),
   related(db, actor, id) {
     const r = db.prepare('SELECT source_type, source_id FROM ui_sample_requests WHERE id = ? AND company_id = ?').get(id, actor.companyId);
     const out = [];

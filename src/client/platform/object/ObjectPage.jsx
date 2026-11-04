@@ -7,14 +7,15 @@ import { useToast } from '../feedback/Feedback.jsx';
 import { QueryError, Skeleton } from '../feedback/states.jsx';
 import { AttachmentPanel, ApprovalPanel, ComparePanel, DiscussionPanel, RelatedPanel, TimelinePanel } from './panels.jsx';
 import { useRefreshObject } from './api.js';
-import { recordVisit, useFavouriteActions, useFavourites, useShellMode } from '../shell/api.js';
+import { recordVisit, useFavouriteActions, useFavourites, useFlagOn, useShellMode } from '../shell/api.js';
+import { DiscussionTab, TimelineTab, TraceTab } from '../collab/CollabTabs.jsx';
 
 // The Object Page (part 03.04): the same look for every record. A sticky header (number, status chips, key figures, owner and dates, the
 // buttons the server allows right now), then the tabs Details, Lines, Attachments, Approvals, Timeline, Discussion, Related (and
 // Amendments once a version exists). The server decides the buttons (`allowedActions`, BR-01); an action that needs asking first opens
 // the confirmation dialog the server described (BR-02). Print is handled here.
 
-const TAB_LABEL = { details: 'Details', lines: 'Lines', attachments: 'Attachments', approvals: 'Approvals', timeline: 'Timeline', discussion: 'Discussion', related: 'Related', amendments: 'Amendments' };
+const TAB_LABEL = { details: 'Details', lines: 'Lines', attachments: 'Attachments', approvals: 'Approvals', timeline: 'Timeline', discussion: 'Discussion', related: 'Related', trace: 'Trace', amendments: 'Amendments' };
 
 const currentTab = (valid) => {
   const t = new URLSearchParams(window.location.search).get('tab');
@@ -48,13 +49,16 @@ export default function ObjectPage({ type, id, query, heading, subtitle, chips, 
   const [pending, setPending] = useState(null); // the action waiting for confirmation
   const [printing, setPrinting] = useState(false);
   const [tab, setTab] = useState(null);
+  // part 04.14: with the collaboration engine on, Timeline and Discussion come from it and a Trace tab is added
+  const collab = useFlagOn('ff.eng.p0414');
   const tabs = useMemo(() => {
     const list = ['details'];
     if (renderLines) list.push('lines');
     list.push('attachments', 'approvals', 'timeline', 'discussion', 'related');
+    if (collab) list.push('trace');
     if (rec?.counts?.versions >= 1) list.push('amendments');
     return list;
-  }, [renderLines, rec?.counts?.versions]);
+  }, [renderLines, rec?.counts?.versions, collab]);
   const active = tab ?? currentTab(tabs);
   const tablist = useRef(null);
   useEffect(() => { if (rec) document.title = `${heading(rec)} - ${title} - ERP`; }, [rec, heading, title]);
@@ -171,8 +175,9 @@ export default function ObjectPage({ type, id, query, heading, subtitle, chips, 
         {active === 'lines' && renderLines?.(rec)}
         {active === 'attachments' && <AttachmentPanel type={type} id={id} entity={attachmentEntity} canEdit={canEditFiles} />}
         {active === 'approvals' && <ApprovalPanel type={type} id={id} actions={actions} onAction={start} />}
-        {active === 'timeline' && <TimelinePanel type={type} id={id} />}
-        {active === 'discussion' && <DiscussionPanel type={type} id={id} />}
+        {active === 'timeline' && (collab ? <TimelineTab entity={type} id={id} /> : <TimelinePanel type={type} id={id} />)}
+        {active === 'discussion' && (collab ? <DiscussionTab entity={type} id={id} /> : <DiscussionPanel type={type} id={id} />)}
+        {active === 'trace' && <TraceTab entity={type} id={id} navigate={navigate} />}
         {active === 'related' && <RelatedPanel type={type} id={id} navigate={navigate} />}
         {active === 'amendments' && <ComparePanel type={type} id={id} />}
       </div>

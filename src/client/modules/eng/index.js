@@ -31,6 +31,7 @@ import ControlPointsPage from './ControlPointsPage.jsx';
 import ControlsDashboardPage from './ControlsDashboardPage.jsx';
 import ExceptionsPage from './ExceptionsPage.jsx';
 import ReasonCodesPage from './ReasonCodesPage.jsx';
+import ProjectActivityPage from './ProjectActivityPage.jsx';
 import SampleDocsPage from './SampleDocsPage.jsx';
 import DocumentRegisterPage from './DocumentRegisterPage.jsx';
 import DocumentPage from './DocumentPage.jsx';
@@ -100,6 +101,7 @@ registerModule({
     { path: '/import', label: 'Import Center', icon: 'erp.action.import', permission: 'xl.import.use', flag: 'ff.eng.p0413', Page: ImportCenterPage },
     { path: '/import/job', label: 'Import Job', icon: 'erp.action.info', permission: 'xl.import.use', flag: 'ff.eng.p0413', Page: ImportJobPage },
     { path: '/admin/import-templates', label: 'Import Template Designer', icon: 'erp.action.settings', permission: 'xl.template.view', flag: 'ff.eng.p0413', Page: ImportTemplateDesignerPage },
+    { path: '/projects/activity', label: 'Project Activity Feed', icon: 'erp.action.info', permission: 'col.activity.view', flag: 'ff.eng.p0414', Page: ProjectActivityPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });
