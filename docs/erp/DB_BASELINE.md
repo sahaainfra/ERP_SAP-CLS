@@ -1966,6 +1966,353 @@ Foreign keys: connector_id -> core_connectors(id)
 Indexes:
 - ux_core_webhook_receipts_delivery (unique): connector_id, delivery_id
 
+## doc_annotations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| version_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| page | INTEGER | yes |  | 1 |
+| shape_json | TEXT | yes |  |  |
+| comment | TEXT |  |  |  |
+| resolved | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: version_id -> doc_versions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_annotations_version: version_id, page
+- ix_doc_annotations_company_id: company_id
+
+## doc_distributions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| document_id | INTEGER | yes |  |  |
+| version_id | INTEGER | yes |  |  |
+| recipient_type | TEXT | yes |  |  |
+| recipient_id | TEXT | yes |  |  |
+| recipient_name | TEXT |  |  |  |
+| recipient_email | TEXT |  |  |  |
+| sent_by | TEXT | yes |  |  |
+| sent_at | TEXT | yes |  |  |
+| message | TEXT |  |  |  |
+| due_at | TEXT |  |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| acknowledged_by | TEXT |  |  |  |
+| ack_note | TEXT |  |  |  |
+| reminded_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: version_id -> doc_versions(id), document_id -> doc_documents(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_distributions_recipient: company_id, recipient_type, recipient_id, acknowledged_at
+- ix_doc_distributions_document: document_id
+- ix_doc_distributions_company_id: company_id
+- ux_doc_distributions (unique): version_id, recipient_type, recipient_id
+
+## doc_documents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| discipline | TEXT |  |  |  |
+| folder_id | INTEGER |  |  |  |
+| wbs_ref | TEXT |  |  |  |
+| location_ref | TEXT |  |  |  |
+| current_revision | TEXT |  |  |  |
+| current_version_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| confidentiality | TEXT | yes |  | 'INTERNAL' |
+| owner_user_ref | TEXT | yes |  |  |
+| retention_class | TEXT | yes |  | 'standard' |
+| valid_until | TEXT |  |  |  |
+| expiry_notified_at | TEXT |  |  |  |
+| tags_json | TEXT | yes |  | '[]' |
+| checked_out_by | TEXT |  |  |  |
+| checked_out_at | TEXT |  |  |  |
+| checkout_note | TEXT |  |  |  |
+| archived_at | TEXT |  |  |  |
+| archive_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: folder_id -> doc_folders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_documents_checkout: company_id, checked_out_by
+- ix_doc_documents_valid: company_id, valid_until
+- ix_doc_documents_owner: company_id, owner_user_ref
+- ix_doc_documents_folder: folder_id
+- ix_doc_documents_project: company_id, project_id, folder_id, status
+- ix_doc_documents_log: company_id, id
+- ix_doc_documents_list: company_id, status, doc_type
+- ux_doc_documents_no (unique): company_id, doc_no
+
+## doc_folder_templates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| tree_json | TEXT | yes |  |  |
+| template_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| batch_id | INTEGER |  |  |  |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_folder_templates_batch: batch_id
+- ix_doc_folder_templates_company: company_id, status
+- ux_doc_folder_templates (unique): , code, template_version
+
+## doc_folders
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| parent_id | INTEGER |  |  |  |
+| name | TEXT | yes |  |  |
+| path | TEXT | yes |  |  |
+| template_code | TEXT |  |  |  |
+| default_acl_json | TEXT | yes |  | '{}' |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> doc_folders(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_doc_folders_name (unique): company_id, , , name
+- ix_doc_folders_parent: parent_id
+- ix_doc_folders_project: company_id, project_id, parent_id, sort_order
+- ix_doc_folders_company_id: company_id
+
+## doc_links
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| document_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| label | TEXT |  |  |  |
+| route | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: document_id -> doc_documents(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_links_record: company_id, entity, entity_id
+- ix_doc_links_company_id: company_id
+- ux_doc_links (unique): document_id, entity, entity_id
+
+## doc_shares
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| document_id | INTEGER | yes |  |  |
+| principal_type | TEXT | yes |  |  |
+| principal_id | TEXT | yes |  |  |
+| principal_name | TEXT |  |  |  |
+| permission | TEXT | yes |  | 'VIEW' |
+| expires_at | TEXT |  |  |  |
+| granted_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: document_id -> doc_documents(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_shares_principal: company_id, principal_type, principal_id, is_active
+- ix_doc_shares_document: document_id, is_active
+- ix_doc_shares_company_id: company_id
+
+## doc_types
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| requires_review | INTEGER | yes |  | 1 |
+| reviewer_role | TEXT | yes |  | 'DESIGN|SE|QCE' |
+| approver_role | TEXT | yes |  | 'PM' |
+| has_validity | INTEGER | yes |  | 0 |
+| default_confidentiality | TEXT | yes |  | 'INTERNAL' |
+| retention_class | TEXT | yes |  | 'standard' |
+| sort_order | INTEGER | yes |  | 100 |
+| type_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| batch_id | INTEGER |  |  |  |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_types_batch: batch_id
+- ix_doc_types_company: company_id, status
+- ux_doc_types (unique): , code, type_version
+
+## doc_versions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| document_id | INTEGER | yes |  |  |
+| revision | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  |  |
+| file_id | INTEGER |  |  |  |
+| change_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| instance_id | INTEGER |  |  |  |
+| submitted_by | TEXT |  |  |  |
+| submitted_at | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| superseded_at | TEXT |  |  |  |
+| superseded_by | INTEGER |  |  |  |
+| metadata_json | TEXT | yes |  | '{}' |
+| text_extract | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: superseded_by -> doc_versions(id), file_id -> core_files(id), document_id -> doc_documents(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_doc_versions_superseded_by: superseded_by
+- ix_doc_versions_instance: instance_id
+- ix_doc_versions_file: file_id
+- ix_doc_versions_document: document_id, status
+- ix_doc_versions_company_id: company_id
+- ux_doc_versions_rev (unique): document_id, revision_no
+
 ## eng_sample_docs
 
 | Column | Type | Not null | Key | Default |

@@ -235,3 +235,8 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-228 | Alerts | The text of the three new pages is English only (see D-163). | Medium | Add the pages to the translation catalogue | 03.09 | Open |
 | D-229 | Alerts | Alerts are visible to their owner, those told, and those who manage the project; a rule cannot yet choose a department or a site as the audience. | Low | Audience by scope | 04.x | Open |
 | D-230 | Controls | The protocol engine reads the setting of the observation days with the UTC date while the parameter service wants the India date; between 18:30 and 24:00 UTC (00:00 to 05:30 in India) `e2e/controls.spec.js` fails at its set-up. Found in the regression of part 04.09; not changed by it. | Medium | Use one calendar day for both | 04.04 | Open |
+| D-231 | Documents | Bulk upload and zip download run inside the request, with caps (500 rows; 100 documents or 200 MB). A larger set needs a queued job with a result file. | Low | Move to a job when a project needs more | 04.10 | Open |
+| D-232 | Documents | A person who made a confidential document but may not view confidential documents sees it in the register but does not find it in the search. | Low | Index the owner's rows with an owner-aware permission | 04.10 | Open |
+| D-233 | Documents | Only PDF and images carry a watermark when a superseded revision is downloaded; Office files are marked in a header only. | Medium | Convert to PDF when 04.11 provides rendering | 04.10 | Open |
+| D-234 | Documents | OCR is a hook only (`text_extract` is filled by whoever provides text); no OCR engine is run. | Low | Part 28.04 | 04.10 | Open |
+

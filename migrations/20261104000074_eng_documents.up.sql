@@ -178,6 +178,7 @@ CREATE INDEX IF NOT EXISTS ix_doc_versions_company_id ON doc_versions (company_i
 CREATE INDEX IF NOT EXISTS ix_doc_versions_document ON doc_versions (document_id, status);
 CREATE INDEX IF NOT EXISTS ix_doc_versions_file ON doc_versions (file_id);
 CREATE INDEX IF NOT EXISTS ix_doc_versions_instance ON doc_versions (instance_id);
+CREATE INDEX IF NOT EXISTS ix_doc_versions_superseded_by ON doc_versions (superseded_by);
 
 CREATE TABLE IF NOT EXISTS doc_shares (
   id             INTEGER PRIMARY KEY AUTOINCREMENT,
