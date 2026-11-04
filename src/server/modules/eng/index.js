@@ -14,7 +14,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { SAMPLE_DOC_TYPE, createSampleDocService, registerSampleDocObject } from './sample-docs.js';
-import { collabRoutes, excelRoutes, signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { offlineRoutes, collabRoutes, excelRoutes, signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -28,6 +28,8 @@ import { bind as bindDocuments, createDocumentService } from './documents.js';
 import { createDocumentOps } from './documents-ops.js';
 import { createDocumentConfig } from './documents-config.js';
 import { bind as bindExcel, createExcelService } from './excel.js';
+import { bind as bindOffline, createOfflineService } from './offline.js';
+import { registerOfflineAdapters } from './offline-forms.js';
 import { bind as bindCollab, createCollabService, RELATIONS as TRACE_RELATIONS } from './collab.js';
 import { bindAdapters } from './xl-adapters.js';
 import { bind as bindSignatures, createSignatureService } from './signatures.js';
@@ -376,6 +378,26 @@ defineList({
   columns: { method: { sql: 's.method', type: 'enum', label: 'Method' }, status: { sql: 's.status', type: 'enum', label: 'Status' }, sort: { sql: 's.id', type: 'text', label: 'Order' } },
 });
 
+// Part 04.15: the offline-first field engine.
+for (const [type, description] of [
+  ['off.device.registered', 'A browser was registered for offline work.'],
+  ['off.device.revoked', 'A registered device was revoked; its local data is wiped at its next contact.'],
+  ['off.sync.completed', 'A device sent a batch of offline commands; the counts of what became of them.'],
+  ['off.conflict.raised', 'An offline change met a record the server had changed meanwhile.'],
+  ['off.conflict.resolved', 'A person resolved an offline conflict (mine, the server\'s, or field by field).'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, dataType, def, min, max, description] of [
+  ['off.command.max_age_days', 'integer', 7, 1, 90, 'Days after which an offline command needs a supervisor\'s confirmation before it is saved.'],
+  ['off.clock.max_drift_seconds', 'integer', 300, 10, 86400, 'Seconds a device clock may differ from the server before the person is warned.'],
+  ['off.data.max_age_hours', 'integer', 72, 1, 720, 'Hours the offline copy of the masters may be used without contact with the server.'],
+  ['off.sync.batch_max', 'integer', 100, 10, 500, 'The most commands a device may send in one sync.'],
+]) parameterRegistry.define({ key, dataType, default: def, min, max, scopes: ['system', 'company'], description });
+integrityRegistry.register({
+  companyOptional: [],
+  statuses: { off_sync_log: ['APPLIED', 'CONFLICT', 'REJECTED', 'NEEDS_CONFIRMATION', 'DEFERRED', 'RESOLVED', 'DECLINED'], off_uploads: ['OPEN', 'COMPLETE', 'FAILED'] },
+  uniqueKeys: [{ table: 'off_sync_log', columns: ['company_id', 'command_id'] }],
+});
+
 // Part 04.14: comments, mentions, activity timeline and record trace links.
 for (const [type, description] of [
   ['col.comment.created', 'A comment or reply was posted on a record.'],
@@ -421,7 +443,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['col_comments', 'col_mentions', 'col_reactions', 'col_trace_links', 'xl_templates', 'xl_jobs', 'xl_job_errors', 'sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['off_devices', 'off_sync_log', 'off_uploads', 'col_comments', 'col_mentions', 'col_reactions', 'col_trace_links', 'xl_templates', 'xl_jobs', 'xl_job_errors', 'sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['doc_types', 'doc_folder_templates', 'alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -662,6 +684,15 @@ export const eng = {
     xlRouter.use(excelRoutes({ service: excelService, fileBody: express.raw({ type: () => true, limit: '12mb' }) }, idem));
     api.use('/xl', xlRouter);
 
+
+    // part 04.15: the offline-first field engine
+    const offlineService = createOfflineService({ db, storage: docStorage });
+    bindOffline(db, offlineService);
+    registerOfflineAdapters({ db, docs });
+    const offRouter = Router();
+    offRouter.use(gate('ff.eng.p0415', 'The offline field engine is'));
+    offRouter.use(offlineRoutes({ service: offlineService, chunkBody: express.raw({ type: () => true, limit: '2mb' }) }, idem));
+    api.use('/off', offRouter);
     // part 04.14: comments, mentions, activity timeline and record trace links
     const collabService = createCollabService({ db });
     bindCollab(db, collabService);

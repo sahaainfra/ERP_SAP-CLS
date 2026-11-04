@@ -397,3 +397,27 @@ export const parseColTrace = (q) => parse(z.object({ entity: COL_ENTITY, id: COL
 export const parseColLink = (b) => parse(z.object({ from: COL_REF, to: COL_REF, relation: z.enum(['DERIVED', 'AMENDS', 'FULFILS', 'SETTLES', 'REFERS']).default('REFERS'), reason: text(500).min(10, 'Give the reason for linking these records (at least 10 characters)') }).strict(), b);
 export const parseColMentions = (q) => parse(z.object({ unread: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'), limit: z.coerce.number().int().min(1).max(100).default(30), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
 export const parseColRead = (b) => parse(z.object({ ids: z.array(z.number().int().min(1)).max(200).default([]), all: z.boolean().default(false) }).strict().refine((o) => o.all || o.ids.length > 0, 'Choose the mentions to mark as read'), b);
+
+// ---- part 04.15: the offline field engine ----
+const OFF_ID = z.string().trim().regex(/^[A-Za-z0-9_-]{8,64}$/, 'Use the id the device made (8 to 64 letters, digits, - or _)');
+const OFF_DEVICE = z.string().trim().regex(/^[A-Za-z0-9_-]{8,64}$/, 'Use the device id (8 to 64 letters, digits, - or _)');
+const OFF_VALUES = z.record(z.string().max(40), z.union([z.string().max(2000), z.number(), z.boolean(), z.null()])).refine((o) => Object.keys(o).length <= 40, 'At most 40 fields');
+const OFF_COMMAND = z.object({
+  id: OFF_ID, seq: z.number().int().min(0).max(1_000_000_000).default(0), type: z.string().regex(/^[a-z][a-z_]{1,40}$/), op: z.enum(['create', 'update']).default('create'),
+  ref: OFF_ID.optional(), clientRef: OFF_ID.optional(), entityId: z.union([z.string().max(60), z.number().int()]).transform(String).optional(),
+  values: OFF_VALUES.default({}), baseVersion: z.number().int().min(1).optional(), baseValues: OFF_VALUES.optional(),
+  createdAt: z.string().max(40).optional(), deviceClock: z.string().max(40).optional(), label: z.string().trim().max(120).optional(),
+  gps: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), accuracy: z.number().min(0).max(100_000).optional() }).strict().optional(),
+}).strict();
+export const parseOffDevice = (b) => parse(z.object({ deviceId: OFF_DEVICE, name: text(80).optional(), platform: text(80).optional() }).strict(), b);
+export const parseOffWiped = (b) => parse(z.object({ deviceId: OFF_DEVICE }).strict(), b);
+export const parseOffDevices = (q) => parse(z.object({ all: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'), status: z.enum(['ACTIVE', 'REVOKED']).optional(), q: text(60).optional(), limit: z.coerce.number().int().min(1).max(100).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseOffRevoke = (b) => parse(z.object({ reason: text(300).min(3, 'Give the reason for revoking this device') }).strict(), b);
+export const parseOffMasters = (q) => parse(z.object({ since: z.string().regex(/^\d{4}-\d{2}-\d{2}T[0-9:.]+Z$/, 'Use a time such as 2026-11-04T10:00:00.000Z').optional(), codes: z.string().max(200).transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean)).optional() }).strict(), q);
+export const parseOffSync = (b) => parse(z.object({ deviceId: OFF_DEVICE, deviceTime: z.string().max(40).optional(), commands: z.array(OFF_COMMAND).min(1).max(500) }).strict(), b);
+export const parseOffCommands = (q) => parse(z.object({ status: z.enum(['APPLIED', 'CONFLICT', 'REJECTED', 'NEEDS_CONFIRMATION', 'DEFERRED', 'RESOLVED', 'DECLINED']).optional(), all: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'), limit: z.coerce.number().int().min(1).max(100).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseOffResolve = (b) => parse(z.object({ choice: z.enum(['MINE', 'SERVER', 'MERGE']), fields: z.record(z.string().max(40), z.string().max(2000)).default({}) }).strict(), b);
+export const parseOffDecision = (b) => parse(z.object({ decision: z.enum(['CONFIRM', 'DECLINE']), reason: text(300).optional() }).strict(), b);
+export const parseOffUpload = (b) => parse(z.object({ deviceId: OFF_DEVICE, commandId: OFF_ID, fileName: text(200).min(1), totalSize: z.number().int().min(1).max(25 * 1024 * 1024), chunkSize: z.number().int().min(1).max(1024 * 1024) }).strict(), b);
+export const parseOffChunk = (p) => parse(z.object({ id: z.string().uuid(), index: z.coerce.number().int().min(0).max(100_000) }).strict(), p);
+export const parseOffUploadId = (v) => parse(z.string().uuid(), v);

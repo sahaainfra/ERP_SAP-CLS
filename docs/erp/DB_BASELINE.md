@@ -3510,6 +3510,146 @@ Indexes:
 - ix_ntf_templates_lookup: code, channel, lang, status
 - ux_ntf_templates (unique): , code, channel, lang, template_version
 
+## off_devices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| device_id | TEXT | yes |  |  |
+| device_name | TEXT | yes |  | '' |
+| platform | TEXT |  |  |  |
+| registered_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| last_sync_at | TEXT |  |  |  |
+| last_seen_at | TEXT |  |  |  |
+| clock_drift_ms | INTEGER | yes |  | 0 |
+| revoked_at | TEXT |  |  |  |
+| revoked_by | TEXT |  |  |  |
+| revoke_reason | TEXT |  |  |  |
+| wiped_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_off_devices_company_id: company_id
+- ix_off_devices_user: company_id, user_ref, revoked_at
+- ux_off_devices_user_device (unique): company_id, user_ref, device_id
+
+## off_sync_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| device_pk | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| command_id | TEXT | yes |  |  |
+| seq | INTEGER | yes |  | 0 |
+| command_type | TEXT | yes |  |  |
+| op | TEXT | yes |  | 'create' |
+| client_ref | TEXT |  |  |  |
+| status | TEXT | yes |  |  |
+| server_entity_id | TEXT |  |  |  |
+| base_version | INTEGER |  |  |  |
+| payload_json | TEXT | yes |  | '{}' |
+| conflict_json | TEXT |  |  |  |
+| result_json | TEXT |  |  |  |
+| error_message | TEXT |  |  |  |
+| client_created_at | TEXT |  |  |  |
+| device_clock_at | TEXT |  |  |  |
+| effective_at | TEXT |  |  |  |
+| lat | REAL |  |  |  |
+| lng | REAL |  |  |  |
+| accuracy | REAL |  |  |  |
+| received_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| processed_at | TEXT |  |  |  |
+| confirmed_by | TEXT |  |  |  |
+| confirmed_at | TEXT |  |  |  |
+| actor_json | TEXT |  |  |  |
+| resolution | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: device_pk -> off_devices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_off_sync_log_company_id: company_id
+- ix_off_sync_entity: company_id, command_type, server_entity_id
+- ix_off_sync_ref: company_id, client_ref
+- ix_off_sync_status: company_id, status, id
+- ix_off_sync_user: company_id, user_ref, status, id
+- ix_off_sync_device: device_pk, seq
+- ux_off_sync_command (unique): company_id, command_id
+
+## off_uploads
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| device_pk | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| upload_id | TEXT | yes |  |  |
+| command_id | TEXT | yes |  |  |
+| file_name | TEXT | yes |  |  |
+| total_size | INTEGER | yes |  |  |
+| chunk_size | INTEGER | yes |  |  |
+| total_chunks | INTEGER | yes |  |  |
+| received_json | TEXT | yes |  | '[]' |
+| sha256 | TEXT |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| file_id | INTEGER |  |  |  |
+| error_message | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), device_pk -> off_devices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_off_uploads_company_id: company_id
+- ix_off_uploads_file: file_id
+- ix_off_uploads_command: company_id, command_id
+- ix_off_uploads_device: device_pk, status
+- ux_off_uploads_id (unique): upload_id
+
 ## org_assignments
 
 | Column | Type | Not null | Key | Default |
