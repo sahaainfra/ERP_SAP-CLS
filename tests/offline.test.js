@@ -1,5 +1,6 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { todayIST } from '../src/shared/dates.js';
 import '../src/server/modules/registry.js';
 import { runtimeOf } from '../src/server/platform/runtime/index.js';
 import { EICAR } from '../src/server/platform/files/scan.js';
@@ -324,7 +325,7 @@ test('FR-07 the person sees their own commands and what became of them; the audi
 test('AC-04 the settings are parameters (limits, audit, effect at once); the feature flag switches the API off', async () => {
   const { api, reg, sync, create } = await setup();
   await reg();
-  const set = (body) => api.call('POST', '/api/v1/core/parameters', { ...as('SYSADM', 'sys1'), headers: key('p'), body: { scopeType: 'company', scopeId: 1, effectiveFrom: new Date().toISOString().slice(0, 10), reason: 'Sites in the hills sync rarely', ...body } });
+  const set = (body) => api.call('POST', '/api/v1/core/parameters', { ...as('SYSADM', 'sys1'), headers: key('p'), body: { scopeType: 'company', scopeId: 1, effectiveFrom: todayIST(), reason: 'Sites in the hills sync rarely', ...body } });
   assert.equal((await set({ key: 'off.command.max_age_days', value: 500 })).status, 400);
   assert.equal((await set({ key: 'off.sync.batch_max', value: 10 })).status, 201);
   const cmds = Array.from({ length: 11 }, (_, i) => create({ id: cid(), seq: i }));
