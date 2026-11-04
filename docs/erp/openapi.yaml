@@ -1932,4 +1932,87 @@ paths:
     post:
       summary: Assemble the file, check its type, size and for viruses, and attach it to the record the command made; completing twice is the same file
       responses: { '200': { description: the upload with fileId }, '409': { description: the record is not saved yet }, '422': { description: refused } }
+  /api/v1/msg/conversations:
+    get:
+      summary: The person's conversations in one list, pinned first then by last activity, with unread counts and the last message (query view all|unread|pinned|archived|<type>, q, limit, offset); external threads of the communication gateway are included for those who may read the log
+      responses: { '200': { description: '{ data: { rows, total, counts, canExternal, canManage } }' } }
+    post:
+      summary: Make a conversation ({ type DIRECT|GROUP|TEAM|PROJECT|SITE|DEPARTMENT|RECORD, title, members, projectId, siteId, departmentId, entity, entityId }); a direct, place or record conversation that exists is returned (200) instead of a second one (201)
+      responses: { '201': { description: '{ data: { id, created } }' }, '403': { description: no right to make that channel }, '422': { description: a person is unknown or cannot see the record } }
+  /api/v1/msg/conversations/{id}:
+    get:
+      summary: Details of a conversation: members, shared files, linked records (cards drawn for the reader) and the person's own settings
+      responses: { '200': { description: the conversation }, '404': { description: not a member, or it does not exist } }
+    patch:
+      summary: Rename a group, team or channel (administrators)
+      responses: { '200': { description: the conversation }, '403': { description: not an administrator } }
+  /api/v1/msg/conversations/{id}/settings:
+    put:
+      summary: The person's own pin, mute (mutedUntil), mention-only and archive of this conversation
+      responses: { '200': { description: the conversation } }
+  /api/v1/msg/conversations/{id}/archive:
+    post:
+      summary: Archive or unarchive for everyone (administrators); nobody can write in an archived conversation
+      responses: { '200': { description: the conversation } }
+  /api/v1/msg/conversations/{id}/read:
+    post:
+      summary: Mark the conversation read up to a message (default the last)
+      responses: { '200': { description: '{ data: { id, lastRead } }' } }
+  /api/v1/msg/conversations/{id}/messages:
+    get:
+      summary: A page of messages, oldest first, ending before the id given in before (query limit); record cards are drawn for the reader; an external thread is read in place and read-only
+      responses: { '200': { description: '{ data: { rows, hasMore, readOnly, lastRead } }' }, '404': { description: not a member } }
+    post:
+      summary: Send a message ({ body, kind, replyToId, attachments[fileIds], recordLinks[{entity,id}], clientId }); the same clientId returns the same message; a mention of someone outside the conversation is refused
+      responses: { '201': { description: the message }, '422': { description: empty, too long, unknown file, record not open to the sender, mention of a non-member } }
+  /api/v1/msg/conversations/{id}/members:
+    post:
+      summary: Add people ({ users[] }); administrators; for a record conversation each person must be able to open the record
+      responses: { '200': { description: the conversation }, '403': { description: not an administrator }, '422': { description: unknown person, no access to the record or the member limit } }
+  /api/v1/msg/conversations/{id}/members/{user}:
+    delete:
+      summary: Remove a member, or leave (the person's own name); automatic members of a channel cannot be removed by hand
+      responses: { '200': { description: the conversation, or { left: true } } }
+    patch:
+      summary: Make a member an administrator or a member ({ role })
+      responses: { '200': { description: the conversation }, '422': { description: a conversation keeps one administrator } }
+  /api/v1/msg/messages/{id}:
+    patch:
+      summary: Edit your own message inside the edit window
+      responses: { '200': { description: the message }, '422': { description: the window is over } }
+    delete:
+      summary: Delete for everyone inside the edit window (the sender) or at any time with a reason (an administrator of the conversation); the words stay in the audit trail
+      responses: { '200': { description: '{ data: { id, status: DELETED } }' }, '409': { description: already deleted } }
+  /api/v1/msg/messages/{id}/reactions:
+    post:
+      summary: Add or take back an emoji reaction ({ emoji, on })
+      responses: { '200': { description: '{ data: { count, mine } }' } }
+  /api/v1/msg/messages/{id}/forward:
+    post:
+      summary: Forward the words and record links of a message to other conversations of the person ({ conversationIds[] }); the copies are marked forwarded
+      responses: { '201': { description: '{ data: { forwarded, messages } }' } }
+  /api/v1/msg/people:
+    get:
+      summary: Active people of the company to write to or add (query q)
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/msg/record-types:
+    get:
+      summary: The kinds of record the person may link into a message
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/msg/records:
+    get:
+      summary: Search records of a kind by number or title among those the person may open (query type, q)
+      responses: { '200': { description: '{ data: { rows } } as record cards' } }
+  /api/v1/msg/unread:
+    get:
+      summary: The number of conversations with unread messages
+      responses: { '200': { description: '{ data: { unread } }' } }
+  /api/v1/msg/verify:
+    get:
+      summary: Counts and checksums of the earlier stores against the unified index (permission msg.admin.view)
+      responses: { '200': { description: '{ data: { stores, ok } }' }, '403': { description: no right } }
+  /api/v1/msg/conversations/{id}/export:
+    get:
+      summary: A conversation as CSV for compliance (permission msg.compliance.export); audited
+      responses: { '200': { description: text/csv }, '403': { description: no right } }
 
