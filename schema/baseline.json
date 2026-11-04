@@ -16189,6 +16189,18 @@
   "index:ix_iam_users_company_name": {
     "sql": "CREATE INDEX ix_iam_users_company_name ON iam_users (company_id, display_name)"
   },
+  "index:ix_msg_calls_company": {
+    "sql": "CREATE INDEX ix_msg_calls_company ON msg_calls (company_id, status, id)"
+  },
+  "index:ix_msg_calls_company_id": {
+    "sql": "CREATE INDEX ix_msg_calls_company_id ON msg_calls (company_id)"
+  },
+  "index:ix_msg_calls_conv": {
+    "sql": "CREATE INDEX ix_msg_calls_conv ON msg_calls (conversation_id, id)"
+  },
+  "index:ix_msg_config_instance": {
+    "sql": "CREATE INDEX ix_msg_config_instance ON msg_config (instance_id)"
+  },
   "index:ix_msg_conv_activity": {
     "sql": "CREATE INDEX ix_msg_conv_activity ON msg_conversations (company_id, conv_type, last_activity_at)"
   },
@@ -16197,6 +16209,12 @@
   },
   "index:ix_msg_conv_project": {
     "sql": "CREATE INDEX ix_msg_conv_project ON msg_conversations (company_id, project_id)"
+  },
+  "index:ix_msg_hidden_company_id": {
+    "sql": "CREATE INDEX ix_msg_hidden_company_id ON msg_hidden (company_id)"
+  },
+  "index:ix_msg_holds_company_id": {
+    "sql": "CREATE INDEX ix_msg_holds_company_id ON msg_holds (company_id)"
   },
   "index:ix_msg_members_company_id": {
     "sql": "CREATE INDEX ix_msg_members_company_id ON msg_members (company_id)"
@@ -16216,8 +16234,32 @@
   "index:ix_msg_messages_reply": {
     "sql": "CREATE INDEX ix_msg_messages_reply ON msg_messages (reply_to_id)"
   },
+  "index:ix_msg_periods_company_id": {
+    "sql": "CREATE INDEX ix_msg_periods_company_id ON msg_member_periods (company_id)"
+  },
+  "index:ix_msg_periods_member": {
+    "sql": "CREATE INDEX ix_msg_periods_member ON msg_member_periods (conversation_id, user_ref, started_at)"
+  },
+  "index:ix_msg_pins_company_id": {
+    "sql": "CREATE INDEX ix_msg_pins_company_id ON msg_pins (company_id)"
+  },
+  "index:ix_msg_pins_message": {
+    "sql": "CREATE INDEX ix_msg_pins_message ON msg_pins (message_id)"
+  },
   "index:ix_msg_reactions_company_id": {
     "sql": "CREATE INDEX ix_msg_reactions_company_id ON msg_reactions (company_id)"
+  },
+  "index:ix_msg_receipts_user": {
+    "sql": "CREATE INDEX ix_msg_receipts_user ON msg_receipts (company_id, user_ref, message_id)"
+  },
+  "index:ix_msg_stars_user": {
+    "sql": "CREATE INDEX ix_msg_stars_user ON msg_stars (company_id, user_ref, starred_at)"
+  },
+  "index:ix_msg_user_settings_company_id": {
+    "sql": "CREATE INDEX ix_msg_user_settings_company_id ON msg_user_settings (company_id)"
+  },
+  "index:ix_msg_voice_company_id": {
+    "sql": "CREATE INDEX ix_msg_voice_company_id ON msg_voice (company_id)"
   },
   "index:ix_ntf_deliveries_digest": {
     "sql": "CREATE INDEX ix_ntf_deliveries_digest ON ntf_deliveries (status, user_ref, deliver_after)"
@@ -16762,6 +16804,350 @@
   "index:ix_xl_templates_instance": {
     "sql": "CREATE INDEX ix_xl_templates_instance ON xl_templates (instance_id)"
   },
+  "table:msg_calls": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "initiated_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "call_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'RINGING'",
+        "pk": 0
+      },
+      {
+        "name": "provider",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'WEBRTC'",
+        "pk": 0
+      },
+      {
+        "name": "provider_room_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "answered_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "ended_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "participants_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "invited_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_config": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "config_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "config_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "instance_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "effective_from",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:msg_conversations": {
     "columns": [
       {
@@ -16971,6 +17357,415 @@
     "fks": [
       "company_id->org_companies.id:NO ACTION/NO ACTION",
       "department_id->org_departments.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_hidden": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_holds": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "released_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "released_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_member_periods": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "ended_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION"
     ]
   },
   "table:msg_members": {
@@ -17369,6 +18164,274 @@
       "reply_to_id->msg_messages.id:NO ACTION/NO ACTION"
     ]
   },
+  "table:msg_pins": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "pinned_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_presence": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ONLINE'",
+        "pk": 0
+      },
+      {
+        "name": "last_seen_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:msg_reactions": {
     "columns": [
       {
@@ -17404,6 +18467,555 @@
         "type": "TEXT",
         "notnull": 1,
         "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_receipts": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "delivered_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "read_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_stars": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "starred_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_user_settings": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "show_last_seen",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "share_read_receipts",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "show_online",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_voice": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "duration_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "waveform_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
         "pk": 0
       },
       {
@@ -23817,6 +25429,15 @@
   "trigger:trg_core_security_events_no_update": {
     "sql": "CREATE TRIGGER trg_core_security_events_no_update BEFORE UPDATE ON core_security_events BEGIN SELECT RAISE(ABORT, 'The security event log is append-only: rows cannot be changed.'); END"
   },
+  "trigger:trg_msg_members_back": {
+    "sql": "CREATE TRIGGER trg_msg_members_back AFTER UPDATE OF left_at ON msg_members WHEN OLD.left_at IS NOT NULL AND NEW.left_at IS NULL BEGIN INSERT INTO msg_member_periods (company_id, conversation_id, user_ref, started_at) VALUES (NEW.company_id, NEW.conversation_id, NEW.user_ref, strftime('%Y-%m-%dT%H:%M:%fZ','now')); END"
+  },
+  "trigger:trg_msg_members_joined": {
+    "sql": "CREATE TRIGGER trg_msg_members_joined AFTER INSERT ON msg_members BEGIN INSERT INTO msg_member_periods (company_id, conversation_id, user_ref, started_at, ended_at) VALUES (NEW.company_id, NEW.conversation_id, NEW.user_ref, NEW.joined_at, NEW.left_at); END"
+  },
+  "trigger:trg_msg_members_left": {
+    "sql": "CREATE TRIGGER trg_msg_members_left AFTER UPDATE OF left_at ON msg_members WHEN OLD.left_at IS NULL AND NEW.left_at IS NOT NULL BEGIN UPDATE msg_member_periods SET ended_at = NEW.left_at WHERE conversation_id = NEW.conversation_id AND user_ref = NEW.user_ref AND ended_at IS NULL; END"
+  },
   "trigger:trg_pcs_results_no_delete": {
     "sql": "CREATE TRIGGER trg_pcs_results_no_delete BEFORE DELETE ON pcs_check_results BEGIN SELECT RAISE(ABORT, 'A check result cannot be removed'); END"
   },
@@ -29255,6 +30876,15 @@
   "index:ux_iam_users_username": {
     "sql": "CREATE UNIQUE INDEX ux_iam_users_username ON iam_users (username)"
   },
+  "index:ux_msg_config_active": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_config_active ON msg_config (company_id) WHERE status = 'ACTIVE' AND is_active = 1"
+  },
+  "index:ux_msg_config_pending": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_config_pending ON msg_config (company_id) WHERE status = 'PENDING' AND is_active = 1"
+  },
+  "index:ux_msg_config_version": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_config_version ON msg_config (company_id, config_version)"
+  },
   "index:ux_msg_conv_direct": {
     "sql": "CREATE UNIQUE INDEX ux_msg_conv_direct ON msg_conversations (company_id, direct_key) WHERE direct_key IS NOT NULL AND is_active = 1"
   },
@@ -29267,14 +30897,38 @@
   "index:ux_msg_conv_record": {
     "sql": "CREATE UNIQUE INDEX ux_msg_conv_record ON msg_conversations (company_id, entity, entity_id) WHERE conv_type = 'RECORD' AND is_active = 1"
   },
+  "index:ux_msg_hidden_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_hidden_one ON msg_hidden (message_id, user_ref)"
+  },
+  "index:ux_msg_holds_active": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_holds_active ON msg_holds (conversation_id) WHERE released_at IS NULL"
+  },
   "index:ux_msg_members_conv_user": {
     "sql": "CREATE UNIQUE INDEX ux_msg_members_conv_user ON msg_members (conversation_id, user_ref)"
   },
   "index:ux_msg_messages_client": {
     "sql": "CREATE UNIQUE INDEX ux_msg_messages_client ON msg_messages (conversation_id, client_id) WHERE client_id IS NOT NULL"
   },
+  "index:ux_msg_pins_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_pins_one ON msg_pins (conversation_id, message_id)"
+  },
+  "index:ux_msg_presence_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_presence_one ON msg_presence (company_id, user_ref)"
+  },
   "index:ux_msg_reactions_one": {
     "sql": "CREATE UNIQUE INDEX ux_msg_reactions_one ON msg_reactions (message_id, user_ref, emoji)"
+  },
+  "index:ux_msg_receipts_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_receipts_one ON msg_receipts (message_id, user_ref)"
+  },
+  "index:ux_msg_stars_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_stars_one ON msg_stars (message_id, user_ref)"
+  },
+  "index:ux_msg_user_settings_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_user_settings_one ON msg_user_settings (company_id, user_ref)"
+  },
+  "index:ux_msg_voice_message": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_voice_message ON msg_voice (message_id)"
   },
   "index:ux_ntf_notifications_key": {
     "sql": "CREATE UNIQUE INDEX ux_ntf_notifications_key ON ntf_notifications (company_id, user_ref, event_key) WHERE event_key IS NOT NULL"

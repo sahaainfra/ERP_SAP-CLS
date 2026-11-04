@@ -655,3 +655,16 @@ Behind feature flag `ff.msg.p0501`; a module of its own, `modules/msg` (`message
 - **Permissions**: none for direct and group messaging; `msg.channel.manage` (system administrator, directors, project directors and managers, HR manager), `msg.admin.view` (system and IT administrators, auditor), `msg.compliance.export` (auditor). Parameters `msg.edit_window_minutes` (15), `msg.deleted_content_retention_days` (30), `msg.group_max_members` (250).
 - **Client** (FR-07): three panes on a computer, two on a tablet (details over the conversation), one on a phone with a back button; a mini dock with small chat windows over any page on a computer, kept in the shell's `extras`.
 
+## 51. Messaging features (part 05.02)
+
+Behind feature flag `ff.msg.p0502`, inside the `msg` module (`features.js` the service, `config.js` the settings; routes, validators and `index.js` extended). Tables `msg_receipts`, `msg_stars`, `msg_pins`, `msg_hidden`, `msg_voice`, `msg_user_settings`, `msg_presence`, `msg_holds`, `msg_member_periods`, `msg_calls`, `msg_config` (migrations 88 and 89).
+
+- **Presence and typing** (FR-01, ADR-226): `POST /msg/presence` heartbeat, `GET /msg/presence`; typing goes through `hub.emitTransient` (not logged, ids only), as do call signals.
+- **Receipts** (FR-02, BR-01): `msg_receipts` per (message, person); `read` writes them and publishes `msg.receipt.updated`; group read details via `GET /messages/:id/receipts`; privacy in `msg_user_settings`, overridden when `enforceReadReceipts` is on.
+- **Search** (FR-03, ADR-227): `GET /msg/search` is limited to the person's membership periods (`msg_member_periods`, trigger-kept) and hides hidden messages; hits carry the id used by `messages?around=` to jump to context.
+- **Edit and delete, stars, pins, hide** (FR-04, FR-05, ADR-228): windows from the active settings; delete for me writes `msg_hidden`.
+- **Gallery and voice** (FR-06, FR-07): `GET /conversations/:id/media`; voice notes are files with `msg_voice` (duration, waveform); limits for file, video and voice length are enforced on send.
+- **Calls** (FR-08, BR-02, ADR-229): `msg_calls`; `calls.start|join|decline|end|signal`; ICE servers with coturn-REST credentials; ringing is `GET /calls/ringing` plus the `msg.call.started` event; the call page (`/collab/call`) is a WebRTC mesh; calls are never recorded.
+- **Retention and legal hold** (FR-09, ADR-228): job `msg.purge` uses `retentionDays` and skips held conversations; holds need `msg.legal_hold.manage`.
+- **Settings** (ADR-230): `msg_config` versions (PENDING, SCHEDULED, ACTIVE, RETIRED, REJECTED), workflow type `MSG_CONFIG` (maker-checker), `activeConfig()` promotes scheduled versions that are due; page `/admin/messaging`.
+- **Real-time** : `realtimeConversations` supplies the `conv:<id>` rooms; `emitTransient` is new in `platform/realtime`.

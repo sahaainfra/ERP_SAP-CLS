@@ -2016,3 +2016,112 @@ paths:
       summary: A conversation as CSV for compliance (permission msg.compliance.export); audited
       responses: { '200': { description: text/csv }, '403': { description: no right } }
 
+  /api/v1/msg/me/settings:
+    get:
+      summary: The person's own messaging privacy: share read receipts, share last seen (an organisation that enforces receipts overrides the first)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+    put:
+      summary: Change the person's own privacy settings
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/presence:
+    post:
+      summary: Heartbeat: the person is online (auto-away after 5 minutes, offline after 60 seconds of silence)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+    get:
+      summary: Presence of the given people (query users), hiding last seen where the person chose to
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/typing:
+    post:
+      summary: Typing indicator, sent as a transient event; never stored
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/delivered:
+    post:
+      summary: Mark the messages shown on a device as delivered
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/receipts:
+    get:
+      summary: Who has had and who has read a message (groups: read details; respects privacy unless the organisation enforces receipts)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/search:
+    get:
+      summary: Search messages (query q, conversation, from, type, dates); never returns what was said while the person was not a member; each hit carries the id to jump to
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/star:
+    post:
+      summary: Star or unstar a message for the person
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/starred:
+    get:
+      summary: The person's starred messages
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/pin:
+    post:
+      summary: Pin or unpin a message in the conversation (members)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/pins:
+    get:
+      summary: Pinned messages of a conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/hide:
+    post:
+      summary: Delete a message for me only
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/media:
+    get:
+      summary: Media gallery: photos, videos, files, links and voice notes (query kind)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/holds:
+    get:
+      summary: Legal holds (permission msg.legal_hold.manage)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/hold:
+    post:
+      summary: Place a legal hold with a reason (permission msg.legal_hold.manage); audited
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/holds/{id}/release:
+    post:
+      summary: Release a hold; a different person than the one who placed it, with a reason
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/ringing:
+    get:
+      summary: Calls ringing for the person now
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}:
+    get:
+      summary: One call with participants and the ICE servers (STUN, TURN with short-lived credentials)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/join:
+    post:
+      summary: Join a call
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/decline:
+    post:
+      summary: Decline a call
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/end:
+    post:
+      summary: Leave or end a call; recording is never made
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/signal:
+    post:
+      summary: Pass a WebRTC offer, answer or candidate to a participant (transient, size-limited, not stored)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/calls:
+    get:
+      summary: Call history of a conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+    post:
+      summary: Start an audio or video call in a conversation (members; calls must be enabled)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/config:
+    get:
+      summary: The messaging settings in force, the version waiting, history (permission msg.settings.view); the TURN secret is masked
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/config/changes:
+    post:
+      summary: Propose new settings: maker-checker, effective from a date, mandatory reason (permission msg.settings.edit); 202 with the workflow instance
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/config/export:
+    get:
+      summary: Export the settings and history as JSON
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
