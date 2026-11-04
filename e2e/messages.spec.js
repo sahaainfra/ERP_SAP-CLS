@@ -81,7 +81,7 @@ test('AC-01 AC-02 FR-02 FR-03 FR-04 FR-07 one Messages app: a direct conversatio
   const card = a.page.getByTestId('record-card').first();
   await expect(card).toContainText('Shuttering for the bridge');
   await expect(card).toHaveAttribute('data-restricted', 'false');
-  await expect(a.page.getByTestId('msg-file')).toContainText('site.png');
+  await expect(a.page.getByTestId('msg-thread').getByTestId('msg-file')).toContainText('site.png');
   if (!phone) await expect(a.page.getByTestId('msg-details-panel')).toBeVisible(); else await expect(a.page.getByTestId('msg-details-panel')).toHaveCount(0);
   await noOverflow(a.page);
 
