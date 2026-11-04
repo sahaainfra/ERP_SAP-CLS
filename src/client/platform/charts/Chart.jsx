@@ -232,7 +232,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   const box = type === 'donut' ? '0 0 240 240' : type === 'gauge' ? '0 0 240 150' : `0 0 ${W} ${H}`;
   return (
     <figure className="ch" data-chart={type}>
-      <svg ref={svgRef} viewBox={box} role="img" aria-labelledby={`${id}-t`} focusable="false" className="ch-svg">
+      <svg ref={svgRef} viewBox={box} role="group" aria-roledescription="chart" aria-labelledby={`${id}-t`} focusable="false" className="ch-svg">
         <title id={`${id}-t`}>{`${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; the same figures are in the table below.`}</title>
         {body}
       </svg>

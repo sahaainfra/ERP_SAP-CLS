@@ -1,3 +1,5 @@
+import { notificationsOf } from '../../platform/notify/index.js';
+import { workflowOf } from '../../platform/workflow/index.js';
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { hasPermission, hasPermissionAnywhere } from '../../platform/auth/index.js';
@@ -7,6 +9,7 @@ import { transaction } from '../../platform/db/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { objectTypes } from '../../platform/objects/index.js';
+import { searchEntities } from '../../platform/search/registry.js';
 import { parse } from '../../platform/validation/index.js';
 
 // Part 03.05: the application shell's server side. The navigation registry (filtered per person by permission and feature flag),
@@ -51,6 +54,8 @@ export const parseFavouriteOrder = (b) => parse(z.object({ ids: z.array(z.number
 export const parseVisit = (b) => parse(z.object({ entity: z.string().max(40).regex(/^[a-z][a-z_]*$/), entityId: z.number().int().positive(), title: text(120), route }).strict(), b);
 export const parseContext = (b) => parse(z.object({ projectId: z.number().int().positive().nullable().default(null), siteId: z.number().int().positive().nullable().default(null) }).strict(), b);
 
+/** A record type a person can open, favourite or find among their recent records: an Object Page type, or a searchable type of part 03.08. */
+const recordType = (entity) => objectTypes.get(entity) ?? searchEntities.get(entity);
 const nowIso = () => new Date().toISOString();
 const flagList = (rows) => [...new Set(rows.map((r) => r.feature_flag).filter(Boolean))];
 
@@ -246,7 +251,7 @@ export function createShellService({ db, flags, approvals }) {
   /** A person's favourites; a page they can no longer open, or a record they can no longer see, is left out. */
   function favourites(actor) {
     const pages = new Map(pagesOf(actor).map((p) => [p.code, p]));
-    return favRows(actor).filter((r) => (r.kind === 'page' ? pages.has(r.nav_code) : Boolean(objectTypes.get(r.entity)?.access(db, actor, r.entity_id)))).map((r) => {
+    return favRows(actor).filter((r) => (r.kind === 'page' ? pages.has(r.nav_code) : Boolean(recordType(r.entity)?.access(db, actor, r.entity_id)))).map((r) => {
       const p = r.kind === 'page' ? pages.get(r.nav_code) : null;
       return presentFav({ ...r, title: p?.label ?? r.title, route: p?.route ?? r.route });
     });
@@ -262,7 +267,7 @@ export function createShellService({ db, flags, approvals }) {
         if (!page) throw notFound('That page does not exist or is not open to you.');
         rec = { refKey: `nav:${page.code}`, kind: 'page', navCode: page.code, entity: null, entityId: null, title: page.label, route: page.route };
       } else {
-        const def = objectTypes.get(body.entity);
+        const def = recordType(body.entity);
         const found = def?.access(db, actor, body.entityId);
         if (!def || !found) throw notFound('That record does not exist or is not open to you.');
         const title = db.prepare('SELECT title FROM ui_recent_records WHERE company_id = ? AND user_ref = ? AND entity = ? AND entity_id = ?').get(actor.companyId, user(actor), body.entity, body.entityId)?.title;
@@ -294,7 +299,7 @@ export function createShellService({ db, flags, approvals }) {
 
   // ---- recent records ----
   function visit(actor, body) {
-    const def = objectTypes.get(body.entity);
+    const def = recordType(body.entity);
     if (!def || !def.access(db, actor, body.entityId)) throw notFound('That record does not exist or is not open to you.');
     return transaction(db, () => {
       const at = nowIso();
@@ -309,8 +314,8 @@ export function createShellService({ db, flags, approvals }) {
   /** The records a person opened last, newest first, leaving out any they can no longer see. */
   function recent(actor, limit = 10) {
     const rows = db.prepare('SELECT * FROM ui_recent_records WHERE company_id = ? AND user_ref = ? ORDER BY visited_at DESC, id DESC LIMIT 30').all(actor.companyId, user(actor));
-    return rows.filter((r) => Boolean(objectTypes.get(r.entity)?.access(db, actor, r.entity_id))).slice(0, limit)
-      .map((r) => ({ entity: r.entity, entityId: r.entity_id, title: r.title, route: r.route, type: objectTypes.get(r.entity)?.label ?? r.entity, visitedAt: r.visited_at }));
+    return rows.filter((r) => Boolean(recordType(r.entity)?.access(db, actor, r.entity_id))).slice(0, limit)
+      .map((r) => ({ entity: r.entity, entityId: r.entity_id, title: r.title, route: r.route, type: recordType(r.entity)?.label ?? r.entity, visitedAt: r.visited_at }));
   }
 
   // ---- working context ----
@@ -362,7 +367,13 @@ export function createShellService({ db, flags, approvals }) {
   }
 
   /** What the notification bell shows until the notification service (04.06) exists: the requests waiting for this person. */
-  const bell = (actor) => ({ unread: approvals.awaitingCount(actor), source: 'approvals' });
+  const bell = (actor) => {
+    // part 04.06: with the notification engine on, the bell counts the unread notifications of the centre (the tasks waiting for a decision are among them)
+    try { if (actor.companyId && flags.isOn(actor, 'ff.eng.p0406')) return { unread: notificationsOf(db).unread(actor.companyId, actor.user), source: 'notifications' }; } catch { /* the notification tables are not there yet */ }
+    let workflow = 0;
+    try { workflow = workflowOf(db).openCount(actor); } catch { /* the engine's tables are not there yet */ }
+    return { unread: approvals.awaitingCount(actor) + workflow, source: 'approvals' };
+  };
 
   return { navigation, registry, propose, history, exportSettings, importSettings, favourites, addFavourite, removeFavourite, orderFavourites, visit, recent, contextOptions, setContext, launchpad, bell };
 }

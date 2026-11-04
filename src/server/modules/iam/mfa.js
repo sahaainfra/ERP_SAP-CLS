@@ -1,4 +1,5 @@
 import { createHash, randomInt } from 'node:crypto';
+import { localisationOf } from '../../platform/i18n/index.js';
 import QRCode from 'qrcode';
 import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
@@ -24,7 +25,9 @@ function backupCodes() {
  * Second factors (FR-02): an authenticator app (TOTP), a one-time code by text or WhatsApp, and ten single-use backup codes.
  * The TOTP seed is stored encrypted with the vault; it is shown once, at enrolment, so it can be typed in by hand.
  */
-export function createMfaService({ db, identity, notifier }) {
+export function createMfaService({ db, identity, notifier, otp }) {
+  /** The translator for a person's own language (part 03.09: messages go out in the language of their recipient). */
+  const msg = (user) => { const loc = localisationOf(db); return loc.translator(user.company_id, loc.languageOf({ companyId: user.company_id, userId: user.id, username: user.username })); };
   const now = () => identity.now();
   const slot = (userId) => `iam/${userId}/totp`;
   const factors = (userId) => db.prepare("SELECT * FROM iam_mfa_factors WHERE user_id = ? AND is_active = 1 AND type != 'backup'").all(userId);
@@ -89,15 +92,22 @@ export function createMfaService({ db, identity, notifier }) {
     /** Start a text or WhatsApp factor: the code goes to the phone, and the factor counts once it is confirmed. */
     async phoneBegin(user, { phone, channel }) {
       if (!/^\+?[0-9]{10,15}$/.test(phone)) throw unprocessable('Give the mobile number with country code, digits only, for example +919876543210.');
-      const code = String(randomInt(100000, 1000000));
-      transaction(db, () => {
+      const factorId = transaction(db, () => {
         db.prepare("DELETE FROM iam_mfa_factors WHERE user_id = ? AND type = ? AND verified_at IS NULL").run(user.id, channel);
-        db.prepare('INSERT INTO iam_mfa_factors (company_id, user_id, type, phone, meta_json, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .run(user.company_id, user.id, channel, phone, JSON.stringify({ otpHash: sha(code), expires: iso(now() + OTP_MINUTES * 60_000), tries: 0 }), user.username, 'mfa_enrolment');
+        return Number(db.prepare("INSERT INTO iam_mfa_factors (company_id, user_id, type, phone, meta_json, created_by, source_type) VALUES (?, ?, ?, ?, '{}', ?, 'mfa_enrolment')").run(user.company_id, user.id, channel, phone, user.username).lastInsertRowid);
       });
-      const sent = await notifier.phone(user.company_id, channel, phone, `Your ERP verification code is ${code}. It works for ${OTP_MINUTES} minutes.`);
-      if (!sent.delivered) throw new HttpError(503, 'SERVICE_UNAVAILABLE', `The ${channel === 'sms' ? 'text message' : 'WhatsApp'} could not be sent (${sent.reason}). Ask an administrator to check the ${channel} connector.`);
+      const sent = await svc.sendOtp(user, { purpose: 'MFA_ENROL', channel, phone, factorId, key: 'verify.body' });
+      if (!sent.delivered) throw new HttpError(503, 'SERVICE_UNAVAILABLE', `The ${channel === 'sms' ? 'text message' : 'WhatsApp'} could not be sent (${sent.reason}). Ask an administrator to check the ${channel === 'sms' ? 'text message' : 'WhatsApp'} connector.`);
       return { sent: true, expiresInMinutes: OTP_MINUTES };
+    },
+
+    /** The one-time code service (part 04.07) makes, keeps (as a hash), sends and later checks the code; the connectors the sign-in policy names carry it, as before. */
+    sendOtp(user, { purpose, channel, phone, factorId, key }) {
+      return otp.send({
+        companyId: user.company_id, purpose, channel: channel.toUpperCase(), address: phone, userRef: user.username, subjectRef: `factor:${factorId}`, ttlSeconds: OTP_MINUTES * 60, actor: user.username, cooldownSeconds: 0, maxPerHour: 100,
+        render: (code) => msg(user)('notify', key, { code, minutes: OTP_MINUTES }),
+        deliver: (text) => notifier.phone(user.company_id, channel, phone, text),
+      });
     },
 
     phoneConfirm(user, channel, code) {
@@ -115,20 +125,14 @@ export function createMfaService({ db, identity, notifier }) {
     },
 
     otpMatches(factor, code) {
-      const meta = JSON.parse(factor.meta_json);
-      if (!meta.otpHash || meta.expires <= iso(now()) || meta.tries >= 5) return false;
-      const ok = meta.otpHash === sha(String(code ?? '').trim());
-      db.prepare('UPDATE iam_mfa_factors SET meta_json = ? WHERE id = ?').run(JSON.stringify({ ...meta, tries: meta.tries + 1, ...(ok ? { otpHash: null } : {}) }), factor.id);
-      return ok;
+      return otp.verify({ companyId: factor.company_id, purposes: ['MFA_ENROL', 'LOGIN_MFA'], subjectRef: `factor:${factor.id}`, code: String(code ?? '').trim(), actor: 'sign-in' }).ok;
     },
 
     /** At sign-in: send a fresh code to the chosen text or WhatsApp factor. */
     async sendCode(user, factorId) {
       const f = svc.verifiedFactors(user.id).find((x) => x.id === Number(factorId) && x.type !== 'totp');
       if (!f) throw notFound('That second step is not available.');
-      const code = String(randomInt(100000, 1000000));
-      db.prepare('UPDATE iam_mfa_factors SET meta_json = ? WHERE id = ?').run(JSON.stringify({ otpHash: sha(code), expires: iso(now() + OTP_MINUTES * 60_000), tries: 0 }), f.id);
-      const sent = await notifier.phone(user.company_id, f.type, f.phone, `Your ERP sign-in code is ${code}. It works for ${OTP_MINUTES} minutes.`);
+      const sent = await svc.sendOtp(user, { purpose: 'LOGIN_MFA', channel: f.type, phone: f.phone, factorId: f.id, key: 'otp.body' });
       return { sent: sent.delivered, message: sent.delivered ? 'A code has been sent.' : 'The code could not be sent. Use your authenticator app or a backup code.' };
     },
 

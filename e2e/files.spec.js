@@ -44,7 +44,7 @@ async function newDocument(page, title) {
 }
 
 test('AC-01 upload by drag-and-drop style input: progress, scan, preview and a short-lived link that really downloads', async ({ page, request }, info) => {
-  const companyId = company(info, '61', '62');
+  const companyId = company(info, '961', '962');
   await prepare(request, companyId);
   const errors = await open(page, 'PM', '/admin/sample-documents', companyId, 'e2e-pm');
   await expect(page.getByRole('heading', { name: 'Sample Documents', exact: true })).toBeVisible();
@@ -81,7 +81,7 @@ test('AC-01 upload by drag-and-drop style input: progress, scan, preview and a s
 });
 
 test('FR-03 bad files are refused with a clear message: wrong type, a program renamed to .pdf', async ({ page, request }, info) => {
-  const companyId = company(info, '63', '64');
+  const companyId = company(info, '963', '964');
   await prepare(request, companyId);
   await open(page, 'PM', '/admin/sample-documents', companyId, 'e2e-pm');
   await newDocument(page, 'Bad uploads');
@@ -95,7 +95,7 @@ test('FR-03 bad files are refused with a clear message: wrong type, a program re
 });
 
 test('T-01 a file that fails the virus scan is quarantined, cannot be opened, and shows on the administrator overview', async ({ page, request }, info) => {
-  const companyId = company(info, '65', '66');
+  const companyId = company(info, '965', '966');
   await prepare(request, companyId);
   await open(page, 'SYSADM', '/admin/sample-documents', companyId, 'e2e-sys');
   await newDocument(page, 'Scan test');
@@ -112,7 +112,7 @@ test('T-01 a file that fails the virus scan is quarantined, cannot be opened, an
 });
 
 test('FR-02 a large file goes up in chunks, then a new version replaces it; submitting locks the record so files cannot be removed', async ({ page, request }, info) => {
-  const companyId = company(info, '67', '68');
+  const companyId = company(info, '967', '968');
   await prepare(request, companyId);
   const errors = await open(page, 'PM', '/admin/sample-documents', companyId, 'e2e-pm');
   await newDocument(page, 'Drawing set');
@@ -134,7 +134,7 @@ test('FR-02 a large file goes up in chunks, then a new version replaces it; subm
 });
 
 test('Removing a file asks for a reason and hides it from the record', async ({ page, request }, info) => {
-  const companyId = company(info, '69', '70');
+  const companyId = company(info, '969', '970');
   await prepare(request, companyId);
   await open(page, 'PM', '/admin/sample-documents', companyId, 'e2e-pm');
   await newDocument(page, 'Removable');
@@ -149,7 +149,7 @@ test('Removing a file asks for a reason and hides it from the record', async ({ 
 });
 
 test('FR-08 the camera button is there on a phone-sized screen and asks for the rear camera', async ({ page, request }, info) => {
-  const companyId = company(info, '71', '72');
+  const companyId = company(info, '971', '972');
   await prepare(request, companyId);
   await open(page, 'PM', '/admin/sample-documents', companyId, 'e2e-pm');
   await newDocument(page, 'Camera');
@@ -162,7 +162,7 @@ test('FR-08 the camera button is there on a phone-sized screen and asks for the 
 });
 
 test('AC-06 file settings: SYSADM asks, ITADM approves, and the limit changes; PM has no access', async ({ page, request }, info) => {
-  const companyId = company(info, '73', '74');
+  const companyId = company(info, '973', '974');
   await prepare(request, companyId);
   const errors = await open(page, 'SYSADM', '/admin/file-storage', companyId, 'e2e-sys');
   await expect(page.getByRole('heading', { name: 'File Storage Settings' })).toBeVisible();

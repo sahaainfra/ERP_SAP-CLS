@@ -23,6 +23,7 @@ import { runReadiness } from './platform/health/index.js';
 import { loadBuildInfo } from './modules/core/about/service.js';
 import { mountModules } from './modules/registry.js';
 import { createFlagService } from './modules/core/api.js';
+import { attachSocketServer } from './platform/realtime/socket.js';
 import { assertDeclared, buildRegistry, cors, csrfGuard, enforcePolicy, persistRegistry, securityHeaders, securityOf } from './platform/security/index.js';
 
 const sameToken = (a, b) => {
@@ -150,6 +151,13 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   }
 
   app.use(errorHandler(logger));
+  // Part 04.06: the Socket.IO layer rides on the HTTP server that listen() makes, so every way of starting the application (the process, the tests, the browser tests) has it.
+  const listen = app.listen.bind(app);
+  app.listen = (...args) => {
+    const server = listen(...args);
+    attachSocketServer({ server, db, config, authenticate: authenticate(config, identity.resolver, authz), isOn: (actor) => flags.isOn(actor, 'ff.eng.p0406') });
+    return server;
+  };
   // The route registry (part 02.07, FR-01): every live route against the route policy; an undeclared route stops a staging or production start.
   const built = buildRegistry(app, sec.policy);
   assertDeclared(built, { environment: config.environment, log: (text) => logger.warn({ msg: 'route policy', problem: text }) });

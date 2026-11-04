@@ -62,7 +62,7 @@ input[type='search'] { min-width: min(20rem, 100%); }
 .btn:disabled { color: var(--erp-color-text-disabled); cursor: not-allowed; }
 .btn-primary:disabled { background: var(--erp-color-bg-surface-sunken); border-color: var(--erp-color-border-subtle); }
 
-.table-wrap { overflow-x: auto; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
+.table-wrap { position: relative; overflow-x: auto; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: var(--erp-cell-py) var(--erp-cell-px); font-size: var(--erp-density-font-size); border-bottom: 1px solid var(--erp-color-border-subtle); vertical-align: top; }
 th { font: var(--erp-type-label); background: var(--erp-color-bg-surface-sunken); }
@@ -642,8 +642,8 @@ tr.op-changed del, .op-delta del { color: var(--erp-color-status-error-fg); }
 }
 .sh-palette input { width: 100%; min-height: 44px; padding: 0 var(--erp-space-3); font: var(--erp-type-body-lg); }
 .sh-palette ul { list-style: none; margin: 0; padding: 0; }
-.sh-palette li button { display: flex; align-items: center; gap: var(--erp-space-3); width: 100%; min-height: 40px; padding: 0 var(--erp-space-3); border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
-.sh-palette li[aria-selected='true'] button { background: var(--erp-color-bg-selected); }
+.sh-palette li.sh-palette-item { display: flex; align-items: center; gap: var(--erp-space-3); width: 100%; min-height: 40px; padding: 0 var(--erp-space-3); border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
+.sh-palette li[aria-selected='true'] { background: var(--erp-color-bg-selected); }
 .sh-palette-empty { padding: var(--erp-space-3); }
 .sh-keys { display: grid; grid-template-columns: auto 1fr; gap: var(--erp-space-2) var(--erp-space-5); margin: 0; }
 .sh-keys dd { margin: 0; }
@@ -685,7 +685,7 @@ kbd { font: var(--erp-type-caption); border: 1px solid var(--erp-color-border-co
 /* touch ergonomics (FR-05): on a touch screen or a phone every control is at least 44 px, whatever density was chosen */
 @media (pointer: coarse), (max-width: 767px) {
   :root, [data-density] { --erp-control-h: 44px; --erp-row-h: 48px; --erp-cell-py: 12px; }
-  .btn, .btn-small, .sh-icon, .sh-user, .sh-chip, .sh-search, .lr-chip, .sh-options button, .sh-palette li button { min-height: 44px; }
+  .btn, .btn-small, .sh-icon, .sh-user, .sh-chip, .sh-search, .lr-chip, .sh-options button, .sh-palette li.sh-palette-item { min-height: 44px; }
   .btn-small { padding-inline: 12px; }
   .sh-icon { min-width: 44px; }
   .sh-nav li a, .sh-group h2 button { min-height: 44px; }
@@ -857,3 +857,100 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
   .ch-table summary { min-height: 44px; display: flex; align-items: center; }
   .wd.is-editing { cursor: auto; }
 }
+
+/* ---- global search and the command palette (part 03.08) ---- */
+.sh-palette-group { padding: var(--erp-space-3) var(--erp-space-3) var(--erp-space-1); font: var(--erp-type-label); color: var(--erp-color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.sh-palette-main { display: flex; flex-direction: column; flex: 1; min-width: 0; padding: var(--erp-space-1) 0; }
+.sh-palette-title, .sh-palette-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-palette mark, .srch-row mark { background: var(--erp-color-status-warning-bg); color: inherit; border-radius: 2px; padding: 0 1px; font-weight: 600; }
+.sh-palette li.sh-palette-item { min-height: 44px; }
+.srch-form { display: grid; gap: var(--erp-space-4); grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); align-items: end; margin-bottom: var(--erp-space-4); }
+.srch-form .srch-q { grid-column: 1 / -1; }
+.srch-form .srch-q input { width: 100%; min-height: 44px; font: var(--erp-type-body-lg); }
+.srch-types { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); margin: 0 0 var(--erp-space-4); padding: 0; list-style: none; }
+.srch-count { font: var(--erp-type-caption); opacity: 0.85; }
+.srch-group { margin-bottom: var(--erp-space-5); }
+.srch-group > header { display: flex; align-items: center; justify-content: space-between; gap: var(--erp-space-3); margin-bottom: var(--erp-space-2); }
+.srch-group h2 { margin: 0; font: var(--erp-type-title-sm); }
+.srch-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
+.srch-row { display: flex; align-items: center; gap: var(--erp-space-3); padding: var(--erp-space-3) var(--erp-space-4); border-top: 1px solid var(--erp-color-border-subtle); }
+.srch-row:first-child { border-top: 0; }
+.srch-row a.srch-title { font-weight: 600; color: var(--erp-color-text-link); text-decoration: none; overflow-wrap: anywhere; }
+.srch-row a.srch-title:hover, .srch-row a.srch-title:focus-visible { text-decoration: underline; }
+.srch-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.srch-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-3); }
+.srch-tools { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); align-items: center; margin-bottom: var(--erp-space-3); }
+@media (max-width: 480px) { .srch-row { flex-wrap: wrap; } .srch-form { grid-template-columns: 1fr; } }
+.srch-two { display: grid; gap: var(--erp-space-5); grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.srch-tools details[open] { flex-basis: 100%; }
+.srch-menu { display: grid; gap: var(--erp-space-2); margin-top: var(--erp-space-2); padding: var(--erp-space-3); background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-md); }
+.wd-cal-row { display: contents; }
+
+/* part 03.09, FR-05: a person who asked for less motion gets none, whatever a component animates */
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+
+/* Workflow engine (part 04.01): the read-only step diagram and the pages that use it. */
+.wf-diagram { display: flex; flex-direction: column; gap: var(--erp-space-3); list-style: none; padding: 0; margin: var(--erp-space-4) 0; }
+.wf-step { position: relative; display: flex; flex-direction: column; gap: var(--erp-space-1); padding: var(--erp-space-3); background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border); border-radius: var(--erp-radius-md); }
+.wf-step-active { border-color: var(--erp-color-brand-primary); background: var(--erp-color-brand-primary-tint); }
+.wf-step-skipped { opacity: 0.8; border-style: dashed; }
+.wf-step-no { align-self: flex-start; min-width: 1.5rem; text-align: center; border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface-sunken); color: var(--erp-color-border-strong); font-weight: 600; }
+.wf-step:not(:last-child)::after { content: '↓'; position: absolute; left: 50%; bottom: calc(-1 * var(--erp-space-3)); transform: translate(-50%, 50%); line-height: 1; color: var(--erp-color-border-strong); }
+@media (min-width: 900px) {
+  .wf-diagram { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
+  .wf-step { flex: 1 1 11rem; max-width: 15rem; }
+  .wf-step:not(:last-child)::after { content: '→'; left: auto; right: calc(-1 * var(--erp-space-3)); bottom: 50%; transform: translate(50%, 50%); }
+}
+.wf-tabs { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); margin: var(--erp-space-4) 0; }
+.wf-timeline { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--erp-space-2); }
+.wf-timeline li { padding-left: var(--erp-space-3); border-left: 3px solid var(--erp-color-border); }
+.wf-editor-step { border: 1px solid var(--erp-color-border); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); margin: var(--erp-space-3) 0; background: var(--erp-color-bg-surface); }
+.wf-editor-step legend { font-weight: 600; }
+.wf-inline { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: flex-end; }
+
+/* Approval inbox (part 04.03): phone cards with large touch targets and the secure-link page. */
+.mob-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--erp-space-3); }
+.mob-card { display: flex; flex-direction: column; align-items: flex-start; gap: var(--erp-space-1); width: 100%; min-height: 4.5rem; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.mob-btn { min-height: 3rem; min-width: 3rem; font-size: 1rem; }
+.mob-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); margin: var(--erp-space-4) 0; }
+.mob-actions .mob-btn { flex: 1 1 8rem; }
+.link-page { max-width: 36rem; margin: 0 auto; padding: var(--erp-space-5) var(--erp-page-padding-mobile); }
+
+/* Protocol & Control Engine (part 04.04): the control cycle, and the dashboard's two columns. */
+.wf-step-done { border-color: var(--erp-color-brand-primary); }
+.wf-step-pending { border-style: dashed; opacity: 0.85; }
+.pcs-two { display: grid; gap: var(--erp-space-5); grid-template-columns: 1fr; }
+@media (min-width: 900px) { .pcs-two { grid-template-columns: 1fr 1fr; } }
+
+/* Notifications (part 04.06): the bell drawer and the centre. */
+.ntf-bell { position: relative; display: inline-flex; }
+.ntf-panel { position: absolute; right: 0; top: calc(100% + var(--erp-space-2)); width: min(24rem, calc(100vw - 2rem)); max-height: 70vh; overflow: auto; z-index: 40; padding: var(--erp-space-3); background: var(--erp-color-bg-surface); color: var(--erp-color-text); border: 1px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-md); box-shadow: var(--erp-shadow-popover, 0 4px 12px var(--erp-color-border-strong)); }
+.ntf-panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--erp-space-3); }
+.ntf-panel-head h2 { margin: 0; font-size: 1rem; }
+.ntf-panel-foot { margin: var(--erp-space-3) 0 0; font-size: 0.875rem; }
+.ntf-list { list-style: none; margin: var(--erp-space-3) 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.ntf-item { display: flex; gap: var(--erp-space-2); align-items: flex-start; justify-content: space-between; padding: var(--erp-space-2) var(--erp-space-3); border: 1px solid var(--erp-color-border); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
+.ntf-unread { border-left: 4px solid var(--erp-color-brand-primary); background: var(--erp-color-brand-primary-tint); }
+.ntf-open { display: flex; flex-direction: column; gap: var(--erp-space-1); flex: 1; text-align: left; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.ntf-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }
+.ntf-day h2 { font-size: 1rem; margin: var(--erp-space-4) 0 0; }
+@media (max-width: 600px) { .ntf-item { flex-direction: column; } .ntf-panel { position: fixed; left: 1rem; right: 1rem; top: 3.5rem; width: auto; } }
+
+/* Part 04.08: tasks. The board is a row of columns that scrolls sideways inside its own box on a phone; the calendar is a seven-column grid of days. */
+.tsk-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: var(--erp-space-3); overflow-x: auto; padding-bottom: var(--erp-space-2); }
+.tsk-col ul, .tsk-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.tsk-card { display: grid; gap: 2px; padding: var(--erp-space-2); border: 1px solid var(--erp-color-border-subtle); border-radius: 6px; }
+.tsk-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.tsk-day { min-height: 84px; padding: 4px; border: 1px solid var(--erp-color-border-subtle); border-radius: 4px; overflow: hidden; overflow-wrap: anywhere; font-size: 0.85em; }
+.tsk-day-empty { border-style: dashed; opacity: 0.5; }
+@media (max-width: 600px) { .tsk-cal { grid-template-columns: 1fr; } .tsk-day-empty { display: none; } .tsk-day { min-height: 0; } }
+
+/* Part 04.10: the document viewer draws each page with a layer of markups over it; the folder tree beside the register is a plain list. */
+.doc-pages { display: grid; gap: var(--erp-space-3); justify-items: start; overflow-x: auto; }
+.doc-page { position: relative; border: 1px solid var(--erp-color-border-subtle); max-width: 100%; }
+.doc-page img { display: block; max-width: 100%; height: auto; }
+.doc-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.doc-register { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: var(--erp-space-4); align-items: start; }
+.doc-tree ul { list-style: none; margin: 0; padding-left: var(--erp-space-3); }
+.doc-tree > ul { padding-left: 0; }
+@media (max-width: 800px) { .doc-register { grid-template-columns: 1fr; } }

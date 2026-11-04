@@ -5,6 +5,9 @@ import { parseSampleRequest } from './sample-requests.js';
 import { parseVersionBody, parseViewCreate, parseViewList, parseViewUpdate } from './lists.js';
 import { parseQr, parseSubscription, parseUnsubscribe } from './device.js';
 import { parseDashboardCode, parseHistory, parsePersonal, parseRoleDefault, parseWidgetCode, parseWidgetQuery } from './widgets.js';
+import { parseCatalogueParams, parseChanges, parseHistory as parseTranslationHistory, parseImportQuery, parseLocalePrefs, parseTranslationList } from './translations.js';
+import { parseDefect, parseExportQuery, parseModuleParam, parsePageCode, parseResolve, parseRouteChange, parseSignoff, parseTrackerQuery, parseTransition } from './page-migration.js';
+import { parseAnalytics, parseClick, parseCommands, parseEntityParam, parseReindex, parseSearch } from './search.js';
 import { parseContext, parseFavourite, parseFavouriteOrder, parseNavChange, parseNavImport, parseVisit } from './shell.js';
 import { parseComment, parseCompare, parseDocumentLink, parseReasonFor, parseTypeId } from './objects.js';
 import {
@@ -148,3 +151,57 @@ export function dashboardRoutes(service, { idempotent }) {
   r.get('/dashboards/:code/history', (req, res) => res.json({ data: service.history(req.actor, parseDashboardCode(req.params.code), parseHistory(req.query).role) }));
   return r;
 }
+
+/** Part 03.08: global search, the commands of the palette and the administration of the index. */
+export function searchRoutes(service, { shell, idempotent }) {
+  const r = Router();
+  r.get('/search', (req, res) => res.json({ data: service.search(req.actor, parseSearch(req.query)) }));
+  r.get('/search/types', (req, res) => res.json({ data: service.typesFor(req.actor) }));
+  r.get('/search/commands', (req, res) => res.json({ data: service.commands(req.actor, parseCommands(req.query)) }));
+  r.post('/search/click', (req, res) => res.json({ data: service.click(req.actor, parseClick(req.body), shell) }));
+  r.get('/search/status', (req, res) => res.json({ data: service.status(req.actor) }));
+  r.get('/search/analytics', (req, res) => res.json({ data: service.analytics(req.actor, parseAnalytics(req.query)) }));
+  r.post('/search/reindex/:entity', idempotent, (req, res) => res.status(202).json({ data: service.requestReindex(req.actor, parseEntityParam(req.params.entity), parseReindex(req.body)) }));
+  return r;
+}
+
+/** Part 03.09: the text of the screens (any signed-in person reads it; the system administrator manages wording) and each person's number and time format. */
+export function translationRoutes(service, { idempotent, xlsxBody }) {
+  const r = Router();
+  r.get('/locale-preferences', (req, res) => res.json({ data: service.localePrefs(req.actor) }));
+  r.put('/locale-preferences', (req, res) => res.json({ data: service.saveLocalePrefs(req.actor, parseLocalePrefs(req.body)) }));
+  r.get('/translations', (req, res) => res.json({ data: service.list(req.actor, parseTranslationList(req.query)) }));
+  r.get('/translations/missing', (req, res) => res.json({ data: service.missing(req.actor) }));
+  r.get('/translations/pending', (req, res) => res.json({ data: service.pending(req.actor) }));
+  r.get('/translations/history', (req, res) => res.json({ data: service.history(req.actor, parseTranslationHistory(req.query)) }));
+  r.get('/translations/export', (req, res) => {
+    const out = service.exportXlsx(req.actor);
+    res.set({ 'content-type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer);
+  });
+  r.post('/translations/changes', idempotent, (req, res) => res.status(201).json({ data: service.propose(req.actor, parseChanges(req.body)) }));
+  r.post('/translations/import', xlsxBody, async (req, res) => {
+    const q = parseImportQuery(req.query);
+    res.status(q.commit === '1' ? 201 : 200).json({ data: await service.importXlsx(req.actor, Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0), { commit: q.commit === '1', reason: q.reason }) });
+  });
+  r.get('/translations/:lang/:namespace', (req, res) => res.json({ data: service.strings(req.actor, parseCatalogueParams(req.params)) }));
+  return r;
+}
+
+/** Part 03.10: the screen migration tracker, the redirects of old addresses and the sign-off of modules. */
+export function pageMigrationRoutes(service, { idempotent }) {
+  const r = Router();
+  r.get('/page-migration', (req, res) => res.json({ data: service.list(req.actor, parseTrackerQuery(req.query)) }));
+  r.get('/page-migration/redirects', (req, res) => res.json({ data: service.redirects() }));
+  r.get('/page-migration/pending', (req, res) => res.json({ data: service.pending(req.actor) }));
+  r.get('/page-migration/export', (req, res) => {
+    const out = service.exportRows(req.actor, parseExportQuery(req.query));
+    res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer);
+  });
+  r.post('/page-migration/modules/:module/signoff', idempotent, (req, res) => res.json({ data: service.signoffModule(req.actor, parseModuleParam(req.params.module), parseSignoff(req.body)) }));
+  r.post('/page-migration/:code/defects', idempotent, (req, res) => res.status(201).json({ data: service.addDefect(req.actor, parsePageCode(req.params.code), parseDefect(req.body)) }));
+  r.post('/page-migration/:code/defects/:defectId/resolve', idempotent, (req, res) => res.json({ data: service.resolveDefect(req.actor, parsePageCode(req.params.code), String(req.params.defectId).slice(0, 12), parseResolve(req.body)) }));
+  r.post('/page-migration/:code/status', idempotent, (req, res) => res.json({ data: service.transition(req.actor, parsePageCode(req.params.code), parseTransition(req.body)) }));
+  r.post('/page-migration/:code/route', idempotent, (req, res) => res.status(201).json({ data: service.proposeRoute(req.actor, parsePageCode(req.params.code), parseRouteChange(req.body)) }));
+  return r;
+}
+

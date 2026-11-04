@@ -152,7 +152,7 @@ test('FR-08 the Requests Overview: charts have a tooltip, a legend and the same 
   const errors = watch(page);
   await expect(page.getByRole('heading', { name: 'Requests Overview', level: 1 })).toBeVisible();
   const bars = widget(page, 'requests.by_project');
-  await expect(bars.locator('svg[role="img"]')).toBeVisible();
+  await expect(bars.locator('svg.ch-svg')).toBeVisible();
   // the table fallback has the figures the chart draws
   await bars.getByText('View as table').click();
   await expect(bars.getByRole('table')).toContainText(`${w.project.code}`);
@@ -170,9 +170,9 @@ test('FR-08 the Requests Overview: charts have a tooltip, a legend and the same 
   await bars.getByRole('button', { name: 'PNG' }).click();
   expect((await png).suggestedFilename()).toBe('requests-by_project.png');
   // the heat map, the S-curve and the Gantt each draw from the register
-  await expect(widget(page, 'requests.heatmap').locator('svg[role="img"]')).toBeVisible();
-  await expect(widget(page, 'requests.scurve').locator('svg[role="img"]')).toBeVisible();
-  await expect(widget(page, 'requests.gantt').locator('svg[role="img"]')).toBeVisible();
+  await expect(widget(page, 'requests.heatmap').locator('svg.ch-svg')).toBeVisible();
+  await expect(widget(page, 'requests.scurve').locator('svg.ch-svg')).toBeVisible();
+  await expect(widget(page, 'requests.gantt').locator('svg.ch-svg')).toBeVisible();
   // the bar opens the list of that project's requests
   await bars.locator('g.ch-mark.is-link').first().focus();
   await page.keyboard.press('Enter');
@@ -181,7 +181,7 @@ test('FR-08 the Requests Overview: charts have a tooltip, a legend and the same 
   await page.goBack();
   // dark theme: charts keep their tokens, nothing overflows
   await setTheme(page, 'dark');
-  await expect(bars.locator('svg[role="img"]')).toBeVisible();
+  await expect(bars.locator('svg.ch-svg')).toBeVisible();
   const fill = await bars.locator('g.ch-mark rect').first().evaluate((e) => getComputedStyle(e).fill);
   expect(fill).not.toBe('none');
   if (info.project.name === 'mobile') await noOverflow(page);

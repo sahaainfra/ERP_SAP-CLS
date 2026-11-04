@@ -3,6 +3,7 @@ import { writeAudit } from '../audit/index.js';
 import { publishEvent } from '../events/index.js';
 import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from '../http/errors.js';
 import { sodOf } from '../sod/index.js';
+import { legacyAdapterOf } from '../workflow/legacy.js';
 
 /**
  * A thin stand-in for the workflow engine of part 04.01, so approval-controlled configuration changes cannot be made
@@ -56,6 +57,9 @@ export function createApprovalEngine({ db, handlers }) {
         sodOf(db).record({ companyId: actor.companyId, actor, action: 'change_request.create', subject: { type: 'change_request', id } });
         writeAudit(db, { entity: 'core_change_requests', entityId: id, action: 'submit', newValues: { type, chain, reason }, reason, actor: actor.user });
         publishEvent(db, { type: 'core.change_request.submitted', entity: 'change_request', entityId: id, actorId: actor.user, companyId: actor.companyId, data: { type, targetType, targetId } });
+        // part 04.01: a type that has been moved onto the workflow engine starts its workflow here (the request is mirrored from it)
+        const adapter = legacyAdapterOf(db);
+        if (adapter?.handles(actor.companyId, type)) adapter.start(actor, { id, type, chain, companyId: actor.companyId, title });
         return presentFull(id, actor.companyId);
       });
     },
@@ -104,13 +108,22 @@ export function createApprovalEngine({ db, handlers }) {
         if (version !== undefined && version !== r.version) throw conflict('This request was changed by someone else. Refresh it and decide again.');
         const chain = JSON.parse(r.chain_json);
         const role = chain[r.current_step - 1];
-        // a step written 'ITADM|DIR' is decided by either role
-        if (role.startsWith('@') ? actor.user !== role.slice(1) : !role.split('|').some((x) => actor.roles.includes(x))) throw forbidden(role.startsWith('@') ? `Step ${r.current_step} of this request is for ${role.slice(1)} (the requester's manager). You are not that person.` : `Step ${r.current_step} of this request needs the ${role.replace('|', ' or ')} role. Your roles do not include it.`);
-        if (action === 'approve') sodOf(db).guardAction({ companyId: r.company_id, actor, action: 'change_request.approve', subject: { type: 'change_request', id } });
-        if (actor.user === r.requested_by) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You raised this request, so someone else must approve it.');
-        const decided = db.prepare('SELECT decided_by FROM core_change_request_steps WHERE request_id = ? AND decision = ?').all(id, 'APPROVED').map((s) => s.decided_by);
-        if (decided.includes(actor.user)) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You already approved an earlier step of this request; a different person must approve this step.');
-        if (action !== 'approve' && (!comment || comment.trim().length < 5)) throw badRequest('Give a comment of at least 5 characters when you reject or return a request.', [{ field: 'comment', message: 'is required' }]);
+        const adapter = legacyAdapterOf(db);
+        const adapted = Boolean(adapter?.handles(r.company_id, r.type));
+        let moved = null;
+        if (adapted) {
+          // part 04.01: the workflow engine decides who may act and how the request moves; the segregation-of-duties rules of the action still apply
+          if (action === 'approve') sodOf(db).guardAction({ companyId: r.company_id, actor, action: 'change_request.approve', subject: { type: 'change_request', id } });
+          moved = adapter.decide(actor, r, { action, comment });
+        } else {
+          // a step written 'ITADM|DIR' is decided by either role
+          if (role.startsWith('@') ? actor.user !== role.slice(1) : !role.split('|').some((x) => actor.roles.includes(x))) throw forbidden(role.startsWith('@') ? `Step ${r.current_step} of this request is for ${role.slice(1)} (the requester's manager). You are not that person.` : `Step ${r.current_step} of this request needs the ${role.replace('|', ' or ')} role. Your roles do not include it.`);
+          if (action === 'approve') sodOf(db).guardAction({ companyId: r.company_id, actor, action: 'change_request.approve', subject: { type: 'change_request', id } });
+          if (actor.user === r.requested_by) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You raised this request, so someone else must approve it.');
+          const decided = db.prepare('SELECT decided_by FROM core_change_request_steps WHERE request_id = ? AND decision = ?').all(id, 'APPROVED').map((s) => s.decided_by);
+          if (decided.includes(actor.user)) throw new HttpError(403, 'SEGREGATION_OF_DUTIES', 'You already approved an earlier step of this request; a different person must approve this step.');
+          if (action !== 'approve' && (!comment || comment.trim().length < 5)) throw badRequest('Give a comment of at least 5 characters when you reject or return a request.', [{ field: 'comment', message: 'is required' }]);
+        }
 
         const decision = { approve: 'APPROVED', reject: 'REJECTED', return: 'RETURNED' }[action];
         const now = new Date().toISOString();
@@ -119,7 +132,8 @@ export function createApprovalEngine({ db, handlers }) {
         if (action === 'approve') sodOf(db).record({ companyId: r.company_id, actor, action: 'change_request.approve', subject: { type: 'change_request', id } });
         let status = 'SUBMITTED';
         let step = r.current_step;
-        if (decision === 'REJECTED') status = 'REJECTED';
+        if (moved) ({ status, step } = moved);
+        else if (decision === 'REJECTED') status = 'REJECTED';
         else if (decision === 'RETURNED') status = 'RETURNED';
         else if (r.current_step === chain.length) status = 'APPROVED';
         else step += 1;
@@ -141,6 +155,8 @@ export function createApprovalEngine({ db, handlers }) {
         if (r.requested_by !== actor.user) throw forbidden('Only the person who raised a request can resubmit it.');
         if (r.status !== 'RETURNED') throw unprocessable('Only a returned request can be resubmitted.');
         db.prepare("UPDATE core_change_requests SET status = 'SUBMITTED', current_step = 1, reason = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(reason, actor.user, new Date().toISOString(), id);
+        const adapter = legacyAdapterOf(db);
+        if (adapter?.handles(r.company_id, r.type)) adapter.resubmit(actor, r);
         writeAudit(db, { entity: 'core_change_requests', entityId: id, action: 'resubmit', reason, actor: actor.user });
         return presentFull(id, actor.companyId);
       });
@@ -153,6 +169,7 @@ export function createApprovalEngine({ db, handlers }) {
         if (r.requested_by !== actor.user) throw forbidden('Only the person who raised a request can withdraw it.');
         if (!['SUBMITTED', 'RETURNED'].includes(r.status)) throw unprocessable(`This request is ${r.status.toLowerCase()} and cannot be withdrawn.`);
         db.prepare("UPDATE core_change_requests SET status = 'CANCELLED', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, new Date().toISOString(), id);
+        legacyAdapterOf(db)?.withdraw(actor, r);
         writeAudit(db, { entity: 'core_change_requests', entityId: id, action: 'withdraw', actor: actor.user });
         return presentFull(id, actor.companyId);
       });
@@ -164,12 +181,13 @@ export function createApprovalEngine({ db, handlers }) {
      * caller's transaction.
      */
     reassignRequester(actor, { from, to, reason }) {
-      const open = db.prepare("SELECT id FROM core_change_requests WHERE company_id = ? AND requested_by = ? AND status IN ('SUBMITTED', 'RETURNED') AND is_active = 1").all(actor.companyId, from);
+      const open = db.prepare("SELECT id, company_id, type FROM core_change_requests WHERE company_id = ? AND requested_by = ? AND status IN ('SUBMITTED', 'RETURNED') AND is_active = 1").all(actor.companyId, from);
       for (const { id } of open) {
         const touched = db.prepare('SELECT 1 FROM core_change_request_steps WHERE request_id = ? AND decided_by = ? AND decision = ?').get(id, to, 'APPROVED');
         if (touched) throw unprocessable(`Request ${id} already has a step approved by ${to}, so ${to} cannot take it over. Choose another person to take over.`);
       }
-      for (const { id } of open) {
+      for (const { id, company_id, type } of open) {
+        legacyAdapterOf(db)?.reassign({ id, company_id, type }, to);
         db.prepare('UPDATE core_change_requests SET requested_by = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(to, actor.user, new Date().toISOString(), id);
         writeAudit(db, { entity: 'core_change_requests', entityId: id, action: 'reassign_requester', oldValues: { requestedBy: from }, newValues: { requestedBy: to }, reason, actor: actor.user });
       }

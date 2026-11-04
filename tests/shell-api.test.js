@@ -228,6 +228,8 @@ test('FR-06 the launchpad gathers tiles by role, favourites, recent records and 
   assert.equal(lp.pending.approvals, 0);
   const sent = (await api.call('POST', `${U}/sample-requests/${r.id}/submit`, { ...pm, headers: key('sub'), body: { version: r.version } })).json.data;
   assert.equal(sent.status, 'SUBMITTED');
+  // with the notification centre on (ff.eng.p0406) the bell counts unread notifications; this test is about the stand-in that counts the requests waiting
+  api.db.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.eng.p0406'").run();
   assert.equal((await api.call('GET', `${U}/bell`, acc)).json.data.unread, 1);
   assert.equal((await api.call('GET', `${U}/bell`, pm)).json.data.unread, 0, 'the requester has nothing to decide');
   assert.equal((await api.call('GET', `${U}/launchpad`, acc)).json.data.pending.approvals, 1);

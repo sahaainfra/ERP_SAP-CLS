@@ -18,7 +18,7 @@ export function memoryDb() {
 /** Start the API on a random port; returns { db, call, close }. */
 export async function startApi(configOverrides = {}, appOverrides = {}) {
   const db = memoryDb();
-  const app = createApp({ config: testConfig(configOverrides), db, logger: silentLogger, ...appOverrides });
+  const app = createApp({ config: testConfig(configOverrides), db, logger: process.env.TEST_LOG ? { ...silentLogger, error: (...a) => console.error(...a), warn: (...a) => console.error(...a) } : silentLogger, ...appOverrides });
   const server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });

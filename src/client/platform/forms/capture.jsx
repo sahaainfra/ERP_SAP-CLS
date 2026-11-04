@@ -147,7 +147,7 @@ export function PhotoField({ id, label, value, onChange, error, hint, required, 
     <FieldShell id={id} label={label} required={required} hint={hint ?? 'Taken with the camera or chosen from the gallery. It is uploaded when the record is saved.'} error={error ?? value?.error} group>
       {(aria) => (
         <div className="ff-photo" {...aria}>
-          <input ref={input} id={id} type="file" accept="image/*" capture="environment" className="visually-hidden" disabled={disabled} onChange={(e) => pickFile(e.target.files?.[0])} />
+          <input ref={input} id={id} type="file" accept="image/*" capture="environment" className="visually-hidden" aria-label={label} disabled={disabled} onChange={(e) => pickFile(e.target.files?.[0])} />
           {shown}
           <div className="ff-multi-actions">
             <button type="button" className="btn btn-small" onClick={() => input.current?.click()} disabled={disabled}><Icon name="erp.action.camera" size={16} />{value?.preview ? 'Retake' : 'Take or choose a photo'}</button>
@@ -207,7 +207,7 @@ export function QrScanField({ id, label, value, onChange, onBlur, error, hint, r
           <div className="ff-multi-actions">
             <button type="button" className="btn btn-small" onClick={scanning ? stop : scan} disabled={disabled}><Icon name="erp.action.scan" size={16} />{scanning ? 'Stop' : 'Scan with camera'}</button>
             <button type="button" className="btn btn-small" onClick={() => photo.current?.click()} disabled={disabled}>Read from a photo</button>
-            <input ref={photo} type="file" accept="image/*" className="visually-hidden" tabIndex={-1} onChange={(e) => fromPhoto(e.target.files?.[0])} />
+            <input ref={photo} type="file" accept="image/*" className="visually-hidden" tabIndex={-1} aria-label="Photo of the code" onChange={(e) => fromPhoto(e.target.files?.[0])} />
             <span className="muted small" aria-live="polite">{message}</span>
           </div>
         </div>

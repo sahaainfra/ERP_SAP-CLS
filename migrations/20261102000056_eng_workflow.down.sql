@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS eng_sample_docs;
+DROP TABLE IF EXISTS wf_watchers;
+DROP TRIGGER IF EXISTS trg_wf_history_no_update;
+DROP TRIGGER IF EXISTS trg_wf_history_no_delete;
+DROP TABLE IF EXISTS wf_history;
+DROP TABLE IF EXISTS wf_task_attachments;
+DROP TABLE IF EXISTS wf_tasks;
+DROP TABLE IF EXISTS wf_instances;
+DROP TABLE IF EXISTS wf_definitions;

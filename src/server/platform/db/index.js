@@ -10,7 +10,7 @@ export function openDatabase(path) {
   if (path !== ':memory:') mkdirSync(dirname(resolve(ROOT, path)), { recursive: true });
   const db = new DatabaseSync(path === ':memory:' ? path : resolve(ROOT, path));
   // busy_timeout: a second process (or connection) waits for the write lock instead of failing at once.
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 10000;');
+  db.exec('PRAGMA busy_timeout = 10000; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;'); // the timeout first: switching to WAL needs the lock too
   return db;
 }
 

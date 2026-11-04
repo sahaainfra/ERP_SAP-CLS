@@ -83,7 +83,7 @@ function HistoryDialog({ code, dialogRef }) {
   return (
     <dialog ref={dialogRef} className="dialog" aria-label="Change history">
       <h2>Change history{code ? `: ${code}` : ''}</h2>
-      <QueryState query={h} what="the change history" />
+      {code && <QueryState query={h} what="the change history" />}
       {h.data && h.data.length === 0 && <p className="muted">This entry has not been changed since it was seeded.</p>}
       {h.data?.length > 0 && (
         <ol className="history">

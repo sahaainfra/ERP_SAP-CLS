@@ -355,7 +355,7 @@ test('BR-02 AC-03 real-time rooms: joining checks the permission, every event ch
   const sec = securityOf(api.db);
   const authz = authzOf(api.db);
   sec.rooms.register('project', { permission: 'org.view', resolve: (_db, id) => ({ companyId: 1, projectId: Number(id) }) });
-  assert.deepEqual(sec.rooms.kinds(), ['project']);
+  assert.ok(sec.rooms.kinds().includes('project'), 'the real-time layer of 04.06 registers the rooms of sites, departments and conversations beside it');
   const actor = (user, roles) => authz.enrich({ user, roles, companyId: 1 });
   const pm = actor('pm1', ['PM']);
   assert.deepEqual(sec.rooms.join(pm, 'project:12'), { joined: 'project:12' });

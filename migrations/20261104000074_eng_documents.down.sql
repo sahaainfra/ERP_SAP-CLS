@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS doc_links;
+DROP TABLE IF EXISTS doc_annotations;
+DROP TABLE IF EXISTS doc_distributions;
+DROP TABLE IF EXISTS doc_shares;
+DROP TABLE IF EXISTS doc_versions;
+DROP TABLE IF EXISTS doc_documents;
+DROP TABLE IF EXISTS doc_folders;
+DROP TABLE IF EXISTS doc_folder_templates;
+DROP TABLE IF EXISTS doc_types;

@@ -1153,6 +1153,57 @@ paths:
     post: { summary: 'Ask for the default of a role to be set, changed or removed ({ role, layout, filters, name?, remove?, reason }); another administrator approves it; Idempotency-Key (ui.dashboard.manage)', responses: { '201': { description: '{ data: request }' } } }
   /api/v1/ui/dashboards/{code}/history:
     get: { summary: 'The audited changes of one role\'s default (?role=), newest first (ui.dashboard.manage)', responses: { '200': { description: '{ data: [entry] }' } } }
+  /api/v1/ui/search:
+    get: { summary: 'Global search (ff.ui.p0308). Grouped by kind for the palette, or one page of the chosen kinds. Query: q, types (comma list), status (comma list), projectId, siteId, from, to (dates), sort (relevance|updated|title), perGroup (1-20), page and pageSize (10|25|50|100) for a paged list, source (palette|page), log (0|1). Every hit is inside the right and data scope of the caller and is read again from its record; sensitive values are matched only for roles that see them in full', responses: { '200': { description: '{ data: { query, took, counts: { kind: n }, mode: grouped|page, total, groups: [{ type, label, labelHi, icon, total, items }] | page, pageSize, capped, items: [{ id, entity, entityId, title, subtitle, code, status, route, projectCode, match }] } }' }, '400': { description: 'a parameter is not valid' } } }
+  /api/v1/ui/search/types:
+    get: { summary: 'The kinds of record the caller\'s role can search, with their statuses and date label', responses: { '200': { description: '{ data: [{ type, label, labelHi, icon, statuses, dateLabel }] }' } } }
+  /api/v1/ui/search/commands:
+    get: { summary: 'The palette actions the caller may run (?route= puts those of that page first)', responses: { '200': { description: '{ data: [{ code, label, labelHi, keywords, icon, group, route, clientAction, here }] }' } } }
+  /api/v1/ui/search/click:
+    post: { summary: 'Say which result was opened ({ entity, entityId, position }): marks the search for the analytics and adds the record to the recent records. 404 if the caller cannot see it', responses: { '200': { description: '{ data: { entity, entityId } }' }, '404': { description: 'not found or not open to you' } } }
+  /api/v1/ui/search/status:
+    get: { summary: 'The state of the index per kind (records, indexed, waiting, last indexed) and the latest rebuild jobs (ui.search.analytics or ui.search.reindex)', responses: { '200': { description: '{ data: { types, jobs, canReindex } }' }, '403': { description: 'no right' } } }
+  /api/v1/ui/search/analytics:
+    get: { summary: 'What people searched for in the last ?days (default 30): totals, share with no result, median and p95 time, most searched, searches that found nothing (ui.search.analytics)', responses: { '200': { description: '{ data }' }, '403': { description: 'no right' } } }
+  /api/v1/ui/search/reindex/{entity}:
+    post: { summary: 'Rebuild the index of one kind (or all) as a background job ({ reason }, Idempotency-Key). Audited. One rebuild of a kind at a time (ui.search.reindex, the IT administrator)', responses: { '202': { description: '{ data: { entity, types, jobId } }' }, '400': { description: 'reason missing or a rebuild is already running' }, '403': { description: 'no right' }, '404': { description: 'no such kind' } } }
+  /api/v1/ui/translations/{lang}/{namespace}:
+    get: { summary: 'The text of one language (en or hi) for one area of the screens (common, shell, palette, field, format, notify) or all of them (namespace all): the built-in text with the company\'s own wording over it; Hindi falls back to English. Any signed-in person (ff.ui.p0309)', responses: { '200': { description: '{ data: { lang, namespace, strings } | { lang, namespaces }, etag } }' }, '400': { description: 'unknown language or area' } } }
+  /api/v1/ui/translations:
+    get: { summary: 'Every text with its English and Hindi, whether the company changed it; filters lang, namespace, q, show (all|missing|overridden), page, pageSize (ui.translation.manage)', responses: { '200': { description: '{ data: { rows, meta, namespaces } }' }, '403': { description: 'no right' } } }
+  /api/v1/ui/translations/missing:
+    get: { summary: 'The missing-key report: English texts with no Hindi, Hindi texts with other placeholders, overrides of texts that no longer exist, and the count per area (ui.translation.manage)', responses: { '200': { description: '{ data }' } } }
+  /api/v1/ui/translations/pending:
+    get: { summary: 'Wording changes waiting for approval (ui.translation.manage)', responses: { '200': { description: '{ data: [request] }' } } }
+  /api/v1/ui/translations/history:
+    get: { summary: 'The audited changes of one text (?namespace=&key=) (ui.translation.manage)', responses: { '200': { description: '{ data: [entry] }' } } }
+  /api/v1/ui/translations/export:
+    get: { summary: 'An .xlsx workbook of every text (Namespace, Key, English, Hindi, Note) for translators; audited (ui.translation.manage)', responses: { '200': { description: 'the workbook' } } }
+  /api/v1/ui/translations/changes:
+    post: { summary: 'Ask for the wording of one or more texts to change ({ changes: [{ namespace, key, lang, text | null }], reason }); null means back to the standard wording. Another system administrator approves it through /core/change-requests/{id}/act. Placeholders must match the English; one open request at a time (409)', responses: { '201': { description: '{ data: request }' }, '400': { description: 'a text is not valid' }, '409': { description: 'a request is already waiting' }, '422': { description: 'nothing differs from the text in force' } } }
+  /api/v1/ui/translations/import:
+    post: { summary: 'A translator\'s .xlsx (body: the file, content-type application/octet-stream). Without ?commit=1 it only reports what would change and the problems per row; with ?commit=1&reason= it makes one change request for the whole file, refused while the file has problems (ui.translation.manage)', responses: { '200': { description: 'preview { rows, changes, errors, sample, committed: false }' }, '201': { description: 'committed: { ..., request }' }, '400': { description: 'not a workbook, a column missing or no reason' }, '422': { description: 'the file has problems, or nothing differs' } } }
+  /api/v1/ui/page-migration:
+    get: { summary: 'The migration tracker (ff.ui.p0310): every page with its module, type, status, owner role, defects and address, and the progress by module and by page type; filters module, status, type, q, defects=open (ui.migration.view)', responses: { '200': { description: '{ data: { rows, summary: { totals, byModule, byType }, modules, types, statuses, canSignOff } }' }, '403': { description: 'no right' } } }
+  /api/v1/ui/page-migration/redirects:
+    get: { summary: 'The old addresses and the page each now leads to; any signed-in person', responses: { '200': { description: '{ data: [{ from, to }] }' } } }
+  /api/v1/ui/page-migration/pending:
+    get: { summary: 'Old-address requests waiting for approval (ui.migration.view)', responses: { '200': { description: '{ data: [request] }' } } }
+  /api/v1/ui/page-migration/export:
+    get: { summary: 'The report as .xlsx (default) or .csv, with the filters of the list; audited (ui.migration.view)', responses: { '200': { description: 'the file' }, '400': { description: 'unknown format' } } }
+  /api/v1/ui/page-migration/{code}/defects:
+    post: { summary: 'Raise a defect on a page ({ text, severity Low|Medium|High|Critical, ownerPart, version }) (ui.migration.signoff)', responses: { '201': { description: '{ data: page }' }, '409': { description: 'the page changed' } } }
+  /api/v1/ui/page-migration/{code}/defects/{defectId}/resolve:
+    post: { summary: 'Resolve an open defect ({ note, version })', responses: { '200': { description: '{ data: page }' }, '422': { description: 'already resolved' } } }
+  /api/v1/ui/page-migration/{code}/status:
+    post: { summary: 'Verify, reopen (Migrated) or schedule a page ({ to, reason, scheduledPart?, version }). Verify needs the owner role of the page, someone who did not migrate it, and no open High or Critical defect', responses: { '200': { description: '{ data: page }' }, '403': { description: 'not the owner, or the migrator' }, '422': { description: 'a blocking defect is open, or the status does not allow it' } } }
+  /api/v1/ui/page-migration/{code}/route:
+    post: { summary: 'Ask for the old address of a page to be registered ({ oldRoute, reason, version }); another system administrator approves it through /core/change-requests/{id}/act. The page\'s own address removes the redirect', responses: { '201': { description: '{ data: request }' }, '400': { description: 'the address is a page, already redirects, or is not an address of this application' }, '409': { description: 'a request is already waiting' } } }
+  /api/v1/ui/page-migration/modules/{module}/signoff:
+    post: { summary: 'Sign off a module (core, iam, ui): every migrated page without a High or Critical defect becomes Verified; the others are listed with the reason. Only the owner of the module', responses: { '200': { description: '{ data: { module, verified, skipped, summary } }' }, '403': { description: 'not the owner' } } }
+  /api/v1/ui/locale-preferences:
+    get: { summary: 'The person\'s own choice of number grouping and hour format, the company default and what is in force', responses: { '200': { description: '{ data: { numberStyle, timeFormat, defaults, effective, version } }' } } }
+    put: { summary: 'Choose indian or international grouping and a 12- or 24-hour clock (null returns to the company default); version-checked (409), audited', responses: { '200': { description: '{ data }' }, '409': { description: 'changed on another device' } } }
   /api/v1/iam/legacy-mapping:
     get:
       summary: How each role that existed before maps to a system role (iam.role.view)
@@ -1264,3 +1315,311 @@ paths:
     post:
       summary: Cancel an open campaign; nothing is changed (iam.review.manage)
       responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/submit:
+    post:
+      summary: Submit a document into approval; resolves the chain from the active definition (Idempotency-Key required)
+      responses: { '201': { description: '{ data: instance with steps, tasks, history }' } }
+  /api/v1/workflow/tasks:
+    get:
+      summary: The task inbox data, mine=assigned|delegated|watching|started|admin
+      responses: { '200': { description: '{ data: { rows, total } }' } }
+  /api/v1/workflow/tasks/count:
+    get:
+      summary: How many tasks wait for the signed-in person
+      responses: { '200': { description: '{ data: { open } }' } }
+  /api/v1/workflow/tasks/{id}/act:
+    post:
+      summary: Approve, reject, return (returnToStep), clarify, answer or delegate a task (Idempotency-Key required)
+      responses: { '200': { description: '{ data: instance }' } }
+  /api/v1/workflow/tasks/{id}/assign:
+    post:
+      summary: Assign a task waiting in the administrators' queue (eng.workflow.admin)
+      responses: { '200': { description: '{ data: instance }' } }
+  /api/v1/workflow/instances:
+    get:
+      summary: Instances, filtered, within the caller's scope (eng.workflow.view)
+      responses: { '200': { description: '{ data: { rows, total } }' } }
+  /api/v1/workflow/instances/{id}:
+    get:
+      summary: One instance with steps, tasks, history and the actions allowed to the caller
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/withdraw:
+    post:
+      summary: The originator withdraws before the first action (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/cancel:
+    post:
+      summary: Cancel with a reason (eng.workflow.cancel)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/resubmit:
+    post:
+      summary: The originator takes a returned document back into approval
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/watch:
+    post:
+      summary: Watch a document
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/instances/{id}/unwatch:
+    post:
+      summary: Stop watching a document
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/documents/{docType}/{docId}:
+    get:
+      summary: The latest approval of a document (the Approvals tab)
+      responses: { '200': { description: '{ data | null }' } }
+  /api/v1/workflow/documents/{docType}/{docId}/history:
+    get:
+      summary: Every approval round of a document
+      responses: { '200': { description: '{ data: [instance] }' } }
+  /api/v1/workflow/monitor:
+    get:
+      summary: Running, stuck, overdue and cycle time by document type; format=json|csv|xlsx (eng.workflow.view)
+      responses: { '200': { description: '200' } }
+  /api/v1/workflow/definitions:
+    get:
+      summary: Definitions and their versions (eng.workflow.view)
+      responses: { '200': { description: '{ data: { rows, total, docTypes } }' } }
+    post:
+      summary: Create a draft version (eng.workflow.define)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/definitions/draft:
+    post:
+      summary: A draft from the active version of a document type
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/definitions/options:
+    get:
+      summary: The roles, resolvers, system actions and operators the editor offers
+      responses: { '200': { description: '200' } }
+  /api/v1/workflow/definitions/{id}:
+    get:
+      summary: One definition with its steps
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a draft (optimistic lock on version)
+      responses: { '200': { description: '{ data }' } }
+    delete:
+      summary: Delete a draft or a rejected version
+      responses: { '200': { description: '200' } }
+  /api/v1/workflow/definitions/{id}/activate:
+    post:
+      summary: Ask for a draft to become active, which starts its approval chain
+      responses: { '202': { description: '{ data: { definition, instance } }' } }
+  /api/v1/workflow/definitions/{a}/compare/{b}:
+    get:
+      summary: Step-by-step difference of two versions
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/eng/sample-docs:
+    get:
+      summary: Sample documents (eng.sample.use)
+      responses: { '200': { description: '{ data: { rows, total } }' } }
+    post:
+      summary: Create a sample document as a draft
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/{id}:
+    get:
+      summary: One sample document with its approval
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a draft or returned sample document
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/{id}/submit:
+    post:
+      summary: Submit a sample document into approval (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/{id}/amend:
+    post:
+      summary: Make a linked new document from an approved one
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/matrix:
+    get:
+      summary: Matrix versions, filtered (eng.matrix.view)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Make a draft version of a document type's matrix (eng.matrix.manage)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/matrix/simulate:
+    post:
+      summary: The chain a described document would get, on the version in force or on a draft (eng.matrix.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/history/{docType}:
+    get:
+      summary: Every version of the matrix of a document type
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{a}/compare/{b}:
+    get:
+      summary: Rule-by-rule difference of two versions
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{id}:
+    get:
+      summary: One version with its rules
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a draft's rules (optimistic lock on version)
+      responses: { '200': { description: '{ data }' } }
+    delete:
+      summary: Delete a draft
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{id}/validate:
+    post:
+      summary: Check a version for gaps, duplicate priorities and rules never reached
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/matrix/{id}/activate:
+    post:
+      summary: Ask for a version to take effect from a date; refused while it leaves gaps (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/authority-limits:
+    get:
+      summary: The grid of limits by role and document type, with what waits for approval
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/authority-limits/history:
+    get:
+      summary: Changes of limits
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/authority-limits/changes:
+    post:
+      summary: Ask for a set of limit changes from a date (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/delegations:
+    get:
+      summary: My delegations, or everyone's with scope=all (eng.delegation.admin)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Delegate approvals for a period (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/delegations/{id}:
+    get:
+      summary: One delegation
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/delegations/{id}/revoke:
+    post:
+      summary: End a delegation
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/escalation-paths:
+    get:
+      summary: The escalation hierarchy
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/escalation-paths/changes:
+    post:
+      summary: Ask for a change of the hierarchy (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/sla-settings:
+    get:
+      summary: SLA settings by document type
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/sla-settings/changes:
+    post:
+      summary: Ask for a change of SLA settings (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/workflow/inbox:
+    get:
+      summary: My approvals across every module, most urgent first, with filters and counts
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/inbox/counts:
+    get:
+      summary: Counts for the bell and the widget
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/inbox/submissions:
+    get:
+      summary: The documents I raised, or follow, with where each stands
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/tasks/bulk-act:
+    post:
+      summary: Approve several tasks at once; each is checked against the policy of its document type and the answer lists what was refused and why (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/tasks/{id}/evidence:
+    get:
+      summary: The task, the document at a glance, the evidence sections and risk flags, computed when asked
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/tasks/{id}/links:
+    post:
+      summary: Make a secure approval link for my own task; the token is shown once and only its hash is kept
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/workflow/links/{token}:
+    get:
+      summary: Before sign-in - what a secure link shows (the document at a glance); the same answer for every link that is not good
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/links/{token}/decide:
+    post:
+      summary: Before sign-in - approve or reject from a secure link, once; above the policy amount it answers 401 REAUTH_REQUIRED
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/links/{token}/confirm:
+    post:
+      summary: Signed in as the person the link was made for - approve or reject from a secure link, once (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/approval-policies:
+    get:
+      summary: Bulk and link approval settings by document type
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/workflow/approval-policies/changes:
+    post:
+      summary: Ask for a change of the approval settings from a date (Idempotency-Key required)
+      responses: { '202': { description: '{ data }' } }
+  /api/v1/pcs/control-points:
+    get:
+      summary: The control points of the company with their mode and what each would have stopped (filters: module, mode, stage, q)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Define a control point written as data; it starts OFF
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/pcs/control-points/options:
+    get:
+      summary: Stages, enforcements, modes and roles for the forms
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/control-points/{code}:
+    get:
+      summary: One control point with its observation figures, its changes and what it found lately
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change a control point (Idempotency-Key required). A control in or going to ENFORCE is changed through its approval chain (202) and goes to ENFORCE only after the days of observation set by eng.pcs.observe_days (422 before)
+      responses: { '200': { description: '{ data }' } }
+    delete:
+      summary: Remove a control point written as data (it must be OFF)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/reason-codes:
+    get:
+      summary: The reason codes as the company sees them, for every action type (all=true includes switched-off ones)
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Add a reason code for the company, or switch a shared one off for it
+      responses: { '201': { description: '{ data }' } }
+    put:
+      summary: Change a reason code of the company (version for optimistic locking)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/exceptions:
+    get:
+      summary: The exceptions register: filters status, control, project, value, emergency, words; the raiser sees their own, a watcher those of their scope
+      responses: { '200': { description: '{ data }' } }
+    post:
+      summary: Start an exception for an action a control stopped; the server finds the failed check and takes the value at risk from it
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/export:
+    get:
+      summary: Export the register as xlsx, csv or pdf with the filters and permissions of the list
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/{id}:
+    get:
+      summary: One exception with its evidence, the checks, and its approval
+      responses: { '200': { description: '{ data }' } }
+    put:
+      summary: Change the reason or the justification of a draft or returned exception
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/{id}/submit:
+    post:
+      summary: Send an exception into approval (evidence required where the control or reason asks) (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }
+  /api/v1/pcs/exceptions/{id}/cancel:
+    post:
+      summary: Cancel an exception that has not been used, with a reason (Idempotency-Key required)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/dashboard:
+    get:
+      summary: Tiles, trend, top failing controls, ageing, by control and by person, and the rollout of modes
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/pcs/cycle/{entity}/{id}:
+    get:
+      summary: The stages of Plan, Verify, Approve, Execute, Record, Monitor, Reconcile and Close a business object has passed, with what the controls said
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/eng/sample-docs/import:
+    post:
+      summary: Create and submit sample documents from rows; each row goes through the same control checks as the screen, and a row a control stops stays a draft (Idempotency-Key required)
+      responses: { '201': { description: '{ data }' } }

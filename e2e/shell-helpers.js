@@ -3,9 +3,9 @@
 
 /** The main navigation, opened first when the viewport keeps it behind the menu button. */
 export async function menu(page) {
-  const nav = page.getByRole('navigation', { name: 'Main' });
+  const nav = page.locator('#sh-nav'); // named Main in English; its name follows the language of the screen
   await page.locator('#sh-nav').waitFor({ state: 'attached' }); // the shell has drawn (on a phone it is there but hidden)
-  if (!(await nav.isVisible())) await page.getByRole('button', { name: 'Open menu' }).click();
+  if (!(await nav.isVisible())) await page.locator('.sh-burger, [data-testid="bottom-more"]').filter({ visible: true }).first().click(); // the button is named Open menu in English
   return nav;
 }
 
@@ -13,7 +13,7 @@ export async function menu(page) {
 export async function userMenu(page) {
   const button = page.getByTestId('user-menu');
   if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
-  return page.getByRole('menu', { name: 'Account' });
+  return page.locator('.sh-user-pop'); // its name is the account menu in the language of the screen
 }
 
 export async function setTheme(page, theme) {

@@ -62,7 +62,7 @@ function UserList({ session, onOpen }) {
   const suspend = can(session, 'iam.user.suspend');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(() => new URLSearchParams(window.location.search).get('q') ?? ''); // global search opens the page with the person's username (part 03.08)
   const [sort, setSort] = useState('displayName');
   const [filter, setFilter] = useState({});
   const [visible, setVisible] = useState(() => read(COL_KEY, DEFAULT_COLS).filter((k) => COLUMNS.some((c) => c.key === k)));
@@ -78,6 +78,7 @@ function UserList({ session, onOpen }) {
   const create = useCreateUser();
   const bulk = useBulkUsers();
   const createDialog = useRef(null);
+  useEffect(() => { if (manage && new URLSearchParams(window.location.search).get('invite') === '1') { setFormKey((k) => k + 1); createDialog.current?.showModal?.(); } }, [manage]); // the palette command "Invite a person"
   const suspendDialog = useRef(null);
   const importDialog = useRef(null);
   const variantDialog = useRef(null);

@@ -80,7 +80,7 @@ test('T-01 FR-01 FR-02 three roles see exactly the entries they may open; the te
   await expect(pmNav.getByRole('region', { name: 'Stores' })).toHaveCount(0); // a group with nothing for this role is not drawn
   // the accounts manager: approvals are in My Work; still no administration
   const accNav = await menu(acc);
-  await expect(accNav.getByRole('region', { name: 'My Work' }).getByRole('link', { name: 'Approvals' })).toBeVisible();
+  await expect(accNav.getByRole('region', { name: 'My Work' }).getByRole('link', { name: 'Approvals', exact: true })).toBeVisible();
   await expect(accNav.getByRole('link', { name: 'Navigation Registry' })).toHaveCount(0);
   // the system administrator: administration and the console, which is its own section
   const sysNav = await menu(sys);
@@ -173,8 +173,8 @@ test('FR-06 the launchpad: what is waiting, tiles for the role, favourites in th
   const errors = watch(acc);
   // the approver: one request waiting, on the card and on the bell
   await expect(acc.getByTestId('pending-approvals')).toHaveAttribute('data-count', '1');
-  await expect(acc.getByTestId('bell-count')).toHaveText('1');
-  await expect(acc.getByRole('link', { name: '1 approval waiting for you' })).toBeVisible();
+  // the bell is the notification centre's (part 04.06): it counts what the person was told, and this request (of the earlier approval service) tells nobody
+  await expect(acc.getByRole('button', { name: 'No unread notifications' })).toBeVisible();
   await expect(acc.getByTestId('tile-admin-approvals')).toBeVisible();
   await expect(acc.getByTestId('tile-admin-users')).toHaveCount(0);
   await expect(acc.getByTestId('no-favourites')).toBeVisible();
@@ -259,7 +259,7 @@ test('FR-04 FR-07 header and keyboard: search or go to, quick create, g-shortcut
   await (await userMenu(page)).getByLabel('Language').selectOption('hi');
   await expect(page.locator('html')).toHaveAttribute('lang', 'hi');
   await expect((await menu(page)).getByRole('region', { name: 'खरीद' })).toBeVisible();
-  await (await userMenu(page)).getByLabel('Language').selectOption('en');
+  await (await userMenu(page)).getByLabel('भाषा').selectOption('en'); // the label is Hindi now
   await expect((await menu(page)).getByRole('region', { name: 'Procurement' })).toBeVisible();
   if (desktop) {
     // the menu collapses to icons and comes back

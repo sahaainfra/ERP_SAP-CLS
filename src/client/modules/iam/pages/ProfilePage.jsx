@@ -7,6 +7,7 @@ import { useMe } from '../api/index.js';
 import { useUpdateMe } from '../api/users.js';
 import { LANGUAGES, UserStatusChip, typeLabel } from '../components/userCommon.jsx';
 import AppearancePanel from '../../ui/AppearancePanel.jsx';
+import FormatPanel from '../../ui/FormatPanel.jsx';
 import { useFeatureFlag } from '../../core/api/index.js';
 
 const CHANNELS = [['email', 'Email'], ['sms', 'Text message'], ['whatsapp', 'WhatsApp'], ['inApp', 'In the application']];
@@ -120,6 +121,7 @@ export default function ProfilePage({ session }) {
           </form>
 
           {appearance && <AppearancePanel session={session} />}
+          {appearance && <FormatPanel />}
 
           <div className="card">
             <h2>Your details</h2>

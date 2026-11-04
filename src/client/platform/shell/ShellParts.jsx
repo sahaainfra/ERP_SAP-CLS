@@ -4,8 +4,8 @@ import { LANGUAGES, THEMES } from '../design/appearance.js';
 import { breadcrumbs, entryFor, groupHolds } from './nav.js';
 import { useFavouriteActions, useFavourites } from './api.js';
 import { useToast } from '../feedback/Feedback.jsx';
+import { useT } from '../i18n/index.js';
 
-const THEME_LABEL = { light: 'Light', dark: 'Dark', 'high-contrast': 'High contrast' };
 const LANGUAGE_LABEL = { en: 'English', hi: 'हिन्दी' };
 const labelOf = (item, language) => (language === 'hi' && item.labelHi) || item.label;
 
@@ -69,25 +69,27 @@ function Section({ group, path, go, language, name, closedGroups, setClosedGroup
 
 /** The sidebar: the registry's groups the person may see, then the account pages and the technical console (FR-01, FR-02, FR-09). */
 export function Sidebar({ groups, account, consoleGroup, path, go, language, open, onClose, collapsed }) {
+  const t = useT('shell');
   const [closedGroups, setClosedGroups] = useStored('erp.shell.closed-groups', []);
   const wrapped = (to) => (e) => { go(to)(e); onClose(); };
   return (
-    <nav id="sh-nav" className="sh-nav" aria-label="Main" data-open={open} data-collapsed={collapsed}>
+    <nav id="sh-nav" className="sh-nav" aria-label={t('nav.main')} data-open={open} data-collapsed={collapsed}>
       {groups.map((g) => <Section key={g.code} group={g} path={path} go={wrapped} language={language} closedGroups={closedGroups} setClosedGroups={setClosedGroups} />)}
-      {account && <Section group={account} path={path} go={wrapped} language={language} name="Account" closedGroups={closedGroups} setClosedGroups={setClosedGroups} />}
-      {consoleGroup && <Section group={consoleGroup} path={path} go={wrapped} language={language} name="Technical Console" closedGroups={closedGroups} setClosedGroups={setClosedGroups} />}
+      {account && <Section group={account} path={path} go={wrapped} language={language} name={t('nav.account')} closedGroups={closedGroups} setClosedGroups={setClosedGroups} />}
+      {consoleGroup && <Section group={consoleGroup} path={path} go={wrapped} language={language} name={t('nav.console')} closedGroups={closedGroups} setClosedGroups={setClosedGroups} />}
     </nav>
   );
 }
 
 export function QuickCreate({ items, go }) {
+  const t = useT('shell');
   const { open, setOpen, box, button } = usePopover();
   if (items.length === 0) return null;
   return (
     <span className="sh-menu" ref={box}>
-      <button type="button" ref={button} className="sh-icon sh-create" aria-haspopup="menu" aria-expanded={open} aria-label="Quick create" title="Create" onClick={() => setOpen(!open)} data-testid="quick-create"><Icon name="erp.action.create" size={20} /></button>
+      <button type="button" ref={button} className="sh-icon sh-create" aria-haspopup="menu" aria-expanded={open} aria-label={t('quickCreate.label')} title={t('quickCreate.title')} onClick={() => setOpen(!open)} data-testid="quick-create"><Icon name="erp.action.create" size={20} /></button>
       {open && (
-        <ul className="sh-pop" role="menu" aria-label="Create">
+        <ul className="sh-pop" role="menu" aria-label={t('quickCreate.menu')}>
           {items.map((q) => (
             <li key={q.code} role="none"><a role="menuitem" href={q.route} onClick={(e) => { setOpen(false); go(q.route)(e); }}>{q.label}</a></li>
           ))}
@@ -99,9 +101,10 @@ export function QuickCreate({ items, go }) {
 
 /** The bell: until the notification service (04.06) exists it counts the requests waiting for this person and opens them. */
 export function Bell({ count, to, go }) {
+  const t = useT('shell');
   if (!to) return null;
   return (
-    <a className="sh-icon sh-bell" href={to} onClick={go(to)} aria-label={count > 0 ? `${count} approval${count === 1 ? '' : 's'} waiting for you` : 'No approvals waiting for you'} title="Approvals waiting for you" data-testid="bell">
+    <a className="sh-icon sh-bell" href={to} onClick={go(to)} aria-label={count > 0 ? t('bell.waiting', { count }) : t('bell.none')} title={t('bell.title')} data-testid="bell">
       <Icon name="erp.action.notify" size={20} />
       {count > 0 && <span className="sh-badge" data-testid="bell-count">{count > 99 ? '99+' : count}</span>}
     </a>
@@ -109,23 +112,25 @@ export function Bell({ count, to, go }) {
 }
 
 export function UserMenu({ name, theme, setTheme, language, setLanguage, profileRoute, go, onSignOut, deviceMenu = null }) {
+  const t = useT('shell');
+  const tc = useT('common');
   const { open, setOpen, box, button } = usePopover();
   return (
     <span className="sh-menu" ref={box}>
-      <button type="button" ref={button} className="sh-user" aria-haspopup="menu" aria-expanded={open} aria-label={`Account menu for ${name}`} onClick={() => setOpen(!open)} data-testid="user-menu">
+      <button type="button" ref={button} className="sh-user" aria-haspopup="menu" aria-expanded={open} aria-label={t('account.menuFor', { name })} onClick={() => setOpen(!open)} data-testid="user-menu">
         <Icon name="erp.admin.iam" size={18} /><span className="sh-user-name" data-testid="signed-in-as">{name}</span>
       </button>
       {open && (
-        <div className="sh-pop sh-user-pop" role="menu" aria-label="Account">
-          {profileRoute && <a role="menuitem" href={profileRoute} onClick={(e) => { setOpen(false); go(profileRoute)(e); }}>My profile and preferences</a>}
-          <label className="shell-field"><span>Language</span>
+        <div className="sh-pop sh-user-pop" role="menu" aria-label={t('account.menu')}>
+          {profileRoute && <a role="menuitem" href={profileRoute} onClick={(e) => { setOpen(false); go(profileRoute)(e); }}>{t('account.profile')}</a>}
+          <label className="shell-field"><span>{t('account.language')}</span>
             <select value={language} onChange={(e) => setLanguage(e.target.value)}>{LANGUAGES.map((l) => <option key={l} value={l}>{LANGUAGE_LABEL[l] ?? l}</option>)}</select>
           </label>
-          <label className="shell-field"><span>Theme</span>
-            <select value={theme} onChange={(e) => setTheme(e.target.value)}>{THEMES.map((t) => <option key={t} value={t}>{THEME_LABEL[t] ?? t}</option>)}</select>
+          <label className="shell-field"><span>{t('account.theme')}</span>
+            <select value={theme} onChange={(e) => setTheme(e.target.value)}>{THEMES.map((th) => <option key={th} value={th}>{tc(`theme.${th}`)}</option>)}</select>
           </label>
           {deviceMenu}
-          {onSignOut && <button type="button" role="menuitem" className="btn btn-small" onClick={() => { setOpen(false); onSignOut(); }}>Sign out</button>}
+          {onSignOut && <button type="button" role="menuitem" className="btn btn-small" onClick={() => { setOpen(false); onSignOut(); }}>{t('account.signOut')}</button>}
         </div>
       )}
     </span>
@@ -137,15 +142,16 @@ export function UserMenu({ name, theme, setTheme, language, setLanguage, profile
  * when its page exists for the person (Messages appears once the Messages part registers a page). More opens the whole menu.
  */
 export function BottomNav({ items, path, go, moreOpen, onMore }) {
+  const t = useT('shell');
   return (
-    <nav className="sh-bottom" aria-label="Quick destinations" data-testid="bottom-nav">
+    <nav className="sh-bottom" aria-label={t('bottom.aria')} data-testid="bottom-nav">
       {items.map((i) => (
         <a key={i.key} href={i.route} onClick={go(i.route)} aria-current={i.route.split('?')[0] === path ? 'page' : undefined} data-testid={`bottom-${i.key}`}>
           <Icon name={i.icon} size={22} /><span>{i.label}</span>
         </a>
       ))}
-      <button type="button" aria-label={moreOpen ? 'Close menu' : 'Open menu'} aria-expanded={moreOpen} aria-controls="sh-nav" onClick={onMore} data-testid="bottom-more">
-        <Icon name="erp.action.more" size={22} /><span>More</span>
+      <button type="button" aria-label={moreOpen ? t('menu.close') : t('menu.open')} aria-expanded={moreOpen} aria-controls="sh-nav" onClick={onMore} data-testid="bottom-more">
+        <Icon name="erp.action.more" size={22} /><span>{t('bottom.more')}</span>
       </button>
     </nav>
   );
@@ -153,6 +159,7 @@ export function BottomNav({ items, path, go, moreOpen, onMore }) {
 
 /** Add the current page to the person's favourites, or take it out again. */
 function FavouriteToggle({ nav, path }) {
+  const t = useT('shell');
   const favs = useFavourites();
   const { add, remove } = useFavouriteActions();
   const toast = useToast();
@@ -161,23 +168,24 @@ function FavouriteToggle({ nav, path }) {
   const mine = favs.data.find((f) => f.kind === 'page' && f.navCode === entry.code);
   const busy = add.isPending || remove.isPending;
   const toggle = () => {
-    if (mine) remove.mutate(mine.id, { onSuccess: () => toast.info(`${entry.label} removed from your favourites.`) });
-    else add.mutate({ navCode: entry.code }, { onSuccess: () => toast.success(`${entry.label} added to your favourites.`), onError: (e) => toast.error(e.message) });
+    if (mine) remove.mutate(mine.id, { onSuccess: () => toast.info(t('fav.removed', { page: entry.label })) });
+    else add.mutate({ navCode: entry.code }, { onSuccess: () => toast.success(t('fav.added', { page: entry.label })), onError: (e) => toast.error(e.message) });
   };
   return (
     <button type="button" className="btn btn-small sh-fav" aria-pressed={Boolean(mine)} disabled={busy} onClick={toggle} data-testid="favourite-toggle">
-      <Icon name="erp.action.pin" size={14} /> {mine ? 'Remove from favourites' : 'Add to favourites'}
+      <Icon name="erp.action.pin" size={14} /> {mine ? t('fav.remove') : t('fav.add')}
     </button>
   );
 }
 
 /** Home › group › page, from the registry (FR-05), and the favourite toggle of the page. */
 export function Breadcrumbs({ nav, path, go }) {
+  const t = useT('shell');
   const crumbs = breadcrumbs(nav, path);
   if (crumbs.length === 0) return null;
   return (
     <div className="sh-crumbs">
-      <nav aria-label="You are here">
+      <nav aria-label={t('crumbs.aria')}>
         <ol>
           {crumbs.map((c, i) => (
             <li key={`${c.label}-${i}`} aria-current={i === crumbs.length - 1 ? 'page' : undefined}>

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import ApproveLinkPage from './modules/eng/ApproveLinkPage.jsx';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
 import { allRoutes, findRoute, routesFor } from './platform/shell/registry.js';
@@ -16,6 +17,7 @@ import { useFlag, useShellMode } from './platform/shell/api.js';
 import { landsOnField } from '../shared/device/breakpoints.js';
 import { pwa } from './platform/device/pwa.js';
 import { Skeleton } from './platform/feedback/states.jsx';
+import { useLegacyRedirect } from './platform/migration/redirect.js';
 
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
@@ -91,6 +93,9 @@ function Shell({ iam, user }) {
   const shellOn = mode === 'on';
   const found = findRoute(path.split('?')[0]);
   const field = useFlag('ff.ui.p0306', shellOn);
+  const migration = useFlag('ff.ui.p0310', shellOn);
+  const toNewAddress = useCallback((to) => { window.history.replaceState(null, '', to); setPath(to); }, []);
+  useLegacyRedirect({ ready: shellOn && migration.on, go: toNewAddress }); // an old address leads to the page that replaced it (part 03.10)
   const fallback = shellOn ? findRoute(onboarding ? '/welcome' : field.on && landsOnField(s?.roles) ? '/field' : '/home') : allRoutes()[0];
   const route = onboarding ? (found?.onboarding ? found : findRoute('/welcome')) : (found ?? fallback);
   // the address the person is really on: '/' and, for a person still being onboarded, a page they cannot use are shown as their landing page
@@ -189,6 +194,8 @@ export default function App({ authMode = 'dev-headers' }) {
 
   // An invitation link is opened before anybody is signed in, in either mode.
   if (window.location.pathname === '/accept-invite') return <AcceptInvitePage />;
+  // a secure approval link is opened before anybody is signed in (part 04.03)
+  if (window.location.pathname === '/approve-link') return <ApproveLinkPage />;
   if (authMode !== 'iam') return <Shell iam={false} user={null} />;
   if (!user) {
     const notice = wasSignedIn.current ? 'signed-out' : '';

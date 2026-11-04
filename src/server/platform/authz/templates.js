@@ -18,7 +18,19 @@ export const PERMISSIONS_03_01 = ['ui.styleguide.view'];
 export const PERMISSIONS_03_03 = ['ui.view.share'];
 export const PERMISSIONS_03_05 = ['ui.nav.manage', 'ui.console.view'];
 export const PERMISSIONS_03_07 = ['ui.dashboard.manage'];
-export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07]);
+export const PERMISSIONS_03_08 = ['ui.search.reindex', 'ui.search.analytics'];
+export const PERMISSIONS_03_09 = ['ui.translation.manage'];
+export const PERMISSIONS_03_10 = ['ui.migration.view', 'ui.migration.signoff'];
+export const PERMISSIONS_04_01 = ['eng.workflow.view', 'eng.workflow.define', 'eng.workflow.cancel', 'eng.workflow.admin', 'eng.sample.use'];
+export const PERMISSIONS_04_02 = ['eng.matrix.view', 'eng.matrix.manage', 'eng.delegation.use', 'eng.delegation.admin'];
+export const PERMISSIONS_04_04 = ['eng.pcs.view', 'eng.pcs.manage', 'eng.pcs.raise', 'eng.pcs.emergency'];
+export const PERMISSIONS_04_05 = ['acc.raci.view', 'acc.raci.maintain', 'acc.ledger.view', 'acc.report.view'];
+export const PERMISSIONS_04_06 = ['ntf.template.view', 'ntf.template.edit', 'ntf.delivery.view', 'ntf.delivery.retry'];
+export const PERMISSIONS_04_07 = ['comm.channel.view', 'comm.channel.edit', 'comm.log.view', 'comm.consent.view', 'comm.consent.edit'];
+export const PERMISSIONS_04_10 = ['doc.document.view', 'doc.document.view_confidential', 'doc.document.view_restricted', 'doc.document.create', 'doc.document.manage', 'doc.config.view', 'doc.config.edit'];
+export const PERMISSIONS_04_09 = ['alr.rule.view', 'alr.rule.edit', 'alr.alert.view', 'alr.alert.manage'];
+export const PERMISSIONS_04_08 = ['tsk.team.view', 'tsk.task.assign', 'tsk.instruction.create', 'tsk.routing.view', 'tsk.routing.edit'];
+export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07, ...PERMISSIONS_04_08, ...PERMISSIONS_04_09, ...PERMISSIONS_04_10]);
 
 /** Permission keys that are privileged: a role holding any of them is a privileged role (its changes need the extra approver). */
 export const SENSITIVE_ACTIONS = ['manage', 'configure', 'configure_system', 'redrive', 'replay', 'issue', 'post_soft_closed'];
@@ -102,20 +114,92 @@ const unique = (list) => [...new Set(list)].sort();
 // Part 02.05. Rules are maintained by the system administrator and checked by the auditor or the director; anyone inside the company may ask
 // for elevated access for themselves; department heads and other managers certify the access of their people in a review.
 const ADDED_02_05 = {
-  SYSADM: ['iam.sod.view', 'iam.sod.manage', 'iam.elevation.view', 'iam.elevation.revoke', 'iam.review.view', 'iam.review.manage', 'core.security.view', 'core.routes.view', 'iam.user.export', 'ui.styleguide.view', 'ui.nav.manage', 'ui.console.view', 'ui.dashboard.manage'],
-  ITADM: ['iam.sod.view', 'iam.elevation.view', 'iam.elevation.revoke', 'core.security.view', 'core.routes.view', 'core.security.configure', 'iam.user.export', 'ui.console.view'],
+  SYSADM: ['iam.sod.view', 'iam.sod.manage', 'iam.elevation.view', 'iam.elevation.revoke', 'iam.review.view', 'iam.review.manage', 'core.security.view', 'core.routes.view', 'iam.user.export', 'ui.styleguide.view', 'ui.nav.manage', 'ui.console.view', 'ui.dashboard.manage', 'ui.search.analytics', 'ui.translation.manage', 'ui.migration.view', 'ui.migration.signoff'],
+  ITADM: ['iam.sod.view', 'iam.elevation.view', 'iam.elevation.revoke', 'core.security.view', 'core.routes.view', 'core.security.configure', 'iam.user.export', 'ui.console.view', 'ui.search.reindex', 'ui.search.analytics', 'ui.migration.view', 'ui.migration.signoff'], // part 03.08: the IT administrator rebuilds the search index and reads its analytics
   DIR: ['iam.sod.view', 'iam.sod.resolve', 'iam.elevation.view', 'iam.review.view', 'iam.review.manage'],
   AUD: ['iam.sod.view', 'iam.sod.resolve', 'iam.elevation.view', 'iam.review.view', 'iam.review.manage', 'core.audit.view', 'core.audit.verify', 'core.security.view', 'core.routes.view'],
   HRMGR: ['iam.user.export'],
-  PCMGR: ['ui.dashboard.manage'], // part 03.07: the project controls manager sets the default dashboards of roles
+  PCMGR: ['ui.dashboard.manage', 'ui.migration.view', 'ui.migration.signoff'], // part 03.07: the project controls manager sets the default dashboards of roles
 };
+// Part 04.02. The system administrator maintains the matrix, limits, escalation and SLA settings (the maker; the chain of the change is CFO or the process owner,
+// then the director for large limits); the roles that approve or audit read them and run the simulator; everyone inside the company delegates their own approvals.
+const ADDED_04_02 = {
+  SYSADM: ['eng.matrix.view', 'eng.matrix.manage', 'eng.delegation.admin'],
+  ITADM: ['eng.matrix.view', 'eng.delegation.admin'],
+  DIR: ['eng.matrix.view'], CFO: ['eng.matrix.view'], AUD: ['eng.matrix.view'], ACCMGR: ['eng.matrix.view'], PROCMGR: ['eng.matrix.view'], PCMGR: ['eng.matrix.view'], HRMGR: ['eng.matrix.view', 'eng.delegation.admin'],
+};
+// Part 04.07. The IT administrator sets up the channels (a change is approved by the system administrator or a director); the system administrator, the auditor and the IT administrator read
+// the communication log; those who deal with vendors, clients and staff keep the consent of the contacts they write to.
+// Part 04.08. Everyone has their own tasks and may give themselves tasks; seniors give tasks to others and raise instructions; managers see the tasks of their team within their projects; the
+// department heads (HR manager) and the system administrator keep the responsibility matrix, and a change of it is approved by the system administrator or a director.
+const SENIORS_04_08 = ['tsk.team.view', 'tsk.task.assign', 'tsk.instruction.create'];
+const ADDED_04_08 = {
+  DIR: [...SENIORS_04_08, 'tsk.routing.view'], PD: SENIORS_04_08, PM: SENIORS_04_08, CFO: SENIORS_04_08, PROCMGR: SENIORS_04_08, COMMGR: SENIORS_04_08, HRMGR: [...SENIORS_04_08, 'tsk.routing.view', 'tsk.routing.edit'],
+  SYSADM: ['tsk.team.view', 'tsk.routing.view', 'tsk.routing.edit'], ITADM: ['tsk.routing.view'], AUD: ['tsk.team.view', 'tsk.routing.view'],
+};
+// Part 04.09. The system administrator and the process owners keep the rules (one that sends messages outside is approved by the process owner and the system administrator); everybody has their own
+// alerts; those who manage a project see and settle the alerts of it.
+const OWNERS_04_09 = ['alr.rule.view', 'alr.rule.edit', 'alr.alert.view', 'alr.alert.manage'];
+// Part 04.10. Everyone inside the company sees the documents of their projects, up to the level of confidentiality their role is trusted with; the authors add and revise; the document controller (DOC)
+// keeps the register, the folders and the types; the system administrator keeps the configuration (a change is approved by the system administrator or a director).
+const VIEW_04_10 = ['doc.document.view'];
+const AUTHOR_04_10 = ['doc.document.view', 'doc.document.create'];
+const SENIOR_04_10 = ['doc.document.view', 'doc.document.create', 'doc.document.view_confidential'];
+const ADDED_04_10 = {
+  DOC: ['doc.document.view', 'doc.document.view_confidential', 'doc.document.view_restricted', 'doc.document.create', 'doc.document.manage', 'doc.config.view', 'doc.config.edit'],
+  DIR: ['doc.document.view', 'doc.document.view_confidential', 'doc.document.view_restricted', 'doc.config.view'], PD: [...SENIOR_04_10, 'doc.document.view_restricted'], PM: [...SENIOR_04_10, 'doc.config.view'], QCMGR: [...SENIOR_04_10, 'doc.config.view'],
+  CFO: SENIOR_04_10, COMMGR: SENIOR_04_10, HRMGR: SENIOR_04_10, PCMGR: SENIOR_04_10, CM: SENIOR_04_10, PROCMGR: AUTHOR_04_10, ACCMGR: VIEW_04_10, FINEX: VIEW_04_10,
+  SE: AUTHOR_04_10, QCE: AUTHOR_04_10, DESIGN: AUTHOR_04_10, PLAN: AUTHOR_04_10, QS: AUTHOR_04_10, EST: AUTHOR_04_10, BD: VIEW_04_10, HSEE: AUTHOR_04_10, HSEO: AUTHOR_04_10, CSUP: VIEW_04_10, WSUP: VIEW_04_10, PMSUP: VIEW_04_10,
+  PROCIC: VIEW_04_10, SACC: VIEW_04_10, PLANTMGR: VIEW_04_10, STOREMGR: VIEW_04_10, AUD: ['doc.document.view', 'doc.document.view_confidential', 'doc.config.view'], SYSADM: ['doc.config.view', 'doc.config.edit'], ITADM: ['doc.config.view'],
+};
+const ADDED_04_09 = {
+  SYSADM: OWNERS_04_09, ITADM: ['alr.rule.view', 'alr.alert.view'], AUD: ['alr.rule.view', 'alr.alert.view'], DIR: OWNERS_04_09, PD: OWNERS_04_09, PM: OWNERS_04_09, CFO: OWNERS_04_09, PROCMGR: OWNERS_04_09, COMMGR: OWNERS_04_09, HRMGR: OWNERS_04_09,
+};
+const ADDED_04_07 = {
+  ITADM: ['comm.channel.view', 'comm.channel.edit', 'comm.log.view', 'comm.consent.view', 'comm.consent.edit'],
+  SYSADM: ['comm.channel.view', 'comm.log.view', 'comm.consent.view', 'comm.consent.edit'],
+  AUD: ['comm.channel.view', 'comm.log.view', 'comm.consent.view'], DIR: ['comm.consent.view'],
+  PROCMGR: ['comm.consent.view', 'comm.consent.edit'], COMMGR: ['comm.consent.view', 'comm.consent.edit'], HRMGR: ['comm.consent.view', 'comm.consent.edit'],
+};
+// Part 04.06. The system administrator writes the templates of notifications (a new version is approved by the IT administrator); the IT administrator reads the templates and the
+// delivery log and may retry a failed delivery; everyone has their own notifications and preferences without a permission.
+const ADDED_04_06 = { SYSADM: ['ntf.template.view', 'ntf.template.edit'], ITADM: ['ntf.template.view', 'ntf.delivery.view', 'ntf.delivery.retry'], AUD: ['ntf.delivery.view'] };
+// Part 04.05. Project managers and directors, the HR manager and the system administrator keep the RACI of the scopes they hold (a change of a live project is approved by the
+// project manager and then the project director); the people who watch the business read the ledger and the report; everyone has their own view without a permission.
+const ADDED_04_05 = {
+  SYSADM: ['acc.raci.view', 'acc.raci.maintain', 'acc.ledger.view', 'acc.report.view'],
+  PD: ['acc.raci.view', 'acc.raci.maintain', 'acc.ledger.view', 'acc.report.view'], PM: ['acc.raci.view', 'acc.raci.maintain', 'acc.ledger.view', 'acc.report.view'],
+  HRMGR: ['acc.raci.view', 'acc.raci.maintain', 'acc.ledger.view', 'acc.report.view'],
+  DIR: ['acc.raci.view', 'acc.ledger.view', 'acc.report.view'], AUD: ['acc.raci.view', 'acc.ledger.view', 'acc.report.view'],
+  PCMGR: ['acc.raci.view', 'acc.report.view'], CFO: ['acc.raci.view', 'acc.report.view'],
+};
+// Part 04.04. The system administrator and the process owners configure controls and reason codes (changes of a control in ENFORCE mode go through an approval chain);
+// the roles that watch the business read the register and the dashboard; every internal role may raise an exception where a control blocks it, and the roles that
+// run the site and the company may raise an emergency exception that is regularised afterwards.
+const ADDED_04_04 = {
+  SYSADM: ['eng.pcs.view', 'eng.pcs.manage', 'eng.pcs.emergency'],
+  ITADM: ['eng.pcs.view'],
+  DIR: ['eng.pcs.view', 'eng.pcs.emergency'], CFO: ['eng.pcs.view'], AUD: ['eng.pcs.view'], PCMGR: ['eng.pcs.view'], PD: ['eng.pcs.view', 'eng.pcs.emergency'], PM: ['eng.pcs.view', 'eng.pcs.emergency'],
+  ACCMGR: ['eng.pcs.view'], PROCMGR: ['eng.pcs.view'], HRMGR: ['eng.pcs.view'], QCMGR: ['eng.pcs.view'], STOREMGR: ['eng.pcs.view'], COMMGR: ['eng.pcs.view'], HSEMGR: ['eng.pcs.view'],
+};
+// Part 04.01. The system administrator defines workflows (the maker; activation needs the process owner and the IT administrator), cancels instances
+// and resolves tasks nobody could be found for; the IT administrator validates and resolves tasks; the auditor and the director read every instance.
+const ADDED_04_01 = {
+  SYSADM: ['eng.workflow.view', 'eng.workflow.define', 'eng.workflow.cancel', 'eng.workflow.admin'],
+  ITADM: ['eng.workflow.view', 'eng.workflow.admin'],
+  DIR: ['eng.workflow.view', 'eng.workflow.cancel'],
+  AUD: ['eng.workflow.view'],
+  PROCMGR: ['eng.workflow.view'],
+  PCMGR: ['eng.workflow.view'],
+};
+const USES_SAMPLE_DOCS = new Set(['SYSADM', 'ITADM', 'DIR', 'CFO', 'ACCMGR', 'PROCMGR', 'PCMGR', 'PD', 'PM', 'CM', 'SE', 'SK', 'QS', 'EST', 'PLAN', 'DOC']);
 // Part 03.03. Managers may share saved list views with a role or a project; everyone keeps personal views.
 const SHARES_VIEWS = new Set(['SYSADM', 'PM', 'PD', 'PCMGR', 'ACCMGR', 'CFO', 'HRMGR', 'DIR']);
 const internalRole = (code, category) => category !== EXT && code !== 'EMP' && code !== 'GUARD';
 
 function permissionsOfTemplate(code, category) {
-  const extra = [...(ADDED_02_05[code] ?? []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
-  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07]);
+  const extra = [...(ADDED_02_05[code] ?? []), ...(ADDED_04_01[code] ?? []), ...(ADDED_04_02[code] ?? []), ...(ADDED_04_04[code] ?? []), ...(ADDED_04_05[code] ?? []), ...(ADDED_04_06[code] ?? []), ...(ADDED_04_07[code] ?? []), ...(ADDED_04_08[code] ?? []), ...(ADDED_04_09[code] ?? []), ...(ADDED_04_10[code] ?? []), ...(internalRole(code, category) ? ['eng.pcs.raise'] : []), ...(internalRole(code, category) ? ['eng.delegation.use'] : []), ...(USES_SAMPLE_DOCS.has(code) ? ['eng.sample.use'] : []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
+  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07, ...PERMISSIONS_04_08, ...PERMISSIONS_04_09, ...PERMISSIONS_04_10]);
   if (code === 'AUD') return unique([...AUDITOR_READS, ...ADDED.AUD, ...extra]);
   if (LEGACY_ROLE_PERMISSIONS[code]) return unique([...LEGACY_ROLE_PERMISSIONS[code], ...(ADDED[code] ?? []), ...extra]);
   if (category === EXT || code === 'EMP') return [];

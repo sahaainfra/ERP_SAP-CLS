@@ -258,11 +258,11 @@ export default function ConnectorConfigPage({ session }) {
   const id = params.get('id');
   if (params.get('new') === '1') {
     return can(session, 'core.connectors.configure') ? <CreateConnector /> : (
-      <section aria-labelledby="page-title"><div className="state" role="alert"><h2 id="page-title">You do not have access to create connectors</h2><p>This needs the core.connectors.configure permission (IT Administrator). <Link to="/admin/integrations">Back to connectors</Link></p></div></section>
+      <section aria-labelledby="page-title"><div className="page-head"><h1 id="page-title">New connector</h1></div><div className="state" role="alert"><h2>You do not have access to create connectors</h2><p>This needs the core.connectors.configure permission (IT Administrator). <Link to="/admin/integrations">Back to connectors</Link></p></div></section>
     );
   }
   if (!id) {
-    return <section aria-labelledby="page-title"><div className="state"><h2 id="page-title">No connector chosen</h2><p><Link to="/admin/integrations">Choose one from the list</Link>.</p></div></section>;
+    return <section aria-labelledby="page-title"><div className="page-head"><h1 id="page-title">Connector</h1></div><div className="state"><h2>No connector chosen</h2><p><Link to="/admin/integrations">Choose one from the list</Link>.</p></div></section>;
   }
   return <ViewConnector id={id} session={session} />;
 }
