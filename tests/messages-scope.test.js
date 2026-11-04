@@ -95,6 +95,31 @@ test('BR-01 AC-04 project and site channels take their members from active assig
     assert.equal((await outsider.get(`${M}/conversations/${id}/media`)).status, 404);
     assert.equal((await seAlpha.get(`${M}/holds`)).status, 403);
     assert.equal((await seAlpha.get(`${M}/config`)).status, 403);
+    // part 05.04: instructions, announcements and message-to-action keep to the same boundary
+    const due = new Date(Date.now() + 2 * 86_400_000).toISOString();
+    const mineMsg = (await pmAlpha.post(`${M}/conversations/${id}/messages`, { body: 'Alpha: stop the pour at 4' })).json.data;
+    const foreignMsg = (await pmBravo.post(`${M}/conversations/${id}/messages`, { body: 'Bravo manager in the Alpha channel' })).json.data;
+    assert.equal((await pmBravo.post(`${M}/messages/${foreignMsg.id}/instruction`, { priority: 'HIGH', dueAt: due })).status, 403, 'a manager of another project may not instruct inside this project');
+    assert.equal((await seAlpha.post(`${M}/messages/${mineMsg.id}/instruction`, { priority: 'HIGH', dueAt: due })).status, 403, 'a site engineer has no right to');
+    const instr = await pmAlpha.post(`${M}/messages/${mineMsg.id}/instruction`, { priority: 'HIGH', dueAt: due });
+    assert.equal(instr.status, 201, JSON.stringify(instr.json));
+    assert.equal((await outsider.get(`${M}/instructions/${instr.json.data.id}`)).status, 404, 'an outsider cannot read the instruction');
+    assert.equal((await outsider.post(`${M}/instructions/${instr.json.data.id}/ack`, {})).status, 404);
+    assert.equal((await outsider.get(`${M}/messages/${mineMsg.id}/action-draft?type=TASK`)).status, 404);
+    assert.equal((await outsider.post(`${M}/conversations/${id}/escalate`, { reason: 'I want in', afterHours: 1 })).status, 404);
+    assert.equal((await pmAlpha.get(`${M}/instructions?view=all`)).status, 403, 'the full register needs msg.comm.view_all');
+    assert.equal((await pdAll.get(`${M}/instructions?view=all`)).json.data.rows.length, 1);
+    const ann = (project) => ({ title: 'Safety notice', body: 'Hard hats on the whole site.', audience: { projectIds: [project] } });
+    assert.equal((await pmAlpha.post(`${M}/announcements`, ann(b))).status, 403, 'not to another project');
+    assert.equal((await outsider.post(`${M}/announcements`, ann(a))).status, 403);
+    assert.equal((await pmAlpha.post(`${M}/announcements`, { ...ann(a), audience: { all: true } })).status, 403, 'a project-scoped manager may not announce to everyone');
+    const mineAnn = await pmAlpha.post(`${M}/announcements`, ann(a));
+    assert.equal(mineAnn.status, 201, JSON.stringify(mineAnn.json));
+    assert.equal((await pmAlpha.post(`${M}/announcements/${mineAnn.json.data.id}/publish`, {})).status, 200);
+    assert.equal((await seAlpha.get(`${M}/announcements`)).json.data.rows.length, 1);
+    assert.equal((await outsider.get(`${M}/announcements`)).json.data.rows.length, 0, 'another project does not receive it');
+    assert.equal((await outsider.get(`${M}/announcements/${mineAnn.json.data.id}`)).status, 404);
+    assert.equal((await seAlpha.get(`${M}/auto-group-rules`)).status, 403);
     // an automatic member cannot leave (mute or archive instead)
     assert.equal((await seAlpha.post(`${M}/conversations/${id}/read`, {})).status, 200);
   } finally { await api.close(); rmSync(storage, { recursive: true, force: true }); }

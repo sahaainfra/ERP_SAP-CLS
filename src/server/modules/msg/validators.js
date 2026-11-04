@@ -7,7 +7,7 @@ const text = (max) => z.string().trim().max(max);
 const USER = z.string().trim().min(2).max(60);
 const ENTITY = z.string().regex(/^[a-z][a-z_]*$/).max(60);
 export const parseId = (v) => parse(id, v);
-export const parseConvList = (q) => parse(z.object({ q: text(80).optional(), view: z.enum(['all', 'unread', 'pinned', 'archived', 'DIRECT', 'GROUP', 'DEPARTMENT', 'PROJECT', 'SITE', 'TEAM', 'RECORD', 'EXTERNAL']).default('all'), limit: z.coerce.number().int().min(1).max(200).default(100), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseConvList = (q) => parse(z.object({ q: text(80).optional(), view: z.enum(['all', 'unread', 'pinned', 'archived', 'DIRECT', 'GROUP', 'DEPARTMENT', 'PROJECT', 'SITE', 'TEAM', 'RECORD', 'EXTERNAL', 'important', 'escalated']).default('all'), limit: z.coerce.number().int().min(1).max(200).default(100), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
 export const parseConvCreate = (b) => parse(z.object({
   type: z.enum(['DIRECT', 'GROUP', 'TEAM', 'PROJECT', 'SITE', 'DEPARTMENT', 'RECORD']), title: text(120).optional(), members: z.array(USER).max(200).default([]),
   projectId: id.optional(), siteId: id.optional(), departmentId: id.optional(), entity: ENTITY.optional(), entityId: z.union([z.string().trim().min(1).max(60), z.number().int()]).transform(String).optional(),

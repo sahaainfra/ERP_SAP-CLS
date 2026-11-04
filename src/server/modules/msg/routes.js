@@ -1,10 +1,13 @@
 import { Router } from 'express';
+import { toCsv } from '../../platform/export/index.js';
+import { parseAck, parseAnnouncement, parseAnnouncementList, parseAnnouncementUpdate, parseBulkAck, parseCancel, parseConfirm, parseDraftQuery, parseEscalate, parseEscList, parseInstrList, parseInstruction, parseResolve, parseToAction } from './comcenter.js';
+import { parseRules } from './autogroups.js';
 import { parseCallStart, parseDelivered, parseHold, parseHoldList, parseMedia, parseMeSettings, parseOn, parsePaging, parsePresenceBeat, parsePresenceGet, parseSearch, parseSignal } from './validators.js';
 import { parseMsgConfig } from './config.js';
 import { parseAddMembers, parseArchive, parseConvCreate, parseConvList, parseDelete, parseEdit, parseForward, parseId, parseMemberName, parseMemberRole, parseMessages, parsePeople, parseRead, parseRecordSearch, parseReact, parseRename, parseSend, parseSettings } from './validators.js';
 
 /** Part 05.01: the Messages API. Every route needs a signed-in person; membership of the conversation (BR-01) is checked in the service. */
-export function messageRoutes({ service, features, config }, { idempotent, idempotentRequired }) {
+export function messageRoutes({ service, features, config, comm, groups }, { idempotent, idempotentRequired }) {
   const r = Router();
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   r.get('/people', (req, res) => ok(res, { rows: service.people(req.actor, parsePeople(req.query).q) }));
@@ -58,5 +61,37 @@ export function messageRoutes({ service, features, config }, { idempotent, idemp
   r.get('/config', (req, res) => ok(res, config.get(req.actor)));
   r.post('/config/changes', idempotentRequired, (req, res) => ok(res, config.propose(req.actor, parseMsgConfig(req.body)), 202));
   r.get('/config/export', (req, res) => { const out = config.export(req.actor); res.status(200).set({ 'content-type': 'application/json', 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store' }).send(out.text); });
+  // ---- part 05.04: the Communication Center ----
+  r.get('/center/summary', (req, res) => ok(res, comm.summary(req.actor)));
+  r.post('/messages/:id/instruction', idempotent, (req, res) => ok(res, comm.instructions.create(req.actor, parseId(req.params.id), parseInstruction(req.body)), 201));
+  r.get('/instructions', (req, res) => ok(res, comm.instructions.list(req.actor, parseInstrList(req.query))));
+  r.get('/instructions/export', (req, res) => {
+    const rows = comm.instructions.exportRows(req.actor, parseInstrList(req.query));
+    const columns = [['id', 'No'], ['title', 'Instruction'], ['conversation', 'Conversation'], ['sender', 'Sender'], ['priority', 'Priority'], ['due', 'Due'], ['status', 'Status'], ['acknowledged', 'Acknowledged'], ['percent', 'Percent'], ['overdue', 'Overdue'], ['escalated', 'Escalated at'], ['created', 'Created']].map(([key, label]) => ({ key, label }));
+    res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="instruction-register.csv"' }).send(toCsv({ columns, rows, footer: null }));
+  });
+  r.get('/instructions/:id', (req, res) => ok(res, comm.instructions.get(req.actor, parseId(req.params.id))));
+  r.post('/instructions/:id/ack', idempotent, (req, res) => ok(res, comm.instructions.ack(req.actor, parseId(req.params.id), parseAck(req.body))));
+  r.post('/instructions/:id/cancel', idempotent, (req, res) => ok(res, comm.instructions.cancel(req.actor, parseId(req.params.id), parseCancel(req.body))));
+  r.get('/acknowledgements/pending', (req, res) => ok(res, comm.instructions.pending(req.actor)));
+  r.post('/acknowledgements/bulk', idempotent, (req, res) => ok(res, comm.instructions.bulkAck(req.actor, parseBulkAck(req.body))));
+  r.get('/action-types', (req, res) => ok(res, comm.actions.types(req.actor)));
+  r.get('/messages/:id/action-draft', (req, res) => ok(res, comm.actions.draft(req.actor, parseId(req.params.id), parseDraftQuery(req.query).type)));
+  r.post('/messages/:id/to-action', idempotentRequired, async (req, res) => ok(res, await comm.actions.create(req.actor, parseId(req.params.id), parseToAction(req.body)), 201));
+  r.get('/announcements', (req, res) => ok(res, comm.announcements.list(req.actor, parseAnnouncementList(req.query))));
+  r.post('/announcements', idempotent, (req, res) => ok(res, comm.announcements.create(req.actor, parseAnnouncement(req.body)), 201));
+  r.post('/announcements/audience', (req, res) => ok(res, comm.announcements.audienceSize(req.actor, parseAnnouncement({ title: 'size', body: 'size', ...req.body }).audience)));
+  r.get('/announcements/:id', (req, res) => ok(res, comm.announcements.get(req.actor, parseId(req.params.id))));
+  r.put('/announcements/:id', idempotent, (req, res) => ok(res, comm.announcements.update(req.actor, parseId(req.params.id), parseAnnouncementUpdate(req.body))));
+  r.post('/announcements/:id/publish', idempotent, (req, res) => ok(res, comm.announcements.publish(req.actor, parseId(req.params.id))));
+  r.post('/announcements/:id/cancel', idempotent, (req, res) => ok(res, comm.announcements.cancel(req.actor, parseId(req.params.id), parseCancel(req.body))));
+  r.post('/announcements/:id/read', (req, res) => ok(res, comm.announcements.markRead(req.actor, parseId(req.params.id))));
+  r.post('/announcements/:id/confirm', idempotent, (req, res) => ok(res, comm.announcements.confirm(req.actor, parseId(req.params.id), parseConfirm(req.body))));
+  r.post('/conversations/:id/escalate', idempotent, (req, res) => ok(res, comm.escalations.raise(req.actor, parseId(req.params.id), parseEscalate(req.body)), 201));
+  r.get('/escalations', (req, res) => ok(res, comm.escalations.list(req.actor, parseEscList(req.query))));
+  r.post('/escalations/:id/resolve', idempotent, (req, res) => ok(res, comm.escalations.resolve(req.actor, parseId(req.params.id), parseResolve(req.body))));
+  r.get('/auto-group-rules', (req, res) => ok(res, groups.rules.get(req.actor)));
+  r.post('/auto-group-rules/changes', idempotentRequired, (req, res) => ok(res, groups.rules.propose(req.actor, parseRules(req.body)), 202));
+  r.post('/auto-group-rules/sync', idempotent, (req, res) => { if (!groups.can(req.actor)) return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'You may not run the auto groups (permission msg.autogroup.edit).' } }); return ok(res, groups.sync(req.actor.companyId)); });
   return r;
 }

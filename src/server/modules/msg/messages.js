@@ -47,6 +47,22 @@ export function createMessageService({ db }) {
   const convRow = (id) => db.prepare('SELECT * FROM msg_conversations WHERE id = ? AND is_active = 1').get(id);
   /** Part 05.03: is this one of the secure (end-to-end encrypted) conversations? Their messages are envelopes of the sec module, never rows here, so the text of one is never in this table. */
   const secureRow = (convId) => (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'sec_conversations'").get() ? db.prepare('SELECT * FROM sec_conversations WHERE conversation_id = ? AND is_active = 1').get(convId) : null);
+  /** Part 05.04: the instruction and the actions of the messages shown (none when the tables are not there). */
+  const hasTable = (name) => Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(name));
+  function commExtras(actor, ids) {
+    const instr = new Map(); const actions = new Map();
+    if (!ids.length) return { instr, actions };
+    const q = ids.map(() => '?').join(',');
+    if (hasTable('msg_instructions')) {
+      for (const i of db.prepare(`SELECT i.*, (SELECT COUNT(*) FROM msg_acknowledgements a WHERE a.instruction_id = i.id AND a.is_active = 1) AS total, (SELECT COUNT(*) FROM msg_acknowledgements a WHERE a.instruction_id = i.id AND a.is_active = 1 AND a.acknowledged_at IS NOT NULL) AS done FROM msg_instructions i WHERE i.message_id IN (${q}) AND i.is_active = 1`).all(...ids)) {
+        const mineAck = db.prepare('SELECT acknowledged_at, response FROM msg_acknowledgements WHERE instruction_id = ? AND user_ref = ? AND is_active = 1').get(i.id, actor.user);
+        instr.set(i.message_id, { id: i.id, priority: i.priority, dueAt: i.due_at, status: i.instruction_status, requiresAck: Boolean(i.requires_ack), total: i.total, acknowledged: i.done, overdue: Boolean(i.due_at && i.due_at < nowIso() && i.instruction_status !== 'COMPLETED' && i.instruction_status !== 'CANCELLED' && i.done < i.total),
+          mine: mineAck ? { recipient: true, acknowledgedAt: mineAck.acknowledged_at, response: mineAck.response } : { recipient: false } });
+      }
+    }
+    if (hasTable('msg_actions')) for (const a of db.prepare(`SELECT message_id, action_type, target_entity, target_id, target_label FROM msg_actions WHERE message_id IN (${q}) AND is_active = 1 ORDER BY id`).all(...ids)) { const l = actions.get(a.message_id) ?? []; l.push({ type: a.action_type, entity: a.target_entity, id: a.target_id, label: a.target_label }); actions.set(a.message_id, l); }
+    return { instr, actions };
+  }
   const memberRow = (convId, user) => db.prepare('SELECT * FROM msg_members WHERE conversation_id = ? AND user_ref = ? AND is_active = 1').get(convId, user);
   const isMember = (conv, user) => { const m = memberRow(conv.id, user); return Boolean(m && !m.left_at); };
   /** May this person open this conversation? A member; for an external thread, whoever may read the communication log. */
@@ -130,6 +146,7 @@ export function createMessageService({ db }) {
       mentions: deleted ? [] : JSON.parse(m.mentions_json || '[]').map((u) => person(actor.companyId, u)),
       attachments: files, links: deleted ? [] : JSON.parse(m.record_links_json || '[]').map((l) => card(actor, l)),
       reactions: deleted ? [] : (ctx.reactions.get(m.id) ?? []).map((r) => ({ ...r, mine: r.users.includes(actor.user), users: undefined })),
+      instruction: ctx.instr?.get(m.id) ?? null, actions: ctx.actions?.get(m.id) ?? [],
       createdAt: m.created_at, editedAt: m.edited_at, mine,
       canEdit: !deleted && mine && m.kind !== 'SYSTEM' && p.editWindowMinutes > 0 && Date.now() - Date.parse(m.created_at) <= p.editWindowMinutes * 60_000,
       canDelete: !deleted && m.kind !== 'SYSTEM' && (mine ? p.deleteWindowMinutes > 0 && Date.now() - Date.parse(m.created_at) <= p.deleteWindowMinutes * 60_000 : ctx.admin),
@@ -166,7 +183,7 @@ export function createMessageService({ db }) {
         }
       }
     }
-    return { params: params(actor), byId: new Map(rows.map((r) => [r.id, r])), reactions, files, admin: mayManage(actor, conv), stars, pins, voice, receipts, recipients };
+    return { params: params(actor), byId: new Map(rows.map((r) => [r.id, r])), reactions, files, admin: mayManage(actor, conv), stars, pins, voice, receipts, recipients, ...commExtras(actor, ids) };
   }
   function titleFor(actor, c) {
     if (c.conv_type === 'DIRECT') { const other = c.direct_key.split('|').find((u) => u !== actor.user) ?? actor.user; return nameOf(actor.companyId, other); }
@@ -212,7 +229,13 @@ export function createMessageService({ db }) {
       else list = list.filter((c) => !c.archived);
       if (view === 'unread') list = list.filter((c) => c.unread > 0);
       else if (view === 'pinned') list = list.filter((c) => c.pinned);
-      else if (CONV_TYPES.includes(view)) list = list.filter((c) => c.type === view);
+      else if (view === 'important' || view === 'escalated') {
+        let found = [];
+        if (view === 'important' && hasTable('msg_instructions')) found = db.prepare("SELECT DISTINCT i.conversation_id AS id FROM msg_instructions i JOIN msg_acknowledgements a ON a.instruction_id = i.id WHERE i.company_id = ? AND a.user_ref = ? AND a.acknowledged_at IS NULL AND i.instruction_status IN ('OPEN', 'ESCALATED') AND i.is_active = 1 AND a.is_active = 1").all(actor.companyId, actor.user);
+        if (view === 'escalated' && hasTable('msg_escalations')) found = db.prepare("SELECT DISTINCT conversation_id AS id FROM msg_escalations WHERE company_id = ? AND escalation_status IN ('OPEN', 'ESCALATED') AND is_active = 1").all(actor.companyId);
+        const ids = new Set(found.map((r) => r.id));
+        list = list.filter((c) => ids.has(c.id));
+      } else if (CONV_TYPES.includes(view)) list = list.filter((c) => c.type === view);
       if (q) { const n = q.toLowerCase(); list = list.filter((c) => c.title.toLowerCase().includes(n) || (c.last?.excerpt ?? '').toLowerCase().includes(n)); }
       list.sort((a, b) => Number(b.pinned) - Number(a.pinned) || (a.lastActivityAt < b.lastActivityAt ? 1 : -1));
       return { rows: list.slice(offset, offset + limit), total: list.length, counts: total, canExternal: ext, canManage: anywhere(actor, 'msg.channel.manage') };
@@ -654,7 +677,7 @@ export function createMessageService({ db }) {
     });
   } catch { /* registered once per process */ }
 
-  return { conversations, members, messages, admin, people, records, params, indexExternal, reconcileFor, internals: { secureRow, bumpActivity: (convId, at) => db.prepare('UPDATE msg_conversations SET last_activity_at = ?, message_count = message_count + 1, updated_at = ? WHERE id = ?').run(at, nowIso(), convId), must, canOpen, convRow, memberRow, isAdmin, mayManage, context, present, nameOf, person, anywhere, gapsOf, touchUsers, systemMessage, summarize } };
+  return { conversations, members, messages, admin, people, records, params, indexExternal, reconcileFor, internals: { autoMembersOf, bump, secureRow, hasTable, bumpActivity: (convId, at) => db.prepare('UPDATE msg_conversations SET last_activity_at = ?, message_count = message_count + 1, updated_at = ? WHERE id = ?').run(at, nowIso(), convId), must, canOpen, convRow, memberRow, isAdmin, mayManage, context, present, nameOf, person, anywhere, gapsOf, touchUsers, systemMessage, summarize } };
 }
 
 const services = new WeakMap();
