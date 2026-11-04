@@ -2,6 +2,7 @@ import ApproveLinkPage from './modules/eng/ApproveLinkPage.jsx';
 import VerifyPage from './modules/eng/VerifyPage.jsx';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import ChatDock from './modules/msg/ChatDock.jsx';
 import { startOffline, unsentCount, wipeOnSignOut } from './platform/offline/engine.js';
 import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
 import { allRoutes, findRoute, routesFor } from './platform/shell/registry.js';
@@ -98,6 +99,7 @@ function Shell({ iam, user }) {
   const migration = useFlag('ff.ui.p0310', shellOn);
   // the offline field engine (part 04.15) starts for the signed-in person when its flag is on
   const offlineFlag = useFlag('ff.eng.p0415', Boolean(s));
+  const msgFlag = useFlag('ff.msg.p0501', Boolean(s));
   const offlineUser = s ? (iam && user ? user.username ?? user.id ?? null : identity.user) : null;
   useEffect(() => { if (offlineFlag.on && offlineUser) startOffline(String(offlineUser)).catch(() => {}); }, [offlineFlag.on, offlineUser]);
   const toNewAddress = useCallback((to) => { window.history.replaceState(null, '', to); setPath(to); }, []);
@@ -187,6 +189,7 @@ function Shell({ iam, user }) {
       {identityBar}
       <main id="main">
         {s && route && <route.Page session={s} />}
+        {s && msgFlag.on && !onboarding && <ChatDock session={s} />}
         {unreachable}
       </main>
     </FeedbackProvider>
