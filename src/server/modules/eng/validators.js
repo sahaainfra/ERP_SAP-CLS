@@ -296,3 +296,41 @@ export const parseAlertAct = (b) => parse(z.object({ note: text(1000).optional()
 export const parseAlertBulk = (b) => parse(z.object({ ids: z.array(id).min(1).max(100), action: z.enum(['ack', 'resolve']), note: text(1000).optional() }).strict(), b);
 export const parseAlertExport = (q) => parse(z.object({ view: z.enum(['mine', 'project', 'all']).default('mine'), status: z.union([z.literal('open'), z.enum(['OPEN', 'ACKNOWLEDGED', 'RESOLVED'])]).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
 
+
+// Inputs of the document API (part 04.10).
+const LEVEL = z.enum(['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'RESTRICTED']);
+const RETENTION = z.enum(['permanent', 'statutory', 'standard', 'short']);
+const docFields = {
+  title: text(200).min(3, 'Give the document a title of at least 3 characters'), discipline: text(60).optional(), folderId: id.optional(), wbsRef: text(60).optional(), locationRef: text(120).optional(),
+  confidentiality: LEVEL.optional(), owner: text(60).optional(), retentionClass: RETENTION.optional(), validUntil: date.optional(), tags: z.array(text(40).min(1)).max(20).optional(),
+};
+export const parseDocQuery = (q) => parse(z.object({
+  projectId: id.optional(), siteId: id.optional(), folderId: id.optional(), includeSub: z.enum(['1', 'true']).optional().transform((v) => Boolean(v)), docType: text(40).optional(), status: z.enum(['DRAFT', 'IN_REVIEW', 'ISSUED', 'ARCHIVED', 'CANCELLED']).optional(),
+  discipline: text(60).optional(), confidentiality: LEVEL.optional(), owner: text(60).optional(), checkedOut: z.enum(['1', 'true']).optional().transform((v) => Boolean(v)), expiring: z.coerce.number().int().min(0).max(3650).optional(), tag: text(40).optional(),
+  q: text(80).optional(), sort: z.enum(['newest', 'number', 'title', 'expiry', 'updated']).default('newest'), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0),
+}).strict(), q);
+export const parseDocCreate = (b) => parse(z.object({ ...docFields, docType: text(40).min(2), projectId: id.optional(), siteId: id.optional(), changeNote: text(500).optional(), links: z.array(z.object({ entity: text(40), entityId: z.union([z.string().max(60), z.number()]), label: text(120).optional(), route: text(200).optional() }).strict()).max(20).optional() }).strict(), b);
+export const parseDocUpdate = (b) => parse(z.object({ ...docFields, title: docFields.title.optional(), version: z.number().int().min(1).optional() }).strict(), b);
+export const parseDocNote = (b) => parse(z.object({ note: text(300).optional(), reason: text(500).optional() }).strict(), b ?? {});
+export const parseRevision = (b) => parse(z.object({ changeNote: text(500).min(3, 'Say what changed (at least 3 characters)') }).strict(), b);
+export const parseReason = (b) => parse(z.object({ reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseDistribute = (b) => parse(z.object({ recipients: z.array(z.object({ type: z.enum(['USER', 'ROLE', 'EXTERNAL']), id: text(120).min(1), name: text(120).optional() }).strict()).min(1).max(100), message: text(500).optional(), dueDays: z.number().int().min(1).max(365).optional() }).strict(), b);
+export const parseAcknowledge = (b) => parse(z.object({ note: text(300).optional() }).strict(), b ?? {});
+export const parseShare = (b) => parse(z.object({ type: z.enum(['USER', 'ROLE', 'EXTERNAL']), principal: text(120).min(1), permission: z.enum(['VIEW', 'EDIT']).default('VIEW'), expiresAt: date.optional() }).strict(), b);
+export const parseCompare = (q) => parse(z.object({ from: id, to: id }).strict(), q);
+export const parseContentQuery = (q) => parse(z.object({ download: z.enum(['1', 'true']).optional().transform((v) => Boolean(v)) }).strict(), q);
+const shape = z.object({ kind: z.enum(['rect', 'ellipse', 'arrow', 'note', 'pen']), x: z.number().min(0).max(1).optional(), y: z.number().min(0).max(1).optional(), w: z.number().min(-1).max(1).optional(), h: z.number().min(-1).max(1).optional(), x2: z.number().min(0).max(1).optional(), y2: z.number().min(0).max(1).optional(), points: z.array(z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)])).max(500).optional(), text: text(300).optional(), color: z.enum(['red', 'blue', 'green', 'orange']).optional() }).strict();
+export const parseAnnotation = (b) => parse(z.object({ page: z.number().int().min(1).max(5000).default(1), shape, comment: text(1000).optional() }).strict(), b);
+export const parseAnnotationSet = (b) => parse(z.object({ resolved: z.boolean().optional(), comment: text(1000).optional(), remove: z.boolean().optional() }).strict().refine((v) => Object.keys(v).length > 0, 'Say what to change'), b);
+export const parseFolderQuery = (q) => parse(z.object({ projectId: id.optional() }).strict(), q);
+export const parseFolderCreate = (b) => parse(z.object({ projectId: id.optional(), parentId: id.optional(), name: text(80).min(1), defaultAcl: z.object({ confidentiality: LEVEL.optional(), shareRoles: z.array(z.string().regex(/^[A-Z][A-Z0-9_-]{1,19}$/)).max(10).optional() }).strict().optional() }).strict(), b);
+export const parseFolderTemplate = (b) => parse(z.object({ template: z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/) }).strict(), b);
+export const parseZip = (b) => parse(z.object({ ids: z.array(id).min(1).max(100) }).strict(), b);
+export const parseBulkQuery = (q) => parse(z.object({ commit: z.enum(['0', '1']).default('0') }).strict(), q);
+const folderNode = z.lazy(() => z.object({ name: text(80).min(1), children: z.array(folderNode).max(50).optional(), acl: z.object({ confidentiality: LEVEL.optional(), shareRoles: z.array(z.string().regex(/^[A-Z][A-Z0-9_-]{1,19}$/)).max(10).optional() }).strict().optional() }).strict());
+export const parseDocConfig = (b) => parse(z.object({
+  types: z.array(z.object({ code: z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/), name: text(80).min(3), requiresReview: z.boolean(), reviewerRole: z.string().regex(/^[A-Z][A-Z0-9_-]{1,19}(\|[A-Z][A-Z0-9_-]{1,19})*$/), approverRole: z.enum(['PM', 'QCMGR']), hasValidity: z.boolean(), defaultConfidentiality: LEVEL, retentionClass: RETENTION, sortOrder: z.number().int().min(1).max(1000).optional() }).strict()).max(50).default([]),
+  templates: z.array(z.object({ code: z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/), name: text(80).min(3), tree: z.array(folderNode).min(1).max(50) }).strict()).max(20).default([]),
+  reason: text(500).min(5, 'Give a reason of at least 5 characters'),
+}).strict().refine((v) => v.types.length + v.templates.length > 0, { message: 'Change at least one type or template' }), b);
+export const parseDocExport = (q) => parse(z.object({ projectId: id.optional(), folderId: id.optional(), docType: text(40).optional(), status: z.enum(['DRAFT', 'IN_REVIEW', 'ISSUED', 'ARCHIVED', 'CANCELLED']).optional(), q: text(80).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);

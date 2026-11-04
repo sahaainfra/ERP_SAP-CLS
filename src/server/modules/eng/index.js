@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
+import { join } from 'node:path';
 import { createParameterStore } from '../../platform/parameters/index.js';
 import { eventTypes } from '../../platform/events/index.js';
 import { FORMATS, toCsv, toXlsx, writeExport } from '../../platform/export/index.js';
@@ -13,7 +14,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
-import { alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { documentRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -23,6 +24,10 @@ import { commOf } from '../../platform/comm/index.js';
 import { tasksOf } from '../../platform/tasks/index.js';
 import { createTaskService } from './tasks.js';
 import { createAlertService } from './alerts.js';
+import { bind as bindDocuments, createDocumentService } from './documents.js';
+import { createDocumentOps } from './documents-ops.js';
+import { createDocumentConfig } from './documents-config.js';
+import { createLocalStorage } from '../../platform/files/storage.js';
 import { alertsOf } from '../../platform/alerts/index.js';
 import { registerCommProviders } from '../../platform/comm/providers.js';
 import { integrationsOf } from '../../platform/integrations/index.js';
@@ -289,6 +294,44 @@ workSources.register({
   },
 });
 
+// Part 04.10: the document management service.
+for (const [type, description] of [
+  ['doc.document.created', 'A controlled document was registered (with a number and a first draft revision).'],
+  ['doc.document.updated', 'The details of a document (title, type, discipline, confidentiality, validity ...) were changed.'],
+  ['doc.document.checked_out', 'Someone checked a document out to work on it; nobody else may revise it meanwhile.'],
+  ['doc.document.checked_in', 'A document was checked in (by the person, or by the document controller who forced it, with a reason).'],
+  ['doc.document.revision_started', 'A new revision of an issued document was started.'],
+  ['doc.document.issued', 'A revision was approved and is now the current one; the earlier revision is superseded.'],
+  ['doc.document.superseded', 'A revision was replaced by a newer approved one; it stays readable with a watermark.'],
+  ['doc.document.shared', 'A document was shared with a person, a role or an outside party.'],
+  ['doc.document.distributed', 'A document was sent to people who must acknowledge it.'],
+  ['doc.document.acknowledged', 'A recipient acknowledged a distributed revision.'],
+  ['doc.document.archived', 'A document was archived and is read-only.'],
+  ['doc.document.cancelled', 'A document that was never issued was cancelled.'],
+  ['doc.document.expiring', 'A document with a validity date is within 30 days of its end.'],
+  ['doc.document.expired', 'A document with a validity date has passed it.'],
+  ['doc.config.changed', 'The document types or folder templates were changed after their approval.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'doc_documents', columns: ['company_id', 'doc_no'] }, { table: 'doc_versions', columns: ['document_id', 'revision_no'] }],
+  companyOptional: ['doc_types', 'doc_folder_templates'],
+  statuses: { doc_documents: ['DRAFT', 'IN_REVIEW', 'ISSUED', 'ARCHIVED', 'CANCELLED'], doc_versions: ['DRAFT', 'IN_REVIEW', 'RETURNED', 'ISSUED', 'SUPERSEDED', 'REJECTED'], doc_types: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], doc_folder_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+defineList({
+  code: 'doc.documents', label: 'Documents', from: 'doc_documents d', defaultSort: 'newest',
+  columns: { status: { sql: 'd.status', type: 'enum', label: 'Status' }, type: { sql: 'd.doc_type', type: 'enum', label: 'Type' }, confidentiality: { sql: 'd.confidentiality', type: 'enum', label: 'Confidentiality' }, sort: { sql: 'd.id', type: 'text', label: 'Order' } },
+});
+workSources.register({
+  code: 'doc.acknowledge',
+  kind: 'task',
+  label: 'Documents to acknowledge',
+  list: (db, actor) => {
+    if (!actor.companyId) return [];
+    return db.prepare("SELECT x.id, x.document_id, x.due_at, d.doc_no, d.title, v.revision FROM doc_distributions x JOIN doc_documents d ON d.id = x.document_id JOIN doc_versions v ON v.id = x.version_id WHERE x.company_id = ? AND x.recipient_type = 'USER' AND x.recipient_id = ? AND x.acknowledged_at IS NULL AND x.is_active = 1 ORDER BY x.due_at IS NULL, x.due_at LIMIT 20").all(actor.companyId, actor.user)
+      .map((x) => ({ id: `doc-${x.id}`, title: `Acknowledge ${x.doc_no} rev ${x.revision}: ${x.title}`, due: x.due_at ? x.due_at.slice(0, 10) : null, route: `/documents/document?id=${x.document_id}` }));
+  },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -298,11 +341,11 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
-  companyOptional: ['alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
+  tables: ['doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  companyOptional: ['doc_types', 'doc_folder_templates', 'alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
-  mount(api, { db, config, publicApi }) {
+  mount(api, { db, config, publicApi, storagePath }) {
     // a database that has not been migrated this far (the contract recording of part 01.x) has no engine to mount
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'wf_definitions'").get()) return;
     const flags = createFlagService({ db, environment: config.environment });
@@ -467,6 +510,26 @@ export const eng = {
     alrs.use(gate('ff.eng.p0409', 'Alert rules are'));
     alrs.use(alertRoutes({ service: alertService, alertsFile }, idem));
     api.use('/alr', alrs);
+
+    // part 04.10: the document register, its revisions, folders, sharing, distribution, markups and expiry
+    const docService = createDocumentService({ db, engine });
+    bindDocuments(db, docService);
+    const docStorage = createLocalStorage({ root: join(storagePath ?? join(process.cwd(), 'data'), 'files') });
+    const docOps = createDocumentOps({ db, service: docService, storage: docStorage });
+    const docConfig = createDocumentConfig({ db, engine, service: docService });
+    runtime.jobs.register('doc.sweep', (ctx) => { const expiring = docService.expirySweep(); const reminded = docService.distribution.remind(); ctx.log(`Told ${expiring} owner(s) of expiring documents, reminded ${reminded} recipient(s)`); return { expiring, reminded }; }, { maxAttempts: 1, description: 'Tells the owners of documents that are about to expire and reminds the recipients who have not yet acknowledged a distributed document.' });
+    runtime.scheduler.define({ code: 'doc.sweep_daily', cron: '15 6 * * *', jobType: 'doc.sweep', description: 'Daily 06:15: document expiry and acknowledgement reminders' });
+    const documentsFile = (actor, q) => {
+      const list = docService.documents.list(actor, { projectId: q.projectId, folderId: q.folderId, docType: q.docType, status: q.status, q: q.q, limit: 100, offset: 0, sort: 'number' });
+      const rows = list.rows.map((x) => ({ docNo: x.docNo, title: x.title, type: x.typeName, revision: x.revision ?? '', status: x.status, confidentiality: x.confidentiality, discipline: x.discipline ?? '', owner: x.owner, validUntil: x.validUntil ?? '', checkedOutBy: x.checkedOutBy ?? '' }));
+      const columns = [['docNo', 'Number'], ['title', 'Title'], ['type', 'Type'], ['revision', 'Revision'], ['status', 'Status'], ['confidentiality', 'Confidentiality'], ['discipline', 'Discipline'], ['owner', 'Owner'], ['validUntil', 'Valid until'], ['checkedOutBy', 'Checked out by']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'doc_documents', entityId: 'list', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Document register. Generated by ${actor.user} on ${todayIST()}. Only the documents you may see are listed.`], sheetName: 'Documents', title: 'Document register' }), type: FORMATS[q.format], fileName: `documents-${todayIST()}.${q.format}` };
+    };
+    const docsRouter = Router();
+    docsRouter.use(gate('ff.eng.p0410', 'The document service is'));
+    docsRouter.use(documentRoutes({ service: docService, ops: docOps, config: docConfig, documentsFile, bulkBody: express.raw({ type: ['application/octet-stream', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], limit: '10mb' }) }, idem));
+    api.use('/doc', docsRouter);
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { HttpError } from '../../platform/http/errors.js';
-import { parseAdopt, parseAlertAct, parseAlertBulk, parseAlertDraft, parseAlertExport, parseAlertQuery, parseAlertRule, parseEnable, parseRuleCode, parseRunsQuery, parseRoutePreview, parseRoutingChange, parseTaskAct, parseTaskChecklist, parseTaskComment, parseTaskCreate, parseTaskDashboard, parseTaskDepend, parseTaskExport, parseTaskPeople, parseTskQuery, parseTaskUpdate, parseInstruction, parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
+import { parseAcknowledge, parseAnnotation, parseAnnotationSet, parseFolderTemplate, parseBulkQuery, parseCompare, parseContentQuery, parseDistribute, parseDocConfig, parseDocCreate, parseDocExport, parseDocNote, parseDocQuery, parseDocUpdate, parseFolderCreate, parseFolderQuery, parseReason, parseRevision, parseShare, parseZip, parseAdopt, parseAlertAct, parseAlertBulk, parseAlertDraft, parseAlertExport, parseAlertQuery, parseAlertRule, parseEnable, parseRuleCode, parseRunsQuery, parseRoutePreview, parseRoutingChange, parseTaskAct, parseTaskChecklist, parseTaskComment, parseTaskCreate, parseTaskDashboard, parseTaskDepend, parseTaskExport, parseTaskPeople, parseTskQuery, parseTaskUpdate, parseInstruction, parseChannelChange, parseConsent, parseConsentImport, parseConsentQuery, parseMessageExport, parseMessageQuery, parseMessageSummary, parseOtpSend, parseOtpVerify, parseSample, parseDeliveryExport, parseDeliveryQuery, parseDeliverySummary, parseNotificationQuery, parsePreferencesBody, parseReadAll, parseTemplateChange, parseTemplateCode, parseTemplatePreview, parseTemplateQuery, parseApplyTemplate, parseGapQuery, parseLedgerQuery, parseMeQuery, parseRaciChange, parseRaciHistory, parseRaciScope, parseResolveQuery, parseScoreExport, parseScoreQuery, parseControlCode, parseControlCreate, parseControlQuery, parseControlUpdate, parseCycleTarget, parseDashboardQuery, parseExceptionCreate, parseExceptionExport, parseExceptionQuery, parseExceptionUpdate, parseReasonQuery, parseReasonSave, parseSampleImport, parseBulkAct, parseInboxQuery, parseLinkDecide, parseLinkIssue, parseLinkToken, parsePolicyChange, parseSubmissionsQuery, parseActivate, parseDelegation, parseDelegationQuery, parseLimitChanges, parseLimitHistory, parseMatrixCreate, parseMatrixQuery, parseMatrixUpdate, parsePathChange, parseRevoke, parseSimulate, parseSlaChange, parseAct, parseAssign, parseCancel, parseComment, parseDefinitionCreate, parseDefinitionQuery, parseDefinitionUpdate, parseDocId, parseDocType, parseDraftFrom, parseId, parseInstanceQuery, parseMonitorQuery, parseSampleDoc, parseSampleQuery, parseSubmit, parseTaskQuery } from './validators.js';
 
 /** /api/v1/workflow: the engine's API (FR-05, FR-06, FR-08). Writes carry an Idempotency-Key. */
 export function workflowRoutes({ engine, definitions, monitorFile, matrix, limits, delegations, paths, sla, inbox }, { idempotent, idempotentRequired }) {
@@ -245,5 +245,48 @@ export function alertRoutes({ service, alertsFile }, { idempotent, idempotentReq
   r.get('/alerts/:id', (req, res) => ok(res, service.alerts.get(req.actor, parseId(req.params.id))));
   r.post('/alerts/:id/ack', idempotent, (req, res) => ok(res, service.alerts.act(req.actor, parseId(req.params.id), 'ack', parseAlertAct(req.body).note)));
   r.post('/alerts/:id/resolve', idempotent, (req, res) => ok(res, service.alerts.act(req.actor, parseId(req.params.id), 'resolve', parseAlertAct(req.body).note)));
+  return r;
+}
+
+/** /api/v1/doc: the document register and what goes with it (part 04.10). The files themselves go in and out through the file service (as `doc_version`) and the content route here. */
+export function documentRoutes({ service, ops, config, documentsFile, bulkBody }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const d = service.documents;
+  r.get('/types', (req, res) => ok(res, { types: service.types.list(req.actor.companyId), templates: service.templates.list(req.actor.companyId) }));
+  r.get('/documents/export', (req, res) => { const out = documentsFile(req.actor, parseDocExport(req.query)); res.set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.fileName}"` }).send(out.buffer); });
+  r.post('/documents/zip', idempotent, async (req, res, next) => { try { const out = await ops.zip(req.actor, parseZip(req.body).ids); res.set({ 'content-type': 'application/zip', 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-included': String(out.included), 'x-not-included': String(out.left.length) }).send(out.buffer); } catch (e) { next(e); } });
+  r.get('/documents', (req, res) => ok(res, d.list(req.actor, parseDocQuery(req.query))));
+  r.post('/documents', idempotentRequired, (req, res) => ok(res, d.create(req.actor, parseDocCreate(req.body)), 201));
+  r.get('/documents/:id', (req, res) => ok(res, d.get(req.actor, parseId(req.params.id))));
+  r.patch('/documents/:id', idempotent, (req, res) => ok(res, d.update(req.actor, parseId(req.params.id), parseDocUpdate(req.body))));
+  r.get('/documents/:id/compare', (req, res) => { const q = parseCompare(req.query); ok(res, d.compare(req.actor, parseId(req.params.id), q.from, q.to)); });
+  r.post('/documents/:id/checkout', idempotent, (req, res) => ok(res, d.checkOut(req.actor, parseId(req.params.id), parseDocNote(req.body).note)));
+  r.post('/documents/:id/checkin', idempotent, (req, res) => ok(res, d.checkIn(req.actor, parseId(req.params.id), { reason: parseDocNote(req.body).reason })));
+  r.post('/documents/:id/revisions', idempotentRequired, (req, res) => ok(res, d.newRevision(req.actor, parseId(req.params.id), parseRevision(req.body)), 201));
+  r.post('/documents/:id/submit', idempotentRequired, (req, res) => ok(res, d.submit(req.actor, parseId(req.params.id)), 202));
+  r.post('/documents/:id/archive', idempotent, (req, res) => ok(res, d.archive(req.actor, parseId(req.params.id), parseReason(req.body).reason)));
+  r.post('/documents/:id/cancel', idempotent, (req, res) => ok(res, d.cancel(req.actor, parseId(req.params.id), parseReason(req.body).reason)));
+  r.post('/documents/:id/distribute', idempotentRequired, (req, res) => ok(res, service.distribution.send(req.actor, parseId(req.params.id), parseDistribute(req.body)), 201));
+  r.post('/documents/:id/acknowledge', idempotent, (req, res) => ok(res, service.distribution.acknowledge(req.actor, parseId(req.params.id), parseAcknowledge(req.body).note)));
+  r.post('/documents/:id/shares', idempotent, (req, res) => ok(res, service.shares.add(req.actor, parseId(req.params.id), parseShare(req.body)), 201));
+  r.delete('/documents/:id/shares/:shareId', idempotent, (req, res) => ok(res, service.shares.remove(req.actor, parseId(req.params.id), parseId(req.params.shareId))));
+  r.get('/versions/:id/content', async (req, res, next) => {
+    try {
+      const out = await ops.content(req.actor, parseId(req.params.id), { download: parseContentQuery(req.query).download, range: req.get('range') });
+      res.status(out.status).set(out.headers);
+      if (out.stream) out.stream.on('error', next).pipe(res); else res.end(out.buffer);
+    } catch (e) { next(e); }
+  });
+  r.get('/versions/:id/annotations', (req, res) => ok(res, service.annotations.list(req.actor, parseId(req.params.id))));
+  r.post('/versions/:id/annotations', idempotent, (req, res) => ok(res, service.annotations.add(req.actor, parseId(req.params.id), parseAnnotation(req.body)), 201));
+  r.patch('/annotations/:id', idempotent, (req, res) => ok(res, service.annotations.set(req.actor, parseId(req.params.id), parseAnnotationSet(req.body))));
+  r.get('/folders', (req, res) => ok(res, service.folders.tree(req.actor, parseFolderQuery(req.query).projectId ?? null)));
+  r.post('/folders', idempotent, (req, res) => ok(res, service.folders.create(req.actor, parseFolderCreate(req.body)), 201));
+  r.post('/projects/:id/folder-template', idempotent, (req, res) => ok(res, service.folders.applyTemplate(req.actor, parseId(req.params.id), parseFolderTemplate(req.body).template), 201));
+  r.get('/bulk-template', (req, res) => res.set({ 'content-type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'content-disposition': 'attachment; filename="documents-to-register.xlsx"' }).send(ops.template()));
+  r.post('/bulk-upload', bulkBody, async (req, res, next) => { try { const q = parseBulkQuery(req.query); ok(res, await ops.bulkImport(req.actor, Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0), { commit: q.commit === '1' }), q.commit === '1' ? 201 : 200); } catch (e) { next(e); } });
+  r.get('/config', (req, res) => ok(res, config.get(req.actor)));
+  r.post('/config/changes', idempotentRequired, (req, res) => ok(res, config.propose(req.actor, parseDocConfig(req.body)), 202));
   return r;
 }
