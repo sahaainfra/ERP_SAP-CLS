@@ -243,6 +243,9 @@ export function registerSampleDocObject() {
       const d = db.prepare('SELECT doc_no, title, amount, status FROM eng_sample_docs WHERE id = ? AND company_id = ?').get(id, actor.companyId);
       return d ? { label: `${d.doc_no ?? `#${id}`}: ${d.title}`, status: d.status, amount: fromUnits(d.amount, 'money').toFixed(2) } : null;
     },
+    search(db, actor, q, limit) {
+      return db.prepare(`SELECT d.id FROM eng_sample_docs d WHERE d.company_id = ? AND d.is_active = 1 AND ${authzOf(db).scopeFilter(actor, PERMISSION, { project: 'd.project_id', site: 'd.site_id' }).sql} AND (d.doc_no LIKE ? OR d.title LIKE ?) ORDER BY d.id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, `%${q}%`, limit);
+    },
     projectRecords: (db, companyId, projectId, limit) => db.prepare('SELECT id FROM eng_sample_docs WHERE company_id = ? AND project_id = ? AND is_active = 1 ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((r) => r.id),
   });
 }
