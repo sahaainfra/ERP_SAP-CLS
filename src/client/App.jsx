@@ -149,7 +149,7 @@ function Shell({ iam, user }) {
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
           onSignOut={iam && user ? () => { if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve(); pwa.clearApiCache(); return signOut().then(() => wipeOnSignOut()).then(() => qc.clear()); } : null} identityBar={identityBar}
-          extras={<FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>}
+          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <ChatDock session={s} />}</>}
         />
       </FeedbackProvider>
     );
