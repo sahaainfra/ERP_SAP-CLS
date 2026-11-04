@@ -482,7 +482,7 @@ export function createDocumentService({ db, engine }) {
     /** For the job: remind those who have not acknowledged by the date, once a day. */
     remind() {
       let n = 0;
-      for (const r of db.prepare("SELECT x.*, d.doc_no, d.title, d.company_id AS dc, d.project_id AS dp, d.site_id AS ds, d.id AS did FROM doc_distributions x JOIN doc_documents d ON d.id = x.document_id WHERE x.acknowledged_at IS NULL AND x.recipient_type = 'USER' AND x.is_active = 1 AND x.due_at IS NOT NULL AND x.due_at < ? AND (x.reminded_at IS NULL OR substr(x.reminded_at, 1, 10) < ?)").all(nowIso(), today())) {
+      for (const r of db.prepare("SELECT x.*, d.doc_no, d.title, d.company_id AS dc, d.project_id AS dp, d.site_id AS ds, d.id AS did FROM doc_distributions x JOIN doc_documents d ON d.id = x.document_id WHERE x.acknowledged_at IS NULL AND x.recipient_type = 'USER' AND x.is_active = 1 AND x.due_at IS NOT NULL AND x.due_at < ? AND (x.reminded_at IS NULL OR substr(datetime(x.reminded_at, '+330 minutes'), 1, 10) < ?)").all(nowIso(), today())) {
         const d = { id: r.did, company_id: r.dc, doc_no: r.doc_no, title: r.title, project_id: r.dp, site_id: r.ds };
         tell(d, 'doc.distribution.reminder', [r.recipient_id], {}, `doc:${r.did}:remind:${r.id}:${today()}`, db.prepare('SELECT revision FROM doc_versions WHERE id = ?').get(r.version_id));
         db.prepare('UPDATE doc_distributions SET reminded_at = ? WHERE id = ?').run(nowIso(), r.id);

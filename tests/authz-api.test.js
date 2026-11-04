@@ -406,8 +406,8 @@ test('T-04 the legacy comparison shows nobody lost access or gained any that is 
   assert.deepEqual(byName.stranger.unmapped, ['SUPPLIER']);
   assert.equal(byName.nobody.result, 'SAME');
   const pmOnly = d.data.find((r) => r.roles.length === 1 && r.roles[0] === 'PM');
-  assert.deepEqual(pmOnly.newOnly, ['acc.ledger.view', 'acc.raci.maintain', 'acc.raci.view', 'acc.report.view', 'alr.alert.manage', 'alr.alert.view', 'alr.rule.edit', 'alr.rule.view', 'col.activity.view', 'col.comment.moderate', 'col.trace.link', 'doc.config.view', 'doc.document.create', 'doc.document.view', 'doc.document.view_confidential', 'eng.delegation.use', 'eng.pcs.emergency', 'eng.pcs.raise', 'eng.pcs.view', 'eng.sample.import', 'eng.sample.use', 'iam.elevation.request', 'iam.review.decide', 'msg.channel.manage', 'off.sync.confirm', 'sig.document.cancel', 'sig.document.sign', 'sig.document.view', 'tpl.document.deliver', 'tpl.document.generate', 'tpl.document.view', 'tpl.template.view', 'tsk.instruction.create', 'tsk.task.assign', 'tsk.team.view', 'ui.view.share', 'xl.import.use'], 'a project manager gains only the rights to use the sample document (04.01), to delegate (04.02), to see and raise control exceptions (04.04), to keep the RACI and read the ledger of their projects, (04.05), to give tasks, raise instructions and see the tasks of their team (04.08), to keep alert rules and settle the alerts of their projects (04.09), to register and see documents, confidential ones too, and see the document configuration (04.10), to moderate comments, add trace links and read the activity feed of their projects (04.14), to confirm old offline work (04.15), to make project channels (05.01), to ask for elevated access, to decide a review and to share list views (03.03)');
-  assert.equal(pmOnly.after - pmOnly.before, 37);
+  assert.deepEqual(pmOnly.newOnly, ['acc.ledger.view', 'acc.raci.maintain', 'acc.raci.view', 'acc.report.view', 'alr.alert.manage', 'alr.alert.view', 'alr.rule.edit', 'alr.rule.view', 'col.activity.view', 'col.comment.moderate', 'col.trace.link', 'doc.config.view', 'doc.document.create', 'doc.document.view', 'doc.document.view_confidential', 'eng.delegation.use', 'eng.pcs.emergency', 'eng.pcs.raise', 'eng.pcs.view', 'eng.sample.import', 'eng.sample.use', 'iam.elevation.request', 'iam.review.decide', 'msg.announcement.send', 'msg.channel.manage', 'msg.instruction.send', 'off.sync.confirm', 'sig.document.cancel', 'sig.document.sign', 'sig.document.view', 'tpl.document.deliver', 'tpl.document.generate', 'tpl.document.view', 'tpl.template.view', 'tsk.instruction.create', 'tsk.task.assign', 'tsk.team.view', 'ui.view.share', 'xl.import.use'], 'a project manager gains only the rights to use the sample document (04.01), to delegate (04.02), to see and raise control exceptions (04.04), to keep the RACI and read the ledger of their projects, (04.05), to give tasks, raise instructions and see the tasks of their team (04.08), to keep alert rules and settle the alerts of their projects (04.09), to register and see documents, confidential ones too, and see the document configuration (04.10), to moderate comments, add trace links and read the activity feed of their projects (04.14), to confirm old offline work (04.15), to make project channels (05.01), to ask for elevated access, to decide a review and to share list views (03.03)');
+  assert.equal(pmOnly.after - pmOnly.before, 39);
   assert.equal((await sys.get(`${I}/legacy-comparison?filter[result]=UNMAPPED`)).json.meta.total, 1);
   const map = (await sys.get(`${I}/legacy-mapping`)).json.data;
   assert.equal(map.length, 9);
@@ -445,20 +445,22 @@ test('FR-06 a change takes effect at once on the instance that made it and withi
   await api.close();
 });
 
+/** A calendar day in India, n days from today: the test is about dates, so it must not depend on the day it is run. */
+const day = (n) => new Date(Date.now() + 5.5 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
 test('FR-03 an assignment can be dated: it applies from its start date and not after its end date', async () => {
   const app = await boot();
   const sys = await app.as('sysadmin', ['SYSADM']);
   const it = await app.as('indu', ['ITADM']);
   const dir = await app.as('dina', ['DIR']);
   await app.mk('tara', []);
-  const ask = await sys.post(`${I}/assignments`, { userId: app.idOf('tara'), roleId: app.roleId('PCMGR'), scopeType: 'COMPANY', effectiveFrom: '2026-11-05', effectiveTo: '2026-11-20', reason: 'Covers project controls for two weeks' });
+  const ask = await sys.post(`${I}/assignments`, { userId: app.idOf('tara'), roleId: app.roleId('PCMGR'), scopeType: 'COMPANY', effectiveFrom: day(2), effectiveTo: day(17), reason: 'Covers project controls for two weeks' });
   assert.equal(ask.status, 201, ask.text);
   await app.approveAll([it, dir], ask.json.data.id);
   const tara = { token: await app.login('tara') };
   const can = async () => (await app.http('GET', `${C}/formulas`, tara)).status;
   assert.equal(await can(), 403, 'not yet: ONBOARDING_RESTRICTED until the start date');
   assert.equal((await app.http('GET', `${I}/me`, tara)).json.data.lifecycle, 'ONBOARDING');
-  app.clock.t = Date.parse('2026-11-06T06:00:00.000Z');
+  app.clock.t = Date.parse(`${day(3)}T06:00:00.000Z`);
   tara.token = await app.login('tara');
   assert.equal(await can(), 200, 'in force');
   // the daily job moves the person out of onboarding
@@ -467,7 +469,7 @@ test('FR-03 an assignment can be dated: it applies from its start date and not a
   await jobs.enqueue('iam.assignment_sync', {});
   await jobs.drain();
   assert.equal(app.api.db.prepare("SELECT lifecycle FROM iam_user_profiles WHERE user_id = ?").get(app.idOf('tara')).lifecycle, 'ACTIVE');
-  app.clock.t = Date.parse('2026-11-21T06:00:00.000Z');
+  app.clock.t = Date.parse(`${day(18)}T06:00:00.000Z`);
   tara.token = await app.login('tara');
   assert.equal(await can(), 403, 'ended');
   await jobs.enqueue('iam.assignment_sync', {});
