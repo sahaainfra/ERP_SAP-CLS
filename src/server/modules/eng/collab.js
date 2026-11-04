@@ -320,12 +320,14 @@ export function createCollabService({ db }) {
     return { total: rows.length, counts, rows: rows.slice(offset, offset + limit).map(({ ms: _ms, ...e }) => ({ ...e, actorName: e.actor ? displayName(companyId, e.actor) : null })) };
   };
   const timeline = {
+    /** @param {any} actor @param {{ entity: string, id: string|number, kinds?: string[], from?: string, to?: string, q?: string, limit?: number, offset?: number }} o */
     record(actor, { entity, id, kinds, from, to, q, limit = 50, offset = 0 }) {
       const { def } = record(actor, entity, id);
       const res = finish(recordEvents(actor, entity, id, def, kinds), { from, to, q, limit, offset }, actor.companyId);
       return { ...res, kinds: TIMELINE_KINDS };
     },
     /** The project activity feed (FR-04): what happened across the project's records, comments, workflow, documents and tasks. */
+    /** @param {any} actor @param {{ projectId?: number, kinds?: string[], from?: string, to?: string, q?: string, limit?: number, offset?: number }} o */
     project(actor, { projectId, kinds, from, to, q, limit = 50, offset = 0 }) {
       const projects = db.prepare(`SELECT p.id, p.code, p.name FROM org_projects p WHERE p.company_id = ? AND p.is_active = 1 AND ${authz.scopeFilter(actor, 'col.activity.view', { project: 'p.id' }).sql} ORDER BY p.code`).all(actor.companyId);
       if (!projectId) return { projects, rows: [], total: 0, counts: Object.fromEntries(TIMELINE_KINDS.map((k) => [k, 0])), kinds: TIMELINE_KINDS, projectId: null };
