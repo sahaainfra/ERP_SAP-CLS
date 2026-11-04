@@ -6,7 +6,8 @@ import { LEVELS, RETENTION } from './documents-common.js';
 
 // Document Types & Folder Templates (part 04.10, section 7.4): the types with their approval chain, retention and default confidentiality, and the folder templates a project starts from.
 // A change goes through approval (maker-checker) before it takes effect; only one change can wait at a time.
-const toText = (nodes, depth = 0) => nodes.flatMap((n) => [`${'  '.repeat(depth)}${n.name}`, ...(n.children ? toText(n.children, depth + 1) : [])]).join('\n');
+const lines = (nodes, depth = 0) => nodes.flatMap((n) => [`${'  '.repeat(depth)}${n.name}`, ...(n.children ? lines(n.children, depth + 1) : [])]);
+const toText = (nodes) => lines(nodes).join('\n');
 function fromText(text) {
   const root = [];
   const stack = [{ depth: -1, kids: root }];

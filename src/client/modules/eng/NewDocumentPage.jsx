@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { useCreateDocument, useDocAction, useDocTypes, useDocument } from '../../platform/documents/api.js';
-import { FileUploader } from '../core/components/Attachments.jsx';
+import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from './common.js';
 import { LEVELS, RETENTION, docLink } from './documents-common.js';
@@ -22,10 +22,10 @@ function Attach({ id }) {
   const send = () => { setError(null); act.mutate({ id, action: 'submit' }, { onSuccess: () => navigateTo(docLink(id)), onError: (er) => setError(errorInfo(er)) }); };
   return (
     <section aria-labelledby="nd-title" data-testid="attach-revision">
-      <h1 id="nd-title">Revision {v.revision} of {d.number}</h1>
+      <h1 id="nd-title">Revision {v.revision} of {d.docNo}</h1>
       <p className="muted">{d.title}. Attach the file of this revision, then send it for approval.</p>
       <FileUploader entity="doc_version" entityId={v.id} onDone={() => { setN((x) => x + 1); q.refetch(); }} />
-      {n > 0 && <p role="status">File attached.</p>}
+      <AttachmentList key={n} entity="doc_version" entityId={v.id} canEdit onReplace={() => {}} />
       {error?.form && <p role="alert" className="error">{error.form}</p>}
       <div className="actions"><button type="button" className="btn btn-primary" disabled={act.isPending} onClick={send}>Send for approval</button><Link to={docLink(id)}>Back to the document</Link></div>
     </section>
@@ -42,7 +42,7 @@ export default function NewDocumentPage() {
   const [error, setError] = useState(null);
   const set = (p) => setF((x) => ({ ...x, ...p }));
   if (existing) return <Attach id={existing} />;
-  const type = (types.data ?? []).find((t) => t.code === f.docType);
+  const type = (types.data?.types ?? []).find((t) => t.code === f.docType);
   const submit = (e) => {
     e.preventDefault();
     setError(null);
@@ -60,7 +60,7 @@ export default function NewDocumentPage() {
       <form className="form-grid" onSubmit={submit} aria-label="Register a document" data-testid="document-form">
         <Field label="Title" name="title" error={error}><input value={f.title} maxLength={200} required onChange={(e) => set({ title: e.target.value })} /></Field>
         <Field label="Document type" name="docType" error={error}>
-          <select value={f.docType} required onChange={(e) => set({ docType: e.target.value })}><option value="">Choose a type</option>{(types.data ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}</select>
+          <select value={f.docType} required onChange={(e) => set({ docType: e.target.value })}><option value="">Choose a type</option>{(types.data?.types ?? []).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}</select>
         </Field>
         {type && <p className="small muted">{type.requiresReview ? `Reviewed by ${type.reviewerRole.split('|').join(' or ')}, then ` : ''}approved by {type.approverRole}.</p>}
         <LookupField id="nd-project" label="Project" lookup="iam/projects" value={f.projectId} onChange={(v) => set({ projectId: v })} />
