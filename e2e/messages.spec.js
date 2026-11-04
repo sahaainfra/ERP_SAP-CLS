@@ -49,7 +49,7 @@ test('AC-01 AC-02 FR-02 FR-03 FR-04 FR-07 one Messages app: a direct conversatio
   const phone = info.project.name === 'mobile';
   const c = await company(request, `MSG${tag}`);
   const project = await api(request, c, 'PM', 'e2e-pm', 'post', '/iam/org/projects', { code: `MS${tag}1`, name: 'Ring Road', type: 'ROAD' });
-  const doc = await api(request, c, 'PD', 'e2e-pd', 'post', '/eng/sample-docs', { title: 'Shuttering for the bridge', amount: '12000.00', projectId: project.id });
+  await api(request, c, 'PD', 'e2e-pd', 'post', '/eng/sample-docs', { title: 'Shuttering for the bridge', amount: '12000.00', projectId: project.id });
   const pd = `e2e-pd${tag.toLowerCase()}`;
   const pm = `e2e-pm${tag.toLowerCase()}`;
   people(c, [[pd, ['PD'], 'Pooja Director'], [pm, ['PM'], 'Meera Manager']]);
