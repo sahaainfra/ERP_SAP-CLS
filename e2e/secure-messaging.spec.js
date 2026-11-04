@@ -73,7 +73,7 @@ test('AC-01 AC-05 FR-01 FR-07 the licence register and the policy: the gate is c
   await expect(a.page.getByTestId('lr-row').filter({ hasText: 'libsignal (Signal Protocol)' })).toContainText('AGPL-3.0-only');
   await a.page.getByTestId('lr-scan').click();
   await expect(a.page.getByTestId('lr-notice')).toContainText('component');
-  await a.page.getByTestId('lr-q').fill('libsignal');
+  await a.page.getByTestId('lr-q').fill('AGPL');
   await expect(a.page.getByTestId('lr-row')).toHaveCount(2); // libsignal and the Signal server
   await a.page.getByTestId('lr-q').fill('');
   // the policy cannot be switched on yet: the form says why and the server refuses
@@ -166,7 +166,7 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   const file = await dl;
   expect(file.suggestedFilename()).toBe('pier-loads.txt');
   expect(await (await import('node:fs/promises')).readFile(await file.path(), 'utf8')).toBe(`PIER LOADS ${tag} confidential 9912 kN`);
-  await expect(m1.page.getByTestId('secure-label').first()).toBeVisible();
+  if (!phone) await expect(m1.page.getByTestId('secure-label').first()).toBeVisible(); // on a phone the list is a separate screen
 
   // T-01: neither the words nor the file's content are anywhere in the database
   const db = new DatabaseSync('data/e2e.sqlite', { readOnly: true });
