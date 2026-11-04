@@ -11,7 +11,6 @@ function watch(page) {
   return errors;
 }
 const noOverflow = async (page) => expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
-const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 const api = async (request, c, roles, user, method, path, data) => {
   const res = await request[method](`/api/v1${path}`, { headers: H(roles, c, user), data });
   expect(res.status(), `${method} ${path}: ${await res.text()}`).toBeLessThan(300);
