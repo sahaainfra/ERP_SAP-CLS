@@ -680,3 +680,16 @@ Behind feature flag `ff.msg.p0503`; a module of its own, `modules/sec` (`service
 - **Gate and approvals** (ADR-232): `secureReady` = policy on and licence approved; workflows `OSS_LICENCE_REVIEW` (ITADM, DIR) and `SEC_POLICY` (ITADM or DIR, maker not approver).
 - **Unified app**: a secure conversation is a GROUP row of `msg_conversations` flagged by `sec_conversations`; `msg` shows the lock label and "Encrypted message", refuses plaintext sends and member changes, and never has secure text in `msg_messages`.
 - **Browser** (`platform/secure`): IndexedDB store, `engine.js` (set-up, sync, send, trust, attachments), `SecureConversation.jsx`.
+
+## 53. Communication Center (part 05.04)
+
+Behind feature flag `ff.msg.p0504`, inside the `msg` module (`autogroups.js`, `comcenter.js`; routes, validators and `index.js` extended). Tables `msg_auto_group_rules`, `msg_auto_group_links`, `msg_instructions`, `msg_acknowledgements`, `msg_announcements`, `msg_announcement_reads`, `msg_escalations`, `msg_actions` (migrations 92 and 93).
+
+- **Auto groups** (FR-01, ADR-235): `autoGroups.sync(companyId)` on `iam.assignment.created|ended` and `iam.user.suspended|deactivated` and in the minute job `msg.comcenter`; rules change through workflow `MSG_AUTOGROUPS` (approver ITADM or DIR, maker not approver).
+- **Instructions** (FR-03, BR-01, ADR-236): `POST /msg/messages/:id/instruction`, `POST /msg/instructions/:id/ack`, `POST /msg/acknowledgements/bulk`, `GET /msg/instructions` (register, CSV export), `GET /msg/acknowledgements/pending`; escalation in `instructions.escalate` at the due time (T-02). Events `msg.instruction.created|acknowledged|completed|escalated`.
+- **Announcements** (FR-04, ADR-237): CRUD, publish (now or scheduled), read, confirm with quiz, cancel; the job publishes due ones and expires old ones.
+- **Escalations** (FR-06, ADR-239): `POST /msg/conversations/:id/escalate`, `GET /msg/escalations`, `POST /msg/escalations/:id/resolve`; the job escalates the unresolved.
+- **Message to action** (FR-05, BR-02, ADR-238): `GET /msg/action-types`, `GET /msg/messages/:id/action-draft`, `POST /msg/messages/:id/to-action`; registry `messageActions`; the task through `tasksOf(db).create`; attachments through `filesOf(db).copyTo`; trace link through `col.trace.requested`.
+- **Center** (FR-02): `GET /msg/center/summary` (tiles and pending items); Messages list views `important` and `escalated` and the type views (Teams, Projects, Sites, Departments, ERP-linked).
+- **Browser**: `platform/messages/Comm.jsx` (badge, forms, hooks) and the pages Communication Center, Pending Acknowledgements, Instruction Register, Announcements, New Announcement, Auto Groups.
+

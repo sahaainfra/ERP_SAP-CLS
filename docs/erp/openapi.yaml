@@ -2218,3 +2218,109 @@ paths:
     post:
       summary: Send the licence review for approval (ITADM, then DIR); 202
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/msg/center/summary:
+    get:
+      summary: The Communication Center: tiles (chats, teams, projects, sites, departments, ERP-linked, unread, pending acknowledgements, important instructions, announcements, escalations), pending items and exceptions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/messages/{id}/instruction:
+    post:
+      summary: Mark an own message as an instruction ({ priority, dueAt, requiresAck, title }); permission msg.instruction.send within the project or site of the conversation; the other members must acknowledge
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions:
+    get:
+      summary: The instruction register (view sent|all, status, priority, overdue, q, from, to): sender, acknowledgement percentage, overdue
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/export:
+    get:
+      summary: The register as CSV, honouring the filters
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/{id}:
+    get:
+      summary: One instruction with its recipients (sender or msg.comm.view_all) or the person's own state
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/{id}/ack:
+    post:
+      summary: Acknowledge an instruction addressed to the caller ({ response }); a repeat answers the same
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/{id}/cancel:
+    post:
+      summary: Cancel an instruction (its sender), with a reason
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/acknowledgements/pending:
+    get:
+      summary: What the caller still has to acknowledge, overdue and urgent first
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/acknowledgements/bulk:
+    post:
+      summary: Acknowledge several at once; high and urgent ones are refused (422)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/action-types:
+    get:
+      summary: The kinds of record a message can become and whether each is live
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/messages/{id}/action-draft:
+    get:
+      summary: The form for a kind of record, filled from the message: title, text, attachments, project, people
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/messages/{id}/to-action:
+    post:
+      summary: Make a record from a message (a task today; the others answer 409 until their part is live); attachments are copied and the record is linked back; Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements:
+    get:
+      summary: Announcements (view received|sent|all)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+    post:
+      summary: Write an announcement draft (audience, confirmation, quiz, publish and expiry times); permission msg.announcement.send within the audience's scope
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/audience:
+    post:
+      summary: How many people an audience reaches
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}:
+    get:
+      summary: One announcement; the author sees the recipients, reads and confirmations, a recipient does not get the quiz answers
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change a draft (version checked)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/publish:
+    post:
+      summary: Publish now, or schedule when its publish time is in the future
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/cancel:
+    post:
+      summary: Cancel (author), with a reason
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/read:
+    post:
+      summary: Record that the recipient opened it
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/confirm:
+    post:
+      summary: Confirm, with the quiz answers when there is a quiz; all must be right
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/conversations/{id}/escalate:
+    post:
+      summary: Flag a conversation as unresolved; it goes to the managers after the chosen hours
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/escalations:
+    get:
+      summary: Flagged conversations (view mine|received|all)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/escalations/{id}/resolve:
+    post:
+      summary: Resolve a flagged conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/auto-group-rules:
+    get:
+      summary: The auto group rules in force, the version waiting, history and the groups they keep (msg.autogroup.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/auto-group-rules/changes:
+    post:
+      summary: Propose new rules: maker-checker, mandatory reason (msg.autogroup.edit); 202
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/auto-group-rules/sync:
+    post:
+      summary: Run the auto groups now (msg.autogroup.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
