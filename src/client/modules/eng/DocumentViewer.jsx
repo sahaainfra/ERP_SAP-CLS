@@ -55,7 +55,7 @@ function Layer({ page, width, height, tool, color, items, canMark, onDone }) {
   );
 }
 
-function PdfPages({ buffer, render }) {
+export function PdfPages({ buffer, render }) {
   const [pages, setPages] = useState(null);
   const [error, setError] = useState(null);
   const box = useRef(null);

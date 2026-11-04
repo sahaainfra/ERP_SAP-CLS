@@ -36,6 +36,9 @@ import DocumentRegisterPage from './DocumentRegisterPage.jsx';
 import DocumentPage from './DocumentPage.jsx';
 import NewDocumentPage from './NewDocumentPage.jsx';
 import DocumentTypesPage from './DocumentTypesPage.jsx';
+import TemplateLibraryPage from './TemplateLibraryPage.jsx';
+import TemplateEditorPage from './TemplateEditorPage.jsx';
+import GeneratedDocumentsPage from './GeneratedDocumentsPage.jsx';
 import WorkflowDefinitionsPage from './WorkflowDefinitionsPage.jsx';
 import WorkflowEditorPage from './WorkflowEditorPage.jsx';
 import WorkflowInstancePage from './WorkflowInstancePage.jsx';
@@ -86,6 +89,9 @@ registerModule({
     { path: '/documents/document', label: 'Document', icon: 'erp.action.info', permission: 'doc.document.view', flag: 'ff.eng.p0410', Page: DocumentPage },
     { path: '/documents/new', label: 'Upload / New Revision', icon: 'erp.action.create', permission: 'doc.document.create', flag: 'ff.eng.p0410', Page: NewDocumentPage },
     { path: '/admin/document-types', label: 'Document Types & Folder Templates', icon: 'erp.action.settings', permission: 'doc.config.view', flag: 'ff.eng.p0410', Page: DocumentTypesPage },
+    { path: '/admin/templates', label: 'Templates', icon: 'erp.action.settings', permission: 'tpl.template.view', flag: 'ff.eng.p0411', Page: TemplateLibraryPage },
+    { path: '/admin/templates/editor', label: 'Template Editor', icon: 'erp.action.edit', permission: 'tpl.template.view', flag: 'ff.eng.p0411', Page: TemplateEditorPage },
+    { path: '/documents/generated', label: 'Generated Documents', icon: 'erp.insights.metrics', permission: 'tpl.document.view', flag: 'ff.eng.p0411', Page: GeneratedDocumentsPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });
