@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate, formatDateTime } from '../../platform/format.js';
 import { authHeaders, generatedUrl, openGenerated, useBulkJob, useDeliver, useGenerate, useGenerateBulk, useGenerated, useGeneratedDoc, useTplRecords } from '../../platform/templates/api.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import SignaturePanel from './SignaturePanel.jsx';
 import { CHANNEL, DELIVERY_STATUS, PURPOSE, generatedLink, showBlob } from './templates-common.js';
 
 // Generated Documents Log (part 04.11, section 7.3): every official document made from approved data, with its version, its verification code, who made it and where it was sent. A filter panel, the count by
@@ -37,6 +38,7 @@ function Detail({ id, onClose }) {
       {notice && <p role="status" className="notice" data-testid="gd-notice">{notice}</p>}
       {error?.form && <p role="alert" className="error" data-testid="gd-error">{error.form}{error.correlationId ? ` (reference ${error.correlationId})` : ''}</p>}
       <div className="actions"><button type="button" className="btn btn-primary" onClick={() => open(false)} data-testid="open-pdf">Open the PDF</button><button type="button" className="btn" onClick={() => open(true)}>Download</button></div>
+      <SignaturePanel docId={d.id} />
       <h3>Versions</h3>
       <ul>{d.versions.map((v) => <li key={v.id}>{v.id === d.id ? <strong>Version {v.version}</strong> : <Link to={generatedLink(v.id)}>Version {v.version}</Link>} {v.current ? '(current) ' : ''}{formatDateTime(v.generatedAt)} by {v.generatedBy}{v.reason ? `: ${v.reason}` : ''}</li>)}</ul>
       {d.canDeliver && d.current && (

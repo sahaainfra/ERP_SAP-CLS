@@ -39,6 +39,7 @@ import DocumentTypesPage from './DocumentTypesPage.jsx';
 import TemplateLibraryPage from './TemplateLibraryPage.jsx';
 import TemplateEditorPage from './TemplateEditorPage.jsx';
 import GeneratedDocumentsPage from './GeneratedDocumentsPage.jsx';
+import SignatureRegisterPage from './SignatureRegisterPage.jsx';
 import WorkflowDefinitionsPage from './WorkflowDefinitionsPage.jsx';
 import WorkflowEditorPage from './WorkflowEditorPage.jsx';
 import WorkflowInstancePage from './WorkflowInstancePage.jsx';
@@ -92,6 +93,7 @@ registerModule({
     { path: '/admin/templates', label: 'Templates', icon: 'erp.action.settings', permission: 'tpl.template.view', flag: 'ff.eng.p0411', Page: TemplateLibraryPage },
     { path: '/admin/templates/editor', label: 'Template Editor', icon: 'erp.action.edit', permission: 'tpl.template.view', flag: 'ff.eng.p0411', Page: TemplateEditorPage },
     { path: '/documents/generated', label: 'Generated Documents', icon: 'erp.insights.metrics', permission: 'tpl.document.view', flag: 'ff.eng.p0411', Page: GeneratedDocumentsPage },
+    { path: '/admin/signatures', label: 'Signature Register', icon: 'erp.insights.metrics', permission: 'sig.register.view', flag: 'ff.eng.p0412', Page: SignatureRegisterPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });
