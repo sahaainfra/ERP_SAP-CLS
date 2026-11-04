@@ -1084,3 +1084,28 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .safety-grid li { text-align: center; padding: var(--erp-space-1); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
 @media (max-width: 480px) { .safety-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: 1rem; } }
 .notice.is-warning { padding: var(--erp-space-2) var(--erp-space-3); border: 1px solid var(--erp-color-status-warning-solid, var(--erp-color-status-warning-fg)); border-radius: var(--erp-radius-md); background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); }
+
+/* Part 05.04: the Communication Center */
+.cc-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: var(--erp-space-3); margin-block: var(--erp-space-3); }
+.cc-tile { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; text-align: start; padding: var(--erp-space-3); min-height: 5.5rem; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); color: inherit; font: inherit; cursor: pointer; }
+div.cc-tile { cursor: default; }
+.cc-tile.is-danger { border-color: var(--erp-color-status-danger-fg); }
+.cc-tile.is-warning { border-color: var(--erp-color-status-warning-fg); }
+.cc-tile.is-info { border-color: var(--erp-color-status-info-fg); }
+.cc-value { font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+.cc-label { font-weight: 600; }
+.cc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: var(--erp-space-4); }
+.cc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--erp-space-2); }
+.cc-bar { display: inline-block; width: 6rem; height: .6rem; vertical-align: middle; background: var(--erp-color-border-subtle); border-radius: 3px; overflow: hidden; }
+.cc-bar i { display: block; height: 100%; background: var(--erp-color-status-success-fg); }
+tr.is-overdue > * { background: var(--erp-color-status-danger-bg); }
+tr.is-soon > * { background: var(--erp-color-status-warning-bg); }
+tr.is-selected > * { background: var(--erp-color-bg-subtle); }
+.msg-instruction { margin-block: var(--erp-space-1); padding: var(--erp-space-2); border: 1px solid var(--erp-color-border-subtle); border-inline-start: 4px solid var(--erp-color-status-info-fg); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
+.msg-instruction.is-urgent, .msg-instruction.is-overdue { border-inline-start-color: var(--erp-color-status-danger-fg); }
+.msg-instruction.is-high { border-inline-start-color: var(--erp-color-status-warning-fg); }
+.msg-panel { margin-block: var(--erp-space-2); padding: var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
+.msg-action-chips { display: inline-flex; gap: var(--erp-space-1); flex-wrap: wrap; }
+.an-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.an-quiz { margin-block: var(--erp-space-2); }
+.link-button { background: transparent; border: 0; padding: 0; color: var(--erp-color-text-link, var(--erp-color-status-info-fg)); text-decoration: underline; cursor: pointer; font: inherit; text-align: start; min-height: 1.75rem; }

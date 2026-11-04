@@ -8,13 +8,15 @@ import SecureConversation from '../secure/SecureConversation.jsx';
 import { fetchFileUrl } from '../../modules/core/api/index.js';
 import { api } from '../api/index.js';
 import { markDelivered, sendTyping, useCalls, useConversation, useConversations, useFeatureActions, useMessageActions, useMessages, usePeople, uploadToConversation } from './api.js';
+import { ActionChips, ActionPanel, EscalatePanel, InstructionBadge, InstructionForm } from './Comm.jsx';
+import { can } from '../../modules/core/pages/ui.jsx';
 import { Gallery, PinsBar, PresenceLine, Privacy, ReceiptDetails, SearchFilters, SearchResults, StarredList, Ticks, TypingLine, VoicePlayer, useTyping } from './Features.jsx';
 
 // The parts of the Messages app (part 05.01) that the page and the mini chat windows share: the conversation list, a conversation (bubbles, date separators, replies, reactions, record cards, files, voice notes,
 // composer with mentions, emoji and a record picker, drafts) and its details (members, shared files, linked records, my settings). Nothing here decides who may see what: the server does, for every call.
 export const EMOJI = ['👍', '❤️', '😂', '😮', '🙏', '✅'];
 const TYPE_LABEL = { DIRECT: 'Direct', GROUP: 'Group', TEAM: 'Team', PROJECT: 'Project', SITE: 'Site', DEPARTMENT: 'Department', RECORD: 'Record', EXTERNAL: 'External' };
-export const VIEWS = [['all', 'All'], ['unread', 'Unread'], ['pinned', 'Pinned'], ['starred', 'Starred'], ['archived', 'Archived']];
+export const VIEWS = [['all', 'All'], ['unread', 'Unread'], ['TEAM', 'Teams'], ['PROJECT', 'Projects'], ['SITE', 'Sites'], ['DEPARTMENT', 'Departments'], ['RECORD', 'ERP-linked'], ['important', 'Important'], ['escalated', 'Escalated'], ['pinned', 'Pinned'], ['starred', 'Starred'], ['archived', 'Archived']];
 const errorText = (e) => `${e?.message ?? 'Something went wrong'}${e?.correlationId ? ` (Correlation ID: ${e.correlationId})` : ''}`;
 const draftKey = (user, id) => `erp.msg.draft.${user}.${id}`;
 const lsGet = (k) => { try { return localStorage.getItem(k) ?? ''; } catch { return ''; } };
@@ -80,7 +82,8 @@ function FileChip({ f }) {
   const open = async () => { const w = window.open('', '_blank'); try { const link = await fetchFileUrl(f.id, {}); if (w) w.location.href = link.url; } catch { w?.close(); } };
   return <button type="button" className="msg-file" onClick={open} data-testid="msg-file"><Icon name="erp.action.attach" size={14} /> {f.name} <span className="muted small">{Math.max(1, Math.round(f.size / 1024))} KB</span></button>;
 }
-function Bubble({ m, actions, fx, onReply, readOnly, forwardTargets, highlight }) {
+function Bubble({ m, actions, fx, onReply, readOnly, forwardTargets, highlight, session }) {
+  const [panel, setPanel] = useState(null); // 'instruction' | 'action' (part 05.04)
   const [edit, setEdit] = useState(null);
   const [who, setWho] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -103,6 +106,8 @@ function Bubble({ m, actions, fx, onReply, readOnly, forwardTargets, highlight }
         {m.body && <p className="msg-text"><Mentions text={m.body} /></p>}
         {m.kind !== 'VOICE' && m.attachments.map((f) => <FileChip key={f.id} f={f} />)}
         {m.links.map((l, i) => <Card key={i} l={l} />)}
+        {m.instruction && <InstructionBadge m={m} />}
+        {m.actions?.length > 0 && <ActionChips list={m.actions} />}
         {m.readOnly && m.subject && <p className="muted small">{m.subject}</p>}
       </>}
       <span className="msg-meta muted small">{m.starred && <span aria-label="Starred" title="Starred">★ </span>}{m.pinned && <span aria-label="Pinned" title="Pinned">📌 </span>}{timeOf(m.createdAt)}{m.editedAt ? ' · edited' : ''}{m.readOnly ? ` · ${m.channel} ${m.direction === 'IN' ? 'received' : String(m.deliveryStatus).toLowerCase()}` : ''} {m.mine && !m.deleted && <Ticks receipt={m.receipt} onClick={() => setWho(!who)} />}</span>
@@ -119,6 +124,8 @@ function Bubble({ m, actions, fx, onReply, readOnly, forwardTargets, highlight }
               <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-star" onClick={() => run(() => fx.star.mutateAsync({ id: m.id, on: !m.starred }))}>{m.starred ? 'Remove the star' : 'Star'}</button>
               <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-pin" onClick={() => run(() => fx.pin.mutateAsync({ id: m.id, on: !m.pinned }))}>{m.pinned ? 'Unpin' : 'Pin to the conversation'}</button>
               {m.mine && <button type="button" role="menuitem" className="btn btn-small" onClick={() => setWho(!who)}>Who has read it</button>}
+              {m.mine && !m.instruction && m.kind !== 'VOICE' && can(session, 'msg.instruction.send') && <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-instruction" onClick={() => { setPanel('instruction'); setMenu(false); }}>Make this an instruction</button>}
+              <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-to-action" onClick={() => { setPanel('action'); setMenu(false); }}>Make a task or record…</button>
               <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-hide" onClick={() => run(() => fx.hide.mutateAsync(m.id))}>Delete for me</button>
               {forwardTargets.length > 0 && <label className="msg-forward"><span className="sr-only">Forward to</span><select defaultValue="" onChange={(e) => { if (e.target.value) run(() => actions.forward.mutateAsync({ id: m.id, conversationIds: [Number(e.target.value)] })); }}><option value="">Forward to...</option>{forwardTargets.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select></label>}
               {m.canDelete && <button type="button" role="menuitem" className="btn btn-small" data-testid="msg-delete" onClick={() => { const reason = m.mine ? undefined : window.prompt('Why are you deleting this message?') ?? ''; if (m.mine || reason) run(() => actions.remove.mutateAsync({ id: m.id, reason })); }}>Delete for everyone</button>}
@@ -126,6 +133,8 @@ function Bubble({ m, actions, fx, onReply, readOnly, forwardTargets, highlight }
           )}
         </div>
       )}
+      {panel === 'instruction' && <InstructionForm m={m} onClose={() => setPanel(null)} />}
+      {panel === 'action' && <ActionPanel m={m} onClose={() => setPanel(null)} />}
       {error && <p className="field-error" role="alert">{errorText(error)}</p>}
     </li>
   );
@@ -239,6 +248,7 @@ export function ConversationView({ id, session, around, compact = false, onBack,
   const typing = useTyping(id, session?.user);
   const [jump, setJump] = useState(around ?? null);
   const [replyTo, setReplyTo] = useState(null);
+  const [flag, setFlag] = useState(false);
   const bottom = useRef(null);
   const list = useConversations({ view: 'all', limit: 30 });
   useLiveRefresh(id ? [`conv:${id}`] : [], [['msg']]);
@@ -262,11 +272,13 @@ export function ConversationView({ id, session, around, compact = false, onBack,
         {onBack && <button type="button" className="btn" onClick={onBack} aria-label="Back to the conversations" data-testid="msg-back"><Icon name="erp.action.previous" size={18} /></button>}
         <div className="msg-conv-title"><h2>{c?.title ?? 'Conversation'}</h2><span className="muted small">{c ? `${TYPE_LABEL[c.type]}${c.type !== 'EXTERNAL' && c.members ? ` · ${c.members.length} member(s)` : ''}${c.archived ? ' · archived' : ''}` : ''}</span>{others.length > 0 && <PresenceLine users={others} />}</div>
         {c && c.type !== 'EXTERNAL' && !compact && <><button type="button" className="btn" onClick={() => startCall('AUDIO')} aria-label="Start a voice call" disabled={fx.startCall.isPending} data-testid="call-audio">📞</button><button type="button" className="btn" onClick={() => startCall('VIDEO')} aria-label="Start a video call" disabled={fx.startCall.isPending} data-testid="call-video">🎥</button></>}
+        {c && c.type !== 'EXTERNAL' && !compact && <button type="button" className="btn" onClick={() => setFlag(!flag)} aria-expanded={flag} data-testid="msg-flag">Flag</button>}
         {onDetails && <button type="button" className="btn" onClick={onDetails} aria-label="Conversation details" data-testid="msg-details"><Icon name="erp.action.info" size={18} /></button>}
         {onPopOut && <button type="button" className="btn" onClick={onPopOut} aria-label="Open in a small window" data-testid="msg-popout"><Icon name="erp.action.next" size={18} /></button>}
         {onMinimise && <button type="button" className="btn" onClick={onMinimise} aria-label="Minimise">–</button>}
         {onClose && <button type="button" className="btn" onClick={onClose} aria-label="Close this window">×</button>}
       </header>
+      {flag && <EscalatePanel convId={id} onClose={() => setFlag(false)} />}
       {calls.data?.active && <p className="notice msg-call-banner" role="status" data-testid="call-banner">A call is going on. <a href={`/collab/call?call=${calls.data.active}`} onClick={(e) => { e.preventDefault(); window.history.pushState(null, '', `/collab/call?call=${calls.data.active}`); window.dispatchEvent(new PopStateEvent('popstate')); }}>Join the call</a></p>}
       {c && c.type !== 'EXTERNAL' && <PinsBar id={id} onJump={(mid) => { setJump(mid); document.getElementById(`msg-${mid}`)?.scrollIntoView?.({ block: 'center' }); }} />}
       {(conv.isError || msgs.isError) && <QueryError error={conv.error ?? msgs.error} what="this conversation" permission="" onRetry={() => { conv.refetch(); msgs.refetch(); }} />}
@@ -281,7 +293,7 @@ export function ConversationView({ id, session, around, compact = false, onBack,
             return (
               <Fragment key={m.id}>
                 {sep && <li className="msg-day" role="separator" aria-label={formatDate(m.createdAt)}><span>{day === dayKey(new Date().toISOString()) ? 'Today' : formatDate(m.createdAt)}</span></li>}
-                <Bubble m={m} actions={actions} fx={fx} highlight={jump === m.id} onReply={setReplyTo} readOnly={msgs.data.readOnly || c?.archived} forwardTargets={forwardTargets} />
+                <Bubble m={m} actions={actions} fx={fx} highlight={jump === m.id} onReply={setReplyTo} readOnly={msgs.data.readOnly || c?.archived} forwardTargets={forwardTargets} session={session} />
               </Fragment>
             );
           })}

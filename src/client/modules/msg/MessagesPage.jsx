@@ -8,6 +8,7 @@ import { navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 // Messages (part 05.01, section 7.1): one list of conversations (direct, group, department, project, site, team, record-linked and the external threads of the gateway), one conversation with its composer and its details.
 // Three panes on a computer (list, conversation, details), two on a tablet (details open over the conversation), one on a phone (the list, then the conversation with a back button).
 const fromUrl = () => Number(new URLSearchParams(window.location.search).get('c')) || null;
+const viewFromUrl = () => new URLSearchParams(window.location.search).get('view') || 'all';
 const messageFromUrl = () => Number(new URLSearchParams(window.location.search).get('m')) || null;
 
 export default function MessagesPage({ session }) {
@@ -16,7 +17,7 @@ export default function MessagesPage({ session }) {
   const [active, setActive] = useState(fromUrl);
   const [around, setAround] = useState(messageFromUrl);
   const [details, setDetails] = useState(null); // null: the default for the width (open on a computer, closed on a tablet and a phone)
-  const [filters, setFilters] = useState({ view: 'all', q: '' });
+  const [filters, setFilters] = useState({ view: viewFromUrl(), q: '' });
   useEffect(() => {
     const onPop = () => { setActive(fromUrl()); setAround(messageFromUrl()); };
     window.addEventListener('popstate', onPop);
