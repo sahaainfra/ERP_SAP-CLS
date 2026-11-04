@@ -36,7 +36,7 @@ const open = async (browser, info, c, roles, user, path) => {
 test.afterEach(async ({ browser }) => { for (const c of browser.contexts()) await c.close(); });
 
 test('AC-01 FR-01 FR-03 FR-04 FR-05 FR-07 FR-08 a form captured offline with a photo, kept encrypted, sent when the connection returns; T-03 a revoked device wipes its local store', async ({ browser, request }, info) => {
-  test.setTimeout(150_000);
+  test.setTimeout(90_000);
   const tag = info.project.name === 'mobile' ? 'M' : 'D';
   const c = await company(request, `OFF${tag}`);
   const project = await api(request, c, 'PM', 'e2e-pm', 'post', '/iam/org/projects', { code: `OF${tag}1`, name: 'Ring Road', type: 'ROAD' });
@@ -131,9 +131,7 @@ test('AC-01 FR-01 FR-03 FR-04 FR-05 FR-07 FR-08 a form captured offline with a p
   await expect(it.page.getByTestId('dv-notice')).toContainText('was revoked');
   await expect(it.page.getByTestId(`dv-row-${mine.id}`)).toContainText('Revoked');
   expect(e2).toEqual([]);
-  await page.goto('/field/sync');
-  await expect(page.getByTestId('ss-force')).toBeEnabled();
-  await page.getByTestId('ss-force').click();
+  await page.goto('/field/sync'); // the phone makes contact when the application opens: the server answers that the device is revoked
   await expect(page.getByText('This device was revoked and its offline data removed.')).toBeVisible({ timeout: 15_000 });
   const dbs = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
   expect(dbs).not.toContain('erp-offline');
