@@ -24,6 +24,7 @@ import { commOf } from '../../platform/comm/index.js';
 import { tasksOf } from '../../platform/tasks/index.js';
 import { createTaskService } from './tasks.js';
 import { createAlertService } from './alerts.js';
+import { bindDraftServices } from './policy-drafts.js';
 import { bind as bindDocuments, createDocumentService } from './documents.js';
 import { createDocumentOps } from './documents-ops.js';
 import { createDocumentConfig } from './documents-config.js';
@@ -589,6 +590,7 @@ export const eng = {
 
     // part 04.09: the alert rules; event rules listen through the bus (a consumer takes the types of the rules in force), schedule rules run from a job every 15 minutes
     const alertService = createAlertService({ db, engine });
+    bindDraftServices(db, { matrix, alerts: alertService }); // part 05.05: the policy module drafts into these engines
     const alertCore = alertsOf(db);
     const listenTo = () => { for (const r of db.prepare("SELECT DISTINCT event_type FROM alr_rules WHERE trigger_type = 'EVENT' AND status IN ('ACTIVE', 'PENDING') AND event_type IS NOT NULL").all()) runtime.bus.subscribe(r.event_type, (event) => { alertCore.handleEvent(event); }, { consumer: 'alr.events' }); };
     listenTo();
