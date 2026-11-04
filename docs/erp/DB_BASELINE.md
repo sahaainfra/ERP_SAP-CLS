@@ -3925,6 +3925,180 @@ Indexes:
 - ix_pcs_reason_codes_company: company_id
 - ux_pcs_reason_codes (unique): , action_type, code
 
+## sig_config
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| config_json | TEXT | yes |  |  |
+| config_version | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_sig_config_instance: instance_id
+- ux_sig_config_active (unique): company_id
+- ux_sig_config_version (unique): company_id, config_version
+
+## sig_copies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| generated_doc_id | INTEGER | yes |  |  |
+| file_id | INTEGER | yes |  |  |
+| hash | TEXT | yes |  |  |
+| signature_count | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), generated_doc_id -> tpl_generated_docs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sig_copies_hash: hash
+- ix_sig_copies_file: file_id
+- ix_sig_copies_doc: generated_doc_id, id
+- ix_sig_copies_company_id: company_id
+
+## sig_profiles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_name | TEXT | yes |  |  |
+| image_data | TEXT | yes |  |  |
+| image_hash | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_sig_profiles_user (unique): company_id, user_name
+
+## sig_signatures
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| generated_doc_id | INTEGER | yes |  |  |
+| signer_user_id | INTEGER |  |  |  |
+| signer_name | TEXT | yes |  |  |
+| signer_label | TEXT |  |  |  |
+| method | TEXT | yes |  |  |
+| signed_at | TEXT | yes |  |  |
+| hash | TEXT | yes |  |  |
+| digest | TEXT | yes |  |  |
+| prev_digest | TEXT |  |  |  |
+| certificate_ref | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| ip | TEXT |  |  |  |
+| status | TEXT | yes |  | 'SIGNED' |
+| revoked_at | TEXT |  |  |  |
+| revoked_by | TEXT |  |  |  |
+| revoke_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: signer_user_id -> iam_users(id), generated_doc_id -> tpl_generated_docs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sig_signatures_project: company_id, project_id, signed_at
+- ix_sig_signatures_filter: company_id, method, status
+- ix_sig_signatures_list: company_id, signed_at, id
+- ix_sig_signatures_user: signer_user_id
+- ix_sig_signatures_doc: generated_doc_id, id
+- ux_sig_signatures_signer (unique): generated_doc_id, signer_name, method
+
+## sig_verifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| generated_doc_id | INTEGER | yes |  |  |
+| verify_count | INTEGER | yes |  | 0 |
+| mismatch_count | INTEGER | yes |  | 0 |
+| last_verified_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| cancelled_at | TEXT |  |  |  |
+| cancelled_by | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: generated_doc_id -> tpl_generated_docs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_sig_verifications_company: company_id, status
+- ux_sig_verifications_doc (unique): generated_doc_id
+- ux_sig_verifications_code (unique): code
+
 ## tpl_auto_rules
 
 | Column | Type | Not null | Key | Default |

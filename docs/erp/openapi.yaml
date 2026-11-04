@@ -1714,3 +1714,61 @@ paths:
     get:
       summary: Public, no sign-in. What a QR code on a document says: genuine or not, the version, whether it is the current one (04.12 builds the verification page on this)
       responses: { '200': { description: '{ data: { valid, current, message, document } }' } }
+  /api/v1/verify/{code}:
+    get:
+      summary: Public, no sign-in, rate limited. Whether the document is genuine, superseded (with the date), cancelled (with the date) or unknown, and the fields the company made public (type, number, issuer, version, date, signers, project, amount)
+      responses: { '200': { description: '{ data: { found, valid, status, message, ... } }' } }
+  /api/v1/verify/{code}/file:
+    post:
+      summary: Public. Compare the file sent as the request body with the stored hash of the document and its signed copies; a mismatch is a security event
+      responses: { '200': { description: '{ data: { ..., file: { match, kind, fingerprint, message } } }' }, '400': { description: empty body } }
+  /api/v1/sig/documents/{id}:
+    get:
+      summary: Full detail of the signatures of a generated document, its hash, the chain check, the copies and the checks made (sig.document.view)
+      responses: { '200': { description: '{ data }' }, '404': { description: not found or not visible } }
+  /api/v1/sig/documents/{id}/sign:
+    post:
+      summary: Sign a document (body method APPROVAL, IMAGE, ESIGN or DSC; sig.document.sign; Idempotency-Key required). ESIGN and DSC need a connected provider.
+      responses: { '201': { description: the document with its signatures }, '409': { description: already signed, cancelled, superseded or no provider }, '422': { description: no signature picture } }
+  /api/v1/sig/documents/{id}/cancel:
+    post:
+      summary: Cancel a document; verification then says so with the date (sig.document.cancel; reason required)
+      responses: { '200': { description: '{ data }' }, '409': { description: already cancelled } }
+  /api/v1/sig/documents/{id}/signed:
+    get:
+      summary: The signed copy (or the original when nobody signed) for a signed-in person who may see the document
+      responses: { '200': { description: application/pdf } }
+  /api/v1/sig/signatures/{id}/revoke:
+    post:
+      summary: Revoke a signature (sig.signature.revoke; reason required); the stamped copy is redrawn and verification shows it
+      responses: { '200': { description: '{ data }' }, '409': { description: already revoked } }
+  /api/v1/sig/verify/{code}:
+    get:
+      summary: Full detail by code for a signed-in person who may see the document
+      responses: { '200': { description: '{ data }' }, '404': { description: unknown or not visible } }
+  /api/v1/sig/register:
+    get:
+      summary: The signature register with filters, count by method and status, checks made (sig.register.view; limited to the caller's projects)
+      responses: { '200': { description: '{ data: { rows, total, summary } }' } }
+  /api/v1/sig/register/export:
+    get:
+      summary: The register as xlsx, csv or pdf
+      responses: { '200': { description: file } }
+  /api/v1/sig/profile:
+    get:
+      summary: The caller's own signature picture
+      responses: { '200': { description: '{ data: { has, image } }' } }
+    put:
+      summary: Set the signature picture (PNG or JPEG data URL, at most 150 KB)
+      responses: { '200': { description: '{ data }' }, '400': { description: not a usable picture } }
+    delete:
+      summary: Remove the signature picture
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/sig/config:
+    get:
+      summary: The public fields, automatic signing and stamp placement in force, and a change that waits for approval (sig.config.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/sig/config/changes:
+    post:
+      summary: Propose a change of the signature settings; it takes effect when a director or another administrator approves (sig.config.edit; Idempotency-Key required)
+      responses: { '202': { description: waiting for approval }, '409': { description: a change already waits } }
