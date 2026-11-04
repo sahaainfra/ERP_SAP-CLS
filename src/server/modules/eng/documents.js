@@ -51,9 +51,9 @@ export function createDocumentService({ db, engine }) {
       return db.prepare("SELECT * FROM doc_types WHERE (company_id = ? OR company_id IS NULL) AND code = ? AND status = 'ACTIVE' AND is_active = 1 ORDER BY company_id IS NULL, type_version DESC LIMIT 1").get(companyId, code);
     },
     list(companyId) {
-      const rows = db.prepare("SELECT * FROM doc_types WHERE (company_id = ? OR company_id IS NULL) AND status IN ('ACTIVE') AND is_active = 1 ORDER BY sort_order, code, company_id IS NULL, type_version DESC").all(companyId);
+      const rows = db.prepare("SELECT * FROM doc_types WHERE (company_id = ? OR company_id IS NULL) AND status IN ('ACTIVE') AND is_active = 1 ORDER BY code, company_id IS NULL, type_version DESC").all(companyId);
       const seen = new Set();
-      return rows.filter((r) => (seen.has(r.code) ? false : seen.add(r.code))).map(typeRow);
+      return rows.filter((r) => (seen.has(r.code) ? false : seen.add(r.code))).sort((a, b) => a.sort_order - b.sort_order || a.code.localeCompare(b.code)).map(typeRow);
     },
   };
   const typeRow = (r) => ({ id: r.id, code: r.code, name: r.name, requiresReview: r.requires_review === 1, reviewerRole: r.reviewer_role, approverRole: r.approver_role, hasValidity: r.has_validity === 1, defaultConfidentiality: r.default_confidentiality, retentionClass: r.retention_class, version: r.type_version, shared: r.company_id === null });
@@ -102,7 +102,10 @@ export function createDocumentService({ db, engine }) {
     if (!d) throw notFound('That document does not exist.');
     const acc = access(actor, d);
     if (!acc.view) throw notFound('That document does not exist.'); // BR-03: it is not even said to exist
-    if (need === 'edit' && !acc.edit) throw forbidden('You may not change this document.');
+    if (need === 'edit' && !acc.edit) {
+      if (['ARCHIVED', 'CANCELLED'].includes(d.status)) throw conflict(`This document is ${d.status.toLowerCase()}; it is read-only.`);
+      throw forbidden('You may not change this document.');
+    }
     if (need === 'manage' && !acc.manage) throw forbidden('Only the document controller may do that (permission doc.document.manage).');
     return { d, acc };
   };
@@ -580,7 +583,7 @@ export function createDocumentService({ db, engine }) {
     return told;
   }
 
-  return { documents, versions: { get: (actor, id, versionId) => { const { d } = load(actor, id); return versionRow(versionOrThrow(d, versionId), d); } }, shares, distribution, annotations, folders, types, templates, access, visibleSql, load, expirySweep, today, nowIso, issue, backToAuthor, resubmitted, ensureSeries, only, fileRow, metaOf, row, userRow };
+  return { documents, versions: { get: (actor, id, versionId) => { const { d } = load(actor, id); return versionRow(versionOrThrow(d, versionId), d); }, locate: (actor, versionId) => { const v = db.prepare('SELECT id, document_id, revision, status FROM doc_versions WHERE id = ? AND company_id = ? AND is_active = 1').get(versionId, actor.companyId); if (!v) throw notFound('That revision does not exist.'); load(actor, v.document_id); return { id: v.id, documentId: v.document_id, revision: v.revision, status: v.status }; } }, shares, distribution, annotations, folders, types, templates, access, visibleSql, load, expirySweep, today, nowIso, issue, backToAuthor, resubmitted, ensureSeries, only, fileRow, metaOf, row, userRow };
 }
 
 // ---- registered once: the workflow documents, the file entity, the search entity, the alert dataset ----
@@ -592,10 +595,7 @@ workflowTypes.register({
   docType: REVISION_DOC,
   label: 'Document revision',
   processOwner: 'DOC',
-  route: (db, instance) => {
-    const v = db.prepare('SELECT document_id FROM doc_versions WHERE id = ?').get(Number(instance.docId));
-    return v ? `/documents/document?id=${v.document_id}` : '/documents';
-  },
+  route: (id) => `/documents/document?version=${id}`, // the page finds the document of the revision
   describe(db, companyId, id) {
     const v = db.prepare('SELECT v.*, d.doc_no, d.title FROM doc_versions v JOIN doc_documents d ON d.id = v.document_id WHERE v.id = ? AND v.company_id = ?').get(Number(id), companyId);
     return v ? { ref: `${v.doc_no} rev ${v.revision}`, title: v.title, originator: v.submitted_by ?? v.created_by, projectId: v.project_id ?? undefined, siteId: v.site_id ?? undefined } : null;
@@ -700,7 +700,7 @@ fileEntities.register({
 
 searchEntities.register({
   type: 'controlled_document', label: 'Documents', labelHi: 'दस्तावेज़', icon: 'erp.action.list', order: 35, permission: 'doc.document.view', table: 'doc_documents', statuses: ['DRAFT', 'IN_REVIEW', 'ISSUED', 'ARCHIVED'],
-  events: ['doc.document.*'], eventEntity: 'controlled_document',
+  events: ['doc.document.*'], eventEntity: 'controlled_document', permissionKeys: () => ['doc.document.view', 'doc.document.view_confidential', 'doc.document.view_restricted'],
   load(db, id) {
     const d = db.prepare('SELECT * FROM doc_documents WHERE id = ? AND is_active = 1').get(Number(id));
     if (!d || d.status === 'CANCELLED') return null;

@@ -554,6 +554,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/doc/documents/:id/acknowledge', g: 'record', k: null, s: 'parseAcknowledge', scope: 'project', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/doc/documents/:id/shares', g: 'record', k: null, s: 'parseShare', scope: 'project', rate: 'write', audit: true },
   { m: 'DELETE', p: '/api/v1/doc/documents/:id/shares/:shareId', g: 'record', k: null, s: null, scope: 'project', rate: 'write', audit: true },
+  { m: 'GET', p: '/api/v1/doc/versions/:id', g: 'record', k: null, s: null, scope: 'project', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/doc/versions/:id/content', g: 'record', k: null, s: 'parseContentQuery', scope: 'project', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/doc/versions/:id/annotations', g: 'record', k: null, s: null, scope: 'project', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/doc/versions/:id/annotations', g: 'record', k: null, s: 'parseAnnotation', scope: 'project', rate: 'write', audit: true },

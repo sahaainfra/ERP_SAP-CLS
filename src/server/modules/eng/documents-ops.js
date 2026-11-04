@@ -116,7 +116,7 @@ export function createDocumentOps({ db, service, storage }) {
   }
 
   const COLUMNS = [['title', 'Title'], ['docType', 'Type'], ['discipline', 'Discipline'], ['project', 'Project code'], ['folder', 'Folder'], ['confidentiality', 'Confidentiality'], ['owner', 'Owner'], ['validUntil', 'Valid until'], ['wbsRef', 'WBS'], ['locationRef', 'Location'], ['tags', 'Tags']];
-  const template = () => writeExport('xlsx', { columns: COLUMNS.map(([key, label]) => ({ key, label })), rows: [{ title: 'Pier 4 reinforcement layout', docType: 'DRAWING', discipline: 'Structural', project: 'P1', folder: 'Drawings/Structural', confidentiality: 'INTERNAL', owner: '', validUntil: '', wbsRef: '1.2.4', locationRef: 'Pier 4', tags: 'rebar, pier' }], footer: ['One row for each document. Type is a code from Document Types. Folder is the path of a folder of the project. Leave Valid until empty unless the type has a validity date.'], sheetName: 'Documents', title: 'Documents to register' });
+  const template = () => writeExport('xlsx', { columns: COLUMNS.map(([key, label]) => ({ key, label })), rows: [{ title: 'Pier 4 reinforcement layout', docType: 'DRAWING', discipline: 'Structural', project: 'P1', folder: 'Drawings/Structural', confidentiality: 'INTERNAL', owner: '', validUntil: '', wbsRef: '1.2.4', locationRef: 'Pier 4', tags: 'rebar, pier' }], footer: [], sheetName: 'Documents', title: 'Documents to register' });
 
   /** FR-08: register many documents from a sheet. Without `commit` it only checks and reports each row; with it, every row that is valid is registered (a row with a problem is left out and reported). */
   async function bulkImport(actor, buffer, { commit }) {

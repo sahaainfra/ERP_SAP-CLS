@@ -271,6 +271,7 @@ export function documentRoutes({ service, ops, config, documentsFile, bulkBody }
   r.post('/documents/:id/acknowledge', idempotent, (req, res) => ok(res, service.distribution.acknowledge(req.actor, parseId(req.params.id), parseAcknowledge(req.body).note)));
   r.post('/documents/:id/shares', idempotent, (req, res) => ok(res, service.shares.add(req.actor, parseId(req.params.id), parseShare(req.body)), 201));
   r.delete('/documents/:id/shares/:shareId', idempotent, (req, res) => ok(res, service.shares.remove(req.actor, parseId(req.params.id), parseId(req.params.shareId))));
+  r.get('/versions/:id', (req, res) => ok(res, service.versions.locate(req.actor, parseId(req.params.id))));
   r.get('/versions/:id/content', async (req, res, next) => {
     try {
       const out = await ops.content(req.actor, parseId(req.params.id), { download: parseContentQuery(req.query).download, range: req.get('range') });
