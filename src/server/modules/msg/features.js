@@ -111,8 +111,8 @@ export function createFeatureService({ db, base }) {
       const args = [...ids, actor.user];
       if (q.q) { where.push("m.body LIKE ? ESCAPE '\\'"); args.push(`%${escLike(q.q)}%`); }
       if (q.sender) { where.push('lower(m.sender_ref) = lower(?)'); args.push(q.sender); }
-      if (q.from) { where.push('m.created_at >= ?'); args.push(`${q.from}T00:00:00.000Z`); }
-      if (q.to) { where.push('m.created_at <= ?'); args.push(`${q.to}T23:59:59.999Z`); }
+      if (q.from) { where.push('m.created_at >= ?'); args.push(new Date(`${q.from}T00:00:00.000+05:30`).toISOString()); }
+      if (q.to) { where.push('m.created_at <= ?'); args.push(new Date(`${q.to}T23:59:59.999+05:30`).toISOString()); }
       if (q.kind === 'images') where.push("EXISTS (SELECT 1 FROM json_each(m.attachments_json) j JOIN core_files f ON f.id = j.value WHERE f.category = 'image')");
       else if (q.kind === 'files') where.push("m.attachments_json != '[]'");
       else if (q.kind === 'voice') where.push("m.kind = 'VOICE'");

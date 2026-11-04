@@ -1,5 +1,6 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { todayIST } from '../src/shared/dates.js';
 import '../src/server/modules/registry.js';
 import { realtimeOf } from '../src/server/platform/realtime/index.js';
 import { setupCompany, startApi } from './helpers.js';
@@ -301,7 +302,7 @@ test('FR-02 FR-07 the thread index: forwarding marks the message, people search,
   assert.equal((await call(se, 'POST', `/messages/${m.id}/forward`, { conversationIds: [b] })).status, 404, 'se1 cannot forward what they cannot read');
   const ppl = (await call(pd, 'GET', '/people?q=PM')).json.data.rows;
   assert.deepEqual(ppl.map((p) => p.username), ['pm1']);
-  const set = (body) => api.call('POST', '/api/v1/core/parameters', { ...sys, headers: key('p'), body: { scopeType: 'company', scopeId: 1, effectiveFrom: new Date().toISOString().slice(0, 10), reason: 'Site teams need longer to fix typos', ...body } });
+  const set = (body) => api.call('POST', '/api/v1/core/parameters', { ...sys, headers: key('p'), body: { scopeType: 'company', scopeId: 1, effectiveFrom: todayIST(), reason: 'Site teams need longer to fix typos', ...body } });
   assert.equal((await set({ key: 'msg.edit_window_minutes', value: 5000 })).status, 400);
   assert.equal((await set({ key: 'msg.group_max_members', value: 2 })).status, 201);
   assert.equal((await call(pd, 'POST', `/conversations/${b}/members`, { users: ['pm1'] })).status, 422, 'the member limit applies');

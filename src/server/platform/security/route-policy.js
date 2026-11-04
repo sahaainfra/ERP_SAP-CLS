@@ -711,7 +711,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/msg/messages/:id/to-action', g: 'self', k: null, s: 'parseToAction', scope: 'record', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/msg/announcements', g: 'self', k: null, s: 'parseAnnouncementList', scope: 'own', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/msg/announcements', g: 'self', k: null, s: 'parseAnnouncement', scope: 'own', rate: 'write', audit: true },
-  { m: 'POST', p: '/api/v1/msg/announcements/audience', g: 'self', k: null, s: 'parseAnnouncement', scope: 'own', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/msg/announcements/audience', g: 'self', k: null, s: 'parseAnnouncement', scope: 'own', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/msg/announcements/:id', g: 'self', k: null, s: 'parseId', scope: 'own', rate: 'read', audit: false },
   { m: 'PUT', p: '/api/v1/msg/announcements/:id', g: 'self', k: null, s: 'parseAnnouncementUpdate', scope: 'own', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/msg/announcements/:id/publish', g: 'self', k: null, s: 'parseId', scope: 'own', rate: 'write', audit: true },

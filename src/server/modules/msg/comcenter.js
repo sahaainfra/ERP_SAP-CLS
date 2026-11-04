@@ -179,8 +179,8 @@ export function createCommService({ db, base }) {
       if (f.status) { where.push('i.instruction_status = ?'); args.push(f.status); }
       if (f.priority) { where.push('i.priority = ?'); args.push(f.priority); }
       if (f.q) { where.push('(i.title LIKE ? OR i.sender_ref LIKE ?)'); args.push(`%${f.q}%`, `%${f.q}%`); }
-      if (f.from) { where.push('i.created_at >= ?'); args.push(`${f.from}T00:00:00.000Z`); }
-      if (f.to) { where.push('i.created_at <= ?'); args.push(`${f.to}T23:59:59.999Z`); }
+      if (f.from) { where.push('i.created_at >= ?'); args.push(new Date(`${f.from}T00:00:00.000+05:30`).toISOString()); }
+      if (f.to) { where.push('i.created_at <= ?'); args.push(new Date(`${f.to}T23:59:59.999+05:30`).toISOString()); }
       let rows = db.prepare(`SELECT i.* FROM msg_instructions i WHERE ${where.join(' AND ')} ORDER BY i.id DESC LIMIT 2000`).all(...args)
         .filter((r) => all ? may(actor, 'msg.comm.view_all', { companyId: actor.companyId, projectId: r.project_id ?? undefined, siteId: r.site_id ?? undefined }) : true)
         .map((r) => view(actor, r));
