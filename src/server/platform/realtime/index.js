@@ -12,6 +12,13 @@ import { securityOf } from '../security/index.js';
 const records = new Map();
 export const realtimeRecords = { register(entity, def) { records.set(entity, def); }, get: (entity) => records.get(entity) ?? null, entities: () => [...records.keys()] };
 
+/**
+ * Conversation rooms (`conv:<id>`, part 05.01): only a member may join, and the module that owns conversations says who is a member.
+ *   realtimeConversations.set({ resolve: (db, id) => ({ companyId }) | null, check: (db, actor, id) => boolean })
+ */
+let conversations = null;
+export const realtimeConversations = { set(def) { conversations = def; }, get: () => conversations };
+
 const hubs = new WeakMap();
 export function realtimeOf(db) {
   let h = hubs.get(db);
@@ -54,6 +61,11 @@ function createHub(db) {
       if (!scope || scope.companyId !== actor.companyId) return refuse(actor, room, 'That record does not exist or is outside your scope.');
       return def.check(db, actor, p.id) ? { allowed: true } : refuse(actor, room, 'You may not see that record.');
     }
+    if (p.kind === 'conv') {
+      const scope = conversations?.resolve(db, p.id);
+      if (!scope || scope.companyId !== actor.companyId) return refuse(actor, room, 'That conversation does not exist or you are not a member of it.');
+      return conversations.check(db, actor, p.id) ? { allowed: true } : refuse(actor, room, 'You are not a member of that conversation.');
+    }
     try { guard.join(actor, `${p.kind}:${p.id}`); return { allowed: true }; } catch (e) { return { allowed: false, reason: e.message }; }
   }
   /** The silent form of canJoin, for the check at each event. */
@@ -62,6 +74,7 @@ function createHub(db) {
     if (!p) return false;
     if (p.kind === 'user') return p.id === actor.user;
     if (p.kind === 'record') { const def = records.get(p.entity); const scope = def?.resolve(db, p.id); return Boolean(def && scope && scope.companyId === actor.companyId && def.check(db, actor, p.id)); }
+    if (p.kind === 'conv') { const scope = conversations?.resolve(db, p.id); return Boolean(scope && scope.companyId === actor.companyId && conversations.check(db, actor, p.id)); }
     const def = ({ project: 'org_projects', site: 'org_sites', dept: 'org_departments' })[p.kind];
     if (!def) return false;
     const r = db.prepare(`SELECT * FROM ${def} WHERE id = ?`).get(Number(p.id));

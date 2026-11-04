@@ -142,6 +142,10 @@ objectTypes.register({
     const r = db.prepare('SELECT doc_no, title, status FROM ui_sample_requests WHERE id = ? AND company_id = ?').get(id, actor.companyId);
     return r ? { label: r.doc_no ? `${r.doc_no}: ${r.title}` : r.title, status: r.status } : null;
   },
+  search(db, actor, q, limit) {
+    const rows = db.prepare('SELECT id FROM ui_sample_requests WHERE company_id = ? AND deleted_at IS NULL AND (doc_no LIKE ? OR title LIKE ?) ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, `%${q}%`, limit * 3);
+    return rows.filter((r) => objectTypes.get(TYPE).access(db, actor, r.id)).slice(0, limit);
+  },
   projectRecords: (db, companyId, projectId, limit) => db.prepare('SELECT id FROM ui_sample_requests WHERE company_id = ? AND project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((r) => r.id),
   related(db, actor, id) {
     const r = db.prepare('SELECT source_type, source_id FROM ui_sample_requests WHERE id = ? AND company_id = ?').get(id, actor.companyId);

@@ -1,0 +1,86 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import '../src/server/modules/registry.js';
+import { createLogger } from '../src/server/platform/http/logger.js';
+import { identityOf } from '../src/server/platform/identity/index.js';
+import { createUserStore } from '../src/server/modules/iam/users.js';
+import { realtimeOf } from '../src/server/platform/realtime/index.js';
+import { startApi } from './helpers.js';
+
+// Part 05.01 AC-04: in sign-in mode, project channels follow active assignments (BR-01): a person is in the conversation of a project while an assignment covers it, and not before or after; another project's people never are.
+const PW = 'Tr0ub4dor&3-Excavator';
+const M = '/api/v1/msg';
+const idem = () => ({ 'idempotency-key': `s-${Math.random().toString(36).slice(2, 12)}` });
+
+test('BR-01 AC-04 project and site channels take their members from active assignments, and lose them when an assignment ends; the real-time room follows the same rule', async () => {
+  const storage = mkdtempSync(join(tmpdir(), 'erp-msg-scope-'));
+  const api = await startApi({ AUTH_MODE: 'iam' }, { storagePath: storage, logger: createLogger({ write: () => {} }), identityOptions: { passwordCost: { memory: 8, passes: 1 } } });
+  try {
+    const store = createUserStore({ db: api.db, identity: identityOf(api.db) });
+    api.db.prepare("INSERT INTO iam_auth_policy (company_id, settings_json, created_by, source_type) VALUES (1, ?, 'test', 'seed')").run(JSON.stringify({ mfa: { enforced: false } }));
+    const http = async (method, path, { token, body } = {}) => {
+      const res = await fetch(api.base + path, { method, headers: { 'content-type': 'application/json', 'x-token-delivery': 'body', ...(token ? { authorization: `Bearer ${token}` } : {}), ...(method === 'GET' ? {} : idem()) }, body: body === undefined ? undefined : JSON.stringify(body) });
+      let json = null;
+      try { json = await res.json(); } catch { /* no body */ }
+      return { status: res.status, json };
+    };
+    const person = async (username, roles, projects = null) => {
+      await store.create({ companyId: 1, username, email: `${username}@example.com`, displayName: `${username} Kumar`, roles, password: PW });
+      const id = Number(api.db.prepare('SELECT id FROM iam_users WHERE username = ?').get(username).id);
+      if (projects) {
+        api.db.prepare("UPDATE iam_users SET roles_json = '[]' WHERE id = ?").run(id);
+        for (const code of roles) api.db.prepare("INSERT INTO iam_assignments (company_id, user_id, role_id, scope_type, scope_ids_json, status, reason, created_by, source_type) VALUES (1, ?, (SELECT id FROM iam_roles WHERE code = ? AND company_id IS NULL), 'PROJECT', ?, 'ACTIVE', 'test', 'test', 'test')").run(id, code, JSON.stringify(projects));
+      }
+      const token = (await http('POST', '/api/v1/iam/auth/login', { body: { username, password: PW, deviceId: 'device-aaaaaaaa', deviceName: 'Laptop' } })).json?.data?.accessToken;
+      assert.ok(token, `${username} signs in`);
+      return { id, get: (p) => http('GET', p, { token }), post: (p, body = {}) => http('POST', p, { token, body }) };
+    };
+    const project = (code) => Number(api.db.prepare("INSERT INTO org_projects (company_id, code, name, type, status, created_by, source_type) VALUES (1, ?, ?, 'ROAD', 'ACTIVE', 't', 't')").run(code, `Project ${code}`).lastInsertRowid);
+    const a = project('ALPHA');
+    const b = project('BRAVO');
+    const site = Number(api.db.prepare("INSERT INTO org_sites (company_id, org_project_id, code, name, created_by, source_type) VALUES (1, ?, 'ALP-S1', 'Alpha yard', 't', 't')").run(a).lastInsertRowid);
+    const pdAll = await person('pd-all', ['PD']);
+    const pmAlpha = await person('pm-alpha', ['PM'], [a]);
+    const seAlpha = await person('se-alpha', ['SE'], [a]);
+    const pmBravo = await person('pm-bravo', ['PM'], [b]);
+    // the channel can be made only by someone with the right for that project
+    assert.equal((await pmBravo.post(`${M}/conversations`, { type: 'PROJECT', projectId: a })).status, 403);
+    assert.equal((await seAlpha.post(`${M}/conversations`, { type: 'PROJECT', projectId: a })).status, 403);
+    const ch = await pdAll.post(`${M}/conversations`, { type: 'PROJECT', projectId: a });
+    assert.equal(ch.status, 201, JSON.stringify(ch.json));
+    const id = ch.json.data.id;
+    const sch = await pmAlpha.post(`${M}/conversations`, { type: 'SITE', siteId: site });
+    assert.equal(sch.status, 201, JSON.stringify(sch.json));
+    // the members are those whose assignments cover the project: Alpha's people yes, Bravo's no
+    const members = (await pdAll.get(`${M}/conversations/${id}`)).json.data.members;
+    assert.deepEqual(members.map((m) => [m.username, m.source]).sort(), [['pd-all', 'MANUAL'], ['pm-alpha', 'AUTO'], ['se-alpha', 'AUTO']]);
+    assert.equal((await seAlpha.get(`${M}/conversations/${id}/messages`)).status, 200);
+    assert.equal((await pmBravo.get(`${M}/conversations/${id}/messages`)).status, 404, 'another project\'s manager is not a member');
+    assert.equal((await pmBravo.get(`${M}/conversations`)).json.data.rows.length, 0);
+    assert.equal((await pmBravo.post(`${M}/conversations/${id}/messages`, { body: 'let me in' })).status, 404);
+    // the site channel: the site covers the people of its project
+    assert.equal((await seAlpha.get(`${M}/conversations`)).json.data.rows.map((c) => c.type).sort().join(), 'PROJECT,SITE');
+    assert.equal((await seAlpha.post(`${M}/conversations/${id}/messages`, { body: 'Yard is ready' })).status, 201);
+    // the real-time room follows the same rule
+    const hub = realtimeOf(api.db);
+    const actor = (u, uid) => ({ user: u, userId: uid, companyId: 1, roles: [] });
+    assert.equal(hub.canJoin(actor('se-alpha', seAlpha.id), `conv:${id}`).allowed, true);
+    assert.equal(hub.canJoin(actor('pm-bravo', pmBravo.id), `conv:${id}`).allowed, false);
+    // a person who may not make channels cannot add Bravo's manager by hand into a record-less channel either; the admin can add a person by hand, who then stays a manual member
+    assert.equal((await pdAll.post(`${M}/conversations/${id}/members`, { users: ['pm-bravo'] })).status, 200);
+    assert.equal((await pmBravo.get(`${M}/conversations/${id}/messages`)).status, 200);
+    // the assignment of Alpha's site engineer ends: they leave the channel at their next contact
+    api.db.prepare("UPDATE iam_assignments SET status = 'ENDED' WHERE user_id = ?").run(seAlpha.id);
+    assert.equal((await seAlpha.get(`${M}/conversations/${id}/messages`)).status, 404, 'no assignment, no channel');
+    assert.equal((await seAlpha.get(`${M}/conversations`)).json.data.rows.length, 0);
+    assert.equal(hub.canJoin(actor('se-alpha', seAlpha.id), `conv:${id}`).allowed, false);
+    // and returns when an assignment covers the project again
+    api.db.prepare("UPDATE iam_assignments SET status = 'ACTIVE' WHERE user_id = ?").run(seAlpha.id);
+    assert.equal((await seAlpha.get(`${M}/conversations/${id}/messages`)).status, 200);
+    // an automatic member cannot leave (mute or archive instead)
+    assert.equal((await seAlpha.post(`${M}/conversations/${id}/read`, {})).status, 200);
+  } finally { await api.close(); rmSync(storage, { recursive: true, force: true }); }
+});

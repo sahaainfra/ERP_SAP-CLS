@@ -61,7 +61,7 @@ export function registerOfflineAdapters({ db: owner, docs }) {
     code: 'sites', label: 'Sites', permission: 'eng.sample.use',
     rows(db, actor, since) {
       const authz = authzOf(db);
-      const sql = `SELECT s.id, s.code, s.name, s.project_id, s.is_active, COALESCE(s.updated_at, s.created_at) AS changed FROM org_sites s WHERE s.company_id = ? AND (s.project_id IS NULL OR ${authz.scopeFilter(actor, 'eng.sample.use', { project: 's.project_id' }).sql})${since ? ' AND COALESCE(s.updated_at, s.created_at) > ?' : ''} ORDER BY s.code`;
+      const sql = `SELECT s.id, s.code, s.name, s.org_project_id AS project_id, s.is_active, COALESCE(s.updated_at, s.created_at) AS changed FROM org_sites s WHERE s.company_id = ? AND (${authz.scopeFilter(actor, 'eng.sample.use', { project: 's.org_project_id' }).sql})${since ? ' AND COALESCE(s.updated_at, s.created_at) > ?' : ''} ORDER BY s.code`;
       const all = db.prepare(sql).all(...(since ? [actor.companyId, since] : [actor.companyId]));
       return { rows: all.filter((r) => r.is_active === 1).map((r) => ({ id: r.id, code: r.code, name: r.name, projectId: r.project_id, changed: r.changed })), removed: all.filter((r) => r.is_active !== 1).map((r) => r.id) };
     },
