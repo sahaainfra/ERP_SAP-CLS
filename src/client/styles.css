@@ -944,3 +944,13 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .tsk-day { min-height: 84px; padding: 4px; border: 1px solid var(--erp-color-border-subtle); border-radius: 4px; overflow: hidden; overflow-wrap: anywhere; font-size: 0.85em; }
 .tsk-day-empty { border-style: dashed; opacity: 0.5; }
 @media (max-width: 600px) { .tsk-cal { grid-template-columns: 1fr; } .tsk-day-empty { display: none; } .tsk-day { min-height: 0; } }
+
+/* Part 04.10: the document viewer draws each page with a layer of markups over it; the folder tree beside the register is a plain list. */
+.doc-pages { display: grid; gap: var(--erp-space-3); justify-items: start; overflow-x: auto; }
+.doc-page { position: relative; border: 1px solid var(--erp-color-border-subtle); max-width: 100%; }
+.doc-page img { display: block; max-width: 100%; height: auto; }
+.doc-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.doc-register { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: var(--erp-space-4); align-items: start; }
+.doc-tree ul { list-style: none; margin: 0; padding-left: var(--erp-space-3); }
+.doc-tree > ul { padding-left: 0; }
+@media (max-width: 800px) { .doc-register { grid-template-columns: 1fr; } }

@@ -32,6 +32,10 @@ import ControlsDashboardPage from './ControlsDashboardPage.jsx';
 import ExceptionsPage from './ExceptionsPage.jsx';
 import ReasonCodesPage from './ReasonCodesPage.jsx';
 import SampleDocsPage from './SampleDocsPage.jsx';
+import DocumentRegisterPage from './DocumentRegisterPage.jsx';
+import DocumentPage from './DocumentPage.jsx';
+import NewDocumentPage from './NewDocumentPage.jsx';
+import DocumentTypesPage from './DocumentTypesPage.jsx';
 import WorkflowDefinitionsPage from './WorkflowDefinitionsPage.jsx';
 import WorkflowEditorPage from './WorkflowEditorPage.jsx';
 import WorkflowInstancePage from './WorkflowInstancePage.jsx';
@@ -78,6 +82,10 @@ registerModule({
     { path: '/alerts', label: 'Alert Centre', icon: 'erp.action.notify', flag: 'ff.eng.p0409', Page: AlertCentrePage },
     { path: '/admin/alert-rules', label: 'Alert Rules', icon: 'erp.action.settings', permission: 'alr.rule.view', flag: 'ff.eng.p0409', Page: AlertRulesPage },
     { path: '/admin/alert-rules/editor', label: 'Rule Builder', icon: 'erp.action.edit', permission: 'alr.rule.view', flag: 'ff.eng.p0409', Page: RuleBuilderPage },
+    { path: '/documents', label: 'Document Register', icon: 'erp.action.list', permission: 'doc.document.view', flag: 'ff.eng.p0410', Page: DocumentRegisterPage },
+    { path: '/documents/document', label: 'Document', icon: 'erp.action.info', permission: 'doc.document.view', flag: 'ff.eng.p0410', Page: DocumentPage },
+    { path: '/documents/new', label: 'Upload / New Revision', icon: 'erp.action.create', permission: 'doc.document.create', flag: 'ff.eng.p0410', Page: NewDocumentPage },
+    { path: '/admin/document-types', label: 'Document Types & Folder Templates', icon: 'erp.action.settings', permission: 'doc.config.view', flag: 'ff.eng.p0410', Page: DocumentTypesPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });
