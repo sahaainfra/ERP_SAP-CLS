@@ -14,7 +14,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
 import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
-import { documentRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -27,6 +27,7 @@ import { createAlertService } from './alerts.js';
 import { bind as bindDocuments, createDocumentService } from './documents.js';
 import { createDocumentOps } from './documents-ops.js';
 import { createDocumentConfig } from './documents-config.js';
+import { bind as bindTemplates, createTemplateService } from './templates.js';
 import { createLocalStorage } from '../../platform/files/storage.js';
 import { alertsOf } from '../../platform/alerts/index.js';
 import { registerCommProviders } from '../../platform/comm/providers.js';
@@ -314,7 +315,7 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
 integrityRegistry.register({
   uniqueKeys: [{ table: 'doc_documents', columns: ['company_id', 'doc_no'] }, { table: 'doc_versions', columns: ['document_id', 'revision_no'] }],
-  companyOptional: ['doc_types', 'doc_folder_templates'],
+  companyOptional: ['tpl_templates', 'doc_types', 'doc_folder_templates'],
   statuses: { doc_documents: ['DRAFT', 'IN_REVIEW', 'ISSUED', 'ARCHIVED', 'CANCELLED'], doc_versions: ['DRAFT', 'IN_REVIEW', 'RETURNED', 'ISSUED', 'SUPERSEDED', 'REJECTED'], doc_types: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], doc_folder_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
 });
 defineList({
@@ -332,6 +333,29 @@ workSources.register({
   },
 });
 
+// Part 04.11: document templates, PDF generation, print and delivery.
+for (const [type, description] of [
+  ['tpl.template.activated', 'A document template version was approved by the process owner and is now the one used for official documents.'],
+  ['tpl.record.published', 'The approved data of a document was handed to the generator.'],
+  ['tpl.document.generated', 'An official document (PDF with a verification code) was generated; a new generation is a new version.'],
+  ['tpl.document.delivered', 'A generated document was sent by e-mail, WhatsApp, message or portal.'],
+  ['tpl.document.delivery_requested', 'A generated document was asked to be delivered by message or portal; the owning module takes it from here.'],
+  ['tpl.bulk.completed', 'A bulk generation of documents finished.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'tpl_generated_docs', columns: ['company_id', 'doc_type', 'entity_id', 'version_no'] }, { table: 'tpl_records', columns: ['company_id', 'doc_no'] }],
+  companyOptional: ['tpl_templates'],
+  statuses: { tpl_templates: ['DRAFT', 'IN_REVIEW', 'ACTIVE', 'RETIRED', 'REJECTED'], tpl_deliveries: ['QUEUED', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'BLOCKED', 'PUBLISHED', 'DOWNLOADED'], tpl_bulk_jobs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED', 'CANCELLED'] },
+});
+defineList({
+  code: 'tpl.templates', label: 'Templates', from: 'tpl_templates t', defaultSort: 'newest',
+  columns: { status: { sql: 't.status', type: 'enum', label: 'Status' }, type: { sql: 't.doc_type', type: 'enum', label: 'Document type' }, sort: { sql: 't.id', type: 'text', label: 'Order' } },
+});
+defineList({
+  code: 'tpl.generated', label: 'Generated documents', from: 'tpl_generated_docs g', defaultSort: 'newest',
+  columns: { type: { sql: 'g.doc_type', type: 'enum', label: 'Document type' }, purpose: { sql: 'g.purpose', type: 'enum', label: 'Purpose' }, sort: { sql: 'g.id', type: 'text', label: 'Order' } },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -341,7 +365,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['doc_types', 'doc_folder_templates', 'alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -530,6 +554,27 @@ export const eng = {
     docsRouter.use(gate('ff.eng.p0410', 'The document service is'));
     docsRouter.use(documentRoutes({ service: docService, ops: docOps, config: docConfig, documentsFile, bulkBody: express.raw({ type: ['application/octet-stream', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], limit: '10mb' }) }, idem));
     api.use('/doc', docsRouter);
+
+    // part 04.11: templates, PDF generation, print and delivery
+    const tplService = createTemplateService({ db, engine, storage: docStorage, jobs: runtime.jobs, secret: config.fileUrlSecret, publicUrl: config.publicUrl });
+    bindTemplates(db, tplService);
+    tplService.seedLibrary();
+    runtime.jobs.register('tpl.bulk', (ctx) => tplService.bulk.run(ctx), { maxAttempts: 1, description: 'Generates many documents (PDF with a verification code) one by one, with progress, and tells the person who asked when it is done.' });
+    runtime.jobs.register('tpl.milestone', (ctx) => tplService.rules.runMilestone(ctx), { maxAttempts: 3, description: 'Generates the document that a workflow approval milestone asks for.' });
+    runtime.bus.subscribe(['workflow.instance.approved'], (e) => tplService.rules.onApproved(e), { consumer: 'tpl.milestones' });
+    runtime.bus.subscribe(['comm.message.sent', 'comm.message.delivered', 'comm.message.read', 'comm.message.failed'], (e) => tplService.delivery.onMessage(e), { consumer: 'tpl.delivery_status' });
+    const generatedFile = (actor, q) => {
+      const list = tplService.generated.list(actor, { ...q, limit: 100, offset: 0, sort: 'newest' });
+      const rows = list.rows.map((x) => ({ docNo: x.docNo, type: x.typeLabel, version: x.version, current: x.current ? 'Yes' : 'No', purpose: x.purpose, project: x.projectName ?? '', generatedBy: x.generatedBy, generatedAt: x.generatedAt, pages: x.pages, deliveries: x.deliveries, verifyCode: x.verifyCode }));
+      const columns = [['docNo', 'Number'], ['type', 'Document'], ['version', 'Version'], ['current', 'Current'], ['purpose', 'Purpose'], ['project', 'Project'], ['generatedBy', 'Generated by'], ['generatedAt', 'Generated at'], ['pages', 'Pages'], ['deliveries', 'Deliveries'], ['verifyCode', 'Verification code']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'tpl_generated_docs', entityId: 'list', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Generated documents. Exported by ${actor.user} on ${todayIST()}. Only the documents you may see are listed.`], sheetName: 'Generated documents', title: 'Generated documents' }), type: FORMATS[q.format], fileName: `generated-documents-${todayIST()}.${q.format}` };
+    };
+    const tplRouter = Router();
+    tplRouter.use(gate('ff.eng.p0411', 'Document templates are'));
+    tplRouter.use(templateRoutes({ service: tplService, generatedFile }, idem));
+    api.use('/tpl', tplRouter);
+    publicApi.use(templatePublicRoutes({ service: tplService }));
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));
