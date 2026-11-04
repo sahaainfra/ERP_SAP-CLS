@@ -70,11 +70,11 @@ test('AC-01 AC-05 FR-01 FR-07 the licence register and the policy: the gate is c
   const errors = watch(a.page);
   await expect(a.page.getByRole('heading', { name: 'Open-Source Licence Register', level: 1 })).toBeVisible();
   await expect(a.page.getByTestId('licence-gate')).toContainText('not approved');
-  await expect(a.page.getByTestId('lr-row').filter({ hasText: 'libsignal' })).toContainText('AGPL-3.0-only');
+  await expect(a.page.getByTestId('lr-row').filter({ hasText: 'libsignal (Signal Protocol)' })).toContainText('AGPL-3.0-only');
   await a.page.getByTestId('lr-scan').click();
   await expect(a.page.getByTestId('lr-notice')).toContainText('component');
   await a.page.getByTestId('lr-q').fill('libsignal');
-  await expect(a.page.getByTestId('lr-row')).toHaveCount(2);
+  await expect(a.page.getByTestId('lr-row')).toHaveCount(2); // libsignal and the Signal server
   await a.page.getByTestId('lr-q').fill('');
   // the policy cannot be switched on yet: the form says why and the server refuses
   const p0 = await open(browser, info, c, 'SYSADM', sys, '/admin/secure-messaging');
@@ -91,7 +91,7 @@ test('AC-01 AC-05 FR-01 FR-07 the licence register and the policy: the gate is c
   await a.page.reload();
   await expect(a.page.getByTestId('licence-gate')).toContainText('is approved');
   await expect(a.page.getByTestId('lr-review-row').first()).toContainText('Approved');
-  await expect(a.page.getByTestId('lr-row').filter({ hasText: 'libsignal' })).toContainText('Not allowed');
+  await expect(a.page.getByTestId('lr-row').filter({ hasText: 'libsignal (Signal Protocol)' })).toContainText('Not allowed');
   await noOverflow(a.page);
   // the policy: the system administrator proposes, the IT administrator approves
   await p0.page.reload();
@@ -160,6 +160,7 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   await expect(m1.page.getByTestId('secure-label').first()).toBeVisible({ timeout: 20_000 });
   await m1.page.locator('[data-testid^="conv-"]').first().click();
   await expect(m1.page.getByTestId('smsg').filter({ hasText: secret })).toBeVisible({ timeout: 20_000 });
+  await expect(m1.page.getByTestId('smsg-file')).toBeVisible({ timeout: 40_000 });
   const dl = m1.page.waitForEvent('download');
   await m1.page.getByTestId('smsg-file').click();
   const file = await dl;

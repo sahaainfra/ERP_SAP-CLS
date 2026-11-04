@@ -160,12 +160,12 @@ export async function openFile(payload) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-/** The messages of one secure conversation; refreshed by a real-time hint (ids only) and every 20 seconds. */
+/** The messages of one secure conversation; refreshed by a real-time hint (ids only) and every 8 seconds. */
 export function useSecureThread(convId, session) {
   const qc = useQueryClient();
   useLiveRefresh(session?.user ? [`user:${session.user}`] : [], [['sec']]);
   return useQuery({
-    queryKey: ['sec', 'thread', convId], enabled: Boolean(convId && session?.user), retry: false, refetchInterval: 20_000,
+    queryKey: ['sec', 'thread', convId], enabled: Boolean(convId && session?.user), retry: false, refetchInterval: 8000,
     queryFn: async () => {
       const got = await sync(session).catch((e) => { throw e; });
       if (got) qc.invalidateQueries({ queryKey: ['msg'] });
