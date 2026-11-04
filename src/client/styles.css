@@ -1083,3 +1083,4 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .safety-grid { list-style: none; margin: var(--erp-space-3) 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--erp-space-2); font-family: var(--erp-font-mono, monospace); font-size: 1.15rem; letter-spacing: .08em; }
 .safety-grid li { text-align: center; padding: var(--erp-space-1); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
 @media (max-width: 480px) { .safety-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: 1rem; } }
+.notice.is-warning { padding: var(--erp-space-2) var(--erp-space-3); border: 1px solid var(--erp-color-status-warning-solid, var(--erp-color-status-warning-fg)); border-radius: var(--erp-radius-md); background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); }

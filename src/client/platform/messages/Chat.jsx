@@ -52,7 +52,7 @@ export function ConversationList({ activeId, onOpen, filters, setFilters, sessio
                 <span className="msg-avatar" aria-hidden="true">{c.title.slice(0, 1).toUpperCase()}</span>
                 <span className="msg-row-main">
                   <span className="msg-row-top"><strong>{c.secure && <span className="msg-lock" title="Secure conversation, end-to-end encrypted" data-testid="secure-label"><Icon name="erp.action.lock" size={14} /><span className="sr-only">Secure conversation. </span></span>}{c.title}</strong><span className="muted small">{c.last ? formatListTime(c.last.at) : ''}</span></span>
-                  <span className="msg-row-bottom"><span className="msg-preview">{c.last ? `${c.last.sender === c.title ? '' : `${c.last.sender}: `}${c.last.excerpt}` : 'No messages yet'}</span>
+                  <span className="msg-row-bottom"><span className="msg-preview">{c.last ? `${!c.last.sender || c.last.sender === c.title ? '' : `${c.last.sender}: `}${c.last.excerpt}` : 'No messages yet'}</span>
                     {c.pinned && <Icon name="erp.action.pin" size={14} />}{c.muted && <span className="muted small" title="Muted">muted</span>}
                     {c.unread > 0 && <span className="op-count" aria-label={`${c.unread} unread`} data-testid={`unread-${c.id}`}>{c.unread}</span>}</span>
                   <span className="muted small">{c.secure ? 'Secure · end-to-end encrypted' : TYPE_LABEL[c.type]}{c.readOnly ? ` · ${c.channel ?? 'read only'}` : ''}</span>
