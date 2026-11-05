@@ -1,5 +1,14 @@
 import { registerModule } from '../../platform/shell/registry.js';
 import CandidatePage from './CandidatePage.jsx';
+import CrewPage from './CrewPage.jsx';
+import CrewsPage from './CrewsPage.jsx';
+import DeploymentBoardPage from './DeploymentBoardPage.jsx';
+import DeploymentPage from './DeploymentPage.jsx';
+import DeploymentsPage from './DeploymentsPage.jsx';
+import NewDeploymentPage from './NewDeploymentPage.jsx';
+import NewTransferPage from './NewTransferPage.jsx';
+import TransferPage from './TransferPage.jsx';
+import TransfersPage from './TransfersPage.jsx';
 import CandidatePipelinePage from './CandidatePipelinePage.jsx';
 import Employee360Page from './Employee360Page.jsx';
 import EmployeeDirectoryPage from './EmployeeDirectoryPage.jsx';
@@ -29,5 +38,14 @@ registerModule({
     { path: '/hr/offers', label: 'Offers', icon: 'erp.action.history', permission: 'hr.offer.view', flag: 'ff.hr.p0702', Page: OffersPage },
     { path: '/hr/offers/offer', label: 'Offer Builder', icon: 'erp.action.create', permission: 'hr.offer.view', flag: 'ff.hr.p0702', Page: OfferBuilderPage },
     { path: '/hr/onboarding', label: 'Onboarding Checklist', icon: 'erp.action.inbox', permission: 'hr.onboarding.view', flag: 'ff.hr.p0702', Page: OnboardingPage },
+    { path: '/hr/deployment-board', label: 'Deployment Board', icon: 'erp.action.history', permission: 'hr.deployment.view', flag: 'ff.hr.p0703', Page: DeploymentBoardPage },
+    { path: '/hr/deployments', label: 'Deployments', icon: 'erp.action.history', permission: 'hr.deployment.view', flag: 'ff.hr.p0703', Page: DeploymentsPage },
+    { path: '/hr/deployments/deployment', label: 'Deployment', icon: 'erp.action.info', permission: 'hr.deployment.view', flag: 'ff.hr.p0703', Page: DeploymentPage },
+    { path: '/hr/deployments/new', label: 'New Deployment / Bulk Deploy', icon: 'erp.action.create', permission: 'hr.deployment.create', flag: 'ff.hr.p0703', Page: NewDeploymentPage },
+    { path: '/hr/crews', label: 'Crews & Gangs', icon: 'erp.action.history', permission: 'hr.crew.view', flag: 'ff.hr.p0703', Page: CrewsPage },
+    { path: '/hr/crews/crew', label: 'Crew', icon: 'erp.action.info', permission: 'hr.crew.view', flag: 'ff.hr.p0703', Page: CrewPage },
+    { path: '/hr/transfers', label: 'Transfers', icon: 'erp.action.history', permission: 'hr.transfer.view', flag: 'ff.hr.p0703', Page: TransfersPage },
+    { path: '/hr/transfers/transfer', label: 'Transfer', icon: 'erp.action.info', permission: 'hr.transfer.view', flag: 'ff.hr.p0703', Page: TransferPage },
+    { path: '/hr/transfers/new', label: 'Transfer Request', icon: 'erp.action.create', permission: 'hr.transfer.create', flag: 'ff.hr.p0703', Page: NewTransferPage },
   ],
 });

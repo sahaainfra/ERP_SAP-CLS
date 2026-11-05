@@ -134,6 +134,8 @@ CREATE INDEX IF NOT EXISTS ix_hr_deployments_site ON hr_deployments (dep_site_id
 CREATE INDEX IF NOT EXISTS ix_hr_deployments_crew ON hr_deployments (crew_id);
 CREATE INDEX IF NOT EXISTS ix_hr_deployments_status ON hr_deployments (company_id, status);
 CREATE INDEX IF NOT EXISTS ix_hr_deployments_dates ON hr_deployments (from_date, to_date);
+CREATE INDEX IF NOT EXISTS ix_hr_deployments_supersedes_id ON hr_deployments (supersedes_id);
+CREATE INDEX IF NOT EXISTS ix_hr_deployments_root_id ON hr_deployments (root_id);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_hr_deployments_doc ON hr_deployments (company_id, doc_no, revision_no);
 
 CREATE TABLE IF NOT EXISTS hr_transfers (
@@ -185,4 +187,10 @@ CREATE INDEX IF NOT EXISTS ix_hr_transfers_company_id ON hr_transfers (company_i
 CREATE INDEX IF NOT EXISTS ix_hr_transfers_employee ON hr_transfers (employee_id);
 CREATE INDEX IF NOT EXISTS ix_hr_transfers_to_project ON hr_transfers (to_project_id);
 CREATE INDEX IF NOT EXISTS ix_hr_transfers_status ON hr_transfers (company_id, status);
+CREATE INDEX IF NOT EXISTS ix_hr_transfers_from_project_id ON hr_transfers (from_project_id);
+CREATE INDEX IF NOT EXISTS ix_hr_transfers_from_site_id ON hr_transfers (from_site_id);
+CREATE INDEX IF NOT EXISTS ix_hr_transfers_to_site_id ON hr_transfers (to_site_id);
+CREATE INDEX IF NOT EXISTS ix_hr_transfers_to_crew_id ON hr_transfers (to_crew_id);
+CREATE INDEX IF NOT EXISTS ix_hr_transfers_supersedes_id ON hr_transfers (supersedes_id);
+CREATE INDEX IF NOT EXISTS ix_hr_transfers_root_id ON hr_transfers (root_id);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_hr_transfers_doc ON hr_transfers (company_id, doc_no, revision_no);

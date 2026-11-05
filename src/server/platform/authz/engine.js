@@ -126,8 +126,8 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
     // Holdings conferred by other modules' records (part 07.03: an approved site deployment); a failing source gives nothing.
     if (userId) {
       for (const [name, fn] of grantSources.list()) {
-        let given = [];
-        try { given = fn(db, { companyId, userId, today }) ?? []; } catch { given = []; }
+        let given;
+        try { given = fn(db, { companyId, userId, today }) ?? []; } catch { continue; }
         for (const g of given) {
           const role = table.byCode.get(g.roleCode) ?? templateRole(g.roleCode);
           if (role && role.status === 'ACTIVE') holdings.push({ role, scopeType: g.scopeType, scopeIds: g.scopeIds ?? [], assignmentId: null, via: g.via ?? name, ref: g.ref });

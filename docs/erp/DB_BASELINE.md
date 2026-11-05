@@ -2771,6 +2771,133 @@ Indexes:
 - ix_hr_candidates_requisition: requisition_id, stage
 - ix_hr_candidates_list: company_id, stage
 
+## hr_crew_members
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| crew_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: crew_id -> hr_crews(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_crew_members_person: person_type, person_id
+- ix_hr_crew_members_crew: crew_id
+- ix_hr_crew_members_company_id: company_id
+
+## hr_crews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| crew_site_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| trade | TEXT |  |  |  |
+| supervisor_id | INTEGER |  |  |  |
+| labour_contractor_id | INTEGER |  |  |  |
+| active | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supervisor_id -> hr_employees(id), crew_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_crews_supervisor: supervisor_id
+- ix_hr_crews_site: crew_site_id
+- ix_hr_crews_company_id: company_id
+- sqlite_autoindex_hr_crews_1 (unique): company_id, code
+
+## hr_deployments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| person_type | TEXT | yes |  | 'EMPLOYEE' |
+| person_id | INTEGER | yes |  |  |
+| dep_project_id | INTEGER | yes |  |  |
+| dep_site_id | INTEGER |  |  |  |
+| crew_id | INTEGER |  |  |  |
+| site_role | TEXT |  |  |  |
+| access_role | TEXT |  |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT |  |  |  |
+| is_primary | INTEGER | yes |  | 1 |
+| default_wbs_id | INTEGER |  |  |  |
+| default_cost_code_id | INTEGER |  |  |  |
+| band | TEXT | yes |  | 'WITHIN_PLAN' |
+| plan_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| closed_reason | TEXT |  |  |  |
+| transfer_id | INTEGER |  |  |  |
+| activated_at | TEXT |  |  |  |
+| ended_event_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: crew_id -> hr_crews(id), dep_site_id -> org_sites(id), dep_project_id -> org_projects(id), supersedes_id -> hr_deployments(id), root_id -> hr_deployments(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_hr_deployments_doc (unique): company_id, doc_no, revision_no
+- ix_hr_deployments_root_id: root_id
+- ix_hr_deployments_supersedes_id: supersedes_id
+- ix_hr_deployments_dates: from_date, to_date
+- ix_hr_deployments_status: company_id, status
+- ix_hr_deployments_crew: crew_id
+- ix_hr_deployments_site: dep_site_id
+- ix_hr_deployments_project: dep_project_id
+- ix_hr_deployments_person: person_type, person_id
+- ix_hr_deployments_company_id: company_id
+
 ## hr_employee_banks
 
 | Column | Type | Not null | Key | Default |
@@ -3354,6 +3481,100 @@ Indexes:
 - ix_hr_requisitions_department: department_id
 - ix_hr_requisitions_list: company_id, status
 - ux_hr_requisitions_doc (unique): company_id, doc_no, revision_no
+
+## hr_site_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plan_site_id | INTEGER | yes |  |  |
+| designation_id | INTEGER | yes |  |  |
+| planned | INTEGER | yes |  |  |
+| valid_from | TEXT | yes |  |  |
+| valid_to | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: designation_id -> org_designations(id), plan_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_site_plans_designation: designation_id
+- ix_hr_site_plans_site: plan_site_id
+- ix_hr_site_plans_company_id: company_id
+
+## hr_transfers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  | 'TRANSFER' |
+| from_project_id | INTEGER |  |  |  |
+| from_site_id | INTEGER |  |  |  |
+| to_project_id | INTEGER | yes |  |  |
+| to_site_id | INTEGER |  |  |  |
+| to_crew_id | INTEGER |  |  |  |
+| site_role | TEXT |  |  |  |
+| relieve_date | TEXT | yes |  |  |
+| join_date | TEXT | yes |  |  |
+| return_date | TEXT |  |  |  |
+| reason | TEXT | yes |  |  |
+| travel_required | INTEGER | yes |  | 0 |
+| accommodation_required | INTEGER | yes |  | 0 |
+| handover_json | TEXT | yes |  | '[]' |
+| scope | TEXT | yes |  | 'SAME_PROJECT' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| closed_reason | TEXT |  |  |  |
+| applied_at | TEXT |  |  |  |
+| applied_json | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: to_crew_id -> hr_crews(id), to_site_id -> org_sites(id), to_project_id -> org_projects(id), from_site_id -> org_sites(id), from_project_id -> org_projects(id), employee_id -> hr_employees(id), supersedes_id -> hr_transfers(id), root_id -> hr_transfers(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_hr_transfers_doc (unique): company_id, doc_no, revision_no
+- ix_hr_transfers_root_id: root_id
+- ix_hr_transfers_supersedes_id: supersedes_id
+- ix_hr_transfers_to_crew_id: to_crew_id
+- ix_hr_transfers_to_site_id: to_site_id
+- ix_hr_transfers_from_site_id: from_site_id
+- ix_hr_transfers_from_project_id: from_project_id
+- ix_hr_transfers_status: company_id, status
+- ix_hr_transfers_to_project: to_project_id
+- ix_hr_transfers_employee: employee_id
+- ix_hr_transfers_company_id: company_id
 
 ## iam_access_campaigns
 

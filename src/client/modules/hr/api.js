@@ -90,3 +90,41 @@ export const recruit = {
   respond: async (token, b) => (await api.post(`/hr/offer-link/${token}/respond`, b)).data,
   linkDetails: async (token, b) => (await api.put(`/hr/offer-link/${token}/prejoining`, b)).data,
 };
+
+// part 07.03: deployment, crews and transfers
+export const ACCESS_ROLES = [['', 'No site access'], ['SE', 'Site Engineer (SE)'], ['WSUP', 'Workforce Supervisor (WSUP)'], ['QCE', 'Quality Control Engineer (QCE)'], ['QS', 'Quantity Surveyor (QS)'], ['PLAN', 'Planning Engineer (PLAN)'], ['HSEE', 'HSE Engineer (HSEE)'], ['HSEO', 'HSE Officer (HSEO)']];
+export const KINDS = [['TRANSFER', 'Transfer'], ['SECONDMENT', 'Secondment']];
+const dq = (path) => `/hr/${path}`;
+export const deploy = {
+  board: async (f) => (await api.get(`${dq('deployment-board')}?${q(f)}`)).data,
+  get: async (id) => (await api.get(dq(`deployments/${id}`))).data,
+  create: async (b) => (await api.post(dq('deployments'), b, idem())).data,
+  update: async (id, b) => (await api.patch(dq(`deployments/${id}`), b, idem())).data,
+  remove: async (id) => (await api.delete(dq(`deployments/${id}`))).data,
+  submit: async (id, comment) => (await api.post(dq(`deployments/${id}/submit`), comment ? { comment } : {}, idem())).data,
+  withdraw: async (id, reason) => (await api.post(dq(`deployments/${id}/withdraw`), { reason }, idem())).data,
+  cancel: async (id, reason) => (await api.post(dq(`deployments/${id}/cancel`), { reason }, idem())).data,
+  amend: async (id, reason, changes) => (await api.post(dq(`deployments/${id}/amend`), changes ? { reason, changes } : { reason }, idem())).data,
+  move: async (id, crewId, comment) => (await api.post(dq(`deployments/${id}/move`), { crewId, comment }, idem())).data,
+  compare: async (id) => (await api.get(dq(`deployments/${id}/compare`))).data,
+  planCheck: async (f) => (await api.get(`${dq('deployments/plan-check')}?${q(f)}`)).data,
+  crews: {
+    get: async (id) => (await api.get(dq(`crews/${id}`))).data,
+    create: async (b) => (await api.post(dq('crews'), b, idem())).data,
+    update: async (id, b) => (await api.patch(dq(`crews/${id}`), b, idem())).data,
+    addMember: async (id, b) => (await api.post(dq(`crews/${id}/members`), b, idem())).data,
+    endMember: async (id, memberId, toDate) => (await api.post(dq(`crews/${id}/members/${memberId}/end`), { toDate }, idem())).data,
+  },
+  transfers: {
+    get: async (id) => (await api.get(dq(`transfers/${id}`))).data,
+    create: async (b) => (await api.post(dq('transfers'), b, idem())).data,
+    update: async (id, b) => (await api.patch(dq(`transfers/${id}`), b, idem())).data,
+    remove: async (id) => (await api.delete(dq(`transfers/${id}`))).data,
+    submit: async (id, comment) => (await api.post(dq(`transfers/${id}/submit`), comment ? { comment } : {}, idem())).data,
+    withdraw: async (id, reason) => (await api.post(dq(`transfers/${id}/withdraw`), { reason }, idem())).data,
+    cancel: async (id, reason) => (await api.post(dq(`transfers/${id}/cancel`), { reason }, idem())).data,
+    amend: async (id, reason) => (await api.post(dq(`transfers/${id}/amend`), { reason }, idem())).data,
+    handover: async (id, items) => (await api.put(dq(`transfers/${id}/handover`), { items }, idem())).data,
+    compare: async (id) => (await api.get(dq(`transfers/${id}/compare`))).data,
+  },
+};

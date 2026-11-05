@@ -63,8 +63,8 @@ export function createAutoGroupService({ db, engine, base }) {
     }
     // other modules' records that confer a role in a place (part 07.03: an approved deployment)
     for (const [, fn] of holderSourcesOf.list()) {
-      let extra = [];
-      try { extra = fn(db, { companyId, roles, scope, today }) ?? []; } catch { extra = []; }
+      let extra;
+      try { extra = fn(db, { companyId, roles, scope, today }) ?? []; } catch { continue; }
       for (const u of extra) if (!out.includes(u)) out.push(u);
     }
     return out;

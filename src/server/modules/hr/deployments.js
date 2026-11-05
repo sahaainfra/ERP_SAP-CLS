@@ -12,6 +12,7 @@ import { createParameterStore, parameterRegistry } from '../../platform/paramete
 import { evidenceProviders, workflowOf, workflowResolvers, workflowTypes } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
 import { issueNumber } from '../core/numbering/service.js';
+import { employeeRelated } from './employees.js';
 
 // Deployment, crews and the live view of who is where (part 07.03). A deployment puts an employee on a project and site (and a crew) between two dates, as the primary or a secondary posting (BR-01: only
 // one primary at a time), with the role on site, the default cost allocation and, when it should give site access, the role the person holds there. It is approved by the project manager, and by the
@@ -105,7 +106,7 @@ export function createDeploymentService({ db }) {
 
   // ---- the site plan (adapter for 17.08) and the check of a deployment against it ----
   const sitePlans = {
-    list(actor, { siteId, projectId } = {}) {
+    list(actor, { siteId, projectId } = /** @type {any} */ ({})) {
       need(actor, 'hr.deployment.view', 'see the site manpower plan');
       const where = ['p.company_id = ?', 'p.deleted_at IS NULL']; const args = [actor.companyId];
       if (siteId) { where.push('p.plan_site_id = ?'); args.push(siteId); }
@@ -511,13 +512,13 @@ export function createDeploymentService({ db }) {
   // ---- FR-04: the deployment board ----
   const registerScope = (actor) => `d.company_id = :c AND ${authz.scopeFilter(actor, 'hr.deployment.view', { project: 'd.project_id', site: 'd.site_id' }).sql}`;
   const deploymentSelect = 'd.*, e.full_name AS person_name, e.emp_code AS person_code, g.name AS designation_name, p.name AS project_name, s.name AS site_name, c.name AS crew_name';
-  const present = (actor) => (d) => ({ id: d.id, docNo: d.doc_no, revision: d.revision_no, person: d.person_name ?? `Worker ${d.person_id}`, code: d.person_code, designation: d.designation_name, project: d.project_name, site: d.site_name, crew: d.crew_name, siteRole: d.site_role, fromDate: d.from_date, toDate: d.to_date, isPrimary: d.is_primary === 1, band: d.band, status: d.status, statusLabel: DEP_STATUS[d.status] });
+  const present = () => (d) => ({ id: d.id, docNo: d.doc_no, revision: d.revision_no, person: d.person_name ?? `Worker ${d.person_id}`, code: d.person_code, designation: d.designation_name, project: d.project_name, site: d.site_name, crew: d.crew_name, siteRole: d.site_role, fromDate: d.from_date, toDate: d.to_date, isPrimary: d.is_primary === 1, band: d.band, status: d.status, statusLabel: DEP_STATUS[d.status] });
   const register = {
-    list(actor, query) { need(actor, 'hr.deployment.view', 'see deployments'); return runList(db, deploymentList, parseListRequest(deploymentList, query), { select: deploymentSelect, scopeSql: registerScope(actor), params: { c: actor.companyId }, tieBreaker: 'd.id', map: present(actor) }); },
+    list(actor, query) { need(actor, 'hr.deployment.view', 'see deployments'); return runList(db, deploymentList, parseListRequest(deploymentList, query), { select: deploymentSelect, scopeSql: registerScope(actor), params: { c: actor.companyId }, tieBreaker: 'd.id', map: present() }); },
     exportSource(actor, req) {
       need(actor, 'hr.deployment.export', 'export deployments');
       const opts = { select: deploymentSelect, scopeSql: registerScope(actor), params: { c: actor.companyId }, tieBreaker: 'd.id' };
-      return { title: deploymentList.label, permission: 'hr.deployment.export', personal: false, columns: Object.entries(deploymentList.columns).map(([key, c]) => ({ key, label: c.label, type: c.type === 'enum' ? 'text' : c.type })), count: () => countList(db, deploymentList, req, opts), rows: () => runList(db, deploymentList, req, { ...opts, limit: null, map: present(actor) }).data, describe: (x) => [x.q ? `search "${x.q}"` : '', ...x.filters.map((f) => `${deploymentList.columns[f.key].label} ${f.op} ${f.raw}`)].filter(Boolean).join('; ') };
+      return { title: deploymentList.label, permission: 'hr.deployment.export', personal: false, columns: Object.entries(deploymentList.columns).map(([key, c]) => ({ key, label: c.label, type: c.type === 'enum' ? 'text' : c.type })), count: () => countList(db, deploymentList, req, opts), rows: () => runList(db, deploymentList, req, { ...opts, limit: null, map: present() }).data, describe: (x) => [x.q ? `search "${x.q}"` : '', ...x.filters.map((f) => `${deploymentList.columns[f.key].label} ${f.op} ${f.raw}`)].filter(Boolean).join('; ') };
     },
   };
   const board = {
@@ -531,9 +532,13 @@ export function createDeploymentService({ db }) {
       const sites = db.prepare(`SELECT s.id, s.code, s.name, s.org_project_id AS project_id, p.name AS project FROM org_sites s JOIN org_projects p ON p.id = s.org_project_id WHERE ${where.join(' AND ')} ORDER BY p.name, s.name LIMIT 200`).all(...args);
       return {
         date, canMove: may(actor, 'hr.deployment.amend'), sites: sites.map((s) => {
-          const people = db.prepare(`SELECT d.id, d.doc_no, d.person_id, d.person_type, d.site_role, d.is_primary, d.crew_id, d.from_date, d.to_date, e.full_name, e.emp_code, e.designation_id, g.name AS designation, c.name AS crew, c.trade, (SELECT COUNT(*) FROM hr_deployments x WHERE x.company_id = d.company_id AND COALESCE(x.root_id, x.id) = COALESCE(d.root_id, d.id) AND x.status IN ('SUBMITTED', 'DRAFT', 'RETURNED') AND x.deleted_at IS NULL) AS pending
-            FROM hr_deployments d LEFT JOIN hr_employees e ON e.id = d.person_id AND d.person_type = 'EMPLOYEE' LEFT JOIN org_designations g ON g.id = e.designation_id LEFT JOIN hr_crews c ON c.id = d.crew_id
-            WHERE d.company_id = ? AND d.dep_site_id = ? AND d.status = 'APPROVED' AND d.deleted_at IS NULL AND d.from_date <= ? AND (d.to_date IS NULL OR d.to_date >= ?) ORDER BY c.name, g.name, e.full_name`).all(actor.companyId, s.id, date, date);
+          const people = db.prepare(`SELECT q.*, c.name AS crew, c.trade FROM (
+              SELECT d.id, d.doc_no, d.person_id, d.person_type, d.site_role, d.is_primary, d.from_date, d.to_date, e.full_name, e.emp_code, e.designation_id, g.name AS designation,
+                COALESCE(d.crew_id, (SELECT m.crew_id FROM hr_crew_members m JOIN hr_crews k ON k.id = m.crew_id WHERE m.person_type = d.person_type AND m.person_id = d.person_id AND k.crew_site_id = d.dep_site_id AND m.deleted_at IS NULL AND m.from_date <= @d AND (m.to_date IS NULL OR m.to_date >= @d) LIMIT 1)) AS crew_id,
+                EXISTS (SELECT 1 FROM hr_deployments x WHERE x.supersedes_id = d.id AND x.status IN ('SUBMITTED', 'DRAFT', 'RETURNED') AND x.deleted_at IS NULL) AS pending
+              FROM hr_deployments d LEFT JOIN hr_employees e ON e.id = d.person_id AND d.person_type = 'EMPLOYEE' LEFT JOIN org_designations g ON g.id = e.designation_id
+              WHERE d.company_id = @c AND d.dep_site_id = @s AND d.status = 'APPROVED' AND d.deleted_at IS NULL AND d.from_date <= @d AND (d.to_date IS NULL OR d.to_date >= @d)) q
+            LEFT JOIN hr_crews c ON c.id = q.crew_id ORDER BY c.name, q.designation, q.full_name`).all({ c: actor.companyId, s: s.id, d: date });
           const groups = new Map();
           for (const x of people) {
             const key = x.crew_id ?? 0;
@@ -545,7 +550,7 @@ export function createDeploymentService({ db }) {
           for (const x of people) { const k = x.designation_id ?? 0; if (!byDes.has(k)) byDes.set(k, { designationId: x.designation_id, designation: x.designation ?? 'Not set', planned: 0, deployed: 0 }); byDes.get(k).deployed += 1; }
           const counts = [...byDes.values()].map((c) => ({ ...c, gap: c.planned - c.deployed })).sort((a, b) => a.designation.localeCompare(b.designation));
           const waiting = db.prepare("SELECT COUNT(*) AS n FROM hr_deployments WHERE company_id = ? AND dep_site_id = ? AND status = 'SUBMITTED' AND deleted_at IS NULL").get(actor.companyId, s.id).n;
-          return { id: s.id, code: s.code, name: s.name, projectId: s.project_id, project: s.project, deployed: people.length, planned: counts.reduce((a, c) => a + c.planned, 0), waiting, counts, groups: [...groups.values()].sort((a, b) => (a.crewId == null) - (b.crewId == null) || a.crew.localeCompare(b.crew)), crews: db.prepare('SELECT id, code, name FROM hr_crews WHERE crew_site_id = ? AND active = 1 AND deleted_at IS NULL ORDER BY name').all(s.id) };
+          return { id: s.id, code: s.code, name: s.name, projectId: s.project_id, project: s.project, deployed: people.length, planned: counts.reduce((a, c) => a + c.planned, 0), waiting, counts, groups: [...groups.values()].sort((a, b) => Number(a.crewId == null) - Number(b.crewId == null) || a.crew.localeCompare(b.crew)), crews: db.prepare('SELECT id, code, name FROM hr_crews WHERE crew_site_id = ? AND active = 1 AND deleted_at IS NULL ORDER BY name').all(s.id) };
         }),
       };
     },
@@ -620,7 +625,7 @@ workflowTypes.register({
     const n = (t, i) => (i ? db.prepare(`SELECT name FROM ${t} WHERE id = ?`).get(i)?.name ?? '—' : '—');
     return { fields: [{ label: 'Deployment', value: `${r.doc_no} revision ${r.revision_no}` }, { label: 'Person', value: `${r.full_name ?? 'Worker'} (${r.emp_code ?? ''})` }, { label: 'Project / site', value: `${n('org_projects', r.dep_project_id)} / ${n('org_sites', r.dep_site_id)}` }, { label: 'Crew', value: n('hr_crews', r.crew_id) }, { label: 'Role on site', value: r.site_role ?? '—' }, { label: 'Dates', value: `${r.from_date} to ${r.to_date ?? 'open'}` }, { label: 'Site access role', value: r.access_role ?? 'none' }] };
   },
-  defaultDefinition: { name: 'Deployment: project manager, and the project director when outside the plan', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('PM', 'Project manager', role('PM', 'HRMGR')), step('PD', 'Project director (outside the plan)', role('PD'), { field: 'band', op: 'eq', value: 'OUTSIDE_PLAN' })] },
+  defaultDefinition: { name: 'Deployment: project manager, and the project director when outside the plan', settings: { resubmit: 'first', distinctApprovers: true, matrix: true }, steps: [step('PM', 'Project manager', role('PM', 'HRMGR')), step('PD', 'Project director (outside the plan)', role('PD'), { field: 'band', op: 'eq', value: 'OUTSIDE_PLAN' })] },
   hooks: {
     onApproved: (db, { instance, actor }) => deploymentsOf(db)?.decisions.deployment(instance, actor, 'APPROVED'),
     onRejected: (db, { instance, actor, comment }) => deploymentsOf(db)?.decisions.deployment(instance, actor, 'REJECTED', comment),
@@ -654,3 +659,12 @@ objectTypes.register({
   search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'hr.crew.view').allowed) return []; return db.prepare("SELECT id FROM hr_crews WHERE company_id = ? AND deleted_at IS NULL AND (code LIKE ? OR name LIKE ?) ORDER BY id DESC LIMIT ?").all(actor.companyId, `%${q}%`, `%${q}%`, limit).map((r) => r.id); },
 });
 void workflowResolvers;
+
+// FR-06: the deployment history on Employee 360 (a related tab of the employee master): the postings in force and past, newest first, each opening its deployment.
+employeeRelated.register({
+  code: 'deployments', label: 'Deployments',
+  summary(db, companyId, e) {
+    const rows = db.prepare("SELECT d.id, d.doc_no, d.from_date, d.to_date, d.is_primary, p.name AS project, s.name AS site FROM hr_deployments d LEFT JOIN org_projects p ON p.id = d.dep_project_id LEFT JOIN org_sites s ON s.id = d.dep_site_id WHERE d.company_id = ? AND d.person_type = 'EMPLOYEE' AND d.person_id = ? AND d.status = 'APPROVED' AND d.deleted_at IS NULL ORDER BY d.from_date DESC, d.id DESC LIMIT 20").all(companyId, e.id);
+    return rows.map((d) => ({ label: `${d.doc_no} · ${[d.project, d.site].filter(Boolean).join(' / ')}${d.is_primary ? '' : ' (secondary)'}`, value: `${d.from_date} to ${d.to_date ?? 'open'}`, route: `/hr/deployments/deployment?id=${d.id}` }));
+  },
+});

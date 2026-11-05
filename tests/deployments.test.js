@@ -15,7 +15,7 @@ const W = '/api/v1/workflow';
 const json = { 'content-type': 'application/json' };
 const key = (k = 'd') => ({ ...json, 'idempotency-key': `dp-${k}-${Math.random().toString(36).slice(2, 10)}` });
 const as = (roles, user, company = '1') => ({ roles, user, company });
-const hr1 = as('HRMGR', 'hr1'); const hr2 = as('HRMGR', 'hr2'); const pm1 = as('PM', 'pm1'); const pm2 = as('PM', 'pm2'); const pd = as('PD', 'pd1'); const cm1 = as('CM', 'cm1'); const se = as('SE', 'se1'); const wsup = as('WSUP', 'ws1'); const aud = as('AUD', 'aud1'); const other = as('HRMGR', 'hr9', '2');
+const hr1 = as('HRMGR', 'hr1'); const hr2 = as('HRMGR', 'hr2'); const pm1 = as('PM', 'pm1'); const pm2 = as('PM', 'pm2'); const pd = as('PD', 'pd1'); const se = as('SE', 'se1'); const wsup = as('WSUP', 'ws1'); const aud = as('AUD', 'aud1'); const other = as('HRMGR', 'hr9', '2');
 const day = (n) => new Date(Date.now() + 5.5 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
 const opened = [];
 after(async () => { for (const a of opened) await a.close(); });

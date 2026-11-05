@@ -86,7 +86,7 @@ tr:last-child td { border-bottom: 0; }
 
 .dialog { border: 1px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-lg); background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary); width: min(32rem, calc(100vw - 32px)); padding: var(--erp-space-6); }
 .dialog::backdrop { background: var(--erp-color-overlay-backdrop); }
-.field { display: flex; flex-direction: column; gap: var(--erp-space-2); margin-bottom: var(--erp-space-4); font: var(--erp-type-label); }
+.field { min-width: 0; display: flex; flex-direction: column; gap: var(--erp-space-2); margin-bottom: var(--erp-space-4); font: var(--erp-type-label); }
 .field-inline { margin: 0; }
 .field-error { color: var(--erp-color-status-error-fg); font-weight: 400; }
 .check { display: flex; gap: var(--erp-space-3); align-items: center; margin-bottom: var(--erp-space-4); }
@@ -1209,5 +1209,15 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .hr-col h2 { font-size: 1rem; margin: 0 0 var(--erp-space-2); display: flex; justify-content: space-between; }
 .hr-card { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-sm); padding: var(--erp-space-2); margin-block-end: var(--erp-space-2); cursor: grab; }
 .hr-card h3 { font-size: 0.95rem; margin: 0; overflow-wrap: anywhere; }
+/* Deployment board (part 07.03) */
+.hr-col h3 { font-size: 1rem; margin: 0 0 var(--erp-space-2); display: flex; justify-content: space-between; }
+.hr-card h4 { font-size: 0.95rem; margin: 0; overflow-wrap: anywhere; }
+.hr-site { margin-block-end: var(--erp-space-5); }
+.hr-site h2 { font-size: 1.1rem; }
+.hr-chip { display: inline-block; padding: 0 var(--erp-space-2); border-radius: var(--erp-radius-sm); border: 1px solid var(--erp-color-border-subtle); background: var(--erp-color-bg-subtle); font-size: 0.8rem; }
+.hr-chip.is-primary { font-weight: 600; }
+.hr-chip.is-pending { border-style: dashed; }
+.grid td.is-over { font-weight: 600; text-decoration: underline; }
+.grid td.is-short { font-weight: 600; }
 @media print { .hr-board { grid-auto-flow: row; } .srch-form, .msg-dock { display: none; } }
 [data-testid="pipeline"], [data-testid="requisitions"], [data-testid="new-requisition"], [data-testid="requisition-page"], [data-testid="candidate-page"], [data-testid="offer-builder"], [data-testid="offers"], [data-testid="onboarding"] { padding-block-end: 4.5rem; }
