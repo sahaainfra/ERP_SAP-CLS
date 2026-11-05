@@ -1,6 +1,10 @@
 import { createElement } from 'react';
 import { registerModule } from '../../platform/shell/registry.js';
+import BusinessPartnersPage from './BusinessPartnersPage.jsx';
 import ChangeRequestsPage from './ChangeRequestsPage.jsx';
+import PartnerApprovalsPage from './PartnerApprovalsPage.jsx';
+import PartnerPage from './PartnerPage.jsx';
+import PartnerRegistrationPage from './PartnerRegistrationPage.jsx';
 import CommonMasterPage from './CommonMasterPage.jsx';
 import ItemCategoriesPage from './ItemCategoriesPage.jsx';
 import ItemMasterPage from './ItemMasterPage.jsx';
@@ -40,5 +44,9 @@ registerModule({
     { path: '/admin/items/new', label: 'New Item', icon: 'erp.action.create', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: NewItemPage },
     { path: '/admin/items/categories', label: 'Item Categories & Attribute Templates', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemCategoriesPage },
     { path: '/admin/items/migration', label: 'Item Migration', icon: 'erp.action.import', permission: 'mdm.item.migrate', flag: 'ff.mdm.p0603', Page: ItemMigrationPage },
+    { path: '/admin/partners', label: 'Business Partners', icon: 'erp.group.supply', permission: 'mdm.record.view', flag: 'ff.mdm.p0604', Page: BusinessPartnersPage },
+    { path: '/admin/partners/partner', label: 'Partner 360', icon: 'erp.action.info', permission: 'mdm.record.view', flag: 'ff.mdm.p0604', Page: PartnerPage },
+    { path: '/admin/partners/new', label: 'Partner Registration', icon: 'erp.action.create', permission: 'mdm.partner.edit', flag: 'ff.mdm.p0604', Page: PartnerRegistrationPage },
+    { path: '/admin/partners/approvals', label: 'Partner Approvals & Bank Changes', icon: 'erp.action.inbox', permission: 'mdm.partner.queue', flag: 'ff.mdm.p0604', Page: PartnerApprovalsPage },
   ],
 });

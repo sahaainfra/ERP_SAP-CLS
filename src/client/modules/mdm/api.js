@@ -64,3 +64,30 @@ export const items = {
   migration: async () => (await api.get('/mdm/items/migration')).data,
   map: async (b) => (await api.post('/mdm/items/migration/map', b, idem())).data,
 };
+
+// ---- part 06.04: the business partner master ----
+export const PARTNER_STATUS = { PROSPECT: ['DRAFT', 'Prospect'], PENDING: ['IN_REVIEW', 'Pending approval'], ACTIVE: ['ACTIVE', 'Active'], ON_HOLD: ['ON_HOLD', 'On hold'], BLACKLISTED: ['BLOCKED', 'Blacklisted'], INACTIVE: ['DEACTIVATED', 'Inactive'], REJECTED: ['REJECTED', 'Rejected'] };
+export const PARTNER_ROLES = [['VENDOR', 'Vendor or supplier'], ['SUBCONTRACTOR', 'Subcontractor'], ['LABOUR_CONTRACTOR', 'Labour contractor'], ['SERVICE_PROVIDER', 'Service provider'], ['CLIENT', 'Client'], ['CONSULTANT', 'Consultant'], ['TRANSPORTER', 'Transporter']];
+export const CONSTITUTIONS = [['PROPRIETORSHIP', 'Proprietorship'], ['PARTNERSHIP', 'Partnership firm'], ['LLP', 'LLP'], ['PRIVATE_LIMITED', 'Private limited company'], ['PUBLIC_LIMITED', 'Public limited company'], ['TRUST', 'Trust'], ['SOCIETY', 'Society'], ['GOVERNMENT', 'Government body'], ['HUF', 'HUF'], ['INDIVIDUAL', 'Individual'], ['OTHER', 'Other']];
+export const DOC_TYPES = [['GST_CERTIFICATE', 'GST certificate'], ['PAN_CARD', 'PAN card'], ['MSME_CERTIFICATE', 'MSME (Udyam) certificate'], ['CLRA_LICENCE', 'Labour licence (CLRA)'], ['PF_REGISTRATION', 'PF registration'], ['ESI_REGISTRATION', 'ESI registration'], ['INSURANCE', 'Insurance'], ['ISO_CERTIFICATE', 'ISO certificate'], ['CANCELLED_CHEQUE', 'Cancelled cheque'], ['INCORPORATION', 'Certificate of incorporation'], ['OTHER', 'Other']];
+export const partners = {
+  get: async (id) => (await api.get(`/mdm/partners/${id}`)).data,
+  check: async (b) => (await api.post('/mdm/partners/check', b)).data,
+  create: async (b) => (await api.post('/mdm/partners', b, idem())).data,
+  update: async (id, b) => (await api.put(`/mdm/partners/${id}`, b, idem())).data,
+  submit: async (id, comment) => (await api.post(`/mdm/partners/${id}/submit`, comment ? { comment } : {}, idem())).data,
+  details: async (id, b) => (await api.put(`/mdm/partners/${id}/details`, b, idem())).data,
+  summary: async (id) => (await api.get(`/mdm/partners/${id}/summary`)).data,
+  addGstin: async (id, b) => (await api.post(`/mdm/partners/${id}/gstins`, b, idem())).data,
+  verifyGstin: async (id, b) => (await api.post(`/mdm/partners/${id}/gstins/verify`, b, idem())).data,
+  addDocument: async (id, b) => (await api.post(`/mdm/partners/${id}/documents`, b, idem())).data,
+  verifyDocument: async (id, docId) => (await api.post(`/mdm/partners/${id}/documents/${docId}/verify`, {}, idem())).data,
+  setTds: async (id, b) => (await api.put(`/mdm/partners/${id}/tds`, b, idem())).data,
+  requestBank: async (id, b) => (await api.post(`/mdm/partners/${id}/banks`, b, idem())).data,
+  confirmBank: async (id, bankId, b) => (await api.post(`/mdm/partners/${id}/banks/${bankId}/confirm`, b, idem())).data,
+  verifyBank: async (id, bankId, b) => (await api.post(`/mdm/partners/${id}/banks/${bankId}/verify`, b, idem())).data,
+  revealBank: async (id, bankId) => (await api.get(`/mdm/partners/${id}/banks/${bankId}/reveal`)).data,
+  setStatus: async (id, b) => (await api.post(`/mdm/partners/${id}/status`, b, idem())).data,
+  blacklist: async (id, b) => (await api.post(`/mdm/partners/${id}/blacklist`, b, idem())).data,
+  queue: async (kind) => (await api.get(`/mdm/partners/queue${kind ? `?kind=${kind}` : ''}`)).data,
+};

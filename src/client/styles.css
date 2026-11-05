@@ -1164,3 +1164,4 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .op-figures div { min-width: 8rem; } .op-figures dt { color: var(--erp-color-text-secondary); font-size: 0.85em; } .op-figures dd { margin: 0; overflow-wrap: anywhere; }
 .item-selector tr.is-selected td, .item-selector tr.is-selected th { background: var(--erp-color-status-info-bg); }
 [data-testid="item-page"], [data-testid="new-item"], [data-testid="item-categories"], [data-testid="item-migration"] { padding-bottom: calc(var(--erp-space-6) * 3); }
+[data-testid="partner-page"], [data-testid="partner-registration"], [data-testid="partner-approvals"], [data-testid="business-partners"] { padding-bottom: calc(var(--erp-space-6) * 3); }
