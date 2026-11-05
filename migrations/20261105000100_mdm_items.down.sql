@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS mdm_item_legacy_map;
+DROP TABLE IF EXISTS mdm_item_user_marks;
+DROP TABLE IF EXISTS mdm_item_code_counters;
+DROP TABLE IF EXISTS mdm_item_alternates;
+DROP TABLE IF EXISTS mdm_item_makes;
+DROP TABLE IF EXISTS mdm_item_resources;
+DROP TABLE IF EXISTS mdm_item_uoms;
+DROP TABLE IF EXISTS mdm_items;
+DROP TABLE IF EXISTS mdm_item_categories;

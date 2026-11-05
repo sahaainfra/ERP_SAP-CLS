@@ -1,0 +1,38 @@
+import { z } from 'zod';
+import { parse } from '../../platform/validation/index.js';
+import { ACCOUNT_TYPES, CONTROL_KINDS, DIMENSIONS, NATURES, REQUIREMENTS, SCHEDULE3, SOURCES } from './service.js';
+
+// Inputs of the finance master API (part 06.05). The service checks the rules again (natures, control accounts, postings, duplicates); these reject malformed input at the door.
+const id = z.coerce.number().int().min(1);
+const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date such as 2026-12-01');
+const why = z.string().trim().min(10, 'Say why (at least 10 characters)').max(500);
+const code = (re, hint) => z.string().trim().toUpperCase().regex(re, hint);
+const accountCode = code(/^[0-9A-Z][0-9A-Z.-]{1,19}$/, 'An account code has 2 to 20 letters, digits, dots or dashes');
+const name = z.string().trim().min(2, 'Give a name').max(120);
+const version = z.number().int().min(1);
+const dims = z.partialRecord(z.enum(DIMENSIONS), z.enum(REQUIREMENTS));
+const accountBody = { code: accountCode, name, groupId: id, type: z.enum(ACCOUNT_TYPES), normalBalance: z.enum(['DR', 'CR']), currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).default('INR'), isControl: z.boolean().default(false), controlKind: z.enum(Object.keys(CONTROL_KINDS)).nullable().default(null), manualPosting: z.boolean().default(true), dimensions: dims.default({}), contraReason: z.string().trim().max(200).optional(), reason: why };
+const partial = (shape) => z.object(Object.fromEntries(Object.entries(shape).map(([k, v]) => [k, (/** @type {any} */ (v)).removeDefault?.()?.optional?.() ?? v.optional()])));
+export const parseId = (v) => parse(id, v);
+export const parseChart = (q) => parse(z.object({ q: z.string().trim().max(60).optional(), status: z.enum(['ACTIVE', 'BLOCKED']).optional(), type: z.enum(ACCOUNT_TYPES).optional(), control: z.enum(['yes', 'no']).optional() }).strict(), q);
+export const parseGroupCreate = (b) => parse(z.object({ code: code(/^[0-9A-Z][0-9A-Z.-]{0,19}$/, 'A group code has up to 20 letters, digits, dots or dashes'), name, parentId: id, nature: z.enum(NATURES), schedule3: z.enum(SCHEDULE3.map((s) => s.code)).nullable().default(null), sortOrder: z.number().int().min(0).max(9999).default(0), reason: why }).strict(), b);
+export const parseGroupUpdate = (b) => parse(z.object({ name: name.optional(), parentId: id.optional(), schedule3: z.enum(SCHEDULE3.map((s) => s.code)).nullable().optional(), reason: why, version }).strict(), b);
+export const parseAccountCreate = (b) => parse(z.object(accountBody).strict(), b);
+export const parseAccountUpdate = (b) => parse(partial(accountBody).extend({ reason: why, version }).strict(), b);
+export const parseBlock = (b) => parse(z.object({ block: z.boolean(), reason: why }).strict(), b);
+export const parseReason = (b) => parse(z.object({ reason: why }).strict(), b);
+export const parseDimensionRules = (b) => parse(z.object({ rules: z.array(z.object({ dimension: z.enum(DIMENSIONS), requirement: z.enum(REQUIREMENTS) }).strict()).max(DIMENSIONS.length), reason: why, version: version.optional() }).strict(), b);
+export const parseRuleList = (q) => parse(z.object({ accountId: id.optional() }).strict(), q);
+const headCode = code(/^\d{1,2}(\.\d{1,3}){0,3}$/, 'A cost head is numbered 1, 1.1, 1.1.2 ...');
+export const parseHeadCreate = (b) => parse(z.object({ code: headCode, name, parentId: id.nullable().default(null), accountId: id.nullable().default(null), reason: why }).strict(), b);
+export const parseHeadUpdate = (b) => parse(z.object({ name: name.optional(), accountId: id.nullable().optional(), status: z.enum(['ACTIVE', 'INACTIVE']).optional(), reason: why, version }).strict(), b);
+const costCode = code(/^[A-Z0-9][A-Z0-9.-]{1,19}$/, 'A cost code has 2 to 20 letters, digits, dots or dashes, for example MAT-CEM');
+export const parseCodeCreate = (b) => parse(z.object({ code: costCode, name, costHeadId: id, uom: z.string().trim().toUpperCase().max(10).nullable().default(null), reason: why }).strict(), b);
+export const parseCodeUpdate = (b) => parse(z.object({ name: name.optional(), costHeadId: id.optional(), uom: z.string().trim().toUpperCase().max(10).nullable().optional(), status: z.enum(['ACTIVE', 'INACTIVE']).optional(), reason: why, version }).strict(), b);
+export const parseMapping = (b) => parse(z.object({ rows: z.array(z.object({ categoryId: id, inventoryAccountId: id.nullable().default(null), expenseAccountId: id, costCodeId: id.nullable().default(null) }).strict()).min(1).max(500), effectiveFrom: date.optional(), reason: why }).strict(), b);
+export const parseChangeList = (q) => parse(z.object({ status: z.enum(['PENDING', 'RETURNED', 'APPLIED', 'REJECTED', 'CANCELLED']).optional(), entity: z.enum(['GROUP', 'ACCOUNT', 'COST_HEAD', 'COST_CODE', 'MAPPING']).optional() }).strict(), q);
+const dimValue = z.union([z.coerce.number().int().min(1), z.string().trim().min(1).max(40)]);
+export const parsePosting = (b) => parse(z.object({ accountId: id.optional(), accountCode: z.string().trim().max(20).optional(), source: z.enum(SOURCES).default('MANUAL'), dimensions: z.record(z.string().max(20), dimValue.nullable()).default({}) }).strict().refine((x) => x.accountId || x.accountCode, 'Give the account'), b);
+const importRows = z.array(z.object({ name: z.string().trim().max(160), parent: z.string().trim().max(120).default(''), code: z.string().trim().toUpperCase().max(20).optional() }).strip()).min(1).max(2000);
+export const parseImportPreview = (b) => parse(z.object({ format: z.enum(['TALLY', 'GENERIC']).default('TALLY'), rows: importRows }).strict(), b);
+export const parseImportSubmit = (b) => parse(z.object({ format: z.enum(['TALLY', 'GENERIC']).default('TALLY'), rows: importRows, reason: why }).strict(), b);

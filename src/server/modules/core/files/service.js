@@ -282,6 +282,22 @@ export function createFileService({ db, storage, scanners, jobs, signer, approva
     },
 
     // ---- reading ----
+    /**
+     * A copy of a stored file linked to another record (message to task, 05.04): the bytes are copied under a new key, so removing or superseding one file never touches the other. Only a clean file is copied.
+     * The caller has already checked that the person may use the target record; the source must be a live file of the same company.
+     */
+    async copyTo(actor, { fileId, entity, entityId, projectId = null, siteId = null }) {
+      const r = db.prepare('SELECT * FROM core_files WHERE id = ? AND company_id = ? AND is_active = 1 AND deleted_at IS NULL').get(Number(fileId), actor.companyId);
+      if (!r) throw notFound('That file does not exist.');
+      if (r.scan_status !== 'CLEAN') throw unprocessable(`The file ${r.original_name} has not been cleared by the virus scan, so it cannot be copied.`);
+      const day = new Date();
+      const key = `c${r.company_id}/${day.getUTCFullYear()}/${String(day.getUTCMonth() + 1).padStart(2, '0')}/${randomUUID()}`;
+      await storage.putBuffer(key, await readAll(storage.createReadStream(r.storage_key)));
+      const res = db.prepare(`INSERT INTO core_files (company_id, storage_key, original_name, extension, mime, category, size_bytes, sha256, scan_status, scanned_at, linked_entity, linked_id, retention_class, exif_json, exif_stripped, project_id, site_id, created_by, source_type, source_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CLEAN', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'file_copy', ?)`)
+        .run(r.company_id, key, r.original_name, r.extension, r.mime, r.category, r.size_bytes, r.sha256, r.scanned_at, entity, Number(entityId), r.retention_class, r.exif_json, r.exif_stripped, projectId, siteId, actor.user, String(r.id));
+      return { id: Number(res.lastInsertRowid), name: r.original_name };
+    },
     list(actor, { entity, entityId }) {
       const record = access(actor, entity, entityId, 'view');
       const rows = db.prepare('SELECT * FROM core_files WHERE company_id = ? AND linked_entity = ? AND linked_id = ? AND deleted_at IS NULL ORDER BY id DESC').all(record.companyId, entity, entityId);

@@ -16,6 +16,14 @@ const fmt = (n) => (n >= CR ? `₹${n / CR} Cr` : n >= L ? `₹${n / L} L` : `�
 
 export const DEFAULT_MATRICES = [
   { docType: 'ACC_RACI', label: 'RACI change of a live project', owner: 'PD', financial: false, rules: [rule('Any change', [], ['PM', 'PD'])] },
+  { docType: 'MDM_ITEM', label: 'New item or item version', owner: 'PROCMGR', financial: false, rules: [rule('Materials and services', [{ field: 'stewardRole', op: 'eq', value: 'PROCMGR' }], ['PROCMGR']), rule('Consumables, spares and tools', [{ field: 'stewardRole', op: 'eq', value: 'STOREMGR' }], ['STOREMGR']), rule('Labour and work items', [{ field: 'stewardRole', op: 'eq', value: 'EST' }], ['EST']), rule('Equipment classes', [], ['PLANTMGR'])] },
+  { docType: 'MDM_PARTNER', label: 'New business partner activation', owner: 'PROCMGR', financial: true, rules: [rule('Vendors, service providers, transporters', [{ field: 'stewardRole', op: 'eq', value: 'PROCMGR' }], ['PROCMGR', 'ACCMGR']), rule('Subcontractors, clients, consultants', [], ['COMMGR', 'ACCMGR'])] },
+  { docType: 'MDM_PARTNER_BANK', label: 'Bank account change of a partner', owner: 'ACCMGR', financial: true, rules: [rule('Any bank change', [], ['ACCMGR', 'CFO'])] },
+  { docType: 'FIN_MASTER_CHANGE', label: 'Chart of accounts or cost code change', owner: 'CFO', financial: true, rules: [rule('Proposed by project controls', [{ field: 'makerRole', op: 'eq', value: 'PCMGR' }], ['ACCMGR', 'CFO']), rule('Proposed by the accounts manager', [], ['CFO'])] },
+  { docType: 'MDM_RATE_ANALYSIS', label: 'Rate analysis release', owner: 'EST', financial: true, rules: [rule('Project-specific analysis', [{ field: 'scope', op: 'eq', value: 'PROJECT' }], ['PM']), rule('Variation rate', [{ field: 'scope', op: 'eq', value: 'VARIATION' }], ['COMMGR']), rule('Standard library', [], ['DIR'])] },
+  { docType: 'MDM_PARTNER_STATUS', label: 'Blacklisting of a partner or its removal', owner: 'PROCMGR', financial: false, rules: [rule('Any blacklisting', [], ['DIR'])] },
+  { docType: 'MDM_TAX_CHANGE', label: 'Tax rate or TDS section change', owner: 'ACCMGR', financial: true, rules: [rule('Any statutory change', [], ['ACCMGR', 'CFO'])] },
+  { docType: 'POL_VERSION', label: 'Company policy version', owner: 'DIR', financial: false, rules: [rule('Any policy', [], ['HRMGR|CFO|QCMGR|PROCMGR|ACCMGR|COMMGR|PCMGR|HSEE', 'DIR'])] },
   { docType: 'PCS_EXCEPTION', label: 'Control exception', owner: 'SYSADM', financial: false, rules: [
     rule('Level 3 control', [{ field: 'level', op: 'eq', value: 3 }], ['DIR']),
     rule('Level 2 control, ₹10 L or more at risk', [{ field: 'level', op: 'eq', value: 2 }, { field: 'amount', op: 'gte', value: 10 * L }], ['PD', 'DIR']),

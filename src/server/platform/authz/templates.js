@@ -28,9 +28,24 @@ export const PERMISSIONS_04_05 = ['acc.raci.view', 'acc.raci.maintain', 'acc.led
 export const PERMISSIONS_04_06 = ['ntf.template.view', 'ntf.template.edit', 'ntf.delivery.view', 'ntf.delivery.retry'];
 export const PERMISSIONS_04_07 = ['comm.channel.view', 'comm.channel.edit', 'comm.log.view', 'comm.consent.view', 'comm.consent.edit'];
 export const PERMISSIONS_04_10 = ['doc.document.view', 'doc.document.view_confidential', 'doc.document.view_restricted', 'doc.document.create', 'doc.document.manage', 'doc.config.view', 'doc.config.edit'];
+export const PERMISSIONS_04_11 = ['tpl.template.view', 'tpl.template.edit', 'tpl.rule.edit', 'tpl.record.publish', 'tpl.document.view', 'tpl.document.generate', 'tpl.document.generate_sensitive', 'tpl.document.deliver'];
+export const PERMISSIONS_04_12 = ['sig.register.view', 'sig.signature.revoke', 'sig.document.view', 'sig.document.sign', 'sig.document.cancel', 'sig.config.view', 'sig.config.edit'];
+export const PERMISSIONS_05_05 = ['pol.policy.create', 'pol.policy.view_all', 'pol.requirement.manage', 'pol.draft.view'];
+export const PERMISSIONS_06_06 = ['mdm.analyse.view', 'mdm.analyse.create', 'mdm.analyse.edit', 'mdm.analyse.delete', 'mdm.analyse.submit', 'mdm.analyse.approve', 'mdm.analyse.cancel', 'mdm.analyse.amend', 'mdm.analyse.print', 'mdm.analyse.export', 'mdm.rate.edit'];
+export const PERMISSIONS_06_05 = ['fin.coa.view', 'fin.coa.edit', 'fin.costcode.edit', 'fin.import'];
+export const PERMISSIONS_06_04 = ['mdm.partner.edit', 'mdm.partner.sensitive.view', 'mdm.partner.bank.view', 'mdm.partner.bank.request', 'mdm.partner.verify', 'mdm.partner.blacklist', 'mdm.partner.hold', 'mdm.partner.queue'];
+export const PERMISSIONS_06_03 = ['mdm.item.edit', 'mdm.item.rate.view', 'mdm.item.category.edit', 'mdm.item.migrate', 'mdm.item.import'];
+export const PERMISSIONS_06_02 = ['mdm.uom.edit', 'mdm.tax.edit', 'mdm.finance.edit', 'mdm.lookup.edit'];
+export const PERMISSIONS_06_01 = ['mdm.record.view', 'mdm.record.edit', 'mdm.record.import', 'mdm.sensitive.view', 'mdm.governance.view', 'mdm.config.edit'];
+export const PERMISSIONS_05_04 = ['msg.instruction.send', 'msg.announcement.send', 'msg.comm.view_all', 'msg.autogroup.view', 'msg.autogroup.edit'];
+export const PERMISSIONS_05_03 = ['sec.policy.view', 'sec.policy.edit', 'sec.device.manage', 'sec.licence.view', 'sec.licence.edit'];
+export const PERMISSIONS_05_01 = ['msg.channel.manage', 'msg.admin.view', 'msg.compliance.export', 'msg.settings.view', 'msg.settings.edit', 'msg.legal_hold.manage'];
+export const PERMISSIONS_04_15 = ['off.device.manage', 'off.sync.confirm', 'off.sync.view_all'];
+export const PERMISSIONS_04_14 = ['col.comment.moderate', 'col.trace.link', 'col.activity.view'];
+export const PERMISSIONS_04_13 = ['xl.import.use', 'xl.template.view', 'xl.template.edit', 'xl.job.view_all', 'org.designation.import', 'eng.sample.import'];
 export const PERMISSIONS_04_09 = ['alr.rule.view', 'alr.rule.edit', 'alr.alert.view', 'alr.alert.manage'];
 export const PERMISSIONS_04_08 = ['tsk.team.view', 'tsk.task.assign', 'tsk.instruction.create', 'tsk.routing.view', 'tsk.routing.edit'];
-export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07, ...PERMISSIONS_04_08, ...PERMISSIONS_04_09, ...PERMISSIONS_04_10]);
+export const PERMISSIONS_SINCE_LEGACY = Object.freeze([...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07, ...PERMISSIONS_04_08, ...PERMISSIONS_04_09, ...PERMISSIONS_04_10, ...PERMISSIONS_04_11, ...PERMISSIONS_04_12, ...PERMISSIONS_04_13, ...PERMISSIONS_04_14, ...PERMISSIONS_04_15, ...PERMISSIONS_05_01, ...PERMISSIONS_05_03, ...PERMISSIONS_05_04, ...PERMISSIONS_05_05, ...PERMISSIONS_06_01, ...PERMISSIONS_06_02, ...PERMISSIONS_06_03, ...PERMISSIONS_06_04, ...PERMISSIONS_06_05, ...PERMISSIONS_06_06]);
 
 /** Permission keys that are privileged: a role holding any of them is a privileged role (its changes need the extra approver). */
 export const SENSITIVE_ACTIONS = ['manage', 'configure', 'configure_system', 'redrive', 'replay', 'issue', 'post_soft_closed'];
@@ -152,6 +167,109 @@ const ADDED_04_10 = {
   SE: AUTHOR_04_10, QCE: AUTHOR_04_10, DESIGN: AUTHOR_04_10, PLAN: AUTHOR_04_10, QS: AUTHOR_04_10, EST: AUTHOR_04_10, BD: VIEW_04_10, HSEE: AUTHOR_04_10, HSEO: AUTHOR_04_10, CSUP: VIEW_04_10, WSUP: VIEW_04_10, PMSUP: VIEW_04_10,
   PROCIC: VIEW_04_10, SACC: VIEW_04_10, PLANTMGR: VIEW_04_10, STOREMGR: VIEW_04_10, AUD: ['doc.document.view', 'doc.document.view_confidential', 'doc.config.view'], SYSADM: ['doc.config.view', 'doc.config.edit'], ITADM: ['doc.config.view'],
 };
+// Part 04.11. The system administrator keeps the templates (the maker; a change is approved by the process owner of the document type) and the records published to the generator; the process owners see the
+// templates they approve; whoever may print a document type generates and delivers it (a payslip or an offer letter needs the extra right of the HR manager and the director).
+const PRINT_04_11 = ['tpl.document.view', 'tpl.document.generate', 'tpl.document.deliver'];
+const OWNER_04_11 = ['tpl.template.view', 'tpl.document.view'];
+const ADDED_04_11 = {
+  SYSADM: ['tpl.template.view', 'tpl.template.edit', 'tpl.rule.edit', 'tpl.record.publish', 'tpl.document.view'], ITADM: ['tpl.template.view', 'tpl.document.view'], AUD: ['tpl.template.view', 'tpl.document.view'],
+  DIR: [...OWNER_04_11, 'tpl.document.generate_sensitive'], CFO: [...OWNER_04_11, ...PRINT_04_11], PROCMGR: [...OWNER_04_11, ...PRINT_04_11], COMMGR: [...OWNER_04_11, ...PRINT_04_11], HRMGR: [...OWNER_04_11, ...PRINT_04_11, 'tpl.document.generate_sensitive'],
+  PM: [...OWNER_04_11, ...PRINT_04_11], PD: PRINT_04_11, QCMGR: [...OWNER_04_11, ...PRINT_04_11], STOREMGR: [...OWNER_04_11, ...PRINT_04_11], HSEO: [...OWNER_04_11, ...PRINT_04_11], DOC: [...OWNER_04_11, ...PRINT_04_11],
+  PCMGR: PRINT_04_11, ACCMGR: PRINT_04_11, FINEX: PRINT_04_11, SACC: PRINT_04_11, PROCIC: PRINT_04_11, CM: PRINT_04_11, QS: PRINT_04_11, SE: PRINT_04_11, QCE: PRINT_04_11, HSEE: PRINT_04_11, PLAN: PRINT_04_11,
+};
+// Part 04.12. The auditor and the system administrator keep the register (the administrator also revokes and changes the settings); whoever may see a generated document sees its signatures; whoever may print one
+// signs it; the process owners and the document controller cancel a document.
+const SEE_04_12 = ['sig.document.view'];
+const SIGN_04_12 = ['sig.document.view', 'sig.document.sign'];
+const OWN_04_12 = [...SIGN_04_12, 'sig.document.cancel'];
+const ADDED_04_12 = {
+  SYSADM: ['sig.register.view', 'sig.signature.revoke', 'sig.document.view', 'sig.document.cancel', 'sig.config.view', 'sig.config.edit'], ITADM: ['sig.register.view', 'sig.config.view'], AUD: ['sig.register.view', 'sig.document.view', 'sig.config.view'],
+  DIR: [...SEE_04_12, 'sig.document.cancel'], CFO: OWN_04_12, PROCMGR: OWN_04_12, COMMGR: OWN_04_12, HRMGR: OWN_04_12, PM: OWN_04_12, DOC: OWN_04_12, PD: SIGN_04_12, QCMGR: OWN_04_12, STOREMGR: SIGN_04_12, HSEO: SIGN_04_12,
+  PCMGR: SIGN_04_12, ACCMGR: SIGN_04_12, FINEX: SIGN_04_12, SACC: SIGN_04_12, PROCIC: SIGN_04_12, CM: SIGN_04_12, QS: SIGN_04_12, SE: SIGN_04_12, QCE: SIGN_04_12, HSEE: SIGN_04_12, PLAN: SIGN_04_12,
+};
+// Part 04.13. Anybody who may import something may open the Import Center; each import has its own right (<module>.<entity>.import) and the module's service still checks the right to create the record. The
+// system administrator keeps the templates (a change is approved by a second person) and, with the auditor, sees every job.
+const SAMPLE_04_13 = ['xl.import.use', 'eng.sample.import'];
+const ADDED_04_13 = {
+  SYSADM: ['xl.import.use', 'xl.template.view', 'xl.template.edit', 'xl.job.view_all', 'org.designation.import'], ITADM: ['xl.import.use', 'xl.template.view', 'xl.job.view_all'], AUD: ['xl.import.use', 'xl.template.view', 'xl.job.view_all'], DIR: ['xl.template.view'],
+  HRMGR: ['xl.import.use', 'org.designation.import'], PD: SAMPLE_04_13, PM: SAMPLE_04_13, ACCMGR: SAMPLE_04_13, CFO: SAMPLE_04_13, PROCMGR: SAMPLE_04_13,
+};
+// Part 04.14. Whoever may open a record may comment on it, read its timeline and trace; a moderator (the system administrator, directors and project managers, in their scope) may delete another person's comment with a reason;
+// the people who run a project or watch the business read the project activity feed; a trace link is added by hand only by those who run projects and finance, with a reason.
+const ADDED_04_14 = {
+  SYSADM: ['col.comment.moderate', 'col.trace.link', 'col.activity.view'], DIR: ['col.comment.moderate', 'col.trace.link', 'col.activity.view'], PD: ['col.comment.moderate', 'col.trace.link', 'col.activity.view'], PM: ['col.comment.moderate', 'col.trace.link', 'col.activity.view'],
+  CFO: ['col.trace.link', 'col.activity.view'], AUD: ['col.activity.view'], PROCMGR: ['col.activity.view'], COMMGR: ['col.activity.view'], ACCMGR: ['col.activity.view'],
+};
+// Part 04.15. Field users use their own device without a permission (each command is checked against the right of its form); the IT administrator manages every device; the people who run a project confirm
+// offline work that is older than the configured age; the auditor reads the whole sync log.
+const ADDED_04_15 = {
+  SYSADM: ['off.device.manage', 'off.sync.view_all'], ITADM: ['off.device.manage', 'off.sync.view_all'], AUD: ['off.sync.view_all'], DIR: ['off.sync.confirm'], PD: ['off.sync.confirm'], PM: ['off.sync.confirm'],
+};
+// Part 05.01. Every internal person writes direct and group messages with no permission (membership decides what they see); the people who run a project, a site or a department make its channel; the system
+// administrator and the IT administrator see the migration check; the auditor exports a conversation for compliance.
+const ADDED_05_01 = {
+  SYSADM: ['msg.channel.manage', 'msg.admin.view', 'msg.settings.view', 'msg.settings.edit'], ITADM: ['msg.admin.view', 'msg.settings.view'], AUD: ['msg.admin.view', 'msg.compliance.export', 'msg.settings.view', 'msg.legal_hold.manage'], DIR: ['msg.channel.manage', 'msg.legal_hold.manage'], PD: ['msg.channel.manage'], PM: ['msg.channel.manage'], HRMGR: ['msg.channel.manage'],
+};
+// Part 05.03. Secure conversations themselves need no permission key (the policy names the roles that may start one); the system administrator keeps the policy and the licence register and sends the review,
+// the IT administrator revokes lost devices and approves the licence review first, the director approves it last, the auditor reads both.
+const ADDED_05_03 = {
+  SYSADM: ['sec.policy.view', 'sec.policy.edit', 'sec.device.manage', 'sec.licence.view', 'sec.licence.edit'], ITADM: ['sec.policy.view', 'sec.device.manage', 'sec.licence.view'], AUD: ['sec.policy.view', 'sec.licence.view'], DIR: ['sec.policy.view', 'sec.licence.view'],
+};
+// Part 05.04. Project and department heads (PM, PD, DIR, HODs) send instructions and announcements within their scope; everybody acknowledges what is sent to them (no permission needed); the auditor, system administrator and
+// director see every register; the system administrator keeps the auto group rules and the IT administrator or director approve them.
+const SENDERS_05_04 = ['msg.instruction.send', 'msg.announcement.send'];
+const ADDED_05_04 = {
+  SYSADM: ['msg.comm.view_all', 'msg.autogroup.view', 'msg.autogroup.edit'], ITADM: ['msg.autogroup.view'], AUD: ['msg.comm.view_all', 'msg.autogroup.view'], DIR: [...SENDERS_05_04, 'msg.comm.view_all', 'msg.autogroup.view'], PD: [...SENDERS_05_04, 'msg.comm.view_all'], PM: SENDERS_05_04,
+  HRMGR: SENDERS_05_04, CFO: SENDERS_05_04, PROCMGR: SENDERS_05_04, COMMGR: SENDERS_05_04, ACCMGR: SENDERS_05_04, PCMGR: SENDERS_05_04,
+};
+// Part 05.05. The owners of policies (HR, finance, quality, procurement, HSE, accounts, commercial, project controls) write them and tag their requirements; the director, the auditor and the system administrator see the whole
+// register; the administrators (system, IT) and the director see the drafts made from policies, which they activate on the screen of the engine that owns them. Everyone reads and acknowledges what applies to them (no permission).
+const AUTHORS_05_05 = ['pol.policy.create', 'pol.policy.view_all', 'pol.requirement.manage'];
+const ADDED_05_05 = {
+  HRMGR: AUTHORS_05_05, CFO: AUTHORS_05_05, QCMGR: AUTHORS_05_05, PROCMGR: AUTHORS_05_05, HSEE: AUTHORS_05_05, ACCMGR: AUTHORS_05_05, COMMGR: AUTHORS_05_05, PCMGR: AUTHORS_05_05,
+  DIR: ['pol.policy.view_all', 'pol.draft.view'], AUD: ['pol.policy.view_all'], SYSADM: ['pol.policy.view_all', 'pol.draft.view'], ITADM: ['pol.draft.view'],
+};
+// Part 06.01. Everyone in the company (internal roles) sees the governed masters and may ask for a new record or a change (it goes to the stewards). The masters' owners (procurement, commercial, accounts, finance) may edit
+// them directly where a field is not sensitive, merge duplicates and import; the accounts and finance heads, the auditor and the director see the sensitive fields (PAN, GSTIN, bank). The administrators and the heads see
+// the governance pages; the system administrator proposes the quality rules and the stewards (approved by the IT administrator or the director). A steward is named per master, not by a role.
+const EDITORS_06_01 = ['mdm.record.edit', 'mdm.record.import', 'mdm.governance.view'];
+const ADDED_06_01 = {
+  PROCMGR: EDITORS_06_01, COMMGR: EDITORS_06_01, ACCMGR: [...EDITORS_06_01, 'mdm.sensitive.view'], CFO: [...EDITORS_06_01, 'mdm.sensitive.view'],
+  DIR: ['mdm.governance.view', 'mdm.sensitive.view'], AUD: ['mdm.governance.view', 'mdm.sensitive.view'], SYSADM: ['mdm.governance.view', 'mdm.config.edit'], ITADM: ['mdm.governance.view'],
+};
+// Part 06.02. Everyone reads the common masters (mdm.record.view of 06.01). Their stewards keep them: the accounts manager the taxes (a change approved by another accounts manager and the CFO), banks, payment terms,
+// states, currencies and rates; the procurement manager the units of measure; the system administrator the lookup lists.
+const ADDED_06_02 = { ACCMGR: ['mdm.tax.edit', 'mdm.finance.edit'], PROCMGR: ['mdm.uom.edit'], SYSADM: ['mdm.lookup.edit'] };
+// Part 06.03. Everyone finds items through the selector (mdm.record.view) and may ask for a new one; the stewards keep the items of their categories (the category names the steward role: PROCMGR
+// materials and services, STOREMGR consumables, spares and tools, EST labour and work items, PLANTMGR equipment classes) and import them; the people who estimate, buy, store, run projects or watch the
+// money see the rates; the procurement manager, the estimator and the system administrator keep the categories; the procurement manager and the system administrator migrate the old materials.
+const STEWARD_06_03 = ['mdm.item.edit', 'mdm.item.rate.view', 'mdm.item.import'];
+const ADDED_06_03 = {
+  PROCMGR: [...STEWARD_06_03, 'mdm.item.category.edit', 'mdm.item.migrate'], STOREMGR: STEWARD_06_03, EST: [...STEWARD_06_03, 'mdm.item.category.edit'], PLANTMGR: STEWARD_06_03,
+  SYSADM: ['mdm.item.category.edit', 'mdm.item.migrate'], QS: ['mdm.item.rate.view'], ACCMGR: ['mdm.item.rate.view'], CFO: ['mdm.item.rate.view'], PM: ['mdm.item.rate.view'], PD: ['mdm.item.rate.view'], DIR: ['mdm.item.rate.view'], AUD: ['mdm.item.rate.view'], COMMGR: ['mdm.item.rate.view'],
+};
+// Part 06.04. Everyone sees the partners (mdm.record.view); the procurement manager keeps vendors, service providers and transporters, the commercial manager subcontractors, labour contractors, clients and
+// consultants, business development registers client prospects; they ask for bank changes and blacklisting. The accounts manager verifies statutory and bank details, keeps TDS settings, sees identity
+// numbers and full account numbers (each view logged), and approves bank changes with the CFO; the director approves blacklisting. Holds: the stewards and the accounts manager.
+const STEWARD_06_04 = ['mdm.partner.edit', 'mdm.partner.bank.request', 'mdm.partner.blacklist', 'mdm.partner.hold', 'mdm.partner.queue'];
+const ADDED_06_04 = {
+  PROCMGR: STEWARD_06_04, COMMGR: STEWARD_06_04, BD: ['mdm.partner.edit'],
+  ACCMGR: ['mdm.partner.sensitive.view', 'mdm.partner.bank.view', 'mdm.partner.bank.request', 'mdm.partner.verify', 'mdm.partner.hold', 'mdm.partner.queue'],
+  CFO: ['mdm.partner.sensitive.view', 'mdm.partner.bank.view', 'mdm.partner.queue'], DIR: ['mdm.partner.sensitive.view', 'mdm.partner.queue'], AUD: ['mdm.partner.sensitive.view'],
+};
+// part 06.05: the chart of accounts and cost codes. The accounts manager proposes accounts, groups and mappings and imports (maker), the project controls manager proposes cost heads and codes, the CFO approves;
+// finance, project, estimation and procurement people see the chart and the cost codes they code costs to.
+const ADDED_06_05 = {
+  ACCMGR: ['fin.coa.view', 'fin.coa.edit', 'fin.costcode.edit', 'fin.import'], PCMGR: ['fin.coa.view', 'fin.costcode.edit'],
+  CFO: ['fin.coa.view'], DIR: ['fin.coa.view'], AUD: ['fin.coa.view'], FINEX: ['fin.coa.view'], SACC: ['fin.coa.view'], PD: ['fin.coa.view'], PM: ['fin.coa.view'], PROCMGR: ['fin.coa.view'], COMMGR: ['fin.coa.view'], EST: ['fin.coa.view'], QS: ['fin.coa.view'], PLAN: ['fin.coa.view'], PLANTMGR: ['fin.coa.view'],
+};
+// part 06.06: rate analyses. The estimator prepares analyses and keeps the rate library and the schedules of rates; the director releases standard analyses, the project manager project ones and the
+// commercial manager variations (approve); QS and project controls read them.
+const READ_06_06 = ['mdm.analyse.view', 'mdm.analyse.print', 'mdm.analyse.export'];
+const ADDED_06_06 = {
+  EST: [...READ_06_06, 'mdm.analyse.create', 'mdm.analyse.edit', 'mdm.analyse.delete', 'mdm.analyse.submit', 'mdm.analyse.cancel', 'mdm.analyse.amend', 'mdm.rate.edit'],
+  QS: READ_06_06, PCMGR: READ_06_06, DIR: [...READ_06_06, 'mdm.analyse.approve', 'mdm.analyse.cancel'], PM: [...READ_06_06, 'mdm.analyse.approve'], COMMGR: [...READ_06_06, 'mdm.analyse.approve'], PD: READ_06_06,
+};
 const ADDED_04_09 = {
   SYSADM: OWNERS_04_09, ITADM: ['alr.rule.view', 'alr.alert.view'], AUD: ['alr.rule.view', 'alr.alert.view'], DIR: OWNERS_04_09, PD: OWNERS_04_09, PM: OWNERS_04_09, CFO: OWNERS_04_09, PROCMGR: OWNERS_04_09, COMMGR: OWNERS_04_09, HRMGR: OWNERS_04_09,
 };
@@ -198,8 +316,8 @@ const SHARES_VIEWS = new Set(['SYSADM', 'PM', 'PD', 'PCMGR', 'ACCMGR', 'CFO', 'H
 const internalRole = (code, category) => category !== EXT && code !== 'EMP' && code !== 'GUARD';
 
 function permissionsOfTemplate(code, category) {
-  const extra = [...(ADDED_02_05[code] ?? []), ...(ADDED_04_01[code] ?? []), ...(ADDED_04_02[code] ?? []), ...(ADDED_04_04[code] ?? []), ...(ADDED_04_05[code] ?? []), ...(ADDED_04_06[code] ?? []), ...(ADDED_04_07[code] ?? []), ...(ADDED_04_08[code] ?? []), ...(ADDED_04_09[code] ?? []), ...(ADDED_04_10[code] ?? []), ...(internalRole(code, category) ? ['eng.pcs.raise'] : []), ...(internalRole(code, category) ? ['eng.delegation.use'] : []), ...(USES_SAMPLE_DOCS.has(code) ? ['eng.sample.use'] : []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
-  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07, ...PERMISSIONS_04_08, ...PERMISSIONS_04_09, ...PERMISSIONS_04_10]);
+  const extra = [...(ADDED_02_05[code] ?? []), ...(ADDED_04_01[code] ?? []), ...(ADDED_04_02[code] ?? []), ...(ADDED_04_04[code] ?? []), ...(ADDED_04_05[code] ?? []), ...(ADDED_04_06[code] ?? []), ...(ADDED_04_07[code] ?? []), ...(ADDED_04_08[code] ?? []), ...(ADDED_04_09[code] ?? []), ...(ADDED_04_10[code] ?? []), ...(ADDED_04_11[code] ?? []), ...(ADDED_04_12[code] ?? []), ...(ADDED_04_13[code] ?? []), ...(ADDED_04_14[code] ?? []), ...(ADDED_04_15[code] ?? []), ...(ADDED_05_01[code] ?? []), ...(ADDED_05_03[code] ?? []), ...(ADDED_05_04[code] ?? []), ...(ADDED_05_05[code] ?? []), ...(ADDED_06_01[code] ?? []), ...(ADDED_06_02[code] ?? []), ...(ADDED_06_03[code] ?? []), ...(ADDED_06_04[code] ?? []), ...(ADDED_06_05[code] ?? []), ...(ADDED_06_06[code] ?? []), ...(internalRole(code, category) ? ['mdm.record.view'] : []), ...(internalRole(code, category) ? ['eng.pcs.raise'] : []), ...(internalRole(code, category) ? ['eng.delegation.use'] : []), ...(USES_SAMPLE_DOCS.has(code) ? ['eng.sample.use'] : []), ...(SHARES_VIEWS.has(code) ? PERMISSIONS_03_03 : []), ...(internalRole(code, category) ? ['iam.elevation.request'] : []), ...((category === HO || category === SITE || code === 'SUPADM') ? ['iam.review.decide'] : [])];
+  if (code === 'SUPADM') return unique([...LEGACY_ROLE_PERMISSIONS.SYSADM, ...LEGACY_ROLE_PERMISSIONS.ITADM, ...PERMISSIONS_02_04, ...PERMISSIONS_02_05, ...PERMISSIONS_02_06, ...PERMISSIONS_02_07, ...PERMISSIONS_03_01, ...PERMISSIONS_03_03, ...PERMISSIONS_03_05, ...PERMISSIONS_03_07, ...PERMISSIONS_03_08, ...PERMISSIONS_03_09, ...PERMISSIONS_03_10, ...PERMISSIONS_04_01, ...PERMISSIONS_04_02, ...PERMISSIONS_04_04, ...PERMISSIONS_04_05, ...PERMISSIONS_04_06, ...PERMISSIONS_04_07, ...PERMISSIONS_04_08, ...PERMISSIONS_04_09, ...PERMISSIONS_04_10, ...PERMISSIONS_04_11, ...PERMISSIONS_04_12, ...PERMISSIONS_04_13]);
   if (code === 'AUD') return unique([...AUDITOR_READS, ...ADDED.AUD, ...extra]);
   if (LEGACY_ROLE_PERMISSIONS[code]) return unique([...LEGACY_ROLE_PERMISSIONS[code], ...(ADDED[code] ?? []), ...extra]);
   if (category === EXT || code === 'EMP') return [];

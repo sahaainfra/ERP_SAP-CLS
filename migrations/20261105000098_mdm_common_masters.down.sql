@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS mdm_lookups;
+DROP TABLE IF EXISTS mdm_lookup_lists;
+DROP TABLE IF EXISTS mdm_payment_terms;
+DROP TABLE IF EXISTS mdm_banks;
+DROP TABLE IF EXISTS mdm_exchange_rates;
+DROP TABLE IF EXISTS mdm_currencies;
+DROP TABLE IF EXISTS mdm_districts;
+DROP TABLE IF EXISTS mdm_states;
+DROP TABLE IF EXISTS mdm_tds_sections;
+DROP TABLE IF EXISTS mdm_hsn_sac;
+DROP TABLE IF EXISTS mdm_gst_rates;
+DROP TABLE IF EXISTS mdm_uoms;

@@ -1,0 +1,92 @@
+[
+  {
+    "inputs": {
+      "quantity": "0.4",
+      "rate": "7200",
+      "wastage_percent": "2"
+    },
+    "outputs": {
+      "amount": "2937.60"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0.42",
+      "rate": "1850",
+      "wastage_percent": "5"
+    },
+    "outputs": {
+      "amount": "815.85"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0.84",
+      "rate": "1650",
+      "wastage_percent": "5"
+    },
+    "outputs": {
+      "amount": "1455.30"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0.17",
+      "rate": "950",
+      "wastage_percent": "0"
+    },
+    "outputs": {
+      "amount": "161.50"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "2.5",
+      "rate": "650",
+      "wastage_percent": "0"
+    },
+    "outputs": {
+      "amount": "1625.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0.07",
+      "rate": "2400",
+      "wastage_percent": "0"
+    },
+    "outputs": {
+      "amount": "168.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "0.001",
+      "rate": "0.0001",
+      "wastage_percent": "2.5"
+    },
+    "outputs": {
+      "amount": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "99.999",
+      "rate": "99999.9999",
+      "wastage_percent": "10"
+    },
+    "outputs": {
+      "amount": "10999889.99"
+    }
+  },
+  {
+    "inputs": {
+      "quantity": "7.777",
+      "rate": "13.3333",
+      "wastage_percent": "3.3333"
+    },
+    "outputs": {
+      "amount": "107.15"
+    }
+  }
+]

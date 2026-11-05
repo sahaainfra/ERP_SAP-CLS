@@ -13,8 +13,8 @@ import { createDefinitionService, createLegacyAdapter, workflowOf } from '../../
 import { writeAudit } from '../../platform/audit/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { createFlagService } from '../core/api.js';
-import { SAMPLE_DOC_TYPE, createSampleDocService } from './sample-docs.js';
-import { documentRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
+import { SAMPLE_DOC_TYPE, createSampleDocService, registerSampleDocObject } from './sample-docs.js';
+import { offlineRoutes, collabRoutes, excelRoutes, signatureRoutes, verifyPublicRoutes, documentRoutes, templateRoutes, templatePublicRoutes, alertRoutes, taskRoutes, communicationRoutes, notificationRoutes, accountabilityRoutes, approvalLinkRoutes, protocolRoutes, sampleDocRoutes, workflowRoutes } from './routes.js';
 import { createProtocolService } from './protocol.js';
 import { createAccountabilityService } from './accountability.js';
 import { REALTIME_PATTERNS, createNotificationService, realtimeConsumer, registerRealtimeRecords, workflowNotificationConsumer } from './notifications.js';
@@ -24,9 +24,17 @@ import { commOf } from '../../platform/comm/index.js';
 import { tasksOf } from '../../platform/tasks/index.js';
 import { createTaskService } from './tasks.js';
 import { createAlertService } from './alerts.js';
+import { bindDraftServices } from './policy-drafts.js';
 import { bind as bindDocuments, createDocumentService } from './documents.js';
 import { createDocumentOps } from './documents-ops.js';
 import { createDocumentConfig } from './documents-config.js';
+import { bind as bindExcel, createExcelService } from './excel.js';
+import { bind as bindOffline, createOfflineService } from './offline.js';
+import { registerOfflineAdapters } from './offline-forms.js';
+import { bind as bindCollab, createCollabService, RELATIONS as TRACE_RELATIONS } from './collab.js';
+import { bindAdapters } from './xl-adapters.js';
+import { bind as bindSignatures, createSignatureService } from './signatures.js';
+import { bind as bindTemplates, createTemplateService } from './templates.js';
 import { createLocalStorage } from '../../platform/files/storage.js';
 import { alertsOf } from '../../platform/alerts/index.js';
 import { registerCommProviders } from '../../platform/comm/providers.js';
@@ -73,7 +81,7 @@ const definitionSchema = { type: 'object', properties: { docType: { type: 'strin
 eventTypes.define({ type: 'workflow.definition.activated', version: 1, schema: definitionSchema, owner: 'eng', description: 'A new version of a workflow definition became the active one after its approval chain approved it.' });
 /** @type {any} */
 const sampleSchema = { type: 'object', properties: { docNo: { type: 'string' }, status: { type: 'string' } }, required: ['docNo', 'status'] };
-for (const [verb, description] of [['created', 'A sample document was saved as a draft.'], ['approved', 'A sample document was approved and locked.'], ['rejected', 'A sample document was rejected.'], ['returned', 'A sample document was returned to its originator.'], ['cancelled', 'A sample document\'s approval was cancelled.']]) {
+for (const [verb, description] of [['created', 'A sample document was saved as a draft.'], ['approved', 'A sample document was approved and locked.'], ['rejected', 'A sample document was rejected.'], ['returned', 'A sample document was returned to its originator.'], ['amended', 'An approved sample document was amended: a new document linked to it was made.'], ['cancelled', 'A sample document\'s approval was cancelled.']]) {
   eventTypes.define({ type: `eng.sample_doc.${verb}`, version: 1, schema: sampleSchema, owner: 'eng', description });
 }
 parameterRegistry.define({ key: 'eng.workflow.default_sla_hours', dataType: 'integer', default: 48, min: 1, max: 2160, scopes: ['system', 'company'], description: 'Hours an approver has for a step whose definition gives no time of its own, before the task shows as overdue and a reminder goes out.' });
@@ -314,7 +322,7 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
 integrityRegistry.register({
   uniqueKeys: [{ table: 'doc_documents', columns: ['company_id', 'doc_no'] }, { table: 'doc_versions', columns: ['document_id', 'revision_no'] }],
-  companyOptional: ['doc_types', 'doc_folder_templates'],
+  companyOptional: ['tpl_templates', 'doc_types', 'doc_folder_templates'],
   statuses: { doc_documents: ['DRAFT', 'IN_REVIEW', 'ISSUED', 'ARCHIVED', 'CANCELLED'], doc_versions: ['DRAFT', 'IN_REVIEW', 'RETURNED', 'ISSUED', 'SUPERSEDED', 'REJECTED'], doc_types: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'], doc_folder_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
 });
 defineList({
@@ -332,6 +340,101 @@ workSources.register({
   },
 });
 
+// Part 04.11: document templates, PDF generation, print and delivery.
+for (const [type, description] of [
+  ['tpl.template.activated', 'A document template version was approved by the process owner and is now the one used for official documents.'],
+  ['tpl.record.published', 'The approved data of a document was handed to the generator.'],
+  ['tpl.document.generated', 'An official document (PDF with a verification code) was generated; a new generation is a new version.'],
+  ['tpl.document.delivered', 'A generated document was sent by e-mail, WhatsApp, message or portal.'],
+  ['tpl.document.delivery_requested', 'A generated document was asked to be delivered by message or portal; the owning module takes it from here.'],
+  ['tpl.bulk.completed', 'A bulk generation of documents finished.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'tpl_generated_docs', columns: ['company_id', 'doc_type', 'entity_id', 'version_no'] }, { table: 'tpl_records', columns: ['company_id', 'doc_no'] }],
+  companyOptional: ['tpl_templates'],
+  statuses: { tpl_templates: ['DRAFT', 'IN_REVIEW', 'ACTIVE', 'RETIRED', 'REJECTED'], tpl_deliveries: ['QUEUED', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'BLOCKED', 'PUBLISHED', 'DOWNLOADED'], tpl_bulk_jobs: ['QUEUED', 'RUNNING', 'DONE', 'FAILED', 'CANCELLED'] },
+});
+defineList({
+  code: 'tpl.templates', label: 'Templates', from: 'tpl_templates t', defaultSort: 'newest',
+  columns: { status: { sql: 't.status', type: 'enum', label: 'Status' }, type: { sql: 't.doc_type', type: 'enum', label: 'Document type' }, sort: { sql: 't.id', type: 'text', label: 'Order' } },
+});
+defineList({
+  code: 'tpl.generated', label: 'Generated documents', from: 'tpl_generated_docs g', defaultSort: 'newest',
+  columns: { type: { sql: 'g.doc_type', type: 'enum', label: 'Document type' }, purpose: { sql: 'g.purpose', type: 'enum', label: 'Purpose' }, sort: { sql: 'g.id', type: 'text', label: 'Order' } },
+});
+
+// Part 04.12: digital signature and QR verification.
+for (const [type, description] of [
+  ['sig.document.signed', 'A generated document was signed (electronic approval, signature image, eSign or DSC).'],
+  ['sig.signature.revoked', 'A signature of a generated document was revoked; verification shows it.'],
+  ['sig.document.cancelled', 'A generated document was cancelled; verification says so.'],
+  ['sig.verification.failed', 'A file that was checked against a document by its QR code did not match: it is not what was issued.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  uniqueKeys: [{ table: 'sig_verifications', columns: ['code'] }],
+  statuses: { sig_signatures: ['SIGNED', 'REVOKED'], sig_verifications: ['ACTIVE', 'CANCELLED'], sig_config: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+defineList({
+  code: 'sig.signatures', label: 'Signatures', from: 'sig_signatures s', defaultSort: 'newest',
+  columns: { method: { sql: 's.method', type: 'enum', label: 'Method' }, status: { sql: 's.status', type: 'enum', label: 'Status' }, sort: { sql: 's.id', type: 'text', label: 'Order' } },
+});
+
+// Part 04.15: the offline-first field engine.
+for (const [type, description] of [
+  ['off.device.registered', 'A browser was registered for offline work.'],
+  ['off.device.revoked', 'A registered device was revoked; its local data is wiped at its next contact.'],
+  ['off.sync.completed', 'A device sent a batch of offline commands; the counts of what became of them.'],
+  ['off.conflict.raised', 'An offline change met a record the server had changed meanwhile.'],
+  ['off.conflict.resolved', 'A person resolved an offline conflict (mine, the server\'s, or field by field).'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, dataType, def, min, max, description] of [
+  ['off.command.max_age_days', 'integer', 7, 1, 90, 'Days after which an offline command needs a supervisor\'s confirmation before it is saved.'],
+  ['off.clock.max_drift_seconds', 'integer', 300, 10, 86400, 'Seconds a device clock may differ from the server before the person is warned.'],
+  ['off.data.max_age_hours', 'integer', 72, 1, 720, 'Hours the offline copy of the masters may be used without contact with the server.'],
+  ['off.sync.batch_max', 'integer', 100, 10, 500, 'The most commands a device may send in one sync.'],
+]) parameterRegistry.define({ key, dataType, default: def, min, max, scopes: ['system', 'company'], description });
+integrityRegistry.register({
+  companyOptional: [],
+  statuses: { off_sync_log: ['APPLIED', 'CONFLICT', 'REJECTED', 'NEEDS_CONFIRMATION', 'DEFERRED', 'RESOLVED', 'DECLINED'], off_uploads: ['OPEN', 'COMPLETE', 'FAILED'] },
+  uniqueKeys: [{ table: 'off_sync_log', columns: ['company_id', 'command_id'] }],
+});
+
+// Part 04.14: comments, mentions, activity timeline and record trace links.
+for (const [type, description] of [
+  ['col.comment.created', 'A comment or reply was posted on a record.'],
+  ['col.comment.edited', 'A comment was edited inside its edit window.'],
+  ['col.comment.deleted', 'A comment was deleted by its author or a moderator.'],
+  ['col.trace.linked', 'Two records were linked by hand, with a reason.'],
+  ['col.trace.requested', 'A module asks for a trace link between two records it has just connected: data { from: { entity, id }, to: { entity, id }, relation }.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+for (const [key, dataType, def, min, max, description] of [
+  ['col.comment.edit_window_minutes', 'integer', 15, 0, 1440, 'Minutes after posting during which the author may edit a comment (0 switches editing off).'],
+  ['col.comment.max_length', 'integer', 2000, 100, 10000, 'The most characters a comment may have.'],
+]) parameterRegistry.define({ key, dataType, default: def, min, max, scopes: ['system', 'company'], description });
+parameterRegistry.define({ key: 'col.reactions.enabled', dataType: 'boolean', default: true, scopes: ['system', 'company'], description: 'Whether people can react to comments with one click (like, acknowledged, seen, thanks).' });
+integrityRegistry.register({
+  companyOptional: [],
+  statuses: { col_comments: ['ACTIVE', 'DELETED'] },
+});
+
+// Part 04.13: the Excel import and export engine.
+for (const [type, description] of [
+  ['xl.job.uploaded', 'A filled import template was uploaded and queued for its check.'],
+  ['xl.job.validated', 'An import file was checked; the preview and the row errors are ready.'],
+  ['xl.job.committed', 'An import was committed: its records were created or updated through the module that owns them.'],
+  ['xl.job.failed', 'A commit stopped on a row; nothing was saved (or, in chunked mode, the chunks before it were).'],
+  ['xl.job.cancelled', 'An import job was cancelled before it was committed.'],
+  ['xl.template.changed', 'An import template was changed after its approval.'],
+]) eventTypes.define({ type, version: 1, schema: changeSchema, owner: 'eng', description });
+integrityRegistry.register({
+  companyOptional: [],
+  statuses: { xl_jobs: ['UPLOADED', 'VALIDATING', 'FAILED', 'PREVIEW', 'COMMITTING', 'COMMITTED', 'PARTIAL', 'CANCELLED'], xl_templates: ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED'] },
+});
+defineList({
+  code: 'xl.jobs', label: 'Import jobs', from: 'xl_jobs j', defaultSort: 'newest',
+  columns: { status: { sql: 'j.status', type: 'enum', label: 'Status' }, type: { sql: 'j.import_type', type: 'enum', label: 'Import' }, sort: { sql: 'j.id', type: 'text', label: 'Order' } },
+});
+
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
 /** Module "eng": the shared business engines. Part 04.01 is the workflow engine. */
@@ -341,7 +444,7 @@ export const eng = {
   routePrefix: '/api/v1/workflow',
   ownerPart: '04.x',
   status: 'Workflow engine core: definitions, instances, states and tasks (04.01)',
-  tables: ['doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
+  tables: ['off_devices', 'off_sync_log', 'off_uploads', 'col_comments', 'col_mentions', 'col_reactions', 'col_trace_links', 'xl_templates', 'xl_jobs', 'xl_job_errors', 'sig_signatures', 'sig_copies', 'sig_verifications', 'sig_profiles', 'sig_config', 'tpl_templates', 'tpl_records', 'tpl_generated_docs', 'tpl_deliveries', 'tpl_bulk_jobs', 'tpl_auto_rules', 'doc_types', 'doc_folder_templates', 'doc_folders', 'doc_documents', 'doc_versions', 'doc_shares', 'doc_distributions', 'doc_annotations', 'doc_links', 'alr_rules', 'alr_alerts', 'alr_rule_runs', 'tsk_tasks', 'tsk_assignees', 'tsk_checklist_items', 'tsk_dependencies', 'tsk_comments', 'tsk_escalations', 'tsk_routing_matrix', 'comm_messages', 'comm_consents', 'comm_otps', 'comm_channels', 'comm_dlt_templates', 'comm_wa_templates', 'ntf_templates', 'ntf_notifications', 'ntf_preferences', 'ntf_deliveries', 'ntf_realtime_events', 'acc_raci_templates', 'acc_raci_assignments', 'acc_action_ledger', 'pcs_control_points', 'pcs_check_results', 'pcs_exceptions', 'pcs_reason_codes', 'pcs_control_changes', 'pcs_cycle_stages', 'wf_approval_policies', 'wf_link_tokens', 'wf_matrix', 'wf_matrix_rules', 'wf_authority_limits', 'wf_delegations', 'wf_escalation_paths', 'wf_sla_settings', 'wf_definitions', 'wf_instances', 'wf_tasks', 'wf_task_attachments', 'wf_history', 'wf_watchers', 'eng_sample_docs'],
   companyOptional: ['doc_types', 'doc_folder_templates', 'alr_rules', 'pcs_reason_codes', 'acc_raci_templates', 'ntf_templates'],
   resources: ['submit', 'tasks', 'instances', 'documents', 'monitor', 'definitions', 'doc-types', 'sample-docs'],
 
@@ -487,6 +590,7 @@ export const eng = {
 
     // part 04.09: the alert rules; event rules listen through the bus (a consumer takes the types of the rules in force), schedule rules run from a job every 15 minutes
     const alertService = createAlertService({ db, engine });
+    bindDraftServices(db, { matrix, alerts: alertService }); // part 05.05: the policy module drafts into these engines
     const alertCore = alertsOf(db);
     const listenTo = () => { for (const r of db.prepare("SELECT DISTINCT event_type FROM alr_rules WHERE trigger_type = 'EVENT' AND status IN ('ACTIVE', 'PENDING') AND event_type IS NOT NULL").all()) runtime.bus.subscribe(r.event_type, (event) => { alertCore.handleEvent(event); }, { consumer: 'alr.events' }); };
     listenTo();
@@ -530,6 +634,85 @@ export const eng = {
     docsRouter.use(gate('ff.eng.p0410', 'The document service is'));
     docsRouter.use(documentRoutes({ service: docService, ops: docOps, config: docConfig, documentsFile, bulkBody: express.raw({ type: ['application/octet-stream', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], limit: '10mb' }) }, idem));
     api.use('/doc', docsRouter);
+
+    // part 04.11: templates, PDF generation, print and delivery
+    const tplService = createTemplateService({ db, engine, storage: docStorage, jobs: runtime.jobs, secret: config.fileUrlSecret, publicUrl: config.publicUrl });
+    bindTemplates(db, tplService);
+    tplService.seedLibrary();
+    runtime.jobs.register('tpl.bulk', (ctx) => tplService.bulk.run(ctx), { maxAttempts: 1, description: 'Generates many documents (PDF with a verification code) one by one, with progress, and tells the person who asked when it is done.' });
+    runtime.jobs.register('tpl.milestone', (ctx) => tplService.rules.runMilestone(ctx), { maxAttempts: 3, description: 'Generates the document that a workflow approval milestone asks for.' });
+    runtime.bus.subscribe(['workflow.instance.approved'], (e) => tplService.rules.onApproved(e), { consumer: 'tpl.milestones' });
+    runtime.bus.subscribe(['comm.message.sent', 'comm.message.delivered', 'comm.message.read', 'comm.message.failed'], (e) => tplService.delivery.onMessage(e), { consumer: 'tpl.delivery_status' });
+    const generatedFile = (actor, q) => {
+      const list = tplService.generated.list(actor, { ...q, limit: 100, offset: 0, sort: 'newest' });
+      const rows = list.rows.map((x) => ({ docNo: x.docNo, type: x.typeLabel, version: x.version, current: x.current ? 'Yes' : 'No', purpose: x.purpose, project: x.projectName ?? '', generatedBy: x.generatedBy, generatedAt: x.generatedAt, pages: x.pages, deliveries: x.deliveries, verifyCode: x.verifyCode }));
+      const columns = [['docNo', 'Number'], ['type', 'Document'], ['version', 'Version'], ['current', 'Current'], ['purpose', 'Purpose'], ['project', 'Project'], ['generatedBy', 'Generated by'], ['generatedAt', 'Generated at'], ['pages', 'Pages'], ['deliveries', 'Deliveries'], ['verifyCode', 'Verification code']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'tpl_generated_docs', entityId: 'list', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Generated documents. Exported by ${actor.user} on ${todayIST()}. Only the documents you may see are listed.`], sheetName: 'Generated documents', title: 'Generated documents' }), type: FORMATS[q.format], fileName: `generated-documents-${todayIST()}.${q.format}` };
+    };
+    const tplRouter = Router();
+    tplRouter.use(gate('ff.eng.p0411', 'Document templates are'));
+    tplRouter.use(templateRoutes({ service: tplService, generatedFile }, idem));
+    api.use('/tpl', tplRouter);
+    publicApi.use(templatePublicRoutes({ service: tplService }));
+
+    // part 04.12: signatures, the stamped copy, the register and the public verification
+    const sigService = createSignatureService({ db, engine, storage: docStorage, jobs: runtime.jobs, publicUrl: config.publicUrl });
+    bindSignatures(db, sigService);
+    runtime.jobs.register('sig.stamp', (ctx) => sigService.signer.stamp(ctx.params.id), { maxAttempts: 3, description: 'Draws the signatures of a generated document on a copy of it (the original is never changed).' });
+    runtime.bus.subscribe(['workflow.instance.approved'], (e) => sigService.signer.onApproved(e), { consumer: 'sig.approvals' });
+    runtime.bus.subscribe(['tpl.document.generated'], (e) => sigService.signer.onGenerated(e), { consumer: 'sig.generated' });
+    const registerFile = (actor, q) => {
+      const list = sigService.register.list(actor, { ...q, limit: 100, offset: 0, sort: 'newest' });
+      const rows = list.rows.map((x) => ({ docNo: x.docNo, type: x.typeLabel, version: x.version, signer: x.name, method: x.methodLabel, status: x.status, signedAt: x.signedAt, documentStatus: x.documentStatus, checks: x.verifications, reference: x.digest.slice(0, 12) }));
+      const columns = [['docNo', 'Number'], ['type', 'Document'], ['version', 'Version'], ['signer', 'Signer'], ['method', 'Method'], ['status', 'Status'], ['signedAt', 'Signed at'], ['documentStatus', 'Document'], ['checks', 'Checks'], ['reference', 'Reference']].map(([key, label]) => ({ key, label }));
+      writeAudit(db, { entity: 'sig_signatures', entityId: 'list', action: 'export', newValues: { rows: rows.length, format: q.format }, actor: actor.user, companyId: actor.companyId });
+      return { buffer: writeExport(q.format, { columns, rows, footer: [`Signature register. Exported by ${actor.user} on ${todayIST()}. Only the signatures you may see are listed.`], sheetName: 'Signatures', title: 'Signature register' }), type: FORMATS[q.format], fileName: `signatures-${todayIST()}.${q.format}` };
+    };
+    const sigRouter = Router();
+    sigRouter.use(gate('ff.eng.p0412', 'Signatures are'));
+    sigRouter.use(signatureRoutes({ service: sigService, registerFile }, idem));
+    api.use('/sig', sigRouter);
+    publicApi.use(verifyPublicRoutes({ service: sigService, fileBody: express.raw({ type: () => true, limit: '25mb' }), isOn: (companyId) => companyId === null || flags.isOn({ companyId }, 'ff.eng.p0412') }));
+
+    // part 04.13: the Excel import and export engine
+    const excelService = createExcelService({ db, engine, storage: docStorage, jobs: runtime.jobs });
+    bindExcel(db, excelService);
+    bindAdapters(db, { sampleDocs: docs });
+    runtime.jobs.register('xl.validate', (ctx) => excelService.job.validate(ctx), { maxAttempts: 2, description: 'Checks an uploaded import file row by row and prepares the preview and the error list.' });
+    runtime.jobs.register('xl.commit', (ctx) => excelService.job.runCommit(ctx), { maxAttempts: 1, description: 'Commits a checked import: creates or updates the records through the module that owns them, all or nothing or in chunks.' });
+    const xlRouter = Router();
+    xlRouter.use(gate('ff.eng.p0413', 'The Excel engine is'));
+    xlRouter.use(excelRoutes({ service: excelService, fileBody: express.raw({ type: () => true, limit: '12mb' }) }, idem));
+    api.use('/xl', xlRouter);
+
+
+    // part 04.15: the offline-first field engine
+    const offlineService = createOfflineService({ db, storage: docStorage });
+    bindOffline(db, offlineService);
+    registerOfflineAdapters({ db, docs });
+    const offRouter = Router();
+    offRouter.use(gate('ff.eng.p0415', 'The offline field engine is'));
+    offRouter.use(offlineRoutes({ service: offlineService, chunkBody: express.raw({ type: () => true, limit: '2mb' }) }, idem));
+    api.use('/off', offRouter);
+    // part 04.14: comments, mentions, activity timeline and record trace links
+    const collabService = createCollabService({ db });
+    bindCollab(db, collabService);
+    registerSampleDocObject();
+    runtime.bus.subscribe('col.trace.requested', (event) => {
+      const d = event.data ?? {};
+      if (!d.from?.entity || !d.to?.entity || !event.companyId) return;
+      collabService.trace.add(event.actorId ?? 'system', { companyId: event.companyId, from: { entity: String(d.from.entity), id: String(d.from.id) }, to: { entity: String(d.to.entity), id: String(d.to.id) }, relation: TRACE_RELATIONS.includes(d.relation) ? d.relation : 'DERIVED', projectId: event.projectId ?? null, siteId: event.siteId ?? null, sourceType: 'event' });
+    }, { consumer: 'col.trace' });
+    runtime.bus.subscribe('eng.sample_doc.amended', (event) => {
+      const d = event.data ?? {};
+      if (!d.amendsId || !event.companyId) return;
+      collabService.trace.add(event.actorId ?? 'system', { companyId: event.companyId, from: { entity: 'sample_doc', id: String(d.amendsId) }, to: { entity: 'sample_doc', id: String(event.entityId) }, relation: 'AMENDS', projectId: event.projectId ?? null, siteId: event.siteId ?? null, sourceType: 'eng.sample_doc' });
+    }, { consumer: 'col.trace.sample_doc' });
+    const colRouter = Router();
+    colRouter.use(gate('ff.eng.p0414', 'Comments, timeline and trace are'));
+    colRouter.use(collabRoutes({ service: collabService }, idem));
+    api.use('/col', colRouter);
     const ntf = Router();
     ntf.use(gate('ff.eng.p0406', 'Notifications are'));
     ntf.use(notificationRoutes({ service: ntfService, deliveriesFile }, idem));

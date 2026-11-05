@@ -587,3 +587,193 @@ Behind feature flag `ff.eng.p0410`; the service is `modules/eng/documents.js` (w
 - **Bulk and zip** (FR-08): the Excel template, a dry check, then the register rows; zip of up to 100 documents or 200 MB. **Expiry** (FR-09): the job `doc.sweep` alerts the owner of documents about to expire and exposes the dataset `core.document` to the alert rules. **Search** (FR-10): entity `controlled_document` with the permission by confidentiality; OCR is a hook (`text_extract`) for part 28.04.
 - **Configuration** (ADR-198): types and folder templates change only by a proposal that is approved (maker-checker); one change waits at a time.
 - **Permissions**: `doc.document.view|create|edit|manage|distribute|view_confidential`, `doc.config.view|edit`. Pages: Document Register `/documents`, Document `/documents/document`, Upload / New Revision `/documents/new`, Document Types & Folder Templates `/admin/document-types`.
+
+## 45. Document templates, PDF generation, print and delivery (part 04.11)
+
+Behind feature flag `ff.eng.p0411`; the service is `modules/eng/templates.js` with the pure parts apart: `tpl-catalogue.js` (the controlled variable catalogue of 19 document types and the calculations), `tpl-engine.js` (the template language and its check), `tpl-pdf.js` (HTML to PDF), `tpl-library.js` (the corporate design standard and the standard formats) and `tpl-words.js` (amount in words, English and Hindi). Routes are under `/api/v1/tpl`, and two public ones (signed download link, verification).
+
+- **Template language** (FR-01, FR-03): HTML with `{{variable}}`, `{{variable | filter}}`, `{{#each group}}`, `{{#if cond}}{{else}}{{/if}}`, `{{qr}}`, `{{logo}}`, `{{page}}`, `{{pages}}`. Every name is checked against the catalogue of the document type when a template is saved; scripts, links, outside pictures and variables inside a tag are refused. Values are escaped.
+- **Approval** (BR-01): a template is a row in `tpl_templates`; one ACTIVE version and one open draft for each code. The system administrator makes the draft and sends it; the workflow document `TPL_TEMPLATE` routes it to the process owner of the document type (PROCMGR for PO, CFO for invoices and vouchers, HRMGR for payslip and offer letter, STOREMGR for stores documents, QCMGR, HSEO, COMMGR, PM); approval makes it ACTIVE and retires the previous one.
+- **Generation** (FR-04, BR-02, ADR-201, ADR-202): `POST /tpl/generate` loads the approved record through its source, recomputes the totals, picks the active template (a company's own before the shared standard, honouring the effective date), draws the PDF with the QR code, stores it through the file service as a clean `core_files` row (`tpl_generated`), and writes `tpl_generated_docs` with the hash, version, purpose and reason. Preview draws the same with a PREVIEW watermark and stores nothing.
+- **Bulk and milestones** (FR-04, FR-08): `POST /tpl/generate/bulk` checks every record with the caller's rights, then a job `tpl.bulk` makes them with progress and a notification; a rule of `tpl_auto_rules` queues the job `tpl.milestone` when a workflow document type is approved, once.
+- **Delivery** (FR-06): e-mail and WhatsApp through the communication gateway with a signed link (7 days, own secret derived from `FILE_URL_SECRET`); the gateway's receipts are written back by the consumer `tpl.delivery_status`; message and portal are published as events (D-238). Every opening of a PDF is on the audit trail and in the delivery log.
+- **Verification** (FR-05): each document has a verification code; `GET /tpl/verify/:code` (public) tells whether it is genuine (the stored file still has its hash) and current; the in-app scanner resolves `ERP:DOCVERIFY:<code>` to the document for people who may see it.
+- **Permissions**: `tpl.template.view|edit`, `tpl.rule.edit`, `tpl.record.publish`, `tpl.document.view|generate|generate_sensitive|deliver`. Pages: Templates `/admin/templates`, Template Editor `/admin/templates/editor`, Generated Documents `/documents/generated`.
+
+## 46. Digital signature and QR verification (part 04.12)
+
+Behind feature flag `ff.eng.p0412`; the service is `modules/eng/signatures.js`, routes under `/api/v1/sig` and two public routes under `/api/v1/verify`. It builds on the generated documents of 04.11 and never changes them.
+
+- **Signatures** (FR-01, ADR-204): `sig_signatures` holds the signer, method (APPROVAL, IMAGE, ESIGN, DSC), time, the hash of the document and a digest chained to the one before; triggers refuse change and delete; revoking sets a status. `fromApprovals` turns the approvals of the workflow into signatures (consumers `sig.approvals` and `sig.generated`); a person signs by electronic approval or by the picture of their profile; eSign and DSC go through `signProviders` (D-243).
+- **Stamped copy**: a job `sig.stamp` (or the sign call) draws the signatures on the first or last page of a copy made from the original (placement from the settings by document type); `sig_copies` keeps each state; the original is untouched.
+- **Verification** (FR-02, FR-03, BR-01, BR-02, ADR-205): `GET /verify/:code` (public, rate limited) gives genuine, superseded (with the date), cancelled (with the date), invalid or not found, with the fields the company made public; `POST /verify/:code/file` compares the sha256 of an uploaded file with the original and the copies; a mismatch is the security event `sig.tamper_detected` and the event `sig.verification.failed`. `GET /sig/verify/:code` gives the full detail to people who may see the document.
+- **Settings** (FR-05): `sig_config`, versioned; the public fields, automatic signing of approvals and the stamp placement change only by the workflow document `SIG_CONFIG` (the administrator proposes, a director approves).
+- **Permissions**: `sig.register.view`, `sig.signature.revoke`, `sig.document.view|sign|cancel`, `sig.config.view|edit`. Pages: Public Verification `/verify/<code>` (no shell, no sign-in), Signature Register `/admin/signatures`; the signing panel is on Generated Documents.
+
+## 47. Excel import and export engine (part 04.13)
+
+Behind feature flag `ff.eng.p0413`; the engine is `modules/eng/excel.js`, the workbook writer and reader `xl-xlsx.js`, the first adapters `xl-adapters.js`; routes under `/api/v1/xl`.
+
+- **Registers** (ADR-207): `registerImportType({ code, label, module, permission, columns, keys, findExisting, validateRow, commitRow, exportRows, onExisting, chunked, maxRows })` and `registerExportSource({ code, label, permission, columns, rows })`. The permission of an import is `<module>.<entity>.import`; the module's service still checks the right to create the record.
+- **Template** (FR-01): the workbook has a Data sheet (protected header, required columns marked *, unlocked cells, drop-downs and number rules), an Instructions sheet, a Lists sheet from the masters and a hidden sheet naming the import type and version. A company's wording, help, instructions, required flags and chunk size are `xl_templates`, changed by the workflow document `XL_TEMPLATE` (the administrator proposes, a second person approves).
+- **Pipeline** (FR-02 to FR-04): upload (rights, size, .xlsx, virus scan of the file and of every part inside it, stored as a file) queues job `xl.validate`: structure, header, each row's cells by type (text, int, decimal, money, date, bool, enum, lookup by code or name), duplicates in the file and in the data, the module's rules, then `action` for each row (create, update, skip, error); `xl_job_errors` keeps sheet, row, column, value, reason. Preview, errors and an error file (the person's rows with an Errors column) are read from the job. Commit queues `xl.commit`: it reads the file again, checks again and calls `commitRow` for each row in one transaction (or one for each chunk, with resume); a failure rolls back and says on which row.
+- **Exports** (FR-06): any registered list in xlsx, csv or pdf with sensitive columns masked, and the data of an import type in the form of its template (change it and import it again).
+- **Permissions**: `xl.import.use` (open the Import Center), `xl.template.view|edit`, `xl.job.view_all`, plus `org.designation.import` and `eng.sample.import`. A person sees their own jobs; the auditor and administrators see all. Events: `xl.job.uploaded|validated|committed|failed|cancelled`, `xl.template.changed`.
+
+## 48. Comments, mentions, activity timeline and record trace links (part 04.14)
+
+Behind feature flag `ff.eng.p0414`; the service is `modules/eng/collab.js`, routes under `/api/v1/col`, tables `col_comments`, `col_mentions`, `col_reactions` and `col_trace_links` (migrations 82 and 83); client `platform/collab/` (`CollabTabs.jsx`, `MentionsInbox.jsx`, `api.js`) and `modules/eng/ProjectActivityPage.jsx`.
+
+- **Record access** (ADR-211): everything starts from the object type registry (03.04). `record(actor, type, id)` checks the type's permission anywhere and then `access(db, actor, id)` with the person's scope; no other table decides who may see a record. Optional hooks: `summary` and `projectRecords`. Registered so far: `sample_request` (03.04) and `sample_doc` (04.01).
+- **Comments** (FR-01): threads by `parent_id` (replies to replies are shown up to three levels), plain text up to the company limit, edit by the author inside the edit window with the old text in the audit trail, delete by the author, or by a moderator (`col.comment.moderate`, in the record's scope) with a reason; a deleted comment keeps its row and shows no text. Reactions `like|ack|eyes|thanks`, one of each kind per person. Files are core files of the entity `col_comment`; the author adds them while the comment can be edited.
+- **Mentions** (BR-01, ADR-212): the regex reads `@username` after a non-word character; each name is resolved to an active person and checked with that person's own grants; any name that cannot open the record refuses the comment (422 with the names). Notifications `col.mention` and `col.reply` (category `mentions`); the inbox lists only mentions of records the person can still open and keeps a read state.
+- **Timeline** (FR-02, FR-04, ADR-213): sources `audit`, `approval` (change requests), `workflow` (`wf_history` through the type's `documentType`), `comment`, `document` (versions of documents linked to the record), `task`, `message`; filters by kind, dates and text; paged by offset. The project feed resolves the records of the project through the registered types and requires `col.activity.view` for that project.
+- **Trace** (FR-03, BR-02, ADR-214): `trace.add` for services, event `col.trace.requested` for modules, `trace.addManual` with a reason; the sample document amendment writes an `AMENDS` link through the event `eng.sample_doc.amended`. `trace.graph` returns upstream and downstream with level, relation, status, amount and totals.
+- **Settings** (ADR-215): parameters `col.comment.edit_window_minutes` (15), `col.comment.max_length` (2000), `col.reactions.enabled` (true).
+- **Permissions**: `col.comment.moderate` (system administrator, directors, project directors and managers), `col.trace.link` (the same and the CFO), `col.activity.view` (those and the auditor, procurement, commercial and accounts managers). Reading and writing a record's discussion needs only the right to the record. Events: `col.comment.created|edited|deleted`, `col.trace.linked`, `col.trace.requested`, `eng.sample_doc.amended`.
+
+## 49. Offline-first field engine and sync (part 04.15)
+
+Behind feature flag `ff.eng.p0415`; server `modules/eng/offline.js` (service) and `offline-forms.js` (the first form and masters), routes under `/api/v1/off`, tables `off_devices`, `off_sync_log`, `off_uploads` (migrations 84 and 85); browser `platform/offline/` (`secureStore.js`, `engine.js`, `api.js`) and the pages `FieldFormsPage`, `SyncStatusPage`, `ConflictPage`, `DevicesPage` in `modules/eng`.
+
+- **Local store** (FR-01, ADR-218): IndexedDB database `erp-offline`; records are AES-GCM ciphertext; the key of each person is a non-extractable `CryptoKey` kept in the same database; `destroyAll()` deletes the database (explicit sign-out, a `DEVICE_REVOKED` answer). The engine starts for the signed-in person in `App.jsx` when the flag is on.
+- **Registers**: `registerOfflineForm({ code, label, module, permission, attachmentEntity, fields, rules, validate, create, load, update })` and `registerOfflineMaster({ code, label, permission, rows })`. A form's `rules(db, actor)` go to the phone with the form so that the phone and the server check the same things. The seven field forms are listed by the engine as planned until their parts register them.
+- **Devices** (BR-03): `POST /off/devices` (register, idempotent), `GET /off/devices`, `POST /off/devices/:id/revoke` (reason; the IT administrator any device, a person their own), `POST /off/devices/wiped`. A revoked device gets `403 DEVICE_REVOKED` with `details[0].wipe = true` on any call.
+- **Masters** (FR-02): `GET /off/masters?since=&codes=` returns the registered masters limited by the person's scope (rows changed since, ids removed), the forms with their rules, `expiresAt` (`off.data.max_age_hours`) and the engine's settings.
+- **Sync** (FR-03, BR-01, BR-02, FR-09, ADR-216/217/219/220): `POST /off/sync { deviceId, deviceTime, commands[] }` sorts by `seq`, answers each command with `APPLIED`, `REJECTED`, `DEFERRED`, `CONFLICT` or `NEEDS_CONFIRMATION` and, for a replay, the first answer with `replayed`. Conflicts: `POST /off/commands/:id/resolve { choice MINE|SERVER|MERGE, fields }`. Old work: `GET /off/confirmations`, `POST /off/commands/:id/confirm { decision, reason }`. Lists: `GET /off/commands`, `GET /off/commands/:id`.
+- **Media** (FR-05): `POST /off/uploads` (starts or resumes), `PUT /off/uploads/:id/chunks/:index`, `POST /off/uploads/:id/complete` (size, type, virus scan; the file is linked to the record the command made and appears among its files).
+- **Permissions**: field users use their own device with no permission (every command is checked against the form's permission and the project); `off.device.manage` (system and IT administrators), `off.sync.confirm` (directors, project directors and managers, per project), `off.sync.view_all` (administrators and the auditor). Parameters `off.command.max_age_days` (7), `off.clock.max_drift_seconds` (300), `off.data.max_age_hours` (72), `off.sync.batch_max` (100). Events `off.device.registered|revoked`, `off.sync.completed`, `off.conflict.raised|resolved`.
+
+## 50. Unified Messages app (part 05.01)
+
+Behind feature flag `ff.msg.p0501`; a module of its own, `modules/msg` (`messages.js` the service, `routes.js`, `validators.js`, `index.js`), tables `msg_conversations`, `msg_members`, `msg_messages`, `msg_reactions` (migrations 86 and 87); browser `platform/messages/` (`api.js`, `Chat.jsx`) and `modules/msg/` (`MessagesPage`, `NewConversationPage`, `ChatDock`). The room kind `conv:<id>` of the real-time layer is now backed by `realtimeConversations` in `platform/realtime`.
+
+- **Conversations** (FR-01, FR-02, ADR-221): `GET/POST /msg/conversations`; DIRECT is made once for a pair (`direct_key`), RECORD once for a record (the registered object type decides who may open it), PROJECT, SITE and DEPARTMENT once for a place (permission `msg.channel.manage` for that scope, automatic members), GROUP and TEAM by anyone. External threads are indexed from `comm_messages` and shown read-only.
+- **Membership** (FR-06, BR-01, ADR-222): `POST/DELETE/PATCH /conversations/:id/members`; an administrator or a channel manager adds and removes; the last administrator cannot leave; automatic members cannot be removed by hand; a person's own pin, mute, mention-only, archive and read mark are `PUT /conversations/:id/settings`.
+- **Messages** (FR-03, FR-04, FR-05, BR-02): `GET /conversations/:id/messages?before=`, `POST` (idempotent by `clientId`; replies, mentions of members only, files uploaded to the conversation, record links the sender can open, voice notes), `PATCH/DELETE /messages/:id`, reactions, forward. Each message is announced as ids only to `conv:<id>` and the members' `user:<name>` rooms (`msg.message.created|updated|deleted`, `msg.conversation.updated`) and told through the notification engine unless muted or mention-only (FR-08).
+- **Administration**: `GET /msg/verify` (counts and checksums, `msg.admin.view`), `GET /conversations/:id/export` (compliance CSV, `msg.compliance.export`, audited), job `msg.purge` blanks the text of long-deleted messages.
+- **Permissions**: none for direct and group messaging; `msg.channel.manage` (system administrator, directors, project directors and managers, HR manager), `msg.admin.view` (system and IT administrators, auditor), `msg.compliance.export` (auditor). Parameters `msg.edit_window_minutes` (15), `msg.deleted_content_retention_days` (30), `msg.group_max_members` (250).
+- **Client** (FR-07): three panes on a computer, two on a tablet (details over the conversation), one on a phone with a back button; a mini dock with small chat windows over any page on a computer, kept in the shell's `extras`.
+
+## 51. Messaging features (part 05.02)
+
+Behind feature flag `ff.msg.p0502`, inside the `msg` module (`features.js` the service, `config.js` the settings; routes, validators and `index.js` extended). Tables `msg_receipts`, `msg_stars`, `msg_pins`, `msg_hidden`, `msg_voice`, `msg_user_settings`, `msg_presence`, `msg_holds`, `msg_member_periods`, `msg_calls`, `msg_config` (migrations 88 and 89).
+
+- **Presence and typing** (FR-01, ADR-226): `POST /msg/presence` heartbeat, `GET /msg/presence`; typing goes through `hub.emitTransient` (not logged, ids only), as do call signals.
+- **Receipts** (FR-02, BR-01): `msg_receipts` per (message, person); `read` writes them and publishes `msg.receipt.updated`; group read details via `GET /messages/:id/receipts`; privacy in `msg_user_settings`, overridden when `enforceReadReceipts` is on.
+- **Search** (FR-03, ADR-227): `GET /msg/search` is limited to the person's membership periods (`msg_member_periods`, trigger-kept) and hides hidden messages; hits carry the id used by `messages?around=` to jump to context.
+- **Edit and delete, stars, pins, hide** (FR-04, FR-05, ADR-228): windows from the active settings; delete for me writes `msg_hidden`.
+- **Gallery and voice** (FR-06, FR-07): `GET /conversations/:id/media`; voice notes are files with `msg_voice` (duration, waveform); limits for file, video and voice length are enforced on send.
+- **Calls** (FR-08, BR-02, ADR-229): `msg_calls`; `calls.start|join|decline|end|signal`; ICE servers with coturn-REST credentials; ringing is `GET /calls/ringing` plus the `msg.call.started` event; the call page (`/collab/call`) is a WebRTC mesh; calls are never recorded.
+- **Retention and legal hold** (FR-09, ADR-228): job `msg.purge` uses `retentionDays` and skips held conversations; holds need `msg.legal_hold.manage`.
+- **Settings** (ADR-230): `msg_config` versions (PENDING, SCHEDULED, ACTIVE, RETIRED, REJECTED), workflow type `MSG_CONFIG` (maker-checker), `activeConfig()` promotes scheduled versions that are due; page `/admin/messaging`.
+- **Real-time** : `realtimeConversations` supplies the `conv:<id>` rooms; `emitTransient` is new in `platform/realtime`.
+
+
+## 52. Secure messaging and licence compliance (part 05.03)
+
+Behind feature flag `ff.msg.p0503`; a module of its own, `modules/sec` (`service.js`, `governance.js`, `routes.js`, `validators.js`, `index.js`), shared crypto `src/shared/e2e.js`, tables `sec_devices`, `sec_prekeys`, `sec_conversations`, `sec_envelopes`, `sec_policy`, `sec_licence_reviews`, `oss_register` (migrations 90 and 91).
+
+- **Protocol `erp-e2e-v1`** (ADR-231): per device an ECDSA identity key, an ECDH signed pre-key and one-time pre-keys (private keys stay in the browser as non-extractable CryptoKeys); a message is encrypted once (AES-GCM) and its content key wrapped per receiving device by an HKDF key from ephemeral-static ECDH; each envelope is signed by the sender's identity key. No ratchet (D-276).
+- **Relay** (ADR-233): `POST /sec/envelopes` needs an envelope for every active device of every member (else 409 with the devices expected); `GET /sec/envelopes` and `POST /sec/envelopes/ack` empty the ciphertext on delivery; job `sec.purge` removes disappeared messages, old delivery metadata and unfetched envelopes.
+- **Devices** (FR-02, BR-02): `POST /sec/devices` (signed pre-key verified), `GET /sec/prekeys/:userId` (public keys; one-time keys are used only by `GET /conversations/:id/bundles`), revoke by owner or `sec.device.manage`.
+- **Gate and approvals** (ADR-232): `secureReady` = policy on and licence approved; workflows `OSS_LICENCE_REVIEW` (ITADM, DIR) and `SEC_POLICY` (ITADM or DIR, maker not approver).
+- **Unified app**: a secure conversation is a GROUP row of `msg_conversations` flagged by `sec_conversations`; `msg` shows the lock label and "Encrypted message", refuses plaintext sends and member changes, and never has secure text in `msg_messages`.
+- **Browser** (`platform/secure`): IndexedDB store, `engine.js` (set-up, sync, send, trust, attachments), `SecureConversation.jsx`.
+
+## 53. Communication Center (part 05.04)
+
+Behind feature flag `ff.msg.p0504`, inside the `msg` module (`autogroups.js`, `comcenter.js`; routes, validators and `index.js` extended). Tables `msg_auto_group_rules`, `msg_auto_group_links`, `msg_instructions`, `msg_acknowledgements`, `msg_announcements`, `msg_announcement_reads`, `msg_escalations`, `msg_actions` (migrations 92 and 93).
+
+- **Auto groups** (FR-01, ADR-235): `autoGroups.sync(companyId)` on `iam.assignment.created|ended` and `iam.user.suspended|deactivated` and in the minute job `msg.comcenter`; rules change through workflow `MSG_AUTOGROUPS` (approver ITADM or DIR, maker not approver).
+- **Instructions** (FR-03, BR-01, ADR-236): `POST /msg/messages/:id/instruction`, `POST /msg/instructions/:id/ack`, `POST /msg/acknowledgements/bulk`, `GET /msg/instructions` (register, CSV export), `GET /msg/acknowledgements/pending`; escalation in `instructions.escalate` at the due time (T-02). Events `msg.instruction.created|acknowledged|completed|escalated`.
+- **Announcements** (FR-04, ADR-237): CRUD, publish (now or scheduled), read, confirm with quiz, cancel; the job publishes due ones and expires old ones.
+- **Escalations** (FR-06, ADR-239): `POST /msg/conversations/:id/escalate`, `GET /msg/escalations`, `POST /msg/escalations/:id/resolve`; the job escalates the unresolved.
+- **Message to action** (FR-05, BR-02, ADR-238): `GET /msg/action-types`, `GET /msg/messages/:id/action-draft`, `POST /msg/messages/:id/to-action`; registry `messageActions`; the task through `tasksOf(db).create`; attachments through `filesOf(db).copyTo`; trace link through `col.trace.requested`.
+- **Center** (FR-02): `GET /msg/center/summary` (tiles and pending items); Messages list views `important` and `escalated` and the type views (Teams, Projects, Sites, Departments, ERP-linked).
+- **Browser**: `platform/messages/Comm.jsx` (badge, forms, hooks) and the pages Communication Center, Pending Acknowledgements, Instruction Register, Announcements, New Announcement, Auto Groups.
+
+## 54. Company policy management and policy-to-protocol (part 05.05)
+
+Behind feature flag `ff.msg.p0505`; a module of its own, `modules/pol` (`service.js`, `richtext.js`, `routes.js`, `validators.js`, `index.js`), tables `pol_policies`, `pol_versions`, `pol_acknowledgements`, `pol_requirements` (migrations 94 and 95). The draft creators live in the engines: `modules/eng/policy-drafts.js` registers them in `platform/protocol/drafts.js`.
+
+- **Register and lifecycle** (FR-01, ADR-240): `GET/POST /pol/policies`, `GET /pol/policies/:id`; status derived from the versions; policy numbers `POL-nnnn`.
+- **Authoring** (FR-02): `PUT /pol/versions/:id` (draft only, row version checked), rich text cleaned by `sanitizeHtml`, attachments as files of entity `pol_version`, `GET /pol/policies/:id/compare` (paragraphs and words).
+- **Approval and publication** (FR-03, ADR-241): `POST /pol/versions/:id/submit` starts workflow `POL_VERSION` (head, director); approval publishes (recipients resolved, notified) and, on the effective date, makes the version Active and supersedes the old one; `POST /pol/policies/:id/versions` revises (BR-01).
+- **Acknowledgement and knowledge check** (FR-03, FR-04, ADR-242/243): `GET /pol/my`, `POST /pol/versions/:id/read`, `POST /pol/acknowledge` (pass mark, tries); report and CSV for the owner; job `pol.cycle` (hourly): effective dates, new people, reminders, escalation, review reminders (FR-06). Event `pol.acknowledgement.recorded`.
+- **Policy-to-protocol** (FR-05, BR-02, ADR-244): `/pol/requirements` (tag, edit, convert, dismiss), `GET /pol/drafts` (administrators' worklist with the state each draft has in its engine).
+- **Browser** (`client/modules/pol`): Policy Register with the policy page, Policy Editor (rich text, quiz, applicability with live count, requirements, compare), My Policies, Policy-to-Protocol Drafts.
+
+## 55. Master data governance (part 06.01)
+
+Behind feature flag `ff.mdm.p0601`; module `modules/mdm` (`masters.js`, `service.js`, `integrations.js`, `routes.js`, `validators.js`, `index.js`) and the shared registry `platform/mdm` (`masterTypes`, `masterReferences`, `FORMATS` with the GSTIN check character, `normalise`, `similarity`, `mask`, `mdmOf`). Tables `mdm_records`, `mdm_record_versions`, `mdm_change_requests`, `mdm_duplicates`, `mdm_merge_map`, `mdm_quality_rules`, `mdm_stewards` (migrations 96 and 97).
+
+- **Records and versions** (FR-01, FR-03, ADR-245/249): `GET/POST /mdm/masters/:type/records`, `GET/PUT /mdm/masters/:type/records/:id` (`?asOf=`), `POST …/status`, `GET …/lookup` (ACTIVE only, BR-02), `POST …/check`.
+- **Change requests** (FR-05, ADR-246): `GET /mdm/change-requests` (`view=mine|review|all`), `GET /:id`, `POST /:id/cancel`, `POST /:id/resubmit`; workflows `MDM_CHANGE`, `MDM_MERGE` (resolver `mdm.steward`, ACCMGR when financial), evidence of duplicates and score for the approver.
+- **Duplicates and merge** (FR-02, BR-01, ADR-247/248): `GET /mdm/duplicates`, `POST /duplicates/scan`, `POST /duplicates/:id/dismiss`, `POST /mdm/merge`; `GET …/resolve`, `GET …/references`.
+- **Quality and stewards** (FR-04, FR-07): `GET /mdm/quality`, `GET/POST /mdm/config` (workflow `MDM_CONFIG`), `GET /mdm/config/export`; `POST …/review` clears staleness.
+- **Dashboard** (FR-08): `GET /mdm/dashboard`. Job `mdm.cycle` (hourly): scheduled versions into force, duplicate scan.
+- **Integration**: object type `mdm_record` (resolves merged ids), Excel import `MDM_PARTNER` (each row a change request) and export `mdm.partners` (FR-06); events `mdm.change.requested`, `mdm.record.changed`, `mdm.record.merged`.
+- **Browser** (`client/modules/mdm`): Master Data Governance, Master Change Requests, Duplicate Candidates (compare and merge), Data Quality Rules & Stewards, Master Records (detail with history, as of, quality, references).
+
+## 56. Common masters (part 06.02)
+
+Behind feature flag `ff.mdm.p0602` (inside the `mdm` module, which needs `ff.mdm.p0601` on). Code: `modules/mdm/common.js` (definitions and engine), `common-integrations.js` (lookups, Excel), routes in `routes.js`. Tables `mdm_uoms`, `mdm_gst_rates`, `mdm_hsn_sac`, `mdm_tds_sections`, `mdm_states`, `mdm_districts`, `mdm_currencies`, `mdm_exchange_rates`, `mdm_banks`, `mdm_payment_terms`, `mdm_lookup_lists`, `mdm_lookups` (migrations 98 and 99); a row without a company is a system row (ADR-250).
+
+- **Registers** (FR-01 to FR-09): `GET /mdm/common` (definitions), `GET/POST /mdm/common/:master`, `GET/PUT /mdm/common/:master/:id`, `POST …/retire`; filters, search, `asOf`, `status`.
+- **Statutory changes** (BR-01, ADR-251): GST rates, HSN/SAC and TDS sections change by proposal from a date, workflow `MDM_TAX_CHANGE` (ACCMGR then CFO), rows of `mdm_change_requests` shown in the 06.01 worklist.
+- **What modules ask**: `GET /mdm/tax/gst?hsn=|code=&date=`, `GET /mdm/tax/tds?section=&date=`, `GET /mdm/exchange-rate?currency=&date=`, `GET /mdm/uoms/convert?quantity=&from=&to=` (BR-02, ADR-252); the service `commonOf(db).tax`.
+- **Lookups** (ADR-253): `/api/v1/mdm/lookups/{uoms,states,districts,gst-rates,hsn-sac,tds-sections,currencies,banks,payment-terms}` and one per list (`/mdm/lookups/priority` …) in the person's language; `GET/PUT /mdm/lookup-lists/:list` for the manager.
+- **Excel**: import types `MDM_UOM`, `MDM_GST_RATE`, `MDM_HSN_SAC`, `MDM_TDS_SECTION`, `MDM_STATE`, `MDM_DISTRICT`, `MDM_CURRENCY`, `MDM_EXCHANGE_RATE`, `MDM_BANK`, `MDM_PAYMENT_TERM`, `MDM_LOOKUP`; export sources `mdm.common.<master>`. Event `mdm.common.changed`.
+- **Browser**: one register page per master (`/admin/master-data/common/<page>`, `CommonMasterPage.jsx`) and the Lookup List Manager; the partner form of 06.01 takes its State from the states master.
+
+## 57. Item master, resource catalogue and item selector (part 06.03)
+
+Behind feature flag `ff.mdm.p0603` (in module `mdm`). Code: `modules/mdm/items.js` (service, workflow `MDM_ITEM`, object type and file entity `mdm_item`, where-used registry `itemReferences`), `item-integrations.js` (lookup `items`, Excel import `MDM_ITEM`, export `mdm.items`); client `platform/items/ItemSelector.jsx` and `modules/mdm/Item*.jsx`. Tables `mdm_item_categories`, `mdm_items`, `mdm_item_uoms`, `mdm_item_resources`, `mdm_item_makes`, `mdm_item_alternates`, `mdm_item_code_counters`, `mdm_item_user_marks`, `mdm_item_legacy_map` (migrations 100 and 101).
+
+- **Categories** (FR-02, ADR-255): `GET/POST /mdm/item-categories`, `PUT /mdm/item-categories/:id`, `GET …/:id/history`.
+- **Items** (FR-01, FR-03, FR-05, ADR-254/256): `GET /mdm/items/register` (List Report) and `…/register/export`, `POST /mdm/items/check` (FR-07), `POST /mdm/items` (request), `GET/PUT /mdm/items/:id`, `POST …/resubmit`, `POST …/versions`, `POST …/status`, `GET …/where-used` (BR-01).
+- **Units** (T-01, ADR-257): `PUT /mdm/items/:id/uoms`, `GET …/convert` through the calculation engine.
+- **Bill of resources** (FR-04, BR-02): `PUT /mdm/items/:id/resources`. Makes and alternates: `POST …/makes`, `POST …/makes/:makeId`, `POST …/alternates`.
+- **Selector** (FR-06, T-03): `GET /mdm/items/search`, `POST /mdm/items/:id/mark`, `GET /mdm/lookups/items`.
+- **Migration** (FR-08, ADR-258): `GET /mdm/items/migration`, `POST /mdm/items/migration/map`.
+- **Platform**: `listExports` (ADR-259) lets a module's list use the List Report's export service.
+- **Browser**: Item Master (category tree beside the List Report), Item (object page with its tabs), New Item wizard, Item Categories & Attribute Templates, Item Migration; the selector in the sample request lines (AC-01), the bill of resources and the alternates.
+
+## 58. Business partner master (part 06.04)
+
+Behind feature flag `ff.mdm.p0604` (in module `mdm`). Code: `modules/mdm/partners.js` (service, list `mdm.partners`, workflows `MDM_PARTNER`, `MDM_PARTNER_BANK`, `MDM_PARTNER_STATUS`, object type and file entity `mdm_partner`, registry `partnerActivity`, parameters), `partner-integrations.js` (lookups, Excel import `MDM_BUSINESS_PARTNER`); client `modules/mdm/BusinessPartnersPage.jsx`, `PartnerPage.jsx`, `PartnerRegistrationPage.jsx`, `PartnerApprovalsPage.jsx`. Tables `mdm_partners`, `mdm_partner_roles`, `mdm_partner_gstins`, `mdm_partner_addresses`, `mdm_partner_contacts`, `mdm_partner_banks`, `mdm_partner_documents`, `mdm_partner_tds`, `mdm_partner_status_requests` (migrations 102 and 103).
+
+- **Registration** (FR-01, FR-07, ADR-260/261): `POST /mdm/partners/check`, `POST /mdm/partners` (a Prospect, or sent with `submit`), `PUT /mdm/partners/:id`, `POST …/submit`.
+- **Register and 360** (FR-08): `GET /mdm/partners/register` (List Report) and `…/export`, `GET /mdm/partners/:id`, `GET …/summary`, `GET …/selectable` (BR-02), `GET …/payment-status`.
+- **Details**: `PUT …/details`, `POST …/gstins`, `POST …/gstins/verify`, `POST …/documents`, `POST …/documents/:docId/verify`, `PUT …/tds`.
+- **Banks** (FR-02, BR-01, BR-03, ADR-262/263): `POST …/banks` (change, payments held), `POST …/banks/:bankId/confirm` (code or call-back), `POST …/banks/:bankId/verify`, `GET …/banks/:bankId/reveal` (finance, logged).
+- **Status** (FR-06, ADR-264): `POST …/status` (hold, release, inactive, active), `POST …/blacklist` (director's approval).
+- **Worklist**: `GET /mdm/partners/queue`. Daily job `mdm.partner_compliance`. Lookups `/mdm/lookups/partners|vendors|subcontractors|labour-contractors|clients|consultants|transporters|service-providers`.
+- **Events**: `mdm.partner.registered|activated|changed|status_changed|bank_changed|payment_hold|document_expiring`.
+
+## 59. Chart of accounts, cost codes and financial dimensions (part 06.05)
+
+Behind feature flag `ff.mdm.p0605`; a module of its own, `modules/fin` (`service.js`, `integrations.js`, `routes.js`, `validators.js`, `index.js`), route prefix `/api/v1/fin`. Tables `fin_account_groups`, `fin_accounts`, `fin_dimension_rules`, `fin_cost_heads`, `fin_cost_codes`, `fin_category_mappings`, `fin_master_changes` (migrations 104 and 105); a row without a company is the template a company copies the first time it opens its chart (ADR-265, ADR-269).
+
+- **Chart** (FR-01, FR-02): `GET /fin/accounts` (groups, accounts with their dimension rules, missing control accounts, pending changes), `GET /fin/accounts/export` (CSV, audited), `GET /fin/accounts/:id`, `GET /fin/account-groups`, `GET /fin/schedule-iii` (lines of Schedule III Division I with their groups and accounts, and whether the mapping is complete, T-02).
+- **Changes** (ADR-266): `POST /fin/accounts`, `PUT /fin/accounts/:id`, `POST …/block`, `PUT …/dimension-rules`, `POST /fin/account-groups`, `PUT /fin/account-groups/:id`, `POST /fin/cost-heads`, `PUT …/:id`, `POST /fin/cost-codes`, `PUT …/:id`, `POST /fin/category-mappings` answer 202 with the change; `GET /fin/changes`, `GET /fin/changes/:id`, `POST …/resubmit`, `POST …/withdraw`. Workflow `FIN_MASTER_CHANGE` (accounts manager when project controls proposed it, then the CFO); the change is applied by the approval hook. `DELETE /fin/accounts/:id` only for an unused account (BR-02, ADR-267).
+- **Posting check** (FR-04, BR-01, T-01, ADR-268): `finOf(db).validatePosting(companyId, { accountId | accountCode, source: MANUAL | ENGINE, dimensions })` and `POST /fin/postings/check`. Dimension values are checked against `org_branches`, `org_projects`, `org_sites` (a site of the project), `org_cost_centres` (COST and PROFIT), `org_departments`, `iam_users`; WBS and equipment by form (D-307). `accountPostings.register()` is where the ledgers report postings (D-308).
+- **Cost structure** (FR-03): `GET /fin/cost-heads` (heads and codes), cost heads numbered 1, 1.1 …, a top head posted to an account.
+- **Item category mapping** (FR-05, AC-01): `GET /fin/category-mappings` (every category with its stock account, consumption account and cost code, own or inherited from its parent, and the list of categories without one), `finOf(db).resolveCategory(companyId, categoryId, date)` for the posting engine; a new mapping applies from its date and retires the earlier one the day before.
+- **Import** (FR-06): `POST /fin/import/preview` (the mapping report: each ledger with the group, type and control account it lands in, or why not) and `POST /fin/import` (the mapped ledgers as one change). The Tally group map is `TALLY_GROUP_MAP` in `service.js` (D-309).
+- **Lookups**: `/api/v1/fin/lookups/accounts`, `/manual-accounts` (open to manual journals), `/cost-codes`. Object type `fin_account`. Events `fin.master.change_requested`, `fin.account.changed`, `fin.cost_code.changed`, `fin.category_mapping.changed`.
+- **Browser** (`client/modules/fin`): Chart of Accounts (tree with filters, Schedule III, import with the mapping report, changes, export), Account (properties, dimension rules, mapping, changes, check a posting), Cost Heads & Cost Codes, Item Category → GL / Cost Code Mapping.
+- **Permissions**: `fin.coa.view` (finance, project, procurement, estimation and planning roles), `fin.coa.edit` and `fin.import` (ACCMGR), `fin.costcode.edit` (ACCMGR, PCMGR); the CFO approves.
+
+## 60. Rate analysis engine and schedule of rates library (part 06.06)
+
+Behind feature flag `ff.mdm.p0606` (in module `mdm`, which needs `ff.mdm.p0601` to `ff.mdm.p0603` on). Code: `modules/mdm/rates.js` (service, workflow `MDM_RATE_ANALYSIS`, evidence panel, object type `ra_analysis`), `rate-integrations.js` (Excel import types, lookup), routes in `routes.js`. Tables `ra_resource_rates`, `ra_sor_books`, `ra_sor_items`, `ra_analyses`, `ra_analysis_lines` (migrations 106 and 107). Formulas `ra.line_amount` and `ra.unit_rate` in `platform/calc/builtins.js` (ADR-270, ADR-271).
+
+- **Resource rates** (FR-01): `GET/POST /mdm/resource-rates`, `PUT …/:id` (only a rate no analysis used), `POST …/:id/retire`, `GET …/lookup?itemId=&region=&projectId=&date=`. Excel import `MDM_RESOURCE_RATE`.
+- **Schedules of rates** (FR-02): `GET/POST /mdm/sor-books`, `GET …/:id`, `PUT …/:id/items` (draft edition), `POST …/:id/activate`, `POST …/:id/editions`, `GET /mdm/sor-items?q=`; Excel import `MDM_SOR_ITEM`; lookup `/mdm/lookups/sor-items`.
+- **Analyses** (FR-03 to FR-06, BR-01, BR-02, ADR-272/273): `GET /mdm/analyses` (and `/export`), `POST /mdm/analyses/start` (from a template or the bill of resources), `POST /mdm/analyses`, `GET/PUT/DELETE /mdm/analyses/:id`, `POST …/recalculate`, `…/submit`, `…/withdraw`, `…/cancel`, `…/amend`, `GET …/compare?with=`, `…/history`, `…/print`.
+- **Impact** (FR-05, T-02): `GET /mdm/analyses/impact?itemId=&newRate=&region=&projectId=`; nothing is saved.
+- **For other modules**: `ratesOf(db).analyses.releasedRate(companyId, workItemId, { region, projectId, date })`; events `mdm.resource_rate.changed`, `mdm.sor.activated`, `mdm.analysis.created`, `mdm.analysis.released`.
+- **Access** (ADR-274): project records through `scopeFilter`/`check` of the permission engine; `mdm.analyse.{view,create,edit,delete,submit,approve,cancel,amend,print,export}` and `mdm.rate.edit`.
+- **Browser**: Resource Rate Library, Schedule of Rates, Rate Analyses (register), Rate Analysis (object page: components, add-ons, SOR, versions with compare, history; new and change form), Rate Change Impact (report).

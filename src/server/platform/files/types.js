@@ -33,6 +33,8 @@ export const FILE_TYPES = Object.freeze({
   doc: { mime: 'application/msword', category: 'document', inline: false, matches: ole },
   xls: { mime: 'application/vnd.ms-excel', category: 'document', inline: false, matches: ole },
   ppt: { mime: 'application/vnd.ms-powerpoint', category: 'document', inline: false, matches: ole },
+  // an attachment of a secure conversation, encrypted on the device before upload (part 05.03): it starts with the fixed marker the browser puts in front, and the rest is ciphertext nobody here can read
+  enc: { mime: 'application/octet-stream', category: 'document', inline: false, matches: (h) => ascii(h, 'ERPE2E01') },
   txt: { mime: 'text/plain', category: 'document', inline: false, matches: looksLikeText },
   csv: { mime: 'text/csv', category: 'document', inline: false, matches: looksLikeText },
   dwg: { mime: 'application/acad', category: 'drawing', inline: false, matches: (h) => ascii(h, 'AC10') },

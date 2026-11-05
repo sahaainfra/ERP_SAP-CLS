@@ -334,3 +334,90 @@ export const parseDocConfig = (b) => parse(z.object({
   reason: text(500).min(5, 'Give a reason of at least 5 characters'),
 }).strict().refine((v) => v.types.length + v.templates.length > 0, { message: 'Change at least one type or template' }), b);
 export const parseDocExport = (q) => parse(z.object({ projectId: id.optional(), folderId: id.optional(), docType: text(40).optional(), status: z.enum(['DRAFT', 'IN_REVIEW', 'ISSUED', 'ARCHIVED', 'CANCELLED']).optional(), q: text(80).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
+
+
+// Inputs of the template and generation API (part 04.11).
+const DOCTYPE = z.string().regex(/^[A-Z][A-Z0-9_]{1,29}$/);
+const TPL_CODE = z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/, 'Use capital letters, digits and underscores, starting with a letter');
+const brand = z.object({ address: text(300).optional(), phone: text(40).optional(), email: text(120).optional(), footerNote: text(200).optional(), logo: z.string().max(200_000).optional() }).strict();
+const tplBody = { name: text(120).min(3, 'Give the template a name of at least 3 characters'), html: z.string().min(10, 'The template is empty').max(200_000), css: z.string().max(60_000).default(''), orientation: z.enum(['portrait', 'landscape']).default('portrait'), brand: brand.optional(), changeNote: text(500).optional(), effectiveFrom: date.nullable().optional() };
+export const parseTplQuery = (q) => parse(z.object({ docType: DOCTYPE.optional(), status: z.enum(['DRAFT', 'IN_REVIEW', 'ACTIVE', 'RETIRED', 'REJECTED']).optional(), q: text(80).optional(), limit: z.coerce.number().int().min(1).max(100).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseTplCreate = (b) => parse(z.object({ docType: DOCTYPE, code: TPL_CODE, ...tplBody }).strict(), b);
+export const parseTplUpdate = (b) => parse(z.object({ name: tplBody.name.optional(), html: tplBody.html.optional(), css: z.string().max(60_000).optional(), orientation: z.enum(['portrait', 'landscape']).optional(), brand: brand.optional(), changeNote: text(500).optional(), effectiveFrom: date.nullable().optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b);
+export const parseTplValidate = (b) => parse(z.object({ docType: DOCTYPE, html: z.string().max(200_000), css: z.string().max(60_000).default('') }).strict(), b);
+export const parseTplPreview = (b) => parse(z.object({ templateId: id.optional(), docType: DOCTYPE.optional(), html: z.string().max(200_000).optional(), css: z.string().max(60_000).optional(), orientation: z.enum(['portrait', 'landscape']).optional(), brand: brand.optional(), recordId: id.optional() }).strict().refine((v) => v.templateId || (v.docType && v.html), 'Name the template, or give the document type and the HTML'), b);
+export const parseTplCatalogue = (q) => parse(z.object({ docType: DOCTYPE }).strict(), q);
+export const parseTplGenerate = (b) => parse(z.object({ docType: DOCTYPE, entityId: z.union([text(80).min(1), z.number().int()]).transform(String), templateCode: TPL_CODE.optional(), purpose: z.enum(['OFFICIAL', 'ARCHIVAL', 'MILESTONE']).optional(), pdfa: z.boolean().optional(), reason: text(500).optional() }).strict(), b);
+export const parseTplBulk = (b) => parse(z.object({ docType: DOCTYPE, entityIds: z.array(z.union([text(80).min(1), z.number().int()]).transform(String)).min(1).max(1000), templateCode: TPL_CODE.optional(), purpose: z.enum(['OFFICIAL', 'ARCHIVAL']).optional(), pdfa: z.boolean().optional(), reason: text(500).optional() }).strict(), b);
+export const parseTplDeliver = (b) => parse(z.object({ channel: z.enum(['EMAIL', 'WHATSAPP', 'MESSAGE', 'PORTAL']), recipients: z.array(text(200).min(3)).min(1).max(20), subject: text(200).optional(), message: text(1000).optional() }).strict(), b);
+export const parseTplGeneratedQuery = (q) => parse(z.object({ docType: DOCTYPE.optional(), projectId: id.optional(), purpose: z.enum(['OFFICIAL', 'ARCHIVAL', 'MILESTONE']).optional(), current: z.enum(['0', '1']).optional(), bulkJobId: id.optional(), from: date.optional(), to: date.optional(), q: text(80).optional(), sort: z.enum(['newest', 'oldest', 'number', 'type']).default('newest'), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseTplGeneratedExport = (q) => parse(z.object({ docType: DOCTYPE.optional(), projectId: id.optional(), purpose: z.enum(['OFFICIAL', 'ARCHIVAL', 'MILESTONE']).optional(), current: z.enum(['0', '1']).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
+export const parseTplRecord = (b) => parse(z.object({ docType: DOCTYPE, entityId: z.union([text(80).min(1), z.number().int()]).transform(String), docNo: text(60).optional(), data: z.record(z.string(), z.unknown()), approved: z.boolean().default(false), sample: z.boolean().default(false), projectId: id.optional(), siteId: id.optional(), reason: text(500).optional() }).strict(), b);
+export const parseTplRecordQuery = (q) => parse(z.object({ docType: DOCTYPE.optional(), approved: z.enum(['0', '1']).optional(), q: text(80).optional(), limit: z.coerce.number().int().min(1).max(200).default(50) }).strict(), q);
+export const parseTplRule = (b) => parse(z.object({ workflowDocType: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,59}$/), docType: DOCTYPE, templateCode: TPL_CODE.optional(), enabled: z.boolean() }).strict(), b);
+export const parseTplLink = (q) => parse(z.object({ exp: z.coerce.number().int(), sig: z.string().min(20).max(80) }).strict(), q);
+export const parseTplVerify = (v) => parse(z.string().regex(/^[A-Za-z0-9]{8,24}$/), v);
+
+// Inputs of the signature API (part 04.12).
+const SIG_METHOD = z.enum(['APPROVAL', 'IMAGE', 'ESIGN', 'DSC']);
+export const parseSigSign = (b) => parse(z.object({ method: SIG_METHOD, label: text(60).optional() }).strict(), b);
+export const parseSigReason = (b) => parse(z.object({ reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseSigProfile = (b) => parse(z.object({ image: z.string().max(200_000) }).strict(), b);
+export const parseSigQuery = (q) => parse(z.object({ method: SIG_METHOD.optional(), status: z.enum(['SIGNED', 'REVOKED']).optional(), docType: z.string().regex(/^[A-Z][A-Z0-9_]{1,29}$/).optional(), projectId: id.optional(), signer: text(60).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(), sort: z.enum(['newest', 'oldest', 'number', 'signer']).default('newest'), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseSigExport = (q) => parse(z.object({ method: SIG_METHOD.optional(), status: z.enum(['SIGNED', 'REVOKED']).optional(), docType: z.string().regex(/^[A-Z][A-Z0-9_]{1,29}$/).optional(), projectId: id.optional(), signer: text(60).optional(), from: date.optional(), to: date.optional(), q: text(80).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
+const placement = z.object({ page: z.enum(['first', 'last']), anchor: z.enum(['top', 'bottom']), width: z.number().min(60).max(300), height: z.number().min(30).max(120), perRow: z.number().int().min(1).max(6), margin: z.number().min(10).max(80) }).strict();
+export const parseSigConfig = (b) => parse(z.object({ publicFields: z.array(z.string().max(20)).max(12), signApprovals: z.boolean(), placements: z.record(z.string().max(30), placement).default({}), reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseVerifyCode = (v) => parse(z.string().regex(/^[A-Za-z0-9]{8,24}$/), v);
+
+
+// Inputs of the Excel engine API (part 04.13).
+const XL_TYPE = z.string().regex(/^[A-Z][A-Z0-9_]{1,39}$/);
+export const parseXlType = (v) => parse(XL_TYPE, v);
+export const parseXlUpload = (q) => parse(z.object({ type: XL_TYPE, onExisting: z.enum(['ERROR', 'UPDATE', 'SKIP']).default('ERROR'), fileName: text(200).min(1).default('import.xlsx') }).strict(), q);
+export const parseXlJobs = (q) => parse(z.object({ importType: XL_TYPE.optional(), status: z.enum(['UPLOADED', 'VALIDATING', 'FAILED', 'PREVIEW', 'COMMITTING', 'COMMITTED', 'PARTIAL', 'CANCELLED']).optional(), scope: z.enum(['mine', 'all']).default('all'), from: date.optional(), to: date.optional(), q: text(80).optional(), sort: z.enum(['newest', 'oldest', 'type', 'status']).default('newest'), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseXlPage = (q) => parse(z.object({ limit: z.coerce.number().int().min(1).max(500).default(50), offset: z.coerce.number().int().min(0).default(0), format: z.enum(['json', 'xlsx']).default('json') }).strict(), q);
+export const parseXlCommit = (b) => parse(z.object({ mode: z.enum(['ALL_OR_NOTHING', 'CHUNKED']).optional(), skipInvalid: z.boolean().default(false), version: z.number().int().min(1).optional() }).strict(), b ?? {});
+export const parseXlDesigner = (b) => parse(z.object({ importType: XL_TYPE, columns: z.record(z.string().max(40), z.object({ label: text(60).min(1).optional(), help: text(300).optional(), required: z.boolean().optional() }).strict()).default({}), instructions: text(2000).default(''), settings: z.object({ allowChunked: z.boolean().default(false), chunkSize: z.number().int().min(10).max(5000).default(500), maxRows: z.number().int().min(10).max(20000).optional() }).strict().default({ allowChunked: false, chunkSize: 500 }), reason: text(500).min(5, 'Give a reason of at least 5 characters') }).strict(), b);
+export const parseXlExport = (q) => parse(z.object({ format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx'), status: text(20).optional(), importType: XL_TYPE.optional() }).strict(), q);
+
+// ---- part 04.14: comments, mentions, timeline and trace links ----
+const COL_ENTITY = z.string().regex(/^[a-z][a-z_]*$/, 'Use the record type, such as sample_request').max(60);
+const COL_ID = z.union([z.string().trim().min(1).max(60), z.number().int()]).transform(String);
+const COL_KINDS = z.string().max(120).transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean)).pipe(z.array(z.enum(['audit', 'approval', 'workflow', 'comment', 'document', 'task', 'message'])).max(7));
+const COL_DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}([T ][0-9:.]+Z?)?$/, 'Use a date such as 2026-11-04');
+const COL_REF = z.object({ entity: COL_ENTITY, id: COL_ID }).strict();
+export const parseColRecord = (q) => parse(z.object({ entity: COL_ENTITY, id: COL_ID }).strict(), q);
+export const parseColComment = (b) => parse(z.object({ entity: COL_ENTITY, id: COL_ID, body: z.string().trim().min(1, 'Write something').max(10_000), parentId: z.number().int().min(1).optional() }).strict(), b);
+export const parseColEdit = (b) => parse(z.object({ body: z.string().trim().min(1, 'Write something').max(10_000), version: z.number().int().min(1).optional() }).strict(), b);
+export const parseColDelete = (b) => parse(z.object({ reason: text(300).optional() }).strict(), b ?? {});
+export const parseColReaction = (b) => parse(z.object({ reaction: z.enum(['like', 'ack', 'eyes', 'thanks']), on: z.boolean().default(true) }).strict(), b);
+export const parseColTimeline = (q) => parse(z.object({ entity: COL_ENTITY, id: COL_ID, kinds: COL_KINDS.optional(), from: COL_DATE.optional(), to: COL_DATE.optional(), q: text(100).optional(), limit: z.coerce.number().int().min(1).max(200).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseColFeed = (q) => parse(z.object({ projectId: z.coerce.number().int().min(1).optional(), kinds: COL_KINDS.optional(), from: COL_DATE.optional(), to: COL_DATE.optional(), q: text(100).optional(), limit: z.coerce.number().int().min(1).max(200).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseColTrace = (q) => parse(z.object({ entity: COL_ENTITY, id: COL_ID, depth: z.coerce.number().int().min(1).max(8).default(3) }).strict(), q);
+export const parseColLink = (b) => parse(z.object({ from: COL_REF, to: COL_REF, relation: z.enum(['DERIVED', 'AMENDS', 'FULFILS', 'SETTLES', 'REFERS']).default('REFERS'), reason: text(500).min(10, 'Give the reason for linking these records (at least 10 characters)') }).strict(), b);
+export const parseColMentions = (q) => parse(z.object({ unread: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'), limit: z.coerce.number().int().min(1).max(100).default(30), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseColRead = (b) => parse(z.object({ ids: z.array(z.number().int().min(1)).max(200).default([]), all: z.boolean().default(false) }).strict().refine((o) => o.all || o.ids.length > 0, 'Choose the mentions to mark as read'), b);
+
+// ---- part 04.15: the offline field engine ----
+const OFF_ID = z.string().trim().regex(/^[A-Za-z0-9_-]{8,64}$/, 'Use the id the device made (8 to 64 letters, digits, - or _)');
+const OFF_DEVICE = z.string().trim().regex(/^[A-Za-z0-9_-]{8,64}$/, 'Use the device id (8 to 64 letters, digits, - or _)');
+const OFF_VALUES = z.record(z.string().max(40), z.union([z.string().max(2000), z.number(), z.boolean(), z.null()])).refine((o) => Object.keys(o).length <= 40, 'At most 40 fields');
+const OFF_COMMAND = z.object({
+  id: OFF_ID, seq: z.number().int().min(0).max(1_000_000_000).default(0), type: z.string().regex(/^[a-z][a-z_]{1,40}$/), op: z.enum(['create', 'update']).default('create'),
+  ref: OFF_ID.optional(), clientRef: OFF_ID.optional(), entityId: z.union([z.string().max(60), z.number().int()]).transform(String).optional(),
+  values: OFF_VALUES.default({}), baseVersion: z.number().int().min(1).optional(), baseValues: OFF_VALUES.optional(),
+  createdAt: z.string().max(40).optional(), deviceClock: z.string().max(40).optional(), label: z.string().trim().max(120).optional(),
+  gps: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), accuracy: z.number().min(0).max(100_000).optional() }).strict().optional(),
+}).strict();
+export const parseOffDevice = (b) => parse(z.object({ deviceId: OFF_DEVICE, name: text(80).optional(), platform: text(80).optional() }).strict(), b);
+export const parseOffWiped = (b) => parse(z.object({ deviceId: OFF_DEVICE }).strict(), b);
+export const parseOffDevices = (q) => parse(z.object({ all: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'), status: z.enum(['ACTIVE', 'REVOKED']).optional(), q: text(60).optional(), limit: z.coerce.number().int().min(1).max(100).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseOffRevoke = (b) => parse(z.object({ reason: text(300).min(3, 'Give the reason for revoking this device') }).strict(), b);
+export const parseOffMasters = (q) => parse(z.object({ since: z.string().regex(/^\d{4}-\d{2}-\d{2}T[0-9:.]+Z$/, 'Use a time such as 2026-11-04T10:00:00.000Z').optional(), codes: z.string().max(200).transform((s) => s.split(',').map((x) => x.trim()).filter(Boolean)).optional() }).strict(), q);
+export const parseOffSync = (b) => parse(z.object({ deviceId: OFF_DEVICE, deviceTime: z.string().max(40).optional(), commands: z.array(OFF_COMMAND).min(1).max(500) }).strict(), b);
+export const parseOffCommands = (q) => parse(z.object({ status: z.enum(['APPLIED', 'CONFLICT', 'REJECTED', 'NEEDS_CONFIRMATION', 'DEFERRED', 'RESOLVED', 'DECLINED']).optional(), all: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'), limit: z.coerce.number().int().min(1).max(100).default(50), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseOffResolve = (b) => parse(z.object({ choice: z.enum(['MINE', 'SERVER', 'MERGE']), fields: z.record(z.string().max(40), z.string().max(2000)).default({}) }).strict(), b);
+export const parseOffDecision = (b) => parse(z.object({ decision: z.enum(['CONFIRM', 'DECLINE']), reason: text(300).optional() }).strict(), b);
+export const parseOffUpload = (b) => parse(z.object({ deviceId: OFF_DEVICE, commandId: OFF_ID, fileName: text(200).min(1), totalSize: z.number().int().min(1).max(25 * 1024 * 1024), chunkSize: z.number().int().min(1).max(1024 * 1024) }).strict(), b);
+export const parseOffChunk = (p) => parse(z.object({ id: z.string().uuid(), index: z.coerce.number().int().min(0).max(100_000) }).strict(), p);
+export const parseOffUploadId = (v) => parse(z.string().uuid(), v);

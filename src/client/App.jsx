@@ -1,6 +1,9 @@
 import ApproveLinkPage from './modules/eng/ApproveLinkPage.jsx';
+import VerifyPage from './modules/eng/VerifyPage.jsx';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import ChatDock from './modules/msg/ChatDock.jsx';
+import { startOffline, unsentCount, wipeOnSignOut } from './platform/offline/engine.js';
 import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
 import { allRoutes, findRoute, routesFor } from './platform/shell/registry.js';
 import { useFeatureFlag, useSession } from './modules/core/api/index.js';
@@ -94,6 +97,11 @@ function Shell({ iam, user }) {
   const found = findRoute(path.split('?')[0]);
   const field = useFlag('ff.ui.p0306', shellOn);
   const migration = useFlag('ff.ui.p0310', shellOn);
+  // the offline field engine (part 04.15) starts for the signed-in person when its flag is on
+  const offlineFlag = useFlag('ff.eng.p0415', Boolean(s));
+  const msgFlag = useFlag('ff.msg.p0501', Boolean(s));
+  const offlineUser = s ? (iam && user ? user.username ?? user.id ?? null : identity.user) : null;
+  useEffect(() => { if (offlineFlag.on && offlineUser) startOffline(String(offlineUser)).catch(() => {}); }, [offlineFlag.on, offlineUser]);
   const toNewAddress = useCallback((to) => { window.history.replaceState(null, '', to); setPath(to); }, []);
   useLegacyRedirect({ ready: shellOn && migration.on, go: toNewAddress }); // an old address leads to the page that replaced it (part 03.10)
   const fallback = shellOn ? findRoute(onboarding ? '/welcome' : field.on && landsOnField(s?.roles) ? '/field' : '/home') : allRoutes()[0];
@@ -140,8 +148,8 @@ function Shell({ iam, user }) {
         <AppShell
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
-          onSignOut={iam && user ? () => { pwa.clearApiCache(); return signOut().then(() => qc.clear()); } : null} identityBar={identityBar}
-          extras={<FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>}
+          onSignOut={iam && user ? () => { if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve(); pwa.clearApiCache(); return signOut().then(() => wipeOnSignOut()).then(() => qc.clear()); } : null} identityBar={identityBar}
+          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <ChatDock session={s} />}</>}
         />
       </FeedbackProvider>
     );
@@ -181,6 +189,7 @@ function Shell({ iam, user }) {
       {identityBar}
       <main id="main">
         {s && route && <route.Page session={s} />}
+        {s && msgFlag.on && !onboarding && <ChatDock session={s} />}
         {unreachable}
       </main>
     </FeedbackProvider>
@@ -196,6 +205,8 @@ export default function App({ authMode = 'dev-headers' }) {
   if (window.location.pathname === '/accept-invite') return <AcceptInvitePage />;
   // a secure approval link is opened before anybody is signed in (part 04.03)
   if (window.location.pathname === '/approve-link') return <ApproveLinkPage />;
+  // the page a QR code on a document leads to is public (part 04.12)
+  if (window.location.pathname === '/verify' || window.location.pathname.startsWith('/verify/')) return <VerifyPage />;
   if (authMode !== 'iam') return <Shell iam={false} user={null} />;
   if (!user) {
     const notice = wasSignedIn.current ? 'signed-out' : '';

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import MentionsInbox from '../../platform/collab/MentionsInbox.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
 import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { NTF, useMark, useNotifications, useReadAll } from '../../platform/notifications/api.js';
@@ -20,6 +22,7 @@ const dayLabel = (iso) => {
 
 export default function NotificationsPage({ session }) {
   usePageTitle('Notifications');
+  const collab = useFlagOn('ff.eng.p0414');
   const [filters, setFilters] = useState({ state: 'inbox', category: '', q: '' });
   const [page, setPage] = useState(1);
   const q = useNotifications({ ...filters, limit: PAGE, offset: (page - 1) * PAGE });
@@ -35,6 +38,7 @@ export default function NotificationsPage({ session }) {
   return (
     <section aria-labelledby="nc-title" data-testid="notifications">
       <h1 id="nc-title">Notifications</h1>
+      {collab && <MentionsInbox navigate={navigateTo} />}
       <p className="muted">What the system told you. <Link to="/notifications/preferences">Preferences</Link> decide the channels, the quiet hours and the digest.</p>
       <div role="tablist" aria-label="Show" className="wf-inline">
         {Object.entries(STATE).map(([k, l]) => <button key={k} role="tab" type="button" aria-selected={filters.state === k} className={filters.state === k ? 'btn btn-primary' : 'btn'} onClick={() => set({ state: k })}>{l}{k === 'unread' && d?.counts.unread ? ` (${d.counts.unread})` : ''}</button>)}

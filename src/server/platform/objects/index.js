@@ -15,6 +15,9 @@
  *     maskSnapshot(db, actor, snapshot) -> snapshot                                  masks sensitive values of a snapshot for this actor
  *     maskEntries(db, actor, values) -> values                                       masks sensitive values of an audit entry's old or new values
  *     print(db, actor, id) -> { buffer, fileName }
+ *     summary(db, actor, id) -> { label, status?, amount? }                           one line for trace panels and mention inboxes (part 04.14)
+ *     search(db, actor, q, limit) -> [{ id }]                                          records the person may open, found by number or title (the record picker of Messages, part 05.01)
+ *     projectRecords(db, companyId, projectId, limit) -> id[]                          the records of a project, for the project activity feed (part 04.14)
  *   })
  */
 const types = new Map();

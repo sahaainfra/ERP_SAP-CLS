@@ -1623,3 +1623,1336 @@ paths:
     post:
       summary: Create and submit sample documents from rows; each row goes through the same control checks as the screen, and a row a control stops stays a draft (Idempotency-Key required)
       responses: { '201': { description: '{ data }' } }
+  /api/v1/tpl/templates:
+    get:
+      summary: List the templates, the shared standard formats and the company's own versions (tpl.template.view); filters docType, status, q
+      responses: { '200': { description: '{ data: { rows, total, docTypes, canEdit } }' } }
+    post:
+      summary: Make a draft template, a new code or the next version of a code; the HTML is checked against the variable catalogue of the document type (tpl.template.edit, Idempotency-Key required)
+      responses: { '201': { description: the draft }, '409': { description: a draft of the code already exists }, '422': { description: a variable is not in the catalogue, or the HTML is outside the allowed subset } }
+  /api/v1/tpl/templates/catalogue:
+    get:
+      summary: The variables, the groups and the standard format of a document type (query docType)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/tpl/templates/validate:
+    post:
+      summary: Check a template without saving it; returns every problem with its line (body docType, html, css)
+      responses: { '200': { description: '{ data: { ok, problems, warnings, variables } }' } }
+  /api/v1/tpl/templates/preview:
+    post:
+      summary: Draw a template with the sample record or a real record as a PDF watermarked PREVIEW; nothing is stored (body templateId or docType and html; recordId)
+      responses: { '200': { description: application/pdf }, '403': { description: no right to see templates, or to print the record } }
+  /api/v1/tpl/templates/{id}:
+    get:
+      summary: One template with its HTML, style, letterhead and versions
+      responses: { '200': { description: '{ data }' } }
+    patch:
+      summary: Change a draft (rowVersion for optimistic locking)
+      responses: { '200': { description: the draft }, '409': { description: changed by someone else, or not a draft } }
+    delete:
+      summary: Discard a draft
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/tpl/templates/{id}/submit:
+    post:
+      summary: Send the draft to the process owner of its document type for approval (maker-checker); the maker cannot approve it (Idempotency-Key required)
+      responses: { '202': { description: in review, with the workflow instance } }
+  /api/v1/tpl/records:
+    get:
+      summary: The approved records documents are made from (tpl.document.generate); pay and identity fields are masked without tpl.document.generate_sensitive
+      responses: { '200': { description: '{ data: { rows } }' } }
+    put:
+      summary: A module hands over the approved data of a document; totals are recomputed and a different total sent is refused (tpl.record.publish, Idempotency-Key required)
+      responses: { '200': { description: the record }, '409': { description: an official document exists and no reason was given }, '422': { description: the data does not pass the checks } }
+  /api/v1/tpl/generate:
+    post:
+      summary: Generate an official document (PDF with a QR verification code) from approved data and the active template (body docType, entityId, templateCode, purpose, pdfa, reason; Idempotency-Key required). A new version of an existing document needs a reason.
+      responses: { '201': { description: the generated document }, '403': { description: no right to generate here }, '409': { description: a document exists and no reason, or no approved template }, '422': { description: not approved data or a sample }}
+  /api/v1/tpl/generate/bulk:
+    post:
+      summary: Generate up to 1000 documents as one background job; every record is checked with the caller's rights first and nothing starts if one is refused (Idempotency-Key required)
+      responses: { '202': { description: the job, QUEUED } }
+  /api/v1/tpl/generate/bulk/{id}:
+    get:
+      summary: Progress and result of a bulk generation
+      responses: { '200': { description: '{ data: { status, total, done, failed, results } }' } }
+  /api/v1/tpl/generated:
+    get:
+      summary: The generated documents the caller may see, with filters, the count by document type and the deliveries sent (tpl.document.view)
+      responses: { '200': { description: '{ data: { rows, total, summary } }' } }
+  /api/v1/tpl/generated/export:
+    get:
+      summary: The same list as xlsx, csv or pdf, honouring the filters and the caller's visibility
+      responses: { '200': { description: file } }
+  /api/v1/tpl/generated/{id}:
+    get:
+      summary: One generated document with its versions and its delivery log (a payslip is not said to exist to someone without the right)
+      responses: { '200': { description: '{ data }' }, '404': { description: not found or not visible } }
+  /api/v1/tpl/generated/{id}/content:
+    get:
+      summary: The PDF for a signed-in person; each opening is written to the audit trail and the delivery log (query download=1 to save)
+      responses: { '200': { description: application/pdf } }
+  /api/v1/tpl/generated/{id}/file:
+    get:
+      summary: The PDF for a signed link (exp, sig) sent in an e-mail or WhatsApp message; no sign-in, valid 7 days, the signature covers the expiry
+      responses: { '200': { description: application/pdf }, '403': { description: link not valid }, '410': { description: link expired } }
+  /api/v1/tpl/generated/{id}/deliver:
+    post:
+      summary: Deliver by EMAIL, WHATSAPP (through the communication gateway), MESSAGE or PORTAL (published as an event for the owning module); one delivery row for each recipient (tpl.document.deliver, Idempotency-Key required)
+      responses: { '201': { description: '{ data: { deliveries } }' } }
+  /api/v1/tpl/deliveries:
+    get:
+      summary: The delivery log (not the downloads)
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/tpl/rules:
+    get:
+      summary: The approval milestones that generate a document by themselves
+      responses: { '200': { description: '{ data: { rows, workflowTypes } }' } }
+    put:
+      summary: Switch on or off the generation of a document when a workflow document type is approved (tpl.rule.edit)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/tpl/verify/{code}:
+    get:
+      summary: Public, no sign-in. What a QR code on a document says: genuine or not, the version, whether it is the current one (04.12 builds the verification page on this)
+      responses: { '200': { description: '{ data: { valid, current, message, document } }' } }
+  /api/v1/verify/{code}:
+    get:
+      summary: Public, no sign-in, rate limited. Whether the document is genuine, superseded (with the date), cancelled (with the date) or unknown, and the fields the company made public (type, number, issuer, version, date, signers, project, amount)
+      responses: { '200': { description: '{ data: { found, valid, status, message, ... } }' } }
+  /api/v1/verify/{code}/file:
+    post:
+      summary: Public. Compare the file sent as the request body with the stored hash of the document and its signed copies; a mismatch is a security event
+      responses: { '200': { description: '{ data: { ..., file: { match, kind, fingerprint, message } } }' }, '400': { description: empty body } }
+  /api/v1/sig/documents/{id}:
+    get:
+      summary: Full detail of the signatures of a generated document, its hash, the chain check, the copies and the checks made (sig.document.view)
+      responses: { '200': { description: '{ data }' }, '404': { description: not found or not visible } }
+  /api/v1/sig/documents/{id}/sign:
+    post:
+      summary: Sign a document (body method APPROVAL, IMAGE, ESIGN or DSC; sig.document.sign; Idempotency-Key required). ESIGN and DSC need a connected provider.
+      responses: { '201': { description: the document with its signatures }, '409': { description: already signed, cancelled, superseded or no provider }, '422': { description: no signature picture } }
+  /api/v1/sig/documents/{id}/cancel:
+    post:
+      summary: Cancel a document; verification then says so with the date (sig.document.cancel; reason required)
+      responses: { '200': { description: '{ data }' }, '409': { description: already cancelled } }
+  /api/v1/sig/documents/{id}/signed:
+    get:
+      summary: The signed copy (or the original when nobody signed) for a signed-in person who may see the document
+      responses: { '200': { description: application/pdf } }
+  /api/v1/sig/signatures/{id}/revoke:
+    post:
+      summary: Revoke a signature (sig.signature.revoke; reason required); the stamped copy is redrawn and verification shows it
+      responses: { '200': { description: '{ data }' }, '409': { description: already revoked } }
+  /api/v1/sig/verify/{code}:
+    get:
+      summary: Full detail by code for a signed-in person who may see the document
+      responses: { '200': { description: '{ data }' }, '404': { description: unknown or not visible } }
+  /api/v1/sig/register:
+    get:
+      summary: The signature register with filters, count by method and status, checks made (sig.register.view; limited to the caller's projects)
+      responses: { '200': { description: '{ data: { rows, total, summary } }' } }
+  /api/v1/sig/register/export:
+    get:
+      summary: The register as xlsx, csv or pdf
+      responses: { '200': { description: file } }
+  /api/v1/sig/profile:
+    get:
+      summary: The caller's own signature picture
+      responses: { '200': { description: '{ data: { has, image } }' } }
+    put:
+      summary: Set the signature picture (PNG or JPEG data URL, at most 150 KB)
+      responses: { '200': { description: '{ data }' }, '400': { description: not a usable picture } }
+    delete:
+      summary: Remove the signature picture
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/sig/config:
+    get:
+      summary: The public fields, automatic signing and stamp placement in force, and a change that waits for approval (sig.config.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/sig/config/changes:
+    post:
+      summary: Propose a change of the signature settings; it takes effect when a director or another administrator approves (sig.config.edit; Idempotency-Key required)
+      responses: { '202': { description: waiting for approval }, '409': { description: a change already waits } }
+  /api/v1/xl/templates:
+    get:
+      summary: The imports the caller may open, with their columns, version and whether they may be exported (xl.import.use)
+      responses: { '200': { description: '{ data: { types } }' } }
+  /api/v1/xl/templates/{type}/download:
+    get:
+      summary: The template workbook of an import (protected header, instructions, drop-down lists, type and version); needs the import's own permission
+      responses: { '200': { description: xlsx }, '403': { description: no right to this import } }
+  /api/v1/xl/templates/{type}/export:
+    get:
+      summary: The data of an import type in the form of its template, with sensitive columns masked
+      responses: { '200': { description: xlsx } }
+  /api/v1/xl/designer:
+    get:
+      summary: Each import with its wording, required flags, settings, a change waiting for approval and the history of versions (xl.template.view)
+      responses: { '200': { description: '{ data }' } }
+  /api/v1/xl/designer/changes:
+    post:
+      summary: Propose a change of a template (labels, help, instructions, required, chunked commit); it takes effect when a second person approves (xl.template.edit; Idempotency-Key required)
+      responses: { '202': { description: waiting for approval }, '409': { description: a change already waits } }
+  /api/v1/xl/jobs:
+    post:
+      summary: Upload a filled template (the raw .xlsx as the body; query type, onExisting ERROR|UPDATE|SKIP, fileName; Idempotency-Key required). The file is scanned and a job checks it; nothing is saved.
+      responses: { '202': { description: the job }, '400': { description: empty, too large or not .xlsx }, '403': { description: no right to this import }, '422': { description: refused by the virus scan } }
+    get:
+      summary: The history of import jobs (own; all with xl.job.view_all) with filters and the count by status
+      responses: { '200': { description: '{ data: { rows, total, summary } }' } }
+  /api/v1/xl/jobs/{id}:
+    get:
+      summary: One job with its status, counts, mode, progress, structure problems and result
+      responses: { '200': { description: '{ data }' }, '404': { description: not found or not yours } }
+  /api/v1/xl/jobs/{id}/preview:
+    get:
+      summary: A page of the rows as read, with what each will do (create, update, skip, error), sensitive columns masked
+      responses: { '200': { description: '{ data: { columns, rows, total } }' } }
+  /api/v1/xl/jobs/{id}/errors:
+    get:
+      summary: The row-level errors (sheet, row, column, value, reason); format=xlsx gives the error file to correct and upload again
+      responses: { '200': { description: json or xlsx } }
+  /api/v1/xl/jobs/{id}/commit:
+    post:
+      summary: Commit a checked job (skipInvalid to leave the rows with errors out, mode CHUNKED where the template allows it, version for optimistic locking; Idempotency-Key required). Runs as a background job; all or nothing.
+      responses: { '202': { description: committing }, '409': { description: rows have errors, not in a committable state or changed }, '422': { description: nothing to import or chunked not enabled } }
+  /api/v1/xl/jobs/{id}/cancel:
+    post:
+      summary: Cancel a job that is not committed; nothing was saved
+      responses: { '200': { description: '{ data }' }, '409': { description: committing or committed } }
+  /api/v1/xl/exports:
+    get:
+      summary: The lists the caller may export
+      responses: { '200': { description: '{ data: { exports } }' } }
+  /api/v1/xl/exports/{code}:
+    get:
+      summary: Export a registered list (xlsx, csv or pdf), limited to what the caller may see, sensitive columns masked, formulas made inert
+      responses: { '200': { description: file }, '403': { description: no right }, '404': { description: unknown list } }
+  /api/v1/col/comments:
+    get:
+      summary: The threaded discussion of a record (query entity, id) with reactions, files, who may edit or delete, the settings and the comments written before part 04.14 (read only)
+      responses: { '200': { description: '{ data: { comments, legacy, total, settings, canModerate } }' }, '403': { description: no right to the record type }, '404': { description: the record does not exist for this person } }
+    post:
+      summary: Post a comment or a reply ({ entity, id, body, parentId? }; Idempotency-Key required). A mention of a person who cannot see the record refuses the comment
+      responses: { '201': { description: '{ data: { id, mentions, ignored } }' }, '422': { description: a mentioned person cannot see the record, or the text is too long } }
+  /api/v1/col/comments/{id}:
+    patch:
+      summary: Edit a comment inside the edit window (author only; version for optimistic locking)
+      responses: { '200': { description: edited }, '403': { description: not the author }, '409': { description: changed meanwhile }, '422': { description: the window is over } }
+    delete:
+      summary: Delete a comment (author, or a moderator with a reason); the text stays in the audit trail
+      responses: { '200': { description: deleted }, '403': { description: neither the author nor a moderator }, '422': { description: a reason is needed } }
+  /api/v1/col/comments/{id}/reactions:
+    post:
+      summary: Add or take back a reaction ({ reaction like|ack|eyes|thanks, on })
+      responses: { '200': { description: '{ data: { count, mine } }' }, '422': { description: reactions are switched off } }
+  /api/v1/col/timeline:
+    get:
+      summary: The activity timeline of a record (query entity, id, kinds, from, to, q, limit, offset) merging audit, approvals, workflow, comments, documents, tasks and messages, newest first, with the count of each kind
+      responses: { '200': { description: '{ data: { rows, total, counts, kinds } }' } }
+  /api/v1/col/feed:
+    get:
+      summary: The project activity feed (query projectId, kinds, from, to, q, limit, offset); without projectId the projects the person may pick
+      responses: { '200': { description: '{ data: { rows, total, counts, projects } }' }, '403': { description: no col.activity.view for that project } }
+  /api/v1/col/trace:
+    get:
+      summary: What a record came from (upstream) and what came from it (downstream) to a depth of 1 to 8, with status and amount; records the person cannot open appear as restricted
+      responses: { '200': { description: '{ data: { root, upstream, downstream, totals, truncated, canLink } }' } }
+  /api/v1/col/trace/links:
+    post:
+      summary: Link two records by hand ({ from, to, relation, reason of 10 characters or more }); permission col.trace.link and access to both records
+      responses: { '201': { description: linked }, '409': { description: already linked } }
+  /api/v1/col/trace/links/{id}:
+    delete:
+      summary: Remove a link that was made by hand (a link made by the system cannot be removed)
+      responses: { '200': { description: removed }, '422': { description: made by the system } }
+  /api/v1/col/mentions:
+    get:
+      summary: The mentions inbox of the person (query unread, limit, offset), only for records they can still open
+      responses: { '200': { description: '{ data: { rows, total, unread } }' } }
+  /api/v1/col/mentions/read:
+    post:
+      summary: Mark mentions as read ({ ids } or { all: true })
+      responses: { '200': { description: '{ data: { marked } }' } }
+  /api/v1/off/devices:
+    post:
+      summary: Register this browser for offline work ({ deviceId, name, platform }); registering again is the same device; a revoked device is refused with wipe
+      responses: { '201': { description: the device }, '403': { description: DEVICE_REVOKED with details[0].wipe } }
+    get:
+      summary: The person's devices; all of them with all=true and off.device.manage (query status, q, limit, offset)
+      responses: { '200': { description: '{ data: { rows, total, counts, canManage } }' } }
+  /api/v1/off/devices/{id}/revoke:
+    post:
+      summary: Revoke a device ({ reason }); the IT administrator any device, a person their own. Its next contact is told to wipe its local data
+      responses: { '200': { description: the device }, '404': { description: not found or not yours }, '409': { description: already revoked } }
+  /api/v1/off/devices/wiped:
+    post:
+      summary: The device confirms that its local data was removed
+      responses: { '200': { description: the device with status WIPED } }
+  /api/v1/off/masters:
+    get:
+      summary: The master data and the offline forms with their rules for this person (query since for a delta, codes); includes expiresAt after which the copy is not to be used
+      responses: { '200': { description: '{ data: { serverTime, expiresAt, forms, masters, settings } }' }, '403': { description: DEVICE_REVOKED } }
+  /api/v1/off/sync:
+    post:
+      summary: Send a batch of offline commands ({ deviceId, deviceTime, commands[{ id, seq, type, op, ref, entityId, values, baseVersion, baseValues, createdAt, gps }] }); the same id again returns the first answer; the result of each is APPLIED, REJECTED, DEFERRED, CONFLICT or NEEDS_CONFIRMATION; driftMs and a warning are returned
+      responses: { '200': { description: '{ data: { serverTime, driftMs, driftWarning, results, counts } }' }, '403': { description: DEVICE_REVOKED }, '404': { description: DEVICE_UNKNOWN }, '422': { description: more than the batch limit } }
+  /api/v1/off/commands:
+    get:
+      summary: The commands of the person and what became of them (query status, all with off.sync.view_all)
+      responses: { '200': { description: '{ data: { rows, total, counts } }' } }
+  /api/v1/off/commands/{id}:
+    get:
+      summary: One command with what the phone sent
+      responses: { '200': { description: the command }, '404': { description: not found or not yours } }
+  /api/v1/off/commands/{id}/resolve:
+    post:
+      summary: Resolve a conflict ({ choice MINE|SERVER|MERGE, fields { key: mine|server|typed value } })
+      responses: { '200': { description: RESOLVED }, '409': { description: not in conflict }, '422': { description: a side is missing or the result fails validation } }
+  /api/v1/off/confirmations:
+    get:
+      summary: Old offline commands waiting for a supervisor (permission off.sync.confirm, for the supervisor's projects)
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/off/commands/{id}/confirm:
+    post:
+      summary: Confirm or decline an old command ({ decision CONFIRM|DECLINE, reason }); not by its author
+      responses: { '200': { description: APPLIED or DECLINED }, '403': { description: own command or no right for the project }, '409': { description: not waiting } }
+  /api/v1/off/uploads:
+    post:
+      summary: Start (or resume) a photo upload for a command ({ deviceId, commandId, fileName, totalSize, chunkSize }); the answer lists the chunks already received
+      responses: { '201': { description: the upload }, '404': { description: the command is not known to the server yet } }
+  /api/v1/off/uploads/{id}:
+    get:
+      summary: The state of an upload (received chunks, status)
+      responses: { '200': { description: the upload } }
+  /api/v1/off/uploads/{id}/chunks/{index}:
+    put:
+      summary: One chunk of the file (raw bytes, at most 1 MB)
+      responses: { '200': { description: the upload }, '422': { description: the chunk has the wrong size } }
+  /api/v1/off/uploads/{id}/complete:
+    post:
+      summary: Assemble the file, check its type, size and for viruses, and attach it to the record the command made; completing twice is the same file
+      responses: { '200': { description: the upload with fileId }, '409': { description: the record is not saved yet }, '422': { description: refused } }
+  /api/v1/msg/conversations:
+    get:
+      summary: The person's conversations in one list, pinned first then by last activity, with unread counts and the last message (query view all|unread|pinned|archived|<type>, q, limit, offset); external threads of the communication gateway are included for those who may read the log
+      responses: { '200': { description: '{ data: { rows, total, counts, canExternal, canManage } }' } }
+    post:
+      summary: Make a conversation ({ type DIRECT|GROUP|TEAM|PROJECT|SITE|DEPARTMENT|RECORD, title, members, projectId, siteId, departmentId, entity, entityId }); a direct, place or record conversation that exists is returned (200) instead of a second one (201)
+      responses: { '201': { description: '{ data: { id, created } }' }, '403': { description: no right to make that channel }, '422': { description: a person is unknown or cannot see the record } }
+  /api/v1/msg/conversations/{id}:
+    get:
+      summary: Details of a conversation: members, shared files, linked records (cards drawn for the reader) and the person's own settings
+      responses: { '200': { description: the conversation }, '404': { description: not a member, or it does not exist } }
+    patch:
+      summary: Rename a group, team or channel (administrators)
+      responses: { '200': { description: the conversation }, '403': { description: not an administrator } }
+  /api/v1/msg/conversations/{id}/settings:
+    put:
+      summary: The person's own pin, mute (mutedUntil), mention-only and archive of this conversation
+      responses: { '200': { description: the conversation } }
+  /api/v1/msg/conversations/{id}/archive:
+    post:
+      summary: Archive or unarchive for everyone (administrators); nobody can write in an archived conversation
+      responses: { '200': { description: the conversation } }
+  /api/v1/msg/conversations/{id}/read:
+    post:
+      summary: Mark the conversation read up to a message (default the last)
+      responses: { '200': { description: '{ data: { id, lastRead } }' } }
+  /api/v1/msg/conversations/{id}/messages:
+    get:
+      summary: A page of messages, oldest first, ending before the id given in before (query limit); record cards are drawn for the reader; an external thread is read in place and read-only
+      responses: { '200': { description: '{ data: { rows, hasMore, readOnly, lastRead } }' }, '404': { description: not a member } }
+    post:
+      summary: Send a message ({ body, kind, replyToId, attachments[fileIds], recordLinks[{entity,id}], clientId }); the same clientId returns the same message; a mention of someone outside the conversation is refused
+      responses: { '201': { description: the message }, '422': { description: empty, too long, unknown file, record not open to the sender, mention of a non-member } }
+  /api/v1/msg/conversations/{id}/members:
+    post:
+      summary: Add people ({ users[] }); administrators; for a record conversation each person must be able to open the record
+      responses: { '200': { description: the conversation }, '403': { description: not an administrator }, '422': { description: unknown person, no access to the record or the member limit } }
+  /api/v1/msg/conversations/{id}/members/{user}:
+    delete:
+      summary: Remove a member, or leave (the person's own name); automatic members of a channel cannot be removed by hand
+      responses: { '200': { description: the conversation, or { left: true } } }
+    patch:
+      summary: Make a member an administrator or a member ({ role })
+      responses: { '200': { description: the conversation }, '422': { description: a conversation keeps one administrator } }
+  /api/v1/msg/messages/{id}:
+    patch:
+      summary: Edit your own message inside the edit window
+      responses: { '200': { description: the message }, '422': { description: the window is over } }
+    delete:
+      summary: Delete for everyone inside the edit window (the sender) or at any time with a reason (an administrator of the conversation); the words stay in the audit trail
+      responses: { '200': { description: '{ data: { id, status: DELETED } }' }, '409': { description: already deleted } }
+  /api/v1/msg/messages/{id}/reactions:
+    post:
+      summary: Add or take back an emoji reaction ({ emoji, on })
+      responses: { '200': { description: '{ data: { count, mine } }' } }
+  /api/v1/msg/messages/{id}/forward:
+    post:
+      summary: Forward the words and record links of a message to other conversations of the person ({ conversationIds[] }); the copies are marked forwarded
+      responses: { '201': { description: '{ data: { forwarded, messages } }' } }
+  /api/v1/msg/people:
+    get:
+      summary: Active people of the company to write to or add (query q)
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/msg/record-types:
+    get:
+      summary: The kinds of record the person may link into a message
+      responses: { '200': { description: '{ data: { rows } }' } }
+  /api/v1/msg/records:
+    get:
+      summary: Search records of a kind by number or title among those the person may open (query type, q)
+      responses: { '200': { description: '{ data: { rows } } as record cards' } }
+  /api/v1/msg/unread:
+    get:
+      summary: The number of conversations with unread messages
+      responses: { '200': { description: '{ data: { unread } }' } }
+  /api/v1/msg/verify:
+    get:
+      summary: Counts and checksums of the earlier stores against the unified index (permission msg.admin.view)
+      responses: { '200': { description: '{ data: { stores, ok } }' }, '403': { description: no right } }
+  /api/v1/msg/conversations/{id}/export:
+    get:
+      summary: A conversation as CSV for compliance (permission msg.compliance.export); audited
+      responses: { '200': { description: text/csv }, '403': { description: no right } }
+
+  /api/v1/msg/me/settings:
+    get:
+      summary: The person's own messaging privacy: share read receipts, share last seen (an organisation that enforces receipts overrides the first)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+    put:
+      summary: Change the person's own privacy settings
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/presence:
+    post:
+      summary: Heartbeat: the person is online (auto-away after 5 minutes, offline after 60 seconds of silence)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+    get:
+      summary: Presence of the given people (query users), hiding last seen where the person chose to
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/typing:
+    post:
+      summary: Typing indicator, sent as a transient event; never stored
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/delivered:
+    post:
+      summary: Mark the messages shown on a device as delivered
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/receipts:
+    get:
+      summary: Who has had and who has read a message (groups: read details; respects privacy unless the organisation enforces receipts)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/search:
+    get:
+      summary: Search messages (query q, conversation, from, type, dates); never returns what was said while the person was not a member; each hit carries the id to jump to
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/star:
+    post:
+      summary: Star or unstar a message for the person
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/starred:
+    get:
+      summary: The person's starred messages
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/pin:
+    post:
+      summary: Pin or unpin a message in the conversation (members)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/pins:
+    get:
+      summary: Pinned messages of a conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/messages/{id}/hide:
+    post:
+      summary: Delete a message for me only
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/media:
+    get:
+      summary: Media gallery: photos, videos, files, links and voice notes (query kind)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/holds:
+    get:
+      summary: Legal holds (permission msg.legal_hold.manage)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/hold:
+    post:
+      summary: Place a legal hold with a reason (permission msg.legal_hold.manage); audited
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/holds/{id}/release:
+    post:
+      summary: Release a hold; a different person than the one who placed it, with a reason
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/ringing:
+    get:
+      summary: Calls ringing for the person now
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}:
+    get:
+      summary: One call with participants and the ICE servers (STUN, TURN with short-lived credentials)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/join:
+    post:
+      summary: Join a call
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/decline:
+    post:
+      summary: Decline a call
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/end:
+    post:
+      summary: Leave or end a call; recording is never made
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/calls/{id}/signal:
+    post:
+      summary: Pass a WebRTC offer, answer or candidate to a participant (transient, size-limited, not stored)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/conversations/{id}/calls:
+    get:
+      summary: Call history of a conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+    post:
+      summary: Start an audio or video call in a conversation (members; calls must be enabled)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/config:
+    get:
+      summary: The messaging settings in force, the version waiting, history (permission msg.settings.view); the TURN secret is masked
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/config/changes:
+    post:
+      summary: Propose new settings: maker-checker, effective from a date, mandatory reason (permission msg.settings.edit); 202 with the workflow instance
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/msg/config/export:
+    get:
+      summary: Export the settings and history as JSON
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not a member or not found } }
+  /api/v1/sec/devices:
+    post:
+      summary: Register a device: public identity key, signed pre-key (signature checked) and one-time pre-keys; refused until the licence review is approved and the policy is on
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+    get:
+      summary: The person's own devices
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/all:
+    get:
+      summary: Devices of everyone (permission sec.device.manage)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/{id}/revoke:
+    post:
+      summary: Revoke a lost device (owner or sec.device.manage); undelivered envelopes for it are dropped
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/{id}/prekeys:
+    post:
+      summary: More one-time pre-keys or a new signed pre-key for an own device
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/devices/{id}/prekeys/count:
+    get:
+      summary: How many one-time pre-keys are left
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/prekeys/{userId}:
+    get:
+      summary: Public keys of a person's devices (consume=1 uses one-time keys)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/ready:
+    get:
+      summary: Whether secure messaging is usable and the caller may start a conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations:
+    post:
+      summary: Make a secure conversation ({ members, title, disappearSeconds }); the people need a device and the caller a role of the policy
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations/{id}:
+    get:
+      summary: A secure conversation: members, disappearing time, policy limits
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations/{id}/bundles:
+    get:
+      summary: Keys of every device of every member except the sender's device
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/conversations/{id}/disappearing:
+    put:
+      summary: Set the disappearing time within the policy
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/envelopes:
+    post:
+      summary: Store the encrypted envelopes of one message (one per device; 409 when the device list changed); Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+    get:
+      summary: Envelopes waiting for an own device (device, since, limit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/envelopes/ack:
+    post:
+      summary: Confirm delivery: the ciphertext is emptied
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/cards:
+    get:
+      summary: A record card drawn for the caller (restricted when the caller may not open it)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/policy:
+    get:
+      summary: The secure messaging policy in force, the version waiting and history (sec.policy.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/policy/changes:
+    post:
+      summary: Propose a policy change: maker-checker, dated, reason (sec.policy.edit); 202
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/policy/export:
+    get:
+      summary: Export the policy and its history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences:
+    get:
+      summary: The open-source licence register (filters q, status, licence) and the reviews
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+    post:
+      summary: Add or change a component (status changes only by an approved review)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences/scan:
+    post:
+      summary: Read package.json and installed licences into the register
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences/export:
+    get:
+      summary: Register as CSV
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/sec/licences/reviews:
+    post:
+      summary: Send the licence review for approval (ITADM, then DIR); 202
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '422': { description: a business rule refused it } }
+  /api/v1/msg/center/summary:
+    get:
+      summary: The Communication Center: tiles (chats, teams, projects, sites, departments, ERP-linked, unread, pending acknowledgements, important instructions, announcements, escalations), pending items and exceptions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/messages/{id}/instruction:
+    post:
+      summary: Mark an own message as an instruction ({ priority, dueAt, requiresAck, title }); permission msg.instruction.send within the project or site of the conversation; the other members must acknowledge
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions:
+    get:
+      summary: The instruction register (view sent|all, status, priority, overdue, q, from, to): sender, acknowledgement percentage, overdue
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/export:
+    get:
+      summary: The register as CSV, honouring the filters
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/{id}:
+    get:
+      summary: One instruction with its recipients (sender or msg.comm.view_all) or the person's own state
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/{id}/ack:
+    post:
+      summary: Acknowledge an instruction addressed to the caller ({ response }); a repeat answers the same
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/instructions/{id}/cancel:
+    post:
+      summary: Cancel an instruction (its sender), with a reason
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/acknowledgements/pending:
+    get:
+      summary: What the caller still has to acknowledge, overdue and urgent first
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/acknowledgements/bulk:
+    post:
+      summary: Acknowledge several at once; high and urgent ones are refused (422)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/action-types:
+    get:
+      summary: The kinds of record a message can become and whether each is live
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/messages/{id}/action-draft:
+    get:
+      summary: The form for a kind of record, filled from the message: title, text, attachments, project, people
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/messages/{id}/to-action:
+    post:
+      summary: Make a record from a message (a task today; the others answer 409 until their part is live); attachments are copied and the record is linked back; Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements:
+    get:
+      summary: Announcements (view received|sent|all)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+    post:
+      summary: Write an announcement draft (audience, confirmation, quiz, publish and expiry times); permission msg.announcement.send within the audience's scope
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/audience:
+    post:
+      summary: How many people an audience reaches
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}:
+    get:
+      summary: One announcement; the author sees the recipients, reads and confirmations, a recipient does not get the quiz answers
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change a draft (version checked)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/publish:
+    post:
+      summary: Publish now, or schedule when its publish time is in the future
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/cancel:
+    post:
+      summary: Cancel (author), with a reason
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/read:
+    post:
+      summary: Record that the recipient opened it
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/announcements/{id}/confirm:
+    post:
+      summary: Confirm, with the quiz answers when there is a quiz; all must be right
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/conversations/{id}/escalate:
+    post:
+      summary: Flag a conversation as unresolved; it goes to the managers after the chosen hours
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/escalations:
+    get:
+      summary: Flagged conversations (view mine|received|all)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/escalations/{id}/resolve:
+    post:
+      summary: Resolve a flagged conversation
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/auto-group-rules:
+    get:
+      summary: The auto group rules in force, the version waiting, history and the groups they keep (msg.autogroup.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/auto-group-rules/changes:
+    post:
+      summary: Propose new rules: maker-checker, mandatory reason (msg.autogroup.edit); 202
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/msg/auto-group-rules/sync:
+    post:
+      summary: Run the auto groups now (msg.autogroup.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies:
+    get:
+      summary: The policy register (q, category, status, owner, review due or overdue, paging) with version, dates and acknowledgement percentage; owners see their own, permission pol.policy.view_all sees all
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Write a policy: a draft version 1 with text, attachments, quiz, applicability and dates (permission pol.policy.create)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/preview:
+    post:
+      summary: How many people an applicability reaches
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}:
+    get:
+      summary: One policy with its versions, the current and the working version, and what the caller may do
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/versions:
+    post:
+      summary: Start a new draft version from the one in force (owner); never edits a published version
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/compare:
+    get:
+      summary: Compare two versions: paragraphs added, removed, changed (with the words that differ)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/acknowledgements:
+    get:
+      summary: Who has acknowledged a version and who has not, with the percentage
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/acknowledgements/export:
+    get:
+      summary: The acknowledgements as CSV
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/archive:
+    post:
+      summary: Archive a policy (owner, reason)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/versions/{id}:
+    put:
+      summary: Change a draft version (row version checked); a version in approval or in force answers 409
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/versions/{id}/submit:
+    post:
+      summary: Send a draft for approval: department head, then director; Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/versions/{id}/read:
+    post:
+      summary: Open a policy that applies to the caller: records that it was read
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/my:
+    get:
+      summary: My Policies: to acknowledge, acknowledged, library, earlier versions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/acknowledge:
+    post:
+      summary: Acknowledge a version, with the answers of the knowledge check when it has one (pass mark)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements:
+    get:
+      summary: The requirements tagged on a version
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Tag a clause as a controllable requirement (control point, approval rule or alert rule); validated by the engine that will own it
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements/{id}:
+    put:
+      summary: Change a tagged requirement
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: Remove a tagged requirement
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements/{id}/convert:
+    post:
+      summary: Turn a requirement of an approved policy into a DRAFT in its engine (inactive until an administrator activates it there); Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements/{id}/dismiss:
+    post:
+      summary: Dismiss a draft (a person who manages that engine)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/drafts:
+    get:
+      summary: The drafts made from policies, with the state each has in its engine (pol.draft.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/dashboard:
+    get:
+      summary: Master data dashboard per master (records, waiting changes, duplicates, quality score) and exceptions (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters:
+    get:
+      summary: The governed masters with their fields and whether I may edit them (mdm.record.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records:
+    get:
+      summary: Records of a master, filtered; asOf returns the data that applied on that date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Ask for a new record (409 DUPLICATE blocks, 409 DUPLICATE_WARNING asks to confirm); goes to the steward (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/export:
+    get:
+      summary: CSV of the records (sensitive fields masked without mdm.sensitive.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/lookup:
+    get:
+      summary: Records that can be chosen in a new transaction (active only, BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/check:
+    post:
+      summary: Check data before saving - errors, warnings, possible duplicates and the quality score
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}:
+    get:
+      summary: A record with versions, quality checks, change requests and merge links; asOf for any date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: A change from a date - applied at once (200) for non-sensitive fields by an editor, otherwise a change request (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/status:
+    post:
+      summary: Ask to make a record inactive or active again (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/resolve:
+    get:
+      summary: The record in force a (possibly merged) id resolves to (BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/references:
+    get:
+      summary: What refers to the record and to the records merged into it
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/review:
+    post:
+      summary: Confirm the record is still correct (clears staleness; steward or editor)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests:
+    get:
+      summary: Change requests - view mine, review (masters I am steward of) or all (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests/{id}:
+    get:
+      summary: A change request field by field (sensitive values masked), with the duplicates found
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests/{id}/cancel:
+    post:
+      summary: The requester withdraws a request that is waiting or returned
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests/{id}/resubmit:
+    post:
+      summary: The requester corrects a returned request and sends it again
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/duplicates:
+    get:
+      summary: Duplicate candidates, highest score first (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/duplicates/scan:
+    post:
+      summary: Scan a master for duplicates now (mdm.record.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/duplicates/{id}/dismiss:
+    post:
+      summary: Mark a pair as not duplicates, with a reason (mdm.record.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/merge:
+    post:
+      summary: Ask to merge one record into another (steward, then accounts manager for financial masters); never deletes (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/quality:
+    get:
+      summary: Quality score per master, failing rules and the lowest records (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/config:
+    get:
+      summary: Quality rules and stewards in force, the pending proposal and the history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose new rules and stewards (mdm.config.edit; approved by ITADM or DIR)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/config/export:
+    get:
+      summary: The rules and stewards in force as JSON
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common:
+    get:
+      summary: The common masters, their fields and whether I may change them (mdm.record.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common/{master}:
+    get:
+      summary: Rows of a common master in force for my company (asOf, status, q, filters)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new row (201) or, for a statutory master, a proposal from a date approved by ACCMGR then CFO (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common/{master}/{id}:
+    get:
+      summary: A row with its history and change requests
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: A change (200; a system row becomes my companys own row) or a statutory proposal from a date (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common/{master}/{id}/retire:
+    post:
+      summary: A row no longer used (not for statutory masters)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/tax/gst:
+    get:
+      summary: The GST rate of a code or an HSN/SAC code valid on a date (BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/tax/tds:
+    get:
+      summary: The TDS/TCS section valid on a date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/exchange-rate:
+    get:
+      summary: The latest exchange rate of a currency on or before a date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/uoms/convert:
+    get:
+      summary: A quantity in another unit of the same category (BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/lookup-lists:
+    get:
+      summary: The lookup lists with their number of values
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/lookup-lists/{list}:
+    get:
+      summary: The values of a list in my language (lang to choose)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Save a whole list (mdm.lookup.edit): add, change, make inactive
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/lookups/{name}:
+    get:
+      summary: Form lookups of the common masters and of every lookup list, in my language (03.02 contract)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/item-categories:
+    get:
+      summary: The category tree of my company with item types, attribute templates and stewards
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new category (mdm.item.category.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/item-categories/{id}:
+    put:
+      summary: Change a category and its attribute template (mdm.item.category.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/item-categories/{id}/history:
+    get:
+      summary: The changes of a category
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/register:
+    get:
+      summary: The Item Master list (List Report contract: q, filter[...], sort, page, pageSize)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/register/export:
+    get:
+      summary: Export of the list (xlsx, csv, pdf) with the rate hidden where not permitted
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/search:
+    get:
+      summary: The item selector: active items by code, name, specification or category; favourites or recent
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/check:
+    post:
+      summary: Check a request: errors and near-identical items (FR-07)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items:
+    post:
+      summary: Ask for a new item (approved by the category steward); a migrated material may keep its code (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}:
+    get:
+      summary: An item with units, specification, bill of resources, makes, alternates, versions, where used and price history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change an item in force (steward of its category; the base unit of a used item is not changed: BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/resubmit:
+    post:
+      summary: Send a returned request again
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/versions:
+    post:
+      summary: A new version from a date (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/status:
+    post:
+      summary: Out of use or back in use
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/where-used:
+    get:
+      summary: Where the item is used (bills of resources, alternates, migration map, transactions)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/mark:
+    post:
+      summary: Favourite or recent in the selector
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/uoms:
+    put:
+      summary: The item units and factors to the base unit (written into the calculation engine)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/convert:
+    get:
+      summary: A quantity of the item in another unit (T-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/resources:
+    put:
+      summary: The bill of resources of a work item or composite (no cycle: BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/makes:
+    post:
+      summary: Propose a make
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/makes/{makeId}:
+    post:
+      summary: Approve (another steward) or remove a make
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/alternates:
+    post:
+      summary: Add or remove an alternate item
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/migration:
+    get:
+      summary: The old free-text materials with what they map to (mdm.item.migrate)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/migration/map:
+    post:
+      summary: Map an old material to an item
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/register:
+    get:
+      summary: The Business Partners list (List Report contract)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/register/export:
+    get:
+      summary: Export of the list (xlsx, csv, pdf), PAN hidden outside finance
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/queue:
+    get:
+      summary: Partner approvals, bank changes, blacklisting requests and expiring documents (mdm.partner.queue)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/check:
+    post:
+      summary: Errors and duplicates of a registration (FR-07)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners:
+    post:
+      summary: Register a partner as a prospect, or send it for approval with submit (201)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}:
+    get:
+      summary: Partner 360: identity (masked), GSTINs, addresses, contacts, banks (masked), documents, TDS, status requests
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change a prospect, or a registration returned for correction
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/submit:
+    post:
+      summary: Send a prospect for approval: its steward, then the accounts manager (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/details:
+    put:
+      summary: Trade name, categories, regions, contacts and addresses of an active partner
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/summary:
+    get:
+      summary: Partner 360 tiles, what other modules hold, history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/selectable:
+    get:
+      summary: May the partner be chosen for a PO, WO, RFQ or payment, and why not (BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/payment-status:
+    get:
+      summary: Payments held or free, and why (BR-03)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/gstins:
+    post:
+      summary: Add a GSTIN of another state
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/gstins/verify:
+    post:
+      summary: Verify a GSTIN (accounts manager)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/documents:
+    post:
+      summary: Add a compliance document with its validity
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/documents/{docId}/verify:
+    post:
+      summary: Verify a document (another person than the one who added it)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/tds:
+    put:
+      summary: TDS sections and lower-deduction certificates (accounts manager)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks:
+    post:
+      summary: Ask for a bank change: payments are held, a code goes to the registered contact (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks/{bankId}/confirm:
+    post:
+      summary: Confirm the change with the code or a call-back; it goes to the accounts manager and the CFO (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks/{bankId}/verify:
+    post:
+      summary: Record the verification of an account (not by the person who entered it)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks/{bankId}/reveal:
+    get:
+      summary: The full account number (finance; every view logged)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/status:
+    post:
+      summary: Hold, release, make inactive or active again
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/blacklist:
+    post:
+      summary: Ask to blacklist or to lift the blacklist (director approves, 202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts:
+    get:
+      summary: The chart of accounts: groups, accounts with dimension rules, missing control accounts (06.05)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a new account; the CFO approves it (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/export:
+    get:
+      summary: The chart as CSV (audited)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/{id}:
+    get:
+      summary: One account: properties, dimension rules, mapping, postings, changes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Propose a change of the account (BR-02: an account with postings keeps its nature) (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: Delete an unused account (no postings, not a control account, not mapped)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/{id}/block:
+    post:
+      summary: Propose to block or unblock the account (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/{id}/dimension-rules:
+    put:
+      summary: Propose the dimension rules of the account (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/check:
+    post:
+      summary: Whether a posting line may go to an account (T-01, BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/account-groups:
+    get:
+      summary: The account groups with their Schedule III lines
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a new group (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/account-groups/{id}:
+    put:
+      summary: Propose a change of a group (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/schedule-iii:
+    get:
+      summary: The Schedule III lines with their groups and accounts and whether the mapping is complete (T-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-heads:
+    get:
+      summary: Cost heads and cost codes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a cost head (project controls or accounts manager) (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-heads/{id}:
+    put:
+      summary: Propose a change of a cost head (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-codes:
+    get:
+      summary: Cost heads and cost codes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a cost code (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-codes/{id}:
+    put:
+      summary: Propose a change of a cost code (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/dimension-rules:
+    get:
+      summary: The dimension rules of the accounts (filter accountId)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/category-mappings:
+    get:
+      summary: Every item category with its stock account, consumption account and cost code, and the categories without one (AC-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose mappings of item categories from a date (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes:
+    get:
+      summary: The proposed changes of the finance masters
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes/{id}:
+    get:
+      summary: One proposed change
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes/{id}/resubmit:
+    post:
+      summary: Send a returned change again (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes/{id}/withdraw:
+    post:
+      summary: Withdraw a change not yet decided
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/import/preview:
+    post:
+      summary: The mapping report of a ledger list from Tally or another package (nothing is written)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/import:
+    post:
+      summary: Send the mapped ledgers of a list for approval as one change (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/lookups/{name}:
+    get:
+      summary: Lookups: accounts, manual-accounts, cost-codes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates:
+    get:
+      summary: The resource rate library (06.06): filters item, region, project, source, in force on
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A rate of an item from a date; the rate in force for the same item, region and project ends the day before
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates/lookup:
+    get:
+      summary: The library rate of an item in force: project, then region, then everywhere
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates/{id}:
+    put:
+      summary: Correct a rate no analysis has used
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates/{id}/retire:
+    post:
+      summary: Retire a rate
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books:
+    get:
+      summary: Schedules of rates and their editions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new schedule (draft edition 1)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}:
+    get:
+      summary: One edition with its items (search)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}/items:
+    put:
+      summary: Add or replace items of a draft edition
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}/activate:
+    post:
+      summary: Put a draft edition in use; the previous one is superseded
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}/editions:
+    post:
+      summary: A new draft edition copied from this one
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-items:
+    get:
+      summary: Items of the schedules in use (search)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses:
+    get:
+      summary: The rate analyses register
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new rate analysis, priced by the calculation engine (or submitted at once)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/export:
+    get:
+      summary: The register as CSV (audited)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/impact:
+    get:
+      summary: Analyses affected by a resource rate change, with old and new unit rates (T-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/start:
+    post:
+      summary: The components of a new analysis from a template or a work item bill of resources, priced from the library (not saved)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}:
+    get:
+      summary: One version with components, add-ons, SOR comparison, versions and allowed actions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change a draft or returned version (recomputed)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: Delete a draft
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/recalculate:
+    post:
+      summary: Refresh library rates and recompute a draft or returned version
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/submit:
+    post:
+      summary: Submit for release (director, project manager or commercial manager) (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/withdraw:
+    post:
+      summary: Withdraw before anyone acted: back to a draft
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/cancel:
+    post:
+      summary: Cancel an analysis in approval or returned
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/amend:
+    post:
+      summary: A new draft version of a released analysis (BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/compare:
+    get:
+      summary: Two versions side by side
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/history:
+    get:
+      summary: Versions, approvals and audit trail
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/print:
+    get:
+      summary: A printable page (HTML, audited)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }

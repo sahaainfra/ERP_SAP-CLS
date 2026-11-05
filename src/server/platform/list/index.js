@@ -48,6 +48,16 @@ export function defineList(def) {
   return full;
 }
 export const listRegistry = { get: (code) => lists.get(code), codes: () => [...lists.keys()].sort() };
+/**
+ * Exports and masked columns of lists that other modules own (part 06.03 onwards): the export service of the List Report (03.03) reads a source here when it has none of its own,
+ * and the list description hides the columns `hidden(actor)` names. register(code, { source(actor, req) -> export source, hidden?(actor) -> [keys] }).
+ */
+const moduleLists = new Map();
+export const listExports = { register(code, def) { moduleLists.set(code, def); }, source: (code) => moduleLists.get(code)?.source ?? null, hidden: (code) => moduleLists.get(code)?.hidden ?? null };
+const exportServices = new WeakMap();
+export const bindListExports = (db, s) => exportServices.set(db, s);
+/** The export service of a database (the List Report's), for a module's own `<endpoint>/export` route. */
+export const listExportsOf = (db) => exportServices.get(db) ?? null;
 
 /** The columns as the browser needs them (label, type, what can be sorted, filtered and totalled, the operators). */
 export const describeList = (def) => ({

@@ -8,6 +8,8 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import Icon from '../../platform/design/Icon.jsx';
+import ItemSelector from '../../platform/items/ItemSelector.jsx';
+import { useFeatureFlag } from '../core/api/index.js';
 import { formatDateTime } from '../../platform/format.js';
 import { formatBusinessDate } from '../../platform/forms/index.js';
 import {
@@ -59,6 +61,8 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
   const [notice, setNotice] = useState(initialNotice);
   const [createdNote, setCreatedNote] = useState('');
   const [rowFiles, setRowFiles] = useState(null);
+  const [picking, setPicking] = useState(false);
+  const itemsOn = useFeatureFlag('ff.mdm.p0603');
   const loaded = useRef(false);
   const rec = record.data;
   const readOnly = Boolean(rec && rec.status !== 'DRAFT');
@@ -170,6 +174,9 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
               <h2 className="ff-section-title" id={`${s.id}-title`}>{s.title}</h2>
               <LineGrid id="lines" label={def.grids.lines.label} columns={columns.map((c) => (c.type === 'lookup' ? { ...c, valueKey: 'code' } : c))} rows={values.lines} onChange={(rows) => set('lines', rows)} errors={errors} maxRows={def.grids.lines.maxRows} readOnly={readOnly} onBlur={draft.onBlur}
                 rowExtra={rec ? (row) => (row.id ? <button type="button" className="btn btn-small" onClick={() => setRowFiles(row)} aria-label={`Files of row ${row.description}`}><Icon name="erp.action.attach" size={16} />Files</button> : <span className="muted small">Save first</span>) : undefined} />
+              {!readOnly && itemsOn && <p><button type="button" className="btn btn-small" onClick={() => setPicking(true)} data-testid="lines-from-catalogue"><Icon name="erp.action.search" size={16} /> Add items from the catalogue</button></p>}
+              {itemsOn && <ItemSelector open={picking} onClose={() => setPicking(false)} types={['MATERIAL', 'CONSUMABLE', 'SPARE', 'TOOL', 'RETURNABLE']}
+                onPick={(list) => set('lines', [...values.lines.filter((l) => Object.entries(l).some(([k, x]) => !['_k', 'id'].includes(k) && x !== '' && x != null)), ...list.map((it) => newRow({ description: `${it.code} ${it.name}`.slice(0, 200), uom: it.uom, quantity: '', unitRate: it.standardRate ?? '', neededOn: '', comment: '' }))])} />}
               {errors.total && <p className="ff-error" role="alert" id="f-total">{errors.total}</p>}
             </section>
           )

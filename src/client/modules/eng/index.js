@@ -31,11 +31,23 @@ import ControlPointsPage from './ControlPointsPage.jsx';
 import ControlsDashboardPage from './ControlsDashboardPage.jsx';
 import ExceptionsPage from './ExceptionsPage.jsx';
 import ReasonCodesPage from './ReasonCodesPage.jsx';
+import ProjectActivityPage from './ProjectActivityPage.jsx';
+import FieldFormsPage from './FieldFormsPage.jsx';
+import SyncStatusPage from './SyncStatusPage.jsx';
+import ConflictPage from './ConflictPage.jsx';
+import DevicesPage from './DevicesPage.jsx';
 import SampleDocsPage from './SampleDocsPage.jsx';
 import DocumentRegisterPage from './DocumentRegisterPage.jsx';
 import DocumentPage from './DocumentPage.jsx';
 import NewDocumentPage from './NewDocumentPage.jsx';
 import DocumentTypesPage from './DocumentTypesPage.jsx';
+import TemplateLibraryPage from './TemplateLibraryPage.jsx';
+import TemplateEditorPage from './TemplateEditorPage.jsx';
+import GeneratedDocumentsPage from './GeneratedDocumentsPage.jsx';
+import SignatureRegisterPage from './SignatureRegisterPage.jsx';
+import ImportCenterPage from './ImportCenterPage.jsx';
+import ImportJobPage from './ImportJobPage.jsx';
+import ImportTemplateDesignerPage from './ImportTemplateDesignerPage.jsx';
 import WorkflowDefinitionsPage from './WorkflowDefinitionsPage.jsx';
 import WorkflowEditorPage from './WorkflowEditorPage.jsx';
 import WorkflowInstancePage from './WorkflowInstancePage.jsx';
@@ -86,6 +98,18 @@ registerModule({
     { path: '/documents/document', label: 'Document', icon: 'erp.action.info', permission: 'doc.document.view', flag: 'ff.eng.p0410', Page: DocumentPage },
     { path: '/documents/new', label: 'Upload / New Revision', icon: 'erp.action.create', permission: 'doc.document.create', flag: 'ff.eng.p0410', Page: NewDocumentPage },
     { path: '/admin/document-types', label: 'Document Types & Folder Templates', icon: 'erp.action.settings', permission: 'doc.config.view', flag: 'ff.eng.p0410', Page: DocumentTypesPage },
+    { path: '/admin/templates', label: 'Templates', icon: 'erp.action.settings', permission: 'tpl.template.view', flag: 'ff.eng.p0411', Page: TemplateLibraryPage },
+    { path: '/admin/templates/editor', label: 'Template Editor', icon: 'erp.action.edit', permission: 'tpl.template.view', flag: 'ff.eng.p0411', Page: TemplateEditorPage },
+    { path: '/documents/generated', label: 'Generated Documents', icon: 'erp.insights.metrics', permission: 'tpl.document.view', flag: 'ff.eng.p0411', Page: GeneratedDocumentsPage },
+    { path: '/admin/signatures', label: 'Signature Register', icon: 'erp.insights.metrics', permission: 'sig.register.view', flag: 'ff.eng.p0412', Page: SignatureRegisterPage },
+    { path: '/import', label: 'Import Center', icon: 'erp.action.import', permission: 'xl.import.use', flag: 'ff.eng.p0413', Page: ImportCenterPage },
+    { path: '/import/job', label: 'Import Job', icon: 'erp.action.info', permission: 'xl.import.use', flag: 'ff.eng.p0413', Page: ImportJobPage },
+    { path: '/admin/import-templates', label: 'Import Template Designer', icon: 'erp.action.settings', permission: 'xl.template.view', flag: 'ff.eng.p0413', Page: ImportTemplateDesignerPage },
+    { path: '/field/forms', label: 'Field Forms', icon: 'erp.field.field', flag: 'ff.eng.p0415', Page: FieldFormsPage },
+    { path: '/field/sync', label: 'Sync Status', icon: 'erp.action.info', flag: 'ff.eng.p0415', Page: SyncStatusPage },
+    { path: '/field/sync/conflicts', label: 'Conflict Resolution', icon: 'erp.action.info', flag: 'ff.eng.p0415', Page: ConflictPage },
+    { path: '/admin/devices', label: 'Devices', icon: 'erp.action.settings', permission: 'off.device.manage', flag: 'ff.eng.p0415', Page: DevicesPage },
+    { path: '/projects/activity', label: 'Project Activity Feed', icon: 'erp.action.info', permission: 'col.activity.view', flag: 'ff.eng.p0414', Page: ProjectActivityPage },
     { path: '/engine/sample-docs', label: 'Sample Documents', icon: 'erp.group.supply', permission: 'eng.sample.use', flag: 'ff.eng.p0401', Page: SampleDocsPage },
   ],
 });

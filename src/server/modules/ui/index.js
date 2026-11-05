@@ -17,6 +17,7 @@ import { createDeviceService } from './device.js';
 import { loadVapid, sendPush } from '../../platform/push/index.js';
 import { createShellService, navHandlers } from './shell.js';
 import { createExportService, createSavedViewService, describeFor } from './lists.js';
+import { bindListExports, listExports } from '../../platform/list/index.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { createObjectService } from './objects.js';
 import { createSampleRequestService } from './sample-requests.js';
@@ -132,6 +133,7 @@ export const ui = {
     const runtime = runtimeOf(db);
     const exports = createExportService({ db, storagePath: storagePath ?? 'data', jobs: runtime.jobs });
     exports.register('ui.sample_requests', (actor, req) => requests.exportSource(actor, req));
+    bindListExports(db, exports);
     if (migrated) {
       runtime.jobs.register('ui.export', (ctx) => exports.run(ctx.params.exportId, (m) => ctx.log(m)), { maxAttempts: 2, description: 'Writes a large list export in the background; the file appears under My Exports.' });
       runtime.jobs.register('ui.export_purge', (ctx) => { const r = exports.purge(); ctx.log(`Removed ${r.expired} expired export file(s)`); return r; }, { maxAttempts: 1, description: 'Removes list exports older than 7 days.' });
@@ -140,7 +142,7 @@ export const ui = {
     const hidden = { 'ui.sample_requests': (actor) => requests.maskedColumns(actor) };
     const lists = Router();
     lists.use(['/lists', '/saved-views', '/exports', '/sample-requests/export', '/sample-requests/bulk'], gate('ff.ui.p0303', 'Saved views, list exports and bulk actions are'));
-    lists.use(listRoutes({ views: createSavedViewService({ db }), exports, requests, describe: (actor, code) => describeFor(actor, code, hidden[code]) }, { idempotentRequired }));
+    lists.use(listRoutes({ views: createSavedViewService({ db }), exports, requests, describe: (actor, code) => describeFor(actor, code, hidden[code] ?? listExports.hidden(code) ?? undefined) }, { idempotentRequired }));
     router.use(lists);
     // Part 03.04: the Object Page's routes (the record's own GET and actions are under /sample-requests).
     const objectsRouter = Router();

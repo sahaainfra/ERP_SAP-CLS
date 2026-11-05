@@ -5,6 +5,7 @@ import { eventTypes } from '../../../platform/events/index.js';
 import { fileEntities } from '../../../platform/files/entities.js';
 import { createClamdScanner, createBuiltinScanner } from '../../../platform/files/scan.js';
 import { createSigner } from '../../../platform/files/signing.js';
+import { bindFiles } from '../../../platform/files/registry.js';
 import { createLocalStorage } from '../../../platform/files/storage.js';
 import { notFound } from '../../../platform/http/errors.js';
 import { fileContentRoutes, fileRoutes } from './routes.js';
@@ -44,6 +45,7 @@ export function mountFiles({ api, publicApi, db, config, runtime, approvals, opt
   if (config.clamav) scanners.push(createClamdScanner(config.clamav));
   const signer = createSigner(config.fileUrlSecret ?? randomBytes(32).toString('hex'));
   const service = createFileService({ db, storage, scanners, jobs: runtime.jobs, signer, approvals });
+  bindFiles(db, service);
 
   runtime.jobs.register('core.file_scan', (ctx) => service.scanFile({ fileId: ctx.params.fileId, attempt: ctx.attempt }), {
     maxAttempts: SCAN_ATTEMPTS,

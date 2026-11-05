@@ -64,7 +64,7 @@ test('AC-01 the registry lists every business calculation with its versions; the
   const api = await startApi();
   const list = (await api.call('GET', `${C}/formulas`, sys)).json;
   assert.deepEqual(list.data.map((f) => [f.code, f.ownerModule, f.currentVersion, f.latestVersion, f.financial]), [
-    ['billing.net_payable', 'billing', 1, 1, true], ['boq.line_amount', 'boq', 1, 1, true], ['stock.weighted_average', 'stores', 1, 1, true], ['tax.gst_split', 'tax', 1, 1, true],
+    ['billing.net_payable', 'billing', 1, 1, true], ['boq.line_amount', 'boq', 1, 1, true], ['ra.line_amount', 'mdm', 1, 1, true], ['ra.unit_rate', 'mdm', 1, 1, true], ['stock.weighted_average', 'stores', 1, 1, true], ['tax.gst_split', 'tax', 1, 1, true],
   ]);
   assert.equal((await api.call('GET', `${C}/formulas?filter[owner_module]=tax`, sys)).json.data.length, 1);
   assert.equal((await api.call('GET', `${C}/formulas?q=stock`, sys)).json.data[0].code, 'stock.weighted_average');

@@ -1,0 +1,127 @@
+[
+  {
+    "inputs": {
+      "basis_qty": "1",
+      "contingency_percent": "0",
+      "direct_cost": "7205.25",
+      "escalation_percent": "0",
+      "gst_percent": "0",
+      "insurance_percent": "0",
+      "overhead_percent": "7.5",
+      "profit_percent": "7.5",
+      "water_percent": "1"
+    },
+    "outputs": {
+      "contingency": "0.00",
+      "escalation": "0.00",
+      "gst": "0.00",
+      "insurance": "0.00",
+      "overhead": "545.80",
+      "profit": "586.73",
+      "total": "8409.83",
+      "unit_rate": "8409.83",
+      "unit_rate_gross": "8409.83",
+      "water": "72.05"
+    }
+  },
+  {
+    "inputs": {
+      "basis_qty": "10",
+      "contingency_percent": "3",
+      "direct_cost": "1000.00",
+      "escalation_percent": "0",
+      "gst_percent": "18",
+      "insurance_percent": "0",
+      "overhead_percent": "10",
+      "profit_percent": "10",
+      "water_percent": "0"
+    },
+    "outputs": {
+      "contingency": "36.30",
+      "escalation": "0.00",
+      "gst": "22.43",
+      "insurance": "0.00",
+      "overhead": "100.00",
+      "profit": "110.00",
+      "total": "1246.30",
+      "unit_rate": "124.63",
+      "unit_rate_gross": "147.06",
+      "water": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "basis_qty": "3",
+      "contingency_percent": "2.5",
+      "direct_cost": "123456.78",
+      "escalation_percent": "4",
+      "gst_percent": "12",
+      "insurance_percent": "0.5",
+      "overhead_percent": "15",
+      "profit_percent": "0",
+      "water_percent": "1"
+    },
+    "outputs": {
+      "contingency": "3584.88",
+      "escalation": "5735.80",
+      "gst": "6137.31",
+      "insurance": "716.98",
+      "overhead": "18703.70",
+      "profit": "0.00",
+      "total": "153432.71",
+      "unit_rate": "51144.24",
+      "unit_rate_gross": "57281.55",
+      "water": "1234.57"
+    }
+  },
+  {
+    "inputs": {
+      "basis_qty": "0.001",
+      "contingency_percent": "0",
+      "direct_cost": "0.01",
+      "escalation_percent": "0",
+      "gst_percent": "0",
+      "insurance_percent": "0",
+      "overhead_percent": "0",
+      "profit_percent": "0",
+      "water_percent": "0"
+    },
+    "outputs": {
+      "contingency": "0.00",
+      "escalation": "0.00",
+      "gst": "0.00",
+      "insurance": "0.00",
+      "overhead": "0.00",
+      "profit": "0.00",
+      "total": "0.01",
+      "unit_rate": "10.00",
+      "unit_rate_gross": "10.00",
+      "water": "0.00"
+    }
+  },
+  {
+    "inputs": {
+      "basis_qty": "100",
+      "contingency_percent": "0",
+      "direct_cost": "58210.40",
+      "escalation_percent": "0",
+      "gst_percent": "18",
+      "insurance_percent": "0",
+      "overhead_percent": "7.5",
+      "profit_percent": "7.5",
+      "water_percent": "1"
+    },
+    "outputs": {
+      "contingency": "0.00",
+      "escalation": "0.00",
+      "gst": "122.30",
+      "insurance": "0.00",
+      "overhead": "4409.44",
+      "profit": "4740.15",
+      "total": "67942.09",
+      "unit_rate": "679.42",
+      "unit_rate_gross": "801.72",
+      "water": "582.10"
+    }
+  }
+]

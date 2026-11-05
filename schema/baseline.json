@@ -1300,6 +1300,611 @@
       "company_id->org_companies.id:NO ACTION/NO ACTION"
     ]
   },
+  "table:col_comments": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_label",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "parent_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "body",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "edited_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "edit_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "delete_reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "parent_id->col_comments.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:col_mentions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "comment_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "mentioned_user",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "read_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "comment_id->col_comments.id:NO ACTION/NO ACTION",
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:col_reactions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "comment_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reaction",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reacted_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "comment_id->col_comments.id:NO ACTION/NO ACTION",
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:col_trace_links": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "from_entity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "from_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "to_entity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "to_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "relation",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'DERIVED'",
+        "pk": 0
+      },
+      {
+        "name": "link_kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'SERVICE'",
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
   "table:comm_channels": {
     "columns": [
       {
@@ -15017,6 +15622,27 @@
   "index:ix_alr_runs_rule": {
     "sql": "CREATE INDEX ix_alr_runs_rule ON alr_rule_runs (company_id, rule_code, id)"
   },
+  "index:ix_col_comments_parent": {
+    "sql": "CREATE INDEX ix_col_comments_parent ON col_comments (parent_id)"
+  },
+  "index:ix_col_comments_project": {
+    "sql": "CREATE INDEX ix_col_comments_project ON col_comments (company_id, project_id, id)"
+  },
+  "index:ix_col_comments_record": {
+    "sql": "CREATE INDEX ix_col_comments_record ON col_comments (company_id, entity, entity_id, id)"
+  },
+  "index:ix_col_mentions_inbox": {
+    "sql": "CREATE INDEX ix_col_mentions_inbox ON col_mentions (company_id, mentioned_user, read_at, id)"
+  },
+  "index:ix_col_reactions_company_id": {
+    "sql": "CREATE INDEX ix_col_reactions_company_id ON col_reactions (company_id)"
+  },
+  "index:ix_col_trace_from": {
+    "sql": "CREATE INDEX ix_col_trace_from ON col_trace_links (company_id, from_entity, from_id)"
+  },
+  "index:ix_col_trace_to": {
+    "sql": "CREATE INDEX ix_col_trace_to ON col_trace_links (company_id, to_entity, to_id)"
+  },
   "index:ix_comm_channels_active": {
     "sql": "CREATE INDEX ix_comm_channels_active ON comm_channels (company_id, channel, status)"
   },
@@ -15563,6 +16189,78 @@
   "index:ix_iam_users_company_name": {
     "sql": "CREATE INDEX ix_iam_users_company_name ON iam_users (company_id, display_name)"
   },
+  "index:ix_msg_calls_company": {
+    "sql": "CREATE INDEX ix_msg_calls_company ON msg_calls (company_id, status, id)"
+  },
+  "index:ix_msg_calls_company_id": {
+    "sql": "CREATE INDEX ix_msg_calls_company_id ON msg_calls (company_id)"
+  },
+  "index:ix_msg_calls_conv": {
+    "sql": "CREATE INDEX ix_msg_calls_conv ON msg_calls (conversation_id, id)"
+  },
+  "index:ix_msg_config_instance": {
+    "sql": "CREATE INDEX ix_msg_config_instance ON msg_config (instance_id)"
+  },
+  "index:ix_msg_conv_activity": {
+    "sql": "CREATE INDEX ix_msg_conv_activity ON msg_conversations (company_id, conv_type, last_activity_at)"
+  },
+  "index:ix_msg_conv_department": {
+    "sql": "CREATE INDEX ix_msg_conv_department ON msg_conversations (department_id)"
+  },
+  "index:ix_msg_conv_project": {
+    "sql": "CREATE INDEX ix_msg_conv_project ON msg_conversations (company_id, project_id)"
+  },
+  "index:ix_msg_hidden_company_id": {
+    "sql": "CREATE INDEX ix_msg_hidden_company_id ON msg_hidden (company_id)"
+  },
+  "index:ix_msg_holds_company_id": {
+    "sql": "CREATE INDEX ix_msg_holds_company_id ON msg_holds (company_id)"
+  },
+  "index:ix_msg_members_company_id": {
+    "sql": "CREATE INDEX ix_msg_members_company_id ON msg_members (company_id)"
+  },
+  "index:ix_msg_members_user": {
+    "sql": "CREATE INDEX ix_msg_members_user ON msg_members (company_id, user_ref, left_at)"
+  },
+  "index:ix_msg_messages_company_id": {
+    "sql": "CREATE INDEX ix_msg_messages_company_id ON msg_messages (company_id)"
+  },
+  "index:ix_msg_messages_conv": {
+    "sql": "CREATE INDEX ix_msg_messages_conv ON msg_messages (conversation_id, id)"
+  },
+  "index:ix_msg_messages_forward": {
+    "sql": "CREATE INDEX ix_msg_messages_forward ON msg_messages (forwarded_from_id)"
+  },
+  "index:ix_msg_messages_reply": {
+    "sql": "CREATE INDEX ix_msg_messages_reply ON msg_messages (reply_to_id)"
+  },
+  "index:ix_msg_periods_company_id": {
+    "sql": "CREATE INDEX ix_msg_periods_company_id ON msg_member_periods (company_id)"
+  },
+  "index:ix_msg_periods_member": {
+    "sql": "CREATE INDEX ix_msg_periods_member ON msg_member_periods (conversation_id, user_ref, started_at)"
+  },
+  "index:ix_msg_pins_company_id": {
+    "sql": "CREATE INDEX ix_msg_pins_company_id ON msg_pins (company_id)"
+  },
+  "index:ix_msg_pins_message": {
+    "sql": "CREATE INDEX ix_msg_pins_message ON msg_pins (message_id)"
+  },
+  "index:ix_msg_reactions_company_id": {
+    "sql": "CREATE INDEX ix_msg_reactions_company_id ON msg_reactions (company_id)"
+  },
+  "index:ix_msg_receipts_user": {
+    "sql": "CREATE INDEX ix_msg_receipts_user ON msg_receipts (company_id, user_ref, message_id)"
+  },
+  "index:ix_msg_stars_user": {
+    "sql": "CREATE INDEX ix_msg_stars_user ON msg_stars (company_id, user_ref, starred_at)"
+  },
+  "index:ix_msg_user_settings_company_id": {
+    "sql": "CREATE INDEX ix_msg_user_settings_company_id ON msg_user_settings (company_id)"
+  },
+  "index:ix_msg_voice_company_id": {
+    "sql": "CREATE INDEX ix_msg_voice_company_id ON msg_voice (company_id)"
+  },
   "index:ix_ntf_deliveries_digest": {
     "sql": "CREATE INDEX ix_ntf_deliveries_digest ON ntf_deliveries (status, user_ref, deliver_after)"
   },
@@ -15598,6 +16296,42 @@
   },
   "index:ix_ntf_templates_lookup": {
     "sql": "CREATE INDEX ix_ntf_templates_lookup ON ntf_templates (code, channel, lang, status)"
+  },
+  "index:ix_off_devices_company_id": {
+    "sql": "CREATE INDEX ix_off_devices_company_id ON off_devices (company_id)"
+  },
+  "index:ix_off_devices_user": {
+    "sql": "CREATE INDEX ix_off_devices_user ON off_devices (company_id, user_ref, revoked_at)"
+  },
+  "index:ix_off_sync_device": {
+    "sql": "CREATE INDEX ix_off_sync_device ON off_sync_log (device_pk, seq)"
+  },
+  "index:ix_off_sync_entity": {
+    "sql": "CREATE INDEX ix_off_sync_entity ON off_sync_log (company_id, command_type, server_entity_id)"
+  },
+  "index:ix_off_sync_log_company_id": {
+    "sql": "CREATE INDEX ix_off_sync_log_company_id ON off_sync_log (company_id)"
+  },
+  "index:ix_off_sync_ref": {
+    "sql": "CREATE INDEX ix_off_sync_ref ON off_sync_log (company_id, client_ref)"
+  },
+  "index:ix_off_sync_status": {
+    "sql": "CREATE INDEX ix_off_sync_status ON off_sync_log (company_id, status, id)"
+  },
+  "index:ix_off_sync_user": {
+    "sql": "CREATE INDEX ix_off_sync_user ON off_sync_log (company_id, user_ref, status, id)"
+  },
+  "index:ix_off_uploads_command": {
+    "sql": "CREATE INDEX ix_off_uploads_command ON off_uploads (company_id, command_id)"
+  },
+  "index:ix_off_uploads_company_id": {
+    "sql": "CREATE INDEX ix_off_uploads_company_id ON off_uploads (company_id)"
+  },
+  "index:ix_off_uploads_device": {
+    "sql": "CREATE INDEX ix_off_uploads_device ON off_uploads (device_pk, status)"
+  },
+  "index:ix_off_uploads_file": {
+    "sql": "CREATE INDEX ix_off_uploads_file ON off_uploads (file_id)"
   },
   "index:ix_org_assignments_company_id": {
     "sql": "CREATE INDEX ix_org_assignments_company_id ON org_assignments (company_id)"
@@ -15685,6 +16419,81 @@
   },
   "index:ix_pcs_results_entity": {
     "sql": "CREATE INDEX ix_pcs_results_entity ON pcs_check_results (company_id, entity, entity_id)"
+  },
+  "index:ix_sig_config_instance": {
+    "sql": "CREATE INDEX ix_sig_config_instance ON sig_config (instance_id)"
+  },
+  "index:ix_sig_copies_company_id": {
+    "sql": "CREATE INDEX ix_sig_copies_company_id ON sig_copies (company_id)"
+  },
+  "index:ix_sig_copies_doc": {
+    "sql": "CREATE INDEX ix_sig_copies_doc ON sig_copies (generated_doc_id, id DESC)"
+  },
+  "index:ix_sig_copies_file": {
+    "sql": "CREATE INDEX ix_sig_copies_file ON sig_copies (file_id)"
+  },
+  "index:ix_sig_copies_hash": {
+    "sql": "CREATE INDEX ix_sig_copies_hash ON sig_copies (hash)"
+  },
+  "index:ix_sig_signatures_doc": {
+    "sql": "CREATE INDEX ix_sig_signatures_doc ON sig_signatures (generated_doc_id, id)"
+  },
+  "index:ix_sig_signatures_filter": {
+    "sql": "CREATE INDEX ix_sig_signatures_filter ON sig_signatures (company_id, method, status)"
+  },
+  "index:ix_sig_signatures_list": {
+    "sql": "CREATE INDEX ix_sig_signatures_list ON sig_signatures (company_id, signed_at DESC, id DESC)"
+  },
+  "index:ix_sig_signatures_project": {
+    "sql": "CREATE INDEX ix_sig_signatures_project ON sig_signatures (company_id, project_id, signed_at DESC)"
+  },
+  "index:ix_sig_signatures_user": {
+    "sql": "CREATE INDEX ix_sig_signatures_user ON sig_signatures (signer_user_id)"
+  },
+  "index:ix_sig_verifications_company": {
+    "sql": "CREATE INDEX ix_sig_verifications_company ON sig_verifications (company_id, status)"
+  },
+  "index:ix_tpl_bulk_company": {
+    "sql": "CREATE INDEX ix_tpl_bulk_company ON tpl_bulk_jobs (company_id, created_at DESC)"
+  },
+  "index:ix_tpl_bulk_job": {
+    "sql": "CREATE INDEX ix_tpl_bulk_job ON tpl_bulk_jobs (job_id)"
+  },
+  "index:ix_tpl_deliveries_company": {
+    "sql": "CREATE INDEX ix_tpl_deliveries_company ON tpl_deliveries (company_id, status, created_at DESC)"
+  },
+  "index:ix_tpl_deliveries_doc": {
+    "sql": "CREATE INDEX ix_tpl_deliveries_doc ON tpl_deliveries (generated_doc_id, created_at DESC)"
+  },
+  "index:ix_tpl_deliveries_message": {
+    "sql": "CREATE INDEX ix_tpl_deliveries_message ON tpl_deliveries (comm_message_id)"
+  },
+  "index:ix_tpl_generated_bulk": {
+    "sql": "CREATE INDEX ix_tpl_generated_bulk ON tpl_generated_docs (bulk_job_id)"
+  },
+  "index:ix_tpl_generated_file": {
+    "sql": "CREATE INDEX ix_tpl_generated_file ON tpl_generated_docs (file_id)"
+  },
+  "index:ix_tpl_generated_list": {
+    "sql": "CREATE INDEX ix_tpl_generated_list ON tpl_generated_docs (company_id, generated_at DESC, id DESC)"
+  },
+  "index:ix_tpl_generated_project": {
+    "sql": "CREATE INDEX ix_tpl_generated_project ON tpl_generated_docs (company_id, project_id, doc_type, generated_at DESC)"
+  },
+  "index:ix_tpl_generated_superseded": {
+    "sql": "CREATE INDEX ix_tpl_generated_superseded ON tpl_generated_docs (superseded_by)"
+  },
+  "index:ix_tpl_generated_template": {
+    "sql": "CREATE INDEX ix_tpl_generated_template ON tpl_generated_docs (template_id)"
+  },
+  "index:ix_tpl_records_project": {
+    "sql": "CREATE INDEX ix_tpl_records_project ON tpl_records (company_id, project_id, doc_type)"
+  },
+  "index:ix_tpl_templates_company": {
+    "sql": "CREATE INDEX ix_tpl_templates_company ON tpl_templates (company_id, doc_type, status)"
+  },
+  "index:ix_tpl_templates_instance": {
+    "sql": "CREATE INDEX ix_tpl_templates_instance ON tpl_templates (instance_id)"
   },
   "index:ix_tsk_assignees_user": {
     "sql": "CREATE INDEX ix_tsk_assignees_user ON tsk_assignees (company_id, user_ref, role, is_active)"
@@ -15970,6 +16779,2341 @@
   },
   "index:ix_wf_watchers_user": {
     "sql": "CREATE INDEX ix_wf_watchers_user ON wf_watchers (company_id, user_ref)"
+  },
+  "index:ix_xl_job_errors_company_id": {
+    "sql": "CREATE INDEX ix_xl_job_errors_company_id ON xl_job_errors (company_id)"
+  },
+  "index:ix_xl_job_errors_job": {
+    "sql": "CREATE INDEX ix_xl_job_errors_job ON xl_job_errors (job_id, row_no, id)"
+  },
+  "index:ix_xl_jobs_company_id": {
+    "sql": "CREATE INDEX ix_xl_jobs_company_id ON xl_jobs (company_id)"
+  },
+  "index:ix_xl_jobs_file": {
+    "sql": "CREATE INDEX ix_xl_jobs_file ON xl_jobs (file_id)"
+  },
+  "index:ix_xl_jobs_filter": {
+    "sql": "CREATE INDEX ix_xl_jobs_filter ON xl_jobs (company_id, import_type, status)"
+  },
+  "index:ix_xl_jobs_list": {
+    "sql": "CREATE INDEX ix_xl_jobs_list ON xl_jobs (company_id, started_at DESC, id DESC)"
+  },
+  "index:ix_xl_jobs_user": {
+    "sql": "CREATE INDEX ix_xl_jobs_user ON xl_jobs (company_id, started_by, started_at DESC)"
+  },
+  "index:ix_xl_templates_instance": {
+    "sql": "CREATE INDEX ix_xl_templates_instance ON xl_templates (instance_id)"
+  },
+  "table:msg_calls": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "initiated_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "call_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'RINGING'",
+        "pk": 0
+      },
+      {
+        "name": "provider",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'WEBRTC'",
+        "pk": 0
+      },
+      {
+        "name": "provider_room_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "answered_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "ended_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "participants_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "invited_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_config": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "config_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "config_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "instance_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "effective_from",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_conversations": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conv_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "title",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "direct_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "department_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "external_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "external_channel",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "auto_membership",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "is_archived",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "last_message_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_activity_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "message_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "last_external_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "department_id->org_departments.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_hidden": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_holds": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "released_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "released_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_member_periods": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "ended_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_members": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "member_role",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'MEMBER'",
+        "pk": 0
+      },
+      {
+        "name": "member_source",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'MANUAL'",
+        "pk": 0
+      },
+      {
+        "name": "joined_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "left_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "muted_until",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "mention_only",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "last_read_message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "pinned",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "archived",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_messages": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sender_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "kind",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'TEXT'",
+        "pk": 0
+      },
+      {
+        "name": "body",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "reply_to_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "forwarded_from_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "mentions_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "attachments_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "record_links_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "client_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "edited_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "delete_reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION",
+      "forwarded_from_id->msg_messages.id:NO ACTION/NO ACTION",
+      "reply_to_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_pins": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "conversation_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "pinned_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "conversation_id->msg_conversations.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_presence": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ONLINE'",
+        "pk": 0
+      },
+      {
+        "name": "last_seen_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_reactions": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "emoji",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_receipts": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "delivered_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "read_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_stars": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "starred_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_user_settings": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "show_last_seen",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "share_read_receipts",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "show_online",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:msg_voice": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "duration_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "waveform_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "message_id->msg_messages.id:NO ACTION/NO ACTION"
+    ]
   },
   "table:ntf_deliveries": {
     "columns": [
@@ -16868,6 +20012,716 @@
     "fks": [
       "company_id->org_companies.id:NO ACTION/NO ACTION",
       "instance_id->wf_instances.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:off_devices": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "device_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "device_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "platform",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "registered_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "last_sync_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_seen_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "clock_drift_ms",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "revoked_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "revoked_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "revoke_reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "wiped_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:off_sync_log": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "device_pk",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "command_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "seq",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "command_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "op",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'create'",
+        "pk": 0
+      },
+      {
+        "name": "client_ref",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "server_entity_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "base_version",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "payload_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "conflict_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "result_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "error_message",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "client_created_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "device_clock_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "effective_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "lat",
+        "type": "REAL",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "lng",
+        "type": "REAL",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "accuracy",
+        "type": "REAL",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "received_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "processed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "confirmed_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "confirmed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "actor_json",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "resolution",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "resolved_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "resolved_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "device_pk->off_devices.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:off_uploads": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "device_pk",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_ref",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "upload_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "command_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "file_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "total_size",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "chunk_size",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "total_chunks",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "received_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "sha256",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'OPEN'",
+        "pk": 0
+      },
+      {
+        "name": "file_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "error_message",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "device_pk->off_devices.id:NO ACTION/NO ACTION",
+      "file_id->core_files.id:NO ACTION/NO ACTION"
     ]
   },
   "table:org_assignments": {
@@ -19564,6 +23418,1975 @@
       "company_id->org_companies.id:NO ACTION/NO ACTION"
     ]
   },
+  "table:sig_config": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "config_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "config_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "instance_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:sig_copies": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "generated_doc_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "file_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "signature_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "file_id->core_files.id:NO ACTION/NO ACTION",
+      "generated_doc_id->tpl_generated_docs.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:sig_profiles": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "user_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "image_data",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "image_hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:sig_signatures": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "generated_doc_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "signer_user_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "signer_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "signer_label",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "method",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "signed_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "digest",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "prev_digest",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "certificate_ref",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "workflow_instance_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "ip",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'SIGNED'",
+        "pk": 0
+      },
+      {
+        "name": "revoked_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "revoked_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "revoke_reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "generated_doc_id->tpl_generated_docs.id:NO ACTION/NO ACTION",
+      "signer_user_id->iam_users.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:sig_verifications": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "generated_doc_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "verify_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "mismatch_count",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "last_verified_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ACTIVE'",
+        "pk": 0
+      },
+      {
+        "name": "cancelled_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "cancelled_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "cancel_reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "generated_doc_id->tpl_generated_docs.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:tpl_auto_rules": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "workflow_doc_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_code",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "enabled",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:tpl_bulk_jobs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_code",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "total",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "done",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "failed",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'QUEUED'",
+        "pk": 0
+      },
+      {
+        "name": "job_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_ids_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "results_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "purpose",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'OFFICIAL'",
+        "pk": 0
+      },
+      {
+        "name": "pdfa",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "requested_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "finished_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:tpl_deliveries": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "generated_doc_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "channel",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "recipient",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'QUEUED'",
+        "pk": 0
+      },
+      {
+        "name": "comm_message_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sent_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "error",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "link_expires_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "generated_doc_id->tpl_generated_docs.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:tpl_generated_docs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_number",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version_no",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "file_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "pages",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "pdfa",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "purpose",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'OFFICIAL'",
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "verify_code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "is_current",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "superseded_by",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "bulk_job_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "generated_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "generated_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "file_id->core_files.id:NO ACTION/NO ACTION",
+      "superseded_by->tpl_generated_docs.id:NO ACTION/NO ACTION",
+      "template_id->tpl_templates.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:tpl_records": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "entity_id",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_no",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "data_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "approved",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "is_sample",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "record_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:tpl_templates": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "doc_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "html",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "css",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "orientation",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'portrait'",
+        "pk": 0
+      },
+      {
+        "name": "brand_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "variables_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'[]'",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'DRAFT'",
+        "pk": 0
+      },
+      {
+        "name": "is_default",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "change_note",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "instance_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "approved_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "approved_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "effective_from",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
+    ]
+  },
   "trigger:trg_acc_ledger_no_delete": {
     "sql": "CREATE TRIGGER trg_acc_ledger_no_delete BEFORE DELETE ON acc_action_ledger BEGIN SELECT RAISE(ABORT, 'A ledger entry cannot be removed'); END"
   },
@@ -19606,11 +25429,32 @@
   "trigger:trg_core_security_events_no_update": {
     "sql": "CREATE TRIGGER trg_core_security_events_no_update BEFORE UPDATE ON core_security_events BEGIN SELECT RAISE(ABORT, 'The security event log is append-only: rows cannot be changed.'); END"
   },
+  "trigger:trg_msg_members_back": {
+    "sql": "CREATE TRIGGER trg_msg_members_back AFTER UPDATE OF left_at ON msg_members WHEN OLD.left_at IS NOT NULL AND NEW.left_at IS NULL BEGIN INSERT INTO msg_member_periods (company_id, conversation_id, user_ref, started_at) VALUES (NEW.company_id, NEW.conversation_id, NEW.user_ref, strftime('%Y-%m-%dT%H:%M:%fZ','now')); END"
+  },
+  "trigger:trg_msg_members_joined": {
+    "sql": "CREATE TRIGGER trg_msg_members_joined AFTER INSERT ON msg_members BEGIN INSERT INTO msg_member_periods (company_id, conversation_id, user_ref, started_at, ended_at) VALUES (NEW.company_id, NEW.conversation_id, NEW.user_ref, NEW.joined_at, NEW.left_at); END"
+  },
+  "trigger:trg_msg_members_left": {
+    "sql": "CREATE TRIGGER trg_msg_members_left AFTER UPDATE OF left_at ON msg_members WHEN OLD.left_at IS NULL AND NEW.left_at IS NOT NULL BEGIN UPDATE msg_member_periods SET ended_at = NEW.left_at WHERE conversation_id = NEW.conversation_id AND user_ref = NEW.user_ref AND ended_at IS NULL; END"
+  },
   "trigger:trg_pcs_results_no_delete": {
     "sql": "CREATE TRIGGER trg_pcs_results_no_delete BEFORE DELETE ON pcs_check_results BEGIN SELECT RAISE(ABORT, 'A check result cannot be removed'); END"
   },
   "trigger:trg_pcs_results_no_update": {
     "sql": "CREATE TRIGGER trg_pcs_results_no_update BEFORE UPDATE ON pcs_check_results BEGIN SELECT RAISE(ABORT, 'A check result cannot be changed'); END"
+  },
+  "trigger:trg_sig_signatures_immutable": {
+    "sql": "CREATE TRIGGER trg_sig_signatures_immutable BEFORE UPDATE OF generated_doc_id, signer_name, method, signed_at, hash, digest, prev_digest, certificate_ref, company_id ON sig_signatures BEGIN SELECT RAISE(ABORT, 'A signature cannot be changed; revoke it instead.'); END"
+  },
+  "trigger:trg_sig_signatures_no_delete": {
+    "sql": "CREATE TRIGGER trg_sig_signatures_no_delete BEFORE DELETE ON sig_signatures BEGIN SELECT RAISE(ABORT, 'A signature cannot be deleted; revoke it instead.'); END"
+  },
+  "trigger:trg_tpl_generated_immutable": {
+    "sql": "CREATE TRIGGER trg_tpl_generated_immutable BEFORE UPDATE OF template_id, doc_type, entity, entity_id, doc_number, version_no, file_id, hash, pages, verify_code, generated_by, generated_at, company_id ON tpl_generated_docs BEGIN SELECT RAISE(ABORT, 'A generated document cannot be changed; generate a new version with a reason.'); END"
+  },
+  "trigger:trg_tpl_generated_no_delete": {
+    "sql": "CREATE TRIGGER trg_tpl_generated_no_delete BEFORE DELETE ON tpl_generated_docs BEGIN SELECT RAISE(ABORT, 'A generated document cannot be deleted.'); END"
   },
   "trigger:trg_wf_history_no_delete": {
     "sql": "CREATE TRIGGER trg_wf_history_no_delete BEFORE DELETE ON wf_history BEGIN SELECT RAISE(ABORT, 'The workflow history cannot be removed'); END"
@@ -24816,6 +30660,15 @@
   "index:ux_alr_rules_version": {
     "sql": "CREATE UNIQUE INDEX ux_alr_rules_version ON alr_rules (COALESCE(company_id, 0), code, rule_version)"
   },
+  "index:ux_col_mentions_comment_user": {
+    "sql": "CREATE UNIQUE INDEX ux_col_mentions_comment_user ON col_mentions (comment_id, mentioned_user)"
+  },
+  "index:ux_col_reactions_one": {
+    "sql": "CREATE UNIQUE INDEX ux_col_reactions_one ON col_reactions (comment_id, reacted_by, reaction)"
+  },
+  "index:ux_col_trace_pair": {
+    "sql": "CREATE UNIQUE INDEX ux_col_trace_pair ON col_trace_links (company_id, from_entity, from_id, to_entity, to_id, relation) WHERE is_active = 1"
+  },
   "index:ux_comm_channels": {
     "sql": "CREATE UNIQUE INDEX ux_comm_channels ON comm_channels (company_id, channel, channel_version)"
   },
@@ -25023,6 +30876,60 @@
   "index:ux_iam_users_username": {
     "sql": "CREATE UNIQUE INDEX ux_iam_users_username ON iam_users (username)"
   },
+  "index:ux_msg_config_active": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_config_active ON msg_config (company_id) WHERE status = 'ACTIVE' AND is_active = 1"
+  },
+  "index:ux_msg_config_pending": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_config_pending ON msg_config (company_id) WHERE status = 'PENDING' AND is_active = 1"
+  },
+  "index:ux_msg_config_version": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_config_version ON msg_config (company_id, config_version)"
+  },
+  "index:ux_msg_conv_direct": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_conv_direct ON msg_conversations (company_id, direct_key) WHERE direct_key IS NOT NULL AND is_active = 1"
+  },
+  "index:ux_msg_conv_external": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_conv_external ON msg_conversations (company_id, external_key) WHERE external_key IS NOT NULL AND is_active = 1"
+  },
+  "index:ux_msg_conv_place": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_conv_place ON msg_conversations (company_id, conv_type, COALESCE(project_id, 0), COALESCE(site_id, 0), COALESCE(department_id, 0)) WHERE conv_type IN ('PROJECT', 'SITE', 'DEPARTMENT') AND is_active = 1"
+  },
+  "index:ux_msg_conv_record": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_conv_record ON msg_conversations (company_id, entity, entity_id) WHERE conv_type = 'RECORD' AND is_active = 1"
+  },
+  "index:ux_msg_hidden_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_hidden_one ON msg_hidden (message_id, user_ref)"
+  },
+  "index:ux_msg_holds_active": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_holds_active ON msg_holds (conversation_id) WHERE released_at IS NULL"
+  },
+  "index:ux_msg_members_conv_user": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_members_conv_user ON msg_members (conversation_id, user_ref)"
+  },
+  "index:ux_msg_messages_client": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_messages_client ON msg_messages (conversation_id, client_id) WHERE client_id IS NOT NULL"
+  },
+  "index:ux_msg_pins_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_pins_one ON msg_pins (conversation_id, message_id)"
+  },
+  "index:ux_msg_presence_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_presence_one ON msg_presence (company_id, user_ref)"
+  },
+  "index:ux_msg_reactions_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_reactions_one ON msg_reactions (message_id, user_ref, emoji)"
+  },
+  "index:ux_msg_receipts_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_receipts_one ON msg_receipts (message_id, user_ref)"
+  },
+  "index:ux_msg_stars_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_stars_one ON msg_stars (message_id, user_ref)"
+  },
+  "index:ux_msg_user_settings_one": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_user_settings_one ON msg_user_settings (company_id, user_ref)"
+  },
+  "index:ux_msg_voice_message": {
+    "sql": "CREATE UNIQUE INDEX ux_msg_voice_message ON msg_voice (message_id)"
+  },
   "index:ux_ntf_notifications_key": {
     "sql": "CREATE UNIQUE INDEX ux_ntf_notifications_key ON ntf_notifications (company_id, user_ref, event_key) WHERE event_key IS NOT NULL"
   },
@@ -25031,6 +30938,15 @@
   },
   "index:ux_ntf_templates": {
     "sql": "CREATE UNIQUE INDEX ux_ntf_templates ON ntf_templates (COALESCE(company_id, 0), code, channel, lang, template_version)"
+  },
+  "index:ux_off_devices_user_device": {
+    "sql": "CREATE UNIQUE INDEX ux_off_devices_user_device ON off_devices (company_id, user_ref, device_id)"
+  },
+  "index:ux_off_sync_command": {
+    "sql": "CREATE UNIQUE INDEX ux_off_sync_command ON off_sync_log (company_id, command_id)"
+  },
+  "index:ux_off_uploads_id": {
+    "sql": "CREATE UNIQUE INDEX ux_off_uploads_id ON off_uploads (upload_id)"
   },
   "index:ux_org_branches_code": {
     "sql": "CREATE UNIQUE INDEX ux_org_branches_code ON org_branches (company_id, COALESCE(parent_id, 0), code)"
@@ -25067,6 +30983,48 @@
   },
   "index:ux_pcs_reason_codes": {
     "sql": "CREATE UNIQUE INDEX ux_pcs_reason_codes ON pcs_reason_codes (COALESCE(company_id, 0), action_type, code)"
+  },
+  "index:ux_sig_config_active": {
+    "sql": "CREATE UNIQUE INDEX ux_sig_config_active ON sig_config (company_id) WHERE status = 'ACTIVE' AND is_active = 1"
+  },
+  "index:ux_sig_config_version": {
+    "sql": "CREATE UNIQUE INDEX ux_sig_config_version ON sig_config (company_id, config_version)"
+  },
+  "index:ux_sig_profiles_user": {
+    "sql": "CREATE UNIQUE INDEX ux_sig_profiles_user ON sig_profiles (company_id, user_name)"
+  },
+  "index:ux_sig_signatures_signer": {
+    "sql": "CREATE UNIQUE INDEX ux_sig_signatures_signer ON sig_signatures (generated_doc_id, signer_name, method) WHERE status = 'SIGNED'"
+  },
+  "index:ux_sig_verifications_code": {
+    "sql": "CREATE UNIQUE INDEX ux_sig_verifications_code ON sig_verifications (code)"
+  },
+  "index:ux_sig_verifications_doc": {
+    "sql": "CREATE UNIQUE INDEX ux_sig_verifications_doc ON sig_verifications (generated_doc_id)"
+  },
+  "index:ux_tpl_auto_rules": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_auto_rules ON tpl_auto_rules (company_id, workflow_doc_type, doc_type) WHERE is_active = 1"
+  },
+  "index:ux_tpl_generated_verify": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_generated_verify ON tpl_generated_docs (verify_code)"
+  },
+  "index:ux_tpl_generated_version": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_generated_version ON tpl_generated_docs (company_id, doc_type, entity_id, version_no)"
+  },
+  "index:ux_tpl_records_doc_no": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_records_doc_no ON tpl_records (company_id, doc_no)"
+  },
+  "index:ux_tpl_records_key": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_records_key ON tpl_records (company_id, doc_type, entity_id)"
+  },
+  "index:ux_tpl_templates_active": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_templates_active ON tpl_templates (COALESCE(company_id, 0), code) WHERE status = 'ACTIVE' AND is_active = 1"
+  },
+  "index:ux_tpl_templates_open": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_templates_open ON tpl_templates (COALESCE(company_id, 0), code) WHERE status IN ('DRAFT', 'IN_REVIEW') AND is_active = 1"
+  },
+  "index:ux_tpl_templates_version": {
+    "sql": "CREATE UNIQUE INDEX ux_tpl_templates_version ON tpl_templates (COALESCE(company_id, 0), code, template_version)"
   },
   "index:ux_tsk_assignees": {
     "sql": "CREATE UNIQUE INDEX ux_tsk_assignees ON tsk_assignees (task_id, user_ref, role)"
@@ -25157,6 +31115,15 @@
   },
   "index:ux_wf_watchers": {
     "sql": "CREATE UNIQUE INDEX ux_wf_watchers ON wf_watchers (instance_id, user_ref)"
+  },
+  "index:ux_xl_templates_active": {
+    "sql": "CREATE UNIQUE INDEX ux_xl_templates_active ON xl_templates (company_id, import_type) WHERE status = 'ACTIVE' AND is_active = 1"
+  },
+  "index:ux_xl_templates_pending": {
+    "sql": "CREATE UNIQUE INDEX ux_xl_templates_pending ON xl_templates (company_id, import_type) WHERE status = 'PENDING' AND is_active = 1"
+  },
+  "index:ux_xl_templates_version": {
+    "sql": "CREATE UNIQUE INDEX ux_xl_templates_version ON xl_templates (company_id, import_type, template_version)"
   },
   "table:wf_approval_policies": {
     "columns": [
@@ -27687,6 +33654,645 @@
     "fks": [
       "company_id->org_companies.id:NO ACTION/NO ACTION",
       "instance_id->wf_instances.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:xl_job_errors": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "job_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "sheet",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "row_no",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "column_key",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "column_label",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "value",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "message",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "code",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'INVALID'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "job_id->xl_jobs.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:xl_jobs": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "import_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "file_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "file_name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "file_hash",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'UPLOADED'",
+        "pk": 0
+      },
+      {
+        "name": "mode",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ALL_OR_NOTHING'",
+        "pk": 0
+      },
+      {
+        "name": "on_existing",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'ERROR'",
+        "pk": 0
+      },
+      {
+        "name": "total_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "valid_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "error_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "create_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "update_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "skip_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "committed_rows",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "progress",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "0",
+        "pk": 0
+      },
+      {
+        "name": "core_job_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "last_error",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "result_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "started_by",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "started_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "validated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "committed_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "committed_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "cancelled_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "actor_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "commit_actor_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION",
+      "file_id->core_files.id:NO ACTION/NO ACTION"
+    ]
+  },
+  "table:xl_templates": {
+    "columns": [
+      {
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 1
+      },
+      {
+        "name": "company_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "import_type",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "template_version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "columns_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "instructions",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "''",
+        "pk": 0
+      },
+      {
+        "name": "settings_json",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'{}'",
+        "pk": 0
+      },
+      {
+        "name": "status",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "'PENDING'",
+        "pk": 0
+      },
+      {
+        "name": "instance_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "reason",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "project_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "site_id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "created_at",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt": "strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+        "pk": 0
+      },
+      {
+        "name": "updated_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "updated_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "version",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "is_active",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt": "1",
+        "pk": 0
+      },
+      {
+        "name": "deleted_at",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "deleted_by",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_type",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "source_id",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      },
+      {
+        "name": "remarks",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt": null,
+        "pk": 0
+      }
+    ],
+    "fks": [
+      "company_id->org_companies.id:NO ACTION/NO ACTION"
     ]
   }
 }
