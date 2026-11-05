@@ -13,7 +13,7 @@ const W = '/api/v1/workflow';
 const json = { 'content-type': 'application/json' };
 const key = (k = 'a') => ({ ...json, 'idempotency-key': `at-${k}-${Math.random().toString(36).slice(2, 10)}` });
 const as = (roles, user, company = '1') => ({ roles, user, company });
-const hr1 = as('HRMGR', 'hr1'); const hr2 = as('HRMGR', 'hr2'); const dir = as('DIR', 'dir1'); const pm1 = as('PM', 'pm1'); const ws = as('WSUP', 'ws1'); const se = as('SE', 'se1'); const aud = as('AUD', 'aud1'); const other = as('HRMGR', 'hr9', '2');
+const hr1 = as('HRMGR', 'hr1'); const hr2 = as('HRMGR', 'hr2'); const dir = as('DIR', 'dir1'); const pm1 = as('PM', 'pm1'); const ws = as('WSUP', 'ws1'); const se = as('SE', 'se1'); const other = as('HRMGR', 'hr9', '2');
 const day = (n) => new Date(Date.now() + 5.5 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
 const opened = [];
 after(async () => { for (const a of opened) await a.close(); });
@@ -125,7 +125,7 @@ test('T-01 BR-01 FR-05 policy, shift and weekly off resolve from the employee ov
   const gen = await t.shift(); const early = await t.shift({ code: 'EARLY', name: 'Early', startTime: '06:00', endTime: '14:00', breakMinutes: 30, fullDayHours: 7, halfDayHours: 3.5, otAfterHours: 7.5 });
   const nightShift = await t.shift({ code: 'NIGHT', name: 'Night', startTime: '22:00', endTime: '06:00', breakMinutes: 30, fullDayHours: 7, halfDayHours: 3.5, otAfterHours: 7.5 });
   assert.equal(nightShift.crossesMidnight, true); assert.equal(nightShift.nightShift, true);
-  const pCo = await t.policy('CO'); const pSite = await t.policy('SITEP', RULES({ late: { enabled: true, countPerHalfDay: 2 } })); const pCrew = await t.policy('CREWP', RULES({ late: { enabled: false, countPerHalfDay: 0 } }));
+  await t.policy('CO'); await t.policy('SITEP', RULES({ late: { enabled: true, countPerHalfDay: 2 } })); await t.policy('CREWP', RULES({ late: { enabled: false, countPerHalfDay: 0 } }));
   const e = t.emp(); t.deploy(e, t.ids.s1, t.ids.crew1);
   const eOther = t.emp(); t.deploy(eOther, t.ids.s1, t.ids.crew2);
   const eElse = t.emp(); t.deploy(eElse, t.ids.s2, null);
