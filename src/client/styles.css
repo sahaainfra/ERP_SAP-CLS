@@ -1109,3 +1109,17 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .an-body { white-space: pre-wrap; overflow-wrap: anywhere; }
 .an-quiz { margin-block: var(--erp-space-2); }
 .link-button { background: transparent; border: 0; padding: 0; color: var(--erp-color-text-link, var(--erp-color-status-info-fg)); text-decoration: underline; cursor: pointer; font: inherit; text-align: start; min-height: 1.75rem; }
+
+/* Part 05.05: company policies */
+.rt { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); }
+.rt-bar { display: flex; flex-wrap: wrap; gap: var(--erp-space-1); padding: var(--erp-space-1); border-block-end: 1px solid var(--erp-color-border-subtle); }
+.rt-body { min-height: 12rem; padding: var(--erp-space-3); overflow-wrap: anywhere; }
+.rt-body:focus-visible { outline: 3px solid var(--erp-color-status-info-fg); }
+.policy-body { overflow-wrap: anywhere; }
+.policy-body h1, .policy-body h2, .policy-body h3 { margin-block: var(--erp-space-3) var(--erp-space-1); }
+.policy-body table { border-collapse: collapse; } .policy-body td, .policy-body th { border: 1px solid var(--erp-color-border-subtle); padding: var(--erp-space-1) var(--erp-space-2); }
+.diff p { margin: 0 0 var(--erp-space-2); padding: var(--erp-space-1) var(--erp-space-2); border-inline-start: 4px solid transparent; }
+.diff-add { background: var(--erp-color-status-success-bg); border-inline-start-color: var(--erp-color-status-success-fg) !important; }
+.diff-del { background: var(--erp-color-status-danger-bg); border-inline-start-color: var(--erp-color-status-danger-fg) !important; text-decoration: line-through; }
+.diff-change { background: var(--erp-color-status-warning-bg); border-inline-start-color: var(--erp-color-status-warning-fg) !important; }
+.diff-change ins { background: var(--erp-color-status-success-bg); text-decoration: underline; } .diff-change del { background: var(--erp-color-status-danger-bg); }

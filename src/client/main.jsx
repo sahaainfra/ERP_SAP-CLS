@@ -15,6 +15,7 @@ import './modules/iam/index.js';
 import './modules/ui/index.js';
 import './modules/eng/index.js';
 import './modules/msg/index.js';
+import './modules/pol/index.js';
 import { initAuth } from './platform/api/index.js';
 import { installPrintLogging } from './platform/audit/index.js';
 import { createQueryClient } from './platform/query/client.js';
