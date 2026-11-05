@@ -95,7 +95,7 @@ test('screenshots of the item master pages', async ({ browser, request }, info) 
   await expect(u.page.getByTestId('it-uom-row')).toHaveCount(1);
   await shot(u.page, '03-item-units');
   const w = await open(browser, info, g.c, 'SE', g.u.se, '/admin/items/new');
-  await w.page.getByTestId('ni-category').selectOption({ label: 'Reinforcement steel' }).catch(async () => { await w.page.getByTestId('ni-category').selectOption({ label: 'Civil materials › Reinforcement steel' }); });
+  await w.page.getByTestId('ni-category').selectOption({ label: 'Civil materials › Reinforcement steel' });
   await w.page.getByTestId('ni-type').selectOption('MATERIAL');
   await w.page.getByTestId('ni-next').click();
   await expect(w.page.getByTestId('ni-spec-grade')).toBeVisible();

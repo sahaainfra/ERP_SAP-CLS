@@ -55,8 +55,8 @@ const act = async (request, c, roles, user, instanceId, action = 'approve') => {
 async function setup(request, code) {
   const c = await company(request, code);
   const t = code.toLowerCase();
-  const u = { proc: `${t}-proc`, proc2: `${t}-proc2`, est: `${t}-est`, est2: `${t}-est2`, se: `${t}-se`, sys: `${t}-sys` };
-  people(c, [[u.proc, ['PROCMGR'], 'Pramod Purchase'], [u.proc2, ['PROCMGR'], 'Priya Purchase'], [u.est, ['EST'], 'Esha Estimator'], [u.est2, ['EST'], 'Eshan Estimator'], [u.se, ['SE'], 'Seema Engineer'], [u.sys, ['SYSADM'], 'Sam Admin']]);
+  const u = { proc: `${t}-proc`, proc2: `${t}-proc2`, est: `${t}-est`, est2: `${t}-est2`, se: `${t}-se`, sys: `${t}-sys`, pm: `${t}-pm` };
+  people(c, [[u.proc, ['PROCMGR'], 'Pramod Purchase'], [u.proc2, ['PROCMGR'], 'Priya Purchase'], [u.est, ['EST'], 'Esha Estimator'], [u.est2, ['EST'], 'Eshan Estimator'], [u.se, ['SE'], 'Seema Engineer'], [u.sys, ['SYSADM'], 'Sam Admin'], [u.pm, ['PM'], 'Pallavi Projects']]);
   const cats = (await api(request, c, 'PROCMGR', u.proc, 'get', '/mdm/item-categories')).rows;
   const cat = (k) => cats.find((x) => x.code === k).id;
   /** An item through its approval by a second steward of its category. */
@@ -128,9 +128,11 @@ test('FR-04 FR-06 AC-01 a bill of resources kept with the selector; the Item Mas
   const sel = e.page.getByTestId('item-selector');
   await sel.getByTestId('is-q').fill('cement');
   await expect(sel.getByTestId('is-row')).toHaveCount(1);
+  await expect(sel.getByTestId('is-row')).toContainText('cement');
   await sel.getByTestId('is-pick').check();
   await sel.getByTestId('is-q').fill('sand');
   await expect(sel.getByTestId('is-row')).toHaveCount(1);
+  await expect(sel.getByTestId('is-row')).toContainText('River sand');
   await sel.getByTestId('is-pick').check();
   await sel.getByTestId('is-done').click();
   await expect(e.page.getByTestId('it-res-row')).toHaveCount(2);
@@ -144,18 +146,19 @@ test('FR-04 FR-06 AC-01 a bill of resources kept with the selector; the Item Mas
   await expect(l.page.getByTestId('item-master')).toBeVisible();
   await expect(l.page.getByText('OPC 53 grade cement').first()).toBeVisible();
   if (phone) await noOverflow(l.page);
-  // AC-01: the selector in the lines of a sample request
+  // AC-01: the selector in the lines of a sample request (a project manager raises them)
   const db = new DatabaseSync('data/e2e.sqlite');
   db.exec('PRAGMA busy_timeout = 8000;');
   db.prepare("INSERT OR IGNORE INTO org_projects (company_id, code, name, type, status, created_by, source_type) VALUES (?, 'ALPHA', 'Alpha bridge', 'ROAD', 'ACTIVE', 'e2e', 'e2e')").run(g.c);
   db.close();
-  const s = await open(browser, info, g.c, 'SE', g.u.se, '/admin/sample-requests?new=1');
+  const s = await open(browser, info, g.c, 'PM', g.u.pm, '/admin/sample-requests?new=1');
   const btn = s.page.getByTestId('lines-from-catalogue');
   await expect(btn).toBeVisible({ timeout: 15_000 });
   await btn.click();
   const sel2 = s.page.getByTestId('item-selector');
   await sel2.getByTestId('is-q').fill('opc');
   await expect(sel2.getByTestId('is-row')).toHaveCount(1);
+  await expect(sel2.getByTestId('is-row')).toContainText('OPC');
   await sel2.getByTestId('is-pick').check();
   await sel2.getByTestId('is-done').click();
   await expect(s.page.locator('input[value^="CEM-00001 OPC 53 grade cement"]').first()).toBeVisible();
