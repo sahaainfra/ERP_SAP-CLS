@@ -3327,6 +3327,266 @@ Indexes:
 - ux_iam_users_email (unique): email
 - ux_iam_users_username (unique): username
 
+## mdm_change_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| master_type | TEXT | yes |  |  |
+| record_id | INTEGER |  |  |  |
+| change_type | TEXT | yes |  |  |
+| change_json | TEXT | yes |  | '{}' |
+| before_json | TEXT | yes |  | '{}' |
+| justification | TEXT | yes |  |  |
+| effective_from | TEXT |  |  |  |
+| sensitive | INTEGER | yes |  | 0 |
+| duplicates_json | TEXT | yes |  | '[]' |
+| request_status | TEXT | yes |  | 'PENDING' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| applied_at | TEXT |  |  |  |
+| target_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: target_id -> mdm_records(id), record_id -> mdm_records(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_cr_requester: company_id, requested_by
+- ix_mdm_cr_target: target_id
+- ix_mdm_cr_record: record_id
+- ix_mdm_cr_list: company_id, master_type, request_status
+
+## mdm_duplicates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| master_type | TEXT | yes |  |  |
+| record_a | INTEGER | yes |  |  |
+| record_b | INTEGER | yes |  |  |
+| score | INTEGER | yes |  |  |
+| match_rule | TEXT | yes |  |  |
+| duplicate_status | TEXT | yes |  | 'OPEN' |
+| resolution | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: record_b -> mdm_records(id), record_a -> mdm_records(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_dup_b: record_b
+- ix_mdm_dup_a: record_a
+- ix_mdm_dup_status: company_id, master_type, duplicate_status
+- ux_mdm_dup_pair (unique): company_id, master_type, record_a, record_b
+
+## mdm_merge_map
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| master_type | TEXT | yes |  |  |
+| from_id | INTEGER | yes |  |  |
+| to_id | INTEGER | yes |  |  |
+| merged_at | TEXT | yes |  |  |
+| merged_by | TEXT | yes |  |  |
+| change_request_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: change_request_id -> mdm_change_requests(id), to_id -> mdm_records(id), from_id -> mdm_records(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_merge_company_id: company_id
+- ix_mdm_merge_cr: change_request_id
+- ix_mdm_merge_to: to_id
+- ux_mdm_merge_from (unique): from_id
+
+## mdm_quality_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| config_version | INTEGER | yes |  |  |
+| master_type | TEXT | yes |  |  |
+| field | TEXT | yes |  |  |
+| rule | TEXT | yes |  |  |
+| param | TEXT |  |  |  |
+| severity | TEXT | yes |  | 'ERROR' |
+| active | INTEGER | yes |  | 1 |
+| config_status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_rules_version: company_id, config_version
+- ix_mdm_rules_status: company_id, config_status, master_type
+
+## mdm_record_versions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| record_id | INTEGER | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| data_json | TEXT | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| version_status | TEXT | yes |  | 'PENDING' |
+| change_request_id | INTEGER |  |  |  |
+| record_status_after | TEXT | yes |  | 'ACTIVE' |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: change_request_id -> mdm_change_requests(id), record_id -> mdm_records(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_version_due: company_id, version_status, effective_from
+- ix_mdm_version_cr: change_request_id
+- ix_mdm_version_asof: record_id, version_status, effective_from
+- ux_mdm_version_no (unique): record_id, version_no
+
+## mdm_records
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| master_type | TEXT | yes |  |  |
+| record_code | TEXT | yes |  |  |
+| display_name | TEXT | yes |  |  |
+| record_status | TEXT | yes |  | 'SUBMITTED' |
+| current_version_id | INTEGER |  |  |  |
+| merged_into_id | INTEGER |  |  |  |
+| dq_score | INTEGER | yes |  | 0 |
+| last_changed_at | TEXT |  |  |  |
+| last_reviewed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: merged_into_id -> mdm_records(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_record_merged: merged_into_id
+- ix_mdm_record_name: company_id, master_type, display_name
+- ix_mdm_record_list: company_id, master_type, record_status
+- ux_mdm_record_code (unique): company_id, master_type, record_code
+
+## mdm_stewards
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| config_version | INTEGER | yes |  |  |
+| master_type | TEXT | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| steward_role | TEXT | yes |  | 'PRIMARY' |
+| config_status | TEXT | yes |  | 'PENDING' |
+| instance_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_stewards_version: company_id, config_version
+- ix_mdm_stewards_user: user_id
+- ix_mdm_stewards_status: company_id, config_status, master_type
+
 ## msg_acknowledgements
 
 | Column | Type | Not null | Key | Default |

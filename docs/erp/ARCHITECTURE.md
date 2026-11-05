@@ -704,3 +704,14 @@ Behind feature flag `ff.msg.p0505`; a module of its own, `modules/pol` (`service
 - **Policy-to-protocol** (FR-05, BR-02, ADR-244): `/pol/requirements` (tag, edit, convert, dismiss), `GET /pol/drafts` (administrators' worklist with the state each draft has in its engine).
 - **Browser** (`client/modules/pol`): Policy Register with the policy page, Policy Editor (rich text, quiz, applicability with live count, requirements, compare), My Policies, Policy-to-Protocol Drafts.
 
+## 55. Master data governance (part 06.01)
+
+Behind feature flag `ff.mdm.p0601`; module `modules/mdm` (`masters.js`, `service.js`, `integrations.js`, `routes.js`, `validators.js`, `index.js`) and the shared registry `platform/mdm` (`masterTypes`, `masterReferences`, `FORMATS` with the GSTIN check character, `normalise`, `similarity`, `mask`, `mdmOf`). Tables `mdm_records`, `mdm_record_versions`, `mdm_change_requests`, `mdm_duplicates`, `mdm_merge_map`, `mdm_quality_rules`, `mdm_stewards` (migrations 96 and 97).
+
+- **Records and versions** (FR-01, FR-03, ADR-245/249): `GET/POST /mdm/masters/:type/records`, `GET/PUT /mdm/masters/:type/records/:id` (`?asOf=`), `POST …/status`, `GET …/lookup` (ACTIVE only, BR-02), `POST …/check`.
+- **Change requests** (FR-05, ADR-246): `GET /mdm/change-requests` (`view=mine|review|all`), `GET /:id`, `POST /:id/cancel`, `POST /:id/resubmit`; workflows `MDM_CHANGE`, `MDM_MERGE` (resolver `mdm.steward`, ACCMGR when financial), evidence of duplicates and score for the approver.
+- **Duplicates and merge** (FR-02, BR-01, ADR-247/248): `GET /mdm/duplicates`, `POST /duplicates/scan`, `POST /duplicates/:id/dismiss`, `POST /mdm/merge`; `GET …/resolve`, `GET …/references`.
+- **Quality and stewards** (FR-04, FR-07): `GET /mdm/quality`, `GET/POST /mdm/config` (workflow `MDM_CONFIG`), `GET /mdm/config/export`; `POST …/review` clears staleness.
+- **Dashboard** (FR-08): `GET /mdm/dashboard`. Job `mdm.cycle` (hourly): scheduled versions into force, duplicate scan.
+- **Integration**: object type `mdm_record` (resolves merged ids), Excel import `MDM_PARTNER` (each row a change request) and export `mdm.partners` (FR-06); events `mdm.change.requested`, `mdm.record.changed`, `mdm.record.merged`.
+- **Browser** (`client/modules/mdm`): Master Data Governance, Master Change Requests, Duplicate Candidates (compare and merge), Data Quality Rules & Stewards, Master Records (detail with history, as of, quality, references).

@@ -2405,3 +2405,100 @@ paths:
     get:
       summary: The drafts made from policies, with the state each has in its engine (pol.draft.view)
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/dashboard:
+    get:
+      summary: Master data dashboard per master (records, waiting changes, duplicates, quality score) and exceptions (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters:
+    get:
+      summary: The governed masters with their fields and whether I may edit them (mdm.record.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records:
+    get:
+      summary: Records of a master, filtered; asOf returns the data that applied on that date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Ask for a new record (409 DUPLICATE blocks, 409 DUPLICATE_WARNING asks to confirm); goes to the steward (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/export:
+    get:
+      summary: CSV of the records (sensitive fields masked without mdm.sensitive.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/lookup:
+    get:
+      summary: Records that can be chosen in a new transaction (active only, BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/check:
+    post:
+      summary: Check data before saving - errors, warnings, possible duplicates and the quality score
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}:
+    get:
+      summary: A record with versions, quality checks, change requests and merge links; asOf for any date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: A change from a date - applied at once (200) for non-sensitive fields by an editor, otherwise a change request (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/status:
+    post:
+      summary: Ask to make a record inactive or active again (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/resolve:
+    get:
+      summary: The record in force a (possibly merged) id resolves to (BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/references:
+    get:
+      summary: What refers to the record and to the records merged into it
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/masters/{type}/records/{id}/review:
+    post:
+      summary: Confirm the record is still correct (clears staleness; steward or editor)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests:
+    get:
+      summary: Change requests - view mine, review (masters I am steward of) or all (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests/{id}:
+    get:
+      summary: A change request field by field (sensitive values masked), with the duplicates found
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests/{id}/cancel:
+    post:
+      summary: The requester withdraws a request that is waiting or returned
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/change-requests/{id}/resubmit:
+    post:
+      summary: The requester corrects a returned request and sends it again
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/duplicates:
+    get:
+      summary: Duplicate candidates, highest score first (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/duplicates/scan:
+    post:
+      summary: Scan a master for duplicates now (mdm.record.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/duplicates/{id}/dismiss:
+    post:
+      summary: Mark a pair as not duplicates, with a reason (mdm.record.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/merge:
+    post:
+      summary: Ask to merge one record into another (steward, then accounts manager for financial masters); never deletes (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/quality:
+    get:
+      summary: Quality score per master, failing rules and the lowest records (mdm.governance.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/config:
+    get:
+      summary: Quality rules and stewards in force, the pending proposal and the history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose new rules and stewards (mdm.config.edit; approved by ITADM or DIR)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/config/export:
+    get:
+      summary: The rules and stewards in force as JSON
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
