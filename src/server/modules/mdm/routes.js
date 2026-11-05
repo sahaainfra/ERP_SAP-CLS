@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { toCsv } from '../../platform/export/index.js';
+import { parseBankConfirm, parseBankRequest, parseBankVerify, parseBlacklist, parseDocumentAdd, parseGstinAdd, parseGstinVerify, parsePartnerCheck, parsePartnerCreate, parsePartnerDetails, parsePartnerStatus, parsePartnerSubmit, parsePartnerUpdate, parseQueue, parseSelectable, parseTdsSet } from './validators.js';
 import { parseAlternate, parseCategory, parseItemCheck, parseItemConvert, parseItemCreate, parseItemList, parseItemMark, parseItemResources, parseItemResubmit, parseItemSearch, parseItemStatus, parseItemUoms, parseItemUpdate, parseItemVersion, parseLegacyMap, parseMakeAdd, parseMakeDecide } from './validators.js';
 import { parseCommonCreate, parseCommonList, parseCommonRetire, parseCommonUpdate, parseConvert, parseFxQuery, parseGstQuery, parseListCode, parseListSave, parseListValues, parseMaster, parseTdsQuery } from './validators.js';
 import { parseAsOf, parseCancel, parseCheck, parseConfig, parseCreate, parseDismiss, parseDuplicateList, parseId, parseLookup, parseMerge, parseQuality, parseRecordList, parseRequestList, parseResubmit, parseScan, parseStatus, parseType, parseUpdate } from './validators.js';
@@ -98,5 +99,42 @@ export function itemRoutes({ items: s, exportsOf }, { idempotent, idempotentRequ
   r.post('/items/:id/makes', idempotent, (req, res) => ok(res, s.makes.add(req.actor, parseId(req.params.id), parseMakeAdd(req.body)), 201));
   r.post('/items/:id/makes/:makeId', idempotent, (req, res) => ok(res, s.makes.decide(req.actor, parseId(req.params.id), parseId(req.params.makeId), parseMakeDecide(req.body))));
   r.post('/items/:id/alternates', idempotent, (req, res) => ok(res, s.makes.alternate(req.actor, parseId(req.params.id), parseAlternate(req.body))));
+  return r;
+}
+
+/** Part 06.04: the business partner master. Rights (steward of the partner's roles, verification, bank view and requests, blacklist requests, holds) are checked in the service. */
+export function partnerRoutes({ partners: s, exportsOf }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/partners/register', (req, res) => res.json(s.register.list(req.actor, req.query)));
+  r.get('/partners/register/export', (req, res) => {
+    const svc = exportsOf();
+    if (!svc) throw new Error('The list export service is not running');
+    const out = svc.start(req.actor, 'mdm.partners', req.query);
+    if (out.kind === 'job') return res.status(202).json({ data: out });
+    res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+    return res.send(out.buffer);
+  });
+  r.get('/partners/queue', (req, res) => ok(res, s.queue(req.actor, parseQueue(req.query))));
+  r.post('/partners/check', (req, res) => ok(res, s.registration.check(req.actor, parsePartnerCheck(req.body))));
+  r.post('/partners', idempotentRequired, (req, res) => ok(res, s.registration.create(req.actor, parsePartnerCreate(req.body)), 201));
+  r.get('/partners/:id', (req, res) => ok(res, s.get(req.actor, parseId(req.params.id))));
+  r.put('/partners/:id', idempotent, (req, res) => ok(res, s.registration.update(req.actor, parseId(req.params.id), parsePartnerUpdate(req.body))));
+  r.post('/partners/:id/submit', idempotentRequired, (req, res) => ok(res, s.registration.submit(req.actor, parseId(req.params.id), parsePartnerSubmit(req.body)), 202));
+  r.put('/partners/:id/details', idempotent, (req, res) => ok(res, s.details.update(req.actor, parseId(req.params.id), parsePartnerDetails(req.body))));
+  r.get('/partners/:id/summary', (req, res) => ok(res, s.summary(req.actor, parseId(req.params.id))));
+  r.get('/partners/:id/selectable', (req, res) => ok(res, s.selectable(req.actor, parseId(req.params.id), parseSelectable(req.query))));
+  r.get('/partners/:id/payment-status', (req, res) => ok(res, s.banks.payment(req.actor, parseId(req.params.id))));
+  r.post('/partners/:id/gstins', idempotent, (req, res) => ok(res, s.details.addGstin(req.actor, parseId(req.params.id), parseGstinAdd(req.body)), 201));
+  r.post('/partners/:id/gstins/verify', idempotent, (req, res) => ok(res, s.details.verifyGstin(req.actor, parseId(req.params.id), parseGstinVerify(req.body))));
+  r.post('/partners/:id/documents', idempotent, (req, res) => ok(res, s.details.addDocument(req.actor, parseId(req.params.id), parseDocumentAdd(req.body)), 201));
+  r.post('/partners/:id/documents/:docId/verify', idempotent, (req, res) => ok(res, s.details.verifyDocument(req.actor, parseId(req.params.id), parseId(req.params.docId))));
+  r.put('/partners/:id/tds', idempotent, (req, res) => ok(res, s.details.setTds(req.actor, parseId(req.params.id), parseTdsSet(req.body))));
+  r.post('/partners/:id/banks', idempotentRequired, async (req, res) => ok(res, await s.banks.request(req.actor, parseId(req.params.id), parseBankRequest(req.body)), 202));
+  r.post('/partners/:id/banks/:bankId/confirm', idempotentRequired, (req, res) => ok(res, s.banks.confirm(req.actor, parseId(req.params.id), parseId(req.params.bankId), parseBankConfirm(req.body)), 202));
+  r.post('/partners/:id/banks/:bankId/verify', idempotent, (req, res) => ok(res, s.banks.verify(req.actor, parseId(req.params.id), parseId(req.params.bankId), parseBankVerify(req.body))));
+  r.get('/partners/:id/banks/:bankId/reveal', (req, res) => ok(res, s.banks.reveal(req.actor, parseId(req.params.id), parseId(req.params.bankId))));
+  r.post('/partners/:id/status', idempotent, (req, res) => ok(res, s.status.set(req.actor, parseId(req.params.id), parsePartnerStatus(req.body))));
+  r.post('/partners/:id/blacklist', idempotentRequired, (req, res) => ok(res, s.status.request(req.actor, parseId(req.params.id), parseBlacklist(req.body)), 202));
   return r;
 }

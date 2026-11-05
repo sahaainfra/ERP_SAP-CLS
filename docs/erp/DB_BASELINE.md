@@ -4048,6 +4048,334 @@ Indexes:
 - ix_mdm_merge_to: to_id
 - ux_mdm_merge_from (unique): from_id
 
+## mdm_partner_addresses
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| address_type | TEXT | yes |  |  |
+| address | TEXT | yes |  |  |
+| city | TEXT |  |  |  |
+| state_code | TEXT | yes |  |  |
+| pin | TEXT |  |  |  |
+| is_default | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_addresses_company: company_id
+- ix_mdm_partner_addresses_partner: partner_id
+
+## mdm_partner_banks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| account_no_encrypted | TEXT | yes |  |  |
+| account_hash | TEXT | yes |  |  |
+| account_last4 | TEXT | yes |  |  |
+| ifsc | TEXT | yes |  |  |
+| bank_name | TEXT |  |  |  |
+| branch | TEXT |  |  |  |
+| account_name | TEXT | yes |  |  |
+| bank_status | TEXT | yes |  |  |
+| verified_status | TEXT | yes |  | 'UNVERIFIED' |
+| verify_method | TEXT |  |  |  |
+| verify_note | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| otp_id | INTEGER |  |  |  |
+| cheque_file_id | INTEGER |  |  |  |
+| cooling_off_until | TEXT |  |  |  |
+| is_primary | INTEGER | yes |  | 0 |
+| change_reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_banks_hash: company_id, account_hash
+- ix_mdm_partner_banks_partner: partner_id, bank_status
+
+## mdm_partner_contacts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| designation | TEXT |  |  |  |
+| email | TEXT |  |  |  |
+| mobile | TEXT |  |  |  |
+| is_primary | INTEGER | yes |  | 0 |
+| portal_user_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: portal_user_id -> iam_users(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_contacts_portal: portal_user_id
+- ix_mdm_partner_contacts_mobile: company_id, mobile
+- ix_mdm_partner_contacts_partner: partner_id
+
+## mdm_partner_documents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| document_ref | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| valid_from | TEXT |  |  |  |
+| valid_until | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| alert_stage | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_documents_expiry: company_id, valid_until
+- ix_mdm_partner_documents_partner: partner_id
+
+## mdm_partner_gstins
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| state_code | TEXT | yes |  |  |
+| gstin | TEXT | yes |  |  |
+| gstin_status | TEXT | yes |  | 'ACTIVE' |
+| verify_source | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_gstins_gstin: company_id, gstin
+- ix_mdm_partner_gstins_partner: partner_id
+
+## mdm_partner_roles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| partner_role | TEXT | yes |  |  |
+| categories_json | TEXT | yes |  | '[]' |
+| regions_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_roles_role: company_id, partner_role
+- ux_mdm_partner_roles (unique): partner_id, partner_role
+
+## mdm_partner_status_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| action | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| until_date | TEXT |  |  |  |
+| request_status | TEXT | yes |  | 'PENDING' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_status_requests_list: company_id, request_status
+- ix_mdm_partner_status_requests_partner: partner_id
+
+## mdm_partner_tds
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| section | TEXT | yes |  |  |
+| ldc_no | TEXT |  |  |  |
+| ldc_rate | INTEGER |  |  |  |
+| ldc_limit | INTEGER |  |  |  |
+| valid_from | TEXT |  |  |  |
+| valid_until | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partner_tds_company: company_id, section
+- ix_mdm_partner_tds_partner: partner_id
+
+## mdm_partners
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| legal_name | TEXT | yes |  |  |
+| trade_name | TEXT |  |  |  |
+| name_key | TEXT | yes |  | '' |
+| constitution | TEXT | yes |  |  |
+| pan | TEXT |  |  |  |
+| msme_no | TEXT |  |  |  |
+| msme_category | TEXT |  |  |  |
+| cin | TEXT |  |  |  |
+| partner_status | TEXT | yes |  | 'PROSPECT' |
+| status_reason | TEXT |  |  |  |
+| blacklist_reason | TEXT |  |  |  |
+| blacklist_until | TEXT |  |  |  |
+| payment_hold_until | TEXT |  |  |  |
+| payment_hold_reason | TEXT |  |  |  |
+| steward_role | TEXT | yes |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| activated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_partners_name: company_id, legal_name
+- ix_mdm_partners_pan: company_id, pan
+- ix_mdm_partners_list: company_id, partner_status
+- ux_mdm_partners_code (unique): company_id, code
+
 ## mdm_payment_terms
 
 | Column | Type | Not null | Key | Default |

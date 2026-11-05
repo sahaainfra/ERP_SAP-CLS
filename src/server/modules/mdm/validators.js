@@ -82,3 +82,35 @@ export const parseCategory = (b) => parse(z.object({ parentId: id.nullable().opt
   itemTypes: z.array(itemType).min(1, 'Choose the item types of the category').max(11), attributes: z.array(attr).max(20).default([]), defaultHsn: z.string().trim().regex(/^[0-9]{4,8}$/).nullable().optional(), glCode: z.string().trim().max(20).nullable().optional(), stewardRole: z.enum(['PROCMGR', 'STOREMGR', 'EST', 'PLANTMGR']),
   status: z.enum(['ACTIVE', 'INACTIVE']).optional(), version: z.number().int().min(1).optional(), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);
 export const parseLegacyMap = (b) => parse(z.object({ source: z.enum(['conversion', 'sample-request-line']), key: z.string().trim().min(1).max(300), itemId: id }).strict(), b);
+
+// ---- part 06.04: the business partner master ----
+const prole = z.enum(['VENDOR', 'SUBCONTRACTOR', 'LABOUR_CONTRACTOR', 'SERVICE_PROVIDER', 'CLIENT', 'CONSULTANT', 'TRANSPORTER']);
+const upper = (max) => z.string().trim().toUpperCase().max(max);
+const gstinIn = z.object({ stateCode: upper(3), gstin: upper(15) }).strict();
+const addressIn = z.object({ addressType: z.enum(['REGISTERED', 'BILLING', 'SHIPPING', 'SITE', 'OTHER']), address: z.string().trim().min(5, 'Write the address').max(300), city: z.string().trim().max(60).nullable().optional(), stateCode: upper(3), pin: z.string().trim().max(6).nullable().optional(), isDefault: z.boolean().optional() }).strict();
+const mobileIn = z.string().trim().transform((v) => v.replace(/[\s-]/g, '').replace(/^(\+91|0091|0)/, ''));
+const contactIn = z.object({ name: z.string().trim().min(2).max(80), designation: z.string().trim().max(60).nullable().optional(), email: z.string().trim().toLowerCase().max(120).nullable().optional(), mobile: mobileIn.nullable().optional(), isPrimary: z.boolean().optional() }).strict();
+const bankIn = z.object({ accountNo: z.string().trim().transform((v) => v.replace(/\s/g, '')), ifsc: upper(11), accountName: z.string().trim().min(2).max(120), chequeFileId: id.nullable().optional() }).strict();
+const tdsIn = z.object({ section: z.string().trim().max(12), ldcNo: z.string().trim().max(30).nullable().optional(), ldcRate: z.union([z.string().trim().regex(/^\d+(\.\d{1,4})?$/), z.number().nonnegative()]).transform(String).nullable().optional(), ldcLimit: z.union([z.string().trim().regex(/^\d+(\.\d{1,2})?$/), z.number().nonnegative()]).transform(String).nullable().optional(), validFrom: date.nullable().optional(), validUntil: date.nullable().optional() }).strict();
+const partnerBody = {
+  legalName: z.string().trim().min(3, 'Give the legal name').max(160), tradeName: z.string().trim().max(160).nullable().optional(), constitution: z.enum(['PROPRIETORSHIP', 'PARTNERSHIP', 'LLP', 'PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'TRUST', 'SOCIETY', 'GOVERNMENT', 'HUF', 'INDIVIDUAL', 'OTHER']),
+  pan: upper(10).nullable().optional().transform((v) => v || null), msmeNo: upper(19).nullable().optional().transform((v) => v || null), msmeCategory: z.enum(['MICRO', 'SMALL', 'MEDIUM']).nullable().optional(), cin: upper(21).nullable().optional().transform((v) => v || null),
+  roles: z.array(prole).max(7), categories: z.array(z.string().trim().max(30)).max(50).default([]), regions: z.array(upper(3)).max(40).default([]),
+  gstins: z.array(gstinIn).max(37).default([]), addresses: z.array(addressIn).max(20).default([]), contacts: z.array(contactIn).max(20).default([]), bank: bankIn.nullable().optional(), tds: z.array(tdsIn).max(5).default([]),
+};
+export const parsePartnerCreate = (b) => parse(z.object({ ...partnerBody, acknowledgeDuplicates: z.boolean().default(false), submit: z.boolean().default(false), comment: z.string().trim().max(500).optional() }).strict(), b);
+export const parsePartnerCheck = (b) => parse(z.object({ ...partnerBody, legalName: z.string().trim().max(160).default(''), constitution: partnerBody.constitution.default('OTHER'), roles: z.array(prole).max(7).default([]), partnerId: id.optional() }).strip(), b);
+export const parsePartnerUpdate = (b) => parse(z.object({ ...partnerBody, version: z.number().int().min(1), comment: z.string().trim().max(500).optional() }).strict(), b);
+export const parsePartnerSubmit = (b) => parse(z.object({ comment: z.string().trim().max(500).optional() }).strict(), b ?? {});
+export const parsePartnerDetails = (b) => parse(z.object({ tradeName: z.string().trim().max(160).nullable().optional(), categories: z.array(z.string().trim().max(30)).max(50).optional(), regions: z.array(upper(3)).max(40).optional(), contacts: z.array(contactIn).min(1).max(20).optional(), addresses: z.array(addressIn).min(1).max(20).optional(), version: z.number().int().min(1), reason: z.string().trim().max(300).optional() }).strict(), b);
+export const parseGstinAdd = (b) => parse(gstinIn, b);
+export const parseGstinVerify = (b) => parse(z.object({ gstinId: id, checkedOnPortal: z.boolean().default(false), status: z.enum(['ACTIVE', 'CANCELLED', 'SUSPENDED']).optional() }).strict(), b);
+export const parseBankRequest = (b) => parse(bankIn.extend({ reason: z.string().trim().min(10, 'Say why the bank changes (at least 10 characters)').max(300) }).strict(), b);
+export const parseBankConfirm = (b) => parse(z.object({ code: z.string().trim().regex(/^\d{6}$/, 'The six-digit code').optional(), callback: z.object({ spokeTo: z.string().trim().min(2).max(80), number: mobileIn, note: z.string().trim().min(5).max(300) }).strict().optional() }).strict().refine((v) => v.code || v.callback, 'Give the code the partner received, or note the call-back'), b);
+export const parseBankVerify = (b) => parse(z.object({ result: z.enum(['VERIFIED', 'FAILED']), note: z.string().trim().min(5).max(300) }).strict(), b);
+export const parseDocumentAdd = (b) => parse(z.object({ docType: z.enum(['GST_CERTIFICATE', 'PAN_CARD', 'MSME_CERTIFICATE', 'CLRA_LICENCE', 'PF_REGISTRATION', 'ESI_REGISTRATION', 'INSURANCE', 'ISO_CERTIFICATE', 'CANCELLED_CHEQUE', 'INCORPORATION', 'OTHER']), docNo: z.string().trim().max(60).nullable().optional(), fileId: id.nullable().optional(), validFrom: date.nullable().optional(), validUntil: date.nullable().optional() }).strict(), b);
+export const parseTdsSet = (b) => parse(z.object({ tds: z.array(tdsIn).max(5) }).strict(), b);
+export const parsePartnerStatus = (b) => parse(z.object({ action: z.enum(['HOLD', 'RELEASE', 'INACTIVATE', 'REACTIVATE']), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300), version: z.number().int().min(1) }).strict(), b);
+export const parseBlacklist = (b) => parse(z.object({ action: z.enum(['BLACKLIST', 'LIFT_BLACKLIST']).default('BLACKLIST'), reason: z.string().trim().min(10, 'Say why (at least 10 characters)').max(500), until: date.nullable().optional() }).strict(), b);
+export const parseSelectable = (q) => parse(z.object({ purpose: z.enum(['PO', 'WO', 'RFQ', 'PAYMENT', 'OTHER']).default('PO'), role: prole.optional() }).strict(), q);
+export const parseQueue = (q) => parse(z.object({ kind: z.enum(['REGISTRATION', 'BANK', 'STATUS', 'DOCUMENT']).optional() }).strict(), q);

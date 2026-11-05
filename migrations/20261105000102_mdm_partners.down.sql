@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS mdm_partner_status_requests;
+DROP TABLE IF EXISTS mdm_partner_tds;
+DROP TABLE IF EXISTS mdm_partner_documents;
+DROP TABLE IF EXISTS mdm_partner_banks;
+DROP TABLE IF EXISTS mdm_partner_contacts;
+DROP TABLE IF EXISTS mdm_partner_addresses;
+DROP TABLE IF EXISTS mdm_partner_gstins;
+DROP TABLE IF EXISTS mdm_partner_roles;
+DROP TABLE IF EXISTS mdm_partners;

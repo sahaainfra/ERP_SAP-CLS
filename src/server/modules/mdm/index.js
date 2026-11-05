@@ -13,8 +13,10 @@ import './common-integrations.js';
 import { bindCommon, createCommonService, syncCoreUom } from './common.js';
 import { setCommonFlag } from './common-integrations.js';
 import { bindItems, createItemService } from './items.js';
+import { bindPartners, createPartnerService } from './partners.js';
+import './partner-integrations.js';
 import './item-integrations.js';
-import { commonRoutes, itemRoutes, mdmRoutes } from './routes.js';
+import { commonRoutes, itemRoutes, mdmRoutes, partnerRoutes } from './routes.js';
 import { bindService, createMdmService } from './service.js';
 
 /** @type {any} */
@@ -27,23 +29,31 @@ for (const [type, description] of [
   ['mdm.item.approved', 'An item (or a new version of it) was approved and is in force; the version it replaces is superseded: data { code, version, type }.'],
   ['mdm.item.changed', 'An item in force was changed by a steward (fields, units, bill of resources, status): data { code, fields?, status? }. Consumers drop their cached copy.'],
   ['mdm.item_category.changed', 'An item category or its attribute template was added or changed: data { code }.'],
+  ['mdm.partner.registered', 'A business partner was registered as a prospect: data { code, roles }.'],
+  ['mdm.partner.activated', 'A business partner was approved and is active: data { code, roles }. Procurement, contracts, billing and finance may use it.'],
+  ['mdm.partner.changed', 'Details, contacts, addresses or documents of a partner changed: data { code }.'],
+  ['mdm.partner.status_changed', 'A partner was put on hold, released, made inactive or active, blacklisted or taken off the blacklist: data { code, from, to }. Open RFQs, POs and work orders of a blacklisted partner are flagged by their modules.'],
+  ['mdm.partner.bank_changed', 'A new bank account of a partner was approved; payments stay on hold until the cooling-off date: data { code, last4, coolingOffUntil }.'],
+  ['mdm.partner.payment_hold', 'Payments to a partner were put on hold or the hold ended: data { code, held, reason }.'],
+  ['mdm.partner.document_expiring', 'A compliance document of a partner expires soon or has expired: data { code, document, validUntil, stage, blocks }.'],
   ['mdm.common.changed', 'A row of a common master (unit, GST rate, HSN/SAC, TDS section, state, currency or rate, bank, payment term, lookup value) was added, changed, ended or, for a statutory master, approved: data { master, key, action, effectiveFrom? }. Consumers drop their cached copy.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'mdm', description });
 
+const PARTNER_TABLES = ['mdm_partners', 'mdm_partner_roles', 'mdm_partner_gstins', 'mdm_partner_addresses', 'mdm_partner_contacts', 'mdm_partner_banks', 'mdm_partner_documents', 'mdm_partner_tds', 'mdm_partner_status_requests'];
 const ITEM_TABLES = ['mdm_item_categories', 'mdm_items', 'mdm_item_uoms', 'mdm_item_resources', 'mdm_item_makes', 'mdm_item_alternates', 'mdm_item_code_counters', 'mdm_item_user_marks', 'mdm_item_legacy_map'];
 const COMMON_TABLES = ['mdm_uoms', 'mdm_gst_rates', 'mdm_hsn_sac', 'mdm_tds_sections', 'mdm_states', 'mdm_districts', 'mdm_currencies', 'mdm_exchange_rates', 'mdm_banks', 'mdm_payment_terms', 'mdm_lookup_lists', 'mdm_lookups'];
 // the integrity checks (01.02): a common master row without a company is a system row every company sees (06.02); the status lists of the governed records (06.01)
-integrityRegistry.register({ companyOptional: [...COMMON_TABLES, 'mdm_item_categories'], statuses: Object.fromEntries(COMMON_TABLES.map((t) => [t, ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED']])) });
+integrityRegistry.register({ allowNegative: [], companyOptional: [...COMMON_TABLES, 'mdm_item_categories'], statuses: Object.fromEntries(COMMON_TABLES.map((t) => [t, ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED']])) });
 /** Module "mdm": master data governance (part 06.01). The tables are `mdm_*`; the masters plug in through `masterTypes` (platform/mdm). */
 export const mdm = {
   code: 'mdm',
   name: 'Master Data Governance',
   routePrefix: '/api/v1/mdm',
-  ownerPart: '06.01, 06.02, 06.03',
+  ownerPart: '06.01, 06.02, 06.03, 06.04',
   status: 'Governed masters: change requests with steward approval, duplicate detection and merge map, effective-dated versions with "as of", data quality rules and score, stewards, dashboard (06.01); first master: business partner',
-  tables: ['mdm_records', 'mdm_record_versions', 'mdm_change_requests', 'mdm_duplicates', 'mdm_merge_map', 'mdm_quality_rules', 'mdm_stewards', ...COMMON_TABLES, ...ITEM_TABLES],
+  tables: ['mdm_records', 'mdm_record_versions', 'mdm_change_requests', 'mdm_duplicates', 'mdm_merge_map', 'mdm_quality_rules', 'mdm_stewards', ...COMMON_TABLES, ...ITEM_TABLES, ...PARTNER_TABLES],
   companyOptional: [...COMMON_TABLES, 'mdm_item_categories'], // a row without a company is the system row every company sees (06.02)
-  resources: ['masters', 'records', 'change-requests', 'duplicates', 'merge', 'quality', 'config', 'common', 'tax', 'exchange-rate', 'uoms', 'lookup-lists', 'lookups', 'items', 'item-categories'],
+  resources: ['masters', 'records', 'change-requests', 'duplicates', 'merge', 'quality', 'config', 'common', 'tax', 'exchange-rate', 'uoms', 'lookup-lists', 'lookups', 'items', 'item-categories', 'partners'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_records'").get()) return;
@@ -78,6 +88,17 @@ export const mdm = {
         i.use(gate('ff.mdm.p0603', 'The item master is'));
         i.use(itemRoutes({ items, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
         api.use('/mdm', i);
+      }
+      if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_partners'").get()) {
+        const partners = createPartnerService({ db, vaultKey: appConfig.vaultKey });
+        bindPartners(db, partners);
+        listExports.register('mdm.partners', { source: (actor, req) => partners.register.exportSource(actor, req), hidden: (actor) => (partners.seesIdentity(actor) ? [] : ['pan']) });
+        runtime.jobs.register('mdm.partner_compliance', () => { const out = { due: 0, expired: 0, lifted: 0 }; for (const c of companies()) { const r = partners.compliance(c); for (const k of Object.keys(out)) out[k] += r[k]; } return out; });
+        runtime.scheduler.define({ code: 'mdm.partner_compliance_daily', cron: '20 6 * * *', jobType: 'mdm.partner_compliance', description: 'Daily (06:20): compliance documents of partners that expire soon or have expired are reported to their stewards and the accounts manager; blacklistings whose end date has passed lapse' });
+        const pr = Router();
+        pr.use(gate('ff.mdm.p0604', 'The business partner master is'));
+        pr.use(partnerRoutes({ partners, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+        api.use('/mdm', pr);
       }
     }
   },
