@@ -739,3 +739,15 @@ Behind feature flag `ff.mdm.p0603` (in module `mdm`). Code: `modules/mdm/items.j
 - **Migration** (FR-08, ADR-258): `GET /mdm/items/migration`, `POST /mdm/items/migration/map`.
 - **Platform**: `listExports` (ADR-259) lets a module's list use the List Report's export service.
 - **Browser**: Item Master (category tree beside the List Report), Item (object page with its tabs), New Item wizard, Item Categories & Attribute Templates, Item Migration; the selector in the sample request lines (AC-01), the bill of resources and the alternates.
+
+## 58. Business partner master (part 06.04)
+
+Behind feature flag `ff.mdm.p0604` (in module `mdm`). Code: `modules/mdm/partners.js` (service, list `mdm.partners`, workflows `MDM_PARTNER`, `MDM_PARTNER_BANK`, `MDM_PARTNER_STATUS`, object type and file entity `mdm_partner`, registry `partnerActivity`, parameters), `partner-integrations.js` (lookups, Excel import `MDM_BUSINESS_PARTNER`); client `modules/mdm/BusinessPartnersPage.jsx`, `PartnerPage.jsx`, `PartnerRegistrationPage.jsx`, `PartnerApprovalsPage.jsx`. Tables `mdm_partners`, `mdm_partner_roles`, `mdm_partner_gstins`, `mdm_partner_addresses`, `mdm_partner_contacts`, `mdm_partner_banks`, `mdm_partner_documents`, `mdm_partner_tds`, `mdm_partner_status_requests` (migrations 102 and 103).
+
+- **Registration** (FR-01, FR-07, ADR-260/261): `POST /mdm/partners/check`, `POST /mdm/partners` (a Prospect, or sent with `submit`), `PUT /mdm/partners/:id`, `POST …/submit`.
+- **Register and 360** (FR-08): `GET /mdm/partners/register` (List Report) and `…/export`, `GET /mdm/partners/:id`, `GET …/summary`, `GET …/selectable` (BR-02), `GET …/payment-status`.
+- **Details**: `PUT …/details`, `POST …/gstins`, `POST …/gstins/verify`, `POST …/documents`, `POST …/documents/:docId/verify`, `PUT …/tds`.
+- **Banks** (FR-02, BR-01, BR-03, ADR-262/263): `POST …/banks` (change, payments held), `POST …/banks/:bankId/confirm` (code or call-back), `POST …/banks/:bankId/verify`, `GET …/banks/:bankId/reveal` (finance, logged).
+- **Status** (FR-06, ADR-264): `POST …/status` (hold, release, inactive, active), `POST …/blacklist` (director's approval).
+- **Worklist**: `GET /mdm/partners/queue`. Daily job `mdm.partner_compliance`. Lookups `/mdm/lookups/partners|vendors|subcontractors|labour-contractors|clients|consultants|transporters|service-providers`.
+- **Events**: `mdm.partner.registered|activated|changed|status_changed|bank_changed|payment_hold|document_expiring`.

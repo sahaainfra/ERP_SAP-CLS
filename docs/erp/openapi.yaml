@@ -2649,3 +2649,94 @@ paths:
     post:
       summary: Map an old material to an item
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/register:
+    get:
+      summary: The Business Partners list (List Report contract)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/register/export:
+    get:
+      summary: Export of the list (xlsx, csv, pdf), PAN hidden outside finance
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/queue:
+    get:
+      summary: Partner approvals, bank changes, blacklisting requests and expiring documents (mdm.partner.queue)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/check:
+    post:
+      summary: Errors and duplicates of a registration (FR-07)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners:
+    post:
+      summary: Register a partner as a prospect, or send it for approval with submit (201)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}:
+    get:
+      summary: Partner 360: identity (masked), GSTINs, addresses, contacts, banks (masked), documents, TDS, status requests
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change a prospect, or a registration returned for correction
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/submit:
+    post:
+      summary: Send a prospect for approval: its steward, then the accounts manager (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/details:
+    put:
+      summary: Trade name, categories, regions, contacts and addresses of an active partner
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/summary:
+    get:
+      summary: Partner 360 tiles, what other modules hold, history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/selectable:
+    get:
+      summary: May the partner be chosen for a PO, WO, RFQ or payment, and why not (BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/payment-status:
+    get:
+      summary: Payments held or free, and why (BR-03)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/gstins:
+    post:
+      summary: Add a GSTIN of another state
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/gstins/verify:
+    post:
+      summary: Verify a GSTIN (accounts manager)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/documents:
+    post:
+      summary: Add a compliance document with its validity
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/documents/{docId}/verify:
+    post:
+      summary: Verify a document (another person than the one who added it)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/tds:
+    put:
+      summary: TDS sections and lower-deduction certificates (accounts manager)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks:
+    post:
+      summary: Ask for a bank change: payments are held, a code goes to the registered contact (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks/{bankId}/confirm:
+    post:
+      summary: Confirm the change with the code or a call-back; it goes to the accounts manager and the CFO (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks/{bankId}/verify:
+    post:
+      summary: Record the verification of an account (not by the person who entered it)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/banks/{bankId}/reveal:
+    get:
+      summary: The full account number (finance; every view logged)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/status:
+    post:
+      summary: Hold, release, make inactive or active again
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/partners/{id}/blacklist:
+    post:
+      summary: Ask to blacklist or to lift the blacklist (director approves, 202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
