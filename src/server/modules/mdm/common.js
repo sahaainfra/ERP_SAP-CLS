@@ -44,7 +44,7 @@ export const COMMON = {
   'hsn-sac': {
     table: 'mdm_hsn_sac', label: 'HSN/SAC codes', labelHi: 'एचएसएन/एसएसी कोड', masterType: 'HSN_SAC', edit: 'mdm.tax.edit', key: ['code'], dated: true, approval: true, order: 'code_type, code, effective_from',
     fields: [f('code', 'code', 'Code', 'text', { required: true, max: 8, pattern: /^[0-9]{4,8}$/ }), f('codeType', 'code_type', 'Type', 'enum', { required: true, options: [['HSN', 'HSN (goods)'], ['SAC', 'SAC (services)']] }),
-      f('description', 'description', 'Description', 'text', { required: true, max: 200 }), f('defaultGstRate', 'default_gst_rate', 'Default GST rate', 'ref', { required: true, ref: 'gst-rates' }), f('reverseCharge', 'reverse_charge', 'Reverse charge', 'bool')],
+      f('description', 'description', 'Description', 'text', { required: true, max: 200 }), f('defaultGstRate', 'default_gst_code', 'Default GST rate', 'ref', { required: true, ref: 'gst-rates' }), f('reverseCharge', 'reverse_charge', 'Reverse charge', 'bool')],
     filters: ['codeType'],
   },
   'tds-sections': {
@@ -69,9 +69,9 @@ export const COMMON = {
     fields: [f('code', 'code', 'Code', 'upper', { required: true, pattern: /^[A-Z]{3}$/ }), f('name', 'name', 'Name', 'text', { required: true, max: 40 }), f('symbol', 'symbol', 'Symbol', 'text', { required: true, max: 4 }), f('decimals', 'decimals', 'Decimals', 'int', { required: true, min: 0, max: 4 })],
   },
   'exchange-rates': {
-    table: 'mdm_exchange_rates', label: 'Exchange rates', labelHi: 'विनिमय दरें', masterType: 'EXCHANGE_RATE', edit: 'mdm.finance.edit', key: ['currencyCode', 'rateDate'], order: 'rate_date DESC, currency_code',
-    fields: [f('currencyCode', 'currency_code', 'Currency', 'ref', { required: true, ref: 'currencies' }), f('rateDate', 'rate_date', 'Date', 'date', { required: true }), f('rateToInr', 'rate_to_inr', '1 unit in ₹', 'rate', { required: true, positive: true }),
-      f('rateSource', 'rate_source', 'Source', 'enum', { options: [['MANUAL', 'Entered'], ['FEED', 'Provider feed'], ['IMPORT', 'Imported']] })],
+    table: 'mdm_exchange_rates', label: 'Exchange rates', labelHi: 'विनिमय दरें', masterType: 'EXCHANGE_RATE', edit: 'mdm.finance.edit', key: ['currencyCode', 'rateDate'], order: 'fx_date DESC, currency_code',
+    fields: [f('currencyCode', 'currency_code', 'Currency', 'ref', { required: true, ref: 'currencies' }), f('rateDate', 'fx_date', 'Date', 'date', { required: true }), f('rateToInr', 'rate_to_inr', '1 unit in ₹', 'rate', { required: true, positive: true }),
+      f('rateSource', 'fx_source', 'Source', 'enum', { options: [['MANUAL', 'Entered'], ['FEED', 'Provider feed'], ['IMPORT', 'Imported']] })],
     filters: ['currencyCode'],
   },
   banks: {
@@ -203,7 +203,7 @@ export function createCommonService({ db }) {
       if (v == null && x.required) problems.push({ field: x.key, message: `${x.label} is required` });
       cols[x.col] = v ?? (x.type === 'bool' ? 0 : x.type === 'json' ? '[]' : ['percent', 'money', 'int'].includes(x.type) && !x.required && x.col !== 'sort_order' ? 0 : x.col === 'sort_order' ? 0 : null);
       if (d.code === 'lookups' && x.key === 'active' && !has && !base) cols.active = 1;
-      if (d.code === 'exchange-rates' && x.key === 'rateSource' && cols.rate_source == null) cols.rate_source = 'MANUAL';
+      if (d.code === 'exchange-rates' && x.key === 'rateSource' && cols.fx_source == null) cols.fx_source = 'MANUAL';
     }
     if (!problems.length) problems.push(...rules(actor, d, cols));
     if (problems.length) throw badRequest('Some fields are not valid.', problems);
@@ -380,7 +380,7 @@ export function createCommonService({ db }) {
       needView(actor);
       const on = date ?? todayIST();
       let h = null; let rateCode = code;
-      if (hsn) { h = pick(COMMON['hsn-sac'], actor.companyId, 'code', hsn, on); if (!h) throw notFound(`HSN/SAC ${hsn} is not in force on ${on}.`); rateCode = h.default_gst_rate; }
+      if (hsn) { h = pick(COMMON['hsn-sac'], actor.companyId, 'code', hsn, on); if (!h) throw notFound(`HSN/SAC ${hsn} is not in force on ${on}.`); rateCode = h.default_gst_code; }
       const r = pick(COMMON['gst-rates'], actor.companyId, 'code', rateCode, on);
       if (!r) throw notFound(`GST rate ${rateCode} is not in force on ${on}.`);
       return { date: on, hsn: h ? { ...view(COMMON['hsn-sac'], h) } : null, rate: view(COMMON['gst-rates'], r) };
@@ -397,9 +397,9 @@ export function createCommonService({ db }) {
       needView(actor);
       const on = date ?? todayIST();
       if (currency === 'INR') return { date: on, currency, rateToInr: '1', rateDate: on };
-      const r = db.prepare("SELECT * FROM mdm_exchange_rates WHERE currency_code = ? AND rate_date <= ? AND (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND deleted_at IS NULL ORDER BY rate_date DESC, company_id IS NULL LIMIT 1").get(currency, on, actor.companyId);
+      const r = db.prepare("SELECT * FROM mdm_exchange_rates WHERE currency_code = ? AND fx_date <= ? AND (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND deleted_at IS NULL ORDER BY fx_date DESC, company_id IS NULL LIMIT 1").get(currency, on, actor.companyId);
       if (!r) throw notFound(`There is no ${currency} rate on or before ${on}.`);
-      return { date: on, currency, rateToInr: rate4(r.rate_to_inr), rateDate: r.rate_date, source: r.rate_source };
+      return { date: on, currency, rateToInr: rate4(r.rate_to_inr), rateDate: r.fx_date, source: r.fx_source };
     },
     /** A quantity in another unit of the same category, through the base unit, as exact fractions (BR-02). */
     convert(actor, { quantity, from, to }) {
@@ -501,7 +501,7 @@ evidenceProviders.register(TAX_DOC, ({ db, instance }) => {
   const r = db.prepare('SELECT * FROM mdm_change_requests WHERE id = ?').get(Number(instance.docId));
   if (!r) return { sections: [] };
   const ch = JSON.parse(r.change_json);
-  const used = ch.master === 'gst-rates' ? db.prepare("SELECT COUNT(*) AS n FROM mdm_hsn_sac WHERE default_gst_rate = ? AND row_status = 'ACTIVE' AND (company_id IS NULL OR company_id = ?)").get(ch.key, r.company_id).n : null;
+  const used = ch.master === 'gst-rates' ? db.prepare("SELECT COUNT(*) AS n FROM mdm_hsn_sac WHERE default_gst_code = ? AND row_status = 'ACTIVE' AND (company_id IS NULL OR company_id = ?)").get(ch.key, r.company_id).n : null;
   return { sections: [{ code: 'mdm-tax', title: 'What the approver checks', kind: 'metrics', items: [{ label: 'Applies from', value: r.effective_from, format: 'text' }, { label: 'Changed fields', value: (ch.fields ?? []).map((x) => `${x.label}: ${x.before ?? '—'} → ${x.after ?? '—'}`).join('; ') || '—', format: 'text' }, ...(used != null ? [{ label: 'HSN/SAC codes using this rate', value: used, format: 'text' }] : []), { label: 'A transaction dated before', value: `${r.effective_from} keeps the old rate`, format: 'text' }] }] };
 });
 void Decimal;

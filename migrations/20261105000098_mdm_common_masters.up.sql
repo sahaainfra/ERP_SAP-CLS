@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS mdm_hsn_sac (
   code            TEXT    NOT NULL,
   code_type       TEXT    NOT NULL CHECK (code_type IN ('HSN', 'SAC')),
   description     TEXT    NOT NULL,
-  default_gst_rate TEXT   NOT NULL,
+  default_gst_code TEXT   NOT NULL,
   reverse_charge  INTEGER NOT NULL DEFAULT 0 CHECK (reverse_charge IN (0, 1)),
   effective_from  TEXT    NOT NULL DEFAULT '2000-01-01',
   effective_to    TEXT,
@@ -224,9 +224,9 @@ CREATE TABLE IF NOT EXISTS mdm_exchange_rates (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   company_id INTEGER REFERENCES org_companies (id),
   currency_code   TEXT    NOT NULL,
-  rate_date       TEXT    NOT NULL,
+  fx_date       TEXT    NOT NULL,
   rate_to_inr     INTEGER NOT NULL CHECK (rate_to_inr > 0),
-  rate_source     TEXT    NOT NULL DEFAULT 'MANUAL' CHECK (rate_source IN ('MANUAL', 'FEED', 'IMPORT')),
+  fx_source     TEXT    NOT NULL DEFAULT 'MANUAL' CHECK (fx_source IN ('MANUAL', 'FEED', 'IMPORT')),
   effective_from  TEXT    NOT NULL DEFAULT '2000-01-01',
   effective_to    TEXT,
   row_status      TEXT    NOT NULL DEFAULT 'ACTIVE' CHECK (row_status IN ('PENDING', 'ACTIVE', 'REJECTED', 'RETIRED')),
@@ -245,10 +245,10 @@ CREATE TABLE IF NOT EXISTS mdm_exchange_rates (
   source_id   TEXT,
   remarks     TEXT
 );
-CREATE UNIQUE INDEX IF NOT EXISTS ux_mdm_exchange_rates_key ON mdm_exchange_rates (COALESCE(company_id, 0), currency_code, rate_date) WHERE row_status IN ('PENDING', 'ACTIVE') AND deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_mdm_exchange_rates_key ON mdm_exchange_rates (COALESCE(company_id, 0), currency_code, fx_date) WHERE row_status IN ('PENDING', 'ACTIVE') AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS ix_mdm_exchange_rates_company ON mdm_exchange_rates (company_id, row_status);
 CREATE INDEX IF NOT EXISTS ix_mdm_exchange_rates_cr ON mdm_exchange_rates (change_request_id);
-CREATE INDEX IF NOT EXISTS ix_mdm_exchange_rates_rate_date ON mdm_exchange_rates (rate_date);
+CREATE INDEX IF NOT EXISTS ix_mdm_exchange_rates_fx_date ON mdm_exchange_rates (fx_date);
 
 CREATE TABLE IF NOT EXISTS mdm_banks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
