@@ -1202,3 +1202,12 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 @media (max-width: 480px) { .hr-bars li a { grid-template-columns: 1fr 3rem; } .hr-bars .hr-bar { grid-column: 1 / -1; order: 3; } }
 /* part 07.01: room under the last row of the HR pages, so the floating Messages button never covers a button */
 [data-testid="new-employee"], [data-testid="employee-page"], [data-testid="hr-overview"], [data-testid="employee-directory"] { padding-block-end: 4.5rem; }
+
+/* part 07.02: the candidate board (a column per stage, cards that can be dragged) */
+.hr-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(13rem, 1fr); gap: var(--erp-space-3); overflow-x: auto; padding-block-end: var(--erp-space-3); }
+.hr-col { background: var(--erp-color-bg-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); min-block-size: 8rem; }
+.hr-col h2 { font-size: 1rem; margin: 0 0 var(--erp-space-2); display: flex; justify-content: space-between; }
+.hr-card { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-sm); padding: var(--erp-space-2); margin-block-end: var(--erp-space-2); cursor: grab; }
+.hr-card h3 { font-size: 0.95rem; margin: 0; overflow-wrap: anywhere; }
+@media print { .hr-board { grid-auto-flow: row; } .srch-form, .msg-dock { display: none; } }
+[data-testid="pipeline"], [data-testid="requisitions"], [data-testid="new-requisition"], [data-testid="requisition-page"], [data-testid="candidate-page"], [data-testid="offer-builder"], [data-testid="offers"], [data-testid="onboarding"] { padding-block-end: 4.5rem; }

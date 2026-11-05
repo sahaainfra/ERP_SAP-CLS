@@ -19,7 +19,7 @@ lookupRegistry.register({
 // designations and branches for the employee form (the organisation master has no lookup of them yet): the active ones of the company, searched by code or name
 for (const [name, label, table, extra, cols] of [['designations', 'Designations', 'org_designations', ', grade, level', [{ key: 'grade', label: 'Grade' }, { key: 'level', label: 'Level' }]], ['branches', 'Branches', 'org_branches', '', []]]) {
   lookupRegistry.register({
-    module: 'hr', name, label, permission: 'hr.employee.create', columns: cols,
+    module: 'hr', name, label, permission: 'hr.requisition.view', columns: cols,
     search(db, actor, q) {
       const where = ["company_id = ?", "status = 'ACTIVE'", 'is_active = 1', 'deleted_at IS NULL']; const args = [actor.companyId];
       if (q.ids) { where.push(`id IN (${q.ids.map(() => '?').join(',')})`); args.push(...q.ids); }

@@ -2720,6 +2720,57 @@ Indexes:
 - ix_fin_master_changes_entity: entity, entity_id
 - ix_fin_master_changes_list: company_id, request_status, entity
 
+## hr_candidates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| full_name | TEXT | yes |  |  |
+| mobile | TEXT | yes |  |  |
+| email | TEXT |  |  |  |
+| source | TEXT | yes |  |  |
+| source_detail | TEXT |  |  |  |
+| requisition_id | INTEGER | yes |  |  |
+| resume_file_id | INTEGER |  |  |  |
+| current_ctc | INTEGER |  |  |  |
+| expected_ctc | INTEGER |  |  |  |
+| notice_days | INTEGER |  |  |  |
+| stage | TEXT | yes |  | 'APPLIED' |
+| stage_at | TEXT |  |  |  |
+| reject_reason | TEXT |  |  |  |
+| rejected_from | TEXT |  |  |  |
+| retention_until | TEXT |  |  |  |
+| anonymised_at | TEXT |  |  |  |
+| profile_json | TEXT | yes |  | '{}' |
+| sensitive_enc | TEXT |  |  |  |
+| bgv_status | TEXT | yes |  | 'NOT_STARTED' |
+| medical_status | TEXT | yes |  | 'PENDING' |
+| employee_id | INTEGER |  |  |  |
+| joined_on | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), requisition_id -> hr_requisitions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_candidates_retention: stage, retention_until
+- ix_hr_candidates_employee: employee_id
+- ix_hr_candidates_mobile: company_id, mobile
+- ix_hr_candidates_requisition: requisition_id, stage
+- ix_hr_candidates_list: company_id, stage
+
 ## hr_employee_banks
 
 | Column | Type | Not null | Key | Default |
@@ -3083,6 +3134,226 @@ Indexes:
 - ix_hr_employees_list: company_id, record_status, employment_status
 - ux_hr_employees_user (unique): company_id, user_id
 - ux_hr_employees_code (unique): company_id, emp_code
+
+## hr_headcount_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| department_id | INTEGER | yes |  |  |
+| designation_id | INTEGER |  |  |  |
+| approved_positions | INTEGER | yes |  |  |
+| valid_from | TEXT | yes |  |  |
+| valid_to | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: designation_id -> org_designations(id), department_id -> org_departments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_headcount_plans_project: project_id
+- ix_hr_headcount_plans_designation: designation_id
+- ix_hr_headcount_plans_department: department_id
+- ix_hr_headcount_plans_company_id: company_id
+
+## hr_interviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| candidate_id | INTEGER | yes |  |  |
+| round_no | INTEGER | yes |  |  |
+| scheduled_at | TEXT | yes |  |  |
+| mode | TEXT | yes |  | 'IN_PERSON' |
+| panel_json | TEXT | yes |  | '[]' |
+| feedback_json | TEXT | yes |  | '[]' |
+| score | INTEGER |  |  |  |
+| result | TEXT | yes |  | 'PENDING' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: candidate_id -> hr_candidates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_interviews_when: company_id, scheduled_at
+- ix_hr_interviews_candidate: candidate_id, round_no
+- ix_hr_interviews_company_id: company_id
+
+## hr_offers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| candidate_id | INTEGER | yes |  |  |
+| designation_id | INTEGER | yes |  |  |
+| grade | TEXT |  |  |  |
+| employment_type | TEXT | yes |  | 'PERMANENT' |
+| ctc_annual | INTEGER | yes |  |  |
+| breakup_json | TEXT | yes |  | '{}' |
+| doj_proposed | TEXT | yes |  |  |
+| valid_days | INTEGER | yes |  | 7 |
+| band | TEXT | yes |  | 'STANDARD' |
+| band_reason | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| response | TEXT | yes |  | 'NONE' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| token_hash | TEXT |  |  |  |
+| sent_at | TEXT |  |  |  |
+| valid_until | TEXT |  |  |  |
+| responded_at | TEXT |  |  |  |
+| response_note | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: designation_id -> org_designations(id), candidate_id -> hr_candidates(id), supersedes_id -> hr_offers(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_offers_token: token_hash
+- ix_hr_offers_supersedes: supersedes_id
+- ix_hr_offers_designation: designation_id
+- ix_hr_offers_candidate: candidate_id
+- ix_hr_offers_list: company_id, status
+- ux_hr_offers_doc (unique): company_id, doc_no, revision_no
+
+## hr_onboarding_tasks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| candidate_id | INTEGER | yes |  |  |
+| employee_id | INTEGER |  |  |  |
+| task_code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| assigned_department_id | INTEGER |  |  |  |
+| assigned_role | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| task_status | TEXT | yes |  | 'OPEN' |
+| completed_at | TEXT |  |  |  |
+| completed_by | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| task_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: assigned_department_id -> org_departments(id), employee_id -> hr_employees(id), candidate_id -> hr_candidates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_onboarding_tasks_queue: task_status, due_date
+- ix_hr_onboarding_tasks_department: assigned_department_id
+- ix_hr_onboarding_tasks_employee: employee_id
+- ix_hr_onboarding_tasks_candidate: candidate_id
+- ix_hr_onboarding_tasks_company_id: company_id
+
+## hr_requisitions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| department_id | INTEGER | yes |  |  |
+| designation_id | INTEGER | yes |  |  |
+| positions | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| replaces_employee_id | INTEGER |  |  |  |
+| employment_type | TEXT | yes |  | 'PERMANENT' |
+| location_type | TEXT | yes |  | 'HO' |
+| manager_id | INTEGER |  |  |  |
+| ctc_min | INTEGER | yes |  |  |
+| ctc_max | INTEGER | yes |  |  |
+| required_by | TEXT | yes |  |  |
+| justification | TEXT |  |  |  |
+| plan_json | TEXT | yes |  | '{}' |
+| band | TEXT | yes |  | 'WITHIN_PLAN' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| closed_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: manager_id -> hr_employees(id), replaces_employee_id -> hr_employees(id), designation_id -> org_designations(id), department_id -> org_departments(id), supersedes_id -> hr_requisitions(id), root_id -> hr_requisitions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_requisitions_required: company_id, required_by
+- ix_hr_requisitions_project: project_id
+- ix_hr_requisitions_manager: manager_id
+- ix_hr_requisitions_replaces: replaces_employee_id
+- ix_hr_requisitions_supersedes: supersedes_id
+- ix_hr_requisitions_root: root_id
+- ix_hr_requisitions_designation: designation_id
+- ix_hr_requisitions_department: department_id
+- ix_hr_requisitions_list: company_id, status
+- ux_hr_requisitions_doc (unique): company_id, doc_no, revision_no
 
 ## iam_access_campaigns
 
