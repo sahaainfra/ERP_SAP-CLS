@@ -16,6 +16,11 @@ import DuplicatesPage from './DuplicatesPage.jsx';
 import MasterDataGovernancePage from './MasterDataGovernancePage.jsx';
 import MasterRecordsPage from './MasterRecordsPage.jsx';
 import QualityRulesPage from './QualityRulesPage.jsx';
+import RateAnalysesPage from './RateAnalysesPage.jsx';
+import RateAnalysisPage from './RateAnalysisPage.jsx';
+import RateImpactPage from './RateImpactPage.jsx';
+import RateLibraryPage from './RateLibraryPage.jsx';
+import SchedulesOfRatesPage from './SchedulesOfRatesPage.jsx';
 
 /** One register page per common master, all drawn by CommonMasterPage. */
 const register = (page) => { const Page = () => createElement(CommonMasterPage, { page }); Page.displayName = `CommonMaster(${page})`; return Page; };
@@ -44,6 +49,11 @@ registerModule({
     { path: '/admin/items/new', label: 'New Item', icon: 'erp.action.create', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: NewItemPage },
     { path: '/admin/items/categories', label: 'Item Categories & Attribute Templates', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemCategoriesPage },
     { path: '/admin/items/migration', label: 'Item Migration', icon: 'erp.action.import', permission: 'mdm.item.migrate', flag: 'ff.mdm.p0603', Page: ItemMigrationPage },
+    { path: '/admin/rate-library', label: 'Resource Rate Library', icon: 'erp.action.history', permission: 'mdm.analyse.view', flag: 'ff.mdm.p0606', Page: RateLibraryPage },
+    { path: '/admin/schedule-of-rates', label: 'Schedule of Rates', icon: 'erp.action.history', permission: 'mdm.analyse.view', flag: 'ff.mdm.p0606', Page: SchedulesOfRatesPage },
+    { path: '/admin/rate-analyses', label: 'Rate Analyses', icon: 'erp.action.history', permission: 'mdm.analyse.view', flag: 'ff.mdm.p0606', Page: RateAnalysesPage },
+    { path: '/admin/rate-analyses/analysis', label: 'Rate Analysis', icon: 'erp.action.info', permission: 'mdm.analyse.view', flag: 'ff.mdm.p0606', Page: RateAnalysisPage },
+    { path: '/admin/rate-analyses/impact', label: 'Rate Change Impact', icon: 'erp.action.history', permission: 'mdm.analyse.view', flag: 'ff.mdm.p0606', Page: RateImpactPage },
     { path: '/admin/partners', label: 'Business Partners', icon: 'erp.group.supply', permission: 'mdm.record.view', flag: 'ff.mdm.p0604', Page: BusinessPartnersPage },
     { path: '/admin/partners/partner', label: 'Partner 360', icon: 'erp.action.info', permission: 'mdm.record.view', flag: 'ff.mdm.p0604', Page: PartnerPage },
     { path: '/admin/partners/new', label: 'Partner Registration', icon: 'erp.action.create', permission: 'mdm.partner.edit', flag: 'ff.mdm.p0604', Page: PartnerRegistrationPage },

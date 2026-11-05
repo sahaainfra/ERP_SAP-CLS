@@ -6750,6 +6750,212 @@ Indexes:
 - ix_pol_version_status: company_id, version_status, effective_from
 - ux_pol_version_no (unique): policy_id, version_no
 
+## ra_analyses
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| analysis_no | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| work_item_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| scope | TEXT | yes |  | 'STANDARD' |
+| region_code | TEXT |  |  |  |
+| basis_qty | INTEGER | yes |  |  |
+| basis_uom | TEXT | yes |  |  |
+| water_pct | INTEGER | yes |  | 0 |
+| overhead_pct | INTEGER | yes |  | 0 |
+| profit_pct | INTEGER | yes |  | 0 |
+| contingency_pct | INTEGER | yes |  | 0 |
+| insurance_pct | INTEGER | yes |  | 0 |
+| escalation_pct | INTEGER | yes |  | 0 |
+| gst_pct | INTEGER | yes |  | 0 |
+| gst_treatment | TEXT | yes |  | 'EXCLUDED' |
+| direct_cost | INTEGER | yes |  | 0 |
+| unit_rate | INTEGER | yes |  | 0 |
+| unit_rate_gross | INTEGER | yes |  | 0 |
+| breakdown_json | TEXT | yes |  | '{}' |
+| formulas_json | TEXT | yes |  | '{}' |
+| sor_item_id | INTEGER |  |  |  |
+| analysis_status | TEXT | yes |  | 'DRAFT' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| template_code | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| released_by | TEXT |  |  |  |
+| released_at | TEXT |  |  |  |
+| calculated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supersedes_id -> ra_analyses(id), sor_item_id -> ra_sor_items(id), work_item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ra_analyses_project: project_id
+- ix_ra_analyses_supersedes: supersedes_id
+- ix_ra_analyses_sor: sor_item_id
+- ix_ra_analyses_item: work_item_id
+- ix_ra_analyses_list: company_id, analysis_status, scope
+- ux_ra_analyses_no (unique): company_id, analysis_no, version_no
+
+## ra_analysis_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| analysis_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| component_type | TEXT | yes |  |  |
+| component_item_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty_per_basis | INTEGER | yes |  |  |
+| wastage_pct | INTEGER | yes |  | 0 |
+| rate | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| line_origin | TEXT | yes |  | 'MANUAL' |
+| resource_rate_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: resource_rate_id -> ra_resource_rates(id), component_item_id -> mdm_items(id), analysis_id -> ra_analyses(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ra_analysis_lines_company: company_id
+- ix_ra_analysis_lines_rate: resource_rate_id
+- ix_ra_analysis_lines_item: component_item_id
+- ix_ra_analysis_lines_analysis: analysis_id, line_no
+
+## ra_resource_rates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| region_code | TEXT |  |  |  |
+| rate | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| source_kind | TEXT | yes |  |  |
+| basis_ref | TEXT |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| entry_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ra_resource_rates_project: project_id
+- ix_ra_resource_rates_list: company_id, entry_status, region_code
+- ix_ra_resource_rates_item: item_id, effective_from
+
+## ra_sor_books
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| edition | INTEGER | yes |  | 1 |
+| name | TEXT | yes |  |  |
+| authority | TEXT | yes |  |  |
+| book_year | INTEGER | yes |  |  |
+| region_code | TEXT |  |  |  |
+| book_status | TEXT | yes |  | 'DRAFT' |
+| supersedes_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supersedes_id -> ra_sor_books(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ra_sor_books_supersedes: supersedes_id
+- ix_ra_sor_books_list: company_id, book_status
+- ux_ra_sor_books_code (unique): company_id, code, edition
+
+## ra_sor_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| book_id | INTEGER | yes |  |  |
+| item_code | TEXT | yes |  |  |
+| parent_code | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| rate | INTEGER |  |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: book_id -> ra_sor_books(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ra_sor_items_company: company_id, item_code
+- ux_ra_sor_items_code (unique): book_id, item_code
+
 ## sec_conversations
 
 | Column | Type | Not null | Key | Default |

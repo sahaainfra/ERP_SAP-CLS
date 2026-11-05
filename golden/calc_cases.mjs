@@ -36,5 +36,19 @@ export const NET_PAYABLE = [
   { gross: '1234.55', retention_percent: '2.5', tds_percent: '0.1' },
 ];
 
-export const CASES = { 'boq.line_amount': BOQ_LINE, 'tax.gst_split': GST_SPLIT, 'stock.weighted_average': STOCK_AVERAGE, 'billing.net_payable': NET_PAYABLE };
-export const GOLDEN_IDS = { 'boq.line_amount': 'calc.boq_line_amount', 'tax.gst_split': 'calc.gst_split', 'stock.weighted_average': 'calc.stock_weighted_average', 'billing.net_payable': 'calc.billing_net_payable' };
+// Part 06.06: components and unit rates of rate analyses (the hand-calculated M25 example of T-01 among them).
+export const RA_LINE = [
+  { quantity: '0.4', wastage_percent: '2', rate: '7200' }, { quantity: '0.42', wastage_percent: '5', rate: '1850' }, { quantity: '0.84', wastage_percent: '5', rate: '1650' },
+  { quantity: '0.17', wastage_percent: '0', rate: '950' }, { quantity: '2.5', wastage_percent: '0', rate: '650' }, { quantity: '0.07', wastage_percent: '0', rate: '2400' },
+  { quantity: '0.001', wastage_percent: '2.5', rate: '0.0001' }, { quantity: '99.999', wastage_percent: '10', rate: '99999.9999' }, { quantity: '7.777', wastage_percent: '3.3333', rate: '13.3333' },
+];
+export const RA_RATE = [
+  { direct_cost: '7205.25', basis_qty: '1', water_percent: '1', overhead_percent: '7.5', profit_percent: '7.5', contingency_percent: '0', insurance_percent: '0', escalation_percent: '0', gst_percent: '0' },
+  { direct_cost: '1000.00', basis_qty: '10', water_percent: '0', overhead_percent: '10', profit_percent: '10', contingency_percent: '3', insurance_percent: '0', escalation_percent: '0', gst_percent: '18' },
+  { direct_cost: '123456.78', basis_qty: '3', water_percent: '1', overhead_percent: '15', profit_percent: '0', contingency_percent: '2.5', insurance_percent: '0.5', escalation_percent: '4', gst_percent: '12' },
+  { direct_cost: '0.01', basis_qty: '0.001', water_percent: '0', overhead_percent: '0', profit_percent: '0', contingency_percent: '0', insurance_percent: '0', escalation_percent: '0', gst_percent: '0' },
+  { direct_cost: '58210.40', basis_qty: '100', water_percent: '1', overhead_percent: '7.5', profit_percent: '7.5', contingency_percent: '0', insurance_percent: '0', escalation_percent: '0', gst_percent: '18' },
+];
+
+export const CASES = { 'boq.line_amount': BOQ_LINE, 'tax.gst_split': GST_SPLIT, 'stock.weighted_average': STOCK_AVERAGE, 'billing.net_payable': NET_PAYABLE, 'ra.line_amount': RA_LINE, 'ra.unit_rate': RA_RATE };
+export const GOLDEN_IDS = { 'boq.line_amount': 'calc.boq_line_amount', 'tax.gst_split': 'calc.gst_split', 'stock.weighted_average': 'calc.stock_weighted_average', 'billing.net_payable': 'calc.billing_net_payable', 'ra.line_amount': 'calc.ra_line_amount', 'ra.unit_rate': 'calc.ra_unit_rate' };

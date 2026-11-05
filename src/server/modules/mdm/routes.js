@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { toCsv } from '../../platform/export/index.js';
 import { parseBankConfirm, parseBankRequest, parseBankVerify, parseBlacklist, parseDocumentAdd, parseGstinAdd, parseGstinVerify, parsePartnerCheck, parsePartnerCreate, parsePartnerDetails, parsePartnerStatus, parsePartnerSubmit, parsePartnerUpdate, parseQueue, parseSelectable, parseTdsSet } from './validators.js';
+import { parseAmend, parseAnalysisCreate, parseAnalysisList, parseAnalysisStart, parseAnalysisSubmit, parseAnalysisUpdate, parseBookCreate, parseBookQuery, parseCompare, parseEdition, parseImpact, parseRateCreate, parseRateList, parseRateLookup, parseRateUpdate, parseReason, parseSorItems, parseSorSearch } from './validators.js';
 import { parseAlternate, parseCategory, parseItemCheck, parseItemConvert, parseItemCreate, parseItemList, parseItemMark, parseItemResources, parseItemResubmit, parseItemSearch, parseItemStatus, parseItemUoms, parseItemUpdate, parseItemVersion, parseLegacyMap, parseMakeAdd, parseMakeDecide } from './validators.js';
 import { parseCommonCreate, parseCommonList, parseCommonRetire, parseCommonUpdate, parseConvert, parseFxQuery, parseGstQuery, parseListCode, parseListSave, parseListValues, parseMaster, parseTdsQuery } from './validators.js';
 import { parseAsOf, parseCancel, parseCheck, parseConfig, parseCreate, parseDismiss, parseDuplicateList, parseId, parseLookup, parseMerge, parseQuality, parseRecordList, parseRequestList, parseResubmit, parseScan, parseStatus, parseType, parseUpdate } from './validators.js';
@@ -136,5 +137,44 @@ export function partnerRoutes({ partners: s, exportsOf }, { idempotent, idempote
   r.get('/partners/:id/banks/:bankId/reveal', (req, res) => ok(res, s.banks.reveal(req.actor, parseId(req.params.id), parseId(req.params.bankId))));
   r.post('/partners/:id/status', idempotent, (req, res) => ok(res, s.status.set(req.actor, parseId(req.params.id), parsePartnerStatus(req.body))));
   r.post('/partners/:id/blacklist', idempotentRequired, (req, res) => ok(res, s.status.request(req.actor, parseId(req.params.id), parseBlacklist(req.body)), 202));
+  return r;
+}
+
+/** Part 06.06: the rate analysis engine and the schedule of rates library. Rights (view, create, edit, submit, amend, print, export; keep the library) are checked in the service. */
+export function rateRoutes({ rates: s }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  r.get('/resource-rates', (req, res) => ok(res, s.library.list(req.actor, parseRateList(req.query))));
+  r.get('/resource-rates/lookup', (req, res) => { const q = parseRateLookup(req.query); ok(res, s.library.lookup(req.actor, q.itemId, { region: q.region ?? null, projectId: q.projectId ?? null, date: q.date })); });
+  r.post('/resource-rates', idempotent, (req, res) => ok(res, s.library.create(req.actor, parseRateCreate(req.body)), 201));
+  r.put('/resource-rates/:id', idempotent, (req, res) => ok(res, s.library.update(req.actor, parseId(req.params.id), parseRateUpdate(req.body))));
+  r.post('/resource-rates/:id/retire', idempotent, (req, res) => ok(res, s.library.retire(req.actor, parseId(req.params.id), parseReason(req.body))));
+  r.get('/sor-books', (req, res) => ok(res, s.sor.books(req.actor)));
+  r.post('/sor-books', idempotent, (req, res) => ok(res, s.sor.createBook(req.actor, parseBookCreate(req.body)), 201));
+  r.get('/sor-books/:id', (req, res) => ok(res, s.sor.book(req.actor, parseId(req.params.id), parseBookQuery(req.query))));
+  r.put('/sor-books/:id/items', idempotent, (req, res) => ok(res, s.sor.putItems(req.actor, parseId(req.params.id), parseSorItems(req.body))));
+  r.post('/sor-books/:id/activate', idempotent, (req, res) => ok(res, s.sor.activate(req.actor, parseId(req.params.id), parseReason(req.body))));
+  r.post('/sor-books/:id/editions', idempotent, (req, res) => ok(res, s.sor.newEdition(req.actor, parseId(req.params.id), parseEdition(req.body)), 201));
+  r.get('/sor-items', (req, res) => ok(res, s.sor.search(req.actor, parseSorSearch(req.query))));
+  r.get('/analyses', (req, res) => ok(res, s.analyses.list(req.actor, parseAnalysisList(req.query))));
+  r.get('/analyses/export', (req, res) => {
+    const rows = s.analyses.exportRows(req.actor, parseAnalysisList(req.query));
+    const columns = [['ref', 'Analysis'], ['title', 'Title'], ['workItem', 'Work item'], ['scope', 'Scope'], ['project', 'Project'], ['region', 'Region'], ['basis', 'Per'], ['directCost', 'Direct cost'], ['unitRate', 'Unit rate'], ['unitRateGross', 'Unit rate with GST'], ['status', 'Status'], ['from', 'From'], ['to', 'To']].map(([key, label]) => ({ key, label }));
+    res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="rate-analyses.csv"', 'cache-control': 'no-store' }).send(toCsv({ columns, rows, footer: null }));
+  });
+  r.get('/analyses/impact', (req, res) => ok(res, s.analyses.impact(req.actor, parseImpact(req.query))));
+  r.post('/analyses/start', (req, res) => ok(res, s.analyses.start(req.actor, parseAnalysisStart(req.body))));
+  r.post('/analyses', idempotentRequired, (req, res) => ok(res, s.analyses.create(req.actor, parseAnalysisCreate(req.body)), 201));
+  r.get('/analyses/:id', (req, res) => ok(res, s.analyses.get(req.actor, parseId(req.params.id))));
+  r.put('/analyses/:id', idempotent, (req, res) => ok(res, s.analyses.update(req.actor, parseId(req.params.id), parseAnalysisUpdate(req.body))));
+  r.delete('/analyses/:id', (req, res) => ok(res, s.analyses.remove(req.actor, parseId(req.params.id), parseReason(req.body))));
+  r.post('/analyses/:id/recalculate', idempotent, (req, res) => ok(res, s.analyses.recalculate(req.actor, parseId(req.params.id))));
+  r.post('/analyses/:id/submit', idempotentRequired, (req, res) => ok(res, s.analyses.submit(req.actor, parseId(req.params.id), parseAnalysisSubmit(req.body)), 202));
+  r.post('/analyses/:id/withdraw', idempotent, (req, res) => ok(res, s.analyses.withdraw(req.actor, parseId(req.params.id), parseReason(req.body))));
+  r.post('/analyses/:id/cancel', idempotent, (req, res) => ok(res, s.analyses.cancel(req.actor, parseId(req.params.id), parseReason(req.body))));
+  r.post('/analyses/:id/amend', idempotentRequired, (req, res) => ok(res, s.analyses.amend(req.actor, parseId(req.params.id), parseAmend(req.body)), 201));
+  r.get('/analyses/:id/compare', (req, res) => ok(res, s.analyses.compare(req.actor, parseId(req.params.id), parseCompare(req.query).with)));
+  r.get('/analyses/:id/history', (req, res) => ok(res, s.analyses.history(req.actor, parseId(req.params.id))));
+  r.get('/analyses/:id/print', (req, res) => res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(s.analyses.print(req.actor, parseId(req.params.id))));
   return r;
 }

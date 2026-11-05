@@ -1,4 +1,4 @@
-import { api } from '../../platform/api/index.js';
+import { api, authHeaders } from '../../platform/api/index.js';
 
 // The data calls of the master data governance pages (part 06.01).
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
@@ -91,3 +91,46 @@ export const partners = {
   blacklist: async (id, b) => (await api.post(`/mdm/partners/${id}/blacklist`, b, idem())).data,
   queue: async (kind) => (await api.get(`/mdm/partners/queue${kind ? `?kind=${kind}` : ''}`)).data,
 };
+
+// part 06.06: the rate analysis engine and the schedule of rates library
+export const ANALYSIS_STATUS = { DRAFT: ['DRAFT', 'Draft'], SUBMITTED: ['IN_REVIEW', 'In approval'], RETURNED: ['RETURNED', 'Returned for correction'], APPROVED: ['APPROVED', 'Released'], REJECTED: ['REJECTED', 'Rejected'], CANCELLED: ['CANCELLED', 'Cancelled'], SUPERSEDED: ['ARCHIVED', 'Superseded'] };
+export const COMPONENTS = [['MATERIAL', 'Material'], ['LABOUR', 'Labour'], ['EQUIPMENT', 'Equipment'], ['TRANSPORT', 'Transport'], ['SUBCONTRACT', 'Subcontract'], ['OTHER', 'Other']];
+export const SCOPE_LABEL = { STANDARD: 'Standard library', PROJECT: 'Project-specific', VARIATION: 'Variation' };
+export const ADDON_LABELS = [['water', 'Water and electricity'], ['overhead', 'Contractor\'s overhead'], ['profit', 'Profit'], ['contingency', 'Contingency'], ['insurance', 'Insurance'], ['escalation', 'Escalation']];
+export const rates = {
+  library: async (f) => (await api.get(`/mdm/resource-rates?${q(f)}`)).data,
+  lookup: async (f) => (await api.get(`/mdm/resource-rates/lookup?${q(f)}`)).data,
+  addRate: async (b) => (await api.post('/mdm/resource-rates', b, idem())).data,
+  retireRate: async (id, reason) => (await api.post(`/mdm/resource-rates/${id}/retire`, { reason }, idem())).data,
+  books: async () => (await api.get('/mdm/sor-books')).data,
+  book: async (id, f) => (await api.get(`/mdm/sor-books/${id}?${q(f)}`)).data,
+  createBook: async (b) => (await api.post('/mdm/sor-books', b, idem())).data,
+  putItems: async (id, b) => (await api.put(`/mdm/sor-books/${id}/items`, b, idem())).data,
+  activate: async (id, reason) => (await api.post(`/mdm/sor-books/${id}/activate`, { reason }, idem())).data,
+  newEdition: async (id, b) => (await api.post(`/mdm/sor-books/${id}/editions`, b, idem())).data,
+  sorSearch: async (text) => (await api.get(`/mdm/sor-items?${q({ q: text })}`)).data,
+  analyses: async (f) => (await api.get(`/mdm/analyses?${q(f)}`)).data,
+  analysis: async (id) => (await api.get(`/mdm/analyses/${id}`)).data,
+  start: async (b) => (await api.post('/mdm/analyses/start', b)).data,
+  create: async (b) => (await api.post('/mdm/analyses', b, idem())).data,
+  update: async (id, b) => (await api.put(`/mdm/analyses/${id}`, b, idem())).data,
+  remove: async (id, reason) => (await api.delete(`/mdm/analyses/${id}`, idem(), { reason })).data,
+  recalculate: async (id) => (await api.post(`/mdm/analyses/${id}/recalculate`, {}, idem())).data,
+  submit: async (id, comment) => (await api.post(`/mdm/analyses/${id}/submit`, comment ? { comment } : {}, idem())).data,
+  withdraw: async (id, reason) => (await api.post(`/mdm/analyses/${id}/withdraw`, { reason }, idem())).data,
+  cancel: async (id, reason) => (await api.post(`/mdm/analyses/${id}/cancel`, { reason }, idem())).data,
+  amend: async (id, b) => (await api.post(`/mdm/analyses/${id}/amend`, b, idem())).data,
+  compare: async (id, other) => (await api.get(`/mdm/analyses/${id}/compare?with=${other}`)).data,
+  history: async (id) => (await api.get(`/mdm/analyses/${id}/history`)).data,
+  impact: async (f) => (await api.get(`/mdm/analyses/impact?${q(f)}`)).data,
+  /** A file the server writes (CSV export, printable page); the export and the print are in the audit trail. */
+  fetchText: async (path) => { const r = await fetch(`/api/v1${path}`, { headers: { ...authHeaders() } }); if (!r.ok) throw new Error('The server did not return the file'); return r.text(); },
+};
+/** Rows of a schedule pasted from a spreadsheet (item code, description, unit, rate[, parent code]), tab or comma separated, with or without a header. */
+export function parseSorRows(text) {
+  const lines = String(text ?? '').split(/\r?\n/).filter((l) => l.trim());
+  const cells = (l) => { const out = []; let cur = ''; let quoted = false; for (const ch of l) { if (ch === '"') quoted = !quoted; else if ((ch === ',' || ch === '\t') && !quoted) { out.push(cur.trim()); cur = ''; } else cur += ch; } out.push(cur.trim()); return out; };
+  const first = cells(lines[0] ?? '');
+  const head = /code/i.test(first[0] ?? '') && /desc/i.test(first[1] ?? '');
+  return lines.slice(head ? 1 : 0).map(cells).filter((c) => c[0] && c[1]).map((c) => ({ itemCode: c[0], description: c[1], uom: c[2] ? c[2].toUpperCase() : null, rate: c[3] ? c[3].replace(/,/g, '') : null, ...(c[4] ? { parentCode: c[4] } : {}) }));
+}
