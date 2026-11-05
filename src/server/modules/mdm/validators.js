@@ -47,3 +47,38 @@ export const parseConvert = (q) => parse(z.object({ quantity: z.string().trim().
 export const parseListCode = (v) => parse(z.string().trim().regex(/^[A-Za-z][A-Za-z0-9_-]{1,29}$/, 'A list code such as PRIORITY'), v);
 export const parseListValues = (q) => parse(z.object({ all: z.enum(['true', 'false']).optional(), lang: z.enum(['en', 'hi']).optional() }).strict(), q);
 export const parseListSave = (b) => parse(z.object({ values: z.array(z.object({ code: z.string().trim().min(1).max(30), labelEn: z.string().trim().min(1).max(80), labelHi: z.string().trim().max(80).nullable().optional(), sortOrder: z.number().int().min(0).max(9999).optional(), active: z.boolean().optional() }).strict()).max(300), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);
+
+// ---- part 06.03: the item master ----
+const itemType = z.enum(['MATERIAL', 'CONSUMABLE', 'SPARE', 'TOOL', 'RETURNABLE', 'LABOUR', 'EQUIPMENT', 'SERVICE', 'SUBCONTRACT', 'WORK_ITEM', 'COMPOSITE']);
+const num = (max = 12) => z.union([z.string().trim().regex(/^\d+(\.\d{1,4})?$/, 'A number, not negative'), z.number().nonnegative()]).transform(String).refine((v) => v.length <= max + 5, 'Too large');
+const uomCode = z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_]{0,9}$/, 'A unit code such as KG');
+const itemBody = {
+  name: z.string().trim().min(3, 'Give the item a name (at least 3 characters)').max(160), nameHi: z.string().trim().max(160).nullable().optional(), description: z.string().trim().max(1000).nullable().optional(),
+  spec: z.record(z.string().max(30), z.union([z.string().max(120), z.number()])).default({}), baseUom: uomCode, hsnSac: z.string().trim().regex(/^[0-9]{4,8}$/, 'HSN or SAC digits').nullable().optional(), gstRate: z.string().trim().toUpperCase().max(12).nullable().optional(),
+  stockTracked: z.boolean().default(false), batchTracked: z.boolean().default(false), serialTracked: z.boolean().default(false), shelfLifeDays: z.number().int().min(1).max(36500).nullable().optional(),
+  reorderLevel: num().optional(), reorderQuantity: num().optional(), standardRate: num().optional(), preferredBrands: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
+};
+/** The item fields without their defaults: a change carries only what it changes. */
+const itemChange = () => Object.fromEntries(Object.entries(itemBody).map(([k, v]) => [k, (v instanceof z.ZodDefault ? v.removeDefault() : v).optional()]));
+const itemUom = z.object({ uom: uomCode, factorToBase: z.union([z.string().trim(), z.number()]).transform(String), purpose: z.enum(['ANY', 'PURCHASE', 'ISSUE', 'SALE']).default('ANY') }).strict();
+export const parseItemCreate = (b) => parse(z.object({ ...itemBody, categoryId: id, itemType, effectiveFrom: date.optional(), justification: z.string().trim().max(500).optional(), acknowledgeDuplicates: z.boolean().default(false), uoms: z.array(itemUom).max(10).default([]),
+  legacy: z.object({ source: z.enum(['conversion', 'sample-request-line']), key: z.string().trim().min(1).max(300), code: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,29}$/, 'A code of letters, digits, dot, dash or slash') }).strict().optional() }).strict(), b);
+export const parseItemCheck = (b) => parse(z.object({ ...itemBody, name: z.string().trim().max(160).default(''), baseUom: uomCode.optional().default('NOS'), categoryId: id, itemType }), b);
+export const parseItemUpdate = (b) => parse(z.object(itemChange()).extend({ version: z.number().int().min(1), reason: z.string().trim().max(300).optional() }).strict(), b);
+export const parseItemResubmit = (b) => parse(z.object({ ...itemBody, justification: z.string().trim().max(500).optional(), itemType }).strict(), b);
+export const parseItemVersion = (b) => parse(z.object(itemChange()).extend({ effectiveFrom: date, justification: z.string().trim().min(10, 'Say why a new version is needed (at least 10 characters)').max(500) }).strict(), b);
+export const parseItemStatus = (b) => parse(z.object({ status: z.enum(['ACTIVE', 'INACTIVE']), reason: z.string().trim().min(5).max(300), version: z.number().int().min(1) }).strict(), b);
+export const parseItemList = (q) => parse(z.object({ q: text(80).optional(), type: itemType.optional(), category: z.coerce.number().int().min(1).optional(), status: z.enum(['SUBMITTED', 'ACTIVE', 'INACTIVE', 'SUPERSEDED', 'REJECTED']).optional(), sort: z.enum(['code', 'name', 'changed', 'rate']).optional(), limit: z.coerce.number().int().min(1).max(100).default(25), offset: z.coerce.number().int().min(0).default(0) }).strict(), q);
+export const parseItemSearch = (q) => parse(z.object({ q: text(80).optional(), type: z.string().regex(/^[A-Z_]+(,[A-Z_]+)*$/).optional(), category: z.coerce.number().int().min(1).optional(), only: z.enum(['favourites', 'recent']).optional(), limit: z.coerce.number().int().min(1).max(50).default(20) }).strict(), q);
+export const parseItemMark = (b) => parse(z.object({ mark: z.enum(['FAVOURITE', 'RECENT']), on: z.boolean().default(true) }).strict(), b);
+export const parseItemUoms = (b) => parse(z.object({ uoms: z.array(itemUom).max(10), version: z.number().int().min(1) }).strict(), b);
+export const parseItemConvert = (q) => parse(z.object({ quantity: z.string().trim().regex(/^\d+(\.\d+)?$/, 'A quantity such as 12.5'), from: uomCode, to: uomCode }).strict(), q);
+export const parseItemResources = (b) => parse(z.object({ lines: z.array(z.object({ componentId: id, quantity: num(), uom: uomCode, wastagePct: num(3).optional() }).strict().refine((l) => Number(l.quantity) > 0, { message: 'A quantity more than 0', path: ['quantity'] }).refine((l) => !l.wastagePct || Number(l.wastagePct) <= 100, { message: 'Wastage at most 100%', path: ['wastagePct'] })).max(100), version: z.number().int().min(1), reason: z.string().trim().max(300).optional() }).strict(), b);
+export const parseMakeAdd = (b) => parse(z.object({ make: z.string().trim().min(1).max(60), model: z.string().trim().max(60).nullable().optional() }).strict(), b);
+export const parseMakeDecide = (b) => parse(z.object({ approved: z.boolean(), reason: z.string().trim().max(300).optional() }).strict(), b);
+export const parseAlternate = (b) => parse(z.object({ alternateId: id, on: z.boolean().default(true) }).strict(), b);
+const attr = z.object({ key: z.string().trim().regex(/^[a-z][a-zA-Z0-9]{0,29}$/, 'A key such as grade'), label: z.string().trim().min(1).max(60), type: z.enum(['text', 'number', 'enum']), options: z.array(z.string().trim().min(1).max(60)).max(40).optional(), unit: z.string().trim().max(10).optional(), required: z.boolean().default(false) }).strict();
+export const parseCategory = (b) => parse(z.object({ parentId: id.nullable().optional(), code: z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_]{1,19}$/, 'A code such as CEMENT'), name: z.string().trim().min(2).max(80), nameHi: z.string().trim().max(80).nullable().optional(), codePrefix: z.string().trim().toUpperCase().regex(/^[A-Z]{2,6}$/, 'Two to six letters'),
+  itemTypes: z.array(itemType).min(1, 'Choose the item types of the category').max(11), attributes: z.array(attr).max(20).default([]), defaultHsn: z.string().trim().regex(/^[0-9]{4,8}$/).nullable().optional(), glCode: z.string().trim().max(20).nullable().optional(), stewardRole: z.enum(['PROCMGR', 'STOREMGR', 'EST', 'PLANTMGR']),
+  status: z.enum(['ACTIVE', 'INACTIVE']).optional(), version: z.number().int().min(1).optional(), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);
+export const parseLegacyMap = (b) => parse(z.object({ source: z.enum(['conversion', 'sample-request-line']), key: z.string().trim().min(1).max(300), itemId: id }).strict(), b);

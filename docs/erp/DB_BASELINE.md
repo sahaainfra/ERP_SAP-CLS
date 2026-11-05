@@ -3628,6 +3628,319 @@ Indexes:
 - ix_mdm_hsn_sac_company: company_id, row_status
 - ux_mdm_hsn_sac_key (unique): , code, effective_from
 
+## mdm_item_alternates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| alternate_item_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: alternate_item_id -> mdm_items(id), item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_alternates_company: company_id
+- ix_mdm_item_alternates_alt: alternate_item_id
+- ux_mdm_item_alternates (unique): item_id, alternate_item_id
+
+## mdm_item_categories
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| parent_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| name_hi | TEXT |  |  |  |
+| code_prefix | TEXT | yes |  |  |
+| item_types_json | TEXT | yes |  | '[]' |
+| attribute_template_json | TEXT | yes |  | '[]' |
+| default_hsn_code | TEXT |  |  |  |
+| gl_mapping_code | TEXT |  |  |  |
+| steward_role | TEXT | yes |  |  |
+| category_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> mdm_item_categories(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_categories_company: company_id, category_status
+- ix_mdm_item_categories_parent: parent_id
+- ux_mdm_item_categories_code (unique): , code
+
+## mdm_item_code_counters
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| category_id | INTEGER | yes |  |  |
+| next_seq | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: category_id -> mdm_item_categories(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_code_counters_category: category_id
+- ux_mdm_item_code_counters (unique): company_id, category_id
+
+## mdm_item_legacy_map
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| legacy_source | TEXT | yes |  |  |
+| legacy_key | TEXT | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| mapped_by | TEXT | yes |  |  |
+| mapped_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_legacy_map_item: item_id
+- ux_mdm_item_legacy_map (unique): company_id, legacy_source, legacy_key
+
+## mdm_item_makes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| make | TEXT | yes |  |  |
+| model | TEXT |  |  |  |
+| approved | INTEGER | yes |  | 0 |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_makes_company: company_id
+- ix_mdm_item_makes_item: item_id
+
+## mdm_item_resources
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| parent_item_id | INTEGER | yes |  |  |
+| component_item_id | INTEGER | yes |  |  |
+| qty_per_unit | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| wastage_pct | INTEGER | yes |  | 0 |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: component_item_id -> mdm_items(id), parent_item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_resources_company: company_id
+- ix_mdm_item_resources_component: component_item_id
+- ix_mdm_item_resources_parent: parent_item_id
+
+## mdm_item_uoms
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| factor_to_base | TEXT | yes |  |  |
+| purpose | TEXT | yes |  | 'ANY' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_uoms_company: company_id
+- ux_mdm_item_uoms (unique): item_id, uom
+
+## mdm_item_user_marks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| mark | TEXT | yes |  |  |
+| used_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_item_user_marks_user: company_id, user_ref, mark, used_at
+- ix_mdm_item_user_marks_item: item_id
+- ux_mdm_item_user_marks (unique): company_id, user_ref, item_id, mark
+
+## mdm_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| name | TEXT | yes |  |  |
+| name_hi | TEXT |  |  |  |
+| item_type | TEXT | yes |  |  |
+| category_id | INTEGER | yes |  |  |
+| description | TEXT |  |  |  |
+| spec_json | TEXT | yes |  | '{}' |
+| spec_key | TEXT | yes |  | '' |
+| search_text | TEXT | yes |  | '' |
+| base_uom | TEXT | yes |  |  |
+| hsn_sac_code | TEXT |  |  |  |
+| gst_code | TEXT |  |  |  |
+| stock_tracked | INTEGER | yes |  | 0 |
+| batch_tracked | INTEGER | yes |  | 0 |
+| serial_tracked | INTEGER | yes |  | 0 |
+| shelf_life_days | INTEGER |  |  |  |
+| reorder_level | INTEGER | yes |  | 0 |
+| reorder_quantity | INTEGER | yes |  | 0 |
+| standard_amount | INTEGER | yes |  | 0 |
+| last_purchase_amount | INTEGER |  |  |  |
+| last_purchase_at | TEXT |  |  |  |
+| preferred_brands_json | TEXT | yes |  | '[]' |
+| image_file_id | INTEGER |  |  |  |
+| item_status | TEXT | yes |  | 'SUBMITTED' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| legacy_code | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supersedes_id -> mdm_items(id), category_id -> mdm_item_categories(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_items_name: company_id, name
+- ix_mdm_items_supersedes: supersedes_id
+- ix_mdm_items_spec: company_id, category_id, spec_key
+- ix_mdm_items_category: category_id
+- ix_mdm_items_list: company_id, item_status, item_type, category_id
+- ux_mdm_items_code (unique): company_id, code, version_no
+
 ## mdm_lookup_lists
 
 | Column | Type | Not null | Key | Default |

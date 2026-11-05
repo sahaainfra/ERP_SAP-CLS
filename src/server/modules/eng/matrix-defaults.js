@@ -16,6 +16,7 @@ const fmt = (n) => (n >= CR ? `₹${n / CR} Cr` : n >= L ? `₹${n / L} L` : `�
 
 export const DEFAULT_MATRICES = [
   { docType: 'ACC_RACI', label: 'RACI change of a live project', owner: 'PD', financial: false, rules: [rule('Any change', [], ['PM', 'PD'])] },
+  { docType: 'MDM_ITEM', label: 'New item or item version', owner: 'PROCMGR', financial: false, rules: [rule('Materials and services', [{ field: 'stewardRole', op: 'eq', value: 'PROCMGR' }], ['PROCMGR']), rule('Consumables, spares and tools', [{ field: 'stewardRole', op: 'eq', value: 'STOREMGR' }], ['STOREMGR']), rule('Labour and work items', [{ field: 'stewardRole', op: 'eq', value: 'EST' }], ['EST']), rule('Equipment classes', [], ['PLANTMGR'])] },
   { docType: 'MDM_TAX_CHANGE', label: 'Tax rate or TDS section change', owner: 'ACCMGR', financial: true, rules: [rule('Any statutory change', [], ['ACCMGR', 'CFO'])] },
   { docType: 'POL_VERSION', label: 'Company policy version', owner: 'DIR', financial: false, rules: [rule('Any policy', [], ['HRMGR|CFO|QCMGR|PROCMGR|ACCMGR|COMMGR|PCMGR|HSEE', 'DIR'])] },
   { docType: 'PCS_EXCEPTION', label: 'Control exception', owner: 'SYSADM', financial: false, rules: [
