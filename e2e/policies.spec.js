@@ -168,7 +168,7 @@ test('AC-01 AC-02 FR-05 BR-02 a requirement becomes a draft control point that s
   await act(request, c, 'CFO', cfo, sub.workflow.id);
   await act(request, c, 'DIR', dir, sub.workflow.id);
   await a.page.reload();
-  await a.page.getByTestId('pe-tab-requirements').click();
+  await expect(a.page.getByTestId('pe-nodraft')).toBeVisible(); // the policy is approved: there is no draft to edit, the requirements remain
   await expect(a.page.getByTestId('rq-convert')).toBeEnabled();
   await a.page.getByTestId('rq-convert').click();
   await expect(a.page.getByTestId('rq-row')).toContainText('Draft: the control is OFF');

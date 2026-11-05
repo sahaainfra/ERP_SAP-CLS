@@ -2324,3 +2324,84 @@ paths:
     post:
       summary: Run the auto groups now (msg.autogroup.edit)
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not a member }, '409': { description: conflict or not live yet }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies:
+    get:
+      summary: The policy register (q, category, status, owner, review due or overdue, paging) with version, dates and acknowledgement percentage; owners see their own, permission pol.policy.view_all sees all
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Write a policy: a draft version 1 with text, attachments, quiz, applicability and dates (permission pol.policy.create)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/preview:
+    post:
+      summary: How many people an applicability reaches
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}:
+    get:
+      summary: One policy with its versions, the current and the working version, and what the caller may do
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/versions:
+    post:
+      summary: Start a new draft version from the one in force (owner); never edits a published version
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/compare:
+    get:
+      summary: Compare two versions: paragraphs added, removed, changed (with the words that differ)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/acknowledgements:
+    get:
+      summary: Who has acknowledged a version and who has not, with the percentage
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/acknowledgements/export:
+    get:
+      summary: The acknowledgements as CSV
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/policies/{id}/archive:
+    post:
+      summary: Archive a policy (owner, reason)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/versions/{id}:
+    put:
+      summary: Change a draft version (row version checked); a version in approval or in force answers 409
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/versions/{id}/submit:
+    post:
+      summary: Send a draft for approval: department head, then director; Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/versions/{id}/read:
+    post:
+      summary: Open a policy that applies to the caller: records that it was read
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/my:
+    get:
+      summary: My Policies: to acknowledge, acknowledged, library, earlier versions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/acknowledge:
+    post:
+      summary: Acknowledge a version, with the answers of the knowledge check when it has one (pass mark)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements:
+    get:
+      summary: The requirements tagged on a version
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Tag a clause as a controllable requirement (control point, approval rule or alert rule); validated by the engine that will own it
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements/{id}:
+    put:
+      summary: Change a tagged requirement
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: Remove a tagged requirement
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements/{id}/convert:
+    post:
+      summary: Turn a requirement of an approved policy into a DRAFT in its engine (inactive until an administrator activates it there); Idempotency-Key required
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/requirements/{id}/dismiss:
+    post:
+      summary: Dismiss a draft (a person who manages that engine)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pol/drafts:
+    get:
+      summary: The drafts made from policies, with the state each has in its engine (pol.draft.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }

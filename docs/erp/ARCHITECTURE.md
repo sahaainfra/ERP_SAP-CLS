@@ -693,3 +693,14 @@ Behind feature flag `ff.msg.p0504`, inside the `msg` module (`autogroups.js`, `c
 - **Center** (FR-02): `GET /msg/center/summary` (tiles and pending items); Messages list views `important` and `escalated` and the type views (Teams, Projects, Sites, Departments, ERP-linked).
 - **Browser**: `platform/messages/Comm.jsx` (badge, forms, hooks) and the pages Communication Center, Pending Acknowledgements, Instruction Register, Announcements, New Announcement, Auto Groups.
 
+## 54. Company policy management and policy-to-protocol (part 05.05)
+
+Behind feature flag `ff.msg.p0505`; a module of its own, `modules/pol` (`service.js`, `richtext.js`, `routes.js`, `validators.js`, `index.js`), tables `pol_policies`, `pol_versions`, `pol_acknowledgements`, `pol_requirements` (migrations 94 and 95). The draft creators live in the engines: `modules/eng/policy-drafts.js` registers them in `platform/protocol/drafts.js`.
+
+- **Register and lifecycle** (FR-01, ADR-240): `GET/POST /pol/policies`, `GET /pol/policies/:id`; status derived from the versions; policy numbers `POL-nnnn`.
+- **Authoring** (FR-02): `PUT /pol/versions/:id` (draft only, row version checked), rich text cleaned by `sanitizeHtml`, attachments as files of entity `pol_version`, `GET /pol/policies/:id/compare` (paragraphs and words).
+- **Approval and publication** (FR-03, ADR-241): `POST /pol/versions/:id/submit` starts workflow `POL_VERSION` (head, director); approval publishes (recipients resolved, notified) and, on the effective date, makes the version Active and supersedes the old one; `POST /pol/policies/:id/versions` revises (BR-01).
+- **Acknowledgement and knowledge check** (FR-03, FR-04, ADR-242/243): `GET /pol/my`, `POST /pol/versions/:id/read`, `POST /pol/acknowledge` (pass mark, tries); report and CSV for the owner; job `pol.cycle` (hourly): effective dates, new people, reminders, escalation, review reminders (FR-06). Event `pol.acknowledgement.recorded`.
+- **Policy-to-protocol** (FR-05, BR-02, ADR-244): `/pol/requirements` (tag, edit, convert, dismiss), `GET /pol/drafts` (administrators' worklist with the state each draft has in its engine).
+- **Browser** (`client/modules/pol`): Policy Register with the policy page, Policy Editor (rich text, quiz, applicability with live count, requirements, compare), My Policies, Policy-to-Protocol Drafts.
+

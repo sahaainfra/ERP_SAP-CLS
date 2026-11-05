@@ -4998,6 +4998,168 @@ Indexes:
 - ix_pcs_reason_codes_company: company_id
 - ux_pcs_reason_codes (unique): , action_type, code
 
+## pol_acknowledgements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| policy_version_id | INTEGER | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| due_at | TEXT |  |  |  |
+| notified_at | TEXT |  |  |  |
+| read_at | TEXT |  |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| quiz_score | INTEGER |  |  |  |
+| attempts | INTEGER | yes |  | 0 |
+| reminded_at | TEXT |  |  |  |
+| reminder_count | INTEGER | yes |  | 0 |
+| escalated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: policy_version_id -> pol_versions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pol_ack_due: company_id, acknowledged_at, due_at
+- ix_pol_ack_user: company_id, user_ref, acknowledged_at
+- ux_pol_ack_one (unique): policy_version_id, user_ref
+
+## pol_policies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| policy_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| owner_ref | TEXT | yes |  |  |
+| department_id | INTEGER |  |  |  |
+| applicability_json | TEXT | yes |  | '{}' |
+| current_version_id | INTEGER |  |  |  |
+| policy_status | TEXT | yes |  | 'DRAFT' |
+| effective_from | TEXT |  |  |  |
+| review_due | TEXT |  |  |  |
+| archived_at | TEXT |  |  |  |
+| archive_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: department_id -> org_departments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pol_policy_review: company_id, review_due
+- ix_pol_policy_department: department_id
+- ix_pol_policy_owner: company_id, owner_ref
+- ix_pol_policy_list: company_id, policy_status, category
+- ux_pol_policy_no (unique): company_id, policy_no
+
+## pol_requirements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| policy_version_id | INTEGER | yes |  |  |
+| clause_ref | TEXT | yes |  |  |
+| requirement_text | TEXT | yes |  |  |
+| proposed_artifact_type | TEXT | yes |  |  |
+| proposed_config_json | TEXT | yes |  | '{}' |
+| req_status | TEXT | yes |  | 'TAGGED' |
+| artifact_entity | TEXT |  |  |  |
+| artifact_id | TEXT |  |  |  |
+| artifact_label | TEXT |  |  |  |
+| converted_by | TEXT |  |  |  |
+| converted_at | TEXT |  |  |  |
+| dismiss_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: policy_version_id -> pol_versions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pol_req_status: company_id, req_status
+- ix_pol_req_version: policy_version_id, req_status
+
+## pol_versions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| policy_id | INTEGER | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| body_html | TEXT | yes |  | '' |
+| attachments_json | TEXT | yes |  | '[]' |
+| change_summary | TEXT | yes |  | '' |
+| quiz_json | TEXT | yes |  | '[]' |
+| pass_mark | INTEGER | yes |  | 100 |
+| applicability_json | TEXT | yes |  | '{}' |
+| effective_from | TEXT |  |  |  |
+| review_due | TEXT |  |  |  |
+| ack_due_days | INTEGER | yes |  | 14 |
+| version_status | TEXT | yes |  | 'DRAFT' |
+| instance_id | INTEGER |  |  |  |
+| submitted_by | TEXT |  |  |  |
+| submitted_at | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| published_at | TEXT |  |  |  |
+| superseded_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: policy_id -> pol_policies(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pol_version_company_id: company_id
+- ix_pol_version_status: company_id, version_status, effective_from
+- ux_pol_version_no (unique): policy_id, version_no
+
 ## sec_conversations
 
 | Column | Type | Not null | Key | Default |
