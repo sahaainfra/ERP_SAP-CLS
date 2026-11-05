@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { grantSources } from './grant-sources.js';
 import { createParameterStore } from '../parameters/index.js';
 import { CONFIDENTIALITY_LEVELS, ROLE_TEMPLATES, TEMPLATE_FIELD_MASKS, TEMPLATE_PERMISSIONS } from './templates.js';
 import { LEGACY_ROLE_PERMISSIONS } from './legacy.js';
@@ -120,6 +121,17 @@ export function createAuthz({ db, now = () => Date.now(), ttlMs = 30_000 }) {
       for (const a of db.prepare("SELECT id, role_id, scope_type, scope_ids_json, effective_from, effective_to FROM iam_assignments WHERE user_id = ? AND company_id = ? AND status = 'ACTIVE' AND is_active = 1 AND (effective_from IS NULL OR effective_from <= ?) AND (effective_to IS NULL OR effective_to >= ?)").all(userId, companyId, today, today)) {
         const role = table.byId.get(a.role_id);
         if (role && role.status === 'ACTIVE') holdings.push({ role, scopeType: a.scope_type, scopeIds: asSet(a.scope_ids_json), assignmentId: a.id, via: 'assignment' });
+      }
+    }
+    // Holdings conferred by other modules' records (part 07.03: an approved site deployment); a failing source gives nothing.
+    if (userId) {
+      for (const [name, fn] of grantSources.list()) {
+        let given = [];
+        try { given = fn(db, { companyId, userId, today }) ?? []; } catch { given = []; }
+        for (const g of given) {
+          const role = table.byCode.get(g.roleCode) ?? templateRole(g.roleCode);
+          if (role && role.status === 'ACTIVE') holdings.push({ role, scopeType: g.scopeType, scopeIds: g.scopeIds ?? [], assignmentId: null, via: g.via ?? name, ref: g.ref });
+        }
       }
     }
     // Time-boxed elevations (part 02.05): in force between their start and end to the second.
