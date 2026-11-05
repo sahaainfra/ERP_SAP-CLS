@@ -3,6 +3,7 @@ import { eventTypes } from '../../platform/events/index.js';
 import { notFound } from '../../platform/http/errors.js';
 import { idempotency } from '../../platform/http/idempotency.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
+import { listExports, listExportsOf } from '../../platform/list/index.js';
 import { bindMdm } from '../../platform/mdm/index.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { createFlagService } from '../core/api.js';
@@ -72,9 +73,10 @@ export const mdm = {
       if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_items'").get()) {
         const items = createItemService({ db });
         bindItems(db, items);
+        listExports.register('mdm.items', { source: (actor, req) => items.register.exportSource(actor, req), hidden: (actor) => (items.seesRates(actor) ? [] : ['standardRate']) });
         const i = Router();
         i.use(gate('ff.mdm.p0603', 'The item master is'));
-        i.use(itemRoutes({ items }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+        i.use(itemRoutes({ items, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
         api.use('/mdm', i);
       }
     }

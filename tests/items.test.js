@@ -192,6 +192,20 @@ test('FR-06 the selector: search by code, name, specification or category, favou
   const look = await t.api.call('GET', `${M}/lookups/items?q=tmt`, se);
   assert.equal(look.status, 200, JSON.stringify(look.json));
   assert.equal(look.json.data[0].code, 'STL-00001');
+  // the Item Master register (List Report): filters, export with the rate hidden from a site engineer
+  const reg = await t.api.call('GET', `${M}/items/register?q=cement&filter[type]=MATERIAL&sort=code`, se);
+  assert.equal(reg.status, 200, JSON.stringify(reg.json));
+  assert.equal(reg.json.data[0].code, 'CEM-00001');
+  assert.equal(reg.json.data[0].standardRate, undefined);
+  assert.equal((await t.api.call('GET', `${M}/items/register?sort=-standardRate`, se)).status, 400, 'a hidden column is not sorted');
+  assert.equal((await t.api.call('GET', '/api/v1/ui/lists/mdm.items', se)).json.data.columns.find((c) => c.key === 'standardRate').masked, true);
+  const csv = await t.api.raw('GET', `${M}/items/register/export?format=csv&q=tmt`, se);
+  assert.equal(csv.status, 200);
+  const text = csv.buffer.toString('utf8');
+  assert.match(text, /STL-00001/);
+  assert.doesNotMatch(text, /62000/, 'no rate in the export of a person who may not see it');
+  const csv2 = (await t.api.raw('GET', `${M}/items/register/export?format=csv&q=tmt`, proc)).buffer.toString('utf8');
+  assert.match(csv2, /62000/);
   // another company sees nothing
   assert.equal((await t.api.call('GET', `${M}/items/search?q=cement`, as('PROCMGR', 'p9', '2'))).json.data?.rows?.length ?? 0, 0);
 });

@@ -2,6 +2,7 @@ import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
 import { createUomService } from '../../platform/calc/uom.js';
+import { countList, defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
@@ -42,6 +43,22 @@ export function specKey(categoryCode, spec) {
   const norm = (v) => String(v ?? '').toLowerCase().replace(/\s+/g, '').replace(/millimetres?|mm\.?$/g, 'mm').replace(/metres?$/g, 'm').replace(/kilograms?|kgs?$/g, 'kg');
   return `${categoryCode}|${Object.keys(spec ?? {}).sort().filter((k) => k !== 'brand' && spec[k] != null && spec[k] !== '').map((k) => `${k}=${norm(spec[k])}`).join(';')}`;
 }
+
+/** The Item Master register (List Report, 03.03): search, filters with operators, sort, saved views, column chooser and export. The standard rate is a commercial value: hidden for roles without mdm.item.rate.view. */
+const STATUS_OPTIONS = [['SUBMITTED', 'Waiting for approval'], ['ACTIVE', 'Active'], ['INACTIVE', 'Inactive'], ['SUPERSEDED', 'Superseded'], ['REJECTED', 'Rejected']];
+export const itemList = defineList({
+  code: 'mdm.items', label: 'Items', permission: 'mdm.record.view',
+  from: 'mdm_items i JOIN mdm_item_categories c ON c.id = i.category_id', where: 'i.deleted_at IS NULL',
+  searchable: ['i.code', 'i.name', 'i.search_text'], defaultSort: 'code',
+  columns: {
+    code: { sql: 'i.code', type: 'text', label: 'Code' }, versionNo: { sql: 'i.version_no', type: 'number', label: 'Version' }, name: { sql: 'i.name', type: 'text', label: 'Name' },
+    type: { sql: 'i.item_type', type: 'enum', label: 'Type', options: TYPES.map((t) => [t, TYPE_LABELS[t]]) }, category: { sql: 'c.name', type: 'text', label: 'Category' }, categoryId: { sql: 'i.category_id', type: 'id', label: 'Category id' },
+    baseUom: { sql: 'i.base_uom', type: 'text', label: 'Base unit' }, hsnSac: { sql: 'i.hsn_sac_code', type: 'text', label: 'HSN/SAC' }, gstRate: { sql: 'i.gst_code', type: 'text', label: 'GST' },
+    status: { sql: 'i.item_status', type: 'enum', label: 'Status', options: STATUS_OPTIONS }, stockTracked: { sql: "CASE i.stock_tracked WHEN 1 THEN 'YES' ELSE 'NO' END", type: 'enum', label: 'Stock tracked', options: [['YES', 'Yes'], ['NO', 'No']] },
+    standardRate: { sql: 'i.standard_amount', type: 'money', label: 'Standard rate (₹)', toDb: (v) => toUnits(v, 'money'), sensitive: true },
+    updatedAt: { sql: 'COALESCE(i.updated_at, i.created_at)', type: 'datetime', label: 'Changed' },
+  },
+});
 
 export function createItemService({ db }) {
   const authz = authzOf(db);
@@ -574,7 +591,26 @@ export function createItemService({ db }) {
     return best ? { id: best.id, code: best.code, name: best.name, score: best.s } : null;
   }
 
-  return { categories, items, uoms, resources, makes, decisions, migration, ensureTree, specKey };
+  // ---- the register (List Report) ----
+  const presentRow = (actor) => (r) => ({ id: r.id, code: r.code, versionNo: r.version_no, name: r.name, type: r.item_type, typeLabel: TYPE_LABELS[r.item_type], category: r.c_name, categoryId: r.category_id, baseUom: r.base_uom, hsnSac: r.hsn_sac_code, gstRate: r.gst_code, status: r.item_status, stockTracked: r.stock_tracked ? 'YES' : 'NO', standardRate: seesRates(actor) ? money(r.standard_amount) : undefined, updatedAt: r.updated_at ?? r.created_at });
+  const scope = (actor) => ({ scopeSql: "i.company_id = :c AND i.item_status IN ('SUBMITTED', 'ACTIVE', 'INACTIVE', 'SUPERSEDED', 'REJECTED')", params: { c: actor.companyId } });
+  const listReq = (actor, query) => {
+    const req = parseListRequest(itemList, query);
+    if (!seesRates(actor) && (req.sort.some((x) => x.key === 'standardRate') || req.filters.some((x) => x.key === 'standardRate'))) throw badRequest('Some list parameters are invalid.', [{ field: 'standardRate', message: 'The rate is hidden for your role, so it cannot be sorted or filtered.' }]);
+    return req;
+  };
+  const register = {
+    list(actor, query) { need(actor, 'mdm.record.view', 'see the item catalogue'); ensureTree(actor.companyId); return runList(db, itemList, listReq(actor, query), { select: 'i.*, c.name AS c_name', ...scope(actor), tieBreaker: 'i.id', map: presentRow(actor) }); },
+    exportSource(actor, req) {
+      need(actor, 'mdm.record.view', 'see the item catalogue');
+      const cols = Object.entries(itemList.columns).filter(([k]) => k !== 'categoryId' && (k !== 'standardRate' || seesRates(actor))).map(([key, c]) => ({ key, label: c.label, type: c.type === 'enum' ? 'text' : c.type }));
+      return { title: itemList.label, permission: 'mdm.record.view', personal: false, columns: cols, count: () => countList(db, itemList, req, scope(actor)),
+        rows: () => runList(db, itemList, req, { select: 'i.*, c.name AS c_name', ...scope(actor), tieBreaker: 'i.id', limit: null, map: (r) => { const x = presentRow(actor)(r); return { ...x, type: x.typeLabel }; } }).data,
+        describe: (r) => [r.q ? `search "${r.q}"` : '', ...r.filters.map((x) => `${itemList.columns[x.key].label} ${x.op} ${x.raw}`)].filter(Boolean).join('; ') };
+    },
+  };
+
+  return { categories, items, uoms, resources, makes, decisions, migration, register, ensureTree, specKey, seesRates };
 }
 
 const services = new WeakMap();

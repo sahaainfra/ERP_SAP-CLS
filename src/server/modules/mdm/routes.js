@@ -62,9 +62,19 @@ export function commonRoutes({ common }, { idempotent, idempotentRequired }) {
 }
 
 /** Part 06.03: the item master. Reading needs mdm.record.view (everyone, through the selector); a request for a new item too; changes need the steward of the item's category (checked in the service). */
-export function itemRoutes({ items: s }, { idempotent, idempotentRequired }) {
+export function itemRoutes({ items: s, exportsOf }, { idempotent, idempotentRequired }) {
   const r = Router();
   const ok = (res, data, status = 200) => res.status(status).json({ data });
+  // the Item Master register (List Report): its own query and its export through the List Report's export service (direct file or a background job)
+  r.get('/items/register', (req, res) => res.json(s.register.list(req.actor, req.query)));
+  r.get('/items/register/export', (req, res) => {
+    const svc = exportsOf();
+    if (!svc) throw new Error('The list export service is not running');
+    const out = svc.start(req.actor, 'mdm.items', req.query);
+    if (out.kind === 'job') return res.status(202).json({ data: out });
+    res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+    return res.send(out.buffer);
+  });
   r.get('/item-categories', (req, res) => ok(res, s.categories.tree(req.actor)));
   r.post('/item-categories', idempotent, (req, res) => ok(res, s.categories.save(req.actor, null, parseCategory(req.body)), 201));
   r.put('/item-categories/:id', idempotent, (req, res) => ok(res, s.categories.save(req.actor, parseId(req.params.id), parseCategory(req.body))));

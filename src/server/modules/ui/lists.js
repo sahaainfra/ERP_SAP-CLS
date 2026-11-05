@@ -8,7 +8,7 @@ import { transaction } from '../../platform/db/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { footerLines, writeExport, FORMATS } from '../../platform/export/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
-import { describeList, filtersOf, listRegistry, parseListRequest, queryOf } from '../../platform/list/index.js';
+import { describeList, filtersOf, listExports, listRegistry, parseListRequest, queryOf } from '../../platform/list/index.js';
 import { createExportGuard } from '../../platform/security/export.js';
 import { parse } from '../../platform/validation/index.js';
 import { fromUnits, toUnits } from '../../../shared/money.js';
@@ -133,7 +133,7 @@ export function createExportService({ db, storagePath, jobs }) {
   const present = (r) => ({ id: r.id, list: r.list_code, format: r.format, status: r.status, rows: r.rows_written || r.rows_planned, fileName: r.file_name, bytes: r.bytes, error: r.error, createdAt: r.created_at, finishedAt: r.finished_at, expiresAt: r.expires_at, filters: JSON.parse(r.query_json) });
 
   function build(actor, code, req, format) {
-    const src = sources.get(code)(actor, req);
+    const src = (sources.get(code) ?? listExports.source(code))(actor, req);
     const rows = src.rows();
     const generatedAt = istStamp();
     const footer = footerLines({ title: src.title, generatedBy: actor.user, generatedAt, filters: src.describe(req), rows: rows.length });
@@ -148,7 +148,7 @@ export function createExportService({ db, storagePath, jobs }) {
 
     /** Export now, or queue a job when the export is larger than a direct download may be. */
     start(actor, code, query) {
-      const src0 = sources.get(code);
+      const src0 = sources.get(code) ?? listExports.source(code);
       if (!src0) throw notFound(`There is no export for ${code}.`);
       const def = listRegistry.get(code);
       const req = parseListRequest(def, query, { extra: ['format'] });

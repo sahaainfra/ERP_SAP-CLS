@@ -833,6 +833,8 @@ export const ROUTE_POLICY = [
   { m: 'PUT', p: '/api/v1/mdm/item-categories/:id', g: 'permission', k: 'mdm.item.category.edit', s: 'parseCategory', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/mdm/item-categories/:id/history', g: 'permission', k: 'mdm.record.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/mdm/items', g: 'permission', k: 'mdm.record.view', s: 'parseItemList', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/mdm/items/register', g: 'permission', k: 'mdm.record.view', s: 'parseListRequest', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/mdm/items/register/export', g: 'permission', k: 'mdm.record.view', s: 'parseListRequest', scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/mdm/items/search', g: 'permission', k: 'mdm.record.view', s: 'parseItemSearch', scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/mdm/items/check', g: 'permission', k: 'mdm.record.view', s: 'parseItemCheck', scope: 'company', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/mdm/items/migration', g: 'permission', k: 'mdm.item.migrate', s: null, scope: 'company', rate: 'read', audit: false },
