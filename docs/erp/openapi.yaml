@@ -2849,3 +2849,110 @@ paths:
     get:
       summary: Lookups: accounts, manual-accounts, cost-codes
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates:
+    get:
+      summary: The resource rate library (06.06): filters item, region, project, source, in force on
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A rate of an item from a date; the rate in force for the same item, region and project ends the day before
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates/lookup:
+    get:
+      summary: The library rate of an item in force: project, then region, then everywhere
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates/{id}:
+    put:
+      summary: Correct a rate no analysis has used
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/resource-rates/{id}/retire:
+    post:
+      summary: Retire a rate
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books:
+    get:
+      summary: Schedules of rates and their editions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new schedule (draft edition 1)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}:
+    get:
+      summary: One edition with its items (search)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}/items:
+    put:
+      summary: Add or replace items of a draft edition
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}/activate:
+    post:
+      summary: Put a draft edition in use; the previous one is superseded
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-books/{id}/editions:
+    post:
+      summary: A new draft edition copied from this one
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/sor-items:
+    get:
+      summary: Items of the schedules in use (search)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses:
+    get:
+      summary: The rate analyses register
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new rate analysis, priced by the calculation engine (or submitted at once)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/export:
+    get:
+      summary: The register as CSV (audited)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/impact:
+    get:
+      summary: Analyses affected by a resource rate change, with old and new unit rates (T-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/start:
+    post:
+      summary: The components of a new analysis from a template or a work item bill of resources, priced from the library (not saved)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}:
+    get:
+      summary: One version with components, add-ons, SOR comparison, versions and allowed actions
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change a draft or returned version (recomputed)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: Delete a draft
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/recalculate:
+    post:
+      summary: Refresh library rates and recompute a draft or returned version
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/submit:
+    post:
+      summary: Submit for release (director, project manager or commercial manager) (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/withdraw:
+    post:
+      summary: Withdraw before anyone acted: back to a draft
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/cancel:
+    post:
+      summary: Cancel an analysis in approval or returned
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/amend:
+    post:
+      summary: A new draft version of a released analysis (BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/compare:
+    get:
+      summary: Two versions side by side
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/history:
+    get:
+      summary: Versions, approvals and audit trail
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/analyses/{id}/print:
+    get:
+      summary: A printable page (HTML, audited)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }

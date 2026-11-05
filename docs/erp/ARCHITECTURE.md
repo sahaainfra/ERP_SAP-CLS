@@ -765,3 +765,15 @@ Behind feature flag `ff.mdm.p0605`; a module of its own, `modules/fin` (`service
 - **Lookups**: `/api/v1/fin/lookups/accounts`, `/manual-accounts` (open to manual journals), `/cost-codes`. Object type `fin_account`. Events `fin.master.change_requested`, `fin.account.changed`, `fin.cost_code.changed`, `fin.category_mapping.changed`.
 - **Browser** (`client/modules/fin`): Chart of Accounts (tree with filters, Schedule III, import with the mapping report, changes, export), Account (properties, dimension rules, mapping, changes, check a posting), Cost Heads & Cost Codes, Item Category → GL / Cost Code Mapping.
 - **Permissions**: `fin.coa.view` (finance, project, procurement, estimation and planning roles), `fin.coa.edit` and `fin.import` (ACCMGR), `fin.costcode.edit` (ACCMGR, PCMGR); the CFO approves.
+
+## 60. Rate analysis engine and schedule of rates library (part 06.06)
+
+Behind feature flag `ff.mdm.p0606` (in module `mdm`, which needs `ff.mdm.p0601` to `ff.mdm.p0603` on). Code: `modules/mdm/rates.js` (service, workflow `MDM_RATE_ANALYSIS`, evidence panel, object type `ra_analysis`), `rate-integrations.js` (Excel import types, lookup), routes in `routes.js`. Tables `ra_resource_rates`, `ra_sor_books`, `ra_sor_items`, `ra_analyses`, `ra_analysis_lines` (migrations 106 and 107). Formulas `ra.line_amount` and `ra.unit_rate` in `platform/calc/builtins.js` (ADR-270, ADR-271).
+
+- **Resource rates** (FR-01): `GET/POST /mdm/resource-rates`, `PUT …/:id` (only a rate no analysis used), `POST …/:id/retire`, `GET …/lookup?itemId=&region=&projectId=&date=`. Excel import `MDM_RESOURCE_RATE`.
+- **Schedules of rates** (FR-02): `GET/POST /mdm/sor-books`, `GET …/:id`, `PUT …/:id/items` (draft edition), `POST …/:id/activate`, `POST …/:id/editions`, `GET /mdm/sor-items?q=`; Excel import `MDM_SOR_ITEM`; lookup `/mdm/lookups/sor-items`.
+- **Analyses** (FR-03 to FR-06, BR-01, BR-02, ADR-272/273): `GET /mdm/analyses` (and `/export`), `POST /mdm/analyses/start` (from a template or the bill of resources), `POST /mdm/analyses`, `GET/PUT/DELETE /mdm/analyses/:id`, `POST …/recalculate`, `…/submit`, `…/withdraw`, `…/cancel`, `…/amend`, `GET …/compare?with=`, `…/history`, `…/print`.
+- **Impact** (FR-05, T-02): `GET /mdm/analyses/impact?itemId=&newRate=&region=&projectId=`; nothing is saved.
+- **For other modules**: `ratesOf(db).analyses.releasedRate(companyId, workItemId, { region, projectId, date })`; events `mdm.resource_rate.changed`, `mdm.sor.activated`, `mdm.analysis.created`, `mdm.analysis.released`.
+- **Access** (ADR-274): project records through `scopeFilter`/`check` of the permission engine; `mdm.analyse.{view,create,edit,delete,submit,approve,cancel,amend,print,export}` and `mdm.rate.edit`.
+- **Browser**: Resource Rate Library, Schedule of Rates, Rate Analyses (register), Rate Analysis (object page: components, add-ons, SOR, versions with compare, history; new and change form), Rate Change Impact (report).
