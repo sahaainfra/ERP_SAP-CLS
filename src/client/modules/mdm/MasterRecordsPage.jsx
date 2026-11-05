@@ -4,7 +4,15 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { formatDate, formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import { api } from '../../platform/api/index.js';
 import { CHANGE, RECORD_STATUS, REQUEST_STATUS, mdm, scoreTone, todayIST } from './api.js';
+
+/** A field kept in a common master (06.02, AC-01): the choices come from its lookup; the value stored is the name. */
+function LookupSelect({ lookup, name, value, onChange, onBlur, testId }) {
+  const q = useQuery({ queryKey: ['mdm', 'lookup', lookup], queryFn: async () => (await api.get(`/mdm/lookups/${lookup}?pageSize=100`)).data, retry: false, staleTime: 300_000 });
+  if (q.isError) return <input name={name} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} data-testid={testId} />;
+  return <select name={name} value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} data-testid={testId}><option value="">Choose</option>{(q.data ?? []).map((o) => <option key={o.id} value={o.name}>{o.name}{o.extra?.gstCode ? ` (${o.extra.gstCode})` : ''}</option>)}</select>;
+}
 
 // Master Records (Administration, part 06.01): the records of a governed master (the business partner first), with filters, "as of" a date (FR-03) and the quality score (FR-04). A record opens with its versions (each with
 // the date it applies from), its quality checks, its change requests and who refers to it; a merged record shows the record it was merged into (BR-01). A new record or a change is checked for duplicates before it is sent
@@ -98,7 +106,9 @@ function RecordForm({ ref, def, record = null, onDone }) {
         {done ? <><p role="status" data-testid="mdm-form-done">{done}</p><div className="actions"><button type="button" className="btn btn-primary" onClick={() => { dlg.current?.close(); onDone?.(result); }}>Close</button></div></> : <>
           <div className="mdm-fields">{def.fields.map((f) => (
             <Field key={f.key} label={`${f.label}${f.required ? ' (required)' : ''}${f.sensitive ? ' · sensitive' : ''}`} name={f.key} error={error} hint={f.formatHint}>
-              {f.type === 'enum'
+              {f.lookup
+                ? <LookupSelect lookup={f.lookup} name={f.key} value={data[f.key] ?? ''} onChange={(v) => setData({ ...data, [f.key]: v })} onBlur={runCheck} testId={`mdf-${f.key}`} />
+                : f.type === 'enum'
                 ? <select name={f.key} value={data[f.key] ?? ''} required={f.required} onChange={(e) => setData({ ...data, [f.key]: e.target.value })} onBlur={runCheck} data-testid={`mdf-${f.key}`}><option value="">Choose</option>{f.options.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
                 : <input name={f.key} value={data[f.key] ?? ''} maxLength={f.max ?? 300} required={f.required} onChange={(e) => setData({ ...data, [f.key]: e.target.value })} onBlur={runCheck} autoComplete="off" data-testid={`mdf-${f.key}`} />}
             </Field>))}</div>

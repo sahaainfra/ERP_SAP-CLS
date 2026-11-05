@@ -2502,3 +2502,56 @@ paths:
     get:
       summary: The rules and stewards in force as JSON
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common:
+    get:
+      summary: The common masters, their fields and whether I may change them (mdm.record.view)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common/{master}:
+    get:
+      summary: Rows of a common master in force for my company (asOf, status, q, filters)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new row (201) or, for a statutory master, a proposal from a date approved by ACCMGR then CFO (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common/{master}/{id}:
+    get:
+      summary: A row with its history and change requests
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: A change (200; a system row becomes my companys own row) or a statutory proposal from a date (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/common/{master}/{id}/retire:
+    post:
+      summary: A row no longer used (not for statutory masters)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/tax/gst:
+    get:
+      summary: The GST rate of a code or an HSN/SAC code valid on a date (BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/tax/tds:
+    get:
+      summary: The TDS/TCS section valid on a date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/exchange-rate:
+    get:
+      summary: The latest exchange rate of a currency on or before a date
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/uoms/convert:
+    get:
+      summary: A quantity in another unit of the same category (BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/lookup-lists:
+    get:
+      summary: The lookup lists with their number of values
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/lookup-lists/{list}:
+    get:
+      summary: The values of a list in my language (lang to choose)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Save a whole list (mdm.lookup.edit): add, change, make inactive
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/lookups/{name}:
+    get:
+      summary: Form lookups of the common masters and of every lookup list, in my language (03.02 contract)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }

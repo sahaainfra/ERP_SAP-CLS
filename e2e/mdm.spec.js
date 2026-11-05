@@ -135,7 +135,7 @@ test('FR-03 FR-05 FR-07 FR-08 the dashboard, a change from a later date with its
   const errors = watch(r.page);
   await r.page.getByTestId('mdd-change').click();
   const form = r.page.getByTestId('mdm-form');
-  await form.getByTestId('mdf-state').fill('Tamil Nadu');
+  await form.getByTestId('mdf-state').selectOption('Tamil Nadu');
   await form.getByTestId('mdf-from').fill(IST(10));
   await expect(form.getByTestId('mdf-route')).toContainText('saved at once');
   await form.getByTestId('mdf-submit').click();

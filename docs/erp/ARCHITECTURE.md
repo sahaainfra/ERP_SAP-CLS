@@ -715,3 +715,14 @@ Behind feature flag `ff.mdm.p0601`; module `modules/mdm` (`masters.js`, `service
 - **Dashboard** (FR-08): `GET /mdm/dashboard`. Job `mdm.cycle` (hourly): scheduled versions into force, duplicate scan.
 - **Integration**: object type `mdm_record` (resolves merged ids), Excel import `MDM_PARTNER` (each row a change request) and export `mdm.partners` (FR-06); events `mdm.change.requested`, `mdm.record.changed`, `mdm.record.merged`.
 - **Browser** (`client/modules/mdm`): Master Data Governance, Master Change Requests, Duplicate Candidates (compare and merge), Data Quality Rules & Stewards, Master Records (detail with history, as of, quality, references).
+
+## 56. Common masters (part 06.02)
+
+Behind feature flag `ff.mdm.p0602` (inside the `mdm` module, which needs `ff.mdm.p0601` on). Code: `modules/mdm/common.js` (definitions and engine), `common-integrations.js` (lookups, Excel), routes in `routes.js`. Tables `mdm_uoms`, `mdm_gst_rates`, `mdm_hsn_sac`, `mdm_tds_sections`, `mdm_states`, `mdm_districts`, `mdm_currencies`, `mdm_exchange_rates`, `mdm_banks`, `mdm_payment_terms`, `mdm_lookup_lists`, `mdm_lookups` (migrations 98 and 99); a row without a company is a system row (ADR-250).
+
+- **Registers** (FR-01 to FR-09): `GET /mdm/common` (definitions), `GET/POST /mdm/common/:master`, `GET/PUT /mdm/common/:master/:id`, `POST …/retire`; filters, search, `asOf`, `status`.
+- **Statutory changes** (BR-01, ADR-251): GST rates, HSN/SAC and TDS sections change by proposal from a date, workflow `MDM_TAX_CHANGE` (ACCMGR then CFO), rows of `mdm_change_requests` shown in the 06.01 worklist.
+- **What modules ask**: `GET /mdm/tax/gst?hsn=|code=&date=`, `GET /mdm/tax/tds?section=&date=`, `GET /mdm/exchange-rate?currency=&date=`, `GET /mdm/uoms/convert?quantity=&from=&to=` (BR-02, ADR-252); the service `commonOf(db).tax`.
+- **Lookups** (ADR-253): `/api/v1/mdm/lookups/{uoms,states,districts,gst-rates,hsn-sac,tds-sections,currencies,banks,payment-terms}` and one per list (`/mdm/lookups/priority` …) in the person's language; `GET/PUT /mdm/lookup-lists/:list` for the manager.
+- **Excel**: import types `MDM_UOM`, `MDM_GST_RATE`, `MDM_HSN_SAC`, `MDM_TDS_SECTION`, `MDM_STATE`, `MDM_DISTRICT`, `MDM_CURRENCY`, `MDM_EXCHANGE_RATE`, `MDM_BANK`, `MDM_PAYMENT_TERM`, `MDM_LOOKUP`; export sources `mdm.common.<master>`. Event `mdm.common.changed`.
+- **Browser**: one register page per master (`/admin/master-data/common/<page>`, `CommonMasterPage.jsx`) and the Lookup List Manager; the partner form of 06.01 takes its State from the states master.
