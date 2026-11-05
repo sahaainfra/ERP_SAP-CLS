@@ -2956,3 +2956,108 @@ paths:
     get:
       summary: A printable page (HTML, audited)
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/hr/employees:
+    get:
+      summary: "The Employee Directory (List Report contract): HR and payroll see the company, a manager the reporting line and the staff deployed to their projects and sites (basic data); contact details and PAN masked outside the line"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    post:
+      summary: Enter an employee as a Draft (code from the numbering service), or send it for approval with submit (201); duplicates by PAN, Aadhaar, mobile, name and date of birth (409)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/export:
+    get:
+      summary: Export of the directory (xlsx, csv, pdf) with the same filters and masks as the screen; PAN in full only for HR and payroll
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/overview:
+    get:
+      summary: "HR Overview: headcount, joiners, leavers, on notice, waiting for approval, by department, site and type, what needs attention"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/queue:
+    get:
+      summary: "The HR worklist: new employees and changes waiting, expiring documents, separations whose access could not be removed (hr.employee.queue)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/changes:
+    get:
+      summary: Requests to change approved employees (hr.employee.view)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/me:
+    get:
+      summary: The signed-in person's own employee record (no permission needed)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/me/changes:
+    post:
+      summary: The employee asks for a change of their own contact details, addresses, nominees, statutory or bank details (202)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/check:
+    post:
+      summary: Errors and duplicates of an employee while it is typed (FR-09)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}:
+    get:
+      summary: "Employee 360: personal, employment, statutory (masked unless HR, payroll or the employee), banks (masked), contacts, documents, history, changes"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    patch:
+      summary: Correct a Draft or returned record (version required)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    delete:
+      summary: Delete a Draft (soft delete)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/submit:
+    post:
+      summary: Send a Draft for approval (Idempotency-Key required)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/withdraw:
+    post:
+      summary: Withdraw a record in approval; it is a Draft again
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/cancel:
+    post:
+      summary: Cancel a record in approval or returned (reason)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/amend:
+    post:
+      summary: "Ask for a change of an approved employee: PROFILE, STATUTORY, BANK, EMPLOYMENT or SEPARATION, with its effective date; approved through the workflow and applied on its date (202)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/details:
+    put:
+      summary: Education, experience, skills, languages and the photo of an approved employee (no approval; audited)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/history:
+    get:
+      summary: Approval history and audit trail of the employee and its changes
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/print:
+    get:
+      summary: A printable page (HTML, audited), sensitive data masked for those who may not see it
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/documents:
+    post:
+      summary: Record a document with its number and expiry
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/documents/{docId}/verify:
+    post:
+      summary: Verify a document (not by the person who added it)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/banks/{bankId}/verify:
+    post:
+      summary: Payroll verifies a bank account (not by the person who entered it)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/banks/{bankId}/reveal:
+    get:
+      summary: The full account number for HR, payroll and the employee; every view is audited
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/user:
+    post:
+      summary: Create a user account from the employee record and link it (FR-08)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/{id}/link-user:
+    post:
+      summary: Link an existing user account to the employee
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/employees/changes/{changeId}/cancel:
+    post:
+      summary: Cancel a change that is waiting
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/lookups/employees:
+    get:
+      summary: Employees for the lookups of other forms (reporting manager, deployment, attendance)
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict (a stale version, a duplicate, a locked record) }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }

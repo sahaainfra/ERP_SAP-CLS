@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS hr_employee_history;
+DROP TABLE IF EXISTS hr_employee_changes;
+DROP TABLE IF EXISTS hr_employee_documents;
+DROP TABLE IF EXISTS hr_employee_experience;
+DROP TABLE IF EXISTS hr_employee_education;
+DROP TABLE IF EXISTS hr_employee_contacts;
+DROP TABLE IF EXISTS hr_employee_banks;
+DROP TABLE IF EXISTS hr_employee_statutory;
+DROP TABLE IF EXISTS hr_employees;

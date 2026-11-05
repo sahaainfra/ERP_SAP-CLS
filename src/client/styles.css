@@ -1190,3 +1190,15 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 [data-testid="rate-impact"] .tile { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); min-inline-size: 10rem; }
 [data-testid="rate-impact"] .tile-label { font: var(--erp-type-label); color: var(--erp-color-text-muted); }
 [data-testid="rate-impact"] .tile-value { font-size: 1.4rem; font-weight: 600; }
+
+/* part 07.01: HR Overview bars (headcount by department, site, type): a label, a bar relative to the largest, and the number */
+.hr-bars ul { list-style: none; padding: 0; margin: 0; }
+.hr-bars li a { display: grid; grid-template-columns: minmax(6rem, 14rem) 1fr 3rem; gap: var(--erp-space-3); align-items: center; padding-block: var(--erp-space-1); text-decoration: none; color: inherit; }
+.hr-bars li a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.hr-bar-label { overflow-wrap: anywhere; }
+.hr-bar { display: block; block-size: 0.7rem; background: var(--erp-color-bg-subtle); border-radius: var(--erp-radius-sm); overflow: hidden; }
+.hr-bar > span { display: block; block-size: 100%; background: var(--erp-color-brand-primary); }
+.hr-bars .num { text-align: end; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .hr-bars li a { grid-template-columns: 1fr 3rem; } .hr-bars .hr-bar { grid-column: 1 / -1; order: 3; } }
+/* part 07.01: room under the last row of the HR pages, so the floating Messages button never covers a button */
+[data-testid="new-employee"], [data-testid="employee-page"], [data-testid="hr-overview"], [data-testid="employee-directory"] { padding-block-end: 4.5rem; }

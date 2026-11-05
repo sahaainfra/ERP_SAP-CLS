@@ -2720,6 +2720,370 @@ Indexes:
 - ix_fin_master_changes_entity: entity, entity_id
 - ix_fin_master_changes_list: company_id, request_status, entity
 
+## hr_employee_banks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| account_enc | TEXT | yes |  |  |
+| account_hash | TEXT | yes |  |  |
+| account_last4 | TEXT | yes |  |  |
+| ifsc | TEXT | yes |  |  |
+| bank_name | TEXT |  |  |  |
+| branch_name | TEXT |  |  |  |
+| account_name | TEXT | yes |  |  |
+| bank_status | TEXT | yes |  | 'PENDING_APPROVAL' |
+| verified_status | TEXT | yes |  | 'UNVERIFIED' |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| verify_note | TEXT |  |  |  |
+| is_primary | INTEGER | yes |  | 0 |
+| change_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_banks_status: company_id, bank_status
+- ix_hr_employee_banks_hash: company_id, account_hash
+- ix_hr_employee_banks_employee: employee_id
+
+## hr_employee_changes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| change_type | TEXT | yes |  |  |
+| effective_date | TEXT | yes |  |  |
+| payload_enc | TEXT | yes |  |  |
+| summary_json | TEXT | yes |  | '{}' |
+| before_json | TEXT | yes |  | '{}' |
+| reason | TEXT | yes |  |  |
+| change_status | TEXT | yes |  | 'PENDING' |
+| senior | INTEGER | yes |  | 0 |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| requested_self | INTEGER | yes |  | 0 |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| applied_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_changes_due: change_status, effective_date
+- ix_hr_employee_changes_list: company_id, change_status
+- ix_hr_employee_changes_employee: employee_id
+
+## hr_employee_contacts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| contact_type | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| relation | TEXT | yes |  |  |
+| phone | TEXT |  |  |  |
+| dob | TEXT |  |  |  |
+| share_pct | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_contacts_company_id: company_id
+- ix_hr_employee_contacts_employee: employee_id, contact_type
+
+## hr_employee_documents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| document_ref | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| valid_from | TEXT |  |  |  |
+| valid_until | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| alert_stage | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_documents_expiry: company_id, valid_until
+- ix_hr_employee_documents_employee: employee_id
+
+## hr_employee_education
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| qualification | TEXT | yes |  |  |
+| institute | TEXT |  |  |  |
+| pass_year | INTEGER |  |  |  |
+| grade_text | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_education_company_id: company_id
+- ix_hr_employee_education_employee: employee_id
+
+## hr_employee_experience
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| employer | TEXT | yes |  |  |
+| job_title | TEXT | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT |  |  |  |
+| leaving_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_experience_company_id: company_id
+- ix_hr_employee_experience_employee: employee_id
+
+## hr_employee_history
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| event_type | TEXT | yes |  |  |
+| effective_date | TEXT | yes |  |  |
+| from_json | TEXT | yes |  | '{}' |
+| to_json | TEXT | yes |  | '{}' |
+| reference_doc | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| change_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_history_company_id: company_id
+- ix_hr_employee_history_employee: employee_id, effective_date
+
+## hr_employee_statutory
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| pan_enc | TEXT |  |  |  |
+| pan_hash | TEXT |  |  |  |
+| pan_last4 | TEXT |  |  |  |
+| aadhaar_last4 | TEXT |  |  |  |
+| aadhaar_hash | TEXT |  |  |  |
+| uan | TEXT |  |  |  |
+| esic_ip | TEXT |  |  |  |
+| pf_applicable | INTEGER | yes |  | 0 |
+| esi_applicable | INTEGER | yes |  | 0 |
+| pt_state | TEXT |  |  |  |
+| lwf_state | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_statutory_aadhaar: company_id, aadhaar_hash
+- ix_hr_employee_statutory_pan: company_id, pan_hash
+- ux_hr_employee_statutory_employee (unique): employee_id
+
+## hr_employees
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| emp_code | TEXT | yes |  |  |
+| first_name | TEXT | yes |  |  |
+| last_name | TEXT |  |  |  |
+| full_name | TEXT | yes |  |  |
+| name_key | TEXT | yes |  | '' |
+| photo_file_id | INTEGER |  |  |  |
+| gender | TEXT | yes |  |  |
+| dob | TEXT | yes |  |  |
+| blood_group | TEXT |  |  |  |
+| marital_status | TEXT |  |  |  |
+| mobile | TEXT | yes |  |  |
+| email | TEXT |  |  |  |
+| permanent_address | TEXT |  |  |  |
+| current_address | TEXT |  |  |  |
+| branch_id | INTEGER |  |  |  |
+| department_id | INTEGER |  |  |  |
+| designation_id | INTEGER |  |  |  |
+| grade | TEXT |  |  |  |
+| employment_type | TEXT | yes |  |  |
+| doj | TEXT | yes |  |  |
+| confirmation_date | TEXT |  |  |  |
+| manager_id | INTEGER |  |  |  |
+| cost_centre_id | INTEGER |  |  |  |
+| location_type | TEXT | yes |  | 'HO' |
+| salary_payment_mode | TEXT | yes |  | 'BANK_TRANSFER' |
+| employment_status | TEXT | yes |  | 'ACTIVE' |
+| status_effective_date | TEXT |  |  |  |
+| last_working_date | TEXT |  |  |  |
+| separation_reason | TEXT |  |  |  |
+| access_note | TEXT |  |  |  |
+| record_status | TEXT | yes |  | 'DRAFT' |
+| languages_json | TEXT | yes |  | '[]' |
+| skills_json | TEXT | yes |  | '[]' |
+| user_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| activated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id), cost_centre_id -> org_cost_centres(id), manager_id -> hr_employees(id), designation_id -> org_designations(id), department_id -> org_departments(id), branch_id -> org_branches(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employees_doj: company_id, doj
+- ix_hr_employees_user_id: user_id
+- ix_hr_employees_site: site_id
+- ix_hr_employees_project: project_id
+- ix_hr_employees_cost_centre: cost_centre_id
+- ix_hr_employees_manager: manager_id
+- ix_hr_employees_designation: designation_id
+- ix_hr_employees_department: department_id
+- ix_hr_employees_branch: branch_id
+- ix_hr_employees_dob: company_id, dob
+- ix_hr_employees_mobile: company_id, mobile
+- ix_hr_employees_name: company_id, full_name
+- ix_hr_employees_list: company_id, record_status, employment_status
+- ux_hr_employees_user (unique): company_id, user_id
+- ux_hr_employees_code (unique): company_id, emp_code
+
 ## iam_access_campaigns
 
 | Column | Type | Not null | Key | Default |

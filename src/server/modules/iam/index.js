@@ -18,7 +18,7 @@ import { authRoutes, securityRoutes } from './routes.js';
 import { createUserStore } from './users.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { hasPermission } from '../../platform/auth/index.js';
-import { createUserAdminService, userHandlers } from './usermgmt/service.js';
+import { bindUserAdmin, createUserAdminService, userHandlers } from './usermgmt/service.js';
 import { authzOf, recordResolvers } from '../../platform/authz/index.js';
 import { accessHandlers, createAccessService } from './access/service.js';
 import { elevationHandlers, createElevationService } from './privileged/elevation.js';
@@ -195,6 +195,7 @@ export const iam = {
     orgRouter.use(orgRoutes(orgService, { idempotentRequired }));
     api.use('/iam/org', orgRouter);
     userAdmin = createUserAdminService({ db, identity, auth, approvals, orgService, notifier, config, exportGuard: createExportGuard({ db, approvals }) });
+    bindUserAdmin(db, userAdmin);
     const userRouter = Router();
     userRouter.use((req, _res, next) => (flagService.isOn(req.actor, 'ff.iam.p0203') ? next() : next(notFound('User management is not enabled for your company yet (feature flag ff.iam.p0203 is OFF).'))));
     userRouter.use(userRoutes(userAdmin, { idempotentRequired }));
