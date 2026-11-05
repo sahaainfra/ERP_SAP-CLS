@@ -814,3 +814,15 @@ Behind feature flag `ff.hr.p0703` (in module `hr`, which needs `ff.hr.p0701` on)
 - **History and import** (FR-06, FR-07): `GET /hr/employees/:id/deployments` and the Deployments tab on Employee 360; import type `HR_DEPLOYMENT` (each row a deployment waiting for approval).
 - **Jobs and events**: `hr.deployment_cycle` (00:35, ADR-292); events `hr.deployment.changed`, `hr.transfer.approved`; widget `hr.deployed`.
 - **Browser**: Deployment Board, Deployments, Deployment, New Deployment / Bulk Deploy, Crews & Gangs, Crew, Transfers, Transfer, Transfer Request.
+
+## 64. Shifts, work calendars and attendance policies (part 07.04)
+
+Behind feature flag `ff.hr.p0704` (in module `hr`, which needs `ff.hr.p0701` on). Code: `modules/hr/att-calc.js` (the calculations, no database: shift span and window, `evaluateDay`, weekly offs, rotating patterns, attendance periods), `attendance.js` (service: shifts, policy versions, assignments, resolution, rosters and changes, periods; workflows `HR_ATT_POLICY` and `HR_ROSTER_CHANGE`; object types `att_policy` and `att_shift`), `att-routes.js`, `att-validators.js`; migrations `…114_att_config` (tables `att_shifts`, `att_policies`, `att_policy_assignments`, `att_rosters`, `att_roster_changes`, `att_period_defs`, `att_periods`) and `…115_seed_hr_p0704`.
+
+- **Shifts** (FR-01, ADR-293): `/hr/att/shifts` (list, export, `active`, create, `GET/PATCH /:id`).
+- **Policies** (FR-04, ADR-295): `/hr/att/policies` (list, export, `codes`, create, `GET/PATCH/DELETE /:id`, `/submit`, `/withdraw`, `/cancel`, `/amend` (a new version with its date), `/compare`, `/print`); `POST /hr/att/evaluate` works out a day's punches with the rules given or the ones that resolve. Chain: HR manager, and the director when it touches pay.
+- **Assignment and resolution** (FR-03, FR-05, BR-01, ADR-294): `/hr/att/assignments` (list, create, `/:id/end`), `GET /hr/att/resolve` (policy, shift, weekly off, holiday and the source of each), `GET /hr/att/my-shift` (everyone sees their own days); `resolveFor(companyId, employeeId, date)` for other modules.
+- **Rosters** (FR-02, ADR-297): `/hr/att/rosters` (patterns), `/hr/att/roster-board`, `/hr/att/roster-changes` (a day or a swap, `/submit`, `/withdraw`, `/cancel`). Chain: supervisor then project manager.
+- **Periods** (FR-06, ADR-296): `/hr/att/period` (start day from a date), `/hr/att/periods`, `/:id/close`.
+- **Events**: `att.policy.approved`, `att.assignment.changed`, `att.roster.changed`, `att.period.closed`; widget `att.roster_waiting`.
+- **Browser**: Shifts, Shift Editor, Roster Planner, Attendance Policies, Policy Rules Editor (with examples), Policy Assignment (hierarchy, who gets what, attendance period).
