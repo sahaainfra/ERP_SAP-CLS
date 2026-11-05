@@ -2477,6 +2477,249 @@ Indexes:
 - ix_eng_sample_docs_status: company_id, status
 - ux_eng_sample_docs_no (unique): company_id, doc_no
 
+## fin_account_groups
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| parent_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| nature | TEXT | yes |  |  |
+| schedule3_ref | TEXT |  |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| group_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> fin_account_groups(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_account_groups_company: company_id, nature
+- ix_fin_account_groups_parent: parent_id
+- ux_fin_account_groups_code (unique): , code
+
+## fin_accounts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| group_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| account_type | TEXT | yes |  |  |
+| normal_side | TEXT | yes |  |  |
+| currency_code | TEXT | yes |  | 'INR' |
+| is_control | INTEGER | yes |  | 0 |
+| control_kind | TEXT |  |  |  |
+| manual_posting_allowed | INTEGER | yes |  | 1 |
+| account_status | TEXT | yes |  | 'ACTIVE' |
+| block_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: group_id -> fin_account_groups(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_accounts_list: company_id, account_status, account_type
+- ix_fin_accounts_group: group_id
+- ux_fin_accounts_code (unique): , code
+
+## fin_category_mappings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_category_id | INTEGER | yes |  |  |
+| inventory_account_id | INTEGER |  |  |  |
+| expense_account_id | INTEGER | yes |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| mapping_status | TEXT | yes |  | 'ACTIVE' |
+| change_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), expense_account_id -> fin_accounts(id), inventory_account_id -> fin_accounts(id), item_category_id -> mdm_item_categories(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_category_mappings_cc: cost_code_id
+- ix_fin_category_mappings_exp: expense_account_id
+- ix_fin_category_mappings_inv: inventory_account_id
+- ix_fin_category_mappings_company: company_id, mapping_status
+- ix_fin_category_mappings_category: item_category_id, mapping_status
+
+## fin_cost_codes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| cost_head_id | INTEGER | yes |  |  |
+| uom | TEXT |  |  |  |
+| code_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_head_id -> fin_cost_heads(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_cost_codes_company: company_id, code_status
+- ix_fin_cost_codes_head: cost_head_id
+- ux_fin_cost_codes_code (unique): , code
+
+## fin_cost_heads
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| parent_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| default_account_id | INTEGER |  |  |  |
+| default_account_code | TEXT |  |  |  |
+| head_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: default_account_id -> fin_accounts(id), parent_id -> fin_cost_heads(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_cost_heads_company: company_id
+- ix_fin_cost_heads_account: default_account_id
+- ix_fin_cost_heads_parent: parent_id
+- ux_fin_cost_heads_code (unique): , code
+
+## fin_dimension_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| account_id | INTEGER | yes |  |  |
+| dimension | TEXT | yes |  |  |
+| requirement | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: account_id -> fin_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_dimension_rules_company: company_id
+- ux_fin_dimension_rules (unique): account_id, dimension
+
+## fin_master_changes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| action | TEXT | yes |  |  |
+| entity_id | INTEGER |  |  |  |
+| change_json | TEXT | yes |  | '{}' |
+| before_json | TEXT | yes |  | '{}' |
+| reason | TEXT | yes |  |  |
+| maker_role | TEXT | yes |  |  |
+| request_status | TEXT | yes |  | 'PENDING' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| applied_entity_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_master_changes_entity: entity, entity_id
+- ix_fin_master_changes_list: company_id, request_status, entity
+
 ## iam_access_campaigns
 
 | Column | Type | Not null | Key | Default |

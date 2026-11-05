@@ -1165,3 +1165,18 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .item-selector tr.is-selected td, .item-selector tr.is-selected th { background: var(--erp-color-status-info-bg); }
 [data-testid="item-page"], [data-testid="new-item"], [data-testid="item-categories"], [data-testid="item-migration"] { padding-bottom: calc(var(--erp-space-6) * 3); }
 [data-testid="partner-page"], [data-testid="partner-registration"], [data-testid="partner-approvals"], [data-testid="business-partners"] { padding-bottom: calc(var(--erp-space-6) * 3); }
+
+/* Part 06.05: finance masters (chart of accounts tree, account, cost codes, category mapping) */
+.fin-page { padding-bottom: calc(var(--erp-space-6) * 3); }
+.fin-page .filters { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); margin-block: var(--erp-space-3); }
+.fin-page .filters label { display: flex; flex-direction: column; gap: var(--erp-space-1); font: var(--erp-type-label); }
+.coa-tree, .coa-accounts { list-style: none; margin: 0; padding: 0; }
+.coa-group { padding-block: var(--erp-space-1); border-bottom: 1px solid var(--erp-color-border-subtle); }
+.coa-accounts li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-2); padding-block: 2px; }
+.coa-accounts .chip { background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); }
+.fin-form { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-4); margin-block: var(--erp-space-3); }
+.mdm-banner.is-warning { border-color: var(--erp-color-status-warning-fg); background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); }
+.mdm-dl { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: var(--erp-space-1) var(--erp-space-4); }
+.mdm-dl dt { font: var(--erp-type-label); color: var(--erp-color-text-muted); }
+.mdm-dl dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .mdm-dl { grid-template-columns: 1fr; } .mdm-dl dd { margin-bottom: var(--erp-space-2); } }

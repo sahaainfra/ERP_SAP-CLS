@@ -2740,3 +2740,112 @@ paths:
     post:
       summary: Ask to blacklist or to lift the blacklist (director approves, 202)
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts:
+    get:
+      summary: The chart of accounts: groups, accounts with dimension rules, missing control accounts (06.05)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a new account; the CFO approves it (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/export:
+    get:
+      summary: The chart as CSV (audited)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/{id}:
+    get:
+      summary: One account: properties, dimension rules, mapping, postings, changes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Propose a change of the account (BR-02: an account with postings keeps its nature) (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: Delete an unused account (no postings, not a control account, not mapped)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/{id}/block:
+    post:
+      summary: Propose to block or unblock the account (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/accounts/{id}/dimension-rules:
+    put:
+      summary: Propose the dimension rules of the account (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/check:
+    post:
+      summary: Whether a posting line may go to an account (T-01, BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/account-groups:
+    get:
+      summary: The account groups with their Schedule III lines
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a new group (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/account-groups/{id}:
+    put:
+      summary: Propose a change of a group (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/schedule-iii:
+    get:
+      summary: The Schedule III lines with their groups and accounts and whether the mapping is complete (T-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-heads:
+    get:
+      summary: Cost heads and cost codes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a cost head (project controls or accounts manager) (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-heads/{id}:
+    put:
+      summary: Propose a change of a cost head (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-codes:
+    get:
+      summary: Cost heads and cost codes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose a cost code (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-codes/{id}:
+    put:
+      summary: Propose a change of a cost code (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/dimension-rules:
+    get:
+      summary: The dimension rules of the accounts (filter accountId)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/category-mappings:
+    get:
+      summary: Every item category with its stock account, consumption account and cost code, and the categories without one (AC-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: Propose mappings of item categories from a date (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes:
+    get:
+      summary: The proposed changes of the finance masters
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes/{id}:
+    get:
+      summary: One proposed change
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes/{id}/resubmit:
+    post:
+      summary: Send a returned change again (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/changes/{id}/withdraw:
+    post:
+      summary: Withdraw a change not yet decided
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/import/preview:
+    post:
+      summary: The mapping report of a ledger list from Tally or another package (nothing is written)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/import:
+    post:
+      summary: Send the mapped ledgers of a list for approval as one change (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/lookups/{name}:
+    get:
+      summary: Lookups: accounts, manual-accounts, cost-codes
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
