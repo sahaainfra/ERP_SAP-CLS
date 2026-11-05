@@ -1123,3 +1123,27 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .diff-del { background: var(--erp-color-status-danger-bg); border-inline-start-color: var(--erp-color-status-danger-fg) !important; text-decoration: line-through; }
 .diff-change { background: var(--erp-color-status-warning-bg); border-inline-start-color: var(--erp-color-status-warning-fg) !important; }
 .diff-change ins { background: var(--erp-color-status-success-bg); text-decoration: underline; } .diff-change del { background: var(--erp-color-status-danger-bg); }
+
+/* Master data governance pages (part 06.01). */
+.mdm-card { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); background: var(--erp-color-bg-surface); padding: var(--erp-space-4); margin-block: var(--erp-space-4); }
+.mdm-card h2, .mdm-card h3 { margin-block: 0 var(--erp-space-2); }
+.mdm-two { display: grid; gap: var(--erp-space-6); grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.mdm-list { list-style: none; padding: 0; margin: var(--erp-space-2) 0; display: grid; gap: var(--erp-space-2); }
+.mdm-list li { overflow-wrap: anywhere; }
+.mdm-score { display: inline-block; min-width: 2.5rem; padding: 0 var(--erp-space-2); border-radius: var(--erp-radius-sm); font-weight: 600; text-align: center; border: 1px solid currentColor; }
+.mdm-score-success { color: var(--erp-color-status-success-fg); }
+.mdm-score-warning { color: var(--erp-color-status-warning-fg); }
+.mdm-score-error { color: var(--erp-color-status-error-fg); }
+.mdm-score-neutral { color: var(--erp-color-text-secondary); }
+.mdm-sev-error { color: var(--erp-color-status-error-fg); }
+.mdm-sev-warning { color: var(--erp-color-status-warning-fg); }
+.mdm-sev-info { color: var(--erp-color-text-secondary); }
+.mdm-banner { border-inline-start: 4px solid var(--erp-color-border-strong); background: var(--erp-color-bg-subtle); padding: var(--erp-space-3); border-radius: var(--erp-radius-sm); overflow-wrap: anywhere; }
+.mdm-exc-old_request, .mdm-exc-no_steward { font-weight: 600; }
+.mdm-fields { display: grid; gap: var(--erp-space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
+.mdm-fields input, .mdm-fields select { width: 100%; }
+.mdm-check { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-sm); padding: var(--erp-space-3); margin-block: var(--erp-space-3); }
+.mdm-panel { border: 1px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-md); padding: var(--erp-space-4); margin-block: var(--erp-space-4); background: var(--erp-color-bg-surface); }
+.mdm-cmp tr.mdm-diff th, .mdm-cmp tr.mdm-diff td { background: var(--erp-color-status-warning-bg); font-weight: 600; }
+.actions-row { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); align-items: end; margin-block: var(--erp-space-3); }
+.seg { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); margin-block: var(--erp-space-3); }

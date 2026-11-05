@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 // The pages of the application as the client registers them (src/client/modules/*/index.js), for the checks of part 03.10 that visit every page.
-const MODULES = ['core', 'iam', 'ui', 'eng', 'msg', 'pol'];
+const MODULES = ['core', 'iam', 'ui', 'eng', 'msg', 'pol', 'mdm'];
 export function registeredPages() {
   const out = [];
   for (const module of MODULES) {

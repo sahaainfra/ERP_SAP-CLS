@@ -56,6 +56,7 @@ export function createMdmService({ db }) {
     return out;
   }
   /** The quality rules applied to one record: every result, the problems that block saving and the score (0 to 100, weighted by severity). */
+  /** @param {any} t @param {any[]} rules @param {any} data @param {{ lastChangedAt?: string | null }} [opts] */
   function evaluate(t, rules, data, { lastChangedAt } = {}) {
     const results = [];
     for (const r of rules) {
@@ -116,6 +117,7 @@ export function createMdmService({ db }) {
   };
 
   // ---- views ----
+  /** @param {any} actor @param {any} t @param {any} rec @param {{ asOf?: string }} [opts] */
   const recordView = (actor, t, rec, { asOf } = {}) => {
     const v = asOf ? versionAsOf(rec.id, asOf) : (rec.current_version_id ? db.prepare('SELECT * FROM mdm_record_versions WHERE id = ?').get(rec.current_version_id) : null);
     const pendingV = db.prepare("SELECT * FROM mdm_record_versions WHERE record_id = ? AND version_status = 'PENDING' AND is_active = 1 ORDER BY id DESC LIMIT 1").get(rec.id);
@@ -169,6 +171,7 @@ export function createMdmService({ db }) {
       const rows = db.prepare(`SELECT * FROM mdm_records WHERE ${where.join(' AND ')} ORDER BY ${order} LIMIT ? OFFSET ?`).all(...args, f.limit, f.offset).map((r) => recordView(actor, t, r, { asOf: f.asOf }));
       return { rows, total, canEdit: mayEdit(actor, type) };
     },
+    /** @param {any} actor @param {string} type @param {number} id @param {{ asOf?: string }} [opts] */
     get(actor, type, id, { asOf } = {}) {
       need(actor, 'mdm.record.view', 'see master data');
       const t = typeOrThrow(type);
@@ -302,6 +305,7 @@ export function createMdmService({ db }) {
 
   // ---- the change requests worklist ----
   const requests = {
+    /** @param {any} actor @param {{ view?: string, status?: string, type?: string }} [f] */
     list(actor, { view = 'mine', status, type } = {}) {
       need(actor, 'mdm.record.view', 'see master data');
       const where = ['company_id = ?', 'is_active = 1']; const args = [actor.companyId];
@@ -325,7 +329,9 @@ export function createMdmService({ db }) {
       const cr = crRow(actor, id);
       if (cr.requested_by.toLowerCase() !== actor.user.toLowerCase()) throw forbidden('Only the person who asked can withdraw a request.');
       if (!['PENDING', 'RETURNED'].includes(cr.request_status)) throw conflict('This request was already decided.');
-      engine().cancel(actor, cr.workflow_instance_id, { reason });
+      // still running and nobody has acted: the engine's withdraw (its hook ends the request); returned to the requester: the instance is ended and the request with it
+      if (cr.request_status === 'PENDING') engine().withdraw(actor, cr.workflow_instance_id, { comment: reason });
+      else transaction(db, () => { engine().abandon(actor.companyId, cr.workflow_instance_id, actor.user, 'WITHDRAWN', reason); decisions.ended({ docId: cr.id }, actor, 'CANCELLED', reason); });
       return crView(actor, crRow(actor, id));
     },
     /** Returned for correction: the requester changes the data or the justification and sends it again. */
@@ -410,6 +416,7 @@ export function createMdmService({ db }) {
     return { id: d.id, masterType: d.master_type, masterLabel: t?.label ?? d.master_type, score: d.score, rule: d.match_rule, status: d.duplicate_status, resolution: d.resolution, resolvedBy: d.resolved_by, resolvedAt: d.resolved_at, a: side(d.record_a), b: side(d.record_b), fields: t?.fields.map((f) => ({ key: f.key, label: f.label })) ?? [], createdAt: d.created_at };
   };
   const duplicates = {
+    /** @param {any} actor @param {{ type?: string, status?: string, minScore?: number, limit?: number, offset?: number }} [f] */
     list(actor, { type, status, minScore, limit = 50, offset = 0 } = {}) {
       need(actor, 'mdm.governance.view', 'see the duplicates report');
       const where = ['company_id = ?', 'is_active = 1']; const args = [actor.companyId];
@@ -458,6 +465,7 @@ export function createMdmService({ db }) {
 
   // ---- quality (FR-04) ----
   const quality = {
+    /** @param {any} actor @param {{ type?: string }} [f] */
     summary(actor, { type } = {}) {
       need(actor, 'mdm.governance.view', 'see data quality');
       const out = [];
