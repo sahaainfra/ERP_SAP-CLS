@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { eventTypes } from '../../platform/events/index.js';
 import { notFound } from '../../platform/http/errors.js';
 import { idempotency } from '../../platform/http/idempotency.js';
+import { integrityRegistry } from '../../platform/integrity/index.js';
 import { bindMdm } from '../../platform/mdm/index.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { createFlagService } from '../core/api.js';
@@ -23,6 +24,8 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'mdm', description });
 
 const COMMON_TABLES = ['mdm_uoms', 'mdm_gst_rates', 'mdm_hsn_sac', 'mdm_tds_sections', 'mdm_states', 'mdm_districts', 'mdm_currencies', 'mdm_exchange_rates', 'mdm_banks', 'mdm_payment_terms', 'mdm_lookup_lists', 'mdm_lookups'];
+// the integrity checks (01.02): a common master row without a company is a system row every company sees (06.02); the status lists of the governed records (06.01)
+integrityRegistry.register({ companyOptional: COMMON_TABLES, statuses: Object.fromEntries(COMMON_TABLES.map((t) => [t, ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED']])) });
 /** Module "mdm": master data governance (part 06.01). The tables are `mdm_*`; the masters plug in through `masterTypes` (platform/mdm). */
 export const mdm = {
   code: 'mdm',
