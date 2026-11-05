@@ -83,7 +83,7 @@ test('screenshots of the common master pages', async ({ browser, request }, info
   for (const page of PAGES) {
     const x = await open(browser, info, c, 'ACCMGR', u.acc, `/admin/master-data/common/${page}`);
     await expect(x.page.locator('[data-testid^="cm-row-"]').first()).toBeVisible();
-    if (page === 'hsn-sac') { await x.page.getByTestId('cm-q-hsn-sac').fill('2523'); await x.page.getByTestId('cm-open-hsn-sac').click(); await expect(x.page.getByTestId('cmr-history')).toHaveCount(2); }
+    if (page === 'hsn-sac') { await x.page.getByTestId('cm-q-hsn-sac').fill('2523'); await expect(x.page.getByTestId('cm-row-hsn-sac')).toHaveCount(1); await x.page.getByTestId('cm-open-hsn-sac').click(); await expect(x.page.getByTestId('cmr-history')).toHaveCount(2); }
     await shot(x.page, `${String(n).padStart(2, '0')}-${page}`);
     n += 1;
     await x.context.close();

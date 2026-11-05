@@ -1147,3 +1147,5 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .mdm-cmp tr.mdm-diff th, .mdm-cmp tr.mdm-diff td { background: var(--erp-color-status-warning-bg); font-weight: 600; }
 .actions-row { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); align-items: end; margin-block: var(--erp-space-3); }
 .seg { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); margin-block: var(--erp-space-3); }
+/* Part 06.02: the last buttons of the master data pages scroll clear of the floating Messages button (05.01) */
+[data-testid="mdm-lookup-manager"], [data-testid^="cm-page-"], [data-testid="mdm-quality"] { padding-bottom: calc(var(--erp-space-6) * 3); }

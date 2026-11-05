@@ -36,7 +36,7 @@ export default function CommonMasterPage({ page }) {
   return (
     <section aria-labelledby="cm-title" data-testid={`cm-page-${page}`}>
       <h1 id="cm-title">{p.title}</h1>
-      {defs[0].approval && <p className="mdm-banner" role="note">A change of {defs[0].label.toLowerCase()} applies from a date and is approved by an accounts manager and then the CFO. A document dated before the change keeps the rate it had.</p>}
+      {defs[0].approval && <p className="mdm-banner" role="note">A change of {defs[0].label} applies from a date and is approved by an accounts manager and then the CFO. A document dated before the change keeps the rate it had.</p>}
       {defs.map((d, i) => <Register key={d.code} def={d} sub={i > 0} />)}
       {page === 'lookups' && cat.data.rows.find((d) => d.code === 'lookups').canEdit && <p><Link to="/admin/master-data/lookup-manager">Open the Lookup List Manager</Link> to edit a list's values with their Hindi labels.</p>}
     </section>
