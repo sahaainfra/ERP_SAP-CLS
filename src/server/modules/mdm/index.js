@@ -7,7 +7,10 @@ import { runtimeOf } from '../../platform/runtime/index.js';
 import { createFlagService } from '../core/api.js';
 import './masters.js';
 import './integrations.js';
-import { mdmRoutes } from './routes.js';
+import './common-integrations.js';
+import { bindCommon, createCommonService, syncCoreUom } from './common.js';
+import { setCommonFlag } from './common-integrations.js';
+import { commonRoutes, mdmRoutes } from './routes.js';
 import { bindService, createMdmService } from './service.js';
 
 /** @type {any} */
@@ -16,18 +19,20 @@ for (const [type, description] of [
   ['mdm.change.requested', 'A change of a governed master record was asked for (new record, change from a date, inactivation, reactivation or merge): data { masterType, changeType }.'],
   ['mdm.record.changed', 'A version of a master record came into force (approved, or its date came): data { masterType, code, version, status }.'],
   ['mdm.record.merged', 'A duplicate master record was merged into another; it is kept and its references resolve to the survivor through the merge map: data { masterType, from, to }.'],
+  ['mdm.common.changed', 'A row of a common master (unit, GST rate, HSN/SAC, TDS section, state, currency or rate, bank, payment term, lookup value) was added, changed, ended or, for a statutory master, approved: data { master, key, action, effectiveFrom? }. Consumers drop their cached copy.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'mdm', description });
 
+const COMMON_TABLES = ['mdm_uoms', 'mdm_gst_rates', 'mdm_hsn_sac', 'mdm_tds_sections', 'mdm_states', 'mdm_districts', 'mdm_currencies', 'mdm_exchange_rates', 'mdm_banks', 'mdm_payment_terms', 'mdm_lookup_lists', 'mdm_lookups'];
 /** Module "mdm": master data governance (part 06.01). The tables are `mdm_*`; the masters plug in through `masterTypes` (platform/mdm). */
 export const mdm = {
   code: 'mdm',
   name: 'Master Data Governance',
   routePrefix: '/api/v1/mdm',
-  ownerPart: '06.01',
+  ownerPart: '06.01, 06.02',
   status: 'Governed masters: change requests with steward approval, duplicate detection and merge map, effective-dated versions with "as of", data quality rules and score, stewards, dashboard (06.01); first master: business partner',
-  tables: ['mdm_records', 'mdm_record_versions', 'mdm_change_requests', 'mdm_duplicates', 'mdm_merge_map', 'mdm_quality_rules', 'mdm_stewards'],
-  companyOptional: [],
-  resources: ['masters', 'records', 'change-requests', 'duplicates', 'merge', 'quality', 'config'],
+  tables: ['mdm_records', 'mdm_record_versions', 'mdm_change_requests', 'mdm_duplicates', 'mdm_merge_map', 'mdm_quality_rules', 'mdm_stewards', ...COMMON_TABLES],
+  companyOptional: COMMON_TABLES, // a row without a company is the system row every company sees (06.02)
+  resources: ['masters', 'records', 'change-requests', 'duplicates', 'merge', 'quality', 'config', 'common', 'tax', 'exchange-rate', 'uoms', 'lookup-lists', 'lookups'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_records'").get()) return;
@@ -44,5 +49,16 @@ export const mdm = {
     router.use(gate('ff.mdm.p0601', 'Master data governance is'));
     router.use(mdmRoutes({ service }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/mdm', router);
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_uoms'").get()) {
+      const common = createCommonService({ db });
+      bindCommon(db, common);
+      setCommonFlag((actor) => flags.isOn(actor, 'ff.mdm.p0602'));
+      // the calculation engine's unit tables follow the master (D-042): the system units are written into them once, idempotently
+      for (const u of db.prepare("SELECT * FROM mdm_uoms WHERE company_id IS NULL AND row_status = 'ACTIVE' AND deleted_at IS NULL").all()) syncCoreUom(db, u);
+      const c = Router();
+      c.use(gate('ff.mdm.p0602', 'The common masters are'));
+      c.use(commonRoutes({ common }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/mdm', c);
+    }
   },
 };

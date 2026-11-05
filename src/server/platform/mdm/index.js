@@ -25,6 +25,8 @@ export const masterTypes = {
   get: (type) => types.get(type) ?? null,
   list: () => [...types.values()],
 };
+/** Labels of masters that are not registered as governed records (the common masters of 06.02), for the change requests worklist. */
+export const masterLabels = new Map();
 const refs = new Map();
 export const masterReferences = { register(def) { refs.set(def.code, def); }, list: () => [...refs.values()] };
 

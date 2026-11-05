@@ -3,7 +3,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { badRequest, conflict, forbidden, HttpError, notFound, unprocessable } from '../../platform/http/errors.js';
-import { FORMATS, mask, masterReferences, masterTypes, normalise, similarity } from '../../platform/mdm/index.js';
+import { FORMATS, mask, masterLabels, masterReferences, masterTypes, normalise, similarity } from '../../platform/mdm/index.js';
 import { notificationsOf } from '../../platform/notify/index.js';
 import { evidenceProviders, workflowOf, workflowResolvers, workflowTypes } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
@@ -47,7 +47,9 @@ export function createMdmService({ db }) {
     for (const k of Object.keys(input ?? {})) if (!t.fields.some((f) => f.key === k)) problems.push({ field: k, message: 'is not a field of this master' });
     for (const f of t.fields) {
       if (!(f.key in (input ?? {}))) continue;
-      const v = normalise(f, input[f.key]);
+      let v = normalise(f, input[f.key]);
+      // a field kept in a common master (06.02): the value is one of its rows, stored by its name (a state: by code, GST code or name)
+      if (v != null && f.lookup && lookupTable(f.lookup)) { const hit = lookupValue(f.lookup, v); if (!hit) problems.push({ field: f.key, message: `${f.label}: ${v} is not in the ${f.lookup} master` }); else v = hit; }
       if (v != null && f.max && v.length > f.max) problems.push({ field: f.key, message: `${f.label}: at most ${f.max} characters` });
       if (v != null && f.type === 'enum' && !f.options.some(([k]) => k === v)) problems.push({ field: f.key, message: `${f.label}: choose one of ${f.options.map(([, l]) => l).join(', ')}` });
       out[f.key] = v;
@@ -55,6 +57,9 @@ export function createMdmService({ db }) {
     if (problems.length) throw badRequest('Some fields are not valid.', problems);
     return out;
   }
+  const lookupTable = (name) => name === 'states' && Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_states'").get());
+  const lookupValue = (name, v) => (name === 'states' ? db.prepare("SELECT name FROM mdm_states WHERE (lower(name) = lower(?) OR code = upper(?) OR gst_code = ?) AND row_status = 'ACTIVE' AND deleted_at IS NULL ORDER BY company_id IS NULL LIMIT 1").get(v, v, v)?.name ?? null : null);
+  const helpers = { stateGstCode: (name) => (lookupTable('states') ? db.prepare("SELECT gst_code FROM mdm_states WHERE lower(name) = lower(?) AND row_status = 'ACTIVE' AND deleted_at IS NULL ORDER BY company_id IS NULL LIMIT 1").get(name)?.gst_code ?? null : null) };
   /** The quality rules applied to one record: every result, the problems that block saving and the score (0 to 100, weighted by severity). */
   /** @param {any} t @param {any[]} rules @param {any} data @param {{ lastChangedAt?: string | null }} [opts] */
   function evaluate(t, rules, data, { lastChangedAt } = {}) {
@@ -65,7 +70,7 @@ export function createMdmService({ db }) {
       else if (r.rule === 'FORMAT') { const fmt = FORMATS[r.param]; results.push({ ...r, pass: v == null || v === '' || Boolean(fmt?.test(v)), message: `${label(t, r.field)} is not a valid ${fmt?.label ?? r.param} (${fmt?.hint ?? ''})` }); }
       else if (r.rule === 'STALE') { const days = Number(r.param ?? 365); results.push({ ...r, pass: !lastChangedAt || Date.now() - Date.parse(lastChangedAt) <= days * 86_400_000, message: `Not reviewed or changed for more than ${days} days` }); }
     }
-    for (const c of t.crossCheck(data)) results.push({ field: c.field, rule: 'CROSS', severity: 'ERROR', pass: false, message: c.message });
+    for (const c of t.crossCheck(data, helpers)) results.push({ field: c.field, rule: 'CROSS', severity: 'ERROR', pass: false, message: c.message });
     const total = results.reduce((n, r) => n + WEIGHT[r.severity], 0);
     const got = results.reduce((n, r) => n + (r.pass ? WEIGHT[r.severity] : 0), 0);
     return { results, blocking: results.filter((r) => !r.pass && r.severity === 'ERROR' && r.rule !== 'STALE'), score: total ? Math.round((got * 100) / total) : 100 };
@@ -139,11 +144,11 @@ export function createMdmService({ db }) {
     const rec = cr.record_id ? db.prepare('SELECT record_code, display_name, record_status FROM mdm_records WHERE id = ?').get(cr.record_id) : null;
     const target = cr.target_id ? db.prepare('SELECT record_code, display_name FROM mdm_records WHERE id = ?').get(cr.target_id) : null;
     const change = parse(cr.change_json, {}); const before = parse(cr.before_json, {});
-    const fields = t ? t.fields.filter((f) => f.key in change && (cr.change_type === 'CREATE' || change[f.key] !== before[f.key])).map((f) => ({ key: f.key, label: f.label, sensitive: Boolean(f.sensitive), before: seesSensitive(actor, cr.master_type) || !f.sensitive ? before[f.key] ?? null : mask(before[f.key]), after: seesSensitive(actor, cr.master_type) || !f.sensitive ? change[f.key] ?? null : mask(change[f.key]) })) : [];
+    const fields = t ? t.fields.filter((f) => f.key in change && (cr.change_type === 'CREATE' || change[f.key] !== before[f.key])).map((f) => ({ key: f.key, label: f.label, sensitive: Boolean(f.sensitive), before: seesSensitive(actor, cr.master_type) || !f.sensitive ? before[f.key] ?? null : mask(before[f.key]), after: seesSensitive(actor, cr.master_type) || !f.sensitive ? change[f.key] ?? null : mask(change[f.key]) })) : (change.fields ?? []).map((x) => ({ ...x, sensitive: false }));
     const ageHours = Math.floor((Date.now() - Date.parse(cr.created_at)) / 3_600_000);
-    return { id: cr.id, masterType: cr.master_type, masterLabel: t?.label ?? cr.master_type, changeType: cr.change_type, recordId: cr.record_id, record: rec ? { code: rec.record_code, name: rec.display_name, status: rec.record_status } : null, targetId: cr.target_id, target: target ? { code: target.record_code, name: target.display_name } : null,
+    return { id: cr.id, masterType: cr.master_type, masterLabel: t?.label ?? masterLabels.get(cr.master_type) ?? cr.master_type, changeType: cr.change_type, recordId: cr.record_id, record: rec ? { code: rec.record_code, name: rec.display_name, status: rec.record_status } : null, targetId: cr.target_id, target: target ? { code: target.record_code, name: target.display_name } : null,
       justification: cr.justification, effectiveFrom: cr.effective_from, sensitive: Boolean(cr.sensitive), status: cr.request_status, requestedBy: { username: cr.requested_by, name: nameOf(actor.companyId, cr.requested_by) }, createdAt: cr.created_at, decidedBy: cr.decided_by, decidedAt: cr.decided_at, appliedAt: cr.applied_at,
-      instanceId: cr.workflow_instance_id, ageHours, fields, duplicates: full ? parse(cr.duplicates_json, []) : undefined, rowVersion: cr.version, mine: cr.requested_by.toLowerCase() === actor.user.toLowerCase(), canReview: isSteward(actor, cr.master_type) };
+      instanceId: cr.workflow_instance_id, ageHours, fields, duplicates: full ? parse(cr.duplicates_json, []) : undefined, rowVersion: cr.version, mine: cr.requested_by.toLowerCase() === actor.user.toLowerCase(), canReview: isSteward(actor, cr.master_type) || (!t && anywhere(actor, 'mdm.governance.view')) };
   };
   function submitCr(actor, t, { recordId, changeType, change, before, justification, effectiveFrom, sensitive, duplicates, targetId = null }) {
     if (recordId && db.prepare("SELECT 1 FROM mdm_change_requests WHERE record_id = ? AND request_status IN ('PENDING', 'RETURNED') AND is_active = 1").get(recordId)) throw conflict('A change of this record is already waiting. It must be decided or withdrawn first.');
@@ -158,7 +163,7 @@ export function createMdmService({ db }) {
   const tellRequester = (cr, decision, comment) => notif.notify({ companyId: cr.company_id, templateCode: 'mdm.request.decided', recipients: [`user:${cr.requested_by}`], data: { decision, change: cr.change_type.toLowerCase(), master: masterTypes.get(cr.master_type)?.label ?? cr.master_type, record: cr.record_id ? db.prepare('SELECT record_code FROM mdm_records WHERE id = ?').get(cr.record_id)?.record_code ?? '' : '', comment: comment ? `: ${comment}` : '' }, link: '/admin/master-data/change-requests', sourceType: 'mdm_change_request', sourceId: String(cr.id), eventKey: `mdm.request.decided:${cr.id}:${decision}` });
 
   const records = {
-    types(actor) { need(actor, 'mdm.record.view', 'see master data'); return { rows: masterTypes.list().map((t) => ({ type: t.type, label: t.label, financial: t.financial, fields: t.fields.map(({ key, label: l, type, required, options, format, sensitive, unique, max }) => ({ key, label: l, type, required: Boolean(required), options: options ?? null, format: format ?? null, formatHint: format ? FORMATS[format]?.hint : null, sensitive: Boolean(sensitive), unique: unique ?? null, max: max ?? null })), canEdit: mayEdit(actor, t.type), steward: isSteward(actor, t.type) })) }; },
+    types(actor) { need(actor, 'mdm.record.view', 'see master data'); return { rows: masterTypes.list().map((t) => ({ type: t.type, label: t.label, financial: t.financial, fields: t.fields.map(({ key, label: l, type, required, options, format, sensitive, unique, max, lookup }) => ({ key, label: l, type, lookup: lookup ?? null, required: Boolean(required), options: options ?? null, format: format ?? null, formatHint: format ? FORMATS[format]?.hint : null, sensitive: Boolean(sensitive), unique: unique ?? null, max: max ?? null })), canEdit: mayEdit(actor, t.type), steward: isSteward(actor, t.type) })) }; },
     list(actor, type, f) {
       need(actor, 'mdm.record.view', 'see master data');
       const t = typeOrThrow(type);
@@ -340,6 +345,15 @@ export function createMdmService({ db }) {
       if (cr.requested_by.toLowerCase() !== actor.user.toLowerCase()) throw forbidden('Only the person who asked can send it again.');
       if (cr.request_status !== 'RETURNED') throw conflict('Only a request that was returned can be sent again.');
       const t = masterTypes.get(cr.master_type);
+      // a change of a common master (06.02) is sent again with its justification; its data is corrected by withdrawing it and proposing again
+      if (!t) {
+        return transaction(db, () => {
+          db.prepare("UPDATE mdm_change_requests SET justification = ?, request_status = 'PENDING', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(b.justification ?? cr.justification, actor.user, nowIso(), cr.id);
+          engine().resubmit(actor, cr.workflow_instance_id, { comment: b.justification ?? 'Sent again', context: { masterType: cr.master_type, master: parse(cr.change_json, {}).master } });
+          writeAudit(db, { entity: 'mdm_change_requests', entityId: cr.id, action: 'resubmit', actor: actor.user, companyId: actor.companyId, reason: b.justification });
+          return crView(actor, crRow(actor, id));
+        });
+      }
       return transaction(db, () => {
         let change = parse(cr.change_json, {});
         if (b.data && ['CREATE', 'UPDATE'].includes(cr.change_type)) {

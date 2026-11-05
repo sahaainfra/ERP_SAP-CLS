@@ -14,6 +14,7 @@ import { parse } from '../validation/index.js';
  * register({ module, name, label, permission, anywhere?, columns: [{ key, label }], search(db, actor, { like, parent, ids, limit, offset }) -> { rows, total } })
  */
 const lookups = new Map();
+const families = new Map();
 
 export const lookupRegistry = {
   register(def) {
@@ -22,8 +23,10 @@ export const lookupRegistry = {
     if (lookups.has(key)) throw new Error(`Lookup ${key} is already registered`);
     lookups.set(key, { columns: [], anywhere: true, ...def });
   },
-  get: (module, name) => lookups.get(`${module}/${name}`),
-  modules: () => [...new Set([...lookups.values()].map((l) => l.module))],
+  /** A family of lookups served under one module by name (the lookup lists of 06.02): `resolve(name)` returns a definition or null. */
+  registerFamily(module, resolve) { families.set(module, resolve); },
+  get: (module, name) => lookups.get(`${module}/${name}`) ?? families.get(module)?.(name) ?? undefined,
+  modules: () => [...new Set([...[...lookups.values()].map((l) => l.module), ...families.keys()])],
   list: () => [...lookups.values()].map((l) => ({ module: l.module, name: l.name, label: l.label, permission: l.permission, columns: l.columns })),
 };
 

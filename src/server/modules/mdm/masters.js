@@ -12,7 +12,7 @@ masterTypes.register({
     { key: 'mobile', label: 'Mobile', type: 'text', format: 'MOBILE', unique: 'warn', max: 16 },
     { key: 'email', label: 'E-mail', type: 'text', format: 'EMAIL', max: 120 },
     { key: 'address', label: 'Address', type: 'text', max: 300 },
-    { key: 'state', label: 'State', type: 'text', max: 60 },
+    { key: 'state', label: 'State', type: 'text', max: 60, lookup: 'states' },
     { key: 'pinCode', label: 'PIN code', type: 'text', format: 'PIN', max: 6 },
     { key: 'bankAccount', label: 'Bank account number', type: 'text', format: 'BANK_ACCOUNT', sensitive: true, max: 18 },
     { key: 'ifsc', label: 'IFSC', type: 'text', format: 'IFSC', sensitive: true, max: 11 },
@@ -25,8 +25,10 @@ masterTypes.register({
     { field: 'pinCode', rule: 'FORMAT', param: 'PIN', severity: 'ERROR' }, { field: 'mobile', rule: 'FORMAT', param: 'MOBILE', severity: 'ERROR' }, { field: 'email', rule: 'FORMAT', param: 'EMAIL', severity: 'WARNING' },
     { field: 'bankAccount', rule: 'FORMAT', param: 'BANK_ACCOUNT', severity: 'ERROR' }, { field: '*', rule: 'STALE', param: '365', severity: 'WARNING' },
   ],
-  crossCheck(d) {
+  crossCheck(d, h = {}) {
     const out = [];
+    const gst = d.gstin && d.state && h.stateGstCode ? h.stateGstCode(d.state) : null;
+    if (gst && d.gstin.length === 15 && d.gstin.slice(0, 2) !== gst) out.push({ field: 'gstin', message: `The GSTIN starts with ${d.gstin.slice(0, 2)}, but ${d.state} has GST state code ${gst} (06.02).` });
     if (d.gstin && d.pan && d.gstin.length === 15 && d.gstin.slice(2, 12) !== d.pan) out.push({ field: 'gstin', message: 'The GSTIN does not contain this PAN (characters 3 to 12 of a GSTIN are the PAN).' });
     if (d.bankAccount && !d.ifsc) out.push({ field: 'ifsc', message: 'A bank account needs its IFSC.' });
     return out;
