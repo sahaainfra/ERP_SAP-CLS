@@ -1,5 +1,11 @@
 import { registerModule } from '../../platform/shell/registry.js';
 import CandidatePage from './CandidatePage.jsx';
+import PoliciesPage from './PoliciesPage.jsx';
+import PolicyAssignmentPage from './PolicyAssignmentPage.jsx';
+import PolicyEditorPage from './PolicyEditorPage.jsx';
+import RosterPlannerPage from './RosterPlannerPage.jsx';
+import ShiftEditorPage from './ShiftEditorPage.jsx';
+import ShiftsPage from './ShiftsPage.jsx';
 import CrewPage from './CrewPage.jsx';
 import CrewsPage from './CrewsPage.jsx';
 import DeploymentBoardPage from './DeploymentBoardPage.jsx';
@@ -47,5 +53,11 @@ registerModule({
     { path: '/hr/transfers', label: 'Transfers', icon: 'erp.action.history', permission: 'hr.transfer.view', flag: 'ff.hr.p0703', Page: TransfersPage },
     { path: '/hr/transfers/transfer', label: 'Transfer', icon: 'erp.action.info', permission: 'hr.transfer.view', flag: 'ff.hr.p0703', Page: TransferPage },
     { path: '/hr/transfers/new', label: 'Transfer Request', icon: 'erp.action.create', permission: 'hr.transfer.create', flag: 'ff.hr.p0703', Page: NewTransferPage },
+    { path: '/hr/attendance/shifts', label: 'Shifts', icon: 'erp.action.history', permission: 'att.shift.view', flag: 'ff.hr.p0704', Page: ShiftsPage },
+    { path: '/hr/attendance/shifts/shift', label: 'Shift Editor', icon: 'erp.action.info', permission: 'att.shift.view', flag: 'ff.hr.p0704', Page: ShiftEditorPage },
+    { path: '/hr/attendance/roster', label: 'Roster Planner', icon: 'erp.action.history', permission: 'att.roster.view', flag: 'ff.hr.p0704', Page: RosterPlannerPage },
+    { path: '/hr/attendance/policies', label: 'Attendance Policies', icon: 'erp.action.history', permission: 'att.policy.view', flag: 'ff.hr.p0704', Page: PoliciesPage },
+    { path: '/hr/attendance/policies/policy', label: 'Policy Rules Editor', icon: 'erp.action.info', permission: 'att.policy.view', flag: 'ff.hr.p0704', Page: PolicyEditorPage },
+    { path: '/hr/attendance/assignment', label: 'Policy Assignment', icon: 'erp.action.history', permission: 'att.assignment.view', flag: 'ff.hr.p0704', Page: PolicyAssignmentPage },
   ],
 });

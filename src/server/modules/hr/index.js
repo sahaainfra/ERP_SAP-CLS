@@ -7,6 +7,9 @@ import { listExports, listExportsOf } from '../../platform/list/index.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { widgetRegistry } from '../../platform/widgets/index.js';
 import { createFlagService } from '../core/api.js';
+import { bindAttendance, createAttendanceService } from './attendance.js';
+import { attRoutes } from './att-routes.js';
+import { parseRules } from './att-validators.js';
 import { bindDeployments, createDeploymentService } from './deployments.js';
 import './deploy-integrations.js';
 import { deployRoutes } from './deploy-routes.js';
@@ -30,13 +33,17 @@ for (const [type, description] of [
   ['hr.offer.accepted', 'The candidate accepted the offer (through the link, or HR recorded it): data { docNo, candidateId, response }.'],
   ['hr.deployment.changed', 'A deployment changed what a person may do or where they are: an approved deployment started, was amended, ended or was closed: data { change (APPROVED, STARTED, AMENDED, CHANGED, ENDED, CLOSED), docNo, revision, personType, personId, employeeId, userId, projectId, siteId, crewId, siteRole, accessRole, isPrimary, fromDate, toDate, transferId }. Geofence eligibility (07.05), site permissions (02.04 scopes), messaging groups (05.04), labour costing and resource planning (17.08) take it from here.'],
   ['hr.transfer.approved', 'A transfer or secondment was approved: the old primary deployment ends on the relieving date and the new one starts on the joining date: data { docNo, employeeId, kind, fromProjectId, fromSiteId, toProjectId, toSiteId, relieveDate, joinDate, deploymentId }.'],
+  ['att.policy.approved', 'An attendance policy version was approved and governs the dates from its effective date: data { code, version, effectiveFrom, band }. Punch evaluation (07.05, 07.06), leave (07.07) and payroll (24.02, 24.03) resolve policies through the attendance service.'],
+  ['att.assignment.changed', 'The policy, shift, weekly off or holiday calendar of the company, a site, a crew or an employee was assigned or ended: data { scopeType, scopeId, policyCode, shiftId, effectiveFrom, effectiveTo }.'],
+  ['att.roster.changed', 'A roster pattern was made or ended, or a day was changed or swapped after approval: data { siteId, crewId, workDate, kind }.'],
+  ['att.period.closed', 'An attendance period was closed and is never recalculated: data { start, end, label }.'],
   ['hr.offer.declined', 'The candidate declined the offer: data { docNo, candidateId, response }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'hr', description });
 
-const TABLES = ['hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
+const TABLES = ['att_shifts', 'att_policies', 'att_policy_assignments', 'att_rosters', 'att_roster_changes', 'att_period_defs', 'att_periods', 'hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
+  statuses: { att_policies: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_roster_changes: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_shifts: ['ACTIVE', 'INACTIVE'], att_periods: ['OPEN', 'CLOSED'], hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
   uniqueKeys: [{ table: 'hr_employees', columns: ['company_id', 'emp_code'] }],
 });
 /** Module "hr": human resources (Workforce-First, M07). Part 07.01 holds the employee master and employment records. The tables are `hr_*`. */
@@ -44,11 +51,11 @@ export const hr = {
   code: 'hr',
   name: 'HR & Workforce Management',
   routePrefix: '/api/v1/hr',
-  ownerPart: '07.01, 07.02, 07.03',
+  ownerPart: '07.01, 07.02, 07.03, 07.04',
   status: 'Employee master: profile, employment, statutory and bank details (masked), documents with expiry, history, approvals of new employees and of changes, user link, effective-dated separation with access removal, directory, import, overview',
   tables: TABLES,
   companyOptional: [],
-  resources: ['employees', 'plans', 'requisitions', 'candidates', 'interviews', 'offers', 'offer-link', 'onboarding', 'deployments', 'deployment-board', 'crews', 'transfers', 'site-plans'],
+  resources: ['employees', 'plans', 'requisitions', 'candidates', 'interviews', 'offers', 'offer-link', 'onboarding', 'deployments', 'deployment-board', 'crews', 'transfers', 'site-plans', 'att'],
 
   mount(api, { db, config: appConfig, publicApi }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'hr_employees'").get()) return;
@@ -98,6 +105,19 @@ export const hr = {
       dr.use(gate('ff.hr.p0703', 'Deployment is'));
       dr.use(deployRoutes({ dep, trf, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/hr', dr);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'att_shifts'").get()) {
+      const att = createAttendanceService({ db, validRules: parseRules });
+      bindAttendance(db, att);
+      listExports.register('att.shifts', { source: (actor, req) => att.shifts.exportSource(actor, req), hidden: () => [] });
+      listExports.register('att.policies', { source: (actor, req) => att.policies.exportSource(actor, req), hidden: () => [] });
+      try {
+        widgetRegistry.register({ code: 'att.roster_waiting', provider: (ctx) => { const w = att.widget(ctx.actor); return { value: w.value, unit: w.value === 1 ? 'roster change waiting' : 'roster changes waiting', previous: null, trendPct: null, target: null, status: w.value > 0 ? 'amber' : 'green', note: 'Waiting for the supervisor or the project manager.', drill: '/hr/attendance/roster' }; } });
+      } catch { /* registered once per process */ }
+      const ar = Router();
+      ar.use(gate('ff.hr.p0704', 'Attendance configuration is'));
+      ar.use(attRoutes({ att, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/hr', ar);
     }
   },
 };

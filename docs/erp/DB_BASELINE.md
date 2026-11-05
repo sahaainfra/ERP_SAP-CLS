@@ -269,6 +269,262 @@ Indexes:
 - ix_alr_rules_company: company_id, status, enabled
 - ux_alr_rules_version (unique): , code, rule_version
 
+## att_period_defs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| start_day | INTEGER | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_att_period_defs_company_id: company_id
+
+## att_periods
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period_start | TEXT | yes |  |  |
+| period_end | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_att_periods_company_id: company_id
+- ux_att_periods_start (unique): company_id, period_start
+
+## att_policies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| rules_json | TEXT | yes |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| change_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supersedes_id -> att_policies(id), root_id -> att_policies(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_policies_supersedes_id: supersedes_id
+- ix_att_policies_root_id: root_id
+- ix_att_policies_status: company_id, status
+- ix_att_policies_company_id: company_id
+- ux_att_policies_version (unique): company_id, code, version_no
+
+## att_policy_assignments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| scope_type | TEXT | yes |  |  |
+| scope_id | INTEGER | yes |  | 0 |
+| policy_code | TEXT |  |  |  |
+| shift_id | INTEGER |  |  |  |
+| weekly_off_json | TEXT |  |  |  |
+| holiday_calendar_id | INTEGER |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: holiday_calendar_id -> core_holiday_calendars(id), shift_id -> att_shifts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_policy_assignments_calendar: holiday_calendar_id
+- ix_att_policy_assignments_shift: shift_id
+- ix_att_policy_assignments_scope: company_id, scope_type, scope_id
+- ix_att_policy_assignments_company_id: company_id
+
+## att_roster_changes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| change_site_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| swap_employee_id | INTEGER |  |  |  |
+| work_date | TEXT | yes |  |  |
+| shift_id | INTEGER |  |  |  |
+| is_off | INTEGER | yes |  | 0 |
+| swap_shift_id | INTEGER |  |  |  |
+| swap_is_off | INTEGER | yes |  | 0 |
+| reason | TEXT | yes |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: swap_shift_id -> att_shifts(id), shift_id -> att_shifts(id), swap_employee_id -> hr_employees(id), employee_id -> hr_employees(id), change_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_roster_changes_status: company_id, status
+- ix_att_roster_changes_swap_shift: swap_shift_id
+- ix_att_roster_changes_shift: shift_id
+- ix_att_roster_changes_swap: swap_employee_id
+- ix_att_roster_changes_employee: employee_id, work_date
+- ix_att_roster_changes_site: change_site_id
+- ix_att_roster_changes_company_id: company_id
+- ux_att_roster_changes_doc (unique): company_id, doc_no
+
+## att_rosters
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| roster_site_id | INTEGER | yes |  |  |
+| crew_id | INTEGER |  |  |  |
+| name | TEXT | yes |  |  |
+| pattern_json | TEXT | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: crew_id -> hr_crews(id), roster_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_rosters_crew: crew_id
+- ix_att_rosters_site: roster_site_id
+- ix_att_rosters_company_id: company_id
+
+## att_shifts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| start_minute | INTEGER | yes |  |  |
+| end_minute | INTEGER | yes |  |  |
+| night_shift | INTEGER | yes |  | 0 |
+| break_minutes | INTEGER | yes |  | 0 |
+| grace_minutes | INTEGER | yes |  | 0 |
+| half_day_minutes | INTEGER | yes |  |  |
+| full_day_minutes | INTEGER | yes |  |  |
+| ot_after_minutes | INTEGER |  |  |  |
+| rounding_minutes | INTEGER | yes |  | 0 |
+| rounding_mode | TEXT | yes |  | 'NEAREST' |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_att_shifts_company_id: company_id
+- ux_att_shifts_code (unique): company_id, code
+
 ## col_comments
 
 | Column | Type | Not null | Key | Default |

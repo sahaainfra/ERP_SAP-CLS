@@ -1219,5 +1219,13 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .hr-chip.is-pending { border-style: dashed; }
 .grid td.is-over { font-weight: 600; text-decoration: underline; }
 .grid td.is-short { font-weight: 600; }
+/* Attendance configuration (part 07.04) */
+.att-chip { display: inline-block; padding: 0 var(--erp-space-2); border-radius: var(--erp-radius-sm); border: 1px solid var(--erp-color-border-subtle); background: var(--erp-color-bg-subtle); font-size: 0.85rem; margin: 0 var(--erp-space-1); }
+.att-s0 { border-left: 4px solid var(--erp-color-status-info-solid); } .att-s1 { border-left: 4px solid var(--erp-color-status-success-solid); } .att-s2 { border-left: 4px solid var(--erp-color-status-warning-solid); }
+.att-s3 { border-left: 4px solid var(--erp-color-status-error-solid); } .att-s4 { border-left: 4px solid var(--erp-color-status-muted-solid); } .att-s5 { border-left: 4px double var(--erp-color-status-info-solid); }
+.att-off { font-style: italic; } .att-wo { font-weight: 600; } .att-ho { font-weight: 600; text-decoration: underline; } .att-pending { border-style: dashed; }
+.att-palette { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); } .att-palette .att-chip { cursor: grab; }
+.att-grid td select { display: block; font-size: 0.75rem; max-width: 100%; } .att-grid td .att-chip { cursor: grab; }
+.att-cycle { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); align-items: end; }
 @media print { .hr-board { grid-auto-flow: row; } .srch-form, .msg-dock { display: none; } }
 [data-testid="pipeline"], [data-testid="requisitions"], [data-testid="new-requisition"], [data-testid="requisition-page"], [data-testid="candidate-page"], [data-testid="offer-builder"], [data-testid="offers"], [data-testid="onboarding"] { padding-block-end: 4.5rem; }

@@ -102,7 +102,8 @@ export function createDeploymentService({ db }) {
   }
   const nameOf = (type, id) => (type === 'EMPLOYEE' ? db.prepare('SELECT full_name AS n, emp_code AS c FROM hr_employees WHERE id = ?').get(id) : null);
   const usernameOf = (userId) => (userId ? db.prepare('SELECT username FROM iam_users WHERE id = ?').get(userId)?.username ?? null : null);
-  const myEmployee = (actor) => (actor.userId ? db.prepare("SELECT id FROM hr_employees WHERE company_id = ? AND user_id = ? AND deleted_at IS NULL AND record_status = 'APPROVED'").get(actor.companyId, actor.userId)?.id ?? null : null);
+  const myUserId = (actor) => actor.userId ?? db.prepare('SELECT id FROM iam_users WHERE company_id = ? AND lower(username) = lower(?) AND is_active = 1').get(actor.companyId, actor.user)?.id ?? null;
+  const myEmployee = (actor) => { const uid = myUserId(actor); return uid ? db.prepare("SELECT id FROM hr_employees WHERE company_id = ? AND user_id = ? AND deleted_at IS NULL AND record_status = 'APPROVED'").get(actor.companyId, uid)?.id ?? null : null; };
 
   // ---- the site plan (adapter for 17.08) and the check of a deployment against it ----
   const sitePlans = {

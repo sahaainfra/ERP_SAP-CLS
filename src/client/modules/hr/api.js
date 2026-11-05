@@ -128,3 +128,50 @@ export const deploy = {
     compare: async (id) => (await api.get(dq(`transfers/${id}/compare`))).data,
   },
 };
+
+// part 07.04: shifts, attendance policies, assignments, rosters and periods
+const aq = (path) => `/hr/att/${path}`;
+export const POLICY_STATUS = REQ_STATUS;
+export const WEEKDAYS = [[0, 'Sunday'], [1, 'Monday'], [2, 'Tuesday'], [3, 'Wednesday'], [4, 'Thursday'], [5, 'Friday'], [6, 'Saturday']];
+export const MISSING_MODES = [['REGULARISE', 'Wait for the person to regularise it'], ['HALF_DAY', 'Count half a day'], ['ABSENT', 'Count as absent'], ['ASSUME_SHIFT', 'Assume the whole shift']];
+export const DAY_TYPES = { WORKING: 'Working day', WEEKLY_OFF: 'Weekly off', HOLIDAY: 'Holiday', ROSTER_OFF: 'Off in the roster' };
+export const hoursText = (m) => (m == null ? '—' : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}`);
+export const att = {
+  shifts: {
+    get: async (id) => (await api.get(aq(`shifts/${id}`))).data,
+    active: async () => (await api.get(aq('shifts/active'))).data,
+    create: async (b) => (await api.post(aq('shifts'), b, idem())).data,
+    update: async (id, b) => (await api.patch(aq(`shifts/${id}`), b, idem())).data,
+  },
+  policies: {
+    get: async (id) => (await api.get(aq(`policies/${id}`))).data,
+    codes: async () => (await api.get(aq('policies/codes'))).data,
+    create: async (b) => (await api.post(aq('policies'), b, idem())).data,
+    update: async (id, b) => (await api.patch(aq(`policies/${id}`), b, idem())).data,
+    remove: async (id) => (await api.delete(aq(`policies/${id}`))).data,
+    submit: async (id, comment) => (await api.post(aq(`policies/${id}/submit`), comment ? { comment } : {}, idem())).data,
+    withdraw: async (id, reason) => (await api.post(aq(`policies/${id}/withdraw`), { reason }, idem())).data,
+    cancel: async (id, reason) => (await api.post(aq(`policies/${id}/cancel`), { reason }, idem())).data,
+    amend: async (id, effectiveFrom, reason) => (await api.post(aq(`policies/${id}/amend`), { effectiveFrom, reason }, idem())).data,
+    compare: async (id) => (await api.get(aq(`policies/${id}/compare`))).data,
+  },
+  evaluate: async (b) => (await api.post(aq('evaluate'), b)).data,
+  assignments: {
+    list: async (f) => (await api.get(`${aq('assignments')}?${q(f)}`)).data,
+    create: async (b) => (await api.post(aq('assignments'), b, idem())).data,
+    end: async (id, effectiveTo, reason) => (await api.post(aq(`assignments/${id}/end`), { effectiveTo, reason }, idem())).data,
+  },
+  resolve: async (employeeId, date) => (await api.get(`${aq('resolve')}?employeeId=${employeeId}&date=${date}`)).data,
+  myShift: async (f) => (await api.get(`${aq('my-shift')}?${q(f)}`)).data,
+  rosters: {
+    board: async (f) => (await api.get(`${aq('roster-board')}?${q(f)}`)).data,
+    create: async (b) => (await api.post(aq('rosters'), b, idem())).data,
+    end: async (id, toDate) => (await api.post(aq(`rosters/${id}/end`), { toDate }, idem())).data,
+    list: async (f) => (await api.get(`${aq('rosters')}?${q(f)}`)).data,
+    changes: async (f) => (await api.get(`${aq('roster-changes')}?${q(f)}`)).data,
+    change: async (b) => (await api.post(aq('roster-changes'), b, idem())).data,
+    cancelChange: async (id, reason) => (await api.post(aq(`roster-changes/${id}/cancel`), { reason }, idem())).data,
+  },
+  period: { get: async () => (await api.get(aq('period'))).data, set: async (b) => (await api.put(aq('period'), b, idem())).data, list: async (f) => (await api.get(`${aq('periods')}?${q(f)}`)).data, close: async (id) => (await api.post(aq(`periods/${id}/close`), {}, idem())).data },
+  calendars: async () => (await api.get('/core/holiday-calendars')).data,
+};
