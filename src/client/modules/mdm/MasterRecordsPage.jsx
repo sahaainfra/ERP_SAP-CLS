@@ -71,6 +71,7 @@ function RecordForm({ ref, def, record = null, onDone }) {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
+  const [result, setResult] = useState(null);
   useEffect(() => { if (ref) ref.current = { open: () => { setData(record ? { ...record.data } : {}); setMeta({ justification: '', effectiveFrom: todayIST(), ack: false }); setCheck(null); setError(null); setDone(null); dlg.current?.showModal(); } }; });
   const changed = record ? Object.fromEntries(Object.entries(data).filter(([k, v]) => (v ?? '') !== (record.data[k] ?? ''))) : data;
   const sensitive = record && Object.keys(changed).some((k) => def.fields.find((x) => x.key === k)?.sensitive);
@@ -85,8 +86,8 @@ function RecordForm({ ref, def, record = null, onDone }) {
         : await mdm.create(def.type, { data: payload, justification: meta.justification, effectiveFrom: meta.effectiveFrom, acknowledgeDuplicates: meta.ack });
       qc.invalidateQueries({ queryKey: ['mdm'] });
       setDone(r.applied ? `Saved. It applies from ${formatDate(r.effectiveFrom)}.` : `Sent to the steward for approval (request ${r.changeRequestId}).`);
-      onDone?.(r);
-    } catch (err) { setError(errorInfo(err)); if (err.code === 'DUPLICATE_WARNING' || err.code === 'DUPLICATE') runCheck(); } finally { setBusy(false); }
+      setResult(r);
+    } catch (err) { const dup = err.code === 'DUPLICATE_WARNING' || err.code === 'DUPLICATE'; setError(dup ? { ...errorInfo(err), form: err.message } : errorInfo(err)); if (dup) runCheck(); } finally { setBusy(false); }
   };
   const warnDup = check?.duplicates?.filter((d) => !d.block) ?? [];
   const blockDup = check?.duplicates?.filter((d) => d.block) ?? [];
@@ -94,7 +95,7 @@ function RecordForm({ ref, def, record = null, onDone }) {
     <dialog ref={dlg} className="dialog dialog-wide" aria-labelledby="mdf-title" data-testid="mdm-form">
       <form onSubmit={submit}>
         <h2 id="mdf-title">{record ? `Change ${record.code} ${record.name}` : `New ${def.label.toLowerCase()}`}</h2>
-        {done ? <><p role="status" data-testid="mdm-form-done">{done}</p><div className="actions"><button type="button" className="btn btn-primary" onClick={() => dlg.current?.close()}>Close</button></div></> : <>
+        {done ? <><p role="status" data-testid="mdm-form-done">{done}</p><div className="actions"><button type="button" className="btn btn-primary" onClick={() => { dlg.current?.close(); onDone?.(result); }}>Close</button></div></> : <>
           <div className="mdm-fields">{def.fields.map((f) => (
             <Field key={f.key} label={`${f.label}${f.required ? ' (required)' : ''}${f.sensitive ? ' · sensitive' : ''}`} name={f.key} error={error} hint={f.formatHint}>
               {f.type === 'enum'

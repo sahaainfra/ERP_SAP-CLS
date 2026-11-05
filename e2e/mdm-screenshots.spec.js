@@ -55,9 +55,9 @@ const act = async (request, c, roles, user, instanceId, action = 'approve') => {
 const gstin = (pan, state = '27') => { const f = `${state}${pan}1Z`; return f + gstinCheckChar(f); };
 /** A company with a steward of the partner master (named through the approved change of rules and stewards) and some partners. */
 async function governed(request, info, code) {
-  const t = info.project.name === 'mobile' ? 'm' : 'd';
   const c = await company(request, code);
-  const u = { proc: `mdm-proc${t}`, acc: `mdm-acc${t}`, stew: `mdm-stew${t}`, sys: `mdm-sys${t}`, it: `mdm-it${t}` };
+  const t = code.toLowerCase();
+  const u = { proc: `${t}-proc`, acc: `${t}-acc`, stew: `${t}-stew`, sys: `${t}-sys`, it: `${t}-it` };
   people(c, [[u.proc, ['PROCMGR'], 'Pramod Purchase'], [u.acc, ['ACCMGR'], 'Anita Accounts'], [u.stew, ['SE'], 'Suresh Steward'], [u.sys, ['SYSADM'], 'Sam Admin'], [u.it, ['ITADM'], 'Indu IT']]);
   const cfg = await api(request, c, 'SYSADM', u.sys, 'post', '/mdm/config', { rules: [], stewards: [{ masterType: 'PARTNER', username: u.stew, role: 'PRIMARY' }], reason: 'The purchase lead keeps the partner master' });
   await act(request, c, 'ITADM', u.it, cfg.workflow.id);
@@ -106,7 +106,7 @@ test('screenshots of the master data governance pages', async ({ browser, reques
   await expect(l.page.getByTestId('mdr-row')).toHaveCount(4);
   await shot(l.page, '06-master-records');
   const one = await open(browser, info, g.c, 'ACCMGR', g.u.acc, `/admin/master-data/records?id=${a}`);
-  await expect(one.page.getByTestId('mdd-version')).toHaveCount(2);
+  await expect(one.page.getByTestId('mdd-version')).toHaveCount(3);
   await shot(one.page, '07-master-record-history');
   await l.page.getByTestId('mdm-new').click();
   const form = l.page.getByTestId('mdm-form');
