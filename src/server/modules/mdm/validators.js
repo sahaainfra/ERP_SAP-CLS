@@ -62,7 +62,7 @@ const itemBody = {
 const itemChange = () => Object.fromEntries(Object.entries(itemBody).map(([k, v]) => [k, (v instanceof z.ZodDefault ? v.removeDefault() : v).optional()]));
 const itemUom = z.object({ uom: uomCode, factorToBase: z.union([z.string().trim(), z.number()]).transform(String), purpose: z.enum(['ANY', 'PURCHASE', 'ISSUE', 'SALE']).default('ANY') }).strict();
 export const parseItemCreate = (b) => parse(z.object({ ...itemBody, categoryId: id, itemType, effectiveFrom: date.optional(), justification: z.string().trim().max(500).optional(), acknowledgeDuplicates: z.boolean().default(false), uoms: z.array(itemUom).max(10).default([]),
-  legacy: z.object({ source: z.enum(['conversion', 'sample-request-line']), key: z.string().trim().min(1).max(300), code: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,29}$/, 'A code of letters, digits, dot, dash or slash') }).strict().optional() }).strict(), b);
+  legacy: z.object({ source: z.enum(['conversion', 'sample-request-line']), key: z.string().trim().min(1).max(300), code: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._/-]{0,29}$/, 'A code of letters, digits, dot, dash or slash').optional() }).strict().optional() }).strict(), b);
 export const parseItemCheck = (b) => parse(z.object({ ...itemBody, name: z.string().trim().max(160).default(''), baseUom: uomCode.optional().default('NOS'), categoryId: id, itemType }), b);
 export const parseItemUpdate = (b) => parse(z.object(itemChange()).extend({ version: z.number().int().min(1), reason: z.string().trim().max(300).optional() }).strict(), b);
 export const parseItemResubmit = (b) => parse(z.object({ ...itemBody, justification: z.string().trim().max(500).optional(), itemType }).strict(), b);

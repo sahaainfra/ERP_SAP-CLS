@@ -2555,3 +2555,97 @@ paths:
     get:
       summary: Form lookups of the common masters and of every lookup list, in my language (03.02 contract)
       responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/item-categories:
+    get:
+      summary: The category tree of my company with item types, attribute templates and stewards
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: A new category (mdm.item.category.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/item-categories/{id}:
+    put:
+      summary: Change a category and its attribute template (mdm.item.category.edit)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/item-categories/{id}/history:
+    get:
+      summary: The changes of a category
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/register:
+    get:
+      summary: The Item Master list (List Report contract: q, filter[...], sort, page, pageSize)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/register/export:
+    get:
+      summary: Export of the list (xlsx, csv, pdf) with the rate hidden where not permitted
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/search:
+    get:
+      summary: The item selector: active items by code, name, specification or category; favourites or recent
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/check:
+    post:
+      summary: Check a request: errors and near-identical items (FR-07)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items:
+    post:
+      summary: Ask for a new item (approved by the category steward); a migrated material may keep its code (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}:
+    get:
+      summary: An item with units, specification, bill of resources, makes, alternates, versions, where used and price history
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: Change an item in force (steward of its category; the base unit of a used item is not changed: BR-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/resubmit:
+    post:
+      summary: Send a returned request again
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/versions:
+    post:
+      summary: A new version from a date (202)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/status:
+    post:
+      summary: Out of use or back in use
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/where-used:
+    get:
+      summary: Where the item is used (bills of resources, alternates, migration map, transactions)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/mark:
+    post:
+      summary: Favourite or recent in the selector
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/uoms:
+    put:
+      summary: The item units and factors to the base unit (written into the calculation engine)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/convert:
+    get:
+      summary: A quantity of the item in another unit (T-01)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/resources:
+    put:
+      summary: The bill of resources of a work item or composite (no cycle: BR-02)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/makes:
+    post:
+      summary: Propose a make
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/makes/{makeId}:
+    post:
+      summary: Approve (another steward) or remove a make
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/{id}/alternates:
+    post:
+      summary: Add or remove an alternate item
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/migration:
+    get:
+      summary: The old free-text materials with what they map to (mdm.item.migrate)
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/items/migration/map:
+    post:
+      summary: Map an old material to an item
+      responses: { '200': { description: ok }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }

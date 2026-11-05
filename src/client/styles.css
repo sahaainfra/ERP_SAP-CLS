@@ -1149,3 +1149,18 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .seg { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); margin-block: var(--erp-space-3); }
 /* Part 06.02: the last buttons of the master data pages scroll clear of the floating Messages button (05.01) */
 [data-testid="mdm-lookup-manager"], [data-testid^="cm-page-"], [data-testid="mdm-quality"] { padding-bottom: calc(var(--erp-space-6) * 3); }
+/* Part 06.03: the item master (category tree beside the list), the wizard steps and the item selector */
+.item-master { display: grid; gap: var(--erp-space-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .item-master { grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr); } }
+.item-tree-pane { min-width: 0; }
+.item-tree { list-style: none; padding: 0; margin: var(--erp-space-2) 0; display: grid; gap: var(--erp-space-1); }
+.item-tree-node { text-align: start; max-width: 100%; white-space: normal; }
+.item-list-pane { min-width: 0; }
+.wizard-steps { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); list-style: none; padding: 0; margin: var(--erp-space-3) 0; }
+.wizard-steps li { padding: var(--erp-space-1) var(--erp-space-3); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-sm); }
+.wizard-steps li.is-current { border-color: var(--erp-color-border-strong); font-weight: 600; }
+.wizard-steps li.is-done { color: var(--erp-color-text-secondary); }
+.op-figures { display: flex; flex-wrap: wrap; gap: var(--erp-space-4); margin: var(--erp-space-3) 0; }
+.op-figures div { min-width: 8rem; } .op-figures dt { color: var(--erp-color-text-secondary); font-size: 0.85em; } .op-figures dd { margin: 0; overflow-wrap: anywhere; }
+.item-selector tr.is-selected td, .item-selector tr.is-selected th { background: var(--erp-color-status-info-bg); }
+[data-testid="item-page"], [data-testid="new-item"], [data-testid="item-categories"], [data-testid="item-migration"] { padding-bottom: calc(var(--erp-space-6) * 3); }

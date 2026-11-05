@@ -2,6 +2,11 @@ import { createElement } from 'react';
 import { registerModule } from '../../platform/shell/registry.js';
 import ChangeRequestsPage from './ChangeRequestsPage.jsx';
 import CommonMasterPage from './CommonMasterPage.jsx';
+import ItemCategoriesPage from './ItemCategoriesPage.jsx';
+import ItemMasterPage from './ItemMasterPage.jsx';
+import ItemMigrationPage from './ItemMigrationPage.jsx';
+import ItemPage from './ItemPage.jsx';
+import NewItemPage from './NewItemPage.jsx';
 import LookupListManagerPage from './LookupListManagerPage.jsx';
 import DuplicatesPage from './DuplicatesPage.jsx';
 import MasterDataGovernancePage from './MasterDataGovernancePage.jsx';
@@ -30,5 +35,10 @@ registerModule({
     { path: '/admin/master-data/common/payment-terms', label: 'Payment & Delivery Terms', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('payment-terms') },
     { path: '/admin/master-data/common/lookups', label: 'Lookup Lists', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('lookups') },
     { path: '/admin/master-data/lookup-manager', label: 'Lookup List Manager', icon: 'erp.action.edit', permission: 'mdm.lookup.edit', flag: 'ff.mdm.p0602', Page: LookupListManagerPage },
+    { path: '/admin/items', label: 'Item Master', icon: 'erp.action.history', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemMasterPage },
+    { path: '/admin/items/item', label: 'Item', icon: 'erp.action.info', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemPage },
+    { path: '/admin/items/new', label: 'New Item', icon: 'erp.action.create', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: NewItemPage },
+    { path: '/admin/items/categories', label: 'Item Categories & Attribute Templates', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemCategoriesPage },
+    { path: '/admin/items/migration', label: 'Item Migration', icon: 'erp.action.import', permission: 'mdm.item.migrate', flag: 'ff.mdm.p0603', Page: ItemMigrationPage },
   ],
 });

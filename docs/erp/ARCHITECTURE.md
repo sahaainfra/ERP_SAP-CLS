@@ -726,3 +726,16 @@ Behind feature flag `ff.mdm.p0602` (inside the `mdm` module, which needs `ff.mdm
 - **Lookups** (ADR-253): `/api/v1/mdm/lookups/{uoms,states,districts,gst-rates,hsn-sac,tds-sections,currencies,banks,payment-terms}` and one per list (`/mdm/lookups/priority` …) in the person's language; `GET/PUT /mdm/lookup-lists/:list` for the manager.
 - **Excel**: import types `MDM_UOM`, `MDM_GST_RATE`, `MDM_HSN_SAC`, `MDM_TDS_SECTION`, `MDM_STATE`, `MDM_DISTRICT`, `MDM_CURRENCY`, `MDM_EXCHANGE_RATE`, `MDM_BANK`, `MDM_PAYMENT_TERM`, `MDM_LOOKUP`; export sources `mdm.common.<master>`. Event `mdm.common.changed`.
 - **Browser**: one register page per master (`/admin/master-data/common/<page>`, `CommonMasterPage.jsx`) and the Lookup List Manager; the partner form of 06.01 takes its State from the states master.
+
+## 57. Item master, resource catalogue and item selector (part 06.03)
+
+Behind feature flag `ff.mdm.p0603` (in module `mdm`). Code: `modules/mdm/items.js` (service, workflow `MDM_ITEM`, object type and file entity `mdm_item`, where-used registry `itemReferences`), `item-integrations.js` (lookup `items`, Excel import `MDM_ITEM`, export `mdm.items`); client `platform/items/ItemSelector.jsx` and `modules/mdm/Item*.jsx`. Tables `mdm_item_categories`, `mdm_items`, `mdm_item_uoms`, `mdm_item_resources`, `mdm_item_makes`, `mdm_item_alternates`, `mdm_item_code_counters`, `mdm_item_user_marks`, `mdm_item_legacy_map` (migrations 100 and 101).
+
+- **Categories** (FR-02, ADR-255): `GET/POST /mdm/item-categories`, `PUT /mdm/item-categories/:id`, `GET …/:id/history`.
+- **Items** (FR-01, FR-03, FR-05, ADR-254/256): `GET /mdm/items/register` (List Report) and `…/register/export`, `POST /mdm/items/check` (FR-07), `POST /mdm/items` (request), `GET/PUT /mdm/items/:id`, `POST …/resubmit`, `POST …/versions`, `POST …/status`, `GET …/where-used` (BR-01).
+- **Units** (T-01, ADR-257): `PUT /mdm/items/:id/uoms`, `GET …/convert` through the calculation engine.
+- **Bill of resources** (FR-04, BR-02): `PUT /mdm/items/:id/resources`. Makes and alternates: `POST …/makes`, `POST …/makes/:makeId`, `POST …/alternates`.
+- **Selector** (FR-06, T-03): `GET /mdm/items/search`, `POST /mdm/items/:id/mark`, `GET /mdm/lookups/items`.
+- **Migration** (FR-08, ADR-258): `GET /mdm/items/migration`, `POST /mdm/items/migration/map`.
+- **Platform**: `listExports` (ADR-259) lets a module's list use the List Report's export service.
+- **Browser**: Item Master (category tree beside the List Report), Item (object page with its tabs), New Item wizard, Item Categories & Attribute Templates, Item Migration; the selector in the sample request lines (AC-01), the bill of resources and the alternates.

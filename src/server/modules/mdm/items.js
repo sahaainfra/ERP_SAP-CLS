@@ -257,12 +257,13 @@ export function createItemService({ db }) {
     /** A new item: a request to the steward of the category. A migrated material keeps its code (BR-03, mdm.item.migrate). */
     create(actor, b) {
       need(actor, 'mdm.record.view', 'request an item');
-      if (b.legacy && !may(actor, 'mdm.item.migrate')) throw forbidden('Only a person who migrates the old materials gives an item its own code (permission mdm.item.migrate).');
+      if (b.legacy && !may(actor, 'mdm.item.migrate')) throw forbidden('Only a person who migrates the old materials creates an item from them or gives it its own code (permission mdm.item.migrate).');
       const p = prepare(actor, b);
       if (p.dups.length && !b.acknowledgeDuplicates) throw new HttpError(409, 'DUPLICATE_WARNING', `This looks like ${p.dups.map((d) => `${d.code} ${d.name} (${d.rule})`).join('; ')}. Use that item, or confirm this is a different one.`, p.dups.map((d) => ({ field: 'spec', message: `like ${d.code} ${d.name}`, itemId: d.id })));
       return transaction(db, () => {
         let code;
-        if (b.legacy) { code = b.legacy.code.trim().toUpperCase(); if (db.prepare('SELECT 1 FROM mdm_items WHERE company_id = ? AND code = ?').get(actor.companyId, code)) throw conflict(`An item with code ${code} already exists.`); }
+        if (b.legacy?.source === 'conversion' && !b.legacy.code) throw badRequest('A migrated conversion keeps its old code.', [{ field: 'legacy.code', message: `use ${b.legacy.key}` }]);
+        if (b.legacy?.code) { code = b.legacy.code.trim().toUpperCase(); if (db.prepare('SELECT 1 FROM mdm_items WHERE company_id = ? AND code = ?').get(actor.companyId, code)) throw conflict(`An item with code ${code} already exists.`); }
         else code = takeCode(actor.companyId, p.cat);
         const id = insertItem(actor, p.data, { code, version_no: 1, item_status: 'SUBMITTED', effective_from: b.effectiveFrom ?? todayIST(), legacy_code: b.legacy?.key ?? null, source_type: b.legacy ? `legacy:${b.legacy.source}` : 'mdm_item', source_id: b.legacy?.key ?? null });
         const legacyUoms = b.legacy?.source === 'conversion' && !(b.uoms ?? []).length

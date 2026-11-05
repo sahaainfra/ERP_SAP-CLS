@@ -41,3 +41,26 @@ export const mdm = {
   config: async () => (await api.get('/mdm/config')).data,
   propose: async (b) => (await api.post('/mdm/config', b, idem())).data,
 };
+
+// ---- part 06.03: the item master ----
+export const ITEM_STATUS = { SUBMITTED: ['SUBMITTED', 'Waiting for approval'], ACTIVE: ['ACTIVE', 'Active'], INACTIVE: ['DEACTIVATED', 'Inactive'], SUPERSEDED: ['ARCHIVED', 'Superseded'], REJECTED: ['REJECTED', 'Rejected'] };
+export const items = {
+  categories: async () => (await api.get('/mdm/item-categories')).data,
+  saveCategory: async (id, b) => (await (id ? api.put(`/mdm/item-categories/${id}`, b, idem()) : api.post('/mdm/item-categories', b, idem()))).data,
+  categoryHistory: async (id) => (await api.get(`/mdm/item-categories/${id}/history`)).data,
+  get: async (id) => (await api.get(`/mdm/items/${id}`)).data,
+  check: async (b) => (await api.post('/mdm/items/check', b)).data,
+  create: async (b) => (await api.post('/mdm/items', b, idem())).data,
+  update: async (id, b) => (await api.put(`/mdm/items/${id}`, b, idem())).data,
+  resubmit: async (id, b) => (await api.post(`/mdm/items/${id}/resubmit`, b, idem())).data,
+  newVersion: async (id, b) => (await api.post(`/mdm/items/${id}/versions`, b, idem())).data,
+  setStatus: async (id, b) => (await api.post(`/mdm/items/${id}/status`, b, idem())).data,
+  saveUoms: async (id, b) => (await api.put(`/mdm/items/${id}/uoms`, b, idem())).data,
+  convert: async (id, f) => (await api.get(`/mdm/items/${id}/convert?${q(f)}`)).data,
+  saveResources: async (id, b) => (await api.put(`/mdm/items/${id}/resources`, b, idem())).data,
+  addMake: async (id, b) => (await api.post(`/mdm/items/${id}/makes`, b, idem())).data,
+  decideMake: async (id, makeId, b) => (await api.post(`/mdm/items/${id}/makes/${makeId}`, b, idem())).data,
+  alternate: async (id, b) => (await api.post(`/mdm/items/${id}/alternates`, b, idem())).data,
+  migration: async () => (await api.get('/mdm/items/migration')).data,
+  map: async (b) => (await api.post('/mdm/items/migration/map', b, idem())).data,
+};
