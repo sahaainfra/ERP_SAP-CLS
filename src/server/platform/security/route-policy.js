@@ -964,7 +964,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/hr/att/policies/:id/amend', g: 'permission', k: 'att.policy.amend', s: 'parsePolicyAmend', scope: 'project', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/hr/att/policies/:id/compare', g: 'permission', k: 'att.policy.view', s: 'parseId', scope: 'project', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/att/policies/:id/print', g: 'permission', k: 'att.policy.print', s: 'parseId', scope: 'project', rate: 'export', audit: true },
-  { m: 'POST', p: '/api/v1/hr/att/evaluate', g: 'permission', k: 'att.policy.view', s: 'parseEvaluate', scope: 'project', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/hr/att/evaluate', g: 'permission', k: 'att.policy.view', s: 'parseEvaluate', scope: 'project', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/hr/att/assignments', g: 'permission', k: 'att.assignment.view', s: 'parseAssignmentList', scope: 'project', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/hr/att/assignments', g: 'permission', k: 'att.assignment.edit', s: 'parseAssignmentCreate', scope: 'project', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/hr/att/assignments/:id/end', g: 'permission', k: 'att.assignment.edit', s: 'parseAssignmentEnd', scope: 'project', rate: 'write', audit: true },

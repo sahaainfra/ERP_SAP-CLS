@@ -51,7 +51,8 @@ test('FR-08 the engine lists the offline forms, available or planned, and regist
   const forms = Object.fromEntries(m.forms.map((f) => [f.code, f]));
   assert.equal(forms.sample_doc.available, true);
   assert.deepEqual(forms.sample_doc.rules, { titleMin: 3, titleMax: 200, amountPattern: '^\\d{1,13}(\\.\\d{1,2})?$', amountMin: '0.01' });
-  for (const c of ['attendance_punch', 'dpr', 'material_request', 'grn_count', 'inspection_checklist', 'hse_observation', 'log_book_entry']) assert.deepEqual([forms[c].available, forms[c].planned], [false, true], c);
+  assert.deepEqual([forms.attendance_punch.available, forms.attendance_punch.planned], [true, undefined]); // built in 07.05
+  for (const c of ['dpr', 'material_request', 'grn_count', 'inspection_checklist', 'hse_observation', 'log_book_entry']) assert.deepEqual([forms[c].available, forms[c].planned], [false, true], c);
   assert.equal(api.db.prepare('SELECT COUNT(*) AS n FROM off_devices').get().n, 1);
 });
 
