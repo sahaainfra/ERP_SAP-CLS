@@ -447,7 +447,7 @@ export function createTrainingService({ db, dep }) {
     const me = myEmployee(actor); const ids = me ? [me, ...reportees(me)] : [];
     return `x.company_id = :c AND x.person_type = 'EMPLOYEE' AND x.person_id IN (${ids.length ? ids.join(',') : '0'})`;
   };
-  const certView = (actor, x, types = new Map()) => {
+  const certView = (actor, x, types = /** @type {{ get: (k: string) => any }} */ ({ get: () => undefined })) => {
     const t = types.get(x.cert_type) ?? certTypeRow(x.company_id, x.cert_type); const who = nameOf(x.person_type, x.person_id);
     const state = certState(x, t?.alert_days, today());
     const mine = x.person_type === 'EMPLOYEE' && myEmployee(actor) === x.person_id;

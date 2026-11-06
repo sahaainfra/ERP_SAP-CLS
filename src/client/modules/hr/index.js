@@ -12,6 +12,13 @@ import SkillMatrixPage from './SkillMatrixPage.jsx';
 import TrainingCalendarPage from './TrainingCalendarPage.jsx';
 import TrainingSessionPage from './TrainingSessionPage.jsx';
 import TrainingSetupPage from './TrainingSetupPage.jsx';
+import FeedbackPage from './FeedbackPage.jsx';
+import GoalSettingPage from './GoalSettingPage.jsx';
+import KpiLibraryPage from './KpiLibraryPage.jsx';
+import MyPerformancePage from './MyPerformancePage.jsx';
+import ReviewPage from './ReviewPage.jsx';
+import ReviewsPage from './ReviewsPage.jsx';
+import TeamPerformancePage from './TeamPerformancePage.jsx';
 import LetterRequestPage from './LetterRequestPage.jsx';
 import MyAttendancePage from './MyAttendancePage.jsx';
 import MyHrPage from './MyHrPage.jsx';
@@ -133,5 +140,12 @@ registerModule({
     { path: '/training/compliance', label: 'Mandatory Training Compliance', icon: 'erp.group.workforce', permission: 'hr.training.report', flag: 'ff.hr.p0710', Page: ComplianceReportPage },
     { path: '/training/mine', label: 'My Training', icon: 'erp.group.workforce', permission: 'hr.training.own', flag: 'ff.hr.p0710', Page: MyTrainingPage },
     { path: '/training/setup', label: 'Training Set-up', icon: 'erp.action.settings', permission: 'hr.training.configure', flag: 'ff.hr.p0710', Page: TrainingSetupPage },
+    { path: '/performance', label: 'My Performance', icon: 'erp.group.workforce', permission: 'hr.perf.own', flag: 'ff.hr.p0711', Page: MyPerformancePage },
+    { path: '/performance/team', label: 'Team Performance', icon: 'erp.group.workforce', permission: 'hr.perf.team', flag: 'ff.hr.p0711', Page: TeamPerformancePage },
+    { path: '/performance/goals', label: 'Goal Setting', icon: 'erp.action.create', permission: 'hr.perf.own', flag: 'ff.hr.p0711', Page: GoalSettingPage },
+    { path: '/performance/review', label: 'Appraisal Review', icon: 'erp.group.workforce', permission: 'hr.review.view', flag: 'ff.hr.p0711', Page: ReviewPage },
+    { path: '/performance/reviews', label: 'Appraisal Reviews', icon: 'erp.group.workforce', permission: 'hr.review.view', flag: 'ff.hr.p0711', Page: ReviewsPage },
+    { path: '/performance/feedback', label: 'Feedback & One-to-One', icon: 'erp.group.workforce', permission: 'hr.perf.own', flag: 'ff.hr.p0711', Page: FeedbackPage },
+    { path: '/performance/kpis', label: 'KPI Library & Cycles', icon: 'erp.action.settings', permission: 'hr.perf.configure', flag: 'ff.hr.p0711', Page: KpiLibraryPage },
   ],
 });

@@ -4303,3 +4303,176 @@ paths:
     get:
       summary: "Cost of training by project and department"
       responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews:
+    get:
+      summary: "Appraisal reviews (list report)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/export:
+    get:
+      summary: "Export reviews"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/launch:
+    post:
+      summary: "Make the reviews of an open cycle"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}:
+    get:
+      summary: "A review with KPIs, goals and feedback (what the person may not see before approval is hidden)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    delete:
+      summary: "Delete a review nobody has started"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/self:
+    post:
+      summary: "Self-review"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/manager:
+    post:
+      summary: "Manager review"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/calibrate:
+    post:
+      summary: "HR calibration and development plan"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/send-back:
+    post:
+      summary: "Send a review back to the manager"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/submit:
+    post:
+      summary: "Send the final rating for approval: manager, skip-level reviewer, HR manager (director for senior grades)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/withdraw:
+    post:
+      summary: "Withdraw a rating in approval"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/cancel:
+    post:
+      summary: "Cancel a review"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/history:
+    get:
+      summary: "Approval and audit history"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/print:
+    get:
+      summary: "Printable review"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/reviews/{id}/letter:
+    post:
+      summary: "Issue the appraisal letter"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    get:
+      summary: "Download the appraisal letter (PDF)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/my:
+    get:
+      summary: "My performance: KPIs, goals, review, what waits"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/team:
+    get:
+      summary: "Team performance of the reporting line"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/team/{id}:
+    get:
+      summary: "One reportee"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/compute:
+    post:
+      summary: "Compute the KPIs (yourself, your team, or everybody for HR)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/manual-value:
+    post:
+      summary: "Enter the value of a manual KPI for a reportee"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/values/{id}:
+    get:
+      summary: "The evidence of a KPI value, and the same figure computed again"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/values/{id}/dispute:
+    post:
+      summary: "Dispute a KPI value (it is frozen)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/disputes:
+    get:
+      summary: "KPI disputes"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/disputes/{id}/resolve:
+    post:
+      summary: "HR upholds (with the corrected value) or rejects a dispute"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/metrics:
+    get:
+      summary: "The metrics a KPI can name"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/kpis:
+    get:
+      summary: "The KPI library"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    put:
+      summary: "Save a KPI (a change is a draft until a second person activates it)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/kpis/{id}/activate:
+    post:
+      summary: "Activate a KPI (not the person who made it)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/kpis/{id}/retire:
+    post:
+      summary: "Retire a KPI"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/kpis/{id}/history:
+    get:
+      summary: "The history of a KPI"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/cycles:
+    get:
+      summary: "Review cycles"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    put:
+      summary: "Save a review cycle"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/cycles/{id}/open:
+    post:
+      summary: "Open a cycle"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/cycles/{id}/close:
+    post:
+      summary: "Close a cycle"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/goals:
+    get:
+      summary: "Goals of a person for the cycle"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    post:
+      summary: "Add a goal (a manager sets goals for the team, agreed at once)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/goals/{id}:
+    patch:
+      summary: "Change a draft or returned goal"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    delete:
+      summary: "Delete a draft goal"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/goals/{id}/propose:
+    post:
+      summary: "Send a goal to the manager"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/goals/{id}/agree:
+    post:
+      summary: "The manager agrees a goal"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/goals/{id}/return:
+    post:
+      summary: "The manager returns a goal (reason)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/goals/{id}/progress:
+    post:
+      summary: "Record the progress of an agreed goal"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/hr/performance/feedback:
+    get:
+      summary: "Feedback, recognition and one-to-one notes"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    post:
+      summary: "Write feedback, recognition or a one-to-one note"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }

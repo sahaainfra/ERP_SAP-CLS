@@ -894,3 +894,14 @@ Behind feature flag `ff.hr.p0710` (module `hr`; needs 07.01, uses 07.03 and 07.0
 - **Skills** (FR-04): `/hr/training/skills/{assess,matrix,history}`; **compliance and cost** (FR-02, FR-06): `/hr/training/{compliance,costs}`; set-up: `/hr/training/{courses,cert-types,skill-defs}`.
 - **Events**: `trn.session.*`, `trn.attendance.*`, `trn.cert.*`, `trn.skill.assessed`.
 - **Browser**: Training Calendar, Training Session, Certifications & Licences, Skill Matrix, Mandatory Training Compliance, My Training, Training Set-up; Hindi through the `trn` namespace.
+
+## 71. Performance management (part 07.11)
+
+Behind feature flag `ff.hr.p0711` (module `hr`; needs 07.01 and 04.08). Code: `modules/hr/performance.js` (metrics, KPI library, cycles, computation, disputes, goals, feedback, dashboards, reviews, the approval), `perf-routes.js`, `perf-validators.js`. Tables `perf_cycles`, `perf_kpis`, `perf_kpi_values`, `perf_kpi_disputes`, `perf_goals`, `perf_feedback`, `perf_reviews`.
+
+- **KPI library** (FR-01, ADR-325, ADR-328): `/hr/performance/{metrics,kpis,cycles}`; a change is a draft until a second person activates it.
+- **Computation** (FR-03, ADR-325): `POST /hr/performance/compute`, job `perf.daily` (01:20); `GET /hr/performance/values/:id` gives the evidence and the same figure computed again. Metrics: tasks on time (`tsk_tasks`), actions on time (`acc_action_ledger`), approvals within SLA (`wf_tasks`), attendance (`att_daily`), mandatory training (07.10), manual.
+- **Fairness** (FR-06, ADR-326): `excludedDays` (approved leave, transfers); disputes freeze a value; HR resolves.
+- **Goals and feedback** (FR-02, FR-04): `/hr/performance/{goals,feedback}`.
+- **Reviews** (FR-05, ADR-327): `/hr/reviews` (launch, self, manager, calibrate, send-back, submit, withdraw, cancel, history, print, letter, export); workflow `HR_PERF_REVIEW` through resolvers `perf.manager` and `perf.skip`; the event `perf.review.approved` is for payroll (24.01).
+- **Browser**: My Performance, Team Performance, Goal Setting, Appraisal Review, Appraisal Reviews, Feedback & One-to-One, KPI Library & Cycles; Hindi through the `prf` namespace.

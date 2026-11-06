@@ -8628,6 +8628,304 @@ Indexes:
 - ix_pcs_reason_codes_company: company_id
 - ux_pcs_reason_codes (unique): , action_type, code
 
+## perf_cycles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| kind | TEXT | yes |  | 'ANNUAL' |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT | yes |  |  |
+| self_due | TEXT |  |  |  |
+| senior_from_level | INTEGER | yes |  | 7 |
+| cycle_status | TEXT | yes |  | 'DRAFT' |
+| opened_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_perf_cycles_site: site_id
+- ix_perf_cycles_project: project_id
+- ix_perf_cycles_status: company_id, cycle_status
+- ix_perf_cycles_company_id: company_id
+- ux_perf_cycles_code (unique): company_id, code
+
+## perf_feedback
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| author | TEXT | yes |  |  |
+| author_employee_id | INTEGER |  |  |  |
+| kind | TEXT | yes |  |  |
+| body | TEXT | yes |  |  |
+| shared | INTEGER | yes |  | 1 |
+| meeting_date | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: author_employee_id -> hr_employees(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_perf_feedback_site: site_id
+- ix_perf_feedback_project: project_id
+- ix_perf_feedback_author: author_employee_id
+- ix_perf_feedback_employee: employee_id, created_at
+- ix_perf_feedback_company_id: company_id
+
+## perf_goals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| cycle_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| measure | TEXT |  |  |  |
+| target_text | TEXT |  |  |  |
+| weight | INTEGER | yes |  | 10 |
+| progress_pct | INTEGER | yes |  | 0 |
+| goal_status | TEXT | yes |  | 'DRAFT' |
+| manager_note | TEXT |  |  |  |
+| agreed_by | TEXT |  |  |  |
+| agreed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cycle_id -> perf_cycles(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_perf_goals_site: site_id
+- ix_perf_goals_project: project_id
+- ix_perf_goals_cycle: cycle_id
+- ix_perf_goals_employee: employee_id, cycle_id
+- ix_perf_goals_company_id: company_id
+
+## perf_kpi_disputes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| kpi_value_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| dispute_status | TEXT | yes |  | 'OPEN' |
+| resolution | TEXT |  |  |  |
+| adjusted_value | REAL |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), kpi_value_id -> perf_kpi_values(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_perf_kpi_disputes_site: site_id
+- ix_perf_kpi_disputes_project: project_id
+- ix_perf_kpi_disputes_employee: employee_id, dispute_status
+- ix_perf_kpi_disputes_value: kpi_value_id
+- ix_perf_kpi_disputes_company_id: company_id
+
+## perf_kpi_values
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| kpi_code | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| value | REAL |  |  |  |
+| target_value | REAL | yes |  |  |
+| score | INTEGER |  |  |  |
+| sample_size | INTEGER | yes |  | 0 |
+| excluded_days | INTEGER | yes |  | 0 |
+| evidence_json | TEXT | yes |  | '{}' |
+| value_status | TEXT | yes |  | 'COMPUTED' |
+| adjusted_by | TEXT |  |  |  |
+| adjust_reason | TEXT |  |  |  |
+| computed_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_perf_kpi_values_site: site_id
+- ix_perf_kpi_values_project: project_id
+- ix_perf_kpi_values_status: company_id, value_status
+- ix_perf_kpi_values_employee: employee_id, period
+- ix_perf_kpi_values_company_id: company_id
+- ux_perf_kpi_values_key (unique): company_id, employee_id, kpi_code, period
+
+## perf_kpis
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| name_hi | TEXT |  |  |  |
+| applies_to_json | TEXT | yes |  | '{}' |
+| formula_ref | TEXT | yes |  |  |
+| unit | TEXT | yes |  | 'PERCENT' |
+| direction | TEXT | yes |  | 'HIGHER' |
+| target_value | REAL | yes |  |  |
+| weight | INTEGER | yes |  | 10 |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| kpi_status | TEXT | yes |  | 'DRAFT' |
+| activated_by | TEXT |  |  |  |
+| activated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_perf_kpis_site: site_id
+- ix_perf_kpis_project: project_id
+- ix_perf_kpis_status: company_id, kpi_status
+- ix_perf_kpis_company_id: company_id
+- ux_perf_kpis_code (unique): company_id, code
+
+## perf_reviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| cycle_id | INTEGER | yes |  |  |
+| stage | TEXT | yes |  | 'SELF' |
+| status | TEXT | yes |  | 'DRAFT' |
+| band | TEXT | yes |  | 'STANDARD' |
+| self_rating | INTEGER |  |  |  |
+| self_comments | TEXT |  |  |  |
+| self_at | TEXT |  |  |  |
+| manager_rating | INTEGER |  |  |  |
+| manager_comments | TEXT |  |  |  |
+| manager_by | TEXT |  |  |  |
+| manager_at | TEXT |  |  |  |
+| calibrated_rating | INTEGER |  |  |  |
+| calibration_reason | TEXT |  |  |  |
+| calibrated_by | TEXT |  |  |  |
+| calibrated_at | TEXT |  |  |  |
+| final_rating | INTEGER |  |  |  |
+| kpi_score | INTEGER |  |  |  |
+| goal_score | INTEGER |  |  |  |
+| development_plan | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| letter_doc_id | INTEGER |  |  |  |
+| letter_at | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cycle_id -> perf_cycles(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_perf_reviews_site: site_id
+- ix_perf_reviews_project: project_id
+- ix_perf_reviews_letter: letter_doc_id
+- ix_perf_reviews_status: company_id, status, stage
+- ix_perf_reviews_employee: employee_id
+- ix_perf_reviews_company_id: company_id
+- ux_perf_reviews_person (unique): cycle_id, employee_id
+- ux_perf_reviews_doc (unique): company_id, doc_no
+
 ## pol_acknowledgements
 
 | Column | Type | Not null | Key | Default |

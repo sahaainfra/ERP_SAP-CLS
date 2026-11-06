@@ -1308,3 +1308,18 @@ label.btn { position: relative; overflow: hidden; }
 .trn-qr-img { inline-size: min(100%, 16rem); }
 .trn-qr-img svg { inline-size: 100%; block-size: auto; background: var(--erp-color-bg-surface); }
 @media print { .trn-qr-img { inline-size: 12rem; } }
+
+/* Part 07.11: performance management */
+.prf-kpis { list-style: none; padding: 0; margin: var(--erp-space-3) 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--erp-space-3); }
+.prf-kpi { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-3); }
+.prf-kpi[data-tone="GREEN"] { border-inline-start: 4px solid var(--erp-color-status-success-fg); }
+.prf-kpi[data-tone="AMBER"] { border-inline-start: 4px solid var(--erp-color-status-warning-fg); }
+.prf-kpi[data-tone="RED"] { border-inline-start: 4px solid var(--erp-color-status-error-fg); }
+.prf-kpi-head { display: flex; justify-content: space-between; gap: var(--erp-space-2); align-items: center; }
+.prf-trend { display: flex; align-items: flex-end; gap: 4px; block-size: 3rem; margin: var(--erp-space-2) 0; }
+.prf-bar { flex: 1; block-size: 100%; display: flex; align-items: flex-end; background: var(--erp-color-status-muted-bg); border-radius: var(--erp-radius-sm); overflow: hidden; }
+.prf-bar > span { display: block; inline-size: 100%; background: var(--erp-color-status-success-fg); }
+.prf-stages { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); list-style: none; padding: 0; margin: var(--erp-space-3) 0; }
+.prf-stages li { padding: var(--erp-space-1) var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-muted-bg); color: var(--erp-color-status-muted-fg); font: var(--erp-type-caption); }
+.prf-stages li.prf-done { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
+.prf-stages li[aria-current="step"] { background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); font-weight: 600; }
