@@ -8708,6 +8708,214 @@ Indexes:
 - ix_msg_voice_company_id: company_id
 - ux_msg_voice_message (unique): message_id
 
+## mto_bbs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 0 |
+| title | TEXT | yes |  |  |
+| drawing_ref | TEXT | yes |  |  |
+| drawing_rev | TEXT |  |  |  |
+| member | TEXT | yes |  |  |
+| total_weight | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| released_at | TEXT |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_mto_bbs_drawing: company_id, drawing_ref
+- ix_mto_bbs_project: project_id
+- ix_mto_bbs_status: company_id, status
+- ix_mto_bbs_company_id: company_id
+- ux_mto_bbs_doc (unique): company_id, doc_no, revision_no
+
+## mto_bbs_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bbs_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| member | TEXT | yes |  |  |
+| bar_mark | TEXT | yes |  |  |
+| dia_mm | INTEGER | yes |  |  |
+| shape_code | TEXT | yes |  |  |
+| dim_a | INTEGER |  |  |  |
+| dim_b | INTEGER |  |  |  |
+| dim_c | INTEGER |  |  |  |
+| dim_d | INTEGER |  |  |  |
+| members_count | INTEGER | yes |  | 1 |
+| bars_each | INTEGER | yes |  |  |
+| nos | INTEGER | yes |  |  |
+| cut_length_m | INTEGER | yes |  | 0 |
+| total_length_m | INTEGER | yes |  | 0 |
+| unit_weight | INTEGER | yes |  | 0 |
+| weight_kg | INTEGER | yes |  | 0 |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bbs_id -> mto_bbs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mto_bbs_lines_dia: bbs_id, dia_mm
+- ix_mto_bbs_lines_bbs: bbs_id, line_no
+- ix_mto_bbs_lines_company_id: company_id
+
+## mto_material_requirements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| source_ref | TEXT | yes |  |  |
+| item_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| boq_item_ref | TEXT |  |  |  |
+| net_qty | INTEGER | yes |  |  |
+| wastage_pct | INTEGER | yes |  | 0 |
+| qty | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mto_material_requirements_project: project_id
+- ix_mto_material_requirements_item: item_id
+- ix_mto_material_requirements_source: source_type, source_id
+- ix_mto_material_requirements_company_id: company_id
+
+## mto_takeoff_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| takeoff_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| boq_item_ref | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| location | TEXT |  |  |  |
+| formula_code | TEXT | yes |  |  |
+| work_item_id | INTEGER |  |  |  |
+| material_item_id | INTEGER |  |  |  |
+| spec | TEXT |  |  |  |
+| nos | INTEGER | yes |  | 1000 |
+| length | INTEGER |  |  |  |
+| breadth | INTEGER |  |  |  |
+| height | INTEGER |  |  |  |
+| deduction | INTEGER | yes |  | 0 |
+| quantity | INTEGER | yes |  | 0 |
+| uom | TEXT | yes |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: material_item_id -> mdm_items(id), work_item_id -> mdm_items(id), takeoff_id -> mto_takeoffs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mto_takeoff_lines_material: material_item_id
+- ix_mto_takeoff_lines_work_item: work_item_id
+- ix_mto_takeoff_lines_takeoff: takeoff_id, line_no
+- ix_mto_takeoff_lines_company_id: company_id
+
+## mto_takeoffs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 0 |
+| kind | TEXT | yes |  | 'TAKEOFF' |
+| discipline | TEXT | yes |  | 'CIVIL' |
+| title | TEXT | yes |  |  |
+| tender_id | INTEGER |  |  |  |
+| estimate_id | INTEGER |  |  |  |
+| drawing_ref | TEXT | yes |  |  |
+| drawing_rev | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| released_at | TEXT |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: estimate_id -> est_estimates(id), tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mto_takeoffs_drawing: company_id, drawing_ref
+- ix_mto_takeoffs_estimate: estimate_id
+- ix_mto_takeoffs_tender: tender_id
+- ix_mto_takeoffs_project: project_id
+- ix_mto_takeoffs_status: company_id, status
+- ix_mto_takeoffs_company_id: company_id
+- ux_mto_takeoffs_doc (unique): company_id, doc_no, revision_no
+
 ## ntf_deliveries
 
 | Column | Type | Not null | Key | Default |

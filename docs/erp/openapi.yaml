@@ -5434,3 +5434,141 @@ paths:
     get:
       summary: "Print a version"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs:
+    get:
+      summary: "List the take-off sheet or MTOs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Start a take-off sheet or MTO"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoff-templates:
+    get:
+      summary: "The formula templates of the take-off"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}:
+    get:
+      summary: "Read a take-off sheet or MTO revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change the header of a draft take-off sheet or MTO"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft take-off sheet or MTO"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/lines:
+    put:
+      summary: "Save the lines of a take-off sheet or MTO (measured on the server)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/submit:
+    post:
+      summary: "Send a take-off sheet or MTO revision to the checker"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/withdraw:
+    post:
+      summary: "Withdraw a revision from the checker"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/cancel:
+    post:
+      summary: "Cancel an open revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/revisions:
+    post:
+      summary: "Make a new revision (a new drawing revision)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/amend:
+    post:
+      summary: "Revise a released revision (with a reason)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/history:
+    get:
+      summary: "Approvals and changes of a revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/delta:
+    get:
+      summary: "Delta against the previous released revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/explosion:
+    get:
+      summary: "Material requirements of a revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/apply:
+    post:
+      summary: "Feed the quantities of a released take-off into a draft estimate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/{id}/print:
+    get:
+      summary: "Print a take-off sheet or MTO"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs:
+    get:
+      summary: "List the bar bending schedules"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Start a bar bending schedule"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs-shapes:
+    get:
+      summary: "The IS 2502 shape code library and the bend deductions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs-summary:
+    get:
+      summary: "Steel of the released schedules by diameter"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}:
+    get:
+      summary: "Read a bar bending schedule revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change the header of a draft bar bending schedule"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft bar bending schedule"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/lines:
+    put:
+      summary: "Save the lines of a bar bending schedule (measured on the server)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/submit:
+    post:
+      summary: "Send a bar bending schedule revision to the checker"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/withdraw:
+    post:
+      summary: "Withdraw a revision from the checker"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/cancel:
+    post:
+      summary: "Cancel an open revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/revisions:
+    post:
+      summary: "Make a new revision (a new drawing revision)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/amend:
+    post:
+      summary: "Revise a released revision (with a reason)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/history:
+    get:
+      summary: "Approvals and changes of a revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/delta:
+    get:
+      summary: "Delta against the previous released revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/explosion:
+    get:
+      summary: "Material requirements of a revision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/{id}/print:
+    get:
+      summary: "Print a bar bending schedule"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/takeoffs/export:
+    get:
+      summary: "Export the take-off sheet or MTOs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bbs/export:
+    get:
+      summary: "Export the bar bending schedules"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

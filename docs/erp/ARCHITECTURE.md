@@ -986,3 +986,16 @@ Behind feature flag `ff.est.p0901` (new module `est`; needs 06.06 and 08.02). Co
 - **Masking** (BR-02, ADR-356): `est.estimate.cost`; list, export, print and the API leave costs and margins out without it.
 - **Events**: `est.estimate.{created,versioned,boq_imported,approved}`; 08.03 reads the approved estimate of a tender for the submission.
 - **Browser**: Estimates, New Estimate, Estimate (items, cost and margin, indirect costs, risk and tax, versions, approvals), Import Client BOQ, Version Comparison, Resource Summary; Hindi through the `est` namespace.
+
+## 78. Quantity take-off, material take-off and bar bending schedules (part 09.02)
+
+Behind feature flag `ff.est.p0902` (module `est`; needs 09.01). Code: `modules/est/mto.js` (take-offs, engineering MTOs, bar bending schedules, revisions, the checker's decision, deltas, the explosion, the summary by diameter, print), `mto-validators.js`, `mto-routes.js`; the Excel import `EST_MTO` in `integrations.js`; client pages in `src/client/modules/est`.
+
+- **Take-off sheets and engineering MTOs** (FR-01, FR-03, ADR-358): `/est/takeoffs` (list, export, create, get, update, delete, lines, submit, withdraw, cancel, revisions, amend, history, delta, explosion, apply, print), `/est/takeoff-templates`; formula templates per kind of work; DIRECT lines with specs for EPC packages (pasted or imported).
+- **Bar bending schedules** (FR-02, BR-01, ADR-359): `/est/bbs` (the same actions), `/est/bbs-shapes` (the shape code library and the deductions), `/est/bbs-summary` (released schedules of a project, or one schedule, by diameter).
+- **Workflows**: `MTO_TAKEOFF`, `MTO_BBS` (resolver `mto.checker`).
+- **Formulas**: `mto.measure`, `mto.bbs_line`, `mto.requirement` of the calculation engine.
+- **Deltas and requirements** (FR-04, FR-05, BR-02, ADR-360, ADR-361): against the previous released revision; requirements stored in `mto_material_requirements` on release.
+- **Estimate** (FR-06, ADR-362): `estimates.applyQuantities` of 09.01.
+- **Events**: `est.takeoff.released`, `est.bbs.released`.
+- **Browser**: Take-off Sheets, Take-off Sheet (with the drawing beside), Bar Bending Schedules, BBS Editor (shape code library, weight while typing, summary by diameter), BBS Summary by Diameter, Revision Delta Report, Material Requirement Explosion; Hindi through the `est` namespace.
