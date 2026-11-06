@@ -25,7 +25,7 @@ export const est = {
   history: async (id) => (await api.get(`/est/estimates/${id}/history`)).data,
   compare: async (id, withId) => (await api.get(`/est/estimates/${id}/compare?with=${withId}`)).data,
   resources: async (id, type) => (await api.get(`/est/estimates/${id}/resources?${q({ type })}`)).data,
-  analyses: async () => (await api.get('/mdm/analyses?status=APPROVED&current=1&limit=200')).data,
+  analyses: async () => (await api.get('/mdm/analyses?status=APPROVED&current=true&limit=200')).data,
   tenders: async () => (await api.get('/bd/tenders?filter[status]=APPROVED&pageSize=100')),
 };
 /** Rows pasted from a spreadsheet (tab-separated; the first row may be the header): section, section name, item no., description, unit, quantity, client rate. */
