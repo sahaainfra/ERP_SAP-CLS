@@ -1102,7 +1102,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/hr/training/certs', g: 'permission', k: 'hr.cert.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/training/certs/export', g: 'permission', k: 'hr.cert.export', s: null, scope: 'company', rate: 'export', audit: true },
   { m: 'POST', p: '/api/v1/hr/training/certs', g: 'permission', k: 'hr.training.own', s: 'parseCertCreate', scope: 'company', rate: 'write', audit: true },
-  { m: 'POST', p: '/api/v1/hr/training/certs/check', g: 'permission', k: 'hr.cert.view', s: 'parseCheck', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/hr/training/certs/check', g: 'permission', k: 'hr.cert.view', s: 'parseCheck', scope: 'company', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/hr/training/certs/:id', g: 'permission', k: 'hr.cert.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'PATCH', p: '/api/v1/hr/training/certs/:id', g: 'permission', k: 'hr.training.own', s: 'parseCertUpdate', scope: 'company', rate: 'write', audit: true },
   { m: 'DELETE', p: '/api/v1/hr/training/certs/:id', g: 'permission', k: 'hr.training.own', s: 'parseId', scope: 'company', rate: 'write', audit: true },
