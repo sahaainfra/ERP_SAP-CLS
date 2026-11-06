@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo } from '../core/pages/ui.jsx';
 import { TYPES, bd, dayIST } from './api.js';
+
+/** The query of the address, followed when a page moves to another record of the same route (the shell re-renders only when the path changes). */
+export function useSearch() {
+  const [search, setSearch] = useState(window.location.search);
+  useEffect(() => { const on = () => setSearch(window.location.search); window.addEventListener('popstate', on); return () => window.removeEventListener('popstate', on); }, []);
+  return new URLSearchParams(search);
+}
 
 /** The tabs of an object page (Details, Interactions, Documents, Approvals, Timeline, Related): a tab list a keyboard can walk with the arrow keys. */
 export function Tabs({ tabs, active, onChange, label }) {

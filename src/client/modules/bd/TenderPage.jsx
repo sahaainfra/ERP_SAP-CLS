@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { BID_TYPES, PORTALS, REGIONS, bd, inr, tdr } from './api.js';
+import { useFlagOn } from '../../platform/shell/api.js';
 import { Tabs, TimelinePanel } from './parts.jsx';
 import { AddendaTab, DocumentsTab, EligibilityTab, QueriesTab, ReadinessPanel, TasksTab } from './TenderParts.jsx';
 
@@ -27,6 +28,7 @@ export default function TenderPage({ create = false }) {
   const x = q.data;
   usePageTitle(create ? t('td.new') : x ? x.docNo : t('td.title'));
   const [v, setV] = useState(blank); const [mode, setMode] = useState(create ? 'form' : 'view'); const [reason, setReason] = useState('');
+  const bid = useFlagOn('ff.bd.p0803');
   const [tab, setTab] = useState('details'); const [error, setError] = useState(null); const [note, setNote] = useState(null); const [cap, setCap] = useState({ bcTurnover: '', bcCommitments: '' });
   useEffect(() => { if (x && mode === 'view') { setV(fromTender(x)); setCap({ bcTurnover: x.bcTurnover == null ? '' : String(x.bcTurnover), bcCommitments: x.bcCommitments == null ? '' : String(x.bcCommitments) }); } }, [x, mode]);
   useEffect(() => { if (create && fromOpp) bd.opp(fromOpp).then((o) => setV((p) => ({ ...p, clientPartnerId: o.clientPartnerId, nameOfWork: o.name, location: o.location ?? '', region: o.region ?? '', estCost: String(o.estValue ?? ''), opportunityId: o.id }))).catch(() => {}); }, [create, fromOpp]);
@@ -92,6 +94,11 @@ export default function TenderPage({ create = false }) {
           {x.can.cancel && <button type="button" className="btn" onClick={() => why((r) => tdr.tenderAct(id, 'cancel', { reason: r }), t('act.cancelled'))} data-testid="td-cancel">{t('act.cancel')}</button>}
           {x.can.delete && <button type="button" className="btn" onClick={async () => { if (window.confirm(t('act.confirmDelete'))) { const r = await run(() => tdr.deleteTender(id)); if (r) navigateTo('/bd/tenders', { force: true }); } }} data-testid="td-delete">{t('act.delete')}</button>}
           {x.can.print && <a className="btn" href={`/api/v1/bd/tenders/${id}/print`} target="_blank" rel="noreferrer">{t('act.print')}</a>}
+          {bid && x.status === 'APPROVED' && ['BID', 'READY'].includes(x.stage) && x.emd > 0 && <button type="button" className="btn" onClick={() => navigateTo(`/bd/emd/record?tenderId=${id}&kind=EMD`)} data-testid="td-request-emd">{t('td.requestEmd')}</button>}
+          {bid && x.status === 'APPROVED' && ['BID', 'READY'].includes(x.stage) && x.tenderFee > 0 && <button type="button" className="btn" onClick={() => navigateTo(`/bd/emd/record?tenderId=${id}&kind=FEE`)} data-testid="td-request-fee">{t('td.requestFee')}</button>}
+          {bid && x.status === 'APPROVED' && ['BID', 'READY', 'SUBMITTED', 'AWARDED', 'LOST'].includes(x.stage) && <button type="button" className="btn" onClick={() => navigateTo(`/bd/submission?tenderId=${id}`)} data-testid="td-submission-link">{t('sub.title')}</button>}
+          {bid && ['SUBMITTED', 'AWARDED', 'LOST'].includes(x.stage) && <button type="button" className="btn" onClick={() => navigateTo(`/bd/bid-results?tenderId=${id}`)} data-testid="td-results">{t('res.title')}</button>}
+          {bid && ['SUBMITTED', 'AWARDED', 'LOST'].includes(x.stage) && <button type="button" className="btn" onClick={() => navigateTo(`/bd/award?tenderId=${id}`)} data-testid="td-award">{t('aw.record')}</button>}
         </div>
       </header>
       <Tabs tabs={['details', 'eligibility', 'decision', 'documents', 'addenda', 'queries', 'tasks', 'approvals', 'related']} active={tab} onChange={setTab} label={t('td.title')} />

@@ -5,7 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { SCORE_KEYS, inr, tdr } from './api.js';
-import { TimelinePanel } from './parts.jsx';
+import { TimelinePanel, useSearch } from './parts.jsx';
 
 // Bid / No-Bid Evaluation (business development, part 08.02, FR-03): the tender is scored from 1 to 5 on strategic fit, margin, risk, capacity and competition; the weights make a score out of 100 and a recommendation; a decision against it needs reasons.
 // A colleague of the estimation team and then the director approve; the approved decision puts the tender in preparation (bid) or stops it (no bid).
@@ -17,7 +17,7 @@ const payload = (v) => ({ scores: Object.fromEntries(SCORE_KEYS.filter((k) => v.
 export default function BidDecisionPage() {
   const t = useT('bd');
   const qc = useQueryClient();
-  const params = new URLSearchParams(window.location.search);
+  const params = useSearch();
   const id = Number(params.get('id')) || null; const tenderId = Number(params.get('tenderId')) || null;
   const dq = useQuery({ queryKey: ['bd', 'decision', id], queryFn: () => tdr.decision(id), enabled: Boolean(id), retry: false });
   const d = dq.data;

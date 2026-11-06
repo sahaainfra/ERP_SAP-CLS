@@ -79,3 +79,43 @@ export const tdr = {
   dashboard: async () => (await api.get('/bd/tender-reports/dashboard')).data,
   calendar: async (f) => (await api.get(`/bd/tender-reports/calendar?${q(f)}`)).data,
 };
+
+export const CRED_TYPES = ['WORK_ORDER', 'COMPLETION_CERTIFICATE', 'FINANCIALS', 'MACHINERY', 'KEY_PERSON', 'REGISTRATION', 'OTHER'];
+export const EMD_MODES = ['BG', 'DD', 'ONLINE', 'EXEMPT'];
+export const aw = {
+  credentials: async (q2 = {}) => (await api.get(`/bd/credentials?${q(q2)}`)),
+  credential: async (id) => (await api.get(`/bd/credentials/${id}`)).data,
+  createCredential: async (b) => (await api.post('/bd/credentials', b, idem())).data,
+  updateCredential: async (id, b) => (await api.patch(`/bd/credentials/${id}`, b, idem())).data,
+  tenderCredentials: async (id) => (await api.get(`/bd/tenders/${id}/credentials`)).data,
+  linkCredential: async (id, b) => (await api.post(`/bd/tenders/${id}/credentials`, b, idem())).data,
+  unlinkCredential: async (linkId) => (await api.delete(`/bd/tender-credentials/${linkId}`)).data,
+  emd: async (id) => (await api.get(`/bd/emd/${id}`)).data,
+  tenderEmd: async (id) => (await api.get(`/bd/tenders/${id}/emd`)).data,
+  createEmd: async (b) => (await api.post('/bd/emd', b, idem())).data,
+  updateEmd: async (id, b) => (await api.patch(`/bd/emd/${id}`, b, idem())).data,
+  emdAct: async (id, action, b = {}) => (await api.post(`/bd/emd/${id}/${action}`, b, idem())).data,
+  ageing: async () => (await api.get('/bd/emd/ageing')).data,
+  submission: async (tenderId) => (await api.get(`/bd/tenders/${tenderId}/submission`)).data,
+  createSubmission: async (b) => (await api.post('/bd/submissions', b, idem())).data,
+  updateSubmission: async (id, b) => (await api.patch(`/bd/submissions/${id}`, b, idem())).data,
+  submissionAct: async (id, action, b = {}) => (await api.post(`/bd/submissions/${id}/${action}`, b, idem())).data,
+  results: async (tenderId) => (await api.get(`/bd/tenders/${tenderId}/results`)).data,
+  saveResults: async (tenderId, b) => (await api.put(`/bd/tenders/${tenderId}/results`, b, idem())).data,
+  analysis: async (f) => (await api.get(`/bd/competitor-reports?${q(f)}`)).data,
+  competitor: async (id) => (await api.get(`/bd/competitors/${id}`)).data,
+  negotiations: async (tenderId) => (await api.get(`/bd/tenders/${tenderId}/negotiations`)).data,
+  addNegotiation: async (tenderId, b) => (await api.post(`/bd/tenders/${tenderId}/negotiations`, b, idem())).data,
+  award: async (id) => (await api.get(`/bd/awards/${id}`)).data,
+  tenderAward: async (tenderId) => (await api.get(`/bd/tenders/${tenderId}/award`)).data,
+  createAward: async (b) => (await api.post('/bd/awards', b, idem())).data,
+  updateAward: async (id, b) => (await api.patch(`/bd/awards/${id}`, b, idem())).data,
+  awardAct: async (id, action, b = {}) => (await api.post(`/bd/awards/${id}/${action}`, b, idem())).data,
+};
+/** The ranks of an opening as the server works them out (shown while typing; the server decides): lowest qualified price is L1, equal prices share the rank. */
+export function rankPreview(rows) {
+  const priced = rows.map((r, i) => ({ i, q: r.qualified && r.quoted !== '' ? Number(r.quoted) : null })).filter((x) => x.q != null).sort((a, b) => a.q - b.q);
+  const out = rows.map(() => ({ rank: null, diff: null })); const l1 = priced[0]?.q ?? null; let rank = 0; let last = null;
+  priced.forEach((x, k) => { if (x.q !== last) { rank = k + 1; last = x.q; } out[x.i] = { rank, diff: l1 ? Math.round(((x.q - l1) / l1) * 10000) / 100 : 0 }; });
+  return out;
+}

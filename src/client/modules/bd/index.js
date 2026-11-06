@@ -14,6 +14,14 @@ import LeadsPage from './LeadsPage.jsx';
 import OpportunitiesPage from './OpportunitiesPage.jsx';
 import OpportunityPage from './OpportunityPage.jsx';
 import PipelinePage from './PipelinePage.jsx';
+import AwardPage from './AwardPage.jsx';
+import AwardsPage from './AwardsPage.jsx';
+import BidResultsPage from './BidResultsPage.jsx';
+import CompetitorsPage from './CompetitorsPage.jsx';
+import CredentialsPage from './CredentialsPage.jsx';
+import EmdPage from './EmdPage.jsx';
+import EmdRegisterPage from './EmdRegisterPage.jsx';
+import SubmissionPage from './SubmissionPage.jsx';
 
 registerModule({
   code: 'bd',
@@ -36,5 +44,13 @@ registerModule({
     { path: '/bd/bid-decisions', label: 'Bid / No-Bid', icon: 'erp.group.commercial', permission: 'bd.bid_decision.view', flag: 'ff.bd.p0802', Page: BidDecisionsPage },
     { path: '/bd/bid-decision', label: 'Bid / No-Bid Evaluation', icon: 'erp.group.commercial', permission: 'bd.bid_decision.view', flag: 'ff.bd.p0802', Page: BidDecisionPage },
     { path: '/bd/tender-calendar', label: 'Tender Calendar', icon: 'erp.group.commercial', permission: 'bd.tender.view', flag: 'ff.bd.p0802', Page: TenderCalendarPage },
+    { path: '/bd/credentials', label: 'Credentials Library', icon: 'erp.group.commercial', permission: 'bd.credential.view', flag: 'ff.bd.p0803', Page: CredentialsPage },
+    { path: '/bd/emd', label: 'EMD & Fee Register', icon: 'erp.group.commercial', permission: 'bd.emd.view', flag: 'ff.bd.p0803', Page: EmdRegisterPage },
+    { path: '/bd/emd/record', label: 'EMD / Tender Fee', icon: 'erp.group.commercial', permission: 'bd.emd.view', flag: 'ff.bd.p0803', Page: EmdPage },
+    { path: '/bd/submission', label: 'Bid Submission', icon: 'erp.group.commercial', permission: 'bd.submission.view', flag: 'ff.bd.p0803', Page: SubmissionPage },
+    { path: '/bd/bid-results', label: 'Bid Opening Results', icon: 'erp.group.commercial', permission: 'bd.award.view', flag: 'ff.bd.p0803', Page: BidResultsPage },
+    { path: '/bd/competitors', label: 'Competitor Analysis', icon: 'erp.group.commercial', permission: 'bd.competitor.view', flag: 'ff.bd.p0803', Page: CompetitorsPage },
+    { path: '/bd/award', label: 'Award / Loss', icon: 'erp.group.commercial', permission: 'bd.award.view', flag: 'ff.bd.p0803', Page: AwardPage },
+    { path: '/bd/awards', label: 'Awards & Losses', icon: 'erp.group.commercial', permission: 'bd.award.view', flag: 'ff.bd.p0803', Page: AwardsPage },
   ],
 });

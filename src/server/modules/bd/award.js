@@ -277,7 +277,7 @@ export function createAwardService({ db }) {
     },
   };
   function saveEmd(actor, e, b, action) {
-    const t = tenderOf(e.tender_id); const m = { kind: e.kind, mode: e.mode, amount: rupees(e.amount_minor), payee: e.payee, exemptionReason: e.exemption_reason, neededBy: e.needed_by, ...defined(b) }; delete m.version;
+    const t = tenderOf(e.tender_id); const m = /** @type {any} */ ({ kind: e.kind, mode: e.mode, amount: rupees(e.amount_minor), payee: e.payee, exemptionReason: e.exemption_reason, neededBy: e.needed_by, ...defined(b) }); delete m.version;
     if (b.mode && b.amount === undefined) m.amount = m.mode === 'EXEMPT' ? 0 : rupees(expectedOf(t, m.kind));
     const problems = emdProblems(actor, t, m); if (problems.length) throw badRequest('Some fields are not valid.', problems);
     db.prepare('UPDATE tdr_emd SET mode = ?, amount_minor = ?, payee = ?, exemption_reason = ?, needed_by = ?, refund_status = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(m.mode, toMinor(m.amount), m.payee ?? null, m.exemptionReason ?? null, m.neededBy ?? null, m.kind === 'FEE' || m.mode === 'EXEMPT' ? 'NOT_APPLICABLE' : 'NOT_DUE', actor.user, nowIso(), e.id);
@@ -389,7 +389,7 @@ export function createAwardService({ db }) {
   const results = {
     get(actor, tenderId) {
       need(actor, 'bd.award.view', 'see opening results'); const t = tenderFor(actor, tenderId); const rows = resultsOf(t.id); const us = rows.find((r) => r.isUs);
-      return { tenderId: t.id, tenderNo: t.doc_no, stage: t.stage, rows, ourRank: us?.rank ?? null, l1: rows.find((r) => r.rank === 1)?.quoted ?? null, ourDiffPct: us?.diffPct ?? null, canEdit: may(actor, 'bd.result.manage') && ['SUBMITTED'].includes(t.stage) };
+      return { tenderId: t.id, tenderNo: t.doc_no, stage: t.stage, rows, ourRank: us?.rank ?? null, l1: rows.find((r) => r.rank === 1)?.quoted ?? null, ourDiffPct: us?.diffPct ?? null, lostReasons: lostReasons(t.company_id), canEdit: may(actor, 'bd.result.manage') && ['SUBMITTED'].includes(t.stage) };
     },
     /** T-01: the whole opening is entered at once; the server ranks it. */
     save(actor, tenderId, b) {
