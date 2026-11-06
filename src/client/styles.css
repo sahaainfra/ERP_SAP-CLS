@@ -1323,3 +1323,9 @@ label.btn { position: relative; overflow: hidden; }
 .prf-stages li { padding: var(--erp-space-1) var(--erp-space-3); border-radius: var(--erp-radius-md); background: var(--erp-color-status-muted-bg); color: var(--erp-color-status-muted-fg); font: var(--erp-type-caption); }
 .prf-stages li.prf-done { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
 .prf-stages li[aria-current="step"] { background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); font-weight: 600; }
+
+/* Part 07.12: expense claims */
+.exp-lines td input, .exp-lines td select, .exp-lines td textarea { inline-size: 100%; min-inline-size: 5rem; }
+.exp-lines td > * + * { margin-block-start: var(--erp-space-1); }
+.exp-lines tr[data-flag="OVER_LIMIT"], .exp-lines tr[data-flag="OLD"], .exp-lines tr[data-flag="NO_RECEIPT"] { background: var(--erp-color-status-warning-bg); }
+.exp-lines tr[data-flag="DUPLICATE"] { background: var(--erp-color-status-error-bg); }

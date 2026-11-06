@@ -3258,6 +3258,280 @@ Indexes:
 - ix_ess_requests_company_id: company_id
 - ux_ess_requests_doc (unique): company_id, doc_no, revision_no
 
+## exp_advance_recoveries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| advance_id | INTEGER | yes |  |  |
+| claim_id | INTEGER |  |  |  |
+| kind | TEXT | yes |  |  |
+| rec_status | TEXT | yes |  | 'DONE' |
+| due_month | TEXT |  |  |  |
+| amount_minor | INTEGER | yes |  |  |
+| done_on | TEXT |  |  |  |
+| reference | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: claim_id -> exp_claims(id), advance_id -> exp_advances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_exp_recoveries_site: site_id
+- ix_exp_recoveries_project: project_id
+- ix_exp_recoveries_due: company_id, rec_status, due_month
+- ix_exp_recoveries_claim: claim_id
+- ix_exp_recoveries_advance: advance_id
+- ix_exp_recoveries_company_id: company_id
+
+## exp_advances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| advance_type | TEXT | yes |  |  |
+| amount_minor | INTEGER | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| recovery_mode | TEXT | yes |  | 'SETTLEMENT' |
+| instalments | INTEGER | yes |  | 1 |
+| balance_minor | INTEGER | yes |  | 0 |
+| travel_request_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| disbursed_at | TEXT |  |  |  |
+| disbursed_by | TEXT |  |  |  |
+| disbursed_ref | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: travel_request_id -> exp_travel_requests(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_exp_advances_site: site_id
+- ix_exp_advances_project: project_id
+- ix_exp_advances_travel: travel_request_id
+- ix_exp_advances_status: company_id, status
+- ix_exp_advances_employee: employee_id, status
+- ix_exp_advances_company_id: company_id
+- ux_exp_advances_doc (unique): company_id, doc_no
+
+## exp_claim_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| claim_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| category | TEXT | yes |  |  |
+| spend_date | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| amount_minor | INTEGER | yes |  |  |
+| gst_minor | INTEGER | yes |  | 0 |
+| vendor_name | TEXT |  |  |  |
+| vendor_gstin | TEXT |  |  |  |
+| invoice_no | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| km | INTEGER |  |  |  |
+| days | INTEGER |  |  |  |
+| limit_minor | INTEGER |  |  |  |
+| policy_flag | TEXT | yes |  | 'NONE' |
+| flag_text | TEXT |  |  |  |
+| justification | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), claim_id -> exp_claims(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_exp_claim_lines_site: site_id
+- ix_exp_claim_lines_project: project_id
+- ix_exp_claim_lines_file: file_id
+- ix_exp_claim_lines_cost_code: cost_code_id
+- ix_exp_claim_lines_duplicate: company_id, invoice_no, amount_minor
+- ix_exp_claim_lines_company_id: company_id
+- ux_exp_claim_lines_no (unique): claim_id, line_no
+
+## exp_claims
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| period_from | TEXT | yes |  |  |
+| period_to | TEXT | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| city_tier | TEXT | yes |  | 'T2' |
+| travel_request_id | INTEGER |  |  |  |
+| advance_id | INTEGER |  |  |  |
+| total_minor | INTEGER | yes |  | 0 |
+| gst_minor | INTEGER | yes |  | 0 |
+| advance_adjusted_minor | INTEGER | yes |  | 0 |
+| net_payable_minor | INTEGER | yes |  | 0 |
+| recoverable_minor | INTEGER | yes |  | 0 |
+| flag_count | INTEGER | yes |  | 0 |
+| level | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| passed_by | TEXT |  |  |  |
+| passed_at | TEXT |  |  |  |
+| paid_at | TEXT |  |  |  |
+| paid_ref | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: advance_id -> exp_advances(id), travel_request_id -> exp_travel_requests(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_exp_claims_site: site_id
+- ix_exp_claims_project: project_id
+- ix_exp_claims_advance: advance_id
+- ix_exp_claims_travel: travel_request_id
+- ix_exp_claims_status: company_id, status
+- ix_exp_claims_employee: employee_id, status
+- ix_exp_claims_company_id: company_id
+- ux_exp_claims_doc (unique): company_id, doc_no
+
+## exp_policies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| grade | TEXT | yes |  | '*' |
+| category | TEXT | yes |  | '*' |
+| city_tier | TEXT | yes |  | '*' |
+| limit_minor | INTEGER | yes |  | 0 |
+| per_diem_minor | INTEGER | yes |  | 0 |
+| mileage_rate_minor | INTEGER | yes |  | 0 |
+| receipt_above_minor | INTEGER |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| policy_status | TEXT | yes |  | 'DRAFT' |
+| activated_by | TEXT |  |  |  |
+| activated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_exp_policies_site: site_id
+- ix_exp_policies_project: project_id
+- ix_exp_policies_lookup: company_id, policy_status, category, grade, city_tier, effective_from
+- ix_exp_policies_company_id: company_id
+
+## exp_travel_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| from_place | TEXT | yes |  |  |
+| to_place | TEXT | yes |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT | yes |  |  |
+| mode | TEXT | yes |  | 'TRAIN' |
+| est_cost_minor | INTEGER | yes |  | 0 |
+| advance_minor | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_exp_travel_site: site_id
+- ix_exp_travel_project: project_id
+- ix_exp_travel_status: company_id, status
+- ix_exp_travel_employee: employee_id, status
+- ix_exp_travel_company_id: company_id
+- ux_exp_travel_doc (unique): company_id, doc_no
+
 ## fin_account_groups
 
 | Column | Type | Not null | Key | Default |

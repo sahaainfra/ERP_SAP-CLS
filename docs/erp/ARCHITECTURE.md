@@ -905,3 +905,15 @@ Behind feature flag `ff.hr.p0711` (module `hr`; needs 07.01 and 04.08). Code: `m
 - **Goals and feedback** (FR-02, FR-04): `/hr/performance/{goals,feedback}`.
 - **Reviews** (FR-05, ADR-327): `/hr/reviews` (launch, self, manager, calibrate, send-back, submit, withdraw, cancel, history, print, letter, export); workflow `HR_PERF_REVIEW` through resolvers `perf.manager` and `perf.skip`; the event `perf.review.approved` is for payroll (24.01).
 - **Browser**: My Performance, Team Performance, Goal Setting, Appraisal Review, Appraisal Reviews, Feedback & One-to-One, KPI Library & Cycles; Hindi through the `prf` namespace.
+
+## 72. Advances, expense claims and travel (part 07.12)
+
+Behind feature flag `ff.hr.p0712` (module `hr`; needs 07.01 and 04.02). Code: `modules/hr/expenses.js` (policies, claims and their checks, advances and recoveries, travel, the worklist, the analysis), `exp-routes.js`, `exp-validators.js`. Tables `exp_policies`, `exp_travel_requests`, `exp_advances`, `exp_claims`, `exp_claim_lines`, `exp_advance_recoveries`. Money in paise.
+
+- **Policies** (FR-04, ADR-329): `/hr/expenses/policies`; maker-checker activation; `policies.find` takes the most specific active one.
+- **Claims** (FR-03, FR-04, FR-05, ADR-330): `/hr/claims` (CRUD, preview, submit, withdraw, cancel, history, print, pass, paid, export); parameters `exp.claim.max_age_days`, `exp.receipt.threshold_minor`, `exp.duplicate.mode`; bill photos are files of the entity `exp_claim`.
+- **Advances** (FR-02, ADR-331): `/hr/advances` (CRUD, submit..., disburse) and `/hr/advances/recoveries` for payroll.
+- **Travel** (FR-01): `/hr/travel-requests`.
+- **Workflows**: `HR_EXP_CLAIM`, `HR_EXP_ADVANCE`, `HR_EXP_TRAVEL` with the resolver `exp.manager`; the worklist is `/hr/expenses/approvals` (flags shown; bulk decisions); `/hr/expenses/analysis` is the report.
+- **Events** (FR-06, ADR-332): `exp.travel.approved`, `exp.advance.{approved,disbursed,recovered,closed}`, `exp.claim.{approved,passed,paid}`; widget `exp.claims_to_pass`.
+- **Browser**: My Claims & Advances, New Expense Claim, Travel Request, Advance Request, Claim Approvals, Expense Analysis, Expense Policies; Hindi through the `exp` namespace.

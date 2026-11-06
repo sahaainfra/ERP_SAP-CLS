@@ -374,3 +374,33 @@ export const perf = {
   removeReview: async (id) => (await api.delete(`/hr/reviews/${id}`)).data,
   history: async (id) => (await api.get(`/hr/reviews/${id}/history`)).data,
 };
+
+// part 07.12: advances, expense claims and travel
+export const exp = {
+  claim: async (id) => (await api.get(`/hr/claims/${id}`)).data,
+  previewClaim: async (b) => (await api.post('/hr/claims/preview', b)).data,
+  createClaim: async (b) => (await api.post('/hr/claims', b, idem())).data,
+  updateClaim: async (id, b) => (await api.patch(`/hr/claims/${id}`, b, idem())).data,
+  claimAct: async (id, action, b) => (await api.post(`/hr/claims/${id}/${action}`, b ?? {}, idem())).data,
+  removeClaim: async (id) => (await api.delete(`/hr/claims/${id}`)).data,
+  claimHistory: async (id) => (await api.get(`/hr/claims/${id}/history`)).data,
+  advance: async (id) => (await api.get(`/hr/advances/${id}`)).data,
+  createAdvance: async (b) => (await api.post('/hr/advances', b, idem())).data,
+  updateAdvance: async (id, b) => (await api.patch(`/hr/advances/${id}`, b, idem())).data,
+  advanceAct: async (id, action, b) => (await api.post(`/hr/advances/${id}/${action}`, b ?? {}, idem())).data,
+  removeAdvance: async (id) => (await api.delete(`/hr/advances/${id}`)).data,
+  advanceHistory: async (id) => (await api.get(`/hr/advances/${id}/history`)).data,
+  travel: async (id) => (await api.get(`/hr/travel-requests/${id}`)).data,
+  createTravel: async (b) => (await api.post('/hr/travel-requests', b, idem())).data,
+  updateTravel: async (id, b) => (await api.patch(`/hr/travel-requests/${id}`, b, idem())).data,
+  travelAct: async (id, action, b) => (await api.post(`/hr/travel-requests/${id}/${action}`, b ?? {}, idem())).data,
+  removeTravel: async (id) => (await api.delete(`/hr/travel-requests/${id}`)).data,
+  travelHistory: async (id) => (await api.get(`/hr/travel-requests/${id}/history`)).data,
+  approvals: async () => (await api.get('/hr/expenses/approvals')).data,
+  bulk: async (b) => (await api.post('/hr/expenses/approvals/bulk', b, idem())).data,
+  analysis: async (p) => (await api.get(`/hr/expenses/analysis?${q(p)}`)).data,
+  policies: async () => (await api.get('/hr/expenses/policies')).data,
+  savePolicy: async (b) => (await api.put('/hr/expenses/policies', b, idem())).data,
+  policyAct: async (id, action) => (await api.post(`/hr/expenses/policies/${id}/${action}`, {}, idem())).data,
+  policyHistory: async (id) => (await api.get(`/hr/expenses/policies/${id}/history`)).data,
+};

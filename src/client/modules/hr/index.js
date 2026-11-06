@@ -19,6 +19,13 @@ import MyPerformancePage from './MyPerformancePage.jsx';
 import ReviewPage from './ReviewPage.jsx';
 import ReviewsPage from './ReviewsPage.jsx';
 import TeamPerformancePage from './TeamPerformancePage.jsx';
+import AdvanceRequestPage from './AdvanceRequestPage.jsx';
+import ClaimApprovalsPage from './ClaimApprovalsPage.jsx';
+import ClaimPage from './ClaimPage.jsx';
+import ExpenseAnalysisPage from './ExpenseAnalysisPage.jsx';
+import ExpensePoliciesPage from './ExpensePoliciesPage.jsx';
+import MyExpensesPage from './MyExpensesPage.jsx';
+import TravelRequestPage from './TravelRequestPage.jsx';
 import LetterRequestPage from './LetterRequestPage.jsx';
 import MyAttendancePage from './MyAttendancePage.jsx';
 import MyHrPage from './MyHrPage.jsx';
@@ -147,5 +154,12 @@ registerModule({
     { path: '/performance/reviews', label: 'Appraisal Reviews', icon: 'erp.group.workforce', permission: 'hr.review.view', flag: 'ff.hr.p0711', Page: ReviewsPage },
     { path: '/performance/feedback', label: 'Feedback & One-to-One', icon: 'erp.group.workforce', permission: 'hr.perf.own', flag: 'ff.hr.p0711', Page: FeedbackPage },
     { path: '/performance/kpis', label: 'KPI Library & Cycles', icon: 'erp.action.settings', permission: 'hr.perf.configure', flag: 'ff.hr.p0711', Page: KpiLibraryPage },
+    { path: '/expenses', label: 'My Claims & Advances', icon: 'erp.group.workforce', permission: 'hr.claim.view', flag: 'ff.hr.p0712', Page: MyExpensesPage },
+    { path: '/expenses/claim', label: 'New Expense Claim', icon: 'erp.action.create', permission: 'hr.claim.view', flag: 'ff.hr.p0712', Page: ClaimPage },
+    { path: '/expenses/travel', label: 'Travel Request', icon: 'erp.action.create', permission: 'hr.travel_request.view', flag: 'ff.hr.p0712', Page: TravelRequestPage },
+    { path: '/expenses/advance', label: 'Advance Request', icon: 'erp.action.create', permission: 'hr.advance.view', flag: 'ff.hr.p0712', Page: AdvanceRequestPage },
+    { path: '/expenses/approvals', label: 'Claim Approvals', icon: 'erp.action.approve', permission: 'hr.claim.approve', flag: 'ff.hr.p0712', Page: ClaimApprovalsPage },
+    { path: '/expenses/analysis', label: 'Expense Analysis', icon: 'erp.group.workforce', permission: 'hr.expense.report', flag: 'ff.hr.p0712', Page: ExpenseAnalysisPage },
+    { path: '/expenses/policies', label: 'Expense Policies', icon: 'erp.action.settings', permission: 'hr.expense.configure', flag: 'ff.hr.p0712', Page: ExpensePoliciesPage },
   ],
 });
