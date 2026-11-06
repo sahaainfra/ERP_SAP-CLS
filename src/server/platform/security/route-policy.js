@@ -1186,7 +1186,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/hr/claims', g: 'permission', k: 'hr.claim.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/claims/export', g: 'permission', k: 'hr.claim.export', s: null, scope: 'company', rate: 'export', audit: true },
   { m: 'POST', p: '/api/v1/hr/claims', g: 'permission', k: 'hr.claim.create', s: 'parseClaimCreate', scope: 'company', rate: 'write', audit: true },
-  { m: 'POST', p: '/api/v1/hr/claims/preview', g: 'permission', k: 'hr.claim.create', s: 'parseClaimPreview', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/hr/claims/preview', g: 'permission', k: 'hr.claim.create', s: 'parseClaimPreview', scope: 'company', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/hr/claims/:id', g: 'permission', k: 'hr.claim.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'PATCH', p: '/api/v1/hr/claims/:id', g: 'permission', k: 'hr.claim.edit', s: 'parseClaimUpdate', scope: 'company', rate: 'write', audit: true },
   { m: 'DELETE', p: '/api/v1/hr/claims/:id', g: 'permission', k: 'hr.claim.delete', s: 'parseId', scope: 'company', rate: 'write', audit: true },
