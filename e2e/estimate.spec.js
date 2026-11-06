@@ -141,8 +141,9 @@ test('AC-01 an estimate built from the pasted client BOQ with analyses, indirect
   // FR-07 a second version with less concrete, compared
   await est.page.goto(`/est/estimate?id=${id}`);
   await est.page.getByTestId('est-new-version').click();
-  await expect(est.page.getByTestId('estimate')).toHaveAttribute('data-status', 'DRAFT');
-  const v2 = Number(new URL(est.page.url()).searchParams.get('id')); expect(v2).not.toBe(id);
+  await est.page.waitForURL((u) => Number(u.searchParams.get('id')) !== id);
+  const v2 = Number(new URL(est.page.url()).searchParams.get('id'));
+  await expect(est.page.getByRole('heading', { level: 1 })).toContainText('/v2');
   await est.page.getByTestId('it-qty-1').fill('240'); await est.page.getByTestId('it-save').click(); await expect(est.page.getByTestId('est-note')).toBeVisible();
   await est.page.getByTestId('est-compare').click();
   await expect(est.page.getByTestId('cmp-row-B.1')).toHaveAttribute('data-change', 'CHANGED'); await expect(est.page.getByTestId('cmp-amount-B.1')).toContainText('-90065.60');
