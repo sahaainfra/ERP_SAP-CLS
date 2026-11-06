@@ -5174,3 +5174,186 @@ paths:
     get:
       summary: "Print a decision"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/credentials:
+    get:
+      summary: "List the credentials"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Create a credential"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/credentials/export:
+    get:
+      summary: "Export the credentials"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/credentials/{id}:
+    get:
+      summary: "Read a credential"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Update a credential"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a credential"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/credentials:
+    get:
+      summary: "The credentials package of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add to the credentials package of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tender-credentials/{id}:
+    delete:
+      summary: "Unlink a credential from a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd:
+    get:
+      summary: "List the EMD or fees"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Create a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/export:
+    get:
+      summary: "Export the EMD or fees"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/ageing:
+    get:
+      summary: "Refund ageing of the EMDs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}:
+    get:
+      summary: "Read a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Update a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}/submit:
+    post:
+      summary: "Send a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}/withdraw:
+    post:
+      summary: "Withdraw a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}/cancel:
+    post:
+      summary: "Cancel a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}/amend:
+    post:
+      summary: "Amend a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}/issue:
+    post:
+      summary: "Record the instrument of a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}/refund:
+    post:
+      summary: "Record the refund of a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/emd/{id}/print:
+    get:
+      summary: "Print a EMD or fee"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/emd:
+    get:
+      summary: "The EMD and fee of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/submission:
+    get:
+      summary: "The submission of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/submissions:
+    post:
+      summary: "Create a submission"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/submissions/{id}:
+    get:
+      summary: "Read a submission"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Update a submission"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/submissions/{id}/submit:
+    post:
+      summary: "Send a submission"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/submissions/{id}/withdraw:
+    post:
+      summary: "Withdraw a submission"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/submissions/{id}/amend:
+    post:
+      summary: "Amend a submission"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/submissions/{id}/record:
+    post:
+      summary: "Record the portal submission of a submission"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/results:
+    get:
+      summary: "The opening results of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: "Enter the opening results of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/competitor-reports:
+    get:
+      summary: "Competitor analysis by competitor, sector, region and month"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/competitors/{id}:
+    get:
+      summary: "Read a competitor"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/negotiations:
+    get:
+      summary: "The negotiation rounds of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add to the negotiation rounds of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/awards:
+    get:
+      summary: "List the award or losss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Create a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/awards/export:
+    get:
+      summary: "Export the award or losss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/awards/{id}:
+    get:
+      summary: "Read a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Update a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/awards/{id}/submit:
+    post:
+      summary: "Send a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/awards/{id}/withdraw:
+    post:
+      summary: "Withdraw a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/awards/{id}/cancel:
+    post:
+      summary: "Cancel a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/awards/{id}/print:
+    get:
+      summary: "Print a award or loss"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/award:
+    get:
+      summary: "The award or loss of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

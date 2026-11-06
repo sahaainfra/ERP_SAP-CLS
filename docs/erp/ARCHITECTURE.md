@@ -960,3 +960,16 @@ Behind feature flag `ff.bd.p0802` (module `bd`; needs 08.01 and 04.10). Code: `m
 - **Calendar and reminders** (FR-07, T-02, ADR-347): `/bd/tender-reports/calendar`, `/dashboard`; job `bd.tender_daily`; widget `bd.tender_deadlines`.
 - **Events**: `bd.tender.{created,registered,amended,cancelled,bid_decided,addendum_issued,query_answered,ready,submitted}`.
 - **Browser**: Tender Dashboard, Tender Register, Tender, Bid / No-Bid, Bid / No-Bid Evaluation, Tender Calendar; Hindi through the `bd` namespace.
+
+## 76. Prequalification, EMD and tender fee, bid submission, competitor analysis and award (part 08.03)
+
+Behind feature flag `ff.bd.p0803` (module `bd`; needs 08.02). Code: `modules/bd/award.js` (credentials, EMD and fee, submissions, opening results, analysis, negotiations, awards, the daily cycle), `award-validators.js`, `award-routes.js`, `award-integrations.js` (Excel import `BD_CREDENTIAL`); client pages in `src/client/modules/bd`.
+
+- **Credentials library** (FR-01): `/bd/credentials` (CRUD, export); a tender's package `/bd/tenders/:id/credentials`, `/bd/tender-credentials/:id`; files through the entity `tdr_credential`. An expired credential is not linked.
+- **EMD and fee** (FR-02, BR-02, ADR-348, ADR-349): `/bd/emd` (CRUD, submit, withdraw, cancel, amend, issue, refund, print, export, ageing), `/bd/tenders/:id/emd`; workflow `TDR_EMD` (EST colleague, ACCMGR, CFO); the instrument is recorded by accounts (`bd.emd.instrument`) and masked for others; refunds (`bd.emd.refund`) due from the result, aged in four buckets; job `bd.emd_daily` (scheduler `bd.emd_daily_followups`, 01:55) follows them up and warns before a guarantee lapses.
+- **Submission** (FR-03, BR-01, ADR-350): `/bd/tenders/:id/submission`, `/bd/submissions` (create, update, submit, withdraw, amend, record); workflow `TDR_SUBMISSION` (EST colleague, then DIR); the checklist from `tdr.submission_checklist`; the bid security read from the approved and issued EMD and fee; recording the portal upload calls `markSubmitted` of 08.02.
+- **Opening results** (FR-04, T-01, ADR-351): `/bd/tenders/:id/results` (GET, PUT); ranks by `rankBids`; event `bd.tender.opened`; competitors in `tdr_competitors`.
+- **Competitor analysis** (FR-05): `/bd/competitor-reports` (by competitor, sector, region, month; filters sector, region, period), `/bd/competitors/:id`.
+- **Negotiation, award and loss** (FR-06, FR-07, ADR-352): `/bd/tenders/:id/negotiations`, `/bd/awards` (CRUD, submit, withdraw, cancel, print, export), `/bd/tenders/:id/award`; workflow `TDR_AWARD` (EST colleague, then DIR when won); approval calls `markOutcome` (08.02), `awardFromTender` / `loseFromTender` (08.01), makes the EMD refund due and publishes `tdr.tender.awarded` / `tdr.tender.lost`.
+- **Events**: `bd.emd.{requested,issued,refund_changed}`, `bd.submission.approved`, `bd.tender.opened`, `tdr.tender.awarded`, `tdr.tender.lost`.
+- **Browser**: Credentials Library, EMD & Fee Register (with refund ageing), EMD / Tender Fee, Bid Submission, Bid Opening Results, Competitor Analysis, Award / Loss, Awards & Losses; the tender page links to each by stage. Hindi through the `bd` namespace.

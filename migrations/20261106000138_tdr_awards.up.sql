@@ -265,3 +265,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_tdr_awards_doc ON tdr_awards (company_id, d
 CREATE INDEX IF NOT EXISTS ix_tdr_awards_company_id ON tdr_awards (company_id);
 CREATE INDEX IF NOT EXISTS ix_tdr_awards_tender ON tdr_awards (tender_id, status);
 CREATE INDEX IF NOT EXISTS ix_tdr_awards_outcome ON tdr_awards (company_id, outcome);
+CREATE INDEX IF NOT EXISTS ix_tdr_submissions_status ON tdr_submissions (company_id, status);
+CREATE INDEX IF NOT EXISTS ix_tdr_awards_status ON tdr_awards (company_id, status);
