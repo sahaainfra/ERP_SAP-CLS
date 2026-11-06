@@ -932,3 +932,17 @@ Behind feature flag `ff.hr.p0713` (module `hr`; needs 07.01). Code: `modules/hr/
 - **Disciplinary** (FR-07, ADR-336): `/hr/disciplinary` (open, step, respond); views audited. HR uses the restricted page `/disciplinary`; an employee reaches their own cases at `/disciplinary/mine` (from the show-cause notification), which is not in the navigation.
 - **Events**: `hr.separation.{approved,cancelled}`, `hr.clearance.cleared`, `hr.fnf.released`, `hr.grievance.{raised,resolved}`, `hr.disciplinary.action_taken`.
 - **Browser**: Resignation, Separation, Separations (with termination and interview analysis), My Clearance Items, Grievances, Raise Grievance, Grievance, Disciplinary Cases; Hindi through the `sep` namespace.
+
+## 74. CRM: leads, clients, contacts, interactions and the opportunity pipeline (part 08.01)
+
+Behind feature flag `ff.bd.p0801` (new module `bd`; needs 06.04). Code: `modules/bd/crm.js` (leads, opportunities, workflows), `crm-ops.js` (interactions, contacts, clients, board, forecast, win and loss, dashboard), `crm-validators.js`, `crm-routes.js`, `crm-integrations.js` (lookups, files, Excel import), `constants.js`, `kit.js`.
+
+- **Two states of an opportunity** (ADR-337): its approval status is the go-ahead for tendering (workflow `BD_OPPORTUNITY`: business development review by a colleague, then the director above ₹10 crore); its stage is the pipeline position, moved by `POST /opportunities/:id/track`. Stages from Pre-bid need the go-ahead; probability follows the stage (`bd.stage_probability`) unless a reason is given (BR-02).
+- **Win** (BR-01, ADR-338): only `awardFromTender` (called by 08.03; no route) or the direct award approved by the director (`BD_DIRECT_AWARD`).
+- **Leads** (FR-01): `/bd/leads`; BANT-like score, review by a colleague (`BD_LEAD`, resolver `bd.reviewer`: other BD users, else the director), conversion to an opportunity.
+- **Amendments** (ADR-339): an approved record is locked; `POST /:id/amend` keeps a snapshot, returns it to draft and is approved again under the workflow document id `<id>-A<n>`.
+- **Clients** (FR-02): read from the partner master (role Client; prospects allowed); contacts with the influence map in `bd_contacts`; Client 360 at `/bd/clients/:id`.
+- **Interactions** (FR-03): `/bd/interactions`; a next action makes a task (04.08) and is reminded once by the job `bd.daily`.
+- **Forecast** (FR-05, T-01): `/bd/reports/forecast` = Σ round(value × probability) per opportunity, by month, sector, region, stage, owner or client; `/reports/win-loss`, `/reports/board`, `/reports/dashboard`.
+- **Events**: `bd.lead.{created,qualified,converted,amended,cancelled}`, `bd.opportunity.{created,approved,amended,cancelled,stage_changed,lost,won,converted}`, `bd.interaction.logged`.
+- **Browser**: Business Development Dashboard, Leads, Lead, Opportunities, Opportunity, Opportunity Pipeline (board), Clients, Client 360; Hindi through the `bd` namespace.

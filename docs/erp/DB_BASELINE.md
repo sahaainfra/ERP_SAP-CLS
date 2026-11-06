@@ -1003,6 +1003,273 @@ Indexes:
 - ix_att_visits_company_id: company_id
 - ux_att_visits_doc (unique): company_id, doc_no
 
+## bd_amendments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| amendment_no | INTEGER | yes |  |  |
+| snapshot_json | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| amended_by | TEXT | yes |  |  |
+| amended_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_bd_amendments (unique): entity, entity_id, amendment_no
+- ix_bd_amendments_company_id: company_id
+
+## bd_contacts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| designation | TEXT |  |  |  |
+| email | TEXT |  |  |  |
+| mobile | TEXT |  |  |  |
+| influence_role | TEXT | yes |  | 'INFLUENCER' |
+| influence_level | INTEGER | yes |  | 3 |
+| stance | TEXT | yes |  | 'NEUTRAL' |
+| reports_to_id | INTEGER |  |  |  |
+| relationship_owner | TEXT |  |  |  |
+| mdm_contact_id | INTEGER |  |  |  |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: reports_to_id -> bd_contacts(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bd_contacts_reports: reports_to_id
+- ix_bd_contacts_partner: partner_id
+- ix_bd_contacts_company_id: company_id
+
+## bd_interactions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| client_partner_id | INTEGER |  |  |  |
+| type | TEXT | yes |  |  |
+| interaction_date | TEXT | yes |  |  |
+| participants_json | TEXT | yes |  | '[]' |
+| notes | TEXT | yes |  |  |
+| email_ref | TEXT |  |  |  |
+| next_action | TEXT |  |  |  |
+| next_action_date | TEXT |  |  |  |
+| next_action_owner | TEXT |  |  |  |
+| next_done | INTEGER | yes |  | 0 |
+| task_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: client_partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bd_interactions_next: company_id, next_done, next_action_date
+- ix_bd_interactions_client: client_partner_id
+- ix_bd_interactions_entity: entity, entity_id
+- ix_bd_interactions_company_id: company_id
+
+## bd_leads
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| source | TEXT | yes |  |  |
+| source_ref | TEXT |  |  |  |
+| title | TEXT | yes |  |  |
+| client_partner_id | INTEGER |  |  |  |
+| client_name | TEXT |  |  |  |
+| contact_name | TEXT |  |  |  |
+| phone | TEXT |  |  |  |
+| email | TEXT |  |  |  |
+| sector | TEXT | yes |  |  |
+| location | TEXT |  |  |  |
+| region | TEXT |  |  |  |
+| est_value_minor | INTEGER | yes |  | 0 |
+| qualification_json | TEXT | yes |  | '{}' |
+| qual_score | INTEGER | yes |  | 0 |
+| owner | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| opportunity_id | INTEGER |  |  |  |
+| converted_at | TEXT |  |  |  |
+| converted_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: client_partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bd_leads_source: company_id, source
+- ix_bd_leads_client: client_partner_id
+- ix_bd_leads_owner: company_id, owner
+- ix_bd_leads_status: company_id, status
+- ix_bd_leads_company_id: company_id
+- ux_bd_leads_doc (unique): company_id, doc_no
+
+## bd_opportunities
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| lead_id | INTEGER |  |  |  |
+| client_partner_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| sector | TEXT | yes |  |  |
+| location | TEXT |  |  |  |
+| region | TEXT |  |  |  |
+| est_value_minor | INTEGER | yes |  | 0 |
+| probability_pct | INTEGER | yes |  | 0 |
+| probability_default_pct | INTEGER | yes |  | 0 |
+| probability_reason | TEXT |  |  |  |
+| expected_tender_date | TEXT |  |  |  |
+| expected_award_date | TEXT |  |  |  |
+| stage | TEXT | yes |  | 'IDENTIFIED' |
+| competitors_json | TEXT | yes |  | '[]' |
+| owner | TEXT | yes |  |  |
+| lost_reason_code | TEXT |  |  |  |
+| lost_reason | TEXT |  |  |  |
+| lost_to | TEXT |  |  |  |
+| won_via | TEXT |  |  |  |
+| won_value_minor | INTEGER |  |  |  |
+| closed_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| award_status | TEXT | yes |  | 'NONE' |
+| award_instance_id | INTEGER |  |  |  |
+| award_reason | TEXT |  |  |  |
+| award_value_minor | INTEGER |  |  |  |
+| converted_at | TEXT |  |  |  |
+| converted_by | TEXT |  |  |  |
+| tender_ref | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: client_partner_id -> mdm_partners(id), lead_id -> bd_leads(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bd_opportunities_sector: company_id, sector, region
+- ix_bd_opportunities_award: company_id, expected_award_date
+- ix_bd_opportunities_lead: lead_id
+- ix_bd_opportunities_client: client_partner_id
+- ix_bd_opportunities_owner: company_id, owner
+- ix_bd_opportunities_status: company_id, status
+- ix_bd_opportunities_stage: company_id, stage
+- ix_bd_opportunities_company_id: company_id
+- ux_bd_opportunities_doc (unique): company_id, doc_no
+
+## bd_stage_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| opportunity_id | INTEGER | yes |  |  |
+| from_stage | TEXT |  |  |  |
+| to_stage | TEXT | yes |  |  |
+| probability_pct | INTEGER | yes |  |  |
+| reason | TEXT |  |  |  |
+| changed_by | TEXT | yes |  |  |
+| changed_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: opportunity_id -> bd_opportunities(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bd_stage_log_opportunity: opportunity_id
+- ix_bd_stage_log_company_id: company_id
+
 ## col_comments
 
 | Column | Type | Not null | Key | Default |

@@ -4827,3 +4827,178 @@ paths:
     post:
       summary: "The employee answers the show-cause"
       responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/bd/leads:
+    get:
+      summary: "Leads in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Leads in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/export:
+    get:
+      summary: "Export the leads"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}:
+    get:
+      summary: "A lead"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "A lead"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "A lead"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}/submit:
+    post:
+      summary: "Send the lead for qualification"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}/withdraw:
+    post:
+      summary: "Withdraw a lead from review"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}/cancel:
+    post:
+      summary: "Cancel a lead"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}/amend:
+    post:
+      summary: "Amend a qualified lead (back to review)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}/convert:
+    post:
+      summary: "Convert a qualified lead to an opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}/history:
+    get:
+      summary: "History of a lead"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/leads/{id}/print:
+    get:
+      summary: "Print a lead"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities:
+    get:
+      summary: "Opportunities in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Opportunities in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/export:
+    get:
+      summary: "Export the opportunities"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}:
+    get:
+      summary: "An opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "An opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "An opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/submit:
+    post:
+      summary: "Ask for the go-ahead for tendering"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/withdraw:
+    post:
+      summary: "Withdraw the go-ahead request"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/cancel:
+    post:
+      summary: "Cancel an opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/amend:
+    post:
+      summary: "Amend an approved opportunity (back to the go-ahead)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/track:
+    post:
+      summary: "Move the opportunity in the pipeline (stage, probability, dates, competitors, owner)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/lose:
+    post:
+      summary: "Mark lost with the reason"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/direct-award:
+    post:
+      summary: "Ask the director to approve a direct award (a win without a tender)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/convert:
+    post:
+      summary: "Convert to a tender (event bd.opportunity.converted)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/history:
+    get:
+      summary: "History of an opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/opportunities/{id}/print:
+    get:
+      summary: "Print an opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/interactions:
+    get:
+      summary: "Interactions of a lead, opportunity or client"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Interactions of a lead, opportunity or client"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/interactions/mine:
+    get:
+      summary: "My follow-ups"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/interactions/{id}/done:
+    post:
+      summary: "Mark the next action done"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/interactions/{id}:
+    delete:
+      summary: "An interaction"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/clients:
+    get:
+      summary: "Clients and prospects with the pipeline in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/clients/{id}:
+    get:
+      summary: "Client 360"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/clients/{id}/contacts:
+    get:
+      summary: "Contacts and the influence map of a client"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Contacts and the influence map of a client"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/contacts/{id}:
+    patch:
+      summary: "A contact"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "A contact"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/reports/dashboard:
+    get:
+      summary: "Business development dashboard"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/reports/forecast:
+    get:
+      summary: "Weighted forecast (value times probability) by month, sector, region, stage, owner or client"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/reports/win-loss:
+    get:
+      summary: "Win and loss analysis"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/reports/board:
+    get:
+      summary: "Pipeline board by stage"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/lookups:
+    get:
+      summary: "Lookups of the module"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/lookups/{name}:
+    get:
+      summary: "A lookup (clients, owners)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

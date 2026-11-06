@@ -210,7 +210,7 @@ export function createCrmService({ db }) {
     },
   };
   function saveLead(actor, l, b, action, reason = null) {
-    const cur = leadFields(l); const m = { ...cur, ...defined(b) }; delete m.version; delete m.submit; delete m.comment;
+    const cur = leadFields(l); const m = /** @type {any} */ ({ ...cur, ...defined(b) }); delete m.version; delete m.submit; delete m.comment;
     const problems = leadProblems(actor, m); if (problems.length) throw badRequest('Some fields are not valid.', problems);
     const q = qualOf(m.qualification);
     db.prepare('UPDATE bd_leads SET source = ?, source_ref = ?, title = ?, client_partner_id = ?, client_name = ?, contact_name = ?, phone = ?, email = ?, sector = ?, location = ?, region = ?, est_value_minor = ?, qualification_json = ?, qual_score = ?, owner = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?')
@@ -460,7 +460,7 @@ export function createCrmService({ db }) {
     },
   };
   function saveOpp(actor, o, b, action, reason = null) {
-    const cur = oppFields(o); const m = { ...cur, ...defined(b) }; delete m.version; delete m.submit; delete m.comment;
+    const cur = oppFields(o); const m = /** @type {any} */ ({ ...cur, ...defined(b) }); delete m.version; delete m.submit; delete m.comment;
     const problems = oppProblems(actor, m, { stage: o.stage });
     const pr = probabilityOf(actor.companyId, o.stage, b.probability !== undefined ? b.probability : o.probability_pct, b.probability !== undefined ? b.probabilityReason : o.probability_reason); if (pr.problem) problems.push(pr.problem);
     if (problems.length) throw badRequest('Some fields are not valid.', problems);

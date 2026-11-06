@@ -194,8 +194,15 @@ CREATE TABLE IF NOT EXISTS bd_stage_log (
   site_id     INTEGER,
   created_by  TEXT,
   created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_by  TEXT,
+  updated_at  TEXT,
+  version     INTEGER NOT NULL DEFAULT 1,
+  is_active   INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+  deleted_at  TEXT,
+  deleted_by  TEXT,
   source_type TEXT,
-  source_id   TEXT
+  source_id   TEXT,
+  remarks     TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_bd_stage_log_company_id ON bd_stage_log (company_id);
 CREATE INDEX IF NOT EXISTS ix_bd_stage_log_opportunity ON bd_stage_log (opportunity_id);
@@ -214,8 +221,15 @@ CREATE TABLE IF NOT EXISTS bd_amendments (
   site_id     INTEGER,
   created_by  TEXT,
   created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_by  TEXT,
+  updated_at  TEXT,
+  version     INTEGER NOT NULL DEFAULT 1,
+  is_active   INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+  deleted_at  TEXT,
+  deleted_by  TEXT,
   source_type TEXT,
-  source_id   TEXT
+  source_id   TEXT,
+  remarks     TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_bd_amendments_company_id ON bd_amendments (company_id);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bd_amendments ON bd_amendments (entity, entity_id, amendment_no);
