@@ -5,6 +5,11 @@ import CrewPunchPage from './CrewPunchPage.jsx';
 import KioskPage from './KioskPage.jsx';
 import PunchPage from './PunchPage.jsx';
 import TodayAttendancePage from './TodayAttendancePage.jsx';
+import LetterRequestPage from './LetterRequestPage.jsx';
+import MyAttendancePage from './MyAttendancePage.jsx';
+import MyHrPage from './MyHrPage.jsx';
+import MyTeamPage from './MyTeamPage.jsx';
+import ProfileChangePage from './ProfileChangePage.jsx';
 import ContractorPage from './ContractorPage.jsx';
 import ContractorsPage from './ContractorsPage.jsx';
 import PrintCardsPage from './PrintCardsPage.jsx';
@@ -109,5 +114,10 @@ registerModule({
     { path: '/labour/contractors/contractor', label: 'Contractor compliance', icon: 'erp.action.info', permission: 'hr.worker.view', flag: 'ff.hr.p0708', Page: ContractorPage },
     { path: '/labour/wages', label: 'Wage Rates & Minimum Wages', icon: 'erp.action.info', permission: 'hr.worker.view', flag: 'ff.hr.p0708', Page: WageRatesPage },
     { path: '/labour/cards', label: 'Print Labour ID Cards', icon: 'erp.action.create', permission: 'hr.worker.print', flag: 'ff.hr.p0708', Page: PrintCardsPage },
+    { path: '/my-hr', label: 'My HR', icon: 'erp.group.workforce', permission: 'hr.ess.view', flag: 'ff.hr.p0709', Page: MyHrPage },
+    { path: '/my-hr/attendance', label: 'My Attendance', icon: 'erp.action.history', permission: 'hr.ess.view', flag: 'ff.hr.p0709', Page: MyAttendancePage },
+    { path: '/my-hr/profile', label: 'Profile Change Request', icon: 'erp.action.create', permission: 'hr.ess.view', flag: 'ff.hr.p0709', Page: ProfileChangePage },
+    { path: '/my-hr/letters', label: 'Letter Request', icon: 'erp.action.create', permission: 'hr.ess.letter.create', flag: 'ff.hr.p0709', Page: LetterRequestPage },
+    { path: '/my-team', label: 'My Team', icon: 'erp.group.workforce', permission: 'hr.ess.team', flag: 'ff.hr.p0709', Page: MyTeamPage },
   ],
 });

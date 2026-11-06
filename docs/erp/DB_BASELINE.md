@@ -3211,6 +3211,53 @@ Indexes:
 - ix_eng_sample_docs_status: company_id, status
 - ux_eng_sample_docs_no (unique): company_id, doc_no
 
+## ess_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| request_type | TEXT | yes |  | 'LETTER' |
+| letter_type | TEXT | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| addressed_to | TEXT |  |  |  |
+| payload_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| band | TEXT | yes |  | 'STANDARD' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| generated_doc_id | INTEGER |  |  |  |
+| issued_at | TEXT |  |  |  |
+| issued_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ess_requests_generated: generated_doc_id
+- ix_ess_requests_root_id: root_id
+- ix_ess_requests_status: company_id, status
+- ix_ess_requests_employee: employee_id, status
+- ix_ess_requests_company_id: company_id
+- ux_ess_requests_doc (unique): company_id, doc_no, revision_no
+
 ## fin_account_groups
 
 | Column | Type | Not null | Key | Default |

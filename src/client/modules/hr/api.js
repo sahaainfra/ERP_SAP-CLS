@@ -295,3 +295,19 @@ export const lab = {
     applicable: async (f) => (await api.get(`/hr/labour/wage-rates/applicable?${q(f)}`)).data,
   },
 };
+
+// part 07.09: employee and manager self-service
+export const ess = {
+  home: async () => (await api.get('/hr/ess/home')).data,
+  attendance: async (month) => (await api.get(`/hr/ess/attendance?${q({ month })}`)).data,
+  profileChanges: async () => (await api.get('/hr/ess/profile-changes')).data,
+  team: async (date) => (await api.get(`/hr/ess/team?${q({ date })}`)).data,
+  letters: async (scope) => (await api.get(`/hr/ess/letters?${q({ scope })}`)).data,
+  createLetter: async (b) => (await api.post('/hr/ess/letters', b, idem())).data,
+  submitLetter: async (id) => (await api.post(`/hr/ess/letters/${id}/submit`, {}, idem())).data,
+  withdrawLetter: async (id, reason) => (await api.post(`/hr/ess/letters/${id}/withdraw`, { reason }, idem())).data,
+  cancelLetter: async (id, reason) => (await api.post(`/hr/ess/letters/${id}/cancel`, { reason }, idem())).data,
+  removeLetter: async (id) => (await api.delete(`/hr/ess/letters/${id}`)).data,
+  issueLetter: async (id, b) => (await api.post(`/hr/ess/letters/${id}/issue`, b ?? {}, idem())).data,
+  amendMine: async (b) => (await api.post('/hr/employees/me/changes', b, idem())).data,
+};

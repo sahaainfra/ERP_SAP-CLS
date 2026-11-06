@@ -131,7 +131,7 @@ test('T-01 BR-01 statutory and bank details are masked in the API, the list and 
   assert.equal(asPm.status, 200, JSON.stringify(asPm.json));
   assert.equal(asPm.json.data.accessLevel, 'team');
   assert.equal(asPm.json.data.statutory.pan, '••••••234F');
-  assert.equal(asPm.json.data.banks[0].account, '••••••9012');
+  assert.deepEqual(asPm.json.data.banks, [], 'a manager in the reporting line is given no bank accounts at all (07.09 repair; they were masked before)');
   assert.equal(asPm.json.data.masked, true);
   const raw = JSON.stringify(asPm.json);
   for (const secret of ['ABCPK1234F', '123456789012', '100200300400', 'Rakesh Kulkarni\u0000']) assert.equal(raw.includes(secret), false, `${secret} must not reach a manager`);

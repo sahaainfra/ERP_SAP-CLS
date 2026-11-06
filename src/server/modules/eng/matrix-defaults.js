@@ -29,6 +29,7 @@ export const DEFAULT_MATRICES = [
   { docType: 'HR_LV_ADJUST', label: 'Leave balance adjustment', owner: 'HRMGR', financial: false, rules: [rule('Any adjustment', [], ['HRMGR'])] },
   { docType: 'HR_WORKER', label: 'Contract worker registration', owner: 'HRMGR', financial: false, rules: [rule('Any registration', [], ['WSUP|SUBCO', 'HRMGR'])] },
   { docType: 'HR_LAB_WAGE', label: 'Wage rate or minimum wage', owner: 'HRMGR', financial: true, rules: [rule('Contract rate', [{ field: 'band', op: 'eq', value: 'CONTRACT' }], ['HRMGR', 'COMMGR']), rule('Minimum wage notification', [], ['HRMGR'])] },
+  { docType: 'HR_ESS_LETTER', label: 'Letter request (certificate)', owner: 'HRMGR', financial: false, rules: [rule('Any letter', [], ['HRMGR'])] },
   { docType: 'HR_DEPLOYMENT', label: 'Deployment to a project or site', owner: 'HRMGR', financial: false, rules: [rule('Outside the site plan or beyond its headcount', [{ field: 'band', op: 'eq', value: 'OUTSIDE_PLAN' }], ['PM|HRMGR', 'PD']), rule('Within the site plan', [], ['PM|HRMGR'])] },
   { docType: 'HR_EMPLOYEE', label: 'New employee activation', owner: 'HRMGR', financial: false, rules: [rule('Any new employee', [], ['HRMGR'])] },
   { docType: 'HR_EMP_PROFILE', label: 'Change of personal details of an employee', owner: 'HRMGR', financial: false, rules: [rule('Any change', [], ['HRMGR'])] },

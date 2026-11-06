@@ -872,3 +872,14 @@ Behind feature flag `ff.hr.p0708` (module `hr`; needs 07.03 and the partner mast
 - **Cards** (FR-05, ADR-316): `POST /hr/workers/cards` returns the cards with their QR as SVG; the kiosk and the crew punch accept workers.
 - **Events**: `lab.worker.registered`, `.updated`, `.clearance_changed`, `.blacklisted`, `.reinstated`, `lab.contractor.compliance_changed`, `lab.contractor.licence_expiring`, `lab.wage_rate.approved`; widget `lab.licences_expiring`.
 - **Browser**: Workers Register, Register Worker, Worker, Labour Contractors, Contractor compliance, Wage Rates & Minimum Wages, Print Labour ID Cards.
+
+## 69. Employee & manager self-service (part 07.09)
+
+Behind feature flag `ff.hr.p0709` (module `hr`; needs 07.06 and 07.07). Code: `modules/hr/ess.js` (my home and attendance, the team, the letters), `ess-routes.js`, `ess-validators.js`. Table `ess_requests` (letters).
+
+- **My HR / My Attendance** (FR-01): `GET /hr/ess/home`, `/attendance`, `/profile-changes`; always the caller's own employee (422 `NO_EMPLOYEE` if the user has none).
+- **Profile changes** (ADR-317): the page posts `POST /hr/employees/me/changes` of 07.01.
+- **My Team** (FR-02, ADR-318): `GET /hr/ess/team` (reportees by recursive query, presence on a day, approvals waiting by kind, away in 14 days), `GET /hr/ess/team/members/:id` (404 unless in the line, non-sensitive fields).
+- **Letters** (FR-03, ADR-319): `/hr/ess/letters` (create, update, delete, submit, withdraw, cancel, history, issue, content); workflow `HR_ESS_LETTER` (HR manager); issue publishes a CERTIFICATE record and generates the PDF with the template library.
+- **Events**: `ess.letter.approved`, `ess.letter.issued`; widget `ess.team_present`.
+- **Browser**: My HR, My Attendance, Profile Change Request, Letter Request, My Team; Hindi through the `ess` namespace (ADR-320).
