@@ -41,3 +41,43 @@ export function preview(costRate, markupPct, quantity) {
   if (!Number.isFinite(c) || costRate === '' || costRate == null) return { rate: null, amount: null };
   const rate = Math.round(c * (1 + m / 100) * 100) / 100; return { rate, amount: Math.round(rate * qn * 100) / 100 };
 }
+
+// Part 09.02: take-off sheets, engineering MTOs and bar bending schedules.
+export const DISCIPLINES = ['CIVIL', 'STRUCTURAL', 'PIPING', 'ELECTRICAL', 'MECHANICAL', 'OTHER'];
+export const DIAS = [6, 8, 10, 12, 16, 20, 25, 28, 32, 36, 40];
+export const mto = {
+  takeoff: async (id) => (await api.get(`/est/takeoffs/${id}`)).data,
+  createTakeoff: async (b) => (await api.post('/est/takeoffs', b, idem())).data,
+  updateTakeoff: async (id, b) => (await api.patch(`/est/takeoffs/${id}`, b, idem())).data,
+  takeoffLines: async (id, b) => (await api.put(`/est/takeoffs/${id}/lines`, b, idem())).data,
+  takeoffAct: async (id, action, b = {}) => (await api.post(`/est/takeoffs/${id}/${action}`, b, idem())).data,
+  removeTakeoff: async (id) => (await api.delete(`/est/takeoffs/${id}`)).data,
+  templates: async () => (await api.get('/est/takeoff-templates')).data,
+  takeoffs: async (f) => (await api.get(`/est/takeoffs?${q(f)}`)),
+  bbs: async (id) => (await api.get(`/est/bbs/${id}`)).data,
+  bbsList: async (f) => (await api.get(`/est/bbs?${q(f)}`)),
+  createBbs: async (b) => (await api.post('/est/bbs', b, idem())).data,
+  bbsLines: async (id, b) => (await api.put(`/est/bbs/${id}/lines`, b, idem())).data,
+  bbsAct: async (id, action, b = {}) => (await api.post(`/est/bbs/${id}/${action}`, b, idem())).data,
+  removeBbs: async (id) => (await api.delete(`/est/bbs/${id}`)).data,
+  shapes: async () => (await api.get('/est/bbs-shapes')).data,
+  summary: async (f) => (await api.get(`/est/bbs-summary?${q(f)}`)).data,
+  delta: async (kind, id, withId) => (await api.get(`/est/${kind === 'bbs' ? 'bbs' : 'takeoffs'}/${id}/delta?${q({ with: withId })}`)).data,
+  explosion: async (kind, id) => (await api.get(`/est/${kind === 'bbs' ? 'bbs' : 'takeoffs'}/${id}/explosion`)).data,
+  history: async (kind, id) => (await api.get(`/est/${kind === 'bbs' ? 'bbs' : 'takeoffs'}/${id}/history`)).data,
+};
+const r3 = (n) => Math.round(n * 1000) / 1000;
+/** The quantity of a measurement line while typing (mto.measure on the server). */
+export function measurePreview(tpl, l) {
+  if (!tpl) return null; if (tpl.code === 'DIRECT') return l.quantity === '' ? null : Number(l.quantity);
+  const v = (d) => (tpl.dims.includes(d) ? Number(l[d]) : 1); if (tpl.dims.some((d) => l[d] === '' || l[d] == null)) return null;
+  return r3(Number(l.nos || 1) * v('length') * v('breadth') * v('height') - Number(l.deduction || 0));
+}
+/** The cut length, total length and weight of a bar mark while typing (mto.bbs_line on the server). */
+export function bendPreview(shape, deductions, l) {
+  if (!shape) return null; const legs = Object.entries(shape.legs ?? {}).reduce((s, [k, c]) => (l[k] === '' || l[k] == null || Number.isNaN(s) ? NaN : s + Number(l[k]) * Number(c)), 0);
+  const dia = Number(l.dia); const nos = Number(l.membersCount || 1) * Number(l.barsEach || 0); if (Number.isNaN(legs) || !dia || !nos) return null;
+  const bendD = Object.entries(shape.bends ?? {}).reduce((s, [k, n]) => s + Number(n) * Number(deductions?.[k] ?? 0), 0);
+  const cut = r3(legs + ((shape.hooks ?? 0) * (shape.hookD ?? 0) - bendD) * dia / 1000); const total = r3(cut * nos); const unit = Math.floor((dia * dia / 162) * 1000) / 1000;
+  return { nos, cut, total, unit, weight: r3(total * unit) };
+}
