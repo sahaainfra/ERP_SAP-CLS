@@ -9,6 +9,7 @@ import { SECTORS, esc, json, nowIso, rupees, same, toMinor } from './constants.j
 import { crmOf, rid, wfDoc } from './crm.js';
 import { createKit } from './kit.js';
 import { tendersOf } from './tender.js';
+import { estimatesOf } from '../est/estimate.js';
 
 // Prequalification, EMD and tender fee, submission, opening, competitors, negotiation and award (part 08.03). The credentials library (work orders, completion certificates, financials, machinery, key people) is kept once and linked to the tenders it qualifies. The EMD and
 // the tender fee of a tender are asked of finance by a chain (estimation, the accounts manager, the CFO), the instrument (bank guarantee, demand draft, online payment) is recorded by accounts and the refund is followed from the result. The final bid goes through a
@@ -329,8 +330,11 @@ export function createAwardService({ db }) {
       if (db.prepare("SELECT 1 FROM tdr_submissions WHERE tender_id = ? AND deleted_at IS NULL AND status NOT IN ('CANCELLED', 'REJECTED')").get(t.id)) throw conflict('The submission of this tender is prepared already.');
       const list = param(actor.companyId, 'tdr.submission_checklist'); const items = (Array.isArray(list) ? list : CHECKLIST).map(([code, label]) => ({ code, label, done: false, note: null, by: null, at: null }));
       const no = nextDoc(actor, SUBMISSION_DOC, 'tdr_submissions', 'SUB');
-      const id = Number(db.prepare("INSERT INTO tdr_submissions (company_id, doc_no, doc_date, tender_id, checklist_json, estimate_minor, estimate_source, estimate_ref, bid_amount_minor, status, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, 'MANUAL', ?, ?, 'DRAFT', ?, 'tdr_tender', ?)")
-        .run(actor.companyId, no, today(), t.id, JSON.stringify(items), b.estimate == null ? null : toMinor(b.estimate), b.estimateRef ?? null, b.bidAmount == null ? null : toMinor(b.bidAmount), actor.user, String(t.id)).lastInsertRowid);
+      // FR-03: the price of the approved estimate (09.01) when there is one and none is typed; otherwise the estimate is typed (D-383)
+      const est = b.estimate == null ? estimatesOf(db)?.estimates.approvedForTender(actor.companyId, t.id) ?? null : null;
+      const estimate = est ? est.total_selling : b.estimate == null ? null : toMinor(b.estimate);
+      const id = Number(db.prepare("INSERT INTO tdr_submissions (company_id, doc_no, doc_date, tender_id, checklist_json, estimate_minor, estimate_source, estimate_ref, bid_amount_minor, status, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, 'tdr_tender', ?)")
+        .run(actor.companyId, no, today(), t.id, JSON.stringify(items), estimate, est ? 'ESTIMATE' : 'MANUAL', est ? `${est.doc_no}/v${est.version_no}` : b.estimateRef ?? null, b.bidAmount == null ? (est ? est.total_selling : null) : toMinor(b.bidAmount), actor.user, String(t.id)).lastInsertRowid);
       writeAudit(db, { entity: 'tdr_submissions', entityId: id, action: 'create', newValues: { docNo: no, tender: t.doc_no }, actor: actor.user, companyId: actor.companyId });
       return submissions.get(actor, id);
     },
@@ -344,7 +348,7 @@ export function createAwardService({ db }) {
       const m = { ...s, checklist_json: JSON.stringify(items), estimate_minor: b.estimate === undefined ? s.estimate_minor : b.estimate === null ? null : toMinor(b.estimate), estimate_ref: b.estimateRef === undefined ? s.estimate_ref : b.estimateRef, bid_amount_minor: b.bidAmount === undefined ? s.bid_amount_minor : b.bidAmount === null ? null : toMinor(b.bidAmount), adjustment_reason: b.adjustmentReason === undefined ? s.adjustment_reason : b.adjustmentReason };
       const problems = subProblems(actor, m, tenderOf(s.tender_id)); if (problems.length) throw badRequest('Some fields are not valid.', problems);
       const adj = m.bid_amount_minor != null && m.estimate_minor != null ? m.bid_amount_minor - m.estimate_minor : 0;
-      db.prepare('UPDATE tdr_submissions SET checklist_json = ?, estimate_minor = ?, estimate_ref = ?, bid_amount_minor = ?, adjustment_minor = ?, adjustment_reason = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(m.checklist_json, m.estimate_minor, m.estimate_ref ?? null, m.bid_amount_minor, adj, m.adjustment_reason ?? null, actor.user, nowIso(), s.id);
+      db.prepare('UPDATE tdr_submissions SET checklist_json = ?, estimate_minor = ?, estimate_source = ?, estimate_ref = ?, bid_amount_minor = ?, adjustment_minor = ?, adjustment_reason = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(m.checklist_json, m.estimate_minor, m.estimate_minor !== s.estimate_minor || m.estimate_ref !== s.estimate_ref ? 'MANUAL' : s.estimate_source, m.estimate_ref ?? null, m.bid_amount_minor, adj, m.adjustment_reason ?? null, actor.user, nowIso(), s.id);
       writeAudit(db, { entity: 'tdr_submissions', entityId: s.id, action: 'update', oldValues: { bidAmount: rupees(s.bid_amount_minor) }, newValues: { bidAmount: rupees(m.bid_amount_minor), done: items.filter((i) => i.done).length }, actor: actor.user, companyId: actor.companyId });
       return submissions.get(actor, s.id);
     },

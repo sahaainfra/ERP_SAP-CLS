@@ -19,6 +19,7 @@ import './modules/pol/index.js';
 import './modules/mdm/index.js';
 import './modules/hr/index.js';
 import './modules/bd/index.js';
+import './modules/est/index.js';
 import './modules/fin/index.js';
 import { initAuth } from './platform/api/index.js';
 import { installPrintLogging } from './platform/audit/index.js';

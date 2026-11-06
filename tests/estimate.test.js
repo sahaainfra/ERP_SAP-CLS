@@ -236,6 +236,10 @@ test('BR-02 roles and masking: QS and project managers see quantities and sellin
   const te = await t.call(est1, 'POST', `${E}/estimates`, { tenderId: tn.id, region: 'MH' });
   assert.equal(te.status, 201, JSON.stringify(te.json)); assert.deepEqual([te.json.data.title, te.json.data.tender.docNo], ['Four-laning of NH-48 package 3', tn.docNo]);
   assert.equal((await t.call(est1, 'POST', `${E}/estimates`, {})).status, 400, 'a tender or a project');
+  // approved, it is the estimate the bid submission of 08.03 starts from
+  const tp = (await t.call(est1, 'PUT', `${E}/estimates/${te.json.data.id}/items`, { items: [{ ...BOQ[0], mode: 'RATE', costRate: '5000', markupPct: '10' }], version: te.json.data.rowVersion })).json.data;
+  const tsub = (await t.call(est1, 'POST', `${E}/estimates/${tp.id}/submit`, {})).json.data; await t.act(est2, tsub.workflowInstanceId); await t.act(dir, tsub.workflowInstanceId);
+  const ap = estimatesOf(t.api.db).estimates.approvedForTender(1, tn.id); assert.deepEqual([ap.id, ap.total_selling], [tp.id, 55000000], '5500 x 100 = 5,50,000.00 in paise');
   // draft delete by its maker only; the flag hides everything
   assert.equal((await t.call(est2, 'DELETE', `${E}/estimates/${own.id}`)).status, 422);
   assert.equal((await t.call(est1, 'DELETE', `${E}/estimates/${own.id}`)).status, 200);
