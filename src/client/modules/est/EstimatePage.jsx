@@ -26,7 +26,7 @@ export default function EstimatePage() {
   const e = q.data;
   usePageTitle(e ? e.ref : t('obj.title'));
   const [tab, setTab] = useState('items'); const [error, setError] = useState(null); const [note, setNote] = useState(null);
-  if (!id) return <ErrorState error={new Error(t('obj.noId'))} />;
+  if (!id) return <section aria-labelledby="est-h" data-testid="estimate-none"><h1 id="est-h">{t('obj.title')}</h1><p className="muted">{t('obj.noId')} <Link to="/est/estimates">{t('list.title')}</Link></p></section>;
   if (q.error?.status === 403) return <NoPermission what={t('list.title')} permission="est.estimate.view" />;
   if (q.isPending) return <Skeleton label={t('obj.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
