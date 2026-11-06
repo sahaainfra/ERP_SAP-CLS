@@ -229,7 +229,7 @@ test('FR-03 FR-04 crews: a supervisor keeps the members of their own crews only;
   const stranger = t.emp();
   assert.throws(() => svc.crews.addMember(act, crew.json.data.id, { personType: 'EMPLOYEE', personId: stranger, fromDate: day(-1), toDate: null }), /not deployed at this site/);
   assert.throws(() => svc.crews.addMember(act, crew.json.data.id, { personType: 'EMPLOYEE', personId: a, fromDate: day(0), toDate: null }), /already in the crew/);
-  assert.throws(() => svc.crews.addMember(act, crew.json.data.id, { personType: 'WORKER', personId: 1, fromDate: day(0), toDate: null }), (e) => /labour register/.test(JSON.stringify(e.details)));
+  assert.throws(() => svc.crews.addMember(act, crew.json.data.id, { personType: 'WORKER', personId: 1, fromDate: day(0), toDate: null }), (e) => /worker does not exist/.test(JSON.stringify(e.details)));
   const viaApi = await t.call(hr1, 'POST', `/crews/${crew.json.data.id}/members`, { personType: 'EMPLOYEE', personId: b, fromDate: day(-1) });
   assert.equal(viaApi.status, 201, JSON.stringify(viaApi.json));
   const ended = await t.call(hr1, 'POST', `/crews/${crew.json.data.id}/members/${viaApi.json.data.members.find((m) => m.personId === b).id}/end`, { toDate: day(0) });
