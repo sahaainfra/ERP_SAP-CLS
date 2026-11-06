@@ -5,6 +5,13 @@ import CrewPunchPage from './CrewPunchPage.jsx';
 import KioskPage from './KioskPage.jsx';
 import PunchPage from './PunchPage.jsx';
 import TodayAttendancePage from './TodayAttendancePage.jsx';
+import CertificationsPage from './CertificationsPage.jsx';
+import ComplianceReportPage from './ComplianceReportPage.jsx';
+import MyTrainingPage from './MyTrainingPage.jsx';
+import SkillMatrixPage from './SkillMatrixPage.jsx';
+import TrainingCalendarPage from './TrainingCalendarPage.jsx';
+import TrainingSessionPage from './TrainingSessionPage.jsx';
+import TrainingSetupPage from './TrainingSetupPage.jsx';
 import LetterRequestPage from './LetterRequestPage.jsx';
 import MyAttendancePage from './MyAttendancePage.jsx';
 import MyHrPage from './MyHrPage.jsx';
@@ -119,5 +126,12 @@ registerModule({
     { path: '/my-hr/profile', label: 'Profile Change Request', icon: 'erp.action.create', permission: 'hr.ess.view', flag: 'ff.hr.p0709', Page: ProfileChangePage },
     { path: '/my-hr/letters', label: 'Letter Request', icon: 'erp.action.create', permission: 'hr.ess.letter.create', flag: 'ff.hr.p0709', Page: LetterRequestPage },
     { path: '/my-team', label: 'My Team', icon: 'erp.group.workforce', permission: 'hr.ess.team', flag: 'ff.hr.p0709', Page: MyTeamPage },
+    { path: '/training', label: 'Training Calendar', icon: 'erp.group.workforce', permission: 'hr.session.view', flag: 'ff.hr.p0710', Page: TrainingCalendarPage },
+    { path: '/training/session', label: 'Training Session', icon: 'erp.group.workforce', permission: 'hr.session.view', flag: 'ff.hr.p0710', Page: TrainingSessionPage },
+    { path: '/training/certifications', label: 'Certifications & Licences', icon: 'erp.group.workforce', permission: 'hr.cert.view', flag: 'ff.hr.p0710', Page: CertificationsPage },
+    { path: '/training/skills', label: 'Skill Matrix', icon: 'erp.group.workforce', permission: 'hr.skill.view', flag: 'ff.hr.p0710', Page: SkillMatrixPage },
+    { path: '/training/compliance', label: 'Mandatory Training Compliance', icon: 'erp.group.workforce', permission: 'hr.training.report', flag: 'ff.hr.p0710', Page: ComplianceReportPage },
+    { path: '/training/mine', label: 'My Training', icon: 'erp.group.workforce', permission: 'hr.training.own', flag: 'ff.hr.p0710', Page: MyTrainingPage },
+    { path: '/training/setup', label: 'Training Set-up', icon: 'erp.action.settings', permission: 'hr.training.configure', flag: 'ff.hr.p0710', Page: TrainingSetupPage },
   ],
 });

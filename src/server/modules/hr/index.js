@@ -17,9 +17,12 @@ import { registerRoutes } from './reg-routes.js';
 import { bindLeave, createLeaveService } from './leave.js';
 import { leaveRoutes } from './lv-routes.js';
 import './lab-integrations.js';
+import './trn-integrations.js';
 import { bindLabour, createLabourService } from './labour.js';
 import { labourRoutes } from './lab-routes.js';
 import { bindEss, createEssService } from './ess.js';
+import { bindTraining, createTrainingService } from './training.js';
+import { trainingRoutes } from './trn-routes.js';
 import { essRoutes } from './ess-routes.js';
 import { punchRoutes } from './punch-routes.js';
 import { bindAttendance, createAttendanceService } from './attendance.js';
@@ -76,13 +79,24 @@ for (const [type, description] of [
   ['lab.wage_rate.approved', 'A minimum wage notification or a contract rate was approved: data { docNo, kind, contractorId, tradeCode, skillCategory, stateCode, payBasis, rate, effectiveFrom }. Labour payroll (24.03) and costing take the rate from its date.'],
   ['ess.letter.approved', 'A letter request (employment, salary or no-objection certificate) was approved by the HR manager and waits to be issued: data { docNo, employeeId, letterType }.'],
   ['ess.letter.issued', 'A letter was issued from the template library and the employee can download it: data { docNo, employeeId, letterType, generatedDocId }.'],
+  ['trn.session.approved', 'A training session is open for nomination (internal, or an external one with a fee approved): data { docNo, courseId, startAt }.'],
+  ['trn.session.cancelled', 'An open training session was cancelled: data { docNo, reason }.'],
+  ['trn.session.completed', 'A training session was completed: data { docNo, courseId, certificates }.'],
+  ['trn.attendance.nominated', 'A person was nominated to a session: data { sessionId, personType, personId }.'],
+  ['trn.attendance.recorded', 'A person signed in or was marked attended or absent: data { sessionId, personType, personId, attendance, score }.'],
+  ['trn.cert.added', 'A certificate or licence was recorded: data { personType, personId, certType, validUntil }.'],
+  ['trn.cert.verified', 'HR verified a certificate: data { personType, personId, certType, validUntil }. Permit-to-work (19.02) and plant operator assignment (17.02) ask the check service.'],
+  ['trn.cert.revoked', 'A certificate was revoked: data { personType, personId, certType, reason }.'],
+  ['trn.cert.expiring', 'A certificate ends within its alert days: data { personType, personId, certType, validUntil }.'],
+  ['trn.cert.expired', 'A certificate has expired: data { personType, personId, certType, validUntil }.'],
+  ['trn.skill.assessed', 'A skill level was assessed: data { personType, personId, skillCode, level }.'],
   ['hr.offer.declined', 'The candidate declined the offer: data { docNo, candidateId, response }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'hr', description });
 
-const TABLES = ['ess_requests', 'lab_workers', 'lab_contractor_compliance', 'lab_wage_rates', 'lv_types', 'lv_entitlements', 'lv_ledger', 'lv_applications', 'lv_adjustments', 'lv_year_runs', 'att_daily', 'att_regularisations', 'att_overtime_requests', 'att_manual_entries', 'att_period_locks', 'att_arrears', 'att_punches', 'att_anomalies', 'att_visits', 'att_device_bindings', 'att_site_settings', 'att_shifts', 'att_policies', 'att_policy_assignments', 'att_rosters', 'att_roster_changes', 'att_period_defs', 'att_periods', 'hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
+const TABLES = ['trn_courses', 'trn_sessions', 'trn_attendance', 'trn_cert_types', 'trn_certifications', 'trn_skill_defs', 'trn_skills', 'ess_requests', 'lab_workers', 'lab_contractor_compliance', 'lab_wage_rates', 'lv_types', 'lv_entitlements', 'lv_ledger', 'lv_applications', 'lv_adjustments', 'lv_year_runs', 'att_daily', 'att_regularisations', 'att_overtime_requests', 'att_manual_entries', 'att_period_locks', 'att_arrears', 'att_punches', 'att_anomalies', 'att_visits', 'att_device_bindings', 'att_site_settings', 'att_shifts', 'att_policies', 'att_policy_assignments', 'att_rosters', 'att_roster_changes', 'att_period_defs', 'att_periods', 'hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { ess_requests: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'ISSUED'], lab_workers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lab_wage_rates: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_applications: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_adjustments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_types: ['ACTIVE', 'INACTIVE'], att_daily: ['PRESENT', 'ABSENT', 'HALF_DAY', 'ON_LEAVE', 'HOLIDAY', 'WEEKLY_OFF', 'ON_DUTY', 'COMP_OFF', 'MISSING_PUNCH', 'HOLIDAY_WORKED', 'WEEKLY_OFF_WORKED'], att_regularisations: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_overtime_requests: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_manual_entries: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_period_locks: ['LOCKED', 'REOPEN_PENDING', 'REOPENED'], att_arrears: ['OPEN', 'FOLDED'], att_anomalies: ['OPEN', 'PENDING_APPROVAL', 'ACCEPTED', 'REJECTED'], att_visits: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'], att_punches: ['ACCEPTED', 'FLAGGED', 'REJECTED', 'PENDING'], att_policies: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_roster_changes: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_shifts: ['ACTIVE', 'INACTIVE'], att_periods: ['OPEN', 'CLOSED'], hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
+  statuses: { trn_sessions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'COMPLETED'], ess_requests: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'ISSUED'], lab_workers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lab_wage_rates: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_applications: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_adjustments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_types: ['ACTIVE', 'INACTIVE'], att_daily: ['PRESENT', 'ABSENT', 'HALF_DAY', 'ON_LEAVE', 'HOLIDAY', 'WEEKLY_OFF', 'ON_DUTY', 'COMP_OFF', 'MISSING_PUNCH', 'HOLIDAY_WORKED', 'WEEKLY_OFF_WORKED'], att_regularisations: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_overtime_requests: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_manual_entries: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_period_locks: ['LOCKED', 'REOPEN_PENDING', 'REOPENED'], att_arrears: ['OPEN', 'FOLDED'], att_anomalies: ['OPEN', 'PENDING_APPROVAL', 'ACCEPTED', 'REJECTED'], att_visits: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'], att_punches: ['ACCEPTED', 'FLAGGED', 'REJECTED', 'PENDING'], att_policies: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_roster_changes: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_shifts: ['ACTIVE', 'INACTIVE'], att_periods: ['OPEN', 'CLOSED'], hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
   uniqueKeys: [{ table: 'hr_employees', columns: ['company_id', 'emp_code'] }],
 });
 /** Module "hr": human resources (Workforce-First, M07). Part 07.01 holds the employee master and employment records. The tables are `hr_*`. */
@@ -90,11 +104,11 @@ export const hr = {
   code: 'hr',
   name: 'HR & Workforce Management',
   routePrefix: '/api/v1/hr',
-  ownerPart: '07.01, 07.02, 07.03, 07.04, 07.05, 07.06, 07.07, 07.08, 07.09',
+  ownerPart: '07.01, 07.02, 07.03, 07.04, 07.05, 07.06, 07.07, 07.08, 07.09, 07.10',
   status: 'Employee master: profile, employment, statutory and bank details (masked), documents with expiry, history, approvals of new employees and of changes, user link, effective-dated separation with access removal, directory, import, overview',
   tables: TABLES,
   companyOptional: [],
-  resources: ['employees', 'plans', 'requisitions', 'candidates', 'interviews', 'offers', 'offer-link', 'onboarding', 'deployments', 'deployment-board', 'crews', 'transfers', 'site-plans', 'att', 'regularisations', 'overtime-requests', 'manual-entries', 'applications', 'leave', 'workers', 'labour', 'ess'],
+  resources: ['sessions', 'training', 'employees', 'plans', 'requisitions', 'candidates', 'interviews', 'offers', 'offer-link', 'onboarding', 'deployments', 'deployment-board', 'crews', 'transfers', 'site-plans', 'att', 'regularisations', 'overtime-requests', 'manual-entries', 'applications', 'leave', 'workers', 'labour', 'ess'],
 
   mount(api, { db, config: appConfig, publicApi, storagePath }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'hr_employees'").get()) return;
@@ -235,6 +249,20 @@ export const hr = {
       const er = Router(); er.use(gate('ff.hr.p0709', 'Self-service is'));
       er.use(essRoutes({ ess }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/hr', er);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'trn_sessions'").get()) {
+      const trn = createTrainingService({ db, dep: deploymentsOf(db) });
+      bindTraining(db, trn);
+      listExports.register('hr.training_sessions', { source: (actor, req) => trn.sessions.exportSource(actor, req), hidden: () => [] });
+      listExports.register('hr.certifications', { source: (actor, req) => trn.certs.exportSource(actor, req), hidden: () => [] });
+      runtime.jobs.register('trn.daily', () => { const out = { alerted: 0 }; for (const c of companies()) out.alerted += trn.cycle(c).alerted; return out; }, { maxAttempts: 3 });
+      runtime.scheduler.define({ code: 'trn.daily_check', cron: '58 0 * * *', jobType: 'trn.daily', description: 'Daily (00:58): certificates and licences that have expired or end within their alert days are told to HR and to the holder (once for each state).' });
+      try {
+        widgetRegistry.register({ code: 'trn.certs_expiring', provider: (ctx) => { const w = trn.widget(ctx.actor); return { value: w.value, unit: w.value === 1 ? 'certificate needs attention' : 'certificates need attention', previous: null, trendPct: null, target: null, status: w.value > 0 ? 'amber' : 'green', note: 'Expired or ending within the alert days' }; } });
+      } catch { /* registered once per process */ }
+      const tr = Router(); tr.use(gate('ff.hr.p0710', 'Training is'));
+      tr.use(trainingRoutes({ trn, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/hr', tr);
     }
   },
 };

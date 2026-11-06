@@ -1,4 +1,5 @@
 import { deploymentGuards } from './labour.js';
+import { assignmentGuards } from './training.js';
 import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
@@ -189,7 +190,10 @@ export function createDeploymentService({ db }) {
   function check(actor, b, problems, { exceptRoot = null } = {}) {
     const person = personOf(actor.companyId, b.personType, b.personId);
     if (person.error) problems.push({ field: 'personId', message: person.error });
-    else if (b.personType === 'WORKER') for (const g of deploymentGuards) problems.push(...g(actor.companyId, b));
+    else {
+      if (b.personType === 'WORKER') for (const g of deploymentGuards) problems.push(...g(actor.companyId, b));
+      for (const g of assignmentGuards) problems.push(...g(actor.companyId, b));
+    }
     const project = db.prepare('SELECT id, status FROM org_projects WHERE id = ? AND company_id = ? AND is_active = 1').get(b.projectId, actor.companyId);
     if (!project) problems.push({ field: 'projectId', message: 'That project does not exist' });
     else if (['COMPLETED', 'CLOSED'].includes(project.status)) problems.push({ field: 'projectId', message: 'That project is closed; nobody is deployed to it' });

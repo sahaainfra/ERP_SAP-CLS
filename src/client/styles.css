@@ -1270,3 +1270,41 @@ label.btn { position: relative; overflow: hidden; }
 .lab-card-qr { flex: 0 0 6.5rem; inline-size: 6.5rem; block-size: 6.5rem; }
 .lab-card-qr svg { inline-size: 100%; block-size: 100%; }
 @media print { .no-print, nav, header, .app-sidebar, .app-header { display: none !important; } .lab-cards { grid-template-columns: repeat(2, 1fr); } }
+
+/* Part 07.10: training calendar, skill matrix, compliance bars, sign-in code */
+.trn-legend { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); list-style: none; padding: 0; margin: var(--erp-space-2) 0; }
+.trn-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--erp-color-border-subtle); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); overflow: hidden; margin: var(--erp-space-3) 0; }
+.trn-dow { background: var(--erp-color-bg-surface); font: var(--erp-type-caption); color: var(--erp-color-text-secondary); padding: var(--erp-space-1) var(--erp-space-2); text-align: center; }
+.trn-blank, .trn-day { background: var(--erp-color-bg-surface); min-block-size: 5.5rem; padding: var(--erp-space-1); }
+.trn-day[data-over] { outline: 2px solid var(--erp-color-border-focus); }
+.trn-date { display: block; font: var(--erp-type-caption); color: var(--erp-color-text-secondary); }
+.trn-chip { display: block; margin-top: 2px; padding: 2px var(--erp-space-1); border-radius: var(--erp-radius-sm); font: var(--erp-type-caption); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; background: var(--erp-color-status-muted-bg); color: var(--erp-color-status-muted-fg); }
+.trn-chip[draggable="true"] { cursor: grab; }
+.trn-chip:focus-visible { outline: 2px solid var(--erp-color-border-focus); }
+.trn-active, .trn-completed { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
+.trn-in_review, .trn-returned { background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); }
+.trn-rejected, .trn-cancelled { background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); }
+@media (max-width: 767px) {
+  .trn-cal { display: block; background: none; border: 0; }
+  .trn-dow, .trn-blank, .trn-day:not(.trn-has) { display: none; }
+  .trn-day { margin-block-end: var(--erp-space-2); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); min-block-size: 0; }
+  .trn-chip { white-space: normal; padding: var(--erp-space-2); }
+}
+.trn-lvl { padding: 2px var(--erp-space-2); border-radius: var(--erp-radius-sm); font: var(--erp-type-caption); }
+.trn-lvl.att-ok { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
+.trn-lvl.att-warn { background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); }
+.trn-lvl.att-bad { background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); }
+.trn-lvl.att-info { background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); }
+.trn-lvl.att-muted { background: var(--erp-color-status-muted-bg); color: var(--erp-color-status-muted-fg); }
+.trn-matrix td select { inline-size: 100%; min-inline-size: 3.2rem; }
+.trn-matrix td.att-ok { background: var(--erp-color-status-success-bg); }
+.trn-matrix td.att-warn { background: var(--erp-color-status-warning-bg); }
+.trn-matrix td.att-bad { background: var(--erp-color-status-error-bg); }
+.trn-matrix td.att-info { background: var(--erp-color-status-info-bg); }
+.trn-bars { list-style: none; padding: 0; margin: var(--erp-space-3) 0; display: grid; gap: var(--erp-space-2); }
+.trn-bars li { display: grid; grid-template-columns: minmax(6rem, 14rem) 1fr auto; gap: var(--erp-space-3); align-items: center; }
+.trn-bar { display: block; block-size: 0.75rem; background: var(--erp-color-status-muted-bg); border-radius: var(--erp-radius-sm); overflow: hidden; }
+.trn-bar > span { display: block; block-size: 100%; background: var(--erp-color-status-success-fg); }
+.trn-qr-img { inline-size: min(100%, 16rem); }
+.trn-qr-img svg { inline-size: 100%; block-size: auto; background: var(--erp-color-bg-surface); }
+@media print { .trn-qr-img { inline-size: 12rem; } }

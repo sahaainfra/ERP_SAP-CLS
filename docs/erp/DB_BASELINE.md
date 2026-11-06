@@ -9611,6 +9611,270 @@ Indexes:
 - ux_tpl_templates_active (unique): , code
 - ux_tpl_templates_version (unique): , code, template_version
 
+## trn_attendance
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| session_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| nominated_by | TEXT |  |  |  |
+| attendance | TEXT | yes |  | 'NOMINATED' |
+| signed_in_at | TEXT |  |  |  |
+| sign_in_method | TEXT |  |  |  |
+| score | INTEGER |  |  |  |
+| passed | INTEGER |  |  |  |
+| feedback_rating | INTEGER |  |  |  |
+| feedback | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: session_id -> trn_sessions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_trn_attendance_project: project_id
+- ix_trn_attendance_site: site_id
+- ix_trn_attendance_who: company_id, person_type, person_id
+- ix_trn_attendance_company_id: company_id
+- ux_trn_attendance_person (unique): session_id, person_type, person_id
+
+## trn_cert_types
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| name_hi | TEXT |  |  |  |
+| validity_months | INTEGER |  |  |  |
+| alert_days | INTEGER | yes |  | 30 |
+| required_for_json | TEXT | yes |  | '{}' |
+| mandatory | INTEGER | yes |  | 1 |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_trn_cert_types_company_id: company_id
+- ux_trn_cert_types_code (unique): company_id, code
+
+## trn_certifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| cert_type | TEXT | yes |  |  |
+| number | TEXT |  |  |  |
+| issuer | TEXT |  |  |  |
+| valid_from | TEXT | yes |  |  |
+| valid_until | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| verified | INTEGER | yes |  | 0 |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| cert_status | TEXT | yes |  | 'ACTIVE' |
+| revoked_reason | TEXT |  |  |  |
+| session_id | INTEGER |  |  |  |
+| alerted_state | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: session_id -> trn_sessions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_trn_certifications_project: project_id
+- ix_trn_certifications_site: site_id
+- ix_trn_certifications_file: file_id
+- ix_trn_certifications_session: session_id
+- ix_trn_certifications_type: company_id, cert_type, valid_until
+- ix_trn_certifications_person: company_id, person_type, person_id
+- ix_trn_certifications_company_id: company_id
+
+## trn_courses
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| title_hi | TEXT |  |  |  |
+| category | TEXT | yes |  | 'SAFETY' |
+| mode | TEXT | yes |  | 'INTERNAL' |
+| mandatory_for_json | TEXT | yes |  | '{}' |
+| validity_months | INTEGER |  |  |  |
+| pass_score | INTEGER |  |  |  |
+| cert_type_code | TEXT |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_trn_courses_company_id: company_id
+- ux_trn_courses_code (unique): company_id, code
+
+## trn_sessions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| course_id | INTEGER | yes |  |  |
+| start_at | TEXT | yes |  |  |
+| end_at | TEXT | yes |  |  |
+| trainer | TEXT |  |  |  |
+| venue | TEXT |  |  |  |
+| department_id | INTEGER |  |  |  |
+| capacity | INTEGER | yes |  | 20 |
+| cost_minor | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| band | TEXT | yes |  | 'INTERNAL' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| qr_token | TEXT |  |  |  |
+| completed_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: course_id -> trn_courses(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_trn_sessions_department: department_id
+- ix_trn_sessions_project: project_id
+- ix_trn_sessions_site: site_id
+- ix_trn_sessions_status: company_id, status
+- ix_trn_sessions_when: company_id, start_at
+- ix_trn_sessions_course: course_id
+- ix_trn_sessions_company_id: company_id
+- ux_trn_sessions_doc (unique): company_id, doc_no
+
+## trn_skill_defs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| name_hi | TEXT |  |  |  |
+| trade | TEXT |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_trn_skill_defs_company_id: company_id
+- ux_trn_skill_defs_code (unique): company_id, code
+
+## trn_skills
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| skill_code | TEXT | yes |  |  |
+| level | INTEGER | yes |  |  |
+| assessed_on | TEXT | yes |  |  |
+| assessor_id | INTEGER |  |  |  |
+| assessor | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: assessor_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_trn_skills_project: project_id
+- ix_trn_skills_site: site_id
+- ix_trn_skills_assessor: assessor_id
+- ix_trn_skills_person: company_id, person_type, person_id, skill_code, assessed_on
+- ix_trn_skills_company_id: company_id
+
 ## tsk_assignees
 
 | Column | Type | Not null | Key | Default |

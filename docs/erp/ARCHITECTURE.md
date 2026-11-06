@@ -883,3 +883,14 @@ Behind feature flag `ff.hr.p0709` (module `hr`; needs 07.06 and 07.07). Code: `m
 - **Letters** (FR-03, ADR-319): `/hr/ess/letters` (create, update, delete, submit, withdraw, cancel, history, issue, content); workflow `HR_ESS_LETTER` (HR manager); issue publishes a CERTIFICATE record and generates the PDF with the template library.
 - **Events**: `ess.letter.approved`, `ess.letter.issued`; widget `ess.team_present`.
 - **Browser**: My HR, My Attendance, Profile Change Request, Letter Request, My Team; Hindi through the `ess` namespace (ADR-320).
+
+## 70. Training, certifications and skills (part 07.10)
+
+Behind feature flag `ff.hr.p0710` (module `hr`; needs 07.01, uses 07.03 and 07.08). Code: `modules/hr/training.js` (courses, sessions, attendance, certificates, skills, compliance, the daily watch), `trn-routes.js`, `trn-validators.js`, `trn-integrations.js` (Excel import of certificates). Tables `trn_courses`, `trn_sessions`, `trn_attendance`, `trn_cert_types`, `trn_certifications`, `trn_skill_defs`, `trn_skills`.
+
+- **Sessions** (FR-01, ADR-321): `/hr/sessions` (list, calendar, get, create, update, delete, submit, withdraw, cancel, reschedule, complete, history, print, qr, nominations, attendance, feedback, export). Workflow `HR_TRN_SESSION` for an external session with a fee.
+- **QR sign-in** (ADR-324): `GET /hr/sessions/:id/qr` (trainer side), `POST /hr/training/sign-in` (the person).
+- **Certificates** (FR-03, ADR-322, ADR-323): `/hr/training/certs` (list, create, get, update, delete, verify, revoke, export, `check`); `assignmentGuards` called by the deployment service; job `trn.daily` (00:58); widget `trn.certs_expiring`.
+- **Skills** (FR-04): `/hr/training/skills/{assess,matrix,history}`; **compliance and cost** (FR-02, FR-06): `/hr/training/{compliance,costs}`; set-up: `/hr/training/{courses,cert-types,skill-defs}`.
+- **Events**: `trn.session.*`, `trn.attendance.*`, `trn.cert.*`, `trn.skill.assessed`.
+- **Browser**: Training Calendar, Training Session, Certifications & Licences, Skill Matrix, Mandatory Training Compliance, My Training, Training Set-up; Hindi through the `trn` namespace.
