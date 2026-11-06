@@ -354,7 +354,7 @@ test('FR-08 FR-09 the zip of chosen documents, the Excel sheet that registers ma
 test('FR-01 AC-04 the document types and folder templates: a change waits for the system administrator or a director; the standard types are shared; who may see and change them', async () => {
   const t = await setup();
   const cfg = (await t.api.call('GET', `${D}/config`, doc)).json.data;
-  assert.equal(cfg.types.length, 12);
+  assert.equal(cfg.types.length, 13);
   assert.equal(cfg.canEdit, true);
   assert.equal((await t.api.call('GET', `${D}/config`, emp)).status, 403);
   assert.equal((await t.api.call('GET', `${D}/config`, sys)).status, 200);
