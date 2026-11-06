@@ -1251,14 +1251,14 @@ label.btn { position: relative; overflow: hidden; }
 /* Part 07.06: the attendance register */
 .att-register table.grid th, .att-register table.grid td { white-space: nowrap; }
 .att-register thead th { text-align: center; min-inline-size: 2.1rem; padding-inline: 0.25rem; }
-.att-register tbody th[scope='row'] { position: sticky; inset-inline-start: 0; background: var(--surface, #fff); text-align: start; z-index: 1; }
-.att-sun { color: var(--muted, #667); }
+.att-register tbody th[scope='row'] { position: sticky; inset-inline-start: 0; background: var(--erp-color-bg-surface); text-align: start; z-index: 1; }
+.att-sun { color: var(--erp-color-status-muted-fg); }
 .att-cell { text-align: center; padding: 0; }
 .att-cell-btn { inline-size: 100%; min-block-size: 2rem; border: 0; background: transparent; font: inherit; font-weight: 600; cursor: pointer; color: inherit; }
-.att-cell-btn:focus-visible { outline: 2px solid var(--focus, #1a56db); outline-offset: -2px; }
-.att-ok .att-cell-btn { background: color-mix(in srgb, #1a7f37 18%, transparent); }
-.att-warn .att-cell-btn { background: color-mix(in srgb, #b7791f 22%, transparent); }
-.att-bad .att-cell-btn { background: color-mix(in srgb, #c62828 20%, transparent); }
-.att-info .att-cell-btn { background: color-mix(in srgb, #1a56db 16%, transparent); }
-.att-muted .att-cell-btn { background: color-mix(in srgb, #667 14%, transparent); }
+.att-cell-btn:focus-visible { outline: 2px solid var(--erp-color-border-focus); outline-offset: -2px; }
+.att-ok .att-cell-btn { background: var(--erp-color-status-success-bg); color: var(--erp-color-status-success-fg); }
+.att-warn .att-cell-btn { background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); }
+.att-bad .att-cell-btn { background: var(--erp-color-status-error-bg); color: var(--erp-color-status-error-fg); }
+.att-info .att-cell-btn { background: var(--erp-color-status-info-bg); color: var(--erp-color-status-info-fg); }
+.att-muted .att-cell-btn { background: var(--erp-color-status-muted-bg); color: var(--erp-color-status-muted-fg); }
 @media (max-width: 767px) { .att-register table.grid td.att-cell { display: inline-block; inline-size: 2.4rem; } }

@@ -5160,6 +5160,250 @@ Indexes:
 - ux_iam_users_email (unique): email
 - ux_iam_users_username (unique): username
 
+## lv_adjustments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| leave_type_id | INTEGER | yes |  |  |
+| doc_site_id | INTEGER |  |  |  |
+| year | INTEGER | yes |  |  |
+| days | REAL | yes |  |  |
+| reason | TEXT | yes |  |  |
+| applied_at | TEXT |  |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: doc_site_id -> org_sites(id), leave_type_id -> lv_types(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_lv_adjustments_supersedes_id: supersedes_id
+- ix_lv_adjustments_root_id: root_id
+- ix_lv_adjustments_status: company_id, status
+- ix_lv_adjustments_site: doc_site_id
+- ix_lv_adjustments_type: leave_type_id
+- ix_lv_adjustments_employee: employee_id
+- ix_lv_adjustments_company_id: company_id
+- ux_lv_adjustments_doc (unique): company_id, doc_no, revision_no
+
+## lv_applications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| leave_type_id | INTEGER | yes |  |  |
+| doc_site_id | INTEGER |  |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| half_day | TEXT | yes |  | 'NONE' |
+| days | REAL | yes |  |  |
+| leave_year | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| attachment_file_id | INTEGER |  |  |  |
+| delegate_user | TEXT |  |  |  |
+| delegation_id | INTEGER |  |  |  |
+| applied_at | TEXT |  |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: doc_site_id -> org_sites(id), leave_type_id -> lv_types(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_lv_applications_attachment: attachment_file_id
+- ix_lv_applications_dates: employee_id, from_date, to_date
+- ix_lv_applications_supersedes_id: supersedes_id
+- ix_lv_applications_root_id: root_id
+- ix_lv_applications_status: company_id, status
+- ix_lv_applications_site: doc_site_id
+- ix_lv_applications_type: leave_type_id
+- ix_lv_applications_employee: employee_id
+- ix_lv_applications_company_id: company_id
+- ux_lv_applications_doc (unique): company_id, doc_no, revision_no
+
+## lv_entitlements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| leave_type_id | INTEGER | yes |  |  |
+| year | INTEGER | yes |  |  |
+| opening | REAL | yes |  | 0 |
+| accrued | REAL | yes |  | 0 |
+| adjusted | REAL | yes |  | 0 |
+| availed | REAL | yes |  | 0 |
+| lapsed | REAL | yes |  | 0 |
+| encashed | REAL | yes |  | 0 |
+| remaining | REAL | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: leave_type_id -> lv_types(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_lv_entitlements_employee: employee_id
+- ix_lv_entitlements_type: leave_type_id
+- ix_lv_entitlements_company_id: company_id
+- ux_lv_entitlements_key (unique): company_id, employee_id, leave_type_id, year
+
+## lv_ledger
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| leave_type_id | INTEGER | yes |  |  |
+| year | INTEGER | yes |  |  |
+| txn_date | TEXT | yes |  |  |
+| txn_type | TEXT | yes |  |  |
+| days | REAL | yes |  |  |
+| ref_type | TEXT |  |  |  |
+| ref_id | INTEGER |  |  |  |
+| ref_key | TEXT |  |  |  |
+| expires_on | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: leave_type_id -> lv_types(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_lv_ledger_type: leave_type_id
+- ix_lv_ledger_person: employee_id, leave_type_id, year
+- ix_lv_ledger_company_id: company_id
+- ux_lv_ledger_ref (unique): company_id, employee_id, leave_type_id, ref_key
+
+## lv_types
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| paid | INTEGER | yes |  | 1 |
+| rules_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'ACTIVE' |
+| sort_order | INTEGER | yes |  | 100 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_lv_types_company_id: company_id
+- ux_lv_types_code (unique): company_id, code
+
+## lv_year_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| year | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'DONE' |
+| summary_json | TEXT | yes |  | '{}' |
+| run_by | TEXT | yes |  |  |
+| run_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_lv_year_runs_company_id: company_id
+- ux_lv_year_runs_year (unique): company_id, year
+
 ## mdm_banks
 
 | Column | Type | Not null | Key | Default |

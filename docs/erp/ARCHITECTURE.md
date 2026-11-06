@@ -847,3 +847,16 @@ Behind feature flag `ff.hr.p0706` (module `hr`; needs 07.05). Code: `modules/hr/
 - **Reports**: `GET /att/register` (+ export, print), `/att/muster`, `/att/daily`, `/att/day`.
 - **Jobs and events** (ADR-306): the bus consumer `att.register` on `att.punch.recorded`, job `att.register_nightly` (01:05), widget `att.missing_punches`; events `att.period.locked`, `att.period.reopened`, `att.arrears.raised`, `att.regularisation.approved`, `att.overtime.approved`, `att.manual.approved`.
 - **Browser**: Monthly Attendance Register, Daily Attendance, Regularisation Request, Overtime Request, Attendance Approvals, Period Lock.
+
+## 67. Leave management (part 07.07)
+
+Behind feature flag `ff.hr.p0707` (module `hr`; needs 07.06 and 07.04). Code: `modules/hr/lv-calc.js` (days with the sandwich rule and half days, accrual with pro-rata, year-end of a balance; no database), `leave.js` (types, ledger and balances, accrual, comp-off, applications and their approval, adjustments, calendar, year-end, the leave source of the register), `lv-routes.js`, `lv-validators.js`. Tables: `lv_types`, `lv_entitlements`, `lv_ledger`, `lv_applications`, `lv_adjustments`, `lv_year_runs`.
+
+- **Ledger** (ADR-308): balance of a person, a type and a year is the sum of `lv_ledger`; keys make every credit happen once. `GET /hr/leave/balance`, `/hr/leave/ledger`, report `GET /hr/leave/balances`.
+- **Applications** (ADR-309 to 311): `/hr/applications` (list, get, create, update, delete, submit, withdraw, cancel, amend, history, print, export); `GET /hr/leave/check` for the form (days, balance after, clashes, problems); `/hr/leave/approvals` and `/bulk`.
+- **Attendance** (ADR-310): approval queues the recompute of the register; leave shows as `ON_LEAVE` (paid or loss of pay); cancellation and amendments reverse it.
+- **Accrual and comp-off**: `POST /hr/leave/accrual/run`; daily job `lv.daily` (00:50) credits the month, comp-off from the register and lapses expired comp-off.
+- **Year-end** (ADR-312): `GET /hr/leave/year-end/preview`, `POST /hr/leave/year-end`.
+- **Delegation** (04.02): an approver on approved leave who named a cover gets a delegation for the days, ended when the leave is cancelled or replaced.
+- **Events**: `lv.application.approved`, `lv.application.cancelled`, `lv.balance.adjusted`, `lv.year_end.processed`, `lv.encashment.input`; widget `lv.approvals_waiting`.
+- **Browser**: Apply Leave, My Leave, Leave Approvals, Team Leave Calendar, Leave Balance Report, Leave Types & Rules, Year-End Processing.

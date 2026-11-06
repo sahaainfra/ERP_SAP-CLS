@@ -239,3 +239,25 @@ export const regs = {
 export const DAY_STATUS = { PRESENT: 'Present', ABSENT: 'Absent', HALF_DAY: 'Half day', ON_LEAVE: 'On leave', HOLIDAY: 'Holiday', WEEKLY_OFF: 'Weekly off', ON_DUTY: 'On duty', COMP_OFF: 'Comp-off', MISSING_PUNCH: 'Missing punch', HOLIDAY_WORKED: 'Worked on a holiday', WEEKLY_OFF_WORKED: 'Worked on a weekly off' };
 export const BAND_TEXT = { STANDARD: 'The usual approvers', REPEATED: 'The HR manager also approves (fourth in a month)', PM_LEVEL: 'The project manager also approves (over 4 hours a day or 50 hours a month)', POLICY_EXCEPTION: 'The HR manager also approves (outside the policy)' };
 export const MANUAL_ENTRIES = [['PRESENT', 'Present'], ['HALF_DAY', 'Half day'], ['ABSENT', 'Absent'], ['ON_DUTY', 'On duty'], ['COMP_OFF', 'Comp-off']];
+
+// part 07.07: leave
+export const LV_STATUS = REQ_STATUS;
+export const lv = {
+  my: async (year) => (await api.get(`/hr/leave/my?${q({ year })}`)).data,
+  options: async (employeeId) => (await api.get(`/hr/leave/type-options?${q({ employeeId })}`)).data,
+  check: async (f) => (await api.get(`/hr/leave/check?${q(f)}`)).data,
+  applications: docs('applications'),
+  balance: async (employeeId, year) => (await api.get(`/hr/leave/balance?${q({ employeeId, year })}`)).data,
+  ledger: async (employeeId, f) => (await api.get(`/hr/leave/ledger?${q({ employeeId, ...f })}`)).data,
+  approvals: async () => (await api.get('/hr/leave/approvals')).data,
+  bulk: async (b) => (await api.post('/hr/leave/approvals/bulk', b, idem())).data,
+  calendar: async (f) => (await api.get(`/hr/leave/calendar?${q(f)}`)).data,
+  types: async () => (await api.get('/hr/leave/types')).data,
+  createType: async (b) => (await api.post('/hr/leave/types', b, idem())).data,
+  updateType: async (id, b) => (await api.patch(`/hr/leave/types/${id}`, b, idem())).data,
+  adjust: async (b) => (await api.post('/hr/leave/adjustments', b, idem())).data,
+  yearEndPreview: async (year) => (await api.get(`/hr/leave/year-end/preview?year=${year}`)).data,
+  yearEndRun: async (year) => (await api.post('/hr/leave/year-end', { year }, idem())).data,
+  yearEndRuns: async () => (await api.get('/hr/leave/year-end')).data,
+  accrual: async (b) => (await api.post('/hr/leave/accrual/run', b, idem())).data,
+};

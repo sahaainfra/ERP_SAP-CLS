@@ -5,6 +5,13 @@ import CrewPunchPage from './CrewPunchPage.jsx';
 import KioskPage from './KioskPage.jsx';
 import PunchPage from './PunchPage.jsx';
 import TodayAttendancePage from './TodayAttendancePage.jsx';
+import ApplyLeavePage from './ApplyLeavePage.jsx';
+import LeaveApprovalsPage from './LeaveApprovalsPage.jsx';
+import LeaveBalanceReportPage from './LeaveBalanceReportPage.jsx';
+import LeaveTypesPage from './LeaveTypesPage.jsx';
+import MyLeavePage from './MyLeavePage.jsx';
+import TeamLeaveCalendarPage from './TeamLeaveCalendarPage.jsx';
+import YearEndPage from './YearEndPage.jsx';
 import AttendanceApprovalsPage from './AttendanceApprovalsPage.jsx';
 import DailyAttendancePage from './DailyAttendancePage.jsx';
 import MonthlyRegisterPage from './MonthlyRegisterPage.jsx';
@@ -81,5 +88,12 @@ registerModule({
     { path: '/att/overtime', label: 'Overtime Request', icon: 'erp.action.create', permission: 'hr.overtime_request.create', flag: 'ff.hr.p0706', Page: OvertimeRequestPage },
     { path: '/att/approvals', label: 'Attendance Approvals', icon: 'erp.action.inbox', permission: 'att.register.view', flag: 'ff.hr.p0706', Page: AttendanceApprovalsPage },
     { path: '/att/lock', label: 'Period Lock', icon: 'erp.action.history', permission: 'att.register.view', flag: 'ff.hr.p0706', Page: PeriodLockPage },
+    { path: '/leave/apply', label: 'Apply Leave', icon: 'erp.action.create', permission: 'hr.application.create', flag: 'ff.hr.p0707', Page: ApplyLeavePage },
+    { path: '/leave/my', label: 'My Leave', icon: 'erp.action.history', permission: 'hr.application.view', flag: 'ff.hr.p0707', Page: MyLeavePage },
+    { path: '/leave/approvals', label: 'Leave Approvals', icon: 'erp.action.inbox', permission: 'hr.application.approve', flag: 'ff.hr.p0707', Page: LeaveApprovalsPage },
+    { path: '/leave/calendar', label: 'Team Leave Calendar', icon: 'erp.action.history', permission: 'lv.team.view', flag: 'ff.hr.p0707', Page: TeamLeaveCalendarPage },
+    { path: '/leave/balances', label: 'Leave Balance Report', icon: 'erp.action.history', permission: 'lv.team.view', flag: 'ff.hr.p0707', Page: LeaveBalanceReportPage },
+    { path: '/leave/types', label: 'Leave Types & Rules', icon: 'erp.action.info', permission: 'lv.type.view', flag: 'ff.hr.p0707', Page: LeaveTypesPage },
+    { path: '/leave/year-end', label: 'Year-End Processing', icon: 'erp.action.create', permission: 'lv.yearend.run', flag: 'ff.hr.p0707', Page: YearEndPage },
   ],
 });

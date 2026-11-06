@@ -26,6 +26,7 @@ export const DEFAULT_MATRICES = [
   { docType: 'HR_OVERTIME_REQUEST', label: 'Overtime request', owner: 'HRMGR', financial: false, rules: [rule('A policy exception', [{ field: 'band', op: 'eq', value: 'POLICY_EXCEPTION' }], ['WSUP', 'PM', 'HRMGR']), rule('More than 4 hours a day or 50 hours a month', [{ field: 'band', op: 'eq', value: 'PM_LEVEL' }], ['WSUP', 'PM']), rule('Any other', [], ['WSUP|PM'])] },
   { docType: 'HR_ATT_MANUAL', label: 'Manual attendance entry', owner: 'HRMGR', financial: false, rules: [rule('Any manual entry', [], ['HRMGR'])] },
   { docType: 'HR_ATT_REOPEN', label: 'Reopening of a locked attendance period', owner: 'HRMGR', financial: false, rules: [rule('Any reopening', [], ['HRMGR', 'CFO'])] },
+  { docType: 'HR_LV_ADJUST', label: 'Leave balance adjustment', owner: 'HRMGR', financial: false, rules: [rule('Any adjustment', [], ['HRMGR'])] },
   { docType: 'HR_DEPLOYMENT', label: 'Deployment to a project or site', owner: 'HRMGR', financial: false, rules: [rule('Outside the site plan or beyond its headcount', [{ field: 'band', op: 'eq', value: 'OUTSIDE_PLAN' }], ['PM|HRMGR', 'PD']), rule('Within the site plan', [], ['PM|HRMGR'])] },
   { docType: 'HR_EMPLOYEE', label: 'New employee activation', owner: 'HRMGR', financial: false, rules: [rule('Any new employee', [], ['HRMGR'])] },
   { docType: 'HR_EMP_PROFILE', label: 'Change of personal details of an employee', owner: 'HRMGR', financial: false, rules: [rule('Any change', [], ['HRMGR'])] },
