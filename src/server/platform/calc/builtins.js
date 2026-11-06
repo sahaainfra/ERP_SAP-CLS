@@ -113,6 +113,26 @@ export const BUILTIN_FORMULAS = Object.freeze([
     ],
   },
   {
+    code: 'tdr.bid_capacity',
+    description: 'Bid capacity of a tender (part 08.02, BR-02): A x N x factor - B, where A is the highest value of works done in any one of the last years, N the years of the completion period, the factor is 2 unless the tender says otherwise and B the value of the works in hand.',
+    ownerModule: 'bd',
+    financial: true,
+    roundingPolicy: 'half_up',
+    inputs: [
+      { name: 'max_turnover', type: 'money', min: '0' },
+      { name: 'years', type: 'quantity', min: '0' },
+      { name: 'commitments', type: 'money', min: '0' },
+      { name: 'factor', type: 'quantity', min: '0' },
+    ],
+    expression: 'capacity = round(max_turnover * years * factor - commitments, 2)',
+    outputs: [{ name: 'capacity', type: 'money', label: 'Bid capacity' }],
+    tests: [
+      t({ max_turnover: '400000000.00', years: '2', commitments: '300000000.00', factor: '2' }, { capacity: '1300000000.00' }),
+      t({ max_turnover: '250000000.50', years: '1.5', commitments: '100000000.25', factor: '2' }, { capacity: '650000001.25' }),
+      t({ max_turnover: '100000000', years: '1', commitments: '250000000', factor: '2' }, { capacity: '-50000000.00' }),
+    ],
+  },
+  {
     code: 'ra.line_amount',
     description: 'Amount of a component of a rate analysis (part 06.06, BR-01): quantity per basis x (1 + wastage %) x rate, rounded once to paise. With no wastage it is the BOQ line amount.',
     ownerModule: 'mdm',

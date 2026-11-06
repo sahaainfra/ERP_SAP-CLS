@@ -8,8 +8,8 @@ import { createKit } from './kit.js';
 import { createOps } from './crm-ops.js';
 
 /** The id of the record in the document id of a workflow instance: an amendment is approved as '12-A1', the first approval as '12'. */
-const rid = (v) => parseInt(String(v), 10);
-const wfDoc = (id, n) => (n ? `${id}-A${n}` : String(id));
+export const rid = (v) => parseInt(String(v), 10);
+export const wfDoc = (id, n) => (n ? `${id}-A${n}` : String(id));
 const CLIENT_OK = ['PROSPECT', 'PENDING', 'ACTIVE'];
 const CLIENT_ROLE = "EXISTS (SELECT 1 FROM mdm_partner_roles r WHERE r.partner_id = p.id AND r.partner_role = 'CLIENT' AND r.deleted_at IS NULL)";
 const SCOPE_L = (all) => (all ? 'l.company_id = :c AND (1 = 1 OR :u IS NULL OR :roles IS NULL)' : "l.company_id = :c AND (lower(l.owner) = lower(:u) OR lower(l.created_by) = lower(:u) OR EXISTS (SELECT 1 FROM wf_tasks t JOIN wf_instances i ON i.id = t.instance_id WHERE i.doc_type = 'BD_LEAD' AND (i.doc_id = CAST(l.id AS TEXT) OR i.doc_id LIKE CAST(l.id AS TEXT) || '-A%') AND t.status IN ('OPEN', 'ADMIN_QUEUE', 'DONE') AND (lower(t.assignee_user_id) = lower(:u) OR t.assignee_role IN (SELECT value FROM json_each(:roles)))))");
@@ -445,6 +445,8 @@ export function createCrmService({ db }) {
         if (stage !== o.stage) logStage(actor, o, o.stage, stage, pr.pct, 'Converted to a tender');
         writeAudit(db, { entity: 'bd_opportunities', entityId: o.id, action: 'convert', actor: actor.user, companyId: actor.companyId });
         event('bd.opportunity.converted', actor, 'bd_opportunity', o.id, o.company_id, { opportunityId: o.id, docNo: o.doc_no, clientPartnerId: o.client_partner_id, name: o.name, sector: o.sector, location: o.location, region: o.region, estValue: rupees(o.est_value_minor), expectedTenderDate: o.expected_tender_date, expectedAwardDate: o.expected_award_date, competitors: json(o.competitors_json, []), owner: o.owner, notes: b.notes ?? null });
+        const fresh = db.prepare('SELECT * FROM bd_opportunities WHERE id = ?').get(o.id);
+        for (const h of convertHooks) h(db, actor, fresh);
         return opportunities.get(actor, o.id);
       });
     },
@@ -524,6 +526,8 @@ export function createCrmService({ db }) {
   } };
 }
 
+/** Services that react to the conversion of an opportunity to a tender in the same transaction (08.02 makes the draft tender): fn(db, actor, opportunityRow). */
+export const convertHooks = [];
 const services = new WeakMap();
 export const bindCrm = (db, s) => services.set(db, s);
 export const crmOf = (db) => services.get(db) ?? null;

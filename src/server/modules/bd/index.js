@@ -10,6 +10,9 @@ import { createFlagService } from '../core/api.js';
 import { bindCrm, createCrmService } from './crm.js';
 import './crm-integrations.js';
 import { crmRoutes } from './crm-routes.js';
+import { bindTenders, createTenderService } from './tender.js';
+import './tender-integrations.js';
+import { tenderRoutes } from './tender-routes.js';
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -28,24 +31,33 @@ for (const [type, description] of [
   ['bd.opportunity.won', 'An opportunity was won, by a tender award or an approved direct award: data { opportunityId, docNo, via, clientPartnerId, name, sector, region, wonValue, tenderRef }. Contracts (09) and project set-up (10) start from it.'],
   ['bd.opportunity.converted', 'An approved opportunity is converted to a tender (08.02 makes the tender): data { opportunityId, docNo, clientPartnerId, name, sector, location, region, estValue, expectedTenderDate, expectedAwardDate, competitors, owner, notes }.'],
   ['bd.interaction.logged', 'A call, meeting, site visit, e-mail or note was logged against a lead, an opportunity or a client: data { entity, entityId, type, clientPartnerId, nextActionDate }.'],
+  ['bd.tender.created', 'A tender was recorded (from the form, an import or the conversion of an opportunity): data { docNo, clientPartnerId, opportunityId, estCost }.'],
+  ['bd.tender.registered', 'The registration of a tender was approved: data { tenderId, docNo, clientPartnerId, opportunityId, estCost, submissionAt }.'],
+  ['bd.tender.amended', 'A registered tender was amended and is checked again: data { docNo, amendmentNo }.'],
+  ['bd.tender.cancelled', 'A tender was cancelled: data { docNo, reason }.'],
+  ['bd.tender.bid_decided', 'The decision to bid or not to bid was approved: data { tenderId, docNo, decision, score, opportunityId }.'],
+  ['bd.tender.addendum_issued', 'An addendum or corrigendum was recorded; a tender that was ready goes back to preparation: data { tenderId, docNo, number, kind, impact, newSubmissionAt, backToPreparation }.'],
+  ['bd.tender.query_answered', 'A clarification to a pre-bid query was received: data { tenderId, docNo, clauseRef }.'],
+  ['bd.tender.ready', 'A tender is ready for submission (registered, bid decision approved, eligibility complete, addenda read): data { tenderId, docNo, opportunityId, clientPartnerId, nameOfWork, estCost, emd, tenderFee, bidType, periodMonths, submissionAt, openingAt, region, bidCapacity }. Estimation (09.01) and submission (08.03) start from it.'],
+  ['bd.tender.submitted', 'The bid of a tender was submitted (08.03 tells the register): data { tenderId, docNo, submittedOn }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'bd', description });
 
-const TABLES = ['bd_leads', 'bd_opportunities', 'bd_interactions', 'bd_contacts', 'bd_stage_log', 'bd_amendments'];
+const TABLES = ['bd_leads', 'bd_opportunities', 'bd_interactions', 'bd_contacts', 'bd_stage_log', 'bd_amendments', 'tdr_tenders', 'tdr_eligibility', 'tdr_bid_decisions', 'tdr_addenda', 'tdr_queries', 'tdr_team_tasks', 'tdr_date_log', 'tdr_amendments'];
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { bd_leads: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CONVERTED'], bd_opportunities: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'] },
-  uniqueKeys: [{ table: 'bd_leads', columns: ['company_id', 'doc_no'] }, { table: 'bd_opportunities', columns: ['company_id', 'doc_no'] }],
+  statuses: { bd_leads: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CONVERTED'], bd_opportunities: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_tenders: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_bid_decisions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'] },
+  uniqueKeys: [{ table: 'bd_leads', columns: ['company_id', 'doc_no'] }, { table: 'bd_opportunities', columns: ['company_id', 'doc_no'] }, { table: 'tdr_tenders', columns: ['company_id', 'doc_no'] }, { table: 'tdr_bid_decisions', columns: ['company_id', 'doc_no'] }],
 });
 /** Module "bd": CRM, business development and tendering (M08). Part 08.01 holds leads, clients, contacts, interactions and the opportunity pipeline. The tables are `bd_*`. */
 export const bd = {
   code: 'bd',
   name: 'CRM & Business Development',
   routePrefix: '/api/v1/bd',
-  ownerPart: '08.01',
+  ownerPart: '08.01, 08.02',
   status: 'Leads from sources with a BANT-like qualification and a review, opportunities with the go-ahead for tendering, pipeline stages with default probabilities, the weighted forecast, win and loss analysis, interactions with follow-up tasks, client contacts with an influence map, Client 360, Excel import',
   tables: TABLES,
   companyOptional: [],
-  resources: ['leads', 'opportunities', 'interactions', 'clients', 'contacts', 'reports'],
+  resources: ['leads', 'opportunities', 'interactions', 'clients', 'contacts', 'reports', 'tenders', 'eligibility', 'addenda', 'queries', 'team-tasks', 'bid-decisions', 'tender-reports'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bd_leads'").get()) return;
@@ -66,5 +78,20 @@ export const bd = {
     router.use(gate('ff.bd.p0801', 'Business development is'));
     router.use(crmRoutes({ crm, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/bd', router);
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tdr_tenders'").get()) {
+      const tdr = createTenderService({ db });
+      bindTenders(db, tdr);
+      listExports.register('bd.tenders', { source: (actor, req) => tdr.tenders.exportSource(actor, req), hidden: () => [] });
+      listExports.register('bd.bid_decisions', { source: (actor, req) => tdr.decisions.exportSource(actor, req), hidden: () => [] });
+      runtime.jobs.register('bd.tender_daily', () => { const out = { reminded: 0 }; for (const c of companies()) out.reminded += tdr.cycle(c).reminded; return out; }, { maxAttempts: 3 });
+      runtime.scheduler.define({ code: 'bd.tender_daily_reminders', cron: '50 1 * * *', jobType: 'bd.tender_daily', description: 'Daily (01:50): the owner and the team of a tender are reminded on the days before the pre-bid meeting, the submission and the opening (and before a team task is due), once for each date.' });
+      try {
+        widgetRegistry.register({ code: 'bd.tender_deadlines', provider: (ctx) => { const w = tdr.widget(ctx.actor); return { value: w.value, unit: w.value === 1 ? 'tender submission this week' : 'tender submissions this week', previous: null, trendPct: null, target: null, status: w.value > 0 ? 'amber' : 'green', note: 'Tenders whose submission falls in the next seven days' }; } });
+      } catch { /* registered once per process */ }
+      const tr = Router();
+      tr.use(gate('ff.bd.p0802', 'The tender register is'));
+      tr.use(tenderRoutes({ tdr, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/bd', tr);
+    }
   },
 };

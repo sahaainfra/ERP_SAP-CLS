@@ -59,11 +59,11 @@ test('FR-06 every built-in formula is registered as version 1, passes its own te
   const { db, engine } = setup();
   const rows = db.prepare('SELECT * FROM core_formulas ORDER BY code').all();
   assert.deepEqual(rows.map((r) => [r.code, r.formula_version, r.status, r.owner_module]), [
-    ['billing.net_payable', 1, 'ACTIVE', 'billing'], ['boq.line_amount', 1, 'ACTIVE', 'boq'], ['ra.line_amount', 1, 'ACTIVE', 'mdm'], ['ra.unit_rate', 1, 'ACTIVE', 'mdm'], ['stock.weighted_average', 1, 'ACTIVE', 'stores'], ['tax.gst_split', 1, 'ACTIVE', 'tax'],
+    ['billing.net_payable', 1, 'ACTIVE', 'billing'], ['boq.line_amount', 1, 'ACTIVE', 'boq'], ['ra.line_amount', 1, 'ACTIVE', 'mdm'], ['ra.unit_rate', 1, 'ACTIVE', 'mdm'], ['stock.weighted_average', 1, 'ACTIVE', 'stores'], ['tax.gst_split', 1, 'ACTIVE', 'tax'], ['tdr.bid_capacity', 1, 'ACTIVE', 'bd'],
   ]);
   for (const r of rows) assert.ok(runTests(definitionOf(r), JSON.parse(r.tests_json)).every((t) => t.ok), `${r.code} tests`);
   assert.deepEqual(engine.ensureBuiltins(), [], 'running it again changes nothing and finds no drift');
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM core_formulas').get().n, 6);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM core_formulas').get().n, 7);
   db.exec("UPDATE core_formulas SET description = 'edited by an administrator' WHERE code = 'boq.line_amount'");
   assert.deepEqual(engine.ensureBuiltins(), [], 'a changed description is not drift; the calculation is');
   assert.equal(definitionHash({ expression: 'a', inputs: [], outputs: [], roundingPolicy: 'half_up' }), definitionHash({ expression: 'a', inputs: [], outputs: [], rounding_policy: 'half_up' }));
