@@ -1,4 +1,6 @@
+import { join } from 'node:path';
 import { Router } from 'express';
+import { createLocalStorage } from '../../platform/files/storage.js';
 import { eventTypes } from '../../platform/events/index.js';
 import { notFound } from '../../platform/http/errors.js';
 import { idempotency } from '../../platform/http/idempotency.js';
@@ -7,6 +9,8 @@ import { listExports, listExportsOf } from '../../platform/list/index.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { widgetRegistry } from '../../platform/widgets/index.js';
 import { createFlagService } from '../core/api.js';
+import { bindPunches, createPunchService } from './punches.js';
+import { punchRoutes } from './punch-routes.js';
 import { bindAttendance, createAttendanceService } from './attendance.js';
 import { attRoutes } from './att-routes.js';
 import { parseRules } from './att-validators.js';
@@ -36,14 +40,17 @@ for (const [type, description] of [
   ['att.policy.approved', 'An attendance policy version was approved and governs the dates from its effective date: data { code, version, effectiveFrom, band }. Punch evaluation (07.05, 07.06), leave (07.07) and payroll (24.02, 24.03) resolve policies through the attendance service.'],
   ['att.assignment.changed', 'The policy, shift, weekly off or holiday calendar of the company, a site, a crew or an employee was assigned or ended: data { scopeType, scopeId, policyCode, shiftId, effectiveFrom, effectiveTo }.'],
   ['att.roster.changed', 'A roster pattern was made or ended, or a day was changed or swapped after approval: data { siteId, crewId, workDate, kind }.'],
+  ['att.punch.recorded', 'An attendance punch was recorded (or a pending visit punch was decided): data { personType, personId, siteId, type, workDate, effectiveTime, result (ACCEPTED, FLAGGED, PENDING, REJECTED), reason, method, offline, insideFence, anomalies }. The attendance register (07.06), the DPR labour prefill (14.02) and the workforce dashboards (07.14) take it from here; a rejected punch does not count.'],
+  ['att.anomaly.raised', 'A punch looked wrong and waits for review: data { punchId, personId, type, severity }.'],
+  ['att.anomaly.reviewed', 'A reviewer accepted or rejected an anomaly: data { punchId, personId, type, decision }.'],
   ['att.period.closed', 'An attendance period was closed and is never recalculated: data { start, end, label }.'],
   ['hr.offer.declined', 'The candidate declined the offer: data { docNo, candidateId, response }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'hr', description });
 
-const TABLES = ['att_shifts', 'att_policies', 'att_policy_assignments', 'att_rosters', 'att_roster_changes', 'att_period_defs', 'att_periods', 'hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
+const TABLES = ['att_punches', 'att_anomalies', 'att_visits', 'att_device_bindings', 'att_site_settings', 'att_shifts', 'att_policies', 'att_policy_assignments', 'att_rosters', 'att_roster_changes', 'att_period_defs', 'att_periods', 'hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { att_policies: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_roster_changes: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_shifts: ['ACTIVE', 'INACTIVE'], att_periods: ['OPEN', 'CLOSED'], hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
+  statuses: { att_anomalies: ['OPEN', 'PENDING_APPROVAL', 'ACCEPTED', 'REJECTED'], att_visits: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'], att_punches: ['ACCEPTED', 'FLAGGED', 'REJECTED', 'PENDING'], att_policies: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_roster_changes: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_shifts: ['ACTIVE', 'INACTIVE'], att_periods: ['OPEN', 'CLOSED'], hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
   uniqueKeys: [{ table: 'hr_employees', columns: ['company_id', 'emp_code'] }],
 });
 /** Module "hr": human resources (Workforce-First, M07). Part 07.01 holds the employee master and employment records. The tables are `hr_*`. */
@@ -51,13 +58,13 @@ export const hr = {
   code: 'hr',
   name: 'HR & Workforce Management',
   routePrefix: '/api/v1/hr',
-  ownerPart: '07.01, 07.02, 07.03, 07.04',
+  ownerPart: '07.01, 07.02, 07.03, 07.04, 07.05',
   status: 'Employee master: profile, employment, statutory and bank details (masked), documents with expiry, history, approvals of new employees and of changes, user link, effective-dated separation with access removal, directory, import, overview',
   tables: TABLES,
   companyOptional: [],
   resources: ['employees', 'plans', 'requisitions', 'candidates', 'interviews', 'offers', 'offer-link', 'onboarding', 'deployments', 'deployment-board', 'crews', 'transfers', 'site-plans', 'att'],
 
-  mount(api, { db, config: appConfig, publicApi }) {
+  mount(api, { db, config: appConfig, publicApi, storagePath }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'hr_employees'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment });
     const gate = (key, what) => (req, _res, next) => (flags.isOn(req.actor, key) ? next() : next(notFound(`${what} not enabled for your company yet (feature flag ${key} is OFF).`)));
@@ -118,6 +125,19 @@ export const hr = {
       ar.use(gate('ff.hr.p0704', 'Attendance configuration is'));
       ar.use(attRoutes({ att, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/hr', ar);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'att_punches'").get()) {
+      const punch = createPunchService({ db, storage: createLocalStorage({ root: join(storagePath ?? join(process.cwd(), 'data'), 'files') }) });
+      bindPunches(db, punch);
+      runtime.jobs.register('att.punch_retention', () => { let removed = 0; for (const c of companies()) removed += punch.retention(c).removed; return { removed }; }, { maxAttempts: 3 });
+      runtime.scheduler.define({ code: 'att.punch_retention_daily', cron: '45 0 * * *', jobType: 'att.punch_retention', description: 'Daily (00:45): the coordinates and the selfie of punches older than the retention period are removed; the punch stays as a record of attendance.' });
+      try {
+        widgetRegistry.register({ code: 'att.anomalies_open', provider: (ctx) => { const w = punch.widget(ctx.actor); return { value: w.value, unit: w.value === 1 ? 'attendance anomaly' : 'attendance anomalies', previous: null, trendPct: null, target: null, status: w.value > 0 ? 'amber' : 'green', note: 'Waiting for review.', drill: '/att/anomalies' }; } });
+      } catch { /* registered once per process */ }
+      const pr = Router();
+      pr.use(gate('ff.hr.p0705', 'Geo-fenced attendance is'));
+      pr.use(punchRoutes({ punch }, { idempotent: idempotency(db) }));
+      api.use('/att', pr);
     }
   },
 };

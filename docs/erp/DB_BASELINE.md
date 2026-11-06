@@ -269,6 +269,76 @@ Indexes:
 - ix_alr_rules_company: company_id, status, enabled
 - ux_alr_rules_version (unique): , code, rule_version
 
+## att_anomalies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| punch_id | INTEGER | yes |  |  |
+| anomaly_type | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| detail | TEXT |  |  |  |
+| reviewed_by | TEXT |  |  |  |
+| reviewed_at | TEXT |  |  |  |
+| review_note | TEXT |  |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| workflow_instance_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: punch_id -> att_punches(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_anomalies_queue: company_id, status, severity
+- ix_att_anomalies_company_id: company_id
+- ux_att_anomalies_punch_type (unique): punch_id, anomaly_type
+
+## att_device_bindings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| device_id | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| first_seen_at | TEXT | yes |  |  |
+| last_seen_at | TEXT | yes |  |  |
+| punches | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_device_bindings_employee: employee_id
+- ix_att_device_bindings_company_id: company_id
+- ux_att_device_bindings (unique): company_id, device_id, employee_id
+
 ## att_period_defs
 
 | Column | Type | Not null | Key | Default |
@@ -406,6 +476,65 @@ Indexes:
 - ix_att_policy_assignments_scope: company_id, scope_type, scope_id
 - ix_att_policy_assignments_company_id: company_id
 
+## att_punches
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  | 'EMPLOYEE' |
+| person_id | INTEGER | yes |  |  |
+| punch_site_id | INTEGER | yes |  |  |
+| punch_type | TEXT | yes |  |  |
+| work_date | TEXT | yes |  |  |
+| device_time | TEXT | yes |  |  |
+| server_time | TEXT | yes |  |  |
+| effective_time | TEXT | yes |  |  |
+| lat | REAL |  |  |  |
+| lng | REAL |  |  |  |
+| accuracy_m | REAL |  |  |  |
+| inside_fence | INTEGER |  |  |  |
+| distance_m | REAL |  |  |  |
+| selfie_file_id | INTEGER |  |  |  |
+| method | TEXT | yes |  |  |
+| recorded_by | TEXT | yes |  |  |
+| device_id | TEXT |  |  |  |
+| offline | INTEGER | yes |  | 0 |
+| client_uuid | TEXT | yes |  |  |
+| group_id | TEXT |  |  |  |
+| deployment_id | INTEGER |  |  |  |
+| visit_id | INTEGER |  |  |  |
+| result | TEXT | yes |  |  |
+| reason_code | TEXT |  |  |  |
+| flags_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: punch_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_punches_selfie: selfie_file_id
+- ix_att_punches_visit: visit_id
+- ix_att_punches_deployment: deployment_id
+- ix_att_punches_group: group_id
+- ix_att_punches_device: company_id, device_id, work_date
+- ix_att_punches_day: company_id, work_date, result
+- ix_att_punches_site_day: punch_site_id, work_date
+- ix_att_punches_person: person_type, person_id, effective_time
+- ix_att_punches_company_id: company_id
+- ux_att_punches_client (unique): company_id, client_uuid
+
 ## att_roster_changes
 
 | Column | Type | Not null | Key | Default |
@@ -524,6 +653,74 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_att_shifts_company_id: company_id
 - ux_att_shifts_code (unique): company_id, code
+
+## att_site_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| setting_site_id | INTEGER | yes |  |  |
+| selfie_mode | TEXT | yes |  | 'OPTIONAL' |
+| flag_accuracy_m | INTEGER |  |  |  |
+| reject_accuracy_m | INTEGER |  |  |  |
+| tolerance_m | INTEGER |  |  |  |
+| kiosk_enabled | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: setting_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_site_settings_setting_site_id: setting_site_id
+- ix_att_site_settings_company_id: company_id
+- sqlite_autoindex_att_site_settings_1 (unique): company_id, setting_site_id
+
+## att_visits
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| visit_site_id | INTEGER | yes |  |  |
+| work_date | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'SUBMITTED' |
+| workflow_instance_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: visit_site_id -> org_sites(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_visits_site: visit_site_id, work_date
+- ix_att_visits_employee: employee_id, work_date
+- ix_att_visits_company_id: company_id
+- ux_att_visits_doc (unique): company_id, doc_no
 
 ## col_comments
 
