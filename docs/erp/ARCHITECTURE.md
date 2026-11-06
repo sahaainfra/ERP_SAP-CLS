@@ -946,3 +946,17 @@ Behind feature flag `ff.bd.p0801` (new module `bd`; needs 06.04). Code: `modules
 - **Forecast** (FR-05, T-01): `/bd/reports/forecast` = Σ round(value × probability) per opportunity, by month, sector, region, stage, owner or client; `/reports/win-loss`, `/reports/board`, `/reports/dashboard`.
 - **Events**: `bd.lead.{created,qualified,converted,amended,cancelled}`, `bd.opportunity.{created,approved,amended,cancelled,stage_changed,lost,won,converted}`, `bd.interaction.logged`.
 - **Browser**: Business Development Dashboard, Leads, Lead, Opportunities, Opportunity, Opportunity Pipeline (board), Clients, Client 360; Hindi through the `bd` namespace.
+
+## 75. Tender register, bid or no-bid, addenda and clarifications (part 08.02)
+
+Behind feature flag `ff.bd.p0802` (module `bd`; needs 08.01 and 04.10). Code: `modules/bd/tender.js` (tenders, eligibility, addenda, queries, team tasks, documents, calendar, reminders, dashboard, bid decisions), `tender-constants.js`, `tender-validators.js`, `tender-routes.js`, `tender-integrations.js`.
+
+- **Tender** (FR-01, ADR-342): `/bd/tenders` (CRUD, submit, withdraw, cancel, amend, track, capacity, ready, unready, history, print, export); workflow `TDR_TENDER` (resolver `tdr.reviewer`: other EST users, else the director). Created by hand, by the Excel import or from the conversion of an opportunity (ADR-345).
+- **Bid capacity** (BR-02, ADR-343): formula `tdr.bid_capacity` of the calculation engine, recomputed on every save.
+- **Eligibility** (FR-02): `/bd/tenders/:id/eligibility`, `/bd/eligibility/:id`; evidence through the file entity `tdr_eligibility`.
+- **Bid decision** (FR-03, ADR-344): `/bd/bid-decisions`; workflow `TDR_BID_DECISION` (EST colleague, then DIR); the approval sets the tender stage.
+- **Documents** (FR-04, ADR-346): `/bd/tenders/:id/documents` through the document service; **addenda** `/bd/tenders/:id/addenda` and `/bd/addenda/:id/acknowledge` (dates move, the log `tdr_date_log` keeps the change).
+- **Queries** (FR-05): `/bd/tenders/:id/queries`, `/bd/queries/:id/{send,respond,no-response}`. **Team tasks** (FR-06): `/bd/tenders/:id/team-tasks`, each a task of 04.08.
+- **Calendar and reminders** (FR-07, T-02, ADR-347): `/bd/tender-reports/calendar`, `/dashboard`; job `bd.tender_daily`; widget `bd.tender_deadlines`.
+- **Events**: `bd.tender.{created,registered,amended,cancelled,bid_decided,addendum_issued,query_answered,ready,submitted}`.
+- **Browser**: Tender Dashboard, Tender Register, Tender, Bid / No-Bid, Bid / No-Bid Evaluation, Tender Calendar; Hindi through the `bd` namespace.

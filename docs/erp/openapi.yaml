@@ -5002,3 +5002,175 @@ paths:
     get:
       summary: "A lookup (clients, owners)"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tender-reports/dashboard:
+    get:
+      summary: "Tender dashboard: live tenders, deadlines, bid ratio, my actions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tender-reports/calendar:
+    get:
+      summary: "Tender calendar: pre-bid, submission, opening and team task dates"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders:
+    get:
+      summary: "Tenders in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Tenders in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/export:
+    get:
+      summary: "Export the tenders"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}:
+    get:
+      summary: "A tender with eligibility, readiness, addenda, queries and team tasks"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "A tender with eligibility, readiness, addenda, queries and team tasks"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "A tender with eligibility, readiness, addenda, queries and team tasks"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/submit:
+    post:
+      summary: "Send the tender for registration"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/withdraw:
+    post:
+      summary: "Withdraw the tender from registration"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/cancel:
+    post:
+      summary: "Cancel a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/amend:
+    post:
+      summary: "Amend a registered tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/track:
+    post:
+      summary: "Change the owner and the capacity inputs of a registered tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/capacity:
+    post:
+      summary: "Work out the bid capacity (calculation engine)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/ready:
+    post:
+      summary: "Mark ready for submission (422 NOT_READY with the blockers)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/unready:
+    post:
+      summary: "Take back from ready"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/history:
+    get:
+      summary: "History of a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/print:
+    get:
+      summary: "Print a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/eligibility:
+    post:
+      summary: "Add an eligibility criterion"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/eligibility/{id}:
+    patch:
+      summary: "An eligibility criterion"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "An eligibility criterion"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/addenda:
+    post:
+      summary: "Record an addendum or corrigendum (may move the dates)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/addenda/{id}/acknowledge:
+    post:
+      summary: "Acknowledge an addendum"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/queries:
+    post:
+      summary: "Raise a pre-bid query"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/queries/{id}:
+    patch:
+      summary: "A pre-bid query"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/queries/{id}/send:
+    post:
+      summary: "Send a query to the authority"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/queries/{id}/respond:
+    post:
+      summary: "Record the clarification received"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/queries/{id}/no-response:
+    post:
+      summary: "Close a query without a response"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/team-tasks:
+    post:
+      summary: "Give a task to the tender team"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/team-tasks/{id}/done:
+    post:
+      summary: "Mark a team task done"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/team-tasks/{id}/cancel:
+    post:
+      summary: "Cancel a team task"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/tenders/{id}/documents:
+    get:
+      summary: "Tender documents of the document service"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Tender documents of the document service"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions:
+    get:
+      summary: "Bid / no-bid decisions in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Bid / no-bid decisions in scope"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/export:
+    get:
+      summary: "Export the decisions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/{id}:
+    get:
+      summary: "A bid / no-bid decision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "A bid / no-bid decision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "A bid / no-bid decision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/{id}/submit:
+    post:
+      summary: "Send the decision for approval (estimation colleague, then the director)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/{id}/withdraw:
+    post:
+      summary: "Withdraw a decision from approval"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/{id}/cancel:
+    post:
+      summary: "Cancel a decision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/{id}/amend:
+    post:
+      summary: "Amend an approved decision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/{id}/history:
+    get:
+      summary: "History of a decision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bd/bid-decisions/{id}/print:
+    get:
+      summary: "Print a decision"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

@@ -10450,6 +10450,328 @@ Indexes:
 - ux_sig_verifications_doc (unique): generated_doc_id
 - ux_sig_verifications_code (unique): code
 
+## tdr_addenda
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tender_id | INTEGER | yes |  |  |
+| number | INTEGER | yes |  |  |
+| kind | TEXT | yes |  | 'ADDENDUM' |
+| addendum_date | TEXT | yes |  |  |
+| summary | TEXT | yes |  |  |
+| impact | TEXT | yes |  | 'NONE' |
+| impact_note | TEXT |  |  |  |
+| new_prebid_date | TEXT |  |  |  |
+| new_submission_at | TEXT |  |  |  |
+| new_opening_at | TEXT |  |  |  |
+| ack_by | TEXT |  |  |  |
+| ack_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tdr_addenda_company_id: company_id
+- ux_tdr_addenda_number (unique): tender_id, number
+
+## tdr_amendments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| amendment_no | INTEGER | yes |  |  |
+| snapshot_json | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| amended_by | TEXT | yes |  |  |
+| amended_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_tdr_amendments (unique): entity, entity_id, amendment_no
+- ix_tdr_amendments_company_id: company_id
+
+## tdr_bid_decisions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| tender_id | INTEGER | yes |  |  |
+| scores_json | TEXT | yes |  | '{}' |
+| total_score | INTEGER | yes |  | 0 |
+| threshold | INTEGER | yes |  | 60 |
+| recommendation | TEXT | yes |  | 'NO_BID' |
+| decision | TEXT | yes |  |  |
+| reasons | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| decided_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tdr_bid_decisions_tender: tender_id, status
+- ix_tdr_bid_decisions_company_id: company_id
+- ux_tdr_bid_decisions_doc (unique): company_id, doc_no
+
+## tdr_date_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tender_id | INTEGER | yes |  |  |
+| field | TEXT | yes |  |  |
+| old_value | TEXT |  |  |  |
+| new_value | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| addendum_number | INTEGER |  |  |  |
+| changed_by | TEXT | yes |  |  |
+| changed_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tdr_date_log_tender: tender_id
+- ix_tdr_date_log_company_id: company_id
+
+## tdr_eligibility
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tender_id | INTEGER | yes |  |  |
+| seq | INTEGER | yes |  |  |
+| criterion | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| requirement_text | TEXT |  |  |  |
+| requirement_minor | INTEGER |  |  |  |
+| our_minor | INTEGER |  |  |  |
+| our_text | TEXT |  |  |  |
+| result | TEXT | yes |  | 'PENDING' |
+| result_mode | TEXT | yes |  | 'MANUAL' |
+| waive_reason | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tdr_eligibility_company_id: company_id
+- ux_tdr_eligibility_seq (unique): tender_id, seq
+
+## tdr_queries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tender_id | INTEGER | yes |  |  |
+| seq | INTEGER | yes |  |  |
+| clause_ref | TEXT |  |  |  |
+| query_text | TEXT | yes |  |  |
+| addendum_number | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| submitted_on | TEXT |  |  |  |
+| response | TEXT |  |  |  |
+| response_date | TEXT |  |  |  |
+| raised_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tdr_queries_company_id: company_id
+- ux_tdr_queries_seq (unique): tender_id, seq
+
+## tdr_team_tasks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tender_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| assignee | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| task_id | INTEGER |  |  |  |
+| done_at | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tdr_team_tasks_due: company_id, status, due_date
+- ix_tdr_team_tasks_tender: tender_id, status
+- ix_tdr_team_tasks_company_id: company_id
+
+## tdr_tenders
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| opportunity_id | INTEGER |  |  |  |
+| client_partner_id | INTEGER | yes |  |  |
+| reference_no | TEXT |  |  |  |
+| portal | TEXT | yes |  | 'OTHER' |
+| portal_name | TEXT |  |  |  |
+| name_of_work | TEXT | yes |  |  |
+| location | TEXT |  |  |  |
+| region | TEXT |  |  |  |
+| est_cost_minor | INTEGER | yes |  | 0 |
+| emd_minor | INTEGER | yes |  | 0 |
+| tender_fee_minor | INTEGER | yes |  | 0 |
+| bid_type | TEXT | yes |  | 'ITEM_RATE' |
+| period_months | INTEGER | yes |  | 12 |
+| publish_date | TEXT |  |  |  |
+| prebid_date | TEXT |  |  |  |
+| submission_at | TEXT |  |  |  |
+| opening_at | TEXT |  |  |  |
+| owner | TEXT | yes |  |  |
+| bc_turnover_minor | INTEGER |  |  |  |
+| bc_commitments_minor | INTEGER |  |  |  |
+| bc_factor | INTEGER | yes |  | 2 |
+| bid_capacity_minor | INTEGER |  |  |  |
+| capacity_json | TEXT |  |  |  |
+| stage | TEXT | yes |  | 'OPEN' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| ready_at | TEXT |  |  |  |
+| ready_by | TEXT |  |  |  |
+| submitted_on | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: client_partner_id -> mdm_partners(id), opportunity_id -> bd_opportunities(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tdr_tenders_submission: company_id, submission_at
+- ix_tdr_tenders_opportunity: opportunity_id
+- ix_tdr_tenders_client: client_partner_id
+- ix_tdr_tenders_owner: company_id, owner
+- ix_tdr_tenders_status: company_id, status
+- ix_tdr_tenders_stage: company_id, stage
+- ix_tdr_tenders_company_id: company_id
+- ux_tdr_tenders_ref (unique): company_id, client_partner_id, reference_no
+- ux_tdr_tenders_doc (unique): company_id, doc_no
+
 ## tpl_auto_rules
 
 | Column | Type | Not null | Key | Default |
