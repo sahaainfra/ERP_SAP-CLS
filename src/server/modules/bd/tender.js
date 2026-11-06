@@ -138,7 +138,7 @@ export function createTenderService({ db }) {
       },
     };
     if (detail) {
-      v.eligibility = checklistOf(t); v.readiness = readiness(t);
+      v.eligibility = checklistOf(t); v.readiness = readiness(t); v.scoring = { weights: weights(t.company_id), threshold: Number(param(t.company_id, 'tdr.bid_score_threshold') ?? 60) };
       const d = liveDecision(t.id); v.decision = d ? { id: d.id, docNo: d.doc_no, status: d.status, decision: d.decision, totalScore: d.total_score, recommendation: d.recommendation } : null;
       v.addenda = addenda.list(actor, t.id); v.queries = queries.list(actor, t.id); v.teamTasks = teamTasks.list(actor, t.id);
       v.dateLog = db.prepare('SELECT field, old_value AS oldValue, new_value AS newValue, reason, addendum_number AS addendumNumber, changed_by AS by, changed_at AS at FROM tdr_date_log WHERE tender_id = ? ORDER BY id').all(t.id);

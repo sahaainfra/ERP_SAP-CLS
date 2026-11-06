@@ -43,3 +43,39 @@ export const bd = {
   winLoss: async (f) => (await api.get(`/bd/reports/win-loss?${q(f)}`)).data,
   board: async (f) => (await api.get(`/bd/reports/board?${q(f)}`)).data,
 };
+
+export const PORTALS = ['CPPP', 'GEM', 'STATE_PORTAL', 'CLIENT_SITE', 'OTHER'];
+export const BID_TYPES = ['ITEM_RATE', 'PERCENTAGE', 'LUMP_SUM', 'EPC', 'HAM'];
+export const TENDER_STAGES = ['OPEN', 'BID', 'READY', 'SUBMITTED', 'AWARDED', 'LOST', 'NO_BID', 'CLOSED'];
+export const CRITERIA = ['TURNOVER', 'SIMILAR_WORK', 'NET_WORTH', 'BID_CAPACITY', 'REGISTRATION_CLASS', 'JV', 'OTHER'];
+export const IMPACTS = ['NONE', 'DATES', 'SCOPE', 'VALUE', 'DOCUMENTS'];
+export const TEAM_KINDS = ['ESTIMATION', 'TECHNICAL_DOCS', 'FINANCIAL_DOCS', 'SITE_VISIT', 'OTHER'];
+export const SCORE_KEYS = ['STRATEGIC_FIT', 'MARGIN', 'RISK', 'CAPACITY', 'COMPETITION'];
+export const DOC_KINDS = ['NIT', 'BOQ', 'CONDITIONS', 'DRAWINGS', 'ADDENDUM', 'OTHER'];
+
+export const tdr = {
+  tender: async (id) => (await api.get(`/bd/tenders/${id}`)).data,
+  createTender: async (b) => (await api.post('/bd/tenders', b, idem())).data,
+  updateTender: async (id, b) => (await api.patch(`/bd/tenders/${id}`, b, idem())).data,
+  tenderAct: async (id, action, b = {}) => (await api.post(`/bd/tenders/${id}/${action}`, b, idem())).data,
+  deleteTender: async (id) => (await api.delete(`/bd/tenders/${id}`)).data,
+  tenderHistory: async (id) => (await api.get(`/bd/tenders/${id}/history`)).data,
+  addEligibility: async (id, b) => (await api.post(`/bd/tenders/${id}/eligibility`, b, idem())).data,
+  updateEligibility: async (id, b) => (await api.patch(`/bd/eligibility/${id}`, b, idem())).data,
+  deleteEligibility: async (id) => (await api.delete(`/bd/eligibility/${id}`)).data,
+  addAddendum: async (id, b) => (await api.post(`/bd/tenders/${id}/addenda`, b, idem())).data,
+  ackAddendum: async (id) => (await api.post(`/bd/addenda/${id}/acknowledge`, {}, idem())).data,
+  addQuery: async (id, b) => (await api.post(`/bd/tenders/${id}/queries`, b, idem())).data,
+  queryAct: async (id, action, b = {}) => (await api.post(`/bd/queries/${id}/${action}`, b, idem())).data,
+  addTask: async (id, b) => (await api.post(`/bd/tenders/${id}/team-tasks`, b, idem())).data,
+  taskAct: async (id, action) => (await api.post(`/bd/team-tasks/${id}/${action}`, {}, idem())).data,
+  documents: async (id) => (await api.get(`/bd/tenders/${id}/documents`)).data,
+  registerDocument: async (id, b) => (await api.post(`/bd/tenders/${id}/documents`, b, idem())).data,
+  decision: async (id) => (await api.get(`/bd/bid-decisions/${id}`)).data,
+  createDecision: async (b) => (await api.post('/bd/bid-decisions', b, idem())).data,
+  updateDecision: async (id, b) => (await api.patch(`/bd/bid-decisions/${id}`, b, idem())).data,
+  decisionAct: async (id, action, b = {}) => (await api.post(`/bd/bid-decisions/${id}/${action}`, b, idem())).data,
+  decisionHistory: async (id) => (await api.get(`/bd/bid-decisions/${id}/history`)).data,
+  dashboard: async () => (await api.get('/bd/tender-reports/dashboard')).data,
+  calendar: async (f) => (await api.get(`/bd/tender-reports/calendar?${q(f)}`)).data,
+};
