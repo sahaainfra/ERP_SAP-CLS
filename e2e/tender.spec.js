@@ -57,7 +57,7 @@ const pick = async (page, id, text, name) => { await page.locator(`#${id}`).clic
 // (A x N x 2 - B), fills the eligibility checklist, evaluates bid or no-bid (a colleague, then the director approve), records an addendum that moves the submission, a pre-bid query with its clarification, a team task and a tender document, and marks the tender ready for
 // submission only when everything is in place; the calendar and the dashboard show the deadlines; Hindi. On a computer and a phone, no console errors, no horizontal scroll.
 test('AC-01 a tender is registered, evaluated, worked on (eligibility, addenda, queries, tasks, documents) and made ready, with the calendar, the dashboard and Hindi, in the browser', async ({ browser, request }, info) => {
-  test.setTimeout(540_000);
+  test.setTimeout(240_000);
   const phone = info.project.name === 'mobile';
   const sfx = phone ? '-mobile' : '';
   const c = await company(request, phone ? 'TDM' : 'TDD');
