@@ -1329,3 +1329,18 @@ label.btn { position: relative; overflow: hidden; }
 .exp-lines td > * + * { margin-block-start: var(--erp-space-1); }
 .exp-lines tr[data-flag="OVER_LIMIT"], .exp-lines tr[data-flag="OLD"], .exp-lines tr[data-flag="NO_RECEIPT"] { background: var(--erp-color-status-warning-bg); }
 .exp-lines tr[data-flag="DUPLICATE"] { background: var(--erp-color-status-error-bg); }
+
+/* Business development (part 08.01): the pipeline board scrolls inside its own region so that the page never scrolls sideways; the card of an opportunity; the influence map. */
+.bd-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(15rem, 18rem); gap: var(--erp-space-3); overflow-x: auto; padding-block-end: var(--erp-space-3); max-inline-size: 100%; }
+.bd-col { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle, currentColor); border-radius: var(--erp-radius-md, 0.5rem); padding: var(--erp-space-2); min-inline-size: 0; }
+.bd-col.is-over { outline: 2px dashed var(--erp-color-status-info-fg, currentColor); }
+.bd-col h2 { font-size: 1rem; margin: 0 0 var(--erp-space-2); }
+.bd-col ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--erp-space-2); }
+.bd-card { border: 1px solid var(--erp-color-border-subtle, currentColor); border-radius: var(--erp-radius-sm, 0.25rem); padding: var(--erp-space-2); background: var(--erp-color-bg-canvas, transparent); overflow-wrap: anywhere; }
+.bd-card[draggable="true"] { cursor: grab; }
+.bd-card select { inline-size: 100%; }
+.bd-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--erp-space-2); list-style: none; padding: 0; }
+.bd-map li { border: 1px solid var(--erp-color-border-subtle, currentColor); border-radius: var(--erp-radius-sm, 0.25rem); padding: var(--erp-space-2); overflow-wrap: anywhere; }
+.bd-map li[data-stance="BLOCKER"] { border-color: var(--erp-color-status-danger-fg, currentColor); }
+.bd-map li[data-stance="CHAMPION"] { border-color: var(--erp-color-status-success-fg, currentColor); }
+.exp-code { font: 1.25rem/1.4 var(--erp-font-mono, monospace); letter-spacing: 0.08em; }
