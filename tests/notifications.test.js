@@ -277,6 +277,7 @@ test('T-03 FR-05 FR-06 quiet hours hold back non-urgent messages for a digest; a
   failNext = 0;
   assert.equal((await api.call('POST', `${N}/deliveries/${failed.id}/retry`, { ...pm, headers: key('t') })).status, 403);
   assert.equal((await api.call('POST', `${N}/deliveries/${failed.id}/retry`, { ...it, headers: key('t') })).json.data.status, 'PENDING');
+  engine.setClock(() => new Date(Date.now() + 60_000)); // a retry is due from the real time it was asked for, whatever day the test clock was set to above
   await n.dispatchDue();
   assert.equal(api.db.prepare('SELECT status FROM ntf_deliveries WHERE id = ?').get(failed.id).status, 'SENT');
   assert.equal((await api.raw('GET', `${N}/deliveries/export?format=csv`, it)).status, 200);
