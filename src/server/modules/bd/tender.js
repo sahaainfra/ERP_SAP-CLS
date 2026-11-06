@@ -313,7 +313,7 @@ export function createTenderService({ db }) {
   };
   /** One place writes the fields of a tender (update and amendment), and the dates that move are logged. */
   function save(actor, t, b, action, reason = null) {
-    const cur = fieldsOf(t); /** @type {any} */ const m = { ...cur, ...defined(b) }; delete m.version; delete m.submit; delete m.comment; delete m.opportunityId;
+    const cur = fieldsOf(t); const m = /** @type {any} */ ({ ...cur, ...defined(b) }); delete m.version; delete m.submit; delete m.comment; delete m.opportunityId;
     m.opportunityId = t.opportunity_id;
     const problems = problemsOf(actor, m); if (m.referenceNo && db.prepare("SELECT 1 FROM tdr_tenders WHERE company_id = ? AND client_partner_id = ? AND lower(reference_no) = lower(?) AND id <> ? AND status <> 'CANCELLED' AND deleted_at IS NULL").get(actor.companyId, m.clientPartnerId, m.referenceNo, t.id)) problems.push({ field: 'referenceNo', message: 'This authority has a tender with that reference already' });
     if (problems.length) throw badRequest('Some fields are not valid.', problems);
