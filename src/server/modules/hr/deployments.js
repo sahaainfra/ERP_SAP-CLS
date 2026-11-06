@@ -1,3 +1,4 @@
+import { deploymentGuards } from './labour.js';
 import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
@@ -42,10 +43,10 @@ for (const [key, dataType, def, description, extra] of [
 const CURRENT_SQL = `CASE WHEN d.status = 'APPROVED' AND d.from_date <= ${IST_TODAY} AND (d.to_date IS NULL OR d.to_date >= ${IST_TODAY}) THEN 'CURRENT' WHEN d.status = 'APPROVED' AND d.from_date > ${IST_TODAY} THEN 'UPCOMING' WHEN d.status IN ('APPROVED', 'CLOSED', 'SUPERSEDED') THEN 'ENDED' ELSE 'OPEN' END`;
 export const deploymentList = defineList({
   code: 'hr.deployments', label: 'Deployments', permission: 'hr.deployment.view',
-  from: "hr_deployments d LEFT JOIN hr_employees e ON e.id = d.person_id AND d.person_type = 'EMPLOYEE' LEFT JOIN org_designations g ON g.id = e.designation_id LEFT JOIN org_projects p ON p.id = d.dep_project_id LEFT JOIN org_sites s ON s.id = d.dep_site_id LEFT JOIN hr_crews c ON c.id = d.crew_id",
+  from: "hr_deployments d LEFT JOIN hr_employees e ON e.id = d.person_id AND d.person_type = 'EMPLOYEE' LEFT JOIN lab_workers lw ON lw.id = d.person_id AND d.person_type = 'WORKER' LEFT JOIN org_designations g ON g.id = e.designation_id LEFT JOIN org_projects p ON p.id = d.dep_project_id LEFT JOIN org_sites s ON s.id = d.dep_site_id LEFT JOIN hr_crews c ON c.id = d.crew_id",
   where: "d.deleted_at IS NULL AND d.status != 'SUPERSEDED'", searchable: ['d.doc_no', 'e.full_name', 'e.emp_code', 'p.name', 's.name'], defaultSort: '-docNo',
   columns: {
-    docNo: { sql: 'd.doc_no', type: 'text', label: 'Deployment' }, revision: { sql: 'd.revision_no', type: 'number', label: 'Revision' }, person: { sql: 'e.full_name', type: 'text', label: 'Person' }, code: { sql: 'e.emp_code', type: 'text', label: 'Code' },
+    docNo: { sql: 'd.doc_no', type: 'text', label: 'Deployment' }, revision: { sql: 'd.revision_no', type: 'number', label: 'Revision' }, person: { sql: 'COALESCE(e.full_name, lw.name)', type: 'text', label: 'Person' }, code: { sql: 'COALESCE(e.emp_code, lw.worker_code)', type: 'text', label: 'Code' },
     designation: { sql: 'g.name', type: 'text', label: 'Designation' }, project: { sql: 'p.name', type: 'text', label: 'Project' }, site: { sql: 's.name', type: 'text', label: 'Site' }, crew: { sql: 'c.name', type: 'text', label: 'Crew' },
     siteRole: { sql: 'd.site_role', type: 'text', label: 'Role on site' }, fromDate: { sql: 'd.from_date', type: 'date', label: 'From' }, toDate: { sql: 'd.to_date', type: 'date', label: 'To' },
     isPrimary: { sql: 'd.is_primary', type: 'enum', label: 'Posting', options: [['1', 'Primary'], ['0', 'Secondary']] },
@@ -89,10 +90,11 @@ export function createDeploymentService({ db }) {
   /** The person a deployment is for. Contract workers belong to the labour register of 07.08, which is not installed yet; an employee is the only person that can be named today. */
   function personOf(companyId, type, id) {
     if (type === 'WORKER') {
-      const t = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'lab_workers'").get();
-      if (!t) return { error: 'Contract workers are deployed once the labour register (part 07.08) is installed; deploy an employee for now.' };
-      const w = db.prepare('SELECT id, name, code FROM lab_workers WHERE id = ? AND company_id = ?').get(id, companyId);
-      return w ? { id: w.id, type, name: w.name, code: w.code, designationId: null, userId: null } : { error: 'That worker does not exist.' };
+      const w = db.prepare('SELECT id, name, worker_code AS code, status, worker_status FROM lab_workers WHERE id = ? AND company_id = ? AND root_id = id AND deleted_at IS NULL').get(id, companyId);
+      if (!w) return { error: 'That worker does not exist.' };
+      if (w.status !== 'APPROVED') return { error: 'The worker is not approved yet.' };
+      if (w.worker_status !== 'ACTIVE') return { error: `The worker is ${w.worker_status.toLowerCase()}: nobody is deployed who is blacklisted or has left.` };
+      return { id: w.id, type, name: w.name, code: w.code, designationId: null, userId: null };
     }
     const e = db.prepare("SELECT id, full_name, emp_code, designation_id, user_id, employment_status, record_status FROM hr_employees WHERE id = ? AND company_id = ? AND deleted_at IS NULL").get(id, companyId);
     if (!e) return { error: 'That employee does not exist.' };
@@ -100,7 +102,7 @@ export function createDeploymentService({ db }) {
     if (!['ACTIVE', 'NOTICE'].includes(e.employment_status)) return { error: 'The employee has left; only an employee in service is deployed.' };
     return { id: e.id, type, name: e.full_name, code: e.emp_code, designationId: e.designation_id, userId: e.user_id };
   }
-  const nameOf = (type, id) => (type === 'EMPLOYEE' ? db.prepare('SELECT full_name AS n, emp_code AS c FROM hr_employees WHERE id = ?').get(id) : null);
+  const nameOf = (type, id) => (type === 'EMPLOYEE' ? db.prepare('SELECT full_name AS n, emp_code AS c FROM hr_employees WHERE id = ?').get(id) : db.prepare('SELECT name AS n, worker_code AS c FROM lab_workers WHERE id = ?').get(id));
   const usernameOf = (userId) => (userId ? db.prepare('SELECT username FROM iam_users WHERE id = ?').get(userId)?.username ?? null : null);
   const myUserId = (actor) => actor.userId ?? db.prepare('SELECT id FROM iam_users WHERE company_id = ? AND lower(username) = lower(?) AND is_active = 1').get(actor.companyId, actor.user)?.id ?? null;
   const myEmployee = (actor) => { const uid = myUserId(actor); return uid ? db.prepare("SELECT id FROM hr_employees WHERE company_id = ? AND user_id = ? AND deleted_at IS NULL AND record_status = 'APPROVED'").get(actor.companyId, uid)?.id ?? null : null; };
@@ -187,6 +189,7 @@ export function createDeploymentService({ db }) {
   function check(actor, b, problems, { exceptRoot = null } = {}) {
     const person = personOf(actor.companyId, b.personType, b.personId);
     if (person.error) problems.push({ field: 'personId', message: person.error });
+    else if (b.personType === 'WORKER') for (const g of deploymentGuards) problems.push(...g(actor.companyId, b));
     const project = db.prepare('SELECT id, status FROM org_projects WHERE id = ? AND company_id = ? AND is_active = 1').get(b.projectId, actor.companyId);
     if (!project) problems.push({ field: 'projectId', message: 'That project does not exist' });
     else if (['COMPLETED', 'CLOSED'].includes(project.status)) problems.push({ field: 'projectId', message: 'That project is closed; nobody is deployed to it' });
@@ -534,10 +537,10 @@ export function createDeploymentService({ db }) {
       return {
         date, canMove: may(actor, 'hr.deployment.amend'), sites: sites.map((s) => {
           const people = db.prepare(`SELECT q.*, c.name AS crew, c.trade FROM (
-              SELECT d.id, d.doc_no, d.person_id, d.person_type, d.site_role, d.is_primary, d.from_date, d.to_date, e.full_name, e.emp_code, e.designation_id, g.name AS designation,
+              SELECT d.id, d.doc_no, d.person_id, d.person_type, d.site_role, d.is_primary, d.from_date, d.to_date, COALESCE(e.full_name, w.name) AS full_name, COALESCE(e.emp_code, w.worker_code) AS emp_code, e.designation_id, g.name AS designation,
                 COALESCE(d.crew_id, (SELECT m.crew_id FROM hr_crew_members m JOIN hr_crews k ON k.id = m.crew_id WHERE m.person_type = d.person_type AND m.person_id = d.person_id AND k.crew_site_id = d.dep_site_id AND m.deleted_at IS NULL AND m.from_date <= @d AND (m.to_date IS NULL OR m.to_date >= @d) LIMIT 1)) AS crew_id,
                 EXISTS (SELECT 1 FROM hr_deployments x WHERE x.supersedes_id = d.id AND x.status IN ('SUBMITTED', 'DRAFT', 'RETURNED') AND x.deleted_at IS NULL) AS pending
-              FROM hr_deployments d LEFT JOIN hr_employees e ON e.id = d.person_id AND d.person_type = 'EMPLOYEE' LEFT JOIN org_designations g ON g.id = e.designation_id
+              FROM hr_deployments d LEFT JOIN hr_employees e ON e.id = d.person_id AND d.person_type = 'EMPLOYEE' LEFT JOIN lab_workers w ON w.id = d.person_id AND d.person_type = 'WORKER' LEFT JOIN org_designations g ON g.id = e.designation_id
               WHERE d.company_id = @c AND d.dep_site_id = @s AND d.status = 'APPROVED' AND d.deleted_at IS NULL AND d.from_date <= @d AND (d.to_date IS NULL OR d.to_date >= @d)) q
             LEFT JOIN hr_crews c ON c.id = q.crew_id ORDER BY c.name, q.designation, q.full_name`).all({ c: actor.companyId, s: s.id, d: date });
           const groups = new Map();

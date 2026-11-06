@@ -261,3 +261,37 @@ export const lv = {
   yearEndRuns: async () => (await api.get('/hr/leave/year-end')).data,
   accrual: async (b) => (await api.post('/hr/leave/accrual/run', b, idem())).data,
 };
+
+// part 07.08: contract labour
+export const SKILL_LABELS = { UNSKILLED: 'Unskilled', SEMI_SKILLED: 'Semi-skilled', SKILLED: 'Skilled', HIGHLY_SKILLED: 'Highly skilled' };
+export const LICENCE_STATE = { VALID: ['ACTIVE', 'Licence in force'], EXPIRING: ['AT_RISK', 'Licence ending soon'], EXPIRED: ['OVERDUE', 'Licence expired'], NO_LICENCE: ['OVERDUE', 'No licence on file'], OVER: ['OVERDUE', 'More workers than licensed'] };
+export const lab = {
+  trades: async () => (await api.get('/hr/labour/trades')).data,
+  workers: {
+    get: async (id) => (await api.get(`/hr/workers/${id}`)).data,
+    create: async (b) => (await api.post('/hr/workers', b, idem())).data,
+    update: async (id, b) => (await api.patch(`/hr/workers/${id}`, b, idem())).data,
+    remove: async (id) => (await api.delete(`/hr/workers/${id}`)).data,
+    submit: async (id, comment) => (await api.post(`/hr/workers/${id}/submit`, comment ? { comment } : {}, idem())).data,
+    withdraw: async (id, reason) => (await api.post(`/hr/workers/${id}/withdraw`, { reason }, idem())).data,
+    cancel: async (id, reason) => (await api.post(`/hr/workers/${id}/cancel`, { reason }, idem())).data,
+    amend: async (id, reason) => (await api.post(`/hr/workers/${id}/amend`, { reason }, idem())).data,
+    clearance: async (id, b) => (await api.put(`/hr/workers/${id}/clearance`, b, idem())).data,
+    ppe: async (id, b) => (await api.post(`/hr/workers/${id}/ppe`, b, idem())).data,
+    photo: async (id, fileId) => (await api.put(`/hr/workers/${id}/photo`, { fileId }, idem())).data,
+    blacklist: async (id, reason) => (await api.post(`/hr/workers/${id}/blacklist`, { reason }, idem())).data,
+    unblacklist: async (id, reason) => (await api.post(`/hr/workers/${id}/unblacklist`, { reason }, idem())).data,
+    cards: async (ids, reissue) => (await api.post('/hr/workers/cards', { ids, reissue: Boolean(reissue) }, idem())).data,
+  },
+  contractors: async (f) => (await api.get(`/hr/labour/contractors?${q(f)}`)).data,
+  contractor: async (id) => (await api.get(`/hr/labour/contractors/${id}`)).data,
+  setCompliance: async (id, b) => (await api.put(`/hr/labour/contractors/${id}/compliance`, b, idem())).data,
+  wages: {
+    get: async (id) => (await api.get(`/hr/labour/wage-rates/${id}`)).data,
+    create: async (b) => (await api.post('/hr/labour/wage-rates', b, idem())).data,
+    submit: async (id) => (await api.post(`/hr/labour/wage-rates/${id}/submit`, {}, idem())).data,
+    withdraw: async (id, reason) => (await api.post(`/hr/labour/wage-rates/${id}/withdraw`, { reason }, idem())).data,
+    remove: async (id) => (await api.delete(`/hr/labour/wage-rates/${id}`)).data,
+    applicable: async (f) => (await api.get(`/hr/labour/wage-rates/applicable?${q(f)}`)).data,
+  },
+};

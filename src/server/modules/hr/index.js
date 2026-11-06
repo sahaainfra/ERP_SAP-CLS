@@ -16,6 +16,9 @@ import './reg-integrations.js';
 import { registerRoutes } from './reg-routes.js';
 import { bindLeave, createLeaveService } from './leave.js';
 import { leaveRoutes } from './lv-routes.js';
+import './lab-integrations.js';
+import { bindLabour, createLabourService } from './labour.js';
+import { labourRoutes } from './lab-routes.js';
 import { punchRoutes } from './punch-routes.js';
 import { bindAttendance, createAttendanceService } from './attendance.js';
 import { attRoutes } from './att-routes.js';
@@ -61,13 +64,21 @@ for (const [type, description] of [
   ['lv.balance.adjusted', 'A leave balance was adjusted by HR after approval: data { docNo, employeeId, leaveType, year, days }.'],
   ['lv.year_end.processed', 'Year-end processing of leave ran: balances were carried forward, encashed or lapsed: data { year, people, carry, lapse, encash }.'],
   ['lv.encashment.input', 'Leave to be encashed at year-end, one event per person and type: data { year, employeeId, leaveType, days }. Payroll (24.02) pays it.'],
+  ['lab.worker.registered', 'A contract worker was registered and approved (supervisor, then the HR manager): data { workerCode, name, contractorId, tradeCode, skillCategory }. Attendance (07.05), HSE (19.01, 19.04), camp (19.07) and payroll (24.03) take the worker from here.'],
+  ['lab.worker.updated', 'An approved worker was changed through an amendment: data { workerCode, contractorId, tradeCode }.'],
+  ['lab.worker.clearance_changed', 'The induction or medical clearance of a worker changed: data { workerCode, induction, medical, medicalValidUntil }. A worker who is not cleared is not deployed.'],
+  ['lab.worker.blacklisted', 'A worker was blacklisted for a safety violation: data { workerCode, contractorId, reason }. The worker is not deployed or punched in until HR lifts it.'],
+  ['lab.worker.reinstated', 'A blacklisting was lifted: data { workerCode, reason }.'],
+  ['lab.contractor.compliance_changed', 'The licence, registrations or the most workers allowed of a labour contractor changed: data { contractorId, licenceValidUntil, maxWorkers }.'],
+  ['lab.contractor.licence_expiring', 'The CLRA licence of a labour contractor has expired or expires within the alert days; HR was told: data { contractorId, name, licenceValidUntil, expired }.'],
+  ['lab.wage_rate.approved', 'A minimum wage notification or a contract rate was approved: data { docNo, kind, contractorId, tradeCode, skillCategory, stateCode, payBasis, rate, effectiveFrom }. Labour payroll (24.03) and costing take the rate from its date.'],
   ['hr.offer.declined', 'The candidate declined the offer: data { docNo, candidateId, response }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'hr', description });
 
-const TABLES = ['lv_types', 'lv_entitlements', 'lv_ledger', 'lv_applications', 'lv_adjustments', 'lv_year_runs', 'att_daily', 'att_regularisations', 'att_overtime_requests', 'att_manual_entries', 'att_period_locks', 'att_arrears', 'att_punches', 'att_anomalies', 'att_visits', 'att_device_bindings', 'att_site_settings', 'att_shifts', 'att_policies', 'att_policy_assignments', 'att_rosters', 'att_roster_changes', 'att_period_defs', 'att_periods', 'hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
+const TABLES = ['lab_workers', 'lab_contractor_compliance', 'lab_wage_rates', 'lv_types', 'lv_entitlements', 'lv_ledger', 'lv_applications', 'lv_adjustments', 'lv_year_runs', 'att_daily', 'att_regularisations', 'att_overtime_requests', 'att_manual_entries', 'att_period_locks', 'att_arrears', 'att_punches', 'att_anomalies', 'att_visits', 'att_device_bindings', 'att_site_settings', 'att_shifts', 'att_policies', 'att_policy_assignments', 'att_rosters', 'att_roster_changes', 'att_period_defs', 'att_periods', 'hr_site_plans', 'hr_crews', 'hr_crew_members', 'hr_deployments', 'hr_transfers', 'hr_headcount_plans', 'hr_requisitions', 'hr_candidates', 'hr_interviews', 'hr_offers', 'hr_onboarding_tasks', 'hr_employees', 'hr_employee_statutory', 'hr_employee_banks', 'hr_employee_contacts', 'hr_employee_education', 'hr_employee_experience', 'hr_employee_documents', 'hr_employee_changes', 'hr_employee_history'];
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { lv_applications: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_adjustments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_types: ['ACTIVE', 'INACTIVE'], att_daily: ['PRESENT', 'ABSENT', 'HALF_DAY', 'ON_LEAVE', 'HOLIDAY', 'WEEKLY_OFF', 'ON_DUTY', 'COMP_OFF', 'MISSING_PUNCH', 'HOLIDAY_WORKED', 'WEEKLY_OFF_WORKED'], att_regularisations: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_overtime_requests: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_manual_entries: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_period_locks: ['LOCKED', 'REOPEN_PENDING', 'REOPENED'], att_arrears: ['OPEN', 'FOLDED'], att_anomalies: ['OPEN', 'PENDING_APPROVAL', 'ACCEPTED', 'REJECTED'], att_visits: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'], att_punches: ['ACCEPTED', 'FLAGGED', 'REJECTED', 'PENDING'], att_policies: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_roster_changes: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_shifts: ['ACTIVE', 'INACTIVE'], att_periods: ['OPEN', 'CLOSED'], hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
+  statuses: { lab_workers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lab_wage_rates: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_applications: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_adjustments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], lv_types: ['ACTIVE', 'INACTIVE'], att_daily: ['PRESENT', 'ABSENT', 'HALF_DAY', 'ON_LEAVE', 'HOLIDAY', 'WEEKLY_OFF', 'ON_DUTY', 'COMP_OFF', 'MISSING_PUNCH', 'HOLIDAY_WORKED', 'WEEKLY_OFF_WORKED'], att_regularisations: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_overtime_requests: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_manual_entries: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_period_locks: ['LOCKED', 'REOPEN_PENDING', 'REOPENED'], att_arrears: ['OPEN', 'FOLDED'], att_anomalies: ['OPEN', 'PENDING_APPROVAL', 'ACCEPTED', 'REJECTED'], att_visits: ['SUBMITTED', 'APPROVED', 'REJECTED', 'RETURNED', 'CANCELLED'], att_punches: ['ACCEPTED', 'FLAGGED', 'REJECTED', 'PENDING'], att_policies: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_roster_changes: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], att_shifts: ['ACTIVE', 'INACTIVE'], att_periods: ['OPEN', 'CLOSED'], hr_deployments: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_transfers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_requisitions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED', 'SUPERSEDED'], hr_offers: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], hr_candidates: ['APPLIED', 'SCREENED', 'INTERVIEW', 'SELECTED', 'OFFERED', 'ACCEPTED', 'JOINED', 'REJECTED'], hr_onboarding_tasks: ['OPEN', 'DONE', 'WAIVED'], hr_employees: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], hr_employee_changes: ['PENDING', 'SCHEDULED', 'APPLIED', 'REJECTED', 'RETURNED', 'CANCELLED'] },
   uniqueKeys: [{ table: 'hr_employees', columns: ['company_id', 'emp_code'] }],
 });
 /** Module "hr": human resources (Workforce-First, M07). Part 07.01 holds the employee master and employment records. The tables are `hr_*`. */
@@ -75,11 +86,11 @@ export const hr = {
   code: 'hr',
   name: 'HR & Workforce Management',
   routePrefix: '/api/v1/hr',
-  ownerPart: '07.01, 07.02, 07.03, 07.04, 07.05, 07.06, 07.07',
+  ownerPart: '07.01, 07.02, 07.03, 07.04, 07.05, 07.06, 07.07, 07.08',
   status: 'Employee master: profile, employment, statutory and bank details (masked), documents with expiry, history, approvals of new employees and of changes, user link, effective-dated separation with access removal, directory, import, overview',
   tables: TABLES,
   companyOptional: [],
-  resources: ['employees', 'plans', 'requisitions', 'candidates', 'interviews', 'offers', 'offer-link', 'onboarding', 'deployments', 'deployment-board', 'crews', 'transfers', 'site-plans', 'att', 'regularisations', 'overtime-requests', 'manual-entries', 'applications', 'leave'],
+  resources: ['employees', 'plans', 'requisitions', 'candidates', 'interviews', 'offers', 'offer-link', 'onboarding', 'deployments', 'deployment-board', 'crews', 'transfers', 'site-plans', 'att', 'regularisations', 'overtime-requests', 'manual-entries', 'applications', 'leave', 'workers', 'labour'],
 
   mount(api, { db, config: appConfig, publicApi, storagePath }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'hr_employees'").get()) return;
@@ -196,6 +207,20 @@ export const hr = {
       const lr = Router(); lr.use(gate('ff.hr.p0707', 'Leave management is'));
       lr.use(leaveRoutes({ lv, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/hr', lr);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'lab_workers'").get()) {
+      const lab = createLabourService({ db, dep: deploymentsOf(db), vaultKey: appConfig.vaultKey });
+      bindLabour(db, lab);
+      listExports.register('hr.workers', { source: (actor, req) => lab.register.exportSource(actor, req), hidden: () => [] });
+      listExports.register('hr.wage_rates', { source: (actor, req) => lab.wages.exportSource(actor, req), hidden: () => [] });
+      runtime.jobs.register('lab.daily', () => { const out = { licencesAlerted: 0, medicalExpired: 0 }; for (const c of companies()) { const r = lab.cycle(c); for (const k of Object.keys(out)) out[k] += r[k]; } return out; }, { maxAttempts: 3 });
+      runtime.scheduler.define({ code: 'lab.daily_check', cron: '55 0 * * *', jobType: 'lab.daily', description: 'Daily (00:55): contractors whose CLRA licence has ended or ends within the alert days are told to HR (once for each state); medical clearances that ran out are marked expired.' });
+      try {
+        widgetRegistry.register({ code: 'lab.licences_expiring', provider: (ctx) => { const w = lab.widget(ctx.actor); return { value: w.value, unit: w.value === 1 ? 'contractor needs attention' : 'contractors need attention', previous: null, trendPct: null, target: null, status: w.value > 0 ? 'amber' : 'green', note: 'Licence expired or ending, or more workers than licensed' }; } });
+      } catch { /* registered once per process */ }
+      const br = Router(); br.use(gate('ff.hr.p0708', 'Contract labour is'));
+      br.use(labourRoutes({ lab, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/hr', br);
     }
   },
 };

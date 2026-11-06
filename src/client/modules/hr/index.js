@@ -5,6 +5,13 @@ import CrewPunchPage from './CrewPunchPage.jsx';
 import KioskPage from './KioskPage.jsx';
 import PunchPage from './PunchPage.jsx';
 import TodayAttendancePage from './TodayAttendancePage.jsx';
+import ContractorPage from './ContractorPage.jsx';
+import ContractorsPage from './ContractorsPage.jsx';
+import PrintCardsPage from './PrintCardsPage.jsx';
+import RegisterWorkerPage from './RegisterWorkerPage.jsx';
+import WageRatesPage from './WageRatesPage.jsx';
+import WorkerPage from './WorkerPage.jsx';
+import WorkersPage from './WorkersPage.jsx';
 import ApplyLeavePage from './ApplyLeavePage.jsx';
 import LeaveApprovalsPage from './LeaveApprovalsPage.jsx';
 import LeaveBalanceReportPage from './LeaveBalanceReportPage.jsx';
@@ -95,5 +102,12 @@ registerModule({
     { path: '/leave/balances', label: 'Leave Balance Report', icon: 'erp.action.history', permission: 'lv.team.view', flag: 'ff.hr.p0707', Page: LeaveBalanceReportPage },
     { path: '/leave/types', label: 'Leave Types & Rules', icon: 'erp.action.info', permission: 'lv.type.view', flag: 'ff.hr.p0707', Page: LeaveTypesPage },
     { path: '/leave/year-end', label: 'Year-End Processing', icon: 'erp.action.create', permission: 'lv.yearend.run', flag: 'ff.hr.p0707', Page: YearEndPage },
+    { path: '/labour/workers', label: 'Workers Register', icon: 'erp.action.history', permission: 'hr.worker.view', flag: 'ff.hr.p0708', Page: WorkersPage },
+    { path: '/labour/workers/new', label: 'Register Worker', icon: 'erp.action.create', permission: 'hr.worker.create', flag: 'ff.hr.p0708', Page: RegisterWorkerPage },
+    { path: '/labour/workers/worker', label: 'Worker', icon: 'erp.action.info', permission: 'hr.worker.view', flag: 'ff.hr.p0708', Page: WorkerPage },
+    { path: '/labour/contractors', label: 'Labour Contractors', icon: 'erp.action.history', permission: 'hr.worker.view', flag: 'ff.hr.p0708', Page: ContractorsPage },
+    { path: '/labour/contractors/contractor', label: 'Contractor compliance', icon: 'erp.action.info', permission: 'hr.worker.view', flag: 'ff.hr.p0708', Page: ContractorPage },
+    { path: '/labour/wages', label: 'Wage Rates & Minimum Wages', icon: 'erp.action.info', permission: 'hr.worker.view', flag: 'ff.hr.p0708', Page: WageRatesPage },
+    { path: '/labour/cards', label: 'Print Labour ID Cards', icon: 'erp.action.create', permission: 'hr.worker.print', flag: 'ff.hr.p0708', Page: PrintCardsPage },
   ],
 });

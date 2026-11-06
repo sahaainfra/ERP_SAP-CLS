@@ -1,3 +1,4 @@
+import { labourOf } from './labour.js';
 import { randomUUID } from 'node:crypto';
 import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
@@ -172,8 +173,13 @@ export function createPunchService({ db, storage }) {
     const cid = actor.companyId;
     const site = siteRow(cid, input.siteId);
     if (!site) throw badRequest('Some fields are not valid.', [{ field: 'siteId', message: 'That site does not exist' }]);
-    const person = personType === 'EMPLOYEE' ? empRow(cid, input.personId) : null;
-    if (!person || person.record_status !== 'APPROVED' || !['ACTIVE', 'NOTICE'].includes(person.employment_status)) throw badRequest('Some fields are not valid.', [{ field: 'personId', message: 'The person is not an employee in service' }]);
+    if (personType === 'WORKER') {
+      const chk = labourOf(db)?.punchCheck(cid, input.personId);
+      if (!chk?.ok) throw badRequest('Some fields are not valid.', [{ field: 'personId', message: chk?.message ?? 'The person is not a contract worker' }]);
+    } else {
+      const person = empRow(cid, input.personId);
+      if (!person || person.record_status !== 'APPROVED' || !['ACTIVE', 'NOTICE'].includes(person.employment_status)) throw badRequest('Some fields are not valid.', [{ field: 'personId', message: 'The person is not an employee in service' }]);
+    }
     const deviceMs = Date.parse(input.deviceTime);
     if (!Number.isFinite(deviceMs)) throw badRequest('Some fields are not valid.', [{ field: 'deviceTime', message: 'Give the time of the punch as an ISO date and time' }]);
     // BR-02: the same client id is the same punch; the same kind of punch by the same person within a few minutes is too
@@ -187,7 +193,7 @@ export function createPunchService({ db, storage }) {
     }
     const workDate = istDate(deviceMs);
     const dep = deploymentsOf(db)?.deployments.eligibility(cid, { personType, personId: input.personId, siteId: input.siteId, date: workDate }) ?? { eligible: false };
-    let visit = db.prepare("SELECT * FROM att_visits WHERE company_id = ? AND employee_id = ? AND visit_site_id = ? AND work_date = ? AND deleted_at IS NULL AND status != 'CANCELLED' ORDER BY id DESC LIMIT 1").get(cid, input.personId, input.siteId, workDate);
+    let visit = personType !== 'EMPLOYEE' ? undefined : db.prepare("SELECT * FROM att_visits WHERE company_id = ? AND employee_id = ? AND visit_site_id = ? AND work_date = ? AND deleted_at IS NULL AND status != 'CANCELLED' ORDER BY id DESC LIMIT 1").get(cid, input.personId, input.siteId, workDate);
     if (!dep.eligible && !visit && method === 'MOBILE') {
       if (!input.reason || String(input.reason).trim().length < 5) throw new HttpError(422, 'NOT_DEPLOYED', 'You are not deployed at this site on this day. To punch here as a visit, give the reason (at least 5 characters); your manager and the site project manager approve it.');
     }
@@ -320,9 +326,15 @@ export function createPunchService({ db, storage }) {
       if (!b.photo) throw badRequest('Some fields are not valid.', [{ field: 'photo', message: 'A group photo is required' }]);
       const members = db.prepare("SELECT m.person_id FROM hr_crew_members m WHERE m.crew_id = ? AND m.person_type = 'EMPLOYEE' AND m.deleted_at IS NULL AND m.from_date <= ? AND (m.to_date IS NULL OR m.to_date >= ?)").all(crew.id, istDate(Date.parse(b.deviceTime)), istDate(Date.parse(b.deviceTime))).map((x) => x.person_id);
       for (const id of b.personIds) if (!members.includes(id)) throw badRequest('Some fields are not valid.', [{ field: 'personIds', message: `Employee ${id} is not in this crew` }]);
+      const workerIds = b.workerIds ?? [];
+      const workerMembers = workerIds.length ? db.prepare("SELECT m.person_id FROM hr_crew_members m WHERE m.crew_id = ? AND m.person_type = 'WORKER' AND m.deleted_at IS NULL AND m.from_date <= ? AND (m.to_date IS NULL OR m.to_date >= ?)").all(crew.id, istDate(Date.parse(b.deviceTime)), istDate(Date.parse(b.deviceTime))).map((x) => x.person_id) : [];
+      for (const id of workerIds) if (!workerMembers.includes(id)) throw badRequest('Some fields are not valid.', [{ field: 'workerIds', message: `Worker ${id} is not in this crew` }]);
       const photoId = await storeSelfie(actor, b.photo, 'group photo');
       const groupId = b.groupUuid;
       const out = [];
+      for (const personId of workerIds) {
+        out.push(await record(actor, { personId, siteId: site.id, punchType: b.punchType, deviceTime: b.deviceTime, lat: b.lat, lng: b.lng, accuracyM: b.accuracyM, mockLocation: b.mockLocation, deviceId: b.deviceId, clientUuid: `${groupId}:W${personId}:${b.punchType}`, offline: b.offline, groupId, selfieFileId: photoId }, { method: 'SUPERVISOR', personType: 'WORKER' }));
+      }
       for (const personId of b.personIds) {
         out.push(await record(actor, { personId, siteId: site.id, punchType: b.punchType, deviceTime: b.deviceTime, lat: b.lat, lng: b.lng, accuracyM: b.accuracyM, mockLocation: b.mockLocation, deviceId: b.deviceId, clientUuid: `${groupId}:${personId}:${b.punchType}`, offline: b.offline, groupId, selfieFileId: photoId }, { method: 'SUPERVISOR' }));
       }
@@ -334,8 +346,14 @@ export function createPunchService({ db, storage }) {
       if (!site) throw badRequest('Some fields are not valid.', [{ field: 'siteId', message: 'That site does not exist' }]);
       need(actor, 'att.punch.kiosk', 'run the kiosk', { projectId: site.org_project_id, siteId: site.id });
       if (!setting(actor.companyId, site.id).kioskEnabled) throw unprocessable('The kiosk is switched off for this site.');
-      const emp = db.prepare("SELECT id FROM hr_employees WHERE company_id = ? AND emp_code = ? COLLATE NOCASE AND deleted_at IS NULL AND record_status = 'APPROVED'").get(actor.companyId, String(b.badge).trim());
-      if (!emp) throw new HttpError(404, 'NO_BADGE', 'That badge is not known. Ask the supervisor.');
+      const badge = String(b.badge).trim();
+      const emp = badge.startsWith('LAB:') ? null : db.prepare("SELECT id FROM hr_employees WHERE company_id = ? AND emp_code = ? COLLATE NOCASE AND deleted_at IS NULL AND record_status = 'APPROVED'").get(actor.companyId, badge);
+      if (!emp) {
+        // a contract worker's card: the QR holds the token of the card (part 07.08), or the worker code is typed
+        const wid = labourOf(db)?.byToken(actor.companyId, badge);
+        if (!wid) throw new HttpError(404, 'NO_BADGE', 'That badge is not known. Ask the supervisor.');
+        return record(actor, { ...b, personId: wid }, { method: 'KIOSK', personType: 'WORKER' });
+      }
       return record(actor, { ...b, personId: emp.id }, { method: 'KIOSK' });
     },
     /** FR-05: the interface of a biometric device (implemented in 29.02): the device names the person by code and the site it stands at, and the punch goes through the same checks. */

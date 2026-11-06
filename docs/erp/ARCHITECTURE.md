@@ -860,3 +860,15 @@ Behind feature flag `ff.hr.p0707` (module `hr`; needs 07.06 and 07.04). Code: `m
 - **Delegation** (04.02): an approver on approved leave who named a cover gets a delegation for the days, ended when the leave is cancelled or replaced.
 - **Events**: `lv.application.approved`, `lv.application.cancelled`, `lv.balance.adjusted`, `lv.year_end.processed`, `lv.encashment.input`; widget `lv.approvals_waiting`.
 - **Browser**: Apply Leave, My Leave, Leave Approvals, Team Leave Calendar, Leave Balance Report, Leave Types & Rules, Year-End Processing.
+
+## 68. Contract labour (part 07.08)
+
+Behind feature flag `ff.hr.p0708` (module `hr`; needs 07.03 and the partner master 06.04). Code: `modules/hr/labour.js` (workers, contractor compliance and strength, wage rates, the guards of a deployment, the cards, the daily check), `lab-routes.js`, `lab-validators.js`, `lab-integrations.js` (the lookup `hr/workers` and the import type `HR_WORKER`). Tables: `lab_workers`, `lab_contractor_compliance`, `lab_wage_rates`.
+
+- **Contractors** (FR-01, FR-06, FR-08): the labour contractors are the partners with the role LABOUR_CONTRACTOR; `GET /hr/labour/contractors` gives licence state (VALID, EXPIRING, EXPIRED, NO_LICENCE, OVER) and the strength of a day; `PUT .../compliance` sets licence, registrations and the licensed number. Daily job `lab.daily` (00:55) tells HR once for each licence state and expires medical clearances.
+- **Workers** (FR-02, FR-03, FR-07, ADR-313): `/hr/workers` (list, get, create, update, delete, submit, withdraw, cancel, amend, history, print, export), `PUT /clearance`, `PUT /photo`, `POST /ppe`, `POST /blacklist` and `/unblacklist`. Approval: supervisor or coordinator, then the HR manager (matrix `HR_WORKER`).
+- **Guards** (ADR-314): age on every write; `deploymentGuards` (licence, licensed number, clearance) called by the deployment service for each worker; `punchCheck` for punches.
+- **Wage rates** (FR-04, ADR-315): `/hr/labour/wage-rates` and `GET .../applicable`; approval HR manager, then the commercial manager for contract rates (matrix `HR_LAB_WAGE`).
+- **Cards** (FR-05, ADR-316): `POST /hr/workers/cards` returns the cards with their QR as SVG; the kiosk and the crew punch accept workers.
+- **Events**: `lab.worker.registered`, `.updated`, `.clearance_changed`, `.blacklisted`, `.reinstated`, `lab.contractor.compliance_changed`, `lab.contractor.licence_expiring`, `lab.wage_rate.approved`; widget `lab.licences_expiring`.
+- **Browser**: Workers Register, Register Worker, Worker, Labour Contractors, Contractor compliance, Wage Rates & Minimum Wages, Print Labour ID Cards.

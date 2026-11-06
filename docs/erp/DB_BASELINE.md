@@ -5160,6 +5160,165 @@ Indexes:
 - ux_iam_users_email (unique): email
 - ux_iam_users_username (unique): username
 
+## lab_contractor_compliance
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| contractor_id | INTEGER | yes |  |  |
+| clra_licence_no | TEXT |  |  |  |
+| licence_valid_until | TEXT |  |  |  |
+| max_workers | INTEGER |  |  |  |
+| pf_code | TEXT |  |  |  |
+| esi_code | TEXT |  |  |  |
+| wo_reference | TEXT |  |  |  |
+| wo_valid_until | TEXT |  |  |  |
+| alerted_for | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contractor_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_lab_compliance_contractor: contractor_id
+- ix_lab_compliance_company_id: company_id
+- ux_lab_compliance_contractor (unique): company_id, contractor_id
+
+## lab_wage_rates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| band | TEXT | yes |  | 'STANDARD' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| kind | TEXT | yes |  |  |
+| contractor_id | INTEGER |  |  |  |
+| trade_code | TEXT |  |  |  |
+| skill_category | TEXT | yes |  |  |
+| state_code | TEXT | yes |  |  |
+| pay_basis | TEXT | yes |  |  |
+| rate_minor | INTEGER | yes |  |  |
+| min_wage_ref | TEXT |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contractor_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_lab_wage_rates_supersedes_id: supersedes_id
+- ix_lab_wage_rates_root_id: root_id
+- ix_lab_wage_rates_lookup: company_id, kind, state_code, skill_category, effective_from
+- ix_lab_wage_rates_contractor: contractor_id
+- ix_lab_wage_rates_company_id: company_id
+- ux_lab_wage_rates_doc (unique): company_id, doc_no, revision_no
+
+## lab_workers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| band | TEXT | yes |  | 'STANDARD' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| worker_code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| photo_file_id | INTEGER |  |  |  |
+| aadhaar_last4 | TEXT |  |  |  |
+| aadhaar_hash | TEXT |  |  |  |
+| mobile | TEXT |  |  |  |
+| dob | TEXT | yes |  |  |
+| gender | TEXT | yes |  |  |
+| home_state | TEXT |  |  |  |
+| trade_code | TEXT | yes |  |  |
+| skill_category | TEXT | yes |  |  |
+| contractor_id | INTEGER | yes |  |  |
+| bank_enc | TEXT |  |  |  |
+| bank_last4 | TEXT |  |  |  |
+| ifsc | TEXT |  |  |  |
+| uan | TEXT |  |  |  |
+| esic_ip | TEXT |  |  |  |
+| bocw_no | TEXT |  |  |  |
+| emergency_name | TEXT |  |  |  |
+| emergency_mobile | TEXT |  |  |  |
+| induction_status | TEXT | yes |  | 'PENDING' |
+| induction_date | TEXT |  |  |  |
+| medical_status | TEXT | yes |  | 'PENDING' |
+| medical_valid_until | TEXT |  |  |  |
+| ppe_json | TEXT | yes |  | '[]' |
+| worker_status | TEXT | yes |  | 'ACTIVE' |
+| blacklist_reason | TEXT |  |  |  |
+| blacklisted_by | TEXT |  |  |  |
+| blacklisted_at | TEXT |  |  |  |
+| qr_token | TEXT |  |  |  |
+| card_issued_at | TEXT |  |  |  |
+| card_version | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contractor_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_lab_workers_aadhaar (unique): company_id, aadhaar_hash
+- ux_lab_workers_qr (unique): qr_token
+- ix_lab_workers_photo: photo_file_id
+- ix_lab_workers_supersedes_id: supersedes_id
+- ix_lab_workers_root_id: root_id
+- ix_lab_workers_status: company_id, status, worker_status
+- ix_lab_workers_contractor: contractor_id
+- ix_lab_workers_company_id: company_id
+- ux_lab_workers_doc (unique): company_id, doc_no, revision_no
+
 ## lv_adjustments
 
 | Column | Type | Not null | Key | Default |
