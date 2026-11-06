@@ -1,0 +1,36 @@
+import { z } from 'zod';
+import { parse } from '../../platform/validation/index.js';
+
+// Inputs of the exit and people-relations API (part 07.13). The service computes the notice and checks the rules again.
+const id = z.coerce.number().int().min(1);
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date such as 2026-12-01');
+const text = (max) => z.string().trim().max(max);
+const optText = (max) => z.string().trim().max(max).nullish().transform((v) => v || null);
+const reason = z.string().trim().min(5, 'Say why (at least 5 characters)').max(1000);
+const clean = (q) => Object.fromEntries(Object.entries(q ?? {}).filter(([, v]) => v !== '' && v !== undefined));
+const REASONS = ['BETTER_OPPORTUNITY', 'PERSONAL', 'RELOCATION', 'HIGHER_STUDIES', 'HEALTH', 'RETIREMENT', 'MISCONDUCT', 'PERFORMANCE', 'REDUNDANCY', 'CONTRACT_END', 'OTHER'];
+const CATS = ['WAGES', 'WORKING_CONDITIONS', 'SAFETY', 'HARASSMENT', 'DISCRIMINATION', 'LEAVE', 'ACCOMMODATION', 'SUPERVISOR', 'OTHER'];
+export const parseId = (v) => parse(id, v);
+export const parseReason = (b) => parse(z.object({ reason }).strict(), b ?? {});
+export const parseSubmit = (b) => parse(z.object({ comment: text(500).optional() }).strict(), b ?? {});
+const sep = { reasonCode: z.enum(REASONS), reason: text(1000).min(5, 'Say why (at least 5 characters)'), submittedOn: day, requestedLwd: day.nullish().transform((v) => v || null), earlyMode: z.enum(['NONE', 'WAIVER', 'BUYOUT']).default('NONE') };
+export const parseSepCreate = (b) => parse(z.object({ type: z.enum(['RESIGNATION', 'TERMINATION']), employeeId: id.optional(), ...sep, submit: z.boolean().default(false) }).strict(), b);
+export const parseSepPreview = (b) => parse(z.object({ type: z.enum(['RESIGNATION', 'TERMINATION']), employeeId: id.optional(), submittedOn: day, requestedLwd: day.nullish().transform((v) => v || null), earlyMode: z.enum(['NONE', 'WAIVER', 'BUYOUT']).default('NONE') }).strict(), b);
+export const parseSepUpdate = (b) => parse(z.object({ ...sep, version: z.number().int().min(1) }).strict(), b);
+export const parseInterview = (b) => parse(z.object({ rating: z.number().int().min(1).max(5), reasonCode: z.enum(REASONS).optional(), wouldRejoin: z.boolean().optional(), responses: z.object({ likedMost: optText(1000), improve: optText(1000), managerRating: z.number().int().min(1).max(5).optional(), recommend: z.boolean().optional(), comments: optText(2000) }).strict().default({}) }).strict(), b);
+export const parseLetter = (b) => parse(z.object({ kind: z.enum(['RELIEVING', 'EXPERIENCE']) }).strict(), b);
+export const parseLetterKind = (v) => parse(z.enum(['RELIEVING', 'EXPERIENCE']), String(v ?? '').toUpperCase());
+export const parseAnalytics = (q) => parse(z.object({ from: day.optional(), to: day.optional() }).strict(), clean(q));
+export const parseClearance = (b) => parse(z.object({ items: z.array(z.object({ code: z.string().trim().min(1).max(30), status: z.enum(['PENDING', 'CLEARED', 'NA']), note: optText(300), recovery: z.number().min(0).max(100_000_000).optional() }).strict()).min(1).max(30), version: z.number().int().min(1) }).strict(), b);
+const grv = { category: z.enum(CATS), subject: text(150).min(3), description: text(4000).min(10, 'Say what happened (at least 10 characters)') };
+export const parseGrvCreate = (b) => parse(z.object({ ...grv, complainantType: z.enum(['EMPLOYEE', 'WORKER']).default('EMPLOYEE'), workerId: id.optional(), anonymous: z.boolean().default(false), siteId: id.optional(), submit: z.boolean().default(false) }).strict(), b);
+export const parseGrvUpdate = (b) => parse(z.object({ ...grv, version: z.number().int().min(1) }).strict(), b);
+export const parseAssign = (b) => parse(z.object({ officer: text(60).min(2) }).strict(), b);
+export const parseNote = (b) => parse(z.object({ text: text(2000).min(3), shared: z.boolean().default(false) }).strict(), b);
+export const parseResolve = (b) => parse(z.object({ resolution: reason }).strict(), b);
+export const parseRespond = (b) => parse(z.object({ accept: z.boolean(), reason: optText(1000) }).strict(), b);
+export const parseTrack = (q) => parse(z.object({ code: z.string().trim().toUpperCase().regex(/^[0-9A-F]{12}$/, 'The tracking code has 12 letters and digits') }).strict(), clean(q));
+export const parseTrackRespond = (b) => parse(z.object({ code: z.string().trim().toUpperCase().regex(/^[0-9A-F]{12}$/, 'The tracking code has 12 letters and digits'), accept: z.boolean(), reason: optText(1000) }).strict(), b);
+export const parseCaseCreate = (b) => parse(z.object({ employeeId: id, incidentDate: day, category: z.enum(['ATTENDANCE', 'CONDUCT', 'SAFETY_BREACH', 'FRAUD', 'HARASSMENT', 'NEGLIGENCE', 'OTHER']), severity: z.enum(['MINOR', 'MAJOR', 'GROSS']), incident: text(4000).min(10), documents: z.array(id).max(20).optional() }).strict(), b);
+export const parseCaseStep = (b) => parse(z.object({ stage: z.enum(['SHOW_CAUSE', 'INQUIRY', 'ACTION', 'CLOSE', 'DROP']), text: text(4000).min(5), dueDate: day.optional(), action: z.enum(['WARNING', 'FINAL_WARNING', 'SUSPENSION', 'TERMINATION_RECOMMENDED', 'NONE']).optional(), documents: z.array(id).max(20).optional(), version: z.number().int().min(1) }).strict(), b);
+export const parseCaseRespond = (b) => parse(z.object({ text: text(4000).min(10) }).strict(), b);

@@ -26,6 +26,14 @@ import ExpenseAnalysisPage from './ExpenseAnalysisPage.jsx';
 import ExpensePoliciesPage from './ExpensePoliciesPage.jsx';
 import MyExpensesPage from './MyExpensesPage.jsx';
 import TravelRequestPage from './TravelRequestPage.jsx';
+import ClearanceWorklistPage from './ClearanceWorklistPage.jsx';
+import DisciplinaryPage from './DisciplinaryPage.jsx';
+import GrievancePage from './GrievancePage.jsx';
+import GrievancesPage from './GrievancesPage.jsx';
+import RaiseGrievancePage from './RaiseGrievancePage.jsx';
+import ResignationPage from './ResignationPage.jsx';
+import SeparationPage from './SeparationPage.jsx';
+import SeparationsPage from './SeparationsPage.jsx';
 import LetterRequestPage from './LetterRequestPage.jsx';
 import MyAttendancePage from './MyAttendancePage.jsx';
 import MyHrPage from './MyHrPage.jsx';
@@ -161,5 +169,14 @@ registerModule({
     { path: '/expenses/approvals', label: 'Claim Approvals', icon: 'erp.action.approve', permission: 'hr.claim.approve', flag: 'ff.hr.p0712', Page: ClaimApprovalsPage },
     { path: '/expenses/analysis', label: 'Expense Analysis', icon: 'erp.group.workforce', permission: 'hr.expense.report', flag: 'ff.hr.p0712', Page: ExpenseAnalysisPage },
     { path: '/expenses/policies', label: 'Expense Policies', icon: 'erp.action.settings', permission: 'hr.expense.configure', flag: 'ff.hr.p0712', Page: ExpensePoliciesPage },
+    { path: '/exit/resign', label: 'Resignation', icon: 'erp.action.create', permission: 'hr.separation.create', flag: 'ff.hr.p0713', Page: ResignationPage },
+    { path: '/exit/separations', label: 'Separations', icon: 'erp.group.workforce', permission: 'hr.separation.view_all', flag: 'ff.hr.p0713', Page: SeparationsPage },
+    { path: '/exit/separation', label: 'Separation', icon: 'erp.group.workforce', permission: 'hr.separation.view', flag: 'ff.hr.p0713', Page: SeparationPage },
+    { path: '/exit/clearances', label: 'My Clearance Items', icon: 'erp.action.approve', permission: 'hr.clearance.view', flag: 'ff.hr.p0713', Page: ClearanceWorklistPage },
+    { path: '/grievances', label: 'Grievances', icon: 'erp.group.workforce', permission: 'hr.grievance.view', flag: 'ff.hr.p0713', Page: GrievancesPage },
+    { path: '/grievances/new', label: 'Raise Grievance', icon: 'erp.action.create', permission: 'hr.grievance.create', flag: 'ff.hr.p0713', Page: RaiseGrievancePage },
+    { path: '/grievances/grievance', label: 'Grievance', icon: 'erp.group.workforce', permission: 'hr.grievance.view', flag: 'ff.hr.p0713', Page: GrievancePage },
+    { path: '/disciplinary', label: 'Disciplinary Cases', icon: 'erp.group.workforce', permission: 'hr.disciplinary.view', flag: 'ff.hr.p0713', Page: DisciplinaryPage },
+    { path: '/disciplinary/mine', label: 'My Disciplinary Cases', icon: 'erp.group.workforce', permission: 'hr.separation.view', flag: 'ff.hr.p0713', Page: DisciplinaryPage },
   ],
 });

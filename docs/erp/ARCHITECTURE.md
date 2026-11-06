@@ -917,3 +917,18 @@ Behind feature flag `ff.hr.p0712` (module `hr`; needs 07.01 and 04.02). Code: `m
 - **Workflows**: `HR_EXP_CLAIM`, `HR_EXP_ADVANCE`, `HR_EXP_TRAVEL` with the resolver `exp.manager`; the worklist is `/hr/expenses/approvals` (flags shown; bulk decisions); `/hr/expenses/analysis` is the report.
 - **Events** (FR-06, ADR-332): `exp.travel.approved`, `exp.advance.{approved,disbursed,recovered,closed}`, `exp.claim.{approved,passed,paid}`; widget `exp.claims_to_pass`.
 - **Browser**: My Claims & Advances, New Expense Claim, Travel Request, Advance Request, Claim Approvals, Expense Analysis, Expense Policies; Hindi through the `exp` namespace.
+
+## 73. Exit, full-and-final inputs, grievances and disciplinary records (part 07.13)
+
+Behind feature flag `ff.hr.p0713` (module `hr`; needs 07.01). Code: `modules/hr/exit.js` (separations, clearances, interviews, F&F, letters, grievances, cases, the daily cycle), `exit-validators.js`, `exit-routes.js`; the hook `employees.exits` in `employees.js`.
+
+- **Separations** (FR-01, ADR-333): `/hr/separations` (CRUD, preview, submit, withdraw, cancel, history, print, export, mine); notice from `hr.exit.notice_days` (`hr.exit.notice_days_probation` before confirmation); a shorter day needs a waiver or a buyout; a termination short of notice gets pay in lieu.
+- **Workflow** `HR_SEPARATION`: resignation reporting manager (resolver `sep.manager`) then HR manager; termination HR manager then director; distinct approvers.
+- **Clearances** (FR-02, ADR-334): `/hr/clearances` worklist, `PUT /:id`, `POST /:id/waive`; departments from `hr.exit.clearance_departments`.
+- **Exit interview** (FR-03): `POST /separations/:id/interview`, `GET /separations/analytics`.
+- **F&F** (FR-04, ADR-335): `GET /separations/:id/fnf`, `POST .../fnf/release`; event `hr.fnf.released`.
+- **Letters** (FR-05): relieving and experience letters from the template library after the last working day.
+- **Grievances** (FR-06, ADR-336): `/hr/grievances` (CRUD, submit, withdraw, assign, note, resolve, reject, respond, track); SLA from `hr.grievance.sla_days`; job `hr.exit_daily` alerts once when overdue and closes resolved ones after 15 days; widget `grv.overdue`.
+- **Disciplinary** (FR-07, ADR-336): `/hr/disciplinary` (open, step, respond); views audited. HR uses the restricted page `/disciplinary`; an employee reaches their own cases at `/disciplinary/mine` (from the show-cause notification), which is not in the navigation.
+- **Events**: `hr.separation.{approved,cancelled}`, `hr.clearance.cleared`, `hr.fnf.released`, `hr.grievance.{raised,resolved}`, `hr.disciplinary.action_taken`.
+- **Browser**: Resignation, Separation, Separations (with termination and interview analysis), My Clearance Items, Grievances, Raise Grievance, Grievance, Disciplinary Cases; Hindi through the `sep` namespace.

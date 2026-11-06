@@ -404,3 +404,30 @@ export const exp = {
   policyAct: async (id, action) => (await api.post(`/hr/expenses/policies/${id}/${action}`, {}, idem())).data,
   policyHistory: async (id) => (await api.get(`/hr/expenses/policies/${id}/history`)).data,
 };
+
+// part 07.13: exit, grievances, disciplinary cases
+export const ext = {
+  mine: async () => (await api.get('/hr/separations/mine')).data,
+  separation: async (id) => (await api.get(`/hr/separations/${id}`)).data,
+  preview: async (b) => (await api.post('/hr/separations/preview', b)).data,
+  createSeparation: async (b) => (await api.post('/hr/separations', b, idem())).data,
+  sepAct: async (id, action, b) => (await api.post(`/hr/separations/${id}/${action}`, b ?? {}, idem())).data,
+  sepHistory: async (id) => (await api.get(`/hr/separations/${id}/history`)).data,
+  interview: async (id, b) => (await api.post(`/hr/separations/${id}/interview`, b, idem())).data,
+  fnf: async (id) => (await api.get(`/hr/separations/${id}/fnf`)).data,
+  release: async (id) => (await api.post(`/hr/separations/${id}/fnf/release`, {}, idem())).data,
+  letter: async (id, kind) => (await api.post(`/hr/separations/${id}/letters`, { kind }, idem())).data,
+  analytics: async (p) => (await api.get(`/hr/separations/analytics?${q(p)}`)).data,
+  clearances: async () => (await api.get('/hr/clearances')).data,
+  saveClearance: async (id, b) => (await api.put(`/hr/clearances/${id}`, b, idem())).data,
+  waive: async (id, reason) => (await api.post(`/hr/clearances/${id}/waive`, { reason }, idem())).data,
+  grievance: async (id) => (await api.get(`/hr/grievances/${id}`)).data,
+  createGrievance: async (b) => (await api.post('/hr/grievances', b, idem())).data,
+  grvAct: async (id, action, b) => (await api.post(`/hr/grievances/${id}/${action}`, b ?? {}, idem())).data,
+  track: async (code) => (await api.get(`/hr/grievances/track?${q({ code })}`)).data,
+  trackRespond: async (b) => (await api.post('/hr/grievances/track/respond', b, idem())).data,
+  cases: async () => (await api.get('/hr/disciplinary')).data,
+  createCase: async (b) => (await api.post('/hr/disciplinary', b, idem())).data,
+  caseStep: async (id, b) => (await api.post(`/hr/disciplinary/${id}/step`, b, idem())).data,
+  caseRespond: async (id, text) => (await api.post(`/hr/disciplinary/${id}/respond`, { text }, idem())).data,
+};

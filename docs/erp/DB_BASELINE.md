@@ -3826,6 +3826,48 @@ Indexes:
 - ix_hr_candidates_requisition: requisition_id, stage
 - ix_hr_candidates_list: company_id, stage
 
+## hr_clearances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| separation_id | INTEGER | yes |  |  |
+| department_code | TEXT | yes |  |  |
+| department_name | TEXT | yes |  |  |
+| owner_roles | TEXT | yes |  | '[]' |
+| owner_user | TEXT |  |  |  |
+| items_json | TEXT | yes |  | '[]' |
+| due_date | TEXT |  |  |  |
+| clr_status | TEXT | yes |  | 'PENDING' |
+| cleared_by | TEXT |  |  |  |
+| cleared_at | TEXT |  |  |  |
+| waived_by | TEXT |  |  |  |
+| waive_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: separation_id -> hr_separations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_clearances_site: site_id
+- ix_hr_clearances_project: project_id
+- ix_hr_clearances_separation: separation_id
+- ix_hr_clearances_status: company_id, clr_status, due_date
+- ix_hr_clearances_company_id: company_id
+- ux_hr_clearances_dept (unique): separation_id, department_code
+
 ## hr_crew_members
 
 | Column | Type | Not null | Key | Default |
@@ -3952,6 +3994,48 @@ Indexes:
 - ix_hr_deployments_project: dep_project_id
 - ix_hr_deployments_person: person_type, person_id
 - ix_hr_deployments_company_id: company_id
+
+## hr_disciplinary_cases
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| incident_date | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| severity | TEXT | yes |  | 'MINOR' |
+| incident | TEXT | yes |  |  |
+| documents_json | TEXT | yes |  | '[]' |
+| actions_json | TEXT | yes |  | '[]' |
+| case_status | TEXT | yes |  | 'OPEN' |
+| response_due | TEXT |  |  |  |
+| final_action | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_disciplinary_cases_site: site_id
+- ix_hr_disciplinary_cases_project: project_id
+- ix_hr_disciplinary_cases_status: company_id, case_status
+- ix_hr_disciplinary_cases_employee: employee_id
+- ix_hr_disciplinary_cases_company_id: company_id
+- ux_hr_disciplinary_doc (unique): company_id, doc_no
 
 ## hr_employee_banks
 
@@ -4317,6 +4401,95 @@ Indexes:
 - ux_hr_employees_user (unique): company_id, user_id
 - ux_hr_employees_code (unique): company_id, emp_code
 
+## hr_exit_interviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| separation_id | INTEGER | yes |  |  |
+| responses_json | TEXT | yes |  | '{}' |
+| overall_rating | INTEGER |  |  |  |
+| reason_code | TEXT |  |  |  |
+| would_rejoin | INTEGER |  |  |  |
+| conducted_by | TEXT | yes |  |  |
+| conducted_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: separation_id -> hr_separations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_exit_interviews_site: site_id
+- ix_hr_exit_interviews_project: project_id
+- ix_hr_exit_interviews_company_id: company_id
+- ux_hr_exit_interviews_sep (unique): separation_id
+
+## hr_grievances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| complainant_type | TEXT | yes |  |  |
+| complainant_id | INTEGER |  |  |  |
+| anonymous | INTEGER | yes |  | 0 |
+| tracking_hash | TEXT |  |  |  |
+| raised_by | TEXT |  |  |  |
+| category | TEXT | yes |  |  |
+| subject | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| priority | TEXT | yes |  | 'NORMAL' |
+| assigned_to | TEXT |  |  |  |
+| sla_due | TEXT |  |  |  |
+| overdue_alerted | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| notes_json | TEXT | yes |  | '[]' |
+| resolution | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| reopen_count | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_grievances_site: site_id
+- ix_hr_grievances_project: project_id
+- ix_hr_grievances_complainant: complainant_type, complainant_id
+- ix_hr_grievances_raised_by: company_id, raised_by
+- ix_hr_grievances_assigned: company_id, assigned_to
+- ix_hr_grievances_status: company_id, status, sla_due
+- ix_hr_grievances_company_id: company_id
+- ux_hr_grievances_tracking (unique): tracking_hash
+- ux_hr_grievances_doc (unique): company_id, doc_no
+
 ## hr_headcount_plans
 
 | Column | Type | Not null | Key | Default |
@@ -4536,6 +4709,66 @@ Indexes:
 - ix_hr_requisitions_department: department_id
 - ix_hr_requisitions_list: company_id, status
 - ux_hr_requisitions_doc (unique): company_id, doc_no, revision_no
+
+## hr_separations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| sep_type | TEXT | yes |  |  |
+| reason_code | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| submitted_on | TEXT | yes |  |  |
+| notice_days | INTEGER | yes |  |  |
+| standard_lwd | TEXT | yes |  |  |
+| last_working_day | TEXT | yes |  |  |
+| early_mode | TEXT | yes |  | 'NONE' |
+| waiver_days | INTEGER | yes |  | 0 |
+| buyout_days | INTEGER | yes |  | 0 |
+| notice_pay_days | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| notice_change_id | INTEGER |  |  |  |
+| exit_change_id | INTEGER |  |  |  |
+| fnf_json | TEXT |  |  |  |
+| fnf_released_at | TEXT |  |  |  |
+| fnf_released_by | TEXT |  |  |  |
+| relieving_doc_id | INTEGER |  |  |  |
+| experience_doc_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_separations_site: site_id
+- ix_hr_separations_project: project_id
+- ix_hr_separations_experience: experience_doc_id
+- ix_hr_separations_relieving: relieving_doc_id
+- ix_hr_separations_exit_change: exit_change_id
+- ix_hr_separations_notice_change: notice_change_id
+- ix_hr_separations_lwd: company_id, last_working_day
+- ix_hr_separations_status: company_id, status
+- ix_hr_separations_employee: employee_id, status
+- ix_hr_separations_company_id: company_id
+- ux_hr_separations_doc (unique): company_id, doc_no
 
 ## hr_site_plans
 

@@ -921,7 +921,31 @@ export function createEmployeeService({ db, vaultKey }) {
 <p>Printed ${e(nowIso())} by ${e(actor.user)}.</p></body></html>`;
   }
 
-  return { registration, amendments, details, banks, userLink, decisions, register, get, me, history, overview, widget, queue, lookup, print, cycle, seesSensitive, access, row };
+  /**
+   * Part 07.13: a separation decided by its own workflow goes on the record through the change documents of this part, approved by that workflow: the person is on notice at once and separated on the last working day, when the daily cycle
+   * applies the scheduled change and the user account is deactivated (BR-02). A separation cancelled before that day takes the scheduled change back and makes the person active again.
+   */
+  const exits = {
+    schedule(actor, employeeId, { status, lastWorkingDate = null, effectiveDate, reason, sourceId }) {
+      const e = db.prepare('SELECT * FROM hr_employees WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(employeeId, actor.companyId);
+      if (!e) throw notFound('That employee does not exist.');
+      const payload = { status, lastWorkingDate, separationReason: reason };
+      const summary = { Status: EMPLOYMENT_LABELS[status], 'Last working day': lastWorkingDate ?? '—', Reason: reason }; const before = { Status: EMPLOYMENT_LABELS[e.employment_status] };
+      const secret = vault.encrypt(JSON.stringify(payload), slot(actor.companyId, 'change', employeeId));
+      const cid = Number(db.prepare("INSERT INTO hr_employee_changes (company_id, employee_id, change_type, effective_date, payload_enc, summary_json, before_json, reason, senior, requested_by, requested_self, decided_by, decided_at, created_by, source_type, source_id) VALUES (?, ?, 'SEPARATION', ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, ?, 'hr_separation', ?)")
+        .run(actor.companyId, employeeId, effectiveDate, secret, JSON.stringify(summary), JSON.stringify(before), reason, actor.user, actor.user, nowIso(), actor.user, String(sourceId)).lastInsertRowid);
+      const c = db.prepare('SELECT * FROM hr_employee_changes WHERE id = ?').get(cid);
+      if (effectiveDate <= todayIST()) applyChange(c, actor);
+      else db.prepare("UPDATE hr_employee_changes SET change_status = 'SCHEDULED', updated_at = ?, version = version + 1 WHERE id = ?").run(nowIso(), cid);
+      writeAudit(db, { entity: 'hr_employee_changes', entityId: cid, action: 'request', newValues: { employee: e.emp_code, type: 'SEPARATION', status, effectiveDate, source: `hr_separation ${sourceId}` }, reason, actor: actor.user, companyId: actor.companyId });
+      return cid;
+    },
+    unschedule(actor, changeId, reason) {
+      const c = db.prepare('SELECT * FROM hr_employee_changes WHERE id = ? AND company_id = ?').get(changeId, actor.companyId);
+      if (c && c.change_status === 'SCHEDULED') applyDecision(c, 'CANCELLED', actor, reason);
+    },
+  };
+  return { registration, amendments, details, banks, userLink, decisions, register, get, me, history, overview, widget, queue, lookup, print, cycle, seesSensitive, access, row, exits };
 }
 
 const services = new WeakMap();
