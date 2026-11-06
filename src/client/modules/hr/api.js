@@ -207,3 +207,35 @@ export const smallPhoto = (file) => new Promise((resolve, reject) => {
   img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('That photo could not be read.')); };
   img.src = url;
 });
+
+// part 07.06: the attendance register, regularisation, overtime, manual entries, the period lock and arrears
+const docs = (path) => ({
+  get: async (id) => (await api.get(`/hr/${path}/${id}`)).data,
+  list: async (f) => (await api.get(`/hr/${path}?${q(f)}`)),
+  create: async (b) => (await api.post(`/hr/${path}`, b, idem())).data,
+  update: async (id, b) => (await api.patch(`/hr/${path}/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/hr/${path}/${id}`)).data,
+  submit: async (id, comment) => (await api.post(`/hr/${path}/${id}/submit`, comment ? { comment } : {}, idem())).data,
+  withdraw: async (id, reason) => (await api.post(`/hr/${path}/${id}/withdraw`, { reason }, idem())).data,
+  cancel: async (id, reason) => (await api.post(`/hr/${path}/${id}/cancel`, { reason }, idem())).data,
+  amend: async (id, reason) => (await api.post(`/hr/${path}/${id}/amend`, { reason }, idem())).data,
+});
+export const regs = {
+  regularisation: docs('regularisations'),
+  overtime: docs('overtime-requests'),
+  manual: docs('manual-entries'),
+  register: async (f) => (await api.get(`/att/register?${q(f)}`)).data,
+  muster: async (f) => (await api.get(`/att/muster?${q(f)}`)).data,
+  day: async (employeeId, date) => (await api.get(`/att/day?${q({ employeeId, date })}`)).data,
+  recompute: async (b) => (await api.post('/att/recompute', b, idem())).data,
+  approvals: async () => (await api.get('/att/approvals')).data,
+  bulk: async (b) => (await api.post('/att/approvals/bulk', b, idem())).data,
+  lockStatus: async (f) => (await api.get(`/att/periods/status?${q(f)}`)).data,
+  locks: async () => (await api.get('/att/period-locks')).data,
+  lock: async (b) => (await api.post('/att/period-locks', b, idem())).data,
+  reopen: async (id, b) => (await api.post(`/att/period-locks/${id}/reopen`, b, idem())).data,
+  arrears: async (f) => (await api.get(`/att/arrears?${q(f)}`)).data,
+};
+export const DAY_STATUS = { PRESENT: 'Present', ABSENT: 'Absent', HALF_DAY: 'Half day', ON_LEAVE: 'On leave', HOLIDAY: 'Holiday', WEEKLY_OFF: 'Weekly off', ON_DUTY: 'On duty', COMP_OFF: 'Comp-off', MISSING_PUNCH: 'Missing punch', HOLIDAY_WORKED: 'Worked on a holiday', WEEKLY_OFF_WORKED: 'Worked on a weekly off' };
+export const BAND_TEXT = { STANDARD: 'The usual approvers', REPEATED: 'The HR manager also approves (fourth in a month)', PM_LEVEL: 'The project manager also approves (over 4 hours a day or 50 hours a month)', POLICY_EXCEPTION: 'The HR manager also approves (outside the policy)' };
+export const MANUAL_ENTRIES = [['PRESENT', 'Present'], ['HALF_DAY', 'Half day'], ['ABSENT', 'Absent'], ['ON_DUTY', 'On duty'], ['COMP_OFF', 'Comp-off']];

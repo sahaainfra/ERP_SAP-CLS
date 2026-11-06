@@ -5,6 +5,12 @@ import CrewPunchPage from './CrewPunchPage.jsx';
 import KioskPage from './KioskPage.jsx';
 import PunchPage from './PunchPage.jsx';
 import TodayAttendancePage from './TodayAttendancePage.jsx';
+import AttendanceApprovalsPage from './AttendanceApprovalsPage.jsx';
+import DailyAttendancePage from './DailyAttendancePage.jsx';
+import MonthlyRegisterPage from './MonthlyRegisterPage.jsx';
+import OvertimeRequestPage from './OvertimeRequestPage.jsx';
+import PeriodLockPage from './PeriodLockPage.jsx';
+import RegularisationRequestPage from './RegularisationRequestPage.jsx';
 import PoliciesPage from './PoliciesPage.jsx';
 import PolicyAssignmentPage from './PolicyAssignmentPage.jsx';
 import PolicyEditorPage from './PolicyEditorPage.jsx';
@@ -69,5 +75,11 @@ registerModule({
     { path: '/att/kiosk', label: 'Kiosk Mode', icon: 'erp.action.create', permission: 'att.punch.kiosk', flag: 'ff.hr.p0705', Page: KioskPage },
     { path: '/att/anomalies', label: 'Attendance Anomalies', icon: 'erp.action.inbox', permission: 'att.anomaly.view', flag: 'ff.hr.p0705', Page: AnomaliesPage },
     { path: '/att/today', label: 'Attendance Today', icon: 'erp.action.history', permission: 'att.punch.view', flag: 'ff.hr.p0705', Page: TodayAttendancePage },
+    { path: '/att/register', label: 'Monthly Attendance Register', icon: 'erp.action.history', permission: 'att.register.view', flag: 'ff.hr.p0706', Page: MonthlyRegisterPage },
+    { path: '/att/daily', label: 'Daily Attendance', icon: 'erp.action.history', permission: 'att.register.view', flag: 'ff.hr.p0706', Page: DailyAttendancePage },
+    { path: '/att/regularisation', label: 'Regularisation Request', icon: 'erp.action.create', permission: 'hr.regularisation.create', flag: 'ff.hr.p0706', Page: RegularisationRequestPage },
+    { path: '/att/overtime', label: 'Overtime Request', icon: 'erp.action.create', permission: 'hr.overtime_request.create', flag: 'ff.hr.p0706', Page: OvertimeRequestPage },
+    { path: '/att/approvals', label: 'Attendance Approvals', icon: 'erp.action.inbox', permission: 'att.register.view', flag: 'ff.hr.p0706', Page: AttendanceApprovalsPage },
+    { path: '/att/lock', label: 'Period Lock', icon: 'erp.action.history', permission: 'att.register.view', flag: 'ff.hr.p0706', Page: PeriodLockPage },
   ],
 });

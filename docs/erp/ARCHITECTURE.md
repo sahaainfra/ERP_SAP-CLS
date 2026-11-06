@@ -836,3 +836,14 @@ Behind feature flag `ff.hr.p0705` (in module `hr`, which needs `ff.hr.p0701` on)
 - **Report** (FR-09 and section 10): `GET /att/report/today` (and `/export`): by site deployed, expected, present, absent, late, outside the fence, rejected, waiting; every count opens its punches. `GET/PUT /att/site-settings/:siteId`.
 - **Jobs and events**: `att.punch_retention` (00:45, FR-09); events `att.punch.recorded` (for the register, DPR labour and dashboards), `att.anomaly.raised`, `att.anomaly.reviewed`; widget `att.anomalies_open`.
 - **Browser**: Punch In/Out (map, fence status, selfie, offline queue), Crew Punch, Kiosk Mode, Attendance Anomalies, Today's Attendance (with the site settings).
+
+## 66. Attendance register, regularisation, overtime and device import (part 07.06)
+
+Behind feature flag `ff.hr.p0706` (module `hr`; needs 07.05). Code: `modules/hr/att-register.js` (the status engine, recompute, register, daily list, muster roll, period lock, reopen workflow, arrears), `att-requests.js` (regularisation, overtime and manual entry: one factory, three workflows, the approvals worklist), `reg-integrations.js` (the import type `ATT_DEVICE_PUNCH`), `reg-routes.js`, `reg-validators.js`. Tables: `att_daily`, `att_regularisations`, `att_overtime_requests`, `att_manual_entries`, `att_period_locks`, `att_arrears`.
+
+- **Engine** (ADR-303): inputs of a day are read, `attendanceOf(db).resolveFor` gives shift, policy and day type, `evaluateDay` (07.04) gives the status, and the register adds visits (on duty), leave through `registerLeaveSource`, approved manual entries, regularised times and the overtime cap. Pay: present 1, half day 0.5, absent 0 with loss of pay 1, weekly off and holiday paid, a missing punch neither paid nor lost until regularised; late and early-going sets cost half a day.
+- **Lock and arrears** (ADR-304): `POST /att/period-locks` or `/att/periods/:id/lock`; `GET /att/periods/status` shows what still blocks. Event `att.period.locked` carries the totals for payroll. A locked day only changes through `att_arrears` (`GET /att/arrears`).
+- **Requests** (ADR-305): `/hr/regularisations`, `/hr/overtime-requests`, `/hr/manual-entries` (list, get, create, update, delete, submit, withdraw, cancel, amend, history, print, export). `GET /att/approvals` and `POST /att/approvals/bulk` for the worklist.
+- **Reports**: `GET /att/register` (+ export, print), `/att/muster`, `/att/daily`, `/att/day`.
+- **Jobs and events** (ADR-306): the bus consumer `att.register` on `att.punch.recorded`, job `att.register_nightly` (01:05), widget `att.missing_punches`; events `att.period.locked`, `att.period.reopened`, `att.arrears.raised`, `att.regularisation.approved`, `att.overtime.approved`, `att.manual.approved`.
+- **Browser**: Monthly Attendance Register, Daily Attendance, Regularisation Request, Overtime Request, Attendance Approvals, Period Lock.

@@ -306,6 +306,101 @@ Indexes:
 - ix_att_anomalies_company_id: company_id
 - ux_att_anomalies_punch_type (unique): punch_id, anomaly_type
 
+## att_arrears
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  | 'EMPLOYEE' |
+| person_id | INTEGER | yes |  |  |
+| work_date | TEXT | yes |  |  |
+| arrears_site_id | INTEGER |  |  |  |
+| period_start | TEXT | yes |  |  |
+| lock_id | INTEGER |  |  |  |
+| before_json | TEXT | yes |  |  |
+| after_json | TEXT | yes |  |  |
+| delta_paid | REAL | yes |  | 0 |
+| delta_lop | REAL | yes |  | 0 |
+| delta_ot_minutes | INTEGER | yes |  | 0 |
+| cause | TEXT |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: lock_id -> att_period_locks(id), arrears_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_arrears_site: arrears_site_id
+- ix_att_arrears_lock: lock_id
+- ix_att_arrears_company_id: company_id
+- ux_att_arrears_open (unique): company_id, person_type, person_id, work_date
+
+## att_daily
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  | 'EMPLOYEE' |
+| person_id | INTEGER | yes |  |  |
+| work_date | TEXT | yes |  |  |
+| daily_site_id | INTEGER |  |  |  |
+| status | TEXT | yes |  |  |
+| late | INTEGER | yes |  | 0 |
+| early_going | INTEGER | yes |  | 0 |
+| late_minutes | INTEGER | yes |  | 0 |
+| early_minutes | INTEGER | yes |  | 0 |
+| in_time | TEXT |  |  |  |
+| out_time | TEXT |  |  |  |
+| worked_minutes | INTEGER | yes |  | 0 |
+| ot_minutes | INTEGER | yes |  | 0 |
+| ot_approved_minutes | INTEGER | yes |  | 0 |
+| ot_paid_minutes | INTEGER | yes |  | 0 |
+| ot_multiplier | REAL |  |  |  |
+| paid_day | REAL | yes |  | 0 |
+| lop_day | REAL | yes |  | 0 |
+| comp_off | REAL | yes |  | 0 |
+| source | TEXT | yes |  | 'PUNCH' |
+| source_ids_json | TEXT | yes |  | '{}' |
+| flags_json | TEXT | yes |  | '[]' |
+| period_start | TEXT |  |  |  |
+| locked | INTEGER | yes |  | 0 |
+| computed_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: daily_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_daily_status: company_id, work_date, status
+- ix_att_daily_period: company_id, period_start, locked
+- ix_att_daily_site_day: daily_site_id, work_date
+- ix_att_daily_company_id: company_id
+- ux_att_daily_person_day (unique): company_id, person_type, person_id, work_date
+
 ## att_device_bindings
 
 | Column | Type | Not null | Key | Default |
@@ -339,6 +434,104 @@ Indexes:
 - ix_att_device_bindings_company_id: company_id
 - ux_att_device_bindings (unique): company_id, device_id, employee_id
 
+## att_manual_entries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| doc_site_id | INTEGER |  |  |  |
+| work_date | TEXT | yes |  |  |
+| entry_status | TEXT | yes |  |  |
+| in_time | TEXT |  |  |  |
+| out_time | TEXT |  |  |  |
+| reason | TEXT | yes |  |  |
+| evidence_file_id | INTEGER |  |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| arrears | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: doc_site_id -> org_sites(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_manual_entries_evidence: evidence_file_id
+- ix_att_manual_entries_supersedes_id: supersedes_id
+- ix_att_manual_entries_root_id: root_id
+- ix_att_manual_entries_status: company_id, status
+- ix_att_manual_entries_site: doc_site_id
+- ix_att_manual_entries_employee: employee_id, work_date
+- ix_att_manual_entries_company_id: company_id
+- ux_att_manual_entries_doc (unique): company_id, doc_no, revision_no
+
+## att_overtime_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| doc_site_id | INTEGER |  |  |  |
+| work_date | TEXT | yes |  |  |
+| ot_type | TEXT | yes |  |  |
+| minutes_requested | INTEGER | yes |  |  |
+| minutes_approved | INTEGER |  |  |  |
+| reason | TEXT | yes |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| arrears | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: doc_site_id -> org_sites(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_overtime_requests_supersedes_id: supersedes_id
+- ix_att_overtime_requests_root_id: root_id
+- ix_att_overtime_requests_status: company_id, status
+- ix_att_overtime_requests_site: doc_site_id
+- ix_att_overtime_requests_employee: employee_id, work_date
+- ix_att_overtime_requests_company_id: company_id
+- ux_att_overtime_requests_doc (unique): company_id, doc_no, revision_no
+
 ## att_period_defs
 
 | Column | Type | Not null | Key | Default |
@@ -365,6 +558,45 @@ Foreign keys: company_id -> org_companies(id)
 
 Indexes:
 - ix_att_period_defs_company_id: company_id
+
+## att_period_locks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period_start | TEXT | yes |  |  |
+| period_end | TEXT | yes |  |  |
+| lock_site_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'LOCKED' |
+| locked_at | TEXT | yes |  |  |
+| locked_by | TEXT | yes |  |  |
+| summary_json | TEXT | yes |  | '{}' |
+| reopen_reason | TEXT |  |  |  |
+| reopen_requested_by | TEXT |  |  |  |
+| reopened_at | TEXT |  |  |  |
+| reopened_by | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: lock_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_period_locks_site: lock_site_id
+- ix_att_period_locks_company_id: company_id
+- ux_att_period_locks_active (unique): company_id, period_start, 
 
 ## att_periods
 
@@ -534,6 +766,55 @@ Indexes:
 - ix_att_punches_person: person_type, person_id, effective_time
 - ix_att_punches_company_id: company_id
 - ux_att_punches_client (unique): company_id, client_uuid
+
+## att_regularisations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| doc_date | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| doc_site_id | INTEGER |  |  |  |
+| work_date | TEXT | yes |  |  |
+| requested_in | TEXT |  |  |  |
+| requested_out | TEXT |  |  |  |
+| reason | TEXT | yes |  |  |
+| evidence_file_id | INTEGER |  |  |  |
+| band | TEXT | yes |  | 'STANDARD' |
+| arrears | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: doc_site_id -> org_sites(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_att_regularisations_evidence: evidence_file_id
+- ix_att_regularisations_supersedes_id: supersedes_id
+- ix_att_regularisations_root_id: root_id
+- ix_att_regularisations_status: company_id, status
+- ix_att_regularisations_site: doc_site_id
+- ix_att_regularisations_employee: employee_id, work_date
+- ix_att_regularisations_company_id: company_id
+- ux_att_regularisations_doc (unique): company_id, doc_no, revision_no
 
 ## att_roster_changes
 

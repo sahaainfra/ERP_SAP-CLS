@@ -54,13 +54,6 @@ const open = async (browser, info, c, roles, user, path, extra = {}) => {
   return { page, context };
 };
 test.afterEach(async ({ browser }) => { for (const c of browser.contexts()) await c.close(); });
-const act = async (request, c, roles, user, instanceId, action = 'approve') => {
-  const rows = await api(request, c, roles, user, 'get', '/workflow/tasks?mine=assigned');
-  const task = rows.rows.find((x) => x.instance.id === instanceId);
-  expect(task, `${user} has the task`).toBeTruthy();
-  await api(request, c, roles, user, 'post', `/workflow/tasks/${task.id}/act`, { action, comment: 'checked it' });
-};
-const day = (n) => new Date(Date.now() + 5.5 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
 
 
 

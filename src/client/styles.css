@@ -1247,3 +1247,18 @@ label.btn { position: relative; overflow: hidden; }
 .btn-link { background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; font: inherit; color: inherit; }
 @media print { .hr-board { grid-auto-flow: row; } .srch-form, .msg-dock { display: none; } }
 [data-testid="pipeline"], [data-testid="requisitions"], [data-testid="new-requisition"], [data-testid="requisition-page"], [data-testid="candidate-page"], [data-testid="offer-builder"], [data-testid="offers"], [data-testid="onboarding"] { padding-block-end: 4.5rem; }
+
+/* Part 07.06: the attendance register */
+.att-register table.grid th, .att-register table.grid td { white-space: nowrap; }
+.att-register thead th { text-align: center; min-inline-size: 2.1rem; padding-inline: 0.25rem; }
+.att-register tbody th[scope='row'] { position: sticky; inset-inline-start: 0; background: var(--surface, #fff); text-align: start; z-index: 1; }
+.att-sun { color: var(--muted, #667); }
+.att-cell { text-align: center; padding: 0; }
+.att-cell-btn { inline-size: 100%; min-block-size: 2rem; border: 0; background: transparent; font: inherit; font-weight: 600; cursor: pointer; color: inherit; }
+.att-cell-btn:focus-visible { outline: 2px solid var(--focus, #1a56db); outline-offset: -2px; }
+.att-ok .att-cell-btn { background: color-mix(in srgb, #1a7f37 18%, transparent); }
+.att-warn .att-cell-btn { background: color-mix(in srgb, #b7791f 22%, transparent); }
+.att-bad .att-cell-btn { background: color-mix(in srgb, #c62828 20%, transparent); }
+.att-info .att-cell-btn { background: color-mix(in srgb, #1a56db 16%, transparent); }
+.att-muted .att-cell-btn { background: color-mix(in srgb, #667 14%, transparent); }
+@media (max-width: 767px) { .att-register table.grid td.att-cell { display: inline-block; inline-size: 2.4rem; } }

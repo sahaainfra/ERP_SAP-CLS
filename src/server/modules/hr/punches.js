@@ -118,6 +118,7 @@ export function createPunchService({ db, storage }) {
       if (Math.abs(skew) > param(cid, 'att.punch.max_skew_seconds')) { reject = reject ?? 'CLOCK_SKEW'; add('CLOCK_SKEW', 'MEDIUM', `The phone clock is ${Math.round(skew)} s from the server time`); }
     } else {
       if (deviceMs > now + param(cid, 'att.punch.max_skew_seconds') * 1000) { reject = reject ?? 'FUTURE_TIME'; add('CLOCK_SKEW', 'MEDIUM', 'The offline punch is dated in the future'); }
+      else if (b.imported === true) flags.push('IMPORTED'); // a device log loaded from a file is as old as the file: the age rules of a phone do not apply (part 07.06)
       else if (now - deviceMs > param(cid, 'att.punch.max_offline_age_hours') * 3_600_000) reject = reject ?? 'TOO_OLD';
       else if (now - deviceMs > param(cid, 'att.punch.late_sync_minutes') * 60_000) add('LATE_SYNC', 'LOW', `Made ${Math.round((now - deviceMs) / 60_000)} minutes before it reached the server`);
     }
@@ -222,6 +223,13 @@ export function createPunchService({ db, storage }) {
       return { ...punchView(row), replayed: false, visit: visit ? { id: visit.id, docNo: visit.doc_no, status: visit.status } : null };
     });
   }
+  /** A punch from a device file (part 07.06): the same core as every other way in, without a selfie; a punch whose client id was recorded before is answered as a replay and stored once. */
+  const recordDeviceSync = (actor, input) => {
+    const replay = db.prepare('SELECT * FROM att_punches WHERE company_id = ? AND client_uuid = ?').get(actor.companyId, input.clientUuid);
+    if (replay) return { id: replay.id, replayed: true, result: replay.result };
+    const r = recordCore(actor, input, { method: 'DEVICE' }, null);
+    return { id: r.id, replayed: false, result: r.result };
+  };
   const recordSync = (actor, input) => { const r = recordCore(actor, input, { method: 'MOBILE' }, null); return { entityId: r.id, version: 1, projectId: db.prepare('SELECT project_id FROM att_punches WHERE id = ?').get(r.id)?.project_id ?? null }; };
   const nextVisitNo = (actor) => {
     try { return issueNumber(db, { companyId: actor.companyId, docType: 'ATT_VISIT', actor: actor.user, refType: 'att_visits' }).number; } catch (e) { if (!['DOCUMENT_TYPE_UNKNOWN', 'NUMBER_SERIES_MISSING'].includes(e?.code)) throw e; }
@@ -575,7 +583,7 @@ export function createPunchService({ db, storage }) {
   }
   const widget = (actor) => (may(actor, 'att.anomaly.view') ? { value: db.prepare("SELECT COUNT(*) AS n FROM att_anomalies WHERE company_id = ? AND status = 'OPEN' AND deleted_at IS NULL").get(actor.companyId).n } : { value: 0 });
 
-  return { punches, anomalies, decisions, report, settings, retention, widget, record, recordSync, myEmployee };
+  return { punches, anomalies, decisions, report, settings, retention, widget, record, recordSync, recordDeviceSync, myEmployee };
 }
 
 const services = new WeakMap();
