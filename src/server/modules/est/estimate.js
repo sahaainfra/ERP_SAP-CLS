@@ -397,6 +397,22 @@ export function createEstimateService({ db }) {
       const priced = input.map((it, i) => priceItem(actor, e, it, i, p)); fail(p);
       return transaction(db, () => { writeItems(actor, e, priced, { replace: true }); bump(actor, e.id); retotal(actor, db.prepare('SELECT * FROM est_estimates WHERE id = ?').get(e.id)); writeAudit(db, { entity: 'est_estimates', entityId: e.id, action: 'reprice', newValues: { items: changed }, actor: actor.user, companyId: e.company_id }); return { changed, estimate: estimates.get(actor, e.id) }; });
     },
+    /** 09.02 FR-06: the quantities of a released take-off into the items of a draft with the same BOQ item number; each item is priced again. */
+    applyQuantities(actor, id, { quantities, source }) {
+      const e = editable(actor, id, null); const items = itemsOf(e.id); const p = [];
+      const want = new Map(quantities.map((q) => [String(q.itemNo).toLowerCase(), q.qty]));
+      const matched = []; const input = items.map((i) => {
+        const v = itemView(actor, i, { components: true }); const q = want.get(i.item_no.toLowerCase());
+        if (q != null && q !== num(i.qty, 'quantity')) matched.push({ itemNo: i.item_no, from: num(i.qty, 'quantity'), to: q });
+        return { sectionCode: v.sectionCode, sectionName: v.sectionName, itemNo: v.itemNo, description: v.description, uom: v.uom, qty: q ?? v.qty, clientRate: v.clientRate, workItemId: v.workItemId, mode: v.mode, analysisId: v.analysisId, costRate: num(i.cost_rate, 'rate'), markupPct: num(i.markup_pct, 'percent'), notes: v.notes, components: componentsOf(i.id).map((c) => ({ type: c.component_type, itemId: c.component_item_id, description: c.description, uom: c.uom, qty: num(c.qty_per_unit, 'quantity'), rate: num(c.rate, 'rate') })) };
+      });
+      const unmatched = quantities.filter((q) => !items.some((i) => i.item_no.toLowerCase() === String(q.itemNo).toLowerCase())).map((q) => q.itemNo);
+      if (matched.length) {
+        const priced = input.map((it, i) => priceItem(actor, e, it, i, p)); fail(p);
+        transaction(db, () => { writeItems(actor, e, priced, { replace: true }); bump(actor, e.id); retotal(actor, db.prepare('SELECT * FROM est_estimates WHERE id = ?').get(e.id)); writeAudit(db, { entity: 'est_estimates', entityId: e.id, action: 'quantities', newValues: { source, items: matched.length }, actor: actor.user, companyId: e.company_id }); });
+      }
+      return { matched, unmatched, estimate: estimates.get(actor, e.id) };
+    },
     /** FR-07: a new draft version copied from this one. */
     newVersion(actor, id, { reason = null } = /** @type {any} */ ({})) {
       const e = row(actor, id); need(actor, 'est.estimate.create', 'make estimate versions');
