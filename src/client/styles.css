@@ -1227,5 +1227,23 @@ tr.is-selected > * { background: var(--erp-color-bg-subtle); }
 .att-palette { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); } .att-palette .att-chip { cursor: grab; }
 .att-grid td select { display: block; font-size: 0.75rem; max-width: 100%; } .att-grid td .att-chip { cursor: grab; }
 .att-cycle { display: flex; flex-wrap: wrap; gap: var(--erp-space-3); align-items: end; }
+/* Geo-fenced attendance (part 07.05) */
+label.btn { position: relative; overflow: hidden; }
+.att-punch { max-inline-size: 36rem; }
+.att-big { inline-size: 100%; min-block-size: 4.5rem; font-size: 1.4rem; margin-block: var(--erp-space-4); }
+.att-map { inline-size: 100%; max-inline-size: 18rem; block-size: auto; border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); }
+.att-map-bg { fill: transparent; } .att-map-fence { fill: none; stroke: var(--erp-color-status-info-solid); stroke-width: 1.5; stroke-dasharray: 4 2; }
+.att-map-acc { fill: var(--erp-color-status-muted-solid); opacity: 0.25; } .att-map-in { fill: var(--erp-color-status-success-solid); } .att-map-out { fill: var(--erp-color-status-error-solid); }
+.att-in { color: var(--erp-color-status-success-fg); } .att-out { color: var(--erp-color-status-error-fg); }
+.att-net.is-off { font-weight: 600; } .att-thumb { max-inline-size: 8rem; border-radius: var(--erp-radius-sm); }
+.att-members { list-style: none; padding: 0; margin: 0; } .att-member { min-block-size: 3rem; align-items: center; } .att-all { font-weight: 600; min-block-size: 3rem; }
+.att-toggle { display: flex; gap: var(--erp-space-3); } .att-toggle .btn { flex: 1; min-block-size: 3.5rem; }
+.att-video { inline-size: 100%; max-inline-size: 20rem; }
+.att-answer { text-align: center; padding: var(--erp-space-6); border-radius: var(--erp-radius-md); border: 3px solid var(--erp-color-border-subtle); }
+.att-answer.is-good { border-color: var(--erp-color-status-success-solid); } .att-answer.is-bad { border-color: var(--erp-color-status-error-solid); } .att-answer-big { font-size: 2.2rem; font-weight: 700; margin: 0; }
+.att-dot { display: inline-block; inline-size: 0.8rem; block-size: 0.8rem; border-radius: 50%; border: 1px solid var(--erp-color-border-subtle); vertical-align: middle; }
+.att-green { background: var(--erp-color-status-success-solid); } .att-amber { background: var(--erp-color-status-warning-solid); } .att-red { background: var(--erp-color-status-error-solid); } .att-grey { background: var(--erp-color-status-muted-solid); }
+.att-bar { display: inline-block; inline-size: 8rem; block-size: 0.7rem; border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-sm); vertical-align: middle; overflow: hidden; } .att-bar-fill { display: block; block-size: 100%; background: var(--erp-color-status-success-solid); }
+.btn-link { background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; font: inherit; color: inherit; }
 @media print { .hr-board { grid-auto-flow: row; } .srch-form, .msg-dock { display: none; } }
 [data-testid="pipeline"], [data-testid="requisitions"], [data-testid="new-requisition"], [data-testid="requisition-page"], [data-testid="candidate-page"], [data-testid="offer-builder"], [data-testid="offers"], [data-testid="onboarding"] { padding-block-end: 4.5rem; }

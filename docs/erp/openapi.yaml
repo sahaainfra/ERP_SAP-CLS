@@ -3551,3 +3551,65 @@ paths:
     post:
       summary: "Close a period after its last day, in order"
       responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/punches/context:
+    get:
+      summary: "What the punch screen needs: your sites with their fences, the next punch, your last punches, the privacy notice"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/punches/today:
+    get:
+      summary: "The punches of a site on a day (all for those who see the site, your own otherwise)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/punches:
+    get:
+      summary: "Punches with filters (List contract), within the sites you see"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    post:
+      summary: "Punch from the phone: the server decides (fence, accuracy, clock, device); Idempotency-Key is the client id, so a replay is the same punch"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/punches/crew:
+    post:
+      summary: "The supervisor punches the members of the crew with a group photo and a position"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/punches/kiosk:
+    post:
+      summary: "A badge scanned at a site kiosk, with a photo"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/punches/device:
+    post:
+      summary: "The interface of a biometric device (29.02): the same checks"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/punches/{id}/selfie:
+    get:
+      summary: "The selfie of a punch (the person and the reviewers; audited)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/anomalies:
+    get:
+      summary: "Attendance anomalies, most serious and oldest first, with the colour of their age"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/anomalies/{id}:
+    get:
+      summary: "One anomaly"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/anomalies/{id}/review:
+    post:
+      summary: "Accept or reject with a note; a repeated outside-fence acceptance also goes to the HR manager"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/anomalies/bulk-review:
+    post:
+      summary: "Accept or reject several anomalies"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/report/today:
+    get:
+      summary: "Attendance by site for a day: deployed, expected, present, absent, late, outside the fence, rejected, waiting"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/report/today/export:
+    get:
+      summary: "The same as CSV (formula injection neutralised)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+  /api/v1/att/site-settings/{siteId}:
+    get:
+      summary: "Selfie, accuracy and fence tolerance of a site"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }
+    put:
+      summary: "Set them (HR); version required"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted, sent for approval }, '400': { description: validation errors with the field named }, '403': { description: no right }, '404': { description: not found or not in your scope }, '409': { description: conflict }, '422': { description: a business rule }, '500': { description: unexpected, with a correlation id } }

@@ -175,3 +175,35 @@ export const att = {
   period: { get: async () => (await api.get(aq('period'))).data, set: async (b) => (await api.put(aq('period'), b, idem())).data, list: async (f) => (await api.get(`${aq('periods')}?${q(f)}`)).data, close: async (id) => (await api.post(aq(`periods/${id}/close`), {}, idem())).data },
   calendars: async () => (await api.get('/core/holiday-calendars')).data,
 };
+
+// part 07.05: geo-fenced attendance (under /api/v1/att)
+export const RESULT = { ACCEPTED: ['APPROVED', 'Accepted'], FLAGGED: ['AT_RISK', 'Accepted, flagged'], PENDING: ['IN_REVIEW', 'Waiting for approval'], REJECTED: ['REJECTED', 'Rejected'] };
+export const SEVERITY = { HIGH: ['OVERDUE', 'High'], MEDIUM: ['AT_RISK', 'Medium'], LOW: ['ACTIVE', 'Low'] };
+export const attp = {
+  context: async () => (await api.get('/att/punches/context')).data,
+  punch: async (b, key) => (await api.post('/att/punches', b, { headers: { 'idempotency-key': key } })).data,
+  crew: async (b) => (await api.post('/att/punches/crew', b)).data,
+  kiosk: async (b, key) => (await api.post('/att/punches/kiosk', b, { headers: { 'idempotency-key': key } })).data,
+  today: async (f) => (await api.get(`/att/punches/today?${q(f)}`)).data,
+  list: async (f) => (await api.get(`/att/punches?${q(f)}`)),
+  anomalies: async (f) => (await api.get(`/att/anomalies?${q(f)}`)),
+  review: async (id, b) => (await api.post(`/att/anomalies/${id}/review`, b, idem())).data,
+  bulk: async (b) => (await api.post('/att/anomalies/bulk-review', b, idem())).data,
+  report: async (f) => (await api.get(`/att/report/today?${q(f)}`)).data,
+  settings: async (siteId) => (await api.get(`/att/site-settings/${siteId}`)).data,
+  setSettings: async (siteId, b) => (await api.put(`/att/site-settings/${siteId}`, b, idem())).data,
+};
+/** A stable id for this browser, so a phone used by two people can be seen (only an id, never read from the device). */
+export const deviceId = () => { try { let d = localStorage.getItem('erp.att.device'); if (!d) { d = globalThis.crypto.randomUUID(); localStorage.setItem('erp.att.device', d); } return d; } catch { return null; } };
+/** The position at this moment (read only when a person punches, never in the background): { lat, lng, accuracyM } or an error message. */
+export const readPosition = () => new Promise((resolve, reject) => {
+  if (!navigator.geolocation) { reject(new Error('This browser cannot give a location.')); return; }
+  navigator.geolocation.getCurrentPosition((p) => resolve({ lat: Number(p.coords.latitude.toFixed(6)), lng: Number(p.coords.longitude.toFixed(6)), accuracyM: Math.round(p.coords.accuracy) }), (e) => reject(new Error(e.code === 1 ? 'Location is switched off for this page: allow it in the browser to punch.' : 'The location could not be read. Move to open sky and try again.')), { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 });
+});
+/** A photo made small (at most 480 px) and returned as a data URL, so it travels with the punch. */
+export const smallPhoto = (file) => new Promise((resolve, reject) => {
+  const img = new Image(); const url = URL.createObjectURL(file);
+  img.onload = () => { const k = Math.min(1, 480 / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); resolve(c.toDataURL('image/jpeg', 0.7)); };
+  img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('That photo could not be read.')); };
+  img.src = url;
+});

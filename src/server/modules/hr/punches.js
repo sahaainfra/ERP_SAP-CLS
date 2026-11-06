@@ -144,7 +144,8 @@ export function createPunchService({ db, storage }) {
     }
     // a selfie where the site, or the role of the person, asks for one
     const roles = param(cid, 'att.punch.selfie_roles');
-    const needsSelfie = method === 'MOBILE' && !b.selfie && (st.selfieMode === 'REQUIRED' || (Array.isArray(roles) && roles.some((r) => (actor.roles ?? []).includes(r))));
+    const needsSelfie = method === 'MOBILE' && !b.selfie && !b.selfiePending && (st.selfieMode === 'REQUIRED' || (Array.isArray(roles) && roles.some((r) => (actor.roles ?? []).includes(r))));
+    if (b.selfiePending && !b.selfie) flags.push('SELFIE_PENDING'); // the photo of an offline punch follows through the media upload of the offline engine
     if (needsSelfie) reject = reject ?? 'SELFIE_REQUIRED';
     if (method === 'KIOSK' && st.selfieMode === 'REQUIRED' && !b.selfie) reject = reject ?? 'SELFIE_REQUIRED';
     if (param(cid, 'att.punch.face_match_enabled') && Number.isFinite(b.faceMatchScore) && b.faceMatchScore < param(cid, 'att.punch.face_match_threshold')) add('SELFIE_MISMATCH', 'HIGH', `Match score ${b.faceMatchScore}`);
@@ -154,7 +155,8 @@ export function createPunchService({ db, storage }) {
   }
 
   const punchRow = (id) => db.prepare('SELECT * FROM att_punches WHERE id = ?').get(id);
-  const punchView = (r) => ({ id: r.id, personType: r.person_type, personId: r.person_id, person: r.person_name ?? undefined, code: r.person_code ?? undefined, siteId: r.punch_site_id, site: r.site_name ?? undefined, type: r.punch_type, workDate: r.work_date, deviceTime: r.device_time, serverTime: r.server_time, effectiveTime: r.effective_time,
+  const nameOf = (id) => db.prepare('SELECT full_name AS n, emp_code AS c FROM hr_employees WHERE id = ?').get(id);
+  const punchView = (r) => ({ id: r.id, personType: r.person_type, personId: r.person_id, person: r.person_name ?? nameOf(r.person_id)?.n, code: r.person_code ?? nameOf(r.person_id)?.c, siteId: r.punch_site_id, site: r.site_name ?? undefined, type: r.punch_type, workDate: r.work_date, deviceTime: r.device_time, serverTime: r.server_time, effectiveTime: r.effective_time,
     insideFence: r.inside_fence == null ? null : r.inside_fence === 1, distanceM: r.distance_m, accuracyM: r.accuracy_m, hasLocation: r.lat != null, hasSelfie: r.selfie_file_id != null, method: r.method, recordedBy: r.recorded_by, offline: r.offline === 1, result: r.result, reason: r.reason_code, reasonText: r.reason_code ? REASONS[r.reason_code] ?? r.reason_code : null, flags: json(r.flags_json, []), visitId: r.visit_id, groupId: r.group_id });
 
   /** Records one punch (the core of every way in). `input`: { personId, siteId, punchType, deviceTime, lat, lng, accuracyM, mockLocation, deviceId, clientUuid, selfie, offline, reason, faceMatchScore, groupId, selfieFileId }. */
@@ -600,7 +602,7 @@ registerOfflineForm({
     const me = svc.myEmployee(actor);
     if (!me) throw unprocessable('Your user account is not linked to an employee record.');
     // the engine is synchronous in its hooks: the record is made through the same checks, with the command id as the client id
-    return svc.recordSync(actor, { personId: me, siteId: Number(v.siteId), punchType: v.punchType, deviceTime: ctx.effectiveAt ?? v.deviceTime, lat: v.lat ?? ctx.gps?.lat, lng: v.lng ?? ctx.gps?.lng, accuracyM: v.accuracyM ?? ctx.gps?.accuracy, mockLocation: v.mockLocation === true, deviceId: v.deviceId ?? null, clientUuid: ctx.commandId, offline: true, reason: v.reason ?? null });
+    return svc.recordSync(actor, { personId: me, siteId: Number(v.siteId), punchType: v.punchType, deviceTime: ctx.effectiveAt ?? v.deviceTime, lat: v.lat ?? ctx.gps?.lat, lng: v.lng ?? ctx.gps?.lng, accuracyM: v.accuracyM ?? ctx.gps?.accuracy, mockLocation: v.mockLocation === true, deviceId: v.deviceId ?? null, clientUuid: ctx.commandId, offline: true, reason: v.reason ?? null, selfiePending: v.hasPhoto === true });
   },
   load: () => null,
   update() { throw unprocessable('A punch is not changed: it is reviewed.'); },

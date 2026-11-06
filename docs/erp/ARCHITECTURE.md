@@ -826,3 +826,13 @@ Behind feature flag `ff.hr.p0704` (in module `hr`, which needs `ff.hr.p0701` on)
 - **Periods** (FR-06, ADR-296): `/hr/att/period` (start day from a date), `/hr/att/periods`, `/:id/close`.
 - **Events**: `att.policy.approved`, `att.assignment.changed`, `att.roster.changed`, `att.period.closed`; widget `att.roster_waiting`.
 - **Browser**: Shifts, Shift Editor, Roster Planner, Attendance Policies, Policy Rules Editor (with examples), Policy Assignment (hierarchy, who gets what, attendance period).
+
+## 65. Geo-fenced mobile attendance (part 07.05)
+
+Behind feature flag `ff.hr.p0705` (in module `hr`, which needs `ff.hr.p0701` on). Code: `modules/hr/punches.js` (service: the decision on a punch, the ways in, anomalies and their review, visits, the report of the day, site settings, retention; workflows `HR_ATT_VISIT` and `HR_ATT_ANOMALY`; the offline form `attendance_punch`; object type `att_punch`; file entity `att_punch`), `punch-routes.js`, `punch-validators.js`; migrations `…116_att_punches` (tables `att_punches`, `att_anomalies`, `att_visits`, `att_device_bindings`, `att_site_settings`) and `…117_seed_hr_p0705`. The routes are under `/api/v1/att`.
+
+- **Punches** (FR-01 to FR-07, ADR-298): `POST /att/punches` (the phone; `Idempotency-Key` is the client id), `/punches/crew` (the supervisor, group photo), `/punches/kiosk` (badge), `/punches/device` (biometric interface), `GET /punches/context`, `/punches/today`, `/punches` (list), `/punches/:id/selfie` (the person and reviewers). Result: ACCEPTED, FLAGGED, PENDING (a visit) or REJECTED with its reason.
+- **Anomalies** (FR-08, ADR-299, ADR-301): `GET /att/anomalies`, `POST /anomalies/:id/review`, `/anomalies/bulk-review`. Repeated outside-fence acceptances also go to the HR manager.
+- **Report** (FR-09 and section 10): `GET /att/report/today` (and `/export`): by site deployed, expected, present, absent, late, outside the fence, rejected, waiting; every count opens its punches. `GET/PUT /att/site-settings/:siteId`.
+- **Jobs and events**: `att.punch_retention` (00:45, FR-09); events `att.punch.recorded` (for the register, DPR labour and dashboards), `att.anomaly.raised`, `att.anomaly.reviewed`; widget `att.anomalies_open`.
+- **Browser**: Punch In/Out (map, fence status, selfie, offline queue), Crew Punch, Kiosk Mode, Attendance Anomalies, Today's Attendance (with the site settings).

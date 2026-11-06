@@ -1,5 +1,10 @@
 import { registerModule } from '../../platform/shell/registry.js';
+import AnomaliesPage from './AnomaliesPage.jsx';
 import CandidatePage from './CandidatePage.jsx';
+import CrewPunchPage from './CrewPunchPage.jsx';
+import KioskPage from './KioskPage.jsx';
+import PunchPage from './PunchPage.jsx';
+import TodayAttendancePage from './TodayAttendancePage.jsx';
 import PoliciesPage from './PoliciesPage.jsx';
 import PolicyAssignmentPage from './PolicyAssignmentPage.jsx';
 import PolicyEditorPage from './PolicyEditorPage.jsx';
@@ -59,5 +64,10 @@ registerModule({
     { path: '/hr/attendance/policies', label: 'Attendance Policies', icon: 'erp.action.history', permission: 'att.policy.view', flag: 'ff.hr.p0704', Page: PoliciesPage },
     { path: '/hr/attendance/policies/policy', label: 'Policy Rules Editor', icon: 'erp.action.info', permission: 'att.policy.view', flag: 'ff.hr.p0704', Page: PolicyEditorPage },
     { path: '/hr/attendance/assignment', label: 'Policy Assignment', icon: 'erp.action.history', permission: 'att.assignment.view', flag: 'ff.hr.p0704', Page: PolicyAssignmentPage },
+    { path: '/att/punch', label: 'Punch In/Out', icon: 'erp.action.create', permission: 'att.punch.own', flag: 'ff.hr.p0705', Page: PunchPage },
+    { path: '/att/crew-punch', label: 'Crew Punch', icon: 'erp.action.create', permission: 'att.punch.crew', flag: 'ff.hr.p0705', Page: CrewPunchPage },
+    { path: '/att/kiosk', label: 'Kiosk Mode', icon: 'erp.action.create', permission: 'att.punch.kiosk', flag: 'ff.hr.p0705', Page: KioskPage },
+    { path: '/att/anomalies', label: 'Attendance Anomalies', icon: 'erp.action.inbox', permission: 'att.anomaly.view', flag: 'ff.hr.p0705', Page: AnomaliesPage },
+    { path: '/att/today', label: 'Attendance Today', icon: 'erp.action.history', permission: 'att.punch.view', flag: 'ff.hr.p0705', Page: TodayAttendancePage },
   ],
 });
