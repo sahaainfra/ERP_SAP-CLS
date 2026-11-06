@@ -13,6 +13,9 @@ import { crmRoutes } from './crm-routes.js';
 import { bindTenders, createTenderService } from './tender.js';
 import './tender-integrations.js';
 import { tenderRoutes } from './tender-routes.js';
+import { bindAwards, createAwardService } from './award.js';
+import './award-integrations.js';
+import { awardRoutes } from './award-routes.js';
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -40,24 +43,31 @@ for (const [type, description] of [
   ['bd.tender.query_answered', 'A clarification to a pre-bid query was received: data { tenderId, docNo, clauseRef }.'],
   ['bd.tender.ready', 'A tender is ready for submission (registered, bid decision approved, eligibility complete, addenda read): data { tenderId, docNo, opportunityId, clientPartnerId, nameOfWork, estCost, emd, tenderFee, bidType, periodMonths, submissionAt, openingAt, region, bidCapacity }. Estimation (09.01) and submission (08.03) start from it.'],
   ['bd.tender.submitted', 'The bid of a tender was submitted (08.03 tells the register): data { tenderId, docNo, submittedOn }.'],
+  ['bd.emd.requested', 'An EMD or tender fee was approved and is asked of finance (a bank guarantee to securities 21.02, a payment to 23.04): data { emdId, docNo, tenderId, kind, mode, amount, payee, neededBy, bankGuarantee }.'],
+  ['bd.emd.issued', 'Accounts recorded the instrument of an EMD or fee: data { emdId, docNo, tenderId, kind, mode, amount, validUntil }.'],
+  ['bd.emd.refund_changed', 'The refund of an EMD was asked for, received, forfeited or adjusted: data { emdId, docNo, tenderId, status, on, amount }.'],
+  ['bd.submission.approved', 'The final bid was approved (estimation, then the director): data { submissionId, docNo, tenderId, bidAmount, estimate, adjustment, estimateSource }.'],
+  ['bd.tender.opened', 'The prices of a tender opening were recorded and ranked: data { tenderId, docNo, openedOn, bidders, ourRank, ourQuoted, l1 }.'],
+  ['tdr.tender.awarded', 'A tender was awarded to us (letter of acceptance, approved by the director): data { tenderId, docNo, awardId, opportunityId, clientPartnerId, nameOfWork, location, region, loaNo, loaDate, awardedValue, periodMonths, bidType, owner }. Project set-up (10.02) makes the project from it.'],
+  ['tdr.tender.lost', 'A tender was lost: data { tenderId, docNo, awardId, opportunityId, reasonCode, awardedTo }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'bd', description });
 
-const TABLES = ['bd_leads', 'bd_opportunities', 'bd_interactions', 'bd_contacts', 'bd_stage_log', 'bd_amendments', 'tdr_tenders', 'tdr_eligibility', 'tdr_bid_decisions', 'tdr_addenda', 'tdr_queries', 'tdr_team_tasks', 'tdr_date_log', 'tdr_amendments'];
+const TABLES = ['bd_leads', 'bd_opportunities', 'bd_interactions', 'bd_contacts', 'bd_stage_log', 'bd_amendments', 'tdr_tenders', 'tdr_eligibility', 'tdr_bid_decisions', 'tdr_addenda', 'tdr_queries', 'tdr_team_tasks', 'tdr_date_log', 'tdr_amendments', 'tdr_credentials', 'tdr_tender_credentials', 'tdr_emd', 'tdr_submissions', 'tdr_competitors', 'tdr_bid_results', 'tdr_negotiations', 'tdr_awards'];
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { bd_leads: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CONVERTED'], bd_opportunities: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_tenders: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_bid_decisions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'] },
-  uniqueKeys: [{ table: 'bd_leads', columns: ['company_id', 'doc_no'] }, { table: 'bd_opportunities', columns: ['company_id', 'doc_no'] }, { table: 'tdr_tenders', columns: ['company_id', 'doc_no'] }, { table: 'tdr_bid_decisions', columns: ['company_id', 'doc_no'] }],
+  statuses: { bd_leads: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CONVERTED'], bd_opportunities: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_tenders: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_bid_decisions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_emd: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_submissions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], tdr_awards: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'] },
+  uniqueKeys: [{ table: 'bd_leads', columns: ['company_id', 'doc_no'] }, { table: 'bd_opportunities', columns: ['company_id', 'doc_no'] }, { table: 'tdr_tenders', columns: ['company_id', 'doc_no'] }, { table: 'tdr_bid_decisions', columns: ['company_id', 'doc_no'] }, { table: 'tdr_emd', columns: ['company_id', 'doc_no'] }, { table: 'tdr_awards', columns: ['company_id', 'doc_no'] }, { table: 'tdr_submissions', columns: ['company_id', 'doc_no'] }, { table: 'tdr_credentials', columns: ['company_id', 'doc_no'] }],
 });
 /** Module "bd": CRM, business development and tendering (M08). Part 08.01 holds leads, clients, contacts, interactions and the opportunity pipeline. The tables are `bd_*`. */
 export const bd = {
   code: 'bd',
   name: 'CRM & Business Development',
   routePrefix: '/api/v1/bd',
-  ownerPart: '08.01, 08.02',
+  ownerPart: '08.01, 08.02, 08.03',
   status: 'Leads from sources with a BANT-like qualification and a review, opportunities with the go-ahead for tendering, pipeline stages with default probabilities, the weighted forecast, win and loss analysis, interactions with follow-up tasks, client contacts with an influence map, Client 360, Excel import',
   tables: TABLES,
   companyOptional: [],
-  resources: ['leads', 'opportunities', 'interactions', 'clients', 'contacts', 'reports', 'tenders', 'eligibility', 'addenda', 'queries', 'team-tasks', 'bid-decisions', 'tender-reports'],
+  resources: ['leads', 'opportunities', 'interactions', 'clients', 'contacts', 'reports', 'tenders', 'eligibility', 'addenda', 'queries', 'team-tasks', 'bid-decisions', 'tender-reports', 'credentials', 'emd', 'submissions', 'competitors', 'competitor-reports', 'awards'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bd_leads'").get()) return;
@@ -92,6 +102,19 @@ export const bd = {
       tr.use(gate('ff.bd.p0802', 'The tender register is'));
       tr.use(tenderRoutes({ tdr, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/bd', tr);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tdr_awards'").get()) {
+      const aw = createAwardService({ db });
+      bindAwards(db, aw);
+      listExports.register('bd.emd', { source: (actor, req) => aw.emd.exportSource(actor, req), hidden: () => [] });
+      listExports.register('bd.awards', { source: (actor, req) => aw.awards.exportSource(actor, req), hidden: () => [] });
+      listExports.register('bd.credentials', { source: (actor, req) => aw.credentials.exportSource(actor, req), hidden: () => [] });
+      runtime.jobs.register('bd.emd_daily', () => { const out = { followUps: 0, expiring: 0 }; for (const c of companies()) { const r = aw.cycle(c); out.followUps += r.followUps; out.expiring += r.expiring; } return out; }, { maxAttempts: 3 });
+      runtime.scheduler.define({ code: 'bd.emd_daily_followups', cron: '55 1 * * *', jobType: 'bd.emd_daily', description: 'Daily (01:55): EMDs not refunded N days after the result are followed up (and every N days after); bank guarantees that end soon are told to accounts.' });
+      const ar = Router();
+      ar.use(gate('ff.bd.p0803', 'Prequalification, EMD, submission and award are'));
+      ar.use(awardRoutes({ aw, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/bd', ar);
     }
   },
 };

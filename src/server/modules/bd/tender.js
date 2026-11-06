@@ -300,6 +300,14 @@ export function createTenderService({ db }) {
       event('bd.tender.submitted', actor, 'tdr_tender', t.id, t.company_id, { tenderId: t.id, docNo: t.doc_no, submittedOn: submittedOn ?? today() });
       return { id: t.id, stage: 'SUBMITTED' };
     },
+    /** 08.03 records the result of a submitted tender: awarded or lost. */
+    markOutcome(actor, id, outcome) {
+      const t = db.prepare('SELECT * FROM tdr_tenders WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId);
+      if (!t || t.stage !== 'SUBMITTED') throw unprocessable('Only a submitted tender is awarded or lost.');
+      db.prepare('UPDATE tdr_tenders SET stage = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(outcome === 'WON' ? 'AWARDED' : 'LOST', actor.user, nowIso(), t.id);
+      writeAudit(db, { entity: 'tdr_tenders', entityId: t.id, action: outcome === 'WON' ? 'awarded' : 'lost', actor: actor.user, companyId: actor.companyId });
+      return db.prepare('SELECT * FROM tdr_tenders WHERE id = ?').get(t.id);
+    },
     history(actor, id) {
       const t = tenderRow(actor, id);
       return { approvals: t.workflow_instance_id ? db.prepare('SELECT event, actor, comment, at, step_code FROM wf_history WHERE instance_id = ? ORDER BY id').all(t.workflow_instance_id) : [], dateLog: db.prepare('SELECT field, old_value AS oldValue, new_value AS newValue, reason, changed_by AS by, changed_at AS at FROM tdr_date_log WHERE tender_id = ? ORDER BY id').all(t.id), audit: db.prepare("SELECT action, actor, reason, created_at AS at FROM core_audit_log WHERE entity IN ('tdr_tenders', 'tdr_eligibility', 'tdr_addenda', 'tdr_queries', 'tdr_team_tasks') AND (entity_id = ? OR entity_id IN (SELECT CAST(id AS TEXT) FROM tdr_eligibility WHERE tender_id = ? UNION SELECT CAST(id AS TEXT) FROM tdr_addenda WHERE tender_id = ? UNION SELECT CAST(id AS TEXT) FROM tdr_queries WHERE tender_id = ? UNION SELECT CAST(id AS TEXT) FROM tdr_team_tasks WHERE tender_id = ?)) ORDER BY id").all(String(t.id), t.id, t.id, t.id, t.id) };
@@ -725,7 +733,7 @@ export function createTenderService({ db }) {
     const table = entity === 'tdr_eligibility' ? 'tdr_eligibility' : 'tdr_addenda'; const r = db.prepare(`SELECT tender_id FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null;
     return access(actor, 'tdr_tender', r.tender_id);
   };
-  return { tenders, eligibility, addenda, queries, teamTasks, documents, decisions, calendar, dashboard, cycle, widget, decisionsOf: { tender: decideTender, decision: decideDecision }, access };
+  return { tenders, eligibility, addenda, queries, teamTasks, documents, decisions, calendar, dashboard, cycle, widget, decisionsOf: { tender: decideTender, decision: decideDecision }, access, tenderRow, seenTender, tenderView, readiness };
 }
 
 const services = new WeakMap();
@@ -734,7 +742,7 @@ export const tendersOf = (db) => services.get(db) ?? null;
 
 const step = (code, name, approvers, when = null) => ({ code, name, type: 'approval', mode: 'single', approvers, slaHours: 48, requireAttachment: false, checklist: [], when, notify: [], action: null });
 if (!workflowResolvers.get('tdr.reviewer')) workflowResolvers.register('tdr.reviewer', ({ db, companyId, instance }) => {
-  const table = instance.docType === TENDER_DOC ? 'tdr_tenders' : 'tdr_bid_decisions';
+  const table = { TDR_TENDER: 'tdr_tenders', TDR_BID_DECISION: 'tdr_bid_decisions', TDR_EMD: 'tdr_emd', TDR_SUBMISSION: 'tdr_submissions', TDR_AWARD: 'tdr_awards' }[instance.docType] ?? 'tdr_bid_decisions';
   const r = db.prepare(`SELECT created_by${instance.docType === TENDER_DOC ? ', owner' : ''} FROM ${table} WHERE id = ?`).get(rid(instance.docId));
   const out = new Set([instance.submittedBy, r?.created_by, r?.owner].filter(Boolean).map((x) => String(x).toLowerCase()));
   const users = db.prepare('SELECT username, roles_json FROM iam_users WHERE company_id = ? AND is_active = 1').all(companyId).filter((u) => json(u.roles_json, []).includes('EST') && !out.has(u.username.toLowerCase())).map((u) => ({ user: u.username }));

@@ -426,6 +426,18 @@ export function createCrmService({ db }) {
       if (o.status !== 'APPROVED' || ['WON', 'LOST'].includes(o.stage)) throw unprocessable('Only an open opportunity with the go-ahead is won through a tender.');
       return transaction(db, () => markWon(actor, o, 'TENDER_AWARD', toMinor(awardValue ?? rupees(o.est_value_minor)), awardedOn ?? today(), tenderRef ?? null));
     },
+    /** 08.03: the tender of the opportunity was lost: the opportunity is lost with the reason of the tender. There is no route for it. */
+    loseFromTender(actor, id, { reasonCode, reason, lostTo }) {
+      const o = db.prepare('SELECT * FROM bd_opportunities WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId);
+      if (!o || ['WON', 'LOST'].includes(o.stage)) return null;
+      return transaction(db, () => {
+        db.prepare("UPDATE bd_opportunities SET stage = 'LOST', probability_pct = 0, probability_default_pct = 0, probability_reason = NULL, lost_reason_code = ?, lost_reason = ?, lost_to = ?, closed_on = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(reasonCode, reason ?? null, lostTo ?? null, today(), actor.user, nowIso(), o.id);
+        logStage(actor, o, o.stage, 'LOST', 0, `Tender lost: ${reasonCode}`);
+        writeAudit(db, { entity: 'bd_opportunities', entityId: o.id, action: 'lose', reason: reasonCode, actor: actor.user, companyId: o.company_id });
+        event('bd.opportunity.lost', actor, 'bd_opportunity', o.id, o.company_id, { docNo: o.doc_no, reasonCode, lostTo: lostTo ?? null, estValue: rupees(o.est_value_minor), sector: o.sector, region: o.region });
+        return db.prepare('SELECT * FROM bd_opportunities WHERE id = ?').get(o.id);
+      });
+    },
     /** 08.02 tells the opportunity which tender it became. */
     linkTender(actor, id, tenderRef) {
       const o = db.prepare('SELECT * FROM bd_opportunities WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId);
