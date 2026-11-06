@@ -31,11 +31,11 @@ export default function BdDashboardPage() {
       {q.isPending ? <Skeleton label={t('dash.title')} rows={5} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : (
         <>
           <dl className="op-figures" data-testid="bd-tiles">
-            <div><dt>{t('dash.open')}</dt><dd><Link to={drill()} data-testid="tile-open">{d.tiles.openCount}</Link></dd></div>
+            <div><dt>{t('dash.open')}</dt><dd data-testid="tile-open"><Link to={drill()}>{d.tiles.openCount}</Link></dd></div>
             <div><dt>{t('dash.pipeline')}</dt><dd data-testid="tile-pipeline" title={inr(d.tiles.pipeline)}>{inrShort(d.tiles.pipeline)}</dd></div>
             <div><dt>{t('dash.weighted')}</dt><dd data-testid="tile-weighted" title={inr(d.tiles.weighted)}>{inrShort(d.tiles.weighted)}</dd></div>
             <div><dt>{t('dash.winRate')}</dt><dd data-testid="tile-winrate">{d.tiles.winRate == null ? '—' : `${d.tiles.winRate}%`} <span className="muted small">{t('dash.wonLost', { won: d.tiles.won.count, lost: d.tiles.lost.count })}</span></dd></div>
-            <div><dt>{t('dash.approvals')}</dt><dd><Link to="/inbox" data-testid="tile-approvals">{d.myActions.approvals}</Link></dd></div>
+            <div><dt>{t('dash.approvals')}</dt><dd data-testid="tile-approvals"><Link to="/inbox">{d.myActions.approvals}</Link></dd></div>
           </dl>
           <h2>{t('dash.byStage')}</h2>
           {d.tiles.openCount === 0 ? <EmptyState title={t('dash.emptyTitle')} message={t('dash.emptyText')} /> : (
