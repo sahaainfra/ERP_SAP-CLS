@@ -86,7 +86,7 @@ export default function TenderPage({ create = false }) {
           {x.can.submit && !editing && <button type="button" className="btn btn-primary" onClick={() => run(() => tdr.tenderAct(id, 'submit', {}), t('td.sent'))} data-testid="td-submit">{t('td.send')}</button>}
           {x.can.withdraw && <button type="button" className="btn" onClick={() => why((r) => tdr.tenderAct(id, 'withdraw', { reason: r }), t('act.withdrawn'))} data-testid="td-withdraw">{t('act.withdraw')}</button>}
           {x.can.amend && !editing && <button type="button" className="btn" onClick={() => setMode('amend')} data-testid="td-amend">{t('act.amend')}</button>}
-          {x.can.decide && <Link to={`/bd/bid-decision?tenderId=${id}`} className="btn btn-primary" data-testid="td-decide">{t('td.evaluate')}</Link>}
+          {x.can.decide && <button type="button" className="btn btn-primary" onClick={() => navigateTo(`/bd/bid-decision?tenderId=${id}`)} data-testid="td-decide">{t('td.evaluate')}</button>}
           {x.can.ready && <button type="button" className="btn btn-primary" onClick={() => run(() => tdr.tenderAct(id, 'ready', {}), t('td.markedReady'))} data-testid="td-ready">{t('td.markReady')}</button>}
           {x.can.unready && <button type="button" className="btn" onClick={() => why((r) => tdr.tenderAct(id, 'unready', { reason: r }), t('td.takenBack'))} data-testid="td-unready">{t('td.takeBack')}</button>}
           {x.can.cancel && <button type="button" className="btn" onClick={() => why((r) => tdr.tenderAct(id, 'cancel', { reason: r }), t('act.cancelled'))} data-testid="td-cancel">{t('act.cancel')}</button>}
