@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS est_item_components (
   qty_per_unit    INTEGER NOT NULL CHECK (qty_per_unit >= 0),
   rate            INTEGER NOT NULL CHECK (rate >= 0),
   amount          INTEGER NOT NULL DEFAULT 0 CHECK (amount >= 0),
-  rate_origin     TEXT    NOT NULL DEFAULT 'MANUAL' CHECK (rate_origin IN ('LIBRARY', 'MANUAL')),
+  line_origin     TEXT    NOT NULL DEFAULT 'MANUAL' CHECK (line_origin IN ('LIBRARY', 'MANUAL')),
   resource_rate_id INTEGER REFERENCES ra_resource_rates (id),
   site_id     INTEGER,
   created_by  TEXT,

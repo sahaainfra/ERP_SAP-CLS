@@ -3525,6 +3525,215 @@ Indexes:
 - ix_ess_requests_company_id: company_id
 - ux_ess_requests_doc (unique): company_id, doc_no, revision_no
 
+## est_estimate_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_id | INTEGER | yes |  |  |
+| section_code | TEXT | yes |  |  |
+| section_name | TEXT |  |  |  |
+| item_no | TEXT | yes |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| description | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty | INTEGER | yes |  | 0 |
+| client_rate | INTEGER |  |  |  |
+| work_item_id | INTEGER |  |  |  |
+| build_mode | TEXT | yes |  | 'RATE' |
+| analysis_id | INTEGER |  |  |  |
+| cost_rate | INTEGER | yes |  | 0 |
+| markup_pct | INTEGER | yes |  | 0 |
+| selling_rate | INTEGER | yes |  | 0 |
+| cost_amount | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| priced_at | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: analysis_id -> ra_analyses(id), work_item_id -> mdm_items(id), estimate_id -> est_estimates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_estimate_items_analysis: analysis_id
+- ix_est_estimate_items_work_item: work_item_id
+- ix_est_estimate_items_estimate: estimate_id, sort_order
+- ix_est_estimate_items_company_id: company_id
+- ux_est_items_no (unique): estimate_id, item_no
+
+## est_estimates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| title | TEXT | yes |  |  |
+| tender_id | INTEGER |  |  |  |
+| basis_date | TEXT | yes |  |  |
+| region_code | TEXT |  |  |  |
+| currency_code | TEXT | yes |  | 'INR' |
+| ho_overhead_pct | INTEGER | yes |  | 0 |
+| contingency_pct | INTEGER | yes |  | 0 |
+| escalation_pct | INTEGER | yes |  | 0 |
+| gst_pct | INTEGER | yes |  | 0 |
+| direct_cost | INTEGER | yes |  | 0 |
+| indirect_cost | INTEGER | yes |  | 0 |
+| overhead_amount | INTEGER | yes |  | 0 |
+| risk_amount | INTEGER | yes |  | 0 |
+| contingency_amount | INTEGER | yes |  | 0 |
+| escalation_amount | INTEGER | yes |  | 0 |
+| total_cost | INTEGER | yes |  | 0 |
+| total_selling | INTEGER | yes |  | 0 |
+| margin_amount | INTEGER | yes |  | 0 |
+| margin_pct | INTEGER | yes |  | 0 |
+| gst_amount | INTEGER | yes |  | 0 |
+| bid_value | INTEGER | yes |  | 0 |
+| breakdown_json | TEXT |  |  |  |
+| calculated_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supersedes_id -> est_estimates(id), tender_id -> tdr_tenders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_estimates_supersedes: supersedes_id
+- ix_est_estimates_project: project_id
+- ix_est_estimates_tender: tender_id
+- ix_est_estimates_status: company_id, status
+- ix_est_estimates_company_id: company_id
+- ux_est_estimates_doc (unique): company_id, doc_no, version_no
+
+## est_indirects
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_id | INTEGER | yes |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| category | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| basis | TEXT | yes |  | 'LUMP_SUM' |
+| qty | INTEGER |  |  |  |
+| rate | INTEGER |  |  |  |
+| percent | INTEGER |  |  |  |
+| amount | INTEGER | yes |  | 0 |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: estimate_id -> est_estimates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_indirects_estimate: estimate_id, sort_order
+- ix_est_indirects_company_id: company_id
+
+## est_item_components
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_item_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| component_type | TEXT | yes |  |  |
+| component_item_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty_per_unit | INTEGER | yes |  |  |
+| rate | INTEGER | yes |  |  |
+| amount | INTEGER | yes |  | 0 |
+| line_origin | TEXT | yes |  | 'MANUAL' |
+| resource_rate_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: resource_rate_id -> ra_resource_rates(id), component_item_id -> mdm_items(id), estimate_item_id -> est_estimate_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_item_components_rate: resource_rate_id
+- ix_est_item_components_component: component_item_id
+- ix_est_item_components_item: estimate_item_id, line_no
+- ix_est_item_components_company_id: company_id
+
+## est_risks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_id | INTEGER | yes |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| description | TEXT | yes |  |  |
+| impact | INTEGER | yes |  |  |
+| probability_pct | INTEGER | yes |  |  |
+| exposure | INTEGER | yes |  | 0 |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: estimate_id -> est_estimates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_risks_estimate: estimate_id, sort_order
+- ix_est_risks_company_id: company_id
+
 ## exp_advance_recoveries
 
 | Column | Type | Not null | Key | Default |

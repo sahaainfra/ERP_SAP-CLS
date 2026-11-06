@@ -70,7 +70,7 @@ export function createEstimateService({ db }) {
       workItemId: i.work_item_id, workItem: i.work_item_id ? { id: i.work_item_id, code: i.work_code, name: i.work_name } : null, mode: i.build_mode, modeLabel: MODES[i.build_mode],
       analysisId: i.analysis_id, analysis: i.analysis_id ? { id: i.analysis_id, ref: `${i.analysis_no}/v${i.analysis_version}`, status: i.analysis_status } : null, stale: Boolean(newer), newerAnalysis: newer ? { id: newer.id, ref: `${i.analysis_no}/v${newer.version_no}` } : null,
       costRate: c ? num(i.cost_rate, 'rate') : null, markupPct: c ? num(i.markup_pct, 'percent') : null, sellingRate: money(i.selling_rate), costAmount: c ? money(i.cost_amount) : null, amount: money(i.amount), pricedAt: i.priced_at, notes: i.remarks,
-      ...(components ? { components: i.build_mode === 'MANUAL' ? componentsOf(i.id).map((x) => ({ id: x.id, lineNo: x.line_no, type: x.component_type, itemId: x.component_item_id, itemCode: x.item_code, description: x.description, uom: x.uom, qty: num(x.qty_per_unit, 'quantity'), rate: c ? num(x.rate, 'rate') : null, amount: c ? money(x.amount) : null, origin: x.rate_origin })) : [] } : {}),
+      ...(components ? { components: i.build_mode === 'MANUAL' ? componentsOf(i.id).map((x) => ({ id: x.id, lineNo: x.line_no, type: x.component_type, itemId: x.component_item_id, itemCode: x.item_code, description: x.description, uom: x.uom, qty: num(x.qty_per_unit, 'quantity'), rate: c ? num(x.rate, 'rate') : null, amount: c ? money(x.amount) : null, origin: x.line_origin })) : [] } : {}),
     };
   }
   /** FR-08: cost against selling, and the margin of each section, through the engine. */
@@ -150,7 +150,7 @@ export function createEstimateService({ db }) {
         if (rate == null || rate === '') return;
         const amt = ev('ra.line_amount', { quantity: String(l.qty ?? '0'), wastage_percent: '0', rate: String(rate) }).amount;
         cost = cost.add(dec(amt));
-        out.components.push({ line_no: k + 1, component_type: type, component_item_id: item?.id ?? null, description, uom, qty_per_unit: units(l.qty ?? '0', 'quantity'), rate: units(rate, 'rate'), amount: units(amt, 'money'), rate_origin: origin, resource_rate_id: rateId });
+        out.components.push({ line_no: k + 1, component_type: type, component_item_id: item?.id ?? null, description, uom, qty_per_unit: units(l.qty ?? '0', 'quantity'), rate: units(rate, 'rate'), amount: units(amt, 'money'), line_origin: origin, resource_rate_id: rateId });
       });
     } else if (out.build_mode === 'RATE') {
       if (it.costRate == null || it.costRate === '') p.push({ field: at('costRate'), message: 'Give the cost rate, choose a rate analysis or build the rate up' });
@@ -169,8 +169,8 @@ export function createEstimateService({ db }) {
     for (const [k, x] of priced.entries()) {
       const id = Number(db.prepare(`INSERT INTO est_estimate_items (company_id, estimate_id, ${ITEM_COLS.join(', ')}, created_by, source_type, source_id) VALUES (?, ?, ${ITEM_COLS.map(() => '?').join(', ')}, ?, 'est_estimate', ?)`)
         .run(e.company_id, e.id, ...ITEM_COLS.map((col) => (col === 'sort_order' ? start + k + 1 : x[col] ?? null)), actor.user, String(e.id)).lastInsertRowid);
-      for (const c of x.components) db.prepare("INSERT INTO est_item_components (company_id, estimate_item_id, line_no, component_type, component_item_id, description, uom, qty_per_unit, rate, amount, rate_origin, resource_rate_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate_item')")
-        .run(e.company_id, id, c.line_no, c.component_type, c.component_item_id, c.description, c.uom, c.qty_per_unit, c.rate, c.amount, c.rate_origin, c.resource_rate_id, actor.user);
+      for (const c of x.components) db.prepare("INSERT INTO est_item_components (company_id, estimate_item_id, line_no, component_type, component_item_id, description, uom, qty_per_unit, rate, amount, line_origin, resource_rate_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate_item')")
+        .run(e.company_id, id, c.line_no, c.component_type, c.component_item_id, c.description, c.uom, c.qty_per_unit, c.rate, c.amount, c.line_origin, c.resource_rate_id, actor.user);
     }
   }
   /** The totals of the estimate (FR-04, FR-05, FR-08): the indirects that are a percentage of the direct cost follow it; the risks give the contingency; the engine does the rest. */
@@ -224,7 +224,7 @@ export function createEstimateService({ db }) {
       .run(from.company_id, from.doc_no, v, from.title, from.tender_id, from.project_id, from.basis_date, from.region_code, from.currency_code, from.ho_overhead_pct, from.contingency_pct, from.escalation_pct, from.gst_pct, from.id, actor.user, String(from.id), reason ?? null).lastInsertRowid);
     for (const i of itemsOf(from.id)) {
       const nid = Number(db.prepare(`INSERT INTO est_estimate_items (company_id, estimate_id, ${ITEM_COLS.join(', ')}, created_by, source_type, source_id) VALUES (?, ?, ${ITEM_COLS.map(() => '?').join(', ')}, ?, 'est_estimate_item', ?)`).run(i.company_id, id, ...ITEM_COLS.map((c) => i[c] ?? null), actor.user, String(i.id)).lastInsertRowid);
-      for (const c of componentsOf(i.id)) db.prepare("INSERT INTO est_item_components (company_id, estimate_item_id, line_no, component_type, component_item_id, description, uom, qty_per_unit, rate, amount, rate_origin, resource_rate_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate_item')").run(c.company_id, nid, c.line_no, c.component_type, c.component_item_id, c.description, c.uom, c.qty_per_unit, c.rate, c.amount, c.rate_origin, c.resource_rate_id, actor.user);
+      for (const c of componentsOf(i.id)) db.prepare("INSERT INTO est_item_components (company_id, estimate_item_id, line_no, component_type, component_item_id, description, uom, qty_per_unit, rate, amount, line_origin, resource_rate_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate_item')").run(c.company_id, nid, c.line_no, c.component_type, c.component_item_id, c.description, c.uom, c.qty_per_unit, c.rate, c.amount, c.line_origin, c.resource_rate_id, actor.user);
     }
     for (const x of indirectsOf(from.id)) db.prepare("INSERT INTO est_indirects (company_id, estimate_id, sort_order, category, description, basis, qty, rate, percent, amount, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate')").run(x.company_id, id, x.sort_order, x.category, x.description, x.basis, x.qty, x.rate, x.percent, x.amount, actor.user);
     for (const x of risksOf(from.id)) db.prepare("INSERT INTO est_risks (company_id, estimate_id, sort_order, description, impact, probability_pct, exposure, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate')").run(x.company_id, id, x.sort_order, x.description, x.impact, x.probability_pct, x.exposure, actor.user);

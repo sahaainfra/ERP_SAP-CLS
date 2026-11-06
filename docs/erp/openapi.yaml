@@ -5357,3 +5357,80 @@ paths:
     get:
       summary: "The award or loss of a tender"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates:
+    get:
+      summary: "List the estimates (versions)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Start an estimate for a tender or a project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/export:
+    get:
+      summary: "Export the estimates (costs left out without est.estimate.cost)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}:
+    get:
+      summary: "Read an estimate version with its items, sections, indirects, risks and versions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change the header of a draft (title, basis date, region, percentages)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/items:
+    put:
+      summary: "Save the items grid (priced on the server)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/boq:
+    post:
+      summary: "Check, then add, rows of the client BOQ"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/indirects:
+    put:
+      summary: "Save the indirect costs sheet"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/risks:
+    put:
+      summary: "Save the risks (contingency)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/reprice:
+    post:
+      summary: "Re-price the items whose analysis has a newer released version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/versions:
+    post:
+      summary: "Make a new draft version from this one"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/submit:
+    post:
+      summary: "Send a version for approval"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/withdraw:
+    post:
+      summary: "Withdraw a version from approval"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/cancel:
+    post:
+      summary: "Cancel an open version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/amend:
+    post:
+      summary: "Amend an approved version (a new version)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/history:
+    get:
+      summary: "Approvals and changes of a version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/compare:
+    get:
+      summary: "Compare two versions of one estimate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/resources:
+    get:
+      summary: "Resource summary of a version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/print:
+    get:
+      summary: "Print a version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

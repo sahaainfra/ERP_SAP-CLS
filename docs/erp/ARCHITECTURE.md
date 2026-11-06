@@ -973,3 +973,16 @@ Behind feature flag `ff.bd.p0803` (module `bd`; needs 08.02). Code: `modules/bd/
 - **Negotiation, award and loss** (FR-06, FR-07, ADR-352): `/bd/tenders/:id/negotiations`, `/bd/awards` (CRUD, submit, withdraw, cancel, print, export), `/bd/tenders/:id/award`; workflow `TDR_AWARD` (EST colleague, then DIR when won); approval calls `markOutcome` (08.02), `awardFromTender` / `loseFromTender` (08.01), makes the EMD refund due and publishes `tdr.tender.awarded` / `tdr.tender.lost`.
 - **Events**: `bd.emd.{requested,issued,refund_changed}`, `bd.submission.approved`, `bd.tender.opened`, `tdr.tender.awarded`, `tdr.tender.lost`.
 - **Browser**: Credentials Library, EMD & Fee Register (with refund ageing), EMD / Tender Fee, Bid Submission, Bid Opening Results, Competitor Analysis, Award / Loss, Awards & Losses; the tender page links to each by stage. Hindi through the `bd` namespace.
+
+## 77. Estimate workspace: versions, item build-up, indirects, contingency and the resource summary (part 09.01)
+
+Behind feature flag `ff.est.p0901` (new module `est`; needs 06.06 and 08.02). Code: `modules/est/estimate.js` (estimates, items, build-ups, indirects, risks, totals, re-pricing, versions, comparison, resources, print, the decision of the approval), `constants.js`, `validators.js`, `routes.js`, `integrations.js` (Excel import `EST_BOQ`); client pages in `src/client/modules/est`.
+
+- **Estimate** (FR-01, FR-07, ADR-353): `/est/estimates` (list, export, create, get, update, delete, versions, amend, submit, withdraw, cancel, history, print); a tender (read through `tendersOf(db).tenderRow`) or a project; workflow `EST_ESTIMATE` (resolver `est.reviewer`, then DIR, ADR-357).
+- **Items** (FR-02, FR-03, BR-01, ADR-354, ADR-355): `PUT /est/estimates/:id/items` saves the grid whole; each item is priced from a released analysis (`ratesOf(db).analyses.get`), a build-up of components priced from the resource rate library (`ratesOf(db).rateFor`) or a typed cost rate; `/boq` checks and adds pasted BOQ rows; `/reprice` moves flagged items to the newer analysis.
+- **Indirects and risks** (FR-04, FR-05): `PUT /indirects` (lump sum, quantity x rate, percentage of the direct cost), `PUT /risks` (exposure = impact x probability); the header holds HO overhead, contingency, escalation and GST percentages.
+- **Totals** (FR-08, BR-01): formulas `est.item_rate`, `est.percent_amount`, `est.estimate_total` of the calculation engine, traced against the estimate; the margin of each section through the same engine.
+- **Comparison and resources** (FR-06, FR-07): `/compare?with=` (items matched by item number; added, removed, changed; deltas; totals), `/resources` (analysis lines with wastage and build-up components times the item quantity, by kind; headline cement, steel, man-days, plant).
+- **Masking** (BR-02, ADR-356): `est.estimate.cost`; list, export, print and the API leave costs and margins out without it.
+- **Events**: `est.estimate.{created,versioned,boq_imported,approved}`; 08.03 reads the approved estimate of a tender for the submission.
+- **Browser**: Estimates, New Estimate, Estimate (items, cost and margin, indirect costs, risk and tax, versions, approvals), Import Client BOQ, Version Comparison, Resource Summary; Hindi through the `est` namespace.
