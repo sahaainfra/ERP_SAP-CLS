@@ -49,7 +49,7 @@ test('T-01 three roles see exactly the entries their permissions and flags allow
   assert.ok(p.denied.some((d) => d.route === '/admin/users' && d.reason === 'permission' && d.permissionKey === 'iam.user.view'));
   assert.ok(!p.groups.flatMap((g) => g.pages).some((x) => x.route === '/admin/users'));
   assert.equal(p.groups.find((g) => g.code === 'g-procurement').pages[0].quickCreate.route, '/admin/sample-requests?new=1');
-  assert.deepEqual(p.quickCreate.map((q) => q.label), ['New sample material request']);
+  assert.deepEqual(p.quickCreate.map((q) => q.label), ['New sample material request', 'New project']);
   // groups appear only when they hold something
   assert.ok(p.groups.every((g) => g.pages.length > 0));
   await api.close();
