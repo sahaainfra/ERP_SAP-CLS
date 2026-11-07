@@ -79,3 +79,5 @@ export const msg = {
     api.use('/msg', router);
   },
 };
+// status lists that are not workflow states (found by the data-health check: a valid row was reported as an invalid status)
+integrityRegistry.register({ statuses: { msg_presence: ['ONLINE', 'AWAY'], msg_calls: ['RINGING', 'ACTIVE', 'ENDED', 'MISSED', 'DECLINED'], msg_config: ['PENDING', 'SCHEDULED', 'ACTIVE', 'RETIRED', 'REJECTED'] } });

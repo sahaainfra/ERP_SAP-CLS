@@ -338,3 +338,5 @@ export const hr = {
     }
   },
 };
+// status lists that are not workflow states (found by the data-health check: a valid row was reported as an invalid status)
+integrityRegistry.register({ statuses: { att_device_bindings: ['ACTIVE', 'REVOKED'], lv_year_runs: ['DONE'] } });

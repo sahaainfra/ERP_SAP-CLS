@@ -118,3 +118,5 @@ export const bd = {
     }
   },
 };
+// status lists that are not workflow states (found by the data-health check: a valid row was reported as an invalid status)
+integrityRegistry.register({ statuses: { tdr_queries: ['DRAFT', 'SUBMITTED', 'ANSWERED', 'NO_RESPONSE'], tdr_team_tasks: ['OPEN', 'DONE', 'CANCELLED'] } });

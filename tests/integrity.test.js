@@ -265,3 +265,19 @@ test('API: the whole feature is hidden (404) while ff.core.p0102 is OFF for the 
   assert.equal((await api.call('GET', '/api/v1/core/integrity/summary', { roles: 'SYSADM', company: '1' })).status, 200, 'other companies are unaffected');
   await api.close();
 });
+
+test('every status a table allows by its CHECK constraint is a status the integrity check accepts (registered list, standard states, or a technical table)', async () => {
+  await import('../src/server/modules/registry.js');
+  const { integrityRegistry, STANDARD_STATES } = await import('../src/server/platform/integrity/index.js');
+  const { openDatabase, migrateUp } = await import('../src/server/platform/db/index.js');
+  const db = openDatabase(':memory:'); migrateUp(db);
+  const gaps = [];
+  for (const t of db.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table'").all()) {
+    if (integrityRegistry.rules.technicalTables.has(t.name)) continue;
+    const m = /\bstatus\s+TEXT[^,]*CHECK\s*\(\s*status\s+IN\s*\(([^)]*)\)/i.exec(t.sql ?? ''); if (!m) continue;
+    const allowed = integrityRegistry.rules.statuses.get(t.name) ?? STANDARD_STATES;
+    const extra = [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]).filter((v) => !allowed.includes(v));
+    if (extra.length) gaps.push(`${t.name}: ${extra.join(', ')}`);
+  }
+  assert.deepEqual(gaps, [], 'a valid row would be reported as an invalid status on the Data Health page; register the table\'s statuses with integrityRegistry');
+});
