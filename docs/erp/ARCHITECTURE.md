@@ -999,3 +999,15 @@ Behind feature flag `ff.est.p0902` (module `est`; needs 09.01). Code: `modules/e
 - **Estimate** (FR-06, ADR-362): `estimates.applyQuantities` of 09.01.
 - **Events**: `est.takeoff.released`, `est.bbs.released`.
 - **Browser**: Take-off Sheets, Take-off Sheet (with the drawing beside), Bar Bending Schedules, BBS Editor (shape code library, weight while typing, summary by diameter), BBS Summary by Diameter, Revision Delta Report, Material Requirement Explosion; Hindi through the `est` namespace.
+
+## 79. Estimate review, approval, bid price summary and priced BOQ (part 09.03)
+
+Behind feature flag `ff.est.p0903` (module `est`; needs 09.01, 09.02 and 04.02). Code: `modules/est/review.js` (the panel, reviews, the bid summary and its discount, the assumptions register, sensitivity, unbalanced items, the priced BOQ), `review-validators.js`, `review-routes.js`; `estimateHooks` in `estimate.js`; client pages `ReviewPage.jsx`, `BidPricePage.jsx`.
+
+- **Review** (FR-01, FR-04, ADR-363): `GET /est/estimates/:id/review` (the panel), `/reviews` (list, record: approve or return the reviewer's task, or a note); workflow `EST_ESTIMATE` = COMMGR review with the checklist, then DIR.
+- **Bid price** (FR-02, BR-01, ADR-364, ADR-365): `/est/estimates/:id/bid-summary` (get, put the discount, submit and withdraw it), `/est/bid-summaries/:id`; formula `est.bid_price`; workflow `EST_DISCOUNT` (DIR); parameter `est.bid.discount_director_pct`.
+- **Register** (FR-03): `/est/estimates/:id/assumptions`.
+- **Sensitivity and unbalanced items** (FR-02, FR-06, ADR-366): `/sensitivity?pct=`, `/unbalanced`; parameters `est.unbalanced.band_points`, `est.unbalanced.client_band_pct`; for holders of `est.estimate.cost` only.
+- **Priced BOQ** (FR-05, ADR-367): `/priced-boq?format=xlsx|pdf|csv|html&words=` through the export writer, rates in words by `amountInWords`.
+- **Permissions**: `est.review.{view,perform}`, `est.bid.{edit,approve}`, `est.boq.export`; COMMGR also `est.estimate.approve`.
+- **Browser**: Estimate Review (checklist, bid price summary, sensitivity, unbalanced items, assumptions, reviews), Bid Price Finalisation (discount, summary, priced BOQ in Excel, PDF and print); links from the Estimate page.

@@ -5572,3 +5572,52 @@ paths:
     get:
       summary: "Export the bar bending schedules"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/review:
+    get:
+      summary: "The Estimate Review panel: the estimate, the checklist, the reviews, the bid summary, the register and the unbalanced items"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/reviews:
+    get:
+      summary: "The reviews of an estimate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Record a review (approve or return the review step, or a note)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/bid-summary:
+    get:
+      summary: "The bid price summary"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: "Set the discount or rebate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/bid-summary/submit:
+    post:
+      summary: "Send the discount to the director"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/bid-summary/withdraw:
+    post:
+      summary: "Withdraw the discount from the director"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/assumptions:
+    get:
+      summary: "The register of assumptions, inclusions, exclusions and qualifications"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: "Save the register"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/sensitivity:
+    get:
+      summary: "The bid price for +/- x % on each key resource"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/unbalanced:
+    get:
+      summary: "Items priced away from the average markup or the client rate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/estimates/{id}/priced-boq:
+    get:
+      summary: "The priced BOQ in the client format (Excel, PDF, CSV or print), rates in words"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/est/bid-summaries/{id}:
+    get:
+      summary: "The estimate of a bid summary"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

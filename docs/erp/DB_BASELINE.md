@@ -3525,6 +3525,84 @@ Indexes:
 - ix_ess_requests_company_id: company_id
 - ux_ess_requests_doc (unique): company_id, doc_no, revision_no
 
+## est_assumptions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| text | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: estimate_id -> est_estimates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_assumptions_estimate: estimate_id, kind, sort_order
+- ix_est_assumptions_company_id: company_id
+
+## est_bid_summary
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_id | INTEGER | yes |  |  |
+| direct_cost | INTEGER | yes |  | 0 |
+| indirect_cost | INTEGER | yes |  | 0 |
+| overhead_amount | INTEGER | yes |  | 0 |
+| contingency_amount | INTEGER | yes |  | 0 |
+| escalation_amount | INTEGER | yes |  | 0 |
+| total_cost | INTEGER | yes |  | 0 |
+| profit_amount | INTEGER | yes |  | 0 |
+| selling_amount | INTEGER | yes |  | 0 |
+| discount_pct | INTEGER | yes |  | 0 |
+| discount_amount | INTEGER | yes |  | 0 |
+| net_price | INTEGER | yes |  | 0 |
+| gst_pct | INTEGER | yes |  | 0 |
+| gst_amount | INTEGER | yes |  | 0 |
+| bid_price | INTEGER | yes |  | 0 |
+| discount_reason | TEXT |  |  |  |
+| discount_status | TEXT | yes |  | 'NOT_REQUIRED' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| calculated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: estimate_id -> est_estimates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_bid_summary_status: company_id, discount_status
+- ix_est_bid_summary_company_id: company_id
+- ux_est_bid_summary_estimate (unique): estimate_id
+
 ## est_estimate_items
 
 | Column | Type | Not null | Key | Default |
@@ -3702,6 +3780,39 @@ Indexes:
 - ix_est_item_components_component: component_item_id
 - ix_est_item_components_item: estimate_item_id, line_no
 - ix_est_item_components_company_id: company_id
+
+## est_reviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_id | INTEGER | yes |  |  |
+| reviewer | TEXT | yes |  |  |
+| checklist_json | TEXT | yes |  |  |
+| comments | TEXT |  |  |  |
+| verdict | TEXT | yes |  |  |
+| review_status | TEXT | yes |  | 'RECORDED' |
+| workflow_task_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: estimate_id -> est_estimates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_est_reviews_estimate: estimate_id
+- ix_est_reviews_company_id: company_id
 
 ## est_risks
 
