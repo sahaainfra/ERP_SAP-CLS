@@ -6425,6 +6425,18 @@ paths:
     get:
       summary: "GIS: GET /layers/{id}/export"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/project-360:
+    get:
+      summary: "Project 360: header, health and widgets by tab"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/project-360/export:
+    get:
+      summary: "Project 360 snapshot as PDF, XLSX or CSV"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/portfolio-overview:
+    get:
+      summary: "The projects in scope with their health"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"

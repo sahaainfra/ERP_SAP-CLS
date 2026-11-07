@@ -1097,3 +1097,15 @@ Module `proj`, flag `ff.proj.p1007`, tables `gis_layers`, `gis_overlays`, `gis_p
 - **Permissions**: `proj.gis.{view,create,edit,delete,submit,approve,cancel,print,export,import,progress}`; all project users view, planner and site engineer maintain, project manager and project director approve.
 - **Browser**: Project Map (layer toggles, heatmap, legend, list mode), Chainage Progress Strip Chart (SVG chart, table, export, record progress), Layers and Overlays; Hindi through the `proj` namespace.
 
+## 87. Project 360 and the project dashboard (part 10.08)
+
+Module `proj`, flag `ff.proj.p1008`, table `proj_360_widgets`. The service is `modules/proj/p360.js` (`createP360Service`, `p360Of`, `registerProject360Widget`, `project360Providers`), routes in `routes.js` (`p360Routes`), inputs in `validators.js`; pages in `client/modules/proj/` (`Project360Page`, `PortfolioPage`).
+
+- **Page** (FR-01 to FR-04, ADR-412 to ADR-415): `/proj/project-360?projectId&period` returns the header (client, contract value original and current, start, scheduled and forecast completion, lifecycle state, project manager), the health of six dimensions and eight tabs of widgets; `/proj/project-360/export` (PDF, XLSX, CSV, audited).
+- **Slots** (FR-02, FR-06, BR-02): twenty rows of `proj_360_widgets`; ten have providers from live parts, ten are empty states that name the part (11.x to 23.x); a later part calls `registerProject360Widget(code, provider)`.
+- **Health** (BR-01, ADR-414): parameter `proj.rag_thresholds` per company.
+- **Portfolio** (FR-05): `/proj/portfolio-overview` (projects in scope, health, overdue milestones, critical risks, open issues; filter by health and name).
+- **Dashboard framework** (ADR-416): `ui_widgets` rows `proj.risks.critical`, `proj.milestones.late`, `proj.map.located`.
+- **Permissions**: `proj.p360.view`, `proj.p360.export`.
+- **Browser**: Project 360 (header, health tiles, tabs, period, export) and Portfolio Overview; Hindi through the `proj` namespace.
+
