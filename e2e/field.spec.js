@@ -91,7 +91,7 @@ test('FR-01 on a phone the bottom navigation has Home, My Work, Scan and More; M
   const errors = watch(page);
   const bottom = page.getByTestId('bottom-nav');
   await expect(bottom).toBeVisible();
-  await expect(bottom.getByRole('link')).toHaveText(['Home', 'My Work', 'Scan']); // Messages appears when its part registers a page
+  await expect(bottom.getByRole('link')).toHaveText(['Home', 'My Work', 'Scan', 'Messages']); // Messages is there since its part (05.01) registered its page
   await expect(bottom.getByRole('button', { name: 'Open menu' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open menu' })).toHaveCount(1); // the header has no second menu button
   await expect(page.getByTestId('bottom-home')).toHaveAttribute('aria-current', 'page');
