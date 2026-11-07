@@ -275,7 +275,8 @@ function opsSetup(start = '2026-10-30T10:00:00.000Z') {
   const db = memoryDb();
   const clock = { t: Date.parse(start) };
   const m = createMetrics({ now: () => clock.t });
-  const ops = createOps({ db, metrics: m, storagePath: tmpdir(), now: () => clock.t });
+  // a disk half full, whatever the machine running the tests has left
+  const ops = createOps({ db, metrics: m, storagePath: tmpdir(), now: () => clock.t, statfs: () => ({ blocks: 1000, bsize: 1_048_576, bavail: 500 }) });
   ops.ensureDefaults();
   return { db, clock, m, ops };
 }

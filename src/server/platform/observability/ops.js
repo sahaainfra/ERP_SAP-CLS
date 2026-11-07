@@ -76,7 +76,8 @@ export function evaluateSlo(def, { persisted, live, last1h }) {
  * to send an email or a WhatsApp message (defect D-047); an alert is recorded, announced as an event and logged, and each
  * configured channel records whether a sender exists for it.
  */
-export function createOps({ db, metrics, storagePath, now = () => Date.now() }) {
+/** `statfs` reads the disk of the data folder; tests pass their own so an alert does not depend on how full the machine running them is. */
+export function createOps({ db, metrics, storagePath, now = () => Date.now(), statfs = statfsSync }) {
   const senders = new Map();
 
   const sloDefs = () => db.prepare('SELECT * FROM core_slo_definitions WHERE deleted_at IS NULL AND is_active = 1 ORDER BY id').all();
@@ -141,7 +142,7 @@ export function createOps({ db, metrics, storagePath, now = () => Date.now() }) 
       const pages = db.prepare('PRAGMA page_count').get().page_count * db.prepare('PRAGMA page_size').get().page_size;
       let disk;
       try {
-        const s = statfsSync(storagePath);
+        const s = statfs(storagePath);
         disk = { totalMb: Math.round((s.blocks * s.bsize) / 1048576), freeMb: Math.round((s.bavail * s.bsize) / 1048576), freePct: Math.round((s.bavail / s.blocks) * 1000) / 10 };
       } catch {
         disk = null;

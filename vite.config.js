@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -14,14 +15,16 @@ function serviceWorker() {
   return {
     name: 'erp-service-worker',
     apply: 'build',
-    generateBundle(_options, bundle) {
-      const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'sw.js');
+    // after the files are written: a chunk the bundler reports and then drops (an empty wrapper of a dynamic import) must not be listed, or the offline install would fail on a missing file
+    writeBundle(options, bundle) {
+      const dir = options.dir ?? 'dist';
+      const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'sw.js' && existsSync(join(dir, f)));
       // fonts of scripts the people here do not write in are fetched (and then kept) only if a page ever asks for them
       const kept = files.filter((f) => !/-(cyrillic|cyrillic-ext|greek|greek-ext|vietnamese|math|symbols)-\d+-/.test(f));
       const urls = [...kept.map((f) => `/${f}`), ...PUBLIC_SHELL];
       const id = createHash('sha1').update(files.join('|')).digest('hex').slice(0, 10);
       const source = readFileSync('src/client/sw.js', 'utf8').replace("'__BUILD_ID__'", JSON.stringify(id)).replace("'__PRECACHE__'", JSON.stringify(urls));
-      this.emitFile({ type: 'asset', fileName: 'sw.js', source });
+      writeFileSync(join(dir, 'sw.js'), source);
     },
   };
 }
