@@ -4,7 +4,8 @@ import { setTheme } from './shell-helpers.js';
 async function open(page, roles, path = '/admin/data-health', company = '1', user = 'e2e-health') {
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), { user, roles, company });
   const errors = [];
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // the companies of these tests are known only by id, so the shell's background calls (device, presence) may answer 4xx; a 5xx or a script error still fails
+  page.on('console', (m) => m.type() === 'error' && !/Failed to load resource: the server responded with a status of 4\d\d/.test(m.text()) && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto(path);
   return errors;
