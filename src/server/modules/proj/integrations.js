@@ -18,7 +18,7 @@ const lookup = (name, label, role) => lookupRegistry.register({
 });
 lookup('clients', 'Clients', 'CLIENT'); lookup('consultants', 'Consultants and engineers', 'CONSULTANT'); lookup('funders', 'Funding agencies', null);
 lookupRegistry.register({
-  module: 'proj', name: 'people', label: 'People of the company', permission: 'proj.project.view', columns: [{ key: 'roles', label: 'Roles' }],
+  module: 'proj', name: 'people', label: 'People of the company', permission: 'proj.meeting.view', columns: [{ key: 'roles', label: 'Roles' }],
   search(db, actor, q) {
     const all = db.prepare('SELECT id, username, display_name, roles_json FROM iam_users WHERE company_id = ? AND is_active = 1 ORDER BY display_name, username').all(actor.companyId).filter((u) => !q.text || `${u.username} ${u.display_name ?? ''}`.toLowerCase().includes(q.text.toLowerCase()));
     const rows = q.ids ? all.filter((u) => q.ids.includes(u.id)) : all.slice(q.offset, q.offset + q.limit);

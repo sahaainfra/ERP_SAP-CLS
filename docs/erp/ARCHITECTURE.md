@@ -1063,3 +1063,14 @@ Behind feature flag `ff.proj.p1004` (module `proj`; needs 10.03 and 06.06; recei
 - **Permissions**: `proj.version.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `proj.boq.{map,import,rates}`; QS and EST prepare and map, COMMGR and PM approve, site roles read without rates.
 - **Browser**: BOQ Versions, BOQ (hierarchical grid), Import BOQ wizard, WBS and Location Mapping, BOQ Reports (abstract, comparison, unmapped); Hindi through the `proj` namespace.
 
+## 84. Project team, stakeholders, meetings and minutes (part 10.05)
+
+Behind feature flag `ff.proj.p1005` (module `proj`; needs 10.01 and 04.08). Code: `modules/proj/team.js` (team, stakeholders, communication matrix, workflow `PROJ_TEAM`), `modules/proj/meetings.js` (meetings, minutes, revisions, actions, workflow `PROJ_MEETING`, resolver `proj.chair`), routes in `routes.js` (`teamRoutes`), inputs in `validators.js`; the role engine's service is reached through `accessOf(db)` (added to `iam/access/service.js`); pages in `client/modules/proj/` (`TeamPage`, `StakeholdersPage`, `MeetingsPage`, `MeetingPage`, `ActionTrackerPage`).
+
+- **Team** (FR-01, BR-01, ADR-393): `/proj/team` (list, add, get, history, withdraw, cancel, end); event `proj.team.added`, `proj.team.ended`; the scoped assignment is requested of 02.04 and the messaging group follows its event (05.04).
+- **Stakeholders and matrix** (FR-02, FR-03, ADR-397): `/proj/stakeholders`, `/proj/comm-matrix` (list, create, update, delete, export).
+- **Meetings** (FR-04, BR-02, ADR-394, ADR-395): `/proj/meetings` (list, export, create, get, update, delete, submit, withdraw, cancel, amend = revision, history, print and document PDF/XLSX/CSV); event `proj.meeting.issued`; notification template `proj.mom.issued`.
+- **Actions** (FR-05, ADR-396): `/proj/meeting-actions` (tracker list, summary, owner update); tasks through `tasksOf(db)`; event `proj.action.updated`.
+- **Permissions**: `proj.meeting.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `proj.team.{view,manage}`, `proj.stakeholder.{view,manage,contact,export}`, `proj.action.update`.
+- **Browser**: Project Team, Stakeholders (register and communication matrix), Meetings, Meeting (minutes, attendees, actions, approvals), Action Item Tracker; Hindi through the `proj` namespace.
+

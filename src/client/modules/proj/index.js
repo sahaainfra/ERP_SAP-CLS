@@ -8,8 +8,13 @@ import BoqMappingPage from './BoqMappingPage.jsx';
 import BoqReportsPage from './BoqReportsPage.jsx';
 import BoqVersionPage from './BoqVersionPage.jsx';
 import BoqVersionsPage from './BoqVersionsPage.jsx';
+import ActionTrackerPage from './ActionTrackerPage.jsx';
 import LocationsPage from './LocationsPage.jsx';
+import MeetingPage from './MeetingPage.jsx';
+import MeetingsPage from './MeetingsPage.jsx';
 import ProjectPage from './ProjectPage.jsx';
+import StakeholdersPage from './StakeholdersPage.jsx';
+import TeamPage from './TeamPage.jsx';
 import ProjectsPage from './ProjectsPage.jsx';
 import WbsPage from './WbsPage.jsx';
 import WizardPage from './WizardPage.jsx';
@@ -36,5 +41,10 @@ registerModule({
     { path: '/proj/boq-import', label: 'Import BOQ', icon: 'erp.action.import', permission: 'proj.boq.import', flag: 'ff.proj.p1004', Page: BoqImportPage },
     { path: '/proj/boq-mapping', label: 'WBS and Location Mapping', icon: 'erp.group.projects', permission: 'proj.version.view', flag: 'ff.proj.p1004', Page: BoqMappingPage },
     { path: '/proj/boq-reports', label: 'BOQ Reports', icon: 'erp.group.projects', permission: 'proj.version.view', flag: 'ff.proj.p1004', Page: BoqReportsPage },
+    { path: '/proj/team', label: 'Project Team', icon: 'erp.group.projects', permission: 'proj.team.view', flag: 'ff.proj.p1005', Page: TeamPage },
+    { path: '/proj/stakeholders', label: 'Stakeholders', icon: 'erp.group.projects', permission: 'proj.stakeholder.view', flag: 'ff.proj.p1005', Page: StakeholdersPage },
+    { path: '/proj/meetings', label: 'Meetings', icon: 'erp.group.projects', permission: 'proj.meeting.view', flag: 'ff.proj.p1005', Page: MeetingsPage },
+    { path: '/proj/meeting', label: 'Meeting', icon: 'erp.group.projects', permission: 'proj.meeting.view', flag: 'ff.proj.p1005', Page: MeetingPage },
+    { path: '/proj/action-tracker', label: 'Action Item Tracker', icon: 'erp.group.projects', permission: 'proj.meeting.view', flag: 'ff.proj.p1005', Page: ActionTrackerPage },
   ],
 });

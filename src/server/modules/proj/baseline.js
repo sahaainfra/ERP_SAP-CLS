@@ -402,7 +402,7 @@ export function createBaselineService({ db }) {
     remove(actor, id) {
       const { m, x } = mrow(actor, id); need(actor, 'proj.handover.manage', 'keep handover meetings', x.project_id);
       if (['CANCELLED', 'REJECTED', 'SUPERSEDED'].includes(x.status)) throw new HttpError(409, 'LOCKED', `${x.doc_no} is ${BASELINE_STATUS[x.status].toLowerCase()}: its handover is not changed.`);
-      return transaction(db, () => { for (const a of json(m.actions_json, [])) if (a.taskId) { try { tasksOf(db).act(actor, a.taskId, 'cancel', { reason: 'The handover meeting was removed' }); } catch { /* a task closed elsewhere stays as it is */ } } db.prepare('UPDATE proj_handover_meetings SET deleted_at = ?, deleted_by = ?, is_active = 0 WHERE id = ?').run(nowIso(), actor.user, m.id); writeAudit(db, { entity: 'proj_handover_meetings', entityId: m.id, action: 'delete', actor: actor.user, companyId: m.company_id }); return meetingsOf(x.id); });
+      return transaction(db, () => { for (const a of json(m.actions_json, [])) if (a.taskId) { try { tasksOf(db).act(actor.user, a.taskId, 'cancel', { reason: 'The handover meeting was removed' }); } catch { /* a task closed elsewhere stays as it is */ } } db.prepare('UPDATE proj_handover_meetings SET deleted_at = ?, deleted_by = ?, is_active = 0 WHERE id = ?').run(nowIso(), actor.user, m.id); writeAudit(db, { entity: 'proj_handover_meetings', entityId: m.id, action: 'delete', actor: actor.user, companyId: m.company_id }); return meetingsOf(x.id); });
     },
   };
 

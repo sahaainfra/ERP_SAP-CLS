@@ -81,3 +81,15 @@ export const LINE_KINDS = { BILL: 'Bill', SECTION: 'Section', ITEM: 'Item', SUBI
 export const NORM_TYPES = { MATERIAL: 'Material', LABOUR: 'Labour', EQUIPMENT: 'Equipment', TRANSPORT: 'Transport', SUBCONTRACT: 'Subcontract', OTHER: 'Other' };
 /** BR-01: amount in paise = quantity (x 1 000) x rate (x 10 000) / 100 000, rounded half up. */
 export const lineAmount = (qty, rate) => Number((BigInt(qty) * BigInt(rate) + 50000n) / 100000n);
+
+// Part 10.05: the project team, stakeholders, communication matrix, meetings and minutes.
+export const TEAM_DOC = 'PROJ_TEAM';
+export const MEETING_DOC = 'PROJ_MEETING';
+export const TEAM_STATUS = { REQUESTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', ENDED: 'Ended' };
+export const SKINDS = { CLIENT: 'Client', CONSULTANT: 'Consultant', AUTHORITY: 'Authority', FUNDER: 'Funding agency', SUBCONTRACTOR: 'Subcontractor', SUPPLIER: 'Supplier', COMMUNITY: 'Community', OTHER: 'Other' };
+export const LEVELS = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' };
+export const FREQUENCIES = { DAILY: 'Daily', WEEKLY: 'Weekly', FORTNIGHTLY: 'Fortnightly', MONTHLY: 'Monthly', QUARTERLY: 'Quarterly', ON_EVENT: 'On an event' };
+export const CHANNELS = { EMAIL: 'E-mail', MEETING: 'Meeting', PORTAL: 'Portal', REPORT: 'Report', LETTER: 'Letter', PHONE: 'Phone' };
+export const MTYPES = { KICKOFF: 'Kick-off', WEEKLY_PROGRESS: 'Weekly progress', COORDINATION: 'Coordination', SAFETY: 'Safety', CLIENT_REVIEW: 'Client review', OTHER: 'Other' };
+export const MEETING_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for the chair', APPROVED: 'Issued', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', SUPERSEDED: 'Superseded by a revision' };
+export const ACTION_STATUS = { OPEN: 'Open', IN_PROGRESS: 'In progress', BLOCKED: 'Blocked', DONE: 'Done', CANCELLED: 'Cancelled' };

@@ -10710,6 +10710,41 @@ Indexes:
 - ux_proj_boq_versions_no (unique): org_project_id, version_no
 - ux_proj_boq_versions_doc (unique): company_id, doc_no
 
+## proj_comm_matrix
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| info | TEXT | yes |  |  |
+| stakeholder_id | INTEGER |  |  |  |
+| audience | TEXT |  |  |  |
+| frequency | TEXT | yes |  |  |
+| channel | TEXT | yes |  |  |
+| owner_user | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: stakeholder_id -> proj_stakeholders(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_comm_matrix_stakeholder: stakeholder_id
+- ix_proj_comm_matrix_project: org_project_id
+- ix_proj_comm_matrix_company_id: company_id
+
 ## proj_handover_meetings
 
 | Column | Type | Not null | Key | Default |
@@ -10820,6 +10855,95 @@ Indexes:
 - ix_proj_locations_parent_id: parent_id
 - ux_proj_locations_code (unique): project_id, code
 
+## proj_meeting_actions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| meeting_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| action_no | INTEGER | yes |  |  |
+| description | TEXT | yes |  |  |
+| owner_user | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| priority | TEXT | yes |  | 'MEDIUM' |
+| task_id | INTEGER |  |  |  |
+| action_status | TEXT | yes |  | 'OPEN' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), meeting_id -> proj_meetings(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_meeting_actions_task: task_id
+- ix_proj_meeting_actions_owner: company_id, owner_user, due_date
+- ix_proj_meeting_actions_project: org_project_id, action_status
+- ix_proj_meeting_actions_meeting: meeting_id, action_no
+- ix_proj_meeting_actions_company_id: company_id
+
+## proj_meetings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| rev_no | INTEGER | yes |  | 0 |
+| supersedes_id | INTEGER |  |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| mtype | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| meeting_date | TEXT | yes |  |  |
+| start_time | TEXT |  |  |  |
+| location | TEXT |  |  |  |
+| chair_user | TEXT | yes |  |  |
+| minute_taker | TEXT | yes |  |  |
+| attendees_json | TEXT | yes |  | '[]' |
+| agenda_json | TEXT | yes |  | '[]' |
+| minutes | TEXT |  |  |  |
+| decisions_json | TEXT | yes |  | '[]' |
+| distribution_json | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| revision_reason | TEXT |  |  |  |
+| issued_at | TEXT |  |  |  |
+| issued_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), supersedes_id -> proj_meetings(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_meetings_supersedes: supersedes_id
+- ix_proj_meetings_status: company_id, status
+- ix_proj_meetings_project: org_project_id, meeting_date
+- ix_proj_meetings_company_id: company_id
+- ux_proj_meetings_doc (unique): company_id, doc_no, rev_no
+
 ## proj_milestones
 
 | Column | Type | Not null | Key | Default |
@@ -10914,6 +11038,87 @@ Indexes:
 - ix_proj_projects_status: company_id, status
 - ix_proj_projects_company_id: company_id
 - ux_proj_projects_project (unique): project_id
+
+## proj_stakeholders
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| skind | TEXT | yes |  |  |
+| organisation | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| role_title | TEXT |  |  |  |
+| influence | TEXT | yes |  | 'MEDIUM' |
+| interest | TEXT | yes |  | 'MEDIUM' |
+| email | TEXT |  |  |  |
+| phone | TEXT |  |  |  |
+| partner_id | INTEGER |  |  |  |
+| sstatus | TEXT | yes |  | 'ACTIVE' |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_stakeholders_partner: partner_id
+- ix_proj_stakeholders_project: org_project_id, skind
+- ix_proj_stakeholders_company_id: company_id
+
+## proj_team
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| user_id | INTEGER | yes |  |  |
+| username | TEXT | yes |  |  |
+| project_role | TEXT | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT |  |  |  |
+| team_status | TEXT | yes |  | 'REQUESTED' |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| assignment_request_id | INTEGER |  |  |  |
+| assignment_id | INTEGER |  |  |  |
+| access_note | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: user_id -> iam_users(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_proj_team_open (unique): org_project_id, user_id, project_role
+- ix_proj_team_user: user_id
+- ix_proj_team_project: org_project_id, team_status
+- ix_proj_team_company_id: company_id
 
 ## proj_wbs
 

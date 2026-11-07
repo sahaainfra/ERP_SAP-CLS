@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard } from './validators.js';
+import { parseActionQuery, parseActionUpdate, parseComm, parseCommUpdate, parseMtgCreate, parseMtgRevise, parseMtgUpdate, parseProjectIdQuery, parseStakeholder, parseStakeholderUpdate, parseTeamAdd, parseTeamEnd, parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard } from './validators.js';
 
 /** Part 10.01: the project master. Rights and scope are checked in the service. */
 export function projectRoutes({ svc, exportsOf }, { idempotent, idempotentRequired }) {
@@ -180,5 +180,54 @@ export function boqRoutes(bq, { exportsOf }, { idempotent, idempotentRequired })
   r.get('/boq-changes/:id', (req, res) => ok(res, bq.changes.get(req.actor, pid(req))));
   r.post('/boq-changes/:id/withdraw', idempotent, (req, res) => ok(res, bq.changes.withdraw(req.actor, pid(req), parseReason(req.body))));
   r.post('/boq-changes/:id/cancel', idempotent, (req, res) => ok(res, bq.changes.cancel(req.actor, pid(req), parseReason(req.body))));
+  return r;
+}
+
+/** Part 10.05: the project team, stakeholders, the communication matrix, meetings, minutes and action items. */
+export function teamRoutes(tm, mt, { exportsOf }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pj = (req) => parseProjectIdQuery(req.query).projectId; const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => { res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }); return res.send(out.buffer); };
+  r.get('/team', (req, res) => ok(res, tm.team.list(req.actor, pj(req))));
+  r.post('/team', idempotentRequired, (req, res) => ok(res, tm.team.add(req.actor, parseTeamAdd(req.body)), 202));
+  r.get('/team/:id', (req, res) => ok(res, tm.team.get(req.actor, pid(req))));
+  r.get('/team/:id/history', (req, res) => ok(res, tm.team.history(req.actor, pid(req))));
+  r.post('/team/:id/withdraw', idempotent, (req, res) => ok(res, tm.team.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/team/:id/cancel', idempotent, (req, res) => ok(res, tm.team.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/team/:id/end', idempotent, (req, res) => ok(res, tm.team.end(req.actor, pid(req), parseTeamEnd(req.body))));
+  r.get('/stakeholders', (req, res) => ok(res, tm.stakeholders.list(req.actor, pj(req))));
+  r.get('/stakeholders/export', (req, res) => { const fmt = ['xlsx', 'csv', 'pdf'].includes(req.query.format) ? req.query.format : 'xlsx'; file(res, tm.stakeholders.exportFile(req.actor, pj(req), fmt)); });
+  r.post('/stakeholders', idempotent, (req, res) => ok(res, tm.stakeholders.create(req.actor, parseStakeholder(req.body)), 201));
+  r.patch('/stakeholders/:id', idempotent, (req, res) => ok(res, tm.stakeholders.update(req.actor, pid(req), parseStakeholderUpdate(req.body))));
+  r.delete('/stakeholders/:id', (req, res) => ok(res, tm.stakeholders.remove(req.actor, pid(req))));
+  r.get('/comm-matrix', (req, res) => ok(res, tm.matrix.list(req.actor, pj(req))));
+  r.get('/comm-matrix/export', (req, res) => { const fmt = ['xlsx', 'csv', 'pdf'].includes(req.query.format) ? req.query.format : 'xlsx'; file(res, tm.matrix.exportFile(req.actor, pj(req), fmt)); });
+  r.post('/comm-matrix', idempotent, (req, res) => ok(res, tm.matrix.create(req.actor, parseComm(req.body)), 201));
+  r.patch('/comm-matrix/:id', idempotent, (req, res) => ok(res, tm.matrix.update(req.actor, pid(req), parseCommUpdate(req.body))));
+  r.delete('/comm-matrix/:id', (req, res) => ok(res, tm.matrix.remove(req.actor, pid(req))));
+  const m = mt.meetings;
+  r.get('/meetings', (req, res) => res.json(m.list(req.actor, req.query)));
+  r.get('/meetings/export', (req, res) => {
+    const x = exportsOf(); if (!x) throw new Error('The list export service is not running');
+    const out = x.start(req.actor, 'proj.meetings', req.query);
+    if (out.kind === 'job') return res.status(202).json({ data: out });
+    res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+    return res.send(out.buffer);
+  });
+  r.post('/meetings', idempotentRequired, (req, res) => ok(res, m.create(req.actor, parseMtgCreate(req.body)), 201));
+  r.get('/meetings/:id', (req, res) => ok(res, m.get(req.actor, pid(req))));
+  r.patch('/meetings/:id', idempotent, (req, res) => ok(res, m.update(req.actor, pid(req), parseMtgUpdate(req.body))));
+  r.delete('/meetings/:id', (req, res) => ok(res, m.remove(req.actor, pid(req))));
+  r.post('/meetings/:id/submit', idempotentRequired, (req, res) => ok(res, m.submit(req.actor, pid(req)), 202));
+  r.post('/meetings/:id/withdraw', idempotent, (req, res) => ok(res, m.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/meetings/:id/cancel', idempotent, (req, res) => ok(res, m.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/meetings/:id/amend', idempotentRequired, (req, res) => ok(res, m.revise(req.actor, pid(req), parseMtgRevise(req.body)), 201));
+  r.get('/meetings/:id/history', (req, res) => ok(res, m.history(req.actor, pid(req))));
+  const doc = (req, res) => { const out = m.document(req.actor, pid(req), ['html', 'pdf', 'xlsx', 'csv'].includes(req.query.format) ? req.query.format : 'html'); if (out.kind === 'html') return res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(out.body); return file(res, out); };
+  r.get('/meetings/:id/print', doc); r.get('/meetings/:id/document', doc);
+  r.get('/meeting-actions', (req, res) => res.json(mt.actions.list(req.actor, req.query)));
+  r.get('/meeting-actions/summary', (req, res) => { const q = parseActionQuery(req.query); ok(res, mt.actions.summary(req.actor, q)); });
+  r.patch('/meeting-actions/:id', idempotent, (req, res) => ok(res, mt.actions.update(req.actor, pid(req), parseActionUpdate(req.body))));
   return r;
 }

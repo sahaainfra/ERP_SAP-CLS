@@ -154,3 +154,37 @@ export function parseTable(text) {
 }
 export const IMPORT_FIELDS = ['bill', 'section', 'itemCode', 'description', 'uom', 'qty', 'rate', 'parentCode', 'extra'];
 export const guessField = (h) => { const x = h.toLowerCase(); if (/bill/.test(x)) return 'bill'; if (/section|group/.test(x)) return 'section'; if (/(item|sl|s\.?no|code|ref)/.test(x) && !/desc/.test(x)) return 'itemCode'; if (/desc|particular|work/.test(x)) return 'description'; if (/unit|uom/.test(x)) return 'uom'; if (/qty|quant/.test(x)) return 'qty'; if (/rate/.test(x)) return 'rate'; if (/parent/.test(x)) return 'parentCode'; if (/extra|nsi|non/.test(x)) return 'extra'; return ''; };
+
+// Part 10.05: the project team, stakeholders, communication matrix, meetings, minutes and action items.
+export const TEAM_TONE = { REQUESTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', ENDED: 'CANCELLED' };
+export const MEET_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const ACTION_TONE = { OPEN: 'DRAFT', IN_PROGRESS: 'IN_REVIEW', BLOCKED: 'REJECTED', DONE: 'APPROVED', CANCELLED: 'CANCELLED' };
+export const SKINDS = ['CLIENT', 'CONSULTANT', 'AUTHORITY', 'FUNDER', 'SUBCONTRACTOR', 'SUPPLIER', 'COMMUNITY', 'OTHER'];
+export const FREQS = ['DAILY', 'WEEKLY', 'FORTNIGHTLY', 'MONTHLY', 'QUARTERLY', 'ON_EVENT'];
+export const CHANNELS = ['EMAIL', 'MEETING', 'PORTAL', 'REPORT', 'LETTER', 'PHONE'];
+export const MTYPES = ['KICKOFF', 'WEEKLY_PROGRESS', 'COORDINATION', 'SAFETY', 'CLIENT_REVIEW', 'OTHER'];
+export const tm = {
+  team: async (p) => (await api.get(`/proj/team?projectId=${p}`)).data,
+  addMember: async (b) => (await api.post('/proj/team', b, idem())).data,
+  teamAct: async (id, action, b = {}) => (await api.post(`/proj/team/${id}/${action}`, b, idem())).data,
+  stakeholders: async (p) => (await api.get(`/proj/stakeholders?projectId=${p}`)).data,
+  addStakeholder: async (b) => (await api.post('/proj/stakeholders', b, idem())).data,
+  updateStakeholder: async (id, b) => (await api.patch(`/proj/stakeholders/${id}`, b, idem())).data,
+  removeStakeholder: async (id) => (await api.delete(`/proj/stakeholders/${id}`)).data,
+  matrix: async (p) => (await api.get(`/proj/comm-matrix?projectId=${p}`)).data,
+  addComm: async (b) => (await api.post('/proj/comm-matrix', b, idem())).data,
+  removeComm: async (id) => (await api.delete(`/proj/comm-matrix/${id}`)).data,
+  meeting: async (id) => (await api.get(`/proj/meetings/${id}`)).data,
+  createMeeting: async (b) => (await api.post('/proj/meetings', b, idem())).data,
+  updateMeeting: async (id, b) => (await api.patch(`/proj/meetings/${id}`, b, idem())).data,
+  removeMeeting: async (id) => (await api.delete(`/proj/meetings/${id}`)).data,
+  meetingAct: async (id, action, b = {}) => (await api.post(`/proj/meetings/${id}/${action}`, b, idem())).data,
+  meetingHistory: async (id) => (await api.get(`/proj/meetings/${id}/history`)).data,
+  actionSummary: async (p) => (await api.get(`/proj/meeting-actions/summary${p ? `?projectId=${p}` : ''}`)).data,
+  updateAction: async (id, b) => (await api.patch(`/proj/meeting-actions/${id}`, b, idem())).data,
+};
+export async function downloadFile(path, name) {
+  const { authHeaders } = await import('../../platform/api/index.js');
+  const w = /format=html|\/print/.test(path) ? window.open('', '_blank') : null;
+  try { const res = await fetch(`/api/v1/proj${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(await res.blob()); if (w) w.location.href = url; else { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); } } catch { w?.close(); }
+}

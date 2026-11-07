@@ -104,3 +104,26 @@ export const parseCompare = (q) => parse(z.object({ a: id, b: id }).strict(), q)
 export const parseUnmapped = (q) => parse(z.object({ unmapped: z.enum(['true', 'false']).default('false').transform((v) => v === 'true') }).strict(), q ?? {});
 export const parseVersionQuery = (q) => parse(z.object({ versionId: id }).strict(), q);
 export const parseBoqStage = (b) => parse(z.object({ projectId: id, stageId: text(40).optional(), rows: z.array(importRow).min(1, 'Give at least one row').max(300) }).strict(), b);
+
+// ---- Part 10.05: team, stakeholders, communication matrix, meetings, actions ----
+const user60 = text(60).min(1, 'Choose a person');
+const level = z.enum(['LOW', 'MEDIUM', 'HIGH']);
+export const parseTeamAdd = (b) => parse(z.object({ projectId: id, username: user60, projectRole: text(40).min(1, 'Choose the project role'), fromDate: day, toDate: optDay.optional(), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(1000) }).strict(), b);
+export const parseTeamEnd = (b) => parse(z.object({ reason, toDate: optDay.optional() }).strict(), b);
+export const parseProjectIdQuery = (q) => parse(z.object({ projectId: id, format: z.enum(['xlsx', 'csv', 'pdf']).optional() }).strict(), q);
+const stk = { skind: z.enum(['CLIENT', 'CONSULTANT', 'AUTHORITY', 'FUNDER', 'SUBCONTRACTOR', 'SUPPLIER', 'COMMUNITY', 'OTHER']), organisation: text(200).min(1, 'Give the organisation'), name: text(160).min(1, 'Give the name'), roleTitle: optText(120), influence: level.default('MEDIUM'), interest: level.default('MEDIUM'), email: z.string().trim().email('Give a valid e-mail').max(160).nullish().transform((v) => v || null), phone: optText(30), partnerId: optId, notes: optText(2000) };
+export const parseStakeholder = (b) => parse(z.object({ projectId: id, ...stk }).strict(), b);
+export const parseStakeholderUpdate = (b) => parse(z.object({ skind: stk.skind.optional(), organisation: stk.organisation.optional(), name: stk.name.optional(), roleTitle: stk.roleTitle.optional(), influence: level.optional(), interest: level.optional(), email: stk.email.optional(), phone: stk.phone.optional(), notes: stk.notes.optional(), status: z.enum(['ACTIVE', 'INACTIVE']).optional(), version: version.optional() }).strict(), b);
+const comm = { info: text(300).min(1, 'Say what is reported'), stakeholderId: optId, audience: optText(160), frequency: z.enum(['DAILY', 'WEEKLY', 'FORTNIGHTLY', 'MONTHLY', 'QUARTERLY', 'ON_EVENT']), channel: z.enum(['EMAIL', 'MEETING', 'PORTAL', 'REPORT', 'LETTER', 'PHONE']), ownerUser: optText(60), notes: optText(1000) };
+export const parseComm = (b) => parse(z.object({ projectId: id, ...comm }).strict(), b);
+export const parseCommUpdate = (b) => parse(z.object({ info: comm.info.optional(), stakeholderId: optId.optional(), audience: comm.audience.optional(), frequency: comm.frequency.optional(), channel: comm.channel.optional(), ownerUser: comm.ownerUser.optional(), notes: comm.notes.optional(), version: version.optional() }).strict(), b);
+const attendee = z.object({ kind: z.enum(['INTERNAL', 'EXTERNAL']), user: optText(60), stakeholderId: optId, name: text(160).min(1, 'Give the name'), organisation: optText(200), present: z.boolean().default(true) }).strict();
+const agendaItem = z.object({ title: text(300).min(1, 'Give the item'), notes: optText(2000) }).strict();
+const decision = z.object({ text: text(1000).min(1, 'Give the decision') }).strict();
+const maction = z.object({ description: text(1000).min(1, 'Describe the action'), ownerUser: user60, dueDate: day, priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM') }).strict();
+const mfields = { mtype: z.enum(['KICKOFF', 'WEEKLY_PROGRESS', 'COORDINATION', 'SAFETY', 'CLIENT_REVIEW', 'OTHER']), title: text(200).min(1, 'Give the title'), meetingDate: day, startTime: optText(5), location: optText(200), chairUser: user60, minuteTaker: user60, attendees: z.array(attendee).max(80).default([]), agenda: z.array(agendaItem).max(60).default([]), minutes: optText(20000), decisions: z.array(decision).max(100).default([]), actions: z.array(maction).max(100).default([]) };
+export const parseMtgCreate = (b) => parse(z.object({ projectId: id, ...mfields }).strict(), b);
+export const parseMtgUpdate = (b) => parse(z.object({ mtype: mfields.mtype.optional(), title: mfields.title.optional(), meetingDate: day.optional(), startTime: mfields.startTime.optional(), location: mfields.location.optional(), chairUser: user60.optional(), minuteTaker: user60.optional(), attendees: z.array(attendee).max(80).optional(), agenda: z.array(agendaItem).max(60).optional(), minutes: mfields.minutes.optional(), decisions: z.array(decision).max(100).optional(), actions: z.array(maction).max(100).optional(), version: version.optional() }).strict(), b);
+export const parseMtgRevise = (b) => parse(z.object({ reason }).strict(), b);
+export const parseActionUpdate = (b) => parse(z.object({ status: z.enum(['IN_PROGRESS', 'BLOCKED', 'DONE']), note: optText(500) }).strict(), b);
+export const parseActionQuery = (q) => parse(z.object({ projectId: id.optional(), mine: z.enum(['true', 'false']).default('false').transform((v) => v === 'true') }).strict(), q ?? {});

@@ -6071,3 +6071,127 @@ paths:
     post:
       summary: "Cancel a change"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/team:
+    get:
+      summary: "The project team"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Ask to add a team member (approved by PM and PD)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/team/{id}:
+    get:
+      summary: "One team member"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/team/{id}/history:
+    get:
+      summary: "Approvals of a team request"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/team/{id}/withdraw:
+    post:
+      summary: "Withdraw a team request"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/team/{id}/cancel:
+    post:
+      summary: "Cancel a team request"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/team/{id}/end:
+    post:
+      summary: "End a membership and the role for the project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/stakeholders:
+    get:
+      summary: "The stakeholder register (contacts masked)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add a stakeholder"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/stakeholders/export:
+    get:
+      summary: "Export the register"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/stakeholders/{id}:
+    patch:
+      summary: "Change a stakeholder"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a stakeholder not in the matrix"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/comm-matrix:
+    get:
+      summary: "The communication matrix"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add a line"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/comm-matrix/export:
+    get:
+      summary: "Export the matrix"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/comm-matrix/{id}:
+    patch:
+      summary: "Change a line"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a line"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings:
+    get:
+      summary: "Meetings"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Create a meeting"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/export:
+    get:
+      summary: "Export meetings"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}:
+    get:
+      summary: "One meeting with minutes and actions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change a draft meeting"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft meeting"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}/submit:
+    post:
+      summary: "The minute-taker sends the minutes to the chair"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}/withdraw:
+    post:
+      summary: "Withdraw the minutes"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}/cancel:
+    post:
+      summary: "Cancel a meeting whose minutes are not issued"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}/amend:
+    post:
+      summary: "Start a revision of issued minutes"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}/history:
+    get:
+      summary: "Approvals, audit and revisions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}/print:
+    get:
+      summary: "The minutes as HTML"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meetings/{id}/document:
+    get:
+      summary: "The minutes as HTML, PDF, XLSX or CSV"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meeting-actions:
+    get:
+      summary: "The action item tracker"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meeting-actions/summary:
+    get:
+      summary: "Open, done and overdue actions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/meeting-actions/{id}:
+    patch:
+      summary: "The owner updates an action; the task follows"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
