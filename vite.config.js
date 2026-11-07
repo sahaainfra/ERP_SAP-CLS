@@ -21,7 +21,8 @@ function serviceWorker() {
       const files = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'sw.js' && existsSync(join(dir, f)));
       // fonts of scripts the people here do not write in are fetched (and then kept) only if a page ever asks for them
       const kept = files.filter((f) => !/-(cyrillic|cyrillic-ext|greek|greek-ext|vietnamese|math|symbols)-\d+-/.test(f));
-      const urls = [...kept.map((f) => `/${f}`), ...PUBLIC_SHELL];
+      // no address twice: Cache.addAll refuses a list with a duplicate, and the whole install fails with it (index.html is in the bundle and in the shell list)
+      const urls = [...new Set([...kept.map((f) => `/${f}`), ...PUBLIC_SHELL])];
       const id = createHash('sha1').update(files.join('|')).digest('hex').slice(0, 10);
       const source = readFileSync('src/client/sw.js', 'utf8').replace("'__BUILD_ID__'", JSON.stringify(id)).replace("'__PRECACHE__'", JSON.stringify(urls));
       writeFileSync(join(dir, 'sw.js'), source);
