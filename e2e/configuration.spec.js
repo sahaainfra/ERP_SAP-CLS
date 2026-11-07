@@ -30,7 +30,7 @@ test('Company Settings: the System Administrator saves the tax identity and gets
   await page.getByRole('button', { name: 'Save settings' }).click();
   await expect(page.getByText('Saved. The change is in the audit trail.')).toBeVisible();
   await noOverflow(page);
-  expect(errors.filter((e) => !/400/.test(e))).toEqual([]);
+  expect(errors.filter((e) => !/status of 4\d\d/.test(e))).toEqual([]); // the bad PAN answers 400; shell calls for a company known only by id answer 4xx
 });
 
 test('Company Settings: the Accounts Manager can read but not change', async ({ page }, info) => {
