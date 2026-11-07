@@ -55,7 +55,7 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proj', description });
 
 integrityRegistry.register({
-  allowNegative: [], companyOptional: [],
+  allowNegative: [], companyOptional: ['proj_360_widgets'], // the slots of Project 360 are platform defaults (no company) that a company may override
   statuses: { proj_risks: ['OPEN', 'CLOSE_REQUESTED', 'CLOSED', 'OCCURRED', 'CANCELLED'], proj_risk_issues: ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED'], proj_risk_snapshots: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_projects: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_baseline_packs: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], proj_wbs_versions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_boq_versions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_meetings: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], proj_team: ['REQUESTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'ENDED'] },
   uniqueKeys: [{ table: 'proj_risks', columns: ['company_id', 'doc_no'] }, { table: 'proj_risk_issues', columns: ['company_id', 'doc_no'] }, { table: 'proj_milestones', columns: ['project_id', 'code'] }, { table: 'proj_baseline_packs', columns: ['company_id', 'doc_no'] }, { table: 'proj_wbs', columns: ['project_id', 'code'] }, { table: 'proj_locations', columns: ['project_id', 'code'] }, { table: 'proj_work_packages', columns: ['project_id', 'code'] }, { table: 'proj_boq_versions', columns: ['company_id', 'doc_no'] }, { table: 'proj_meetings', columns: ['company_id', 'doc_no', 'rev_no'] }],
 });
