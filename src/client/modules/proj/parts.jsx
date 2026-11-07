@@ -8,12 +8,12 @@ export function useSearch() {
   return new URLSearchParams(search);
 }
 /** The tabs of an object page: a tab list a keyboard walks with the arrow keys. */
-export function Tabs({ tabs, active, onChange, label }) {
+export function Tabs({ tabs, active, onChange, label, labelOf }) {
   const t = useT('proj');
   const move = (e, i) => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const n = (i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length; onChange(tabs[n]); document.getElementById(`ptab-${tabs[n]}`)?.focus(); } };
   return (
     <div role="tablist" aria-label={label} className="tabs no-print" data-testid="tabs">
-      {tabs.map((k, i) => <button key={k} id={`ptab-${k}`} type="button" role="tab" aria-selected={active === k} tabIndex={active === k ? 0 : -1} className={`btn${active === k ? ' btn-primary' : ''}`} onClick={() => onChange(k)} onKeyDown={(e) => move(e, i)} data-testid={`tab-${k}`}>{t(`tab.${k}`)}</button>)}
+      {tabs.map((k, i) => <button key={k} id={`ptab-${k}`} type="button" role="tab" aria-selected={active === k} tabIndex={active === k ? 0 : -1} className={`btn${active === k ? ' btn-primary' : ''}`} onClick={() => onChange(k)} onKeyDown={(e) => move(e, i)} data-testid={`tab-${k}`}>{labelOf ? labelOf(k) : t(`tab.${k}`)}</button>)}
     </div>
   );
 }

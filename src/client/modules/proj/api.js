@@ -235,6 +235,12 @@ export const gs = {
   overlayAct: async (id, action, b = {}) => (await api.post(`/proj/gis/overlays/${id}/${action}`, b, idem())).data,
   removeOverlay: async (id) => (await api.delete(`/proj/gis/overlays/${id}`)).data,
 };
+// ---- Part 10.08: Project 360 ----
+export const RAG_TONE = { GREEN: 'ACTIVE', AMBER: 'AT_RISK', RED: 'REJECTED', NONE: 'DRAFT' };
+export const p3 = {
+  get: async (projectId, period) => (await api.get(`/proj/project-360?projectId=${projectId}${period ? `&period=${period}` : ''}`)).data,
+  portfolio: async (params = {}) => (await api.get(`/proj/portfolio-overview${Object.keys(params).length ? `?${new URLSearchParams(params)}` : ''}`)).data,
+};
 export async function downloadFile(path, name) {
   const { authHeaders } = await import('../../platform/api/index.js');
   const w = /format=html|\/print/.test(path) ? window.open('', '_blank') : null;

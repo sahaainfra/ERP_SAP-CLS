@@ -147,11 +147,11 @@ export function createP360Service({ db }) {
     return out;
   }
   const p360 = {
-    get(actor, projectId, { period } = {}) {
+    get(actor, projectId, { period } = /** @type {{ period?: string }} */ ({})) {
       const x = project(actor, projectId); const t = thresholdsOf(x.company_id); const per = periodOf(period); const w = widgets(actor, x, per);
       return { ...header(actor, x, t), period: per, tabs: P360_TABS.map((k) => ({ key: k, label: P360_TAB_LABELS[k], widgets: w.filter((i) => i.tab === k) })), can: { export: may(actor, 'proj.p360.export', x.project_id) } };
     },
-    exportFile(actor, projectId, format = 'pdf', { period } = {}) {
+    exportFile(actor, projectId, format = 'pdf', { period } = /** @type {{ period?: string }} */ ({})) {
       const x = project(actor, projectId); if (!may(actor, 'proj.p360.export', x.project_id)) throw forbidden('You may not export Project 360 (permission proj.p360.export).');
       const d = p360.get(actor, projectId, { period }); const rows = [];
       rows.push({ tab: 'Header', widget: 'Project', figure: 'Code and name', value: `${d.code} ${d.name}` }, { tab: 'Header', widget: 'Project', figure: 'Client', value: d.client ?? '' }, { tab: 'Header', widget: 'Project', figure: 'Lifecycle state', value: d.lifecycleLabel }, { tab: 'Header', widget: 'Project', figure: 'Project manager', value: d.pm ?? '' },
@@ -162,7 +162,7 @@ export function createP360Service({ db }) {
       return { buffer: writeExport(format, { columns: [{ key: 'tab', label: 'Tab', type: 'text' }, { key: 'widget', label: 'Widget', type: 'text' }, { key: 'figure', label: 'Figure', type: 'text' }, { key: 'value', label: 'Value', type: 'text' }], rows, footer: [`Period ${d.period.period}; health ${d.health}`], title: `Project 360: ${d.code} ${d.name}`, sheetName: 'Project 360' }), contentType: FORMATS[format], fileName: `project-360-${d.code}-${d.period.period}.${format}` };
     },
     /** FR-05: the projects the person may see, each with its health and the figures that matter first. */
-    portfolio(actor, { q, health: only } = {}) {
+    portfolio(actor, { q, health: only } = /** @type {{ q?: string, health?: string }} */ ({})) {
       if (!may(actor, 'proj.p360.view')) throw forbidden('You may not see the portfolio (permission proj.p360.view).');
       const f = authz.scopeFilter(actor, 'proj.p360.view', { project: 'x.project_id' }); const t = thresholdsOf(actor.companyId);
       const rows = db.prepare(`SELECT x.*, p.code, p.name FROM proj_projects x JOIN org_projects p ON p.id = x.project_id WHERE x.company_id = :c AND x.deleted_at IS NULL AND ${f.sql} ORDER BY p.code LIMIT 300`).all({ c: actor.companyId, ...(f.params ?? {}) });

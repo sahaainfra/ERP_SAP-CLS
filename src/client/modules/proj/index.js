@@ -16,6 +16,8 @@ import GisConfigPage from './GisConfigPage.jsx';
 import IssuePage from './IssuePage.jsx';
 import IssuesPage from './IssuesPage.jsx';
 import ProjectPage from './ProjectPage.jsx';
+import PortfolioPage from './PortfolioPage.jsx';
+import Project360Page from './Project360Page.jsx';
 import ProjectMapPage from './ProjectMapPage.jsx';
 import RiskDashboardPage from './RiskDashboardPage.jsx';
 import RiskPage from './RiskPage.jsx';
@@ -62,5 +64,7 @@ registerModule({
     { path: '/proj/map', label: 'Project Map', icon: 'erp.group.projects', permission: 'proj.gis.view', flag: 'ff.proj.p1007', Page: ProjectMapPage },
     { path: '/proj/strip-chart', label: 'Chainage Progress Strip Chart', icon: 'erp.group.projects', permission: 'proj.gis.view', flag: 'ff.proj.p1007', Page: StripChartPage },
     { path: '/proj/gis-config', label: 'Layers and Overlays', icon: 'erp.group.projects', permission: 'proj.gis.view', flag: 'ff.proj.p1007', Page: GisConfigPage },
+    { path: '/proj/project-360', label: 'Project 360', menu: false, icon: 'erp.group.projects', permission: 'proj.p360.view', flag: 'ff.proj.p1008', Page: Project360Page },
+    { path: '/proj/portfolio', label: 'Portfolio Overview', icon: 'erp.group.projects', permission: 'proj.p360.view', flag: 'ff.proj.p1008', Page: PortfolioPage },
   ],
 });
