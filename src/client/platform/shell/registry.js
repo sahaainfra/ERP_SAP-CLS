@@ -3,7 +3,8 @@
 const modules = new Map();
 
 /**
- * registerModule({ code, label, routes: [{ path, label, permission, flag?, Page }] })
+ * registerModule({ code, label, routes: [{ path, label, permission, flag?, menu?, Page }] })
+ * `menu: false` marks a record page (opened from its list with an id): it is routed but listed in no menu.
  * `permission` hides the navigation entry from users who lack it (the page still shows a no-permission
  * state if reached by URL); `flag` shows the entry only while that feature flag is ON.
  */

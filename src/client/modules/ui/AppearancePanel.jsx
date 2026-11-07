@@ -23,7 +23,7 @@ export default function AppearancePanel({ session }) {
   useEffect(() => {
     if (p && !form) setForm(p.saved ? { theme: p.theme, density: p.density, language: p.language, startPage: p.startPage ?? '' } : baseline);
   }, [p, form, baseline]);
-  const pages = allRoutes().filter((r) => !r.permission || session?.permissions?.includes(r.permission)).filter((r) => !r.onboardingOnly);
+  const pages = allRoutes().filter((r) => !r.permission || session?.permissions?.includes(r.permission)).filter((r) => !r.onboardingOnly && r.menu !== false);
   const preview = (next) => { setForm(next); applyAppearance(next, { remember: false }); setNotice(''); };
   const dirty = form && p && (!p.saved || form.theme !== p.theme || form.density !== p.density || form.language !== p.language || (form.startPage || null) !== (p.startPage ?? null));
 

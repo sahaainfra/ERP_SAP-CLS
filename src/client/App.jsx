@@ -93,7 +93,7 @@ function Shell({ iam, user }) {
   const devIdentity = !iam && s?.environment !== 'production';
   // A person with no approved role (restricted onboarding, part 02.03) gets a welcome page, their profile and their security pages.
   const onboarding = Boolean(iam && s?.onboarding === true);
-  const nav = (s ? routesFor(s.permissions) : []).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
+  const nav = (s ? routesFor(s.permissions) : []).filter((r) => r.menu !== false).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
   const shellOn = mode === 'on';
   const found = findRoute(path.split('?')[0]);
   const field = useFlag('ff.ui.p0306', shellOn);
