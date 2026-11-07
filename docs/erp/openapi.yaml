@@ -6195,3 +6195,169 @@ paths:
     patch:
       summary: "The owner updates an action; the task follows"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-dashboard:
+    get:
+      summary: "The risk dashboard: heat map, tiles, top risks, EMV against contingency, trend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-settings:
+    get:
+      summary: "The contingency pool and the heat-map thresholds"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: "Set the pool and the thresholds (project manager)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-reviews:
+    get:
+      summary: "The monthly risk reviews"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Prepare a monthly review"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-reviews/{id}:
+    get:
+      summary: "One review"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Update the notes and retake the figures"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft review"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-reviews/{id}/submit:
+    post:
+      summary: "Send the review to the project manager and the project director"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-reviews/{id}/withdraw:
+    post:
+      summary: "Withdraw a review"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-reviews/{id}/cancel:
+    post:
+      summary: "Cancel a review"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risk-reviews/{id}/history:
+    get:
+      summary: "Approvals and audit of a review"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks:
+    get:
+      summary: "The risk and opportunity register"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Raise a risk or an opportunity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/export:
+    get:
+      summary: "Export the register"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/import:
+    post:
+      summary: "Import risks (all or none)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}:
+    get:
+      summary: "One risk with actions, triggers and contingency"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Reassess or update a risk"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete an open risk"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/submit:
+    post:
+      summary: "Ask to close (project manager approves a high or critical one)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/withdraw:
+    post:
+      summary: "Withdraw the request to close"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/cancel:
+    post:
+      summary: "Cancel a risk"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/amend:
+    post:
+      summary: "Reopen a closed risk"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/history:
+    get:
+      summary: "Approvals and audit of a risk"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/print:
+    get:
+      summary: "The risk as HTML"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/document:
+    get:
+      summary: "The risk as HTML, PDF, XLSX or CSV"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/triggers/{tid}/reading:
+    post:
+      summary: "Record a reading of a trigger; passing the threshold fires it and raises the alert"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/triggers/{tid}/rearm:
+    post:
+      summary: "Re-arm a fired trigger"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/contingency:
+    post:
+      summary: "Allocate contingency or request a drawdown"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/risks/{id}/contingency/{cid}/release:
+    post:
+      summary: "Release an allocation"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues:
+    get:
+      summary: "The issue log"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Log an issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/export:
+    get:
+      summary: "Export the issue log"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/import:
+    post:
+      summary: "Import issues (all or none)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}:
+    get:
+      summary: "One issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Update an issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete an open issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}/submit:
+    post:
+      summary: "Resolve the issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}/withdraw:
+    post:
+      summary: "Take a resolution back"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}/cancel:
+    post:
+      summary: "Cancel an issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}/amend:
+    post:
+      summary: "Reopen an issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}/history:
+    get:
+      summary: "Audit of an issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}/print:
+    get:
+      summary: "The issue as HTML"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/issues/{id}/document:
+    get:
+      summary: "The issue as HTML, PDF, XLSX or CSV"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

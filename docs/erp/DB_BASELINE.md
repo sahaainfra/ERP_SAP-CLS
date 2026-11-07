@@ -11039,6 +11039,297 @@ Indexes:
 - ix_proj_projects_company_id: company_id
 - ux_proj_projects_project (unique): project_id
 
+## proj_risk_actions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| risk_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| action_no | INTEGER | yes |  |  |
+| description | TEXT | yes |  |  |
+| owner_user | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| task_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), risk_id -> proj_risks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_risk_actions_task: task_id
+- ix_proj_risk_actions_owner: company_id, owner_user
+- ix_proj_risk_actions_project: org_project_id
+- ix_proj_risk_actions_risk: risk_id, action_no
+- ix_proj_risk_actions_company_id: company_id
+
+## proj_risk_contingency
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| risk_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| amount | INTEGER | yes |  |  |
+| entry_status | TEXT | yes |  | 'ACTIVE' |
+| reason | TEXT | yes |  |  |
+| by_user | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), risk_id -> proj_risks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_risk_contingency_project: org_project_id, entry_status
+- ix_proj_risk_contingency_risk: risk_id, kind
+- ix_proj_risk_contingency_company_id: company_id
+
+## proj_risk_issues
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| risk_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| priority | TEXT | yes |  | 'MEDIUM' |
+| owner_user | TEXT | yes |  |  |
+| due_date | TEXT |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| impact_cost | INTEGER | yes |  | 0 |
+| impact_time | INTEGER | yes |  | 0 |
+| impact_text | TEXT |  |  |  |
+| resolution | TEXT |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| resolved_at | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: wbs_id -> proj_wbs(id), risk_id -> proj_risks(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_risk_issues_wbs: wbs_id
+- ix_proj_risk_issues_owner: company_id, owner_user
+- ix_proj_risk_issues_risk: risk_id
+- ix_proj_risk_issues_project: org_project_id, status
+- ix_proj_risk_issues_company_id: company_id
+- ux_proj_risk_issues_doc (unique): company_id, doc_no
+
+## proj_risk_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| contingency_pool | INTEGER | yes |  | 0 |
+| thresholds_json | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_risk_settings_company_id: company_id
+- ux_proj_risk_settings_project (unique): org_project_id
+
+## proj_risk_snapshots
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| data_json | TEXT | yes |  | '{}' |
+| notes | TEXT |  |  |  |
+| snap_status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_risk_snapshots_project: org_project_id, snap_status
+- ix_proj_risk_snapshots_company_id: company_id
+- ux_proj_risk_snapshots_period (unique): org_project_id, period
+
+## proj_risk_triggers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| risk_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| indicator | TEXT |  |  |  |
+| comparator | TEXT | yes |  |  |
+| threshold | INTEGER | yes |  |  |
+| unit | TEXT |  |  |  |
+| current_value | INTEGER |  |  |  |
+| trigger_status | TEXT | yes |  | 'ARMED' |
+| fired_at | TEXT |  |  |  |
+| last_reading_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), risk_id -> proj_risks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_risk_triggers_project: org_project_id, trigger_status
+- ix_proj_risk_triggers_risk: risk_id
+- ix_proj_risk_triggers_company_id: company_id
+
+## proj_risks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| rtype | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| cause | TEXT |  |  |  |
+| effect | TEXT |  |  |  |
+| category | TEXT | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| activity_ref | TEXT |  |  |  |
+| clause_ref | TEXT |  |  |  |
+| owner_user | TEXT | yes |  |  |
+| probability | INTEGER | yes |  |  |
+| impact_cost | INTEGER | yes |  | 1 |
+| impact_time | INTEGER | yes |  | 1 |
+| impact_quality | INTEGER | yes |  | 1 |
+| impact_safety | INTEGER | yes |  | 1 |
+| score | INTEGER | yes |  | 0 |
+| level | TEXT | yes |  | 'LOW' |
+| strategy | TEXT | yes |  | 'MITIGATE' |
+| residual_probability | INTEGER |  |  |  |
+| residual_impact | INTEGER |  |  |  |
+| residual_score | INTEGER |  |  |  |
+| residual_level | TEXT |  |  |  |
+| exposure_cost_min | INTEGER | yes |  | 0 |
+| exposure_cost_ml | INTEGER | yes |  | 0 |
+| exposure_cost_max | INTEGER | yes |  | 0 |
+| exposure_time_min | INTEGER | yes |  | 0 |
+| exposure_time_ml | INTEGER | yes |  | 0 |
+| exposure_time_max | INTEGER | yes |  | 0 |
+| probability_pct | INTEGER | yes |  | 0 |
+| emv | INTEGER | yes |  | 0 |
+| contingency_allocated | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'OPEN' |
+| close_reason | TEXT |  |  |  |
+| close_occurred | INTEGER | yes |  | 0 |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| occurred_issue_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_risks_level: company_id, level, status
+- ix_proj_risks_cost_code: cost_code_id
+- ix_proj_risks_wbs: wbs_id
+- ix_proj_risks_owner: company_id, owner_user
+- ix_proj_risks_project: org_project_id, rtype, status
+- ix_proj_risks_company_id: company_id
+- ux_proj_risks_doc (unique): company_id, doc_no
+
 ## proj_stakeholders
 
 | Column | Type | Not null | Key | Default |

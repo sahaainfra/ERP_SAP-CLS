@@ -93,3 +93,21 @@ export const CHANNELS = { EMAIL: 'E-mail', MEETING: 'Meeting', PORTAL: 'Portal',
 export const MTYPES = { KICKOFF: 'Kick-off', WEEKLY_PROGRESS: 'Weekly progress', COORDINATION: 'Coordination', SAFETY: 'Safety', CLIENT_REVIEW: 'Client review', OTHER: 'Other' };
 export const MEETING_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for the chair', APPROVED: 'Issued', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', SUPERSEDED: 'Superseded by a revision' };
 export const ACTION_STATUS = { OPEN: 'Open', IN_PROGRESS: 'In progress', BLOCKED: 'Blocked', DONE: 'Done', CANCELLED: 'Cancelled' };
+
+// ---- Part 10.06: risks, opportunities and issues ----
+export const RISK_CLOSE_DOC = 'PROJ_RISK_CLOSE';
+export const RISK_REVIEW_DOC = 'PROJ_RISK_REVIEW';
+export const RTYPES = { RISK: 'Risk', OPPORTUNITY: 'Opportunity' };
+export const RISK_CATEGORIES = { TECHNICAL: 'Technical', COMMERCIAL: 'Commercial', CONTRACTUAL: 'Contractual', SAFETY: 'Safety', ENVIRONMENTAL: 'Environmental', FINANCIAL: 'Financial', STATUTORY: 'Statutory' };
+export const RISK_STRATEGIES = { AVOID: 'Avoid', MITIGATE: 'Mitigate', TRANSFER: 'Transfer', ACCEPT: 'Accept', EXPLOIT: 'Exploit', ENHANCE: 'Enhance', SHARE: 'Share' };
+export const RISK_STRATEGY_OF = { RISK: ['AVOID', 'MITIGATE', 'TRANSFER', 'ACCEPT'], OPPORTUNITY: ['EXPLOIT', 'ENHANCE', 'SHARE', 'ACCEPT'] };
+export const RISK_STATUS = { OPEN: 'Open', CLOSE_REQUESTED: 'Closure waiting for the project manager', CLOSED: 'Closed', OCCURRED: 'Occurred (issue raised)', CANCELLED: 'Cancelled' };
+export const RISK_LEVELS = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', CRITICAL: 'Critical' };
+export const ISSUE_STATUS = { OPEN: 'Open', IN_PROGRESS: 'In progress', RESOLVED: 'Resolved', CANCELLED: 'Cancelled' };
+export const SNAP_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for review', APPROVED: 'Reviewed', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+export const TRIGGER_COMPARATORS = { GTE: 'is at least', GT: 'is above', LTE: 'is at most', LT: 'is below' };
+/** BR-01: the heat-map thresholds are configurable per project. A score is probability (1-5) x the worst impact (1-5); each level starts at the score given. The probability scale gives the chance behind each 1-5 (percent x 10 000). */
+export const HEATMAP_DEFAULTS = { medium: 5, high: 10, critical: 15, probabilityPct: [100000, 300000, 500000, 700000, 900000] };
+export const RISK_LEVEL_ORDER = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+export const levelOf = (score, t = HEATMAP_DEFAULTS) => (score >= t.critical ? 'CRITICAL' : score >= t.high ? 'HIGH' : score >= t.medium ? 'MEDIUM' : 'LOW');
+export const emvOf = (probabilityPct, exposureMl) => Number((BigInt(probabilityPct) * BigInt(exposureMl) + 500000n) / 1000000n);

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseActionQuery, parseActionUpdate, parseComm, parseCommUpdate, parseMtgCreate, parseMtgRevise, parseMtgUpdate, parseProjectIdQuery, parseStakeholder, parseStakeholderUpdate, parseTeamAdd, parseTeamEnd, parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard } from './validators.js';
+import { parseActionQuery, parseActionUpdate, parseComm, parseCommUpdate, parseMtgCreate, parseMtgRevise, parseMtgUpdate, parseProjectIdQuery, parseStakeholder, parseStakeholderUpdate, parseTeamAdd, parseTeamEnd, parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard , parseRiskCreate, parseRiskUpdate, parseRiskClose, parseReading, parseContingency, parseRiskSettings, parseIssueCreate, parseIssueUpdate, parseIssueResolve, parseReviewCreate, parseReviewUpdate } from './validators.js';
 
 /** Part 10.01: the project master. Rights and scope are checked in the service. */
 export function projectRoutes({ svc, exportsOf }, { idempotent, idempotentRequired }) {
@@ -229,5 +229,64 @@ export function teamRoutes(tm, mt, { exportsOf }, { idempotent, idempotentRequir
   r.get('/meeting-actions', (req, res) => res.json(mt.actions.list(req.actor, req.query)));
   r.get('/meeting-actions/summary', (req, res) => { const q = parseActionQuery(req.query); ok(res, mt.actions.summary(req.actor, q)); });
   r.patch('/meeting-actions/:id', idempotent, (req, res) => ok(res, mt.actions.update(req.actor, pid(req), parseActionUpdate(req.body))));
+  return r;
+}
+
+export function riskRoutes(rk, { exportsOf }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id); const pj = (req) => parseProjectIdQuery(req.query).projectId;
+  const file = (res, out) => { res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }); return res.send(out.buffer); };
+  const exportOf = (code) => (req, res) => {
+    const x = exportsOf(); if (!x) throw new Error('The list export service is not running');
+    const out = x.start(req.actor, code, req.query);
+    if (out.kind === 'job') return res.status(202).json({ data: out });
+    res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+    return res.send(out.buffer);
+  };
+  const doc = (svc) => (req, res) => { const out = svc.document(req.actor, pid(req), ['html', 'pdf', 'xlsx', 'csv'].includes(req.query.format) ? req.query.format : 'html'); if (out.kind === 'html') return res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(out.body); return file(res, out); };
+  const k = rk.risks; const i = rk.issues; const v = rk.reviews;
+  r.get('/risk-dashboard', (req, res) => ok(res, rk.dashboard.get(req.actor, pj(req))));
+  r.get('/risk-settings', (req, res) => ok(res, rk.settings.get(req.actor, pj(req))));
+  r.put('/risk-settings', idempotent, (req, res) => ok(res, rk.settings.put(req.actor, parseRiskSettings(req.body))));
+  r.get('/risk-reviews', (req, res) => ok(res, v.list(req.actor, pj(req))));
+  r.post('/risk-reviews', idempotent, (req, res) => ok(res, v.create(req.actor, parseReviewCreate(req.body)), 201));
+  r.get('/risk-reviews/:id', (req, res) => ok(res, v.get(req.actor, pid(req))));
+  r.patch('/risk-reviews/:id', idempotent, (req, res) => ok(res, v.update(req.actor, pid(req), parseReviewUpdate(req.body))));
+  r.delete('/risk-reviews/:id', (req, res) => ok(res, v.remove(req.actor, pid(req))));
+  r.post('/risk-reviews/:id/submit', idempotentRequired, (req, res) => ok(res, v.submit(req.actor, pid(req)), 202));
+  r.post('/risk-reviews/:id/withdraw', idempotent, (req, res) => ok(res, v.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/risk-reviews/:id/cancel', idempotent, (req, res) => ok(res, v.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/risk-reviews/:id/history', (req, res) => ok(res, v.history(req.actor, pid(req))));
+  r.get('/risks', (req, res) => res.json(k.list(req.actor, req.query)));
+  r.get('/risks/export', exportOf('proj.risks'));
+  r.post('/risks/import', idempotentRequired, (req, res) => ok(res, k.import(req.actor, parseId(req.body?.projectId), (Array.isArray(req.body?.rows) ? req.body.rows : []).map((x) => parseRiskCreate({ ...x, projectId: req.body.projectId })).map(({ projectId: _p, ...rest }) => rest)), 201));
+  r.post('/risks', idempotentRequired, (req, res) => ok(res, k.create(req.actor, parseRiskCreate(req.body)), 201));
+  r.get('/risks/:id', (req, res) => ok(res, k.get(req.actor, pid(req))));
+  r.patch('/risks/:id', idempotent, (req, res) => ok(res, k.update(req.actor, pid(req), parseRiskUpdate(req.body))));
+  r.delete('/risks/:id', (req, res) => ok(res, k.remove(req.actor, pid(req))));
+  r.post('/risks/:id/submit', idempotentRequired, (req, res) => ok(res, k.submit(req.actor, pid(req), parseRiskClose(req.body)), 202));
+  r.post('/risks/:id/withdraw', idempotent, (req, res) => ok(res, k.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/risks/:id/cancel', idempotent, (req, res) => ok(res, k.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/risks/:id/amend', idempotent, (req, res) => ok(res, k.amend(req.actor, pid(req), parseReason(req.body))));
+  r.get('/risks/:id/history', (req, res) => ok(res, k.history(req.actor, pid(req))));
+  r.get('/risks/:id/print', doc(k)); r.get('/risks/:id/document', doc(k));
+  r.post('/risks/:id/triggers/:tid/reading', idempotent, (req, res) => ok(res, k.reading(req.actor, pid(req), parseId(req.params.tid), parseReading(req.body))));
+  r.post('/risks/:id/triggers/:tid/rearm', idempotent, (req, res) => ok(res, k.rearm(req.actor, pid(req), parseId(req.params.tid))));
+  r.post('/risks/:id/contingency', idempotent, (req, res) => ok(res, k.contingency(req.actor, pid(req), parseContingency(req.body)), 201));
+  r.post('/risks/:id/contingency/:cid/release', idempotent, (req, res) => ok(res, k.releaseContingency(req.actor, pid(req), parseId(req.params.cid))));
+  r.get('/issues', (req, res) => res.json(i.list(req.actor, req.query)));
+  r.get('/issues/export', exportOf('proj.issues'));
+  r.post('/issues/import', idempotentRequired, (req, res) => ok(res, i.import(req.actor, parseId(req.body?.projectId), (Array.isArray(req.body?.rows) ? req.body.rows : []).map((x) => parseIssueCreate({ ...x, projectId: req.body.projectId })).map(({ projectId: _p, ...rest }) => rest)), 201));
+  r.post('/issues', idempotentRequired, (req, res) => ok(res, i.create(req.actor, parseIssueCreate(req.body)), 201));
+  r.get('/issues/:id', (req, res) => ok(res, i.get(req.actor, pid(req))));
+  r.patch('/issues/:id', idempotent, (req, res) => ok(res, i.update(req.actor, pid(req), parseIssueUpdate(req.body))));
+  r.delete('/issues/:id', (req, res) => ok(res, i.remove(req.actor, pid(req))));
+  r.post('/issues/:id/submit', idempotent, (req, res) => ok(res, i.resolve(req.actor, pid(req), parseIssueResolve(req.body))));
+  r.post('/issues/:id/withdraw', idempotent, (req, res) => ok(res, i.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/issues/:id/cancel', idempotent, (req, res) => ok(res, i.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/issues/:id/amend', idempotent, (req, res) => ok(res, i.reopen(req.actor, pid(req), parseReason(req.body), 'proj.issue.amend')));
+  r.get('/issues/:id/history', (req, res) => ok(res, i.history(req.actor, pid(req))));
+  r.get('/issues/:id/print', doc(i)); r.get('/issues/:id/document', doc(i));
   return r;
 }

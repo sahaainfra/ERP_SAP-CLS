@@ -8,7 +8,8 @@ import { createFlagService } from '../core/api.js';
 import './integrations.js';
 import { bindBaseline, createBaselineService } from './baseline.js';
 import { bindProjects, createProjectService } from './project.js';
-import { baselineRoutes, boqRoutes, projectRoutes, structureRoutes, teamRoutes } from './routes.js';
+import { baselineRoutes, boqRoutes, projectRoutes, riskRoutes, structureRoutes, teamRoutes } from './routes.js';
+import { bindRisks, createRiskService } from './risks.js';
 import { bindMeetings, createMeetingService } from './meetings.js';
 import { bindTeam, createTeamService } from './team.js';
 import { bindBoq, createBoqService } from './boq.js';
@@ -37,13 +38,22 @@ for (const [type, description] of [
   ['proj.team.added', 'A person was approved as a member of the project team (project manager, project director); the scoped role assignment is requested of the role engine (02.04): data { projectId, code, username, projectRole, fromDate, toDate, accessRequested }.'],
   ['proj.team.ended', 'A membership of the project team ended and the role assignment for the project was ended: data { projectId, username, projectRole, assignmentEnded }.'],
   ['proj.meeting.issued', 'The chair approved the minutes of a meeting: they are issued (locked), each action became a task of its owner and the attendees were told: data { projectId, code, meetingId, docNo, revNo, title, meetingDate, decisions, actions, tasksMade, attendees, external }.'],
+  ['proj.risk.created', 'A risk or an opportunity was entered in the register of a project: data { projectId, code, riskId, docNo, type, level, score, emv }.'],
+  ['proj.risk.reassessed', 'The assessment of a risk changed its level: data { projectId, riskId, docNo, from, to, score }.'],
+  ['proj.risk.trigger_fired', 'The reading of an early-warning indicator passed its threshold; the alert rule of 04.09 raises the alert: data { projectId, riskId, docNo, trigger, reading, threshold, level }.'],
+  ['proj.risk.closed', 'A risk or opportunity was closed (a high or critical one after the approval of the project manager, BR-02): data { projectId, code, riskId, docNo, level, occurred, issueId }.'],
+  ['proj.risk.contingency_allocated', 'Contingency of the project pool was allocated to a risk: data { projectId, riskId, docNo, entryId, amount, reason }.'],
+  ['proj.risk.drawdown_requested', 'A drawdown of the contingency allocated to a risk was requested; the budget (12.02) executes it and marks it executed: data { projectId, riskId, docNo, entryId, amount, reason }.'],
+  ['proj.risk.review_approved', 'The monthly risk review of a project was approved (project manager, project director) and its snapshot is frozen: data { projectId, reviewId, period }.'],
+  ['proj.issue.raised', 'An issue was entered in the issue log (or a risk occurred and became one): data { projectId, code, issueId, docNo, priority, riskId }.'],
+  ['proj.issue.resolved', 'The owner of an issue resolved it: data { projectId, issueId, docNo }.'],
   ['proj.action.updated', 'The owner of a meeting action changed its status (the task of the task service moved): data { projectId, meetingId, actionId, owner, status }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proj', description });
 
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { proj_projects: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_baseline_packs: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], proj_wbs_versions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_boq_versions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_meetings: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], proj_team: ['REQUESTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'ENDED'] },
-  uniqueKeys: [{ table: 'proj_milestones', columns: ['project_id', 'code'] }, { table: 'proj_baseline_packs', columns: ['company_id', 'doc_no'] }, { table: 'proj_wbs', columns: ['project_id', 'code'] }, { table: 'proj_locations', columns: ['project_id', 'code'] }, { table: 'proj_work_packages', columns: ['project_id', 'code'] }, { table: 'proj_boq_versions', columns: ['company_id', 'doc_no'] }, { table: 'proj_meetings', columns: ['company_id', 'doc_no', 'rev_no'] }],
+  statuses: { proj_risks: ['OPEN', 'CLOSE_REQUESTED', 'CLOSED', 'OCCURRED', 'CANCELLED'], proj_risk_issues: ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED'], proj_risk_snapshots: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_projects: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_baseline_packs: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], proj_wbs_versions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_boq_versions: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_meetings: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], proj_team: ['REQUESTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'ENDED'] },
+  uniqueKeys: [{ table: 'proj_risks', columns: ['company_id', 'doc_no'] }, { table: 'proj_risk_issues', columns: ['company_id', 'doc_no'] }, { table: 'proj_milestones', columns: ['project_id', 'code'] }, { table: 'proj_baseline_packs', columns: ['company_id', 'doc_no'] }, { table: 'proj_wbs', columns: ['project_id', 'code'] }, { table: 'proj_locations', columns: ['project_id', 'code'] }, { table: 'proj_work_packages', columns: ['project_id', 'code'] }, { table: 'proj_boq_versions', columns: ['company_id', 'doc_no'] }, { table: 'proj_meetings', columns: ['company_id', 'doc_no', 'rev_no'] }],
 });
 /** Module "proj": project setup, WBS and BOQ (M10). Part 10.01 holds the project master, its lifecycle, the setup wizard and the key dates. The tables are `proj_*`. */
 export const proj = {
@@ -52,9 +62,9 @@ export const proj = {
   routePrefix: '/api/v1/proj',
   ownerPart: '10.01',
   status: 'The project master as a 1:1 extension of the organisation project: client, consultant and funding agency from the partner master, the contract summary, key dates, settings and the lifecycle (Setup, Mobilisation, Execution, Suspended, Substantially complete, Defect liability period, Closed, Archived) with a checklist at each move; the setup wizard that makes the project, its sites, numbering series and document folders in one transaction; activation, suspension and closure by approval; the milestones register and the portfolio with health.',
-  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log', 'proj_baseline_packs', 'proj_handover_meetings', 'proj_boq_items', 'proj_wbs', 'proj_wbs_versions', 'proj_work_packages', 'proj_locations', 'proj_wbs_locations', 'proj_boq_versions', 'proj_boq_lines', 'proj_boq_line_wbs', 'proj_boq_line_norms', 'proj_boq_changes', 'proj_team', 'proj_stakeholders', 'proj_comm_matrix', 'proj_meetings', 'proj_meeting_actions'],
+  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log', 'proj_baseline_packs', 'proj_handover_meetings', 'proj_boq_items', 'proj_wbs', 'proj_wbs_versions', 'proj_work_packages', 'proj_locations', 'proj_wbs_locations', 'proj_boq_versions', 'proj_boq_lines', 'proj_boq_line_wbs', 'proj_boq_line_norms', 'proj_boq_changes', 'proj_team', 'proj_stakeholders', 'proj_comm_matrix', 'proj_meetings', 'proj_meeting_actions', 'proj_risk_settings', 'proj_risks', 'proj_risk_actions', 'proj_risk_triggers', 'proj_risk_contingency', 'proj_risk_issues', 'proj_risk_snapshots'],
   companyOptional: [],
-  resources: ['projects', 'project-options', 'project-prefill', 'milestones', 'award-candidates', 'award-preview', 'baseline-packs', 'handover-meetings', 'boq', 'baseline-report', 'wbs', 'wbs-versions', 'wbs-changes', 'locations', 'wbs-matrix', 'work-packages', 'versions', 'boq-lines', 'boq-changes', 'boq-projects', 'team', 'stakeholders', 'comm-matrix', 'meetings', 'meeting-actions'],
+  resources: ['risks', 'issues', 'risk-dashboard', 'risk-settings', 'risk-reviews', 'projects', 'project-options', 'project-prefill', 'milestones', 'award-candidates', 'award-preview', 'baseline-packs', 'handover-meetings', 'boq', 'baseline-report', 'wbs', 'wbs-versions', 'wbs-changes', 'locations', 'wbs-matrix', 'work-packages', 'versions', 'boq-lines', 'boq-changes', 'boq-projects', 'team', 'stakeholders', 'comm-matrix', 'meetings', 'meeting-actions'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proj_projects'").get()) return;
@@ -102,6 +112,16 @@ export const proj = {
       router5.use(gate('ff.proj.p1005', 'The project team, stakeholders and meetings are'));
       router5.use(teamRoutes(tm, mt, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/proj', router5);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proj_risks'").get()) {
+      const rk = createRiskService({ db });
+      bindRisks(db, rk);
+      listExports.register('proj.risks', { source: (actor, req) => rk.risks.exportSource(actor, req), hidden: () => [] });
+      listExports.register('proj.issues', { source: (actor, req) => rk.issues.exportSource(actor, req), hidden: () => [] });
+      const router6 = Router();
+      router6.use(gate('ff.proj.p1006', 'The risks, opportunities and issues register is'));
+      router6.use(riskRoutes(rk, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/proj', router6);
     }
   },
 };

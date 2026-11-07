@@ -183,6 +183,39 @@ export const tm = {
   actionSummary: async (p) => (await api.get(`/proj/meeting-actions/summary${p ? `?projectId=${p}` : ''}`)).data,
   updateAction: async (id, b) => (await api.patch(`/proj/meeting-actions/${id}`, b, idem())).data,
 };
+// ---- Part 10.06: risks, opportunities and issues ----
+export const RISK_TONE = { OPEN: 'ACTIVE', CLOSE_REQUESTED: 'IN_REVIEW', CLOSED: 'COMPLETED', OCCURRED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const LEVEL_TONE = { LOW: 'ACTIVE', MEDIUM: 'AT_RISK', HIGH: 'AT_RISK', CRITICAL: 'REJECTED' };
+export const ISSUE_TONE = { OPEN: 'DRAFT', IN_PROGRESS: 'IN_REVIEW', RESOLVED: 'APPROVED', CANCELLED: 'CANCELLED' };
+export const RISK_CATEGORIES = ['TECHNICAL', 'COMMERCIAL', 'CONTRACTUAL', 'SAFETY', 'ENVIRONMENTAL', 'FINANCIAL', 'STATUTORY'];
+export const RISK_STRATEGIES = { RISK: ['AVOID', 'MITIGATE', 'TRANSFER', 'ACCEPT'], OPPORTUNITY: ['EXPLOIT', 'ENHANCE', 'SHARE', 'ACCEPT'] };
+export const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+const dl = (p) => (p ? `?projectId=${p}` : '');
+export const rk = {
+  dashboard: async (p) => (await api.get(`/proj/risk-dashboard${dl(p)}`)).data,
+  settings: async (p) => (await api.get(`/proj/risk-settings${dl(p)}`)).data,
+  putSettings: async (b) => (await api.put('/proj/risk-settings', b, idem())).data,
+  risk: async (id) => (await api.get(`/proj/risks/${id}`)).data,
+  createRisk: async (b) => (await api.post('/proj/risks', b, idem())).data,
+  updateRisk: async (id, b) => (await api.patch(`/proj/risks/${id}`, b, idem())).data,
+  removeRisk: async (id) => (await api.delete(`/proj/risks/${id}`)).data,
+  riskAct: async (id, action, b = {}) => (await api.post(`/proj/risks/${id}/${action}`, b, idem())).data,
+  riskHistory: async (id) => (await api.get(`/proj/risks/${id}/history`)).data,
+  reading: async (id, tid, b) => (await api.post(`/proj/risks/${id}/triggers/${tid}/reading`, b, idem())).data,
+  rearm: async (id, tid) => (await api.post(`/proj/risks/${id}/triggers/${tid}/rearm`, {}, idem())).data,
+  contingency: async (id, b) => (await api.post(`/proj/risks/${id}/contingency`, b, idem())).data,
+  release: async (id, cid) => (await api.post(`/proj/risks/${id}/contingency/${cid}/release`, {}, idem())).data,
+  issue: async (id) => (await api.get(`/proj/issues/${id}`)).data,
+  createIssue: async (b) => (await api.post('/proj/issues', b, idem())).data,
+  updateIssue: async (id, b) => (await api.patch(`/proj/issues/${id}`, b, idem())).data,
+  removeIssue: async (id) => (await api.delete(`/proj/issues/${id}`)).data,
+  issueAct: async (id, action, b = {}) => (await api.post(`/proj/issues/${id}/${action}`, b, idem())).data,
+  issueHistory: async (id) => (await api.get(`/proj/issues/${id}/history`)).data,
+  reviews: async (p) => (await api.get(`/proj/risk-reviews${dl(p)}`)).data,
+  createReview: async (b) => (await api.post('/proj/risk-reviews', b, idem())).data,
+  updateReview: async (id, b) => (await api.patch(`/proj/risk-reviews/${id}`, b, idem())).data,
+  reviewAct: async (id, action, b = {}) => (await api.post(`/proj/risk-reviews/${id}/${action}`, b, idem())).data,
+};
 export async function downloadFile(path, name) {
   const { authHeaders } = await import('../../platform/api/index.js');
   const w = /format=html|\/print/.test(path) ? window.open('', '_blank') : null;

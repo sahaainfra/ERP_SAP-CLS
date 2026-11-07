@@ -12,7 +12,12 @@ import ActionTrackerPage from './ActionTrackerPage.jsx';
 import LocationsPage from './LocationsPage.jsx';
 import MeetingPage from './MeetingPage.jsx';
 import MeetingsPage from './MeetingsPage.jsx';
+import IssuePage from './IssuePage.jsx';
+import IssuesPage from './IssuesPage.jsx';
 import ProjectPage from './ProjectPage.jsx';
+import RiskDashboardPage from './RiskDashboardPage.jsx';
+import RiskPage from './RiskPage.jsx';
+import RisksPage from './RisksPage.jsx';
 import StakeholdersPage from './StakeholdersPage.jsx';
 import TeamPage from './TeamPage.jsx';
 import ProjectsPage from './ProjectsPage.jsx';
@@ -46,5 +51,10 @@ registerModule({
     { path: '/proj/meetings', label: 'Meetings', icon: 'erp.group.projects', permission: 'proj.meeting.view', flag: 'ff.proj.p1005', Page: MeetingsPage },
     { path: '/proj/meeting', label: 'Meeting', icon: 'erp.group.projects', permission: 'proj.meeting.view', flag: 'ff.proj.p1005', Page: MeetingPage },
     { path: '/proj/action-tracker', label: 'Action Item Tracker', icon: 'erp.group.projects', permission: 'proj.meeting.view', flag: 'ff.proj.p1005', Page: ActionTrackerPage },
+    { path: '/proj/risk-dashboard', label: 'Risk Dashboard', icon: 'erp.group.projects', permission: 'proj.risk.view', flag: 'ff.proj.p1006', Page: RiskDashboardPage },
+    { path: '/proj/risks', label: 'Risk and Opportunity Register', icon: 'erp.group.projects', permission: 'proj.risk.view', flag: 'ff.proj.p1006', Page: RisksPage },
+    { path: '/proj/risk', label: 'Risk', icon: 'erp.group.projects', permission: 'proj.risk.view', flag: 'ff.proj.p1006', Page: RiskPage },
+    { path: '/proj/issues', label: 'Issue Log', icon: 'erp.group.projects', permission: 'proj.issue.view', flag: 'ff.proj.p1006', Page: IssuesPage },
+    { path: '/proj/issue', label: 'Issue', icon: 'erp.group.projects', permission: 'proj.issue.view', flag: 'ff.proj.p1006', Page: IssuePage },
   ],
 });

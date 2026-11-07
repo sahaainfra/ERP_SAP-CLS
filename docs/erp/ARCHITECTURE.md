@@ -1074,3 +1074,16 @@ Behind feature flag `ff.proj.p1005` (module `proj`; needs 10.01 and 04.08). Code
 - **Permissions**: `proj.meeting.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `proj.team.{view,manage}`, `proj.stakeholder.{view,manage,contact,export}`, `proj.action.update`.
 - **Browser**: Project Team, Stakeholders (register and communication matrix), Meetings, Meeting (minutes, attendees, actions, approvals), Action Item Tracker; Hindi through the `proj` namespace.
 
+## 85. Risks, opportunities and issues (part 10.06)
+
+Module `proj`, flag `ff.proj.p1006`, tables `proj_risk_settings`, `proj_risks`, `proj_risk_actions`, `proj_risk_triggers`, `proj_risk_contingency`, `proj_risk_issues`, `proj_risk_snapshots`. The service is `modules/proj/risks.js` (`createRiskService`, `risksOf`, `riskExposureOf`, `drawdownExecutors`), routes in `routes.js` (`riskRoutes`), inputs in `validators.js`; pages in `client/modules/proj/` (`RiskDashboardPage`, `RisksPage`, `RiskPage`, `IssuesPage`, `IssuePage`).
+
+- **Register** (FR-01, FR-02, BR-01, ADR-399): `/proj/risks` (list, export, import, create, get, update, delete, submit = ask to close, withdraw, cancel, amend = reopen, history, print and document); risks and opportunities share the table (`rtype`), numbers `RSK-` and `OPP-`.
+- **Closure** (BR-02, ADR-400): workflow `PROJ_RISK_CLOSE` for high and critical items (project manager, resolver `proj.riskpm`); events `proj.risk.created`, `proj.risk.reassessed`, `proj.risk.closed`.
+- **Triggers** (FR-04, ADR-401): `/proj/risks/:id/triggers/:tid/reading|rearm`; alert dataset `proj.risk_trigger` and the library rule `risk.trigger_fired` of 04.09; event `proj.risk.trigger_fired`.
+- **Contingency** (FR-05, ADR-402): `/proj/risks/:id/contingency` and `/release`, `/proj/risk-settings` (pool and thresholds); events `proj.risk.contingency_allocated`, `proj.risk.drawdown_requested`; 12.02 settles through `risksOf(db).risks.settleDrawdown`.
+- **Review** (FR-06, ADR-403): `/proj/risk-reviews` (list, create, update, delete, submit, withdraw, cancel, history), workflow `PROJ_RISK_REVIEW` (project manager, then project director); `/proj/risk-dashboard` reads the live register and the approved snapshots.
+- **Issues** (FR-03, ADR-404): `/proj/issues` (list, export, import, create, get, update, delete, submit = resolve, withdraw, cancel, amend = reopen, history, print and document); events `proj.issue.raised`, `proj.issue.resolved`.
+- **Permissions**: `proj.risk.*` and `proj.issue.*` (view, create, edit, delete, submit, approve, cancel, amend, print, export).
+- **Browser**: Risk Dashboard (heat map, tiles with drill-down, top risks, EMV against contingency, trend, thresholds, monthly review), Risk and Opportunity Register, Risk (assessment, response and triggers, contingency, history), Issue Log, Issue; Hindi through the `proj` namespace.
+

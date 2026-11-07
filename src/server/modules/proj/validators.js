@@ -127,3 +127,29 @@ export const parseMtgUpdate = (b) => parse(z.object({ mtype: mfields.mtype.optio
 export const parseMtgRevise = (b) => parse(z.object({ reason }).strict(), b);
 export const parseActionUpdate = (b) => parse(z.object({ status: z.enum(['IN_PROGRESS', 'BLOCKED', 'DONE']), note: optText(500) }).strict(), b);
 export const parseActionQuery = (q) => parse(z.object({ projectId: id.optional(), mine: z.enum(['true', 'false']).default('false').transform((v) => v === 'true') }).strict(), q ?? {});
+
+// ---- Part 10.06: risks, opportunities and issues ----
+const score15 = z.number().int().min(1, 'Choose 1 to 5').max(5, 'Choose 1 to 5');
+const raction = z.object({ description: text(1000).min(1, 'Describe the action'), ownerUser: user60, dueDate: day }).strict();
+const rtrigger = z.object({ name: text(160).min(1, 'Name the indicator'), indicator: optText(300), comparator: z.enum(['GTE', 'GT', 'LTE', 'LT']), threshold: z.number().int().min(-1e12).max(1e12), unit: optText(30) }).strict();
+const rfields = {
+  rtype: z.enum(['RISK', 'OPPORTUNITY']).default('RISK'), title: text(200).min(3, 'Give the title'), description: optText(3000), cause: optText(2000), effect: optText(2000),
+  category: z.enum(['TECHNICAL', 'COMMERCIAL', 'CONTRACTUAL', 'SAFETY', 'ENVIRONMENTAL', 'FINANCIAL', 'STATUTORY']), wbsId: optId, costCodeId: optId, activityRef: optText(120), clauseRef: optText(120), ownerUser: user60,
+  probability: score15, impactCost: score15.default(1), impactTime: score15.default(1), impactQuality: score15.default(1), impactSafety: score15.default(1),
+  strategy: z.enum(['AVOID', 'MITIGATE', 'TRANSFER', 'ACCEPT', 'EXPLOIT', 'ENHANCE', 'SHARE']).default('MITIGATE'), residualProbability: score15.nullish().transform((v) => v ?? null), residualImpact: score15.nullish().transform((v) => v ?? null),
+  exposureCost: z.object({ min: money, mostLikely: money, max: money }).strict().default({ min: '0', mostLikely: '0', max: '0' }), exposureDays: z.object({ min: z.number().int().min(0).max(36500), mostLikely: z.number().int().min(0).max(36500), max: z.number().int().min(0).max(36500) }).strict().default({ min: 0, mostLikely: 0, max: 0 }),
+  actions: z.array(raction).max(30).default([]), triggers: z.array(rtrigger).max(20).default([]), remarks: optText(1000),
+};
+export const parseRiskCreate = (b) => parse(z.object({ projectId: id, ...rfields }).strict(), b);
+const given = (out, b) => Object.fromEntries(Object.entries(out).filter(([k]) => b && Object.hasOwn(b, k)));
+export const parseRiskUpdate = (b) => given(parse(z.object({ ...Object.fromEntries(Object.entries(rfields).filter(([k]) => !['rtype', 'actions', 'triggers'].includes(k)).map(([k, v]) => [k, v.optional()])), actions: rfields.actions.optional(), triggers: rfields.triggers.optional(), rowVersion: version.optional() }).strict(), b), b);
+export const parseRiskClose = (b) => parse(z.object({ reason: z.string().trim().min(10, 'Give the justification (at least 10 characters)').max(1000), occurred: z.boolean().default(false) }).strict(), b ?? {});
+export const parseReading = (b) => parse(z.object({ value: z.number().int().min(-1e12).max(1e12), note: optText(300) }).strict(), b);
+export const parseContingency = (b) => parse(z.object({ kind: z.enum(['ALLOCATION', 'DRAWDOWN']), amount: money, reason }).strict(), b);
+export const parseRiskSettings = (b) => parse(z.object({ projectId: id, contingencyPool: money.optional(), thresholds: z.object({ medium: z.number().int().min(2).max(24), high: z.number().int().min(3).max(25), critical: z.number().int().min(4).max(25), probabilityPct: z.array(z.number().min(0).max(100)).length(5).optional() }).strict().optional() }).strict(), b);
+const ifields = { title: text(200).min(3, 'Give the title'), description: optText(3000), priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'), ownerUser: user60, dueDate: optDay, wbsId: optId, riskId: optId, impactCost: money.default('0'), impactTime: z.number().int().min(0).max(36500).default(0), impactText: optText(1000) };
+export const parseIssueCreate = (b) => parse(z.object({ projectId: id, ...ifields }).strict(), b);
+export const parseIssueUpdate = (b) => given(parse(z.object({ ...Object.fromEntries(Object.entries(ifields).map(([k, v]) => [k, v.optional()])), status: z.enum(['OPEN', 'IN_PROGRESS']).optional() }).strict(), b), b);
+export const parseIssueResolve = (b) => parse(z.object({ resolution: z.string().trim().min(10, 'Say how it was resolved (at least 10 characters)').max(2000) }).strict(), b);
+export const parseReviewCreate = (b) => parse(z.object({ projectId: id, period: z.string().regex(/^\d{4}-\d{2}$/, 'Use a month such as 2026-11'), notes: optText(3000) }).strict(), b);
+export const parseReviewUpdate = (b) => parse(z.object({ notes: optText(3000) }).strict(), b);
