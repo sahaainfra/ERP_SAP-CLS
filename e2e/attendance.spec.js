@@ -63,6 +63,8 @@ const act = async (request, c, roles, user, instanceId, action = 'approve') => {
   await api(request, c, roles, user, 'post', `/workflow/tasks/${task.id}/act`, { action, comment: 'checked it' });
 };
 const day = (n) => new Date(Date.now() + 5.5 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
+// The first day from tomorrow that is a Monday to Thursday in India, so it and the two days after it are working days (Sunday is the weekly off): the roster steps do not depend on the day the test runs.
+const R = (() => { let n = 1; while (![1, 2, 3, 4].includes(new Date(`${day(n)}T00:00:00Z`).getUTCDay())) n += 1; return n; })();
 
 
 const OUT = 'docs/erp/screenshots/attendance';
@@ -134,7 +136,7 @@ test('AC-01 shifts, policy with examples, assignment and who gets what, roster p
   await expect(hr.page.getByTestId('pa-note')).toContainText('Assigned');
   await expect(hr.page.getByTestId('pa-level-COMPANY')).toContainText('STD');
   await hr.page.locator('#pa-res-emp').click(); await hr.page.getByRole('option', { name: /Asha Kulkarni/ }).click();
-  await hr.page.getByTestId('pa-res-date').fill(day(2));
+  await hr.page.getByTestId('pa-res-date').fill(day(R));
   await hr.page.getByTestId('pa-res-go').click();
   await expect(hr.page.getByTestId('pa-res-policy')).toContainText('STD');
   await expect(hr.page.getByTestId('pa-res-shift')).toContainText('GEN');
@@ -142,11 +144,11 @@ test('AC-01 shifts, policy with examples, assignment and who gets what, roster p
   if (phone) await noOverflow(hr.page);
   await shot(hr.page, '05-policy-assignment');
   // the roster planner: a rotating pattern, a change that waits, a change that is approved
-  const pm = await open(browser, info, c, 'PM', g.u('pm'), `/hr/attendance/roster?siteId=${g.s1}&from=${day(1)}`);
+  const pm = await open(browser, info, c, 'PM', g.u('pm'), `/hr/attendance/roster?siteId=${g.s1}&from=${day(R)}`);
   const pmErrors = watch(pm.page);
   await expect(pm.page.getByTestId('rp-row')).toHaveCount(3);
   await pm.page.getByTestId('pt-name').fill('Rotation');
-  await pm.page.getByTestId('pt-from').fill(day(1));
+  await pm.page.getByTestId('pt-from').fill(day(R));
   await pm.page.getByTestId('pt-day-0').selectOption({ label: 'GEN' });
   await pm.page.getByTestId('pt-day-1').selectOption({ label: 'NIGHT' });
   await pm.page.getByTestId('pt-day-2').selectOption({ label: 'GEN' });
@@ -162,7 +164,7 @@ test('AC-01 shifts, policy with examples, assignment and who gets what, roster p
   await shot(pm.page, '07-roster-change-waiting');
   await pm.page.getByTestId('rp-undo-go').click();
   await expect(pm.page.getByTestId('rp-undo')).toHaveCount(0);
-  const ch = await api(request, c, 'HRMGR', g.u('hr'), 'post', '/hr/att/roster-changes', { siteId: g.s1, kind: 'CHANGE', employeeId: g.people.asha, workDate: day(2), shiftId: null, isOff: true, reason: 'A day off asked for', submit: true });
+  const ch = await api(request, c, 'HRMGR', g.u('hr'), 'post', '/hr/att/roster-changes', { siteId: g.s1, kind: 'CHANGE', employeeId: g.people.asha, workDate: day(R + 1), shiftId: null, isOff: true, reason: 'A day off asked for', submit: true });
   await act(request, c, 'WSUP', g.u('ws'), ch.workflowInstanceId);
   await act(request, c, 'PM', g.u('pm'), ch.workflowInstanceId);
   await pm.page.reload();

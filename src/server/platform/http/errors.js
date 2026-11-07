@@ -45,6 +45,7 @@ export const ERROR_CODES = [
   { code: 'LINK_INVALID', status: 410, meaning: 'An approval link has expired, was already used, or is not valid.', action: 'Open the approval from the inbox instead.' },
   { code: 'CONTROL_BLOCKED', status: 422, meaning: 'A control point of the Protocol & Control Engine blocks this action.', action: 'Correct what the message names; a blocked action cannot be excepted.' },
   { code: 'EXCEPTION_REQUIRED', status: 422, meaning: 'A control point fails for this action and it can go ahead only with an approved exception.', action: 'Raise an exception with a reason, justification and evidence; try again after it is approved.' },
+  { code: 'REFERENCE_MISSING', status: 422, meaning: 'The change refers to a record that does not exist (a company, project, site or master that was never created or was removed).', action: 'Reload the page and choose an existing record; if the company itself is missing, sign in to a company you belong to.' },
   { code: 'REAUTH_REQUIRED', status: 401, meaning: 'The amount is above the threshold for approving from a link, so the approver must sign in again.', action: 'Sign in as yourself and open the link again.' },
 ];
 
@@ -53,6 +54,10 @@ function describe(err) {
   if (err instanceof HttpError) return { status: err.status, code: err.code, message: err.message, details: err.details, known: true };
   if (err?.type === 'entity.parse.failed') {
     return { status: 400, code: 'BAD_JSON', message: 'The request body is not valid JSON. Send a well-formed JSON body.', details: [], known: true };
+  }
+  // a write that names a record that does not exist (SQLite foreign key): the caller's data is wrong, not the server
+  if (err?.errcode === 787 || /FOREIGN KEY constraint failed/.test(String(err?.message ?? ''))) {
+    return { status: 422, code: 'REFERENCE_MISSING', message: 'This refers to a record that does not exist. Reload the page and choose an existing record.', details: [], known: true };
   }
   if (err?.type === 'entity.too.large') {
     return { status: 413, code: 'PAYLOAD_TOO_LARGE', message: 'The request body is too large. Send less data.', details: [], known: true };
