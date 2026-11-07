@@ -49,6 +49,8 @@ test('FR-01 FR-09 BR-01 BR-02 AC-02 a new version of a matrix: edit the rules, c
   const sys = await as(browser, info, c, 'SYSADM', 'e2e-sys', '/admin/approval-matrix');
   const errors = watch(sys);
   await expect(sys.getByRole('heading', { name: 'Approval Matrix', level: 1 })).toBeVisible();
+  // the list is paged and sorted by document type, and more types have registered since: filter to the one wanted
+  await sys.getByRole('search', { name: 'Filter the matrix' }).getByLabel('Document type').selectOption('PAY');
   await expect(sys.getByRole('region', { name: 'Matrix versions' })).toContainText('Payment release');
   await sys.getByTestId('am-new').selectOption('PAY');
   await expect(sys.getByRole('heading', { name: 'Matrix Rule Editor', level: 1 })).toBeVisible();
