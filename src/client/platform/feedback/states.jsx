@@ -28,12 +28,25 @@ function Illustration() {
   );
 }
 
+/** A page that is only a state message still needs its one level-1 heading and a title (part 03.10 checklist); a page that has a heading of its own keeps the message as a subheading. */
+function useLeadHeading(box, title) {
+  const [lead, setLead] = useState(false);
+  useLayoutEffect(() => {
+    const others = [...document.querySelectorAll('main h1, #main h1')].filter((h) => !box.current?.contains(h));
+    setLead(others.length === 0);
+  }, [box]);
+  useEffect(() => { if (lead && title) document.title = `${title} - ERP`; }, [lead, title]);
+  return lead ? 'h1' : 'h2';
+}
+
 /** Nothing to show yet: an illustration, what it means and what to do next. */
 export function EmptyState({ title, message, action = null, compact = false }) {
+  const box = useRef(null);
+  const Heading = useLeadHeading(box, compact ? null : title);
   return (
-    <div className={`state fb-empty${compact ? ' is-compact' : ''}`} data-testid="empty-state">
+    <div className={`state fb-empty${compact ? ' is-compact' : ''}`} data-testid="empty-state" ref={box}>
       {!compact && <Illustration />}
-      <h2>{title}</h2>
+      <Heading>{title}</Heading>
       {message && <p>{message}</p>}
       {/* the action is { label, onClick }, or an element the page made itself (a button or a link) */}
       {action && (isValidElement(action) ? action : <button type="button" className="btn btn-primary" onClick={action.onClick}>{action.label}</button>)}
@@ -44,9 +57,11 @@ export function EmptyState({ title, message, action = null, compact = false }) {
 /** Something failed: the message, the correlation ID to quote to support, and a way to try again. */
 export function ErrorState({ title, error, onRetry }) {
   const t = useT('common');
+  const box = useRef(null);
+  const Heading = useLeadHeading(box, title ?? t('error.title'));
   return (
-    <div className="state state-error fb-error" role="alert" data-testid="error-state">
-      <h2><Icon name="erp.state.exception" size={20} /> {title ?? t('error.title')}</h2>
+    <div className="state state-error fb-error" role="alert" data-testid="error-state" ref={box}>
+      <Heading><Icon name="erp.state.exception" size={20} /> {title ?? t('error.title')}</Heading>
       <p>{error?.message ?? t('error.body')}</p>
       {error?.correlationId && <p className="muted">{t('error.correlation', { id: '' })}<code data-testid="correlation-id">{error.correlationId}</code></p>}
       {onRetry && <button type="button" className="btn" onClick={onRetry}>{t('tryAgain')}</button>}
@@ -58,14 +73,7 @@ export function ErrorState({ title, error, onRetry }) {
 export function NoPermission({ what, permission, ask }) {
   const t = useT('common');
   const box = useRef(null);
-  // A page that is only this message still needs its one level-1 heading and a title (part 03.10 checklist); one that has a heading of its own keeps this as a subheading.
-  const [lead, setLead] = useState(false);
-  useLayoutEffect(() => {
-    const others = [...document.querySelectorAll('main h1, #main h1')].filter((h) => !box.current?.contains(h));
-    setLead(others.length === 0);
-  }, []);
-  useEffect(() => { if (lead && what) document.title = `${what} - ERP`; }, [lead, what]);
-  const Heading = lead ? 'h1' : 'h2';
+  const Heading = useLeadHeading(box, what);
   return (
     <div className="state fb-noperm" role="alert" data-testid="no-permission" ref={box}>
       <Heading><Icon name="erp.state.locked" size={20} /> {t('noPermission.title', { what })}</Heading>
