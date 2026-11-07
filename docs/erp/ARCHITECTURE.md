@@ -1011,3 +1011,16 @@ Behind feature flag `ff.est.p0903` (module `est`; needs 09.01, 09.02 and 04.02).
 - **Priced BOQ** (FR-05, ADR-367): `/priced-boq?format=xlsx|pdf|csv|html&words=` through the export writer, rates in words by `amountInWords`.
 - **Permissions**: `est.review.{view,perform}`, `est.bid.{edit,approve}`, `est.boq.export`; COMMGR also `est.estimate.approve`.
 - **Browser**: Estimate Review (checklist, bid price summary, sensitivity, unbalanced items, assumptions, reviews), Bid Price Finalisation (discount, summary, priced BOQ in Excel, PDF and print); links from the Estimate page.
+
+## 80. Project master, lifecycle and setup wizard (part 10.01)
+
+Behind feature flag `ff.proj.p1001` (new module `proj`; needs 02.02 and 06.04). Code: `modules/proj/project.js` (the wizard, the project master, activation, transitions, amendments, milestones, readiness and health, print, the workflows), `validators.js`, `routes.js`, `integrations.js` (lookups, Excel import `PROJ_MILESTONE`); in the organisation part `applyProjectStatus` and `activationGuards`; client pages `WizardPage`, `ProjectsPage`, `ProjectPage`.
+
+- **Project master** (FR-01, ADR-368): `/proj/projects` (list, export, create = the wizard, get, update, delete, submit, withdraw, cancel, amend, history, print), `/proj/project-options`, `/proj/project-prefill?tenderId=` (an awarded tender fills the wizard).
+- **Wizard** (ADR-369): one transaction for the organisation project, sites, project master, numbering series, document folders and milestones.
+- **Lifecycle** (FR-02, BR-01, ADR-370, ADR-371): `POST /proj/projects/:id/transitions`; workflows `PROJ_ACTIVATION`, `PROJ_TRANSITION`, `PROJ_CHANGE` (resolvers `proj.director`, `proj.pm`); readiness and health registries (`readinessProviders`, `healthProviders`).
+- **Amendment** (BR-02, ADR-372): `POST /proj/projects/:id/amend`.
+- **Settings** (FR-03): `settings_json`, defaults in `proj.settings_defaults`; **milestones** (FR-04): `/proj/projects/:id/milestones`, `/proj/milestones/:id`; **folders** (FR-05): the template of the document service; **portfolio** (FR-06, ADR-373): list with health.
+- **Events**: `proj.project.{created,activated,state_changed,amended}`, `proj.milestone.achieved`; the messaging auto-groups sync on `proj.project.activated`.
+- **Permissions**: `proj.project.{view,create,edit,delete,submit,approve,cancel,amend,print,export,view_all,transition,import}`, `proj.milestone.manage`; PCMGR and PD set up and configure, PM edits and moves within the project, DIR approves, transitions, prints and exports.
+- **Browser**: Project Portfolio, Project (details, sites, milestones, settings, lifecycle history, approvals, papers) with the activation, move and amendment panels, Project Setup Wizard in seven steps; Hindi through the `proj` namespace.

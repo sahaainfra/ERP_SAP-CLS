@@ -5621,3 +5621,78 @@ paths:
     get:
       summary: "The estimate of a bid summary"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects:
+    get:
+      summary: "The project portfolio with health"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Set a project up with the wizard (one transaction)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/export:
+    get:
+      summary: "Export the portfolio"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/project-options:
+    get:
+      summary: "Options of the wizard (numbering and folder templates, settings defaults, checklists)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/project-prefill:
+    get:
+      summary: "Prefill of the wizard from an awarded tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}:
+    get:
+      summary: "A project with its sites, milestones, settings, lifecycle log and the moves open to the person"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change a project (all in setup; the non-contract details when live)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/submit:
+    post:
+      summary: "Send a project for activation"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/withdraw:
+    post:
+      summary: "Withdraw the activation request"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/cancel:
+    post:
+      summary: "Cancel a project still in setup"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/amend:
+    post:
+      summary: "Ask to amend the contract terms of a live project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/transitions:
+    post:
+      summary: "Move a project through its lifecycle (a checklist; the chain for a suspension or a closure)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/transitions/withdraw:
+    post:
+      summary: "Withdraw a request to move"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/history:
+    get:
+      summary: "Approvals and changes of a project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/print:
+    get:
+      summary: "Print a project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/{id}/milestones:
+    get:
+      summary: "The key dates and milestones"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add a milestone"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/milestones/{id}:
+    patch:
+      summary: "Change a milestone or mark it achieved"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a milestone not yet achieved"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

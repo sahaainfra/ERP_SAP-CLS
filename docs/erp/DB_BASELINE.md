@@ -10390,6 +10390,139 @@ Indexes:
 - ix_pol_version_status: company_id, version_status, effective_from
 - ux_pol_version_no (unique): policy_id, version_no
 
+## proj_lifecycle_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  | 'TRANSITION' |
+| from_state | TEXT |  |  |  |
+| to_state | TEXT |  |  |  |
+| log_status | TEXT | yes |  | 'EFFECTIVE' |
+| checklist_json | TEXT |  |  |  |
+| warnings_json | TEXT |  |  |  |
+| changes_json | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| by_user | TEXT | yes |  |  |
+| decided_at | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_lifecycle_log_status: company_id, log_status
+- ix_proj_lifecycle_log_project: project_id, id
+- ix_proj_lifecycle_log_company_id: company_id
+
+## proj_milestones
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| planned_date | TEXT | yes |  |  |
+| actual_date | TEXT |  |  |  |
+| contractual | INTEGER | yes |  | 0 |
+| payment_linked | INTEGER | yes |  | 0 |
+| milestone_status | TEXT | yes |  | 'PLANNED' |
+| sort_order | INTEGER | yes |  | 0 |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_milestones_project: project_id, planned_date
+- ix_proj_milestones_company_id: company_id
+- ux_proj_milestones_code (unique): project_id, code
+
+## proj_projects
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| lifecycle_state | TEXT | yes |  | 'SETUP' |
+| sector | TEXT |  |  |  |
+| location | TEXT |  |  |  |
+| client_partner_id | INTEGER |  |  |  |
+| consultant_partner_id | INTEGER |  |  |  |
+| funder_partner_id | INTEGER |  |  |  |
+| tender_id | INTEGER |  |  |  |
+| contract_type | TEXT | yes |  | 'ITEM_RATE' |
+| contract_no | TEXT |  |  |  |
+| contract_value | INTEGER | yes |  | 0 |
+| start_date | TEXT |  |  |  |
+| scheduled_completion | TEXT |  |  |  |
+| revised_completion | TEXT |  |  |  |
+| dlp_months | INTEGER | yes |  | 0 |
+| retention_pct | INTEGER | yes |  | 0 |
+| mob_advance_pct | INTEGER | yes |  | 0 |
+| ld_summary | TEXT |  |  |  |
+| pm_user | TEXT |  |  |  |
+| director_user | TEXT |  |  |  |
+| settings_json | TEXT |  |  |  |
+| setup_json | TEXT |  |  |  |
+| pending_json | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| activated_at | TEXT |  |  |  |
+| activated_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: tender_id -> tdr_tenders(id), funder_partner_id -> mdm_partners(id), consultant_partner_id -> mdm_partners(id), client_partner_id -> mdm_partners(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_projects_tender: tender_id
+- ix_proj_projects_funder: funder_partner_id
+- ix_proj_projects_consultant: consultant_partner_id
+- ix_proj_projects_client: client_partner_id
+- ix_proj_projects_state: company_id, lifecycle_state
+- ix_proj_projects_status: company_id, status
+- ix_proj_projects_company_id: company_id
+- ux_proj_projects_project (unique): project_id
+
 ## ra_analyses
 
 | Column | Type | Not null | Key | Default |
