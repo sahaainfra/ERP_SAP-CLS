@@ -168,3 +168,7 @@ export const parseOverlayCreate = (b) => parse(z.object({ projectId: id, ...ovFi
 export const parseOverlayUpdate = (b) => given(parse(z.object({ name: ovFields.name.optional(), imageUrl: imageUrl.optional(), fileId: optId.optional(), bounds: bounds.optional(), opacity: ovFields.opacity.optional(), rowVersion: version.optional() }).strict(), b), b);
 export const parseGisProject = (q) => parse(z.object({ projectId: id, activity: text(80).optional(), format: z.string().optional(), days: z.coerce.number().int().min(1).max(90).optional() }).strict(), q ?? {});
 export const parseProgress = (b) => parse(z.object({ projectId: id, locationId: id, activity: text(80).min(2, 'Name the activity'), pct: z.union([z.number(), z.string().trim().regex(/^\d+(\.\d+)?$/, 'Give a percentage')]).transform((v) => String(v)).refine((v) => Number(v) >= 0 && Number(v) <= 100, 'A percentage from 0 to 100'), asOf: day }).strict(), b);
+
+// ---- Part 10.08: Project 360 ----
+export const parseP360 = (q) => parse(z.object({ projectId: id, period: z.string().regex(/^\d{4}-\d{2}$/, 'Use a month such as 2026-11').optional(), format: z.string().optional() }).strict(), q ?? {});
+export const parsePortfolio = (q) => parse(z.object({ q: z.string().trim().max(80).optional(), health: z.enum(['RED', 'AMBER', 'GREEN', 'NONE']).optional() }).strict(), q ?? {});

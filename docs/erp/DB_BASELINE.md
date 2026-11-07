@@ -10504,6 +10504,44 @@ Indexes:
 - ix_pol_version_status: company_id, version_status, effective_from
 - ux_pol_version_no (unique): policy_id, version_no
 
+## proj_360_widgets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| widget_code | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| tab | TEXT | yes |  |  |
+| slot | TEXT | yes |  | 'main' |
+| sort_order | INTEGER | yes |  | 100 |
+| permission_key | TEXT | yes |  |  |
+| owner_part | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| title_hi | TEXT |  |  |  |
+| empty_text | TEXT |  |  |  |
+| drill_route | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_360_widgets_tab: tab, sort_order
+- ix_proj_360_widgets_company_id: company_id
+- ux_proj_360_widgets_code (unique): , widget_code
+
 ## proj_baseline_packs
 
 | Column | Type | Not null | Key | Default |

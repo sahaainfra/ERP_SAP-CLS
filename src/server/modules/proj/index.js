@@ -8,9 +8,10 @@ import { createFlagService } from '../core/api.js';
 import './integrations.js';
 import { bindBaseline, createBaselineService } from './baseline.js';
 import { bindProjects, createProjectService } from './project.js';
-import { baselineRoutes, boqRoutes, gisRoutes, projectRoutes, riskRoutes, structureRoutes, teamRoutes } from './routes.js';
+import { baselineRoutes, boqRoutes, gisRoutes, p360Routes, projectRoutes, riskRoutes, structureRoutes, teamRoutes } from './routes.js';
 import { bindRisks, createRiskService } from './risks.js';
 import { bindGis, createGisService } from './gis.js';
+import { bindP360, createP360Service } from './p360.js';
 import { bindMeetings, createMeetingService } from './meetings.js';
 import { bindTeam, createTeamService } from './team.js';
 import { bindBoq, createBoqService } from './boq.js';
@@ -65,9 +66,9 @@ export const proj = {
   routePrefix: '/api/v1/proj',
   ownerPart: '10.01',
   status: 'The project master as a 1:1 extension of the organisation project: client, consultant and funding agency from the partner master, the contract summary, key dates, settings and the lifecycle (Setup, Mobilisation, Execution, Suspended, Substantially complete, Defect liability period, Closed, Archived) with a checklist at each move; the setup wizard that makes the project, its sites, numbering series and document folders in one transaction; activation, suspension and closure by approval; the milestones register and the portfolio with health.',
-  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log', 'proj_baseline_packs', 'proj_handover_meetings', 'proj_boq_items', 'proj_wbs', 'proj_wbs_versions', 'proj_work_packages', 'proj_locations', 'proj_wbs_locations', 'proj_boq_versions', 'proj_boq_lines', 'proj_boq_line_wbs', 'proj_boq_line_norms', 'proj_boq_changes', 'proj_team', 'proj_stakeholders', 'proj_comm_matrix', 'proj_meetings', 'proj_meeting_actions', 'proj_risk_settings', 'proj_risks', 'proj_risk_actions', 'proj_risk_triggers', 'proj_risk_contingency', 'proj_risk_issues', 'proj_risk_snapshots', 'gis_layers', 'gis_overlays', 'gis_progress'],
+  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log', 'proj_baseline_packs', 'proj_handover_meetings', 'proj_boq_items', 'proj_wbs', 'proj_wbs_versions', 'proj_work_packages', 'proj_locations', 'proj_wbs_locations', 'proj_boq_versions', 'proj_boq_lines', 'proj_boq_line_wbs', 'proj_boq_line_norms', 'proj_boq_changes', 'proj_team', 'proj_stakeholders', 'proj_comm_matrix', 'proj_meetings', 'proj_meeting_actions', 'proj_risk_settings', 'proj_risks', 'proj_risk_actions', 'proj_risk_triggers', 'proj_risk_contingency', 'proj_risk_issues', 'proj_risk_snapshots', 'gis_layers', 'gis_overlays', 'gis_progress', 'proj_360_widgets'],
   companyOptional: [],
-  resources: ['gis', 'risks', 'issues', 'risk-dashboard', 'risk-settings', 'risk-reviews', 'projects', 'project-options', 'project-prefill', 'milestones', 'award-candidates', 'award-preview', 'baseline-packs', 'handover-meetings', 'boq', 'baseline-report', 'wbs', 'wbs-versions', 'wbs-changes', 'locations', 'wbs-matrix', 'work-packages', 'versions', 'boq-lines', 'boq-changes', 'boq-projects', 'team', 'stakeholders', 'comm-matrix', 'meetings', 'meeting-actions'],
+  resources: ['project-360', 'portfolio-overview', 'gis', 'risks', 'issues', 'risk-dashboard', 'risk-settings', 'risk-reviews', 'projects', 'project-options', 'project-prefill', 'milestones', 'award-candidates', 'award-preview', 'baseline-packs', 'handover-meetings', 'boq', 'baseline-report', 'wbs', 'wbs-versions', 'wbs-changes', 'locations', 'wbs-matrix', 'work-packages', 'versions', 'boq-lines', 'boq-changes', 'boq-projects', 'team', 'stakeholders', 'comm-matrix', 'meetings', 'meeting-actions'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proj_projects'").get()) return;
@@ -133,6 +134,14 @@ export const proj = {
       router7.use(gate('ff.proj.p1007', 'The project map (GIS) is'));
       router7.use(gisRoutes(gs, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/proj', router7);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proj_360_widgets'").get()) {
+      const pv = createP360Service({ db });
+      bindP360(db, pv);
+      const router8 = Router();
+      router8.use(gate('ff.proj.p1008', 'Project 360 and the portfolio overview are'));
+      router8.use(p360Routes(pv));
+      api.use('/proj', router8);
     }
   },
 };

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseActionQuery, parseActionUpdate, parseComm, parseCommUpdate, parseMtgCreate, parseMtgRevise, parseMtgUpdate, parseProjectIdQuery, parseStakeholder, parseStakeholderUpdate, parseTeamAdd, parseTeamEnd, parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard , parseRiskCreate, parseRiskUpdate, parseRiskClose, parseReading, parseContingency, parseRiskSettings, parseIssueCreate, parseIssueUpdate, parseIssueResolve, parseReviewCreate, parseReviewUpdate, parseLayerCreate, parseLayerUpdate, parseLayerImport, parseOverlayCreate, parseOverlayUpdate, parseGisProject, parseProgress } from './validators.js';
+import { parseActionQuery, parseActionUpdate, parseComm, parseCommUpdate, parseMtgCreate, parseMtgRevise, parseMtgUpdate, parseProjectIdQuery, parseStakeholder, parseStakeholderUpdate, parseTeamAdd, parseTeamEnd, parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard , parseRiskCreate, parseRiskUpdate, parseRiskClose, parseReading, parseContingency, parseRiskSettings, parseIssueCreate, parseIssueUpdate, parseIssueResolve, parseReviewCreate, parseReviewUpdate, parseLayerCreate, parseLayerUpdate, parseLayerImport, parseOverlayCreate, parseOverlayUpdate, parseGisProject, parseProgress, parseP360, parsePortfolio } from './validators.js';
 
 /** Part 10.01: the project master. Rights and scope are checked in the service. */
 export function projectRoutes({ svc, exportsOf }, { idempotent, idempotentRequired }) {
@@ -322,5 +322,17 @@ export function gisRoutes(g, { idempotent, idempotentRequired }) {
   r.post('/gis/overlays/:id/withdraw', idempotent, (req, res) => ok(res, g.overlays.withdraw(req.actor, pid(req), parseReason(req.body))));
   r.post('/gis/overlays/:id/cancel', idempotent, (req, res) => ok(res, g.overlays.cancel(req.actor, pid(req), parseReason(req.body))));
   r.get('/gis/overlays/:id/history', (req, res) => ok(res, g.overlays.history(req.actor, pid(req))));
+  return r;
+}
+
+export function p360Routes(pv) {
+  const r = Router();
+  const ok = (res, data) => res.status(200).json({ data });
+  r.get('/project-360', (req, res) => { const q = parseP360(req.query); ok(res, pv.p360.get(req.actor, q.projectId, { period: q.period })); });
+  r.get('/project-360/export', (req, res) => {
+    const q = parseP360(req.query); const fmt = ['pdf', 'xlsx', 'csv'].includes(q.format) ? q.format : 'pdf'; const out = pv.p360.exportFile(req.actor, q.projectId, fmt, { period: q.period });
+    res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }); return res.send(out.buffer);
+  });
+  r.get('/portfolio-overview', (req, res) => ok(res, pv.p360.portfolio(req.actor, parsePortfolio(req.query))));
   return r;
 }

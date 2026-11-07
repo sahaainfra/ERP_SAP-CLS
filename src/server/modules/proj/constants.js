@@ -118,3 +118,10 @@ export const GIS_LTYPES = { BOUNDARY: 'Site boundary', ALIGNMENT: 'Alignment', W
 export const GIS_CFG_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
 /** BR-01: a punch cell is shown only when at least this many different people punched in it; nothing individual is ever returned. */
 export const PUNCH_MIN_PEOPLE = 5;
+
+// ---- Part 10.08: Project 360 ----
+export const P360_TABS = ['overview', 'time', 'cost', 'resources', 'quality_hse', 'commercial', 'documents', 'activity'];
+export const P360_TAB_LABELS = { overview: 'Overview', time: 'Time', cost: 'Cost', resources: 'Resources', quality_hse: 'Quality & HSE', commercial: 'Commercial', documents: 'Documents', activity: 'Activity' };
+export const HEALTH_DIMENSIONS = { TIME: ['Time', 'Key dates and milestones', '10.01'], COST: ['Cost', 'Budget and cost control', '12.x and 14.07'], QUALITY: ['Quality', 'Inspections and non-conformances', '18.x'], SAFETY: ['Safety', 'Incidents and observations', '19.x'], CASH: ['Cash', 'Billing and collections', '22.x and 23.x'], RISK: ['Risk', 'Risk register', '10.06'] };
+/** BR-01: the health thresholds of a company (parameter `proj.rag_thresholds`): days a planned milestone may be late before amber and red, how many critical risks make red, how many high risks make amber; SPI and CPI are read by the schedule and cost modules (13.x, 12.x) when they are live. */
+export const RAG_DEFAULTS = { milestoneLateDaysAmber: 1, milestoneLateDaysRed: 14, riskCriticalRed: 1, riskHighAmber: 1, spiAmber: 0.95, spiRed: 0.9, cpiAmber: 0.95, cpiRed: 0.9 };
