@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { isValidElement, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { useT } from '../i18n/index.js';
 
@@ -35,7 +35,8 @@ export function EmptyState({ title, message, action = null, compact = false }) {
       {!compact && <Illustration />}
       <h2>{title}</h2>
       {message && <p>{message}</p>}
-      {action && <button type="button" className="btn btn-primary" onClick={action.onClick}>{action.label}</button>}
+      {/* the action is { label, onClick }, or an element the page made itself (a button or a link) */}
+      {action && (isValidElement(action) ? action : <button type="button" className="btn btn-primary" onClick={action.onClick}>{action.label}</button>)}
     </div>
   );
 }

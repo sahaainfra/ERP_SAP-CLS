@@ -14,6 +14,7 @@ export default function ContractorPage() {
   const q = useQuery({ queryKey: ['lab', 'contractor', id], queryFn: () => lab.contractor(id), enabled: Boolean(id), retry: false });
   const [f, setF] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   useEffect(() => { const c = q.data?.compliance; setF({ clraLicenceNo: c?.clraLicenceNo ?? '', licenceValidUntil: c?.licenceValidUntil ?? '', maxWorkers: c?.maxWorkers ?? '', pfCode: c?.pfCode ?? '', esiCode: c?.esiCode ?? '', woReference: c?.woReference ?? '', woValidUntil: c?.woValidUntil ?? '' }); }, [q.data]);
+  if (!id) return <section aria-labelledby="contractor-h" data-testid="contractor-none"><h1 id="contractor-h">Contractor compliance</h1><p className="muted">Open a contractor from the list. <Link to="/labour/contractors">Labour Contractors</Link></p></section>;
   if (q.error?.status === 403) return <NoPermission what="contractors" permission="hr.worker.view" />;
   if (q.isPending || !f) return <Skeleton label="Loading the contractor" rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
