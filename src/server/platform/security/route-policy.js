@@ -1458,6 +1458,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/est/estimates/:id/sensitivity', g: 'permission', k: 'est.estimate.cost', s: 'parseSensitivity', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/est/estimates/:id/unbalanced', g: 'permission', k: 'est.estimate.cost', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/est/estimates/:id/priced-boq', g: 'permission', k: 'est.boq.export', s: 'parseBoq', scope: 'company', rate: 'export', audit: true },
+  { m: 'GET', p: '/api/v1/est/bid-summaries/:id', g: 'permission', k: 'est.review.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/workers', g: 'permission', k: 'hr.worker.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/workers/export', g: 'permission', k: 'hr.worker.export', s: null, scope: 'company', rate: 'export', audit: true },
   { m: 'POST', p: '/api/v1/hr/workers', g: 'permission', k: 'hr.worker.create', s: 'parseWorkerCreate', scope: 'company', rate: 'write', audit: true },

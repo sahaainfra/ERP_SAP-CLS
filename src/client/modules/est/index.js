@@ -12,6 +12,8 @@ import MtoDeltaPage from './MtoDeltaPage.jsx';
 import MtoExplosionPage from './MtoExplosionPage.jsx';
 import TakeoffPage from './TakeoffPage.jsx';
 import TakeoffsPage from './TakeoffsPage.jsx';
+import BidPricePage from './BidPricePage.jsx';
+import ReviewPage from './ReviewPage.jsx';
 
 registerModule({
   code: 'est',
@@ -30,5 +32,7 @@ registerModule({
     { path: '/est/bbs-summary', label: 'BBS Summary by Diameter', icon: 'erp.group.insights', permission: 'est.bb.view', flag: 'ff.est.p0902', Page: BbsSummaryPage },
     { path: '/est/mto-delta', label: 'Revision Delta Report', icon: 'erp.group.insights', permission: 'est.takeoff.view', flag: 'ff.est.p0902', Page: MtoDeltaPage },
     { path: '/est/mto-explosion', label: 'Material Requirement Explosion', icon: 'erp.group.insights', permission: 'est.takeoff.view', flag: 'ff.est.p0902', Page: MtoExplosionPage },
+    { path: '/est/review', label: 'Estimate Review', icon: 'erp.group.commercial', permission: 'est.review.view', flag: 'ff.est.p0903', Page: ReviewPage },
+    { path: '/est/bid-price', label: 'Bid Price Finalisation', icon: 'erp.group.commercial', permission: 'est.review.view', flag: 'ff.est.p0903', Page: BidPricePage },
   ],
 });

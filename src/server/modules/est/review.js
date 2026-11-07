@@ -247,7 +247,9 @@ export function createReviewService({ db }) {
       can: { review: may(actor, 'est.review.perform') && !same(e.created_by, actor.user), reviewTask: Boolean(task), reviewStep: step, editBid: may(actor, 'est.bid.edit') && ['DRAFT', 'RETURNED'].includes(e.status) && same(e.created_by, actor.user), editAssumptions: may(actor, 'est.estimate.edit') && ['DRAFT', 'RETURNED'].includes(e.status) && same(e.created_by, actor.user), exportBoq: may(actor, 'est.boq.export'), sensitivity: c, forBid: e.status === 'APPROVED' },
     };
   }
-  return { summary, reviews, assumptions, sensitivity, unbalanced, pricedBoq, panel, sync, copyTo, decideDiscount, discountReady: (e) => { const b = summaryRow(e.id); return !b || DONE_DISCOUNT.includes(b.discount_status); }, summaryRow };
+  /** The estimate of a bid summary (the approval task of a discount points at the summary). */
+  const estimateOfSummary = (actor, sid) => { const b = db.prepare('SELECT estimate_id FROM est_bid_summary WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(sid), actor.companyId); if (!b) throw notFound('That bid summary does not exist.'); row(actor, b.estimate_id); return { estimateId: b.estimate_id }; };
+  return { estimateOfSummary, summary, reviews, assumptions, sensitivity, unbalanced, pricedBoq, panel, sync, copyTo, decideDiscount, discountReady: (e) => { const b = summaryRow(e.id); return !b || DONE_DISCOUNT.includes(b.discount_status); }, summaryRow };
 }
 
 const services = new WeakMap();

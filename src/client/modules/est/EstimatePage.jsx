@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { BASES, COMPONENT_TYPES, INDIRECTS, MODES, est, inr, preview, qty } from './api.js';
+import { useFlagOn } from '../../platform/shell/api.js';
 import { Tabs, useSearch } from './parts.jsx';
 
 // Estimate (part 09.01): one version of an estimate as an object page. Items in BOQ sections, each priced from a released rate analysis, a manual build-up or a typed cost rate, with its markup (FR-02, FR-03);
@@ -25,6 +26,7 @@ export default function EstimatePage() {
   const q = useQuery({ queryKey: ['est', 'estimate', id], queryFn: () => est.get(id), enabled: Boolean(id), retry: false });
   const e = q.data;
   usePageTitle(e ? e.ref : t('obj.title'));
+  const reviewOn = useFlagOn('ff.est.p0903');
   const [tab, setTab] = useState('items'); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   if (!id) return <section aria-labelledby="est-h" data-testid="estimate-none"><h1 id="est-h">{t('obj.title')}</h1><p className="muted">{t('obj.noId')} <Link to="/est/estimates">{t('list.title')}</Link></p></section>;
   if (q.error?.status === 403) return <NoPermission what={t('list.title')} permission="est.estimate.view" />;
@@ -59,6 +61,8 @@ export default function EstimatePage() {
           {e.can.amend && <button type="button" className="btn" onClick={() => { const r = window.prompt(t('act.why')); if (r) run(() => est.act(id, 'amend', { reason: r }), t('obj.versioned')).then(go); }} data-testid="est-amend">{t('act.amend')}</button>}
           {e.versions.length > 1 && <button type="button" className="btn" onClick={() => navigateTo(`/est/compare?id=${e.versions.find((x) => x.id !== id)?.id}&with=${id}`)} data-testid="est-compare">{t('act.compare')}</button>}
           <button type="button" className="btn" onClick={() => navigateTo(`/est/resources?id=${id}`)} data-testid="est-resources">{t('act.resources')}</button>
+          {reviewOn && <button type="button" className="btn" onClick={() => navigateTo(`/est/review?id=${id}`)} data-testid="est-review">{t('rev.title')}</button>}
+          {reviewOn && <button type="button" className="btn" onClick={() => navigateTo(`/est/bid-price?id=${id}`)} data-testid="est-bid-price">{t('bid.title')}</button>}
           {e.can.cancel && <button type="button" className="btn" onClick={() => why((r) => est.act(id, 'cancel', { reason: r }), t('obj.cancelled'))} data-testid="est-cancel">{t('act.cancel')}</button>}
           {e.can.delete && <button type="button" className="btn" onClick={async () => { if (window.confirm(t('act.confirmDelete'))) { const r = await run(() => est.remove(id)); if (r) navigateTo('/est/estimates', { force: true }); } }} data-testid="est-delete">{t('act.delete')}</button>}
           {e.can.print && <a className="btn" href={`/api/v1/est/estimates/${id}/print`} target="_blank" rel="noreferrer">{t('act.print')}</a>}

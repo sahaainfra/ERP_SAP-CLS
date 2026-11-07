@@ -6,6 +6,7 @@ export function reviewRoutes({ rv }, { idempotent, idempotentRequired }) {
   const r = Router();
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   const pid = (req) => parseId(req.params.id);
+  r.get('/bid-summaries/:id', (req, res) => ok(res, rv.estimateOfSummary(req.actor, pid(req))));
   r.get('/estimates/:id/review', (req, res) => ok(res, rv.panel(req.actor, pid(req))));
   r.get('/estimates/:id/reviews', (req, res) => ok(res, rv.reviews.list(req.actor, pid(req))));
   r.post('/estimates/:id/reviews', idempotentRequired, (req, res) => ok(res, rv.reviews.record(req.actor, pid(req), parseReview(req.body)), 201));

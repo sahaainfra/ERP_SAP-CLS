@@ -1,4 +1,4 @@
-import { api } from '../../platform/api/index.js';
+import { api, authHeaders } from '../../platform/api/index.js';
 
 // The data calls of the estimate workspace (part 09.01).
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
@@ -80,4 +80,35 @@ export function bendPreview(shape, deductions, l) {
   const bendD = Object.entries(shape.bends ?? {}).reduce((s, [k, n]) => s + Number(n) * Number(deductions?.[k] ?? 0), 0);
   const cut = r3(legs + ((shape.hooks ?? 0) * (shape.hookD ?? 0) - bendD) * dia / 1000); const total = r3(cut * nos); const unit = Math.floor((dia * dia / 162) * 1000) / 1000;
   return { nos, cut, total, unit, weight: r3(total * unit) };
+}
+
+// Part 09.03: review, bid price and priced BOQ.
+export const REVIEW_CODES = ['QUANTITIES', 'RATES', 'INDIRECTS', 'RISKS', 'ASSUMPTIONS'];
+export const ASSUMPTION_KINDS = ['ASSUMPTION', 'INCLUSION', 'EXCLUSION', 'QUALIFICATION'];
+export const rv = {
+  panel: async (id) => (await api.get(`/est/estimates/${id}/review`)).data,
+  review: async (id, b) => (await api.post(`/est/estimates/${id}/reviews`, b, idem())).data,
+  summary: async (id) => (await api.get(`/est/estimates/${id}/bid-summary`)).data,
+  discount: async (id, b) => (await api.put(`/est/estimates/${id}/bid-summary`, b, idem())).data,
+  discountAct: async (id, action, b = {}) => (await api.post(`/est/estimates/${id}/bid-summary/${action}`, b, idem())).data,
+  assumptions: async (id, b) => (await api.put(`/est/estimates/${id}/assumptions`, b, idem())).data,
+  sensitivity: async (id, pct) => (await api.get(`/est/estimates/${id}/sensitivity?pct=${pct}`)).data,
+  ofSummary: async (sid) => (await api.get(`/est/bid-summaries/${sid}`)).data,
+};
+/** The bid price while typing the discount (est.bid_price on the server). */
+export function bidPreview(selling, discountPct, gstPct) {
+  const s = Number(selling); const d = Math.round(s * Number(discountPct || 0)) / 100; const n = Math.round((s - d) * 100) / 100; const g = Math.round(n * Number(gstPct || 0)) / 100;
+  return { discount: d, net: n, gst: g, bid: Math.round((n + g) * 100) / 100 };
+}
+/** A file of the API fetched with the person's credentials and saved (or, for a printable page, opened in a new tab). */
+export async function fetchFile(path, { open = false } = {}) {
+  const win = open ? window.open('', '_blank') : null;
+  const res = await fetch(`/api/v1${path}`, { headers: { ...authHeaders(), 'x-correlation-id': globalThis.crypto.randomUUID() } });
+  if (!res.ok) { win?.close(); const e = await res.json().catch(() => null); throw Object.assign(new Error(e?.error?.message ?? `The server answered ${res.status}`), { correlationId: e?.error?.correlationId }); }
+  const blob = await res.blob(); const url = URL.createObjectURL(blob);
+  if (win) { win.location.href = url; return null; }
+  const name = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? 'download';
+  Object.assign(document.createElement('a'), { href: url, download: name }).click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return name;
 }

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { DatabaseSync } from 'node:sqlite';
+import { REVIEW_ITEMS } from '../src/server/modules/est/constants.js';
 
 // Development-header mode (port 3100).
 const H = (roles, company, user) => ({ 'x-erp-user': user, 'x-erp-roles': roles, 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}` });
@@ -38,12 +39,12 @@ const decide = async (request, c, roles, user, instanceId, action = 'approve') =
   const tasks = await api(request, c, roles, user, 'get', '/workflow/tasks?mine=assigned');
   const task = tasks.rows.find((x) => x.instance.id === instanceId);
   expect(task, `the task waits for ${user}`).toBeTruthy();
-  await api(request, c, roles, user, 'post', `/workflow/tasks/${task.id}/act`, { action, comment: 'checked it' });
+  await api(request, c, roles, user, 'post', `/workflow/tasks/${task.id}/act`, { action, comment: 'checked it', checked: REVIEW_ITEMS.map(([, l]) => l) });
 };
 function seed(c, t) {
   const db = new DatabaseSync('data/e2e.sqlite');
   db.exec('PRAGMA busy_timeout = 8000;');
-  for (const [n, roles] of [['dir', ['DIR']], ['est', ['EST']], ['est2', ['EST']], ['qs', ['QS']]]) db.prepare('INSERT OR IGNORE INTO iam_users (company_id, username, display_name, roles_json, email) VALUES (?, ?, ?, ?, ?)').run(c, `${t}-${n}`, n, JSON.stringify(roles), `${t}-${n}@example.com`);
+  for (const [n, roles] of [['dir', ['DIR']], ['est', ['EST']], ['est2', ['EST']], ['qs', ['QS']], ['com', ['COMMGR']]]) db.prepare('INSERT OR IGNORE INTO iam_users (company_id, username, display_name, roles_json, email) VALUES (?, ?, ?, ?, ?)').run(c, `${t}-${n}`, n, JSON.stringify(roles), `${t}-${n}@example.com`);
   const cat = Number(db.prepare("INSERT INTO mdm_item_categories (company_id, code, name, code_prefix, item_types_json, attribute_template_json, steward_role, category_status) VALUES (?, 'ESE', 'Estimate test', 'ESE', '[]', '[]', 'EST', 'ACTIVE')").run(c).lastInsertRowid);
   const item = (ic, name, type, uom) => Number(db.prepare("INSERT INTO mdm_items (company_id, code, name, item_type, category_id, base_uom, effective_from, item_status, search_text) VALUES (?, ?, ?, ?, ?, ?, '2026-01-01', 'ACTIVE', ?)").run(c, `${t.toUpperCase()}-${ic}`, name, type, cat, uom, name.toLowerCase()).lastInsertRowid);
   const it = { cement: item('CEM', 'Cement OPC 53', 'MATERIAL', 'MT'), sand: item('SND', 'Coarse sand', 'MATERIAL', 'CUM'), agg: item('AGG', 'Coarse aggregate 20 mm', 'MATERIAL', 'CUM'), mason: item('MSN', 'Mason', 'LABOUR', 'DAY'), beldar: item('BLD', 'Beldar', 'LABOUR', 'DAY'), mixer: item('MIX', 'Concrete mixer with operator', 'EQUIPMENT', 'DAY'), vib: item('VIB', 'Needle vibrator', 'EQUIPMENT', 'DAY'), m25: item('M25', 'RCC M25 in superstructure', 'WORK_ITEM', 'CUM') };
@@ -55,7 +56,7 @@ const BOQ = ['Section\tSection name\tItem\tDescription\tUnit\tQuantity\tClient r
 
 // Part 09.01: the estimate workspace. The estimator starts an estimate for a project, pastes the client BOQ (checked, then added), prices the items (a typed cost rate, the released M25 rate analysis, a build-up of components),
 // fills the indirect costs, the risks and the percentages; the totals and the margin by section are worked out on the server; the resource summary adds up cement, labour and plant; a second version changes a quantity and the
-// comparison shows it; the version is approved (a colleague, then the director); a quantity surveyor sees it without costs. On a computer and a phone, no console errors, no horizontal scroll.
+// comparison shows it; the version is approved (the commercial manager, then the director); a quantity surveyor sees it without costs. On a computer and a phone, no console errors, no horizontal scroll.
 test('AC-01 an estimate built from the pasted client BOQ with analyses, indirects and the resource summary; versions compared; approved; masked for QS, in the browser', async ({ browser, request }, info) => {
   test.setTimeout(240_000);
   const phone = info.project.name === 'mobile';
@@ -155,7 +156,7 @@ test('AC-01 an estimate built from the pasted client BOQ with analyses, indirect
   await est.page.goto(`/est/estimate?id=${v2}`);
   await est.page.getByTestId('est-submit').click(); await expect(est.page.getByTestId('estimate')).toHaveAttribute('data-status', 'SUBMITTED');
   const x = await call(E, 'get', `/est/estimates/${v2}`);
-  await decide(request, c, 'EST', g.u('est2'), x.workflowInstanceId); await decide(request, c, 'DIR', g.u('dir'), x.workflowInstanceId);
+  await decide(request, c, 'COMMGR', g.u('com'), x.workflowInstanceId); await decide(request, c, 'DIR', g.u('dir'), x.workflowInstanceId);
   await est.page.reload(); await expect(est.page.getByTestId('estimate')).toHaveAttribute('data-status', 'APPROVED');
   await est.page.goto('/est/estimates'); await expect(est.page.getByText('Alpha towers, civil works').first()).toBeVisible();
   if (phone) await noOverflow(est.page);
