@@ -5,6 +5,7 @@ import { publishEvent } from '../../platform/events/index.js';
 import { HttpError, badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { countList, defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
+import { fileEntities } from '../../platform/files/entities.js';
 import { evidenceProviders, workflowOf, workflowResolvers, workflowTypes } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
 import { createNumberingService } from '../core/numbering/service.js';
@@ -494,3 +495,10 @@ evidenceProviders.register(ACTIVATION_DOC, ({ db, instance }) => {
   const sites = db.prepare('SELECT COUNT(*) AS n FROM org_sites WHERE org_project_id = ? AND is_active = 1').get(x.project_id).n; const s = json(x.setup_json, {});
   return { sections: [{ code: 'proj-activation', title: 'Before approving the activation', kind: 'metrics', items: [{ label: 'Sites', value: String(sites), format: 'text' }, { label: 'Numbering series and folders made', value: `${(s.series ?? []).length} series, ${s.folders ?? 0} folders`, format: 'text' }, { label: 'Contract value', value: `₹ ${money(x.contract_value)}`, format: 'text' }] }] };
 });
+
+// The contract, the drawings handed over and the papers of a project are attached to the project (the id is the project of the organisation master).
+fileEntities.register({ entity: 'proj_project', label: 'Project papers (contract, letters, handover)', resolve(db, actor, id) {
+  const x = db.prepare('SELECT * FROM proj_projects WHERE project_id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!x) return null;
+  const check = (key) => authzOf(db).check(actor, key, { companyId: actor.companyId, projectId: x.project_id }).allowed;
+  return { companyId: x.company_id, projectId: x.project_id, siteId: null, canView: check('proj.project.view'), canEdit: check('proj.project.edit') && !['CLOSED', 'ARCHIVED'].includes(x.lifecycle_state), locked: ['CLOSED', 'ARCHIVED'].includes(x.lifecycle_state) };
+} });
