@@ -64,7 +64,10 @@ test('Route Registry: every route with its protection, filters, and a self-test 
   await expect(page).toHaveTitle(/Route Registry/);
   await expect(page.getByTestId('route-summary')).toContainText('100%');
   await expect(page.getByTestId('route-summary')).toContainText('Routes declared');
+  // more than 1,800 routes over pages of 50: the audit route is found by searching, as a person would
+  await page.getByRole('searchbox', { name: 'Search routes' }).fill('/core/audit');
   await expect(page.getByTestId('route-GET-/api/v1/core/audit')).toContainText('core.audit.view');
+  await page.getByRole('searchbox', { name: 'Search routes' }).fill('');
   await noOverflow(page);
   await page.locator('select[aria-label="Protection"]').selectOption('public');
   await expect(page.getByTestId('route-POST-/api/v1/iam/auth/login')).toContainText('Public');
