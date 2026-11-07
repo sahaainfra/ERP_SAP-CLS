@@ -13,8 +13,8 @@ import { GIS_CFG_STATUS, GIS_DOC, GIS_LTYPES, HUNDRED, PUNCH_MIN_PEOPLE, esc, js
 // georeferenced plan overlays, and points that other modules offer (DPR photos, inspections, NCRs, incidents) through a registry. Layers and overlays are configuration: a change waits as a proposal and goes live only when the project manager (not the maker)
 // approves it, and every change is audited. Progress by location and chainage gives the heatmap and the linear strip chart. Punches are shown only as aggregates of at least five people per cell (BR-01). KML and GeoJSON are imported and exported.
 for (const [key, dataType, def, description] of [
-  ['gis.tile_url', 'string', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', 'FR-01: the address template of the map tiles ({z}/{x}/{y}); empty means no base map (the vector layers and the list still work).'],
-  ['gis.tile_attribution', 'string', '© OpenStreetMap contributors', 'FR-01: the attribution shown with the base map.'],
+  ['gis.tile_url', 'string', 'NONE', 'FR-01: the address template of the base-map tiles, such as https://tile.openstreetmap.org/{z}/{x}/{y}.png; NONE (the default) means no base map: the vector layers, overlays and the list still work. The tile host must also be allowed in img-src of the content security policy (02.07), an approved security-settings change.'],
+  ['gis.tile_attribution', 'string', 'Map data © OpenStreetMap contributors', 'FR-01: the attribution shown with the base map.'],
 ]) if (!parameterRegistry.get(key)) parameterRegistry.define({ key, dataType, default: def, scopes: ['system', 'company'], description });
 
 /** FR-03: what the modules that hold located records offer to the map: { code, label, ownerModule, query?: (db, { companyId, projectId }) => [{ id, lat, lng, title, status, date, route }] }. A provider without a query is listed as "not live yet". */
@@ -298,7 +298,7 @@ export function createGisService({ db }) {
       });
       const pts = [...locations.filter((l) => l.lat != null && l.lng != null).map((l) => [l.lat, l.lng]), ...sites.filter((s) => s.lat != null && s.lng != null).map((s) => [s.lat, s.lng])];
       const center = pts.length ? [pts.reduce((n, p) => n + p[0], 0) / pts.length, pts.reduce((n, p) => n + p[1], 0) / pts.length] : [20.5937, 78.9629];
-      return { projectId: o.id, projectCode: o.code, projectName: o.name, center, zoom: pts.length ? 14 : 5, tile: { url: store.get('gis.tile_url', { companyId: actor.companyId, date }) || null, attribution: store.get('gis.tile_attribution', { companyId: actor.companyId, date }) || '' },
+      return { projectId: o.id, projectCode: o.code, projectName: o.name, center, zoom: pts.length ? 14 : 5, tile: { url: /^https?:\/\//i.test(String(store.get('gis.tile_url', { companyId: actor.companyId, date }))) ? store.get('gis.tile_url', { companyId: actor.companyId, date }) : null, attribution: store.get('gis.tile_attribution', { companyId: actor.companyId, date }) || '' },
         sites, layers: lyr, overlays: ovr, locations, points, punches: punchAggregates(actor, o.id, days), legend: BANDS.map(([a, b, tone]) => ({ from: a, to: Math.min(100, Math.floor(b)), tone })),
         summary: { sites: sites.length, layers: lyr.length, overlays: ovr.length, locations: locations.length, located: locations.filter((l) => l.lat != null).length, points: points.reduce((n, p) => n + p.features.length, 0) },
         can: { edit: canEdit, export: may(actor, 'proj.gis.export', o.id), progress: may(actor, 'proj.gis.progress', o.id) } };

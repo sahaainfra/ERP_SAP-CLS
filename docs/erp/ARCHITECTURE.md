@@ -1087,3 +1087,13 @@ Module `proj`, flag `ff.proj.p1006`, tables `proj_risk_settings`, `proj_risks`, 
 - **Permissions**: `proj.risk.*` and `proj.issue.*` (view, create, edit, delete, submit, approve, cancel, amend, print, export).
 - **Browser**: Risk Dashboard (heat map, tiles with drill-down, top risks, EMV against contingency, trend, thresholds, monthly review), Risk and Opportunity Register, Risk (assessment, response and triggers, contingency, history), Issue Log, Issue; Hindi through the `proj` namespace.
 
+## 86. GIS, site maps and location intelligence (part 10.07)
+
+Module `proj`, flag `ff.proj.p1007`, tables `gis_layers`, `gis_overlays`, `gis_progress`. The service is `modules/proj/gis.js` (`createGisService`, `gisOf`, `pointProviders`, `normaliseGeo`, `kmlToGeo`, `geoToKml`), routes in `routes.js` (`gisRoutes`), inputs in `validators.js`; pages in `client/modules/proj/` (`ProjectMapPage`, `StripChartPage`, `GisConfigPage`); the client dependency is Leaflet, imported on demand.
+
+- **Map** (FR-01, FR-03, FR-07, BR-01, ADR-406 to ADR-409): `/proj/gis/map` returns the sites with geofences, the location breakdown with progress, the approved layers the caller's roles may see, the overlays, the points of every provider and the punch aggregates, plus the tile settings (parameters `gis.tile_url`, `gis.tile_attribution`).
+- **Layers and overlays** (FR-02, FR-06, ADR-405): `/proj/gis/layers` and `/proj/gis/overlays` (list, create, get, update, delete, submit, withdraw, cancel, history), `/proj/gis/layers/import` (GeoJSON or KML), `/proj/gis/layers/:id/export` (GeoJSON or KML); workflow `PROJ_GIS_CONFIG`; event `proj.gis.config_approved`.
+- **Progress** (FR-04, FR-05, ADR-410): `/proj/gis/progress`, `/proj/gis/heatmap`, `/proj/gis/strip`, `/proj/gis/strip/export` (XLSX, CSV, PDF); event `proj.gis.progress_recorded`.
+- **Permissions**: `proj.gis.{view,create,edit,delete,submit,approve,cancel,print,export,import,progress}`; all project users view, planner and site engineer maintain, project manager and project director approve.
+- **Browser**: Project Map (layer toggles, heatmap, legend, list mode), Chainage Progress Strip Chart (SVG chart, table, export, record progress), Layers and Overlays; Hindi through the `proj` namespace.
+

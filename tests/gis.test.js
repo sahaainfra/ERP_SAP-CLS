@@ -54,7 +54,7 @@ test('T-01 a GeoJSON import becomes a layer after the project manager approves i
   assert.equal(await t.hasTask(se1, inst), false, 'the maker does not approve'); assert.equal(await t.hasTask(pm1, inst), true);
   assert.equal((await t.call(se1, 'PATCH', `/gis/layers/${l.id}`, { name: 'Changed' })).status, 409, 'locked while waiting');
   await t.act(pm1, inst);
-  const m = (await t.call(plan1, 'GET', `/gis/map?projectId=${t.a}`)).json.data; assert.equal(m.layers.length, 1); assert.equal(m.layers[0].geojson.features.length, 2); assert.deepEqual([m.layers[0].revision, m.summary.layers], [1, 1]); assert.ok(m.tile.url.includes('{z}'), 'the base map is a parameter');
+  const m = (await t.call(plan1, 'GET', `/gis/map?projectId=${t.a}`)).json.data; assert.equal(m.layers.length, 1); assert.equal(m.layers[0].geojson.features.length, 2); assert.deepEqual([m.layers[0].revision, m.summary.layers], [1, 1]); assert.equal(m.tile.url, null, 'no base map until an administrator sets the tile address (and allows the host in the content security policy)');
   // a change to the live layer: the live content stays until it is approved
   const up = await t.call(se1, 'PATCH', `/gis/layers/${l.id}`, { geojson: fc(boundary.features[0]) }); assert.equal(up.status, 200, JSON.stringify(up.json)); assert.deepEqual([up.json.data.status, up.json.data.features, up.json.data.pendingFeatures], ['DRAFT', 2, 1]);
   assert.equal((await t.call(plan1, 'GET', `/gis/map?projectId=${t.a}`)).json.data.layers[0].geojson.features.length, 2);

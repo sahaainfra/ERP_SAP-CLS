@@ -6361,3 +6361,100 @@ paths:
     get:
       summary: "The issue as HTML, PDF, XLSX or CSV"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/map:
+    get:
+      summary: "GIS: GET /map"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/heatmap:
+    get:
+      summary: "GIS: GET /heatmap"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/strip:
+    get:
+      summary: "GIS: GET /strip"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/strip/export:
+    get:
+      summary: "GIS: GET /strip/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/progress:
+    get:
+      summary: "GIS: GET /progress"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "GIS: POST /progress"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers:
+    get:
+      summary: "GIS: GET /layers"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "GIS: POST /layers"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers/import:
+    post:
+      summary: "GIS: POST /layers/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers/{id}:
+    get:
+      summary: "GIS: GET /layers/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "GIS: PATCH /layers/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "GIS: DELETE /layers/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers/{id}/submit:
+    post:
+      summary: "GIS: POST /layers/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers/{id}/withdraw:
+    post:
+      summary: "GIS: POST /layers/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers/{id}/cancel:
+    post:
+      summary: "GIS: POST /layers/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers/{id}/history:
+    get:
+      summary: "GIS: GET /layers/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/layers/{id}/export:
+    get:
+      summary: "GIS: GET /layers/{id}/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/overlays:
+    get:
+      summary: "GIS: GET /overlays"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "GIS: POST /overlays"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/overlays/{id}:
+    get:
+      summary: "GIS: GET /overlays/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "GIS: PATCH /overlays/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "GIS: DELETE /overlays/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/overlays/{id}/submit:
+    post:
+      summary: "GIS: POST /overlays/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/overlays/{id}/withdraw:
+    post:
+      summary: "GIS: POST /overlays/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/overlays/{id}/cancel:
+    post:
+      summary: "GIS: POST /overlays/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/gis/overlays/{id}/history:
+    get:
+      summary: "GIS: GET /overlays/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

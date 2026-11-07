@@ -4362,6 +4362,120 @@ Indexes:
 - ix_fin_master_changes_entity: entity, entity_id
 - ix_fin_master_changes_list: company_id, request_status, entity
 
+## gis_layers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| ltype | TEXT | yes |  |  |
+| geojson | TEXT | yes |  | '{"type":"FeatureCollection","features":[]}' |
+| style_json | TEXT | yes |  | '{}' |
+| visible_roles_json | TEXT | yes |  | '[]' |
+| cfg_status | TEXT | yes |  | 'DRAFT' |
+| has_live | INTEGER | yes |  | 0 |
+| pending_json | TEXT |  |  |  |
+| revision | INTEGER | yes |  | 0 |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| effective_from | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gis_layers_project: org_project_id, cfg_status
+- ix_gis_layers_company_id: company_id
+- ux_gis_layers_name (unique): org_project_id, name
+
+## gis_overlays
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| image_url | TEXT | yes |  |  |
+| file_id | INTEGER |  |  |  |
+| bounds_json | TEXT | yes |  |  |
+| opacity | INTEGER | yes |  | 70 |
+| cfg_status | TEXT | yes |  | 'DRAFT' |
+| has_live | INTEGER | yes |  | 0 |
+| pending_json | TEXT |  |  |  |
+| revision | INTEGER | yes |  | 0 |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| effective_from | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gis_overlays_project: org_project_id, cfg_status
+- ix_gis_overlays_company_id: company_id
+- ux_gis_overlays_name (unique): org_project_id, name
+
+## gis_progress
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| location_id | INTEGER | yes |  |  |
+| activity | TEXT | yes |  |  |
+| pct | INTEGER | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: location_id -> proj_locations(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gis_progress_location: location_id, activity, as_of
+- ix_gis_progress_project: org_project_id, activity, as_of
+- ix_gis_progress_company_id: company_id
+
 ## hr_candidates
 
 | Column | Type | Not null | Key | Default |
