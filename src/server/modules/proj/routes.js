@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard } from './validators.js';
+import { parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard } from './validators.js';
 
 /** Part 10.01: the project master. Rights and scope are checked in the service. */
 export function projectRoutes({ svc, exportsOf }, { idempotent, idempotentRequired }) {
@@ -77,5 +77,60 @@ export function baselineRoutes(bl, { exportsOf }, { idempotent, idempotentRequir
   r.delete('/handover-meetings/:id', (req, res) => ok(res, m.remove(req.actor, pid(req))));
   r.get('/boq', (req, res) => ok(res, bl.boq.list(req.actor, parseProjectQuery(req.query).projectId)));
   r.get('/baseline-report', (req, res) => ok(res, bl.report.get(req.actor, parseProjectQuery(req.query).projectId)));
+  return r;
+}
+
+/** Part 10.03: the WBS, its versions and changes, the locations, the matrix and the work packages. The project is the organisation project (projectId). */
+export function structureRoutes(sv, { exportsOf }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pj = (req) => parseProjectQuery(req.query).projectId; const pid = (req) => parseId(req.params.id);
+  const w = sv.wbs; const c = sv.changes; const l = sv.locations; const k = sv.packages;
+  r.get('/wbs-projects', (req, res) => ok(res, sv.projectsList(req.actor)));
+  r.get('/wbs', (req, res) => ok(res, w.tree(req.actor, pj(req))));
+  r.post('/wbs', idempotent, (req, res) => ok(res, w.create(req.actor, pj(req), parseWbsCreate(req.body)), 201));
+  r.get('/wbs/validate', (req, res) => ok(res, w.validate(req.actor, pj(req))));
+  r.get('/wbs/export', (req, res) => { const q = parseWbsFormat(req.query); const out = w.exportFile(req.actor, q.projectId, q.format); res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }); res.send(out.buffer); });
+  r.post('/wbs/bulk', idempotent, (req, res) => ok(res, w.bulk(req.actor, pj(req), parseWbsBulk(req.body))));
+  r.post('/wbs/normalise', idempotent, (req, res) => ok(res, w.normalise(req.actor, pj(req), parseWbsNormalise(req.body))));
+  r.post('/wbs/template', idempotentRequired, (req, res) => ok(res, w.applyTemplate(req.actor, pj(req), parseWbsTemplate(req.body)), 201));
+  r.post('/wbs/copy', idempotentRequired, (req, res) => ok(res, w.copyFrom(req.actor, pj(req), parseWbsCopy(req.body)), 201));
+  r.post('/wbs/baseline', idempotentRequired, (req, res) => ok(res, w.baseline(req.actor, pj(req), parseWbsBaseline(req.body)), 201));
+  r.patch('/wbs/:id', idempotent, (req, res) => ok(res, w.update(req.actor, pj(req), pid(req), parseWbsUpdate(req.body))));
+  r.delete('/wbs/:id', (req, res) => ok(res, w.remove(req.actor, pj(req), pid(req))));
+  r.post('/wbs/:id/move', idempotent, (req, res) => ok(res, w.move(req.actor, pj(req), pid(req), parseWbsMove(req.body))));
+  r.post('/wbs/:id/activate', idempotent, (req, res) => ok(res, w.setStatus(req.actor, pj(req), pid(req), true)));
+  r.post('/wbs/:id/deactivate', idempotent, (req, res) => ok(res, w.setStatus(req.actor, pj(req), pid(req), false)));
+  r.get('/wbs-versions', (req, res) => ok(res, w.versions(req.actor, pj(req))));
+  r.get('/wbs-versions/:id', (req, res) => ok(res, w.version(req.actor, pj(req), pid(req))));
+  r.get('/wbs-changes', (req, res) => ok(res, c.list(req.actor, pj(req))));
+  r.post('/wbs-changes', idempotentRequired, (req, res) => ok(res, c.create(req.actor, pj(req), parseWbsChange(req.body)), 201));
+  r.get('/wbs-changes/:id/locate', (req, res) => ok(res, c.locate(req.actor, pid(req))));
+  r.get('/wbs-changes/:id', (req, res) => ok(res, c.get(req.actor, pj(req), pid(req))));
+  r.post('/wbs-changes/:id/submit', idempotentRequired, (req, res) => ok(res, c.submit(req.actor, pj(req), pid(req)), 202));
+  r.post('/wbs-changes/:id/withdraw', idempotent, (req, res) => ok(res, c.withdraw(req.actor, pj(req), pid(req), parseReason(req.body))));
+  r.post('/wbs-changes/:id/cancel', idempotent, (req, res) => ok(res, c.cancel(req.actor, pj(req), pid(req), parseReason(req.body))));
+  r.get('/wbs-changes/:id/history', (req, res) => ok(res, c.history(req.actor, pj(req), pid(req))));
+  r.get('/locations', (req, res) => ok(res, l.tree(req.actor, pj(req))));
+  r.post('/locations', idempotent, (req, res) => ok(res, l.create(req.actor, pj(req), parseLocCreate(req.body)), 201));
+  r.patch('/locations/:id', idempotent, (req, res) => ok(res, l.update(req.actor, pj(req), pid(req), parseLocUpdate(req.body))));
+  r.delete('/locations/:id', (req, res) => ok(res, l.remove(req.actor, pj(req), pid(req))));
+  r.post('/locations/:id/move', idempotent, (req, res) => ok(res, l.move(req.actor, pj(req), pid(req), parseLocMove(req.body))));
+  r.post('/locations/:id/activate', idempotent, (req, res) => ok(res, l.setStatus(req.actor, pj(req), pid(req), true)));
+  r.post('/locations/:id/deactivate', idempotent, (req, res) => ok(res, l.setStatus(req.actor, pj(req), pid(req), false)));
+  r.get('/wbs-matrix', (req, res) => ok(res, sv.matrix.get(req.actor, pj(req))));
+  r.put('/wbs-matrix', idempotent, (req, res) => ok(res, sv.matrix.set(req.actor, pj(req), parseMatrix(req.body))));
+  r.get('/work-packages', (req, res) => res.json(k.list(req.actor, req.query)));
+  r.get('/work-packages/export', (req, res) => {
+    const x = exportsOf(); if (!x) throw new Error('The list export service is not running');
+    const out = x.start(req.actor, 'proj.work_packages', req.query);
+    if (out.kind === 'job') return res.status(202).json({ data: out });
+    res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+    return res.send(out.buffer);
+  });
+  r.post('/work-packages', idempotent, (req, res) => { const b = parseWpCreate(req.body); ok(res, k.create(req.actor, b.projectId, b), 201); });
+  r.get('/work-packages/:id', (req, res) => ok(res, k.get(req.actor, pid(req))));
+  r.patch('/work-packages/:id', idempotent, (req, res) => ok(res, k.update(req.actor, pid(req), parseWpUpdate(req.body))));
+  r.delete('/work-packages/:id', (req, res) => ok(res, k.remove(req.actor, pid(req))));
   return r;
 }

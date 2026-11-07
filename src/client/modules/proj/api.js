@@ -55,3 +55,53 @@ export async function openDocument(id, format = 'html') {
     if (w) w.location.href = url; else { const a = document.createElement('a'); a.href = url; a.download = `baseline-${id}.${format}`; a.click(); }
   } catch { w?.close(); }
 }
+
+// Part 10.03: the WBS, the location breakdown, the matrix, the changes after the baseline and the work packages.
+const pq = (projectId) => `projectId=${projectId}`;
+export const st = {
+  projects: async () => (await api.get('/proj/wbs-projects')).data,
+  tree: async (p) => (await api.get(`/proj/wbs?${pq(p)}`)).data,
+  create: async (p, b) => (await api.post(`/proj/wbs?${pq(p)}`, b, idem())).data,
+  update: async (p, id, b) => (await api.patch(`/proj/wbs/${id}?${pq(p)}`, b, idem())).data,
+  remove: async (p, id) => (await api.delete(`/proj/wbs/${id}?${pq(p)}`)).data,
+  move: async (p, id, b) => (await api.post(`/proj/wbs/${id}/move?${pq(p)}`, b, idem())).data,
+  setStatus: async (p, id, on) => (await api.post(`/proj/wbs/${id}/${on ? 'activate' : 'deactivate'}?${pq(p)}`, {}, idem())).data,
+  bulk: async (p, b) => (await api.post(`/proj/wbs/bulk?${pq(p)}`, b, idem())).data,
+  normalise: async (p, b = {}) => (await api.post(`/proj/wbs/normalise?${pq(p)}`, b, idem())).data,
+  template: async (p, b) => (await api.post(`/proj/wbs/template?${pq(p)}`, b, idem())).data,
+  copy: async (p, b) => (await api.post(`/proj/wbs/copy?${pq(p)}`, b, idem())).data,
+  baseline: async (p, b = {}) => (await api.post(`/proj/wbs/baseline?${pq(p)}`, b, idem())).data,
+  versions: async (p) => (await api.get(`/proj/wbs-versions?${pq(p)}`)).data,
+  version: async (p, id) => (await api.get(`/proj/wbs-versions/${id}?${pq(p)}`)).data,
+  changes: async (p) => (await api.get(`/proj/wbs-changes?${pq(p)}`)).data,
+  change: async (p, id) => (await api.get(`/proj/wbs-changes/${id}?${pq(p)}`)).data,
+  locate: async (id) => (await api.get(`/proj/wbs-changes/${id}/locate`)).data,
+  createChange: async (p, b) => (await api.post(`/proj/wbs-changes?${pq(p)}`, b, idem())).data,
+  actChange: async (p, id, action, b = {}) => (await api.post(`/proj/wbs-changes/${id}/${action}?${pq(p)}`, b, idem())).data,
+  locations: async (p) => (await api.get(`/proj/locations?${pq(p)}`)).data,
+  createLoc: async (p, b) => (await api.post(`/proj/locations?${pq(p)}`, b, idem())).data,
+  updateLoc: async (p, id, b) => (await api.patch(`/proj/locations/${id}?${pq(p)}`, b, idem())).data,
+  removeLoc: async (p, id) => (await api.delete(`/proj/locations/${id}?${pq(p)}`)).data,
+  moveLoc: async (p, id, b) => (await api.post(`/proj/locations/${id}/move?${pq(p)}`, b, idem())).data,
+  setLocStatus: async (p, id, on) => (await api.post(`/proj/locations/${id}/${on ? 'activate' : 'deactivate'}?${pq(p)}`, {}, idem())).data,
+  matrix: async (p) => (await api.get(`/proj/wbs-matrix?${pq(p)}`)).data,
+  setMatrix: async (p, cells) => (await api.put(`/proj/wbs-matrix?${pq(p)}`, { cells }, idem())).data,
+  wp: async (id) => (await api.get(`/proj/work-packages/${id}`)).data,
+  createWp: async (b) => (await api.post('/proj/work-packages', b, idem())).data,
+  updateWp: async (id, b) => (await api.patch(`/proj/work-packages/${id}`, b, idem())).data,
+  removeWp: async (id) => (await api.delete(`/proj/work-packages/${id}`)).data,
+};
+/** Downloads the WBS as a file with the sign-in of this session. */
+export async function downloadWbs(projectId, format) {
+  const { authHeaders } = await import('../../platform/api/index.js');
+  const res = await fetch(`/api/v1/proj/wbs/export?projectId=${projectId}&format=${format}`, { headers: authHeaders() });
+  if (!res.ok) throw new Error(String(res.status));
+  const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = `wbs-${projectId}.${format}`; a.click();
+}
+export const WP_TYPES = ['SELF', 'SUBCONTRACT', 'PROCUREMENT'];
+export const LOC_TYPES = ['BLOCK', 'BUILDING', 'FLOOR', 'ZONE', 'ROOM', 'CHAINAGE', 'STRUCTURE'];
+/** The nodes of a flat tree in the order of the tree (depth first, by sort order). */
+export function ordered(nodes) {
+  const kids = new Map(); for (const n of nodes) { const k = n.parentId ?? 0; if (!kids.has(k)) kids.set(k, []); kids.get(k).push(n); }
+  const out = []; const walk = (pid) => { for (const n of (kids.get(pid) ?? []).sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)) { out.push(n); walk(n.id); } }; walk(0); return out;
+}

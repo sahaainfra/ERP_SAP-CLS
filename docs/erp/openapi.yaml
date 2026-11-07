@@ -5791,3 +5791,154 @@ paths:
     get:
       summary: "The signed-off baseline against the current figures"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-projects:
+    get:
+      summary: "Projects whose structure the person may see"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs:
+    get:
+      summary: "The WBS tree with its validation and what the person may do"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add a WBS node (before the baseline)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/validate:
+    get:
+      summary: "Weight groups that do not sum to 100 %"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/export:
+    get:
+      summary: "The WBS as XLSX, CSV or PDF"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/bulk:
+    post:
+      summary: "Edit several nodes at once"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/normalise:
+    post:
+      summary: "Scale the weights of siblings to sum to 100 %"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/template:
+    post:
+      summary: "Start the WBS from a template of the project type"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/copy:
+    post:
+      summary: "Copy the structure of another project into an empty WBS"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/baseline:
+    post:
+      summary: "Baseline the WBS (version 1; the structure is locked)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/{id}:
+    patch:
+      summary: "Change a node"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a node that is not in use"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/{id}/move:
+    post:
+      summary: "Move a node (keeps its links)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/{id}/activate:
+    post:
+      summary: "Activate a node"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs/{id}/deactivate:
+    post:
+      summary: "Deactivate a node and its subtree"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-versions:
+    get:
+      summary: "The versions of the WBS"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-versions/{id}:
+    get:
+      summary: "One version with its snapshot and diff"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-changes:
+    get:
+      summary: "The change requests after the baseline"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Raise a change request (dry-run checked)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-changes/{id}:
+    get:
+      summary: "One change request"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-changes/{id}/locate:
+    get:
+      summary: "The project of a change request"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-changes/{id}/submit:
+    post:
+      summary: "Send the change for approval"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-changes/{id}/withdraw:
+    post:
+      summary: "Withdraw the change"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-changes/{id}/cancel:
+    post:
+      summary: "Cancel the change"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-changes/{id}/history:
+    get:
+      summary: "Approvals of the change"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/locations:
+    get:
+      summary: "The location tree"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add a location"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/locations/{id}:
+    patch:
+      summary: "Change a location"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a location that is not in use"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/locations/{id}/move:
+    post:
+      summary: "Move a location"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/locations/{id}/activate:
+    post:
+      summary: "Activate a location"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/locations/{id}/deactivate:
+    post:
+      summary: "Deactivate a location and those under it"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/wbs-matrix:
+    get:
+      summary: "The WBS x location matrix"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: "Set cells of the matrix"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/work-packages:
+    get:
+      summary: "Work packages"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Create a work package"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/work-packages/export:
+    get:
+      summary: "Export work packages"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/work-packages/{id}:
+    get:
+      summary: "One work package"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change a work package"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a work package"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

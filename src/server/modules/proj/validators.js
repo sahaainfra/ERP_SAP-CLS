@@ -55,3 +55,32 @@ export const parsePackFormat = (q) => parse(z.object({ format: z.enum(['html', '
 export const parseMeeting = (b) => parse(meeting, b);
 export const parseMeetingUpdate = (b) => parse(meeting.partial().extend({ version: version.optional() }).strict(), b);
 export const parseProjectQuery = (q) => parse(z.object({ projectId: id }).strict(), q);
+
+// ---- Part 10.03: the project structure ----
+const optPct = z.union([z.number(), z.string().trim().regex(/^\d+(\.\d{1,4})?$/, 'Give a percentage')]).transform((x) => String(x));
+const wbsFields = { code: optText(40).optional(), name: text(200).min(1, 'Give the name'), weight: optPct.optional(), discipline: optText(30).optional(), responsibleUser: optText(60).optional(), isControlAccount: z.boolean().optional(), description: optText(2000).optional() };
+export const parseWbsCreate = (b) => parse(z.object({ parentId: optId, ...wbsFields }).strict(), b);
+export const parseWbsUpdate = (b) => parse(z.object({ code: text(40).min(1).optional(), name: text(200).min(1).optional(), weight: optPct.optional(), discipline: optText(30).optional(), responsibleUser: optText(60).optional(), isControlAccount: z.boolean().optional(), description: optText(2000).optional(), version: version.optional() }).strict(), b);
+export const parseWbsMove = (b) => parse(z.object({ parentId: optId, beforeId: optId }).strict(), b);
+export const parseWbsBulk = (b) => parse(z.object({ ids: z.array(id).min(1).max(500), set: z.object({ discipline: optText(30).optional(), responsibleUser: optText(60).optional(), isControlAccount: z.boolean().optional() }).strict().refine((o) => Object.keys(o).length > 0, 'Give at least one field') }).strict(), b);
+export const parseWbsNormalise = (b) => parse(z.object({ parentId: optId.optional() }).strict(), b ?? {});
+export const parseWbsTemplate = (b) => parse(z.object({ template: text(40).min(1, 'Choose a template'), parentId: optId }).strict(), b);
+export const parseWbsCopy = (b) => parse(z.object({ sourceProjectId: id, includeLocations: z.boolean().default(false), includeWorkPackages: z.boolean().default(false) }).strict(), b);
+export const parseWbsBaseline = (b) => parse(z.object({ reason: optText(1000) }).strict(), b ?? {});
+export const parseWbsFormat = (q) => parse(z.object({ projectId: id, format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q);
+const op = z.discriminatedUnion('op', [
+  z.object({ op: z.literal('add'), parentId: z.union([id, text(40)]).nullish(), ...wbsFields }).strict(),
+  z.object({ op: z.literal('update'), id: z.union([id, text(40)]), fields: z.object({ code: text(40).min(1).optional(), name: text(200).min(1).optional(), weight: optPct.optional(), discipline: optText(30).optional(), responsibleUser: optText(60).optional(), isControlAccount: z.boolean().optional(), description: optText(2000).optional() }).strict() }).strict(),
+  z.object({ op: z.literal('move'), id: z.union([id, text(40)]), parentId: z.union([id, text(40)]).nullish(), beforeId: optId }).strict(),
+  z.object({ op: z.literal('deactivate'), id: id }).strict(), z.object({ op: z.literal('activate'), id: id }).strict(), z.object({ op: z.literal('delete'), id: id }).strict(),
+  z.object({ op: z.literal('weights'), weights: z.array(z.object({ id: z.union([id, text(40)]), weight: optPct }).strict()).min(1).max(200) }).strict(),
+]);
+export const parseWbsChange = (b) => parse(z.object({ reason, ops: z.array(op).min(1, 'Give at least one operation').max(200) }).strict(), b);
+const locFields = { type: z.enum(['BLOCK', 'BUILDING', 'FLOOR', 'ZONE', 'ROOM', 'CHAINAGE', 'STRUCTURE']), code: text(40).min(1, 'Give the code'), name: text(200).min(1, 'Give the name'), chainageFrom: z.number().int().min(0).nullish(), chainageTo: z.number().int().min(0).nullish(), lat: z.number().nullish(), lng: z.number().nullish(), description: optText(2000).optional() };
+export const parseLocCreate = (b) => parse(z.object({ parentId: optId, ...locFields }).strict(), b);
+export const parseLocUpdate = (b) => parse(z.object({ type: locFields.type.optional(), code: text(40).min(1).optional(), name: text(200).min(1).optional(), chainageFrom: locFields.chainageFrom, chainageTo: locFields.chainageTo, lat: locFields.lat, lng: locFields.lng, description: locFields.description, version: version.optional() }).strict(), b);
+export const parseLocMove = (b) => parse(z.object({ parentId: optId }).strict(), b);
+export const parseMatrix = (b) => parse(z.object({ cells: z.array(z.object({ wbsId: id, locationId: id, on: z.boolean() }).strict()).min(1).max(2000) }).strict(), b);
+export const parseWp = (b) => parse(z.object({ code: text(40).min(1, 'Give the code'), name: text(200).min(1, 'Give the name'), type: z.enum(['SELF', 'SUBCONTRACT', 'PROCUREMENT']), wbsIds: z.array(id).max(500).default([]), ownerUser: optText(60), description: optText(2000).optional() }).strict(), b);
+export const parseWpUpdate = (b) => parse(z.object({ code: text(40).min(1).optional(), name: text(200).min(1).optional(), type: z.enum(['SELF', 'SUBCONTRACT', 'PROCUREMENT']).optional(), wbsIds: z.array(id).max(500).optional(), ownerUser: optText(60).optional(), description: optText(2000).optional(), status: z.enum(['ACTIVE', 'INACTIVE', 'CLOSED']).optional(), version: version.optional() }).strict(), b);
+export const parseWpCreate = (b) => parse(z.object({ projectId: id, code: text(40).min(1, 'Give the code'), name: text(200).min(1, 'Give the name'), type: z.enum(['SELF', 'SUBCONTRACT', 'PROCUREMENT']), wbsIds: z.array(id).max(500).default([]), ownerUser: optText(60), description: optText(2000).optional() }).strict(), b);

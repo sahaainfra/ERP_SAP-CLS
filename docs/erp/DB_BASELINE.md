@@ -10554,6 +10554,45 @@ Indexes:
 - ix_proj_lifecycle_log_project: project_id, id
 - ix_proj_lifecycle_log_company_id: company_id
 
+## proj_locations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| parent_id | INTEGER |  |  |  |
+| loc_type | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| chainage_from | INTEGER |  |  |  |
+| chainage_to | INTEGER |  |  |  |
+| lat | REAL |  |  |  |
+| lng | REAL |  |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| loc_status | TEXT | yes |  | 'ACTIVE' |
+| description | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proj_locations(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_locations_parent: project_id, parent_id, sort_order
+- ix_proj_locations_company_id: company_id
+- ix_proj_locations_parent_id: parent_id
+- ux_proj_locations_code (unique): project_id, code
+
 ## proj_milestones
 
 | Column | Type | Not null | Key | Default |
@@ -10648,6 +10687,150 @@ Indexes:
 - ix_proj_projects_status: company_id, status
 - ix_proj_projects_company_id: company_id
 - ux_proj_projects_project (unique): project_id
+
+## proj_wbs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| parent_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| level | INTEGER | yes |  | 1 |
+| weight | INTEGER | yes |  | 0 |
+| discipline | TEXT |  |  |  |
+| responsible_user | TEXT |  |  |  |
+| is_control_account | INTEGER | yes |  | 0 |
+| sort_order | INTEGER | yes |  | 0 |
+| wbs_status | TEXT | yes |  | 'ACTIVE' |
+| description | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proj_wbs(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_wbs_responsible: company_id, responsible_user
+- ix_proj_wbs_parent: project_id, parent_id, sort_order
+- ix_proj_wbs_company_id: company_id
+- ix_proj_wbs_parent_id: parent_id
+- ux_proj_wbs_code (unique): project_id, code
+
+## proj_wbs_locations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER | yes |  |  |
+| location_id | INTEGER | yes |  |  |
+| note | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: location_id -> proj_locations(id), wbs_id -> proj_wbs(id), project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_wbs_locations_location: location_id
+- ix_proj_wbs_locations_project: project_id
+- ix_proj_wbs_locations_company_id: company_id
+- ux_proj_wbs_locations_cell (unique): wbs_id, location_id
+
+## proj_wbs_versions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| version_status | TEXT | yes |  | 'DRAFT' |
+| reason | TEXT |  |  |  |
+| ops_json | TEXT | yes |  | '[]' |
+| snapshot_json | TEXT |  |  |  |
+| diff_json | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| project_ref_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_proj_wbs_versions_open (unique): project_id
+- ix_proj_wbs_versions_project: project_id, version_no
+- ix_proj_wbs_versions_company_id: company_id
+
+## proj_work_packages
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| project_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| wp_type | TEXT | yes |  | 'SELF' |
+| wbs_ids_json | TEXT | yes |  | '[]' |
+| owner_user | TEXT |  |  |  |
+| wp_status | TEXT | yes |  | 'ACTIVE' |
+| description | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_work_packages_owner: company_id, owner_user
+- ix_proj_work_packages_project: project_id, wp_type
+- ix_proj_work_packages_company_id: company_id
+- ux_proj_work_packages_code (unique): project_id, code
 
 ## ra_analyses
 

@@ -1036,3 +1036,16 @@ Behind feature flag `ff.proj.p1002` (module `proj`; needs 10.01, 08.03 and 09.03
 - **Other events**: `proj.project.created_from_award`.
 - **Permissions**: `proj.baseline_pack.{view,create,edit,delete,submit,approve,cancel,amend,print,export,cost}`, `proj.handover.manage`; EST, COMMGR and PD draft, send, sign and see costs; PCMGR drafts and sends without costs; PM sees and prints without costs and keeps the handover; DIR signs and sees costs.
 - **Browser**: Create Project from Award (preview, form), Commercial Baseline Packs, Commercial Baseline Pack (summary, BOQ, basis, clauses, handover, approvals, related), Baseline vs Current; Hindi through the `proj` namespace.
+
+## 82. WBS, work packages and the location breakdown (part 10.03)
+
+Behind feature flag `ff.proj.p1003` (module `proj`; needs 10.01). Code: `modules/proj/structure.js` (the WBS, the versions and changes, the work packages, the locations, the matrix, the workflow `PROJ_WBS_CHANGE`), routes in `routes.js` (`structureRoutes`), inputs in `validators.js`, imports in `integrations.js`; pages in `client/modules/proj/` (`WbsPage`, `LocationsPage`, `WorkPackagesPage`, `WorkPackagePage`, `ProjectPicker`).
+
+- **WBS** (FR-01, FR-02, FR-06, BR-01, BR-02, ADR-381, ADR-382, ADR-386): `/proj/wbs` (tree, create, update, delete, move, activate, deactivate, bulk, normalise, validate, template, copy, export XLSX/CSV/PDF), `/proj/wbs-projects`; Excel import type `PROJ_WBS`.
+- **Baseline and versions** (FR-07, ADR-383): `POST /proj/wbs/baseline`, `/proj/wbs-versions`, `/proj/wbs-changes` (create, get, submit, withdraw, cancel, history, locate); workflow `PROJ_WBS_CHANGE`.
+- **Work packages** (FR-03, ADR-384): `/proj/work-packages` (list, export, create, get, update, delete).
+- **Locations** (FR-04, ADR-385): `/proj/locations`; Excel import type `PROJ_LOCATION`. **Matrix** (FR-05): `/proj/wbs-matrix`.
+- **Registries for later parts**: `usageProviders`, `locationUsageProviders`; `structureOf(db).forProject()` reads the structure.
+- **Events**: `proj.wbs.updated`, `proj.wbs.baselined`, `proj.wbs.changed`, `proj.location.updated`, `proj.workpackage.updated`, `proj.matrix.updated`.
+- **Permissions**: `proj.wbs.{view,manage,baseline,change,approve,export,import}`; PLAN and PCMGR maintain and raise changes, PM baselines and approves, project roles view.
+- **Browser**: WBS Editor (tree with drag and drop, Move to, Undo, bulk edit, template, copy, matrix, versions, changes), Location Breakdown (tree and chainage table), Work Packages (list and form); Hindi through the `proj` namespace.

@@ -1,6 +1,7 @@
 import { lookupRegistry } from '../../platform/lookups/index.js';
 import { registerImportType } from '../eng/excel.js';
 import { projectsOf } from './project.js';
+import { structureOf } from './structure.js';
 
 // Part 10.01 for the rest of the ERP: the lookups of the wizard (clients, consultants and funding agencies from the partner master) and the Excel import (04.13) of milestones into the key dates register of a project.
 const lookup = (name, label, role) => lookupRegistry.register({
@@ -31,4 +32,24 @@ registerImportType({
   keys: ['projectCode', 'code'], findExisting: () => null,
   validateRow() { return []; },
   commitRow(ctx, { row }) { return projectsOf(ctx.db).milestones.importRow(ctx.actor, { projectCode: row.projectCode, row: { code: row.code, name: row.name, plannedDate: row.plannedDate, contractual: Boolean(row.contractual), paymentLinked: Boolean(row.paymentLinked) } }); },
+});
+
+// Part 10.03: the Excel import (04.13) of the WBS and of the location breakdown. Parents are listed before their children; a baselined WBS is changed by a change request, not by import.
+registerImportType({
+  code: 'PROJ_WBS', label: 'Project WBS (work breakdown structure)', module: 'project structure',
+  description: 'Each row adds a WBS node to a project (give its code): the node code, its parent code (empty at the top), the name, the weight in % among its siblings, the discipline, the person responsible and whether it is a control account. List parents before their children. A baselined WBS is changed by a change request, not by import.',
+  permission: 'proj.wbs.import', exportPermission: 'proj.wbs.view', onExisting: ['ERROR'], chunked: false,
+  columns: [{ key: 'projectCode', label: 'Project', type: 'text', required: true, maxLength: 30 }, { key: 'code', label: 'WBS code', type: 'text', required: false, maxLength: 40 }, { key: 'parentCode', label: 'Parent code', type: 'text', maxLength: 40 }, { key: 'name', label: 'Name', type: 'text', required: true, maxLength: 200 }, { key: 'weight', label: 'Weight %', type: 'text', maxLength: 12 }, { key: 'discipline', label: 'Discipline', type: 'text', maxLength: 30 }, { key: 'responsibleUser', label: 'Responsible (user name)', type: 'text', maxLength: 60 }, { key: 'controlAccount', label: 'Control account', type: 'bool' }],
+  keys: ['projectCode', 'code'], findExisting: () => null,
+  validateRow() { return []; },
+  commitRow(ctx, { row }) { return structureOf(ctx.db).wbs.importRow(ctx.actor, { projectCode: row.projectCode, row: { code: row.code, parentCode: row.parentCode, name: row.name, weight: row.weight, discipline: row.discipline, responsibleUser: row.responsibleUser, controlAccount: Boolean(row.controlAccount) } }); },
+});
+registerImportType({
+  code: 'PROJ_LOCATION', label: 'Project locations (location breakdown)', module: 'project structure',
+  description: 'Each row adds a location to a project: the code, its parent code (empty at the top), the type (BLOCK, BUILDING, FLOOR, ZONE, ROOM, CHAINAGE, STRUCTURE), the name, the chainage from and to in metres for chainage segments and structures, and the map reference. List parents before their children.',
+  permission: 'proj.wbs.import', exportPermission: 'proj.wbs.view', onExisting: ['ERROR'], chunked: false,
+  columns: [{ key: 'projectCode', label: 'Project', type: 'text', required: true, maxLength: 30 }, { key: 'code', label: 'Location code', type: 'text', required: true, maxLength: 40 }, { key: 'parentCode', label: 'Parent code', type: 'text', maxLength: 40 }, { key: 'type', label: 'Type', type: 'text', required: true, maxLength: 20 }, { key: 'name', label: 'Name', type: 'text', required: true, maxLength: 200 }, { key: 'chainageFrom', label: 'Chainage from (m)', type: 'number' }, { key: 'chainageTo', label: 'Chainage to (m)', type: 'number' }, { key: 'lat', label: 'Latitude', type: 'number' }, { key: 'lng', label: 'Longitude', type: 'number' }],
+  keys: ['projectCode', 'code'], findExisting: () => null,
+  validateRow() { return []; },
+  commitRow(ctx, { row }) { return structureOf(ctx.db).locations.importRow(ctx.actor, { projectCode: row.projectCode, row: { code: row.code, parentCode: row.parentCode, type: String(row.type ?? '').toUpperCase(), name: row.name, chainageFrom: row.chainageFrom ?? null, chainageTo: row.chainageTo ?? null, lat: row.lat ?? null, lng: row.lng ?? null } }); },
 });
