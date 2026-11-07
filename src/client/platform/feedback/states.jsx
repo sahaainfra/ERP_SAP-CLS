@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { useT } from '../i18n/index.js';
 
@@ -55,9 +56,18 @@ export function ErrorState({ title, error, onRetry }) {
 /** The person lacks a permission: what it is, and whom to ask (a system administrator, or the people who hold it). */
 export function NoPermission({ what, permission, ask }) {
   const t = useT('common');
+  const box = useRef(null);
+  // A page that is only this message still needs its one level-1 heading and a title (part 03.10 checklist); one that has a heading of its own keeps this as a subheading.
+  const [lead, setLead] = useState(false);
+  useLayoutEffect(() => {
+    const others = [...document.querySelectorAll('main h1, #main h1')].filter((h) => !box.current?.contains(h));
+    setLead(others.length === 0);
+  }, []);
+  useEffect(() => { if (lead && what) document.title = `${what} - ERP`; }, [lead, what]);
+  const Heading = lead ? 'h1' : 'h2';
   return (
-    <div className="state fb-noperm" role="alert" data-testid="no-permission">
-      <h2><Icon name="erp.state.locked" size={20} /> {t('noPermission.title', { what })}</h2>
+    <div className="state fb-noperm" role="alert" data-testid="no-permission" ref={box}>
+      <Heading><Icon name="erp.state.locked" size={20} /> {t('noPermission.title', { what })}</Heading>
       <p>{t('noPermission.body', { need: /^an? /.test(String(permission)) ? permission : t('noPermission.need', { permission }), ask: ask ?? t('ask.admin') })}</p>
     </div>
   );
