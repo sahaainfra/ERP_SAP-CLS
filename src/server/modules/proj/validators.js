@@ -34,3 +34,24 @@ export const parseAmend = (b) => parse(z.object({ reason, changes: z.object({ co
 export const parseMilestone = (b) => parse(milestone, b);
 export const parseMilestoneUpdate = (b) => parse(z.object({ name: text(200).min(1).optional(), plannedDate: day.optional(), contractual: z.boolean().optional(), paymentLinked: z.boolean().optional(), status: z.enum(['PLANNED', 'ACHIEVED', 'WAIVED']).optional(), actualDate: optDay.optional(), version }).strict(), b);
 export const parsePrefill = (q) => parse(z.object({ tenderId: id }).strict(), q);
+
+// ---- Part 10.02: project from an awarded tender and the commercial baseline pack ----
+const clause = z.object({ title: text(160).min(1, 'Give the clause title'), summary: text(2000).min(1, 'Give the summary'), ref: optText(60) }).strict();
+const person = z.object({ name: text(120).min(1, 'Give the name'), user: optText(60), role: optText(80), team: z.enum(['ESTIMATION', 'EXECUTION', 'COMMERCIAL', 'OTHER']).default('OTHER') }).strict();
+const question = z.object({ text: text(1000).min(1, 'Give the question'), askedBy: optText(120), answer: optText(2000) }).strict();
+const action = z.object({ title: text(200).min(1, 'Give the action'), owner: text(60).min(1, 'Choose who does it'), dueDate: day, priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'), taskId: optId, taskStatus: z.string().nullish() }).strict();
+const meeting = z.object({ meetingDate: day, venue: optText(200), attendees: z.array(person).min(1, 'Name at least one attendee').max(60), questions: z.array(question).max(100).default([]), minutes: optText(10000), actions: z.array(action).max(100).default([]) }).strict();
+const awardContract = z.object({ consultantPartnerId: optId, funderPartnerId: optId, startDate: optDay, scheduledCompletion: optDay, dlpMonths: z.number().int().min(0).max(120).default(0), retentionPct: pct.default('0'), mobAdvancePct: pct.default('0'), ldSummary: optText(2000) }).strict().default({ dlpMonths: 0, retentionPct: '0', mobAdvancePct: '0' });
+export const parseFromAward = (b) => parse(z.object({
+  tenderId: id,
+  basics: z.object({ code: text(30).min(2, 'Give the project code').optional(), name: text(160).min(3).optional(), type: z.enum(['BUILDING', 'ROAD', 'BRIDGE', 'INDUSTRIAL', 'EPC', 'WATER', 'RAIL', 'OTHER']), sector: z.enum(keys(Object.fromEntries(SECTORS.map((s) => [s, 1])))).nullish().transform((v) => v || null), location: optText(200).optional(), branchId: optId }).strict(),
+  contract: awardContract, sites: z.array(site).max(30).default([]), team: z.object({ pmUser: optText(60), directorUser: optText(60) }).strict().default({ pmUser: null, directorUser: null }),
+  setup: z.object({ numbering: z.array(text(30)).max(40).optional(), folderTemplate: optText(40).optional(), settings: settings.optional() }).strict().default({}), milestones: z.array(milestone).max(100).default([]), clauses: z.array(clause).max(60).default([]),
+}).strict(), b);
+export const parsePackCreate = (b) => parse(z.object({ projectId: id, clauses: z.array(clause).max(60).default([]) }).strict(), b);
+export const parsePackUpdate = (b) => parse(z.object({ clauses: z.array(clause).max(60), version: version.optional() }).strict(), b);
+export const parsePackAmend = (b) => parse(z.object({ reason }).strict(), b);
+export const parsePackFormat = (q) => parse(z.object({ format: z.enum(['html', 'pdf', 'xlsx', 'csv']).default('html') }).strict(), q ?? {});
+export const parseMeeting = (b) => parse(meeting, b);
+export const parseMeetingUpdate = (b) => parse(meeting.partial().extend({ version: version.optional() }).strict(), b);
+export const parseProjectQuery = (q) => parse(z.object({ projectId: id }).strict(), q);

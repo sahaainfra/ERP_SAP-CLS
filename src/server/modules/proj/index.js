@@ -6,8 +6,9 @@ import { integrityRegistry } from '../../platform/integrity/index.js';
 import { listExports, listExportsOf } from '../../platform/list/index.js';
 import { createFlagService } from '../core/api.js';
 import './integrations.js';
+import { bindBaseline, createBaselineService } from './baseline.js';
 import { bindProjects, createProjectService } from './project.js';
-import { projectRoutes } from './routes.js';
+import { baselineRoutes, projectRoutes } from './routes.js';
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -17,12 +18,15 @@ for (const [type, description] of [
   ['proj.project.state_changed', 'A project moved in its lifecycle (the project of the organisation master follows): data { projectId, code, from, to }.'],
   ['proj.project.amended', 'An approved amendment changed the contract terms of a live project: data { projectId, code, changes }.'],
   ['proj.milestone.achieved', 'A milestone of a project was achieved: data { projectId, code, name, plannedDate, actualDate, contractual, paymentLinked }. Billing (later) reads the payment-linked ones.'],
+  ['proj.project.created_from_award', 'A project was set up from an awarded tender: the project, the BOQ of the approved estimate with its rates and a draft baseline pack in one transaction: data { projectId, code, tenderId, awardId, estimateId, boqItems, packId }.'],
+  ['proj.baseline.signed_off', 'The commercial baseline pack of a project was signed off (estimation, commercial manager, project director, and the director above the limit) and is now the immutable reference for the budget (12.01), the contract (21.01), the forecast (23.11) and the P&L (23.12): data { packId, docNo, packNo, supersedes, projectId, code, tenderId, awardId, estimateId, contractValue, totalCost, totalSelling, margin, boqItems, snapshotHash, signedOffBy }.'],
+  ['proj.handover.held', 'A handover meeting between the estimation team and the execution team was recorded on a baseline pack: data { packId, meetingId, projectId, meetingDate, attendees, actions }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proj', description });
 
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { proj_projects: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'] },
-  uniqueKeys: [{ table: 'proj_milestones', columns: ['project_id', 'code'] }],
+  statuses: { proj_projects: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED'], proj_baseline_packs: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'] },
+  uniqueKeys: [{ table: 'proj_milestones', columns: ['project_id', 'code'] }, { table: 'proj_baseline_packs', columns: ['company_id', 'doc_no'] }],
 });
 /** Module "proj": project setup, WBS and BOQ (M10). Part 10.01 holds the project master, its lifecycle, the setup wizard and the key dates. The tables are `proj_*`. */
 export const proj = {
@@ -31,9 +35,9 @@ export const proj = {
   routePrefix: '/api/v1/proj',
   ownerPart: '10.01',
   status: 'The project master as a 1:1 extension of the organisation project: client, consultant and funding agency from the partner master, the contract summary, key dates, settings and the lifecycle (Setup, Mobilisation, Execution, Suspended, Substantially complete, Defect liability period, Closed, Archived) with a checklist at each move; the setup wizard that makes the project, its sites, numbering series and document folders in one transaction; activation, suspension and closure by approval; the milestones register and the portfolio with health.',
-  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log'],
+  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log', 'proj_baseline_packs', 'proj_handover_meetings', 'proj_boq_items'],
   companyOptional: [],
-  resources: ['projects', 'project-options', 'project-prefill', 'milestones'],
+  resources: ['projects', 'project-options', 'project-prefill', 'milestones', 'award-candidates', 'award-preview', 'baseline-packs', 'handover-meetings', 'boq', 'baseline-report'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proj_projects'").get()) return;
@@ -46,5 +50,14 @@ export const proj = {
     router.use(gate('ff.proj.p1001', 'The project master is'));
     router.use(projectRoutes({ svc, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/proj', router);
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proj_baseline_packs'").get()) {
+      const bl = createBaselineService({ db });
+      bindBaseline(db, bl);
+      listExports.register('proj.baseline_packs', { source: (actor, req) => bl.packs.exportSource(actor, req), hidden: () => [] });
+      const router2 = Router();
+      router2.use(gate('ff.proj.p1002', 'The project from an award and the commercial baseline are'));
+      router2.use(baselineRoutes(bl, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/proj', router2);
+    }
   },
 };

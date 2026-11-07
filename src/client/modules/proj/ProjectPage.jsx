@@ -6,7 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
-import { CONTRACT_TYPES, dayIST, inr, proj } from './api.js';
+import { CONTRACT_TYPES, bl, dayIST, inr, proj } from './api.js';
 import { APPROVAL_TONE, HEALTH_TONE, STATE_TONE, Tabs, useSearch } from './parts.jsx';
 
 // Project (part 10.01, FR-01 to FR-06): one project as an object page: details with the contract summary, sites, the key dates and milestones, settings, the lifecycle history and the approvals. The actions follow the state and the rights of the
@@ -56,6 +56,7 @@ export default function ProjectPage() {
         {panel === 'amend' && <Amend x={x} run={run} done={() => setPanel(null)} />}
         {panel?.startsWith('move:') && <Move x={x} to={panel.slice(5)} run={run} done={() => setPanel(null)} />}
       </header>
+      <BaselineLink projectId={x.projectId} />
       <Tabs tabs={['details', 'sites', 'milestones', 'settings', 'lifecycle', 'approvals', 'files']} active={tab} onChange={setTab} label={t('obj.title')} />
       {tab === 'details' && (panel === 'edit' ? <Edit x={x} run={run} done={() => setPanel(null)} error={error} /> : <Details x={x} />)}
       {tab === 'sites' && <Sites x={x} />}
@@ -258,4 +259,12 @@ function Approvals({ id, rowVersion }) {
       <ul className="mdm-list">{q.data.audit.map((a, i) => <li key={i}>{a.action} · {a.actor} · <span className="muted small">{String(a.at).slice(0, 16).replace('T', ' ')}</span>{a.reason ? ` · ${a.reason}` : ''}</li>)}</ul>
     </div>
   );
+}
+
+/** Part 10.02: the commercial baseline pack of the project (a link when the part is on and the person may see it). */
+function BaselineLink({ projectId }) {
+  const t = useT('proj'); const q = useQuery({ queryKey: ['proj', 'project-packs', projectId], queryFn: () => bl.packs(projectId), retry: false });
+  const live = (q.data ?? []).find((p) => !['SUPERSEDED', 'CANCELLED', 'REJECTED'].includes(p.status)) ?? (q.data ?? [])[0];
+  if (!live) return null;
+  return <p className="small" data-testid="proj-baseline-link">{t('bl.title')}: <Link to={`/proj/baseline-pack?id=${live.id}`}>{live.docNo}</Link> · {live.statusLabel}</p>;
 }

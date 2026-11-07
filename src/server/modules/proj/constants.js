@@ -43,3 +43,9 @@ export const same = (a, b) => Boolean(a && b && String(a).toLowerCase() === Stri
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const rid = (v) => parseInt(String(v), 10);
 export const keyOf = (from, to) => `${from}>${to}`;
+
+// Part 10.02: the commercial baseline pack.
+export const BASELINE_DOC = 'PROJ_BASELINE';
+export const BASELINE_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for sign-off', APPROVED: 'Signed off', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', SUPERSEDED: 'Superseded' };
+/** The director signs the baseline of a project above this contract value (₹ 50 crore); the chain itself is configurable in the workflow settings. */
+export const DIRECTOR_ABOVE_RUPEES = 500_000_000;

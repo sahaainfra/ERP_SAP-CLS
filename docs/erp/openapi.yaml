@@ -5696,3 +5696,98 @@ paths:
     delete:
       summary: "Delete a milestone not yet achieved"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/award-candidates:
+    get:
+      summary: "Awarded tenders without a project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/award-preview:
+    get:
+      summary: "What will be copied from an awarded tender and its approved estimate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/projects/from-award:
+    post:
+      summary: "Create a project, its BOQ and a draft baseline pack from an award (one transaction)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs:
+    get:
+      summary: "The commercial baseline packs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Draft a baseline pack for a project that came from a tender"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/export:
+    get:
+      summary: "Export the baseline packs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}:
+    get:
+      summary: "One baseline pack with its snapshot (costs masked)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change the clauses of a draft pack"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft pack"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/refresh:
+    post:
+      summary: "Rebuild a draft pack from the approved estimate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/submit:
+    post:
+      summary: "Freeze the pack and send it for sign-off"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/withdraw:
+    post:
+      summary: "Withdraw the pack from sign-off"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/cancel:
+    post:
+      summary: "Cancel a pack that is not signed off"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/amend:
+    post:
+      summary: "Start a superseding pack with a reason"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/history:
+    get:
+      summary: "Approvals, changes and versions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/verify:
+    get:
+      summary: "Check the frozen pack against its hash"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/compare:
+    get:
+      summary: "The superseding pack against the pack it replaces"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/print:
+    get:
+      summary: "The pack as HTML or PDF"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/document:
+    get:
+      summary: "The pack as HTML, PDF, XLSX or CSV"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-packs/{id}/meetings:
+    get:
+      summary: "Handover meetings of the pack"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Record a handover meeting; its actions become tasks"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/handover-meetings/{id}:
+    patch:
+      summary: "Change a handover meeting"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Remove a handover meeting and cancel its tasks"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq:
+    get:
+      summary: "The BOQ copied into a project (costs masked)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/baseline-report:
+    get:
+      summary: "The signed-off baseline against the current figures"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

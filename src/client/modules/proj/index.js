@@ -1,4 +1,8 @@
 import { registerModule } from '../../platform/shell/registry.js';
+import BaselineComparePage from './BaselineComparePage.jsx';
+import BaselinePackPage from './BaselinePackPage.jsx';
+import BaselinePacksPage from './BaselinePacksPage.jsx';
+import FromAwardPage from './FromAwardPage.jsx';
 import ProjectPage from './ProjectPage.jsx';
 import ProjectsPage from './ProjectsPage.jsx';
 import WizardPage from './WizardPage.jsx';
@@ -10,5 +14,9 @@ registerModule({
     { path: '/proj/projects', label: 'Project Portfolio', icon: 'erp.group.projects', permission: 'proj.project.view', flag: 'ff.proj.p1001', Page: ProjectsPage },
     { path: '/proj/project', label: 'Project', icon: 'erp.group.projects', permission: 'proj.project.view', flag: 'ff.proj.p1001', Page: ProjectPage },
     { path: '/proj/wizard', label: 'Project Setup Wizard', icon: 'erp.action.create', permission: 'proj.project.create', flag: 'ff.proj.p1001', Page: WizardPage },
+    { path: '/proj/from-award', label: 'Project from Award', icon: 'erp.action.create', permission: 'proj.project.create', flag: 'ff.proj.p1002', Page: FromAwardPage },
+    { path: '/proj/baseline-packs', label: 'Commercial Baseline', icon: 'erp.group.projects', permission: 'proj.baseline_pack.view', flag: 'ff.proj.p1002', Page: BaselinePacksPage },
+    { path: '/proj/baseline-pack', label: 'Commercial Baseline Pack', icon: 'erp.group.projects', permission: 'proj.baseline_pack.view', flag: 'ff.proj.p1002', Page: BaselinePackPage },
+    { path: '/proj/baseline-compare', label: 'Baseline vs Current', icon: 'erp.group.projects', permission: 'proj.baseline_pack.view', flag: 'ff.proj.p1002', Page: BaselineComparePage },
   ],
 });

@@ -1024,3 +1024,15 @@ Behind feature flag `ff.proj.p1001` (new module `proj`; needs 02.02 and 06.04). 
 - **Events**: `proj.project.{created,activated,state_changed,amended}`, `proj.milestone.achieved`; the messaging auto-groups sync on `proj.project.activated`.
 - **Permissions**: `proj.project.{view,create,edit,delete,submit,approve,cancel,amend,print,export,view_all,transition,import}`, `proj.milestone.manage`; PCMGR and PD set up and configure, PM edits and moves within the project, DIR approves, transitions, prints and exports.
 - **Browser**: Project Portfolio, Project (details, sites, milestones, settings, lifecycle history, approvals, papers) with the activation, move and amendment panels, Project Setup Wizard in seven steps; Hindi through the `proj` namespace.
+
+## 81. Project from an award and the commercial baseline handover (part 10.02)
+
+Behind feature flag `ff.proj.p1002` (module `proj`; needs 10.01, 08.03 and 09.03). Code: `modules/proj/baseline.js` (the preview, the creation, the pack, the sign-off hook, the handover, the BOQ, the report, the workflow `PROJ_BASELINE`), routes in `routes.js` (`baselineRoutes`), inputs in `validators.js`; pages in `client/modules/proj/` (`FromAwardPage`, `BaselinePacksPage`, `BaselinePackPage`, `BaselineComparePage`).
+
+- **From an award** (FR-01, ADR-374, ADR-375): `GET /proj/award-candidates`, `GET /proj/award-preview?tenderId=`, `POST /proj/projects/from-award` (the wizard of 10.01 + the BOQ copy + the draft pack, one transaction), `GET /proj/boq?projectId=`.
+- **The pack** (FR-02, FR-04, BR-01, ADR-376 to ADR-378): `/proj/baseline-packs` (list, export, create for a project that has none, get, update clauses, delete, refresh, submit, withdraw, cancel, amend, history, verify, compare, print and document as HTML, PDF, XLSX or CSV); workflow `PROJ_BASELINE`; event `proj.baseline.signed_off`.
+- **Handover** (FR-03, ADR-379): `/proj/baseline-packs/:id/meetings`, `/proj/handover-meetings/:id`; events `proj.handover.held`; tasks through `tasksOf(db)`.
+- **Baseline vs current** (FR-05, ADR-380): `GET /proj/baseline-report?projectId=`; registry `currentProviders`.
+- **Other events**: `proj.project.created_from_award`.
+- **Permissions**: `proj.baseline_pack.{view,create,edit,delete,submit,approve,cancel,amend,print,export,cost}`, `proj.handover.manage`; EST, COMMGR and PD draft, send, sign and see costs; PCMGR drafts and sends without costs; PM sees and prints without costs and keeps the handover; DIR signs and sees costs.
+- **Browser**: Create Project from Award (preview, form), Commercial Baseline Packs, Commercial Baseline Pack (summary, BOQ, basis, clauses, handover, approvals, related), Baseline vs Current; Hindi through the `proj` namespace.

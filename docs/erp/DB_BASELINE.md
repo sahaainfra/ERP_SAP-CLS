@@ -10390,6 +10390,132 @@ Indexes:
 - ix_pol_version_status: company_id, version_status, effective_from
 - ux_pol_version_no (unique): policy_id, version_no
 
+## proj_baseline_packs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| pack_no | INTEGER | yes |  | 1 |
+| supersedes_id | INTEGER |  |  |  |
+| project_id | INTEGER | yes |  |  |
+| tender_id | INTEGER |  |  |  |
+| award_id | INTEGER |  |  |  |
+| estimate_id | INTEGER |  |  |  |
+| contract_value | INTEGER | yes |  | 0 |
+| snapshot_json | TEXT | yes |  | '{}' |
+| snapshot_hash | TEXT |  |  |  |
+| clauses_json | TEXT | yes |  | '[]' |
+| file_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| amend_reason | TEXT |  |  |  |
+| signed_off_at | TEXT |  |  |  |
+| signed_off_by | TEXT |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: estimate_id -> est_estimates(id), award_id -> tdr_awards(id), tender_id -> tdr_tenders(id), project_id -> org_projects(id), supersedes_id -> proj_baseline_packs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_baseline_packs_supersedes: supersedes_id
+- ix_proj_baseline_packs_estimate: estimate_id
+- ix_proj_baseline_packs_award: award_id
+- ix_proj_baseline_packs_tender: tender_id
+- ix_proj_baseline_packs_project: project_id
+- ix_proj_baseline_packs_status: company_id, status
+- ix_proj_baseline_packs_company_id: company_id
+- ux_proj_baseline_packs_live (unique): project_id
+- ux_proj_baseline_packs_doc (unique): company_id, doc_no
+
+## proj_boq_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| estimate_item_id | INTEGER |  |  |  |
+| section_code | TEXT | yes |  |  |
+| section_name | TEXT |  |  |  |
+| item_no | TEXT | yes |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| description | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty | INTEGER | yes |  | 0 |
+| client_rate | INTEGER |  |  |  |
+| cost_rate | INTEGER | yes |  | 0 |
+| markup_pct | INTEGER | yes |  | 0 |
+| selling_rate | INTEGER | yes |  | 0 |
+| cost_amount | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| project_id | INTEGER | yes |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: project_id -> org_projects(id), estimate_item_id -> est_estimate_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_boq_items_estimate_item: estimate_item_id
+- ix_proj_boq_items_project: project_id, sort_order
+- ix_proj_boq_items_company_id: company_id
+- ux_proj_boq_items_item (unique): project_id, section_code, item_no
+
+## proj_handover_meetings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| pack_id | INTEGER | yes |  |  |
+| meeting_date | TEXT | yes |  |  |
+| venue | TEXT |  |  |  |
+| attendees_json | TEXT | yes |  | '[]' |
+| questions_json | TEXT | yes |  | '[]' |
+| minutes | TEXT |  |  |  |
+| actions_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: pack_id -> proj_baseline_packs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_handover_meetings_pack: pack_id, meeting_date
+- ix_proj_handover_meetings_company_id: company_id
+
 ## proj_lifecycle_log
 
 | Column | Type | Not null | Key | Default |
