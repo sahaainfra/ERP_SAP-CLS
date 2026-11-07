@@ -12,13 +12,16 @@ import ActionTrackerPage from './ActionTrackerPage.jsx';
 import LocationsPage from './LocationsPage.jsx';
 import MeetingPage from './MeetingPage.jsx';
 import MeetingsPage from './MeetingsPage.jsx';
+import GisConfigPage from './GisConfigPage.jsx';
 import IssuePage from './IssuePage.jsx';
 import IssuesPage from './IssuesPage.jsx';
 import ProjectPage from './ProjectPage.jsx';
+import ProjectMapPage from './ProjectMapPage.jsx';
 import RiskDashboardPage from './RiskDashboardPage.jsx';
 import RiskPage from './RiskPage.jsx';
 import RisksPage from './RisksPage.jsx';
 import StakeholdersPage from './StakeholdersPage.jsx';
+import StripChartPage from './StripChartPage.jsx';
 import TeamPage from './TeamPage.jsx';
 import ProjectsPage from './ProjectsPage.jsx';
 import WbsPage from './WbsPage.jsx';
@@ -56,5 +59,8 @@ registerModule({
     { path: '/proj/risk', label: 'Risk', icon: 'erp.group.projects', permission: 'proj.risk.view', flag: 'ff.proj.p1006', Page: RiskPage },
     { path: '/proj/issues', label: 'Issue Log', icon: 'erp.group.projects', permission: 'proj.issue.view', flag: 'ff.proj.p1006', Page: IssuesPage },
     { path: '/proj/issue', label: 'Issue', icon: 'erp.group.projects', permission: 'proj.issue.view', flag: 'ff.proj.p1006', Page: IssuePage },
+    { path: '/proj/map', label: 'Project Map', icon: 'erp.group.projects', permission: 'proj.gis.view', flag: 'ff.proj.p1007', Page: ProjectMapPage },
+    { path: '/proj/strip-chart', label: 'Chainage Progress Strip Chart', icon: 'erp.group.projects', permission: 'proj.gis.view', flag: 'ff.proj.p1007', Page: StripChartPage },
+    { path: '/proj/gis-config', label: 'Layers and Overlays', icon: 'erp.group.projects', permission: 'proj.gis.view', flag: 'ff.proj.p1007', Page: GisConfigPage },
   ],
 });

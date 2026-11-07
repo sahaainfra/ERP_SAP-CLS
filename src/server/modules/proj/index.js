@@ -8,8 +8,9 @@ import { createFlagService } from '../core/api.js';
 import './integrations.js';
 import { bindBaseline, createBaselineService } from './baseline.js';
 import { bindProjects, createProjectService } from './project.js';
-import { baselineRoutes, boqRoutes, projectRoutes, riskRoutes, structureRoutes, teamRoutes } from './routes.js';
+import { baselineRoutes, boqRoutes, gisRoutes, projectRoutes, riskRoutes, structureRoutes, teamRoutes } from './routes.js';
 import { bindRisks, createRiskService } from './risks.js';
+import { bindGis, createGisService } from './gis.js';
 import { bindMeetings, createMeetingService } from './meetings.js';
 import { bindTeam, createTeamService } from './team.js';
 import { bindBoq, createBoqService } from './boq.js';
@@ -46,6 +47,8 @@ for (const [type, description] of [
   ['proj.risk.drawdown_requested', 'A drawdown of the contingency allocated to a risk was requested; the budget (12.02) executes it and marks it executed: data { projectId, riskId, docNo, entryId, amount, reason }.'],
   ['proj.risk.review_approved', 'The monthly risk review of a project was approved (project manager, project director) and its snapshot is frozen: data { projectId, reviewId, period }.'],
   ['proj.issue.raised', 'An issue was entered in the issue log (or a risk occurred and became one): data { projectId, code, issueId, docNo, priority, riskId }.'],
+  ['proj.gis.config_approved', 'The project manager approved a map layer or overlay change; it is live from today: data { projectId, kind, id, name }.'],
+  ['proj.gis.progress_recorded', 'Progress of an activity at a location was recorded for the heatmap and the strip chart (until 14.05 supplies it): data { projectId, locationId, activity, pct }.'],
   ['proj.issue.resolved', 'The owner of an issue resolved it: data { projectId, issueId, docNo }.'],
   ['proj.action.updated', 'The owner of a meeting action changed its status (the task of the task service moved): data { projectId, meetingId, actionId, owner, status }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proj', description });
@@ -62,9 +65,9 @@ export const proj = {
   routePrefix: '/api/v1/proj',
   ownerPart: '10.01',
   status: 'The project master as a 1:1 extension of the organisation project: client, consultant and funding agency from the partner master, the contract summary, key dates, settings and the lifecycle (Setup, Mobilisation, Execution, Suspended, Substantially complete, Defect liability period, Closed, Archived) with a checklist at each move; the setup wizard that makes the project, its sites, numbering series and document folders in one transaction; activation, suspension and closure by approval; the milestones register and the portfolio with health.',
-  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log', 'proj_baseline_packs', 'proj_handover_meetings', 'proj_boq_items', 'proj_wbs', 'proj_wbs_versions', 'proj_work_packages', 'proj_locations', 'proj_wbs_locations', 'proj_boq_versions', 'proj_boq_lines', 'proj_boq_line_wbs', 'proj_boq_line_norms', 'proj_boq_changes', 'proj_team', 'proj_stakeholders', 'proj_comm_matrix', 'proj_meetings', 'proj_meeting_actions', 'proj_risk_settings', 'proj_risks', 'proj_risk_actions', 'proj_risk_triggers', 'proj_risk_contingency', 'proj_risk_issues', 'proj_risk_snapshots'],
+  tables: ['proj_projects', 'proj_milestones', 'proj_lifecycle_log', 'proj_baseline_packs', 'proj_handover_meetings', 'proj_boq_items', 'proj_wbs', 'proj_wbs_versions', 'proj_work_packages', 'proj_locations', 'proj_wbs_locations', 'proj_boq_versions', 'proj_boq_lines', 'proj_boq_line_wbs', 'proj_boq_line_norms', 'proj_boq_changes', 'proj_team', 'proj_stakeholders', 'proj_comm_matrix', 'proj_meetings', 'proj_meeting_actions', 'proj_risk_settings', 'proj_risks', 'proj_risk_actions', 'proj_risk_triggers', 'proj_risk_contingency', 'proj_risk_issues', 'proj_risk_snapshots', 'gis_layers', 'gis_overlays', 'gis_progress'],
   companyOptional: [],
-  resources: ['risks', 'issues', 'risk-dashboard', 'risk-settings', 'risk-reviews', 'projects', 'project-options', 'project-prefill', 'milestones', 'award-candidates', 'award-preview', 'baseline-packs', 'handover-meetings', 'boq', 'baseline-report', 'wbs', 'wbs-versions', 'wbs-changes', 'locations', 'wbs-matrix', 'work-packages', 'versions', 'boq-lines', 'boq-changes', 'boq-projects', 'team', 'stakeholders', 'comm-matrix', 'meetings', 'meeting-actions'],
+  resources: ['gis', 'risks', 'issues', 'risk-dashboard', 'risk-settings', 'risk-reviews', 'projects', 'project-options', 'project-prefill', 'milestones', 'award-candidates', 'award-preview', 'baseline-packs', 'handover-meetings', 'boq', 'baseline-report', 'wbs', 'wbs-versions', 'wbs-changes', 'locations', 'wbs-matrix', 'work-packages', 'versions', 'boq-lines', 'boq-changes', 'boq-projects', 'team', 'stakeholders', 'comm-matrix', 'meetings', 'meeting-actions'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proj_projects'").get()) return;
@@ -122,6 +125,14 @@ export const proj = {
       router6.use(gate('ff.proj.p1006', 'The risks, opportunities and issues register is'));
       router6.use(riskRoutes(rk, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/proj', router6);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'gis_layers'").get()) {
+      const gs = createGisService({ db });
+      bindGis(db, gs);
+      const router7 = Router();
+      router7.use(gate('ff.proj.p1007', 'The project map (GIS) is'));
+      router7.use(gisRoutes(gs, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/proj', router7);
     }
   },
 };

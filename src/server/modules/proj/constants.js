@@ -111,3 +111,10 @@ export const HEATMAP_DEFAULTS = { medium: 5, high: 10, critical: 15, probability
 export const RISK_LEVEL_ORDER = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 export const levelOf = (score, t = HEATMAP_DEFAULTS) => (score >= t.critical ? 'CRITICAL' : score >= t.high ? 'HIGH' : score >= t.medium ? 'MEDIUM' : 'LOW');
 export const emvOf = (probabilityPct, exposureMl) => Number((BigInt(probabilityPct) * BigInt(exposureMl) + 500000n) / 1000000n);
+
+// ---- Part 10.07: GIS, site maps and location intelligence ----
+export const GIS_DOC = 'PROJ_GIS_CONFIG';
+export const GIS_LTYPES = { BOUNDARY: 'Site boundary', ALIGNMENT: 'Alignment', WORK_FRONT: 'Work front', STORE: 'Store', CAMP: 'Camp', EQUIPMENT: 'Equipment', CUSTOM: 'Custom' };
+export const GIS_CFG_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+/** BR-01: a punch cell is shown only when at least this many different people punched in it; nothing individual is ever returned. */
+export const PUNCH_MIN_PEOPLE = 5;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseActionQuery, parseActionUpdate, parseComm, parseCommUpdate, parseMtgCreate, parseMtgRevise, parseMtgUpdate, parseProjectIdQuery, parseStakeholder, parseStakeholderUpdate, parseTeamAdd, parseTeamEnd, parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard , parseRiskCreate, parseRiskUpdate, parseRiskClose, parseReading, parseContingency, parseRiskSettings, parseIssueCreate, parseIssueUpdate, parseIssueResolve, parseReviewCreate, parseReviewUpdate } from './validators.js';
+import { parseActionQuery, parseActionUpdate, parseComm, parseCommUpdate, parseMtgCreate, parseMtgRevise, parseMtgUpdate, parseProjectIdQuery, parseStakeholder, parseStakeholderUpdate, parseTeamAdd, parseTeamEnd, parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard , parseRiskCreate, parseRiskUpdate, parseRiskClose, parseReading, parseContingency, parseRiskSettings, parseIssueCreate, parseIssueUpdate, parseIssueResolve, parseReviewCreate, parseReviewUpdate, parseLayerCreate, parseLayerUpdate, parseLayerImport, parseOverlayCreate, parseOverlayUpdate, parseGisProject, parseProgress } from './validators.js';
 
 /** Part 10.01: the project master. Rights and scope are checked in the service. */
 export function projectRoutes({ svc, exportsOf }, { idempotent, idempotentRequired }) {
@@ -288,5 +288,39 @@ export function riskRoutes(rk, { exportsOf }, { idempotent, idempotentRequired }
   r.post('/issues/:id/amend', idempotent, (req, res) => ok(res, i.reopen(req.actor, pid(req), parseReason(req.body), 'proj.issue.amend')));
   r.get('/issues/:id/history', (req, res) => ok(res, i.history(req.actor, pid(req))));
   r.get('/issues/:id/print', doc(i)); r.get('/issues/:id/document', doc(i));
+  return r;
+}
+
+export function gisRoutes(g, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id); const q = (req) => parseGisProject(req.query);
+  const file = (res, out) => { res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }); return res.send(out.buffer); };
+  r.get('/gis/map', (req, res) => { const x = q(req); ok(res, g.map.get(req.actor, x.projectId, { days: x.days })); });
+  r.get('/gis/heatmap', (req, res) => ok(res, g.heatmap(req.actor, q(req).projectId)));
+  r.get('/gis/strip', (req, res) => { const x = q(req); ok(res, g.strip(req.actor, x.projectId, x.activity ?? null)); });
+  r.get('/gis/strip/export', (req, res) => { const x = q(req); file(res, g.stripExport(req.actor, x.projectId, ['xlsx', 'csv', 'pdf'].includes(x.format) ? x.format : 'xlsx', x.activity ?? null)); });
+  r.get('/gis/progress', (req, res) => ok(res, g.progress.list(req.actor, q(req).projectId)));
+  r.post('/gis/progress', idempotent, (req, res) => ok(res, g.progress.record(req.actor, parseProgress(req.body)), 201));
+  r.get('/gis/layers', (req, res) => ok(res, g.layers.list(req.actor, q(req).projectId)));
+  r.post('/gis/layers/import', idempotentRequired, (req, res) => ok(res, g.layers.import(req.actor, parseLayerImport(req.body)), 201));
+  r.post('/gis/layers', idempotentRequired, (req, res) => ok(res, g.layers.create(req.actor, parseLayerCreate(req.body)), 201));
+  r.get('/gis/layers/:id', (req, res) => ok(res, g.layers.get(req.actor, pid(req))));
+  r.patch('/gis/layers/:id', idempotent, (req, res) => ok(res, g.layers.update(req.actor, pid(req), parseLayerUpdate(req.body))));
+  r.delete('/gis/layers/:id', (req, res) => ok(res, g.layers.remove(req.actor, pid(req))));
+  r.post('/gis/layers/:id/submit', idempotentRequired, (req, res) => ok(res, g.layers.submit(req.actor, pid(req)), 202));
+  r.post('/gis/layers/:id/withdraw', idempotent, (req, res) => ok(res, g.layers.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/gis/layers/:id/cancel', idempotent, (req, res) => ok(res, g.layers.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/gis/layers/:id/history', (req, res) => ok(res, g.layers.history(req.actor, pid(req))));
+  r.get('/gis/layers/:id/export', (req, res) => file(res, g.layers.export(req.actor, pid(req), req.query.format === 'kml' ? 'kml' : 'geojson')));
+  r.get('/gis/overlays', (req, res) => ok(res, g.overlays.list(req.actor, q(req).projectId)));
+  r.post('/gis/overlays', idempotentRequired, (req, res) => ok(res, g.overlays.create(req.actor, parseOverlayCreate(req.body)), 201));
+  r.get('/gis/overlays/:id', (req, res) => ok(res, g.overlays.get(req.actor, pid(req))));
+  r.patch('/gis/overlays/:id', idempotent, (req, res) => ok(res, g.overlays.update(req.actor, pid(req), parseOverlayUpdate(req.body))));
+  r.delete('/gis/overlays/:id', (req, res) => ok(res, g.overlays.remove(req.actor, pid(req))));
+  r.post('/gis/overlays/:id/submit', idempotentRequired, (req, res) => ok(res, g.overlays.submit(req.actor, pid(req)), 202));
+  r.post('/gis/overlays/:id/withdraw', idempotent, (req, res) => ok(res, g.overlays.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/gis/overlays/:id/cancel', idempotent, (req, res) => ok(res, g.overlays.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/gis/overlays/:id/history', (req, res) => ok(res, g.overlays.history(req.actor, pid(req))));
   return r;
 }

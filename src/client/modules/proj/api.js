@@ -216,6 +216,25 @@ export const rk = {
   updateReview: async (id, b) => (await api.patch(`/proj/risk-reviews/${id}`, b, idem())).data,
   reviewAct: async (id, action, b = {}) => (await api.post(`/proj/risk-reviews/${id}/${action}`, b, idem())).data,
 };
+// ---- Part 10.07: GIS ----
+export const GIS_LTYPES = ['BOUNDARY', 'ALIGNMENT', 'WORK_FRONT', 'STORE', 'CAMP', 'EQUIPMENT', 'CUSTOM'];
+export const CFG_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const gs = {
+  map: async (p, days) => (await api.get(`/proj/gis/map?projectId=${p}${days ? `&days=${days}` : ''}`)).data,
+  heatmap: async (p) => (await api.get(`/proj/gis/heatmap?projectId=${p}`)).data,
+  strip: async (p, a) => (await api.get(`/proj/gis/strip?projectId=${p}${a ? `&activity=${encodeURIComponent(a)}` : ''}`)).data,
+  progress: async (p) => (await api.get(`/proj/gis/progress?projectId=${p}`)).data,
+  record: async (b) => (await api.post('/proj/gis/progress', b, idem())).data,
+  layers: async (p) => (await api.get(`/proj/gis/layers?projectId=${p}`)).data,
+  createLayer: async (b) => (await api.post('/proj/gis/layers', b, idem())).data,
+  importLayer: async (b) => (await api.post('/proj/gis/layers/import', b, idem())).data,
+  layerAct: async (id, action, b = {}) => (await api.post(`/proj/gis/layers/${id}/${action}`, b, idem())).data,
+  removeLayer: async (id) => (await api.delete(`/proj/gis/layers/${id}`)).data,
+  overlays: async (p) => (await api.get(`/proj/gis/overlays?projectId=${p}`)).data,
+  createOverlay: async (b) => (await api.post('/proj/gis/overlays', b, idem())).data,
+  overlayAct: async (id, action, b = {}) => (await api.post(`/proj/gis/overlays/${id}/${action}`, b, idem())).data,
+  removeOverlay: async (id) => (await api.delete(`/proj/gis/overlays/${id}`)).data,
+};
 export async function downloadFile(path, name) {
   const { authHeaders } = await import('../../platform/api/index.js');
   const w = /format=html|\/print/.test(path) ? window.open('', '_blank') : null;

@@ -153,3 +153,18 @@ export const parseIssueUpdate = (b) => given(parse(z.object({ ...Object.fromEntr
 export const parseIssueResolve = (b) => parse(z.object({ resolution: z.string().trim().min(10, 'Say how it was resolved (at least 10 characters)').max(2000) }).strict(), b);
 export const parseReviewCreate = (b) => parse(z.object({ projectId: id, period: z.string().regex(/^\d{4}-\d{2}$/, 'Use a month such as 2026-11'), notes: optText(3000) }).strict(), b);
 export const parseReviewUpdate = (b) => parse(z.object({ notes: optText(3000) }).strict(), b);
+
+// ---- Part 10.07: GIS ----
+const styleSchema = z.object({ color: text(20).optional(), weight: z.number().min(1).max(12).optional(), fillOpacity: z.number().min(0).max(1).optional(), dashArray: text(20).optional() }).strict();
+const geo = z.object({}).passthrough();
+const layerFields = { name: text(120).min(2, 'Give the name'), ltype: z.enum(['BOUNDARY', 'ALIGNMENT', 'WORK_FRONT', 'STORE', 'CAMP', 'EQUIPMENT', 'CUSTOM']), geojson: geo, style: styleSchema.default({}), visibleRoles: z.array(text(20)).max(40).default([]) };
+export const parseLayerCreate = (b) => parse(z.object({ projectId: id, ...layerFields }).strict(), b);
+export const parseLayerUpdate = (b) => given(parse(z.object({ name: layerFields.name.optional(), ltype: layerFields.ltype.optional(), geojson: geo.optional(), style: styleSchema.optional(), visibleRoles: layerFields.visibleRoles.optional(), rowVersion: version.optional() }).strict(), b), b);
+export const parseLayerImport = (b) => parse(z.object({ projectId: id, name: layerFields.name, ltype: layerFields.ltype, format: z.enum(['geojson', 'kml']), content: z.string().min(2).max(45000), style: styleSchema.default({}), visibleRoles: layerFields.visibleRoles }).strict(), b);
+const bounds = z.tuple([z.tuple([z.number().min(-90).max(90), z.number().min(-180).max(180)]), z.tuple([z.number().min(-90).max(90), z.number().min(-180).max(180)])]);
+const imageUrl = z.string().trim().max(45000).regex(/^(https?:\/\/|\/api\/|data:image\/(png|jpeg|webp|gif);base64,)/i, 'Use an https address, an /api/ path or a small embedded image');
+const ovFields = { name: text(120).min(2, 'Give the name'), imageUrl, fileId: optId, bounds, opacity: z.number().int().min(5).max(100).default(70) };
+export const parseOverlayCreate = (b) => parse(z.object({ projectId: id, ...ovFields }).strict(), b);
+export const parseOverlayUpdate = (b) => given(parse(z.object({ name: ovFields.name.optional(), imageUrl: imageUrl.optional(), fileId: optId.optional(), bounds: bounds.optional(), opacity: ovFields.opacity.optional(), rowVersion: version.optional() }).strict(), b), b);
+export const parseGisProject = (q) => parse(z.object({ projectId: id, activity: text(80).optional(), format: z.string().optional(), days: z.coerce.number().int().min(1).max(90).optional() }).strict(), q ?? {});
+export const parseProgress = (b) => parse(z.object({ projectId: id, locationId: id, activity: text(80).min(2, 'Name the activity'), pct: z.union([z.number(), z.string().trim().regex(/^\d+(\.\d+)?$/, 'Give a percentage')]).transform((v) => String(v)).refine((v) => Number(v) >= 0 && Number(v) <= 100, 'A percentage from 0 to 100'), asOf: day }).strict(), b);
