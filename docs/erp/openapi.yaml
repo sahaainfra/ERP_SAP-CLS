@@ -5942,3 +5942,132 @@ paths:
     delete:
       summary: "Delete a work package"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-projects:
+    get:
+      summary: "Projects with a BOQ the person may see"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions:
+    get:
+      summary: "BOQ versions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Create a BOQ version from the award, another version or nothing"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/export:
+    get:
+      summary: "Export the BOQ versions"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/compare:
+    get:
+      summary: "Compare two versions of a project item by item"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/import/rows:
+    post:
+      summary: "Stage a chunk of the client BOQ rows"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/import:
+    post:
+      summary: "Check or commit the import of the client BOQ"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/revised:
+    post:
+      summary: "Make a revised version from an approved variation"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}:
+    get:
+      summary: "One version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Change a draft version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a draft version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/submit:
+    post:
+      summary: "Send a contract or revised version for the freeze"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/withdraw:
+    post:
+      summary: "Withdraw from the freeze"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/cancel:
+    post:
+      summary: "Cancel a version that is not frozen"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/amend:
+    post:
+      summary: "Raise a change of mapping or norms of a frozen version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/history:
+    get:
+      summary: "Approvals and audit of a version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/print:
+    get:
+      summary: "The BOQ as HTML"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/document:
+    get:
+      summary: "The BOQ as HTML, PDF, XLSX or CSV in the client columns"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/lines:
+    get:
+      summary: "The lines of a version with mapping and quantity status"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Add a line"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/abstract:
+    get:
+      summary: "The abstract of a version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/unmapped:
+    get:
+      summary: "Items not fully mapped"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/versions/{id}/mapping/bulk:
+    post:
+      summary: "Give the whole quantity of many items to one node"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-lines/{id}:
+    patch:
+      summary: "Change a line"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Delete a line"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-lines/{id}/mapping:
+    get:
+      summary: "The splits of an item"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: "Replace the splits of an item (they sum to its quantity)"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-lines/{id}/norms:
+    get:
+      summary: "The resource norms of an item"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    put:
+      summary: "Replace the norms of an item"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-lines/{id}/norms/from-analysis:
+    post:
+      summary: "Take the norms from the rate analysis of the item"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-changes:
+    get:
+      summary: "Changes of mapping and norms of a version"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-changes/{id}:
+    get:
+      summary: "One change"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-changes/{id}/withdraw:
+    post:
+      summary: "Withdraw a change"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/proj/boq-changes/{id}/cancel:
+    post:
+      summary: "Cancel a change"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

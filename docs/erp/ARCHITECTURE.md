@@ -1049,3 +1049,17 @@ Behind feature flag `ff.proj.p1003` (module `proj`; needs 10.01). Code: `modules
 - **Events**: `proj.wbs.updated`, `proj.wbs.baselined`, `proj.wbs.changed`, `proj.location.updated`, `proj.workpackage.updated`, `proj.matrix.updated`.
 - **Permissions**: `proj.wbs.{view,manage,baseline,change,approve,export,import}`; PLAN and PCMGR maintain and raise changes, PM baselines and approves, project roles view.
 - **Browser**: WBS Editor (tree with drag and drop, Move to, Undo, bulk edit, template, copy, matrix, versions, changes), Location Breakdown (tree and chainage table), Work Packages (list and form); Hindi through the `proj` namespace.
+
+## 83. BOQ management: versions, import, WBS mapping and resource norms (part 10.04)
+
+Behind feature flag `ff.proj.p1004` (module `proj`; needs 10.03 and 06.06; receives the BOQ copy of 10.02). Code: `modules/proj/boq.js` (versions, lines, mapping, norms, import, changes after the freeze, reports, documents, the workflows `PROJ_BOQ_FREEZE` and `PROJ_BOQ_MAPPING`), routes in `routes.js` (`boqRoutes`), inputs in `validators.js`, the import type in `integrations.js`; pages in `client/modules/proj/` (`BoqVersionsPage`, `BoqVersionPage`, `BoqImportPage`, `BoqMappingPage`, `BoqReportsPage`).
+
+- **Versions** (FR-01, FR-07, BR-02, ADR-387, ADR-389): `/proj/versions` (list, export, create from award, version or nothing, get, update, delete, submit, withdraw, cancel, amend, history, print, document XLSX/CSV/PDF in the client's columns), `POST /proj/versions/revised` (only from an approved variation), `GET /proj/versions/compare`.
+- **Lines** (FR-02, BR-01, ADR-388): `/proj/versions/:id/lines`, `/proj/boq-lines/:id`; **import** (FR-03, ADR-391): `POST /proj/versions/import/rows` (stage) and `POST /proj/versions/import`.
+- **Mapping and norms** (FR-04, FR-05, ADR-390): `/proj/boq-lines/:id/mapping`, `/proj/versions/:id/mapping/bulk`, `/proj/boq-lines/:id/norms`, `/norms/from-analysis`; changes after the freeze: `/proj/versions/:id/amend`, `/proj/boq-changes`.
+- **Reports**: abstract, unmapped items, comparison; **quantity status** (FR-06): `quantityProviders`.
+- **For later parts**: `boqOf(db).frozen(companyId, projectId)` returns the frozen BOQ with its mapping and norms; event `boq.version.frozen`.
+- **Events**: `boq.version.created`, `boq.version.frozen`, `boq.mapping.changed`.
+- **Permissions**: `proj.version.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `proj.boq.{map,import,rates}`; QS and EST prepare and map, COMMGR and PM approve, site roles read without rates.
+- **Browser**: BOQ Versions, BOQ (hierarchical grid), Import BOQ wizard, WBS and Location Mapping, BOQ Reports (abstract, comparison, unmapped); Hindi through the `proj` namespace.
+

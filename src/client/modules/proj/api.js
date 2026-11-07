@@ -105,3 +105,52 @@ export function ordered(nodes) {
   const kids = new Map(); for (const n of nodes) { const k = n.parentId ?? 0; if (!kids.has(k)) kids.set(k, []); kids.get(k).push(n); }
   const out = []; const walk = (pid) => { for (const n of (kids.get(pid) ?? []).sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)) { out.push(n); walk(n.id); } }; walk(0); return out;
 }
+
+// Part 10.04: BOQ versions, lines, mapping, norms, import, changes after the freeze and the reports.
+export const BOQ_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const MAP_TONE = { MAPPED: 'APPROVED', PARTIAL: 'AT_RISK', UNMAPPED: 'REJECTED', NONE: 'DRAFT' };
+export const NORM_TYPES = ['MATERIAL', 'LABOUR', 'EQUIPMENT', 'TRANSPORT', 'SUBCONTRACT', 'OTHER'];
+export const bq = {
+  projects: async () => (await api.get('/proj/boq-projects')).data,
+  versions: async (q = '') => (await api.get(`/proj/versions?pageSize=100${q}`)).data,
+  get: async (id) => (await api.get(`/proj/versions/${id}`)).data,
+  create: async (b) => (await api.post('/proj/versions', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/proj/versions/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/proj/versions/${id}`)).data,
+  act: async (id, action, b = {}) => (await api.post(`/proj/versions/${id}/${action}`, b, idem())).data,
+  history: async (id) => (await api.get(`/proj/versions/${id}/history`)).data,
+  lines: async (id, unmapped = false) => (await api.get(`/proj/versions/${id}/lines${unmapped ? '?unmapped=true' : ''}`)).data,
+  addLine: async (id, b) => (await api.post(`/proj/versions/${id}/lines`, b, idem())).data,
+  updateLine: async (id, b) => (await api.patch(`/proj/boq-lines/${id}`, b, idem())).data,
+  removeLine: async (id) => (await api.delete(`/proj/boq-lines/${id}`)).data,
+  mapping: async (id) => (await api.get(`/proj/boq-lines/${id}/mapping`)).data,
+  setMapping: async (id, splits) => (await api.put(`/proj/boq-lines/${id}/mapping`, { splits }, idem())).data,
+  bulkMap: async (versionId, b) => (await api.post(`/proj/versions/${versionId}/mapping/bulk`, b, idem())).data,
+  norms: async (id) => (await api.get(`/proj/boq-lines/${id}/norms`)).data,
+  setNorms: async (id, norms) => (await api.put(`/proj/boq-lines/${id}/norms`, { norms }, idem())).data,
+  normsFromAnalysis: async (id) => (await api.post(`/proj/boq-lines/${id}/norms/from-analysis`, {}, idem())).data,
+  amend: async (id, b) => (await api.post(`/proj/versions/${id}/amend`, b, idem())).data,
+  changes: async (versionId) => (await api.get(`/proj/boq-changes?versionId=${versionId}`)).data,
+  actChange: async (id, action, b = {}) => (await api.post(`/proj/boq-changes/${id}/${action}`, b, idem())).data,
+  stage: async (b) => (await api.post('/proj/versions/import/rows', b, idem())).data,
+  importRun: async (b) => (await api.post('/proj/versions/import', b, idem())).data,
+  abstract: async (id) => (await api.get(`/proj/versions/${id}/abstract`)).data,
+  unmapped: async (id) => (await api.get(`/proj/versions/${id}/unmapped`)).data,
+  compare: async (a, b) => (await api.get(`/proj/versions/compare?a=${a}&b=${b}`)).data,
+};
+export async function downloadBoq(id, format) {
+  const { authHeaders } = await import('../../platform/api/index.js');
+  const w = format === 'html' ? window.open('', '_blank') : null;
+  try {
+    const res = await fetch(`/api/v1/proj/versions/${id}/document?format=${format}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
+    const url = URL.createObjectURL(await res.blob()); if (w) w.location.href = url; else { const a = document.createElement('a'); a.href = url; a.download = `boq-${id}.${format}`; a.click(); }
+  } catch { w?.close(); }
+}
+/** The rows of text pasted from Excel (tab separated, or comma separated) as a table of cells. */
+export function parseTable(text) {
+  const lines = String(text).split(/\r?\n/).filter((l) => l.trim() !== ''); if (!lines.length) return { headers: [], rows: [] };
+  const sep = lines[0].includes('\t') ? '\t' : ','; const cells = lines.map((l) => l.split(sep).map((c) => c.trim().replace(/^"|"$/g, '')));
+  return { headers: cells[0], rows: cells.slice(1) };
+}
+export const IMPORT_FIELDS = ['bill', 'section', 'itemCode', 'description', 'uom', 'qty', 'rate', 'parentCode', 'extra'];
+export const guessField = (h) => { const x = h.toLowerCase(); if (/bill/.test(x)) return 'bill'; if (/section|group/.test(x)) return 'section'; if (/(item|sl|s\.?no|code|ref)/.test(x) && !/desc/.test(x)) return 'itemCode'; if (/desc|particular|work/.test(x)) return 'description'; if (/unit|uom/.test(x)) return 'uom'; if (/qty|quant/.test(x)) return 'qty'; if (/rate/.test(x)) return 'rate'; if (/parent/.test(x)) return 'parentCode'; if (/extra|nsi|non/.test(x)) return 'extra'; return ''; };

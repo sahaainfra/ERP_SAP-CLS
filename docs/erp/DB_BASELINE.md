@@ -10441,6 +10441,72 @@ Indexes:
 - ux_proj_baseline_packs_live (unique): project_id
 - ux_proj_baseline_packs_doc (unique): company_id, doc_no
 
+## proj_boq_changes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| version_id | INTEGER | yes |  |  |
+| change_status | TEXT | yes |  | 'SUBMITTED' |
+| reason | TEXT | yes |  |  |
+| ops_json | TEXT | yes |  | '[]' |
+| diff_json | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: version_id -> proj_boq_versions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_boq_changes_version: version_id, change_status
+- ix_proj_boq_changes_company_id: company_id
+
+## proj_boq_import_rows
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| stage_id | TEXT | yes |  |  |
+| user_ref | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| row_no | INTEGER | yes |  |  |
+| data_json | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_boq_import_rows_project: org_project_id
+- ix_proj_boq_import_rows_stage: stage_id, row_no
+- ix_proj_boq_import_rows_company_id: company_id
+
 ## proj_boq_items
 
 | Column | Type | Not null | Key | Default |
@@ -10482,6 +10548,167 @@ Indexes:
 - ix_proj_boq_items_project: project_id, sort_order
 - ix_proj_boq_items_company_id: company_id
 - ux_proj_boq_items_item (unique): project_id, section_code, item_no
+
+## proj_boq_line_norms
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| line_id | INTEGER | yes |  |  |
+| resource_item_id | INTEGER |  |  |  |
+| norm_type | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty_per_unit | INTEGER | yes |  |  |
+| wastage_pct | INTEGER | yes |  | 0 |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: resource_item_id -> mdm_items(id), line_id -> proj_boq_lines(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_boq_line_norms_item: resource_item_id
+- ix_proj_boq_line_norms_line: line_id, sort_order
+- ix_proj_boq_line_norms_company_id: company_id
+
+## proj_boq_line_wbs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| line_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| qty | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: location_id -> proj_locations(id), wbs_id -> proj_wbs(id), line_id -> proj_boq_lines(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_boq_line_wbs_location: location_id
+- ix_proj_boq_line_wbs_wbs: wbs_id
+- ix_proj_boq_line_wbs_company_id: company_id
+- ux_proj_boq_line_wbs (unique): line_id, wbs_id, 
+
+## proj_boq_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| version_id | INTEGER | yes |  |  |
+| parent_id | INTEGER |  |  |  |
+| line_kind | TEXT | yes |  |  |
+| item_code | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| qty | INTEGER | yes |  | 0 |
+| rate | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| is_extra | INTEGER | yes |  | 0 |
+| work_item_id | INTEGER |  |  |  |
+| analysis_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| source_line_id | INTEGER |  |  |  |
+| source_row | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), analysis_id -> ra_analyses(id), work_item_id -> mdm_items(id), parent_id -> proj_boq_lines(id), version_id -> proj_boq_versions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_boq_lines_cost_code: cost_code_id
+- ix_proj_boq_lines_analysis: analysis_id
+- ix_proj_boq_lines_work_item: work_item_id
+- ix_proj_boq_lines_parent_id: parent_id
+- ix_proj_boq_lines_parent: version_id, parent_id, sort_order
+- ix_proj_boq_lines_company_id: company_id
+- ux_proj_boq_lines_code (unique): version_id, item_code
+
+## proj_boq_versions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| vtype | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| source_ref | TEXT |  |  |  |
+| parent_version_id | INTEGER |  |  |  |
+| variation_ref | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| total_amount | INTEGER | yes |  | 0 |
+| items_count | INTEGER | yes |  | 0 |
+| import_map_json | TEXT |  |  |  |
+| frozen_at | TEXT |  |  |  |
+| frozen_by | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_version_id -> proj_boq_versions(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proj_boq_versions_parent: parent_version_id
+- ix_proj_boq_versions_status: company_id, status
+- ix_proj_boq_versions_company_id: company_id
+- ux_proj_boq_versions_contract (unique): org_project_id
+- ux_proj_boq_versions_no (unique): org_project_id, version_no
+- ux_proj_boq_versions_doc (unique): company_id, doc_no
 
 ## proj_handover_meetings
 

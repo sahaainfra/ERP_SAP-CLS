@@ -1,6 +1,7 @@
 import { lookupRegistry } from '../../platform/lookups/index.js';
 import { registerImportType } from '../eng/excel.js';
 import { projectsOf } from './project.js';
+import { boqOf } from './boq.js';
 import { structureOf } from './structure.js';
 
 // Part 10.01 for the rest of the ERP: the lookups of the wizard (clients, consultants and funding agencies from the partner master) and the Excel import (04.13) of milestones into the key dates register of a project.
@@ -52,4 +53,15 @@ registerImportType({
   keys: ['projectCode', 'code'], findExisting: () => null,
   validateRow() { return []; },
   commitRow(ctx, { row }) { return structureOf(ctx.db).locations.importRow(ctx.actor, { projectCode: row.projectCode, row: { code: row.code, parentCode: row.parentCode, type: String(row.type ?? '').toUpperCase(), name: row.name, chainageFrom: row.chainageFrom ?? null, chainageTo: row.chainageTo ?? null, lat: row.lat ?? null, lng: row.lng ?? null } }); },
+});
+
+// Part 10.04: the Excel import (04.13) of BOQ items into a draft BOQ version (give its number); the bill and section are made from their names.
+registerImportType({
+  code: 'PROJ_BOQ_LINE', label: 'BOQ items (client bill of quantities)', module: 'project BOQ',
+  description: 'Each row adds an item to a draft BOQ version (give its number): the bill and section names, the client item code, the description, the unit, the quantity and the rate; a sub-item gives the code of its parent item. A frozen version is not changed by import.',
+  permission: 'proj.boq.import', exportPermission: 'proj.version.view', onExisting: ['ERROR'], chunked: false,
+  columns: [{ key: 'versionNo', label: 'BOQ version', type: 'text', required: true, maxLength: 30 }, { key: 'bill', label: 'Bill', type: 'text', maxLength: 200 }, { key: 'section', label: 'Section', type: 'text', maxLength: 200 }, { key: 'itemCode', label: 'Item code', type: 'text', required: true, maxLength: 60 }, { key: 'description', label: 'Description', type: 'text', required: true, maxLength: 4000 }, { key: 'uom', label: 'Unit', type: 'text', required: true, maxLength: 20 }, { key: 'qty', label: 'Quantity', type: 'text', required: true, maxLength: 20 }, { key: 'rate', label: 'Rate', type: 'text', maxLength: 20 }, { key: 'parentCode', label: 'Parent item code', type: 'text', maxLength: 60 }],
+  keys: ['versionNo', 'itemCode'], findExisting: () => null,
+  validateRow() { return []; },
+  commitRow(ctx, { row }) { return boqOf(ctx.db).importer.importRow(ctx.actor, { versionNo: row.versionNo, row: { bill: row.bill, section: row.section, itemCode: row.itemCode, description: row.description, uom: row.uom, qty: row.qty, rate: row.rate, parentCode: row.parentCode } }); },
 });

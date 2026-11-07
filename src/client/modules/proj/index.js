@@ -3,6 +3,11 @@ import BaselineComparePage from './BaselineComparePage.jsx';
 import BaselinePackPage from './BaselinePackPage.jsx';
 import BaselinePacksPage from './BaselinePacksPage.jsx';
 import FromAwardPage from './FromAwardPage.jsx';
+import BoqImportPage from './BoqImportPage.jsx';
+import BoqMappingPage from './BoqMappingPage.jsx';
+import BoqReportsPage from './BoqReportsPage.jsx';
+import BoqVersionPage from './BoqVersionPage.jsx';
+import BoqVersionsPage from './BoqVersionsPage.jsx';
 import LocationsPage from './LocationsPage.jsx';
 import ProjectPage from './ProjectPage.jsx';
 import ProjectsPage from './ProjectsPage.jsx';
@@ -26,5 +31,10 @@ registerModule({
     { path: '/proj/locations', label: 'Location Breakdown', icon: 'erp.group.projects', permission: 'proj.wbs.view', flag: 'ff.proj.p1003', Page: LocationsPage },
     { path: '/proj/work-packages', label: 'Work Packages', icon: 'erp.group.projects', permission: 'proj.wbs.view', flag: 'ff.proj.p1003', Page: WorkPackagesPage },
     { path: '/proj/work-package', label: 'Work Package', icon: 'erp.group.projects', permission: 'proj.wbs.view', flag: 'ff.proj.p1003', Page: WorkPackagePage },
+    { path: '/proj/versions', label: 'BOQ Versions', icon: 'erp.group.projects', permission: 'proj.version.view', flag: 'ff.proj.p1004', Page: BoqVersionsPage },
+    { path: '/proj/version', label: 'BOQ', icon: 'erp.group.projects', permission: 'proj.version.view', flag: 'ff.proj.p1004', Page: BoqVersionPage },
+    { path: '/proj/boq-import', label: 'Import BOQ', icon: 'erp.action.import', permission: 'proj.boq.import', flag: 'ff.proj.p1004', Page: BoqImportPage },
+    { path: '/proj/boq-mapping', label: 'WBS and Location Mapping', icon: 'erp.group.projects', permission: 'proj.version.view', flag: 'ff.proj.p1004', Page: BoqMappingPage },
+    { path: '/proj/boq-reports', label: 'BOQ Reports', icon: 'erp.group.projects', permission: 'proj.version.view', flag: 'ff.proj.p1004', Page: BoqReportsPage },
   ],
 });

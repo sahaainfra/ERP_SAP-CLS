@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard } from './validators.js';
+import { parseBoqAmend, parseBoqImport, parseBoqStage, parseBulkMap, parseCompare, parseLineCreate, parseLineUpdate, parseNorms, parseRevised, parseSplits, parseUnmapped, parseVersionCreate, parseVersionQuery, parseVersionUpdate, parseLocCreate, parseLocMove, parseLocUpdate, parseMatrix, parseWbsBaseline, parseWbsBulk, parseWbsChange, parseWbsCopy, parseWbsCreate, parseWbsFormat, parseWbsMove, parseWbsNormalise, parseWbsTemplate, parseWbsUpdate, parseWpCreate, parseWpUpdate, parseFromAward, parseMeeting, parseMeetingUpdate, parsePackAmend, parsePackCreate, parsePackFormat, parsePackUpdate, parseProjectQuery, parseAmend, parseId, parseMilestone, parseMilestoneUpdate, parsePrefill, parseReason, parseSubmit, parseTransition, parseUpdate, parseWizard } from './validators.js';
 
 /** Part 10.01: the project master. Rights and scope are checked in the service. */
 export function projectRoutes({ svc, exportsOf }, { idempotent, idempotentRequired }) {
@@ -132,5 +132,53 @@ export function structureRoutes(sv, { exportsOf }, { idempotent, idempotentRequi
   r.get('/work-packages/:id', (req, res) => ok(res, k.get(req.actor, pid(req))));
   r.patch('/work-packages/:id', idempotent, (req, res) => ok(res, k.update(req.actor, pid(req), parseWpUpdate(req.body))));
   r.delete('/work-packages/:id', (req, res) => ok(res, k.remove(req.actor, pid(req))));
+  return r;
+}
+
+/** Part 10.04: BOQ versions, lines, mapping, norms, import, changes after the freeze and the reports. */
+export function boqRoutes(bq, { exportsOf }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id); const v = bq.versions; const send = (res, out) => { if (out.kind === 'html') return res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(out.body); res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }); return res.send(out.buffer); };
+  r.get('/boq-projects', (req, res) => ok(res, bq.projectsList(req.actor)));
+  r.get('/versions', (req, res) => res.json(v.list(req.actor, req.query)));
+  r.get('/versions/export', (req, res) => {
+    const x = exportsOf(); if (!x) throw new Error('The list export service is not running');
+    const out = x.start(req.actor, 'proj.boq_versions', req.query);
+    if (out.kind === 'job') return res.status(202).json({ data: out });
+    res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+    return res.send(out.buffer);
+  });
+  r.get('/versions/compare', (req, res) => { const q = parseCompare(req.query); ok(res, bq.reports.compare(req.actor, q.a, q.b)); });
+  r.post('/versions/import/rows', idempotent, (req, res) => ok(res, bq.importer.stage(req.actor, parseBoqStage(req.body)), 201));
+  r.post('/versions/import', idempotent, (req, res) => { const out = bq.importer.run(req.actor, parseBoqImport(req.body)); ok(res, out, out.committed ? 201 : 200); });
+  r.post('/versions/revised', idempotentRequired, (req, res) => ok(res, v.createRevised(req.actor, parseRevised(req.body)), 201));
+  r.post('/versions', idempotentRequired, (req, res) => ok(res, v.create(req.actor, parseVersionCreate(req.body)), 201));
+  r.get('/versions/:id', (req, res) => ok(res, v.get(req.actor, pid(req))));
+  r.patch('/versions/:id', idempotent, (req, res) => ok(res, v.update(req.actor, pid(req), parseVersionUpdate(req.body))));
+  r.delete('/versions/:id', (req, res) => ok(res, v.remove(req.actor, pid(req))));
+  r.post('/versions/:id/submit', idempotentRequired, (req, res) => ok(res, v.submit(req.actor, pid(req)), 202));
+  r.post('/versions/:id/withdraw', idempotent, (req, res) => ok(res, v.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/versions/:id/cancel', idempotent, (req, res) => ok(res, v.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/versions/:id/amend', idempotentRequired, (req, res) => ok(res, bq.changes.amend(req.actor, pid(req), parseBoqAmend(req.body)), 202));
+  r.get('/versions/:id/history', (req, res) => ok(res, v.history(req.actor, pid(req))));
+  r.get('/versions/:id/print', (req, res) => send(res, bq.document(req.actor, pid(req), 'html')));
+  r.get('/versions/:id/document', (req, res) => send(res, bq.document(req.actor, pid(req), parsePackFormat(req.query).format)));
+  r.get('/versions/:id/lines', (req, res) => ok(res, bq.lines.list(req.actor, pid(req), parseUnmapped(req.query).unmapped ? { unmappedOnly: true } : {})));
+  r.post('/versions/:id/lines', idempotent, (req, res) => ok(res, bq.lines.create(req.actor, pid(req), parseLineCreate(req.body)), 201));
+  r.get('/versions/:id/abstract', (req, res) => ok(res, bq.reports.abstract(req.actor, pid(req))));
+  r.get('/versions/:id/unmapped', (req, res) => ok(res, bq.reports.unmapped(req.actor, pid(req))));
+  r.post('/versions/:id/mapping/bulk', idempotent, (req, res) => ok(res, bq.mapping.bulk(req.actor, pid(req), parseBulkMap(req.body))));
+  r.patch('/boq-lines/:id', idempotent, (req, res) => ok(res, bq.lines.update(req.actor, pid(req), parseLineUpdate(req.body))));
+  r.delete('/boq-lines/:id', (req, res) => ok(res, bq.lines.remove(req.actor, pid(req))));
+  r.get('/boq-lines/:id/mapping', (req, res) => ok(res, bq.mapping.get(req.actor, pid(req))));
+  r.put('/boq-lines/:id/mapping', idempotent, (req, res) => ok(res, bq.mapping.set(req.actor, pid(req), parseSplits(req.body))));
+  r.get('/boq-lines/:id/norms', (req, res) => ok(res, bq.norms.get(req.actor, pid(req))));
+  r.put('/boq-lines/:id/norms', idempotent, (req, res) => ok(res, bq.norms.set(req.actor, pid(req), parseNorms(req.body))));
+  r.post('/boq-lines/:id/norms/from-analysis', idempotent, (req, res) => ok(res, bq.norms.fromAnalysis(req.actor, pid(req))));
+  r.get('/boq-changes', (req, res) => ok(res, bq.changes.list(req.actor, parseVersionQuery(req.query).versionId)));
+  r.get('/boq-changes/:id', (req, res) => ok(res, bq.changes.get(req.actor, pid(req))));
+  r.post('/boq-changes/:id/withdraw', idempotent, (req, res) => ok(res, bq.changes.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/boq-changes/:id/cancel', idempotent, (req, res) => ok(res, bq.changes.cancel(req.actor, pid(req), parseReason(req.body))));
   return r;
 }

@@ -71,3 +71,13 @@ export const WBS_TEMPLATES = {
   WATER_PIPELINE: { label: 'Water pipeline', tree: [n('Preliminaries and site establishment', 'GENERAL', null, true), n('Survey and trenching', 'WATER', [n('Survey and marking'), n('Trench excavation'), n('Bedding and backfill')], true), n('Pipe supply and laying', 'WATER', [n('Pipe supply'), n('Laying and jointing'), n('Valves and fittings')], true), n('Chambers and structures', 'CIVIL', [n('Valve chambers'), n('Thrust blocks and crossings')], true), n('Pumping and storage', 'PLANT', [n('Pump house'), n('Storage reservoir')], true), n('Testing, disinfection and commissioning', 'QUALITY', null, true)] },
   INDUSTRIAL_PLANT: { label: 'Industrial plant', tree: [n('Preliminaries and site establishment', 'GENERAL', null, true), n('Civil and foundations', 'CIVIL', [n('Earthwork and piling'), n('Equipment foundations'), n('Plant buildings')], true), n('Structural steel', 'STRUCTURAL', [n('Fabrication'), n('Erection')], true), n('Mechanical equipment', 'PLANT', [n('Equipment erection'), n('Piping')], true), n('Electrical and instrumentation', 'MEP', [n('Power and cabling'), n('Instrumentation and control')], true), n('Insulation, painting and fire protection', 'MEP', null, true), n('Pre-commissioning, commissioning and handover', 'QUALITY', null, true)] },
 };
+
+// Part 10.04: BOQ management. Quantities x 1 000, rates x 10 000, amounts in paise.
+export const BOQ_FREEZE_DOC = 'PROJ_BOQ_FREEZE';
+export const BOQ_MAP_DOC = 'PROJ_BOQ_MAPPING';
+export const BOQ_VTYPES = { TENDER: 'Tender', CONTRACT: 'Contract', REVISED: 'Revised' };
+export const BOQ_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Frozen', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+export const LINE_KINDS = { BILL: 'Bill', SECTION: 'Section', ITEM: 'Item', SUBITEM: 'Sub-item' };
+export const NORM_TYPES = { MATERIAL: 'Material', LABOUR: 'Labour', EQUIPMENT: 'Equipment', TRANSPORT: 'Transport', SUBCONTRACT: 'Subcontract', OTHER: 'Other' };
+/** BR-01: amount in paise = quantity (x 1 000) x rate (x 10 000) / 100 000, rounded half up. */
+export const lineAmount = (qty, rate) => Number((BigInt(qty) * BigInt(rate) + 50000n) / 100000n);
