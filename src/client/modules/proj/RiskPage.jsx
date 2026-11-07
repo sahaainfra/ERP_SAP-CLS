@@ -64,7 +64,7 @@ export default function RiskPage() {
           <h2>{t('rk.closeAsk')}</h2>
           {r.needsApproval && <p className="muted">{t('rk.closeNeedsPm')}</p>}
           <Field label={t('rk.justification')} name="reason" error={error}><textarea value={closing.reason} onChange={(e) => setClosing({ ...closing, reason: e.target.value })} rows={3} maxLength={1000} data-testid="rk-close-reason" /></Field>
-          {r.typeLabel && r.type === 'RISK' && <label><input type="checkbox" checked={closing.occurred} onChange={() => setClosing({ ...closing, occurred: !closing.occurred })} data-testid="rk-close-occurred" /> {t('rk.occurred')}</label>}
+          {r.rtype === 'RISK' && <label><input type="checkbox" checked={closing.occurred} onChange={() => setClosing({ ...closing, occurred: !closing.occurred })} data-testid="rk-close-occurred" /> {t('rk.occurred')}</label>}
           <div className="actions"><button type="submit" className="btn btn-primary" disabled={closing.reason.trim().length < 10} data-testid="rk-close-send">{t('act.submit')}</button></div>
         </form>
       )}
@@ -125,7 +125,7 @@ export default function RiskPage() {
           <p><strong>{t('rk.allocated')}</strong>: {inr(r.contingencyAllocated)} · <strong>{t('rk.drawn')}</strong>: {inr(r.contingencyDrawn)}</p>
           <table className="data-table"><thead><tr><th scope="col">{t('rk.kind')}</th><th scope="col">{t('rk.amount')}</th><th scope="col">{t('rk.col.status')}</th><th scope="col">{t('rk.reason')}</th><th scope="col">{t('rk.by')}</th></tr></thead>
             <tbody>{r.contingency.map((e) => <tr key={e.id}><td>{t(`rk.cont.${e.kind}`)}</td><td>{inr(e.amount)}</td><td>{t(`rk.contStatus.${e.status}`)}{c.contingency && e.kind === 'ALLOCATION' && e.status === 'ACTIVE' && <button type="button" className="btn" onClick={() => run(() => rk.release(r.id, e.id), t('rk.released'))}>{t('rk.release')}</button>}</td><td>{e.reason}</td><td>{e.by}</td></tr>)}</tbody></table>
-          {c.contingency && r.type === 'RISK' && (
+          {c.contingency && r.rtype === 'RISK' && (
             <form className="actions-row" aria-label={t('rk.contNew')} data-testid="rk-cont-form" onSubmit={(e) => { e.preventDefault(); run(() => rk.contingency(r.id, cont), t('rk.contSaved')).then((x) => x && setCont({ kind: cont.kind, amount: '', reason: '' })); }}>
               <Field label={t('rk.kind')} name="kind" error={error}><select value={cont.kind} onChange={(e) => setCont({ ...cont, kind: e.target.value })} data-testid="rk-cont-kind"><option value="ALLOCATION">{t('rk.cont.ALLOCATION')}</option><option value="DRAWDOWN">{t('rk.cont.DRAWDOWN')}</option></select></Field>
               <Field label={t('rk.amount')} name="amount" error={error}><input value={cont.amount} onChange={(e) => setCont({ ...cont, amount: e.target.value })} inputMode="decimal" data-testid="rk-cont-amount" /></Field>
