@@ -70,6 +70,8 @@ test('AC-01 AC-03 AC-04 FR-02 FR-03 FR-05 receipts, search with a jump to the me
   // star and pin
   await a.page.getByTestId('msg').filter({ hasText: 'Cube test result' }).getByTestId('msg-more').click();
   await a.page.getByTestId('msg-star').click();
+  // the menu closes when the star is saved: wait for that before opening it again, or the late close would shut the reopened menu
+  await expect(a.page.getByTestId('msg').filter({ hasText: 'Cube test result' }).getByLabel('Starred')).toBeVisible();
   await a.page.getByTestId('msg').filter({ hasText: 'Cube test result' }).getByTestId('msg-more').click();
   await a.page.getByTestId('msg-pin').click();
   await expect(a.page.getByTestId('pins')).toContainText('Cube test result');
