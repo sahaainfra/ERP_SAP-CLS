@@ -332,9 +332,9 @@ export function createAwardService({ db }) {
       const no = nextDoc(actor, SUBMISSION_DOC, 'tdr_submissions', 'SUB');
       // FR-03: the price of the approved estimate (09.01) when there is one and none is typed; otherwise the estimate is typed (D-383)
       const est = b.estimate == null ? estimatesOf(db)?.estimates.approvedForTender(actor.companyId, t.id) ?? null : null;
-      const estimate = est ? est.total_selling : b.estimate == null ? null : toMinor(b.estimate);
+      const estimate = est ? estimatesOf(db).estimates.netOf(est) : b.estimate == null ? null : toMinor(b.estimate);
       const id = Number(db.prepare("INSERT INTO tdr_submissions (company_id, doc_no, doc_date, tender_id, checklist_json, estimate_minor, estimate_source, estimate_ref, bid_amount_minor, status, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, 'tdr_tender', ?)")
-        .run(actor.companyId, no, today(), t.id, JSON.stringify(items), estimate, est ? 'ESTIMATE' : 'MANUAL', est ? `${est.doc_no}/v${est.version_no}` : b.estimateRef ?? null, b.bidAmount == null ? (est ? est.total_selling : null) : toMinor(b.bidAmount), actor.user, String(t.id)).lastInsertRowid);
+        .run(actor.companyId, no, today(), t.id, JSON.stringify(items), estimate, est ? 'ESTIMATE' : 'MANUAL', est ? `${est.doc_no}/v${est.version_no}` : b.estimateRef ?? null, b.bidAmount == null ? (est ? estimate : null) : toMinor(b.bidAmount), actor.user, String(t.id)).lastInsertRowid);
       writeAudit(db, { entity: 'tdr_submissions', entityId: id, action: 'create', newValues: { docNo: no, tender: t.doc_no }, actor: actor.user, companyId: actor.companyId });
       return submissions.get(actor, id);
     },

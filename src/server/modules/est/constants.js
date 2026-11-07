@@ -20,3 +20,6 @@ export const same = (a, b) => Boolean(a && b && String(a).toLowerCase() === Stri
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 export const rid = (v) => parseInt(String(v), 10);
 export const wfDoc = (id) => String(id);
+/** Part 09.03 (FR-01): the review checklist of an estimate: the commercial manager ticks each item when approving the review step (in the inbox or on the Estimate Review panel). */
+export const REVIEW_ITEMS = [['QUANTITIES', 'Quantities checked against the take-off or the client BOQ'], ['RATES', 'Rates current (released analyses, the resource library on the basis date)'], ['INDIRECTS', 'Indirect costs complete'], ['RISKS', 'Risks priced (contingency and escalation)'], ['ASSUMPTIONS', 'Assumptions, inclusions, exclusions and qualifications listed']];
+export const ASSUMPTION_KINDS = { ASSUMPTION: 'Assumption', INCLUSION: 'Inclusion', EXCLUSION: 'Exclusion', QUALIFICATION: 'Qualification' };

@@ -10,6 +10,8 @@ import './integrations.js';
 import { estimateRoutes } from './routes.js';
 import { bindMto, createMtoService } from './mto.js';
 import { mtoRoutes } from './mto-routes.js';
+import { bindReview, createReviewService } from './review.js';
+import { reviewRoutes } from './review-routes.js';
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -22,9 +24,9 @@ for (const [type, description] of [
   ['est.bbs.released', 'A bar bending schedule revision was released: data { bbsId, docNo, revisionNo, projectId, member, drawingRef, byDia: [{ dia, marks, bars, totalLength, weightKg, weightMt }], totalKg, requirements, delta }. Procurement of steel reads it.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'est', description });
 
-const TABLES = ['est_estimates', 'est_estimate_items', 'est_item_components', 'est_indirects', 'est_risks', 'mto_takeoffs', 'mto_takeoff_lines', 'mto_bbs', 'mto_bbs_lines', 'mto_material_requirements'];
+const TABLES = ['est_reviews', 'est_bid_summary', 'est_assumptions', 'est_estimates', 'est_estimate_items', 'est_item_components', 'est_indirects', 'est_risks', 'mto_takeoffs', 'mto_takeoff_lines', 'mto_bbs', 'mto_bbs_lines', 'mto_material_requirements'];
 integrityRegistry.register({
-  allowNegative: ['est_estimates.margin_amount', 'est_estimates.margin_pct'], companyOptional: [],
+  allowNegative: ['est_estimates.margin_amount', 'est_estimates.margin_pct', 'est_bid_summary.profit_amount'], companyOptional: [],
   statuses: { est_estimates: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], mto_takeoffs: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], mto_bbs: ['DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'] },
   uniqueKeys: [{ table: 'est_estimates', columns: ['company_id', 'doc_no', 'version_no'] }, { table: 'mto_takeoffs', columns: ['company_id', 'doc_no', 'revision_no'] }, { table: 'mto_bbs', columns: ['company_id', 'doc_no', 'revision_no'] }],
 });
@@ -33,7 +35,7 @@ export const est = {
   code: 'est',
   name: 'Estimation & Quantity Take-off',
   routePrefix: '/api/v1/est',
-  ownerPart: '09.01, 09.02',
+  ownerPart: '09.01, 09.02, 09.03',
   status: 'Estimate versions of a tender or a project, items in BOQ sections priced from rate analyses, manual build-ups or typed rates with a markup, the indirect costs sheet, contingency by risk, escalation, HO overhead and GST worked out by the calculation engine, the resource summary and the comparison of versions.',
   tables: TABLES,
   companyOptional: [],
@@ -59,6 +61,14 @@ export const est = {
       mr.use(gate('ff.est.p0902', 'Quantity take-off and bar bending schedules are'));
       mr.use(mtoRoutes({ mto, exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/est', mr);
+    }
+    if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'est_bid_summary'").get()) {
+      const rv = createReviewService({ db });
+      bindReview(db, rv);
+      const rr = Router();
+      rr.use(gate('ff.est.p0903', 'The estimate review and the bid price are'));
+      rr.use(reviewRoutes({ rv }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      api.use('/est', rr);
     }
   },
 };

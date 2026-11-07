@@ -2,11 +2,12 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import '../src/server/modules/registry.js';
 import { estimatesOf } from '../src/server/modules/est/estimate.js';
+import { REVIEW_ITEMS } from '../src/server/modules/est/constants.js';
 import { setupCompany, startApi } from './helpers.js';
 
 // Part 09.01: the estimate workspace. T-01 the selling rate of each item and the totals of the estimate reproduce the hand calculation (an item priced from the M25 rate analysis of 06.06, a manual build-up priced from the
 // resource library, a typed cost rate; the indirects sheet; contingency by risk; HO overhead, escalation and GST), and the comparison of two versions shows the changes. Also: the client BOQ pasted (checked, then added),
-// the resource summary, re-pricing when the analysis gets a newer released version (BR-01), masking of costs and margins (BR-02), the approval chain (an estimation colleague, then the director; the maker never approves),
+// the resource summary, re-pricing when the analysis gets a newer released version (BR-01), masking of costs and margins (BR-02), the approval chain (since 09.03: the commercial manager reviews against the checklist, then the director; the maker never approves),
 // conflicts, idempotent replay, roles, project isolation, another company, the flag, and a tender estimate.
 const E = '/api/v1/est';
 const M = '/api/v1/mdm';
@@ -29,7 +30,7 @@ async function setup() {
   const act = async (who, instanceId, action = 'approve') => {
     const task = (await api.call('GET', `${W}/tasks?mine=assigned`, who)).json.data.rows.find((x) => x.instance.id === instanceId);
     assert.ok(task, `${who.user} has the task of instance ${instanceId}`);
-    const r = await api.call('POST', `${W}/tasks/${task.id}/act`, { ...who, headers: key(), body: { action, comment: 'checked the estimate' } });
+    const r = await api.call('POST', `${W}/tasks/${task.id}/act`, { ...who, headers: key(), body: { action, comment: 'checked the estimate', checked: REVIEW_ITEMS.map(([, l]) => l) } });
     assert.equal(r.status, 200, JSON.stringify(r.json));
   };
   const hasTask = async (who, instanceId) => (await api.call('GET', `${W}/tasks?mine=assigned`, who)).json.data.rows.some((x) => x.instance.id === instanceId);
@@ -138,7 +139,7 @@ test('T-01 the item selling rates and the totals reproduce the hand calculation;
   assert.deepEqual(list.data.map((r) => r.versionNo).sort(), [1, 2]);
 });
 
-test('BR-01 an item priced from an analysis that gets a newer released version is flagged and re-priced; the chain approves (a colleague, then the director); conflicts and replays', async () => {
+test('BR-01 an item priced from an analysis that gets a newer released version is flagged and re-priced; the chain approves (the commercial manager, then the director); conflicts and replays', async () => {
   const t = await setup();
   const e = await built(t);
   // 409 on a stale version, and a client total is never trusted (it is not accepted at all)
@@ -171,11 +172,11 @@ test('BR-01 an item priced from an analysis that gets a newer released version i
   const inst = s1.json.data.workflowInstanceId;
   assert.equal(await t.hasTask(est1, inst), false, 'the maker is not a reviewer');
   assert.equal((await t.call(est1, 'PATCH', `${E}/estimates/${e.id}`, { title: 'changed', version: s1.json.data.rowVersion })).status, 409, 'locked in approval');
-  await t.act(est2, inst, 'return');
+  await t.act(com, inst, 'return');
   let x = (await t.call(est1, 'GET', `${E}/estimates/${e.id}`)).json.data; assert.equal(x.status, 'RETURNED');
   assert.equal((await t.call(est1, 'PATCH', `${E}/estimates/${e.id}`, { contingencyPct: '1.25', version: x.rowVersion })).json.data.contingencyPct, '1.25');
   assert.equal((await t.call(est1, 'POST', `${E}/estimates/${e.id}/submit`, {})).status, 202);
-  await t.act(est2, inst); await t.act(dir, inst);
+  await t.act(com, inst); await t.act(dir, inst);
   x = (await t.call(est1, 'GET', `${E}/estimates/${e.id}`)).json.data;
   assert.deepEqual([x.status, x.can.edit, x.can.amend], ['APPROVED', false, true]);
   const ev = t.api.db.prepare("SELECT payload FROM core_outbox WHERE event_type = 'est.estimate.approved'").all().map((r) => JSON.parse(r.payload).data ?? JSON.parse(r.payload));
@@ -185,14 +186,14 @@ test('BR-01 an item priced from an analysis that gets a newer released version i
   assert.equal((await t.call(est1, 'PUT', `${E}/estimates/${e.id}/items`, { items: priced(t), version: x.rowVersion })).status, 409);
   assert.equal((await t.call(est1, 'POST', `${E}/estimates/${e.id}/amend`, {})).status, 400, 'an amendment says why');
   const v2 = (await t.call(est1, 'POST', `${E}/estimates/${e.id}/amend`, { reason: 'client asked for a revised offer' })).json.data;
-  const s3 = (await t.call(est1, 'POST', `${E}/estimates/${v2.id}/submit`, {})).json.data; await t.act(est2, s3.workflowInstanceId); await t.act(dir, s3.workflowInstanceId);
+  const s3 = (await t.call(est1, 'POST', `${E}/estimates/${v2.id}/submit`, {})).json.data; await t.act(com, s3.workflowInstanceId); await t.act(dir, s3.workflowInstanceId);
   assert.equal((await t.call(est1, 'GET', `${E}/estimates/${e.id}`)).json.data.status, 'SUPERSEDED');
   // withdraw and cancel
   const v3 = (await t.call(est1, 'POST', `${E}/estimates/${v2.id}/versions`, {})).json.data;
   const s4 = (await t.call(est1, 'POST', `${E}/estimates/${v3.id}/submit`, {})).json.data;
   assert.equal((await t.call(est2, 'POST', `${E}/estimates/${v3.id}/withdraw`, { reason: 'not mine to withdraw' })).status, 403);
   assert.equal((await t.call(est1, 'POST', `${E}/estimates/${v3.id}/withdraw`, { reason: 'one more change' })).json.data.status, 'DRAFT');
-  assert.equal(await t.hasTask(est2, s4.workflowInstanceId), false);
+  assert.equal(await t.hasTask(com, s4.workflowInstanceId), false);
   assert.equal((await t.call(est1, 'POST', `${E}/estimates/${v3.id}/cancel`, { reason: 'not needed any more' })).json.data.status, 'CANCELLED');
   assert.ok(t.api.db.prepare("SELECT 1 FROM core_audit_log WHERE entity = 'est_estimates' AND action = 'reprice'").get());
 });
@@ -238,7 +239,7 @@ test('BR-02 roles and masking: QS and project managers see quantities and sellin
   assert.equal((await t.call(est1, 'POST', `${E}/estimates`, {})).status, 400, 'a tender or a project');
   // approved, it is the estimate the bid submission of 08.03 starts from
   const tp = (await t.call(est1, 'PUT', `${E}/estimates/${te.json.data.id}/items`, { items: [{ ...BOQ[0], mode: 'RATE', costRate: '5000', markupPct: '10' }], version: te.json.data.rowVersion })).json.data;
-  const tsub = (await t.call(est1, 'POST', `${E}/estimates/${tp.id}/submit`, {})).json.data; await t.act(est2, tsub.workflowInstanceId); await t.act(dir, tsub.workflowInstanceId);
+  const tsub = (await t.call(est1, 'POST', `${E}/estimates/${tp.id}/submit`, {})).json.data; await t.act(com, tsub.workflowInstanceId); await t.act(dir, tsub.workflowInstanceId);
   const ap = estimatesOf(t.api.db).estimates.approvedForTender(1, tn.id); assert.deepEqual([ap.id, ap.total_selling], [tp.id, 55000000], '5500 x 100 = 5,50,000.00 in paise');
   // draft delete by its maker only; the flag hides everything
   assert.equal((await t.call(est2, 'DELETE', `${E}/estimates/${own.id}`)).status, 422);

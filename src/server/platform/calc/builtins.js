@@ -335,4 +335,23 @@ export const BUILTIN_FORMULAS = Object.freeze([
       t({ quantity: '0', per_unit: '7.5', wastage_percent: '3' }, { net: '0.000', gross: '0.000' }),
     ],
   },
+  {
+    code: 'est.bid_price',
+    description: 'Final bid price of an estimate (part 09.03, FR-02, BR-01): the selling amount (cost plus profit) less the discount or rebate, then GST on works contract on what is left; the bid price is the sum of those parts.',
+    ownerModule: 'est',
+    financial: true,
+    roundingPolicy: 'half_up',
+    inputs: [
+      { name: 'selling_amount', type: 'money', min: '0' },
+      { name: 'discount_percent', type: 'percent', min: '0', max: '100' },
+      { name: 'gst_percent', type: 'percent', min: '0', max: '100' },
+    ],
+    expression: ['discount = round(selling_amount * discount_percent / 100, 2)', 'net = selling_amount - discount', 'gst = round(net * gst_percent / 100, 2)', 'bid_price = net + gst'].join('\n'),
+    outputs: [{ name: 'discount', type: 'money', label: 'Discount or rebate' }, { name: 'net', type: 'money', label: 'Price before GST' }, { name: 'gst', type: 'money', label: 'GST' }, { name: 'bid_price', type: 'money', label: 'Bid price' }],
+    tests: [
+      t({ selling_amount: '2906035.20', discount_percent: '1.5', gst_percent: '18' }, { discount: '43590.53', net: '2862444.67', gst: '515240.04', bid_price: '3377684.71' }),
+      t({ selling_amount: '1000.00', discount_percent: '0', gst_percent: '12' }, { discount: '0.00', net: '1000.00', gst: '120.00', bid_price: '1120.00' }),
+      t({ selling_amount: '0', discount_percent: '5', gst_percent: '18' }, { discount: '0.00', net: '0.00', gst: '0.00', bid_price: '0.00' }),
+    ],
+  },
 ]);

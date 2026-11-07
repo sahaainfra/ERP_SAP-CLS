@@ -11,7 +11,7 @@ import { todayIST } from '../../../shared/dates.js';
 import { issueNumber } from '../core/numbering/service.js';
 import { ratesOf } from '../mdm/rates.js';
 import { tendersOf } from '../bd/tender.js';
-import { BASES, COMPONENT_TYPES, ESTIMATE_DOC, INDIRECTS, MODES, OPEN, STATUS, esc, json, money, nowIso, num, rid, same, units } from './constants.js';
+import { BASES, COMPONENT_TYPES, ESTIMATE_DOC, INDIRECTS, MODES, OPEN, REVIEW_ITEMS, STATUS, esc, json, money, nowIso, num, rid, same, units } from './constants.js';
 
 // The estimate workspace (part 09.01). An estimate is a version of the costing of a tender (08.02) or a project: a header (basis date, region, currency, the HO overhead, contingency, escalation and GST percentages),
 // items in sections that mirror the client BOQ (typed, pasted or imported from Excel), each priced from a released rate analysis (06.06: its direct cost per unit and its resources), from a manual build-up of components
@@ -30,6 +30,8 @@ export const estimateList = defineList({
   },
 });
 const SENSITIVE = ['totalCost', 'marginPct'];
+/** Where later parts plug in (09.03): checks before an estimate goes for approval, and what its approval adds to the event. Each is (db, estimateRow, actor) => problems[] / data. */
+export const estimateHooks = /** @type {{ gates: any[], approved: any[], versioned?: (db: any, fromId: number, toId: number, user: string) => void }} */ ({ gates: [], approved: [] });
 const ITEM_COLS = ['section_code', 'section_name', 'item_no', 'sort_order', 'description', 'uom', 'qty', 'client_rate', 'work_item_id', 'build_mode', 'analysis_id', 'cost_rate', 'markup_pct', 'selling_rate', 'cost_amount', 'amount', 'priced_at', 'remarks'];
 
 export function createEstimateService({ db }) {
@@ -228,6 +230,7 @@ export function createEstimateService({ db }) {
     }
     for (const x of indirectsOf(from.id)) db.prepare("INSERT INTO est_indirects (company_id, estimate_id, sort_order, category, description, basis, qty, rate, percent, amount, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate')").run(x.company_id, id, x.sort_order, x.category, x.description, x.basis, x.qty, x.rate, x.percent, x.amount, actor.user);
     for (const x of risksOf(from.id)) db.prepare("INSERT INTO est_risks (company_id, estimate_id, sort_order, description, impact, probability_pct, exposure, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'est_estimate')").run(x.company_id, id, x.sort_order, x.description, x.impact, x.probability_pct, x.exposure, actor.user);
+    estimateHooks.versioned?.(db, from.id, id, actor.user);
     const e = db.prepare('SELECT * FROM est_estimates WHERE id = ?').get(id); retotal(actor, e);
     writeAudit(db, { entity: 'est_estimates', entityId: id, action: 'version', newValues: { from: `${from.doc_no}/v${from.version_no}`, versionNo: v }, reason: reason ?? null, actor: actor.user, companyId: from.company_id });
     return id;
@@ -427,6 +430,7 @@ export function createEstimateService({ db }) {
       if (!items.length) p.push({ field: 'items', message: 'An estimate has at least one item' });
       const unpriced = items.filter((i) => i.qty > 0 && i.selling_rate === 0); if (unpriced.length) p.push({ field: 'items', message: `Price every item: ${unpriced.slice(0, 10).map((i) => i.item_no).join(', ')}${unpriced.length > 10 ? ` and ${unpriced.length - 10} more` : ''}` });
       const stale = items.filter((i) => newerOf(i)); if (stale.length) p.push({ field: 'items', message: `A newer released rate analysis prices ${stale.map((i) => i.item_no).join(', ')}: re-price them first (BR-01)` });
+      for (const g of estimateHooks.gates) p.push(...(g(db, e, actor) ?? []));
       if (p.length) throw unprocessable('The estimate is not ready for approval.', p);
       return transaction(db, () => {
         retotal(actor, e); const x = db.prepare('SELECT * FROM est_estimates WHERE id = ?').get(e.id);
@@ -473,6 +477,8 @@ export function createEstimateService({ db }) {
       return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(v.ref)}</title><style>body{font:13px sans-serif;margin:24px}td,th{border:1px solid #888;padding:4px 6px;text-align:left}table{border-collapse:collapse;width:100%}</style></head><body><h1>Estimate ${esc(v.ref)}</h1><p>${esc(v.title)} · ${esc(v.tender ? `${v.tender.docNo} ${v.tender.nameOfWork}` : v.project?.name)} · basis ${esc(v.basisDate)} · ${esc(v.statusLabel)}</p><table><thead><tr><th>Section</th><th>Item</th><th>Description</th><th>Unit</th><th>Quantity</th>${c ? '<th>Cost rate</th><th>Markup %</th>' : ''}<th>Rate</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><p>Selling ₹ ${esc(t.selling)} · GST ₹ ${esc(t.gst)} · Bid value ₹ ${esc(t.bidValue)}${c ? ` · Direct ₹ ${esc(t.directCost)} · Indirect ₹ ${esc(t.indirectCost)} · Overhead ₹ ${esc(t.overhead)} · Contingency ₹ ${esc(t.contingency)} · Escalation ₹ ${esc(t.escalation)} · Total cost ₹ ${esc(t.totalCost)} · Margin ₹ ${esc(t.margin)} (${esc(t.marginPct)}%)` : ''}</p></body></html>`;
     },
     /** For other parts (09.02, 09.03, 08.03): the approved estimate of a tender. */
+    /** The price before GST of an approved estimate: after the discount of its bid summary (09.03) when there is one. */
+    netOf(e) { const b = db.prepare('SELECT net_price FROM est_bid_summary WHERE estimate_id = ? AND deleted_at IS NULL').get(e.id); return b ? b.net_price : e.total_selling; },
     approvedForTender(companyId, tenderId) { return db.prepare("SELECT * FROM est_estimates WHERE company_id = ? AND tender_id = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY version_no DESC LIMIT 1").get(companyId, tenderId) ?? null; },
   };
 
@@ -487,7 +493,8 @@ export function createEstimateService({ db }) {
     if (to !== 'APPROVED') return;
     db.prepare("UPDATE est_estimates SET status = 'SUPERSEDED', updated_at = ? WHERE company_id = ? AND doc_no = ? AND id != ? AND status = 'APPROVED'").run(nowIso(), e.company_id, e.doc_no, e.id);
     const res = resourcesOf(actor, e);
-    event('est.estimate.approved', actor, e.id, e.company_id, { estimateId: e.id, docNo: e.doc_no, versionNo: e.version_no, tenderId: e.tender_id, projectId: e.project_id, totalSelling: money(e.total_selling), totalCost: money(e.total_cost), marginPct: num(e.margin_pct, 'percent'), bidValue: money(e.bid_value), gst: money(e.gst_amount), resources: res.rows.map((r) => ({ type: r.type, itemId: r.itemId, itemCode: r.itemCode, description: r.description, uom: r.uom, qty: r.qty })) });
+    const extra = Object.assign({}, ...estimateHooks.approved.map((h) => h(db, e, actor) ?? {}));
+    event('est.estimate.approved', actor, e.id, e.company_id, { ...extra, estimateId: e.id, docNo: e.doc_no, versionNo: e.version_no, tenderId: e.tender_id, projectId: e.project_id, totalSelling: money(e.total_selling), totalCost: money(e.total_cost), marginPct: num(e.margin_pct, 'percent'), bidValue: money(e.bid_value), gst: money(e.gst_amount), resources: res.rows.map((r) => ({ type: r.type, itemId: r.itemId, itemCode: r.itemCode, description: r.description, uom: r.uom, qty: r.qty })) });
   }
   return { estimates, decide, access: (actor, id) => { const e = db.prepare('SELECT * FROM est_estimates WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); return e && seesProject(actor, 'est.estimate.view', e.project_id) ? e : null; } };
 }
@@ -507,7 +514,8 @@ workflowTypes.register({
   docType: ESTIMATE_DOC, label: 'Estimate', processOwner: 'EST', route: (id) => `/est/estimate?id=${id}`,
   describe(db, companyId, id) { const r = db.prepare('SELECT doc_no, version_no, title, requested_by FROM est_estimates WHERE id = ? AND company_id = ?').get(rid(id), companyId); return r ? { ref: `${r.doc_no}/v${r.version_no}`, title: r.title, originator: r.requested_by } : null; },
   summarise(db, _actor, id) { const e = db.prepare('SELECT * FROM est_estimates WHERE id = ?').get(rid(id)); if (!e) return null; return { fields: [{ label: 'Estimate', value: `${e.doc_no}/v${e.version_no}` }, { label: 'Title', value: e.title }, { label: 'Selling', value: `₹ ${money(e.total_selling)}` }, { label: 'Total cost', value: `₹ ${money(e.total_cost)}` }, { label: 'Margin', value: `${num(e.margin_pct, 'percent')}%` }, { label: 'Bid value with GST', value: `₹ ${money(e.bid_value)}` }] }; },
-  defaultDefinition: { name: 'Estimate: a colleague of the estimation team, then the director (09.03 adds the formal review)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('EST', 'Estimation review', [{ kind: 'resolver', resolver: 'est.reviewer' }]), step('DIR', 'Director', [{ kind: 'role', role: 'DIR' }])] },
+  // 09.03: the estimator sends it; the commercial manager reviews it against the checklist; the director approves it (a definition already stored for a company stays until changed in the workflow designer)
+  defaultDefinition: { name: 'Estimate: the commercial manager reviews it against the checklist, then the director approves it', settings: { resubmit: 'first', distinctApprovers: true }, steps: [{ ...step('REVIEW', 'Commercial review', [{ kind: 'role', role: 'COMMGR' }]), checklist: REVIEW_ITEMS.map(([, label]) => label) }, step('DIR', 'Director', [{ kind: 'role', role: 'DIR' }])] },
   hooks: {
     onApproved: (db, { instance, actor }) => estimatesOf(db)?.decide(instance, actor, 'APPROVED'),
     onRejected: (db, { instance, actor, comment }) => estimatesOf(db)?.decide(instance, actor, 'REJECTED', comment),
