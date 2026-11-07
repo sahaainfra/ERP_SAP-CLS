@@ -1042,6 +1042,8 @@ a.wd-row:hover { background: var(--erp-color-bg-hover); }
 .msg-emoji { display: flex; gap: var(--erp-space-1); flex-wrap: wrap; }
 .msg-details h3 { margin-block: var(--erp-space-3) var(--erp-space-1); }
 .msg-readonly { padding-block: var(--erp-space-2); }
+/* the dock floats over the bottom-right corner: the page keeps room below its last controls so they can scroll clear of it (a button under the dock could not be pressed) */
+body:has(.msg-dock) .app-shell main { padding-block-end: calc(var(--erp-space-3) + 4.5rem); }
 .msg-dock { position: fixed; inset-block-end: var(--erp-space-3); inset-inline-end: var(--erp-space-4); z-index: var(--erp-z-dropdown); display: flex; align-items: flex-end; gap: var(--erp-space-3); }
 .msg-minichat { width: 22rem; height: 30rem; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); padding: var(--erp-space-2); display: flex; flex-direction: column; min-height: 0; }
 .msg-minichat.is-min { width: auto; height: auto; padding: 0; }
