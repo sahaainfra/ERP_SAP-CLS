@@ -70,3 +70,17 @@ export async function uploadToRfi(rfiId, blob, name) {
   if (!res.ok) throw new Error(String(res.status));
   return (await res.json()).data;
 }
+
+// Part 11.03: submittals.
+export const SUB_TYPES = ['MAR', 'METHOD_STATEMENT', 'SHOP_DRAWING', 'SAMPLE', 'MOCK_UP', 'PRODUCT_DATA', 'QUALITY_PLAN'];
+export const SUB_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', WITH_CONSULTANT: 'ACTIVE', APPROVED: 'APPROVED', REVISE: 'AT_RISK', REJECTED: 'REJECTED', RETURNED: 'RETURNED', CANCELLED: 'CANCELLED' };
+export const sb = {
+  get: async (id) => (await api.get(`/engg/submittals/${id}`)).data,
+  create: async (b) => (await api.post('/engg/submittals', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/engg/submittals/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/engg/submittals/${id}`)).data,
+  act: async (id, action, b = {}) => (await api.post(`/engg/submittals/${id}/${action}`, b, idem())).data,
+  schedule: async (projectId) => (await api.get(`/engg/submittal-schedule${pq(projectId)}`)).data,
+  makes: async (projectId) => (await api.get(`/engg/approved-makes${pq(projectId)}`)).data,
+  history: async (id) => (await api.get(`/engg/submittals/${id}/history`)).data,
+};

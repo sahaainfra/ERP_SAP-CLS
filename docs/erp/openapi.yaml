@@ -6658,6 +6658,75 @@ paths:
     get:
       summary: "RFI: GET /rfis/{id}/print"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittal-schedule:
+    get:
+      summary: "Submittal: GET /submittal-schedule"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/approved-makes:
+    get:
+      summary: "Submittal: GET /approved-makes"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/po-check:
+    get:
+      summary: "Submittal: GET /submittals/po-check"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals:
+    get:
+      summary: "Submittal: GET /submittals"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Submittal: POST /submittals"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/export:
+    get:
+      summary: "Submittal: GET /submittals/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/import:
+    post:
+      summary: "Submittal: POST /submittals/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}:
+    get:
+      summary: "Submittal: GET /submittals/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Submittal: PATCH /submittals/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Submittal: DELETE /submittals/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/submit:
+    post:
+      summary: "Submittal: POST /submittals/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/withdraw:
+    post:
+      summary: "Submittal: POST /submittals/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/cancel:
+    post:
+      summary: "Submittal: POST /submittals/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/amend:
+    post:
+      summary: "Submittal: POST /submittals/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/respond:
+    post:
+      summary: "Submittal: POST /submittals/{id}/respond"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/resubmit:
+    post:
+      summary: "Submittal: POST /submittals/{id}/resubmit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/history:
+    get:
+      summary: "Submittal: GET /submittals/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/submittals/{id}/print:
+    get:
+      summary: "Submittal: GET /submittals/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"

@@ -1134,3 +1134,14 @@ Module `engg`, flag `ff.engg.p1102`, tables `engg_rfis`, `engg_rfi_routing`, `en
 - **Hold** (FR-06): open RFIs with the hold flag are the constraints read by `/rfis/constraints` and `rfiConstraintsOf`.
 - **Files** (ADR-423): file entity `engg_rfi`.
 - **Permissions**: `engg.rfi.*`. **Browser**: RFI Dashboard, RFI Register, RFI, Raise RFI (mobile, photo and finger markup); the RFIs tab of the drawing page.
+
+## 90. Submittals (part 11.03)
+
+Module `engg`, flag `ff.engg.p1103`, tables `engg_submittals`, `engg_submittal_revisions`, `engg_approved_makes`, parameter `engg.po_mar_control`. The service is `modules/engg/submittals.js` (`createSubmittalService`, `procurementCheck`), bound with the services of 11.01 and 11.02.
+
+- **Life** (FR-03, ADR-428): draft, internal approval (`ENGG_SUBMITTAL`, resolver `engg.submittalReviewer`), with the consultant, response code A to D recorded; A and B approve, C starts a new revision, D rejects; amend reopens an approved, rejected or cancelled submittal as a new revision.
+- **Approved makes** (FR-04, ADR-429): an approved MAR writes `engg_approved_makes`; `/approved-makes`; event `engg.submittal.approved` carries the make, item, activity and HSE reference for 15.x, 18.03 and 19.01.
+- **Purchase-order check** (BR-01, ADR-430): `procurementCheck` and `/submittals/po-check`.
+- **Schedule** (FR-06): `/submittal-schedule`: required-by against submitted and responded, the overdue report, the count by type.
+- **Files** (ADR-431): file entity `engg_submittal`.
+- **Permissions**: `engg.submittal.*`. **Browser**: Submittal Register, Submittal, Submittal Schedule.

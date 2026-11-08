@@ -6,6 +6,9 @@ import RfiDashboardPage from './RfiDashboardPage.jsx';
 import RfiPage from './RfiPage.jsx';
 import RfiRaisePage from './RfiRaisePage.jsx';
 import RfisPage from './RfisPage.jsx';
+import SubmittalPage from './SubmittalPage.jsx';
+import SubmittalSchedulePage from './SubmittalSchedulePage.jsx';
+import SubmittalsPage from './SubmittalsPage.jsx';
 import SiteDrawingsPage from './SiteDrawingsPage.jsx';
 import TransmittalPage from './TransmittalPage.jsx';
 import TransmittalsPage from './TransmittalsPage.jsx';
@@ -24,5 +27,8 @@ registerModule({
     { path: '/engg/rfis', label: 'RFI Register', icon: 'erp.group.projects', permission: 'engg.rfi.view', flag: 'ff.engg.p1102', Page: RfisPage },
     { path: '/engg/rfi', label: 'RFI', menu: false, icon: 'erp.group.projects', permission: 'engg.rfi.view', flag: 'ff.engg.p1102', Page: RfiPage },
     { path: '/engg/rfi-raise', label: 'Raise RFI', icon: 'erp.action.create', permission: 'engg.rfi.create', flag: 'ff.engg.p1102', Page: RfiRaisePage },
+    { path: '/engg/submittals', label: 'Submittal Register', icon: 'erp.group.projects', permission: 'engg.submittal.view', flag: 'ff.engg.p1103', Page: SubmittalsPage },
+    { path: '/engg/submittal', label: 'Submittal', menu: false, icon: 'erp.group.projects', permission: 'engg.submittal.view', flag: 'ff.engg.p1103', Page: SubmittalPage },
+    { path: '/engg/submittal-schedule', label: 'Submittal Schedule', icon: 'erp.group.projects', permission: 'engg.submittal.view', flag: 'ff.engg.p1103', Page: SubmittalSchedulePage },
   ],
 });
