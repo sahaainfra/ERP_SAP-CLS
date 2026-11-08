@@ -7134,6 +7134,61 @@ paths:
     get:
       summary: "Budget changes: GET /compare/export"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/check:
+    post:
+      summary: "Budget check and ledger: POST /check"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/availability:
+    get:
+      summary: "Budget check and ledger: GET /availability"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/ledger:
+    get:
+      summary: "Budget check and ledger: GET /ledger"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/ledger/documents:
+    get:
+      summary: "Budget check and ledger: GET /ledger/documents"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/ledger/export:
+    get:
+      summary: "Budget check and ledger: GET /ledger/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/commitments/{id}/log:
+    get:
+      summary: "Budget check and ledger: GET /commitments/{id}/log"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/ingest/commitment:
+    post:
+      summary: "Budget check and ledger: POST /ingest/commitment"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/ingest/actual:
+    post:
+      summary: "Budget check and ledger: POST /ingest/actual"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/check-config:
+    get:
+      summary: "Budget check and ledger: GET /check-config"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Budget check and ledger: POST /check-config"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/check-config/export:
+    get:
+      summary: "Budget check and ledger: GET /check-config/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/check-config/import:
+    post:
+      summary: "Budget check and ledger: POST /check-config/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/check-config/{id}/cancel:
+    post:
+      summary: "Budget check and ledger: POST /check-config/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/check-config/{id}/history:
+    get:
+      summary: "Budget check and ledger: GET /check-config/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"

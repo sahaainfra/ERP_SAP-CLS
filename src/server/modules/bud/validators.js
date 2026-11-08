@@ -7,6 +7,7 @@ const text = (max) => z.string().trim().max(max);
 const optText = (max) => z.string().trim().max(max).nullish().transform((v) => v || null);
 const optId = id.nullish().transform((v) => v || null);
 const reason = z.string().trim().min(5, 'Say why (at least 5 characters)').max(1000);
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date such as 2026-12-01');
 const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month such as 2026-12');
 const num = z.number().finite().min(0);
 const given = (out, b) => Object.fromEntries(Object.entries(out).filter(([k]) => b && Object.hasOwn(b, k)));
@@ -46,3 +47,17 @@ export const parseChangePreview = (b) => parse(z.object({ projectId: id, ...chan
 export const parseChangeUpdate = (b) => given(parse(z.object({ reasonCode: change.reasonCode.optional(), title: change.title.optional(), justification: change.justification.optional(), riskId: optId.optional(), variationRef: optText(80).optional(), lines: z.array(cline).max(300).optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b), b);
 export const parseChangeImport = (b) => parse(z.object({ rows: z.array(z.object({ projectId: id, ...change }).strict()).min(1, 'Give at least one row').max(100) }).strict(), b);
 export const parseCompare = (q) => parse(z.object({ projectId: id, from: optId, to: optId, by: z.enum(['line', 'cost_head', 'wbs']).default('line'), format: z.enum(['csv']).optional() }).strict(), q ?? {});
+
+// Part 12.03: the budget check and the ledger.
+const nonNeg = z.number().finite().min(0);
+const stage = z.enum(['PR', 'PO', 'WO', 'OTHER']);
+const lline = z.object({ lineId: z.union([z.string().max(60), z.number()]).nullish().transform((v) => (v == null ? '' : String(v))), wbsId: optId, costCodeId: optId, resourceType: TYPE.default('OTHER'), qty: nonNeg.default(0), amount: nonNeg, description: optText(200) }).strict();
+const ref = z.object({ sourceType: text(40).min(1), sourceId: z.union([z.string().max(60), z.number()]).transform(String), lineId: z.union([z.string().max(60), z.number()]).nullish().transform((v) => (v == null ? '' : String(v))) }).strict();
+export const parseCheck = (b) => parse(z.object({ projectId: id, stage: stage.default('PO'), lines: z.array(lline.extend({ sourceType: optText(40), sourceId: z.union([z.string().max(60), z.number()]).nullish().transform((v) => (v == null ? null : String(v))) }).strict()).min(1, 'Give at least one line').max(100) }).strict(), b);
+export const parseAvailability = (q) => parse(z.object({ projectId: id, wbsId: optId, costCodeId: optId, stage: stage.optional(), amount: z.coerce.number().min(0).optional() }).strict(), q ?? {});
+export const parseLedger = (q) => parse(z.object({ projectId: id, by: z.enum(['wbs', 'cost_code', 'cost_head', 'vendor']).default('wbs') }).strict(), q ?? {});
+export const parseLedgerDocs = (q) => parse(z.object({ projectId: id, wbsId: optId, costCodeId: optId, vendorRef: optText(60) }).strict(), q ?? {});
+export const parseIngestCommitment = (b) => parse(z.object({ action: z.enum(['UPSERT', 'SHORT_CLOSE', 'CANCEL']), projectId: id, stage, sourceType: text(40).min(1), sourceId: z.union([z.string().max(60), z.number()]).transform(String), docRef: optText(80), vendorRef: optText(60), vendorName: optText(160), replaces: ref.pick({ sourceType: true, sourceId: true }).nullish().transform((v) => v ?? null), lines: z.array(lline).max(300).default([]), reason: optText(500) }).strict(), b);
+export const parseIngestActual = (b) => parse(z.object({ action: z.enum(['POST', 'REVERSE']), projectId: id, sourceType: text(40).min(1), sourceId: z.union([z.string().max(60), z.number()]).transform(String), docRef: optText(80), vendorRef: optText(60), vendorName: optText(160), date: day.nullish().transform((v) => v || null), lines: z.array(lline.extend({ commitment: ref.nullish().transform((v) => v ?? null) }).strict()).max(300).default([]) }).strict(), b);
+export const parseConfigPropose = (b) => parse(z.object({ costHeadId: optId, stage: stage.nullish().transform((v) => v || null), mode: z.enum(['OFF', 'WARN', 'BLOCK']), tolerancePct: z.number().finite().min(0).max(100).default(0), effectiveFrom: day, reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(1000) }).strict(), b);
+export const parseConfigImport = (b) => parse(z.object({ rows: z.array(z.object({ costHeadId: optId, stage: stage.nullish().transform((v) => v || null), mode: z.enum(['OFF', 'WARN', 'BLOCK']), tolerancePct: z.number().finite().min(0).max(100).default(0), effectiveFrom: day, reason: z.string().trim().min(5).max(1000) }).strict()).min(1).max(100) }).strict(), b);

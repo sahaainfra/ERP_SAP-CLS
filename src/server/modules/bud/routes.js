@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { parseAvailability, parseCheck, parseConfigImport, parseConfigPropose, parseIngestActual, parseIngestCommitment, parseLedger, parseLedgerDocs } from './validators.js';
 import { parseChangeCreate, parseChangeImport, parseChangePreview, parseChangeUpdate, parseCompare } from './validators.js';
 import { parseAmend, parseBudgetCreate, parseBudgetUpdate, parseGenerate, parseId, parseImport, parseLineCreate, parseLineUpdate, parseOptReason, parsePhasingGenerate, parsePhasingSet, parseProject, parseReason, parseView } from './validators.js';
 
@@ -71,6 +72,25 @@ export function budRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }
     r.get('/changes/:id/print', (req, res) => html(res, c.print(req.actor, pid(req))));
     r.get('/compare', (req, res) => ok(res, c.compare(req.actor, parseCompare(req.query))));
     r.get('/compare/export', (req, res) => { const out = c.compareCsv(req.actor, parseCompare(req.query)); res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'no-store' }).send(out.body); });
+  }
+  // ---- part 12.03: the budget check, the commitment ledger and the settings ----
+  const l = svc.ledger;
+  if (l) {
+    const csv = (res, out) => res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'no-store' }).send(out.body);
+    r.post('/check', (req, res) => ok(res, l.check(req.actor, parseCheck(req.body))));
+    r.get('/availability', (req, res) => ok(res, l.availability(req.actor, parseAvailability(req.query))));
+    r.get('/ledger', (req, res) => ok(res, l.report(req.actor, parseLedger(req.query))));
+    r.get('/ledger/documents', (req, res) => ok(res, l.documents(req.actor, parseLedgerDocs(req.query))));
+    r.get('/ledger/export', (req, res) => csv(res, l.reportCsv(req.actor, parseLedger(req.query))));
+    r.get('/commitments/:id/log', (req, res) => ok(res, l.commitments.ledgerLog(req.actor, pid(req))));
+    r.post('/ingest/commitment', idempotentRequired, (req, res) => ok(res, l.ingestCommitment(req.actor, parseIngestCommitment(req.body)), 201));
+    r.post('/ingest/actual', idempotentRequired, (req, res) => ok(res, l.ingestActual(req.actor, parseIngestActual(req.body)), 201));
+    r.get('/check-config', (req, res) => ok(res, l.config.list(req.actor)));
+    r.get('/check-config/export', (req, res) => csv(res, l.config.csv(req.actor)));
+    r.post('/check-config/import', idempotentRequired, (req, res) => ok(res, l.config.import(req.actor, parseConfigImport(req.body)), 201));
+    r.post('/check-config', idempotentRequired, (req, res) => ok(res, l.config.propose(req.actor, parseConfigPropose(req.body)), 201));
+    r.post('/check-config/:id/cancel', idempotent, (req, res) => ok(res, l.config.cancel(req.actor, pid(req), parseReason(req.body))));
+    r.get('/check-config/:id/history', (req, res) => ok(res, l.config.history(req.actor, pid(req))));
   }
   return r;
 }

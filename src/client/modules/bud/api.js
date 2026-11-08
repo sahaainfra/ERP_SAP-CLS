@@ -22,6 +22,24 @@ export const bc = {
   history: async (id) => (await api.get(`/bud/changes/${id}/history`)).data,
   compare: async (q) => (await api.get(`/bud/compare?${q}`)).data,
 };
+export const CHECK_TONE = { OK: 'APPROVED', WARNING: 'AT_RISK', BLOCK: 'REJECTED' };
+export const CFG_TONE = { PENDING: 'IN_REVIEW', ACTIVE: 'ACTIVE', SUPERSEDED: 'CANCELLED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const STAGES = ['PR', 'PO', 'WO', 'OTHER'];
+export const lg = {
+  report: async (projectId, by) => (await api.get(`/bud/ledger?projectId=${projectId}&by=${by}`)).data,
+  documents: async (q) => (await api.get(`/bud/ledger/documents?${q}`)).data,
+  availability: async (q) => (await api.get(`/bud/availability?${q}`)).data,
+  check: async (b) => (await api.post('/bud/check', b)).data,
+  config: async () => (await api.get('/bud/check-config')).data,
+  propose: async (b) => (await api.post('/bud/check-config', b, idem())).data,
+  cancelConfig: async (id, reason) => (await api.post(`/bud/check-config/${id}/cancel`, { reason }, idem())).data,
+  configHistory: async (id) => (await api.get(`/bud/check-config/${id}/history`)).data,
+};
+export async function download(path, name) {
+  const { authHeaders } = await import('../../platform/api/index.js');
+  const res = await fetch(`/api/v1/bud${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
+  const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+}
 export const bd = {
   projects: async () => (await api.get('/bud/project-options')).data,
   preview: async (projectId) => (await api.get(`/bud/generate/preview?projectId=${projectId}`)).data,
@@ -47,3 +65,5 @@ export async function openPrint(path, name) {
   const w = window.open('', '_blank');
   try { const res = await fetch(`/api/v1/bud${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(await res.blob()); if (w) w.location.href = url; else { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); } } catch (e) { if (w) w.close(); throw e; }
 }
+
+export const dayIST = (n = 0) => new Date(Date.now() + 5.5 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);

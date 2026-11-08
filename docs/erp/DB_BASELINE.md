@@ -1270,6 +1270,56 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bud_actuals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| cost_head_id | INTEGER |  |  |  |
+| resource_type | TEXT | yes |  | 'OTHER' |
+| commitment_id | INTEGER |  |  |  |
+| consumed_amount | INTEGER | yes |  | 0 |
+| consumed_qty | INTEGER | yes |  | 0 |
+| doc_ref | TEXT |  |  |  |
+| vendor_ref | TEXT |  |  |  |
+| vendor_name | TEXT |  |  |  |
+| description | TEXT |  |  |  |
+| qty | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| actual_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'POSTED' |
+| src_type | TEXT | yes |  |  |
+| src_id | TEXT | yes |  |  |
+| src_line_id | TEXT | yes |  | '' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: commitment_id -> bud_commitments(id), cost_head_id -> fin_cost_heads(id), cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_actuals_commitment: commitment_id
+- ix_bud_actuals_head: cost_head_id
+- ix_bud_actuals_code: cost_code_id
+- ix_bud_actuals_wbs: wbs_id
+- ix_bud_actuals_project: org_project_id, status, actual_date
+- ix_bud_actuals_company_id: company_id
+- ux_bud_actuals_src (unique): company_id, src_type, src_id, src_line_id
+
 ## bud_budgets
 
 | Column | Type | Not null | Key | Default |
@@ -1428,6 +1478,134 @@ Indexes:
 - ix_bud_changes_company_id: company_id
 - ux_bud_changes_variation (unique): org_project_id, variation_id
 - ux_bud_changes_doc (unique): company_id, doc_no
+
+## bud_check_config
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| cost_head_id | INTEGER |  |  |  |
+| stage | TEXT |  |  |  |
+| mode | TEXT | yes |  |  |
+| tolerance_pct | INTEGER | yes |  | 0 |
+| effective_from | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'PENDING' |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_head_id -> fin_cost_heads(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_check_config_status: company_id, status
+- ix_bud_check_config_head: cost_head_id
+- ix_bud_check_config_company_id: company_id
+- ux_bud_check_config_open (unique): company_id, , , effective_from
+- ux_bud_check_config_doc (unique): company_id, doc_no
+
+## bud_commitment_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| commitment_id | INTEGER | yes |  |  |
+| action | TEXT | yes |  |  |
+| amount_delta | INTEGER | yes |  | 0 |
+| qty_delta | INTEGER | yes |  | 0 |
+| ref_type | TEXT |  |  |  |
+| ref_id | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: commitment_id -> bud_commitments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_commitment_log_commitment: commitment_id, id
+- ix_bud_commitment_log_company_id: company_id
+
+## bud_commitments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| cost_head_id | INTEGER |  |  |  |
+| resource_type | TEXT | yes |  | 'OTHER' |
+| stage | TEXT | yes |  |  |
+| commit_type | TEXT |  |  |  |
+| doc_ref | TEXT |  |  |  |
+| vendor_ref | TEXT |  |  |  |
+| vendor_name | TEXT |  |  |  |
+| description | TEXT |  |  |  |
+| qty | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| consumed_qty | INTEGER | yes |  | 0 |
+| consumed_amount | INTEGER | yes |  | 0 |
+| released_amount | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'OPEN' |
+| commit_date | TEXT | yes |  |  |
+| src_type | TEXT | yes |  |  |
+| src_id | TEXT | yes |  |  |
+| src_line_id | TEXT | yes |  | '' |
+| exception_id | INTEGER |  |  |  |
+| check_result | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_head_id -> fin_cost_heads(id), cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_commitments_vendor: company_id, vendor_ref
+- ix_bud_commitments_head: cost_head_id
+- ix_bud_commitments_code: cost_code_id
+- ix_bud_commitments_wbs: wbs_id
+- ix_bud_commitments_project: org_project_id, status
+- ix_bud_commitments_company_id: company_id
+- ux_bud_commitments_src (unique): company_id, src_type, src_id, src_line_id
 
 ## bud_lines
 

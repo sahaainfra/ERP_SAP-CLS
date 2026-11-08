@@ -47,3 +47,15 @@ export const BAND_PCT = 5;
 export const signed = (paise) => `${paise < 0 ? '-' : ''}${(Math.abs(paise) / 100).toFixed(2)}`;
 /** Neutralises a spreadsheet formula at the start of a cell of an export. */
 export const cell = (v) => { const s = String(v ?? ''); return /^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s) ? `'${s}` : s; };
+
+// Part 12.03: the budget check and the commitment ledger.
+export const CHECK_DOC = 'BUD_CHECK_CONFIG';
+export const STAGES = { PR: 'Purchase request', PO: 'Purchase order', WO: 'Work order', OTHER: 'Other commitment' };
+export const CHECK_MODES = { OFF: 'Off', WARN: 'Warn', BLOCK: 'Block' };
+export const CHECK_RESULTS = { OK: 'Within budget', WARNING: 'Over budget: warning', BLOCK: 'Over budget: blocked' };
+export const COMMIT_STATUS = { OPEN: 'Open', PARTIAL: 'Partly consumed', CLOSED: 'Closed', CANCELLED: 'Cancelled' };
+export const CONFIG_STATUS = { PENDING: 'Waiting for approval', ACTIVE: 'In force', SUPERSEDED: 'Replaced', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+export const CONTROL_CODE = 'CP-BUD-01';
+/** Event types the ledger listens to (the modules that publish them are built later; the payload is the contract). The stage follows the family. */
+export const COMMIT_EVENTS = { 'proc.pr': 'PR', 'proc.po': 'PO', 'proc.hire_order': 'OTHER', 'proc.service_order': 'OTHER', 'ctr.workorder': 'WO' };
+export const ACTUAL_EVENTS = ['inv.grn', 'inv.issue', 'ap.bill', 'hr.payroll', 'plant.cost'];

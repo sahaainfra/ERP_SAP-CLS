@@ -1189,3 +1189,14 @@ Module `bud` (flag `ff.bud.p1202`), tables `bud_changes`, `bud_change_lines`. Th
 - **Events**: `bud.change.approved`, `bud.budget.revised` (also from 12.01 revisions; the draft start of a 12.01 revision is now `bud.budget.revision_started`).
 - **Permissions**: `bud.change.*`. **Browser**: Budget Change Requests, Budget Change Request (form with the impact preview), Budget Version Comparison.
 
+## 95. Budget check service and commitment ledger (part 12.03)
+Module `bud` (flag `ff.bud.p1203`), tables `bud_check_config`, `bud_commitments`, `bud_commitment_log`, `bud_actuals`. The service is `modules/bud/ledger.js` (`createLedgerService`).
+
+- **Check** (FR-01, ADR-454, ADR-457): `POST /check` and `GET /availability`; available = budget in force (12.01, 12.02) − open commitments − actuals, for a WBS node and cost code.
+- **Ledger** (FR-02, FR-03, ADR-455, ADR-456): commitments by document line with amendment, short-close, cancel and PR replacement; actuals by source consuming commitments once; reconciliation by `bud_commitment_log`.
+- **Exception path** (FR-04, ADR-458): control point `CP-BUD-01` of the protocol and control engine.
+- **Settings** (ADR-460): `BUD_CHECK_CONFIG`, maker and checker.
+- **Events consumed** (ADR-459): `proc.pr|po|hire_order|service_order.*` and `ctr.workorder.*` with data `{ projectId, sourceType, sourceId, docRef, vendorRef, vendorName, replaces?, lines: [{ lineId, wbsId, costCodeId, resourceType, qty, amount, description }] }`; `inv.grn|inv.issue|ap.bill|hr.payroll|plant.cost.posted|reversed` with `{ projectId, sourceType, sourceId, date, lines: [{ ..., commitment?: { sourceType, sourceId, lineId } }] }`. **Events published**: `bud.commitment.changed`, `bud.actual.posted` (project control engine 14.07), `bud.check.config_changed`.
+- **Report** (FR-06): `GET /ledger` by WBS, cost code, cost head or vendor with drill-down documents and CSV.
+- **Permissions**: `bud.ledger.{view,export,post}`, `bud.check.{use,view,configure,approve}`. **Browser**: Budget vs Committed vs Actual (with the availability panel), Budget Check Settings; component `AvailabilityPanel`.
+
