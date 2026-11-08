@@ -10,6 +10,7 @@ export function budRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }
   const html = (res, body) => res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(body);
   const b = svc.budgets;
   r.get('/project-options', (req, res) => ok(res, b.options(req.actor)));
+  r.get('/structure-options', (req, res) => ok(res, b.structure(req.actor, parseProject(req.query).projectId)));
   r.get('/generate/preview', (req, res) => ok(res, b.preview(req.actor, { projectId: parseProject(req.query).projectId })));
   r.post('/generate/preview', (req, res) => ok(res, b.preview(req.actor, parseGenerate(req.body))));
   r.post('/generate', idempotentRequired, (req, res) => ok(res, b.generate(req.actor, parseGenerate(req.body)), 201));

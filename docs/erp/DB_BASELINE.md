@@ -1270,6 +1270,151 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bud_budgets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| vtype | TEXT | yes |  | 'ORIGINAL' |
+| name | TEXT | yes |  |  |
+| baseline_pack_id | INTEGER |  |  |  |
+| boq_version_id | INTEGER |  |  |  |
+| parent_budget_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| contract_value | INTEGER | yes |  | 0 |
+| target_margin_pct | INTEGER | yes |  | 0 |
+| direct_total | INTEGER | yes |  | 0 |
+| overhead_total | INTEGER | yes |  | 0 |
+| contingency_total | INTEGER | yes |  | 0 |
+| reserve_total | INTEGER | yes |  | 0 |
+| total_amount | INTEGER | yes |  | 0 |
+| baseline_cost | INTEGER | yes |  | 0 |
+| lines_count | INTEGER | yes |  | 0 |
+| phasing_method | TEXT |  |  |  |
+| generated_at | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| locked_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_budget_id -> bud_budgets(id), boq_version_id -> proj_boq_versions(id), baseline_pack_id -> proj_baseline_packs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_budgets_parent: parent_budget_id
+- ix_bud_budgets_boq: boq_version_id
+- ix_bud_budgets_pack: baseline_pack_id
+- ix_bud_budgets_project: org_project_id, status
+- ix_bud_budgets_status: company_id, status
+- ix_bud_budgets_company_id: company_id
+- ux_bud_budgets_version (unique): org_project_id, version_no
+- ux_bud_budgets_doc (unique): company_id, doc_no
+
+## bud_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| budget_id | INTEGER | yes |  |  |
+| line_kind | TEXT | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| work_package_id | INTEGER |  |  |  |
+| boq_line_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| cost_head_id | INTEGER |  |  |  |
+| resource_type | TEXT | yes |  | 'OTHER' |
+| resource_name | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| qty | INTEGER | yes |  | 0 |
+| rate | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| gen_qty | INTEGER |  |  |  |
+| gen_rate | INTEGER |  |  |  |
+| gen_amount | INTEGER |  |  |  |
+| origin | TEXT | yes |  | 'GENERATED' |
+| adjust_reason | TEXT |  |  |  |
+| adjusted_by | TEXT |  |  |  |
+| adjusted_at | TEXT |  |  |  |
+| unrated | INTEGER | yes |  | 0 |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_head_id -> fin_cost_heads(id), cost_code_id -> fin_cost_codes(id), boq_line_id -> proj_boq_lines(id), work_package_id -> proj_work_packages(id), wbs_id -> proj_wbs(id), budget_id -> bud_budgets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_lines_head: cost_head_id
+- ix_bud_lines_code: cost_code_id
+- ix_bud_lines_boq: boq_line_id
+- ix_bud_lines_wp: work_package_id
+- ix_bud_lines_wbs: wbs_id
+- ix_bud_lines_budget: budget_id, line_kind, sort_order
+- ix_bud_lines_company_id: company_id
+
+## bud_phasing
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| budget_id | INTEGER | yes |  |  |
+| line_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| amount | INTEGER | yes |  | 0 |
+| qty | INTEGER | yes |  | 0 |
+| method | TEXT | yes |  | 'MANUAL' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: line_id -> bud_lines(id), budget_id -> bud_budgets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_phasing_budget: budget_id, period
+- ix_bud_phasing_company_id: company_id
+- ux_bud_phasing (unique): line_id, period
+
 ## col_comments
 
 | Column | Type | Not null | Key | Default |

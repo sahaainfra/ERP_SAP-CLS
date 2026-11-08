@@ -186,7 +186,6 @@ export function createBudgetService({ db }) {
     return { o, x, pack, ver, lines, issues, totals: { direct: sum('DIRECT'), overhead: sum('OVERHEAD'), contingency: sum('CONTINGENCY'), reserve: sum('RESERVE'), baselineCost }, unrated: lines.filter((l) => l.unrated).length, contractValue: x?.contract_value ?? 0 };
   }
   const previewLine = (l) => ({ lineKind: l.lineKind, wbsId: l.wbsId, wbs: l.wbsId ? (() => { const w = wbsMeta(l.wbsId); return w ? `${w.code} ${w.name}` : null; })() : null, costCodeId: l.costCodeId, costCode: l.costCodeId ? db.prepare('SELECT code FROM fin_cost_codes WHERE id = ?').get(l.costCodeId)?.code : null, resourceType: l.resourceType, resourceName: l.resourceName, uom: l.uom, qty: l.qty / 1000, rate: l.rate / 10000, amount: rupees(l.amount), unrated: l.unrated });
-  const inPreparation = (projectId) => db.prepare("SELECT * FROM bud_budgets WHERE org_project_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND deleted_at IS NULL ORDER BY id DESC").get(projectId);
 
   function viewsOf(r, by) {
       const ls = linesOf(r.id); const groups = new Map();
@@ -225,6 +224,10 @@ export function createBudgetService({ db }) {
     options(actor) {
       need(actor, 'bud.budget.view', 'see projects with budgets'); const s = scopeSql(actor, 'bud.budget.view');
       return db.prepare('SELECT p.id, p.code, p.name FROM proj_projects x JOIN org_projects p ON p.id = x.project_id WHERE x.deleted_at IS NULL AND x.company_id = :c AND ' + s.sql.replace('x.org_project_id', 'x.project_id') + ' ORDER BY p.code').all(s.params).map((p) => ({ id: p.id, code: p.code, name: p.name }));
+    },
+    structure(actor, projectId) {
+      const o = project(actor, projectId, 'bud.budget.view');
+      return { wbs: db.prepare("SELECT id, code, name, level FROM proj_wbs WHERE project_id = ? AND deleted_at IS NULL AND wbs_status = 'ACTIVE' ORDER BY code").all(o.id), costCodes: db.prepare("SELECT id, code, name FROM fin_cost_codes WHERE (company_id IS NULL OR company_id = ?) AND code_status = 'ACTIVE' AND deleted_at IS NULL ORDER BY code").all(actor.companyId) };
     },
     /** FR-01: what the generation would do, with the lines, the totals against the baseline cost and what is missing; nothing is saved. */
     preview(actor, { projectId, rates = [] }) {

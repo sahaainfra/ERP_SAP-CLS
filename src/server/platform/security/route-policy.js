@@ -1816,6 +1816,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/engg/transmittals/:id/history', g: 'permission', k: 'engg.transmittal.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/engg/transmittals/:id/print', g: 'permission', k: 'engg.transmittal.print', s: 'parseId', scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/bud/project-options', g: 'permission', k: 'bud.budget.view', s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/bud/structure-options', g: 'permission', k: 'bud.budget.view', s: 'parseProject', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/bud/generate/preview', g: 'permission', k: 'bud.budget.create', s: 'parseProject', scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/bud/generate/preview', g: 'permission', k: 'bud.budget.create', s: 'parseGenerate', scope: 'company', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/bud/generate', g: 'permission', k: 'bud.budget.create', s: 'parseGenerate', scope: 'company', rate: 'write', audit: true },
