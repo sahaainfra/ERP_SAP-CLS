@@ -28,7 +28,7 @@ export default function LettersPage() {
       <h1 id="lt-list-h" className="sr-only">{t('letter.registerTitle')}</h1>
       <div className="actions-row no-print">
         {perms.includes('engg.letter.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="lt-new-in">{t('letter.registerInward')}</button>}
-        {perms.includes('engg.letter.create') && <Link to="/engg/letter-draft" className="btn" data-testid="lt-new-out">{t('letter.draftOutward')}</Link>}
+        {perms.includes('engg.letter.create') && <button type="button" className="btn" onClick={() => navigateTo('/engg/letter-draft')} data-testid="lt-new-out">{t('letter.draftOutward')}</button>}
         <Link to="/engg/time-bars">{t('tb.title')}</Link>
       </div>
       <div role="group" aria-label={t('letter.direction')} className="actions-row" data-testid="lt-tabs">
