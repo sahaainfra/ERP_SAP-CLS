@@ -6868,6 +6868,102 @@ paths:
     get:
       summary: "EPC: GET /vdr-items/{id}/print"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letter-templates:
+    get:
+      summary: "Correspondence: GET /letter-templates"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letter-templates/render:
+    post:
+      summary: "Correspondence: POST /letter-templates/render"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/time-bars:
+    get:
+      summary: "Correspondence: GET /time-bars"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Correspondence: POST /time-bars"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/time-bars/{id}:
+    get:
+      summary: "Correspondence: GET /time-bars/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/time-bars/{id}/serve:
+    post:
+      summary: "Correspondence: POST /time-bars/{id}/serve"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/time-bars/{id}/waive:
+    post:
+      summary: "Correspondence: POST /time-bars/{id}/waive"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/alerts:
+    post:
+      summary: "Correspondence: POST /letters/alerts"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters:
+    get:
+      summary: "Correspondence: GET /letters"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Correspondence: POST /letters"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/export:
+    get:
+      summary: "Correspondence: GET /letters/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/import:
+    post:
+      summary: "Correspondence: POST /letters/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}:
+    get:
+      summary: "Correspondence: GET /letters/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Correspondence: PATCH /letters/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Correspondence: DELETE /letters/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/submit:
+    post:
+      summary: "Correspondence: POST /letters/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/withdraw:
+    post:
+      summary: "Correspondence: POST /letters/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/cancel:
+    post:
+      summary: "Correspondence: POST /letters/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/amend:
+    post:
+      summary: "Correspondence: POST /letters/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/issue:
+    post:
+      summary: "Correspondence: POST /letters/{id}/issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/acknowledge:
+    post:
+      summary: "Correspondence: POST /letters/{id}/acknowledge"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/close:
+    post:
+      summary: "Correspondence: POST /letters/{id}/close"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/thread:
+    get:
+      summary: "Correspondence: GET /letters/{id}/thread"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/history:
+    get:
+      summary: "Correspondence: GET /letters/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/letters/{id}/print:
+    get:
+      summary: "Correspondence: GET /letters/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"

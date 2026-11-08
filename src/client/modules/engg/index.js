@@ -7,6 +7,10 @@ import DeliverablesPage from './DeliverablesPage.jsx';
 import ProgressPage from './ProgressPage.jsx';
 import VdrItemPage from './VdrItemPage.jsx';
 import VdrPage from './VdrPage.jsx';
+import LetterDraftPage from './LetterDraftPage.jsx';
+import LetterPage from './LetterPage.jsx';
+import LettersPage from './LettersPage.jsx';
+import TimeBarsPage from './TimeBarsPage.jsx';
 import RfiDashboardPage from './RfiDashboardPage.jsx';
 import RfiPage from './RfiPage.jsx';
 import RfiRaisePage from './RfiRaisePage.jsx';
@@ -40,5 +44,9 @@ registerModule({
     { path: '/engg/deliverable', label: 'Deliverable', menu: false, icon: 'erp.group.projects', permission: 'engg.deliverable.view', flag: 'ff.engg.p1104', Page: DeliverablePage },
     { path: '/engg/vdr', label: 'VDR Tracker', icon: 'erp.group.projects', permission: 'engg.vdr_item.view', flag: 'ff.engg.p1104', Page: VdrPage },
     { path: '/engg/vdr-item', label: 'VDR item', menu: false, icon: 'erp.group.projects', permission: 'engg.vdr_item.view', flag: 'ff.engg.p1104', Page: VdrItemPage },
+    { path: '/engg/letters', label: 'Correspondence Register', icon: 'erp.group.projects', permission: 'engg.letter.view', flag: 'ff.engg.p1105', Page: LettersPage },
+    { path: '/engg/letter', label: 'Letter', menu: false, icon: 'erp.group.projects', permission: 'engg.letter.view', flag: 'ff.engg.p1105', Page: LetterPage },
+    { path: '/engg/letter-draft', label: 'Draft Outward Letter', icon: 'erp.action.create', permission: 'engg.letter.create', flag: 'ff.engg.p1105', Page: LetterDraftPage },
+    { path: '/engg/time-bars', label: 'Notices and Time Bars', icon: 'erp.group.projects', permission: 'engg.letter.view', flag: 'ff.engg.p1105', Page: TimeBarsPage },
   ],
 });

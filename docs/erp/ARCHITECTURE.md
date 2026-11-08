@@ -1154,3 +1154,14 @@ Module `engg`, flag `ff.engg.p1104`, tables `engg_deliverables`, `engg_crs`, `en
 - **Comments and holds** (FR-03, FR-05): `engg_crs` per revision; `engg_holds` with the PO and activity; events `engg.hold.raised` and `engg.hold.cleared`.
 - **Vendor documents** (FR-04, ADR-435, ADR-436): `engg_vdr_items`, the tracker by PO and vendor, review code approved through `ENGG_VDR_REVIEW`; event `engg.vdr.reviewed`.
 - **Permissions**: `engg.deliverable.*`, `engg.vdr_item.*`. **Browser**: Engineering Progress, Deliverable Register, Deliverable, VDR Tracker, VDR item.
+
+## 92. Correspondence register (part 11.05)
+
+Module `engg`, flag `ff.engg.p1105`, tables `engg_letters`, `engg_letter_links`, `engg_time_bars`, parameter `engg.time_bar_alert_days`. The service is `modules/engg/letters.js` (`createLetterService`).
+
+- **Letters** (FR-01, FR-02, BR-01, ADR-437): inward registered and numbered; outward drafted from a standard text, approved (`ENGG_LETTER`: project manager, or commercial manager for a contractual notice), then numbered, printed on letterhead, issued by mode and acknowledged.
+- **Threads and replies** (FR-03): `parent_letter_id`; an inward letter is answered by an issued reply; overdue replies alert once.
+- **Time bars** (FR-04, BR-02, ADR-438, ADR-439): `engg_time_bars` with the deadline; alert steps 7, 3, 1 and lapse; served by an outward letter; alert dataset `engg.time_bar`.
+- **Confidentiality** (ADR-440): `engg.letter.view_confidential`. **Files**: entity `engg_letter`. **Templates** (ADR-441).
+- **Events**: `engg.letter.registered`, `engg.letter.issued`, `engg.letter.acknowledged`, `engg.letter.response_overdue`, `engg.timebar.opened`, `engg.timebar.alert`, `engg.timebar.served`, `engg.timebar.lapsed`.
+- **Permissions**: `engg.letter.*`. **Browser**: Correspondence Register, Letter, Draft Outward Letter, Notices and Time Bars.

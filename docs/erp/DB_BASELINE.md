@@ -3822,6 +3822,102 @@ Indexes:
 - ix_engg_holds_company_id: company_id
 - ux_engg_holds_no (unique): company_id, hold_no
 
+## engg_letter_links
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| letter_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER |  |  |  |
+| entity_ref | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), letter_id -> engg_letters(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_letter_links_entity: org_project_id, entity, entity_id
+- ix_engg_letter_links_company_id: company_id
+- ux_engg_letter_links_target (unique): letter_id, entity, entity_ref
+
+## engg_letters
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| direction | TEXT | yes |  |  |
+| letter_no | TEXT |  |  |  |
+| series_seq | INTEGER |  |  |  |
+| their_ref | TEXT |  |  |  |
+| letter_date | TEXT | yes |  |  |
+| received_on | TEXT |  |  |  |
+| issued_on | TEXT |  |  |  |
+| party | TEXT | yes |  |  |
+| party_contact | TEXT |  |  |  |
+| subject | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| clause_ref | TEXT |  |  |  |
+| contractual | INTEGER | yes |  | 0 |
+| confidentiality | TEXT | yes |  | 'NORMAL' |
+| response_due | TEXT |  |  |  |
+| assigned_to | TEXT |  |  |  |
+| tags | TEXT |  |  |  |
+| body_text | TEXT |  |  |  |
+| template_code | TEXT |  |  |  |
+| document_id | INTEGER |  |  |  |
+| parent_letter_id | INTEGER |  |  |  |
+| time_bar_id | INTEGER |  |  |  |
+| issue_mode | TEXT |  |  |  |
+| delivery_ref | TEXT |  |  |  |
+| ack_on | TEXT |  |  |  |
+| ack_by | TEXT |  |  |  |
+| ack_note | TEXT |  |  |  |
+| overdue_alerted_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_letter_id -> engg_letters(id), document_id -> doc_documents(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_letters_time_bar: time_bar_id
+- ix_engg_letters_due: org_project_id, response_due
+- ix_engg_letters_document: document_id
+- ix_engg_letters_parent: parent_letter_id
+- ix_engg_letters_project: org_project_id, direction, status
+- ix_engg_letters_company_id: company_id
+- ux_engg_letters_series (unique): org_project_id, direction, series_seq
+- ux_engg_letters_no (unique): company_id, letter_no
+
 ## engg_rfi_delay_drafts
 
 | Column | Type | Not null | Key | Default |
@@ -4059,6 +4155,50 @@ Indexes:
 - ix_engg_submittals_project: org_project_id, status, submittal_type
 - ix_engg_submittals_company_id: company_id
 - ux_engg_submittals_no (unique): company_id, submittal_no
+
+## engg_time_bars
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| bar_no | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| clause_ref | TEXT |  |  |  |
+| trigger_letter_id | INTEGER |  |  |  |
+| event_date | TEXT | yes |  |  |
+| limit_days | INTEGER | yes |  |  |
+| deadline | TEXT | yes |  |  |
+| claim_ref | TEXT |  |  |  |
+| owner_user | TEXT |  |  |  |
+| last_alert_days | INTEGER |  |  |  |
+| served_letter_id | INTEGER |  |  |  |
+| served_on | TEXT |  |  |  |
+| bar_status | TEXT | yes |  | 'OPEN' |
+| waive_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: served_letter_id -> engg_letters(id), trigger_letter_id -> engg_letters(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_time_bars_served: served_letter_id
+- ix_engg_time_bars_trigger: trigger_letter_id
+- ix_engg_time_bars_project: org_project_id, bar_status, deadline
+- ix_engg_time_bars_company_id: company_id
+- ux_engg_time_bars_no (unique): company_id, bar_no
 
 ## engg_transmittal_items
 

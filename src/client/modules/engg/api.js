@@ -106,3 +106,24 @@ export const ep = {
   vdrAct: async (id, action, b = {}) => (await api.post(`/engg/vdr-items/${id}/${action}`, b, idem())).data,
   tracker: async (projectId) => (await api.get(`/engg/vdr-items/tracker${pq(projectId)}`)).data,
 };
+
+// Part 11.05: correspondence register.
+export const LETTER_CATS = ['INSTRUCTION', 'NOTICE', 'APPROVAL', 'QUERY', 'PAYMENT', 'OTHER'];
+export const ISSUE_MODES = ['EMAIL', 'COURIER', 'PORTAL', 'HAND'];
+export const LINK_ENTITIES = ['RFI', 'VARIATION', 'CLAIM', 'SITE_INSTRUCTION', 'DRAWING', 'SUBMITTAL', 'TRANSMITTAL', 'OTHER'];
+export const LETTER_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'ACTIVE', ISSUED: 'ACTIVE', ACKNOWLEDGED: 'APPROVED', REGISTERED: 'ACTIVE', CLOSED: 'COMPLETED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const lt = {
+  get: async (id) => (await api.get(`/engg/letters/${id}`)).data,
+  create: async (b) => (await api.post('/engg/letters', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/engg/letters/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/engg/letters/${id}`)).data,
+  act: async (id, action, b = {}) => (await api.post(`/engg/letters/${id}/${action}`, b, idem())).data,
+  thread: async (id) => (await api.get(`/engg/letters/${id}/thread`)).data,
+  templates: async () => (await api.get('/engg/letter-templates')).data,
+  render: async (b) => (await api.post('/engg/letter-templates/render', b, idem())).data,
+  bars: async (projectId) => (await api.get(`/engg/time-bars${pq(projectId)}`)).data,
+  createBar: async (b) => (await api.post('/engg/time-bars', b, idem())).data,
+  barAct: async (id, action, b = {}) => (await api.post(`/engg/time-bars/${id}/${action}`, b, idem())).data,
+  alerts: async () => (await api.post('/engg/letters/alerts', {}, idem())).data,
+  letters: async (projectId, extra = '') => (await api.get(`/engg/letters?pageSize=100&filter[projectId][eq]=${projectId}${extra}`)).data,
+};
