@@ -489,6 +489,8 @@ const ADDED_11_02 = {
   DIR: ['engg.rfi.view', 'engg.rfi.print', 'engg.rfi.export'],
 };
 const ADDED_11_01 = {
+  QCE: ['engg.drawing.view'],
+  QCMGR: ['engg.drawing.view', 'engg.drawing.print'],
   DOC: ['engg.drawing.view', 'engg.drawing.create', 'engg.drawing.edit', 'engg.drawing.delete', 'engg.drawing.submit', 'engg.drawing.cancel', 'engg.drawing.amend', 'engg.drawing.print', 'engg.drawing.export', 'engg.drawing.distribute', 'engg.transmittal.view', 'engg.transmittal.create', 'engg.transmittal.edit', 'engg.transmittal.delete', 'engg.transmittal.submit', 'engg.transmittal.cancel', 'engg.transmittal.amend', 'engg.transmittal.print', 'engg.transmittal.export', 'engg.transmittal.respond'],
   DESIGN: ['engg.drawing.view', 'engg.drawing.create', 'engg.drawing.edit', 'engg.drawing.approve', 'engg.drawing.cancel', 'engg.drawing.amend', 'engg.drawing.print', 'engg.drawing.export', 'engg.drawing.distribute', 'engg.transmittal.view', 'engg.transmittal.create', 'engg.transmittal.edit', 'engg.transmittal.submit', 'engg.transmittal.approve', 'engg.transmittal.cancel', 'engg.transmittal.amend', 'engg.transmittal.print', 'engg.transmittal.export', 'engg.transmittal.respond'],
   PM: ['engg.drawing.view', 'engg.drawing.approve', 'engg.drawing.print', 'engg.drawing.export', 'engg.drawing.distribute', 'engg.transmittal.view', 'engg.transmittal.print', 'engg.transmittal.export'],
