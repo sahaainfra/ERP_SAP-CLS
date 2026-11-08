@@ -3558,6 +3558,97 @@ Indexes:
 - ix_engg_copies_drawing: drawing_id, copy_status
 - ix_engg_copies_company_id: company_id
 
+## engg_crs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| deliverable_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| revision | TEXT | yes |  |  |
+| comment_no | INTEGER | yes |  |  |
+| comment_text | TEXT | yes |  |  |
+| raised_by | TEXT |  |  |  |
+| response_text | TEXT |  |  |  |
+| responded_by | TEXT |  |  |  |
+| responded_on | TEXT |  |  |  |
+| comment_status | TEXT | yes |  | 'OPEN' |
+| closed_on | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), deliverable_id -> engg_deliverables(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_crs_project: org_project_id, comment_status
+- ix_engg_crs_company_id: company_id
+- ux_engg_crs_no (unique): deliverable_id, revision, comment_no
+
+## engg_deliverables
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| deliverable_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| discipline | TEXT | yes |  |  |
+| deliverable_type | TEXT | yes |  |  |
+| package_name | TEXT |  |  |  |
+| weight | INTEGER | yes |  | 100 |
+| plan_ifr | TEXT |  |  |  |
+| plan_ifa | TEXT |  |  |  |
+| plan_ifc | TEXT |  |  |  |
+| plan_asbuilt | TEXT |  |  |  |
+| act_ifr | TEXT |  |  |  |
+| act_ifa | TEXT |  |  |  |
+| act_ifc | TEXT |  |  |  |
+| act_asbuilt | TEXT |  |  |  |
+| milestone | TEXT | yes |  | 'NOT_STARTED' |
+| progress_bp | INTEGER | yes |  | 0 |
+| drawing_id | INTEGER |  |  |  |
+| document_id | INTEGER |  |  |  |
+| owner_user | TEXT |  |  |  |
+| release_status | TEXT | yes |  | 'NONE' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| reg_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: document_id -> doc_documents(id), drawing_id -> engg_drawings(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_deliverables_document: document_id
+- ix_engg_deliverables_drawing: drawing_id
+- ix_engg_deliverables_project: org_project_id, discipline, milestone
+- ix_engg_deliverables_company_id: company_id
+- ux_engg_deliverables_no (unique): company_id, deliverable_no
+
 ## engg_drawing_links
 
 | Column | Type | Not null | Key | Default |
@@ -3688,6 +3779,48 @@ Indexes:
 - ix_engg_drawings_project: org_project_id, discipline, register_status
 - ix_engg_drawings_company_id: company_id
 - ux_engg_drawings_no (unique): company_id, org_project_id, drawing_no
+
+## engg_holds
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| hold_no | TEXT | yes |  |  |
+| deliverable_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| description | TEXT | yes |  |  |
+| impact_procurement | INTEGER | yes |  | 0 |
+| impact_construction | INTEGER | yes |  | 0 |
+| po_ref | TEXT |  |  |  |
+| activity_ref | TEXT |  |  |  |
+| raised_on | TEXT | yes |  |  |
+| raised_by | TEXT |  |  |  |
+| cleared_on | TEXT |  |  |  |
+| cleared_by | TEXT |  |  |  |
+| clear_note | TEXT |  |  |  |
+| hold_status | TEXT | yes |  | 'OPEN' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), deliverable_id -> engg_deliverables(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_holds_project: org_project_id, hold_status
+- ix_engg_holds_deliverable: deliverable_id, hold_status
+- ix_engg_holds_company_id: company_id
+- ux_engg_holds_no (unique): company_id, hold_no
 
 ## engg_rfi_delay_drafts
 
@@ -4004,6 +4137,51 @@ Indexes:
 - ix_engg_transmittals_project: org_project_id, direction, status
 - ix_engg_transmittals_company_id: company_id
 - ux_engg_transmittals_doc (unique): company_id, doc_no
+
+## engg_vdr_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| vdr_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| po_ref | TEXT | yes |  |  |
+| vendor | TEXT | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| submitted_on | TEXT |  |  |  |
+| cycle_no | INTEGER | yes |  | 1 |
+| review_code | TEXT |  |  |  |
+| review_text | TEXT |  |  |  |
+| reviewed_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'REQUIRED' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| pending_code | TEXT |  |  |  |
+| pending_text | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_vdr_items_po: company_id, po_ref
+- ix_engg_vdr_items_project: org_project_id, status, due_date
+- ix_engg_vdr_items_company_id: company_id
+- ux_engg_vdr_items_no (unique): company_id, vdr_no
 
 ## ess_requests
 

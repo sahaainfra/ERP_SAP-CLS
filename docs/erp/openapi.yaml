@@ -6727,6 +6727,147 @@ paths:
     get:
       summary: "Submittal: GET /submittals/{id}/print"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/engineering-progress:
+    get:
+      summary: "EPC: GET /engineering-progress"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/holds:
+    get:
+      summary: "EPC: GET /holds"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "EPC: POST /holds"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/holds/{id}/clear:
+    post:
+      summary: "EPC: POST /holds/{id}/clear"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/comments/{id}/respond:
+    post:
+      summary: "EPC: POST /comments/{id}/respond"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/comments/{id}/close:
+    post:
+      summary: "EPC: POST /comments/{id}/close"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/comments/{id}/reopen:
+    post:
+      summary: "EPC: POST /comments/{id}/reopen"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables:
+    get:
+      summary: "EPC: GET /deliverables"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "EPC: POST /deliverables"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/export:
+    get:
+      summary: "EPC: GET /deliverables/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/import:
+    post:
+      summary: "EPC: POST /deliverables/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}:
+    get:
+      summary: "EPC: GET /deliverables/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "EPC: PATCH /deliverables/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "EPC: DELETE /deliverables/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/milestones:
+    post:
+      summary: "EPC: POST /deliverables/{id}/milestones"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/submit:
+    post:
+      summary: "EPC: POST /deliverables/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/withdraw:
+    post:
+      summary: "EPC: POST /deliverables/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/cancel:
+    post:
+      summary: "EPC: POST /deliverables/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/amend:
+    post:
+      summary: "EPC: POST /deliverables/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/comments:
+    post:
+      summary: "EPC: POST /deliverables/{id}/comments"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/history:
+    get:
+      summary: "EPC: GET /deliverables/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/deliverables/{id}/print:
+    get:
+      summary: "EPC: GET /deliverables/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/tracker:
+    get:
+      summary: "EPC: GET /vdr-items/tracker"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items:
+    get:
+      summary: "EPC: GET /vdr-items"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "EPC: POST /vdr-items"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/export:
+    get:
+      summary: "EPC: GET /vdr-items/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/import:
+    post:
+      summary: "EPC: POST /vdr-items/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}:
+    get:
+      summary: "EPC: GET /vdr-items/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "EPC: PATCH /vdr-items/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "EPC: DELETE /vdr-items/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}/receive:
+    post:
+      summary: "EPC: POST /vdr-items/{id}/receive"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}/submit:
+    post:
+      summary: "EPC: POST /vdr-items/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}/withdraw:
+    post:
+      summary: "EPC: POST /vdr-items/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}/cancel:
+    post:
+      summary: "EPC: POST /vdr-items/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}/amend:
+    post:
+      summary: "EPC: POST /vdr-items/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}/history:
+    get:
+      summary: "EPC: GET /vdr-items/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/vdr-items/{id}/print:
+    get:
+      summary: "EPC: GET /vdr-items/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"

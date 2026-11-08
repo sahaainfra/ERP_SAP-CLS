@@ -2,6 +2,11 @@ import { registerModule } from '../../platform/shell/registry.js';
 import DrawingPage from './DrawingPage.jsx';
 import DrawingsDashboardPage from './DrawingsDashboardPage.jsx';
 import DrawingsPage from './DrawingsPage.jsx';
+import DeliverablePage from './DeliverablePage.jsx';
+import DeliverablesPage from './DeliverablesPage.jsx';
+import ProgressPage from './ProgressPage.jsx';
+import VdrItemPage from './VdrItemPage.jsx';
+import VdrPage from './VdrPage.jsx';
 import RfiDashboardPage from './RfiDashboardPage.jsx';
 import RfiPage from './RfiPage.jsx';
 import RfiRaisePage from './RfiRaisePage.jsx';
@@ -30,5 +35,10 @@ registerModule({
     { path: '/engg/submittals', label: 'Submittal Register', icon: 'erp.group.projects', permission: 'engg.submittal.view', flag: 'ff.engg.p1103', Page: SubmittalsPage },
     { path: '/engg/submittal', label: 'Submittal', menu: false, icon: 'erp.group.projects', permission: 'engg.submittal.view', flag: 'ff.engg.p1103', Page: SubmittalPage },
     { path: '/engg/submittal-schedule', label: 'Submittal Schedule', icon: 'erp.group.projects', permission: 'engg.submittal.view', flag: 'ff.engg.p1103', Page: SubmittalSchedulePage },
+    { path: '/engg/progress', label: 'Engineering Progress', icon: 'erp.group.projects', permission: 'engg.deliverable.view', flag: 'ff.engg.p1104', Page: ProgressPage },
+    { path: '/engg/deliverables', label: 'Deliverable Register', icon: 'erp.group.projects', permission: 'engg.deliverable.view', flag: 'ff.engg.p1104', Page: DeliverablesPage },
+    { path: '/engg/deliverable', label: 'Deliverable', menu: false, icon: 'erp.group.projects', permission: 'engg.deliverable.view', flag: 'ff.engg.p1104', Page: DeliverablePage },
+    { path: '/engg/vdr', label: 'VDR Tracker', icon: 'erp.group.projects', permission: 'engg.vdr_item.view', flag: 'ff.engg.p1104', Page: VdrPage },
+    { path: '/engg/vdr-item', label: 'VDR item', menu: false, icon: 'erp.group.projects', permission: 'engg.vdr_item.view', flag: 'ff.engg.p1104', Page: VdrItemPage },
   ],
 });

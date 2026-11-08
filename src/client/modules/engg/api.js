@@ -84,3 +84,25 @@ export const sb = {
   makes: async (projectId) => (await api.get(`/engg/approved-makes${pq(projectId)}`)).data,
   history: async (id) => (await api.get(`/engg/submittals/${id}/history`)).data,
 };
+
+// Part 11.04: EPC engineering deliverables and vendor document review.
+export const DELIV_DISCIPLINES = ['ARCHITECTURAL', 'STRUCTURAL', 'MEP', 'CIVIL', 'LANDSCAPE', 'PROCESS', 'PIPING', 'ELECTRICAL', 'INSTRUMENTATION', 'MECHANICAL'];
+export const DELIV_TYPES = ['DRAWING', 'CALCULATION', 'SPECIFICATION', 'DATA_SHEET', 'MTO', 'REPORT', 'OTHER'];
+export const VDR_TYPES = ['GA_DRAWING', 'DATA_SHEET', 'TEST_PROCEDURE', 'MANUAL', 'CALCULATION', 'CERTIFICATE', 'OTHER'];
+export const VDR_TONE = { REQUIRED: 'DRAFT', RECEIVED: 'ACTIVE', IN_REVIEW: 'IN_REVIEW', ACCEPTED: 'APPROVED', RESUBMIT: 'AT_RISK', RETURNED: 'RETURNED', CANCELLED: 'CANCELLED' };
+export const ep = {
+  progress: async (projectId) => (await api.get(`/engg/engineering-progress${pq(projectId)}`)).data,
+  deliverable: async (id) => (await api.get(`/engg/deliverables/${id}`)).data,
+  createDeliverable: async (b) => (await api.post('/engg/deliverables', b, idem())).data,
+  updateDeliverable: async (id, b) => (await api.patch(`/engg/deliverables/${id}`, b, idem())).data,
+  removeDeliverable: async (id) => (await api.delete(`/engg/deliverables/${id}`)).data,
+  deliverableAct: async (id, action, b = {}) => (await api.post(`/engg/deliverables/${id}/${action}`, b, idem())).data,
+  commentAct: async (id, action, b = {}) => (await api.post(`/engg/comments/${id}/${action}`, b, idem())).data,
+  raiseHold: async (b) => (await api.post('/engg/holds', b, idem())).data,
+  clearHold: async (id, b) => (await api.post(`/engg/holds/${id}/clear`, b, idem())).data,
+  vdr: async (id) => (await api.get(`/engg/vdr-items/${id}`)).data,
+  createVdr: async (b) => (await api.post('/engg/vdr-items', b, idem())).data,
+  removeVdr: async (id) => (await api.delete(`/engg/vdr-items/${id}`)).data,
+  vdrAct: async (id, action, b = {}) => (await api.post(`/engg/vdr-items/${id}/${action}`, b, idem())).data,
+  tracker: async (projectId) => (await api.get(`/engg/vdr-items/tracker${pq(projectId)}`)).data,
+};

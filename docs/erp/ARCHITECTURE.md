@@ -1145,3 +1145,12 @@ Module `engg`, flag `ff.engg.p1103`, tables `engg_submittals`, `engg_submittal_r
 - **Schedule** (FR-06): `/submittal-schedule`: required-by against submitted and responded, the overdue report, the count by type.
 - **Files** (ADR-431): file entity `engg_submittal`.
 - **Permissions**: `engg.submittal.*`. **Browser**: Submittal Register, Submittal, Submittal Schedule.
+
+## 91. EPC engineering deliverables and vendor document review (part 11.04)
+
+Module `engg`, flag `ff.engg.p1104`, tables `engg_deliverables`, `engg_crs`, `engg_vdr_items`, `engg_holds`, parameter `engg.progress_weights`. The services are `modules/engg/deliverables.js` (`createDeliverableService`) and `vdr.js` (`createVdrService`).
+
+- **Progress** (FR-02, BR-01, ADR-432, ADR-433, ADR-434): milestones recorded or released by approval (`ENGG_DELIVERABLE_IFC`); progress in basis points from the company weights; roll-up by discipline, package and project; S-curve; event `engg.progress.updated`.
+- **Comments and holds** (FR-03, FR-05): `engg_crs` per revision; `engg_holds` with the PO and activity; events `engg.hold.raised` and `engg.hold.cleared`.
+- **Vendor documents** (FR-04, ADR-435, ADR-436): `engg_vdr_items`, the tracker by PO and vendor, review code approved through `ENGG_VDR_REVIEW`; event `engg.vdr.reviewed`.
+- **Permissions**: `engg.deliverable.*`, `engg.vdr_item.*`. **Browser**: Engineering Progress, Deliverable Register, Deliverable, VDR Tracker, VDR item.
