@@ -54,3 +54,20 @@ export const VDR_TYPES = { GA_DRAWING: 'GA drawing', DATA_SHEET: 'Data sheet', T
 export const VDR_STATUS = { REQUIRED: 'Required', RECEIVED: 'Received, to be reviewed', IN_REVIEW: 'Review waiting for approval', ACCEPTED: 'Accepted', RESUBMIT: 'Vendor to resubmit', RETURNED: 'Returned for correction', CANCELLED: 'Cancelled' };
 export const CRS_STATUS = { OPEN: 'Open', RESPONDED: 'Responded', CLOSED: 'Closed' };
 export const pct = (bp) => (Number(bp ?? 0) / 100).toFixed(2);
+// ---- part 11.05: correspondence register ----
+export const LETTER_DOC = 'ENGG_LETTER';
+export const LETTER_CATS = { INSTRUCTION: 'Instruction', NOTICE: 'Notice', APPROVAL: 'Approval', QUERY: 'Query', PAYMENT: 'Payment', OTHER: 'Other' };
+export const LETTER_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved, to be issued', ISSUED: 'Issued', ACKNOWLEDGED: 'Acknowledged', REGISTERED: 'Registered', CLOSED: 'Closed', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+export const ISSUE_MODES = { EMAIL: 'E-mail', COURIER: 'Courier', PORTAL: 'Portal', HAND: 'Hand delivery' };
+export const LINK_ENTITIES = { RFI: 'RFI', VARIATION: 'Variation', CLAIM: 'Claim', SITE_INSTRUCTION: 'Site instruction', DRAWING: 'Drawing', SUBMITTAL: 'Submittal', TRANSMITTAL: 'Transmittal', OTHER: 'Other' };
+export const TB_STATUS = { OPEN: 'Open', SERVED: 'Served in time', LAPSED: 'Lapsed', WAIVED: 'Waived' };
+/** The standard texts for drafting an outward letter ({project}, {their_ref}, {their_date}, {clause}, {date} are filled in); the print templates (04.11) will replace them. */
+export const LETTER_TEMPLATES = [
+  { code: 'ACKNOWLEDGE', label: 'Acknowledgement of a letter', category: 'OTHER', subject: 'Acknowledgement of your letter {their_ref}', body: 'Dear Sir,\n\nWe acknowledge receipt of your letter {their_ref} dated {their_date} on {project}. The matter is under examination and we will revert shortly.\n\nYours faithfully,' },
+  { code: 'REPLY_INSTRUCTION', label: 'Reply to an instruction', category: 'INSTRUCTION', subject: 'Re: {their_ref}: instruction', body: 'Dear Sir,\n\nWith reference to your instruction {their_ref} dated {their_date} on {project}, we confirm that it will be carried out. Any effect on cost or time will be notified under clause {clause}.\n\nYours faithfully,' },
+  { code: 'NOTICE_CLAIM', label: 'Notice of claim', category: 'NOTICE', subject: 'Notice of claim under clause {clause}', body: 'Dear Sir,\n\nWe give notice under clause {clause} of the contract that an event has occurred on {project} which entitles us to extension of time and additional cost. Particulars follow within the time allowed by the contract.\n\nYours faithfully,' },
+  { code: 'NOTICE_DELAY', label: 'Notice of delay', category: 'NOTICE', subject: 'Notice of delay on {project}', body: 'Dear Sir,\n\nWe notify you under clause {clause} that the progress of the works on {project} is being delayed by the matter referred to in {their_ref}. We request an extension of time.\n\nYours faithfully,' },
+  { code: 'PAYMENT_REMINDER', label: 'Payment reminder', category: 'PAYMENT', subject: 'Payment due: {their_ref}', body: 'Dear Sir,\n\nThe payment certified in {their_ref} on {project} is overdue under clause {clause}. Please release it without further delay.\n\nYours faithfully,' },
+  { code: 'CORRIGENDUM', label: 'Corrigendum to an issued letter', category: 'OTHER', subject: 'Corrigendum to our letter {their_ref}', body: 'Dear Sir,\n\nPlease note the following correction to our letter {their_ref} on {project}:\n\nYours faithfully,' },
+];
+export const ALERT_DAYS_DEFAULT = [7, 3, 1];

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseCommentAdd, parseCommentRespond, parseDeliverableCreate, parseDeliverableImport, parseDeliverableUpdate, parseHoldClear, parseHoldRaise, parseMilestone, parseRelease, parseVdrCreate, parseVdrImport, parseVdrReceive, parseVdrReview, parseVdrUpdate, parsePoCheck, parseResubmit, parseSubmittalCreate, parseSubmittalImport, parseSubmittalRespond, parseSubmittalUpdate, parseRfiClose, parseRfiCreate, parseRfiImport, parseRfiRespond, parseRfiUpdate, parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
+import { parseLetterAck, parseLetterCreate, parseLetterImport, parseLetterIssue, parseLetterUpdate, parseTemplateRender, parseTimeBarCreate, parseTimeBarServe, parseCommentAdd, parseCommentRespond, parseDeliverableCreate, parseDeliverableImport, parseDeliverableUpdate, parseHoldClear, parseHoldRaise, parseMilestone, parseRelease, parseVdrCreate, parseVdrImport, parseVdrReceive, parseVdrReview, parseVdrUpdate, parsePoCheck, parseResubmit, parseSubmittalCreate, parseSubmittalImport, parseSubmittalRespond, parseSubmittalUpdate, parseRfiClose, parseRfiCreate, parseRfiImport, parseRfiRespond, parseRfiUpdate, parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
 
 /** Part 11.01: the drawing register, its revisions, the controlled copies, the transmittals and the schedule. Rights and scope are checked in the services. */
 export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }) {
@@ -131,5 +131,31 @@ export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired 
   r.post('/vdr-items/:id/amend', idempotentRequired, (req, res) => ok(res, vd.amend(req.actor, pid(req), parseReason(req.body))));
   r.get('/vdr-items/:id/history', (req, res) => ok(res, vd.history(req.actor, pid(req))));
   r.get('/vdr-items/:id/print', (req, res) => html(res, vd.print(req.actor, pid(req))));
+  const lt = svc.letters; const tb = svc.timeBars;
+  r.get('/letter-templates', (req, res) => ok(res, lt.templates()));
+  r.post('/letter-templates/render', idempotent, (req, res) => ok(res, lt.render(req.actor, parseTemplateRender(req.body))));
+  r.get('/time-bars', (req, res) => ok(res, tb.list(req.actor, { projectId: parseProject(req.query).projectId, status: req.query.status })));
+  r.post('/time-bars', idempotentRequired, (req, res) => ok(res, tb.create(req.actor, parseTimeBarCreate(req.body)), 201));
+  r.get('/time-bars/:id', (req, res) => ok(res, tb.get(req.actor, pid(req))));
+  r.post('/time-bars/:id/serve', idempotent, (req, res) => ok(res, tb.serve(req.actor, pid(req), parseTimeBarServe(req.body))));
+  r.post('/time-bars/:id/waive', idempotent, (req, res) => ok(res, tb.waive(req.actor, pid(req), parseReason(req.body))));
+  r.post('/letters/alerts', idempotent, (req, res) => ok(res, svc.letterAlerts(req.actor)));
+  r.get('/letters', (req, res) => res.json(lt.list(req.actor, req.query)));
+  r.get('/letters/export', exportOf('engg.letters'));
+  r.post('/letters/import', idempotentRequired, (req, res) => ok(res, lt.import(req.actor, parseLetterImport(req.body)), 201));
+  r.post('/letters', idempotentRequired, (req, res) => ok(res, lt.create(req.actor, parseLetterCreate(req.body)), 201));
+  r.get('/letters/:id', (req, res) => ok(res, lt.get(req.actor, pid(req))));
+  r.patch('/letters/:id', idempotent, (req, res) => ok(res, lt.update(req.actor, pid(req), parseLetterUpdate(req.body))));
+  r.delete('/letters/:id', (req, res) => ok(res, lt.remove(req.actor, pid(req))));
+  r.post('/letters/:id/submit', idempotentRequired, (req, res) => ok(res, lt.submit(req.actor, pid(req)), 202));
+  r.post('/letters/:id/withdraw', idempotent, (req, res) => ok(res, lt.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/letters/:id/cancel', idempotent, (req, res) => ok(res, lt.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/letters/:id/amend', idempotentRequired, (req, res) => ok(res, lt.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/letters/:id/issue', idempotentRequired, (req, res) => ok(res, lt.issue(req.actor, pid(req), parseLetterIssue(req.body))));
+  r.post('/letters/:id/acknowledge', idempotent, (req, res) => ok(res, lt.acknowledge(req.actor, pid(req), parseLetterAck(req.body))));
+  r.post('/letters/:id/close', idempotent, (req, res) => ok(res, lt.close(req.actor, pid(req))));
+  r.get('/letters/:id/thread', (req, res) => ok(res, lt.thread(req.actor, pid(req))));
+  r.get('/letters/:id/history', (req, res) => ok(res, lt.history(req.actor, pid(req))));
+  r.get('/letters/:id/print', (req, res) => html(res, lt.print(req.actor, pid(req))));
   return r;
 }

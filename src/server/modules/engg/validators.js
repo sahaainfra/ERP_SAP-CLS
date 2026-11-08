@@ -86,3 +86,19 @@ export const parseVdrUpdate = (b) => given(parse(z.object(Object.fromEntries([..
 export const parseVdrImport = (b) => parse(z.object({ projectId: id, rows: z.array(z.object(vdrFields).strict()).min(1, 'Give at least one row').max(300) }).strict(), b);
 export const parseVdrReceive = (b) => parse(z.object({ submittedOn: optDay }).strict(), b ?? {});
 export const parseVdrReview = (b) => parse(z.object({ code: z.enum(['A', 'B', 'C', 'D']), text: optText(2000) }).strict(), b);
+
+// ---- part 11.05: correspondence register ----
+const linkIn = z.object({ entity: z.enum(['RFI', 'VARIATION', 'CLAIM', 'SITE_INSTRUCTION', 'DRAWING', 'SUBMITTAL', 'TRANSMITTAL', 'OTHER']), entityId: optId, ref: text(120).min(1, 'Name the record') }).strict();
+const letterFields = {
+  direction: z.enum(['IN', 'OUT']), theirRef: optText(120), letterDate: day, receivedOn: optDay, party: text(160).min(2, 'Name the other party'), partyContact: optText(160), subject: text(300).min(3, 'Give the subject'),
+  category: z.enum(['INSTRUCTION', 'NOTICE', 'APPROVAL', 'QUERY', 'PAYMENT', 'OTHER']), clauseRef: optText(120), contractual: z.boolean().default(false), confidentiality: z.enum(['NORMAL', 'CONFIDENTIAL']).default('NORMAL'),
+  responseDue: optDay, assignedTo: optText(60), tags: optText(300), bodyText: optText(20000), templateCode: optText(40), documentId: optId, parentLetterId: optId, timeBarId: optId, links: z.array(linkIn).max(30).default([]),
+};
+export const parseLetterCreate = (b) => parse(z.object({ projectId: id, ...letterFields }).strict(), b);
+export const parseLetterUpdate = (b) => { const rest = Object.fromEntries(Object.entries(letterFields).filter(([k]) => k !== 'direction')); return given(parse(z.object(Object.fromEntries([...Object.entries(rest).map(([k, v]) => [k, v.optional()]), ['rowVersion', version.optional()]])).strict(), b), b); };
+export const parseLetterImport = (b) => parse(z.object({ projectId: id, rows: z.array(z.object({ ...letterFields, direction: z.literal('IN').default('IN') }).strict()).min(1, 'Give at least one row').max(300) }).strict(), b);
+export const parseLetterIssue = (b) => parse(z.object({ issueMode: z.enum(['EMAIL', 'COURIER', 'PORTAL', 'HAND']), deliveryRef: optText(160), issuedOn: optDay }).strict(), b);
+export const parseLetterAck = (b) => parse(z.object({ ackBy: text(160).min(2, 'Say who acknowledged it'), ackOn: optDay, ackNote: optText(1000) }).strict(), b);
+export const parseTemplateRender = (b) => parse(z.object({ projectId: id, templateCode: text(40).min(1), parentLetterId: optId, clauseRef: optText(120) }).strict(), b);
+export const parseTimeBarCreate = (b) => parse(z.object({ projectId: id, description: text(500).min(5, 'Say what must be notified'), clauseRef: optText(120), triggerLetterId: optId, eventDate: day, limitDays: z.number().int().min(1).max(1000), claimRef: optText(120), ownerUser: optText(60) }).strict(), b);
+export const parseTimeBarServe = (b) => parse(z.object({ letterId: id }).strict(), b);
