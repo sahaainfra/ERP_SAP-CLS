@@ -64,10 +64,6 @@ async function approve(request, c, roles, user, instanceId, action = 'approve') 
 }
 const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
 
-async function pick(sel, re) {
-  let v; await expect.poll(async () => { v = await sel.locator('option').evaluateAll((os, src) => os.find((o) => new RegExp(src).test(o.textContent ?? ''))?.value ?? null, re.source); return v; }).not.toBeNull();
-  await sel.selectOption(v);
-}
 async function approvedBudget(request, c, s) {
   const g = await api(request, c, 'QS', s.u('qs'), 'post', '/bud/generate', { projectId: s.project });
   await api(request, c, 'QS', s.u('qs'), 'post', `/bud/budgets/${g.id}/phasing/generate`, { method: 'SCURVE', profile: 'SCURVE' });
