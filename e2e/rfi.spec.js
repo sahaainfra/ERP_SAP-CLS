@@ -69,7 +69,7 @@ test('AC-01 RFI raised with a photo markup, routed, answered, verified and close
   await r.page.getByTestId('raise-activity').fill('A1010 Beam B12 reinforcement');
   await r.page.getByTestId('raise-activityCritical').check();
   await r.page.getByTestId('raise-holdActivity').check();
-  await r.page.getByTestId('raise-timeFlag').check();
+  await r.page.getByTestId('raise-timeImpactFlag').check();
   await r.page.getByTestId('raise-photo').setInputFiles({ name: 'site.png', mimeType: 'image/png', buffer: PNG });
   const canvas = r.page.getByTestId('raise-canvas');
   await expect(canvas).toBeVisible();
