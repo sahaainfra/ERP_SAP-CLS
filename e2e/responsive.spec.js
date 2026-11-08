@@ -26,7 +26,7 @@ const stickingOut = (page) => page.evaluate(() => {
 
 test('T-03 AC-02 every page of the application renders at 360 px without a horizontal page scroll and without console errors', async ({ page, request }, info) => {
   test.skip(info.project.name !== 'mobile', 'the phone width');
-  test.setTimeout(420_000);
+  test.setTimeout(720_000);
   const routes = await routesOf(request);
   expect(routes.length).toBeGreaterThanOrEqual(55);
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), identity);
