@@ -1178,3 +1178,14 @@ Module `bud` (flag `ff.bud.p1201`), tables `bud_budgets`, `bud_lines`, `bud_phas
 - **Events**: `bud.budget.generated`, `bud.budget.approved` (read by the budget check 12.03, the project control engine 14.07 and the EAC 23.11), `bud.budget.revised`.
 - **Permissions**: `bud.budget.*`. **Browser**: Budget Versions, Budget Workbench, Generate Budget from Baseline.
 
+## 94. Budget revisions, transfers and contingency drawdown (part 12.02)
+Module `bud` (flag `ff.bud.p1202`), tables `bud_changes`, `bud_change_lines`. The service is `modules/bud/changes.js` (`createChangeService`), built on the budget service of 12.01 (`budgetBase`).
+
+- **Requests** (FR-01, FR-02, FR-03): revision, transfer (nets to zero), drawdown against a risk of 10.06 (not above the contingency left); the impact preview (total, share, margin, band) is computed by the server (`POST /changes/preview`).
+- **Approval** (BR-02, ADR-451): `BUD_CHANGE` (PCMGR, PD, DIR above 5 %), `BUD_DRAWDOWN` (PM, PD).
+- **Applying** (FR-05, ADR-448, ADR-449, ADR-453): a new approved version in force; `currentOf(projectId)` (`budgetCurrent`) is the budget the checks read.
+- **Variations** (FR-04, ADR-452): consumer `bud.variation` of `ctr.variation.approved`.
+- **Comparison**: `GET /compare` by line, cost head or WBS, with the versions and the change that made each; CSV export.
+- **Events**: `bud.change.approved`, `bud.budget.revised` (also from 12.01 revisions; the draft start of a 12.01 revision is now `bud.budget.revision_started`).
+- **Permissions**: `bud.change.*`. **Browser**: Budget Change Requests, Budget Change Request (form with the impact preview), Budget Version Comparison.
+

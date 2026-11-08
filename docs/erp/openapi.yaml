@@ -7069,6 +7069,71 @@ paths:
     put:
       summary: "Project budget: PUT /lines/{lineId}/phasing"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/change-options:
+    get:
+      summary: "Budget changes: GET /change-options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes:
+    get:
+      summary: "Budget changes: GET /changes"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Budget changes: POST /changes"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/export:
+    get:
+      summary: "Budget changes: GET /changes/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/import:
+    post:
+      summary: "Budget changes: POST /changes/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/preview:
+    post:
+      summary: "Budget changes: POST /changes/preview"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/{id}:
+    get:
+      summary: "Budget changes: GET /changes/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Budget changes: PATCH /changes/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Budget changes: DELETE /changes/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/{id}/submit:
+    post:
+      summary: "Budget changes: POST /changes/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/{id}/withdraw:
+    post:
+      summary: "Budget changes: POST /changes/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/{id}/cancel:
+    post:
+      summary: "Budget changes: POST /changes/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/{id}/amend:
+    post:
+      summary: "Budget changes: POST /changes/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/{id}/history:
+    get:
+      summary: "Budget changes: GET /changes/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/changes/{id}/print:
+    get:
+      summary: "Budget changes: GET /changes/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/compare:
+    get:
+      summary: "Budget changes: GET /compare"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/compare/export:
+    get:
+      summary: "Budget changes: GET /compare/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"
