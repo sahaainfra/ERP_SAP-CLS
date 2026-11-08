@@ -1165,3 +1165,16 @@ Module `engg`, flag `ff.engg.p1105`, tables `engg_letters`, `engg_letter_links`,
 - **Confidentiality** (ADR-440): `engg.letter.view_confidential`. **Files**: entity `engg_letter`. **Templates** (ADR-441).
 - **Events**: `engg.letter.registered`, `engg.letter.issued`, `engg.letter.acknowledged`, `engg.letter.response_overdue`, `engg.timebar.opened`, `engg.timebar.alert`, `engg.timebar.served`, `engg.timebar.lapsed`.
 - **Permissions**: `engg.letter.*`. **Browser**: Correspondence Register, Letter, Draft Outward Letter, Notices and Time Bars.
+
+## 93. Project budget (part 12.01)
+Module `bud` (flag `ff.bud.p1201`), tables `bud_budgets`, `bud_lines`, `bud_phasing`, parameters `bud.target_margin_pct` and `bud.default_cost_codes`. The service is `modules/bud/budgets.js` (`createBudgetService`).
+
+- **Generation** (FR-01, ADR-442, ADR-443): preview and generate from the approved baseline pack and BOQ version; a line per WBS node x cost code x resource; generated values kept beside adjustments with reasons.
+- **Overheads, contingency, reserve** (FR-03, FR-04): lines of kind OVERHEAD, CONTINGENCY, RESERVE, not on a WBS node for the last two.
+- **Views** (FR-02): by WBS, cost head, resource, work package and control account; every view reconciles to the total.
+- **Phasing** (FR-05, ADR-446): `bud_phasing`, profiles, manual per line, schedule later (13.02).
+- **Margin** (FR-06, BR-01, ADR-444). **Quantity and amount** (BR-02): material, labour and plant lines need both.
+- **Versions** (FR-07, ADR-445) and **approval** (`BUD_BUDGET`: PCMGR, PM, PD, DIR from ₹ 50 crore; ADR-447).
+- **Events**: `bud.budget.generated`, `bud.budget.approved` (read by the budget check 12.03, the project control engine 14.07 and the EAC 23.11), `bud.budget.revised`.
+- **Permissions**: `bud.budget.*`. **Browser**: Budget Versions, Budget Workbench, Generate Budget from Baseline.
+
