@@ -195,7 +195,7 @@ export function createLedgerService({ db, base }) {
     },
     availability(actor, q) {
       const o = project(actor, q.projectId, 'bud.check.use', 'bud.check.use'); const f = figures(o.id, { wbsId: q.wbsId, costCodeId: q.costCodeId });
-      const out = { projectId: o.id, projectCode: o.code, wbsId: q.wbsId ?? null, costCodeId: q.costCodeId ?? null, ...figOut(f) };
+      /** @type {any} */ const out = { projectId: o.id, projectCode: o.code, wbsId: q.wbsId ?? null, costCodeId: q.costCodeId ?? null, ...figOut(f) };
       if (q.amount != null) { const c = checkLine(actor, o, q.stage ?? 'PO', { wbsId: q.wbsId, costCodeId: q.costCodeId, amount: q.amount }, todayIST()); out.asked = { amount: String(q.amount), result: c.result, resultLabel: c.resultLabel, message: c.message, after: c.after, mode: c.mode }; }
       return out;
     },
