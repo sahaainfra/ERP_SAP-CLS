@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parsePoCheck, parseResubmit, parseSubmittalCreate, parseSubmittalImport, parseSubmittalRespond, parseSubmittalUpdate, parseRfiClose, parseRfiCreate, parseRfiImport, parseRfiRespond, parseRfiUpdate, parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
+import { parseCommentAdd, parseCommentRespond, parseDeliverableCreate, parseDeliverableImport, parseDeliverableUpdate, parseHoldClear, parseHoldRaise, parseMilestone, parseRelease, parseVdrCreate, parseVdrImport, parseVdrReceive, parseVdrReview, parseVdrUpdate, parsePoCheck, parseResubmit, parseSubmittalCreate, parseSubmittalImport, parseSubmittalRespond, parseSubmittalUpdate, parseRfiClose, parseRfiCreate, parseRfiImport, parseRfiRespond, parseRfiUpdate, parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
 
 /** Part 11.01: the drawing register, its revisions, the controlled copies, the transmittals and the schedule. Rights and scope are checked in the services. */
 export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }) {
@@ -93,5 +93,43 @@ export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired 
   r.post('/submittals/:id/resubmit', idempotent, (req, res) => ok(res, u.resubmit(req.actor, pid(req), parseResubmit(req.body))));
   r.get('/submittals/:id/history', (req, res) => ok(res, u.history(req.actor, pid(req))));
   r.get('/submittals/:id/print', (req, res) => html(res, u.print(req.actor, pid(req))));
+  const dv = svc.deliverables; const vd = svc.vdr;
+  r.get('/engineering-progress', (req, res) => ok(res, svc.progress.get(req.actor, parseProject(req.query))));
+  r.get('/holds', (req, res) => ok(res, svc.holds.list(req.actor, { projectId: parseProject(req.query).projectId, status: req.query.status })));
+  r.post('/holds', idempotent, (req, res) => ok(res, svc.holds.raise(req.actor, parseHoldRaise(req.body)), 201));
+  r.post('/holds/:id/clear', idempotent, (req, res) => ok(res, svc.holds.clear(req.actor, pid(req), parseHoldClear(req.body))));
+  r.post('/comments/:id/respond', idempotent, (req, res) => ok(res, svc.comments.respond(req.actor, pid(req), parseCommentRespond(req.body))));
+  r.post('/comments/:id/close', idempotent, (req, res) => ok(res, svc.comments.close(req.actor, pid(req))));
+  r.post('/comments/:id/reopen', idempotent, (req, res) => ok(res, svc.comments.reopen(req.actor, pid(req), parseReason(req.body))));
+  r.get('/deliverables', (req, res) => res.json(dv.list(req.actor, req.query)));
+  r.get('/deliverables/export', exportOf('engg.deliverables'));
+  r.post('/deliverables/import', idempotentRequired, (req, res) => ok(res, dv.import(req.actor, parseDeliverableImport(req.body)), 201));
+  r.post('/deliverables', idempotentRequired, (req, res) => ok(res, dv.create(req.actor, parseDeliverableCreate(req.body)), 201));
+  r.get('/deliverables/:id', (req, res) => ok(res, dv.get(req.actor, pid(req))));
+  r.patch('/deliverables/:id', idempotent, (req, res) => ok(res, dv.update(req.actor, pid(req), parseDeliverableUpdate(req.body))));
+  r.delete('/deliverables/:id', (req, res) => ok(res, dv.remove(req.actor, pid(req))));
+  r.post('/deliverables/:id/milestones', idempotent, (req, res) => ok(res, dv.record(req.actor, pid(req), parseMilestone(req.body))));
+  r.post('/deliverables/:id/submit', idempotentRequired, (req, res) => ok(res, dv.release(req.actor, pid(req), parseRelease(req.body)), 202));
+  r.post('/deliverables/:id/withdraw', idempotent, (req, res) => ok(res, dv.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/deliverables/:id/cancel', idempotent, (req, res) => ok(res, dv.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/deliverables/:id/amend', idempotentRequired, (req, res) => ok(res, dv.amend(req.actor, pid(req), parseReason(req.body))));
+  r.post('/deliverables/:id/comments', idempotent, (req, res) => ok(res, svc.comments.add(req.actor, pid(req), parseCommentAdd(req.body)), 201));
+  r.get('/deliverables/:id/history', (req, res) => ok(res, dv.history(req.actor, pid(req))));
+  r.get('/deliverables/:id/print', (req, res) => html(res, dv.print(req.actor, pid(req))));
+  r.get('/vdr-items/tracker', (req, res) => ok(res, vd.tracker(req.actor, parseProject(req.query))));
+  r.get('/vdr-items', (req, res) => res.json(vd.list(req.actor, req.query)));
+  r.get('/vdr-items/export', exportOf('engg.vdr_items'));
+  r.post('/vdr-items/import', idempotentRequired, (req, res) => ok(res, vd.import(req.actor, parseVdrImport(req.body)), 201));
+  r.post('/vdr-items', idempotentRequired, (req, res) => ok(res, vd.create(req.actor, parseVdrCreate(req.body)), 201));
+  r.get('/vdr-items/:id', (req, res) => ok(res, vd.get(req.actor, pid(req))));
+  r.patch('/vdr-items/:id', idempotent, (req, res) => ok(res, vd.update(req.actor, pid(req), parseVdrUpdate(req.body))));
+  r.delete('/vdr-items/:id', (req, res) => ok(res, vd.remove(req.actor, pid(req))));
+  r.post('/vdr-items/:id/receive', idempotent, (req, res) => ok(res, vd.receive(req.actor, pid(req), parseVdrReceive(req.body))));
+  r.post('/vdr-items/:id/submit', idempotentRequired, (req, res) => ok(res, vd.review(req.actor, pid(req), parseVdrReview(req.body)), 202));
+  r.post('/vdr-items/:id/withdraw', idempotent, (req, res) => ok(res, vd.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/vdr-items/:id/cancel', idempotent, (req, res) => ok(res, vd.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/vdr-items/:id/amend', idempotentRequired, (req, res) => ok(res, vd.amend(req.actor, pid(req), parseReason(req.body))));
+  r.get('/vdr-items/:id/history', (req, res) => ok(res, vd.history(req.actor, pid(req))));
+  r.get('/vdr-items/:id/print', (req, res) => html(res, vd.print(req.actor, pid(req))));
   return r;
 }

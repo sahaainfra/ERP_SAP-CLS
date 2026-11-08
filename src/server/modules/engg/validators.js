@@ -64,3 +64,25 @@ export const parseSubmittalImport = (b) => parse(z.object({ projectId: id, rows:
 export const parseSubmittalRespond = (b) => parse(z.object({ code: z.enum(['A', 'B', 'C', 'D']), text: optText(2000), responseOn: optDay }).strict(), b);
 export const parsePoCheck = (q) => parse(z.object({ projectId: id, itemId: id.optional(), material: z.string().trim().max(160).optional(), make: z.string().trim().max(120).optional() }).strict(), q ?? {});
 export const parseResubmit = (b) => parse(z.object({ changeNote: text(2000).min(5, 'Say what changed') }).strict(), b);
+
+// ---- part 11.04: EPC deliverables and vendor document review ----
+const DISC = z.enum(['ARCHITECTURAL', 'STRUCTURAL', 'MEP', 'CIVIL', 'LANDSCAPE', 'PROCESS', 'PIPING', 'ELECTRICAL', 'INSTRUMENTATION', 'MECHANICAL']);
+const delFields = {
+  deliverableNo: text(60).min(2, 'Give the deliverable number'), title: text(200).min(3, 'Give the title'), discipline: DISC, type: z.enum(['DRAWING', 'CALCULATION', 'SPECIFICATION', 'DATA_SHEET', 'MTO', 'REPORT', 'OTHER']), packageName: optText(80),
+  weight: z.number().int().min(1).max(1_000_000).default(100), planIfr: optDay, planIfa: optDay, planIfc: optDay, planAsbuilt: optDay, drawingId: optId, documentId: optId, ownerUser: optText(60),
+};
+export const parseDeliverableCreate = (b) => parse(z.object({ projectId: id, ...delFields }).strict(), b);
+export const parseDeliverableUpdate = (b) => given(parse(z.object(Object.fromEntries([...Object.entries(delFields).map(([k, v]) => [k, v.optional()]), ['rowVersion', version.optional()]])).strict(), b), b);
+export const parseDeliverableImport = (b) => parse(z.object({ projectId: id, rows: z.array(z.object(delFields).strict()).min(1, 'Give at least one row').max(300) }).strict(), b);
+export const parseMilestone = (b) => parse(z.object({ milestone: z.enum(['IFR', 'IFA', 'ASBUILT']), date: optDay }).strict(), b);
+export const parseRelease = (b) => parse(z.object({ note: optText(1000) }).strict(), b ?? {});
+export const parseCommentAdd = (b) => parse(z.object({ revision: text(10).min(1, 'Name the revision'), comment: text(2000).min(5, 'Write the comment') }).strict(), b);
+export const parseCommentRespond = (b) => parse(z.object({ response: text(2000).min(3, 'Write the response') }).strict(), b);
+export const parseHoldRaise = (b) => parse(z.object({ deliverableId: id, description: text(2000).min(5, 'Say what the hold waits for'), impactProcurement: z.boolean().default(false), impactConstruction: z.boolean().default(false), poRef: optText(80), activityRef: optText(120) }).strict(), b);
+export const parseHoldClear = (b) => parse(z.object({ note: text(1000).min(3, 'Say how the hold was cleared') }).strict(), b);
+const vdrFields = { poRef: text(80).min(1, 'Name the purchase order'), vendor: text(160).min(2, 'Name the vendor'), docType: z.enum(['GA_DRAWING', 'DATA_SHEET', 'TEST_PROCEDURE', 'MANUAL', 'CALCULATION', 'CERTIFICATE', 'OTHER']), title: text(200).min(3, 'Give the title'), dueDate: day };
+export const parseVdrCreate = (b) => parse(z.object({ projectId: id, ...vdrFields }).strict(), b);
+export const parseVdrUpdate = (b) => given(parse(z.object(Object.fromEntries([...Object.entries(vdrFields).map(([k, v]) => [k, v.optional()]), ['rowVersion', version.optional()]])).strict(), b), b);
+export const parseVdrImport = (b) => parse(z.object({ projectId: id, rows: z.array(z.object(vdrFields).strict()).min(1, 'Give at least one row').max(300) }).strict(), b);
+export const parseVdrReceive = (b) => parse(z.object({ submittedOn: optDay }).strict(), b ?? {});
+export const parseVdrReview = (b) => parse(z.object({ code: z.enum(['A', 'B', 'C', 'D']), text: optText(2000) }).strict(), b);

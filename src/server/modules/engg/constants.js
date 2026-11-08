@@ -41,3 +41,16 @@ export const SUB_CM_TYPES = ['METHOD_STATEMENT', 'SHOP_DRAWING'];
 export const SUB_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for internal approval', WITH_CONSULTANT: 'With the consultant', APPROVED: 'Approved', REVISE: 'Revise and resubmit', REJECTED: 'Rejected', RETURNED: 'Returned for correction', CANCELLED: 'Cancelled' };
 export const SUB_OPEN = ['DRAFT', 'SUBMITTED', 'WITH_CONSULTANT', 'REVISE', 'RETURNED'];
 export const SUB_RESPONSE = { A: 'Approved', B: 'Approved as noted', C: 'Revise and resubmit', D: 'Rejected' };
+// ---- part 11.04: EPC deliverables and vendor document review ----
+export const DELIVERABLE_DOC = 'ENGG_DELIVERABLE_IFC';
+export const VDR_DOC = 'ENGG_VDR_REVIEW';
+export const DELIV_DISCIPLINES = { ARCHITECTURAL: 'Architectural', STRUCTURAL: 'Structural', MEP: 'MEP', CIVIL: 'Civil', LANDSCAPE: 'Landscape', PROCESS: 'Process', PIPING: 'Piping', ELECTRICAL: 'Electrical', INSTRUMENTATION: 'Instrumentation', MECHANICAL: 'Mechanical' };
+export const DELIV_TYPES = { DRAWING: 'Drawing', CALCULATION: 'Calculation', SPECIFICATION: 'Specification', DATA_SHEET: 'Data sheet', MTO: 'Material take-off', REPORT: 'Report', OTHER: 'Other' };
+export const MILESTONES = ['IFR', 'IFA', 'IFC', 'ASBUILT'];
+export const MILESTONE_RANK = { NOT_STARTED: 0, IFR: 1, IFA: 2, IFC: 3, ASBUILT: 4 };
+/** The share of a deliverable that is done when it reaches a milestone, in basis points (10000 = 100 %); the company can change it with the parameter engg.progress_weights. */
+export const DEFAULT_WEIGHTS = { IFR: 5000, IFA: 7000, IFC: 10000, ASBUILT: 10000 };
+export const VDR_TYPES = { GA_DRAWING: 'GA drawing', DATA_SHEET: 'Data sheet', TEST_PROCEDURE: 'Test procedure', MANUAL: 'Manual', CALCULATION: 'Calculation', CERTIFICATE: 'Certificate', OTHER: 'Other' };
+export const VDR_STATUS = { REQUIRED: 'Required', RECEIVED: 'Received, to be reviewed', IN_REVIEW: 'Review waiting for approval', ACCEPTED: 'Accepted', RESUBMIT: 'Vendor to resubmit', RETURNED: 'Returned for correction', CANCELLED: 'Cancelled' };
+export const CRS_STATUS = { OPEN: 'Open', RESPONDED: 'Responded', CLOSED: 'Closed' };
+export const pct = (bp) => (Number(bp ?? 0) / 100).toFixed(2);
