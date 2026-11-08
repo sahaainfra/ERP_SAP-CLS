@@ -79,7 +79,8 @@ export function createEnggService({ db }) {
       can: { edit: can('engg.drawing.edit') && d.register_status === 'ACTIVE', create: can('engg.drawing.create'), amend: can('engg.drawing.amend') && d.register_status === 'ACTIVE', cancel: can('engg.drawing.cancel') && d.register_status === 'ACTIVE', distribute: can('engg.drawing.distribute'), print: can('engg.drawing.print'), export: can('engg.drawing.export') },
     };
     if (detail) {
-      out.revisions = revsOf(d.id).map((r) => rview(actor, r, d)); out.links = linksOf(d.id); out.copies = copiesOf(d.id); out.rfis = [];
+      out.revisions = revsOf(d.id).map((r) => rview(actor, r, d)); out.links = linksOf(d.id); out.copies = copiesOf(d.id);
+      out.rfis = may(actor, 'engg.rfi.view', d.org_project_id) ? db.prepare('SELECT id, rfi_no, subject, status, priority, required_by, ball_in_court FROM engg_rfis WHERE drawing_id = ? AND deleted_at IS NULL ORDER BY id DESC').all(d.id).map((x) => ({ id: x.id, rfiNo: x.rfi_no, subject: x.subject, status: x.status, priority: x.priority, requiredBy: x.required_by, ball: x.ball_in_court })) : [];
       out.transmittals = db.prepare('SELECT DISTINCT t.id, t.doc_no, t.direction, t.purpose, t.status, t.issued_on, i.response_code, r.rev_label FROM engg_transmittal_items i JOIN engg_transmittals t ON t.id = i.transmittal_id JOIN engg_drawing_revisions r ON r.id = i.revision_id WHERE i.drawing_id = ? AND i.deleted_at IS NULL AND t.deleted_at IS NULL ORDER BY t.id DESC').all(d.id)
         .map((t) => ({ id: t.id, docNo: t.doc_no, direction: t.direction, purpose: t.purpose, status: t.status, issuedOn: t.issued_on, revision: t.rev_label, responseCode: t.response_code }));
     }

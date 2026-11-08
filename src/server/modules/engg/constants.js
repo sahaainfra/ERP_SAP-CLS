@@ -19,3 +19,17 @@ export const json = (s, d) => { try { return JSON.parse(s ?? ''); } catch { retu
 export const rid = (v) => parseInt(String(v), 10);
 export const same = (a, b) => Boolean(a && b && String(a).toLowerCase() === String(b).toLowerCase());
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+// ---- part 11.02: RFI management ----
+export const RFI_ISSUE_DOC = 'ENGG_RFI_ISSUE';
+export const RFI_CLOSE_DOC = 'ENGG_RFI_CLOSE';
+export const RFI_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for the design coordinator', ISSUED: 'With the consultant', RESPONDED: 'Responded, to be verified', CLOSE_REQUESTED: 'Closure waiting for approval', CLOSED: 'Closed', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+export const RFI_OPEN = ['SUBMITTED', 'ISSUED', 'RESPONDED', 'CLOSE_REQUESTED'];
+export const RFI_PRIORITY = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', CRITICAL: 'Critical' };
+/** Days the consultant has to answer, by priority, counted from the day the RFI is issued (FR-04). */
+export const RFI_SLA_DAYS = { CRITICAL: 2, HIGH: 5, MEDIUM: 7, LOW: 14 };
+export const BALL = { RAISER: 'Raiser', DESIGN: 'Design coordinator', CONSULTANT: 'Consultant', VERIFIER: 'Raiser\'s lead', NONE: 'Nobody' };
+export const RESPONSE_TYPES = { CLARIFICATION: 'Clarification', DESIGN_CHANGE: 'Design change', INSTRUCTION: 'Instruction' };
+export const toPaise = (v) => Math.round(Number(v ?? 0) * 100);
+export const rupees = (n) => (Number(n ?? 0) / 100).toFixed(2);
+export const addDays = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+export const diffDays = (a, b) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000);

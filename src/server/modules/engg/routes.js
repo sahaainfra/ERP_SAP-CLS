@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
+import { parseRfiClose, parseRfiCreate, parseRfiImport, parseRfiRespond, parseRfiUpdate, parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
 
 /** Part 11.01: the drawing register, its revisions, the controlled copies, the transmittals and the schedule. Rights and scope are checked in the services. */
 export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }) {
@@ -54,5 +54,25 @@ export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired 
   r.post('/transmittals/:id/responses', idempotent, (req, res) => ok(res, t.respond(req.actor, pid(req), parseResponses(req.body))));
   r.get('/transmittals/:id/history', (req, res) => ok(res, t.history(req.actor, pid(req))));
   r.get('/transmittals/:id/print', (req, res) => html(res, t.print(req.actor, pid(req))));
+  const f = svc.rfis;
+  r.get('/rfi-dashboard', (req, res) => ok(res, svc.rfiDashboard.get(req.actor, parseProject(req.query))));
+  r.get('/rfis/constraints', (req, res) => ok(res, f.constraints(req.actor, parseProject(req.query))));
+  r.get('/rfis', (req, res) => res.json(f.list(req.actor, req.query)));
+  r.get('/rfis/export', exportOf('engg.rfis'));
+  r.post('/rfis/import', idempotentRequired, (req, res) => ok(res, f.import(req.actor, parseRfiImport(req.body)), 201));
+  r.post('/rfis/escalate', idempotent, (req, res) => ok(res, f.escalate(req.actor)));
+  r.post('/rfis', idempotentRequired, (req, res) => ok(res, f.create(req.actor, parseRfiCreate(req.body)), 201));
+  r.get('/rfis/:id', (req, res) => ok(res, f.get(req.actor, pid(req))));
+  r.patch('/rfis/:id', idempotent, (req, res) => ok(res, f.update(req.actor, pid(req), parseRfiUpdate(req.body))));
+  r.delete('/rfis/:id', (req, res) => ok(res, f.remove(req.actor, pid(req))));
+  r.post('/rfis/:id/submit', idempotentRequired, (req, res) => ok(res, f.submit(req.actor, pid(req)), 202));
+  r.post('/rfis/:id/withdraw', idempotent, (req, res) => ok(res, f.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rfis/:id/cancel', idempotent, (req, res) => ok(res, f.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rfis/:id/amend', idempotentRequired, (req, res) => ok(res, f.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/rfis/:id/respond', idempotent, (req, res) => ok(res, f.respond(req.actor, pid(req), parseRfiRespond(req.body))));
+  r.post('/rfis/:id/rework', idempotent, (req, res) => ok(res, f.rework(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rfis/:id/close', idempotentRequired, (req, res) => ok(res, f.requestClose(req.actor, pid(req), parseRfiClose(req.body)), 202));
+  r.get('/rfis/:id/history', (req, res) => ok(res, f.history(req.actor, pid(req))));
+  r.get('/rfis/:id/print', (req, res) => html(res, f.print(req.actor, pid(req))));
   return r;
 }

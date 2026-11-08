@@ -35,3 +35,20 @@ const tfields = { direction: z.enum(['OUT', 'IN']), party: text(160).min(2, 'Nam
 export const parseTransmittalCreate = (b) => parse(z.object({ projectId: id, ...tfields }).strict(), b);
 export const parseTransmittalUpdate = (b) => given(parse(z.object({ party: tfields.party.optional(), contact: tfields.contact.optional(), purpose: tfields.purpose.optional(), coverNote: tfields.coverNote.optional(), dueOn: tfields.dueOn.optional(), items: tfields.items.optional(), rowVersion: version.optional() }).strict(), b), b);
 export const parseResponses = (b) => parse(z.object({ responses: z.array(z.object({ itemId: id, code: z.enum(['A', 'B', 'C', 'D']), comments: optText(1000), date: optDay }).strict()).min(1, 'Give at least one response').max(100) }).strict(), b);
+
+// ---- part 11.02: RFI management ----
+const money = z.string().trim().regex(/^\d{1,13}(\.\d{1,2})?$/, 'Write an amount in rupees such as 25000 or 25000.50');
+const flag = z.boolean().default(false);
+const rfiFields = {
+  subject: text(200).min(3, 'Give the subject'), question: text(4000).min(10, 'Write the question (at least 10 characters)'), discipline: z.enum(['ARCHITECTURAL', 'STRUCTURAL', 'MEP', 'CIVIL', 'LANDSCAPE']),
+  siteId: optId, wbsId: optId, locationId: optId, activityRef: optText(120), activityCritical: flag, holdActivity: flag, boqItemId: optId, drawingId: optId, drawingRevisionId: optId, specRef: optText(200), proposedSolution: optText(2000),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'), requiredBy: day, costImpactFlag: flag, timeImpactFlag: flag, consultant: optText(160),
+};
+export const parseRfiCreate = (b) => parse(z.object({ projectId: id, ...rfiFields }).strict(), b);
+export const parseRfiUpdate = (b) => {
+  const s = z.object(Object.fromEntries([...Object.entries(rfiFields).map(([k, v]) => [k, v.optional()]), ['rowVersion', version.optional()]])).strict();
+  return given(parse(s, b), b);
+};
+export const parseRfiImport = (b) => parse(z.object({ projectId: id, rows: z.array(z.object(rfiFields).strict()).min(1, 'Give at least one row').max(150) }).strict(), b);
+export const parseRfiRespond = (b) => parse(z.object({ responseType: z.enum(['CLARIFICATION', 'DESIGN_CHANGE', 'INSTRUCTION']), text: text(4000).min(5, 'Write the response'), costImpact: money.default('0'), timeImpactDays: z.number().int().min(0).max(3650).default(0), drawingRevisionId: optId, instructionRef: optText(120), variationRef: optText(120) }).strict(), b);
+export const parseRfiClose = (b) => parse(z.object({ note: optText(1000) }).strict(), b ?? {});

@@ -7,6 +7,7 @@ import { listExports, listExportsOf } from '../../platform/list/index.js';
 import { createFlagService } from '../core/api.js';
 import { bindEngg, createEnggService } from './drawings.js';
 import { createTransmittalService } from './transmittals.js';
+import { createRfiService } from './rfis.js';
 import { enggRoutes } from './routes.js';
 
 /** @type {any} */
@@ -15,13 +16,17 @@ for (const [type, description] of [
   ['engg.drawing.issued', 'A drawing revision was issued (an IFC one after the approval of document control, the design coordinator and the project manager): data { projectId, drawingId, drawingNo, revisionId, revision, statusCode, superseded, holdersNotified, wbsId, locationId }. Work authorisation (14.01) and the site view follow it.'],
   ['engg.drawing.superseded', 'Issuing a revision superseded earlier ones (BR-02): they are marked "SUPERSEDED, DO NOT USE" and the holders of their controlled copies were told: data { projectId, drawingId, drawingNo, by, revisions, holdersNotified }.'],
   ['engg.transmittal.issued', 'A transmittal left (or an incoming one was registered): data { projectId, transmittalId, docNo, direction, purpose, party, items, dueOn }.'],
+  ['engg.rfi.issued', 'An RFI was checked by the design coordinator and issued to the consultant: data { projectId, rfiId, rfiNo, priority, requiredBy, drawingId, activityRef, hold, consultant }.'],
+  ['engg.rfi.responded', 'The consultant answered an RFI (a clarification, a design change or an instruction): data { projectId, rfiId, rfiNo, responseType, drawingId, drawingRevisionId, instructionRef, costImpact, timeImpactDays, variationRef, activityRef, hold, delayDraftId }. The drawing page, the variation draft (21.05), the delay register (13.05) and the constraints (13.04) follow it.'],
+  ['engg.rfi.closed', 'An RFI was closed after its answer was verified by the design coordinator and the raiser\'s lead: data { projectId, rfiId, rfiNo, responseType, costImpact, timeImpactDays, activityRef, verifiedBy }. The activity it held is free.'],
+  ['engg.rfi.escalated', 'An RFI late against its SLA or its required-by date was escalated: data { projectId, rfiId, rfiNo, priority, ageDays, critical, ballInCourt }.'],
   ['engg.transmittal.response', 'A response code (A approved, B approved with comments, C revise and resubmit, D rejected) was recorded on a drawing of a transmittal: data { projectId, transmittalId, docNo, drawingId, drawingNo, revision, code, comments }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'engg', description });
 
 integrityRegistry.register({
   allowNegative: [], companyOptional: [],
-  statuses: { engg_drawing_revisions: ['DRAFT', 'SUBMITTED', 'ISSUED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], engg_transmittals: ['DRAFT', 'SUBMITTED', 'ISSUED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED'], engg_copies: ['ISSUED', 'ACKNOWLEDGED', 'SUPERSEDED', 'WITHDRAWN'], engg_drawings: ['ACTIVE', 'CANCELLED'] },
-  uniqueKeys: [{ table: 'engg_drawings', columns: ['company_id', 'org_project_id', 'drawing_no'] }, { table: 'engg_transmittals', columns: ['company_id', 'doc_no'] }, { table: 'engg_drawing_revisions', columns: ['drawing_id', 'rev_seq'] }],
+  statuses: { engg_drawing_revisions: ['DRAFT', 'SUBMITTED', 'ISSUED', 'RETURNED', 'REJECTED', 'CANCELLED', 'SUPERSEDED'], engg_transmittals: ['DRAFT', 'SUBMITTED', 'ISSUED', 'RETURNED', 'REJECTED', 'CANCELLED', 'CLOSED'], engg_copies: ['ISSUED', 'ACKNOWLEDGED', 'SUPERSEDED', 'WITHDRAWN'], engg_drawings: ['ACTIVE', 'CANCELLED'], engg_rfis: ['DRAFT', 'SUBMITTED', 'ISSUED', 'RESPONDED', 'CLOSE_REQUESTED', 'CLOSED', 'RETURNED', 'REJECTED', 'CANCELLED'], engg_rfi_delay_drafts: ['DRAFT', 'TAKEN_OVER', 'DISCARDED'] },
+  uniqueKeys: [{ table: 'engg_drawings', columns: ['company_id', 'org_project_id', 'drawing_no'] }, { table: 'engg_transmittals', columns: ['company_id', 'doc_no'] }, { table: 'engg_drawing_revisions', columns: ['drawing_id', 'rev_seq'] }, { table: 'engg_rfis', columns: ['company_id', 'rfi_no'] }],
 });
 
 /** Module "engg": engineering and drawing control (M11). Part 11.01 holds the drawing register, its revisions with the IFC approval and supersession, transmittals with response codes, controlled copies and the site view. The tables are `engg_*`. */
@@ -31,21 +36,22 @@ export const engg = {
   routePrefix: '/api/v1/engg',
   ownerPart: '11.01',
   status: 'The drawing register (number, title, discipline, package, location, scale, size, originator, current revision and status code), the revision workflow (draft, check, approval of issue for construction, issue) with the change note and revision-cloud summary and a side-by-side comparison, outgoing and incoming transmittals with response codes A to D, controlled copies with acknowledgement, the site view of current IFC drawings only, links to WBS, location, BOQ and activity, the drawing schedule with the overdue report, and the use check that work authorisation reads.',
-  tables: ['engg_drawings', 'engg_drawing_revisions', 'engg_drawing_links', 'engg_transmittals', 'engg_transmittal_items', 'engg_copies'],
+  tables: ['engg_drawings', 'engg_drawing_revisions', 'engg_drawing_links', 'engg_transmittals', 'engg_transmittal_items', 'engg_copies', 'engg_rfis', 'engg_rfi_routing', 'engg_rfi_delay_drafts'],
   companyOptional: [],
-  resources: ['project-options', 'structure-options', 'dashboard', 'schedule', 'site-drawings', 'drawings', 'revisions', 'copies', 'transmittals'],
+  resources: ['rfis', 'rfi-dashboard', 'project-options', 'structure-options', 'dashboard', 'schedule', 'site-drawings', 'drawings', 'revisions', 'copies', 'transmittals'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'engg_drawings'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment });
     const gate = (key, what) => (req, _res, next) => (flags.isOn(req.actor, key) ? next() : next(notFound(`${what} not enabled for your company yet (feature flag ${key} is OFF).`)));
     const base = createEnggService({ db });
-    const svc = { ...base, ...createTransmittalService({ db, base }) };
+    const svc = { ...base, ...createTransmittalService({ db, base }), ...createRfiService({ db, base }) };
     bindEngg(db, svc);
     listExports.register('engg.drawings', { source: (actor, req) => svc.drawings.exportSource(actor, req), hidden: () => [] });
     listExports.register('engg.transmittals', { source: (actor, req) => svc.transmittals.exportSource(actor, req), hidden: () => [] });
+    listExports.register('engg.rfis', { source: (actor, req) => svc.rfis.exportSource(actor, req), hidden: () => [] });
     const router = Router();
-    router.use(gate('ff.engg.p1101', 'Drawing control is'));
+    router.use((req, res, next) => (/^\/(rfis|rfi-dashboard)(\/|$)/.test(req.path) ? gate('ff.engg.p1102', 'RFI management is')(req, res, next) : gate('ff.engg.p1101', 'Drawing control is')(req, res, next)));
     router.use(enggRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/engg', router);
   },
