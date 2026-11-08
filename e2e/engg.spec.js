@@ -200,7 +200,7 @@ test('AC-01 T-01 T-02 register, IFC approval, controlled copy, supersession, com
   await expect(d.page.getByRole('heading', { name: 'Drawings Dashboard', level: 1 })).toBeVisible();
   await expect(d.page.getByTestId('eg-tile-total')).toHaveAttribute('data-value', '2');
   await expect(d.page.getByTestId('eg-tile-ifc')).toHaveAttribute('data-value', '1');
-  await expect(d.page.getByTestId('eg-overdue')).toContainText(no);
+  await expect(d.page.getByTestId('eg-overdue')).toContainText('No drawing is overdue');
   await shot(d.page, 'dashboard', info);
   await noOverflow(d.page);
   expect(errors).toEqual([]);
