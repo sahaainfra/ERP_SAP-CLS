@@ -2,6 +2,10 @@ import { registerModule } from '../../platform/shell/registry.js';
 import DrawingPage from './DrawingPage.jsx';
 import DrawingsDashboardPage from './DrawingsDashboardPage.jsx';
 import DrawingsPage from './DrawingsPage.jsx';
+import RfiDashboardPage from './RfiDashboardPage.jsx';
+import RfiPage from './RfiPage.jsx';
+import RfiRaisePage from './RfiRaisePage.jsx';
+import RfisPage from './RfisPage.jsx';
 import SiteDrawingsPage from './SiteDrawingsPage.jsx';
 import TransmittalPage from './TransmittalPage.jsx';
 import TransmittalsPage from './TransmittalsPage.jsx';
@@ -16,5 +20,9 @@ registerModule({
     { path: '/engg/transmittals', label: 'Transmittals', icon: 'erp.group.projects', permission: 'engg.transmittal.view', flag: 'ff.engg.p1101', Page: TransmittalsPage },
     { path: '/engg/transmittal', label: 'Transmittal', menu: false, icon: 'erp.group.projects', permission: 'engg.transmittal.view', flag: 'ff.engg.p1101', Page: TransmittalPage },
     { path: '/engg/site', label: 'Current Drawings for my Site', icon: 'erp.group.projects', permission: 'engg.drawing.view', flag: 'ff.engg.p1101', Page: SiteDrawingsPage },
+    { path: '/engg/rfi-dashboard', label: 'RFI Dashboard', icon: 'erp.group.projects', permission: 'engg.rfi.view', flag: 'ff.engg.p1102', Page: RfiDashboardPage },
+    { path: '/engg/rfis', label: 'RFI Register', icon: 'erp.group.projects', permission: 'engg.rfi.view', flag: 'ff.engg.p1102', Page: RfisPage },
+    { path: '/engg/rfi', label: 'RFI', menu: false, icon: 'erp.group.projects', permission: 'engg.rfi.view', flag: 'ff.engg.p1102', Page: RfiPage },
+    { path: '/engg/rfi-raise', label: 'Raise RFI', icon: 'erp.action.create', permission: 'engg.rfi.create', flag: 'ff.engg.p1102', Page: RfiRaisePage },
   ],
 });

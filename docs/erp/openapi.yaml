@@ -6585,6 +6585,79 @@ paths:
     get:
       summary: "Drawing control: GET /transmittals/{id}/print"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfi-dashboard:
+    get:
+      summary: "RFI: GET /rfi-dashboard"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/constraints:
+    get:
+      summary: "RFI: GET /rfis/constraints"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis:
+    get:
+      summary: "RFI: GET /rfis"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "RFI: POST /rfis"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/export:
+    get:
+      summary: "RFI: GET /rfis/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/import:
+    post:
+      summary: "RFI: POST /rfis/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/escalate:
+    post:
+      summary: "RFI: POST /rfis/escalate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}:
+    get:
+      summary: "RFI: GET /rfis/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "RFI: PATCH /rfis/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "RFI: DELETE /rfis/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/submit:
+    post:
+      summary: "RFI: POST /rfis/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/withdraw:
+    post:
+      summary: "RFI: POST /rfis/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/cancel:
+    post:
+      summary: "RFI: POST /rfis/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/amend:
+    post:
+      summary: "RFI: POST /rfis/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/respond:
+    post:
+      summary: "RFI: POST /rfis/{id}/respond"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/rework:
+    post:
+      summary: "RFI: POST /rfis/{id}/rework"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/close:
+    post:
+      summary: "RFI: POST /rfis/{id}/close"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/history:
+    get:
+      summary: "RFI: GET /rfis/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/rfis/{id}/print:
+    get:
+      summary: "RFI: GET /rfis/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"

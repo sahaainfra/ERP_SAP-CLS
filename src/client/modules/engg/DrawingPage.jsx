@@ -145,7 +145,7 @@ export default function DrawingPage() {
               <tbody>{d.copies.map((x) => <tr key={x.id} data-status={x.status}><td>{x.revision}</td><td>{x.holder}</td><td>{x.banner ? <strong>{x.banner}</strong> : x.statusLabel}</td><td>{x.acknowledgedAt ? String(x.acknowledgedAt).slice(0, 10) : '—'}</td></tr>)}</tbody></table>
           )}</div>
       )}
-      {tab === 'rfis' && <div className="mdm-panel" data-testid="dwg-rfis"><h2>{t('tab.rfis')}</h2><p className="muted">{t('dwg.rfiLater')}</p></div>}
+      {tab === 'rfis' && <div className="mdm-panel" data-testid="dwg-rfis"><h2>{t('tab.rfis')}</h2>{d.rfis.length === 0 ? <p className="muted">{t('dwg.noRfis')}</p> : <ul>{d.rfis.map((x) => <li key={x.id}><Link to={`/engg/rfi?id=${x.id}`}>{x.rfiNo}</Link> · {x.subject} · {t(`rfis.${x.status}`)}</li>)}</ul>}</div>}
       <p className="no-print"><Link to="/engg/drawings">{t('nav.drawings')}</Link>{' · '}<button type="button" className="btn" onClick={() => navigateTo(`/engg/transmittals?projectId=${d.projectId}`)} data-testid="dwg-to-tx">{t('nav.transmittals')}</button></p>
     </section>
   );

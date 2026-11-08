@@ -3651,6 +3651,150 @@ Indexes:
 - ix_engg_drawings_company_id: company_id
 - ux_engg_drawings_no (unique): company_id, org_project_id, drawing_no
 
+## engg_rfi_delay_drafts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rfi_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| delay_days | INTEGER | yes |  |  |
+| activity_ref | TEXT |  |  |  |
+| reason | TEXT | yes |  |  |
+| draft_status | TEXT | yes |  | 'DRAFT' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), rfi_id -> engg_rfis(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_rfi_delay_drafts_project: org_project_id, draft_status
+- ix_engg_rfi_delay_drafts_company_id: company_id
+- ux_engg_rfi_delay_drafts_rfi (unique): rfi_id
+
+## engg_rfi_routing
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rfi_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| seq | INTEGER | yes |  |  |
+| event | TEXT | yes |  |  |
+| from_party | TEXT |  |  |  |
+| to_party | TEXT | yes |  |  |
+| note | TEXT |  |  |  |
+| at | TEXT | yes |  |  |
+| by_user | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), rfi_id -> engg_rfis(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_rfi_routing_project: org_project_id
+- ix_engg_rfi_routing_company_id: company_id
+- ux_engg_rfi_routing_seq (unique): rfi_id, seq
+
+## engg_rfis
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rfi_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| subject | TEXT | yes |  |  |
+| question | TEXT | yes |  |  |
+| discipline | TEXT | yes |  |  |
+| rfi_site_id | INTEGER |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| activity_ref | TEXT |  |  |  |
+| activity_critical | INTEGER | yes |  | 0 |
+| hold_activity | INTEGER | yes |  | 0 |
+| boq_item_id | INTEGER |  |  |  |
+| drawing_id | INTEGER |  |  |  |
+| drawing_revision_id | INTEGER |  |  |  |
+| spec_ref | TEXT |  |  |  |
+| proposed_solution | TEXT |  |  |  |
+| priority | TEXT | yes |  | 'MEDIUM' |
+| required_by | TEXT | yes |  |  |
+| cost_impact_flag | INTEGER | yes |  | 0 |
+| time_impact_flag | INTEGER | yes |  | 0 |
+| ball_in_court | TEXT | yes |  | 'RAISER' |
+| status | TEXT | yes |  | 'DRAFT' |
+| issued_on | TEXT |  |  |  |
+| consultant | TEXT |  |  |  |
+| response_type | TEXT |  |  |  |
+| response_text | TEXT |  |  |  |
+| responded_on | TEXT |  |  |  |
+| responded_by | TEXT |  |  |  |
+| response_revision_id | INTEGER |  |  |  |
+| instruction_ref | TEXT |  |  |  |
+| cost_impact | INTEGER | yes |  | 0 |
+| time_impact_days | INTEGER | yes |  | 0 |
+| variation_ref | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_on | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| escalated_at | TEXT |  |  |  |
+| issue_workflow_id | INTEGER |  |  |  |
+| close_workflow_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: response_revision_id -> engg_drawing_revisions(id), drawing_revision_id -> engg_drawing_revisions(id), drawing_id -> engg_drawings(id), location_id -> proj_locations(id), wbs_id -> proj_wbs(id), rfi_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_rfis_ball: company_id, ball_in_court, status
+- ix_engg_rfis_required: org_project_id, required_by
+- ix_engg_rfis_response_revision: response_revision_id
+- ix_engg_rfis_revision: drawing_revision_id
+- ix_engg_rfis_drawing: drawing_id
+- ix_engg_rfis_location: location_id
+- ix_engg_rfis_wbs: wbs_id
+- ix_engg_rfis_site: rfi_site_id
+- ix_engg_rfis_project: org_project_id, status, priority
+- ix_engg_rfis_company_id: company_id
+- ux_engg_rfis_no (unique): company_id, rfi_no
+
 ## engg_transmittal_items
 
 | Column | Type | Not null | Key | Default |

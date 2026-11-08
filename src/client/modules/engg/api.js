@@ -46,3 +46,27 @@ export async function openPrint(path, name) {
   const w = window.open('', '_blank');
   try { const res = await fetch(`/api/v1/engg${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(await res.blob()); if (w) w.location.href = url; else { const a = document.createElement('a'); a.href = url; a.download = name; a.click(); } } catch { w?.close(); }
 }
+
+// Part 11.02: RFI management.
+export const RFI_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+export const RESPONSE_TYPES = ['CLARIFICATION', 'DESIGN_CHANGE', 'INSTRUCTION'];
+export const RFI_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', ISSUED: 'ACTIVE', RESPONDED: 'IN_REVIEW', CLOSE_REQUESTED: 'IN_REVIEW', CLOSED: 'COMPLETED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const PRIORITY_TONE = { LOW: 'DRAFT', MEDIUM: 'ACTIVE', HIGH: 'AT_RISK', CRITICAL: 'REJECTED' };
+export const rf = {
+  dashboard: async (projectId) => (await api.get(`/engg/rfi-dashboard${pq(projectId)}`)).data,
+  rfi: async (id) => (await api.get(`/engg/rfis/${id}`)).data,
+  create: async (b) => (await api.post('/engg/rfis', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/engg/rfis/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/engg/rfis/${id}`)).data,
+  act: async (id, action, b = {}) => (await api.post(`/engg/rfis/${id}/${action}`, b, idem())).data,
+  history: async (id) => (await api.get(`/engg/rfis/${id}/history`)).data,
+  escalate: async () => (await api.post('/engg/rfis/escalate', {}, idem())).data,
+};
+/** Uploads a picture or a file to an RFI through the file service. */
+export async function uploadToRfi(rfiId, blob, name) {
+  const { authHeaders } = await import('../../platform/api/index.js');
+  const fd = new FormData(); fd.append('entity', 'engg_rfi'); fd.append('entityId', String(rfiId)); fd.append('file', blob, name);
+  const res = await fetch('/api/v1/core/files', { method: 'POST', headers: authHeaders(), body: fd });
+  if (!res.ok) throw new Error(String(res.status));
+  return (await res.json()).data;
+}

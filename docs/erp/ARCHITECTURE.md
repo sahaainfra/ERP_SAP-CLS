@@ -1123,3 +1123,14 @@ Module `engg` (first of M11), flag `ff.engg.p1101`, tables `engg_drawings`, `eng
 - **For later parts** (FR-05, BR-01, ADR-421): `engg_drawing_links` and `drawingsForTarget`; `drawingUseCheck` for work authorisation (14.01).
 - **Schedule and dashboard** (FR-06): planned against actual receipt, overdue report, tiles.
 - **Permissions**: `engg.drawing.*` and `engg.transmittal.*`. **Browser**: Drawings Dashboard, Drawing Register, Drawing, Transmittals, Transmittal, Current Drawings for my Site; Hindi through the `engg` namespace.
+
+## 89. RFI management (part 11.02)
+
+Module `engg`, flag `ff.engg.p1102`, tables `engg_rfis`, `engg_rfi_routing`, `engg_rfi_delay_drafts`. The service is `modules/engg/rfis.js` (`createRfiService`, `rfiConstraintsOf`), bound with the services of 11.01.
+
+- **Life** (FR-02, ADR-424): draft, sent to the design coordinator (`ENGG_RFI_ISSUE`), issued to the consultant, answered, closure requested (`ENGG_RFI_CLOSE`: design coordinator, then the raiser's lead), closed; returned, rejected and cancelled on the way. `ball_in_court` and `engg_rfi_routing` record who holds it.
+- **Answer** (FR-03, BR-01, BR-02, ADR-425, ADR-427): clarification, design change or instruction; a design change names a drawing revision or an instruction; a time impact makes a delay draft; event `engg.rfi.responded`.
+- **Ageing, SLA, escalation** (FR-04, ADR-426): computed on the server; `escalate` notifies once.
+- **Hold** (FR-06): open RFIs with the hold flag are the constraints read by `/rfis/constraints` and `rfiConstraintsOf`.
+- **Files** (ADR-423): file entity `engg_rfi`.
+- **Permissions**: `engg.rfi.*`. **Browser**: RFI Dashboard, RFI Register, RFI, Raise RFI (mobile, photo and finger markup); the RFIs tab of the drawing page.
