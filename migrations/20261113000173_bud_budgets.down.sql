@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS bud_phasing;
+DROP TABLE IF EXISTS bud_lines;
+DROP TABLE IF EXISTS bud_budgets;
