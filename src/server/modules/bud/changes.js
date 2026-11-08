@@ -191,7 +191,7 @@ export function createChangeService({ db, base }) {
   const changes = {
     list(actor, query) {
       need(actor, 'bud.change.view', 'see budget changes'); const s = scopeSql(actor, 'bud.change.view');
-      return runList(db, changeList, parseListRequest(changeList, query), { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id', map: (x) => { const v = view(actor, x); return { id: v.id, docNo: v.docNo, title: v.title, projectId: v.projectId, project: v.projectCode, docDate: v.docDate, changeType: v.changeType, changeTypeLabel: v.changeTypeLabel, reasonCode: v.reasonCode, reasonLabel: v.reasonLabel, status: v.status, statusLabel: v.statusLabel, totalDelta: v.totalDelta, moved: v.moved, pct: v.pctOfBudget, requestedBy: v.requestedBy }; } });
+      return runList(db, changeList, parseListRequest(changeList, query), { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id', map: (x) => { const v = view(actor, x); return { id: v.id, docNo: v.docNo, title: v.title, projectId: v.projectId, project: v.projectCode, docDate: v.docDate, changeType: v.changeType, changeTypeLabel: v.changeTypeLabel, reasonCode: v.reasonCode, reasonLabel: v.reasonLabel, status: v.status, statusLabel: v.statusLabel, totalDelta: v.totalDelta, moved: v.moved, pct: String(v.pctOfBudget), requestedBy: v.requestedBy }; } });
     },
     exportSource(actor, req) {
       need(actor, 'bud.change.export', 'export budget changes'); const s = scopeSql(actor, 'bud.change.view'); const opts = { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id' };

@@ -64,6 +64,10 @@ async function approve(request, c, roles, user, instanceId, action = 'approve') 
 }
 const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
 
+async function pick(sel, re) {
+  let v; await expect.poll(async () => { v = await sel.locator('option').evaluateAll((os, src) => os.find((o) => new RegExp(src).test(o.textContent ?? ''))?.value ?? null, re.source); return v; }).not.toBeNull();
+  await sel.selectOption(v);
+}
 async function approvedBudget(request, c, s) {
   const g = await api(request, c, 'QS', s.u('qs'), 'post', '/bud/generate', { projectId: s.project });
   await api(request, c, 'QS', s.u('qs'), 'post', `/bud/budgets/${g.id}/phasing/generate`, { method: 'SCURVE', profile: 'SCURVE' });
@@ -88,7 +92,7 @@ test('AC-01 revision, transfer check, contingency drawdown and the version compa
   await r.page.getByTestId('bc-reason').selectOption('RATE_ESCALATION');
   await r.page.getByTestId('bc-title').fill('Cement price rise');
   await r.page.getByTestId('bc-justification').fill('Cement rose 15 % since the estimate (supplier letters attached).');
-  await r.page.getByTestId('bc-line-pick').first().selectOption({ label: /Direct cost · W2 · Cement/ });
+  await pick(r.page.getByTestId('bc-line-pick').first(), /Direct cost · W2 · Cement/);
   await r.page.getByTestId('bc-line-amount').first().fill('20000');
   await expect(r.page.getByTestId('bc-i-chain')).toHaveText('PCMGR → PD');
   await expect(r.page.getByTestId('bc-i-totalAfter')).toContainText('6,84,200.00');
@@ -113,10 +117,10 @@ test('AC-01 revision, transfer check, contingency drawdown and the version compa
   await p.page.getByTestId('bc-type').selectOption('TRANSFER');
   await p.page.getByTestId('bc-title').fill('Mason to excavation');
   await p.page.getByTestId('bc-justification').fill('Less masonry, more rock excavation found.');
-  await p.page.getByTestId('bc-line-pick').first().selectOption({ label: /W2 · Mason/ });
+  await pick(p.page.getByTestId('bc-line-pick').first(), /W2 · Mason/);
   await p.page.getByTestId('bc-line-amount').first().fill('-10000');
   await p.page.getByTestId('bc-line-add').click();
-  await p.page.getByTestId('bc-line-pick').nth(1).selectOption({ label: /Excavation in soil/ });
+  await pick(p.page.getByTestId('bc-line-pick').nth(1), /Excavation in soil/);
   await p.page.getByTestId('bc-line-amount').nth(1).fill('9000');
   await expect(p.page.getByTestId('bc-issues')).toContainText('net to zero');
   await shot(p.page, 'transfer-not-net-zero', info);
@@ -127,7 +131,7 @@ test('AC-01 revision, transfer check, contingency drawdown and the version compa
   await p.page.getByTestId('bc-title').fill('Rock in the foundation');
   await p.page.getByTestId('bc-risk').selectOption(String(s.risk));
   await p.page.getByTestId('bc-justification').fill('The rock found at W2 needs breaking and extra concrete.');
-  await p.page.getByTestId('bc-line-pick').first().selectOption({ label: /W1.1 · Cement/ });
+  await pick(p.page.getByTestId('bc-line-pick').first(), /W1.1 · Cement/);
   await p.page.getByTestId('bc-line-amount').first().fill('60000');
   await expect(p.page.getByTestId('bc-issues')).toContainText('more than the contingency left');
   await p.page.getByTestId('bc-line-amount').first().fill('20000');
@@ -152,7 +156,7 @@ test('AC-01 revision, transfer check, contingency drawdown and the version compa
   await expect(r.page.getByTestId('cmp-version')).toHaveCount(3);
   await shot(r.page, 'compare', info);
   await noOverflow(r.page);
-  await r.page.getByTestId('cmp-from').selectOption({ label: /v1$/ });
+  await pick(r.page.getByTestId('cmp-from'), /v1$/);
   await expect(r.page.getByTestId('cmp-total-delta')).toContainText('20,000.00');
   await r.page.goto('/bud/changes');
   await expect(r.page.getByRole('heading', { name: 'Budget Change Requests' }).first()).toBeVisible();
