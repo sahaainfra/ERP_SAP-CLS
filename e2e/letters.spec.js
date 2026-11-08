@@ -138,7 +138,7 @@ test('AC-01 inward registration, outward letter approved and issued, thread, tim
   await expect(p.page.getByTestId('tb-row-TB-00001')).toHaveAttribute('data-urgency', 'WARNING');
   await p.page.getByTestId('tb-run').click();
   await expect(p.page.getByTestId('tb-note')).toContainText('1 countdown');
-  const told = await api(request, c, 'SE', se, 'get', '/ntf/notifications?pageSize=50');
+  const told = await api(request, c, 'SE', se, 'get', '/ntf/notifications');
   expect(JSON.stringify(told)).toContain('TB-00001');
   await shot(p.page, 'timebars', info);
   await noOverflow(p.page);
