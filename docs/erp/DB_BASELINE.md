@@ -1329,6 +1329,106 @@ Indexes:
 - ux_bud_budgets_version (unique): org_project_id, version_no
 - ux_bud_budgets_doc (unique): company_id, doc_no
 
+## bud_change_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| change_id | INTEGER | yes |  |  |
+| line_id | INTEGER |  |  |  |
+| line_kind | TEXT | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| resource_type | TEXT | yes |  | 'OTHER' |
+| resource_name | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| qty_before | INTEGER | yes |  | 0 |
+| amount_before | INTEGER | yes |  | 0 |
+| qty_delta | INTEGER | yes |  | 0 |
+| amount_delta | INTEGER | yes |  | 0 |
+| note | TEXT |  |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), line_id -> bud_lines(id), change_id -> bud_changes(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_change_lines_code: cost_code_id
+- ix_bud_change_lines_wbs: wbs_id
+- ix_bud_change_lines_line: line_id
+- ix_bud_change_lines_change: change_id, sort_order
+- ix_bud_change_lines_company_id: company_id
+
+## bud_changes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| budget_id | INTEGER | yes |  |  |
+| change_type | TEXT | yes |  |  |
+| reason_code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| justification | TEXT |  |  |  |
+| risk_id | INTEGER |  |  |  |
+| variation_id | INTEGER |  |  |  |
+| variation_ref | TEXT |  |  |  |
+| budget_total_before | INTEGER | yes |  | 0 |
+| total_delta | INTEGER | yes |  | 0 |
+| moved_amount | INTEGER | yes |  | 0 |
+| pct_of_budget | INTEGER | yes |  | 0 |
+| margin_before | INTEGER | yes |  | 0 |
+| margin_after | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| result_budget_id | INTEGER |  |  |  |
+| amends_change_id | INTEGER |  |  |  |
+| approved_at | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_change_id -> bud_changes(id), result_budget_id -> bud_budgets(id), risk_id -> proj_risks(id), budget_id -> bud_budgets(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_changes_amends: amends_change_id
+- ix_bud_changes_result: result_budget_id
+- ix_bud_changes_risk: risk_id
+- ix_bud_changes_budget: budget_id
+- ix_bud_changes_project: org_project_id, status
+- ix_bud_changes_status: company_id, status
+- ix_bud_changes_company_id: company_id
+- ux_bud_changes_variation (unique): org_project_id, variation_id
+- ux_bud_changes_doc (unique): company_id, doc_no
+
 ## bud_lines
 
 | Column | Type | Not null | Key | Default |

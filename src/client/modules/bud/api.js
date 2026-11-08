@@ -8,6 +8,20 @@ export const TYPES = ['MATERIAL', 'LABOUR', 'EQUIPMENT', 'TRANSPORT', 'SUBCONTRA
 export const DIMENSIONS = ['wbs', 'cost_head', 'resource', 'work_package', 'control_account'];
 export const PROFILES = ['SCURVE', 'LINEAR', 'FRONT', 'BACK'];
 export const inr = (v) => (v == null || v === '' ? '—' : Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+export const CHANGE_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const CHANGE_TYPES = ['REVISION', 'TRANSFER', 'DRAWDOWN'];
+export const REASONS = { REVISION: ['RATE_ESCALATION', 'SCOPE_CHANGE', 'RE_ESTIMATE', 'VARIATION'], TRANSFER: ['TRANSFER'], DRAWDOWN: ['RISK_REALISED'], VARIATION: ['VARIATION'] };
+export const bc = {
+  options: async (projectId) => (await api.get(`/bud/change-options?projectId=${projectId}`)).data,
+  preview: async (b) => (await api.post('/bud/changes/preview', b)).data,
+  create: async (b) => (await api.post('/bud/changes', b, idem())).data,
+  get: async (id) => (await api.get(`/bud/changes/${id}`)).data,
+  update: async (id, b) => (await api.patch(`/bud/changes/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/bud/changes/${id}`)).data,
+  act: async (id, action, b = {}) => (await api.post(`/bud/changes/${id}/${action}`, b, idem())).data,
+  history: async (id) => (await api.get(`/bud/changes/${id}/history`)).data,
+  compare: async (q) => (await api.get(`/bud/compare?${q}`)).data,
+};
 export const bd = {
   projects: async () => (await api.get('/bud/project-options')).data,
   preview: async (projectId) => (await api.get(`/bud/generate/preview?projectId=${projectId}`)).data,
