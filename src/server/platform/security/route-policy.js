@@ -1754,7 +1754,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/engg/vdr-items/:id/history', g: 'permission', k: 'engg.vdr_item.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/engg/vdr-items/:id/print', g: 'permission', k: 'engg.vdr_item.print', s: 'parseId', scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/engg/letter-templates', g: 'permission', k: 'engg.letter.view', s: null, scope: 'company', rate: 'read', audit: false },
-  { m: 'POST', p: '/api/v1/engg/letter-templates/render', g: 'permission', k: 'engg.letter.create', s: 'parseTemplateRender', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/engg/letter-templates/render', g: 'permission', k: 'engg.letter.create', s: 'parseTemplateRender', scope: 'company', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/engg/time-bars', g: 'permission', k: 'engg.letter.view', s: 'parseProject', scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/engg/time-bars', g: 'permission', k: 'engg.letter.create', s: 'parseTimeBarCreate', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/engg/time-bars/:id', g: 'permission', k: 'engg.letter.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
