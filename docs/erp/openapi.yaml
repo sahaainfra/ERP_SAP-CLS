@@ -6437,6 +6437,154 @@ paths:
     get:
       summary: "The projects in scope with their health"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/project-options:
+    get:
+      summary: "Drawing control: GET /project-options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/structure-options:
+    get:
+      summary: "Drawing control: GET /structure-options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/dashboard:
+    get:
+      summary: "Drawing control: GET /dashboard"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/schedule:
+    get:
+      summary: "Drawing control: GET /schedule"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/site-drawings:
+    get:
+      summary: "Drawing control: GET /site-drawings"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/use-check:
+    get:
+      summary: "Drawing control: GET /drawings/use-check"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/compare:
+    get:
+      summary: "Drawing control: GET /drawings/compare"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings:
+    get:
+      summary: "Drawing control: GET /drawings"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Drawing control: POST /drawings"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/export:
+    get:
+      summary: "Drawing control: GET /drawings/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/import:
+    post:
+      summary: "Drawing control: POST /drawings/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/{id}:
+    get:
+      summary: "Drawing control: GET /drawings/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Drawing control: PATCH /drawings/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Drawing control: DELETE /drawings/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/{id}/cancel:
+    post:
+      summary: "Drawing control: POST /drawings/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/{id}/amend:
+    post:
+      summary: "Drawing control: POST /drawings/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/{id}/distribute:
+    post:
+      summary: "Drawing control: POST /drawings/{id}/distribute"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/{id}/history:
+    get:
+      summary: "Drawing control: GET /drawings/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/drawings/{id}/print:
+    get:
+      summary: "Drawing control: GET /drawings/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/revisions/{id}:
+    get:
+      summary: "Drawing control: GET /revisions/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Drawing control: PATCH /revisions/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Drawing control: DELETE /revisions/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/revisions/{id}/submit:
+    post:
+      summary: "Drawing control: POST /revisions/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/revisions/{id}/withdraw:
+    post:
+      summary: "Drawing control: POST /revisions/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/revisions/{id}/cancel:
+    post:
+      summary: "Drawing control: POST /revisions/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/copies/{id}/acknowledge:
+    post:
+      summary: "Drawing control: POST /copies/{id}/acknowledge"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals:
+    get:
+      summary: "Drawing control: GET /transmittals"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Drawing control: POST /transmittals"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/export:
+    get:
+      summary: "Drawing control: GET /transmittals/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}:
+    get:
+      summary: "Drawing control: GET /transmittals/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Drawing control: PATCH /transmittals/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Drawing control: DELETE /transmittals/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}/submit:
+    post:
+      summary: "Drawing control: POST /transmittals/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}/withdraw:
+    post:
+      summary: "Drawing control: POST /transmittals/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}/cancel:
+    post:
+      summary: "Drawing control: POST /transmittals/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}/amend:
+    post:
+      summary: "Drawing control: POST /transmittals/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}/responses:
+    post:
+      summary: "Drawing control: POST /transmittals/{id}/responses"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}/history:
+    get:
+      summary: "Drawing control: GET /transmittals/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/engg/transmittals/{id}/print:
+    get:
+      summary: "Drawing control: GET /transmittals/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
   /api/v1/proj/gis/overlays:
     get:
       summary: "GIS: GET /overlays"

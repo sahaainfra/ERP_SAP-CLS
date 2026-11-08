@@ -179,6 +179,7 @@ CREATE TABLE IF NOT EXISTS engg_transmittal_items (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_engg_transmittal_items_pair ON engg_transmittal_items (transmittal_id, revision_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS ix_engg_transmittal_items_company_id ON engg_transmittal_items (company_id);
 CREATE INDEX IF NOT EXISTS ix_engg_transmittal_items_drawing ON engg_transmittal_items (drawing_id);
+CREATE INDEX IF NOT EXISTS ix_engg_transmittal_items_revision_id ON engg_transmittal_items (revision_id);
 CREATE INDEX IF NOT EXISTS ix_engg_transmittal_items_project ON engg_transmittal_items (org_project_id, response_code);
 
 CREATE TABLE IF NOT EXISTS engg_copies (

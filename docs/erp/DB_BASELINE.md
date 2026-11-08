@@ -3478,6 +3478,257 @@ Indexes:
 - ix_eng_sample_docs_status: company_id, status
 - ux_eng_sample_docs_no (unique): company_id, doc_no
 
+## engg_copies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| drawing_id | INTEGER | yes |  |  |
+| revision_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| holder_user | TEXT | yes |  |  |
+| holder_site_id | INTEGER |  |  |  |
+| copy_no | INTEGER | yes |  | 1 |
+| issued_on | TEXT | yes |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| acknowledged_by | TEXT |  |  |  |
+| copy_status | TEXT | yes |  | 'ISSUED' |
+| replaced_by_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: replaced_by_id -> engg_copies(id), holder_site_id -> org_sites(id), org_project_id -> org_projects(id), revision_id -> engg_drawing_revisions(id), drawing_id -> engg_drawings(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_copies_replaced: replaced_by_id
+- ix_engg_copies_site: holder_site_id
+- ix_engg_copies_project: org_project_id, copy_status
+- ix_engg_copies_holder: company_id, holder_user, copy_status
+- ix_engg_copies_revision: revision_id
+- ix_engg_copies_drawing: drawing_id, copy_status
+- ix_engg_copies_company_id: company_id
+
+## engg_drawing_links
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| drawing_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| link_type | TEXT | yes |  |  |
+| target_id | INTEGER |  |  |  |
+| target_ref | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), drawing_id -> engg_drawings(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_drawing_links_project: org_project_id, link_type, target_id
+- ix_engg_drawing_links_company_id: company_id
+- ux_engg_drawing_links_target (unique): drawing_id, link_type, target_ref
+
+## engg_drawing_revisions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| drawing_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| rev_seq | INTEGER | yes |  |  |
+| rev_label | TEXT | yes |  |  |
+| status_code | TEXT | yes |  |  |
+| issue_purpose | TEXT |  |  |  |
+| change_note | TEXT |  |  |  |
+| cloud_summary | TEXT |  |  |  |
+| received_on | TEXT |  |  |  |
+| issued_on | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| rev_status | TEXT | yes |  | 'DRAFT' |
+| superseded_by_id | INTEGER |  |  |  |
+| superseded_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: superseded_by_id -> engg_drawing_revisions(id), supersedes_id -> engg_drawing_revisions(id), org_project_id -> org_projects(id), drawing_id -> engg_drawings(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_drawing_revisions_file: file_id
+- ix_engg_drawing_revisions_superseded_by: superseded_by_id
+- ix_engg_drawing_revisions_supersedes: supersedes_id
+- ix_engg_drawing_revisions_project: org_project_id, rev_status
+- ix_engg_drawing_revisions_company_id: company_id
+- ux_engg_drawing_revisions_seq (unique): drawing_id, rev_seq
+
+## engg_drawings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| drawing_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| discipline | TEXT | yes |  |  |
+| package_name | TEXT |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| scale | TEXT |  |  |  |
+| sheet_size | TEXT |  |  |  |
+| originator_type | TEXT | yes |  | 'CONSULTANT' |
+| originator | TEXT |  |  |  |
+| document_id | INTEGER |  |  |  |
+| planned_receipt | TEXT |  |  |  |
+| actual_receipt | TEXT |  |  |  |
+| current_revision_id | INTEGER |  |  |  |
+| current_revision | TEXT |  |  |  |
+| current_status_code | TEXT |  |  |  |
+| current_ifc_revision_id | INTEGER |  |  |  |
+| response_code | TEXT |  |  |  |
+| response_date | TEXT |  |  |  |
+| register_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: document_id -> doc_documents(id), location_id -> proj_locations(id), wbs_id -> proj_wbs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_drawings_planned: org_project_id, planned_receipt
+- ix_engg_drawings_document: document_id
+- ix_engg_drawings_location: location_id
+- ix_engg_drawings_wbs: wbs_id
+- ix_engg_drawings_project: org_project_id, discipline, register_status
+- ix_engg_drawings_company_id: company_id
+- ux_engg_drawings_no (unique): company_id, org_project_id, drawing_no
+
+## engg_transmittal_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| transmittal_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| drawing_id | INTEGER | yes |  |  |
+| revision_id | INTEGER | yes |  |  |
+| copies | INTEGER | yes |  | 1 |
+| response_code | TEXT |  |  |  |
+| response_date | TEXT |  |  |  |
+| comments | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: revision_id -> engg_drawing_revisions(id), drawing_id -> engg_drawings(id), org_project_id -> org_projects(id), transmittal_id -> engg_transmittals(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_transmittal_items_project: org_project_id, response_code
+- ix_engg_transmittal_items_revision_id: revision_id
+- ix_engg_transmittal_items_drawing: drawing_id
+- ix_engg_transmittal_items_company_id: company_id
+- ux_engg_transmittal_items_pair (unique): transmittal_id, revision_id
+
+## engg_transmittals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| direction | TEXT | yes |  |  |
+| party | TEXT | yes |  |  |
+| contact | TEXT |  |  |  |
+| purpose | TEXT | yes |  |  |
+| cover_note | TEXT |  |  |  |
+| issued_on | TEXT |  |  |  |
+| due_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| closed_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_engg_transmittals_due: org_project_id, due_on
+- ix_engg_transmittals_project: org_project_id, direction, status
+- ix_engg_transmittals_company_id: company_id
+- ux_engg_transmittals_doc (unique): company_id, doc_no
+
 ## ess_requests
 
 | Column | Type | Not null | Key | Default |

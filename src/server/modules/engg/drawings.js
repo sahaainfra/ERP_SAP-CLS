@@ -163,7 +163,7 @@ export function createEnggService({ db }) {
   const drawings = {
     list(actor, query) {
       need(actor, 'engg.drawing.view', 'see the drawing register'); const s = scopeSql(actor, 'engg.drawing.view');
-      return runList(db, drawingList, parseListRequest(drawingList, query), { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id', map: (x) => { const v = view(actor, x); return { id: v.id, drawingNo: v.drawingNo, title: v.title, projectId: v.projectId, project: v.projectCode, discipline: v.disciplineLabel, package: v.packageName, revision: v.currentRevision, statusCode: v.currentStatusCode, planned: v.plannedReceipt, actual: v.actualReceipt, response: v.responseCode, overdue: v.overdue ? 1 : 0, usable: v.usable, registerStatus: v.registerStatus }; } });
+      return runList(db, drawingList, parseListRequest(drawingList, query), { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id', map: (x) => { const v = view(actor, x); return { id: v.id, drawingNo: v.drawingNo, title: v.title, projectId: v.projectId, project: v.projectCode, currentRevisionId: v.currentRevisionId, discipline: v.disciplineLabel, package: v.packageName, revision: v.currentRevision, statusCode: v.currentStatusCode, planned: v.plannedReceipt, actual: v.actualReceipt, response: v.responseCode, overdue: v.overdue ? 1 : 0, usable: v.usable, registerStatus: v.registerStatus }; } });
     },
     exportSource(actor, req) {
       need(actor, 'engg.drawing.export', 'export the drawing register'); const s = scopeSql(actor, 'engg.drawing.view'); const opts = { select: 'x.*', scopeSql: s.sql, params: s.params, tieBreaker: 'x.id' };
@@ -365,7 +365,18 @@ export function createEnggService({ db }) {
     if (r.rev_status !== 'ISSUED' || r.status_code !== 'IFC') return { ...base, usable: false, level: 'BLOCK', reason: 'NOT_IFC', message: `Revision ${r.rev_label} is ${r.rev_status === 'ISSUED' ? STATUS_CODES[r.status_code].toLowerCase() : REV_STATUS[r.rev_status].toLowerCase()}, not issued for construction.` };
     return { ...base, usable: true, level: 'OK', reason: 'CURRENT_IFC', message: `Revision ${r.rev_label} is the current IFC.`, revisionId: r.id };
   }
-  return { drawings, revisions, distribution, schedule, dashboard, useCheck, issue, recompute, may, need, fail, project, orgOf, scopeSql, audit, event, today, fileOf, rrow, dfresh, view, rview, copiesOf, staff };
+  /** The projects the person may use the drawing pages for, and the master data a drawing refers to: WBS nodes and locations. */
+  const options = {
+    projects(actor) {
+      need(actor, 'engg.drawing.view', 'see the drawings');
+      return db.prepare('SELECT o.id, o.code, o.name FROM org_projects o JOIN proj_projects p ON p.project_id = o.id WHERE o.company_id = ? AND p.deleted_at IS NULL ORDER BY o.code').all(actor.companyId).filter((o) => may(actor, 'engg.drawing.view', o.id)).map((o) => ({ projectId: o.id, code: o.code, name: o.name }));
+    },
+    structure(actor, projectId) {
+      const o = project(actor, projectId, 'engg.drawing.view');
+      return { wbs: db.prepare('SELECT id, code, name FROM proj_wbs WHERE project_id = ? AND deleted_at IS NULL ORDER BY code LIMIT 500').all(o.id), locations: db.prepare('SELECT id, code, name FROM proj_locations WHERE project_id = ? AND deleted_at IS NULL ORDER BY code LIMIT 500').all(o.id) };
+    },
+  };
+  return { options, drawings, revisions, distribution, schedule, dashboard, useCheck, issue, recompute, may, need, fail, project, orgOf, scopeSql, audit, event, today, fileOf, rrow, dfresh, view, rview, copiesOf, staff };
 }
 
 /** What 14.01 (work authorisation) and later parts read without a request: is the revision the current issued-for-construction one? */

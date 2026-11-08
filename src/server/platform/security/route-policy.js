@@ -1677,6 +1677,8 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/proj/project-360', g: 'permission', k: 'proj.p360.view', s: 'parseP360', scope: 'project', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proj/project-360/export', g: 'permission', k: 'proj.p360.export', s: 'parseP360', scope: 'project', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/proj/portfolio-overview', g: 'permission', k: 'proj.p360.view', s: 'parsePortfolio', scope: 'project', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/engg/project-options', g: 'permission', k: 'engg.drawing.view', s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/engg/structure-options', g: 'permission', k: 'engg.drawing.view', s: 'parseProject', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/engg/dashboard', g: 'permission', k: 'engg.drawing.view', s: 'parseProject', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/engg/schedule', g: 'permission', k: 'engg.drawing.view', s: 'parseProject', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/engg/site-drawings', g: 'permission', k: 'engg.drawing.view', s: 'parseProject', scope: 'company', rate: 'read', audit: false },

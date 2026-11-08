@@ -1109,3 +1109,17 @@ Module `proj`, flag `ff.proj.p1008`, table `proj_360_widgets`. The service is `m
 - **Permissions**: `proj.p360.view`, `proj.p360.export`.
 - **Browser**: Project 360 (header, health tiles, tabs, period, export) and Portfolio Overview; Hindi through the `proj` namespace.
 
+
+## 88. Drawing control (part 11.01)
+
+Module `engg` (first of M11), flag `ff.engg.p1101`, tables `engg_drawings`, `engg_drawing_revisions`, `engg_drawing_links`, `engg_transmittals`, `engg_transmittal_items`, `engg_copies`. The services are `modules/engg/drawings.js` (`createEnggService`, `enggOf`, `drawingUseCheck`, `drawingsForTarget`) and `transmittals.js` (`createTransmittalService`); both are bound together at mount.
+
+- **Register and revisions** (FR-01, FR-02, ADR-417): a drawing row is the register entry with the denormalised current revision, current IFC and last response; each revision is the approval-controlled record (draft, waiting, issued, returned, rejected, cancelled, superseded).
+- **Approval** (ADR-418): workflow `ENGG_DRAWING_IFC` (resolver `engg.docCheck`, role DESIGN, resolver `engg.pm`) for IFC; other status codes issue on submit; workflow `ENGG_TRANSMITTAL` (document control, design coordinator) for outgoing transmittals for approval.
+- **Supersession** (BR-02, ADR-419): `issue()` marks the older issued revisions it replaces, supersedes their controlled copies, makes replacement copies for each holder, notifies them (`engg.drawing.superseded`) and publishes `engg.drawing.issued` and `engg.drawing.superseded`, in the transaction of the issue.
+- **Files** (FR-04, ADR-420): file entity `engg_drawing_revision`; an issued revision is readable by everyone who may see drawings, any other revision only by register staff.
+- **Distribution** (FR-04): `engg_copies` with acknowledgement by the holder; `/engg/site-drawings` lists the current IFC with the person's copy state.
+- **Transmittals** (FR-03, ADR-422): outgoing and incoming; responses A to D per item update the drawing and close the transmittal.
+- **For later parts** (FR-05, BR-01, ADR-421): `engg_drawing_links` and `drawingsForTarget`; `drawingUseCheck` for work authorisation (14.01).
+- **Schedule and dashboard** (FR-06): planned against actual receipt, overdue report, tiles.
+- **Permissions**: `engg.drawing.*` and `engg.transmittal.*`. **Browser**: Drawings Dashboard, Drawing Register, Drawing, Transmittals, Transmittal, Current Drawings for my Site; Hindi through the `engg` namespace.

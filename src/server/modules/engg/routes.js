@@ -15,6 +15,8 @@ export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired 
   };
   const html = (res, body) => res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(body);
   const d = svc.drawings; const v = svc.revisions; const t = svc.transmittals;
+  r.get('/project-options', (req, res) => ok(res, svc.options.projects(req.actor)));
+  r.get('/structure-options', (req, res) => ok(res, svc.options.structure(req.actor, parseProject(req.query).projectId)));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard.get(req.actor, parseProject(req.query))));
   r.get('/schedule', (req, res) => ok(res, svc.schedule.report(req.actor, parseProject(req.query))));
   r.get('/site-drawings', (req, res) => ok(res, svc.distribution.site(req.actor, { ...parseProject(req.query), locationId: req.query.locationId, discipline: req.query.discipline })));

@@ -33,7 +33,7 @@ export const engg = {
   status: 'The drawing register (number, title, discipline, package, location, scale, size, originator, current revision and status code), the revision workflow (draft, check, approval of issue for construction, issue) with the change note and revision-cloud summary and a side-by-side comparison, outgoing and incoming transmittals with response codes A to D, controlled copies with acknowledgement, the site view of current IFC drawings only, links to WBS, location, BOQ and activity, the drawing schedule with the overdue report, and the use check that work authorisation reads.',
   tables: ['engg_drawings', 'engg_drawing_revisions', 'engg_drawing_links', 'engg_transmittals', 'engg_transmittal_items', 'engg_copies'],
   companyOptional: [],
-  resources: ['dashboard', 'schedule', 'site-drawings', 'drawings', 'revisions', 'copies', 'transmittals'],
+  resources: ['project-options', 'structure-options', 'dashboard', 'schedule', 'site-drawings', 'drawings', 'revisions', 'copies', 'transmittals'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'engg_drawings'").get()) return;
