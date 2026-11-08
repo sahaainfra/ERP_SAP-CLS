@@ -33,3 +33,11 @@ export const toPaise = (v) => Math.round(Number(v ?? 0) * 100);
 export const rupees = (n) => (Number(n ?? 0) / 100).toFixed(2);
 export const addDays = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 export const diffDays = (a, b) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86_400_000);
+// ---- part 11.03: submittals ----
+export const SUBMITTAL_DOC = 'ENGG_SUBMITTAL';
+export const SUB_TYPES = { MAR: 'Material approval', METHOD_STATEMENT: 'Method statement', SHOP_DRAWING: 'Shop drawing', SAMPLE: 'Sample', MOCK_UP: 'Mock-up', PRODUCT_DATA: 'Product data', QUALITY_PLAN: 'Quality plan' };
+/** Method statements and shop drawings are checked internally by the construction manager; the material types by the quality control manager. */
+export const SUB_CM_TYPES = ['METHOD_STATEMENT', 'SHOP_DRAWING'];
+export const SUB_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for internal approval', WITH_CONSULTANT: 'With the consultant', APPROVED: 'Approved', REVISE: 'Revise and resubmit', REJECTED: 'Rejected', RETURNED: 'Returned for correction', CANCELLED: 'Cancelled' };
+export const SUB_OPEN = ['DRAFT', 'SUBMITTED', 'WITH_CONSULTANT', 'REVISE', 'RETURNED'];
+export const SUB_RESPONSE = { A: 'Approved', B: 'Approved as noted', C: 'Revise and resubmit', D: 'Rejected' };

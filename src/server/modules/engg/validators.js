@@ -52,3 +52,15 @@ export const parseRfiUpdate = (b) => {
 export const parseRfiImport = (b) => parse(z.object({ projectId: id, rows: z.array(z.object(rfiFields).strict()).min(1, 'Give at least one row').max(150) }).strict(), b);
 export const parseRfiRespond = (b) => parse(z.object({ responseType: z.enum(['CLARIFICATION', 'DESIGN_CHANGE', 'INSTRUCTION']), text: text(4000).min(5, 'Write the response'), costImpact: money.default('0'), timeImpactDays: z.number().int().min(0).max(3650).default(0), drawingRevisionId: optId, instructionRef: optText(120), variationRef: optText(120) }).strict(), b);
 export const parseRfiClose = (b) => parse(z.object({ note: optText(1000) }).strict(), b ?? {});
+
+// ---- part 11.03: submittals ----
+const subFields = {
+  type: z.enum(['MAR', 'METHOD_STATEMENT', 'SHOP_DRAWING', 'SAMPLE', 'MOCK_UP', 'PRODUCT_DATA', 'QUALITY_PLAN']), title: text(200).min(3, 'Give the title'), specSection: optText(120), activityRef: optText(120), wbsId: optId, itemId: optId, materialRef: optText(160), make: optText(120), model: optText(120), supplier: optText(160),
+  drawingId: optId, hseRef: optText(120), consultant: optText(160), needDate: optDay, leadTimeDays: z.number().int().min(0).max(1000).default(0), reviewDays: z.number().int().min(0).max(365).default(14), requiredBy: optDay,
+};
+export const parseSubmittalCreate = (b) => parse(z.object({ projectId: id, ...subFields }).strict(), b);
+export const parseSubmittalUpdate = (b) => given(parse(z.object(Object.fromEntries([...Object.entries(subFields).map(([k, v]) => [k, v.optional()]), ['rowVersion', version.optional()]])).strict(), b), b);
+export const parseSubmittalImport = (b) => parse(z.object({ projectId: id, rows: z.array(z.object(subFields).strict()).min(1, 'Give at least one row').max(150) }).strict(), b);
+export const parseSubmittalRespond = (b) => parse(z.object({ code: z.enum(['A', 'B', 'C', 'D']), text: optText(2000), responseOn: optDay }).strict(), b);
+export const parsePoCheck = (q) => parse(z.object({ projectId: id, itemId: id.optional(), material: z.string().trim().max(160).optional(), make: z.string().trim().max(120).optional() }).strict(), q ?? {});
+export const parseResubmit = (b) => parse(z.object({ changeNote: text(2000).min(5, 'Say what changed') }).strict(), b);

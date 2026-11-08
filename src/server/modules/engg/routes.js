@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseRfiClose, parseRfiCreate, parseRfiImport, parseRfiRespond, parseRfiUpdate, parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
+import { parsePoCheck, parseResubmit, parseSubmittalCreate, parseSubmittalImport, parseSubmittalRespond, parseSubmittalUpdate, parseRfiClose, parseRfiCreate, parseRfiImport, parseRfiRespond, parseRfiUpdate, parseAmend, parseCheck, parseCompare, parseDistribute, parseDrawingCreate, parseDrawingUpdate, parseId, parseImport, parseProject, parseReason, parseResponses, parseRevisionUpdate, parseTransmittalCreate, parseTransmittalUpdate } from './validators.js';
 
 /** Part 11.01: the drawing register, its revisions, the controlled copies, the transmittals and the schedule. Rights and scope are checked in the services. */
 export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }) {
@@ -74,5 +74,24 @@ export function enggRoutes(svc, { exportsOf }, { idempotent, idempotentRequired 
   r.post('/rfis/:id/close', idempotentRequired, (req, res) => ok(res, f.requestClose(req.actor, pid(req), parseRfiClose(req.body)), 202));
   r.get('/rfis/:id/history', (req, res) => ok(res, f.history(req.actor, pid(req))));
   r.get('/rfis/:id/print', (req, res) => html(res, f.print(req.actor, pid(req))));
+  const u = svc.submittals;
+  r.get('/submittal-schedule', (req, res) => ok(res, u.schedule(req.actor, parseProject(req.query))));
+  r.get('/approved-makes', (req, res) => ok(res, u.approvedMakes(req.actor, { projectId: req.query.projectId, itemId: req.query.itemId })));
+  r.get('/submittals/po-check', (req, res) => ok(res, u.poCheck(req.actor, parsePoCheck(req.query))));
+  r.get('/submittals', (req, res) => res.json(u.list(req.actor, req.query)));
+  r.get('/submittals/export', exportOf('engg.submittals'));
+  r.post('/submittals/import', idempotentRequired, (req, res) => ok(res, u.import(req.actor, parseSubmittalImport(req.body)), 201));
+  r.post('/submittals', idempotentRequired, (req, res) => ok(res, u.create(req.actor, parseSubmittalCreate(req.body)), 201));
+  r.get('/submittals/:id', (req, res) => ok(res, u.get(req.actor, pid(req))));
+  r.patch('/submittals/:id', idempotent, (req, res) => ok(res, u.update(req.actor, pid(req), parseSubmittalUpdate(req.body))));
+  r.delete('/submittals/:id', (req, res) => ok(res, u.remove(req.actor, pid(req))));
+  r.post('/submittals/:id/submit', idempotentRequired, (req, res) => ok(res, u.submit(req.actor, pid(req)), 202));
+  r.post('/submittals/:id/withdraw', idempotent, (req, res) => ok(res, u.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/submittals/:id/cancel', idempotent, (req, res) => ok(res, u.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/submittals/:id/amend', idempotentRequired, (req, res) => ok(res, u.amend(req.actor, pid(req), parseReason(req.body))));
+  r.post('/submittals/:id/respond', idempotent, (req, res) => ok(res, u.respond(req.actor, pid(req), parseSubmittalRespond(req.body))));
+  r.post('/submittals/:id/resubmit', idempotent, (req, res) => ok(res, u.resubmit(req.actor, pid(req), parseResubmit(req.body))));
+  r.get('/submittals/:id/history', (req, res) => ok(res, u.history(req.actor, pid(req))));
+  r.get('/submittals/:id/print', (req, res) => html(res, u.print(req.actor, pid(req))));
   return r;
 }
