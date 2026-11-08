@@ -35,3 +35,15 @@ export function splitBy(total, weights) {
   weights.forEach((w, i) => { acc += w; const upto = i === weights.length - 1 ? total : Math.round((total * acc) / sum); out.push(upto - given); given = upto; });
   return out;
 }
+
+// Part 12.02: budget changes.
+export const CHANGE_DOC = 'BUD_CHANGE';
+export const DRAWDOWN_DOC = 'BUD_DRAWDOWN';
+export const CHANGE_TYPES = { REVISION: 'Budget revision', TRANSFER: 'Transfer between lines', DRAWDOWN: 'Contingency drawdown', VARIATION: 'Revision from a variation' };
+export const REASONS = { VARIATION: 'Variation', SCOPE_CHANGE: 'Scope change', RATE_ESCALATION: 'Rate escalation', RE_ESTIMATE: 'Re-estimate', TRANSFER: 'Transfer between lines', RISK_REALISED: 'Risk realised' };
+export const CHANGE_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved (applied)', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+/** BR-02: a revision or transfer above this share of the budget goes to the director as well. */
+export const BAND_PCT = 5;
+export const signed = (paise) => `${paise < 0 ? '-' : ''}${(Math.abs(paise) / 100).toFixed(2)}`;
+/** Neutralises a spreadsheet formula at the start of a cell of an export. */
+export const cell = (v) => { const s = String(v ?? ''); return /^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s) ? `'${s}` : s; };

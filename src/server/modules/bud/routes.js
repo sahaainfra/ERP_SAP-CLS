@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { parseChangeCreate, parseChangeImport, parseChangePreview, parseChangeUpdate, parseCompare } from './validators.js';
 import { parseAmend, parseBudgetCreate, parseBudgetUpdate, parseGenerate, parseId, parseImport, parseLineCreate, parseLineUpdate, parseOptReason, parsePhasingGenerate, parsePhasingSet, parseProject, parseReason, parseView } from './validators.js';
 
 /** Part 12.01: the project budget: generation from the baseline pack and the BOQ norms, lines and adjustments, views, phasing, margin, versions and approval. Rights and scope are checked in the service. */
@@ -43,5 +44,33 @@ export function budRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }
   r.delete('/lines/:lineId', (req, res) => ok(res, b.lines.remove(req.actor, lid(req), parseOptReason(req.query))));
   r.get('/lines/:lineId/phasing', (req, res) => ok(res, b.phasing.lineGet(req.actor, lid(req))));
   r.put('/lines/:lineId/phasing', idempotent, (req, res) => ok(res, b.phasing.lineSet(req.actor, lid(req), parsePhasingSet(req.body))));
+  // ---- part 12.02: budget changes and the comparison of versions ----
+  const c = svc.changes;
+  if (c) {
+    const exportOf = (code) => (req, res) => {
+      const x = exportsOf(); if (!x) throw new Error('The list export service is not running');
+      const out = x.start(req.actor, code, req.query);
+      if (out.kind === 'job') return res.status(202).json({ data: out });
+      res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+      return res.send(out.buffer);
+    };
+    r.get('/change-options', (req, res) => ok(res, c.options(req.actor, parseProject(req.query).projectId)));
+    r.get('/changes', (req, res) => res.json(c.list(req.actor, req.query)));
+    r.get('/changes/export', exportOf('bud.changes'));
+    r.post('/changes/import', idempotentRequired, (req, res) => ok(res, c.import(req.actor, parseChangeImport(req.body)), 201));
+    r.post('/changes/preview', (req, res) => ok(res, c.preview(req.actor, parseChangePreview(req.body))));
+    r.post('/changes', idempotentRequired, (req, res) => ok(res, c.create(req.actor, parseChangeCreate(req.body)), 201));
+    r.get('/changes/:id', (req, res) => ok(res, c.get(req.actor, pid(req))));
+    r.patch('/changes/:id', idempotent, (req, res) => ok(res, c.update(req.actor, pid(req), parseChangeUpdate(req.body))));
+    r.delete('/changes/:id', (req, res) => ok(res, c.remove(req.actor, pid(req))));
+    r.post('/changes/:id/submit', idempotentRequired, (req, res) => ok(res, c.submit(req.actor, pid(req)), 202));
+    r.post('/changes/:id/withdraw', idempotent, (req, res) => ok(res, c.withdraw(req.actor, pid(req), parseReason(req.body))));
+    r.post('/changes/:id/cancel', idempotent, (req, res) => ok(res, c.cancel(req.actor, pid(req), parseReason(req.body))));
+    r.post('/changes/:id/amend', idempotentRequired, (req, res) => ok(res, c.amend(req.actor, pid(req), parseAmend(req.body)), 201));
+    r.get('/changes/:id/history', (req, res) => ok(res, c.history(req.actor, pid(req))));
+    r.get('/changes/:id/print', (req, res) => html(res, c.print(req.actor, pid(req))));
+    r.get('/compare', (req, res) => ok(res, c.compare(req.actor, parseCompare(req.query))));
+    r.get('/compare/export', (req, res) => { const out = c.compareCsv(req.actor, parseCompare(req.query)); res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'no-store' }).send(out.body); });
+  }
   return r;
 }

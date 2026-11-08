@@ -301,6 +301,7 @@ export function createBudgetService({ db }) {
     amend(actor, id, { reason }) {
       const r = row(actor, id, 'bud.budget.amend'); if (r.status !== 'APPROVED') throw unprocessable('Only an approved budget is revised.');
       if (db.prepare("SELECT 1 FROM bud_budgets WHERE org_project_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND deleted_at IS NULL").get(r.org_project_id)) throw conflict('A revision of this budget is in preparation already.');
+      if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bud_changes'").get() && db.prepare("SELECT 1 FROM bud_changes WHERE org_project_id = ? AND status = 'SUBMITTED' AND deleted_at IS NULL").get(r.org_project_id)) throw conflict('A budget change of this project is waiting for approval: decide it first.');
       return transaction(db, () => {
         const vno = (db.prepare('SELECT MAX(version_no) AS n FROM bud_budgets WHERE org_project_id = ? AND deleted_at IS NULL').get(r.org_project_id).n ?? 1) + 1; const x = projOf(r.org_project_id);
         const nid = Number(db.prepare("INSERT INTO bud_budgets (company_id, doc_no, doc_date, org_project_id, version_no, vtype, name, baseline_pack_id, boq_version_id, parent_budget_id, status, contract_value, target_margin_pct, baseline_cost, phasing_method, requested_by, reason, project_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, 'REVISED', ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?, ?, ?, 'api')")
@@ -313,7 +314,7 @@ export function createBudgetService({ db }) {
         }
         for (const p of db.prepare('SELECT * FROM bud_phasing WHERE budget_id = ? AND deleted_at IS NULL').all(r.id)) db.prepare("INSERT INTO bud_phasing (company_id, budget_id, line_id, period, amount, qty, method, project_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'api')").run(p.company_id, nid, map.get(p.line_id), p.period, p.amount, p.qty, p.method, p.project_id, actor.user);
         retotal(nid); audit(actor, 'bud_budgets', nid, 'amend', r.company_id, { reason, newValues: { from: r.doc_no } });
-        event('bud.budget.revised', actor, nid, r.company_id, r.org_project_id, { projectId: r.org_project_id, budgetId: nid, parentBudgetId: r.id, versionNo: vno, reason });
+        event('bud.budget.revision_started', actor, nid, r.company_id, r.org_project_id, { projectId: r.org_project_id, budgetId: nid, parentBudgetId: r.id, versionNo: vno, reason });
         return budgets.get(actor, nid);
       });
     },
@@ -444,6 +445,7 @@ export function createBudgetService({ db }) {
             projectId: r.org_project_id, budgetId: r.id, docNo: r.doc_no, versionNo: r.version_no, vtype: r.vtype, total: rupees(f.total_amount), direct: rupees(f.direct_total), overhead: rupees(f.overhead_total), contingency: rupees(f.contingency_total), reserve: rupees(f.reserve_total),
             contractValue: rupees(f.contract_value), marginPct: m.marginPct, marginWarning: m.warning, supersedes: r.parent_budget_id, byCostHead: viewsOf(f, 'cost_head').rows.map((x) => ({ label: x.label, amount: x.amount })),
           });
+          if (r.parent_budget_id) { const prev = fresh(r.parent_budget_id); event('bud.budget.revised', actor, r.id, r.company_id, r.org_project_id, { projectId: r.org_project_id, budgetId: r.id, previousBudgetId: r.parent_budget_id, versionNo: r.version_no, total: rupees(f.total_amount), totalBefore: rupees(prev?.total_amount ?? 0), delta: rupees(f.total_amount - (prev?.total_amount ?? 0)), source: 'REVISION', changeId: null, reason: r.reason }); }
           notify(f, 'bud.budget.approved', [f.requested_by, projOf(r.org_project_id)?.pm_user], f.doc_no, f.name, `Budget ${f.doc_no} version ${f.version_no} is approved and locked.`, `/bud/budget?id=${f.id}`);
         });
         return;
@@ -456,7 +458,9 @@ export function createBudgetService({ db }) {
     try { return issueNumber(db, { companyId: actor.companyId, docType: BUDGET_DOC, actor: actor.user, refType: 'bud_budgets' }).number; } catch (x) { if (!['DOCUMENT_TYPE_UNKNOWN', 'NUMBER_SERIES_MISSING'].includes(x?.code)) throw x; }
     const n = (db.prepare('SELECT COUNT(*) AS n FROM bud_budgets WHERE company_id = ?').get(actor.companyId).n ?? 0) + 1; return `BUD/${String(n).padStart(5, '0')}`;
   }
-  return { budgets, budgetDecide: budgets.decide, budgetOptions: budgets.options };
+  /** The approved budget in force for a project (the one budget checks, the control engine and the EAC read), or null. */
+  const currentOf = (projectId) => db.prepare("SELECT * FROM bud_budgets WHERE org_project_id = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY version_no DESC, id DESC LIMIT 1").get(projectId) ?? null;
+  return { budgets, budgetDecide: budgets.decide, budgetOptions: budgets.options, budgetCurrent: currentOf, budgetBase: { db, may, need, fail, audit, event, notify, orgOf, projOf, scopeSql, project, row, fresh, retotal, linesOf, margin, wbsMeta, wpOf, codeById, numberFor, viewsOf, lineView, currentOf } };
 }
 
 // ---- workflow, evidence ---------------------------------------------------------------------------------------------------------------------------------------------

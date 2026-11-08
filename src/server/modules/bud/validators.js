@@ -30,3 +30,19 @@ export const parseView = (q) => parse(z.object({ by: z.enum(['wbs', 'cost_head',
 export const parsePhasingGenerate = (b) => parse(z.object({ method: z.enum(['SCURVE', 'SCHEDULE']), profile: z.enum(['LINEAR', 'SCURVE', 'FRONT', 'BACK']).default('SCURVE'), from: month.nullish().transform((v) => v || null), to: month.nullish().transform((v) => v || null) }).strict(), b ?? {});
 export const parsePhasingSet = (b) => parse(z.object({ rows: z.array(z.object({ period: month, amount: num }).strict()).max(240) }).strict(), b);
 export const parseImport = (b) => parse(z.object({ projectId: id.optional(), rows: z.array(z.object({ ...line, reason: optText(1000) }).strict()).min(1, 'Give at least one row').max(500) }).strict(), b);
+
+// Part 12.02: budget changes. Deltas are signed rupees and quantities.
+const delta = z.number().finite();
+const cline = z.object({
+  lineId: optId, lineKind: KIND.optional(), wbsId: optId, costCodeId: optId, resourceType: TYPE.optional(), resourceName: optText(200), uom: optText(20),
+  qtyDelta: delta.default(0), amountDelta: delta, note: optText(500),
+}).strict();
+const change = {
+  changeType: z.enum(['REVISION', 'TRANSFER', 'DRAWDOWN']), reasonCode: z.enum(['VARIATION', 'SCOPE_CHANGE', 'RATE_ESCALATION', 'RE_ESTIMATE', 'TRANSFER', 'RISK_REALISED']),
+  title: text(200).min(3, 'Give a title'), justification: z.string().trim().min(10, 'Justify the change (at least 10 characters)').max(4000), riskId: optId, variationRef: optText(80), lines: z.array(cline).max(300).default([]),
+};
+export const parseChangeCreate = (b) => parse(z.object({ projectId: id, ...change }).strict(), b);
+export const parseChangePreview = (b) => parse(z.object({ projectId: id, ...change, title: text(200).default('Preview'), justification: z.string().max(4000).default(''), changeId: optId }).strict(), b);
+export const parseChangeUpdate = (b) => given(parse(z.object({ reasonCode: change.reasonCode.optional(), title: change.title.optional(), justification: change.justification.optional(), riskId: optId.optional(), variationRef: optText(80).optional(), lines: z.array(cline).max(300).optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b), b);
+export const parseChangeImport = (b) => parse(z.object({ rows: z.array(z.object({ projectId: id, ...change }).strict()).min(1, 'Give at least one row').max(100) }).strict(), b);
+export const parseCompare = (q) => parse(z.object({ projectId: id, from: optId, to: optId, by: z.enum(['line', 'cost_head', 'wbs']).default('line'), format: z.enum(['csv']).optional() }).strict(), q ?? {});
