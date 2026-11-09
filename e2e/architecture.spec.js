@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { menu, setTheme } from "./shell-helpers.js";
 
+// page.route does not see requests that the application's service worker handles: block it so that the answers given here are the ones the page gets.
+test.use({ serviceWorkers: 'block' });
+
 async function open(page, roles, path = '/admin/architecture', company = '1') {
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), { user: 'e2e-arch', roles, company });
   const errors = [];

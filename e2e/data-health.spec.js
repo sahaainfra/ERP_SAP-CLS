@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { setTheme } from './shell-helpers.js';
 
+// The tests below answer API calls themselves (page.route). Once the application's service worker controls the page, Chromium sends its requests through
+// the worker and page.route no longer sees them, so whether a test passed depended on when the worker took over: block it for this file.
+test.use({ serviceWorkers: 'block' });
+
 async function open(page, roles, path = '/admin/data-health', company = '1', user = 'e2e-health') {
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), { user, roles, company });
   const errors = [];

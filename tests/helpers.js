@@ -22,6 +22,10 @@ export async function startApi(configOverrides = {}, appOverrides = {}) {
   const server = await new Promise((resolve) => {
     const s = app.listen(0, () => resolve(s));
   });
+  // The test client and the server share one process. When a test keeps the event loop busy for about 5 s (a burst of 2,000 records under coverage), the server's
+  // keep-alive (5 s) closes an idle connection just as the client reuses it: ECONNRESET (D-455, reproduced 2 times in 6 with coverage). A longer server side keep-alive
+  // leaves the client (undici, 4 s) to retire idle connections itself.
+  server.keepAliveTimeout = 65_000; server.headersTimeout = 66_000;
   const base = `http://127.0.0.1:${server.address().port}`;
   const call = async (method, path, { user = 'tester', roles = '', company = '1', body, headers = {} } = {}) => {
     const h = { 'content-type': 'application/json', ...headers };

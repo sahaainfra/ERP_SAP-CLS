@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { setTheme } from './shell-helpers.js';
 
+// page.route does not see requests that the application's service worker handles: block it so that the answers given here are the ones the page gets.
+test.use({ serviceWorkers: 'block' });
+
 // The database is shared by both viewport projects (run in order), so each test uses its own scope.
 const identity = (roles, company = '1', user = 'e2e-user') => ({ user, roles, company });
 
