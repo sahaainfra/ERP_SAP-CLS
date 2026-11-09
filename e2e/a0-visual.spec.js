@@ -23,7 +23,7 @@ async function company(request, code) {
 for (const theme of THEMES) {
   test(`T-01 FR-05 visual baseline of every page, ${theme} theme, at 360, 768 and 1280 px`, async ({ browser, request }, info) => {
     test.skip(info.project.name === 'mobile', 'the three widths are set here');
-    test.setTimeout(1_200_000);
+    test.setTimeout(3_000_000); // 361 pages x 3 widths: about 1 100 screenshots a theme
     const c = await company(request, `VIS${theme.slice(0, 2).toUpperCase()}`);
     const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: SIZES[2], reducedMotion: 'reduce' });
     await context.addInitScript(([v, th]) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: th, density: 'comfortable', language: 'en' })); localStorage.setItem('erp.shell.closed-groups', JSON.stringify([])); }, [{ user: 'e2e-visual', roles: 'SUPADM', company: String(c) }, theme]);
