@@ -7284,6 +7284,168 @@ paths:
     get:
       summary: "Department budgets and overhead allocation: GET /alloc/pool"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/projects:
+    get:
+      summary: "Schedule core: GET /projects"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/options:
+    get:
+      summary: "Schedule core: GET /options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/current:
+    get:
+      summary: "Schedule core: GET /current"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/calendars:
+    get:
+      summary: "Schedule core: GET /calendars"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Schedule core: POST /calendars"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/calendars/{id}:
+    get:
+      summary: "Schedule core: GET /calendars/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    patch:
+      summary: "Schedule core: PATCH /calendars/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/calendars/{id}/activate:
+    post:
+      summary: "Schedule core: POST /calendars/{id}/activate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/calendars/{id}/cancel:
+    post:
+      summary: "Schedule core: POST /calendars/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/calendars/{id}/days:
+    get:
+      summary: "Schedule core: GET /calendars/{id}/days"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/calendars/{id}/history:
+    get:
+      summary: "Schedule core: GET /calendars/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/templates:
+    get:
+      summary: "Schedule core: GET /templates"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Schedule core: POST /templates"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/templates/{id}/activate:
+    post:
+      summary: "Schedule core: POST /templates/{id}/activate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/templates/{id}/cancel:
+    post:
+      summary: "Schedule core: POST /templates/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules:
+    get:
+      summary: "Schedule core: GET /schedules"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Schedule core: POST /schedules"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/export:
+    get:
+      summary: "Schedule core: GET /schedules/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}:
+    get:
+      summary: "Schedule core: GET /schedules/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    patch:
+      summary: "Schedule core: PATCH /schedules/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    delete:
+      summary: "Schedule core: DELETE /schedules/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/submit:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/withdraw:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/cancel:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/amend:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/history:
+    get:
+      summary: "Schedule core: GET /schedules/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/print:
+    get:
+      summary: "Schedule core: GET /schedules/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/import:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/calculate:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/calculate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/update-progress:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/update-progress"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/critical:
+    get:
+      summary: "Schedule core: GET /schedules/{id}/critical"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/critical/export:
+    get:
+      summary: "Schedule core: GET /schedules/{id}/critical/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/generate/preview:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/generate/preview"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/generate:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/generate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/activities:
+    get:
+      summary: "Schedule core: GET /schedules/{id}/activities"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Schedule core: POST /schedules/{id}/activities"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    patch:
+      summary: "Schedule core: PATCH /schedules/{id}/activities"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/dependencies:
+    post:
+      summary: "Schedule core: POST /schedules/{id}/dependencies"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/activities/{id}:
+    get:
+      summary: "Schedule core: GET /activities/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    patch:
+      summary: "Schedule core: PATCH /activities/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    delete:
+      summary: "Schedule core: DELETE /activities/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/activities/{id}/boq:
+    put:
+      summary: "Schedule core: PUT /activities/{id}/boq"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/dependencies/{id}:
+    delete:
+      summary: "Schedule core: DELETE /dependencies/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
   /api/v1/bud/commitments/{id}/log:
     get:
       summary: "Budget check and ledger: GET /commitments/{id}/log"

@@ -23,6 +23,7 @@ import './modules/est/index.js';
 import './modules/proj/index.js';
 import './modules/engg/index.js';
 import './modules/bud/index.js';
+import './modules/plan/index.js';
 import './modules/fin/index.js';
 import { initAuth } from './platform/api/index.js';
 import { installPrintLogging } from './platform/audit/index.js';

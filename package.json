@@ -55,6 +55,7 @@
     "erp:xl-perf": "node scripts/xl_perf.mjs",
     "erp:col-perf": "node scripts/col_perf.mjs",
     "erp:bud-dept-perf": "node scripts/bud_dept_perf.mjs",
+    "erp:plan-perf": "node scripts/plan_perf.mjs",
     "migration:new": "node scripts/new_migration.mjs",
     "backfill": "node --env-file-if-exists=.env scripts/backfill.mjs",
     "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",

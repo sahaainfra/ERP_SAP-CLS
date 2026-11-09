@@ -1209,3 +1209,14 @@ Module `bud` (flag `ff.bud.p1204`), tables `bud_dept_budgets`, `bud_dept_lines`,
 - **Allocation** (FR-04, BR-01, ADR-464, ADR-465): a rule (revenue, direct cost or fixed percentages; pool = cost centres and accounts) is drafted by one person and put in force by another; a run shows its shares, posts them (the shares equal the pool; the rounding residual goes to the largest share) and publishes `bud.overhead.allocated`; `GET /alloc/pool` is what part 23.10 reads.
 - **Events**: `bud.dept_budget.approved`, `bud.dept_budget.revision_started`, `bud.alloc.rule_changed`, `bud.overhead.allocated`, `bud.overhead.allocation_reversed`.
 - **Permissions**: `bud.dept_budget.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `bud.dept_report.{view,export}`, `bud.dept_actual.post`, `bud.alloc.{view,configure,approve,run}`. **Browser**: Department Budget Workbench (list and object page), Department Budget vs Actual, Overhead Allocation Rules.
+
+## 97. Schedule core (part 13.01)
+Module `plan` (flag `ff.plan.p1301`), tables `plan_calendars`, `plan_schedules`, `plan_activities`, `plan_dependencies`, `plan_activity_boq`, `plan_templates`. The pure CPM is `modules/plan/cpm.js` (`makeCalendar`, `calculate`, `findCycle`); the service is `modules/plan/service.js`.
+
+- **Schedules** (FR-01): one open and one approved version per project; workflow `PLAN_SCHEDULE` (project controls manager); `amend` copies activities, links, BOQ splits and progress into a new version.
+- **Activities and links** (FR-02, FR-04, BR-02): codes unique per schedule; bulk edit `PATCH /schedules/:id/activities`; a link that closes a loop is refused with the loop path.
+- **Calendars** (FR-05): work week (seven 1/0 from Monday), the holidays of a holiday calendar of 01.03, site exceptions; maker-checker.
+- **Generation** (FR-03): a template per WBS node or per location (steps, links, the chaining step between targets) or one activity per WBS node with BOQ quantities; preview first, existing codes skipped.
+- **CPM** (FR-06, BR-01, ADR-466 to 469): `POST /schedules/:id/calculate`; the client never computes dates. **Progress** (FR-07): `POST /schedules/:id/update-progress`; the DPR publishes `site.dpr.approved` with data `{ projectId, date, lines: [{ activityId | activityCode, actualStart?, actualFinish?, pctComplete? }] }`, applied to the approved schedule.
+- **Events**: `plan.schedule.calculated`, `plan.schedule.approved`, `plan.progress.updated`. **Read API for other modules**: `GET /api/v1/plan/current?projectId=` (the approved schedule and its activities).
+- **Permissions**: `plan.schedule.{view,create,edit,delete,submit,approve,cancel,amend,print,export,progress}`, `plan.calendar.{view,manage,approve}`, `plan.template.{manage,approve}`. **Browser**: Schedules, Activities (grid with WBS grouping, filters, bulk edit, links, progress, approval, discussion), Generate Activities from Template, Critical Path & Float Report, Work Calendars.
