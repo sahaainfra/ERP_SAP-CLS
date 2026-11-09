@@ -302,3 +302,39 @@ test('roles, department scope, the other company and the flag (AC-03, AC-04)', a
   assert.throws(() => t.d.prepare('INSERT INTO bud_dept_lines (company_id, budget_id, account_id, period_id, amount) VALUES (1, ?, ?, ?, -1)').run(hrB.id, t.accounts[3].id, t.periods[0].id), /CHECK/);
   assert.throws(() => t.d.prepare("INSERT INTO bud_alloc_runs (company_id, doc_no, fy_id, rule_id, basis, from_period_id, to_period_id, pool_source, pool_amount, allocated_amount) VALUES (1, 'X', ?, 1, 'FIXED_PCT', ?, ?, 'BUDGET', 100, 99)").run(t.fy.id, t.periods[0].id, t.periods[1].id), /CHECK|FOREIGN/);
 });
+
+test('the Excel import of 04.13: a workbook of account lines goes into the open draft through the service; approved and waiting budgets are refused; the export has the same shape', async () => {
+  const { templateWorkbook } = await import('../src/server/modules/eng/xl-xlsx.js');
+  const t = await boot(); const rt = runtimeOf(t.d); const X = '/api/v1/xl';
+  const drain = async () => { for (let i = 0; i < 8; i += 1) { rt.bus.drain(); await rt.jobs.drain(); } };
+  const type = (await t.api.call('GET', `${X}/templates`, prep)).json.data.types.find((x) => x.code === 'BUD_DEPT_BUDGET'); assert.ok(type, 'the department head may import');
+  { const r = await t.api.call('GET', `${X}/templates`, se); assert.equal(r.status === 200 && r.json.data.types.some((x) => x.code === 'BUD_DEPT_BUDGET'), false, 'a site engineer may not'); }
+  const tpl = await t.api.raw('GET', `${X}/templates/BUD_DEPT_BUDGET/download`, prep); assert.equal(tpl.status, 200); assert.ok(tpl.buffer.length > 1000);
+  // an approved budget of ADM and a draft waiting for approval of HO, so that their rows are refused
+  const adm = (await t.create(prep, { costCentreId: t.ccAdm })).json.data; const sub = await t.call(prep, 'POST', `/dept-budgets/${adm.id}/submit`); await t.act(head2, sub.json.data.workflowInstanceId); await t.act(cfo, sub.json.data.workflowInstanceId); await t.act(dir, sub.json.data.workflowInstanceId);
+  const ho = (await t.create(prep, { costCentreId: t.ccHo })).json.data; await t.call(prep, 'POST', `/dept-budgets/${ho.id}/submit`);
+  const cc = (id) => t.d.prepare('SELECT code FROM org_cost_centres WHERE id = ?').get(id).code; const fy = t.fy.code; const a = (i) => t.accounts[i].code;
+  const rows = [
+    { fy, costCentre: cc(t.ccHr), account: a(0), m1: '1000', m2: '1000', m12: '2000.50', note: 'Staff' },
+    { fy, costCentre: cc(t.ccHr), account: a(1), m1: '300' },
+    { fy, costCentre: cc(t.ccAdm), account: a(0), m1: '5' },
+    { fy, costCentre: cc(t.ccHo), account: a(0), m1: '5' },
+    { fy, costCentre: 'CC-PRJ', account: a(0), m1: '5' },
+    { fy, costCentre: cc(t.ccHr), account: a(2), m1: '=SUM(A1)' },
+  ];
+  const wb = templateWorkbook({ importType: 'BUD_DEPT_BUDGET', version: 0, title: 'BUD_DEPT_BUDGET', columns: type.columns.map((c) => ({ key: c.key, label: c.label, required: c.required, type: c.type })), instructions: ['x'], rowsRaw: true, rows: rows.map((r) => type.columns.map((c) => r[c.key] ?? '')) });
+  const up = await t.api.raw('POST', `${X}/jobs?type=BUD_DEPT_BUDGET&fileName=budget.xlsx`, { ...prep, headers: { 'content-type': 'application/octet-stream', 'idempotency-key': `xl-${Math.random().toString(36).slice(2, 10)}` }, body: wb });
+  assert.equal(up.status, 202, up.buffer.toString().slice(0, 300)); await drain();
+  const errors = (await t.api.call('GET', `${X}/jobs/${up.json.data.id}/errors?limit=50`, prep)).json; const bad = new Set((errors.data.rows ?? errors.data ?? []).map((e) => e.line ?? e.row ?? e.rowNo));
+  assert.equal(bad.size, 4, `the approved, the waiting, the project cost centre and the formula: ${JSON.stringify(errors).slice(0, 800)}`);
+  const commit = await t.api.call('POST', `${X}/jobs/${up.json.data.id}/commit`, { ...prep, headers: key(), body: { skipInvalid: true } }); assert.ok([200, 202].includes(commit.status), JSON.stringify(commit.json).slice(0, 300)); await drain();
+  const job = t.d.prepare('SELECT status, last_error FROM xl_jobs WHERE id = ?').get(up.json.data.id); assert.equal(job.status, 'COMMITTED', job.last_error);
+  const hr = t.d.prepare("SELECT * FROM bud_dept_budgets WHERE cost_centre_id = ? AND status = 'DRAFT'").get(t.ccHr); assert.ok(hr, 'a draft was made for HR');
+  const v = (await t.call(prep, 'GET', `/dept-budgets/${hr.id}`)).json.data; assert.deepEqual([v.total, v.linesCount, v.status, v.lines[0].note], ['4300.50', 2, 'DRAFT', 'Staff'], 'two accounts, totals by the server, nothing sent for approval');
+  // the same file again replaces the accounts, it does not add them twice
+  const again = await t.api.raw('POST', `${X}/jobs?type=BUD_DEPT_BUDGET&fileName=budget2.xlsx`, { ...prep, headers: { 'content-type': 'application/octet-stream', 'idempotency-key': `xl-${Math.random().toString(36).slice(2, 10)}` }, body: templateWorkbook({ importType: 'BUD_DEPT_BUDGET', version: 0, title: 'BUD_DEPT_BUDGET', columns: type.columns.map((c) => ({ key: c.key, label: c.label, required: c.required, type: c.type })), instructions: ['x'], rowsRaw: true, rows: [type.columns.map((c) => ({ fy, costCentre: cc(t.ccHr), account: a(1), m1: '700' })[c.key] ?? '')] }) });
+  await drain(); await t.api.call('POST', `${X}/jobs/${again.json.data.id}/commit`, { ...prep, headers: key(), body: { skipInvalid: true } }); await drain();
+  assert.deepEqual([(await t.call(prep, 'GET', `/dept-budgets/${hr.id}`)).json.data.total, (await t.call(prep, 'GET', `/dept-budgets/${hr.id}`)).json.data.linesCount], ['4700.50', 2]);
+  assert.deepEqual([t.d.prepare('SELECT status FROM bud_dept_budgets WHERE id = ?').get(adm.id).status, t.d.prepare('SELECT total_amount FROM bud_dept_budgets WHERE id = ?').get(adm.id).total_amount], ['APPROVED', 1_800_000], 'the approved budget is untouched');
+  const ex = await t.api.raw('GET', `${X}/templates/BUD_DEPT_BUDGET/export`, prep); assert.equal(ex.status, 200); assert.equal((await t.api.raw('GET', `${X}/templates/BUD_DEPT_BUDGET/export`, se)).status, 403);
+});

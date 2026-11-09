@@ -1763,6 +1763,7 @@ Indexes:
 Foreign keys: account_id -> fin_accounts(id), cost_centre_id -> org_cost_centres(id), period_id -> core_periods(id), fy_id -> core_financial_years(id), company_id -> org_companies(id)
 
 Indexes:
+- ix_bud_dept_actuals_report: company_id, fy_id, status, period_id, cost_centre_id, account_id, amount, deleted_at
 - ix_bud_dept_actuals_account: account_id
 - ix_bud_dept_actuals_cc: cost_centre_id
 - ix_bud_dept_actuals_period: period_id
@@ -1851,6 +1852,7 @@ Indexes:
 Foreign keys: period_id -> core_periods(id), account_id -> fin_accounts(id), budget_id -> bud_dept_budgets(id), company_id -> org_companies(id)
 
 Indexes:
+- ix_bud_dept_lines_report: budget_id, period_id, account_id, amount, deleted_at
 - ix_bud_dept_lines_period: period_id
 - ix_bud_dept_lines_account: account_id
 - ix_bud_dept_lines_budget: budget_id

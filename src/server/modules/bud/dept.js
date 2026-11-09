@@ -335,13 +335,17 @@ export function createDeptService({ db, base }) {
   }
   function report(actor, q) {
     const { fy, periods, params, scope, up } = reportFacts(actor, q);
-    const bud = db.prepare(`SELECT c.id AS cc, c.code AS cc_code, c.name AS cc_name, l.account_id, a.code AS a_code, a.name AS a_name, p.period_no, SUM(l.amount) AS amt FROM bud_dept_lines l JOIN bud_dept_budgets b ON b.id = l.budget_id AND b.status = 'APPROVED' AND b.deleted_at IS NULL
-      JOIN org_cost_centres c ON c.id = b.cost_centre_id JOIN fin_accounts a ON a.id = l.account_id JOIN core_periods p ON p.id = l.period_id WHERE b.company_id = :co AND b.fy_id = :fy AND l.deleted_at IS NULL AND p.period_no <= :up ${scope} GROUP BY c.id, l.account_id, p.period_no`).all({ ...params, up });
-    const act = db.prepare(`SELECT c.id AS cc, c.code AS cc_code, c.name AS cc_name, x.account_id, a.code AS a_code, a.name AS a_name, p.period_no, SUM(x.amount) AS amt FROM bud_dept_actuals x JOIN org_cost_centres c ON c.id = x.cost_centre_id JOIN fin_accounts a ON a.id = x.account_id JOIN core_periods p ON p.id = x.period_id
-      WHERE x.company_id = :co AND x.fy_id = :fy AND x.status = 'POSTED' AND x.deleted_at IS NULL AND p.period_no <= :up ${scope} GROUP BY c.id, x.account_id, p.period_no`).all({ ...params, up });
+    // grouped by the dimension asked for in SQL; the cost centres in scope and the months are one-off subqueries, so the 100 000 rows of a year are read from the covering index and never joined row by row
     const by = q.by ?? 'cost_centre'; const rows = new Map();
-    const keyOf = (r) => (by === 'account' ? [`a${r.account_id}`, r.account_id, `${r.a_code} ${r.a_name}`] : by === 'month' ? [`m${r.period_no}`, r.period_no, periods.find((p) => p.period_no === r.period_no)?.name ?? `Month ${r.period_no}`] : [`c${r.cc}`, r.cc, `${r.cc_code} ${r.cc_name}`]);
-    const put = (r, side) => { const [key, id, label] = keyOf(r); const g = rows.get(key) ?? { key, id, label, budget: 0, actual: 0 }; g[side] += r.amt; rows.set(key, g); };
+    const inScope = `(SELECT c.id FROM org_cost_centres c WHERE c.company_id = :co ${scope})`; const months = '(SELECT id FROM core_periods WHERE fy_id = :fy AND period_no <= :up)';
+    const dimB = by === 'account' ? 'l.account_id' : by === 'month' ? 'l.period_id' : 'b.cost_centre_id'; const dimA = by === 'account' ? 'x.account_id' : by === 'month' ? 'x.period_id' : 'x.cost_centre_id';
+    const bud = db.prepare(`SELECT ${dimB} AS k, SUM(l.amount) AS amt FROM bud_dept_budgets b JOIN bud_dept_lines l ON l.budget_id = b.id AND l.deleted_at IS NULL WHERE b.company_id = :co AND b.fy_id = :fy AND b.status = 'APPROVED' AND b.deleted_at IS NULL AND b.cost_centre_id IN ${inScope} AND l.period_id IN ${months} GROUP BY ${dimB}`).all({ ...params, up });
+    const act = db.prepare(`SELECT ${dimA} AS k, SUM(x.amount) AS amt FROM bud_dept_actuals x WHERE x.company_id = :co AND x.fy_id = :fy AND x.status = 'POSTED' AND x.deleted_at IS NULL AND x.cost_centre_id IN ${inScope} AND x.period_id IN ${months} GROUP BY ${dimA}`).all({ ...params, up });
+    const ids = [...new Set([...bud, ...act].map((r) => r.k))];
+    const labelOf = new Map();
+    if (by === 'month') for (const p of periods) labelOf.set(p.id, [p.period_no, p.name]);
+    else for (let n = 0; n < ids.length; n += 500) { const chunk = ids.slice(n, n + 500); for (const r of db.prepare(`SELECT id, code, name FROM ${by === 'account' ? 'fin_accounts' : 'org_cost_centres'} WHERE id IN (${chunk.map(() => '?').join(',')})`).all(...chunk)) labelOf.set(r.id, [r.id, `${r.code} ${r.name}`]); }
+    const put = (r, side) => { const [id, label] = labelOf.get(r.k) ?? [r.k, String(r.k)]; const key = `${by[0]}${id}`; const g = rows.get(key) ?? { key, id, label, budget: 0, actual: 0 }; g[side] += r.amt; rows.set(key, g); };
     bud.forEach((r) => put(r, 'budget')); act.forEach((r) => put(r, 'actual'));
     const out = [...rows.values()].sort((a, b) => (by === 'month' ? a.id - b.id : a.label.localeCompare(b.label))).map((g) => ({ key: g.key, id: g.id, label: g.label, budget: rupees(g.budget), actual: rupees(g.actual), variance: signed(g.budget - g.actual), usedPct: g.budget > 0 ? Math.round((g.actual * 1000) / g.budget) / 10 : null, over: g.actual > g.budget, unbudgeted: g.budget === 0 && g.actual !== 0 }));
     const tb = [...rows.values()].reduce((a, g) => a + g.budget, 0); const ta = [...rows.values()].reduce((a, g) => a + g.actual, 0);

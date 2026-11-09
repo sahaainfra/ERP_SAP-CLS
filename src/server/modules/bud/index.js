@@ -9,6 +9,7 @@ import { bindBud, createBudgetService } from './budgets.js';
 import { createChangeService } from './changes.js';
 import { createLedgerService } from './ledger.js';
 import { createDeptService } from './dept.js';
+import './dept-import.js';
 import { ACTUAL_EVENTS, COMMIT_EVENTS, GL_EVENT_FAMILY } from './constants.js';
 import { budRoutes } from './routes.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
