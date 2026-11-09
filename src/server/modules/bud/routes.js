@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { parseAvailability, parseCheck, parseConfigImport, parseConfigPropose, parseIngestActual, parseIngestCommitment, parseLedger, parseLedgerDocs } from './validators.js';
 import { parseChangeCreate, parseChangeImport, parseChangePreview, parseChangeUpdate, parseCompare } from './validators.js';
+import { parseDeptActual, parseDeptCompare, parseDeptCreate, parseDeptDocs, parseDeptImport, parseDeptReport, parseDeptSpread, parseDeptUpdate, parsePool, parseRuleCreate, parseRuleList, parseRuleUpdate, parseRunList, parseRunPost, parseRunPreview } from './validators.js';
 import { parseAmend, parseBudgetCreate, parseBudgetUpdate, parseGenerate, parseId, parseImport, parseLineCreate, parseLineUpdate, parseOptReason, parsePhasingGenerate, parsePhasingSet, parseProject, parseReason, parseView } from './validators.js';
 
 /** Part 12.01: the project budget: generation from the baseline pack and the BOQ norms, lines and adjustments, views, phasing, margin, versions and approval. Rights and scope are checked in the service. */
@@ -91,6 +92,52 @@ export function budRoutes(svc, { exportsOf }, { idempotent, idempotentRequired }
     r.post('/check-config', idempotentRequired, (req, res) => ok(res, l.config.propose(req.actor, parseConfigPropose(req.body)), 201));
     r.post('/check-config/:id/cancel', idempotent, (req, res) => ok(res, l.config.cancel(req.actor, pid(req), parseReason(req.body))));
     r.get('/check-config/:id/history', (req, res) => ok(res, l.config.history(req.actor, pid(req))));
+  }
+  // ---- part 12.04: head-office and department budgets, ledger actuals, the report and the overhead allocation ----
+  const d = svc.dept;
+  if (d) {
+    const csv = (res, out) => res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'no-store' }).send(out.body);
+    const db_ = d.budgets;
+    r.get('/dept-options', (req, res) => ok(res, db_.options(req.actor)));
+    r.post('/dept-budgets/spread', (req, res) => ok(res, db_.spread(req.actor, parseDeptSpread(req.body))));
+    r.get('/dept-budgets', (req, res) => res.json(db_.list(req.actor, req.query)));
+    r.get('/dept-budgets/export', (req, res) => {
+      const x = exportsOf(); if (!x) throw new Error('The list export service is not running');
+      const out = x.start(req.actor, 'bud.dept_budgets', req.query);
+      if (out.kind === 'job') return res.status(202).json({ data: out });
+      res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' });
+      return res.send(out.buffer);
+    });
+    r.post('/dept-budgets/import', idempotentRequired, (req, res) => ok(res, db_.import(req.actor, parseDeptImport(req.body)), 201));
+    r.post('/dept-budgets', idempotentRequired, (req, res) => ok(res, db_.create(req.actor, parseDeptCreate(req.body)), 201));
+    r.get('/dept-budgets/:id', (req, res) => ok(res, db_.get(req.actor, pid(req))));
+    r.patch('/dept-budgets/:id', idempotent, (req, res) => ok(res, db_.update(req.actor, pid(req), parseDeptUpdate(req.body))));
+    r.delete('/dept-budgets/:id', (req, res) => ok(res, db_.remove(req.actor, pid(req))));
+    r.post('/dept-budgets/:id/submit', idempotentRequired, (req, res) => ok(res, db_.submit(req.actor, pid(req)), 202));
+    r.post('/dept-budgets/:id/withdraw', idempotent, (req, res) => ok(res, db_.withdraw(req.actor, pid(req), parseReason(req.body))));
+    r.post('/dept-budgets/:id/cancel', idempotent, (req, res) => ok(res, db_.cancel(req.actor, pid(req), parseReason(req.body))));
+    r.post('/dept-budgets/:id/amend', idempotentRequired, (req, res) => ok(res, db_.amend(req.actor, pid(req), parseAmend(req.body)), 201));
+    r.get('/dept-budgets/:id/compare', (req, res) => ok(res, db_.compare(req.actor, pid(req), parseDeptCompare(req.query).with)));
+    r.get('/dept-budgets/:id/history', (req, res) => ok(res, db_.history(req.actor, pid(req))));
+    r.get('/dept-budgets/:id/print', (req, res) => html(res, db_.print(req.actor, pid(req))));
+    r.get('/dept-report', (req, res) => ok(res, d.report(req.actor, parseDeptReport(req.query))));
+    r.get('/dept-report/documents', (req, res) => ok(res, d.reportDocs(req.actor, parseDeptDocs(req.query))));
+    r.get('/dept-report/export', (req, res) => csv(res, d.reportCsv(req.actor, parseDeptReport(req.query))));
+    r.post('/dept-actuals', idempotentRequired, (req, res) => ok(res, d.actuals.ingest(req.actor, parseDeptActual(req.body)), 201));
+    r.get('/alloc-rules', (req, res) => ok(res, d.rules.list(req.actor, parseRuleList(req.query))));
+    r.get('/alloc-rules/export', (req, res) => csv(res, d.rules.csv(req.actor)));
+    r.post('/alloc-rules', idempotentRequired, (req, res) => ok(res, d.rules.create(req.actor, parseRuleCreate(req.body)), 201));
+    r.get('/alloc-rules/:id', (req, res) => ok(res, d.rules.get(req.actor, pid(req))));
+    r.patch('/alloc-rules/:id', idempotent, (req, res) => ok(res, d.rules.update(req.actor, pid(req), parseRuleUpdate(req.body))));
+    r.post('/alloc-rules/:id/activate', idempotentRequired, (req, res) => ok(res, d.rules.activate(req.actor, pid(req))));
+    r.post('/alloc-rules/:id/cancel', idempotent, (req, res) => ok(res, d.rules.cancel(req.actor, pid(req), parseReason(req.body))));
+    r.get('/alloc-rules/:id/history', (req, res) => ok(res, d.rules.history(req.actor, pid(req))));
+    r.post('/alloc/preview', (req, res) => ok(res, d.runs.preview(req.actor, parseRunPreview(req.body))));
+    r.get('/alloc/runs', (req, res) => ok(res, d.runs.list(req.actor, parseRunList(req.query))));
+    r.post('/alloc/runs', idempotentRequired, (req, res) => ok(res, d.runs.post(req.actor, parseRunPost(req.body)), 201));
+    r.get('/alloc/runs/:id', (req, res) => ok(res, d.runs.get(req.actor, pid(req))));
+    r.post('/alloc/runs/:id/reverse', idempotentRequired, (req, res) => ok(res, d.runs.reverse(req.actor, pid(req), parseReason(req.body))));
+    r.get('/alloc/pool', (req, res) => ok(res, d.runs.poolOfProject(req.actor, parsePool(req.query))));
   }
   return r;
 }

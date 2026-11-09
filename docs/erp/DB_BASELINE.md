@@ -1320,6 +1320,126 @@ Indexes:
 - ix_bud_actuals_company_id: company_id
 - ux_bud_actuals_src (unique): company_id, src_type, src_id, src_line_id
 
+## bud_alloc_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| basis_value | INTEGER | yes |  | 0 |
+| share | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  |  |
+| residual | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), run_id -> bud_alloc_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_alloc_lines_project: org_project_id
+- ix_bud_alloc_lines_run: run_id
+- ix_bud_alloc_lines_company_id: company_id
+- ux_bud_alloc_lines_run_project (unique): run_id, org_project_id
+
+## bud_alloc_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| fy_id | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| basis | TEXT | yes |  |  |
+| rules_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| reason | TEXT |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: fy_id -> core_financial_years(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_alloc_rules_fy: fy_id, status
+- ix_bud_alloc_rules_company_id: company_id
+- ux_bud_alloc_rules_name (unique): company_id, fy_id, name
+- ux_bud_alloc_rules_doc (unique): company_id, doc_no
+
+## bud_alloc_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| fy_id | INTEGER | yes |  |  |
+| rule_id | INTEGER | yes |  |  |
+| basis | TEXT | yes |  |  |
+| from_period_id | INTEGER | yes |  |  |
+| to_period_id | INTEGER | yes |  |  |
+| pool_source | TEXT | yes |  |  |
+| basis_source | TEXT |  |  |  |
+| pool_amount | INTEGER | yes |  |  |
+| allocated_amount | INTEGER | yes |  |  |
+| projects_count | INTEGER | yes |  | 0 |
+| pool_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'POSTED' |
+| run_by | TEXT |  |  |  |
+| reversed_by | TEXT |  |  |  |
+| reversed_at | TEXT |  |  |  |
+| reverse_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: to_period_id -> core_periods(id), from_period_id -> core_periods(id), rule_id -> bud_alloc_rules(id), fy_id -> core_financial_years(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_alloc_runs_to: to_period_id
+- ix_bud_alloc_runs_from: from_period_id
+- ix_bud_alloc_runs_rule: rule_id
+- ix_bud_alloc_runs_fy: fy_id
+- ix_bud_alloc_runs_company_id: company_id
+- ux_bud_alloc_runs_once (unique): company_id, rule_id, from_period_id, to_period_id, pool_source
+- ux_bud_alloc_runs_doc (unique): company_id, doc_no
+
 ## bud_budgets
 
 | Column | Type | Not null | Key | Default |
@@ -1606,6 +1726,136 @@ Indexes:
 - ix_bud_commitments_project: org_project_id, status
 - ix_bud_commitments_company_id: company_id
 - ux_bud_commitments_src (unique): company_id, src_type, src_id, src_line_id
+
+## bud_dept_actuals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| fy_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| cost_centre_id | INTEGER | yes |  |  |
+| account_id | INTEGER | yes |  |  |
+| amount | INTEGER | yes |  |  |
+| src_type | TEXT | yes |  |  |
+| src_id | TEXT | yes |  |  |
+| src_line_id | TEXT | yes |  | '' |
+| doc_ref | TEXT |  |  |  |
+| narration | TEXT |  |  |  |
+| posted_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'POSTED' |
+| reversed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: account_id -> fin_accounts(id), cost_centre_id -> org_cost_centres(id), period_id -> core_periods(id), fy_id -> core_financial_years(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_dept_actuals_account: account_id
+- ix_bud_dept_actuals_cc: cost_centre_id
+- ix_bud_dept_actuals_period: period_id
+- ix_bud_dept_actuals_fy: fy_id, cost_centre_id, status
+- ix_bud_dept_actuals_company_id: company_id
+- ux_bud_dept_actuals_src (unique): company_id, src_type, src_id, src_line_id
+
+## bud_dept_budgets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| fy_id | INTEGER | yes |  |  |
+| cost_centre_id | INTEGER | yes |  |  |
+| department_id | INTEGER |  |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| vtype | TEXT | yes |  | 'ORIGINAL' |
+| name | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| total_amount | INTEGER | yes |  | 0 |
+| lines_count | INTEGER | yes |  | 0 |
+| parent_budget_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| locked_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_budget_id -> bud_dept_budgets(id), department_id -> org_departments(id), cost_centre_id -> org_cost_centres(id), fy_id -> core_financial_years(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_dept_budgets_status: company_id, status
+- ix_bud_dept_budgets_parent: parent_budget_id
+- ix_bud_dept_budgets_dept: department_id
+- ix_bud_dept_budgets_cc: cost_centre_id
+- ix_bud_dept_budgets_fy: fy_id
+- ix_bud_dept_budgets_company_id: company_id
+- ux_bud_dept_budgets_open (unique): company_id, fy_id, cost_centre_id
+- ux_bud_dept_budgets_inforce (unique): company_id, fy_id, cost_centre_id
+- ux_bud_dept_budgets_version (unique): company_id, fy_id, cost_centre_id, version_no
+- ux_bud_dept_budgets_doc (unique): company_id, doc_no
+
+## bud_dept_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| budget_id | INTEGER | yes |  |  |
+| account_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| amount | INTEGER | yes |  | 0 |
+| note | TEXT |  |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: period_id -> core_periods(id), account_id -> fin_accounts(id), budget_id -> bud_dept_budgets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bud_dept_lines_period: period_id
+- ix_bud_dept_lines_account: account_id
+- ix_bud_dept_lines_budget: budget_id
+- ix_bud_dept_lines_company_id: company_id
+- ux_bud_dept_lines_cell (unique): budget_id, account_id, period_id
 
 ## bud_lines
 

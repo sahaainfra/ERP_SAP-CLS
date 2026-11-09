@@ -7154,6 +7154,136 @@ paths:
     get:
       summary: "Budget check and ledger: GET /ledger/export"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/bud/dept-options:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/spread:
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-budgets/spread"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-budgets"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-budgets"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/export:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-budgets/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/import:
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-budgets/import"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-budgets/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    patch:
+      summary: "Department budgets and overhead allocation: PATCH /dept-budgets/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    delete:
+      summary: "Department budgets and overhead allocation: DELETE /dept-budgets/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}/submit:
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-budgets/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}/withdraw:
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-budgets/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}/cancel:
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-budgets/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}/amend:
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-budgets/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}/compare:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-budgets/{id}/compare"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}/history:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-budgets/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-budgets/{id}/print:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-budgets/{id}/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-report:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-report"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-report/documents:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-report/documents"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-report/export:
+    get:
+      summary: "Department budgets and overhead allocation: GET /dept-report/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/dept-actuals:
+    post:
+      summary: "Department budgets and overhead allocation: POST /dept-actuals"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc-rules:
+    get:
+      summary: "Department budgets and overhead allocation: GET /alloc-rules"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Department budgets and overhead allocation: POST /alloc-rules"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc-rules/export:
+    get:
+      summary: "Department budgets and overhead allocation: GET /alloc-rules/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc-rules/{id}:
+    get:
+      summary: "Department budgets and overhead allocation: GET /alloc-rules/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    patch:
+      summary: "Department budgets and overhead allocation: PATCH /alloc-rules/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc-rules/{id}/activate:
+    post:
+      summary: "Department budgets and overhead allocation: POST /alloc-rules/{id}/activate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc-rules/{id}/cancel:
+    post:
+      summary: "Department budgets and overhead allocation: POST /alloc-rules/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc-rules/{id}/history:
+    get:
+      summary: "Department budgets and overhead allocation: GET /alloc-rules/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc/preview:
+    post:
+      summary: "Department budgets and overhead allocation: POST /alloc/preview"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc/runs:
+    get:
+      summary: "Department budgets and overhead allocation: GET /alloc/runs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Department budgets and overhead allocation: POST /alloc/runs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc/runs/{id}:
+    get:
+      summary: "Department budgets and overhead allocation: GET /alloc/runs/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc/runs/{id}/reverse:
+    post:
+      summary: "Department budgets and overhead allocation: POST /alloc/runs/{id}/reverse"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/bud/alloc/pool:
+    get:
+      summary: "Department budgets and overhead allocation: GET /alloc/pool"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
   /api/v1/bud/commitments/{id}/log:
     get:
       summary: "Budget check and ledger: GET /commitments/{id}/log"

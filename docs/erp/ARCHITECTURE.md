@@ -1200,3 +1200,12 @@ Module `bud` (flag `ff.bud.p1203`), tables `bud_check_config`, `bud_commitments`
 - **Report** (FR-06): `GET /ledger` by WBS, cost code, cost head or vendor with drill-down documents and CSV.
 - **Permissions**: `bud.ledger.{view,export,post}`, `bud.check.{use,view,configure,approve}`. **Browser**: Budget vs Committed vs Actual (with the availability panel), Budget Check Settings; component `AvailabilityPanel`.
 
+
+## 96. Head-office and department overhead budgets (part 12.04)
+Module `bud` (flag `ff.bud.p1204`), tables `bud_dept_budgets`, `bud_dept_lines`, `bud_dept_actuals`, `bud_alloc_rules`, `bud_alloc_runs`, `bud_alloc_lines`. The service is `modules/bud/dept.js` (`createDeptService`); the exact sharing is the pure `modules/bud/alloc.js`.
+
+- **Department budget** (FR-01, FR-02, ADR-461, ADR-462): one budget per cost centre and financial year, by GL account and month, in versions; recomputed on the server at save and submit, a client total that differs is refused. Workflow `BUD_DEPT_BUDGET`: department head (resolver `bud_dept_head`), CFO, director. Approved = locked; a new version (`amend`) is compared with the one in force and supersedes it on approval. Data scope is by department (`department_id` from the cost centre); a cost centre without a department is company-level.
+- **Actuals** (FR-03, ADR-463): `fin.gl.posted` / `fin.gl.reversed` (data `{ sourceType, sourceId, docRef, date, lines: [{ lineId, costCentreId, accountId, amount }] }`) and `POST /dept-actuals` (system only), once per source line. `GET /dept-report` by cost centre, account or month to a month, with drill-down and CSV.
+- **Allocation** (FR-04, BR-01, ADR-464, ADR-465): a rule (revenue, direct cost or fixed percentages; pool = cost centres and accounts) is drafted by one person and put in force by another; a run shows its shares, posts them (the shares equal the pool; the rounding residual goes to the largest share) and publishes `bud.overhead.allocated`; `GET /alloc/pool` is what part 23.10 reads.
+- **Events**: `bud.dept_budget.approved`, `bud.dept_budget.revision_started`, `bud.alloc.rule_changed`, `bud.overhead.allocated`, `bud.overhead.allocation_reversed`.
+- **Permissions**: `bud.dept_budget.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `bud.dept_report.{view,export}`, `bud.dept_actual.post`, `bud.alloc.{view,configure,approve,run}`. **Browser**: Department Budget Workbench (list and object page), Department Budget vs Actual, Overhead Allocation Rules.

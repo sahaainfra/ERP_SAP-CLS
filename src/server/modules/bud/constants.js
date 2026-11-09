@@ -59,3 +59,15 @@ export const CONTROL_CODE = 'CP-BUD-01';
 /** Event types the ledger listens to (the modules that publish them are built later; the payload is the contract). The stage follows the family. */
 export const COMMIT_EVENTS = { 'proc.pr': 'PR', 'proc.po': 'PO', 'proc.hire_order': 'OTHER', 'proc.service_order': 'OTHER', 'ctr.workorder': 'WO' };
 export const ACTUAL_EVENTS = ['inv.grn', 'inv.issue', 'ap.bill', 'hr.payroll', 'plant.cost'];
+
+// Part 12.04: head-office and department overhead budgets and their allocation to projects.
+export const DEPT_DOC = 'BUD_DEPT_BUDGET';
+export const DEPT_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved (locked)', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', SUPERSEDED: 'Superseded by a revision' };
+export const ALLOC_BASIS = { REVENUE: 'By revenue (contract value)', DIRECT_COST: 'By direct cost', FIXED_PCT: 'Fixed percentages' };
+export const RULE_STATUS = { DRAFT: 'Draft', ACTIVE: 'In force', SUPERSEDED: 'Replaced', CANCELLED: 'Cancelled' };
+export const POOL_SOURCE = { BUDGET: 'Approved budget', ACTUAL: 'Actual cost of the ledger' };
+export const RUN_STATUS = { POSTED: 'Posted', REVERSED: 'Reversed' };
+/** The general ledger (part 23) publishes `fin.gl.posted` and `fin.gl.reversed`; the payload is the contract (data { sourceType, sourceId, docRef, date, lines: [{ lineId, costCentreId, accountId, amount, narration }] }). */
+export const GL_EVENT_FAMILY = 'fin.gl';
+/** Whole rupees or paise-exact rupees: at most two decimals. */
+export const twoDecimals = (n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6;

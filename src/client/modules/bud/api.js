@@ -67,3 +67,34 @@ export async function openPrint(path, name) {
 }
 
 export const dayIST = (n = 0) => new Date(Date.now() + 5.5 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
+
+// Part 12.04: department budgets, the report against actual, the allocation rules and runs.
+export const DEPT_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const RULE_TONE = { DRAFT: 'DRAFT', ACTIVE: 'ACTIVE', SUPERSEDED: 'CANCELLED', CANCELLED: 'CANCELLED' };
+export const RUN_TONE = { POSTED: 'APPROVED', REVERSED: 'CANCELLED' };
+export const BASES = ['REVENUE', 'DIRECT_COST', 'FIXED_PCT'];
+export const SPREADS = ['LINEAR', 'SCURVE', 'FRONT', 'BACK'];
+export const dp = {
+  options: async () => (await api.get('/bud/dept-options')).data,
+  spread: async (b) => (await api.post('/bud/dept-budgets/spread', b)).data,
+  create: async (b) => (await api.post('/bud/dept-budgets', b, idem())).data,
+  get: async (id) => (await api.get(`/bud/dept-budgets/${id}`)).data,
+  update: async (id, b) => (await api.patch(`/bud/dept-budgets/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/bud/dept-budgets/${id}`)).data,
+  act: async (id, action, b = {}) => (await api.post(`/bud/dept-budgets/${id}/${action}`, b, idem())).data,
+  history: async (id) => (await api.get(`/bud/dept-budgets/${id}/history`)).data,
+  compare: async (id, withId) => (await api.get(`/bud/dept-budgets/${id}/compare${withId ? `?with=${withId}` : ''}`)).data,
+  report: async (q) => (await api.get(`/bud/dept-report?${q}`)).data,
+  docs: async (q) => (await api.get(`/bud/dept-report/documents?${q}`)).data,
+};
+export const al = {
+  rules: async (q = '') => (await api.get(`/bud/alloc-rules${q}`)).data,
+  createRule: async (b) => (await api.post('/bud/alloc-rules', b, idem())).data,
+  activate: async (id) => (await api.post(`/bud/alloc-rules/${id}/activate`, {}, idem())).data,
+  cancelRule: async (id, reason) => (await api.post(`/bud/alloc-rules/${id}/cancel`, { reason }, idem())).data,
+  ruleHistory: async (id) => (await api.get(`/bud/alloc-rules/${id}/history`)).data,
+  preview: async (b) => (await api.post('/bud/alloc/preview', b)).data,
+  post: async (b) => (await api.post('/bud/alloc/runs', b, idem())).data,
+  runs: async (q = '') => (await api.get(`/bud/alloc/runs${q}`)).data,
+  reverse: async (id, reason) => (await api.post(`/bud/alloc/runs/${id}/reverse`, { reason }, idem())).data,
+};

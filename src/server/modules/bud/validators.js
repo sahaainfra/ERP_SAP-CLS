@@ -61,3 +61,29 @@ export const parseIngestCommitment = (b) => parse(z.object({ action: z.enum(['UP
 export const parseIngestActual = (b) => parse(z.object({ action: z.enum(['POST', 'REVERSE']), projectId: id, sourceType: text(40).min(1), sourceId: z.union([z.string().max(60), z.number()]).transform(String), docRef: optText(80), vendorRef: optText(60), vendorName: optText(160), date: day.nullish().transform((v) => v || null), lines: z.array(lline.extend({ commitment: ref.nullish().transform((v) => v ?? null) }).strict()).max(300).default([]) }).strict(), b);
 export const parseConfigPropose = (b) => parse(z.object({ costHeadId: optId, stage: stage.nullish().transform((v) => v || null), mode: z.enum(['OFF', 'WARN', 'BLOCK']), tolerancePct: z.number().finite().min(0).max(100).default(0), effectiveFrom: day, reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(1000) }).strict(), b);
 export const parseConfigImport = (b) => parse(z.object({ rows: z.array(z.object({ costHeadId: optId, stage: stage.nullish().transform((v) => v || null), mode: z.enum(['OFF', 'WARN', 'BLOCK']), tolerancePct: z.number().finite().min(0).max(100).default(0), effectiveFrom: day, reason: z.string().trim().min(5).max(1000) }).strict()).min(1).max(100) }).strict(), b);
+
+// Part 12.04: department budgets, actuals of the ledger, allocation rules and runs. Money is given in rupees with at most two decimals.
+const money = z.number().finite().min(0, 'An amount is not negative').max(100_000_000_000, 'Too large').refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, 'At most two decimals');
+const dline = z.object({ accountId: id, note: optText(300), months: z.array(money).length(12, 'Give the twelve months of the financial year') }).strict();
+const dtotal = money.nullish().transform((v) => (v == null ? null : v));
+const dbase = { name: text(200).min(3, 'Name the budget').optional(), reason: optText(1000), lines: z.array(dline).max(300).default([]), total: dtotal };
+export const parseDeptCreate = (b) => parse(z.object({ fyId: id, costCentreId: id, ...dbase }).strict(), b);
+export const parseDeptUpdate = (b) => given(parse(z.object({ name: dbase.name, reason: dbase.reason.optional(), lines: z.array(dline).max(300).optional(), total: dtotal.optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b), b);
+export const parseDeptImport = (b) => parse(z.object({ rows: z.array(z.object({ fyId: id, costCentreId: id, ...dbase }).strict()).min(1, 'Give at least one row').max(100) }).strict(), b);
+export const parseDeptSpread = (b) => parse(z.object({ total: money, profile: z.enum(['LINEAR', 'SCURVE', 'FRONT', 'BACK']).default('LINEAR') }).strict(), b);
+export const parseDeptCompare = (q) => parse(z.object({ with: optId }).strict(), q ?? {});
+const gline = z.object({ lineId: z.union([z.string().max(60), z.number()]).nullish().transform((v) => (v == null ? '' : String(v))), costCentreId: id, accountId: id, amount: z.number().finite().min(-100_000_000_000).max(100_000_000_000).refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, 'At most two decimals'), narration: optText(200) }).strict();
+export const parseDeptActual = (b) => parse(z.object({ action: z.enum(['POST', 'REVERSE']), sourceType: text(40).min(1), sourceId: z.union([z.string().max(60), z.number()]).transform(String), docRef: optText(80), date: day.nullish().transform((v) => v || null), lines: z.array(gline).max(500).default([]) }).strict(), b);
+export const parseDeptReport = (q) => parse(z.object({ fyId: id, costCentreId: optId, by: z.enum(['cost_centre', 'account', 'month']).default('cost_centre'), upTo: z.coerce.number().int().min(1).max(12).default(12) }).strict(), q ?? {});
+export const parseDeptDocs = (q) => parse(z.object({ fyId: id, costCentreId: optId, accountId: optId, periodNo: z.coerce.number().int().min(1).max(12).optional() }).strict(), q ?? {});
+const pool = z.object({ costCentreIds: z.array(id).min(1, 'Choose the cost centres of the pool').max(200), accountIds: z.array(id).max(300).default([]) }).strict();
+const fixed = z.array(z.object({ projectId: id, pct: z.number().finite().gt(0, 'A percentage is above zero').max(100).refine((n) => Math.abs(n * 10000 - Math.round(n * 10000)) < 1e-6, 'At most four decimals') }).strict()).max(200);
+const rule = { fyId: id, name: text(120).min(3, 'Name the rule'), basis: z.enum(['REVENUE', 'DIRECT_COST', 'FIXED_PCT']), pool, projectIds: z.array(id).max(500).default([]), fixed: fixed.default([]), reason };
+export const parseRuleCreate = (b) => parse(z.object(rule).strict(), b);
+export const parseRuleUpdate = (b) => given(parse(z.object({ name: rule.name.optional(), basis: rule.basis.optional(), pool: pool.optional(), projectIds: rule.projectIds.optional(), fixed: fixed.optional(), reason: reason.optional() }).strict(), b), b);
+export const parseRuleList = (q) => parse(z.object({ fyId: optId, status: z.enum(['DRAFT', 'ACTIVE', 'SUPERSEDED', 'CANCELLED']).optional() }).strict(), q ?? {});
+const run = { ruleId: id, fromPeriodNo: z.number().int().min(1).max(12), toPeriodNo: z.number().int().min(1).max(12), poolSource: z.enum(['BUDGET', 'ACTUAL']).default('BUDGET') };
+export const parseRunPreview = (b) => parse(z.object(run).strict().refine((x) => x.fromPeriodNo <= x.toPeriodNo, { message: 'The first month is not after the last', path: ['toPeriodNo'] }), b);
+export const parseRunPost = (b) => parse(z.object({ ...run, expectedPool: money.nullish().transform((v) => (v == null ? null : v)) }).strict().refine((x) => x.fromPeriodNo <= x.toPeriodNo, { message: 'The first month is not after the last', path: ['toPeriodNo'] }), b);
+export const parseRunList = (q) => parse(z.object({ fyId: optId, ruleId: optId }).strict(), q ?? {});
+export const parsePool = (q) => parse(z.object({ projectId: id, fyId: optId }).strict(), q ?? {});
