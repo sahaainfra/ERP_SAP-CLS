@@ -83,6 +83,19 @@ test('T-03 duplicate business key is detected when the unique index is missing; 
   assert.equal(result(runChecks(db, { registry: reg }), 'duplicate_business_keys').status, 'pass');
 });
 
+test('T-03 a table whose unique index keeps the number across revisions is checked on that index, and a real duplicate is still found', () => {
+  const { db, reg } = businessDb({ uniqueIndex: false });
+  clean(db);
+  db.exec('ALTER TABLE tst_docs ADD COLUMN revision_no INTEGER NOT NULL DEFAULT 0');
+  db.exec('CREATE UNIQUE INDEX ux_tst_docs_rev ON tst_docs (company_id, doc_no, revision_no)');
+  db.exec("INSERT INTO tst_docs (company_id, doc_no, status, revision_no) VALUES (1, 'D-1', 'DRAFT', 1)");
+  assert.equal(result(runChecks(db, { registry: reg }), 'duplicate_business_keys').status, 'pass', 'revision 1 of D-1 is not a duplicate of revision 0');
+  db.exec('DROP INDEX ux_tst_docs_rev');
+  db.exec("INSERT INTO tst_docs (company_id, doc_no, status, revision_no) VALUES (1, 'D-1', 'DRAFT', 1)");
+  db.exec('CREATE INDEX ix_tst_docs_rev ON tst_docs (company_id, doc_no, revision_no)');
+  assert.equal(result(runChecks(db, { registry: reg }), 'duplicate_business_keys').status, 'fail', 'without a unique index the default key applies');
+});
+
 test('T-03 a header total that differs from its lines is detected (Critical), and samples hold no amounts', () => {
   const { db, reg } = businessDb();
   clean(db);

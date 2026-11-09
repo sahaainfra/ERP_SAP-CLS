@@ -51,7 +51,7 @@ function Register({ def, sub }) {
   const q = useQuery({ queryKey: ['mdm', 'common', def.code, params], queryFn: () => mdm.common(def.code, params), retry: false, placeholderData: (x) => x });
   const [open, setOpen] = useState(null);
   const formRef = useRef(null);
-  const set = (x) => setF({ ...f, offset: 0, ...x });
+  const set = (x) => setF((cur) => ({ ...cur, offset: 0, ...x }));
   const cols = def.fields.filter((x) => x.type !== 'json' || def.code === 'payment-terms').slice(0, 8);
   const exportCsv = async () => {
     const all = await mdm.common(def.code, { ...params, limit: 200, offset: 0 });

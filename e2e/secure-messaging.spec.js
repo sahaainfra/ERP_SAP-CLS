@@ -126,7 +126,9 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   const [sys, it, dir, pd, pm] = [`e2e-csys${t}`, `e2e-cit${t}`, `e2e-cdir${t}`, `e2e-cpd${t}`, `e2e-cpm${t}`];
   people(c, [[sys, ['SYSADM'], 'Sam Admin'], [it, ['ITADM'], 'Ira IT'], [dir, ['DIR'], 'Dina Director'], [pd, ['PD'], 'Pooja Director'], [pm, ['PM'], 'Meera Manager']]);
   await gate(request, c, sys, it, dir);
-  const words = `Quote the bridge pier at floor price ${tag}7731`;
+  // the marker has letters that never occur in hex (hashes, ids) and LIKE ignores case, so it cannot match a hash of the audit chain by chance
+  const mark = `pq${tag}w7731z`;
+  const words = `Quote the bridge pier at floor price ${mark}`;
 
   // Meera sets up her first device from the Safety Number page
   const m1 = await open(browser, info, c, 'PM', pm, '/collab/safety-number');
@@ -173,7 +175,7 @@ test('AC-02 FR-02 FR-03 FR-04 FR-06 FR-08 T-01 T-02 T-03 a secure conversation a
   db.exec('PRAGMA busy_timeout = 8000;');
   for (const table of db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((r) => r.name)) {
     for (const col of db.prepare(`PRAGMA table_info(${table})`).all().map((x) => x.name)) {
-      for (const needle of [words, `${tag}7731`, 'confidential 9912']) expect(db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE CAST("${col}" AS TEXT) LIKE ?`).get(`%${needle}%`).n, `${table}.${col}`).toBe(0);
+      for (const needle of [words, mark, 'confidential 9912']) expect(db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE CAST("${col}" AS TEXT) LIKE ?`).get(`%${needle}%`).n, `${table}.${col}`).toBe(0);
     }
   }
   db.close();

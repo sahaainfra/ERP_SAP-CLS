@@ -22,7 +22,7 @@ export default function ChangeRequestsPage() {
   if (q.error?.status === 403) return <NoPermission what="these change requests" permission={f.view === 'all' ? 'mdm.governance.view' : 'mdm.record.view'} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (q.isPending) return <Skeleton label="Loading the change requests" rows={4} />;
-  const set = (p) => setF({ ...f, ...p });
+  const set = (p) => setF((cur) => ({ ...cur, ...p }));
   const refresh = () => { qc.invalidateQueries({ queryKey: ['mdm'] }); };
   const withdraw = async (r) => { const why = window.prompt('Why do you withdraw this request?') ?? ''; if (why.trim().length < 5) return; setError(null); try { await mdm.cancel(r.id, why.trim()); refresh(); } catch (e) { setError(errorInfo(e)); } };
   const resend = async (r) => { setError(null); try { await mdm.resubmit(r.id, fix.trim().length >= 10 ? { justification: fix.trim() } : {}); setFix(''); refresh(); } catch (e) { setError(errorInfo(e)); } };

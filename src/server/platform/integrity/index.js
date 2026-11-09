@@ -36,7 +36,13 @@ export const CHECKS = [
     description: 'No two live rows may share a business key, such as (company_id, doc_no).',
     run({ db, tables, rules, business }) {
       const byName = new Map(tables.map((t) => [t.name, t]));
-      const keys = business.filter((t) => t.has('company_id') && t.has('doc_no')).map((t) => ({ table: t.name, columns: ['company_id', 'doc_no'] }));
+      // the business key of a numbered document is (company_id, doc_no) unless the table's own unique index says more: a table whose revisions keep the number declares (company_id, doc_no, revision) and is checked on that
+      const declared = (name) => {
+        const sets = db.prepare(`PRAGMA index_list(${ident(name)})`).all().filter((i) => i.unique).map((i) => db.prepare(`PRAGMA index_info(${ident(i.name)})`).all().map((c) => c.name));
+        const withDoc = sets.filter((cols) => cols.includes('company_id') && cols.includes('doc_no') && cols.every(Boolean)).sort((a, b) => a.length - b.length);
+        return withDoc[0] ?? ['company_id', 'doc_no'];
+      };
+      const keys = business.filter((t) => t.has('company_id') && t.has('doc_no')).map((t) => ({ table: t.name, columns: declared(t.name) }));
       for (const u of rules.uniqueKeys) if (byName.has(u.table)) keys.push(u);
       let failures = 0;
       const samples = [];

@@ -83,7 +83,7 @@ function AddCandidate({ requisitions, reqId, done, close }) {
     e.preventDefault(); setError(null);
     try { done(await recruit.candCreate({ fullName: v.fullName, mobile: v.mobile, email: v.email || null, source: v.source, sourceDetail: v.sourceDetail || null, requisitionId: Number(v.requisitionId), expectedCtc: v.expectedCtc || null, currentCtc: v.currentCtc || null, noticeDays: v.noticeDays === '' ? null : Number(v.noticeDays), acknowledgeDuplicates: ack })); } catch (err) { setError(errorInfo(err)); }
   };
-  const set = (p) => setV({ ...v, ...p });
+  const set = (p) => setV((cur) => ({ ...cur, ...p }));
   return (
     <form className="mdm-panel mdm-fields" onSubmit={submit} data-testid="cp-add-form">
       <Field label="Requisition (required)" name="requisitionId" error={error}><select value={v.requisitionId} onChange={(e) => set({ requisitionId: e.target.value })} required data-testid="cp-add-req"><option value="">Choose</option>{open.map((r) => <option key={r.id} value={r.id}>{r.docNo} · {r.designation}</option>)}</select></Field>

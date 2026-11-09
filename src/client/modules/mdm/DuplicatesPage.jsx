@@ -22,7 +22,7 @@ export default function DuplicatesPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (q.isPending) return <Skeleton label="Loading the duplicate candidates" rows={4} />;
   const d = q.data;
-  const set = (p) => setF({ ...f, ...p });
+  const set = (p) => setF((cur) => ({ ...cur, ...p }));
   const refresh = () => qc.invalidateQueries({ queryKey: ['mdm'] });
   const openPair = (p) => { setPair(p); setSurvivor(p.a.dqScore >= p.b.dqScore ? 'a' : 'b'); setError(null); setNote(null); dlg.current?.showModal(); };
   const scan = async () => { setError(null); try { const r = await mdm.scan(f.type); setNote(`${r.found} new candidate(s) found.`); refresh(); } catch (e) { setError(errorInfo(e)); } };

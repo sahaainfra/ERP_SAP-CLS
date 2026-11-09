@@ -37,7 +37,7 @@ function RecordList({ def, masters, setType, onOpen }) {
   const [f, setF] = useState(() => ({ q: '', status: params().get('status') ?? '', maxScore: params().get('maxScore') ?? '', asOf: '', sort: 'code', offset: 0, limit: 25 }));
   const q = useQuery({ queryKey: ['mdm', 'records', def.type, f], queryFn: () => mdm.records(def.type, f), retry: false, placeholderData: (p) => p });
   const formRef = useRef(null);
-  const set = (p) => setF({ ...f, offset: 0, ...p });
+  const set = (p) => setF((cur) => ({ ...cur, offset: 0, ...p }));
   return (
     <section aria-labelledby="mdr-title" data-testid="mdm-records">
       <div className="page-head"><h1 id="mdr-title">Master Records</h1><button type="button" className="btn btn-primary" onClick={() => formRef.current?.open()} data-testid="mdm-new">{def.canEdit ? `New ${def.label.toLowerCase()}` : `Request a new ${def.label.toLowerCase()}`}</button></div>

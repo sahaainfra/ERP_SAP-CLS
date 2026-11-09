@@ -21,7 +21,7 @@ export default function InstructionRegisterPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (q.isPending) return <Skeleton label="Loading the register" rows={4} />;
   const d = q.data;
-  const set = (p) => setF({ ...f, ...p });
+  const set = (p) => setF((cur) => ({ ...cur, ...p }));
   const exportCsv = async () => { const qs = new URLSearchParams(Object.entries(f).filter(([, v]) => v)).toString(); const res = await fetch(`/api/v1/msg/instructions/export?${qs}`, { headers: authHeaders() }); const url = URL.createObjectURL(await res.blob()); Object.assign(document.createElement('a'), { href: url, download: 'instruction-register.csv' }).click(); URL.revokeObjectURL(url); };
   const cancel = async (r) => { const why = window.prompt('Why is this instruction being cancelled?') ?? ''; if (why.trim().length < 5) return; try { await comm.cancelInstruction(r.id, why.trim()); qc.invalidateQueries({ queryKey: ['comm'] }); } catch (e) { setError(errorInfo(e)); } };
   return (

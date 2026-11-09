@@ -62,8 +62,8 @@ test('AC-01 take-off and BBS sheets give quantities with revisions and deltas; t
   test.setTimeout(240_000);
   const phone = info.project.name === 'mobile';
   const sfx = phone ? '-mobile' : '';
-  const c = await company(request, phone ? 'MTM' : 'MTD');
-  const t = phone ? 'mtm' : 'mtd';
+  const c = await company(request, phone ? 'MOM' : 'MOD');
+  const t = phone ? 'mom' : 'mod';
   const g = seed(c, t);
   const shot = async (page, name) => { await page.waitForTimeout(400); await page.screenshot({ path: `${OUT}/${name}${sfx}.png`, fullPage: true }); };
   const replies = []; const answer = (page) => page.on('dialog', (d) => d.accept(replies.shift() ?? ''));

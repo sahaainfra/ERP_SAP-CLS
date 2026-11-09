@@ -39,7 +39,7 @@ export default function PartnerRegistrationPage() {
   useEffect(() => { if (!v.legalName && !v.pan) return undefined; const t = setTimeout(async () => { try { const c = await partners.check({ legalName: v.legalName, pan: v.pan || null, roles: v.roles, constitution: v.constitution || 'OTHER', gstins: v.gstins.filter((g) => g.gstin), contacts: v.contacts.filter((c) => c.mobile).map((c) => ({ name: c.name || 'x x', mobile: c.mobile })), ...(v.bank.accountNo ? { bank: v.bank } : {}), ...(editId ? { partnerId: editId } : {}) }); setDups(c.duplicates); } catch { /* checked again on save */ } }, 400); return () => clearTimeout(t); }, [v.legalName, v.pan, v.gstins, v.contacts, v.bank, v.roles, v.constitution, editId]);
   if (editId && existing.isPending) return <Skeleton label="Loading the partner" rows={4} />;
   if (editId && existing.isError) return <ErrorState error={existing.error} onRetry={existing.refetch} />;
-  const set = (p) => setV({ ...v, ...p });
+  const set = (p) => setV((cur) => ({ ...cur, ...p }));
   const setIn = (list, i, p) => set({ [list]: v[list].map((x, j) => (j === i ? { ...x, ...p } : x)) });
   const fe = (k) => error?.fields?.[k];
   const next = () => {

@@ -41,7 +41,7 @@ function Requirements({ policy, version, canTag }) {
   const [f, setF] = useState({ clauseRef: '', requirementText: '', type: 'CONTROL_POINT', config: TEMPLATES.CONTROL_POINT });
   const [error, setError] = useState(null);
   const refresh = () => qc.invalidateQueries({ queryKey: ['pol'] });
-  const set = (p) => setF({ ...f, ...p });
+  const set = (p) => setF((cur) => ({ ...cur, ...p }));
   const setC = (p) => setF({ ...f, config: { ...f.config, ...p } });
   const add = async (e) => { e.preventDefault(); setError(null); try { await pol.addRequirement({ versionId: version.id, clauseRef: f.clauseRef, requirementText: f.requirementText, artifactType: f.type, config: configOf(f.type, f.config) }); setF({ ...f, clauseRef: '', requirementText: '' }); refresh(); } catch (er) { setError(errorInfo(er)); } };
   const convert = async (r) => { setError(null); try { await pol.convert(r.id); refresh(); } catch (er) { setError(errorInfo(er)); } };

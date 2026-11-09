@@ -52,7 +52,7 @@ export default function RateAnalysisPage() {
   if (isNew && !draft) return <Skeleton label="Starting the analysis" rows={6} />;
   const a = q.data ?? null;
   const editing = Boolean(draft);
-  const set = (p) => setDraft({ ...draft, ...p });
+  const set = (p) => setDraft((cur) => ({ ...cur, ...p }));
   const setLine = (i, p) => set({ lines: draft.lines.map((l, j) => (j === i ? { ...l, ...p } : l)) });
   const fieldErr = (k) => error?.fields?.[k];
   const done = (out, msg) => { setNote(msg); setDraft(null); setError(null); qc.invalidateQueries({ queryKey: ['mdm', 'rates'] }); if (out?.id && out.id !== id) navigateTo(`/admin/rate-analyses/analysis?id=${out.id}`); };

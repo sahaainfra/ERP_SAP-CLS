@@ -19,7 +19,7 @@ export default function PolicyDraftsPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (q.isPending) return <Skeleton label="Loading the drafts" rows={3} />;
   const d = q.data;
-  const set = (p) => setF({ ...f, ...p });
+  const set = (p) => setF((cur) => ({ ...cur, ...p }));
   const dismiss = async (r) => { const why = window.prompt('Why is this draft not needed?') ?? ''; if (why.trim().length < 5) return; setError(null); try { await pol.dismiss(r.id, why.trim()); qc.invalidateQueries({ queryKey: ['pol'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="pdr-title" data-testid="policy-drafts">

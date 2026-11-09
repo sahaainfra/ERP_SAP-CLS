@@ -32,7 +32,7 @@ export default function NewItemPage() {
   if (cats.isError) return <ErrorState error={cats.error} onRetry={cats.refetch} />;
   if (cats.isPending) return <Skeleton label="Loading the categories" rows={4} />;
   const cat = cats.data.rows.find((c) => c.id === Number(v.categoryId));
-  const set = (p) => setV({ ...v, ...p });
+  const set = (p) => setV((cur) => ({ ...cur, ...p }));
   const body = () => ({ categoryId: Number(v.categoryId), itemType: v.itemType, name: v.name, nameHi: v.nameHi || null, description: v.description || null, spec: Object.fromEntries(Object.entries(v.spec).filter(([, x]) => x !== '')), baseUom: v.baseUom,
     hsnSac: v.hsnSac || null, gstRate: v.gstRate || null, stockTracked: v.stockTracked, batchTracked: v.batchTracked, serialTracked: v.serialTracked, shelfLifeDays: v.shelfLifeDays ? Number(v.shelfLifeDays) : null,
     reorderLevel: v.reorderLevel || undefined, reorderQuantity: v.reorderQuantity || undefined, standardRate: v.standardRate || undefined, preferredBrands: v.preferredBrands.split(',').map((b) => b.trim()).filter(Boolean), uoms: v.uoms.filter((u) => u.uom && u.factorToBase) });

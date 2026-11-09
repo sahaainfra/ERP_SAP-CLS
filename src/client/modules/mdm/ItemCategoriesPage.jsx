@@ -23,7 +23,7 @@ export default function ItemCategoriesPage() {
   if (q.isPending) return <Skeleton label="Loading the categories" rows={4} />;
   const { rows, types, canEdit } = q.data;
   const open = (c) => { setError(null); setNote(null); setEdit({ ...c, nameHi: c.nameHi ?? '', defaultHsn: c.defaultHsn ?? '', glCode: c.glCode ?? '', reason: '' }); };
-  const set = (p) => setEdit({ ...edit, ...p });
+  const set = (p) => setEdit((cur) => ({ ...cur, ...p }));
   const setAttr = (i, p) => set({ attributes: edit.attributes.map((a, j) => (j === i ? { ...a, ...p } : a)) });
   const save = async (e) => {
     e.preventDefault(); setError(null);

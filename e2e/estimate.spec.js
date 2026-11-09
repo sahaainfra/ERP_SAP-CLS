@@ -61,8 +61,8 @@ test('AC-01 an estimate built from the pasted client BOQ with analyses, indirect
   test.setTimeout(240_000);
   const phone = info.project.name === 'mobile';
   const sfx = phone ? '-mobile' : '';
-  const c = await company(request, phone ? 'ESM' : 'ESD');
-  const t = phone ? 'esm' : 'esd';
+  const c = await company(request, phone ? 'ETM' : 'ETD');
+  const t = phone ? 'etm' : 'etd';
   const g = seed(c, t);
   const shot = async (page, name) => { await page.waitForTimeout(400); await page.screenshot({ path: `${OUT}/${name}${sfx}.png`, fullPage: true }); };
   const E = ['EST', c, g.u('est')];

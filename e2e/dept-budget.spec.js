@@ -59,7 +59,7 @@ async function approve(request, c, roles, user, instanceId, action = 'approve') 
 // compared with it; ledger actuals reach the report against the budget with drill-down; an overhead rule is drafted by the accounts manager, put in force by the CFO and run: the shares add up to the pool exactly. A person without the right sees the no-permission state.
 test('AC-01 department budget prepared, approved by the chain, compared with a new version, set against actual, and the overhead allocated, in the browser', async ({ browser, request }, info) => {
   test.setTimeout(300_000);
-  const t = info.project.name === 'mobile' ? 'dpm' : 'dpd';
+  const t = info.project.name === 'mobile' ? 'dbm' : 'dbd';
   const c = await company(request, t.toUpperCase());
   const s = seed(c, t); const prep = s.u('prep'); const head = s.u('head'); const cfo = s.u('cfo'); const dir = s.u('dir'); const acc = s.u('acc'); const sys = s.u('sys');
   const o = await api(request, c, 'HRMGR', prep, 'get', '/bud/dept-options'); const fy = o.fys[0]; const accounts = o.accounts.slice(0, 3);

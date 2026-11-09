@@ -80,7 +80,7 @@ export default function PolicyRegisterPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (q.isPending) return <Skeleton label="Loading the register" rows={4} />;
   const d = q.data;
-  const set = (p) => setF({ ...f, offset: 0, ...p });
+  const set = (p) => setF((cur) => ({ ...cur, offset: 0, ...p }));
   const choose = (id) => { window.history.pushState(null, '', `/collab/policies?id=${id}`); setSel(id); };
   return (
     <section aria-labelledby="pr-title" data-testid="policy-register">

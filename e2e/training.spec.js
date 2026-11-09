@@ -65,8 +65,8 @@ test('AC-01 course set-up, a session with QR sign-in, attendance, completion, ca
   test.setTimeout(300_000);
   const phone = info.project.name === 'mobile';
   const sfx = phone ? '-mobile' : '';
-  const c = await company(request, phone ? 'TRM' : 'TRD');
-  const g = seed(c, phone ? 'trm' : 'trd');
+  const c = await company(request, phone ? 'TNM' : 'TND');
+  const g = seed(c, phone ? 'tnm' : 'tnd');
   const shot = async (page, name) => { await page.waitForTimeout(400); await page.screenshot({ path: `${OUT}/${name}${sfx}.png`, fullPage: true }); };
   const today = new Date(Date.now() + 19_800_000).toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 19_800_000 + 86_400_000).toISOString().slice(0, 10);
