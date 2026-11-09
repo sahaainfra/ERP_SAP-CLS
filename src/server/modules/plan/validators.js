@@ -43,3 +43,25 @@ export const parseProgress = (b) => { const out = parseProgress0(b); out.rows = 
 const parseProgress0 = (b) => parse(z.object({ dataDate: day, rows: z.array(z.object({ activityId: id, actualStart: optDay, actualFinish: optDay, pctComplete: z.number().min(0).max(100).refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, 'At most two decimals').nullish().transform((v) => (v == null ? null : v)), remainingDays: z.number().int().min(0).max(36500).nullish().transform((v) => (v == null ? null : v)) }).strict()).max(5000).default([]) }).strict(), b);
 export const parseGenerate = (b) => parse(z.object({ mode: z.enum(['TEMPLATE', 'BOQ']), templateId: optId, wbsIds: z.array(id).max(500).default([]), locationIds: z.array(id).max(500).default([]), wbsId: optId, chain: z.boolean().default(true), duration: z.number().int().min(0).max(3650).default(5), prefix: z.string().regex(/^[A-Za-z0-9._-]{0,10}$/, 'Up to 10 letters or digits').default('') }).strict(), b);
 export const parseImport = (b) => parse(z.object({ rows: z.array(z.object({ code: z.string().trim().regex(/^[A-Za-z0-9._-]{1,30}$/), name: text(200).min(2), wbsCode: optText(60), locationCode: optText(60), type: TYPE.default('TASK'), duration: z.number().int().min(0).max(36500).default(1), predecessors: optText(1000), responsible: optText(60) }).strict()).min(1, 'Give at least one row').max(5000) }).strict(), b);
+
+// ---- part 13.02: the Gantt edits, resources, availability, histogram and programme ----------------------------------------------------------------------------
+const OP = z.enum(['MOVE', 'RESIZE', 'EDIT', 'LINK', 'UNLINK', 'ADD', 'DELETE']);
+const RES_TYPE = z.enum(['LABOUR', 'PLANT', 'MATERIAL']);
+export const parseGanttEdit = (b) => parse(z.object({
+  op: OP, activityId: optId, start: optDay, finish: optDay, duration: z.number().int().min(0).max(5000).nullish(), name: optText(200),
+  predId: optId, succId: optId, type: DEP.default('FS'), lag: z.number().int().min(-999).max(999).default(0), linkId: optId,
+  actType: TYPE.default('TASK'), wbsId: optId, afterId: optId, confirm: z.boolean().default(false),
+}).strict(), b ?? {});
+export const parseUndo = (b) => parse(z.object({ editId: optId }).strict(), b ?? {});
+const resRow = z.object({ type: RES_TYPE, itemId: optId, trade: optText(80), uom: optText(20), basis: z.enum(['TOTAL', 'PER_DAY']).default('TOTAL'), qty: qty.refine((n) => n > 0, 'Give a quantity above zero'), sourceType: z.enum(['MANUAL', 'BOQ_NORM']).default('MANUAL') }).strict()
+  .refine((r) => r.itemId || r.trade, { message: 'Choose an item or name a trade', path: ['itemId'] });
+export const parseResources = (b) => parse(z.object({ rows: z.array(resRow).max(100), rowVersion: z.number().int().min(1).nullish() }).strict(), b ?? {});
+export const parseCapacity = (b) => parse(z.object({ projectId: id, type: RES_TYPE, itemId: optId, trade: optText(80), uom: optText(20), qtyPerDay: qty.refine((n) => n > 0, 'Give a quantity above zero'), from: day, to: day, reason }).strict()
+  .refine((r) => r.itemId || r.trade, { message: 'Choose an item or name a trade', path: ['itemId'] }).refine((r) => r.to >= r.from, { message: 'The end is on or after the start', path: ['to'] }), b ?? {});
+export const parseHistogramQ = (q) => parse(z.object({ type: RES_TYPE.nullish().transform((v) => v || null), bucket: z.enum(['day', 'week', 'month']).default('week'), dates: z.enum(['early', 'late']).default('early'), from: optDay, to: optDay, key: optText(120) }).strict(), q ?? {});
+export const parseDrillQ = (q) => parse(z.object({ type: RES_TYPE, key: text(120).min(1), from: day, to: day, dates: z.enum(['early', 'late']).default('early') }).strict(), q ?? {});
+export const parseResourceOptionsQ = (q) => parse(z.object({ projectId: optId, type: RES_TYPE.nullish().transform((v) => v || null), q: optText(60) }).strict(), q ?? {});
+export const parseProgrammeQ = (q) => parse(z.object({
+  format: z.enum(['pdf', 'svg', 'json']).default('pdf'), paper: z.enum(['A3', 'A1']).default('A3'), scale: z.enum(['day', 'week', 'month', 'quarter']).default('week'),
+  filter: z.enum(['all', 'critical', 'open']).default('all'), wbsId: optId, from: optDay, to: optDay, links: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
+}).strict(), q ?? {});

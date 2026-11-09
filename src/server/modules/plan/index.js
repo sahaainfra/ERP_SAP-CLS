@@ -11,7 +11,9 @@ import { runtimeOf } from '../../platform/runtime/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { createFlagService } from '../core/api.js';
 import { SCHEDULE_DOC, SCHEDULE_STATUS, createPlanService } from './service.js';
-import { planRoutes } from './routes.js';
+import { ganttRoutes, planRoutes } from './routes.js';
+import { createGanttService } from './gantt.js';
+import { createProgramme } from './programme.js';
 
 const services = new WeakMap();
 export const planOf = (db) => services.get(db) ?? null;
@@ -21,12 +23,13 @@ const schema = { type: 'object', properties: {}, required: [] };
 for (const [type, description] of [
   ['plan.schedule.calculated', 'The CPM pass of a schedule ran on the server: data { scheduleId, projectId, docNo, versionNo, status, start, finish, dataDate, activities, critical, ms }.'],
   ['plan.schedule.approved', 'A schedule version was approved by the project controls manager and its logic locked; the previous approved version is superseded: data { scheduleId, projectId, docNo, versionNo, previousScheduleId, start, finish, activities, critical }. Look-ahead (13.04), work authorisation (14.01), MRP (15.02) and resource planning (17.08) read its activities at GET /api/v1/plan/current.'],
+  ['plan.resources.updated', 'The labour, plant and material of an activity were set on the Gantt (part 13.02), for budget phasing (12.01) and resource planning (17.08): data { scheduleId, projectId, activityId, code, rows: [{ type, key, label, uom, qtyTotal }] }.'],
   ['plan.progress.updated', 'The progress of a schedule was updated at a data date and the schedule recalculated: data { scheduleId, projectId, dataDate, source (MANUAL or DPR), finish, activities: [{ activityId, code, actualStart, actualFinish, pctComplete, remainingDays }] }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'plan', description });
 
 integrityRegistry.register({
   allowNegative: ['plan_activities.total_float', 'plan_activities.free_float', 'plan_dependencies.lag_days'], companyOptional: ['plan_templates'],
-  statuses: { plan_schedules: Object.keys(SCHEDULE_STATUS), plan_calendars: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_templates: ['DRAFT', 'ACTIVE', 'CANCELLED'] },
+  statuses: { plan_schedules: Object.keys(SCHEDULE_STATUS), plan_calendars: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_templates: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_resource_capacity: ['DRAFT', 'ACTIVE', 'CANCELLED'] },
   uniqueKeys: [{ table: 'plan_schedules', columns: ['company_id', 'doc_no'] }, { table: 'plan_activities', columns: ['schedule_id', 'code'] }, { table: 'plan_dependencies', columns: ['schedule_id', 'pred_id', 'succ_id'] }],
 });
 
@@ -37,19 +40,25 @@ export const plan = {
   routePrefix: '/api/v1/plan',
   ownerPart: '13.01',
   status: 'The schedule of a project in versions: activities (task, milestone, level of effort, WBS summary) on WBS nodes and locations with duration, calendar, constraint, quantity, BOQ split and person responsible; FS, SS, FF and SF links with lags (a loop is refused with its path); calendars of working days, holidays and site exceptions; activities generated from templates per WBS node or floor, or from the BOQ split by WBS; the CPM pass on the server (early and late dates, total and free float, critical path); progress at a data date; approval by the project controls manager. Baselines come in 13.03 and the DPR (14.05) feeds progress by event.',
-  tables: ['plan_calendars', 'plan_schedules', 'plan_activities', 'plan_dependencies', 'plan_activity_boq', 'plan_templates'],
+  tables: ['plan_calendars', 'plan_schedules', 'plan_activities', 'plan_dependencies', 'plan_activity_boq', 'plan_templates', 'plan_activity_resources', 'plan_resource_capacity', 'plan_gantt_edits'],
   companyOptional: ['plan_templates'],
-  resources: ['projects', 'options', 'current', 'calendars', 'templates', 'schedules', 'activities', 'dependencies'],
+  resources: ['projects', 'options', 'current', 'calendars', 'templates', 'schedules', 'activities', 'dependencies', 'resource-options', 'capacity'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_schedules'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment });
-    const svc = createPlanService({ db }); services.set(db, svc);
+    const svc = /** @type {any} */ (createPlanService({ db })); const gantt = createGanttService({ db, plan: svc.plan }); svc.gantt = gantt; services.set(db, svc); const programme = createProgramme({ db, gantt });
     listExports.register('plan.schedules', { source: (actor, req) => svc.plan.schedules.exportSource(actor, req), hidden: () => [] });
     runtimeOf(db)?.bus?.subscribe(['site.dpr.approved'], (e) => { svc.plan.onDpr(e); }, { consumer: 'plan.progress' });
+    runtimeOf(db)?.bus?.subscribe(['plan.schedule.calculated'], (e) => { if (e.data?.scheduleId) gantt.syncResources(Number(e.data.scheduleId)); }, { consumer: 'plan.resources' });
     const router = Router();
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plan.p1301') ? next() : next(notFound('Planning and scheduling is not enabled for your company yet (feature flag ff.plan.p1301 is OFF).'))));
-    router.use(planRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+    const mw = { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) };
+    router.use(planRoutes(svc, { exportsOf: () => listExportsOf(db) }, mw));
+    const p1302 = Router();
+    p1302.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plan.p1302') ? next() : next(notFound('The Gantt planner and resource loading are not enabled for your company yet (feature flag ff.plan.p1302 is OFF).'))));
+    p1302.use(ganttRoutes(gantt, programme, mw));
+    router.use(p1302);
     api.use('/plan', router);
   },
 };

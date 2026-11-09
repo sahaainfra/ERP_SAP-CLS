@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   parseActivityCreate, parseActivityList, parseActivityUpdate, parseAmend, parseBoqLinks, parseBulk, parseCalendarCreate, parseCalendarDays, parseCalendarUpdate, parseDepCreate, parseGenerate, parseId, parseImport,
   parseProgress, parseProjectQ, parseReason, parseScheduleCreate, parseScheduleUpdate, parseTemplateCreate,
+  parseCapacity, parseDrillQ, parseGanttEdit, parseHistogramQ, parseProgrammeQ, parseResourceOptionsQ, parseResources, parseUndo,
 } from './validators.js';
 
 /** /api/v1/plan: the schedule core (part 13.01). Rights and scope are checked in the service. */
@@ -63,5 +64,38 @@ export function planRoutes(svc, { exportsOf }, { idempotent, idempotentRequired 
   r.delete('/activities/:id', (req, res) => ok(res, p.activities.remove(req.actor, pid(req))));
   r.put('/activities/:id/boq', idempotent, (req, res) => ok(res, p.activities.setBoq(req.actor, pid(req), parseBoqLinks(req.body))));
   r.delete('/dependencies/:id', (req, res) => ok(res, p.links.remove(req.actor, pid(req))));
+  return r;
+}
+
+/** /api/v1/plan: the Gantt, its edits, resources, availability, histograms and the printable programme (part 13.02, behind ff.plan.p1302). */
+export function ganttRoutes(g, programme, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id);
+  r.get('/schedules/:id/gantt', (req, res) => ok(res, g.data(req.actor, pid(req))));
+  r.post('/schedules/:id/gantt/check', (req, res) => ok(res, g.edit(req.actor, pid(req), parseGanttEdit(req.body), { dryRun: true })));
+  r.post('/schedules/:id/gantt/edits', idempotentRequired, (req, res) => ok(res, g.edit(req.actor, pid(req), parseGanttEdit(req.body)), 201));
+  r.get('/schedules/:id/gantt/edits', (req, res) => ok(res, g.edits(req.actor, pid(req))));
+  r.post('/schedules/:id/gantt/undo', idempotentRequired, (req, res) => ok(res, g.undo(req.actor, pid(req), parseUndo(req.body))));
+  r.get('/schedules/:id/histogram', (req, res) => ok(res, g.histogram(req.actor, pid(req), parseHistogramQ(req.query))));
+  r.get('/schedules/:id/histogram/drill', (req, res) => ok(res, g.drill(req.actor, pid(req), parseDrillQ(req.query))));
+  r.get('/schedules/:id/histogram/export', (req, res) => { const out = g.histogramCsv(req.actor, pid(req), parseHistogramQ(req.query)); res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'no-store' }).send(out.body); });
+  r.get('/schedules/:id/loading', (req, res) => ok(res, g.loading(req.actor, pid(req))));
+  r.get('/schedules/:id/programme', async (req, res, next) => {
+    try {
+      const out = await programme.render(req.actor, pid(req), parseProgrammeQ(req.query));
+      if (out.kind === 'json') return ok(res, out.body);
+      const type = out.kind === 'svg' ? 'image/svg+xml' : 'application/pdf';
+      return res.status(200).set({ 'content-type': type, 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff', ...(out.pages ? { 'x-pages': String(out.pages) } : {}) }).send(out.body);
+    } catch (e) { return next(e); }
+  });
+  r.get('/resource-options', (req, res) => ok(res, g.resourceOptions(req.actor, parseResourceOptionsQ(req.query))));
+  r.get('/activities/:id/resources', (req, res) => ok(res, g.resourcesOf(req.actor, pid(req))));
+  r.put('/activities/:id/resources', idempotent, (req, res) => ok(res, g.saveResources(req.actor, pid(req), parseResources(req.body))));
+  r.get('/activities/:id/resources/norms', (req, res) => ok(res, g.norms(req.actor, pid(req))));
+  r.get('/capacity', (req, res) => ok(res, g.capacity.list(req.actor, parseProjectQ(req.query))));
+  r.post('/capacity', idempotentRequired, (req, res) => ok(res, g.capacity.create(req.actor, parseCapacity(req.body)), 201));
+  r.post('/capacity/:id/activate', idempotentRequired, (req, res) => ok(res, g.capacity.activate(req.actor, pid(req))));
+  r.post('/capacity/:id/cancel', idempotent, (req, res) => ok(res, g.capacity.cancel(req.actor, pid(req), parseReason(req.body))));
   return r;
 }
