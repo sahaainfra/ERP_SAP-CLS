@@ -87,8 +87,11 @@ test('T-01 FR-02 a GST change of an HSN code from a date: proposed on the page, 
   await p.page.reload();
   await p.page.getByTestId('cm-q-hsn-sac').fill('2523');
   await p.page.getByTestId('cm-asof-hsn-sac').fill(IST(4));
+  // the list shows the previous rows while the filtered ones load: wait for the one row, since a strict-mode violation is not retried
+  await expect(p.page.getByTestId('cm-row-hsn-sac')).toHaveCount(1);
   await expect(p.page.getByTestId('cm-row-hsn-sac')).toContainText('GST28');
   await p.page.getByTestId('cm-asof-hsn-sac').fill(IST(5));
+  await expect(p.page.getByTestId('cm-row-hsn-sac')).toHaveCount(1);
   await expect(p.page.getByTestId('cm-row-hsn-sac')).toContainText('GST18');
   await expect(p.page.getByTestId('cm-row-hsn-sac')).toContainText('Company');
   expect((await api(request, c, 'SE', u.se, 'get', `/mdm/tax/gst?hsn=2523&date=${IST(4)}`)).rate.igstPct).toBe('28');
