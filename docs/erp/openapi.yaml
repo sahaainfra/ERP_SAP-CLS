@@ -7475,7 +7475,7 @@ paths:
       responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
   /api/v1/plan/schedules/{id}/histogram/export:
     get:
-      summary: "Gantt and resources: GET /schedules/{id}/histogram/export"
+      summary: "Gantt and resources: GET /schedules/{id}/histogram/export (format = csv, xlsx or pdf)"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
   /api/v1/plan/schedules/{id}/loading:
     get:

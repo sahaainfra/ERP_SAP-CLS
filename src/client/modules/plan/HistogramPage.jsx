@@ -102,7 +102,7 @@ export default function HistogramPage() {
           <Field label={t('h.from')} name="from"><input type="date" value={p.from} onChange={(e) => { setP({ ...p, from: e.target.value }); setPick(null); }} data-testid="ph-from" /></Field>
           <Field label={t('h.to')} name="to"><input type="date" value={p.to} onChange={(e) => { setP({ ...p, to: e.target.value }); setPick(null); }} data-testid="ph-to" /></Field>
         </div>
-        {h && perms.includes('plan.schedule.export') && <div className="actions"><button type="button" className="btn" onClick={() => download(`/schedules/${scheduleId}/histogram/export?${qs}`, `resource-histogram-${h.docNo}.csv`).catch(() => null)} data-testid="ph-export">{t('h.export')}</button></div>}
+        {h && perms.includes('plan.schedule.export') && <div className="actions">{['xlsx', 'pdf', 'csv'].map((f) => <button key={f} type="button" className="btn" onClick={() => download(`/schedules/${scheduleId}/histogram/export?${qs}${qs ? '&' : ''}format=${f}`, `resource-histogram-${h.docNo.replace(/[^A-Za-z0-9_-]+/g, '-')}.${f}`).catch(() => null)} data-testid={f === 'csv' ? 'ph-export' : `ph-export-${f}`}>{t(`h.export.${f}`)}</button>)}</div>}
       </form>
       {!scheduleId && <p className="muted" data-testid="ph-choose">{t('h.choose')}</p>}
       {scheduleId && hq.isPending && <Skeleton label={t('h.title')} rows={4} />}

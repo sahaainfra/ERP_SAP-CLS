@@ -1958,7 +1958,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/plan/schedules/:id/gantt/undo', g: 'permission', k: 'plan.schedule.edit', s: 'parseUndo', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/plan/schedules/:id/histogram', g: 'permission', k: 'plan.resource.view', s: 'parseHistogramQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/plan/schedules/:id/histogram/drill', g: 'permission', k: 'plan.resource.view', s: 'parseDrillQ', scope: 'company', rate: 'read', audit: false },
-  { m: 'GET', p: '/api/v1/plan/schedules/:id/histogram/export', g: 'permission', k: 'plan.schedule.export', s: 'parseHistogramQ', scope: 'company', rate: 'export', audit: true },
+  { m: 'GET', p: '/api/v1/plan/schedules/:id/histogram/export', g: 'permission', k: 'plan.schedule.export', s: 'parseHistogramExportQ', scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/plan/schedules/:id/loading', g: 'permission', k: 'plan.resource.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/plan/schedules/:id/programme', g: 'permission', k: 'plan.schedule.view', s: 'parseProgrammeQ', scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/plan/resource-options', g: 'permission', k: 'plan.resource.view', s: 'parseResourceOptionsQ', scope: 'company', rate: 'read', audit: false },

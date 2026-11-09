@@ -58,7 +58,9 @@ const resRow = z.object({ type: RES_TYPE, itemId: optId, trade: optText(80), uom
 export const parseResources = (b) => parse(z.object({ rows: z.array(resRow).max(100), rowVersion: z.number().int().min(1).nullish() }).strict(), b ?? {});
 export const parseCapacity = (b) => parse(z.object({ projectId: id, type: RES_TYPE, itemId: optId, trade: optText(80), uom: optText(20), qtyPerDay: qty.refine((n) => n > 0, 'Give a quantity above zero'), from: day, to: day, reason }).strict()
   .refine((r) => r.itemId || r.trade, { message: 'Choose an item or name a trade', path: ['itemId'] }).refine((r) => r.to >= r.from, { message: 'The end is on or after the start', path: ['to'] }), b ?? {});
-export const parseHistogramQ = (q) => parse(z.object({ type: RES_TYPE.nullish().transform((v) => v || null), bucket: z.enum(['day', 'week', 'month']).default('week'), dates: z.enum(['early', 'late']).default('early'), from: optDay, to: optDay, key: optText(120) }).strict(), q ?? {});
+const HISTOGRAM_Q = { type: RES_TYPE.nullish().transform((v) => v || null), bucket: z.enum(['day', 'week', 'month']).default('week'), dates: z.enum(['early', 'late']).default('early'), from: optDay, to: optDay, key: optText(120) };
+export const parseHistogramQ = (q) => parse(z.object(HISTOGRAM_Q).strict(), q ?? {});
+export const parseHistogramExportQ = (q) => parse(z.object({ ...HISTOGRAM_Q, format: z.enum(['csv', 'xlsx', 'pdf']).default('csv') }).strict(), q ?? {});
 export const parseDrillQ = (q) => parse(z.object({ type: RES_TYPE, key: text(120).min(1), from: day, to: day, dates: z.enum(['early', 'late']).default('early') }).strict(), q ?? {});
 export const parseResourceOptionsQ = (q) => parse(z.object({ projectId: optId, type: RES_TYPE.nullish().transform((v) => v || null), q: optText(60) }).strict(), q ?? {});
 export const parseProgrammeQ = (q) => parse(z.object({

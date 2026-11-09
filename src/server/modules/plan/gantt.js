@@ -3,6 +3,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
+import { toPdf, toXlsx } from '../../platform/export/index.js';
 import { todayIST } from '../../../shared/dates.js';
 import { isoOf, ordOf } from './cpm.js';
 
@@ -390,15 +391,25 @@ export function createGanttService({ db, plan }) {
     const h = histogram(actor, id, { bucket: 'month', dates: 'early', type: null, from: null, to: null, key: null });
     return { scheduleId: h.scheduleId, docNo: h.docNo, projectId: h.projectId, from: h.from, to: h.to, months: h.buckets.map((b) => b.key), resources: h.resources.map((r) => ({ type: r.type, key: r.key, label: r.label, uom: r.uom, total: r.total, months: r.buckets.map((b) => b.demand) })) };
   }
-  function histogramCsv(actor, id, q) {
-    const h = histogram(actor, id, q); const { s } = sched(actor, id);
+  /** The histogram as a file: CSV or XLSX with one column per period, or a PDF with one line per resource and period (legible whatever the number of periods). */
+  function histogramExport(actor, id, q) {
+    const { format, ...hq } = q; const h = histogram(actor, id, hq); const { s } = sched(actor, id);
     if (!at(actor, 'plan.schedule.export', s.org_project_id)) throw forbidden('You may not export the schedule (permission plan.schedule.export).');
+    const base = `resource-histogram-${s.doc_no.replace(/[^A-Za-z0-9_-]+/g, '-')}`; const note = [`Schedule ${s.doc_no}; ${h.from} to ${h.to}; by ${hq.bucket}; ${hq.dates} dates.`];
+    audit(actor, 'plan_schedules', s.id, 'export', s.company_id, { newValues: { report: 'resource histogram', format, bucket: hq.bucket, type: hq.type } });
+    if (format === 'pdf') {
+      const rows = []; for (const r of h.resources) for (const b of r.buckets) if (b.demand > 0 || (r.tracked && b.available > 0)) rows.push({ type: r.typeLabel, resource: r.label, uom: r.uom, period: b.key, demand: b.demand, available: r.tracked ? b.available : '', over: r.tracked && b.demand > b.available ? round3(b.demand - b.available) : '' });
+      return { name: `${base}.pdf`, type: 'application/pdf', body: toPdf({ title: `Resource histogram ${s.doc_no}`, columns: [{ key: 'type', label: 'Type', type: 'text' }, { key: 'resource', label: 'Resource', type: 'text' }, { key: 'uom', label: 'Unit', type: 'text' }, { key: 'period', label: 'Period', type: 'text' }, { key: 'demand', label: 'Demand', type: 'number' }, { key: 'available', label: 'Available', type: 'number' }, { key: 'over', label: 'Over', type: 'number' }], rows, footer: note }) };
+    }
+    const wide = []; for (const r of h.resources) { wide.push({ type: r.typeLabel, resource: r.label, uom: r.uom, measure: 'Demand', b: r.buckets.map((b) => b.demand), total: r.total }); if (r.tracked) wide.push({ type: r.typeLabel, resource: r.label, uom: r.uom, measure: 'Available', b: r.buckets.map((b) => b.available), total: round3(r.buckets.reduce((a, b) => a + (b.available ?? 0), 0)) }); }
+    if (format === 'xlsx') {
+      const columns = [{ key: 'type', label: 'Type', type: 'text' }, { key: 'resource', label: 'Resource', type: 'text' }, { key: 'uom', label: 'Unit', type: 'text' }, { key: 'measure', label: 'Measure', type: 'text' }, ...h.buckets.map((b, i) => ({ key: `b${i}`, label: b.key, type: 'number' })), { key: 'total', label: 'Total', type: 'number' }];
+      return { name: `${base}.xlsx`, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', body: toXlsx({ sheetName: 'Histogram', columns, rows: wide.map((w) => ({ type: w.type, resource: w.resource, uom: w.uom, measure: w.measure, total: w.total, ...Object.fromEntries(w.b.map((v, i) => [`b${i}`, v])) })), footer: note }) };
+    }
     const cell = (v) => { const t = String(v ?? ''); return /^[=+\-@\t\r]/.test(t) && !/^-?\d+(\.\d+)?$/.test(t) ? `'${t}` : t; };
-    const lines = [['Type', 'Resource', 'Unit', 'Measure', ...h.buckets.map((b) => b.key), 'Total']];
-    for (const r of h.resources) { lines.push([r.typeLabel, r.label, r.uom, 'Demand', ...r.buckets.map((b) => b.demand), r.total]); if (r.tracked) lines.push([r.typeLabel, r.label, r.uom, 'Available', ...r.buckets.map((b) => b.available), round3(r.buckets.reduce((a, b) => a + (b.available ?? 0), 0))]); }
-    audit(actor, 'plan_schedules', s.id, 'export', s.company_id, { newValues: { report: 'resource histogram', bucket: q.bucket, type: q.type } });
-    return { name: `resource-histogram-${s.doc_no.replace(/[^A-Za-z0-9_-]+/g, '-')}.csv`, body: `\uFEFF${lines.map((l) => l.map((v) => `"${cell(v).replaceAll('"', '""')}"`).join(',')).join('\r\n')}` };
+    const lines = [['Type', 'Resource', 'Unit', 'Measure', ...h.buckets.map((b) => b.key), 'Total'], ...wide.map((w) => [w.type, w.resource, w.uom, w.measure, ...w.b, w.total])];
+    return { name: `${base}.csv`, type: 'text/csv; charset=utf-8', body: `\uFEFF${lines.map((l) => l.map((v) => `"${cell(v).replaceAll('"', '""')}"`).join(',')).join('\r\n')}` };
   }
 
-  return { data, edit, undo, edits: (actor, id) => { const { s } = sched(actor, id); return { rows: lastEdits(s, 50) }; }, resourcesOf, saveResources, norms, resourceOptions, capacity, histogram, drill, loading, histogramCsv, syncResources };
+  return { data, edit, undo, edits: (actor, id) => { const { s } = sched(actor, id); return { rows: lastEdits(s, 50) }; }, resourcesOf, saveResources, norms, resourceOptions, capacity, histogram, drill, loading, histogramExport, syncResources };
 }

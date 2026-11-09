@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   parseActivityCreate, parseActivityList, parseActivityUpdate, parseAmend, parseBoqLinks, parseBulk, parseCalendarCreate, parseCalendarDays, parseCalendarUpdate, parseDepCreate, parseGenerate, parseId, parseImport,
   parseProgress, parseProjectQ, parseReason, parseScheduleCreate, parseScheduleUpdate, parseTemplateCreate,
-  parseCapacity, parseDrillQ, parseGanttEdit, parseHistogramQ, parseProgrammeQ, parseResourceOptionsQ, parseResources, parseUndo,
+  parseCapacity, parseDrillQ, parseGanttEdit, parseHistogramExportQ, parseHistogramQ, parseProgrammeQ, parseResourceOptionsQ, parseResources, parseUndo,
 } from './validators.js';
 
 /** /api/v1/plan: the schedule core (part 13.01). Rights and scope are checked in the service. */
@@ -79,7 +79,7 @@ export function ganttRoutes(g, programme, { idempotent, idempotentRequired }) {
   r.post('/schedules/:id/gantt/undo', idempotentRequired, (req, res) => ok(res, g.undo(req.actor, pid(req), parseUndo(req.body))));
   r.get('/schedules/:id/histogram', (req, res) => ok(res, g.histogram(req.actor, pid(req), parseHistogramQ(req.query))));
   r.get('/schedules/:id/histogram/drill', (req, res) => ok(res, g.drill(req.actor, pid(req), parseDrillQ(req.query))));
-  r.get('/schedules/:id/histogram/export', (req, res) => { const out = g.histogramCsv(req.actor, pid(req), parseHistogramQ(req.query)); res.status(200).set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'no-store' }).send(out.body); });
+  r.get('/schedules/:id/histogram/export', (req, res) => { const out = g.histogramExport(req.actor, pid(req), parseHistogramExportQ(req.query)); res.status(200).set({ 'content-type': out.type, 'content-disposition': `attachment; filename="${out.name}"`, 'cache-control': 'no-store' }).send(out.body); });
   r.get('/schedules/:id/loading', (req, res) => ok(res, g.loading(req.actor, pid(req))));
   r.get('/schedules/:id/programme', async (req, res, next) => {
     try {

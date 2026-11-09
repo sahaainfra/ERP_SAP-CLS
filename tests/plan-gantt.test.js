@@ -133,6 +133,10 @@ test('FR-03 resources by hand and from the BOQ norms; histograms against deploym
   assert.ok(d.prepare("SELECT 1 FROM core_outbox WHERE event_type = 'plan.resources.updated'").get() || d.prepare("SELECT 1 FROM core_events WHERE type = 'plan.resources.updated'").get(), 'the loading is published');
   // the CSV: formula injection neutralised, audited
   const csv = await t.api.raw('GET', `${P}/schedules/${t.sid}/histogram/export?bucket=week`, pm); assert.equal(csv.status, 200); assert.match(csv.buffer.toString(), /"Demand"/);
+  const xl = await t.api.raw('GET', `${P}/schedules/${t.sid}/histogram/export?bucket=week&format=xlsx`, pm); assert.equal(xl.status, 200); assert.match(String(xl.headers['content-type'] ?? xl.headers.get?.('content-type')), /spreadsheetml/); assert.equal(xl.buffer.subarray(0, 2).toString(), 'PK');
+  const pdf = await t.api.raw('GET', `${P}/schedules/${t.sid}/histogram/export?bucket=week&format=pdf`, pm); assert.equal(pdf.status, 200); assert.equal(pdf.buffer.subarray(0, 5).toString(), '%PDF-');
+  assert.equal((await t.api.raw('GET', `${P}/schedules/${t.sid}/histogram/export?format=doc`, pm)).status, 400, 'an unknown format is refused');
+  assert.equal(d.prepare("SELECT COUNT(*) AS n FROM core_audit_log WHERE entity = 'plan_schedules' AND action = 'export'").get().n >= 3, true, 'each export is audited');
   // resources are undone like any Gantt edit
   const u = await t.call(plan1, 'POST', `/schedules/${t.sid}/gantt/undo`, {}); assert.equal(u.status, 200, JSON.stringify(u.json));
   assert.equal((await t.call(plan1, 'GET', `/activities/${a.A10.id}/resources`)).json.data.rows.length, 0);
