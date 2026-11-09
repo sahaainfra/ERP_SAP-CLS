@@ -46,7 +46,7 @@ test('AC-01 FR-01 FR-03 FR-04 FR-05 FR-07 FR-08 a form captured offline with a p
   // the list of forms: the real one, and the planned ones with the part that brings them
   await expect(page.getByTestId('form-sample_doc')).toBeVisible();
   await expect(page.getByTestId('form-dpr')).toContainText('Available with part 14.02');
-  await expect(page.getByTestId('form-attendance_punch')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByTestId('form-attendance_punch')).not.toHaveAttribute('aria-disabled', 'true'); // live since part 07.05 registered it
   await page.getByTestId('form-sample_doc').click();
   await expect(page.getByTestId('field-form')).toBeVisible();
   await expect(page.getByTestId('ff-projectId')).toContainText(`OF${tag}1`); // the masters are on the phone

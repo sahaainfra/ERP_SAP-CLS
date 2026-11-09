@@ -393,3 +393,8 @@ export function createAccessService({ db, identity, approvals }) {
   }
   return service;
 }
+
+const accessServices = new WeakMap();
+/** The role engine's service for the modules that ask for a scoped assignment on behalf of a person (the project team of part 10.05). */
+export const bindAccess = (db, service) => accessServices.set(db, service);
+export const accessOf = (db) => accessServices.get(db) ?? null;

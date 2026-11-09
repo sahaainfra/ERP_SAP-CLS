@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { holderSourcesOf } from '../../platform/authz/grant-sources.js';
 import { transaction } from '../../platform/db/index.js';
 import { writeAudit } from '../../platform/audit/index.js';
 import { authzOf } from '../../platform/authz/index.js';
@@ -59,6 +60,12 @@ export function createAutoGroupService({ db, engine, base }) {
       const hit = scope.type === 'COMPANY' || (scope.type === 'PROJECT' && ((a.scope_type === 'PROJECT' && ids.includes(scope.id)) || a.scope_type === 'COMPANY'))
         || (scope.type === 'SITE' && ((a.scope_type === 'SITE' && ids.includes(scope.id)) || (a.scope_type === 'PROJECT' && ids.includes(scope.projectId)))) || (scope.type === 'DEPARTMENT' && a.scope_type === 'DEPARTMENT' && ids.includes(scope.id));
       if (hit && !out.includes(a.username)) out.push(a.username);
+    }
+    // other modules' records that confer a role in a place (part 07.03: an approved deployment)
+    for (const [, fn] of holderSourcesOf.list()) {
+      let extra;
+      try { extra = fn(db, { companyId, roles, scope, today }) ?? []; } catch { continue; }
+      for (const u of extra) if (!out.includes(u)) out.push(u);
     }
     return out;
   }

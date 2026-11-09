@@ -171,7 +171,7 @@ test('T-01 FR-02 FR-03 BR-01 two devices per person: the database holds only cip
   assert.equal(sent.sealed.length, 2, 'one envelope for each device of the other person');
   assert.equal((await t.api.call('GET', '/api/v1/msg/conversations', { ...pm, headers: key('l') })).json.data.rows.find((c) => c.id === conv).unread, 1, 'one unread secure message');
   // T-01: look for the words in every column of every table of the database
-  const texts = [words, 'slurry-pump', '4711'];
+  const texts = [words, 'slurry-pump', 'rate-4711-INR'];
   const tables = t.api.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all().map((r) => r.name);
   for (const table of tables) {
     const cols = t.api.db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);

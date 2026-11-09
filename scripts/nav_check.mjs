@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Navigation registry check (part 03.05, AC-02): every page of the client route table has an entry in the navigation registry, and every
-// registry entry opens a page. A page without an entry would not be in anyone's menu; an entry without a page would be a dead link.
+// registry entry opens a page. A page without an entry would not be in anyone's menu; an entry without a page would be a dead link. A record page (a route marked
+// `menu: false`, such as /proj/risk?id=, opened from its list) belongs in no menu and needs no entry; it may not have one either, or the menu would open it without a record.
 import { readdirSync, readFileSync } from 'node:fs';
 import { openDatabase, migrateUp } from '../src/server/platform/db/index.js';
 
@@ -10,7 +11,7 @@ for (const m of readdirSync('src/client/modules')) {
   try { src = readFileSync(`src/client/modules/${m}/index.js`, 'utf8'); } catch { continue; }
   for (const line of src.split('\n')) {
     const p = /\{ path: '([^']+)', label: '([^']+)'(.*?)Page:/.exec(line);
-    if (p) routes.push({ path: p[1], label: p[2], permission: /permission: '([^']+)'/.exec(p[3])?.[1] ?? null, flag: /flag: '([^']+)'/.exec(p[3])?.[1] ?? null });
+    if (p) routes.push({ path: p[1], label: p[2], record: /menu: false/.test(p[3]), permission: /permission: '([^']+)'/.exec(p[3])?.[1] ?? null, flag: /flag: '([^']+)'/.exec(p[3])?.[1] ?? null });
   }
 }
 
@@ -20,6 +21,7 @@ const entries = db.prepare("SELECT code, route, permission_key, feature_flag, pa
 const problems = [];
 for (const r of routes) {
   const e = entries.find((x) => x.route === r.path);
+  if (r.record) { if (e) problems.push(`record page ${r.path} (${r.label}) is marked menu: false but has navigation entry ${e.code}`); continue; }
   if (!e) { problems.push(`page ${r.path} (${r.label}) has no navigation entry`); continue; }
   const expected = r.path === '/home' || r.path === '/account/profile' ? null : r.permission ?? 'self';
   if ((e.permission_key ?? null) !== expected) problems.push(`${r.path}: the registry says permission ${e.permission_key}, the page says ${expected}`);

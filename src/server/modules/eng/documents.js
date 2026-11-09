@@ -156,6 +156,7 @@ export function createDocumentService({ db, engine }) {
       }
       if (q.checkedOut) where.push('d.checked_out_by IS NOT NULL');
       if (q.expiring !== undefined && q.expiring !== '') { where.push('d.valid_until IS NOT NULL AND d.valid_until <= :soon AND d.status != \'ARCHIVED\''); p.soon = new Date(Date.parse(today()) + Number(q.expiring) * 86_400_000).toISOString().slice(0, 10); }
+      if (q.linkEntity && q.linkId) { where.push('EXISTS (SELECT 1 FROM doc_links dl WHERE dl.document_id = d.id AND dl.entity = :lent AND dl.entity_id = :lid AND dl.is_active = 1)'); p.lent = q.linkEntity; p.lid = String(q.linkId); }
       if (q.tag) { where.push('EXISTS (SELECT 1 FROM json_each(d.tags_json) t WHERE t.value = :tag)'); p.tag = q.tag; }
       if (q.q) { where.push('(d.doc_no LIKE :q OR d.title LIKE :q OR d.tags_json LIKE :q OR d.wbs_ref LIKE :q OR d.location_ref LIKE :q)'); p.q = `%${q.q}%`; }
       const order = { newest: 'd.id DESC', number: 'd.doc_no', title: 'd.title COLLATE NOCASE', expiry: 'd.valid_until IS NULL, d.valid_until', updated: 'COALESCE(d.updated_at, d.created_at) DESC' }[q.sort ?? 'newest'];
@@ -590,6 +591,8 @@ export function createDocumentService({ db, engine }) {
 const services = new WeakMap();
 export const bind = (db, service) => services.set(db, service);
 const bound = (db) => services.get(db);
+/** The document service of the database (part 04.10), for the modules that register documents of their own records. */
+export const documentsOf = (db) => services.get(db) ?? null;
 
 workflowTypes.register({
   docType: REVISION_DOC,

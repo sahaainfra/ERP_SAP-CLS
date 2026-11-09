@@ -34,7 +34,7 @@ test('every registered page is a page of the tracker, and no page is registered 
 
 test('FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completion Checklist that a machine can make', async ({ browser, request }, info) => {
   test.skip(info.project.name === 'mobile', 'the pages are visited at all three widths in one run');
-  test.setTimeout(900_000);
+  test.setTimeout(1_800_000); // every page at three widths: the sweep grows with every part
   const c = await company(request, 'PGS');
   const { baseURL } = info.project.use;
   const context = await browser.newContext({ baseURL, viewport: SIZES[2] });

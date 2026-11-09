@@ -72,6 +72,35 @@ export const orgHandlers = {
   },
 };
 
+/**
+ * Guards a later part registers against the plain activation requests of this part: a project that has a project master (part 10.01) is activated only through its own approval (project director, then the director).
+ * Each is (db, row) => a message that refuses the request, or null.
+ * @type {Array<(db: any, row: any) => string | null>}
+ */
+export const activationGuards = [];
+
+/**
+ * The status of a project follows its lifecycle (part 10.01): a call from that part, inside its own transaction, never from a person. Activating a project activates the draft sites made with it (the project master's approval covers them).
+ * @param {any} db @param {{ user: string }} actor @param {number} projectId @param {'DRAFT' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CLOSED'} status @param {{ reason?: string | null, activateSites?: boolean }} [opts]
+ */
+export function applyProjectStatus(db, actor, projectId, status, { reason = null, activateSites = false } = {}) {
+  const row = db.prepare('SELECT * FROM org_projects WHERE id = ? AND is_active = 1').get(projectId);
+  if (!row) throw unprocessable('The project no longer exists.');
+  const now = new Date().toISOString();
+  if (row.status !== status) {
+    db.prepare('UPDATE org_projects SET status = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(status, actor.user, now, projectId);
+    writeAudit(db, { entity: 'org_projects', entityId: projectId, action: 'status_changed', oldValues: { status: row.status }, newValues: { status }, reason, actor: actor.user });
+    publishEvent(db, { type: 'iam.project.status_changed', entity: 'project', entityId: projectId, actorId: actor.user, companyId: row.company_id, data: { code: row.code, from: row.status, to: status } });
+  }
+  if (activateSites && status === 'ACTIVE') {
+    for (const site of db.prepare("SELECT * FROM org_sites WHERE org_project_id = ? AND status = 'DRAFT' AND is_active = 1").all(projectId)) {
+      db.prepare("UPDATE org_sites SET status = 'ACTIVE', updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(actor.user, now, site.id);
+      writeAudit(db, { entity: 'org_sites', entityId: site.id, action: 'activated', oldValues: { status: 'DRAFT' }, newValues: { status: 'ACTIVE' }, reason: 'Activated with its project', actor: actor.user });
+      publishEvent(db, { type: 'iam.site.activated', entity: 'site', entityId: site.id, actorId: actor.user, companyId: row.company_id, siteId: site.id, data: { code: site.code, withProject: true } });
+    }
+  }
+}
+
 // The entities whose records belong to a project or a site, so a role held for part of the company reaches only its own part (part 02.04).
 const SCOPED = new Set(['projects', 'sites', 'cost-centres']);
 
@@ -539,6 +568,7 @@ export function createOrgService({ db, approvals, clock }) {
         const p = db.prepare('SELECT status FROM org_projects WHERE id = ?').get(row.org_project_id);
         if (p?.status !== 'ACTIVE') throw unprocessable('Activate the project first: a site can only be activated inside an active project.');
       }
+      if (key === 'projects') for (const g of activationGuards) { const why = g(db, row); if (why) throw unprocessable(why); }
       if (approvals.hasOpen(row.company_id, 'org_activation', targetOf[key], id)) throw conflict('There is already an open activation request for this record.');
       return approvals.submit(actor, {
         type: 'org_activation', title: `Activate ${e.noun} ${row.code} ${row.name}`, targetType: targetOf[key], targetId: id,

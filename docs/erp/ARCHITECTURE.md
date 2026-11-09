@@ -777,3 +777,426 @@ Behind feature flag `ff.mdm.p0606` (in module `mdm`, which needs `ff.mdm.p0601` 
 - **For other modules**: `ratesOf(db).analyses.releasedRate(companyId, workItemId, { region, projectId, date })`; events `mdm.resource_rate.changed`, `mdm.sor.activated`, `mdm.analysis.created`, `mdm.analysis.released`.
 - **Access** (ADR-274): project records through `scopeFilter`/`check` of the permission engine; `mdm.analyse.{view,create,edit,delete,submit,approve,cancel,amend,print,export}` and `mdm.rate.edit`.
 - **Browser**: Resource Rate Library, Schedule of Rates, Rate Analyses (register), Rate Analysis (object page: components, add-ons, SOR, versions with compare, history; new and change form), Rate Change Impact (report).
+
+## 61. Employee master and employment records (part 07.01)
+
+Behind feature flag `ff.hr.p0701`; module `modules/hr` (`employees.js` service, lists, workflows and file/object registrations; `integrations.js` lookups and the Excel import; `routes.js`, `validators.js`, `index.js`). It is the first module of Workforce-First (M07). Tables `hr_employees`, `hr_employee_statutory`, `hr_employee_banks`, `hr_employee_contacts`, `hr_employee_education`, `hr_employee_experience`, `hr_employee_documents`, `hr_employee_changes`, `hr_employee_history` (migrations 108 and 109).
+
+- **Two statuses** (ADR-275): the record (`record_status`: Draft, Submitted, Approved, Returned, Rejected, Cancelled) is approval-controlled by workflow `HR_EMPLOYEE`; the employment status (`employment_status`: Active, Notice, Separated, Absconding) is effective-dated and changes only by an approved request.
+- **Locked after approval** (BR-02): personal data, statutory, bank, employment and status changes are rows of `hr_employee_changes` (types PROFILE, STATUTORY, BANK, EMPLOYMENT, SEPARATION), each with its workflow (`HR_EMP_PROFILE`, `HR_EMP_STATUTORY`, `HR_EMP_BANK` with payroll verification, `HR_EMP_EMPLOYMENT` with the director for senior grades, `HR_EMP_SEPARATION`) and an effective date. An approved change whose date has not come is Scheduled; the daily job `hr.employee_cycle` (00:15) applies it. The payload of a change is encrypted (it may hold a PAN).
+- **Sensitive data** (BR-01, ADR-276): PAN is encrypted with the vault of 04.07 and kept with a hash (duplicates) and its last four characters; Aadhaar is kept only as its last four digits and a hash; bank account numbers are encrypted with a hash and the last four digits. HR, payroll (`hr.employee.sensitive.view`) and the employee see them; everyone else sees them masked in the API, list, export, print and search. The full account number is shown on request and logged.
+- **Who sees whom** (ADR-277): `hr.employee.view` (HR, payroll, director, auditor) sees the company; `hr.employee.team.view` (every internal role) sees the people in the reporting line and the staff deployed to the projects and sites of their assignments, approved records only and basic data; an employee sees and changes (by request) their own record without any permission, through `/employees/me`.
+- **Access follows employment** (BR-02): on the effective date of a separation or absconding the employee master calls user management (`userAdminOf(db).deactivate`) and records the result; when the account cannot be deactivated (open items with no successor) the employee shows "Access was NOT removed" and the HR overview raises it. Accounts are created from the employee record or linked to it (`/employees/:id/user`, `/link-user`) through the same service (FR-08).
+- **API** `/api/v1/hr/employees`: list, `/export`, `/overview`, `/queue`, `/changes`, `/me`, `/me/changes`, `/check`, create, `GET/PATCH/DELETE /:id`, `/submit`, `/withdraw`, `/cancel`, `/amend`, `/details`, `/history`, `/print`, `/documents`, `/documents/:docId/verify`, `/banks/:bankId/verify`, `/banks/:bankId/reveal`, `/user`, `/link-user`, `/changes/:changeId/cancel`; lookups `/api/v1/hr/lookups/employees|designations|branches`; Excel import type `HR_EMPLOYEE` (every row is entered and sent for approval).
+- **Events**: `hr.employee.activated`, `hr.employee.updated`, `hr.employee.separated`; widget `hr.headcount`; the Employee 360 takes tabs from other parts through `employeeRelated.register` (attendance, leave, assets, training).
+- **Browser** (`client/modules/hr`): HR Overview, Employee Directory, Employee 360 (also `?me=1`), New Employee wizard (duplicate check as it is typed, documents).
+
+## 62. Recruitment, manpower requisition and onboarding (part 07.02)
+
+Behind feature flag `ff.hr.p0702` (in module `hr`, which needs `ff.hr.p0701` on). Code: `modules/hr/recruitment.js` (service, lists, workflows `HR_REQUISITION` and `HR_OFFER`, evidence panels, object types `hr_requisition` and `hr_candidate`, file entity `hr_candidate`), `recruit-routes.js` (including the public offer link), `recruit-validators.js`. Tables `hr_headcount_plans`, `hr_requisitions`, `hr_candidates`, `hr_interviews`, `hr_offers`, `hr_onboarding_tasks` (migrations 110 and 111).
+
+- **Requisitions** (FR-01, BR-01, ADR-280, ADR-284): `/hr/requisitions` (list, export, create, `GET/PATCH/DELETE /:id`, `/submit`, `/withdraw`, `/cancel` (an approved one is closed), `/amend`, `/compare`, `/history`, `/print`, `/plan-check`); `/hr/plans` for the headcount plan. Chain: department or project head (PM or PD), HR manager, the director beyond the plan.
+- **Pipeline** (FR-02, FR-03, ADR-281): `/hr/candidates` (list, `/board`, create, `GET /:id`, `/stage` with undo, `/checks`, `/prejoining`, `/documents`, `/join`, `/interviews`), `/hr/interviews/:id/feedback|cancel`, `/hr/interviews/mine`.
+- **Offers** (FR-04, BR-02, ADR-282): `/hr/offers` (list, export, `/preview` of the CTC breakup, create, `GET/PATCH/DELETE`, `/submit`, `/withdraw`, `/cancel`, `/amend`, `/compare`, `/send`, `/accept`, `/print`); public `/api/v1/hr/offer-link/:token` (read, `/respond`, `/prejoining`), page `/offer-response`.
+- **Joining** (FR-05 to FR-07): `candidates.join` creates the employee through the employee master (07.01) with everything captured and the checklist (`/hr/onboarding`, parameter `hr.onboarding.checklist`) as rows and as tasks of 04.08; the user account is created from the approved employee (`/hr/employees/:id/user`).
+- **Jobs and events**: `hr.recruitment_cycle` (00:25: lapsed offers, retention of rejected candidates, ADR-283); events `hr.requisition.approved`, `hr.candidate.stage_changed`, `hr.candidate.joined`, `hr.offer.approved|accepted|declined`.
+- **Browser**: Manpower Requisitions, Requisition, New Requisition, Candidate Pipeline (board), Candidate, Offers, Offer Builder, Onboarding Checklist, and the public offer page.
+
+## 63. Deployment, transfers and project/site assignment (part 07.03)
+
+Behind feature flag `ff.hr.p0703` (in module `hr`, which needs `ff.hr.p0701` on). Code: `modules/hr/deployments.js` (service: deployments, crews, site plan, board, eligibility, daily cycle; workflow `HR_DEPLOYMENT`, evidence panel, object types `hr_deployment` and `hr_crew`, the grant and holder sources, the Employee 360 tab), `transfers.js` (service and workflow `HR_TRANSFER`, resolvers `hr.transfer.from_pm` and `hr.transfer.to_pm`, object type `hr_transfer`), `deploy-routes.js`, `deploy-validators.js`, `deploy-integrations.js` (lookup `hr/crews`, import type `HR_DEPLOYMENT`); `platform/authz/grant-sources.js` (the extension point); migrations `…112_hr_deployments` (tables `hr_site_plans`, `hr_crews`, `hr_crew_members`, `hr_deployments`, `hr_transfers`) and `…113_seed_hr_p0703`.
+
+- **Deployments** (FR-01, BR-01, ADR-286, ADR-287): `/hr/deployments` (list, export, create, `GET/PATCH/DELETE /:id`, `/submit`, `/withdraw`, `/cancel` (an approved one is ended today), `/amend`, `/move`, `/compare`, `/history`, `/print`, `/plan-check`, `/eligibility`); `/hr/site-plans` for the planned posts. Chain: the project manager (`PM|HRMGR`), and the project director when the site has no post for the designation or the posts are full. Approved = locked; a change is a new revision approved again.
+- **Access and groups** (FR-05, ADR-285): `grantSources` in the permission engine and `holderSourcesOf` in the messaging auto groups turn an approved deployment that covers today into a site-scoped (or project-scoped) role holding for the employee's user; `hr.deployment.changed` (`APPROVED`, `STARTED`, `AMENDED`, `CHANGED`, `ENDED`, `CLOSED`) clears the engine's cache and re-syncs the groups. Roles that may be given: parameter `hr.deployment.grantable_roles`.
+- **Crews** (FR-03): `/hr/crews` (list, create, `GET/PATCH /:id`, `/members`, `/members/:memberId/end`); the supervisor of a crew keeps its members (`hr.crew.members`), anyone with `hr.crew.edit` keeps any crew in scope; a member is deployed at the site and in one crew at a time; lookup `hr/crews` (parent = site).
+- **Board** (FR-04, ADR-291): `GET /hr/deployment-board` (per site: people by crew, counts by designation against the plan, waiting changes) and `/print`; the drag is `POST /hr/deployments/:id/move`.
+- **Transfers** (FR-02, ADR-288, ADR-289): `/hr/transfers` (list, export, create, `GET/PATCH/DELETE /:id`, `/submit`, `/withdraw`, `/cancel` (undoes an approved one before it takes effect), `/amend`, `/handover`, `/compare`, `/history`, `/print`). Chain: current project manager, receiving project manager (another project), HR manager. Approval ends the old primary deployment on the relieving date and creates the new one from the joining date.
+- **History and import** (FR-06, FR-07): `GET /hr/employees/:id/deployments` and the Deployments tab on Employee 360; import type `HR_DEPLOYMENT` (each row a deployment waiting for approval).
+- **Jobs and events**: `hr.deployment_cycle` (00:35, ADR-292); events `hr.deployment.changed`, `hr.transfer.approved`; widget `hr.deployed`.
+- **Browser**: Deployment Board, Deployments, Deployment, New Deployment / Bulk Deploy, Crews & Gangs, Crew, Transfers, Transfer, Transfer Request.
+
+## 64. Shifts, work calendars and attendance policies (part 07.04)
+
+Behind feature flag `ff.hr.p0704` (in module `hr`, which needs `ff.hr.p0701` on). Code: `modules/hr/att-calc.js` (the calculations, no database: shift span and window, `evaluateDay`, weekly offs, rotating patterns, attendance periods), `attendance.js` (service: shifts, policy versions, assignments, resolution, rosters and changes, periods; workflows `HR_ATT_POLICY` and `HR_ROSTER_CHANGE`; object types `att_policy` and `att_shift`), `att-routes.js`, `att-validators.js`; migrations `…114_att_config` (tables `att_shifts`, `att_policies`, `att_policy_assignments`, `att_rosters`, `att_roster_changes`, `att_period_defs`, `att_periods`) and `…115_seed_hr_p0704`.
+
+- **Shifts** (FR-01, ADR-293): `/hr/att/shifts` (list, export, `active`, create, `GET/PATCH /:id`).
+- **Policies** (FR-04, ADR-295): `/hr/att/policies` (list, export, `codes`, create, `GET/PATCH/DELETE /:id`, `/submit`, `/withdraw`, `/cancel`, `/amend` (a new version with its date), `/compare`, `/print`); `POST /hr/att/evaluate` works out a day's punches with the rules given or the ones that resolve. Chain: HR manager, and the director when it touches pay.
+- **Assignment and resolution** (FR-03, FR-05, BR-01, ADR-294): `/hr/att/assignments` (list, create, `/:id/end`), `GET /hr/att/resolve` (policy, shift, weekly off, holiday and the source of each), `GET /hr/att/my-shift` (everyone sees their own days); `resolveFor(companyId, employeeId, date)` for other modules.
+- **Rosters** (FR-02, ADR-297): `/hr/att/rosters` (patterns), `/hr/att/roster-board`, `/hr/att/roster-changes` (a day or a swap, `/submit`, `/withdraw`, `/cancel`). Chain: supervisor then project manager.
+- **Periods** (FR-06, ADR-296): `/hr/att/period` (start day from a date), `/hr/att/periods`, `/:id/close`.
+- **Events**: `att.policy.approved`, `att.assignment.changed`, `att.roster.changed`, `att.period.closed`; widget `att.roster_waiting`.
+- **Browser**: Shifts, Shift Editor, Roster Planner, Attendance Policies, Policy Rules Editor (with examples), Policy Assignment (hierarchy, who gets what, attendance period).
+
+## 65. Geo-fenced mobile attendance (part 07.05)
+
+Behind feature flag `ff.hr.p0705` (in module `hr`, which needs `ff.hr.p0701` on). Code: `modules/hr/punches.js` (service: the decision on a punch, the ways in, anomalies and their review, visits, the report of the day, site settings, retention; workflows `HR_ATT_VISIT` and `HR_ATT_ANOMALY`; the offline form `attendance_punch`; object type `att_punch`; file entity `att_punch`), `punch-routes.js`, `punch-validators.js`; migrations `…116_att_punches` (tables `att_punches`, `att_anomalies`, `att_visits`, `att_device_bindings`, `att_site_settings`) and `…117_seed_hr_p0705`. The routes are under `/api/v1/att`.
+
+- **Punches** (FR-01 to FR-07, ADR-298): `POST /att/punches` (the phone; `Idempotency-Key` is the client id), `/punches/crew` (the supervisor, group photo), `/punches/kiosk` (badge), `/punches/device` (biometric interface), `GET /punches/context`, `/punches/today`, `/punches` (list), `/punches/:id/selfie` (the person and reviewers). Result: ACCEPTED, FLAGGED, PENDING (a visit) or REJECTED with its reason.
+- **Anomalies** (FR-08, ADR-299, ADR-301): `GET /att/anomalies`, `POST /anomalies/:id/review`, `/anomalies/bulk-review`. Repeated outside-fence acceptances also go to the HR manager.
+- **Report** (FR-09 and section 10): `GET /att/report/today` (and `/export`): by site deployed, expected, present, absent, late, outside the fence, rejected, waiting; every count opens its punches. `GET/PUT /att/site-settings/:siteId`.
+- **Jobs and events**: `att.punch_retention` (00:45, FR-09); events `att.punch.recorded` (for the register, DPR labour and dashboards), `att.anomaly.raised`, `att.anomaly.reviewed`; widget `att.anomalies_open`.
+- **Browser**: Punch In/Out (map, fence status, selfie, offline queue), Crew Punch, Kiosk Mode, Attendance Anomalies, Today's Attendance (with the site settings).
+
+## 66. Attendance register, regularisation, overtime and device import (part 07.06)
+
+Behind feature flag `ff.hr.p0706` (module `hr`; needs 07.05). Code: `modules/hr/att-register.js` (the status engine, recompute, register, daily list, muster roll, period lock, reopen workflow, arrears), `att-requests.js` (regularisation, overtime and manual entry: one factory, three workflows, the approvals worklist), `reg-integrations.js` (the import type `ATT_DEVICE_PUNCH`), `reg-routes.js`, `reg-validators.js`. Tables: `att_daily`, `att_regularisations`, `att_overtime_requests`, `att_manual_entries`, `att_period_locks`, `att_arrears`.
+
+- **Engine** (ADR-303): inputs of a day are read, `attendanceOf(db).resolveFor` gives shift, policy and day type, `evaluateDay` (07.04) gives the status, and the register adds visits (on duty), leave through `registerLeaveSource`, approved manual entries, regularised times and the overtime cap. Pay: present 1, half day 0.5, absent 0 with loss of pay 1, weekly off and holiday paid, a missing punch neither paid nor lost until regularised; late and early-going sets cost half a day.
+- **Lock and arrears** (ADR-304): `POST /att/period-locks` or `/att/periods/:id/lock`; `GET /att/periods/status` shows what still blocks. Event `att.period.locked` carries the totals for payroll. A locked day only changes through `att_arrears` (`GET /att/arrears`).
+- **Requests** (ADR-305): `/hr/regularisations`, `/hr/overtime-requests`, `/hr/manual-entries` (list, get, create, update, delete, submit, withdraw, cancel, amend, history, print, export). `GET /att/approvals` and `POST /att/approvals/bulk` for the worklist.
+- **Reports**: `GET /att/register` (+ export, print), `/att/muster`, `/att/daily`, `/att/day`.
+- **Jobs and events** (ADR-306): the bus consumer `att.register` on `att.punch.recorded`, job `att.register_nightly` (01:05), widget `att.missing_punches`; events `att.period.locked`, `att.period.reopened`, `att.arrears.raised`, `att.regularisation.approved`, `att.overtime.approved`, `att.manual.approved`.
+- **Browser**: Monthly Attendance Register, Daily Attendance, Regularisation Request, Overtime Request, Attendance Approvals, Period Lock.
+
+## 67. Leave management (part 07.07)
+
+Behind feature flag `ff.hr.p0707` (module `hr`; needs 07.06 and 07.04). Code: `modules/hr/lv-calc.js` (days with the sandwich rule and half days, accrual with pro-rata, year-end of a balance; no database), `leave.js` (types, ledger and balances, accrual, comp-off, applications and their approval, adjustments, calendar, year-end, the leave source of the register), `lv-routes.js`, `lv-validators.js`. Tables: `lv_types`, `lv_entitlements`, `lv_ledger`, `lv_applications`, `lv_adjustments`, `lv_year_runs`.
+
+- **Ledger** (ADR-308): balance of a person, a type and a year is the sum of `lv_ledger`; keys make every credit happen once. `GET /hr/leave/balance`, `/hr/leave/ledger`, report `GET /hr/leave/balances`.
+- **Applications** (ADR-309 to 311): `/hr/applications` (list, get, create, update, delete, submit, withdraw, cancel, amend, history, print, export); `GET /hr/leave/check` for the form (days, balance after, clashes, problems); `/hr/leave/approvals` and `/bulk`.
+- **Attendance** (ADR-310): approval queues the recompute of the register; leave shows as `ON_LEAVE` (paid or loss of pay); cancellation and amendments reverse it.
+- **Accrual and comp-off**: `POST /hr/leave/accrual/run`; daily job `lv.daily` (00:50) credits the month, comp-off from the register and lapses expired comp-off.
+- **Year-end** (ADR-312): `GET /hr/leave/year-end/preview`, `POST /hr/leave/year-end`.
+- **Delegation** (04.02): an approver on approved leave who named a cover gets a delegation for the days, ended when the leave is cancelled or replaced.
+- **Events**: `lv.application.approved`, `lv.application.cancelled`, `lv.balance.adjusted`, `lv.year_end.processed`, `lv.encashment.input`; widget `lv.approvals_waiting`.
+- **Browser**: Apply Leave, My Leave, Leave Approvals, Team Leave Calendar, Leave Balance Report, Leave Types & Rules, Year-End Processing.
+
+## 68. Contract labour (part 07.08)
+
+Behind feature flag `ff.hr.p0708` (module `hr`; needs 07.03 and the partner master 06.04). Code: `modules/hr/labour.js` (workers, contractor compliance and strength, wage rates, the guards of a deployment, the cards, the daily check), `lab-routes.js`, `lab-validators.js`, `lab-integrations.js` (the lookup `hr/workers` and the import type `HR_WORKER`). Tables: `lab_workers`, `lab_contractor_compliance`, `lab_wage_rates`.
+
+- **Contractors** (FR-01, FR-06, FR-08): the labour contractors are the partners with the role LABOUR_CONTRACTOR; `GET /hr/labour/contractors` gives licence state (VALID, EXPIRING, EXPIRED, NO_LICENCE, OVER) and the strength of a day; `PUT .../compliance` sets licence, registrations and the licensed number. Daily job `lab.daily` (00:55) tells HR once for each licence state and expires medical clearances.
+- **Workers** (FR-02, FR-03, FR-07, ADR-313): `/hr/workers` (list, get, create, update, delete, submit, withdraw, cancel, amend, history, print, export), `PUT /clearance`, `PUT /photo`, `POST /ppe`, `POST /blacklist` and `/unblacklist`. Approval: supervisor or coordinator, then the HR manager (matrix `HR_WORKER`).
+- **Guards** (ADR-314): age on every write; `deploymentGuards` (licence, licensed number, clearance) called by the deployment service for each worker; `punchCheck` for punches.
+- **Wage rates** (FR-04, ADR-315): `/hr/labour/wage-rates` and `GET .../applicable`; approval HR manager, then the commercial manager for contract rates (matrix `HR_LAB_WAGE`).
+- **Cards** (FR-05, ADR-316): `POST /hr/workers/cards` returns the cards with their QR as SVG; the kiosk and the crew punch accept workers.
+- **Events**: `lab.worker.registered`, `.updated`, `.clearance_changed`, `.blacklisted`, `.reinstated`, `lab.contractor.compliance_changed`, `lab.contractor.licence_expiring`, `lab.wage_rate.approved`; widget `lab.licences_expiring`.
+- **Browser**: Workers Register, Register Worker, Worker, Labour Contractors, Contractor compliance, Wage Rates & Minimum Wages, Print Labour ID Cards.
+
+## 69. Employee & manager self-service (part 07.09)
+
+Behind feature flag `ff.hr.p0709` (module `hr`; needs 07.06 and 07.07). Code: `modules/hr/ess.js` (my home and attendance, the team, the letters), `ess-routes.js`, `ess-validators.js`. Table `ess_requests` (letters).
+
+- **My HR / My Attendance** (FR-01): `GET /hr/ess/home`, `/attendance`, `/profile-changes`; always the caller's own employee (422 `NO_EMPLOYEE` if the user has none).
+- **Profile changes** (ADR-317): the page posts `POST /hr/employees/me/changes` of 07.01.
+- **My Team** (FR-02, ADR-318): `GET /hr/ess/team` (reportees by recursive query, presence on a day, approvals waiting by kind, away in 14 days), `GET /hr/ess/team/members/:id` (404 unless in the line, non-sensitive fields).
+- **Letters** (FR-03, ADR-319): `/hr/ess/letters` (create, update, delete, submit, withdraw, cancel, history, issue, content); workflow `HR_ESS_LETTER` (HR manager); issue publishes a CERTIFICATE record and generates the PDF with the template library.
+- **Events**: `ess.letter.approved`, `ess.letter.issued`; widget `ess.team_present`.
+- **Browser**: My HR, My Attendance, Profile Change Request, Letter Request, My Team; Hindi through the `ess` namespace (ADR-320).
+
+## 70. Training, certifications and skills (part 07.10)
+
+Behind feature flag `ff.hr.p0710` (module `hr`; needs 07.01, uses 07.03 and 07.08). Code: `modules/hr/training.js` (courses, sessions, attendance, certificates, skills, compliance, the daily watch), `trn-routes.js`, `trn-validators.js`, `trn-integrations.js` (Excel import of certificates). Tables `trn_courses`, `trn_sessions`, `trn_attendance`, `trn_cert_types`, `trn_certifications`, `trn_skill_defs`, `trn_skills`.
+
+- **Sessions** (FR-01, ADR-321): `/hr/sessions` (list, calendar, get, create, update, delete, submit, withdraw, cancel, reschedule, complete, history, print, qr, nominations, attendance, feedback, export). Workflow `HR_TRN_SESSION` for an external session with a fee.
+- **QR sign-in** (ADR-324): `GET /hr/sessions/:id/qr` (trainer side), `POST /hr/training/sign-in` (the person).
+- **Certificates** (FR-03, ADR-322, ADR-323): `/hr/training/certs` (list, create, get, update, delete, verify, revoke, export, `check`); `assignmentGuards` called by the deployment service; job `trn.daily` (00:58); widget `trn.certs_expiring`.
+- **Skills** (FR-04): `/hr/training/skills/{assess,matrix,history}`; **compliance and cost** (FR-02, FR-06): `/hr/training/{compliance,costs}`; set-up: `/hr/training/{courses,cert-types,skill-defs}`.
+- **Events**: `trn.session.*`, `trn.attendance.*`, `trn.cert.*`, `trn.skill.assessed`.
+- **Browser**: Training Calendar, Training Session, Certifications & Licences, Skill Matrix, Mandatory Training Compliance, My Training, Training Set-up; Hindi through the `trn` namespace.
+
+## 71. Performance management (part 07.11)
+
+Behind feature flag `ff.hr.p0711` (module `hr`; needs 07.01 and 04.08). Code: `modules/hr/performance.js` (metrics, KPI library, cycles, computation, disputes, goals, feedback, dashboards, reviews, the approval), `perf-routes.js`, `perf-validators.js`. Tables `perf_cycles`, `perf_kpis`, `perf_kpi_values`, `perf_kpi_disputes`, `perf_goals`, `perf_feedback`, `perf_reviews`.
+
+- **KPI library** (FR-01, ADR-325, ADR-328): `/hr/performance/{metrics,kpis,cycles}`; a change is a draft until a second person activates it.
+- **Computation** (FR-03, ADR-325): `POST /hr/performance/compute`, job `perf.daily` (01:20); `GET /hr/performance/values/:id` gives the evidence and the same figure computed again. Metrics: tasks on time (`tsk_tasks`), actions on time (`acc_action_ledger`), approvals within SLA (`wf_tasks`), attendance (`att_daily`), mandatory training (07.10), manual.
+- **Fairness** (FR-06, ADR-326): `excludedDays` (approved leave, transfers); disputes freeze a value; HR resolves.
+- **Goals and feedback** (FR-02, FR-04): `/hr/performance/{goals,feedback}`.
+- **Reviews** (FR-05, ADR-327): `/hr/reviews` (launch, self, manager, calibrate, send-back, submit, withdraw, cancel, history, print, letter, export); workflow `HR_PERF_REVIEW` through resolvers `perf.manager` and `perf.skip`; the event `perf.review.approved` is for payroll (24.01).
+- **Browser**: My Performance, Team Performance, Goal Setting, Appraisal Review, Appraisal Reviews, Feedback & One-to-One, KPI Library & Cycles; Hindi through the `prf` namespace.
+
+## 72. Advances, expense claims and travel (part 07.12)
+
+Behind feature flag `ff.hr.p0712` (module `hr`; needs 07.01 and 04.02). Code: `modules/hr/expenses.js` (policies, claims and their checks, advances and recoveries, travel, the worklist, the analysis), `exp-routes.js`, `exp-validators.js`. Tables `exp_policies`, `exp_travel_requests`, `exp_advances`, `exp_claims`, `exp_claim_lines`, `exp_advance_recoveries`. Money in paise.
+
+- **Policies** (FR-04, ADR-329): `/hr/expenses/policies`; maker-checker activation; `policies.find` takes the most specific active one.
+- **Claims** (FR-03, FR-04, FR-05, ADR-330): `/hr/claims` (CRUD, preview, submit, withdraw, cancel, history, print, pass, paid, export); parameters `exp.claim.max_age_days`, `exp.receipt.threshold_minor`, `exp.duplicate.mode`; bill photos are files of the entity `exp_claim`.
+- **Advances** (FR-02, ADR-331): `/hr/advances` (CRUD, submit..., disburse) and `/hr/advances/recoveries` for payroll.
+- **Travel** (FR-01): `/hr/travel-requests`.
+- **Workflows**: `HR_EXP_CLAIM`, `HR_EXP_ADVANCE`, `HR_EXP_TRAVEL` with the resolver `exp.manager`; the worklist is `/hr/expenses/approvals` (flags shown; bulk decisions); `/hr/expenses/analysis` is the report.
+- **Events** (FR-06, ADR-332): `exp.travel.approved`, `exp.advance.{approved,disbursed,recovered,closed}`, `exp.claim.{approved,passed,paid}`; widget `exp.claims_to_pass`.
+- **Browser**: My Claims & Advances, New Expense Claim, Travel Request, Advance Request, Claim Approvals, Expense Analysis, Expense Policies; Hindi through the `exp` namespace.
+
+## 73. Exit, full-and-final inputs, grievances and disciplinary records (part 07.13)
+
+Behind feature flag `ff.hr.p0713` (module `hr`; needs 07.01). Code: `modules/hr/exit.js` (separations, clearances, interviews, F&F, letters, grievances, cases, the daily cycle), `exit-validators.js`, `exit-routes.js`; the hook `employees.exits` in `employees.js`.
+
+- **Separations** (FR-01, ADR-333): `/hr/separations` (CRUD, preview, submit, withdraw, cancel, history, print, export, mine); notice from `hr.exit.notice_days` (`hr.exit.notice_days_probation` before confirmation); a shorter day needs a waiver or a buyout; a termination short of notice gets pay in lieu.
+- **Workflow** `HR_SEPARATION`: resignation reporting manager (resolver `sep.manager`) then HR manager; termination HR manager then director; distinct approvers.
+- **Clearances** (FR-02, ADR-334): `/hr/clearances` worklist, `PUT /:id`, `POST /:id/waive`; departments from `hr.exit.clearance_departments`.
+- **Exit interview** (FR-03): `POST /separations/:id/interview`, `GET /separations/analytics`.
+- **F&F** (FR-04, ADR-335): `GET /separations/:id/fnf`, `POST .../fnf/release`; event `hr.fnf.released`.
+- **Letters** (FR-05): relieving and experience letters from the template library after the last working day.
+- **Grievances** (FR-06, ADR-336): `/hr/grievances` (CRUD, submit, withdraw, assign, note, resolve, reject, respond, track); SLA from `hr.grievance.sla_days`; job `hr.exit_daily` alerts once when overdue and closes resolved ones after 15 days; widget `grv.overdue`.
+- **Disciplinary** (FR-07, ADR-336): `/hr/disciplinary` (open, step, respond); views audited. HR uses the restricted page `/disciplinary`; an employee reaches their own cases at `/disciplinary/mine` (from the show-cause notification), which is not in the navigation.
+- **Events**: `hr.separation.{approved,cancelled}`, `hr.clearance.cleared`, `hr.fnf.released`, `hr.grievance.{raised,resolved}`, `hr.disciplinary.action_taken`.
+- **Browser**: Resignation, Separation, Separations (with termination and interview analysis), My Clearance Items, Grievances, Raise Grievance, Grievance, Disciplinary Cases; Hindi through the `sep` namespace.
+
+## 74. CRM: leads, clients, contacts, interactions and the opportunity pipeline (part 08.01)
+
+Behind feature flag `ff.bd.p0801` (new module `bd`; needs 06.04). Code: `modules/bd/crm.js` (leads, opportunities, workflows), `crm-ops.js` (interactions, contacts, clients, board, forecast, win and loss, dashboard), `crm-validators.js`, `crm-routes.js`, `crm-integrations.js` (lookups, files, Excel import), `constants.js`, `kit.js`.
+
+- **Two states of an opportunity** (ADR-337): its approval status is the go-ahead for tendering (workflow `BD_OPPORTUNITY`: business development review by a colleague, then the director above ₹10 crore); its stage is the pipeline position, moved by `POST /opportunities/:id/track`. Stages from Pre-bid need the go-ahead; probability follows the stage (`bd.stage_probability`) unless a reason is given (BR-02).
+- **Win** (BR-01, ADR-338): only `awardFromTender` (called by 08.03; no route) or the direct award approved by the director (`BD_DIRECT_AWARD`).
+- **Leads** (FR-01): `/bd/leads`; BANT-like score, review by a colleague (`BD_LEAD`, resolver `bd.reviewer`: other BD users, else the director), conversion to an opportunity.
+- **Amendments** (ADR-339): an approved record is locked; `POST /:id/amend` keeps a snapshot, returns it to draft and is approved again under the workflow document id `<id>-A<n>`.
+- **Clients** (FR-02): read from the partner master (role Client; prospects allowed); contacts with the influence map in `bd_contacts`; Client 360 at `/bd/clients/:id`.
+- **Interactions** (FR-03): `/bd/interactions`; a next action makes a task (04.08) and is reminded once by the job `bd.daily`.
+- **Forecast** (FR-05, T-01): `/bd/reports/forecast` = Σ round(value × probability) per opportunity, by month, sector, region, stage, owner or client; `/reports/win-loss`, `/reports/board`, `/reports/dashboard`.
+- **Events**: `bd.lead.{created,qualified,converted,amended,cancelled}`, `bd.opportunity.{created,approved,amended,cancelled,stage_changed,lost,won,converted}`, `bd.interaction.logged`.
+- **Browser**: Business Development Dashboard, Leads, Lead, Opportunities, Opportunity, Opportunity Pipeline (board), Clients, Client 360; Hindi through the `bd` namespace.
+
+## 75. Tender register, bid or no-bid, addenda and clarifications (part 08.02)
+
+Behind feature flag `ff.bd.p0802` (module `bd`; needs 08.01 and 04.10). Code: `modules/bd/tender.js` (tenders, eligibility, addenda, queries, team tasks, documents, calendar, reminders, dashboard, bid decisions), `tender-constants.js`, `tender-validators.js`, `tender-routes.js`, `tender-integrations.js`.
+
+- **Tender** (FR-01, ADR-342): `/bd/tenders` (CRUD, submit, withdraw, cancel, amend, track, capacity, ready, unready, history, print, export); workflow `TDR_TENDER` (resolver `tdr.reviewer`: other EST users, else the director). Created by hand, by the Excel import or from the conversion of an opportunity (ADR-345).
+- **Bid capacity** (BR-02, ADR-343): formula `tdr.bid_capacity` of the calculation engine, recomputed on every save.
+- **Eligibility** (FR-02): `/bd/tenders/:id/eligibility`, `/bd/eligibility/:id`; evidence through the file entity `tdr_eligibility`.
+- **Bid decision** (FR-03, ADR-344): `/bd/bid-decisions`; workflow `TDR_BID_DECISION` (EST colleague, then DIR); the approval sets the tender stage.
+- **Documents** (FR-04, ADR-346): `/bd/tenders/:id/documents` through the document service; **addenda** `/bd/tenders/:id/addenda` and `/bd/addenda/:id/acknowledge` (dates move, the log `tdr_date_log` keeps the change).
+- **Queries** (FR-05): `/bd/tenders/:id/queries`, `/bd/queries/:id/{send,respond,no-response}`. **Team tasks** (FR-06): `/bd/tenders/:id/team-tasks`, each a task of 04.08.
+- **Calendar and reminders** (FR-07, T-02, ADR-347): `/bd/tender-reports/calendar`, `/dashboard`; job `bd.tender_daily`; widget `bd.tender_deadlines`.
+- **Events**: `bd.tender.{created,registered,amended,cancelled,bid_decided,addendum_issued,query_answered,ready,submitted}`.
+- **Browser**: Tender Dashboard, Tender Register, Tender, Bid / No-Bid, Bid / No-Bid Evaluation, Tender Calendar; Hindi through the `bd` namespace.
+
+## 76. Prequalification, EMD and tender fee, bid submission, competitor analysis and award (part 08.03)
+
+Behind feature flag `ff.bd.p0803` (module `bd`; needs 08.02). Code: `modules/bd/award.js` (credentials, EMD and fee, submissions, opening results, analysis, negotiations, awards, the daily cycle), `award-validators.js`, `award-routes.js`, `award-integrations.js` (Excel import `BD_CREDENTIAL`); client pages in `src/client/modules/bd`.
+
+- **Credentials library** (FR-01): `/bd/credentials` (CRUD, export); a tender's package `/bd/tenders/:id/credentials`, `/bd/tender-credentials/:id`; files through the entity `tdr_credential`. An expired credential is not linked.
+- **EMD and fee** (FR-02, BR-02, ADR-348, ADR-349): `/bd/emd` (CRUD, submit, withdraw, cancel, amend, issue, refund, print, export, ageing), `/bd/tenders/:id/emd`; workflow `TDR_EMD` (EST colleague, ACCMGR, CFO); the instrument is recorded by accounts (`bd.emd.instrument`) and masked for others; refunds (`bd.emd.refund`) due from the result, aged in four buckets; job `bd.emd_daily` (scheduler `bd.emd_daily_followups`, 01:55) follows them up and warns before a guarantee lapses.
+- **Submission** (FR-03, BR-01, ADR-350): `/bd/tenders/:id/submission`, `/bd/submissions` (create, update, submit, withdraw, amend, record); workflow `TDR_SUBMISSION` (EST colleague, then DIR); the checklist from `tdr.submission_checklist`; the bid security read from the approved and issued EMD and fee; recording the portal upload calls `markSubmitted` of 08.02.
+- **Opening results** (FR-04, T-01, ADR-351): `/bd/tenders/:id/results` (GET, PUT); ranks by `rankBids`; event `bd.tender.opened`; competitors in `tdr_competitors`.
+- **Competitor analysis** (FR-05): `/bd/competitor-reports` (by competitor, sector, region, month; filters sector, region, period), `/bd/competitors/:id`.
+- **Negotiation, award and loss** (FR-06, FR-07, ADR-352): `/bd/tenders/:id/negotiations`, `/bd/awards` (CRUD, submit, withdraw, cancel, print, export), `/bd/tenders/:id/award`; workflow `TDR_AWARD` (EST colleague, then DIR when won); approval calls `markOutcome` (08.02), `awardFromTender` / `loseFromTender` (08.01), makes the EMD refund due and publishes `tdr.tender.awarded` / `tdr.tender.lost`.
+- **Events**: `bd.emd.{requested,issued,refund_changed}`, `bd.submission.approved`, `bd.tender.opened`, `tdr.tender.awarded`, `tdr.tender.lost`.
+- **Browser**: Credentials Library, EMD & Fee Register (with refund ageing), EMD / Tender Fee, Bid Submission, Bid Opening Results, Competitor Analysis, Award / Loss, Awards & Losses; the tender page links to each by stage. Hindi through the `bd` namespace.
+
+## 77. Estimate workspace: versions, item build-up, indirects, contingency and the resource summary (part 09.01)
+
+Behind feature flag `ff.est.p0901` (new module `est`; needs 06.06 and 08.02). Code: `modules/est/estimate.js` (estimates, items, build-ups, indirects, risks, totals, re-pricing, versions, comparison, resources, print, the decision of the approval), `constants.js`, `validators.js`, `routes.js`, `integrations.js` (Excel import `EST_BOQ`); client pages in `src/client/modules/est`.
+
+- **Estimate** (FR-01, FR-07, ADR-353): `/est/estimates` (list, export, create, get, update, delete, versions, amend, submit, withdraw, cancel, history, print); a tender (read through `tendersOf(db).tenderRow`) or a project; workflow `EST_ESTIMATE` (resolver `est.reviewer`, then DIR, ADR-357).
+- **Items** (FR-02, FR-03, BR-01, ADR-354, ADR-355): `PUT /est/estimates/:id/items` saves the grid whole; each item is priced from a released analysis (`ratesOf(db).analyses.get`), a build-up of components priced from the resource rate library (`ratesOf(db).rateFor`) or a typed cost rate; `/boq` checks and adds pasted BOQ rows; `/reprice` moves flagged items to the newer analysis.
+- **Indirects and risks** (FR-04, FR-05): `PUT /indirects` (lump sum, quantity x rate, percentage of the direct cost), `PUT /risks` (exposure = impact x probability); the header holds HO overhead, contingency, escalation and GST percentages.
+- **Totals** (FR-08, BR-01): formulas `est.item_rate`, `est.percent_amount`, `est.estimate_total` of the calculation engine, traced against the estimate; the margin of each section through the same engine.
+- **Comparison and resources** (FR-06, FR-07): `/compare?with=` (items matched by item number; added, removed, changed; deltas; totals), `/resources` (analysis lines with wastage and build-up components times the item quantity, by kind; headline cement, steel, man-days, plant).
+- **Masking** (BR-02, ADR-356): `est.estimate.cost`; list, export, print and the API leave costs and margins out without it.
+- **Events**: `est.estimate.{created,versioned,boq_imported,approved}`; 08.03 reads the approved estimate of a tender for the submission.
+- **Browser**: Estimates, New Estimate, Estimate (items, cost and margin, indirect costs, risk and tax, versions, approvals), Import Client BOQ, Version Comparison, Resource Summary; Hindi through the `est` namespace.
+
+## 78. Quantity take-off, material take-off and bar bending schedules (part 09.02)
+
+Behind feature flag `ff.est.p0902` (module `est`; needs 09.01). Code: `modules/est/mto.js` (take-offs, engineering MTOs, bar bending schedules, revisions, the checker's decision, deltas, the explosion, the summary by diameter, print), `mto-validators.js`, `mto-routes.js`; the Excel import `EST_MTO` in `integrations.js`; client pages in `src/client/modules/est`.
+
+- **Take-off sheets and engineering MTOs** (FR-01, FR-03, ADR-358): `/est/takeoffs` (list, export, create, get, update, delete, lines, submit, withdraw, cancel, revisions, amend, history, delta, explosion, apply, print), `/est/takeoff-templates`; formula templates per kind of work; DIRECT lines with specs for EPC packages (pasted or imported).
+- **Bar bending schedules** (FR-02, BR-01, ADR-359): `/est/bbs` (the same actions), `/est/bbs-shapes` (the shape code library and the deductions), `/est/bbs-summary` (released schedules of a project, or one schedule, by diameter).
+- **Workflows**: `MTO_TAKEOFF`, `MTO_BBS` (resolver `mto.checker`).
+- **Formulas**: `mto.measure`, `mto.bbs_line`, `mto.requirement` of the calculation engine.
+- **Deltas and requirements** (FR-04, FR-05, BR-02, ADR-360, ADR-361): against the previous released revision; requirements stored in `mto_material_requirements` on release.
+- **Estimate** (FR-06, ADR-362): `estimates.applyQuantities` of 09.01.
+- **Events**: `est.takeoff.released`, `est.bbs.released`.
+- **Browser**: Take-off Sheets, Take-off Sheet (with the drawing beside), Bar Bending Schedules, BBS Editor (shape code library, weight while typing, summary by diameter), BBS Summary by Diameter, Revision Delta Report, Material Requirement Explosion; Hindi through the `est` namespace.
+
+## 79. Estimate review, approval, bid price summary and priced BOQ (part 09.03)
+
+Behind feature flag `ff.est.p0903` (module `est`; needs 09.01, 09.02 and 04.02). Code: `modules/est/review.js` (the panel, reviews, the bid summary and its discount, the assumptions register, sensitivity, unbalanced items, the priced BOQ), `review-validators.js`, `review-routes.js`; `estimateHooks` in `estimate.js`; client pages `ReviewPage.jsx`, `BidPricePage.jsx`.
+
+- **Review** (FR-01, FR-04, ADR-363): `GET /est/estimates/:id/review` (the panel), `/reviews` (list, record: approve or return the reviewer's task, or a note); workflow `EST_ESTIMATE` = COMMGR review with the checklist, then DIR.
+- **Bid price** (FR-02, BR-01, ADR-364, ADR-365): `/est/estimates/:id/bid-summary` (get, put the discount, submit and withdraw it), `/est/bid-summaries/:id`; formula `est.bid_price`; workflow `EST_DISCOUNT` (DIR); parameter `est.bid.discount_director_pct`.
+- **Register** (FR-03): `/est/estimates/:id/assumptions`.
+- **Sensitivity and unbalanced items** (FR-02, FR-06, ADR-366): `/sensitivity?pct=`, `/unbalanced`; parameters `est.unbalanced.band_points`, `est.unbalanced.client_band_pct`; for holders of `est.estimate.cost` only.
+- **Priced BOQ** (FR-05, ADR-367): `/priced-boq?format=xlsx|pdf|csv|html&words=` through the export writer, rates in words by `amountInWords`.
+- **Permissions**: `est.review.{view,perform}`, `est.bid.{edit,approve}`, `est.boq.export`; COMMGR also `est.estimate.approve`.
+- **Browser**: Estimate Review (checklist, bid price summary, sensitivity, unbalanced items, assumptions, reviews), Bid Price Finalisation (discount, summary, priced BOQ in Excel, PDF and print); links from the Estimate page.
+
+## 80. Project master, lifecycle and setup wizard (part 10.01)
+
+Behind feature flag `ff.proj.p1001` (new module `proj`; needs 02.02 and 06.04). Code: `modules/proj/project.js` (the wizard, the project master, activation, transitions, amendments, milestones, readiness and health, print, the workflows), `validators.js`, `routes.js`, `integrations.js` (lookups, Excel import `PROJ_MILESTONE`); in the organisation part `applyProjectStatus` and `activationGuards`; client pages `WizardPage`, `ProjectsPage`, `ProjectPage`.
+
+- **Project master** (FR-01, ADR-368): `/proj/projects` (list, export, create = the wizard, get, update, delete, submit, withdraw, cancel, amend, history, print), `/proj/project-options`, `/proj/project-prefill?tenderId=` (an awarded tender fills the wizard).
+- **Wizard** (ADR-369): one transaction for the organisation project, sites, project master, numbering series, document folders and milestones.
+- **Lifecycle** (FR-02, BR-01, ADR-370, ADR-371): `POST /proj/projects/:id/transitions`; workflows `PROJ_ACTIVATION`, `PROJ_TRANSITION`, `PROJ_CHANGE` (resolvers `proj.director`, `proj.pm`); readiness and health registries (`readinessProviders`, `healthProviders`).
+- **Amendment** (BR-02, ADR-372): `POST /proj/projects/:id/amend`.
+- **Settings** (FR-03): `settings_json`, defaults in `proj.settings_defaults`; **milestones** (FR-04): `/proj/projects/:id/milestones`, `/proj/milestones/:id`; **folders** (FR-05): the template of the document service; **portfolio** (FR-06, ADR-373): list with health.
+- **Events**: `proj.project.{created,activated,state_changed,amended}`, `proj.milestone.achieved`; the messaging auto-groups sync on `proj.project.activated`.
+- **Permissions**: `proj.project.{view,create,edit,delete,submit,approve,cancel,amend,print,export,view_all,transition,import}`, `proj.milestone.manage`; PCMGR and PD set up and configure, PM edits and moves within the project, DIR approves, transitions, prints and exports.
+- **Browser**: Project Portfolio, Project (details, sites, milestones, settings, lifecycle history, approvals, papers) with the activation, move and amendment panels, Project Setup Wizard in seven steps; Hindi through the `proj` namespace.
+
+## 81. Project from an award and the commercial baseline handover (part 10.02)
+
+Behind feature flag `ff.proj.p1002` (module `proj`; needs 10.01, 08.03 and 09.03). Code: `modules/proj/baseline.js` (the preview, the creation, the pack, the sign-off hook, the handover, the BOQ, the report, the workflow `PROJ_BASELINE`), routes in `routes.js` (`baselineRoutes`), inputs in `validators.js`; pages in `client/modules/proj/` (`FromAwardPage`, `BaselinePacksPage`, `BaselinePackPage`, `BaselineComparePage`).
+
+- **From an award** (FR-01, ADR-374, ADR-375): `GET /proj/award-candidates`, `GET /proj/award-preview?tenderId=`, `POST /proj/projects/from-award` (the wizard of 10.01 + the BOQ copy + the draft pack, one transaction), `GET /proj/boq?projectId=`.
+- **The pack** (FR-02, FR-04, BR-01, ADR-376 to ADR-378): `/proj/baseline-packs` (list, export, create for a project that has none, get, update clauses, delete, refresh, submit, withdraw, cancel, amend, history, verify, compare, print and document as HTML, PDF, XLSX or CSV); workflow `PROJ_BASELINE`; event `proj.baseline.signed_off`.
+- **Handover** (FR-03, ADR-379): `/proj/baseline-packs/:id/meetings`, `/proj/handover-meetings/:id`; events `proj.handover.held`; tasks through `tasksOf(db)`.
+- **Baseline vs current** (FR-05, ADR-380): `GET /proj/baseline-report?projectId=`; registry `currentProviders`.
+- **Other events**: `proj.project.created_from_award`.
+- **Permissions**: `proj.baseline_pack.{view,create,edit,delete,submit,approve,cancel,amend,print,export,cost}`, `proj.handover.manage`; EST, COMMGR and PD draft, send, sign and see costs; PCMGR drafts and sends without costs; PM sees and prints without costs and keeps the handover; DIR signs and sees costs.
+- **Browser**: Create Project from Award (preview, form), Commercial Baseline Packs, Commercial Baseline Pack (summary, BOQ, basis, clauses, handover, approvals, related), Baseline vs Current; Hindi through the `proj` namespace.
+
+## 82. WBS, work packages and the location breakdown (part 10.03)
+
+Behind feature flag `ff.proj.p1003` (module `proj`; needs 10.01). Code: `modules/proj/structure.js` (the WBS, the versions and changes, the work packages, the locations, the matrix, the workflow `PROJ_WBS_CHANGE`), routes in `routes.js` (`structureRoutes`), inputs in `validators.js`, imports in `integrations.js`; pages in `client/modules/proj/` (`WbsPage`, `LocationsPage`, `WorkPackagesPage`, `WorkPackagePage`, `ProjectPicker`).
+
+- **WBS** (FR-01, FR-02, FR-06, BR-01, BR-02, ADR-381, ADR-382, ADR-386): `/proj/wbs` (tree, create, update, delete, move, activate, deactivate, bulk, normalise, validate, template, copy, export XLSX/CSV/PDF), `/proj/wbs-projects`; Excel import type `PROJ_WBS`.
+- **Baseline and versions** (FR-07, ADR-383): `POST /proj/wbs/baseline`, `/proj/wbs-versions`, `/proj/wbs-changes` (create, get, submit, withdraw, cancel, history, locate); workflow `PROJ_WBS_CHANGE`.
+- **Work packages** (FR-03, ADR-384): `/proj/work-packages` (list, export, create, get, update, delete).
+- **Locations** (FR-04, ADR-385): `/proj/locations`; Excel import type `PROJ_LOCATION`. **Matrix** (FR-05): `/proj/wbs-matrix`.
+- **Registries for later parts**: `usageProviders`, `locationUsageProviders`; `structureOf(db).forProject()` reads the structure.
+- **Events**: `proj.wbs.updated`, `proj.wbs.baselined`, `proj.wbs.changed`, `proj.location.updated`, `proj.workpackage.updated`, `proj.matrix.updated`.
+- **Permissions**: `proj.wbs.{view,manage,baseline,change,approve,export,import}`; PLAN and PCMGR maintain and raise changes, PM baselines and approves, project roles view.
+- **Browser**: WBS Editor (tree with drag and drop, Move to, Undo, bulk edit, template, copy, matrix, versions, changes), Location Breakdown (tree and chainage table), Work Packages (list and form); Hindi through the `proj` namespace.
+
+## 83. BOQ management: versions, import, WBS mapping and resource norms (part 10.04)
+
+Behind feature flag `ff.proj.p1004` (module `proj`; needs 10.03 and 06.06; receives the BOQ copy of 10.02). Code: `modules/proj/boq.js` (versions, lines, mapping, norms, import, changes after the freeze, reports, documents, the workflows `PROJ_BOQ_FREEZE` and `PROJ_BOQ_MAPPING`), routes in `routes.js` (`boqRoutes`), inputs in `validators.js`, the import type in `integrations.js`; pages in `client/modules/proj/` (`BoqVersionsPage`, `BoqVersionPage`, `BoqImportPage`, `BoqMappingPage`, `BoqReportsPage`).
+
+- **Versions** (FR-01, FR-07, BR-02, ADR-387, ADR-389): `/proj/versions` (list, export, create from award, version or nothing, get, update, delete, submit, withdraw, cancel, amend, history, print, document XLSX/CSV/PDF in the client's columns), `POST /proj/versions/revised` (only from an approved variation), `GET /proj/versions/compare`.
+- **Lines** (FR-02, BR-01, ADR-388): `/proj/versions/:id/lines`, `/proj/boq-lines/:id`; **import** (FR-03, ADR-391): `POST /proj/versions/import/rows` (stage) and `POST /proj/versions/import`.
+- **Mapping and norms** (FR-04, FR-05, ADR-390): `/proj/boq-lines/:id/mapping`, `/proj/versions/:id/mapping/bulk`, `/proj/boq-lines/:id/norms`, `/norms/from-analysis`; changes after the freeze: `/proj/versions/:id/amend`, `/proj/boq-changes`.
+- **Reports**: abstract, unmapped items, comparison; **quantity status** (FR-06): `quantityProviders`.
+- **For later parts**: `boqOf(db).frozen(companyId, projectId)` returns the frozen BOQ with its mapping and norms; event `boq.version.frozen`.
+- **Events**: `boq.version.created`, `boq.version.frozen`, `boq.mapping.changed`.
+- **Permissions**: `proj.version.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `proj.boq.{map,import,rates}`; QS and EST prepare and map, COMMGR and PM approve, site roles read without rates.
+- **Browser**: BOQ Versions, BOQ (hierarchical grid), Import BOQ wizard, WBS and Location Mapping, BOQ Reports (abstract, comparison, unmapped); Hindi through the `proj` namespace.
+
+## 84. Project team, stakeholders, meetings and minutes (part 10.05)
+
+Behind feature flag `ff.proj.p1005` (module `proj`; needs 10.01 and 04.08). Code: `modules/proj/team.js` (team, stakeholders, communication matrix, workflow `PROJ_TEAM`), `modules/proj/meetings.js` (meetings, minutes, revisions, actions, workflow `PROJ_MEETING`, resolver `proj.chair`), routes in `routes.js` (`teamRoutes`), inputs in `validators.js`; the role engine's service is reached through `accessOf(db)` (added to `iam/access/service.js`); pages in `client/modules/proj/` (`TeamPage`, `StakeholdersPage`, `MeetingsPage`, `MeetingPage`, `ActionTrackerPage`).
+
+- **Team** (FR-01, BR-01, ADR-393): `/proj/team` (list, add, get, history, withdraw, cancel, end); event `proj.team.added`, `proj.team.ended`; the scoped assignment is requested of 02.04 and the messaging group follows its event (05.04).
+- **Stakeholders and matrix** (FR-02, FR-03, ADR-397): `/proj/stakeholders`, `/proj/comm-matrix` (list, create, update, delete, export).
+- **Meetings** (FR-04, BR-02, ADR-394, ADR-395): `/proj/meetings` (list, export, create, get, update, delete, submit, withdraw, cancel, amend = revision, history, print and document PDF/XLSX/CSV); event `proj.meeting.issued`; notification template `proj.mom.issued`.
+- **Actions** (FR-05, ADR-396): `/proj/meeting-actions` (tracker list, summary, owner update); tasks through `tasksOf(db)`; event `proj.action.updated`.
+- **Permissions**: `proj.meeting.{view,create,edit,delete,submit,approve,cancel,amend,print,export}`, `proj.team.{view,manage}`, `proj.stakeholder.{view,manage,contact,export}`, `proj.action.update`.
+- **Browser**: Project Team, Stakeholders (register and communication matrix), Meetings, Meeting (minutes, attendees, actions, approvals), Action Item Tracker; Hindi through the `proj` namespace.
+
+## 85. Risks, opportunities and issues (part 10.06)
+
+Module `proj`, flag `ff.proj.p1006`, tables `proj_risk_settings`, `proj_risks`, `proj_risk_actions`, `proj_risk_triggers`, `proj_risk_contingency`, `proj_risk_issues`, `proj_risk_snapshots`. The service is `modules/proj/risks.js` (`createRiskService`, `risksOf`, `riskExposureOf`, `drawdownExecutors`), routes in `routes.js` (`riskRoutes`), inputs in `validators.js`; pages in `client/modules/proj/` (`RiskDashboardPage`, `RisksPage`, `RiskPage`, `IssuesPage`, `IssuePage`).
+
+- **Register** (FR-01, FR-02, BR-01, ADR-399): `/proj/risks` (list, export, import, create, get, update, delete, submit = ask to close, withdraw, cancel, amend = reopen, history, print and document); risks and opportunities share the table (`rtype`), numbers `RSK-` and `OPP-`.
+- **Closure** (BR-02, ADR-400): workflow `PROJ_RISK_CLOSE` for high and critical items (project manager, resolver `proj.riskpm`); events `proj.risk.created`, `proj.risk.reassessed`, `proj.risk.closed`.
+- **Triggers** (FR-04, ADR-401): `/proj/risks/:id/triggers/:tid/reading|rearm`; alert dataset `proj.risk_trigger` and the library rule `risk.trigger_fired` of 04.09; event `proj.risk.trigger_fired`.
+- **Contingency** (FR-05, ADR-402): `/proj/risks/:id/contingency` and `/release`, `/proj/risk-settings` (pool and thresholds); events `proj.risk.contingency_allocated`, `proj.risk.drawdown_requested`; 12.02 settles through `risksOf(db).risks.settleDrawdown`.
+- **Review** (FR-06, ADR-403): `/proj/risk-reviews` (list, create, update, delete, submit, withdraw, cancel, history), workflow `PROJ_RISK_REVIEW` (project manager, then project director); `/proj/risk-dashboard` reads the live register and the approved snapshots.
+- **Issues** (FR-03, ADR-404): `/proj/issues` (list, export, import, create, get, update, delete, submit = resolve, withdraw, cancel, amend = reopen, history, print and document); events `proj.issue.raised`, `proj.issue.resolved`.
+- **Permissions**: `proj.risk.*` and `proj.issue.*` (view, create, edit, delete, submit, approve, cancel, amend, print, export).
+- **Browser**: Risk Dashboard (heat map, tiles with drill-down, top risks, EMV against contingency, trend, thresholds, monthly review), Risk and Opportunity Register, Risk (assessment, response and triggers, contingency, history), Issue Log, Issue; Hindi through the `proj` namespace.
+
+## 86. GIS, site maps and location intelligence (part 10.07)
+
+Module `proj`, flag `ff.proj.p1007`, tables `gis_layers`, `gis_overlays`, `gis_progress`. The service is `modules/proj/gis.js` (`createGisService`, `gisOf`, `pointProviders`, `normaliseGeo`, `kmlToGeo`, `geoToKml`), routes in `routes.js` (`gisRoutes`), inputs in `validators.js`; pages in `client/modules/proj/` (`ProjectMapPage`, `StripChartPage`, `GisConfigPage`); the client dependency is Leaflet, imported on demand.
+
+- **Map** (FR-01, FR-03, FR-07, BR-01, ADR-406 to ADR-409): `/proj/gis/map` returns the sites with geofences, the location breakdown with progress, the approved layers the caller's roles may see, the overlays, the points of every provider and the punch aggregates, plus the tile settings (parameters `gis.tile_url`, `gis.tile_attribution`).
+- **Layers and overlays** (FR-02, FR-06, ADR-405): `/proj/gis/layers` and `/proj/gis/overlays` (list, create, get, update, delete, submit, withdraw, cancel, history), `/proj/gis/layers/import` (GeoJSON or KML), `/proj/gis/layers/:id/export` (GeoJSON or KML); workflow `PROJ_GIS_CONFIG`; event `proj.gis.config_approved`.
+- **Progress** (FR-04, FR-05, ADR-410): `/proj/gis/progress`, `/proj/gis/heatmap`, `/proj/gis/strip`, `/proj/gis/strip/export` (XLSX, CSV, PDF); event `proj.gis.progress_recorded`.
+- **Permissions**: `proj.gis.{view,create,edit,delete,submit,approve,cancel,print,export,import,progress}`; all project users view, planner and site engineer maintain, project manager and project director approve.
+- **Browser**: Project Map (layer toggles, heatmap, legend, list mode), Chainage Progress Strip Chart (SVG chart, table, export, record progress), Layers and Overlays; Hindi through the `proj` namespace.
+
+## 87. Project 360 and the project dashboard (part 10.08)
+
+Module `proj`, flag `ff.proj.p1008`, table `proj_360_widgets`. The service is `modules/proj/p360.js` (`createP360Service`, `p360Of`, `registerProject360Widget`, `project360Providers`), routes in `routes.js` (`p360Routes`), inputs in `validators.js`; pages in `client/modules/proj/` (`Project360Page`, `PortfolioPage`).
+
+- **Page** (FR-01 to FR-04, ADR-412 to ADR-415): `/proj/project-360?projectId&period` returns the header (client, contract value original and current, start, scheduled and forecast completion, lifecycle state, project manager), the health of six dimensions and eight tabs of widgets; `/proj/project-360/export` (PDF, XLSX, CSV, audited).
+- **Slots** (FR-02, FR-06, BR-02): twenty rows of `proj_360_widgets`; ten have providers from live parts, ten are empty states that name the part (11.x to 23.x); a later part calls `registerProject360Widget(code, provider)`.
+- **Health** (BR-01, ADR-414): parameter `proj.rag_thresholds` per company.
+- **Portfolio** (FR-05): `/proj/portfolio-overview` (projects in scope, health, overdue milestones, critical risks, open issues; filter by health and name).
+- **Dashboard framework** (ADR-416): `ui_widgets` rows `proj.risks.critical`, `proj.milestones.late`, `proj.map.located`.
+- **Permissions**: `proj.p360.view`, `proj.p360.export`.
+- **Browser**: Project 360 (header, health tiles, tabs, period, export) and Portfolio Overview; Hindi through the `proj` namespace.
+
+
+## 88. Drawing control (part 11.01)
+
+Module `engg` (first of M11), flag `ff.engg.p1101`, tables `engg_drawings`, `engg_drawing_revisions`, `engg_drawing_links`, `engg_transmittals`, `engg_transmittal_items`, `engg_copies`. The services are `modules/engg/drawings.js` (`createEnggService`, `enggOf`, `drawingUseCheck`, `drawingsForTarget`) and `transmittals.js` (`createTransmittalService`); both are bound together at mount.
+
+- **Register and revisions** (FR-01, FR-02, ADR-417): a drawing row is the register entry with the denormalised current revision, current IFC and last response; each revision is the approval-controlled record (draft, waiting, issued, returned, rejected, cancelled, superseded).
+- **Approval** (ADR-418): workflow `ENGG_DRAWING_IFC` (resolver `engg.docCheck`, role DESIGN, resolver `engg.pm`) for IFC; other status codes issue on submit; workflow `ENGG_TRANSMITTAL` (document control, design coordinator) for outgoing transmittals for approval.
+- **Supersession** (BR-02, ADR-419): `issue()` marks the older issued revisions it replaces, supersedes their controlled copies, makes replacement copies for each holder, notifies them (`engg.drawing.superseded`) and publishes `engg.drawing.issued` and `engg.drawing.superseded`, in the transaction of the issue.
+- **Files** (FR-04, ADR-420): file entity `engg_drawing_revision`; an issued revision is readable by everyone who may see drawings, any other revision only by register staff.
+- **Distribution** (FR-04): `engg_copies` with acknowledgement by the holder; `/engg/site-drawings` lists the current IFC with the person's copy state.
+- **Transmittals** (FR-03, ADR-422): outgoing and incoming; responses A to D per item update the drawing and close the transmittal.
+- **For later parts** (FR-05, BR-01, ADR-421): `engg_drawing_links` and `drawingsForTarget`; `drawingUseCheck` for work authorisation (14.01).
+- **Schedule and dashboard** (FR-06): planned against actual receipt, overdue report, tiles.
+- **Permissions**: `engg.drawing.*` and `engg.transmittal.*`. **Browser**: Drawings Dashboard, Drawing Register, Drawing, Transmittals, Transmittal, Current Drawings for my Site; Hindi through the `engg` namespace.
+
+## 89. RFI management (part 11.02)
+
+Module `engg`, flag `ff.engg.p1102`, tables `engg_rfis`, `engg_rfi_routing`, `engg_rfi_delay_drafts`. The service is `modules/engg/rfis.js` (`createRfiService`, `rfiConstraintsOf`), bound with the services of 11.01.
+
+- **Life** (FR-02, ADR-424): draft, sent to the design coordinator (`ENGG_RFI_ISSUE`), issued to the consultant, answered, closure requested (`ENGG_RFI_CLOSE`: design coordinator, then the raiser's lead), closed; returned, rejected and cancelled on the way. `ball_in_court` and `engg_rfi_routing` record who holds it.
+- **Answer** (FR-03, BR-01, BR-02, ADR-425, ADR-427): clarification, design change or instruction; a design change names a drawing revision or an instruction; a time impact makes a delay draft; event `engg.rfi.responded`.
+- **Ageing, SLA, escalation** (FR-04, ADR-426): computed on the server; `escalate` notifies once.
+- **Hold** (FR-06): open RFIs with the hold flag are the constraints read by `/rfis/constraints` and `rfiConstraintsOf`.
+- **Files** (ADR-423): file entity `engg_rfi`.
+- **Permissions**: `engg.rfi.*`. **Browser**: RFI Dashboard, RFI Register, RFI, Raise RFI (mobile, photo and finger markup); the RFIs tab of the drawing page.
+
+## 90. Submittals (part 11.03)
+
+Module `engg`, flag `ff.engg.p1103`, tables `engg_submittals`, `engg_submittal_revisions`, `engg_approved_makes`, parameter `engg.po_mar_control`. The service is `modules/engg/submittals.js` (`createSubmittalService`, `procurementCheck`), bound with the services of 11.01 and 11.02.
+
+- **Life** (FR-03, ADR-428): draft, internal approval (`ENGG_SUBMITTAL`, resolver `engg.submittalReviewer`), with the consultant, response code A to D recorded; A and B approve, C starts a new revision, D rejects; amend reopens an approved, rejected or cancelled submittal as a new revision.
+- **Approved makes** (FR-04, ADR-429): an approved MAR writes `engg_approved_makes`; `/approved-makes`; event `engg.submittal.approved` carries the make, item, activity and HSE reference for 15.x, 18.03 and 19.01.
+- **Purchase-order check** (BR-01, ADR-430): `procurementCheck` and `/submittals/po-check`.
+- **Schedule** (FR-06): `/submittal-schedule`: required-by against submitted and responded, the overdue report, the count by type.
+- **Files** (ADR-431): file entity `engg_submittal`.
+- **Permissions**: `engg.submittal.*`. **Browser**: Submittal Register, Submittal, Submittal Schedule.
+
+## 91. EPC engineering deliverables and vendor document review (part 11.04)
+
+Module `engg`, flag `ff.engg.p1104`, tables `engg_deliverables`, `engg_crs`, `engg_vdr_items`, `engg_holds`, parameter `engg.progress_weights`. The services are `modules/engg/deliverables.js` (`createDeliverableService`) and `vdr.js` (`createVdrService`).
+
+- **Progress** (FR-02, BR-01, ADR-432, ADR-433, ADR-434): milestones recorded or released by approval (`ENGG_DELIVERABLE_IFC`); progress in basis points from the company weights; roll-up by discipline, package and project; S-curve; event `engg.progress.updated`.
+- **Comments and holds** (FR-03, FR-05): `engg_crs` per revision; `engg_holds` with the PO and activity; events `engg.hold.raised` and `engg.hold.cleared`.
+- **Vendor documents** (FR-04, ADR-435, ADR-436): `engg_vdr_items`, the tracker by PO and vendor, review code approved through `ENGG_VDR_REVIEW`; event `engg.vdr.reviewed`.
+- **Permissions**: `engg.deliverable.*`, `engg.vdr_item.*`. **Browser**: Engineering Progress, Deliverable Register, Deliverable, VDR Tracker, VDR item.
+
+## 92. Correspondence register (part 11.05)
+
+Module `engg`, flag `ff.engg.p1105`, tables `engg_letters`, `engg_letter_links`, `engg_time_bars`, parameter `engg.time_bar_alert_days`. The service is `modules/engg/letters.js` (`createLetterService`).
+
+- **Letters** (FR-01, FR-02, BR-01, ADR-437): inward registered and numbered; outward drafted from a standard text, approved (`ENGG_LETTER`: project manager, or commercial manager for a contractual notice), then numbered, printed on letterhead, issued by mode and acknowledged.
+- **Threads and replies** (FR-03): `parent_letter_id`; an inward letter is answered by an issued reply; overdue replies alert once.
+- **Time bars** (FR-04, BR-02, ADR-438, ADR-439): `engg_time_bars` with the deadline; alert steps 7, 3, 1 and lapse; served by an outward letter; alert dataset `engg.time_bar`.
+- **Confidentiality** (ADR-440): `engg.letter.view_confidential`. **Files**: entity `engg_letter`. **Templates** (ADR-441).
+- **Events**: `engg.letter.registered`, `engg.letter.issued`, `engg.letter.acknowledged`, `engg.letter.response_overdue`, `engg.timebar.opened`, `engg.timebar.alert`, `engg.timebar.served`, `engg.timebar.lapsed`.
+- **Permissions**: `engg.letter.*`. **Browser**: Correspondence Register, Letter, Draft Outward Letter, Notices and Time Bars.
+
+## 93. Project budget (part 12.01)
+Module `bud` (flag `ff.bud.p1201`), tables `bud_budgets`, `bud_lines`, `bud_phasing`, parameters `bud.target_margin_pct` and `bud.default_cost_codes`. The service is `modules/bud/budgets.js` (`createBudgetService`).
+
+- **Generation** (FR-01, ADR-442, ADR-443): preview and generate from the approved baseline pack and BOQ version; a line per WBS node x cost code x resource; generated values kept beside adjustments with reasons.
+- **Overheads, contingency, reserve** (FR-03, FR-04): lines of kind OVERHEAD, CONTINGENCY, RESERVE, not on a WBS node for the last two.
+- **Views** (FR-02): by WBS, cost head, resource, work package and control account; every view reconciles to the total.
+- **Phasing** (FR-05, ADR-446): `bud_phasing`, profiles, manual per line, schedule later (13.02).
+- **Margin** (FR-06, BR-01, ADR-444). **Quantity and amount** (BR-02): material, labour and plant lines need both.
+- **Versions** (FR-07, ADR-445) and **approval** (`BUD_BUDGET`: PCMGR, PM, PD, DIR from ₹ 50 crore; ADR-447).
+- **Events**: `bud.budget.generated`, `bud.budget.approved` (read by the budget check 12.03, the project control engine 14.07 and the EAC 23.11), `bud.budget.revised`.
+- **Permissions**: `bud.budget.*`. **Browser**: Budget Versions, Budget Workbench, Generate Budget from Baseline.
+
+## 94. Budget revisions, transfers and contingency drawdown (part 12.02)
+Module `bud` (flag `ff.bud.p1202`), tables `bud_changes`, `bud_change_lines`. The service is `modules/bud/changes.js` (`createChangeService`), built on the budget service of 12.01 (`budgetBase`).
+
+- **Requests** (FR-01, FR-02, FR-03): revision, transfer (nets to zero), drawdown against a risk of 10.06 (not above the contingency left); the impact preview (total, share, margin, band) is computed by the server (`POST /changes/preview`).
+- **Approval** (BR-02, ADR-451): `BUD_CHANGE` (PCMGR, PD, DIR above 5 %), `BUD_DRAWDOWN` (PM, PD).
+- **Applying** (FR-05, ADR-448, ADR-449, ADR-453): a new approved version in force; `currentOf(projectId)` (`budgetCurrent`) is the budget the checks read.
+- **Variations** (FR-04, ADR-452): consumer `bud.variation` of `ctr.variation.approved`.
+- **Comparison**: `GET /compare` by line, cost head or WBS, with the versions and the change that made each; CSV export.
+- **Events**: `bud.change.approved`, `bud.budget.revised` (also from 12.01 revisions; the draft start of a 12.01 revision is now `bud.budget.revision_started`).
+- **Permissions**: `bud.change.*`. **Browser**: Budget Change Requests, Budget Change Request (form with the impact preview), Budget Version Comparison.
+
+## 95. Budget check service and commitment ledger (part 12.03)
+Module `bud` (flag `ff.bud.p1203`), tables `bud_check_config`, `bud_commitments`, `bud_commitment_log`, `bud_actuals`. The service is `modules/bud/ledger.js` (`createLedgerService`).
+
+- **Check** (FR-01, ADR-454, ADR-457): `POST /check` and `GET /availability`; available = budget in force (12.01, 12.02) − open commitments − actuals, for a WBS node and cost code.
+- **Ledger** (FR-02, FR-03, ADR-455, ADR-456): commitments by document line with amendment, short-close, cancel and PR replacement; actuals by source consuming commitments once; reconciliation by `bud_commitment_log`.
+- **Exception path** (FR-04, ADR-458): control point `CP-BUD-01` of the protocol and control engine.
+- **Settings** (ADR-460): `BUD_CHECK_CONFIG`, maker and checker.
+- **Events consumed** (ADR-459): `proc.pr|po|hire_order|service_order.*` and `ctr.workorder.*` with data `{ projectId, sourceType, sourceId, docRef, vendorRef, vendorName, replaces?, lines: [{ lineId, wbsId, costCodeId, resourceType, qty, amount, description }] }`; `inv.grn|inv.issue|ap.bill|hr.payroll|plant.cost.posted|reversed` with `{ projectId, sourceType, sourceId, date, lines: [{ ..., commitment?: { sourceType, sourceId, lineId } }] }`. **Events published**: `bud.commitment.changed`, `bud.actual.posted` (project control engine 14.07), `bud.check.config_changed`.
+- **Report** (FR-06): `GET /ledger` by WBS, cost code, cost head or vendor with drill-down documents and CSV.
+- **Permissions**: `bud.ledger.{view,export,post}`, `bud.check.{use,view,configure,approve}`. **Browser**: Budget vs Committed vs Actual (with the availability panel), Budget Check Settings; component `AvailabilityPanel`.
+

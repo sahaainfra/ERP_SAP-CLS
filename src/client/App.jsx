@@ -12,6 +12,7 @@ import ContextSwitcher from './modules/iam/components/ContextSwitcher.jsx';
 import AppearanceSync from './modules/ui/AppearanceSync.jsx';
 import Icon from './platform/design/Icon.jsx';
 import { APPEARANCE_EVENT, THEMES, announceAppearance, applyAppearance, storedAppearance } from './platform/design/appearance.js';
+import OfferResponsePage from './modules/hr/OfferResponsePage.jsx';
 import AcceptInvitePage from './modules/iam/pages/AcceptInvitePage.jsx';
 import { confirmLeave } from './platform/forms/guard.js';
 import { FeedbackProvider } from './platform/feedback/Feedback.jsx';
@@ -92,7 +93,7 @@ function Shell({ iam, user }) {
   const devIdentity = !iam && s?.environment !== 'production';
   // A person with no approved role (restricted onboarding, part 02.03) gets a welcome page, their profile and their security pages.
   const onboarding = Boolean(iam && s?.onboarding === true);
-  const nav = (s ? routesFor(s.permissions) : []).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
+  const nav = (s ? routesFor(s.permissions) : []).filter((r) => r.menu !== false).filter((r) => (onboarding ? r.onboarding : !r.onboardingOnly));
   const shellOn = mode === 'on';
   const found = findRoute(path.split('?')[0]);
   const field = useFlag('ff.ui.p0306', shellOn);
@@ -203,6 +204,8 @@ export default function App({ authMode = 'dev-headers' }) {
 
   // An invitation link is opened before anybody is signed in, in either mode.
   if (window.location.pathname === '/accept-invite') return <AcceptInvitePage />;
+  // the offer a candidate opens from the link they were given (part 07.02)
+  if (window.location.pathname === '/offer-response') return <OfferResponsePage />;
   // a secure approval link is opened before anybody is signed in (part 04.03)
   if (window.location.pathname === '/approve-link') return <ApproveLinkPage />;
   // the page a QR code on a document leads to is public (part 04.12)

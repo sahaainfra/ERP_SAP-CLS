@@ -1,0 +1,127 @@
+import { fromUnits, toUnits } from '../../../shared/money.js';
+
+// Shared constants of the project master (part 10.01). Money in paise (x 100), percentages x 10 000, as in the other parts.
+export const ACTIVATION_DOC = 'PROJ_ACTIVATION';
+export const TRANSITION_DOC = 'PROJ_TRANSITION';
+export const CHANGE_DOC = 'PROJ_CHANGE';
+export const STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+/** FR-02: the lifecycle states, in order. */
+export const STATES = { SETUP: 'Setup', MOBILISATION: 'Mobilisation', EXECUTION: 'Execution', SUSPENDED: 'Suspended', SUBSTANTIALLY_COMPLETE: 'Substantially complete', DLP: 'Defect liability period', CLOSED: 'Closed', ARCHIVED: 'Archived' };
+/** What the project of the organisation master shows for each state (02.02). */
+export const ORG_STATUS = { SETUP: 'DRAFT', MOBILISATION: 'ACTIVE', EXECUTION: 'ACTIVE', SUSPENDED: 'ON_HOLD', SUBSTANTIALLY_COMPLETE: 'COMPLETED', DLP: 'COMPLETED', CLOSED: 'CLOSED', ARCHIVED: 'CLOSED' };
+/** FR-02: the allowed moves; `approval` moves go through the chain (PM, PD, DIR), the others are made by those who hold the right, with their checklist. SETUP to MOBILISATION is the activation (its own approval). */
+export const TRANSITIONS = [
+  { from: 'MOBILISATION', to: 'EXECUTION', approval: false }, { from: 'EXECUTION', to: 'SUSPENDED', approval: true }, { from: 'SUSPENDED', to: 'EXECUTION', approval: false },
+  { from: 'EXECUTION', to: 'SUBSTANTIALLY_COMPLETE', approval: false }, { from: 'SUBSTANTIALLY_COMPLETE', to: 'DLP', approval: false }, { from: 'SUBSTANTIALLY_COMPLETE', to: 'CLOSED', approval: true },
+  { from: 'DLP', to: 'CLOSED', approval: true }, { from: 'SUSPENDED', to: 'CLOSED', approval: true }, { from: 'CLOSED', to: 'ARCHIVED', approval: false },
+];
+export const CONTRACT_TYPES = { ITEM_RATE: 'Item rate', LUMP_SUM: 'Lump sum', EPC: 'EPC', HAM: 'Hybrid annuity (HAM)', COST_PLUS: 'Cost plus' };
+export const SECTORS = ['BUILDING', 'ROADS', 'BRIDGES', 'WATER', 'INDUSTRIAL', 'EPC', 'RAIL', 'OTHER'];
+export const MILESTONE_STATUS = { PLANNED: 'Planned', ACHIEVED: 'Achieved', WAIVED: 'Waived' };
+/** FR-03: the settings of a project and their defaults; a company sets its own defaults in the parameter `proj.settings_defaults`. */
+export const SETTINGS_DEFAULTS = { units: 'METRIC', currency: 'INR', calendar: 'STANDARD_6DAY', workingDays: [1, 2, 3, 4, 5, 6], holidaysFrom: 'COMPANY', costCodeTemplate: 'STANDARD', wbsTemplate: 'BUILDING', approvalOverrides: [], enabledModules: ['PLANNING', 'BUDGET', 'PROCUREMENT', 'STORES', 'SITE', 'BILLING', 'HR', 'QHSE'], budgetRequired: true, planningRequired: true };
+/** FR-02: the checklist of each move (every item is ticked before the move; the log keeps what was ticked). */
+export const CHECKLISTS = {
+  ACTIVATE: ['Contract summary and key dates checked against the contract', 'Client, consultant and funding agency are the ones of the contract', 'Sites and their geofences checked', 'Project manager and project director named'],
+  'MOBILISATION>EXECUTION': ['Site established and access agreed with the client', 'Approved budget in place', 'Baseline schedule in place', 'Key people mobilised'],
+  'EXECUTION>SUSPENDED': ['Written instruction or reason for the suspension recorded', 'Client or consultant informed', 'Site safe and secured', 'Labour and plant demobilisation plan agreed'],
+  'SUSPENDED>EXECUTION': ['Written instruction to resume recorded', 'Schedule impact assessed', 'Site, labour and plant ready to restart'],
+  'EXECUTION>SUBSTANTIALLY_COMPLETE': ['Completion certificate or taking-over certificate received', 'Punch list agreed with the client', 'Revised completion date recorded if it moved'],
+  'SUBSTANTIALLY_COMPLETE>DLP': ['Start of the defect liability period agreed in writing', 'Retention and guarantee position checked', 'Defect liability team named'],
+  'SUBSTANTIALLY_COMPLETE>CLOSED': ['All contractual milestones achieved or waived', 'Final account and retention release settled', 'Handover documents and as-built drawings delivered'],
+  'DLP>CLOSED': ['Defect liability period ended or waived in writing', 'All defects rectified and accepted', 'Final account and retention release settled', 'Handover documents and as-built drawings delivered'],
+  'SUSPENDED>CLOSED': ['Termination or closure instruction recorded', 'Final account position known', 'Handover documents and records secured'],
+  'CLOSED>ARCHIVED': ['Records handed to the archive', 'No open transaction on the project'],
+};
+const trim = (s) => (s.includes('.') ? s.replace(/0+$/, '').replace(/\.$/, '') : s);
+export const num = (u, kind) => (u == null ? null : trim(fromUnits(u, kind).toFixed()));
+export const money = (u) => (u == null ? null : fromUnits(u, 'money').toFixed(2));
+export const units = (v, kind) => toUnits(String(v ?? '0'), kind);
+export const nowIso = () => new Date().toISOString();
+export const json = (s, d) => { try { return JSON.parse(s ?? ''); } catch { return d; } };
+export const same = (a, b) => Boolean(a && b && String(a).toLowerCase() === String(b).toLowerCase());
+export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+export const rid = (v) => parseInt(String(v), 10);
+export const keyOf = (from, to) => `${from}>${to}`;
+
+// Part 10.02: the commercial baseline pack.
+export const BASELINE_DOC = 'PROJ_BASELINE';
+export const BASELINE_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for sign-off', APPROVED: 'Signed off', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', SUPERSEDED: 'Superseded' };
+/** The director signs the baseline of a project above this contract value (₹ 50 crore); the chain itself is configurable in the workflow settings. */
+export const DIRECTOR_ABOVE_RUPEES = 500_000_000;
+
+// Part 10.03: the project structure (WBS, work packages, location breakdown). Percentages x 10 000 (100 % = 1 000 000), chainage in metres.
+export const WBS_CHANGE_DOC = 'PROJ_WBS_CHANGE';
+export const HUNDRED = 1_000_000;
+export const MAX_LEVEL = 10;
+export const DISCIPLINES = { GENERAL: 'General and preliminaries', CIVIL: 'Civil', STRUCTURAL: 'Structural', ARCHITECTURAL: 'Architectural and finishes', MEP: 'Mechanical, electrical and plumbing', ROADS: 'Roads and pavement', BRIDGES: 'Bridges and structures', WATER: 'Water and pipelines', PLANT: 'Plant and equipment', QUALITY: 'Quality and testing' };
+export const WP_TYPES = { SELF: 'Self execution', SUBCONTRACT: 'Subcontract', PROCUREMENT: 'Procurement' };
+export const WP_STATUS = { ACTIVE: 'Active', INACTIVE: 'Inactive', CLOSED: 'Closed' };
+export const LOC_TYPES = { BLOCK: 'Block', BUILDING: 'Building', FLOOR: 'Floor', ZONE: 'Zone or flat', ROOM: 'Room', CHAINAGE: 'Chainage segment', STRUCTURE: 'Structure' };
+/** What may sit under what in the location breakdown ('' = the top level). */
+export const LOC_RULES = { '': ['BLOCK', 'BUILDING', 'CHAINAGE', 'STRUCTURE'], BLOCK: ['BUILDING'], BUILDING: ['FLOOR', 'ZONE'], FLOOR: ['ZONE', 'ROOM'], ZONE: ['ZONE', 'ROOM'], ROOM: [], CHAINAGE: ['STRUCTURE', 'ZONE'], STRUCTURE: ['ZONE'] };
+export const CHAINAGE_TYPES = ['CHAINAGE', 'STRUCTURE'];
+export const VERSION_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+/** FR-02: WBS templates by project type (a company may replace them in the parameter `proj.wbs_templates`); `ca` marks a control account. Weights are shared equally among siblings. */
+const n = (name, discipline, children, ca = false) => ({ name, ...(discipline ? { discipline } : {}), ...(children ? { children } : {}), ...(ca ? { ca: true } : {}) });
+export const WBS_TEMPLATES = {
+  BUILDING: { label: 'Building', tree: [n('Preliminaries and site establishment', 'GENERAL', null, true), n('Substructure', 'CIVIL', [n('Excavation and earthwork'), n('Foundations'), n('Plinth and basement')], true), n('Superstructure', 'STRUCTURAL', [n('RCC frame'), n('Masonry')], true), n('Finishes', 'ARCHITECTURAL', [n('Plaster and paint'), n('Flooring and dado'), n('Doors, windows and glazing')], true), n('MEP services', 'MEP', [n('Electrical'), n('Plumbing and drainage'), n('HVAC and fire fighting')], true), n('External development', 'CIVIL', null, true), n('Testing, commissioning and handover', 'QUALITY', null, true)] },
+  ROAD: { label: 'Road', tree: [n('Preliminaries and site establishment', 'GENERAL', null, true), n('Earthwork', 'ROADS', [n('Clearing and grubbing'), n('Excavation'), n('Embankment and subgrade')], true), n('Sub-base and base', 'ROADS', [n('Granular sub-base'), n('Wet mix macadam')], true), n('Bituminous pavement', 'ROADS', [n('Dense bituminous macadam'), n('Bituminous concrete')], true), n('Drainage and cross-drainage', 'CIVIL', [n('Culverts'), n('Side drains')], true), n('Road furniture and safety', 'ROADS', [n('Signs and markings'), n('Crash barriers')], true), n('Testing and handover', 'QUALITY', null, true)] },
+  BRIDGE: { label: 'Bridge', tree: [n('Preliminaries and site establishment', 'GENERAL', null, true), n('Foundations', 'BRIDGES', [n('Piling'), n('Pile caps and well foundations')], true), n('Substructure', 'BRIDGES', [n('Piers'), n('Abutments'), n('Pier caps and bearings')], true), n('Superstructure', 'BRIDGES', [n('Girders and deck slab'), n('Expansion joints')], true), n('Approaches and protection', 'CIVIL', [n('Approach embankment'), n('River training and protection')], true), n('Finishing and furniture', 'BRIDGES', [n('Wearing coat'), n('Railings and drainage spouts')], true), n('Load testing and handover', 'QUALITY', null, true)] },
+  WATER_PIPELINE: { label: 'Water pipeline', tree: [n('Preliminaries and site establishment', 'GENERAL', null, true), n('Survey and trenching', 'WATER', [n('Survey and marking'), n('Trench excavation'), n('Bedding and backfill')], true), n('Pipe supply and laying', 'WATER', [n('Pipe supply'), n('Laying and jointing'), n('Valves and fittings')], true), n('Chambers and structures', 'CIVIL', [n('Valve chambers'), n('Thrust blocks and crossings')], true), n('Pumping and storage', 'PLANT', [n('Pump house'), n('Storage reservoir')], true), n('Testing, disinfection and commissioning', 'QUALITY', null, true)] },
+  INDUSTRIAL_PLANT: { label: 'Industrial plant', tree: [n('Preliminaries and site establishment', 'GENERAL', null, true), n('Civil and foundations', 'CIVIL', [n('Earthwork and piling'), n('Equipment foundations'), n('Plant buildings')], true), n('Structural steel', 'STRUCTURAL', [n('Fabrication'), n('Erection')], true), n('Mechanical equipment', 'PLANT', [n('Equipment erection'), n('Piping')], true), n('Electrical and instrumentation', 'MEP', [n('Power and cabling'), n('Instrumentation and control')], true), n('Insulation, painting and fire protection', 'MEP', null, true), n('Pre-commissioning, commissioning and handover', 'QUALITY', null, true)] },
+};
+
+// Part 10.04: BOQ management. Quantities x 1 000, rates x 10 000, amounts in paise.
+export const BOQ_FREEZE_DOC = 'PROJ_BOQ_FREEZE';
+export const BOQ_MAP_DOC = 'PROJ_BOQ_MAPPING';
+export const BOQ_VTYPES = { TENDER: 'Tender', CONTRACT: 'Contract', REVISED: 'Revised' };
+export const BOQ_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Frozen', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+export const LINE_KINDS = { BILL: 'Bill', SECTION: 'Section', ITEM: 'Item', SUBITEM: 'Sub-item' };
+export const NORM_TYPES = { MATERIAL: 'Material', LABOUR: 'Labour', EQUIPMENT: 'Equipment', TRANSPORT: 'Transport', SUBCONTRACT: 'Subcontract', OTHER: 'Other' };
+/** BR-01: amount in paise = quantity (x 1 000) x rate (x 10 000) / 100 000, rounded half up. */
+export const lineAmount = (qty, rate) => Number((BigInt(qty) * BigInt(rate) + 50000n) / 100000n);
+
+// Part 10.05: the project team, stakeholders, communication matrix, meetings and minutes.
+export const TEAM_DOC = 'PROJ_TEAM';
+export const MEETING_DOC = 'PROJ_MEETING';
+export const TEAM_STATUS = { REQUESTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', ENDED: 'Ended' };
+export const SKINDS = { CLIENT: 'Client', CONSULTANT: 'Consultant', AUTHORITY: 'Authority', FUNDER: 'Funding agency', SUBCONTRACTOR: 'Subcontractor', SUPPLIER: 'Supplier', COMMUNITY: 'Community', OTHER: 'Other' };
+export const LEVELS = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' };
+export const FREQUENCIES = { DAILY: 'Daily', WEEKLY: 'Weekly', FORTNIGHTLY: 'Fortnightly', MONTHLY: 'Monthly', QUARTERLY: 'Quarterly', ON_EVENT: 'On an event' };
+export const CHANNELS = { EMAIL: 'E-mail', MEETING: 'Meeting', PORTAL: 'Portal', REPORT: 'Report', LETTER: 'Letter', PHONE: 'Phone' };
+export const MTYPES = { KICKOFF: 'Kick-off', WEEKLY_PROGRESS: 'Weekly progress', COORDINATION: 'Coordination', SAFETY: 'Safety', CLIENT_REVIEW: 'Client review', OTHER: 'Other' };
+export const MEETING_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for the chair', APPROVED: 'Issued', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', SUPERSEDED: 'Superseded by a revision' };
+export const ACTION_STATUS = { OPEN: 'Open', IN_PROGRESS: 'In progress', BLOCKED: 'Blocked', DONE: 'Done', CANCELLED: 'Cancelled' };
+
+// ---- Part 10.06: risks, opportunities and issues ----
+export const RISK_CLOSE_DOC = 'PROJ_RISK_CLOSE';
+export const RISK_REVIEW_DOC = 'PROJ_RISK_REVIEW';
+export const RTYPES = { RISK: 'Risk', OPPORTUNITY: 'Opportunity' };
+export const RISK_CATEGORIES = { TECHNICAL: 'Technical', COMMERCIAL: 'Commercial', CONTRACTUAL: 'Contractual', SAFETY: 'Safety', ENVIRONMENTAL: 'Environmental', FINANCIAL: 'Financial', STATUTORY: 'Statutory' };
+export const RISK_STRATEGIES = { AVOID: 'Avoid', MITIGATE: 'Mitigate', TRANSFER: 'Transfer', ACCEPT: 'Accept', EXPLOIT: 'Exploit', ENHANCE: 'Enhance', SHARE: 'Share' };
+export const RISK_STRATEGY_OF = { RISK: ['AVOID', 'MITIGATE', 'TRANSFER', 'ACCEPT'], OPPORTUNITY: ['EXPLOIT', 'ENHANCE', 'SHARE', 'ACCEPT'] };
+export const RISK_STATUS = { OPEN: 'Open', CLOSE_REQUESTED: 'Closure waiting for the project manager', CLOSED: 'Closed', OCCURRED: 'Occurred (issue raised)', CANCELLED: 'Cancelled' };
+export const RISK_LEVELS = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', CRITICAL: 'Critical' };
+export const ISSUE_STATUS = { OPEN: 'Open', IN_PROGRESS: 'In progress', RESOLVED: 'Resolved', CANCELLED: 'Cancelled' };
+export const SNAP_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for review', APPROVED: 'Reviewed', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+export const TRIGGER_COMPARATORS = { GTE: 'is at least', GT: 'is above', LTE: 'is at most', LT: 'is below' };
+/** BR-01: the heat-map thresholds are configurable per project. A score is probability (1-5) x the worst impact (1-5); each level starts at the score given. The probability scale gives the chance behind each 1-5 (percent x 10 000). */
+export const HEATMAP_DEFAULTS = { medium: 5, high: 10, critical: 15, probabilityPct: [100000, 300000, 500000, 700000, 900000] };
+export const RISK_LEVEL_ORDER = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+export const levelOf = (score, t = HEATMAP_DEFAULTS) => (score >= t.critical ? 'CRITICAL' : score >= t.high ? 'HIGH' : score >= t.medium ? 'MEDIUM' : 'LOW');
+export const emvOf = (probabilityPct, exposureMl) => Number((BigInt(probabilityPct) * BigInt(exposureMl) + 500000n) / 1000000n);
+
+// ---- Part 10.07: GIS, site maps and location intelligence ----
+export const GIS_DOC = 'PROJ_GIS_CONFIG';
+export const GIS_LTYPES = { BOUNDARY: 'Site boundary', ALIGNMENT: 'Alignment', WORK_FRONT: 'Work front', STORE: 'Store', CAMP: 'Camp', EQUIPMENT: 'Equipment', CUSTOM: 'Custom' };
+export const GIS_CFG_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+/** BR-01: a punch cell is shown only when at least this many different people punched in it; nothing individual is ever returned. */
+export const PUNCH_MIN_PEOPLE = 5;
+
+// ---- Part 10.08: Project 360 ----
+export const P360_TABS = ['overview', 'time', 'cost', 'resources', 'quality_hse', 'commercial', 'documents', 'activity'];
+export const P360_TAB_LABELS = { overview: 'Overview', time: 'Time', cost: 'Cost', resources: 'Resources', quality_hse: 'Quality & HSE', commercial: 'Commercial', documents: 'Documents', activity: 'Activity' };
+export const HEALTH_DIMENSIONS = { TIME: ['Time', 'Key dates and milestones', '10.01'], COST: ['Cost', 'Budget and cost control', '12.x and 14.07'], QUALITY: ['Quality', 'Inspections and non-conformances', '18.x'], SAFETY: ['Safety', 'Incidents and observations', '19.x'], CASH: ['Cash', 'Billing and collections', '22.x and 23.x'], RISK: ['Risk', 'Risk register', '10.06'] };
+/** BR-01: the health thresholds of a company (parameter `proj.rag_thresholds`): days a planned milestone may be late before amber and red, how many critical risks make red, how many high risks make amber; SPI and CPI are read by the schedule and cost modules (13.x, 12.x) when they are live. */
+export const RAG_DEFAULTS = { milestoneLateDaysAmber: 1, milestoneLateDaysRed: 14, riskCriticalRed: 1, riskHighAmber: 1, spiAmber: 0.95, spiRed: 0.9, cpiAmber: 0.95, cpiRed: 0.9 };

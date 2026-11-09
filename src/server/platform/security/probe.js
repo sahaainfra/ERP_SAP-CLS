@@ -24,7 +24,7 @@ export async function runRouteTests({ app, db, routes, limiter, authMode }) {
       const anon = await call(r.method, r.path, {});
       if (anon !== 401) problems.push(`without signing in: ${anon}, expected 401`);
       if (authMode === 'dev-headers') {
-        const emp = await call(r.method, r.path, { 'x-erp-user': 'route-self-test', 'x-erp-roles': 'EMP', 'x-erp-company': '1' });
+        const emp = await call(r.method, r.path, { 'x-erp-user': 'route-self-test', 'x-erp-roles': 'NOROLE', 'x-erp-company': '1' });
         if (rule.g === 'permission' && emp !== 403) problems.push(`as a person with no permissions: ${emp}, expected 403`);
         if (rule.g !== 'permission' && emp >= 500) problems.push(`as a person with no permissions: server error ${emp}`);
       }

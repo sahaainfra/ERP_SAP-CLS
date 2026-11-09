@@ -15,7 +15,7 @@ export default function MentionsInbox({ navigate }) {
       <div className="toolbar">
         <button type="button" className={`lr-chip${all ? '' : ' is-on'}`} aria-pressed={!all} onClick={() => setAll(false)}>Unread</button>
         <button type="button" className={`lr-chip${all ? ' is-on' : ''}`} aria-pressed={all} onClick={() => setAll(true)}>All</button>
-        <button type="button" className="btn btn-small" disabled={!q.data?.unread || read.isPending} onClick={() => read.mutate({ all: true })}>Mark all as read</button>
+        <button type="button" className="btn btn-small" disabled={!q.data?.unread || read.isPending} onClick={() => read.mutate({ all: true })}>Mark all mentions as read</button>
       </div>
       {q.isPending && <Skeleton label="Loading mentions" rows={2} />}
       {q.isError && <QueryError error={q.error} what="your mentions" permission="" onRetry={q.refetch} />}

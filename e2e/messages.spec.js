@@ -74,6 +74,7 @@ test('AC-01 AC-02 FR-02 FR-03 FR-04 FR-07 one Messages app: a direct conversatio
   await a.page.getByTestId('compose-file').setInputFiles([{ name: 'site.png', mimeType: 'image/png', buffer: PNG }]);
   await expect(a.page.getByRole('list', { name: 'Attached' })).toContainText('site.png');
   await a.page.getByTestId('compose-record').click();
+  await a.page.getByLabel('Kind of record').selectOption('sample_doc'); // many kinds can be linked now; the sample document is chosen, not assumed to be first
   await a.page.getByTestId('picker-q').fill('bridge');
   await a.page.getByTestId('picker-row').first().click();
   await a.page.getByTestId('compose-input').fill('Please check the drawing and the document');

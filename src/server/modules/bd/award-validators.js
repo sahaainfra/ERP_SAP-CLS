@@ -1,0 +1,38 @@
+import { z } from 'zod';
+import { parse } from '../../platform/validation/index.js';
+import { CRED_TYPES, EMD_MODES } from './award.js';
+import { SECTORS } from './constants.js';
+
+// Inputs of the prequalification, EMD, submission, opening and award API (part 08.03). The service checks the rules again (amounts against the tender, the checklist, the ranks) and recomputes the figures.
+const id = z.coerce.number().int().min(1);
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date such as 2026-12-01');
+const dateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Use a date and time such as 2026-12-01T15:00');
+const text = (max) => z.string().trim().max(max);
+const optText = (max) => z.string().trim().max(max).nullish().transform((v) => v || null);
+const reason = z.string().trim().min(5, 'Say why (at least 5 characters)').max(1000);
+const money = z.number().min(0).max(1_000_000_000_000);
+const version = z.number().int().min(1);
+const clean = (q) => Object.fromEntries(Object.entries(q ?? {}).filter(([, v]) => v !== '' && v !== undefined));
+const keys = (o) => /** @type {[string, ...string[]]} */ (Object.keys(o));
+export const parseId = (v) => parse(id, v);
+export const parseReason = (b) => parse(z.object({ reason }).strict(), b ?? {});
+const cred = { type: z.enum(keys(CRED_TYPES)), title: text(200).min(3), clientName: optText(160), clientPartnerId: id.nullish().transform((v) => v || null), sector: z.enum(keys(SECTORS)).nullish().transform((v) => v || null), value: money.nullish(), completionDate: day.nullish().transform((v) => v || null), validUntil: day.nullish().transform((v) => v || null), tags: z.array(text(40).min(1)).max(20), notes: optText(1000) };
+export const parseCredentialCreate = (b) => parse(z.object({ ...cred, tags: cred.tags.default([]) }).strict(), b);
+export const parseCredentialUpdate = (b) => parse(z.object({ ...Object.fromEntries(Object.entries(cred).map(([k, s]) => [k, s.optional()])), version }).strict(), b);
+export const parseCredentialLink = (b) => parse(z.object({ credentialId: id, purpose: optText(200) }).strict(), b);
+const emd = { mode: z.enum(keys(EMD_MODES)), amount: money.optional(), payee: optText(160), exemptionReason: optText(500), neededBy: day.nullish().transform((v) => v || null) };
+export const parseEmdCreate = (b) => parse(z.object({ tenderId: id, kind: z.enum(['EMD', 'FEE']), ...emd, submit: z.boolean().default(false) }).strict(), b);
+export const parseEmdUpdate = (b) => parse(z.object({ ...Object.fromEntries(Object.entries(emd).map(([k, s]) => [k, s.optional()])), version }).strict(), b);
+export const parseEmdAmend = (b) => parse(z.object({ ...Object.fromEntries(Object.entries(emd).map(([k, s]) => [k, s.optional()])), version, reason }).strict(), b);
+export const parseEmdIssue = (b) => parse(z.object({ instrumentNo: text(60).min(3), bank: optText(120), issueDate: day, validUntil: day.optional() }).strict(), b);
+export const parseEmdRefund = (b) => parse(z.object({ action: z.enum(['REQUESTED', 'REFUNDED', 'FORFEITED', 'ADJUSTED']), date: day.optional(), reference: optText(80), note: optText(500) }).strict(), b);
+export const parseSubmissionCreate = (b) => parse(z.object({ tenderId: id, estimate: money.optional(), estimateRef: optText(80), bidAmount: money.optional() }).strict(), b);
+export const parseSubmissionUpdate = (b) => parse(z.object({ items: z.array(z.object({ code: text(40).min(1), done: z.boolean(), note: optText(300).optional() }).strict()).max(40).optional(), estimate: money.nullable().optional(), estimateRef: optText(80).optional(), bidAmount: money.nullable().optional(), adjustmentReason: optText(1000).optional(), version }).strict(), b);
+export const parseSubmissionRecord = (b) => parse(z.object({ submittedAt: dateTime, portalRef: text(80).min(3, 'Give the acknowledgement number of the portal') }).strict(), b);
+export const parseSubmissionAmend = (b) => parse(z.object({ reason, version }).strict(), b);
+export const parseResults = (b) => parse(z.object({ openedOn: day, bidders: z.array(z.object({ name: text(160).min(2), partnerId: id.nullish().transform((v) => v || null), isUs: z.boolean().default(false), qualified: z.boolean().default(true), quoted: money.nullish(), note: optText(300) }).strict()).min(1).max(60) }).strict(), b);
+export const parseAnalysis = (q) => parse(z.object({ sector: z.enum(keys(SECTORS)).optional(), region: text(40).optional(), from: day.optional(), to: day.optional() }).strict(), clean(q));
+export const parseNegotiation = (b) => parse(z.object({ heldOn: day, ourOffer: money.nullish(), clientCounter: money.nullish(), notes: text(2000).min(5, 'Write what was discussed') }).strict(), b);
+const award = { outcome: z.enum(['WON', 'LOST']), loaNo: optText(80), loaDate: day.nullish().transform((v) => v || null), awardedValue: money.nullish(), awardedTo: optText(160), lossReasonCode: optText(30), lossReason: optText(1000) };
+export const parseAwardCreate = (b) => parse(z.object({ tenderId: id, ...award, submit: z.boolean().default(false) }).strict(), b);
+export const parseAwardUpdate = (b) => parse(z.object({ ...Object.fromEntries(Object.entries(award).map(([k, s]) => [k, s.optional()])), version }).strict(), b);

@@ -75,6 +75,16 @@ test('T-01 unhandled errors (sync and async): 500 envelope, no stack trace, SQL 
   await app.close();
 });
 
+test('pipeline: a write naming a record that does not exist (a foreign key) is a 422 REFERENCE_MISSING, never a 500', async () => {
+  const { DatabaseSync } = await import('node:sqlite');
+  const db = new DatabaseSync(':memory:'); db.exec('PRAGMA foreign_keys = ON; CREATE TABLE parent (id INTEGER PRIMARY KEY); CREATE TABLE child (id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL REFERENCES parent (id));');
+  const app = await pipelineApp((a) => a.post('/child', () => { db.prepare('INSERT INTO child (parent_id) VALUES (99)').run(); }));
+  const res = await fetch(`${app.base}/child`, { method: 'POST' });
+  const text = await res.text();
+  assert.equal(res.status, 422); assert.equal(JSON.parse(text).error.code, 'REFERENCE_MISSING'); assert.ok(!/FOREIGN KEY|child|parent_id/.test(text), 'no SQL detail leaked');
+  await app.close();
+});
+
 test('pipeline: malformed JSON is a 400 BAD_JSON and an oversized body is a 413, never a 500', async () => {
   const app = await pipelineApp();
   const bad = await fetch(`${app.base}/echo`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"a":' });

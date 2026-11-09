@@ -26,6 +26,8 @@ if (!existsSync(join(dist, 'sw.js'))) {
     const urls = JSON.parse(listed[1]);
     if (!urls.includes('/index.html')) problems.push('the service worker does not keep /index.html, so the app cannot open offline');
     if (!urls.some((u) => /^\/assets\/.*\.js$/.test(u)) || !urls.some((u) => /^\/assets\/.*\.css$/.test(u))) problems.push('the service worker does not keep the script and the style of the app');
+    // Cache.addAll rejects a list with the same address twice, and then the worker never installs
+    for (const u of new Set(urls.filter((x, i) => urls.indexOf(x) !== i))) problems.push(`the service worker lists ${u} twice: Cache.addAll would refuse the list and the app could not install offline`);
     for (const u of urls) if (!existsSync(join(dist, u))) problems.push(`the service worker lists ${u}, which is not in dist`);
   }
   const html = readFileSync(join(dist, 'index.html'), 'utf8');

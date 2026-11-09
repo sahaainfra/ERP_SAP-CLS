@@ -13,7 +13,8 @@ async function newCompany(request, code) {
 async function open(page, roles, path, company, user) {
   await page.addInitScript((v) => localStorage.setItem('erp.dev.identity', JSON.stringify(v)), { user, roles, company: String(company) });
   const errors = [];
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // companies known only by id make the shell's background calls (device, presence) answer 4xx; a 5xx or a script error still counts
+  page.on('console', (m) => m.type() === 'error' && !/Failed to load resource: the server responded with a status of 4\d\d/.test(m.text()) && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto(path);
   return errors;

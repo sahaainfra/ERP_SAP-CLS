@@ -8,6 +8,7 @@ import { workflowOf } from '../../platform/workflow/index.js';
 import { bindGovernance, createGovernanceService } from './governance.js';
 import { secureRoutes } from './routes.js';
 import { bindSecure, createSecureService } from './service.js';
+import { integrityRegistry } from '../../platform/integrity/index.js';
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -44,3 +45,5 @@ export const sec = {
     api.use('/sec', router);
   },
 };
+// status lists that are not workflow states (found by the data-health check: a valid row was reported as an invalid status)
+integrityRegistry.register({ statuses: { sec_policy: ['PENDING', 'SCHEDULED', 'ACTIVE', 'RETIRED', 'REJECTED'], sec_licence_reviews: ['PENDING', 'APPROVED', 'REJECTED'] } });

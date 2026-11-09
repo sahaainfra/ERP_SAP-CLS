@@ -74,7 +74,7 @@ test('Form Components gallery: every field type in five states, the line grid an
   await expect(page.getByRole('dialog', { name: /Choose a date, December 2026/ })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('total-amount')).toHaveText('1,45,000.00');
-  await page.getByText('Units of measure').waitFor();
+  await page.getByRole('cell', { name: 'Units of measure' }).first().waitFor(); // the live registry lists it (the menu also has a Units of Measure page)
   await expect(page.locator('caption', { hasText: /^Lookups/ })).toBeVisible();
   await page.getByLabel('Find a component').fill('zzz');
   await expect(page.getByRole('heading', { name: 'No component matches "zzz"' })).toBeVisible();

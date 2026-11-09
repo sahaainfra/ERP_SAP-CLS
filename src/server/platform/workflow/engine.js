@@ -1,3 +1,4 @@
+import { holderSourcesOf } from '../authz/grant-sources.js';
 import { inTransaction } from '../db/index.js';
 import { writeAudit } from '../audit/index.js';
 import { authzOf } from '../authz/index.js';
@@ -46,7 +47,12 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
       return !scope.projectId && !scope.siteId;
     }).map((a) => a.username);
     const byAccount = db.prepare("SELECT u.username FROM iam_users u WHERE u.company_id = ? AND u.status = 'ACTIVE' AND u.is_active = 1 AND EXISTS (SELECT 1 FROM json_each(u.roles_json) j WHERE j.value = ?)").all(companyId, role).map((u) => u.username);
-    return [...new Set([...byAssignment, ...byAccount])];
+    // people who hold the role in this place because of another module's record (an approved deployment, part 07.03)
+    const bySource = [];
+    for (const [, fn] of holderSourcesOf.list()) {
+      try { bySource.push(...(fn(db, { companyId, roles: [role], scope: scope.siteId ? { type: 'SITE', id: Number(scope.siteId), projectId: scope.projectId ? Number(scope.projectId) : null } : scope.projectId ? { type: 'PROJECT', id: Number(scope.projectId) } : { type: 'COMPANY' }, today: today() }) ?? [])); } catch { /* a failing source adds nobody */ }
+    }
+    return [...new Set([...byAssignment, ...byAccount, ...bySource])];
   }
 
   /** The roles a person holds for any part of the company: those on their account or session and those of their assignments. */

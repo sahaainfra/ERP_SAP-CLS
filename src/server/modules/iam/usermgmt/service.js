@@ -74,6 +74,11 @@ export const userHandlers = {
   },
 };
 
+/** The user administration service of a database, for modules that create or deactivate the account of a person they hold (the employee master, 07.01): they call it, they never write the tables. */
+const adminServices = new WeakMap();
+export const bindUserAdmin = (db, s) => adminServices.set(db, s);
+export const userAdminOf = (db) => adminServices.get(db) ?? null;
+
 /**
  * User management (part 02.03): accounts, invitations, lifecycle, role requests, the deactivation wizard, bulk import and the
  * person's own profile. `identity`, `users` and `auth` are the services of part 02.01; sign-in itself is never reimplemented here.

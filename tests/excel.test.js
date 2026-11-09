@@ -264,8 +264,8 @@ test('FR-01 the template: protected header, required marks, instructions, drop-d
   const t = await setup();
   try {
     const list = (await t.api.call('GET', `${X}/templates`, pd)).json.data.types;
-    assert.deepEqual(list.map((x) => x.code).sort(), ['ENG_SAMPLE_DOC', 'TEST_ASSET'].filter((c) => c === 'ENG_SAMPLE_DOC'), 'a planner sees only what they may import');
-    assert.deepEqual((await t.api.call('GET', `${X}/templates`, hr)).json.data.types.map((x) => x.code).sort(), ['ORG_DESIGNATION', 'TEST_ASSET']);
+    assert.deepEqual(list.map((x) => x.code).sort(), ['ENG_SAMPLE_DOC', 'PROJ_MILESTONE'], 'a planner sees only what they may import');
+    assert.deepEqual((await t.api.call('GET', `${X}/templates`, hr)).json.data.types.map((x) => x.code).sort(), ['ATT_DEVICE_PUNCH', 'HR_DEPLOYMENT', 'HR_EMPLOYEE', 'HR_WORKER', 'ORG_DESIGNATION', 'TEST_ASSET', 'TRN_CERT']);
     assert.equal((await t.api.call('GET', `${X}/templates`, emp)).status, 403);
     assert.equal((await t.api.call('GET', `${X}/templates/ORG_DESIGNATION/download`, pd)).status, 403);
     assert.equal((await t.api.call('GET', `${X}/templates/NOPE_X/download`, pd)).status, 404);
