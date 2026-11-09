@@ -11950,6 +11950,46 @@ Indexes:
 - ix_plan_activity_boq_company_id: company_id
 - ux_plan_activity_boq (unique): activity_id, boq_line_id
 
+## plan_activity_resources
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| activity_id | INTEGER | yes |  |  |
+| resource_type | TEXT | yes |  |  |
+| item_id | INTEGER |  |  |  |
+| trade | TEXT |  |  |  |
+| res_key | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| basis | TEXT | yes |  | 'TOTAL' |
+| qty_total | INTEGER | yes |  | 0 |
+| qty_per_day | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), activity_id -> plan_activities(id), schedule_id -> plan_schedules(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_activity_resources_item: item_id
+- ix_plan_activity_resources_activity: activity_id
+- ix_plan_activity_resources_schedule: schedule_id, resource_type, res_key
+- ix_plan_activity_resources_company_id: company_id
+- ux_plan_activity_resources_key (unique): activity_id, resource_type, res_key
+
 ## plan_calendars
 
 | Column | Type | Not null | Key | Default |
@@ -12022,6 +12062,83 @@ Indexes:
 - ix_plan_dependencies_pred: pred_id
 - ix_plan_dependencies_company_id: company_id
 - ux_plan_dependencies_pair (unique): schedule_id, pred_id, succ_id
+
+## plan_gantt_edits
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| op | TEXT | yes |  |  |
+| summary | TEXT | yes |  |  |
+| before_json | TEXT | yes |  |  |
+| after_json | TEXT | yes |  |  |
+| finish_before | TEXT |  |  |  |
+| finish_after | TEXT |  |  |  |
+| undone_at | TEXT |  |  |  |
+| undone_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: schedule_id -> plan_schedules(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_gantt_edits_schedule: schedule_id, id
+- ix_plan_gantt_edits_company_id: company_id
+
+## plan_resource_capacity
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| resource_type | TEXT | yes |  |  |
+| item_id | INTEGER |  |  |  |
+| trade | TEXT |  |  |  |
+| res_key | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty_per_day | INTEGER | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| reason | TEXT |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_resource_capacity_item: item_id
+- ix_plan_resource_capacity_project: org_project_id, resource_type, res_key, status
+- ix_plan_resource_capacity_company_id: company_id, status
 
 ## plan_schedules
 

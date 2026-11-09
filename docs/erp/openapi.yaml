@@ -7446,6 +7446,75 @@ paths:
     delete:
       summary: "Schedule core: DELETE /dependencies/{id}"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/gantt:
+    get:
+      summary: "Gantt and resources: GET /schedules/{id}/gantt"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/gantt/check:
+    post:
+      summary: "Gantt and resources: POST /schedules/{id}/gantt/check"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/gantt/edits:
+    post:
+      summary: "Gantt and resources: POST /schedules/{id}/gantt/edits"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    get:
+      summary: "Gantt and resources: GET /schedules/{id}/gantt/edits"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/gantt/undo:
+    post:
+      summary: "Gantt and resources: POST /schedules/{id}/gantt/undo"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/histogram:
+    get:
+      summary: "Gantt and resources: GET /schedules/{id}/histogram"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/histogram/drill:
+    get:
+      summary: "Gantt and resources: GET /schedules/{id}/histogram/drill"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/histogram/export:
+    get:
+      summary: "Gantt and resources: GET /schedules/{id}/histogram/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/loading:
+    get:
+      summary: "Gantt and resources: GET /schedules/{id}/loading"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/schedules/{id}/programme:
+    get:
+      summary: "Gantt and resources: GET /schedules/{id}/programme"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/resource-options:
+    get:
+      summary: "Gantt and resources: GET /resource-options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/activities/{id}/resources:
+    get:
+      summary: "Gantt and resources: GET /activities/{id}/resources"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    put:
+      summary: "Gantt and resources: PUT /activities/{id}/resources"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/activities/{id}/resources/norms:
+    get:
+      summary: "Gantt and resources: GET /activities/{id}/resources/norms"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/capacity:
+    get:
+      summary: "Gantt and resources: GET /capacity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    post:
+      summary: "Gantt and resources: POST /capacity"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/capacity/{id}/activate:
+    post:
+      summary: "Gantt and resources: POST /capacity/{id}/activate"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/capacity/{id}/cancel:
+    post:
+      summary: "Gantt and resources: POST /capacity/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
   /api/v1/bud/commitments/{id}/log:
     get:
       summary: "Budget check and ledger: GET /commitments/{id}/log"
