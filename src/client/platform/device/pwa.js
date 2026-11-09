@@ -47,6 +47,8 @@ export const pwa = {
     } catch {
       return null;
     }
+    // a browser or policy that blocks service workers may resolve without a registration: the application then runs without offline support, without an error
+    if (!registration) return null;
     set({ registered: true });
     const watch = (reg) => {
       const worker = reg.installing;
