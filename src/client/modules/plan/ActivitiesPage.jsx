@@ -32,7 +32,7 @@ export default function ActivitiesPage() {
   const t = useT('plan');
   const qc = useQueryClient(); const sp = useSearch();
   const [projectId, setProjectId] = useState(null); const [scheduleId, setScheduleId] = useState(Number(sp.get('scheduleId')) || null);
-  const [filter, setFilter] = useState(FILTERS.includes(sp.get('filter')) ? sp.get('filter') : 'all'); const [wbsId, setWbsId] = useState(''); const [q, setQ] = useState(''); const [page, setPage] = useState(1); const [pageSize, setPageSize] = useState(100);
+  const [filter, setFilter] = useState(FILTERS.includes(sp.get('filter')) ? sp.get('filter') : 'all'); const [wbsId, setWbsId] = useState(sp.get('wbsId') ?? ''); const [q, setQ] = useState(''); const [page, setPage] = useState(1); const [pageSize, setPageSize] = useState(100);
   const [sel, setSel] = useState([]); const [bulk, setBulk] = useState(null); const [open, setOpen] = useState(null); const [adding, setAdding] = useState(null); const [prog, setProg] = useState(null); const [talk, setTalk] = useState(false);
   const [error, setError] = useState(null); const [note, setNote] = useState(null);
   const sq = useQuery({ queryKey: ['plan', 'schedule', scheduleId], queryFn: () => pl.schedule(scheduleId), enabled: Boolean(scheduleId), retry: false });

@@ -155,8 +155,9 @@ export function createProgramme({ db, gantt }) {
   const authz = authzOf(db);
   function build(actor, id, q) {
     const d = gantt.data(actor, id); const s = d.schedule;
-    const need = q.format === 'pdf' ? 'plan.schedule.print' : 'plan.schedule.export';
-    if (!authz.check(actor, need, { companyId: actor.companyId, projectId: s.projectId }).allowed) throw forbidden(`You may not ${q.format === 'pdf' ? 'print' : 'export'} this schedule (permission ${need}).`);
+    // the PDF is a print; the image (also the page's preview) is open to whoever may print or export the schedule
+    const may = (k) => authz.check(actor, k, { companyId: actor.companyId, projectId: s.projectId }).allowed;
+    if (q.format === 'pdf' ? !may('plan.schedule.print') : !(may('plan.schedule.export') || may('plan.schedule.print'))) throw forbidden(`You may not ${q.format === 'pdf' ? 'print' : 'export'} this schedule (permission ${q.format === 'pdf' ? 'plan.schedule.print' : 'plan.schedule.export'}).`);
     // the WBS branch, then the filter
     let acts = d.activities;
     if (q.wbsId) { const keep = new Set([q.wbsId]); let grew = true; while (grew) { grew = false; for (const w of d.wbs) if (w.parentId && keep.has(w.parentId) && !keep.has(w.id)) { keep.add(w.id); grew = true; } } acts = acts.filter((a) => a.wbsId && keep.has(a.wbsId)); }
