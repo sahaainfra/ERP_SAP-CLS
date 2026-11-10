@@ -53,8 +53,8 @@ CREATE INDEX IF NOT EXISTS ix_plan_delays_company_id ON plan_delays (company_id,
 CREATE INDEX IF NOT EXISTS ix_plan_delays_project ON plan_delays (org_project_id, status, start_date);
 CREATE INDEX IF NOT EXISTS ix_plan_delays_class ON plan_delays (company_id, cause_category, responsibility, status);
 CREATE INDEX IF NOT EXISTS ix_plan_delays_schedule ON plan_delays (schedule_id);
-CREATE INDEX IF NOT EXISTS ix_plan_delays_parent ON plan_delays (parent_delay_id);
-CREATE INDEX IF NOT EXISTS ix_plan_delays_source ON plan_delays (src_entity, src_id);
+CREATE INDEX IF NOT EXISTS ix_plan_delays_parent ON plan_delays (parent_delay_id) WHERE parent_delay_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS ix_plan_delays_source ON plan_delays (src_entity, src_id) WHERE src_entity IS NOT NULL;
 CREATE INDEX IF NOT EXISTS ix_plan_delays_tia ON plan_delays (tia_id);
 
 CREATE TABLE IF NOT EXISTS plan_tia (

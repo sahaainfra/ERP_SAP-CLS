@@ -59,6 +59,7 @@
     "erp:plan-gantt-perf": "node scripts/plan_gantt_perf.mjs",
     "erp:plan-baseline-perf": "node scripts/plan_baseline_perf.mjs",
     "erp:plan-lookahead-perf": "node scripts/plan_lookahead_perf.mjs",
+    "erp:plan-delay-perf": "node scripts/plan_delay_perf.mjs",
     "migration:new": "node scripts/new_migration.mjs",
     "backfill": "node --env-file-if-exists=.env scripts/backfill.mjs",
     "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",
