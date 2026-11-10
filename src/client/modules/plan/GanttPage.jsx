@@ -55,7 +55,7 @@ export default function GanttPage() {
   const qc = useQueryClient(); const sp = useSearch(); const narrow = useNarrow();
   const [projectId, setProjectId] = useState(null); const [scheduleId, setScheduleId] = useState(Number(sp.get('scheduleId')) || null);
   const [zoom, setZoom] = useState(() => store.get('plan.gantt.zoom', 'week')); const [filter, setFilter] = useState(sp.get('filter') ?? 'all'); const [q, setQ] = useState('');
-  const [cols, setCols] = useState(() => store.get('plan.gantt.cols', COLS.map((c) => c.key))); const [collapsed, setCollapsed] = useState(new Set()); const [showLinks, setShowLinks] = useState(true);
+  const [cols, setCols] = useState(() => store.get('plan.gantt.cols', COLS.map((c) => c.key))); const [collapsed, setCollapsed] = useState(new Set()); const [showLinks, setShowLinks] = useState(true); const [showBase, setShowBase] = useState(true);
   const [selected, setSelected] = useState(Number(sp.get('activityId')) || null); const [note, setNote] = useState(null); const [error, setError] = useState(null); const [busy, setBusy] = useState(false); const [pending, setPending] = useState(null);
   const [drag, setDrag] = useState(null); const [view, setView] = useState({ top: 0, height: 600 }); const [adding, setAdding] = useState(false);
   const scrollRef = useRef(null); const dragRef = useRef(null);
@@ -122,6 +122,7 @@ export default function GanttPage() {
             <button type="button" className="btn" onClick={() => setCollapsed(new Set())} data-testid="pgt-expand">{t('g.expand')}</button>
             <button type="button" className="btn" onClick={() => setCollapsed(new Set([0, ...d.wbs.map((w) => w.id)]))} data-testid="pgt-collapse">{t('g.collapse')}</button>
             <label className="check"><input type="checkbox" checked={showLinks} onChange={(e) => setShowLinks(e.target.checked)} data-testid="pgt-links" /> {t('g.links')}</label>
+            {d.baseline && <label className="check" title={`${d.baseline.docNo} · ${fmtDate(d.baseline.finish)}`}><input type="checkbox" checked={showBase} onChange={(e) => setShowBase(e.target.checked)} data-testid="pgt-baseline" /> {t('g.baseline', { n: d.baseline.baselineNo })}</label>}
             <details className="pgt-cols"><summary className="btn">{t('g.columns')}</summary><fieldset><legend className="sr-only">{t('g.columns')}</legend>{COLS.map((c) => <label key={c.key} className="check"><input type="checkbox" checked={cols.includes(c.key)} disabled={c.key === 'code'} onChange={(e) => setCols(e.target.checked ? [...cols, c.key] : cols.filter((k) => k !== c.key))} data-testid={`pgt-col-${c.key}`} /> {t(`g.col.${c.key}`)}</label>)}</fieldset></details>
             {canEdit && <button type="button" className="btn" onClick={() => setAdding(!adding)} data-testid="pgt-add">{t('g.add')}</button>}
             {canEdit && <button type="button" className="btn" onClick={undo} disabled={busy || !d.can.undo} title={d.edits.find((x) => !x.undoneAt)?.summary ?? ''} data-testid="pgt-undo">{t('g.undo')}</button>}
@@ -178,11 +179,13 @@ export default function GanttPage() {
                     const a = r.a; if (!a.es || !a.ef) return null;
                     const dd = drag?.id === a.id ? drag : null; const shift = dd?.mode === 'move' ? dd.days * ppd : 0; const stretch = dd?.mode === 'resize' ? dd.days * ppd : 0;
                     const x = X(a.es) + shift; const w = Math.max(ppd, X(a.ef) + ppd - X(a.es) + stretch); const fill = a.critical ? 'var(--erp-color-status-error-solid)' : 'var(--erp-chart-1)';
-                    const label = `${a.code} ${a.name}: ${fmtDate(a.es)} – ${fmtDate(a.ef)}${a.critical ? ` · ${t('f.critical')}` : ''} · TF ${a.totalFloat ?? '—'}`;
+                    const bl = showBase ? d.baseline?.dates?.[a.id] : null; // the dates of the current baseline (13.03): a thin bar under the bar of today
+                    const label = `${a.code} ${a.name}: ${fmtDate(a.es)} – ${fmtDate(a.ef)}${a.critical ? ` · ${t('f.critical')}` : ''} · TF ${a.totalFloat ?? '—'}${bl ? ` · ${t('g.baselineDates', { s: fmtDate(bl[0]), f: fmtDate(bl[1]) })}` : ''}`;
                     if (a.type === 'MILESTONE') return <g key={a.id} data-act-id={a.id} onPointerDown={(e) => startDrag(e, a, 'move')} style={{ cursor: canEdit ? 'grab' : 'default' }}><title>{label}</title><path d={`M${x},${y + 6} L${x + 8},${y + ROW / 2} L${x},${y + ROW - 6} L${x - 8},${y + ROW / 2} z`} fill={a.critical ? 'var(--erp-color-status-error-solid)' : 'var(--erp-color-text-primary)'} />{canEdit && <circle cx={x + 11} cy={y + ROW / 2} r="3.5" fill="var(--erp-color-bg-surface)" stroke="var(--erp-color-text-muted)" onPointerDown={(e) => startDrag(e, a, 'link')} style={{ cursor: 'crosshair' }} data-testid="pgt-linkdot" />}</g>;
                     return (
                       <g key={a.id} data-act-id={a.id} data-testid="pgt-bar" data-code={a.code}>
                         <title>{label}</title>
+                        {bl && <rect x={X(bl[0])} y={y + ROW - 5} width={Math.max(ppd, X(bl[1]) + ppd - X(bl[0]))} height={3} fill="var(--erp-color-text-muted)" pointerEvents="none" data-testid="pgt-base" />}
                         <rect x={x} y={y + 6} width={w} height={ROW - 12} rx="3" fill={fill} opacity={dd ? 0.6 : 1} stroke={selected === a.id ? 'var(--erp-color-border-focus)' : 'none'} strokeWidth="2" onPointerDown={(e) => startDrag(e, a, 'move')} onClick={() => setSelected(a.id)} style={{ cursor: canEdit ? 'grab' : 'pointer' }} />
                         {(a.actualFinish || a.pctComplete > 0) && <rect x={x} y={y + ROW / 2 - 2} width={w * (a.actualFinish ? 1 : Math.min(1, a.pctComplete / 100))} height={4} fill="var(--erp-color-text-primary)" opacity="0.55" pointerEvents="none" />}
                         {canEdit && !a.actualStart && a.type === 'TASK' && <rect x={x + w - 5} y={y + 6} width={6} height={ROW - 12} fill="transparent" onPointerDown={(e) => startDrag(e, a, 'resize')} style={{ cursor: 'ew-resize' }} data-testid="pgt-resize" />}

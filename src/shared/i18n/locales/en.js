@@ -3156,6 +3156,8 @@ export default {
     'g.addAfter': 'After {c} (finish to start)',
     'g.addSave': 'Add and recalculate',
     'g.apply': 'Apply and recalculate',
+    'g.baseline': 'Baseline bars (revision {n})',
+    'g.baselineDates': 'baseline {s} – {f}',
     'g.chart': 'Gantt chart',
     'g.choose': 'Choose a project and its schedule, or open one from',
     'g.closePanel': 'Close',
