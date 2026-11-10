@@ -294,6 +294,12 @@ export function rfiConstraintsOf(db, companyId, projectId = null) {
     .map((r) => ({ rfiId: r.id, rfiNo: r.rfi_no, projectId: r.org_project_id, project: r.pcode, activityRef: r.activity_ref, locationId: r.location_id, wbsId: r.wbs_id, critical: Boolean(r.activity_critical), priority: r.priority, requiredBy: r.required_by, ballInCourt: r.ball_in_court, subject: r.subject }));
 }
 
+/** Every open RFI (held activity or not) with the drawing, activity, WBS node and location it concerns: the constraints the look-ahead (13.04) detects by itself and clears when the RFI is closed. */
+export function openRfisOf(db, companyId, projectId) {
+  return db.prepare(`SELECT x.id, x.rfi_no, x.subject, x.activity_ref, x.wbs_id, x.location_id, x.drawing_id, x.required_by, x.status, d.drawing_no FROM engg_rfis x LEFT JOIN engg_drawings d ON d.id = x.drawing_id WHERE x.company_id = ? AND x.org_project_id = ? AND x.deleted_at IS NULL AND x.status IN ${OPEN_SQL}`).all(companyId, projectId)
+    .map((r) => ({ rfiId: r.id, rfiNo: r.rfi_no, subject: r.subject, activityRef: r.activity_ref, wbsId: r.wbs_id, locationId: r.location_id, drawingId: r.drawing_id, drawingNo: r.drawing_no, requiredBy: r.required_by, status: r.status }));
+}
+
 // ---- workflow, resolvers, evidence and the files ----------------------------------------------------------------------------------------------------
 const step = (code, name, approvers) => ({ code, name, type: 'approval', mode: 'single', approvers, slaHours: 24, requireAttachment: false, checklist: [], when: null, notify: [], action: null });
 const rline = (db, id) => db.prepare('SELECT x.*, p.code, p.name AS pname FROM engg_rfis x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(id);

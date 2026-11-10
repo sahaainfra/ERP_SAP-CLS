@@ -19,6 +19,11 @@ const SUP = 'SUPERSEDED, DO NOT USE';
 const services = new WeakMap();
 export const bindEngg = (db, s) => services.set(db, s);
 export const enggOf = (db) => services.get(db) ?? null;
+/** Active drawings of a project that have no IFC revision yet, with the WBS node and location they belong to: a constraint for the activities there (13.04). */
+export function drawingsWithoutIfc(db, companyId, projectId) {
+  return db.prepare("SELECT id, drawing_no, title, wbs_id, location_id, planned_receipt FROM engg_drawings WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL AND register_status = 'ACTIVE' AND current_ifc_revision_id IS NULL AND wbs_id IS NOT NULL").all(companyId, projectId)
+    .map((r) => ({ drawingId: r.id, drawingNo: r.drawing_no, title: r.title, wbsId: r.wbs_id, locationId: r.location_id, plannedReceipt: r.planned_receipt }));
+}
 
 export const drawingList = defineList({
   code: 'engg.drawings', label: 'Drawing register', permission: 'engg.drawing.view',

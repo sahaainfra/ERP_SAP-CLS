@@ -100,3 +100,20 @@ export const parseImportUpdate = (b) => parse(z.object({
   rowVersion,
 }).strict(), b ?? {});
 export const parseImportApply = (b) => parse(z.object({ rowVersion: rowVersion.nullish().transform((v) => v || null) }).strict(), b ?? {});
+
+// ---- part 13.04: the look-ahead, the constraints and the weekly work plans ---------------------------------------------------------------------------------------------------------
+const CON_TYPE = z.enum(['DRAWING', 'RFI', 'SUBMITTAL', 'MATERIAL', 'LABOUR', 'PLANT', 'PERMIT', 'PREDECESSOR', 'CLIENT_APPROVAL', 'ACCESS']);
+const VARIANCE = z.enum(['DRAWINGS', 'MATERIAL', 'LABOUR', 'PLANT', 'WEATHER', 'PREDECESSOR', 'CLIENT', 'PERMIT', 'QUALITY', 'SAFETY', 'OTHER']);
+const bool = z.enum(['true', 'false']).default('false').transform((v) => v === 'true');
+export const parseLookaheadQ = (q) => parse(z.object({ weeks: z.coerce.number().int().min(1).max(12).default(6), from: optDay, siteId: optId, locationId: optId, onlyBlocked: bool, q: z.string().trim().max(100).default('') }).strict(), q ?? {});
+export const parseLookaheadSave = (b) => parse(z.object({ weeks: z.number().int().min(1).max(12).default(6), from: optDay, siteId: optId, locationId: optId }).strict(), b ?? {});
+export const parseConstraintCreate = (b) => parse(z.object({ activityId: id, type: CON_TYPE, description: text(500).min(3, 'Describe what holds the activity'), owner: optText(60), dueDate: optDay }).strict(), b ?? {});
+export const parseConstraintUpdate = (b) => given(parse(z.object({ type: CON_TYPE.optional(), description: text(500).min(3).optional(), owner: optText(60), dueDate: optDay, rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseNote = (b) => parse(z.object({ note: optText(500) }).strict(), b ?? {});
+const weeklyItem = z.object({ activityId: id, crewId: optId, committedQty: qty.refine((n) => n > 0, 'Commit a quantity above zero'), uom: optText(20) }).strict();
+export const parseWeeklyCreate = (b) => parse(z.object({ scheduleId: id, siteId: optId, weekStart: day, note: optText(1000), items: z.array(weeklyItem).min(1, 'Commit at least one activity').max(500) }).strict(), b ?? {});
+export const parseWeeklyUpdate = (b) => given(parse(z.object({ note: optText(1000), items: z.array(weeklyItem).min(1).max(500).optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseRecord = (b) => parse(z.object({ items: z.array(z.object({ itemId: id, completedQty: qty, varianceCode: VARIANCE.nullish().transform((v) => v || null), note: optText(500) }).strict()).min(1).max(500) }).strict(), b ?? {});
+export const parsePpcQ = (q) => parse(z.object({ projectId: id, siteId: optId, from: optDay, to: optDay }).strict(), q ?? {});
+export const parsePpcExportQ = (q) => parse(z.object({ projectId: id, siteId: optId, from: optDay, to: optDay, format: FILE_FORMAT }).strict(), q ?? {});
+export const parseDailyPlanQ = (q) => parse(z.object({ projectId: id, date: day }).strict(), q ?? {});

@@ -12089,6 +12089,51 @@ Indexes:
 - ix_plan_calendars_company_id: company_id, status
 - ux_plan_calendars_code (unique): company_id, , code
 
+## plan_constraints
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| activity_id | INTEGER | yes |  |  |
+| ctype | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| owner_user | TEXT |  |  |  |
+| due_date | TEXT |  |  |  |
+| origin | TEXT | yes |  | 'MANUAL' |
+| src_entity | TEXT |  |  |  |
+| src_id | TEXT |  |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| cleared_on | TEXT |  |  |  |
+| cleared_by | TEXT |  |  |  |
+| clear_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: activity_id -> plan_activities(id), schedule_id -> plan_schedules(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_constraints_owner: company_id, owner_user, status
+- ix_plan_constraints_source: src_entity, src_id, status
+- ix_plan_constraints_activity: activity_id, status
+- ix_plan_constraints_schedule: schedule_id, status
+- ix_plan_constraints_project: org_project_id, status, due_date
+- ix_plan_constraints_company_id: company_id, status
+- ux_plan_constraints_auto (unique): activity_id, ctype, src_entity, src_id
+
 ## plan_dependencies
 
 | Column | Type | Not null | Key | Default |
@@ -12202,6 +12247,48 @@ Indexes:
 - ix_plan_imports_schedule: schedule_id
 - ix_plan_imports_project: org_project_id, id
 - ix_plan_imports_company_id: company_id, status
+
+## plan_lookaheads
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| la_site_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| weeks | INTEGER | yes |  |  |
+| generated_at | TEXT | yes |  |  |
+| generated_by | TEXT | yes |  |  |
+| activities_count | INTEGER | yes |  | 0 |
+| ready_count | INTEGER | yes |  | 0 |
+| blocked_count | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: location_id -> proj_locations(id), la_site_id -> org_sites(id), schedule_id -> plan_schedules(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_lookaheads_location: location_id
+- ix_plan_lookaheads_site: la_site_id
+- ix_plan_lookaheads_schedule: schedule_id
+- ix_plan_lookaheads_project: org_project_id, generated_at
+- ix_plan_lookaheads_company_id: company_id, status
 
 ## plan_resource_capacity
 
@@ -12335,6 +12422,95 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_plan_templates_company_id: company_id, status
 - ux_plan_templates_code (unique): , code
+
+## plan_weekly_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plan_id | INTEGER | yes |  |  |
+| activity_id | INTEGER | yes |  |  |
+| crew_id | INTEGER |  |  |  |
+| committed_qty | INTEGER | yes |  | 0 |
+| completed_qty | INTEGER | yes |  | 0 |
+| uom | TEXT |  |  |  |
+| completed | INTEGER | yes |  | 0 |
+| variance_code | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: crew_id -> hr_crews(id), activity_id -> plan_activities(id), plan_id -> plan_weekly_plans(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_weekly_items_crew: crew_id
+- ix_plan_weekly_items_activity: activity_id
+- ix_plan_weekly_items_plan: plan_id
+- ix_plan_weekly_items_company_id: company_id
+- ux_plan_weekly_items_line (unique): plan_id, activity_id, 
+
+## plan_weekly_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wp_site_id | INTEGER |  |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| week_start | TEXT | yes |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| parent_plan_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| items_count | INTEGER | yes |  | 0 |
+| completed_count | INTEGER | yes |  | 0 |
+| ppc | INTEGER |  |  |  |
+| note | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_plan_id -> plan_weekly_plans(id), schedule_id -> plan_schedules(id), wp_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_weekly_plans_parent: parent_plan_id
+- ix_plan_weekly_plans_schedule: schedule_id
+- ix_plan_weekly_plans_site: wp_site_id
+- ix_plan_weekly_plans_project: org_project_id, week_start, status
+- ix_plan_weekly_plans_company_id: company_id, status
+- ux_plan_weekly_plans_week (unique): org_project_id, , week_start, revision_no
+- ux_plan_weekly_plans_doc (unique): company_id, doc_no
 
 ## pol_acknowledgements
 

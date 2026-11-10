@@ -3,6 +3,7 @@ import {
   parseActivityCreate, parseActivityList, parseActivityUpdate, parseAmend, parseBoqLinks, parseBulk, parseCalendarCreate, parseCalendarDays, parseCalendarUpdate, parseDepCreate, parseGenerate, parseId, parseImport,
   parseProgress, parseProjectQ, parseReason, parseScheduleCreate, parseScheduleUpdate, parseTemplateCreate,
   parseCapacity, parseDrillQ, parseGanttEdit, parseHistogramExportQ, parseHistogramQ, parseProgrammeQ, parseResourceOptionsQ, parseResources, parseUndo,
+  parseConstraintCreate, parseConstraintUpdate, parseDailyPlanQ, parseLookaheadQ, parseLookaheadSave, parseNote, parsePpcExportQ, parsePpcQ, parseRecord, parseWeeklyCreate, parseWeeklyUpdate,
   parseBaselineAmend, parseBaselineCreate, parseBaselineUpdate, parseExchangeQ, parseImportApply, parseImportFileQ, parseImportListQ, parseImportUpdate, parseQualityExportQ, parseQualityQ, parseVarianceExportQ, parseVarianceQ,
 } from './validators.js';
 
@@ -137,5 +138,46 @@ export function baselineRoutes(b, { exportsOf, fileBody }, { idempotent, idempot
   r.patch('/imports/:id', idempotent, (req, res) => ok(res, b.imports.update(req.actor, pid(req), parseImportUpdate(req.body))));
   r.post('/imports/:id/apply', idempotentRequired, (req, res) => ok(res, b.imports.apply(req.actor, pid(req), parseImportApply(req.body))));
   r.post('/imports/:id/discard', idempotent, (req, res) => ok(res, b.imports.discard(req.actor, pid(req))));
+  return r;
+}
+
+/** /api/v1/plan: the look-ahead board, the constraint log and the weekly work plans (part 13.04, behind ff.plan.p1304). */
+export function lookaheadRoutes(l, { exportsOf }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff', 'x-export-rows': String(out.rows ?? 0) }).send(out.buffer);
+  const exported = (name) => async (req, res, next) => { try { const out = await exportsOf().start(req.actor, name, req.query); if (out.job) return res.status(202).json({ data: out.job }); return res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' }).send(out.buffer); } catch (e) { return next(e); } };
+  r.get('/lookahead/options', (req, res) => ok(res, l.lookaheads.options(req.actor, parseId(req.query.projectId))));
+  r.get('/schedules/:id/lookahead', (req, res) => ok(res, l.lookaheads.board(req.actor, pid(req), parseLookaheadQ(req.query))));
+  r.get('/schedules/:id/lookaheads', (req, res) => ok(res, l.lookaheads.list(req.actor, pid(req))));
+  r.post('/schedules/:id/lookaheads', idempotentRequired, (req, res) => ok(res, l.lookaheads.create(req.actor, pid(req), parseLookaheadSave(req.body)), 201));
+  r.post('/schedules/:id/constraints/detect', idempotent, (req, res) => ok(res, l.constraints.detect(req.actor, pid(req))));
+  r.get('/constraints', (req, res) => res.json(l.constraints.list(req.actor, req.query)));
+  r.get('/constraints/export', exported('plan.constraints'));
+  r.post('/constraints', idempotentRequired, (req, res) => ok(res, l.constraints.create(req.actor, parseConstraintCreate(req.body)), 201));
+  r.get('/constraints/:id', (req, res) => ok(res, l.constraints.get(req.actor, pid(req))));
+  r.patch('/constraints/:id', idempotent, (req, res) => ok(res, l.constraints.update(req.actor, pid(req), parseConstraintUpdate(req.body))));
+  r.post('/constraints/:id/clear', idempotent, (req, res) => ok(res, l.constraints.clear(req.actor, pid(req), parseNote(req.body))));
+  r.post('/constraints/:id/waive', idempotent, (req, res) => ok(res, l.constraints.waive(req.actor, pid(req), parseReason(req.body))));
+  r.get('/activities/:id/constraints', (req, res) => ok(res, l.constraints.ofActivity(req.actor, pid(req))));
+  r.get('/weekly-plans', (req, res) => res.json(l.weekly.list(req.actor, req.query)));
+  r.get('/weekly-plans/export', exported('plan.weekly_plans'));
+  r.post('/weekly-plans', idempotentRequired, (req, res) => ok(res, l.weekly.create(req.actor, parseWeeklyCreate(req.body)), 201));
+  r.get('/weekly-plans/:id', (req, res) => ok(res, l.weekly.get(req.actor, pid(req))));
+  r.patch('/weekly-plans/:id', idempotent, (req, res) => ok(res, l.weekly.update(req.actor, pid(req), parseWeeklyUpdate(req.body))));
+  r.delete('/weekly-plans/:id', (req, res) => ok(res, l.weekly.remove(req.actor, pid(req))));
+  r.post('/weekly-plans/:id/submit', idempotentRequired, (req, res) => ok(res, l.weekly.submit(req.actor, pid(req)), 202));
+  r.post('/weekly-plans/:id/withdraw', idempotent, (req, res) => ok(res, l.weekly.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/weekly-plans/:id/cancel', idempotent, (req, res) => ok(res, l.weekly.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/weekly-plans/:id/amend', idempotentRequired, (req, res) => ok(res, l.weekly.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/weekly-plans/:id/record', idempotent, (req, res) => ok(res, l.weekly.record(req.actor, pid(req), parseRecord(req.body))));
+  r.post('/weekly-plans/:id/close', idempotentRequired, (req, res) => ok(res, l.weekly.close(req.actor, pid(req))));
+  r.get('/weekly-plans/:id/history', (req, res) => ok(res, l.weekly.history(req.actor, pid(req))));
+  r.get('/weekly-plans/:id/daily', (req, res) => ok(res, l.weekly.daily(req.actor, pid(req))));
+  r.get('/weekly-plans/:id/print', (req, res) => res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(l.weekly.print(req.actor, pid(req))));
+  r.get('/ppc', (req, res) => ok(res, l.ppcReport(req.actor, parsePpcQ(req.query))));
+  r.get('/ppc/export', (req, res) => file(res, l.ppcExport(req.actor, parsePpcExportQ(req.query))));
+  r.get('/daily-plan', (req, res) => { const q = parseDailyPlanQ(req.query); ok(res, l.dailyPlan(req.actor, q.projectId, q.date)); });
   return r;
 }
