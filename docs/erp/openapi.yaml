@@ -7622,6 +7622,124 @@ paths:
     post:
       summary: "Baselines and exchange: POST /imports/{id}/discard"
       responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/lookahead/options:
+    get:
+      summary: "Look-ahead and weekly plans: GET /lookahead/options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/schedules/{id}/lookahead:
+    get:
+      summary: "Look-ahead and weekly plans: GET /schedules/{id}/lookahead"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/schedules/{id}/lookaheads:
+    get:
+      summary: "Look-ahead and weekly plans: GET /schedules/{id}/lookaheads"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    post:
+      summary: "Look-ahead and weekly plans: POST /schedules/{id}/lookaheads"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/schedules/{id}/constraints/detect:
+    post:
+      summary: "Look-ahead and weekly plans: POST /schedules/{id}/constraints/detect"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/constraints:
+    get:
+      summary: "Look-ahead and weekly plans: GET /constraints"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    post:
+      summary: "Look-ahead and weekly plans: POST /constraints"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/constraints/export:
+    get:
+      summary: "Look-ahead and weekly plans: GET /constraints/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/constraints/{id}:
+    get:
+      summary: "Look-ahead and weekly plans: GET /constraints/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    patch:
+      summary: "Look-ahead and weekly plans: PATCH /constraints/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/constraints/{id}/clear:
+    post:
+      summary: "Look-ahead and weekly plans: POST /constraints/{id}/clear"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/constraints/{id}/waive:
+    post:
+      summary: "Look-ahead and weekly plans: POST /constraints/{id}/waive"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/activities/{id}/constraints:
+    get:
+      summary: "Look-ahead and weekly plans: GET /activities/{id}/constraints"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/weekly-plans:
+    get:
+      summary: "Look-ahead and weekly plans: GET /weekly-plans"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    post:
+      summary: "Look-ahead and weekly plans: POST /weekly-plans"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/export:
+    get:
+      summary: "Look-ahead and weekly plans: GET /weekly-plans/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/weekly-plans/{id}:
+    get:
+      summary: "Look-ahead and weekly plans: GET /weekly-plans/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    patch:
+      summary: "Look-ahead and weekly plans: PATCH /weekly-plans/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+    delete:
+      summary: "Look-ahead and weekly plans: DELETE /weekly-plans/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/{id}/submit:
+    post:
+      summary: "Look-ahead and weekly plans: POST /weekly-plans/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/{id}/withdraw:
+    post:
+      summary: "Look-ahead and weekly plans: POST /weekly-plans/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/{id}/cancel:
+    post:
+      summary: "Look-ahead and weekly plans: POST /weekly-plans/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/{id}/amend:
+    post:
+      summary: "Look-ahead and weekly plans: POST /weekly-plans/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/{id}/record:
+    post:
+      summary: "Look-ahead and weekly plans: POST /weekly-plans/{id}/record"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/{id}/close:
+    post:
+      summary: "Look-ahead and weekly plans: POST /weekly-plans/{id}/close"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/weekly-plans/{id}/history:
+    get:
+      summary: "Look-ahead and weekly plans: GET /weekly-plans/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/weekly-plans/{id}/daily:
+    get:
+      summary: "Look-ahead and weekly plans: GET /weekly-plans/{id}/daily"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/weekly-plans/{id}/print:
+    get:
+      summary: "Look-ahead and weekly plans: GET /weekly-plans/{id}/print"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/ppc:
+    get:
+      summary: "Look-ahead and weekly plans: GET /ppc"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/ppc/export:
+    get:
+      summary: "Look-ahead and weekly plans: GET /ppc/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/daily-plan:
+    get:
+      summary: "Look-ahead and weekly plans: GET /daily-plan"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
   /api/v1/bud/commitments/{id}/log:
     get:
       summary: "Budget check and ledger: GET /commitments/{id}/log"
