@@ -10,6 +10,9 @@ import ProgrammePage from './ProgrammePage.jsx';
 import BaselinesPage from './BaselinesPage.jsx';
 import ImportPage from './ImportPage.jsx';
 import VariancePage from './VariancePage.jsx';
+import LookaheadPage from './LookaheadPage.jsx';
+import ConstraintsPage from './ConstraintsPage.jsx';
+import WeeklyPage from './WeeklyPage.jsx';
 
 registerModule({
   code: 'plan',
@@ -25,6 +28,9 @@ registerModule({
     { path: '/plan/import', label: 'Import Schedule', icon: 'erp.action.create', permission: 'plan.schedule.import', flag: 'ff.plan.p1303', Page: ImportPage },
     { path: '/plan/baselines', label: 'Baselines', icon: 'erp.group.projects', permission: 'plan.baseline.view', flag: 'ff.plan.p1303', Page: BaselinesPage },
     { path: '/plan/variance', label: 'Variance and Quality', icon: 'erp.group.projects', permission: 'plan.baseline.view', flag: 'ff.plan.p1303', Page: VariancePage },
+    { path: '/plan/lookahead', label: 'Look-ahead Board', icon: 'erp.group.projects', permission: 'plan.lookahead.view', flag: 'ff.plan.p1304', Page: LookaheadPage },
+    { path: '/plan/constraints', label: 'Constraint Log', icon: 'erp.group.projects', permission: 'plan.constraint.view', flag: 'ff.plan.p1304', Page: ConstraintsPage },
+    { path: '/plan/weekly', label: 'Weekly Work Plan', icon: 'erp.group.projects', permission: 'plan.weekly_plan.view', flag: 'ff.plan.p1304', Page: WeeklyPage },
     { path: '/plan/calendars', label: 'Work Calendars', icon: 'erp.group.projects', permission: 'plan.calendar.view', flag: 'ff.plan.p1301', Page: CalendarsPage },
   ],
 });

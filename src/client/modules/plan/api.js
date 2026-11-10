@@ -66,6 +66,29 @@ export async function uploadSchedule(scheduleId, file, format = '') {
   const body = await res.json().catch(() => null); if (!res.ok) throw Object.assign(new Error(body?.error?.message ?? String(res.status)), { status: res.status, correlationId: body?.error?.correlationId, details: body?.error?.details ?? [] });
   return body.data;
 }
+// part 13.04: the look-ahead board, the constraint log and the weekly work plans
+Object.assign(pl, {
+  lookahead: async (scheduleId, q) => (await api.get(`/plan/schedules/${scheduleId}/lookahead?${q}`)).data,
+  lookaheadOptions: async (projectId) => (await api.get(`/plan/lookahead/options?projectId=${projectId}`)).data,
+  saveLookahead: async (scheduleId, b) => (await api.post(`/plan/schedules/${scheduleId}/lookaheads`, b, idem())).data,
+  detect: async (scheduleId) => (await api.post(`/plan/schedules/${scheduleId}/constraints/detect`, {}, idem())).data,
+  constraint: async (id) => (await api.get(`/plan/constraints/${id}`)).data,
+  createConstraint: async (b) => (await api.post('/plan/constraints', b, idem())).data,
+  updateConstraint: async (id, b) => (await api.patch(`/plan/constraints/${id}`, b, idem())).data,
+  constraintAct: async (id, action, b = {}) => (await api.post(`/plan/constraints/${id}/${action}`, b, idem())).data,
+  weekly: async (id) => (await api.get(`/plan/weekly-plans/${id}`)).data,
+  createWeekly: async (b) => (await api.post('/plan/weekly-plans', b, idem())).data,
+  updateWeekly: async (id, b) => (await api.patch(`/plan/weekly-plans/${id}`, b, idem())).data,
+  removeWeekly: async (id) => (await api.delete(`/plan/weekly-plans/${id}`)).data,
+  weeklyAct: async (id, action, b = {}) => (await api.post(`/plan/weekly-plans/${id}/${action}`, b, idem())).data,
+  weeklyDaily: async (id) => (await api.get(`/plan/weekly-plans/${id}/daily`)).data,
+  weeklyHistory: async (id) => (await api.get(`/plan/weekly-plans/${id}/history`)).data,
+  ppc: async (q) => (await api.get(`/plan/ppc?${q}`)).data,
+});
+export const CONSTRAINT_TYPES = ['DRAWING', 'RFI', 'SUBMITTAL', 'MATERIAL', 'LABOUR', 'PLANT', 'PERMIT', 'PREDECESSOR', 'CLIENT_APPROVAL', 'ACCESS'];
+export const VARIANCE_CODES = ['DRAWINGS', 'MATERIAL', 'LABOUR', 'PLANT', 'WEATHER', 'PREDECESSOR', 'CLIENT', 'PERMIT', 'QUALITY', 'SAFETY', 'OTHER'];
+export const WEEKLY_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', CLOSED: 'APPROVED', SUPERSEDED: 'CANCELLED' };
+export const mondayOf = (iso) => isoOf(ordOf(iso) - ((ordOf(iso) + 3) % 7));
 export const BASELINE_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
 export const REVISIONS = ['EOT', 'RESEQUENCE', 'SCOPE', 'OTHER'];
 /** The programme as text (the SVG image) for the preview and the PNG. */
