@@ -48,6 +48,7 @@ controlRegistry.define({
   evaluate: ({ context }) => ({ pass: !context.deviation, message: context.deviation ?? 'Within the work authorisation', details: { wa: context.waNo ?? null, kind: context.kind ?? null, ref: context.ref ?? null } }),
 });
 
+const YES_NO = [['1', 'Yes'], ['0', 'No']];
 export const waList = defineList({
   code: 'site.work_authorisations', label: 'Work authorisations', permission: 'site.work_authorisation.view',
   from: 'site_work_authorisations x JOIN org_projects p ON p.id = x.org_project_id JOIN org_sites s ON s.id = x.wa_site_id JOIN plan_activities a ON a.id = x.activity_id LEFT JOIN site_work_fronts f ON f.id = x.work_front_id',
@@ -56,7 +57,7 @@ export const waList = defineList({
     waNo: { sql: 'x.wa_no', type: 'text', label: 'WA no.' }, planDate: { sql: 'x.plan_date', type: 'date', label: 'Date' }, project: { sql: 'p.code', type: 'text', label: 'Project' }, projectId: { sql: 'x.org_project_id', type: 'number', label: 'Project id' },
     site: { sql: 's.code', type: 'text', label: 'Site' }, siteId: { sql: 'x.wa_site_id', type: 'number', label: 'Site id' }, front: { sql: 'f.name', type: 'text', label: 'Work front' }, activity: { sql: 'a.code', type: 'text', label: 'Activity' },
     plannedQty: { sql: 'x.planned_qty', type: 'number', label: 'Planned qty' }, actualQty: { sql: 'x.actual_qty', type: 'number', label: 'Actual qty' }, supervisor: { sql: 'x.supervisor', type: 'text', label: 'Supervisor' },
-    emergency: { sql: 'x.is_emergency', type: 'number', label: 'Emergency' }, inPlan: { sql: 'x.in_plan', type: 'number', label: 'In the plan' }, status: { sql: 'x.status', type: 'enum', label: 'Status', options: Object.entries(WA_STATUS) },
+    emergency: { sql: 'x.is_emergency', type: 'enum', label: 'Emergency', options: YES_NO }, inPlan: { sql: 'x.in_plan', type: 'enum', label: 'In the plan', options: YES_NO }, status: { sql: 'x.status', type: 'enum', label: 'Status', options: Object.entries(WA_STATUS) },
   },
 });
 export const dailyList = defineList({
@@ -103,7 +104,7 @@ export function createSiteService({ db }) {
     return { status, summary, activities: acts.filter((a) => a.pct_complete < 10000).map((a) => ({ id: a.id, code: a.code, name: a.name, qty: d3(a.qty), uom: a.uom, pct: a.pct_complete / 100, es: a.es, ef: a.ef })), constraints: cons.map((c) => ({ type: c.ctype, open: c.n })) };
   }
   const refreshFront = (id) => { const f = id ? frontRow(id) : null; if (!f) return; const st = frontState(f); if (st.status !== f.status || st.summary !== f.constraints_summary) db.prepare('UPDATE site_work_fronts SET status = ?, constraints_summary = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(st.status, st.summary, nowIso(), f.id); };
-  const frontView = (f, detail = true) => { const st = frontState(f); const loc = f.location_id ? db.prepare('SELECT code, name FROM proj_locations WHERE id = ?').get(f.location_id) : null; return { id: f.id, siteId: f.wf_site_id, projectId: f.org_project_id, locationId: f.location_id, location: loc ? `${loc.code} ${loc.name}` : null, code: f.code, name: f.name, status: st.status, statusLabel: FRONT_STATUS[st.status], constraintsSummary: st.summary, constraints: st.constraints, ...(detail ? { activities: st.activities } : { activitiesCount: st.activities.length }), sortOrder: f.sort_order, rowVersion: f.version }; };
+  const frontView = (f, detail = true, date = todayIST()) => { const st = frontState(f, date); const loc = f.location_id ? db.prepare('SELECT code, name FROM proj_locations WHERE id = ?').get(f.location_id) : null; return { id: f.id, siteId: f.wf_site_id, projectId: f.org_project_id, locationId: f.location_id, location: loc ? `${loc.code} ${loc.name}` : null, code: f.code, name: f.name, status: st.status, statusLabel: FRONT_STATUS[st.status], constraintsSummary: st.summary, constraints: st.constraints, ...(detail ? { activities: st.activities } : { activitiesCount: st.activities.length }), sortOrder: f.sort_order, rowVersion: f.version }; };
   const fronts = {
     list(actor, { siteId }) { const s = siteOf(actor, siteId, 'site.work_front.view'); return { site: { id: s.id, code: s.code, name: s.name, projectId: s.org_project_id, projectCode: s.pcode }, fronts: db.prepare('SELECT * FROM site_work_fronts WHERE wf_site_id = ? AND deleted_at IS NULL ORDER BY sort_order, code').all(s.id).map((f) => frontView(f)), canManage: may(actor, 'site.work_front.manage', s.org_project_id, s.id) }; },
     create(actor, b) {
@@ -201,7 +202,7 @@ export function createSiteService({ db }) {
   }
   const scope = (actor, key = 'site.work_authorisation.view') => { const f = authz.scopeFilter(actor, key, { project: 'x.org_project_id', site: 'x.wa_site_id' }); return { sql: `x.company_id = :c AND ${f.sql}`, params: { c: actor.companyId, ...(f.params ?? {}) } }; };
   const SELECT = 'x.id, x.wa_no, x.plan_date, x.org_project_id, x.wa_site_id, x.work_front_id, x.activity_id, x.planned_qty, x.actual_qty, x.uom, x.supervisor, x.is_emergency, x.in_plan, x.status, x.regularise_by, x.start_time, x.end_time, p.code AS pcode, s.code AS scode, a.code AS acode, a.name AS aname, f.code AS fcode, f.name AS fname';
-  const listRow = (x) => ({ id: x.id, waNo: x.wa_no, planDate: x.plan_date, project: x.pcode, projectId: x.org_project_id, site: x.scode, siteId: x.wa_site_id, front: x.fname ? `${x.fcode} ${x.fname}` : null, workFrontId: x.work_front_id, activity: `${x.acode} ${x.aname}`, activityId: x.activity_id, plannedQty: d3(x.planned_qty), actualQty: d3(x.actual_qty), uom: x.uom, supervisor: x.supervisor, startTime: x.start_time, endTime: x.end_time, emergency: Boolean(x.is_emergency), inPlan: Boolean(x.in_plan), overdue: x.status === 'EMERGENCY' && x.regularise_by < nowIso(), status: x.status, statusLabel: WA_STATUS[x.status] });
+  const listRow = (x) => ({ id: x.id, waNo: x.wa_no, planDate: x.plan_date, project: x.pcode, projectId: x.org_project_id, site: x.scode, siteId: x.wa_site_id, front: x.fname ? `${x.fcode} ${x.fname}` : null, workFrontId: x.work_front_id, activity: `${x.acode} ${x.aname}`, activityId: x.activity_id, plannedQty: d3(x.planned_qty), actualQty: d3(x.actual_qty), uom: x.uom, supervisor: x.supervisor, startTime: x.start_time, endTime: x.end_time, emergency: String(x.is_emergency), inPlan: String(x.in_plan), overdue: x.status === 'EMERGENCY' && x.regularise_by < nowIso(), status: x.status, statusLabel: WA_STATUS[x.status] });
 
   /** The resources a WA authorises: the crews named (labour by trade, a man-day a head) and the materials and plant of the activity's norms (13.02) in proportion to the quantity. */
   function resourcesFor(r, a, b) {
@@ -454,7 +455,7 @@ export function createSiteService({ db }) {
     const rows = db.prepare(`SELECT x.*, a.code AS acode, a.name AS aname FROM site_work_authorisations x JOIN plan_activities a ON a.id = x.activity_id WHERE x.wa_site_id = ? AND x.plan_date = ? AND x.deleted_at IS NULL AND x.status NOT IN ('CANCELLED', 'SUPERSEDED') ORDER BY x.start_time, x.id`).all(s.id, day);
     const card = (x) => ({ id: x.id, waNo: x.wa_no, activity: `${x.acode} ${x.aname}`, plannedQty: d3(x.planned_qty), actualQty: d3(x.actual_qty), uom: x.uom, startTime: x.start_time, endTime: x.end_time, supervisor: x.supervisor, crews: resources(x.id).filter((y) => y.resource_type === 'LABOUR').map((y) => `${y.label}${y.headcount != null ? ` × ${y.headcount}` : ''}`), emergency: Boolean(x.is_emergency), overdue: x.status === 'EMERGENCY' && x.regularise_by < nowIso(), inPlan: Boolean(x.in_plan), status: x.status, statusLabel: WA_STATUS[x.status], movable: editable(x), checksFailed: json(x.checks_json, []).filter((c) => c.result === 'FAIL').length });
     const fr = db.prepare('SELECT * FROM site_work_fronts WHERE wf_site_id = ? AND deleted_at IS NULL ORDER BY sort_order, code').all(s.id);
-    const lanes = fr.map((f) => { const v = frontView(f, false); return { ...v, was: rows.filter((x) => x.work_front_id === f.id).map(card) }; });
+    const lanes = fr.map((f) => { const v = frontView(f, false, day); return { ...v, was: rows.filter((x) => x.work_front_id === f.id).map(card) }; });
     const loose = rows.filter((x) => !x.work_front_id || !fr.some((f) => f.id === x.work_front_id)).map(card);
     const count = (st) => rows.filter((x) => st.includes(x.status)).length;
     return { site: { id: s.id, code: s.code, name: s.name, projectId: s.org_project_id, projectCode: s.pcode }, date: day, lanes, unassigned: loose, totals: { authorised: count(['APPROVED', 'EMERGENCY']), waiting: count(['SUBMITTED']), draft: count(['DRAFT', 'RETURNED']), closed: count(['CLOSED']), emergencies: count(['EMERGENCY']) },

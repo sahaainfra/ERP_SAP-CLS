@@ -29,7 +29,7 @@ export const st = {
   updateDaily: async (id, b) => (await api.patch(`/site/daily-plans/${id}`, b, idem())).data,
   dailyAct: async (id, action, b = {}) => (await api.post(`/site/daily-plans/${id}/${action}`, b, idem())).data,
   mobile: async (date) => (await api.get(`/site/wa-mobile?date=${date}`)).data,
-  decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, { action, comment }, idem())).data,
+  decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
 export const fmtDate = (iso) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—');
 export const fmtQty = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { maximumFractionDigits: 3 }));
