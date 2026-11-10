@@ -3,6 +3,7 @@ import {
   parseActivityCreate, parseActivityList, parseActivityUpdate, parseAmend, parseBoqLinks, parseBulk, parseCalendarCreate, parseCalendarDays, parseCalendarUpdate, parseDepCreate, parseGenerate, parseId, parseImport,
   parseProgress, parseProjectQ, parseReason, parseScheduleCreate, parseScheduleUpdate, parseTemplateCreate,
   parseCapacity, parseDrillQ, parseGanttEdit, parseHistogramExportQ, parseHistogramQ, parseProgrammeQ, parseResourceOptionsQ, parseResources, parseUndo,
+  parseBaselineAmend, parseBaselineCreate, parseBaselineUpdate, parseExchangeQ, parseImportApply, parseImportFileQ, parseImportListQ, parseImportUpdate, parseQualityExportQ, parseQualityQ, parseVarianceExportQ, parseVarianceQ,
 } from './validators.js';
 
 /** /api/v1/plan: the schedule core (part 13.01). Rights and scope are checked in the service. */
@@ -97,5 +98,44 @@ export function ganttRoutes(g, programme, { idempotent, idempotentRequired }) {
   r.post('/capacity', idempotentRequired, (req, res) => ok(res, g.capacity.create(req.actor, parseCapacity(req.body)), 201));
   r.post('/capacity/:id/activate', idempotentRequired, (req, res) => ok(res, g.capacity.activate(req.actor, pid(req))));
   r.post('/capacity/:id/cancel', idempotent, (req, res) => ok(res, g.capacity.cancel(req.actor, pid(req), parseReason(req.body))));
+  return r;
+}
+
+/** /api/v1/plan: baselines, the comparison, the quality check and the files of MS Project and Primavera (part 13.03, behind ff.plan.p1303). */
+export function baselineRoutes(b, { exportsOf, fileBody }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff', 'x-export-rows': String(out.rows ?? 0) }).send(out.buffer);
+  r.get('/baselines', (req, res) => res.json(b.baselines.list(req.actor, req.query)));
+  r.get('/baselines/export', async (req, res, next) => { try { const out = await exportsOf().start(req.actor, 'plan.baselines', req.query); if (out.job) return res.status(202).json({ data: out.job }); return res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' }).send(out.buffer); } catch (e) { return next(e); } });
+  r.get('/baselines/project', (req, res) => ok(res, b.baselines.ofProject(req.actor, parseId(req.query.projectId))));
+  r.get('/baselines/current', (req, res) => ok(res, b.baselines.current(req.actor, parseId(req.query.projectId))));
+  r.post('/baselines', idempotentRequired, (req, res) => ok(res, b.baselines.create(req.actor, parseBaselineCreate(req.body)), 201));
+  r.get('/baselines/:id', (req, res) => ok(res, b.baselines.get(req.actor, pid(req))));
+  r.patch('/baselines/:id', idempotent, (req, res) => ok(res, b.baselines.update(req.actor, pid(req), parseBaselineUpdate(req.body))));
+  r.delete('/baselines/:id', (req, res) => ok(res, b.baselines.remove(req.actor, pid(req))));
+  r.post('/baselines/:id/submit', idempotentRequired, (req, res) => ok(res, b.baselines.submit(req.actor, pid(req)), 202));
+  r.post('/baselines/:id/withdraw', idempotent, (req, res) => ok(res, b.baselines.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/baselines/:id/cancel', idempotent, (req, res) => ok(res, b.baselines.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/baselines/:id/amend', idempotentRequired, (req, res) => ok(res, b.baselines.amend(req.actor, pid(req), parseBaselineAmend(req.body)), 201));
+  r.get('/baselines/:id/history', (req, res) => ok(res, b.baselines.history(req.actor, pid(req))));
+  r.get('/baselines/:id/print', (req, res) => res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(b.baselines.print(req.actor, pid(req))));
+  r.get('/baselines/:id/variance', (req, res) => ok(res, b.variance(req.actor, pid(req), parseVarianceQ(req.query))));
+  r.get('/baselines/:id/variance/export', (req, res) => file(res, b.varianceExport(req.actor, pid(req), parseVarianceExportQ(req.query))));
+  r.get('/baselines/:id/quality', (req, res) => ok(res, b.quality(req.actor, parseQualityQ(req.query), { baselineId: pid(req) })));
+  r.get('/baselines/:id/quality/export', (req, res) => file(res, b.qualityExport(req.actor, parseQualityExportQ(req.query), { baselineId: pid(req) })));
+  r.get('/baselines/:id/exchange', (req, res) => file(res, b.exchangeFile(req.actor, { baselineId: pid(req) }, parseExchangeQ(req.query))));
+  // the working schedule: its quality check and its file for MS Project or Primavera
+  r.get('/schedules/:id/quality', (req, res) => ok(res, b.quality(req.actor, parseQualityQ(req.query), { scheduleId: pid(req) })));
+  r.get('/schedules/:id/quality/export', (req, res) => file(res, b.qualityExport(req.actor, parseQualityExportQ(req.query), { scheduleId: pid(req) })));
+  r.get('/schedules/:id/exchange', (req, res) => file(res, b.exchangeFile(req.actor, { scheduleId: pid(req) }, parseExchangeQ(req.query))));
+  // the import wizard: read and check a file, change its mapping, apply it to the working schedule
+  r.get('/imports', (req, res) => ok(res, b.imports.list(req.actor, parseImportListQ(req.query))));
+  r.post('/imports', fileBody, (req, res) => ok(res, b.imports.analyse(req.actor, parseImportFileQ(req.query), Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0)), 201));
+  r.get('/imports/:id', (req, res) => ok(res, b.imports.get(req.actor, pid(req))));
+  r.patch('/imports/:id', idempotent, (req, res) => ok(res, b.imports.update(req.actor, pid(req), parseImportUpdate(req.body))));
+  r.post('/imports/:id/apply', idempotentRequired, (req, res) => ok(res, b.imports.apply(req.actor, pid(req), parseImportApply(req.body))));
+  r.post('/imports/:id/discard', idempotent, (req, res) => ok(res, b.imports.discard(req.actor, pid(req))));
   return r;
 }

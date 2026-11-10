@@ -21,9 +21,10 @@ const KEEP = new Set(['id', 'company_id', 'created_at', 'created_by', 'version']
 const nowIso = () => new Date().toISOString();
 const json = (s, d) => { try { return JSON.parse(s ?? ''); } catch { return d; } };
 const round3 = (n) => Math.round(n * 1000) / 1000;
-const keyOf = (type, itemId, trade, itemName) => (type === 'LABOUR' ? `trade:${String(trade || itemName || '').trim().toLowerCase()}` : itemId ? `item:${itemId}` : `trade:${String(trade).trim().toLowerCase()}`);
+export const keyOf = (type, itemId, trade, itemName) => (type === 'LABOUR' ? `trade:${String(trade || itemName || '').trim().toLowerCase()}` : itemId ? `item:${itemId}` : `trade:${String(trade).trim().toLowerCase()}`);
 
 export function createGanttService({ db, plan }) {
+  const hooks = { baseline: null }; // 13.03 gives the dates of the current baseline here; until then the Gantt has none
   const authz = authzOf(db);
   const at = (actor, key, projectId) => authz.check(actor, key, { companyId: actor.companyId, projectId }).allowed;
   const audit = (actor, entity, id, action, companyId, extra = {}) => writeAudit(db, { entity, entityId: id, action, actor: actor.user, companyId, ...extra });
@@ -51,7 +52,7 @@ export function createGanttService({ db, plan }) {
     return {
       schedule: { id: s.id, docNo: s.doc_no, name: s.name, projectId: s.org_project_id, projectCode: v.projectCode, projectName: v.projectName, versionNo: s.version_no, status: s.status, start: s.start_date, finish: s.finish_date, dataDate: s.data_date, today: todayIST(), needsCalc: Boolean(s.needs_calc), calendar: v.calendar, workWeek: db.prepare('SELECT work_week FROM plan_calendars WHERE id = ?').get(s.calendar_id)?.work_week ?? '1111110' },
       can: { edit: canEdit, resources: at(actor, 'plan.resource.view', s.org_project_id), editResources: canEdit && at(actor, 'plan.resource.edit', s.org_project_id), print: at(actor, 'plan.schedule.print', s.org_project_id), export: at(actor, 'plan.schedule.export', s.org_project_id), undo: canEdit && edits.some((e) => !e.undoneAt) },
-      activities: acts, links, wbs, edits, baseline: null,
+      activities: acts, links, wbs, edits, baseline: hooks.baseline ? hooks.baseline(actor, s) : null,
     };
   }
 
@@ -411,5 +412,5 @@ export function createGanttService({ db, plan }) {
     return { name: `${base}.csv`, type: 'text/csv; charset=utf-8', body: `\uFEFF${lines.map((l) => l.map((v) => `"${cell(v).replaceAll('"', '""')}"`).join(',')).join('\r\n')}` };
   }
 
-  return { data, edit, undo, edits: (actor, id) => { const { s } = sched(actor, id); return { rows: lastEdits(s, 50) }; }, resourcesOf, saveResources, norms, resourceOptions, capacity, histogram, drill, loading, histogramExport, syncResources };
+  return { setBaselineSource: (fn) => { hooks.baseline = fn; }, data, edit, undo, edits: (actor, id) => { const { s } = sched(actor, id); return { rows: lastEdits(s, 50) }; }, resourcesOf, saveResources, norms, resourceOptions, capacity, histogram, drill, loading, histogramExport, syncResources };
 }

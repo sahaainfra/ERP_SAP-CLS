@@ -11990,6 +11990,65 @@ Indexes:
 - ix_plan_activity_resources_company_id: company_id
 - ux_plan_activity_resources_key (unique): activity_id, resource_type, res_key
 
+## plan_baselines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| schedule_version_no | INTEGER | yes |  | 1 |
+| baseline_no | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| revision_type | TEXT | yes |  | 'ORIGINAL' |
+| reason | TEXT | yes |  |  |
+| change_summary | TEXT |  |  |  |
+| reference_no | TEXT |  |  |  |
+| previous_baseline_id | INTEGER |  |  |  |
+| snapshot_json | TEXT | yes |  |  |
+| snapshot_hash | TEXT | yes |  |  |
+| change_json | TEXT | yes |  | '{}' |
+| start_date | TEXT |  |  |  |
+| finish_date | TEXT |  |  |  |
+| data_date | TEXT |  |  |  |
+| activities_count | INTEGER | yes |  | 0 |
+| critical_count | INTEGER | yes |  | 0 |
+| links_count | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| is_current | INTEGER | yes |  | 0 |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: previous_baseline_id -> plan_baselines(id), schedule_id -> plan_schedules(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_baselines_date: company_id, doc_date
+- ix_plan_baselines_previous: previous_baseline_id
+- ix_plan_baselines_schedule: schedule_id
+- ix_plan_baselines_project: org_project_id, status
+- ix_plan_baselines_company_id: company_id, status
+- ux_plan_baselines_current (unique): org_project_id
+- ux_plan_baselines_no (unique): org_project_id, baseline_no
+- ux_plan_baselines_doc (unique): company_id, doc_no
+
 ## plan_calendars
 
 | Column | Type | Not null | Key | Default |
@@ -12097,6 +12156,52 @@ Foreign keys: schedule_id -> plan_schedules(id), company_id -> org_companies(id)
 Indexes:
 - ix_plan_gantt_edits_schedule: schedule_id, id
 - ix_plan_gantt_edits_company_id: company_id
+
+## plan_imports
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| file_id | INTEGER |  |  |  |
+| file_name | TEXT | yes |  |  |
+| file_sha256 | TEXT | yes |  |  |
+| file_size | INTEGER | yes |  |  |
+| format | TEXT | yes |  |  |
+| mode | TEXT | yes |  | 'REPLACE' |
+| mapping_json | TEXT | yes |  | '{}' |
+| parsed_json | TEXT |  |  |  |
+| result_json | TEXT | yes |  | '{}' |
+| activities_count | INTEGER | yes |  | 0 |
+| links_count | INTEGER | yes |  | 0 |
+| errors_count | INTEGER | yes |  | 0 |
+| warnings_count | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'ANALYSED' |
+| imported_at | TEXT |  |  |  |
+| imported_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), schedule_id -> plan_schedules(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_imports_file: file_id
+- ix_plan_imports_schedule: schedule_id
+- ix_plan_imports_project: org_project_id, id
+- ix_plan_imports_company_id: company_id, status
 
 ## plan_resource_capacity
 
