@@ -7740,6 +7740,87 @@ paths:
     get:
       summary: "Look-ahead and weekly plans: GET /daily-plan"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays:
+    get:
+      summary: "Delays: GET /delays"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    post:
+      summary: "Delays: POST /delays"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/export:
+    get:
+      summary: "Delays: GET /delays/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/options:
+    get:
+      summary: "Delays: GET /delays/options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/summary:
+    get:
+      summary: "Delays: GET /delays/summary"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/summary/export:
+    get:
+      summary: "Delays: GET /delays/summary/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/claims:
+    get:
+      summary: "Delays: GET /delays/claims"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/{id}:
+    get:
+      summary: "Delays: GET /delays/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    patch:
+      summary: "Delays: PATCH /delays/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+    delete:
+      summary: "Delays: DELETE /delays/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/submit:
+    post:
+      summary: "Delays: POST /delays/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/withdraw:
+    post:
+      summary: "Delays: POST /delays/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/cancel:
+    post:
+      summary: "Delays: POST /delays/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/amend:
+    post:
+      summary: "Delays: POST /delays/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/history:
+    get:
+      summary: "Delays: GET /delays/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/{id}/print:
+    get:
+      summary: "Delays: GET /delays/{id}/print"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/{id}/evidence/candidates:
+    get:
+      summary: "Delays: GET /delays/{id}/evidence/candidates"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/delays/{id}/evidence:
+    post:
+      summary: "Delays: POST /delays/{id}/evidence"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/evidence/{evidenceId}:
+    delete:
+      summary: "Delays: DELETE /delays/{id}/evidence/{evidenceId}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/tia/preview:
+    post:
+      summary: "Delays: POST /delays/{id}/tia/preview"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
+  /api/v1/plan/delays/{id}/tia:
+    post:
+      summary: "Delays: POST /delays/{id}/tia"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict }, '422': { description: business rule } }
   /api/v1/bud/commitments/{id}/log:
     get:
       summary: "Budget check and ledger: GET /commitments/{id}/log"
