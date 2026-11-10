@@ -57,6 +57,7 @@
     "erp:bud-dept-perf": "node scripts/bud_dept_perf.mjs",
     "erp:plan-perf": "node scripts/plan_perf.mjs",
     "erp:plan-gantt-perf": "node scripts/plan_gantt_perf.mjs",
+    "erp:plan-baseline-perf": "node scripts/plan_baseline_perf.mjs",
     "migration:new": "node scripts/new_migration.mjs",
     "backfill": "node --env-file-if-exists=.env scripts/backfill.mjs",
     "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",

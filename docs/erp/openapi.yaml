@@ -7515,6 +7515,113 @@ paths:
     post:
       summary: "Gantt and resources: POST /capacity/{id}/cancel"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/baselines:
+    get:
+      summary: "Baselines and exchange: GET /baselines"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    post:
+      summary: "Baselines and exchange: POST /baselines"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/baselines/export:
+    get:
+      summary: "Baselines and exchange: GET /baselines/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/project:
+    get:
+      summary: "Baselines and exchange: GET /baselines/project"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/current:
+    get:
+      summary: "Baselines and exchange: GET /baselines/current"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/{id}:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    patch:
+      summary: "Baselines and exchange: PATCH /baselines/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+    delete:
+      summary: "Baselines and exchange: DELETE /baselines/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/baselines/{id}/submit:
+    post:
+      summary: "Baselines and exchange: POST /baselines/{id}/submit"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/baselines/{id}/withdraw:
+    post:
+      summary: "Baselines and exchange: POST /baselines/{id}/withdraw"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/baselines/{id}/cancel:
+    post:
+      summary: "Baselines and exchange: POST /baselines/{id}/cancel"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/baselines/{id}/amend:
+    post:
+      summary: "Baselines and exchange: POST /baselines/{id}/amend"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/baselines/{id}/history:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/{id}/print:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}/print"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/{id}/variance:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}/variance"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/{id}/variance/export:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}/variance/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/{id}/quality:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}/quality"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/{id}/quality/export:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}/quality/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/baselines/{id}/exchange:
+    get:
+      summary: "Baselines and exchange: GET /baselines/{id}/exchange"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/schedules/{id}/quality:
+    get:
+      summary: "Baselines and exchange: GET /schedules/{id}/quality"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/schedules/{id}/quality/export:
+    get:
+      summary: "Baselines and exchange: GET /schedules/{id}/quality/export"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/schedules/{id}/exchange:
+    get:
+      summary: "Baselines and exchange: GET /schedules/{id}/exchange"
+      responses: { '200': { description: 'the file' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+  /api/v1/plan/imports:
+    get:
+      summary: "Baselines and exchange: GET /imports"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    post:
+      summary: "Baselines and exchange: POST /imports"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/imports/{id}:
+    get:
+      summary: "Baselines and exchange: GET /imports/{id}"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission }, '404': { description: not found or flag off } }
+    patch:
+      summary: "Baselines and exchange: PATCH /imports/{id}"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/imports/{id}/apply:
+    post:
+      summary: "Baselines and exchange: POST /imports/{id}/apply"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
+  /api/v1/plan/imports/{id}/discard:
+    post:
+      summary: "Baselines and exchange: POST /imports/{id}/discard"
+      responses: { '200': { description: '{ data }' }, '400': { description: validation }, '403': { description: no permission }, '404': { description: not found or flag off }, '409': { description: state conflict } }
   /api/v1/bud/commitments/{id}/log:
     get:
       summary: "Budget check and ledger: GET /commitments/{id}/log"
