@@ -255,6 +255,7 @@ export function createSiteService({ db }) {
         activities: sch ? db.prepare("SELECT id, code, name, qty, uom, pct_complete, wbs_id, location_id FROM plan_activities WHERE schedule_id = ? AND deleted_at IS NULL AND act_type IN ('TASK', 'MILESTONE') AND pct_complete < 10000 ORDER BY sort_order, id").all(sch.id).map((a) => ({ id: a.id, code: a.code, name: a.name, qty: d3(a.qty), uom: a.uom, pct: a.pct_complete / 100, wbsId: a.wbs_id, locationId: a.location_id, remaining: a.qty ? d3(remainingOf(a)) : null, inPlan: planned.some((x) => x.activityId === a.id) })) : [],
         crews: db.prepare('SELECT id, code, name, trade FROM hr_crews WHERE crew_site_id = ? AND company_id = ? AND deleted_at IS NULL AND active = 1 ORDER BY code').all(s.id, actor.companyId).map((c) => ({ id: c.id, code: c.code, name: c.name, trade: c.trade, headcount: crewSize(c.id, day) })),
         drawings: db.prepare("SELECT d.id, d.drawing_no, d.title, r.rev_label FROM engg_drawings d LEFT JOIN engg_drawing_revisions r ON r.id = d.current_ifc_revision_id WHERE d.org_project_id = ? AND d.deleted_at IS NULL ORDER BY d.drawing_no LIMIT 500").all(s.org_project_id).map((d) => ({ id: d.id, drawingNo: d.drawing_no, title: d.title, ifcRevision: d.rev_label ?? null })),
+        locations: db.prepare('SELECT id, code, name FROM proj_locations WHERE project_id = ? AND deleted_at IS NULL ORDER BY sort_order, code LIMIT 1000').all(s.org_project_id),
         plan: planned, tolerancePct: Number(control(actor.companyId).planPct ?? 5),
       };
     },
