@@ -14596,6 +14596,285 @@ Indexes:
 - ux_sig_verifications_doc (unique): generated_doc_id
 - ux_sig_verifications_code (unique): code
 
+## site_daily_plan_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plan_id | INTEGER | yes |  |  |
+| activity_id | INTEGER | yes |  |  |
+| work_front_id | INTEGER |  |  |  |
+| crew_id | INTEGER |  |  |  |
+| planned_qty | INTEGER | yes |  |  |
+| uom | TEXT |  |  |  |
+| weekly_item_id | INTEGER |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: weekly_item_id -> plan_weekly_items(id), crew_id -> hr_crews(id), work_front_id -> site_work_fronts(id), activity_id -> plan_activities(id), plan_id -> site_daily_plans(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_daily_plan_lines_wa: wa_id
+- ix_site_daily_plan_lines_weekly: weekly_item_id
+- ix_site_daily_plan_lines_crew: crew_id
+- ix_site_daily_plan_lines_front: work_front_id
+- ix_site_daily_plan_lines_activity: activity_id
+- ix_site_daily_plan_lines_plan: plan_id
+- ix_site_daily_plan_lines_company_id: company_id
+
+## site_daily_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| dp_site_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER |  |  |  |
+| plan_date | TEXT | yes |  |  |
+| supervisor | TEXT | yes |  |  |
+| weekly_plan_id | INTEGER |  |  |  |
+| copied_from_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| issued_at | TEXT |  |  |  |
+| issued_by | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: copied_from_id -> site_daily_plans(id), weekly_plan_id -> plan_weekly_plans(id), schedule_id -> plan_schedules(id), dp_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_daily_plans_copied: copied_from_id
+- ix_site_daily_plans_weekly: weekly_plan_id
+- ix_site_daily_plans_schedule: schedule_id
+- ix_site_daily_plans_site: dp_site_id, plan_date
+- ix_site_daily_plans_project: org_project_id, plan_date
+- ix_site_daily_plans_company_id: company_id, status
+- ux_site_daily_plans_day (unique): dp_site_id, plan_date, supervisor
+- ux_site_daily_plans_doc (unique): company_id, doc_no
+
+## site_wa_resources
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| wa_id | INTEGER | yes |  |  |
+| resource_type | TEXT | yes |  |  |
+| item_id | INTEGER |  |  |  |
+| trade | TEXT |  |  |  |
+| crew_id | INTEGER |  |  |  |
+| res_key | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| headcount | INTEGER |  |  |  |
+| planned_qty | INTEGER | yes |  |  |
+| actual_qty | INTEGER | yes |  | 0 |
+| source | TEXT | yes |  | 'MANUAL' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: crew_id -> hr_crews(id), item_id -> mdm_items(id), wa_id -> site_work_authorisations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_wa_resources_crew: crew_id
+- ix_site_wa_resources_item: item_id
+- ix_site_wa_resources_wa: wa_id, resource_type, res_key
+- ix_site_wa_resources_company_id: company_id
+
+## site_wa_uses
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wa_id | INTEGER |  |  |  |
+| use_kind | TEXT | yes |  |  |
+| src_entity | TEXT | yes |  |  |
+| src_id | TEXT | yes |  |  |
+| resource_type | TEXT |  |  |  |
+| res_key | TEXT |  |  |  |
+| qty | INTEGER | yes |  | 0 |
+| uom | TEXT |  |  |  |
+| use_date | TEXT | yes |  |  |
+| result | TEXT | yes |  |  |
+| control_result | TEXT |  |  |  |
+| exception_no | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: wa_id -> site_work_authorisations(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_wa_uses_wa: wa_id, use_kind, res_key
+- ix_site_wa_uses_project: org_project_id, use_date
+- ix_site_wa_uses_company_id: company_id, use_date
+- ux_site_wa_uses_source (unique): company_id, use_kind, src_entity, src_id, 
+
+## site_work_authorisations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| wa_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wa_site_id | INTEGER | yes |  |  |
+| work_front_id | INTEGER |  |  |  |
+| daily_plan_id | INTEGER |  |  |  |
+| plan_date | TEXT | yes |  |  |
+| activity_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| planned_qty | INTEGER | yes |  |  |
+| uom | TEXT |  |  |  |
+| drawing_id | INTEGER |  |  |  |
+| drawing_revision | TEXT |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| budget_amount | INTEGER | yes |  | 0 |
+| budget_line_ref | TEXT |  |  |  |
+| permit_required | INTEGER | yes |  | 0 |
+| permit_ref | TEXT |  |  |  |
+| hold_points | TEXT |  |  |  |
+| start_time | TEXT | yes |  |  |
+| end_time | TEXT | yes |  |  |
+| supervisor | TEXT | yes |  |  |
+| in_plan | INTEGER | yes |  | 1 |
+| is_emergency | INTEGER | yes |  | 0 |
+| emergency_reason | TEXT |  |  |  |
+| regularise_by | TEXT |  |  |  |
+| regularised_at | TEXT |  |  |  |
+| checks_json | TEXT | yes |  | '[]' |
+| revision_no | INTEGER | yes |  | 1 |
+| parent_wa_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| actual_qty | INTEGER |  |  |  |
+| closure_notes | TEXT |  |  |  |
+| variance_reason | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_wa_id -> site_work_authorisations(id), drawing_id -> engg_drawings(id), location_id -> proj_locations(id), wbs_id -> proj_wbs(id), activity_id -> plan_activities(id), daily_plan_id -> site_daily_plans(id), work_front_id -> site_work_fronts(id), wa_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_work_authorisations_emergency: company_id, regularise_by
+- ix_site_work_authorisations_supervisor: company_id, supervisor, plan_date
+- ix_site_work_authorisations_parent: parent_wa_id
+- ix_site_work_authorisations_drawing: drawing_id
+- ix_site_work_authorisations_location: location_id
+- ix_site_work_authorisations_wbs: wbs_id
+- ix_site_work_authorisations_activity: activity_id, status
+- ix_site_work_authorisations_daily: daily_plan_id
+- ix_site_work_authorisations_front: work_front_id
+- ix_site_work_authorisations_site: wa_site_id, plan_date, status
+- ix_site_work_authorisations_project: org_project_id, status, plan_date
+- ix_site_work_authorisations_company_id: company_id, status
+- ux_site_work_authorisations_no (unique): company_id, wa_no
+
+## site_work_fronts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wf_site_id | INTEGER | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| constraints_summary | TEXT |  |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: location_id -> proj_locations(id), wf_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_work_fronts_location: location_id
+- ix_site_work_fronts_site: wf_site_id
+- ix_site_work_fronts_project: org_project_id, wf_site_id, status
+- ix_site_work_fronts_company_id: company_id, status
+- ux_site_work_fronts_code (unique): wf_site_id, code
+
 ## tdr_addenda
 
 | Column | Type | Not null | Key | Default |
