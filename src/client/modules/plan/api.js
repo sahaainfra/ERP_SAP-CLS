@@ -85,6 +85,27 @@ Object.assign(pl, {
   weeklyHistory: async (id) => (await api.get(`/plan/weekly-plans/${id}/history`)).data,
   ppc: async (q) => (await api.get(`/plan/ppc?${q}`)).data,
 });
+// part 13.05: the delay register, the time-impact analysis and the delay summary
+Object.assign(pl, {
+  delay: async (id) => (await api.get(`/plan/delays/${id}`)).data,
+  delayOptions: async (projectId) => (await api.get(`/plan/delays/options?projectId=${projectId}`)).data,
+  delays: async (q) => (await api.get(`/plan/delays?${q}`)).data,
+  createDelay: async (b) => (await api.post('/plan/delays', b, idem())).data,
+  updateDelay: async (id, b) => (await api.patch(`/plan/delays/${id}`, b, idem())).data,
+  removeDelay: async (id) => (await api.delete(`/plan/delays/${id}`)).data,
+  delayAct: async (id, action, b = {}) => (await api.post(`/plan/delays/${id}/${action}`, b, idem())).data,
+  delayHistory: async (id) => (await api.get(`/plan/delays/${id}/history`)).data,
+  evidenceCandidates: async (id, entity, q) => (await api.get(`/plan/delays/${id}/evidence/candidates?entity=${entity}&q=${encodeURIComponent(q ?? '')}`)).data,
+  addEvidence: async (id, b) => (await api.post(`/plan/delays/${id}/evidence`, b, idem())).data,
+  removeEvidence: async (id, eid) => (await api.delete(`/plan/delays/${id}/evidence/${eid}`)).data,
+  tiaPreview: async (id, b) => (await api.post(`/plan/delays/${id}/tia/preview`, b)).data,
+  tiaSave: async (id, b) => (await api.post(`/plan/delays/${id}/tia`, b, idem())).data,
+  delaySummary: async (q) => (await api.get(`/plan/delays/summary?${q}`)).data,
+});
+export const CAUSES = ['LATE_DRAWINGS', 'LATE_HANDOVER', 'CHANGE', 'WEATHER', 'FORCE_MAJEURE', 'CONTRACTOR_RESOURCES', 'STATUTORY', 'OTHER'];
+export const RESPONSIBILITIES = ['EMPLOYER', 'CONTRACTOR', 'NEUTRAL'];
+export const EVIDENCE_KINDS = ['engg_rfi', 'engg_letter', 'engg_drawing', 'core_file', 'plan_constraint', 'plan_weekly_plan'];
+export const DELAY_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
 export const CONSTRAINT_TYPES = ['DRAWING', 'RFI', 'SUBMITTAL', 'MATERIAL', 'LABOUR', 'PLANT', 'PERMIT', 'PREDECESSOR', 'CLIENT_APPROVAL', 'ACCESS'];
 export const VARIANCE_CODES = ['DRAWINGS', 'MATERIAL', 'LABOUR', 'PLANT', 'WEATHER', 'PREDECESSOR', 'CLIENT', 'PERMIT', 'QUALITY', 'SAFETY', 'OTHER'];
 export const WEEKLY_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', CLOSED: 'APPROVED', SUPERSEDED: 'CANCELLED' };

@@ -13,6 +13,9 @@ import VariancePage from './VariancePage.jsx';
 import LookaheadPage from './LookaheadPage.jsx';
 import ConstraintsPage from './ConstraintsPage.jsx';
 import WeeklyPage from './WeeklyPage.jsx';
+import DelaysPage from './DelaysPage.jsx';
+import TiaPage from './TiaPage.jsx';
+import DelaySummaryPage from './DelaySummaryPage.jsx';
 
 registerModule({
   code: 'plan',
@@ -31,6 +34,9 @@ registerModule({
     { path: '/plan/lookahead', label: 'Look-ahead Board', icon: 'erp.group.projects', permission: 'plan.lookahead.view', flag: 'ff.plan.p1304', Page: LookaheadPage },
     { path: '/plan/constraints', label: 'Constraint Log', icon: 'erp.group.projects', permission: 'plan.constraint.view', flag: 'ff.plan.p1304', Page: ConstraintsPage },
     { path: '/plan/weekly', label: 'Weekly Work Plan', icon: 'erp.group.projects', permission: 'plan.weekly_plan.view', flag: 'ff.plan.p1304', Page: WeeklyPage },
+    { path: '/plan/delays', label: 'Delay Register', icon: 'erp.group.projects', permission: 'plan.delay.view', flag: 'ff.plan.p1305', Page: DelaysPage },
+    { path: '/plan/tia', label: 'Time Impact Analysis', icon: 'erp.group.projects', permission: 'plan.delay.analyse', flag: 'ff.plan.p1305', Page: TiaPage },
+    { path: '/plan/delay-summary', label: 'Delay Summary', icon: 'erp.group.projects', permission: 'plan.delay.view', flag: 'ff.plan.p1305', Page: DelaySummaryPage },
     { path: '/plan/calendars', label: 'Work Calendars', icon: 'erp.group.projects', permission: 'plan.calendar.view', flag: 'ff.plan.p1301', Page: CalendarsPage },
   ],
 });
