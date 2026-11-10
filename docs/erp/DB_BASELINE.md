@@ -12134,6 +12134,97 @@ Indexes:
 - ix_plan_constraints_company_id: company_id, status
 - ux_plan_constraints_auto (unique): activity_id, ctype, src_entity, src_id
 
+## plan_delay_evidence
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| delay_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: delay_id -> plan_delays(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_delay_evidence_entity: entity, entity_id
+- ix_plan_delay_evidence_delay: delay_id
+- ix_plan_delay_evidence_company_id: company_id
+- ux_plan_delay_evidence_link (unique): delay_id, entity, entity_id
+
+## plan_delays
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| cause_category | TEXT | yes |  |  |
+| responsibility | TEXT | yes |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT | yes |  |  |
+| delay_days | INTEGER | yes |  |  |
+| affected_activities_json | TEXT | yes |  | '[]' |
+| mitigation | TEXT |  |  |  |
+| concurrency_note | TEXT |  |  |  |
+| impact_days | INTEGER |  |  |  |
+| tia_id | INTEGER |  |  |  |
+| revision_no | INTEGER | yes |  | 1 |
+| parent_delay_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| src_entity | TEXT |  |  |  |
+| src_id | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_delay_id -> plan_delays(id), schedule_id -> plan_schedules(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_delays_tia: tia_id
+- ix_plan_delays_source: src_entity, src_id
+- ix_plan_delays_parent: parent_delay_id
+- ix_plan_delays_schedule: schedule_id
+- ix_plan_delays_class: company_id, cause_category, responsibility, status
+- ix_plan_delays_project: org_project_id, status, start_date
+- ix_plan_delays_company_id: company_id, status
+- ux_plan_delays_doc (unique): company_id, doc_no
+
 ## plan_dependencies
 
 | Column | Type | Not null | Key | Default |
@@ -12422,6 +12513,46 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_plan_templates_company_id: company_id, status
 - ux_plan_templates_code (unique): , code
+
+## plan_tia
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| delay_id | INTEGER | yes |  |  |
+| schedule_id | INTEGER | yes |  |  |
+| schedule_copy_ref | TEXT | yes |  |  |
+| data_date | TEXT | yes |  |  |
+| fragnet_json | TEXT | yes |  |  |
+| completion_before | TEXT | yes |  |  |
+| completion_after | TEXT | yes |  |  |
+| impact_days | INTEGER | yes |  |  |
+| impact_working_days | INTEGER | yes |  |  |
+| result_json | TEXT | yes |  | '{}' |
+| analysed_by | TEXT | yes |  |  |
+| analysed_at | TEXT | yes |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: schedule_id -> plan_schedules(id), delay_id -> plan_delays(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plan_tia_schedule: schedule_id
+- ix_plan_tia_delay: delay_id, id
+- ix_plan_tia_company_id: company_id
 
 ## plan_weekly_items
 

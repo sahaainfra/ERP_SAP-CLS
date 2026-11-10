@@ -11,9 +11,10 @@ import { runtimeOf } from '../../platform/runtime/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { createFlagService } from '../core/api.js';
 import { SCHEDULE_DOC, SCHEDULE_STATUS, createPlanService } from './service.js';
-import { baselineRoutes, ganttRoutes, lookaheadRoutes, planRoutes } from './routes.js';
+import { baselineRoutes, delayRoutes, ganttRoutes, lookaheadRoutes, planRoutes } from './routes.js';
 import { createGanttService } from './gantt.js';
 import { createProgramme } from './programme.js';
+import { CAUSES, DELAY_DOC, DELAY_STATUS, RESPONSIBILITY, createDelayService } from './delays.js';
 import { CONSTRAINT_STATUS, WEEKLY_DOC, WEEKLY_STATUS, createLookaheadService } from './lookahead.js';
 import { BASELINE_DOC, BASELINE_STATUS, REVISION_TYPES, createBaselineService } from './baselines.js';
 
@@ -33,12 +34,14 @@ for (const [type, description] of [
   ['plan.constraint.cleared', 'A constraint was cleared (its source was resolved, or a person cleared or waived it): data { constraintId, projectId, scheduleId, activityId, type, by, waived }.'],
   ['plan.weekly_plan.approved', 'A weekly work plan was approved by the construction manager and the project manager (part 13.04); its commitments are spread over the working days of the week for work authorisation (14.01): data { planId, projectId, siteId, scheduleId, docNo, weekStart, revisionNo, supersedes, items, daily: [{ date, activityId, activity, crewId, qty, uom }] }. The daily plan is also read at GET /api/v1/plan/daily-plan.'],
   ['plan.weekly_plan.closed', 'A week was closed with its Percent Plan Complete (completed commitments / commitments) (part 13.04): data { planId, projectId, siteId, docNo, weekStart, items, completed, ppc, variance: [{ code, n }] }.'],
+  ['plan.delay.drafted', 'A delay was drafted by itself from an RFI answered with a time impact (part 13.05): data { delayId, projectId, source, sourceId, delayDays }.'],
+  ['plan.delay.approved', 'The classification of a delay was approved by the project manager and the commercial manager (part 13.05); it is locked and a revision replaces it: data { delayId, projectId, docNo, revisionNo, supersedes, title, cause, responsibility (EMPLOYER, CONTRACTOR, NEUTRAL), excusable, compensable, startDate, endDate, delayDays, impactDays (the completion shift of its time-impact analysis), tiaId, activities }. For the EOT claims (21.06) and the liquidated damages (21.07), which also read GET /api/v1/plan/delays/claims.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'plan', description });
 
 integrityRegistry.register({
   allowNegative: ['plan_activities.total_float', 'plan_activities.free_float', 'plan_dependencies.lag_days'], companyOptional: ['plan_templates'],
-  statuses: { plan_schedules: Object.keys(SCHEDULE_STATUS), plan_calendars: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_templates: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_resource_capacity: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_baselines: Object.keys(BASELINE_STATUS), plan_imports: ['ANALYSED', 'IMPORTED', 'DISCARDED'], plan_weekly_plans: Object.keys(WEEKLY_STATUS), plan_constraints: Object.keys(CONSTRAINT_STATUS), plan_lookaheads: ['ACTIVE', 'ARCHIVED'] },
-  uniqueKeys: [{ table: 'plan_schedules', columns: ['company_id', 'doc_no'] }, { table: 'plan_baselines', columns: ['company_id', 'doc_no'] }, { table: 'plan_weekly_plans', columns: ['company_id', 'doc_no'] }, { table: 'plan_activities', columns: ['schedule_id', 'code'] }, { table: 'plan_dependencies', columns: ['schedule_id', 'pred_id', 'succ_id'] }],
+  statuses: { plan_schedules: Object.keys(SCHEDULE_STATUS), plan_calendars: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_templates: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_resource_capacity: ['DRAFT', 'ACTIVE', 'CANCELLED'], plan_baselines: Object.keys(BASELINE_STATUS), plan_imports: ['ANALYSED', 'IMPORTED', 'DISCARDED'], plan_weekly_plans: Object.keys(WEEKLY_STATUS), plan_constraints: Object.keys(CONSTRAINT_STATUS), plan_lookaheads: ['ACTIVE', 'ARCHIVED'], plan_delays: Object.keys(DELAY_STATUS) },
+  uniqueKeys: [{ table: 'plan_schedules', columns: ['company_id', 'doc_no'] }, { table: 'plan_baselines', columns: ['company_id', 'doc_no'] }, { table: 'plan_weekly_plans', columns: ['company_id', 'doc_no'] }, { table: 'plan_delays', columns: ['company_id', 'doc_no'] }, { table: 'plan_activities', columns: ['schedule_id', 'code'] }, { table: 'plan_dependencies', columns: ['schedule_id', 'pred_id', 'succ_id'] }],
 });
 
 /** Module "plan": planning and scheduling (M13). Part 13.01 holds the schedule core: schedules in versions, activities, links, calendars, templates, the CPM pass and the progress. The tables are `plan_*`. */
@@ -48,9 +51,9 @@ export const plan = {
   routePrefix: '/api/v1/plan',
   ownerPart: '13.01',
   status: 'The schedule of a project in versions: activities (task, milestone, level of effort, WBS summary) on WBS nodes and locations with duration, calendar, constraint, quantity, BOQ split and person responsible; FS, SS, FF and SF links with lags (a loop is refused with its path); calendars of working days, holidays and site exceptions; activities generated from templates per WBS node or floor, or from the BOQ split by WBS; the CPM pass on the server (early and late dates, total and free float, critical path); progress at a data date; approval by the project controls manager. Part 13.03 adds the baselines of the programme (a frozen picture with a number, approved by the project manager and the project director, one of them current), the revisions with their reason and change summary, the variance of the current programme against a baseline, the quality check in the manner of DCMA-14, and the exchange with MS Project (XML) and Primavera P6 (XML and XER). The DPR (14.05) feeds progress by event.',
-  tables: ['plan_calendars', 'plan_schedules', 'plan_activities', 'plan_dependencies', 'plan_activity_boq', 'plan_templates', 'plan_activity_resources', 'plan_resource_capacity', 'plan_gantt_edits', 'plan_baselines', 'plan_imports', 'plan_lookaheads', 'plan_constraints', 'plan_weekly_plans', 'plan_weekly_items'],
+  tables: ['plan_calendars', 'plan_schedules', 'plan_activities', 'plan_dependencies', 'plan_activity_boq', 'plan_templates', 'plan_activity_resources', 'plan_resource_capacity', 'plan_gantt_edits', 'plan_baselines', 'plan_imports', 'plan_lookaheads', 'plan_constraints', 'plan_weekly_plans', 'plan_weekly_items', 'plan_delays', 'plan_tia', 'plan_delay_evidence'],
   companyOptional: ['plan_templates'],
-  resources: ['projects', 'options', 'current', 'calendars', 'templates', 'schedules', 'activities', 'dependencies', 'resource-options', 'capacity', 'baselines', 'imports', 'lookahead', 'constraints', 'weekly-plans', 'ppc', 'daily-plan'],
+  resources: ['projects', 'options', 'current', 'calendars', 'templates', 'schedules', 'activities', 'dependencies', 'resource-options', 'capacity', 'baselines', 'imports', 'lookahead', 'constraints', 'weekly-plans', 'ppc', 'daily-plan', 'delays'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_schedules'").get()) return;
@@ -84,6 +87,14 @@ export const plan = {
     p1304.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plan.p1304') ? next() : next(notFound('Look-ahead planning and weekly work plans are not enabled for your company yet (feature flag ff.plan.p1304 is OFF).'))));
     p1304.use(lookaheadRoutes(la, { exportsOf: () => listExportsOf(db) }, mw));
     router.use(p1304);
+    // part 13.05: the delay register, the time-impact analysis and the delay summary. An RFI answered with a time impact drafts a delay (FR-02).
+    const dl = createDelayService({ db, plan: svc.plan }); svc.delays = dl; svc.delayDecide = dl.delayDecide;
+    listExports.register('plan.delays', { source: (actor, req) => dl.delays.exportSource(actor, req), hidden: () => [] });
+    runtimeOf(db)?.bus?.subscribe(['engg.rfi.responded'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.plan.p1305')) dl.fromRfi(e); }, { consumer: 'plan.delays' });
+    const p1305 = Router();
+    p1305.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plan.p1305') ? next() : next(notFound('The delay register is not enabled for your company yet (feature flag ff.plan.p1305 is OFF).'))));
+    p1305.use(delayRoutes(dl, { exportsOf: () => listExportsOf(db) }, mw));
+    router.use(p1305);
     api.use('/plan', router);
   },
 };
@@ -211,5 +222,48 @@ fileEntities.register({
     const r = db.prepare('SELECT company_id, org_project_id, status FROM plan_weekly_plans WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
     const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('plan.weekly_plan.view')) return null;
     return { companyId: r.company_id, projectId: r.org_project_id, siteId: null, canView: true, canEdit: at('plan.weekly_plan.edit') || at('plan.weekly_plan.record'), locked: ['SUPERSEDED', 'CANCELLED'].includes(r.status) };
+  },
+});
+
+// ---- the approval of a delay classification (part 13.05): the planner prepares, the project manager and then the commercial manager approve -----------------------------------------
+const dline = (db, id) => db.prepare('SELECT x.*, p.code, p.name AS pname FROM plan_delays x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: DELAY_DOC, label: 'Delay classification', processOwner: 'COMMGR', route: (id) => `/plan/delays?id=${id}`,
+  describe(db, companyId, id) { const r = dline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.code} delay: ${r.title}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = dline(db, Number(id)); if (!r) return null; return { fields: [{ label: 'Project', value: `${r.code} ${r.pname}` }, { label: 'Cause', value: CAUSES[r.cause_category] }, { label: 'Responsibility', value: RESPONSIBILITY[r.responsibility] }, { label: 'From', value: r.start_date }, { label: 'To', value: r.end_date }, { label: 'Delay days', value: String(r.delay_days) }, { label: 'Impact on completion (days)', value: r.impact_days == null ? 'not analysed' : String(r.impact_days) }] }; },
+  defaultDefinition: { name: 'Delay classification: the project manager, then the commercial manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PM', 'Project manager (review)', 'PM', 48), approver('COMMGR', 'Commercial manager (approval)', 'COMMGR', 72)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => planOf(db)?.delayDecide?.(instance, actor, 'APPROVED'),
+    onRejected: (db, { instance, actor, comment }) => planOf(db)?.delayDecide?.(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => planOf(db)?.delayDecide?.(instance, actor, 'RETURNED', comment),
+    onCancelled: (db, { instance, actor, comment }) => planOf(db)?.delayDecide?.(instance, actor, 'CANCELLED', comment),
+  },
+});
+evidenceProviders.register(DELAY_DOC, ({ db, instance }) => {
+  const r = dline(db, Number(instance.docId)); if (!r) return { sections: [] };
+  const ev = db.prepare('SELECT entity, COUNT(*) AS n FROM plan_delay_evidence WHERE delay_id = ? AND deleted_at IS NULL GROUP BY entity').all(r.id); const t = r.tia_id ? db.prepare('SELECT completion_before, completion_after, impact_days, schedule_copy_ref FROM plan_tia WHERE id = ?').get(r.tia_id) : null;
+  const acts = (() => { try { return JSON.parse(r.affected_activities_json ?? '[]'); } catch { return []; } })();
+  return { sections: [{ code: 'plan-delay', title: 'Before you approve the classification', kind: 'metrics', items: [
+    { label: 'Cause', value: CAUSES[r.cause_category], format: 'text' }, { label: 'Responsibility', value: RESPONSIBILITY[r.responsibility], format: 'text' }, { label: 'Period', value: `${r.start_date} → ${r.end_date} (${r.delay_days} days)`, format: 'text' },
+    { label: 'Activities', value: acts.map((a) => a.code).join(', ') || '—', format: 'text', tone: acts.length ? undefined : 'warn' },
+    { label: 'Impact on completion', value: t ? `${t.completion_before} → ${t.completion_after} (${t.impact_days} days, on ${t.schedule_copy_ref})` : 'not analysed', format: 'text', tone: t ? undefined : 'warn' },
+    { label: 'Evidence', value: ev.map((e) => `${e.n} ${e.entity.replace(/^[a-z]+_/, '')}`).join(', ') || 'none', format: 'text', tone: ev.length ? undefined : 'bad' },
+    ...(r.concurrency_note ? [{ label: 'Concurrency', value: r.concurrency_note, format: 'text', tone: 'warn' }] : [])] }] };
+});
+objectTypes.register({
+  type: 'plan_delay', label: 'Delay', permission: 'plan.delay.view', route: (id) => `/plan/delays?id=${id}`, attachmentEntity: 'plan_delay', approvalTarget: 'plan_delay',
+  access(db, actor, id) { const s = planOf(db)?.delays; if (!s) return null; try { const r = s.delays.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, siteId: null, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'plan_delays', id }],
+  summary(db, actor, id) { const s = planOf(db)?.delays; if (!s) return null; try { const r = s.delays.get(actor, Number(id)); return { label: `${r.docNo} ${r.projectCode}: ${r.title}`, status: r.status }; } catch { return null; } },
+  related(db, actor, id) { const s = planOf(db)?.delays; if (!s) return []; try { const r = s.delays.get(actor, Number(id)); return [...r.evidence.filter((e) => e.link).map((e) => ({ kind: e.entityLabel.toLowerCase(), label: e.label, to: e.link, direction: 'in' })), ...(r.previous ? [{ kind: 'delay', label: `${r.previous.docNo} (the revision it replaces)`, to: `/plan/delays?id=${r.previous.id}`, direction: 'in' }] : [])]; } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'plan.delay.view').allowed) return []; return db.prepare('SELECT id, org_project_id FROM plan_delays WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `${q}%`, limit).filter((x) => authzOf(db).check(actor, 'plan.delay.view', { companyId: actor.companyId, projectId: x.org_project_id }).allowed).map((x) => ({ id: x.id })); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM plan_delays WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+fileEntities.register({
+  entity: 'plan_delay', label: 'Delay (photographs, site records, correspondence)',
+  resolve(db, actor, id) {
+    const r = db.prepare('SELECT company_id, org_project_id, status FROM plan_delays WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('plan.delay.view')) return null;
+    return { companyId: r.company_id, projectId: r.org_project_id, siteId: null, canView: true, canEdit: at('plan.delay.edit'), locked: ['SUPERSEDED', 'CANCELLED', 'REJECTED'].includes(r.status) };
   },
 });

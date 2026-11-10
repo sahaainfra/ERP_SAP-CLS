@@ -3,6 +3,7 @@ import {
   parseActivityCreate, parseActivityList, parseActivityUpdate, parseAmend, parseBoqLinks, parseBulk, parseCalendarCreate, parseCalendarDays, parseCalendarUpdate, parseDepCreate, parseGenerate, parseId, parseImport,
   parseProgress, parseProjectQ, parseReason, parseScheduleCreate, parseScheduleUpdate, parseTemplateCreate,
   parseCapacity, parseDrillQ, parseGanttEdit, parseHistogramExportQ, parseHistogramQ, parseProgrammeQ, parseResourceOptionsQ, parseResources, parseUndo,
+  parseDelayCreate, parseDelaySummaryExportQ, parseDelaySummaryQ, parseDelayUpdate, parseEvidence, parseEvidenceQ, parseTia,
   parseConstraintCreate, parseConstraintUpdate, parseDailyPlanQ, parseLookaheadQ, parseLookaheadSave, parseNote, parsePpcExportQ, parsePpcQ, parseRecord, parseWeeklyCreate, parseWeeklyUpdate,
   parseBaselineAmend, parseBaselineCreate, parseBaselineUpdate, parseExchangeQ, parseImportApply, parseImportFileQ, parseImportListQ, parseImportUpdate, parseQualityExportQ, parseQualityQ, parseVarianceExportQ, parseVarianceQ,
 } from './validators.js';
@@ -179,5 +180,35 @@ export function lookaheadRoutes(l, { exportsOf }, { idempotent, idempotentRequir
   r.get('/ppc', (req, res) => ok(res, l.ppcReport(req.actor, parsePpcQ(req.query))));
   r.get('/ppc/export', (req, res) => file(res, l.ppcExport(req.actor, parsePpcExportQ(req.query))));
   r.get('/daily-plan', (req, res) => { const q = parseDailyPlanQ(req.query); ok(res, l.dailyPlan(req.actor, q.projectId, q.date)); });
+  return r;
+}
+
+/** /api/v1/plan: the delay register, the time-impact analysis and the delay summary (part 13.05, behind ff.plan.p1305). */
+export function delayRoutes(d, { exportsOf }, { idempotent, idempotentRequired }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff', 'x-export-rows': String(out.rows ?? 0) }).send(out.buffer);
+  r.get('/delays', (req, res) => res.json(d.delays.list(req.actor, req.query)));
+  r.get('/delays/export', async (req, res, next) => { try { const out = await exportsOf().start(req.actor, 'plan.delays', req.query); if (out.job) return res.status(202).json({ data: out.job }); return res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'x-export-rows': String(out.rows), 'cache-control': 'no-store' }).send(out.buffer); } catch (e) { return next(e); } });
+  r.get('/delays/options', (req, res) => ok(res, d.delays.options(req.actor, parseId(req.query.projectId))));
+  r.get('/delays/summary', (req, res) => ok(res, d.summary(req.actor, parseDelaySummaryQ(req.query))));
+  r.get('/delays/summary/export', (req, res) => file(res, d.summaryExport(req.actor, parseDelaySummaryExportQ(req.query))));
+  r.get('/delays/claims', (req, res) => ok(res, d.claims(req.actor, parseId(req.query.projectId))));
+  r.post('/delays', idempotentRequired, (req, res) => ok(res, d.delays.create(req.actor, parseDelayCreate(req.body)), 201));
+  r.get('/delays/:id', (req, res) => ok(res, d.delays.get(req.actor, pid(req))));
+  r.patch('/delays/:id', idempotent, (req, res) => ok(res, d.delays.update(req.actor, pid(req), parseDelayUpdate(req.body))));
+  r.delete('/delays/:id', (req, res) => ok(res, d.delays.remove(req.actor, pid(req))));
+  r.post('/delays/:id/submit', idempotentRequired, (req, res) => ok(res, d.delays.submit(req.actor, pid(req)), 202));
+  r.post('/delays/:id/withdraw', idempotent, (req, res) => ok(res, d.delays.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/delays/:id/cancel', idempotent, (req, res) => ok(res, d.delays.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/delays/:id/amend', idempotentRequired, (req, res) => ok(res, d.delays.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.get('/delays/:id/history', (req, res) => ok(res, d.delays.history(req.actor, pid(req))));
+  r.get('/delays/:id/print', (req, res) => res.status(200).set({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).send(d.delays.print(req.actor, pid(req))));
+  r.get('/delays/:id/evidence/candidates', (req, res) => ok(res, d.evidence.candidates(req.actor, pid(req), parseEvidenceQ(req.query))));
+  r.post('/delays/:id/evidence', idempotent, (req, res) => ok(res, d.evidence.add(req.actor, pid(req), parseEvidence(req.body)), 201));
+  r.delete('/delays/:id/evidence/:evidenceId', (req, res) => ok(res, d.evidence.remove(req.actor, pid(req), parseId(req.params.evidenceId))));
+  r.post('/delays/:id/tia/preview', (req, res) => ok(res, d.tia.preview(req.actor, pid(req), parseTia(req.body))));
+  r.post('/delays/:id/tia', idempotentRequired, (req, res) => ok(res, d.tia.save(req.actor, pid(req), parseTia(req.body)), 201));
   return r;
 }

@@ -117,3 +117,21 @@ export const parseRecord = (b) => parse(z.object({ items: z.array(z.object({ ite
 export const parsePpcQ = (q) => parse(z.object({ projectId: id, siteId: optId, from: optDay, to: optDay }).strict(), q ?? {});
 export const parsePpcExportQ = (q) => parse(z.object({ projectId: id, siteId: optId, from: optDay, to: optDay, format: FILE_FORMAT }).strict(), q ?? {});
 export const parseDailyPlanQ = (q) => parse(z.object({ projectId: id, date: day }).strict(), q ?? {});
+
+// ---- part 13.05: the delay register and the time-impact analysis ---------------------------------------------------------------------------------------------------------------------
+const CAUSE = z.enum(['LATE_DRAWINGS', 'LATE_HANDOVER', 'CHANGE', 'WEATHER', 'FORCE_MAJEURE', 'CONTRACTOR_RESOURCES', 'STATUTORY', 'OTHER']);
+const RESP = z.enum(['EMPLOYER', 'CONTRACTOR', 'NEUTRAL']);
+const actIds = z.array(id).max(200);
+const fragCode = z.string().trim().regex(/^[A-Za-z0-9._-]{1,30}$/, 'A code is 1 to 30 letters, digits, dot, dash or underscore');
+const fragnet = z.object({
+  activities: z.array(z.object({ code: fragCode, name: text(200).min(2, 'Name the activity'), duration: z.number().int().min(0).max(3650) }).strict()).min(1, 'Put at least one activity in the fragnet').max(200),
+  links: z.array(z.object({ pred: fragCode, succ: fragCode, type: DEP.default('FS'), lag: z.number().int().min(-999).max(999).default(0) }).strict()).min(1, 'Link the fragnet to the schedule').max(500),
+}).strict();
+export const parseDelayCreate = (b) => parse(z.object({ projectId: id, scheduleId: optId, title: text(200).min(3, 'Name the event'), description: optText(4000), cause: CAUSE, responsibility: RESP, startDate: day, endDate: day, activityIds: actIds.default([]), mitigation: optText(2000), concurrency: optText(2000) }).strict(), b ?? {});
+export const parseDelayUpdate = (b) => given(parse(z.object({ scheduleId: optId, title: text(200).min(3).optional(), description: optText(4000), cause: CAUSE.optional(), responsibility: RESP.optional(), startDate: day.optional(), endDate: day.optional(), activityIds: actIds.optional(), mitigation: optText(2000), concurrency: optText(2000), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseEvidence = (b) => parse(z.object({ entity: z.enum(['engg_rfi', 'engg_letter', 'engg_drawing', 'core_file', 'plan_constraint', 'plan_weekly_plan']), entityId: id, note: optText(500) }).strict(), b ?? {});
+export const parseEvidenceQ = (q) => parse(z.object({ entity: z.enum(['engg_rfi', 'engg_letter', 'engg_drawing', 'core_file', 'plan_constraint', 'plan_weekly_plan']), q: z.string().trim().max(60).default('') }).strict(), q ?? {});
+export const parseTia = (b) => parse(z.object({ scheduleId: optId, dataDate: optDay, fragnet, note: optText(1000) }).strict(), b ?? {});
+const SUMMARY_Q = { projectId: optId, status: z.enum(['APPROVED', 'SUBMITTED', 'DRAFT', 'all']).default('APPROVED'), from: optDay, to: optDay };
+export const parseDelaySummaryQ = (q) => parse(z.object({ ...SUMMARY_Q, cause: CAUSE.nullish().transform((v) => v || null), responsibility: RESP.nullish().transform((v) => v || null) }).strict(), q ?? {});
+export const parseDelaySummaryExportQ = (q) => parse(z.object({ ...SUMMARY_Q, format: FILE_FORMAT }).strict(), q ?? {});

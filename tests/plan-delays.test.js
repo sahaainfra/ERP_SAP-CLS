@@ -24,7 +24,7 @@ async function boot() {
   const w = Number(d.prepare("INSERT INTO proj_wbs (company_id, project_id, code, name, level, created_by) VALUES (1, ?, '1', 'Substructure', 1, 't')").run(pid).lastInsertRowid);
   const drawing = Number(d.prepare("INSERT INTO engg_drawings (company_id, org_project_id, drawing_no, title, discipline, wbs_id) VALUES (1, ?, 'STR-101', 'Footing layout', 'STRUCTURAL', ?)").run(pid, w).lastInsertRowid);
   const rfi = Number(d.prepare("INSERT INTO engg_rfis (company_id, rfi_no, org_project_id, subject, question, discipline, wbs_id, drawing_id, activity_ref, required_by, status) VALUES (1, 'RFI/00009', ?, 'Footing level', 'What is the footing level?', 'STRUCTURAL', ?, ?, 'A20', '2026-04-08', 'RESPONDED')").run(pid, w, drawing).lastInsertRowid);
-  const letter = Number(d.prepare("INSERT INTO engg_letters (company_id, org_project_id, direction, letter_no, letter_date, subject) VALUES (1, ?, 'IN', 'CL/014', '2026-04-09', 'Revised footing levels')").run(pid).lastInsertRowid);
+  const letter = Number(d.prepare("INSERT INTO engg_letters (company_id, org_project_id, direction, letter_no, letter_date, party, subject, category) VALUES (1, ?, 'IN', 'CL/014', '2026-04-09', 'Consultant', 'Revised footing levels', 'INSTRUCTION')").run(pid).lastInsertRowid);
   const call = (who, method, path, body, k = key()) => api.call(method, `${P}${path}`, { ...who, headers: k, body });
   const act = async (who, instanceId, action = 'approve') => {
     const task = (await api.call('GET', `${W}/tasks?mine=assigned`, who)).json.data.rows.find((x) => x.instance.id === instanceId); assert.ok(task, `${who.user} has the task of instance ${instanceId}`);
@@ -55,7 +55,7 @@ test('T-01 BR-01 a time-impact analysis of a sample fragnet gives the expected c
   // as at a later date: the progress after that date is taken out, the progress before it counts
   t.d.prepare("UPDATE plan_activities SET actual_start = '2026-04-06', actual_finish = '2026-04-13', pct_complete = 10000, remaining_days = 0 WHERE id = ?").run(t.a.A10.id);
   const late = (await t.call(plan1, 'POST', `/delays/${dl.id}/tia/preview`, { dataDate: '2026-04-14', fragnet: { activities: [{ code: 'F30', name: 'Hold for the levels', duration: 2 }], links: [{ pred: 'F30', succ: 'A20' }] } })).json.data;
-  assert.deepEqual([late.completionBefore, late.completionAfter, late.impactDays], ['2026-04-18', '2026-04-20', 2], 'A10 finished late on the 13th; the hold starts at the data date');
+  assert.deepEqual([late.completionBefore, late.completionAfter, late.impactDays], ['2026-04-18', '2026-04-21', 3], 'A10 finished late on the 13th; the 2-day hold starts at the data date and pushes A30 over a Sunday');
   const asAtStart = (await t.call(plan1, 'POST', `/delays/${dl.id}/tia/preview`, { dataDate: '2026-04-06', fragnet: FRAGNET })).json.data; assert.equal(asAtStart.completionBefore, '2026-04-16', 'the finish of the 13th is after the data date: it is taken out');
   t.d.prepare('UPDATE plan_activities SET actual_start = NULL, actual_finish = NULL, pct_complete = 0, remaining_days = NULL WHERE id = ?').run(t.a.A10.id);
   // what is refused: a code of the schedule, a link to nowhere, a loose activity, a loop
