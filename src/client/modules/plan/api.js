@@ -45,7 +45,29 @@ export const pl = {
   capacity: async (projectId) => (await api.get(`/plan/capacity?projectId=${projectId ?? ''}`)).data,
   createCapacity: async (b) => (await api.post('/plan/capacity', b, idem())).data,
   capacityAct: async (id, action, b = {}) => (await api.post(`/plan/capacity/${id}/${action}`, b, idem())).data,
+  // part 13.03: baselines, the comparison, the quality check and the import of MS Project and Primavera files
+  baselinesOf: async (projectId) => (await api.get(`/plan/baselines/project?projectId=${projectId}`)).data,
+  baseline: async (id) => (await api.get(`/plan/baselines/${id}`)).data,
+  createBaseline: async (b) => (await api.post('/plan/baselines', b, idem())).data,
+  updateBaseline: async (id, b) => (await api.patch(`/plan/baselines/${id}`, b, idem())).data,
+  removeBaseline: async (id) => (await api.delete(`/plan/baselines/${id}`)).data,
+  baselineAct: async (id, action, b = {}) => (await api.post(`/plan/baselines/${id}/${action}`, b, idem())).data,
+  baselineHistory: async (id) => (await api.get(`/plan/baselines/${id}/history`)).data,
+  variance: async (id, q) => (await api.get(`/plan/baselines/${id}/variance?${q}`)).data,
+  quality: async (scheduleId, q) => (await api.get(`/plan/schedules/${scheduleId}/quality?${q}`)).data,
+  imports: async (scheduleId) => (await api.get(`/plan/imports?scheduleId=${scheduleId}`)).data,
+  importOf: async (id) => (await api.get(`/plan/imports/${id}`)).data,
+  updateImport: async (id, b) => (await api.patch(`/plan/imports/${id}`, b, idem())).data,
+  importAct: async (id, action, b = {}) => (await api.post(`/plan/imports/${id}/${action}`, b, idem())).data,
 };
+/** A file of MS Project or Primavera goes up as the raw bytes of the request; the answer is the import with its validation report. */
+export async function uploadSchedule(scheduleId, file, format = '') {
+  const res = await fetch(`/api/v1/plan/imports?${new URLSearchParams({ scheduleId: String(scheduleId), fileName: file.name, ...(format ? { format } : {}) })}`, { method: 'POST', headers: { ...authHeaders(), 'content-type': 'application/octet-stream' }, body: file });
+  const body = await res.json().catch(() => null); if (!res.ok) throw Object.assign(new Error(body?.error?.message ?? String(res.status)), { status: res.status, correlationId: body?.error?.correlationId, details: body?.error?.details ?? [] });
+  return body.data;
+}
+export const BASELINE_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const REVISIONS = ['EOT', 'RESEQUENCE', 'SCOPE', 'OTHER'];
 /** The programme as text (the SVG image) for the preview and the PNG. */
 export async function programmeSvg(id, q) {
   const res = await fetch(`/api/v1/plan/schedules/${id}/programme?format=svg&${q}`, { headers: authHeaders() }); if (!res.ok) { const e = await res.json().catch(() => null); throw Object.assign(new Error(e?.error?.message ?? String(res.status)), { status: res.status, correlationId: e?.error?.correlationId }); }
