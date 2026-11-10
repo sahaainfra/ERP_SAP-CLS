@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
@@ -11,9 +11,9 @@ import { SchedulePicker, useSearch } from './parts.jsx';
 // Ready cards are ticked and taken into a weekly plan.
 const WEEKS = [2, 3, 4, 6, 8, 12];
 
-function Card({ t, a, canMove, columns, picked, onPick, onMove, onAdd, canAdd }) {
+function Card({ t, a, canMove, columns, picked, onPick, onMove, onAdd, canAdd, onDrag }) {
   return (
-    <li className={`la-card${a.ready ? '' : ' la-blocked'}`} draggable={canMove} onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(a.id)); e.dataTransfer.effectAllowed = 'move'; }} data-testid="la-card" data-code={a.code} data-ready={a.ready ? '1' : '0'}
+    <li className={`la-card${a.ready ? '' : ' la-blocked'}`} draggable={canMove} onDragStart={(e) => { onDrag(a.id); e.dataTransfer.setData('text/plain', String(a.id)); e.dataTransfer.effectAllowed = 'move'; }} data-testid="la-card" data-code={a.code} data-ready={a.ready ? '1' : '0'}
       style={{ listStyle: 'none', border: `1px solid ${a.ready ? 'var(--erp-color-border-subtle)' : 'var(--erp-color-status-error-solid)'}`, borderRadius: 6, padding: 8, marginBottom: 8, background: 'var(--erp-color-bg-surface)' }}>
       <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap' }}>
         {a.ready && <input type="checkbox" checked={picked} onChange={() => onPick(a.id)} aria-label={t('la.pick', { c: a.code })} data-testid="la-pick" />}
@@ -40,6 +40,7 @@ export default function LookaheadPage() {
   const [projectId, setProjectId] = useState(null); const [scheduleId, setScheduleId] = useState(Number(sp.get('scheduleId')) || null);
   const [weeks, setWeeks] = useState(6); const [siteId, setSiteId] = useState(''); const [locationId, setLocationId] = useState(''); const [onlyBlocked, setOnlyBlocked] = useState(false); const [q, setQ] = useState('');
   const [picked, setPicked] = useState([]); const [move, setMove] = useState(null); const [adding, setAdding] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null); const [busy, setBusy] = useState(false); const [lastEdit, setLastEdit] = useState(false);
+  const dragged = useRef(null); // the card being dragged: some browsers do not hand the drag data to the drop target
   const sq = useQuery({ queryKey: ['plan', 'schedule', scheduleId], queryFn: () => pl.schedule(scheduleId), enabled: Boolean(scheduleId), retry: false });
   const pid = projectId ?? sq.data?.projectId ?? null;
   const oq = useQuery({ queryKey: ['plan', 'la-options', pid], queryFn: () => pl.lookaheadOptions(pid), enabled: Boolean(pid), retry: false });
@@ -52,7 +53,7 @@ export default function LookaheadPage() {
   const tryMove = async (a, weekStart) => { setError(null); setNote(null); setBusy(true); try { setMove({ a, weekStart, check: await pl.ganttCheck(scheduleId, { op: 'MOVE', activityId: a.id, start: weekStart }) }); } catch (e) { setError(errorInfo(e)); } finally { setBusy(false); } };
   const doMove = async () => { const ok = await run(() => pl.ganttEdit(scheduleId, { op: 'MOVE', activityId: move.a.id, start: move.weekStart, confirm: move.check.conflicts.length > 0 }), t('la.moved', { c: move.a.code })); if (ok) { setMove(null); setLastEdit(true); } };
   const cols = d?.columns ?? []; const toggle = (id) => setPicked((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
-  const onDrop = (e, weekStart) => { e.preventDefault(); const a = d.activities.find((x) => x.id === Number(e.dataTransfer.getData('text/plain'))); if (a && a.week !== weekStart && can.move) tryMove(a, weekStart); };
+  const onDrop = (e, weekStart) => { e.preventDefault(); const a = d.activities.find((x) => x.id === (Number(e.dataTransfer.getData('text/plain')) || dragged.current)); dragged.current = null; if (a && a.week !== weekStart && can.move) tryMove(a, weekStart); };
   return (
     <section aria-labelledby="la-h" data-testid="plan-lookahead">
       <h1 id="la-h">{t('la.title')}</h1>
@@ -117,7 +118,7 @@ export default function LookaheadPage() {
             {cols.map((c) => (
               <section key={c.weekStart} aria-label={t('la.weekOf', { d: fmtDate(c.weekStart) })} onDragOver={(e) => can.move && e.preventDefault()} onDrop={(e) => onDrop(e, c.weekStart)} data-testid="la-col" data-week={c.weekStart} style={{ background: 'var(--erp-color-bg-surface-sunken)', borderRadius: 8, padding: 8 }}>
                 <h2 style={{ fontSize: 14, margin: '0 0 8px' }}>{fmtDate(c.weekStart)} <span className="muted">· {c.activities} · ✓ {c.ready} · ⚠ {c.blocked}</span></h2>
-                <ul style={{ margin: 0, padding: 0 }}>{d.activities.filter((a) => a.week === c.weekStart).map((a) => <Card key={a.id} t={t} a={a} canMove={can.move} columns={cols} picked={picked.includes(a.id)} onPick={toggle} onMove={tryMove} onAdd={(x) => setAdding({ a: x, type: 'ACCESS', description: '', owner: '', dueDate: '' })} canAdd={can.addConstraint} />)}</ul>
+                <ul style={{ margin: 0, padding: 0 }}>{d.activities.filter((a) => a.week === c.weekStart).map((a) => <Card key={a.id} t={t} a={a} canMove={can.move} columns={cols} picked={picked.includes(a.id)} onPick={toggle} onMove={tryMove} onAdd={(x) => setAdding({ a: x, type: 'ACCESS', description: '', owner: '', dueDate: '' })} canAdd={can.addConstraint} onDrag={(id) => { dragged.current = id; }} />)}</ul>
               </section>
             ))}
           </div></div>

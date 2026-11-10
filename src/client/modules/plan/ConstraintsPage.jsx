@@ -66,7 +66,7 @@ export default function ConstraintsPage() {
   const t = useT('plan');
   usePageTitle(t('con.title'));
   const sp = useSearch(); const qc = useQueryClient(); const session = useSession(); const perms = session.data?.permissions ?? [];
-  const [adding, setAdding] = useState(false); const [openId, setOpenId] = useState(null);
+  const [adding, setAdding] = useState(false); const [openId, setOpenId] = useState(Number(sp.get('id')) || null);
   return (
     <section aria-labelledby="con-h" data-testid="plan-constraints">
       <h1 id="con-h" className="sr-only">{t('con.title')}</h1>
@@ -76,7 +76,7 @@ export default function ConstraintsPage() {
       </div>
       {adding && <NewConstraint t={t} scheduleId={Number(sp.get('scheduleId')) || null} onDone={(c) => { qc.invalidateQueries({ queryKey: ['plan'] }); setAdding(false); setOpenId(c.id); }} />}
       {openId && <Detail key={openId} t={t} id={openId} onClose={() => setOpenId(null)} />}
-      <ListReport listCode="plan.constraints" endpoint="/plan/constraints" title={t('con.title')} session={session.data} onOpen={(r) => setOpenId(r.id)}
+      <ListReport listCode="plan.constraints" endpoint="/plan/constraints" title={t('con.title')} session={session.data} rowHref={(r) => `/plan/constraints?id=${r.id}`} onOpen={(r) => setOpenId(r.id)}
         cardFields={[{ key: 'activity', label: t('f.activity') }, { key: 'ctype', label: t('f.type') }, { key: 'owner', label: t('con.owner') }, { key: 'dueDate', label: t('con.due') }]} statusKey="status"
         empty={{ title: t('con.emptyTitle'), text: t('con.emptyBody') }} />
     </section>

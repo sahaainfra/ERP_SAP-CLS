@@ -71,18 +71,19 @@ test('AC-01 the look-ahead board shows the constraints found in engineering; a r
   // ---- the board: the constraints appear when the planner looks for them ----
   const r = await open(browser, info, c, 'PLAN', planner, `/plan/lookahead?scheduleId=${sch.id}`); const errors = watch(r.page); const page = r.page;
   await expect(page.getByRole('heading', { name: 'Look-ahead Board', level: 1 })).toBeVisible(); await expect(page.getByTestId('la-card')).toHaveCount(3); await expect(page.getByTestId('la-n-blocked')).toHaveText('0');
-  await page.getByTestId('la-detect').click(); await expect(page.getByTestId('la-note')).toContainText('3 found'); await expect(page.getByTestId('la-n-blocked')).toHaveText('3'); await expect(page.getByTestId('la-n-ready')).toContainText('0');
+  await page.getByTestId('la-detect').click(); await expect(page.getByTestId('la-note')).toContainText('5 found'); await expect(page.getByTestId('la-n-blocked')).toHaveText('3'); await expect(page.getByTestId('la-n-ready')).toContainText('0');
   const card = (code) => page.locator(`[data-testid="la-card"][data-code="${code}"]`);
-  await expect(card('A10')).toHaveAttribute('data-ready', '0'); await expect(card('A10').getByTestId('la-constraint')).toContainText('Open RFI'); await expect(card('A30').getByTestId('la-constraint')).toContainText('No IFC revision');
+  await expect(card('A10')).toHaveAttribute('data-ready', '0'); await expect(card('A10').getByTestId('la-constraint').filter({ hasText: 'Open RFI' })).toHaveCount(1); await expect(card('A10').getByTestId('la-constraint').filter({ hasText: 'No IFC revision' })).toHaveCount(1); await expect(card('A30').getByTestId('la-constraint')).toContainText('No IFC revision');
   await shot(page, 'board', info); await noOverflow(page);
   // the RFI is closed in engineering: the next look finds the constraint resolved
   const db = new DatabaseSync('data/e2e.sqlite'); db.exec('PRAGMA busy_timeout = 8000;'); db.prepare("UPDATE engg_rfis SET status = 'CLOSED' WHERE id = ?").run(s.rfi); db.prepare("UPDATE engg_drawings SET register_status = 'CANCELLED' WHERE company_id = ?").run(c); db.close();
-  await page.getByTestId('la-detect').click(); await expect(page.getByTestId('la-note')).toContainText('3 cleared'); await expect(page.getByTestId('la-n-ready')).toContainText('3'); await expect(card('A10')).toHaveAttribute('data-ready', '1');
+  await page.getByTestId('la-detect').click(); await expect(page.getByTestId('la-note')).toContainText('5 cleared'); await expect(page.getByTestId('la-n-ready')).toContainText('3'); await expect(card('A10')).toHaveAttribute('data-ready', '1');
   await page.getByTestId('la-only-blocked').check(); await expect(page.getByTestId('la-card')).toHaveCount(0); await expect(page.getByTestId('la-empty')).toBeVisible(); await page.getByTestId('la-only-blocked').uncheck();
   // a constraint logged by hand on a card, then the log
   await card('A30').getByTestId('la-add-constraint').click(); await page.getByTestId('la-ctype').selectOption('PERMIT'); await page.getByTestId('la-cdesc').fill('Hot work permit for the cutting'); await page.getByTestId('la-cowner').fill(s.u('se')); await page.getByTestId('la-cdue').fill(nextMonday); await page.getByTestId('la-csave').click();
   await expect(card('A30')).toHaveAttribute('data-ready', '0'); await expect(card('A30').getByTestId('la-constraint')).toContainText('Hot work permit'); await shot(page, 'board-blocked', info);
-  await page.goto(`/plan/constraints?scheduleId=${sch.id}`); await expect(page.getByTestId('plan-constraints')).toBeVisible(); await page.getByText('Hot work permit for the cutting').first().click();
+  await page.goto(`/plan/constraints?scheduleId=${sch.id}`); await expect(page.getByTestId('plan-constraints')).toBeVisible(); const permit = (await P('get', '/plan/constraints?q=hot%20work')).find((x) => x.type === 'PERMIT');
+  if (desktop) await page.getByRole('row').filter({ hasText: 'Hot work permit for the cutting' }).getByRole('link').first().click(); else await page.goto(`/plan/constraints?id=${permit.id}`);
   await expect(page.getByTestId('con-detail')).toHaveAttribute('data-status', 'OPEN'); await shot(page, 'constraints', info); await noOverflow(page);
   page.once('dialog', (d) => d.accept('Permit received')); await page.getByTestId('con-clear').click(); await expect(page.getByTestId('con-detail')).toHaveAttribute('data-status', 'CLEARED');
 
@@ -111,7 +112,7 @@ test('AC-01 the look-ahead board shows the constraints found in engineering; a r
   await card('A20').getByTestId('la-move').selectOption({ index: 1 }); await expect(page.getByTestId('la-move-panel')).toBeVisible(); await expect(page.getByTestId('la-move-panel')).toContainText('A20'); await shot(page, 'board-move', info);
   await page.getByTestId('la-move-apply').click(); await expect(page.getByTestId('la-note')).toContainText('A20 is moved'); await expect(page.getByTestId('la-undo')).toBeVisible();
   await page.getByTestId('la-undo').click(); await expect(page.getByTestId('la-note')).toContainText('undone');
-  if (desktop) { await card('A20').dragTo(page.locator('[data-testid="la-col"]').nth(1)); await expect(page.getByTestId('la-move-panel')).toBeVisible(); await page.getByTestId('la-move-cancel').click(); }
+  if (desktop) { await card('A20').dragTo(page.locator('[data-testid="la-col"]').nth(1), { sourcePosition: { x: 120, y: 30 }, targetPosition: { x: 40, y: 12 } }); await expect(page.getByTestId('la-move-panel')).toBeVisible(); await page.getByTestId('la-move-cancel').click(); }
   expect(errors, errors.join('\n')).toEqual([]);
   // the site engineer reads the board and cannot move a card
   await v.page.goto(`/plan/lookahead?scheduleId=${sch.id}`); await expect(v.page.getByTestId('la-card').first()).toBeVisible(); await expect(v.page.getByTestId('la-move')).toHaveCount(0); await expect(v.page.getByTestId('la-save')).toHaveCount(0);
