@@ -1260,3 +1260,14 @@ Module `plan` (flag `ff.plan.p1305`), tables `plan_delays`, `plan_tia`, `plan_de
 - **Evidence** (FR-04): `/delays/:id/evidence` (add, remove, candidates) for RFIs, letters, drawings, files attached to the delay, constraints and weekly plans of the project.
 - **Summary and claims** (FR-05, ADR-487): `GET /delays/summary` (by cause and responsibility, drill-down, export) and `GET /delays/claims?projectId=`; event `plan.delay.approved`.
 - **Permissions**: `plan.delay.{view,create,edit,delete,submit,approve,cancel,amend,print,export,analyse}`. **Browser**: Delay Register, Time Impact Analysis, Delay Summary.
+
+## 102. Work fronts, daily work plans and work authorisation (part 14.01)
+Module `site` (new, flag `ff.site.p1401`), tables `site_work_fronts`, `site_daily_plans`, `site_daily_plan_lines`, `site_work_authorisations`, `site_wa_resources`, `site_wa_uses`. One service, `modules/site/service.js`.
+
+- **Work fronts** (FR-01): `/work-fronts?siteId=` (list, create, update, delete). The activities, status and constraints summary are worked out from the current schedule and the constraint log of 13.04.
+- **Daily plans** (FR-02): `/daily-plans` (list, create from `WEEKLY`, `YESTERDAY` or `EMPTY`, get, update lines, `cancel`, `issue`). Issue raises a WA in draft for each line (all or none) and publishes `site.daily_plan.issued`.
+- **Work authorisations** (FR-03 to FR-05, ADR-488, ADR-489): `/work-authorisations` (list, export, options, active, create, get, update, delete, `move`, `submit`, `withdraw`, `cancel`, `amend`, `close`, `history`, `print`). Workflow type `SITE_WA`: CM, then PM when `escalate = yes` (outside the weekly plan or emergency). Control CP-SITE-01 (APPROVE, BLOCK, default WARN) at submit and in the approval hook. An emergency WA is usable at once and regularised through the same chain within 24 hours.
+- **Uses** (FR-07, ADR-490): `POST /wa-uses` books attendance, material issue, plant log, DPR or measurement against a WA, once per source; control CP-SITE-02 (EXECUTE, EXCEPTION, default ENFORCE) for a use without a live WA or beyond it. Thresholds of CP-SITE-02: `usePct` 5, `planPct` 5, `closePct` 10.
+- **Board** (FR-06): `GET /board?siteId&date`; `GET /wa-mobile?date` for the phone (my approval tasks of type `SITE_WA` and the approved WAs I can close).
+- **Events**: `site.wa.approved` (also on an emergency WA's creation), `site.wa.closed`, `site.daily_plan.issued`. **Permissions**: `site.work_authorisation.{view,create,edit,delete,submit,approve,cancel,amend,print,export,close}`, `site.work_front.{view,manage}`, `site.daily_plan.{view,manage}`, `site.wa.use`. **Browser**: Site Work Board, Work Authorisations, Daily Work Plan, Approve and Close WA; English and Hindi.
+

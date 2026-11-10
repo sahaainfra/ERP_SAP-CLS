@@ -7889,3 +7889,116 @@ paths:
     get:
       summary: "GIS: GET /overlays/{id}/history"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/sites:
+    get:
+      summary: "Site execution (14.01): GET /sites"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/board:
+    get:
+      summary: "Site execution (14.01): GET /board"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/wa-mobile:
+    get:
+      summary: "Site execution (14.01): GET /wa-mobile"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-fronts:
+    get:
+      summary: "Site execution (14.01): GET /work-fronts"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Site execution (14.01): POST /work-fronts"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-fronts/{id}:
+    patch:
+      summary: "Site execution (14.01): PATCH /work-fronts/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Site execution (14.01): DELETE /work-fronts/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations:
+    get:
+      summary: "Site execution (14.01): GET /work-authorisations"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Site execution (14.01): POST /work-authorisations"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/export:
+    get:
+      summary: "Site execution (14.01): GET /work-authorisations/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/options:
+    get:
+      summary: "Site execution (14.01): GET /work-authorisations/options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/active:
+    get:
+      summary: "Site execution (14.01): GET /work-authorisations/active"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}:
+    get:
+      summary: "Site execution (14.01): GET /work-authorisations/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Site execution (14.01): PATCH /work-authorisations/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Site execution (14.01): DELETE /work-authorisations/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/move:
+    post:
+      summary: "Site execution (14.01): POST /work-authorisations/:id/move"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/submit:
+    post:
+      summary: "Site execution (14.01): POST /work-authorisations/:id/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/withdraw:
+    post:
+      summary: "Site execution (14.01): POST /work-authorisations/:id/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/cancel:
+    post:
+      summary: "Site execution (14.01): POST /work-authorisations/:id/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/amend:
+    post:
+      summary: "Site execution (14.01): POST /work-authorisations/:id/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/close:
+    post:
+      summary: "Site execution (14.01): POST /work-authorisations/:id/close"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/history:
+    get:
+      summary: "Site execution (14.01): GET /work-authorisations/:id/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/work-authorisations/{id}/print:
+    get:
+      summary: "Site execution (14.01): GET /work-authorisations/:id/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/daily-plans:
+    get:
+      summary: "Site execution (14.01): GET /daily-plans"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Site execution (14.01): POST /daily-plans"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/daily-plans/{id}:
+    get:
+      summary: "Site execution (14.01): GET /daily-plans/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Site execution (14.01): PATCH /daily-plans/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/daily-plans/{id}/cancel:
+    post:
+      summary: "Site execution (14.01): POST /daily-plans/:id/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/daily-plans/{id}/issue:
+    post:
+      summary: "Site execution (14.01): POST /daily-plans/:id/issue"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/wa-uses:
+    post:
+      summary: "Site execution (14.01): POST /wa-uses"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
