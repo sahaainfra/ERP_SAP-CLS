@@ -2050,7 +2050,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/plan/delays/:id/evidence/candidates', g: 'permission', k: 'plan.delay.view', s: 'parseEvidenceQ', scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/plan/delays/:id/evidence', g: 'permission', k: 'plan.delay.edit', s: 'parseEvidence', scope: 'company', rate: 'write', audit: true },
   { m: 'DELETE', p: '/api/v1/plan/delays/:id/evidence/:evidenceId', g: 'permission', k: 'plan.delay.edit', s: 'parseId', scope: 'company', rate: 'write', audit: true },
-  { m: 'POST', p: '/api/v1/plan/delays/:id/tia/preview', g: 'permission', k: 'plan.delay.analyse', s: 'parseTia', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/plan/delays/:id/tia/preview', g: 'permission', k: 'plan.delay.analyse', s: 'parseTia', scope: 'company', rate: 'read', audit: true },
   { m: 'POST', p: '/api/v1/plan/delays/:id/tia', g: 'permission', k: 'plan.delay.analyse', s: 'parseTia', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/proj/gis/overlays', g: 'permission', k: 'proj.gis.view', s: 'parseGisProject', scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/proj/gis/overlays', g: 'permission', k: 'proj.gis.create', s: 'parseOverlayCreate', scope: 'company', rate: 'write', audit: true },
