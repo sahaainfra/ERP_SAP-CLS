@@ -115,3 +115,13 @@ export const parseAckAct = (b) => parse(z.object({ note: optText(2000) }).strict
 export const parseComply = (b) => parse(z.object({ note: text(2000).min(5, 'Say what was done (at least 5 characters)') }).strict(), b ?? {});
 export const parseInstructionClose = (b) => parse(z.object({ closureNotes: text(2000).min(5, 'Say how it was closed (at least 5 characters)') }).strict(), b ?? {});
 export const parseVariationDecision = (b) => parse(z.object({ decision: z.enum(['ACCEPTED', 'REJECTED', 'WITHDRAWN']), ref: optText(80), note: optText(1000) }).strict(), b ?? {});
+
+// ---- progress measurement, earned value and S-curves (part 14.05) ----
+const adjustment = z.object({ activityCode: text(40).min(1, 'Name the activity'), qty: z.number().finite().min(-1e9).max(1e9).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals').refine((n) => n !== 0, 'Give a change that is not zero'), reason }).strict();
+const periodFields = { periodType: z.enum(['WEEK', 'MONTH']), periodEnd: day, actualCost: money.nullish().transform((v) => v ?? null), adjustments: z.array(adjustment).max(200).optional() };
+export const parsePeriodCreate = (b) => parse(z.object({ projectId: id, ...periodFields }).strict(), b ?? {});
+export const parsePeriodUpdate = (b) => given(parse(z.object({ periodType: periodFields.periodType.optional(), periodEnd: day.optional(), actualCost: periodFields.actualCost, adjustments: periodFields.adjustments, rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseProgressQ = (q) => parse(z.object({ projectId: id, asOf: day.optional(), wbsId: id.optional(), periodId: id.optional() }).strict(), q ?? {});
+export const parseProgressExportQ = (q) => parse(z.object({ projectId: id, asOf: day.optional(), periodId: id.optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q ?? {});
+export const parseWeights = (b) => parse(z.object({ projectId: id, weights: z.array(z.object({ activityCode: text(40).min(1), amount: money.nullable() }).strict()).min(1).max(500) }).strict(), b ?? {});
+export const parseProjectQ = (q) => parse(z.object({ projectId: id.optional() }).strict(), q ?? {});

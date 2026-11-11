@@ -83,6 +83,18 @@ export const st = {
   insAct: async (id, action, b = {}) => (await api.post(`/site/instructions/${id}/${action}`, b, idem())).data,
   insAck: async (id, ackId, action, b = {}) => (await api.post(`/site/instructions/${id}/recipients/${ackId}/${action}`, b, idem())).data,
   insHistory: async (id) => (await api.get(`/site/instructions/${id}/history`)).data,
+  // part 14.05: progress, periods and reports
+  prgProjects: async () => (await api.get('/site/progress/projects')).data,
+  prgDashboard: async (q) => (await api.get(`/site/progress/dashboard?${q}`)).data,
+  prgReport: async (q) => (await api.get(`/site/progress/report?${q}`)).data,
+  prgClient: async (q) => (await api.get(`/site/progress/client-report?${q}`)).data,
+  periodOptions: async (projectId) => (await api.get(`/site/periods/options?projectId=${projectId}`)).data,
+  period: async (id) => (await api.get(`/site/periods/${id}`)).data,
+  createPeriod: async (b) => (await api.post('/site/periods', b, idem())).data,
+  updatePeriod: async (id, b) => (await api.patch(`/site/periods/${id}`, b, idem())).data,
+  removePeriod: async (id) => (await api.delete(`/site/periods/${id}`)).data,
+  periodAct: async (id, action, b = {}) => (await api.post(`/site/periods/${id}/${action}`, b, idem())).data,
+  periodHistory: async (id) => (await api.get(`/site/periods/${id}/history`)).data,
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
 export const DPR_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
@@ -107,3 +119,7 @@ export const VISITOR_TYPES = ['OFFICIAL', 'CLIENT', 'CONSULTANT', 'AUTHORITY', '
 export const INS_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', OPEN: 'AT_RISK', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', CLOSED: 'COMPLETED', SUPERSEDED: 'CANCELLED' };
 export const INS_TYPES = ['EI', 'CI', 'ISI', 'MEMO'];
 export const PARTY_TYPES = ['SUBCONTRACTOR', 'CREW', 'PERSON'];
+export const PRD_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'COMPLETED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const fmtPct = (n) => (n == null ? '—' : `${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })} %`);
+export const fmtRatio = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+export const fmtRs = (n) => (n == null ? '—' : `₹ ${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`);

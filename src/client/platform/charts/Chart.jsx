@@ -75,14 +75,16 @@ function Cartesian({ kind, data, onDrill, setTip }) {
         });
       })}
       {(kind === 'line' || kind === 'area') && data.series.map((s, si) => {
-        const pts = s.values.map((v, i) => [centre(i), y(v ?? 0)]);
+        // a missing value (null) is a gap in the line, not a zero (S-curves: the actual stops at the data date, the forecast starts there)
+        const pts = s.values.map((v, i) => (v == null ? null : [centre(i), y(v)]));
+        const runs = []; for (const p of pts) { if (p) { if (runs.at(-1)?.open) runs.at(-1).pts.push(p); else runs.push({ open: true, pts: [p] }); } else if (runs.at(-1)) runs.at(-1).open = false; }
         return (
           <g key={s.name}>
-            {kind === 'area' && <path d={areaPath(pts, PAD.t + plotH)} fill={seriesColour(si)} fillOpacity="0.18" aria-hidden="true" />}
-            <path d={linePath(pts)} fill="none" stroke={seriesColour(si)} strokeWidth="2.5" strokeLinejoin="round" aria-hidden="true" />
-            {pts.map(([px, py], i) => (
-              <Mark key={data.categories[i]} label={`${data.categories[i]}, ${s.name}: ${formatCount(s.values[i] ?? 0)}${unit}`} drill={drillOf(s, i)} onDrill={onDrill} setTip={setTip}>
-                <circle cx={px} cy={py} r={n > 24 ? 2 : 4} fill="var(--erp-color-bg-surface)" stroke={seriesColour(si)} strokeWidth="2" />
+            {kind === 'area' && runs.map((r, ri) => <path key={`a${ri}`} d={areaPath(r.pts, PAD.t + plotH)} fill={seriesColour(si)} fillOpacity="0.18" aria-hidden="true" />)}
+            {runs.map((r, ri) => <path key={`l${ri}`} d={linePath(r.pts)} fill="none" stroke={seriesColour(si)} strokeWidth="2.5" strokeLinejoin="round" aria-hidden="true" />)}
+            {pts.map((pt, i) => pt && (
+              <Mark key={data.categories[i]} label={`${data.categories[i]}, ${s.name}: ${formatCount(s.values[i])}${unit}`} drill={drillOf(s, i)} onDrill={onDrill} setTip={setTip}>
+                <circle cx={pt[0]} cy={pt[1]} r={n > 24 ? 2 : 4} fill="var(--erp-color-bg-surface)" stroke={seriesColour(si)} strokeWidth="2" />
               </Mark>
             ))}
           </g>

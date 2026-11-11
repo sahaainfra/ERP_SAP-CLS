@@ -13,6 +13,10 @@ import DiaryPage from './DiaryPage.jsx';
 import VisitorsPage from './VisitorsPage.jsx';
 import InstructionsPage from './InstructionsPage.jsx';
 import InstructionIssuePage from './InstructionIssuePage.jsx';
+import ProgressDashboardPage from './ProgressDashboardPage.jsx';
+import ProgressReportPage from './ProgressReportPage.jsx';
+import PeriodsPage from './PeriodsPage.jsx';
+import ClientProgressPage from './ClientProgressPage.jsx';
 
 registerModule({
   code: 'site',
@@ -32,5 +36,9 @@ registerModule({
     { path: '/site/visitors', label: 'Visitor Log', icon: 'erp.group.projects', permission: 'site.visitor.view', flag: 'ff.site.p1403', Page: VisitorsPage },
     { path: '/site/instructions', label: 'Site Instructions', icon: 'erp.group.projects', permission: 'site.instruction.view', flag: 'ff.site.p1404', Page: InstructionsPage },
     { path: '/site/instruction-issue', label: 'Issue Instruction', icon: 'erp.group.projects', permission: 'site.instruction.create', flag: 'ff.site.p1404', Page: InstructionIssuePage },
+    { path: '/site/progress', label: 'Progress Dashboard', icon: 'erp.group.projects', permission: 'site.period.view', flag: 'ff.site.p1405', Page: ProgressDashboardPage },
+    { path: '/site/progress-report', label: 'Progress by WBS and Activity', icon: 'erp.group.projects', permission: 'site.period.view', flag: 'ff.site.p1405', Page: ProgressReportPage },
+    { path: '/site/periods', label: 'Progress Period Close', icon: 'erp.group.projects', permission: 'site.period.view', flag: 'ff.site.p1405', Page: PeriodsPage },
+    { path: '/site/client-progress', label: 'Client Progress Report', icon: 'erp.group.projects', permission: 'site.period.view', flag: 'ff.site.p1405', Page: ClientProgressPage },
   ],
 });

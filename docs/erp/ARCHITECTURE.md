@@ -1295,3 +1295,11 @@ Module `site`, flag `ff.site.p1404`, tables `site_instructions`, `site_instructi
 - **Acknowledgement and compliance**: one row a recipient; acknowledged by the coordinator or site, complied with a note and at least one file (`site_instruction_ack`); `site.instruction_reminders` job reminds CM and PM of those past their date.
 - **BR-01**: close needs the variation decision when there is a cost implication, and every recipient's compliance when issued. Amendment replaces an open instruction.
 - **API**: 21 routes under `/api/v1/site/instructions` including `/tracker`. **Permissions**: `site.instruction.*` with `acknowledge`, `comply`, `close`, `variation`, `cost`.
+
+## 106. Progress measurement, earned value and S-curves (part 14.05)
+Module `site`, flag `ff.site.p1405`, tables `prs_activity_progress`, `prs_periods`, `prs_evm`, `prs_weights` (migration 200), seed 201.
+- **Quantities** (FR-01, BR-01): the consumer of `site.dpr.approved` writes the executed quantity of each activity and day (an amendment replaces its parent; a site report replaces the supervisors' reports of its day), rebuilds the running totals and gives the schedule its percent complete through 13.01 (ADR-501).
+- **One calculation** (`progress.js`, `evm.js`): activity progress, weights (budget share or manual), planned from the current baseline, forecast from the schedule, PV, EV, SV, CV, SPI, CPI, EAC (BAC / CPI), TCPI; WBS nodes and the project roll up by the weights; S-curve points weekly (ADR-499, ADR-502).
+- **Periods** (FR-02, BR-02): `SITE_PROGRESS_PERIOD`, PLAN prepares and PM closes; the snapshot is taken at sending and again at close, `prs_evm` rows are kept, `site.period.closed` is published (ADR-500).
+- **Reports** (FR-05, FR-06): dashboard, S-curves, progress by WBS and activity (XLSX, CSV, PDF), client report (percentages only, from the snapshot of a closed period). Money needs `site.period.cost`.
+- **API**: 22 routes under `/api/v1/site/periods` and `/api/v1/site/progress`. **Permissions**: `site.period.*` and `site.period.cost`.

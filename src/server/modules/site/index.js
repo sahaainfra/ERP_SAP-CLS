@@ -24,6 +24,9 @@ import { conditionsRoutes } from './conditions-routes.js';
 import { registerWeatherProviders } from './weather-provider.js';
 import { INS_DOC, INS_STATUS, INS_TYPES, createInstructionService } from './instructions.js';
 import { instructionRoutes } from './instruction-routes.js';
+import { PRD_DOC, PRD_STATUS, createProgressService } from './progress.js';
+import { progressRoutes } from './progress-routes.js';
+import { planOf } from '../plan/index.js';
 
 const services = new WeakMap();
 export const siteOf = (db) => services.get(db) ?? null;
@@ -46,12 +49,14 @@ for (const [type, description] of [
   ['site.instruction.acknowledged', 'A recipient acknowledged an issued instruction (part 14.04): data { instructionId, docNo, party }.'],
   ['site.instruction.variation_decided', 'The variation decision of a costly instruction was recorded (part 14.04): data { instructionId, docNo, decision, ref }.'],
   ['site.instruction.closed', 'An instruction was closed after compliance and, for a cost implication, the variation decision (part 14.04): data as site.instruction.registered with variationDecision and variationRef.'],
+  ['site.progress.updated', 'The executed quantities of activities changed because a DPR was approved or amended (part 14.05): data { projectId, date, dprId, activities: [code] }.'],
+  ['site.period.closed', 'A progress period was closed by approval, PLAN then PM, or an amendment replaced a closed one (part 14.05; the part calls it prog.period.closed): data { periodId, docNo, projectId, periodType, periodStart, periodEnd, revisionNo, supersedes, physical, planned, financial (percent), forecastFinish, bac, pv, ev, ac (rupees), spi, cpi, tcpi (ratios), eac, snapshotHash }. For the control engine (14.07), dashboards, client reports and the EAC (23.11).'],
   ['site.daily_plan.issued', 'A daily work plan of a site and a supervisor was issued and its lines raised as work authorisations in draft (part 14.01): data { planId, docNo, projectId, siteId, planDate, supervisor, waIds }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'site', description });
 
 integrityRegistry.register({
-  statuses: { site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
-  uniqueKeys: [{ table: 'site_work_authorisations', columns: ['company_id', 'wa_no'] }, { table: 'site_daily_plans', columns: ['company_id', 'doc_no'] }, { table: 'site_dprs', columns: ['company_id', 'doc_no'] }, { table: 'site_hindrances', columns: ['company_id', 'doc_no'] }, { table: 'site_instructions', columns: ['company_id', 'doc_no'] }],
+  statuses: { prs_periods: Object.keys(PRD_STATUS), site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
+  uniqueKeys: [{ table: 'site_work_authorisations', columns: ['company_id', 'wa_no'] }, { table: 'site_daily_plans', columns: ['company_id', 'doc_no'] }, { table: 'site_dprs', columns: ['company_id', 'doc_no'] }, { table: 'site_hindrances', columns: ['company_id', 'doc_no'] }, { table: 'site_instructions', columns: ['company_id', 'doc_no'] }, { table: 'prs_periods', columns: ['company_id', 'doc_no'] }],
 });
 
 /** Module "site": site execution and progress control (M14). Part 14.01 holds work fronts, daily work plans and work authorisations ("no plan, no work"). The tables are `site_*`. */
@@ -61,8 +66,8 @@ export const site = {
   routePrefix: '/api/v1/site',
   ownerPart: '14.01',
   status: 'Work fronts of a site with their activities, status and open constraints; daily work plans of a site and a supervisor from the approved weekly plans (13.04) or copied from the day before; work authorisations (WA) with activity, WBS, location, quantity, crews, materials and plant from the norms, the budget line (12.03), the drawing revision (11.01), the permit and hold points, the time window and the supervisor, approved by the construction manager and by the project manager when outside the plan; emergency WAs regularised within 24 hours; closure with the quantity done and the reconciliation of what was used; the uses of attendance, stores, plant, DPR and measurement booked against a WA (CP-SITE-02).',
-  tables: ['site_instructions', 'site_instruction_acks', 'site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
-  resources: ['instructions', 'weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
+  tables: ['prs_periods', 'prs_activity_progress', 'prs_evm', 'prs_weights', 'site_instructions', 'site_instruction_acks', 'site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
+  resources: ['periods', 'progress', 'instructions', 'weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'site_work_authorisations'").get()) return;
@@ -72,6 +77,8 @@ export const site = {
     // part 14.02: the daily progress report, its reports and its compliance
     const conditions = createConditionsService({ db, integrations: integrationsOf(db, { vaultKey: appConfig.vaultKey ?? undefined }) }); svc.conditions = conditions; svc.hindranceDecide = conditions.hindranceDecide;
     svc.instructionsSvc = createInstructionService({ db }); svc.instructionDecide = svc.instructionsSvc.instructionDecide; listExports.register('site.instructions', { source: (actor, req) => svc.instructionsSvc.instructions.exportSource(actor, req), hidden: () => [] });
+    svc.progressSvc = createProgressService({ db, planOf: () => planOf(db)?.plan ?? null }); svc.periodDecide = svc.progressSvc.periodDecide; listExports.register('site.periods', { source: (actor, req) => svc.progressSvc.periods.exportSource(actor, req), hidden: () => [] });
+    runtimeOf(db)?.bus?.subscribe(['site.dpr.approved'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.site.p1405')) svc.progressSvc.onDpr(e); }, { consumer: 'site.progress' });
     const dprSvc = createDprService({ db, dayContext: (...a) => conditions.dayContext(...a) }); svc.dpr = dprSvc; svc.dprReports = createDprReports({ db, base: dprSvc.base }); svc.dprDecide = dprSvc.dprDecide;
     listExports.register('site.dprs', { source: (actor, req) => dprSvc.dprs.exportSource(actor, req), hidden: () => [] });
     registerWeatherProviders(integrationsOf(db, { vaultKey: appConfig.vaultKey ?? undefined }).providers);
@@ -89,6 +96,8 @@ export const site = {
     p1402.use((req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1402') ? next() : next(notFound('The daily progress report is not enabled for your company yet (feature flag ff.site.p1402 is OFF).'))));
     p1402.use(dprRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use('/dprs', p1402);
+    router.use(['/periods', '/progress'], (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1405') ? next() : next(notFound('Progress measurement is not enabled for your company yet (feature flag ff.site.p1405 is OFF).'))));
+    router.use(progressRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use('/instructions', (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1404') ? next() : next(notFound('Site instructions are not enabled for your company yet (feature flag ff.site.p1404 is OFF).'))));
     router.use('/instructions', instructionRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use(['/weather', '/hindrances', '/diary', '/visitors'], (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1403') ? next() : next(notFound('Site diary, weather and hindrances are not enabled for your company yet (feature flag ff.site.p1403 is OFF).'))));
@@ -306,5 +315,44 @@ fileEntities.register({
     const r = db.prepare('SELECT a.company_id, a.closed_at, x.org_project_id, x.ins_site_id, x.status FROM site_instruction_acks a JOIN site_instructions x ON x.id = a.instruction_id WHERE a.id = ? AND a.company_id = ? AND a.deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
     const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.ins_site_id }).allowed; if (!at('site.instruction.view')) return null;
     return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.ins_site_id, canView: true, canEdit: at('site.instruction.comply') && r.status === 'OPEN' && !r.closed_at, locked: r.status !== 'OPEN' || Boolean(r.closed_at) };
+  },
+});
+
+// ---- the approval of a progress period (part 14.05): the planner prepares and the project manager closes it; whoever sent it never decides it. ------------------------------------------------------
+const pline = (db, id) => db.prepare('SELECT x.*, p.code FROM prs_periods x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: PRD_DOC, label: 'Progress period close', processOwner: 'PM', route: (id) => `/site/periods?id=${id}`,
+  describe(db, companyId, id) { const r = pline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.code}: ${r.period_type === 'WEEK' ? 'week' : 'month'} to ${r.period_end}${r.parent_period_id ? ' (amendment)' : ''}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = pline(db, Number(id)); if (!r) return null; return { fields: [{ label: 'Project', value: r.code }, { label: 'Period', value: `${r.period_start} to ${r.period_end}` }, { label: 'Planned', value: r.planned_pct == null ? '—' : `${r.planned_pct / 100} %` }, { label: 'Actual', value: r.physical_pct == null ? '—' : `${r.physical_pct / 100} %` }, { label: 'Adjustments', value: String(json(r.adjustments_json, []).length) }, ...(r.reason ? [{ label: 'Reason for the amendment', value: r.reason }] : [])] }; },
+  defaultDefinition: { name: 'Progress period close: the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PM', 'Project manager', 'PM', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => siteOf(db)?.periodDecide(instance, actor, 'APPROVED'),
+    onRejected: (db, { instance, actor, comment }) => siteOf(db)?.periodDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => siteOf(db)?.periodDecide(instance, actor, 'RETURNED', comment),
+    onCancelled: (db, { instance, actor, comment }) => siteOf(db)?.periodDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+evidenceProviders.register(PRD_DOC, ({ db, instance }) => {
+  const r = pline(db, Number(instance.docId)); if (!r) return { sections: [] }; const snap = json(r.snapshot_json, null); const adj = json(r.adjustments_json, []); const sm = snap?.summary;
+  return { sections: [{ code: 'site-period-checks', title: 'Before you close the progress period', kind: 'metrics', items: [
+    { label: 'Period', value: `${r.period_start} to ${r.period_end}`, format: 'text' }, { label: 'Planned progress', value: sm ? `${sm.planned} %` : '—', format: 'text' }, { label: 'Actual progress', value: sm ? `${sm.physical} %` : '—', format: 'text', tone: sm && sm.physical < sm.planned ? 'warn' : undefined },
+    { label: 'Forecast finish', value: sm?.forecastFinish ?? '—', format: 'text' }, { label: 'Manual adjustments', value: adj.length, format: 'number', tone: adj.length ? 'warn' : undefined }, { label: 'Adjustments, with reasons', value: adj.map((a) => `${a.activityCode} ${a.qty > 0 ? '+' : ''}${a.qty}: ${a.reason}`).join(' | ') || 'none', format: 'text' },
+    { label: 'Baseline', value: snap?.baseline?.docNo ?? 'none: the schedule itself is used', format: 'text', tone: snap?.baseline ? undefined : 'warn' }] }] };
+});
+objectTypes.register({
+  type: 'prs_period', label: 'Progress period', permission: 'site.period.view', route: (id) => `/site/periods?id=${id}`, attachmentEntity: 'prs_period', approvalTarget: 'prs_period',
+  access(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.progressSvc.periods.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'prs_periods', id }],
+  summary(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.progressSvc.periods.get(actor, Number(id)); return { label: `${r.docNo} ${r.projectCode} to ${r.periodEnd}`, status: r.status }; } catch { return null; } },
+  related(db, actor, id) { const s = siteOf(db); if (!s) return []; try { const r = s.progressSvc.periods.get(actor, Number(id)); return r.previous ? [{ kind: 'progress period', label: `${r.previous.docNo} (the period it replaces)`, to: `/site/periods?id=${r.previous.id}`, direction: 'in' }] : []; } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'site.period.view').allowed) return []; return db.prepare('SELECT id, org_project_id FROM prs_periods WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `${q}%`, limit).filter((x) => authzOf(db).check(actor, 'site.period.view', { companyId: actor.companyId, projectId: x.org_project_id }).allowed).map((x) => ({ id: x.id })); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM prs_periods WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+fileEntities.register({
+  entity: 'prs_period', label: 'Progress period (the signed progress sheet, supporting measurements)',
+  resolve(db, actor, id) {
+    const r = db.prepare('SELECT company_id, org_project_id, status FROM prs_periods WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('site.period.view')) return null;
+    return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at('site.period.edit') && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) };
   },
 });

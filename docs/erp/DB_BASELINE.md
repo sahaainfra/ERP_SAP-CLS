@@ -14008,6 +14008,171 @@ Indexes:
 - ix_proj_work_packages_company_id: company_id
 - ux_proj_work_packages_code (unique): project_id, code
 
+## prs_activity_progress
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| activity_id | INTEGER |  |  |  |
+| activity_code | TEXT | yes |  |  |
+| work_date | TEXT | yes |  |  |
+| qty | INTEGER | yes |  |  |
+| cum_qty | INTEGER | yes |  | 0 |
+| pct_complete | INTEGER | yes |  | 0 |
+| source | TEXT | yes |  |  |
+| dpr_id | INTEGER |  |  |  |
+| dpr_scope | TEXT |  |  |  |
+| prog_site_id | INTEGER |  |  |  |
+| period_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: period_id -> prs_periods(id), prog_site_id -> org_sites(id), dpr_id -> site_dprs(id), activity_id -> plan_activities(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prs_progress_period: period_id
+- ix_prs_progress_site: prog_site_id, work_date
+- ix_prs_progress_dpr: dpr_id
+- ix_prs_progress_activity: activity_id
+- ix_prs_progress_company: company_id, work_date
+- ix_prs_progress_project: org_project_id, activity_code, work_date, id
+
+## prs_evm
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| period_end | TEXT | yes |  |  |
+| bac | INTEGER | yes |  | 0 |
+| pv | INTEGER | yes |  | 0 |
+| ev | INTEGER | yes |  | 0 |
+| ac | INTEGER |  |  |  |
+| sv | INTEGER | yes |  | 0 |
+| cv | INTEGER |  |  |  |
+| spi | INTEGER |  |  |  |
+| cpi | INTEGER |  |  |  |
+| eac | INTEGER |  |  |  |
+| tcpi | INTEGER |  |  |  |
+| planned_pct | INTEGER | yes |  | 0 |
+| physical_pct | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: wbs_id -> proj_wbs(id), period_id -> prs_periods(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prs_evm_wbs: wbs_id
+- ix_prs_evm_company: company_id
+- ix_prs_evm_project: org_project_id, period_end
+- ux_prs_evm (unique): period_id, 
+
+## prs_periods
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period_type | TEXT | yes |  |  |
+| period_start | TEXT | yes |  |  |
+| period_end | TEXT | yes |  |  |
+| actual_cost | INTEGER |  |  |  |
+| adjustments_json | TEXT | yes |  | '[]' |
+| snapshot_json | TEXT |  |  |  |
+| snapshot_hash | TEXT |  |  |  |
+| physical_pct | INTEGER |  |  |  |
+| planned_pct | INTEGER |  |  |  |
+| financial_pct | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 1 |
+| parent_period_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_period_id -> prs_periods(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prs_periods_parent: parent_period_id
+- ix_prs_periods_project: org_project_id, status, period_end
+- ix_prs_periods_company: company_id, status
+- ux_prs_periods_closed (unique): org_project_id, period_end
+- ux_prs_periods_doc (unique): company_id, doc_no
+
+## prs_weights
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| activity_code | TEXT | yes |  |  |
+| weight_amount | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prs_weights_company: company_id
+- ux_prs_weights (unique): org_project_id, activity_code
+
 ## ra_analyses
 
 | Column | Type | Not null | Key | Default |
