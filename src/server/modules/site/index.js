@@ -26,6 +26,8 @@ import { INS_DOC, INS_STATUS, INS_TYPES, createInstructionService } from './inst
 import { instructionRoutes } from './instruction-routes.js';
 import { PRD_DOC, PRD_STATUS, createProgressService } from './progress.js';
 import { progressRoutes } from './progress-routes.js';
+import { NORM_DOC, NORM_STATUS, createProductivityService } from './productivity.js';
+import { productivityRoutes } from './productivity-routes.js';
 import { planOf } from '../plan/index.js';
 
 const services = new WeakMap();
@@ -51,11 +53,13 @@ for (const [type, description] of [
   ['site.instruction.closed', 'An instruction was closed after compliance and, for a cost implication, the variation decision (part 14.04): data as site.instruction.registered with variationDecision and variationRef.'],
   ['site.progress.updated', 'The executed quantities of activities changed because a DPR was approved or amended (part 14.05): data { projectId, date, dprId, activities: [code] }.'],
   ['site.period.closed', 'A progress period was closed by approval, PLAN then PM, or an amendment replaced a closed one (part 14.05; the part calls it prog.period.closed): data { periodId, docNo, projectId, periodType, periodStart, periodEnd, revisionNo, supersedes, physical, planned, financial (percent), forecastFinish, bac, pv, ev, ac (rupees), spi, cpi, tcpi (ratios), eac, snapshotHash }. For the control engine (14.07), dashboards, client reports and the EAC (23.11).'],
+  ['site.productivity.updated', 'The productivity records of an approved DPR were written (part 14.06): data { projectId, siteId, date, dprId, lines, activities: [code] }. For resource planning (17.08), the performance KPIs (07.11) and forecasting (28.03); the records are read at GET /site/productivity/rows.'],
+  ['site.productivity.low', 'An activity of a site was below site.productivity.alert_pct of its norm on each of the last site.productivity.alert_days days (part 14.06): data { alertId, projectId, siteId, activityCode, days, fromDate, toDate, avgPctOfNorm }.'],
   ['site.daily_plan.issued', 'A daily work plan of a site and a supervisor was issued and its lines raised as work authorisations in draft (part 14.01): data { planId, docNo, projectId, siteId, planDate, supervisor, waIds }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'site', description });
 
 integrityRegistry.register({
-  statuses: { prs_periods: Object.keys(PRD_STATUS), site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
+  statuses: { prod_norms: Object.keys(NORM_STATUS), prs_periods: Object.keys(PRD_STATUS), site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
   uniqueKeys: [{ table: 'site_work_authorisations', columns: ['company_id', 'wa_no'] }, { table: 'site_daily_plans', columns: ['company_id', 'doc_no'] }, { table: 'site_dprs', columns: ['company_id', 'doc_no'] }, { table: 'site_hindrances', columns: ['company_id', 'doc_no'] }, { table: 'site_instructions', columns: ['company_id', 'doc_no'] }, { table: 'prs_periods', columns: ['company_id', 'doc_no'] }],
 });
 
@@ -66,8 +70,8 @@ export const site = {
   routePrefix: '/api/v1/site',
   ownerPart: '14.01',
   status: 'Work fronts of a site with their activities, status and open constraints; daily work plans of a site and a supervisor from the approved weekly plans (13.04) or copied from the day before; work authorisations (WA) with activity, WBS, location, quantity, crews, materials and plant from the norms, the budget line (12.03), the drawing revision (11.01), the permit and hold points, the time window and the supervisor, approved by the construction manager and by the project manager when outside the plan; emergency WAs regularised within 24 hours; closure with the quantity done and the reconciliation of what was used; the uses of attendance, stores, plant, DPR and measurement booked against a WA (CP-SITE-02).',
-  tables: ['prs_periods', 'prs_activity_progress', 'prs_evm', 'prs_weights', 'site_instructions', 'site_instruction_acks', 'site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
-  resources: ['periods', 'progress', 'instructions', 'weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
+  tables: ['prod_norms', 'prod_actuals', 'prod_losses', 'prod_alerts', 'prs_periods', 'prs_activity_progress', 'prs_evm', 'prs_weights', 'site_instructions', 'site_instruction_acks', 'site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
+  resources: ['productivity', 'periods', 'progress', 'instructions', 'weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'site_work_authorisations'").get()) return;
@@ -79,6 +83,8 @@ export const site = {
     svc.instructionsSvc = createInstructionService({ db }); svc.instructionDecide = svc.instructionsSvc.instructionDecide; listExports.register('site.instructions', { source: (actor, req) => svc.instructionsSvc.instructions.exportSource(actor, req), hidden: () => [] });
     svc.progressSvc = createProgressService({ db, planOf: () => planOf(db)?.plan ?? null }); svc.periodDecide = svc.progressSvc.periodDecide; listExports.register('site.periods', { source: (actor, req) => svc.progressSvc.periods.exportSource(actor, req), hidden: () => [] });
     runtimeOf(db)?.bus?.subscribe(['site.dpr.approved'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.site.p1405')) svc.progressSvc.onDpr(e); }, { consumer: 'site.progress' });
+    svc.productivitySvc = createProductivityService({ db }); svc.normDecide = svc.productivitySvc.normDecide; 
+    runtimeOf(db)?.bus?.subscribe(['site.dpr.approved'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.site.p1406')) svc.productivitySvc.onDpr(e); }, { consumer: 'site.productivity' });
     const dprSvc = createDprService({ db, dayContext: (...a) => conditions.dayContext(...a) }); svc.dpr = dprSvc; svc.dprReports = createDprReports({ db, base: dprSvc.base }); svc.dprDecide = dprSvc.dprDecide;
     listExports.register('site.dprs', { source: (actor, req) => dprSvc.dprs.exportSource(actor, req), hidden: () => [] });
     registerWeatherProviders(integrationsOf(db, { vaultKey: appConfig.vaultKey ?? undefined }).providers);
@@ -96,6 +102,8 @@ export const site = {
     p1402.use((req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1402') ? next() : next(notFound('The daily progress report is not enabled for your company yet (feature flag ff.site.p1402 is OFF).'))));
     p1402.use(dprRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use('/dprs', p1402);
+    router.use('/productivity', (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1406') ? next() : next(notFound('Productivity tracking is not enabled for your company yet (feature flag ff.site.p1406 is OFF).'))));
+    router.use('/productivity', productivityRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use(['/periods', '/progress'], (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1405') ? next() : next(notFound('Progress measurement is not enabled for your company yet (feature flag ff.site.p1405 is OFF).'))));
     router.use(progressRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use('/instructions', (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1404') ? next() : next(notFound('Site instructions are not enabled for your company yet (feature flag ff.site.p1404 is OFF).'))));
@@ -355,4 +363,33 @@ fileEntities.register({
     const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('site.period.view')) return null;
     return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at('site.period.edit') && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) };
   },
+});
+
+// ---- the approval of a productivity norm (part 14.06): maker-checker; planning or project controls enter it and the project manager approves it; whoever entered it never decides it. -------------------------
+const nline = (db, id) => db.prepare('SELECT x.*, p.code FROM prod_norms x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: NORM_DOC, label: 'Productivity norm', processOwner: 'PM', route: (id) => `/site/productivity-norms?id=${id}`,
+  describe(db, companyId, id) { const r = nline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.activity_code, title: `${r.code}: ${r.activity_code} ${r.resource_type.toLowerCase()} norm from ${r.effective_from}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = nline(db, Number(id)); if (!r) return null; const cur = db.prepare("SELECT output_per_unit, source FROM prod_norms WHERE org_project_id = ? AND activity_code = ? COLLATE NOCASE AND resource_type = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY (source = 'MANUAL') DESC, effective_from DESC LIMIT 1").get(r.org_project_id, r.activity_code, r.resource_type); return { fields: [{ label: 'Project', value: r.code }, { label: 'Activity', value: `${r.activity_code} (${r.work_type})` }, { label: 'Resource', value: r.resource_type === 'LABOUR' ? 'Labour: output per man-day' : 'Equipment: output per machine-hour' }, { label: 'New norm', value: `${r.output_per_unit / 1000} ${r.uom ?? ''}` }, { label: 'Norm in force', value: cur ? `${cur.output_per_unit / 1000} ${r.uom ?? ''} (${cur.source === 'BOQ' ? 'BOQ norms' : 'entered'})` : 'none' }, { label: 'From', value: r.effective_from }] }; },
+  defaultDefinition: { name: 'Productivity norm: the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PM', 'Project manager', 'PM', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => siteOf(db)?.normDecide(instance, actor, 'APPROVED'),
+    onRejected: (db, { instance, actor, comment }) => siteOf(db)?.normDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => siteOf(db)?.normDecide(instance, actor, 'RETURNED', comment),
+    onCancelled: (db, { instance, actor, comment }) => siteOf(db)?.normDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+evidenceProviders.register(NORM_DOC, ({ db, instance }) => {
+  const r = nline(db, Number(instance.docId)); if (!r) return { sections: [] }; const cur = db.prepare("SELECT output_per_unit, source FROM prod_norms WHERE org_project_id = ? AND activity_code = ? COLLATE NOCASE AND resource_type = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY (source = 'MANUAL') DESC, effective_from DESC LIMIT 1").get(r.org_project_id, r.activity_code, r.resource_type);
+  const seen = db.prepare("SELECT COUNT(*) AS n, SUM(qty) AS q, SUM(man_days) AS md FROM prod_actuals WHERE org_project_id = ? AND activity_code = ? COLLATE NOCASE AND deleted_at IS NULL AND outlier = 0 AND man_days > 0").get(r.org_project_id, r.activity_code); const real = seen.md > 0 ? Math.round((seen.q * 1000) / seen.md) / 1000 : null;
+  return { sections: [{ code: 'site-norm-checks', title: 'Before you approve the norm', kind: 'metrics', items: [{ label: 'New norm', value: `${r.output_per_unit / 1000} ${r.uom ?? ''}`, format: 'text' }, { label: 'Norm in force', value: cur ? `${cur.output_per_unit / 1000} ${r.uom ?? ''} (${cur.source === 'BOQ' ? 'BOQ norms' : 'entered'})` : 'none', format: 'text' }, { label: 'Output per man-day achieved so far', value: real == null ? 'no records' : `${real} (${seen.n} records)`, format: 'text', tone: real != null && r.resource_type === 'LABOUR' && r.output_per_unit / 1000 > real * 1.5 ? 'warn' : undefined }, { label: 'Effective from', value: r.effective_from, format: 'text' }] }] };
+});
+objectTypes.register({
+  type: 'prod_norm', label: 'Productivity norm', permission: 'site.productivity.view', route: (id) => `/site/productivity-norms?id=${id}`, attachmentEntity: 'prod_norm', approvalTarget: 'prod_norm',
+  access(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.productivitySvc.norms.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'prod_norms', id }],
+  summary(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.productivitySvc.norms.get(actor, Number(id)); return { label: `${r.projectCode} ${r.activityCode} ${r.resourceType.toLowerCase()} norm`, status: r.status }; } catch { return null; } },
+  related: () => [],
+  search() { return []; },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM prod_norms WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
 });

@@ -95,6 +95,20 @@ export const st = {
   removePeriod: async (id) => (await api.delete(`/site/periods/${id}`)).data,
   periodAct: async (id, action, b = {}) => (await api.post(`/site/periods/${id}/${action}`, b, idem())).data,
   periodHistory: async (id) => (await api.get(`/site/periods/${id}/history`)).data,
+  // part 14.06: productivity
+  prodProjects: async () => (await api.get('/site/productivity/projects')).data,
+  prodOptions: async (projectId) => (await api.get(`/site/productivity/options?projectId=${projectId}`)).data,
+  prodDashboard: async (q) => (await api.get(`/site/productivity/dashboard?${q}`)).data,
+  prodReport: async (q) => (await api.get(`/site/productivity/report?${q}`)).data,
+  prodLossCreate: async (b) => (await api.post('/site/productivity/losses', b, idem())).data,
+  prodLossRemove: async (id) => (await api.delete(`/site/productivity/losses/${id}`)).data,
+  norm: async (id) => (await api.get(`/site/productivity/norms/${id}`)).data,
+  createNorm: async (b) => (await api.post('/site/productivity/norms', b, idem())).data,
+  updateNorm: async (id, b) => (await api.patch(`/site/productivity/norms/${id}`, b, idem())).data,
+  removeNorm: async (id) => (await api.delete(`/site/productivity/norms/${id}`)).data,
+  normAct: async (id, action, b = {}) => (await api.post(`/site/productivity/norms/${id}/${action}`, b, idem())).data,
+  normHistory: async (id) => (await api.get(`/site/productivity/norms/${id}/history`)).data,
+  refreshBoq: async (projectId) => (await api.post('/site/productivity/norms/refresh-boq', { projectId }, idem())).data,
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
 export const DPR_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
@@ -123,3 +137,6 @@ export const PRD_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'COM
 export const fmtPct = (n) => (n == null ? '—' : `${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })} %`);
 export const fmtRatio = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 export const fmtRs = (n) => (n == null ? '—' : `₹ ${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`);
+export const NORM_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const LOSS_CODES = ['IDLE', 'REWORK', 'WEATHER', 'MATERIAL_SHORTAGE', 'DRAWING_DELAY', 'BREAKDOWN', 'OTHER'];
+export const daysAgo = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);

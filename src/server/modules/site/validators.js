@@ -125,3 +125,14 @@ export const parseProgressQ = (q) => parse(z.object({ projectId: id, asOf: day.o
 export const parseProgressExportQ = (q) => parse(z.object({ projectId: id, asOf: day.optional(), periodId: id.optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q ?? {});
 export const parseWeights = (b) => parse(z.object({ projectId: id, weights: z.array(z.object({ activityCode: text(40).min(1), amount: money.nullable() }).strict()).min(1).max(500) }).strict(), b ?? {});
 export const parseProjectQ = (q) => parse(z.object({ projectId: id.optional() }).strict(), q ?? {});
+
+// ---- productivity tracking and analysis (part 14.06) ----
+const LOSS = z.enum(['IDLE', 'REWORK', 'WEATHER', 'MATERIAL_SHORTAGE', 'DRAWING_DELAY', 'BREAKDOWN', 'OTHER']);
+const outQty = z.number().finite().gt(0).max(1e7).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+export const parseNormCreate = (b) => parse(z.object({ projectId: id, activityCode: text(40).min(1, 'Name the activity'), resourceType: z.enum(['LABOUR', 'EQUIPMENT']), outputPerUnit: outQty, effectiveFrom: day, note: optText(500) }).strict(), b ?? {});
+export const parseNormUpdate = (b) => given(parse(z.object({ outputPerUnit: outQty.optional(), effectiveFrom: day.optional(), note: optText(500), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseNormRefresh = (b) => parse(z.object({ projectId: id }).strict(), b ?? {});
+export const parseProdQ = (q) => parse(z.object({ projectId: id.optional(), siteId: id.optional(), from: day.optional(), to: day.optional(), groupBy: z.enum(['ACTIVITY', 'WORK_TYPE', 'CREW', 'CONTRACTOR', 'SITE', 'WEEK']).optional(), workType: text(60).optional() }).strict(), q ?? {});
+export const parseProdExportQ = (q) => parse(z.object({ projectId: id.optional(), siteId: id.optional(), from: day.optional(), to: day.optional(), groupBy: z.enum(['ACTIVITY', 'WORK_TYPE', 'CREW', 'CONTRACTOR', 'SITE', 'WEEK']).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q ?? {});
+export const parseLossCreate = (b) => parse(z.object({ siteId: id, date: day, activityCode: optText(40), reasonCode: LOSS, hoursLost: z.number().finite().gt(0).max(240).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals'), note: optText(500) }).strict(), b ?? {});
+export const parseLossQ = (q) => parse(z.object({ projectId: id.optional(), siteId: id.optional(), from: day.optional(), to: day.optional() }).strict(), q ?? {});

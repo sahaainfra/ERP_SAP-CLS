@@ -17,6 +17,10 @@ import ProgressDashboardPage from './ProgressDashboardPage.jsx';
 import ProgressReportPage from './ProgressReportPage.jsx';
 import PeriodsPage from './PeriodsPage.jsx';
 import ClientProgressPage from './ClientProgressPage.jsx';
+import ProductivityDashboardPage from './ProductivityDashboardPage.jsx';
+import ProductivityReportPage from './ProductivityReportPage.jsx';
+import ProductivityNormsPage from './ProductivityNormsPage.jsx';
+import ProductivityRecordsPage from './ProductivityRecordsPage.jsx';
 
 registerModule({
   code: 'site',
@@ -40,5 +44,9 @@ registerModule({
     { path: '/site/progress-report', label: 'Progress by WBS and Activity', icon: 'erp.group.projects', permission: 'site.period.view', flag: 'ff.site.p1405', Page: ProgressReportPage },
     { path: '/site/periods', label: 'Progress Period Close', icon: 'erp.group.projects', permission: 'site.period.view', flag: 'ff.site.p1405', Page: PeriodsPage },
     { path: '/site/client-progress', label: 'Client Progress Report', icon: 'erp.group.projects', permission: 'site.period.view', flag: 'ff.site.p1405', Page: ClientProgressPage },
+    { path: '/site/productivity', label: 'Productivity Dashboard', icon: 'erp.group.projects', permission: 'site.productivity.view', flag: 'ff.site.p1406', Page: ProductivityDashboardPage },
+    { path: '/site/productivity-report', label: 'Productivity Variance and Loss Reasons', icon: 'erp.group.projects', permission: 'site.productivity.view', flag: 'ff.site.p1406', Page: ProductivityReportPage },
+    { path: '/site/productivity-norms', label: 'Productivity Norms', icon: 'erp.group.projects', permission: 'site.productivity.view', flag: 'ff.site.p1406', Page: ProductivityNormsPage },
+    { path: '/site/productivity-records', label: 'Productivity Records', icon: 'erp.group.projects', permission: 'site.productivity.view', flag: 'ff.site.p1406', Page: ProductivityRecordsPage },
   ],
 });
