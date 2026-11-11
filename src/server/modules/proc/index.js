@@ -14,6 +14,8 @@ import { createBase } from './base.js';
 import { createStockService } from './stock.js';
 import { MR_DOC, MR_STATUS, createMrService } from './mr.js';
 import { PR_DOC, PR_STATUS, createPrService } from './pr.js';
+import { RUN_STATUS, createMrpService } from './mrp.js';
+import { PARAM_DOC, PARAM_STATUS, createItemParamService } from './item-params.js';
 import { procRoutes } from './routes.js';
 
 const services = new WeakMap();
@@ -31,12 +33,15 @@ for (const [type, description] of [
   ['proc.pr.closed', 'A purchase requisition was short-closed: what is not ordered is given up (part 15.01): data { prId, docNo, projectId, reason }.'],
   ['proc.pr.emergency_raised', 'An emergency purchase was sent; the project manager regularises it by approving it (control CP-PROC-06, part 15.01): data { prId, docNo, projectId, regulariseBy, reason, amount }.'],
   ['proc.pr.regularisation_overdue', 'An emergency purchase was not regularised within the hours set (part 15.01): data { prId, docNo, projectId, regulariseBy, reason }.'],
+  ['proc.mrp.run_completed', 'An MRP run of a project was made (part 15.02): data { runId, docNo, projectId, items, shortages, proposals, late }. The proposals wait for the planner; the lines are at GET /proc/runs/:id.'],
+  ['proc.mrp.shortages_found', 'An MRP run found weeks in which the stock, orders and requisitions do not cover the requirement (part 15.02): data { runId, docNo, projectId, shortages: [{ itemId, weekStart, shortQty, requiredBy, orderBy, late }] }. For the look-ahead constraints of the schedule (13.04).'],
+  ['proc.mrp.proposals_accepted', 'A planner accepted MRP proposals and a draft purchase requisition was made (part 15.02): data { runId, docNo, projectId, prId, prNo, proposals: [id] }. The requisition is not approved: it follows the approval by value of 15.01.'],
   ['proc.stock.levels_loaded', 'Free stock levels of items in stores were loaded for the stock check (part 15.01): data { levels, changed }. Until the stock module (16.01) keeps them.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proc', description });
 
 integrityRegistry.register({
-  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS) },
-  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }],
+  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS) },
+  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }],
 });
 
 /** Module "proc": procurement (M15). Part 15.01 holds the material requests (site indents) and the purchase requisitions. The tables are `proc_*`. */
@@ -46,14 +51,16 @@ export const proc = {
   routePrefix: '/api/v1/proc',
   ownerPart: '15.01',
   status: 'Material requests (site indents) against work authorisations with the stock of the site, nearby stores and the central warehouse; fulfilment by issue, transfer or purchase; purchase requisitions from consolidated requests or direct, with stock, budget and duplicate checks, approval by value and an emergency path.',
-  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels'],
-  resources: ['material-requests', 'requisitions', 'stock'],
+  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply'],
+  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proc_requisitions'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment });
     const base = createBase({ db }); const stockSvc = createStockService({ db, base }); const mrSvc = createMrService({ db, base, stock: stockSvc }); const prSvc = createPrService({ db, base, stock: stockSvc, mr: mrSvc });
-    const svc = { base, stockSvc, mrSvc, prSvc, mrDecide: mrSvc.decide, prDecide: prSvc.decide }; services.set(db, svc);
+    const mrpSvc = createMrpService({ db, base, stock: stockSvc, pr: prSvc }); const paramSvc = createItemParamService({ db, base });
+    const svc = { base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
+    listExports.register('proc.mrp_runs', { source: (actor, req) => mrpSvc.mrp.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.material_requests', { source: (actor, req) => mrSvc.mrs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.requisitions', { source: (actor, req) => prSvc.prs.exportSource(actor, req), hidden: () => [] });
     const runtime = runtimeOf(db);
@@ -62,8 +69,12 @@ export const proc = {
     // FR-06: an emergency purchase not regularised in time is told, once
     runtime?.jobs?.register('proc.emergency_regularisation', (ctx) => { const n = prSvc.sweepEmergencies(); ctx.log(`Told about ${n} emergency purchase(s) not regularised in time`); return { overdue: n }; }, { maxAttempts: 2, description: 'Tells the project manager, the project director and the procurement manager of emergency purchases (CP-PROC-06) that were not regularised within the hours the company allows.' });
     runtime?.scheduler?.define({ code: 'proc.emergency_regularisation_hourly', cron: '10 * * * *', jobType: 'proc.emergency_regularisation', description: 'Hourly: emergency purchases past their regularisation time are told to the project manager and the procurement manager' });
+    // FR-01: every Monday at 01:00 India time a run for each active project that has an approved schedule
+    runtime?.jobs?.register('proc.mrp_weekly', (ctx) => { const out = { runs: 0, skipped: 0 }; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1502')) continue; const r = mrpSvc.mrp.weekly(c.id); out.runs += r.runs; out.skipped += r.skipped; } ctx.log(`Made ${out.runs} MRP run(s), skipped ${out.skipped} project(s) with no approved schedule`); return out; }, { maxAttempts: 2, description: 'Makes the weekly MRP run of every active project that has an approved schedule and tells the planners how many proposals wait for them.' });
+    runtime?.scheduler?.define({ code: 'proc.mrp_weekly_monday', cron: '30 19 * * 0', jobType: 'proc.mrp_weekly', description: 'Every Monday 01:00 India time: the weekly MRP run of each project with an approved schedule' });
     const router = Router();
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1501') ? next() : next(notFound('Material requests and purchase requisitions are not enabled for your company yet (feature flag ff.proc.p1501 is OFF).'))));
+    router.use(/^\/(runs|proposals|item-params|supply|mrp)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1502') ? next() : next(notFound('Material demand planning (MRP) is not enabled for your company yet (feature flag ff.proc.p1502 is OFF).'))));
     router.use(procRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/proc', router);
   },
@@ -152,4 +163,35 @@ fileEntities.register({
     const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.pr_site_id }).allowed; if (!at('proc.requisition.view')) return null;
     return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.pr_site_id ?? undefined, canView: true, canEdit: at('proc.requisition.edit') && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) };
   },
+});
+
+// ---- the approval of an item's planning parameters (part 15.02, section 9): maker-checker; the planner or the procurement officer proposes, the procurement manager approves; the one who proposed never decides it --------------------------
+const iline = (db, id) => db.prepare('SELECT x.*, i.code, i.name FROM proc_item_params x JOIN mdm_items i ON i.id = x.item_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: PARAM_DOC, label: 'Item planning parameters', processOwner: 'PROCMGR', route: (id) => `/proc/item-params?id=${id}`,
+  describe(db, companyId, id) { const r = iline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.code, title: `${r.code}: lead time ${r.lead_time_days} days from ${r.effective_from}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = iline(db, Number(id)); if (!r) return null; const cur = db.prepare("SELECT lead_time_days, moq, safety_stock FROM proc_item_params WHERE company_id = ? AND item_id = ? AND COALESCE(vendor_id, 0) = ? AND status = 'APPROVED' AND effective_from <= ? AND deleted_at IS NULL ORDER BY effective_from DESC LIMIT 1").get(r.company_id, r.item_id, r.vendor_id ?? 0, r.effective_from); return { fields: [{ label: 'Item', value: `${r.code} ${r.name}` }, { label: 'Lead time', value: `${r.lead_time_days} days${cur ? ` (now ${cur.lead_time_days})` : ''}` }, { label: 'Minimum order / pack', value: `${r.moq / 1000} / ${r.pack_size / 1000}` }, { label: 'Safety stock', value: `${r.safety_stock / 1000}${cur ? ` (now ${cur.safety_stock / 1000})` : ''}` }, { label: 'Long lead', value: r.long_lead ? 'yes' : 'no' }, { label: 'Effective from', value: r.effective_from }, { label: 'Supplier capacity', value: r.capacity_note ?? '' }] }; },
+  defaultDefinition: { name: 'Item planning parameters: the procurement manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.paramDecide(instance, actor, 'APPROVED'),
+    onRejected: (db, { instance, actor, comment }) => procOf(db)?.paramDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.paramDecide(instance, actor, 'RETURNED', comment),
+    onCancelled: (db, { instance, actor, comment }) => procOf(db)?.paramDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+objectTypes.register({
+  type: 'proc_item_param', label: 'Item planning parameters', permission: 'proc.item_param.view', route: (id) => `/proc/item-params?id=${id}`, attachmentEntity: 'proc_item_param', approvalTarget: 'proc_item_param',
+  access(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.paramSvc.params.get(actor, Number(id)); return { companyId: actor.companyId, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'proc_item_params', id }],
+  summary(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.paramSvc.params.get(actor, Number(id)); return { label: `${r.itemCode} planning parameters`, status: r.status }; } catch { return null; } },
+  related: () => [], search() { return []; }, projectRecords() { return []; },
+});
+objectTypes.register({
+  type: 'proc_mrp_run', label: 'MRP run', permission: 'proc.run.view', route: (id) => `/proc/mrp?id=${id}`, attachmentEntity: 'proc_mrp_run', approvalTarget: 'proc_mrp_run',
+  access(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.mrpSvc.mrp.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'proc_mrp_runs', id }],
+  summary(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.mrpSvc.mrp.get(actor, Number(id)); return { label: `${r.docNo} ${r.projectCode}`, status: r.status }; } catch { return null; } },
+  related(db, actor, id) { const s = procOf(db); if (!s) return []; try { const rows = db.prepare('SELECT DISTINCT pr_id FROM proc_mrp_proposals WHERE run_id = ? AND pr_id IS NOT NULL').all(Number(id)); return rows.map((x) => { const pr = s.prSvc.prs.get(actor, x.pr_id); return { kind: 'purchase requisition', label: pr.docNo, route: `/proc/requisitions?id=${pr.id}` }; }); } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'proc.run.view').allowed) return []; return db.prepare('SELECT id, org_project_id FROM proc_mrp_runs WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, limit).filter((x) => authzOf(db).check(actor, 'proc.run.view', { companyId: actor.companyId, projectId: x.org_project_id }).allowed).map((x) => x.id); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM proc_mrp_runs WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
 });

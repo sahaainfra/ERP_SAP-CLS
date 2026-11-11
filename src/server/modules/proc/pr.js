@@ -176,6 +176,16 @@ export function createPrService({ db, base, stock, mr }) {
         db.prepare('UPDATE proc_requisitions SET root_id = id WHERE id = ?').run(id); const r = db.prepare('SELECT * FROM proc_requisitions WHERE id = ?').get(id); saveLines(r, lines, actor); audit(actor, 'proc_requisitions', id, 'create', actor.companyId, { newValues: { docNo: no, source: 'DIRECT', lines: lines.length } }); return prs.get(actor, id);
       });
     },
+    /** FR-04 of 15.02 (BR-01): the proposals of an MRP run accepted by a planner make a DRAFT requisition (source MRP): it still has to be sent and approved by value like any other. */
+    fromMrp(actor, b) {
+      const p = project(actor, b.projectId, 'proc.requisition.view'); need(actor, 'proc.requisition.create', 'raise a purchase requisition', p.id); const site = b.siteId ? siteOf(actor.companyId, p.id, b.siteId) : null; if (b.siteId && !site) fail([{ field: 'siteId', message: 'Not a site of this project' }]);
+      const required = b.lines.reduce((m, l) => (!m || l.requiredBy < m ? l.requiredBy : m), null); const { lines, total } = normalise(actor, p, { requiredBy: required, siteId: site?.id ?? null }, b.lines);
+      const no = number(actor.companyId, actor.user, PR_DOC, 'proc_requisitions', 'PR');
+      const id = Number(db.prepare("INSERT INTO proc_requisitions (company_id, doc_no, doc_date, org_project_id, pr_site_id, pr_source, requested_by, required_by, priority, purpose, total_amount, status, project_id, site_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, 'MRP', ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, 'mrp_run', ?)").run(actor.companyId, no, todayIST(), p.id, site?.id ?? null, actor.user, required, b.priority ?? 'NORMAL', b.purpose ?? null, total, p.id, site?.id ?? null, actor.user, String(b.runId)).lastInsertRowid);
+      db.prepare('UPDATE proc_requisitions SET root_id = id WHERE id = ?').run(id); const r = db.prepare('SELECT * FROM proc_requisitions WHERE id = ?').get(id); const ids = saveLines(r, lines, actor);
+      b.lines.forEach((l, i) => db.prepare("UPDATE proc_pr_lines SET source_type = 'mrp_proposal', source_id = ? WHERE id = ?").run(String(l.proposalId), ids[i]));
+      audit(actor, 'proc_requisitions', id, 'create', actor.companyId, { newValues: { docNo: no, source: 'MRP', run: b.runNo, lines: lines.length } }); return prs.get(actor, id);
+    },
     update(actor, id, b) {
       const r = row(actor, id, 'proc.requisition.edit'); if (!EDITABLE.includes(r.status)) throw conflict(r.status === 'APPROVED' ? 'An approved requisition is locked: amend it.' : `${PR_STATUS[r.status]}: it is not changed now.`); if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this requisition; reload it.');
       const p = project(actor, r.org_project_id, 'proc.requisition.view'); const siteId = 'siteId' in b ? b.siteId : r.pr_site_id; if (siteId && !siteOf(actor.companyId, p.id, siteId)) fail([{ field: 'siteId', message: 'Not a site of this project' }]);
