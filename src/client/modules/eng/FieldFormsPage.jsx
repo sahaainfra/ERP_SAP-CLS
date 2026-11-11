@@ -5,7 +5,7 @@ import { EmptyState } from '../../platform/feedback/states.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { useLang } from '../../platform/i18n/index.js';
 import { enqueue, sync, useOffline } from '../../platform/offline/engine.js';
-import { Link, usePageTitle } from '../core/pages/ui.jsx';
+import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CMD_STATUS } from './offline-common.js';
 
 // Field Forms (Mobile, part 04.15, FR-08): the forms that can be filled in with no connection. The list comes from the registry (what the person may use, and which forms wait for their part); a form is checked with the
@@ -80,7 +80,7 @@ export default function FieldFormsPage() {
           {off.forms.map((f) => (
             <li key={f.code}>
               {f.available && f.route
-                ? <Link to={f.route} data-testid={`form-${f.code}`}><Icon name="erp.field.field" size={32} /><strong>{f.label}</strong></Link>
+                ? <a href={f.route} onClick={(e) => { e.preventDefault(); navigateTo(f.route); }} data-testid={`form-${f.code}`}><Icon name="erp.field.field" size={32} /><strong>{f.label}</strong></a>
                 : f.available
                 ? <a href={`/field/forms?form=${f.code}`} onClick={(e) => { e.preventDefault(); choose(f.code); }} data-testid={`form-${f.code}`}><Icon name="erp.field.field" size={32} /><strong>{f.label}</strong></a>
                 : <span className="is-disabled" data-testid={`form-${f.code}`} aria-disabled="true"><Icon name="erp.field.field" size={32} /><strong>{f.label}</strong><span className="muted small">{f.planned ? `Available with part ${f.module}` : 'You may not use this form'}</span></span>}

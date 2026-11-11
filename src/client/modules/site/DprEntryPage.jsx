@@ -200,7 +200,7 @@ export default function DprEntryPage() {
 
       {form && step === 5 && (
         <div data-testid="dpr-photos"><h2>{t('dpr.s.photos')}</h2><p className="muted">{t('dpr.photosHelp')}</p>
-          <label className="btn btn-primary" style={{ ...big, display: 'inline-flex', alignItems: 'center' }}>{t('dpr.takePhoto')}<input type="file" accept="image/*" capture="environment" multiple onChange={(e) => { setPhotos((p) => [...p, ...[...e.target.files].map((file) => ({ file, caption: '' }))]); e.target.value = ''; }} style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} data-testid="dpr-photo-input" /></label>
+          <label className="btn btn-primary" style={{ ...big, display: 'inline-flex', alignItems: 'center' }}>{t('dpr.takePhoto')}<input type="file" accept="image/*" capture="environment" multiple onChange={(e) => { const files = [...e.target.files]; setPhotos((p) => [...p, ...files.map((file) => ({ file, caption: '' }))]); e.target.value = ''; }} style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} data-testid="dpr-photo-input" /></label>
           <ul style={{ listStyle: 'none', padding: 0 }}>{photos.map((p, i) => <li key={i} className="mdm-panel" data-testid="dpr-photo-line"><strong>{p.file.name}</strong> · {Math.round(p.file.size / 1024)} KB <input aria-label={t('dpr.caption')} placeholder={t('dpr.caption')} value={p.caption} onChange={(e) => setPhotos((l) => l.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)))} style={big} maxLength={300} /> <button type="button" className="btn" onClick={() => setPhotos((l) => l.filter((_, j) => j !== i))}>{t('act.remove')}</button></li>)}</ul>
           <Nav />
         </div>
