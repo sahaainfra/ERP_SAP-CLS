@@ -545,3 +545,7 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-534 | RTI | Index uploads and surveys are audited data entry by the procurement manager, not maker-checker; thresholds are parameters of the parameter engine. |
 | D-535 | RTI | Region is the delivery state of the purchase order; quotations, awards and contracts carry no region and count for all regions. Specification keys are free text and are not yet used to split a benchmark. |
 | D-536 | RTI | A contract rate revised by price variation does not add a new observation; the history keeps the rate as first approved. |
+| D-537 | ANA | Figures are computed on every request; no cache or snapshot yet (certified metrics 27.03 will take this over). Large companies should be checked with the 100k-row volume test of the standards. |
+| D-538 | ANA | Spend is the value of approved and closed purchase orders by approval date; amendments change the order value but not its date, and service orders (15.06) are not in the spend yet. |
+| D-539 | ANA | Savings against the budget rate need the budget rate on the statement line; lines without one are left out of the base. |
+| D-540 | ANA | Exports are CSV; XLSX/PDF and e-mail schedules of the report standard are not built. Control exceptions are shown only to those who see every project. |

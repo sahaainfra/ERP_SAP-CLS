@@ -192,3 +192,11 @@ export function saveCsv(name, rows) {
   const cell = (v) => { let s = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; return `"${s.replaceAll('"', '""')}"`; };
   const url = URL.createObjectURL(new Blob([rows.map((r) => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+/** Procurement dashboard and analytics (part 15.10). Every figure, share, ageing bucket, status colour and record comes from the server. */
+const qs = (o) => { const p = new URLSearchParams(); for (const [k, v] of Object.entries(o ?? {})) if (v !== '' && v != null) p.set(k, String(v)); const s = p.toString(); return s ? `?${s}` : ''; };
+export const an = {
+  dashboard: (q) => get(`/analytics/dashboard${qs(q)}`), projects: () => get('/analytics/projects'), spend: (q) => get(`/analytics/spend${qs(q)}`), spendDetail: (q) => get(`/analytics/spend/detail${qs(q)}`),
+  cycle: (q) => get(`/analytics/cycle-time${qs(q)}`), compliance: (q) => get(`/analytics/compliance${qs(q)}`),
+  myTasks: async () => { const rows = (await api.get('/workflow/tasks?mine=assigned')).data?.rows ?? []; return rows.filter((t) => String(t.instance?.docType ?? t.instance?.doc_type ?? 'PROC_').startsWith('PROC_')).length; },
+};

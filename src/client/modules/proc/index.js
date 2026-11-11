@@ -29,6 +29,10 @@ import VendorRankingPage from './VendorRankingPage.jsx';
 import RateIntelligencePage from './RateIntelligencePage.jsx';
 import RateExposurePage from './RateExposurePage.jsx';
 import RateSurveyPage from './RateSurveyPage.jsx';
+import ProcDashboardPage from './ProcDashboardPage.jsx';
+import SpendAnalysisPage from './SpendAnalysisPage.jsx';
+import CycleTimePage from './CycleTimePage.jsx';
+import ProcurementCompliancePage from './ProcurementCompliancePage.jsx';
 
 registerModule({
   code: 'proc',
@@ -64,5 +68,9 @@ registerModule({
     { path: '/proc/rate-intelligence', label: 'Rate Intelligence', icon: 'erp.group.supply', permission: 'proc.rate_intel.view', flag: 'ff.proc.p1509', Page: RateIntelligencePage },
     { path: '/proc/rate-exposure', label: 'Project Rate Exposure', icon: 'erp.group.supply', permission: 'proc.rate_intel.view', flag: 'ff.proc.p1509', Page: RateExposurePage },
     { path: '/proc/rate-survey', label: 'Market Survey and Index Upload', icon: 'erp.group.supply', permission: 'proc.rate_intel.survey', flag: 'ff.proc.p1509', Page: RateSurveyPage },
+    { path: '/proc/dashboard', label: 'Procurement Dashboard', icon: 'erp.group.supply', permission: 'proc.analytics.view', flag: 'ff.proc.p1510', Page: ProcDashboardPage },
+    { path: '/proc/spend-analysis', label: 'Spend Analysis', icon: 'erp.group.supply', permission: 'proc.analytics.view', flag: 'ff.proc.p1510', Page: SpendAnalysisPage },
+    { path: '/proc/cycle-time', label: 'Procurement Cycle Time', icon: 'erp.group.supply', permission: 'proc.analytics.view', flag: 'ff.proc.p1510', Page: CycleTimePage },
+    { path: '/proc/procurement-compliance', label: 'Procurement Compliance', icon: 'erp.group.supply', permission: 'proc.analytics.view', flag: 'ff.proc.p1510', Page: ProcurementCompliancePage },
   ],
 });

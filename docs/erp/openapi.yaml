@@ -8618,6 +8618,18 @@ paths:
     post: { summary: 'Do rate-indices (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/rate-indices/import:
     post: { summary: 'Do rate-indices/import (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/analytics/dashboard:
+    get: { summary: 'Read analytics/dashboard (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/analytics/projects:
+    get: { summary: 'Read analytics/projects (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/analytics/spend:
+    get: { summary: 'Read analytics/spend (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/analytics/spend/detail:
+    get: { summary: 'Read analytics/spend/detail (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/analytics/cycle-time:
+    get: { summary: 'Read analytics/cycle-time (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/analytics/compliance:
+    get: { summary: 'Read analytics/compliance (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones:
     get: { summary: 'Read vendor-po/{token}/milestones (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones/{mid}:

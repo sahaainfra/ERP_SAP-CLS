@@ -1390,3 +1390,11 @@ Module `proc`, flag `ff.proc.p1509`, tables `rti_observations`, `rti_indices`; s
 - **Benchmark** (ADR-555): `benchmark` is the median of the window; `rateBenchmarks.lookup` in `pr.js` is how the comparative statement (`market_rate`) and purchase order (`benchmark_rate`) ask for it.
 - **Exposure** (ADR-557): `exposure` multiplies the remaining MRP quantity by the benchmark less the budget rate.
 - **Permissions**: `proc.rate_intel.{view,survey,index,export}`. Job `proc.rti_harvest`.
+
+
+## 118. Procurement dashboard and analytics (part 15.10)
+Module `proc`, flag `ff.proc.p1510`, no table; service `src/server/modules/proc/ana.js`.
+- **Figures** (ADR-558): `dashboard`, `spendReport`, `spendDetail`, `cycleReport`, `complianceReport` query the procurement tables inside `authz.scopeFilter` on the project of each record; `bucketise`, `concentration` and `fyStart` are pure.
+- **Savings and competition** (ADR-559, ADR-560): awarded statement lines against the budget rate and L2; orders without competition.
+- **Project 360**: `registerProject360Widget('procurement', ...)` in `index.js` supplies the slot from `projectWidget`.
+- **Permissions**: `proc.analytics.{view,export}`. Parameters `proc.ana.target_*`.
