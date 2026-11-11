@@ -5,6 +5,9 @@ const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID
 export const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 export const addDays = (n) => new Date(Date.now() + 5.5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
 export const STATUS_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', EMERGENCY: 'AT_RISK', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', CLOSED: 'COMPLETED', SUPERSEDED: 'CANCELLED' };
+export const RUN_TONE = { DRAFT: 'DRAFT', COMPLETED: 'APPROVED', CLOSED: 'COMPLETED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const LEVEL_TONE = { NONE: 'DRAFT', OK: 'APPROVED', SHORT: 'RETURNED', CRITICAL: 'REJECTED' };
+export const PARAM_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
 export const CHECK_TONE = { OK: 'APPROVED', WARNING: 'RETURNED', BLOCK: 'REJECTED', NOT_CHECKED: 'DRAFT', COVERED: 'REJECTED', PARTIAL: 'RETURNED', NONE: 'APPROVED', NA: 'DRAFT' };
 export const fmtDate = (iso) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—');
 export const fmtQty = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { maximumFractionDigits: 3 }));
@@ -38,5 +41,26 @@ export const pc = {
   preview: (b) => post('/requisitions/consolidate/preview', b, {}),
   consolidate: (b) => post('/requisitions/consolidate', b),
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
+  // part 15.02: MRP
+  mrpProjects: () => get('/mrp/projects'),
+  runOptions: (projectId) => get(`/runs/options?projectId=${projectId}`),
+  runs: async (projectId) => (await api.get(`/proc/runs?filter[projectId]=${projectId}&pageSize=25`)).data,
+  run: (id) => get(`/runs/${id}`),
+  runCreate: (b) => post('/runs', b),
+  runMake: (id) => post(`/runs/${id}/submit`),
+  runAct: (id, action, b) => post(`/runs/${id}/${action}`, b),
+  heatmap: (id) => get(`/runs/${id}/heatmap`),
+  longLead: (id) => get(`/runs/${id}/long-lead`),
+  proposals: async (q) => (await api.get(`/proc/proposals?${q}`)).data,
+  proposalModify: async (id, b) => (await api.patch(`/proc/proposals/${id}`, b, idem())).data,
+  proposalReject: (id, reason) => post(`/proposals/${id}/reject`, { reason }),
+  proposalGet: (id) => get(`/proposals/${id}`),
+  accept: (b) => post('/proposals/accept', b),
+  param: (id) => get(`/item-params/${id}`),
+  paramCreate: (b) => post('/item-params', b),
+  paramUpdate: async (id, b) => (await api.patch(`/proc/item-params/${id}`, b, idem())).data,
+  paramDelete: async (id) => (await api.delete(`/proc/item-params/${id}`)).data,
+  paramAct: (id, action, b) => post(`/item-params/${id}/${action}`, b),
+  paramHistory: (id) => get(`/item-params/${id}/history`),
   approvedMrs: async (projectId) => (await api.get(`/proc/material-requests?filter[status]=APPROVED&filter[projectId]=${projectId}&pageSize=100`)).data,
 };

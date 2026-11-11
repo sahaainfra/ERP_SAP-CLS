@@ -3,6 +3,10 @@ import MaterialRequestNewPage from './MaterialRequestNewPage.jsx';
 import MaterialRequestsPage from './MaterialRequestsPage.jsx';
 import RequisitionsPage from './RequisitionsPage.jsx';
 import ConsolidatePage from './ConsolidatePage.jsx';
+import MrpPage from './MrpPage.jsx';
+import MrpProposalsPage from './MrpProposalsPage.jsx';
+import MrpHeatmapPage from './MrpHeatmapPage.jsx';
+import ItemParamsPage from './ItemParamsPage.jsx';
 
 registerModule({
   code: 'proc',
@@ -12,5 +16,9 @@ registerModule({
     { path: '/proc/material-requests', label: 'Material Requests', icon: 'erp.group.supply', permission: 'proc.material_request.view', flag: 'ff.proc.p1501', Page: MaterialRequestsPage },
     { path: '/proc/requisitions', label: 'Purchase Requisitions', icon: 'erp.group.supply', permission: 'proc.requisition.view', flag: 'ff.proc.p1501', Page: RequisitionsPage },
     { path: '/proc/consolidate', label: 'Consolidate MRs into PR', icon: 'erp.group.supply', permission: 'proc.requisition.create', flag: 'ff.proc.p1501', Page: ConsolidatePage },
+    { path: '/proc/mrp', label: 'Run MRP', icon: 'erp.group.supply', permission: 'proc.run.view', flag: 'ff.proc.p1502', Page: MrpPage },
+    { path: '/proc/mrp-proposals', label: 'PR Proposals', icon: 'erp.group.supply', permission: 'proc.run.view', flag: 'ff.proc.p1502', Page: MrpProposalsPage },
+    { path: '/proc/mrp-heatmap', label: 'Shortage Heat-map and Long-Lead Items', icon: 'erp.group.supply', permission: 'proc.run.view', flag: 'ff.proc.p1502', Page: MrpHeatmapPage },
+    { path: '/proc/item-params', label: 'Item Planning Parameters', icon: 'erp.group.supply', permission: 'proc.item_param.view', flag: 'ff.proc.p1502', Page: ItemParamsPage },
   ],
 });

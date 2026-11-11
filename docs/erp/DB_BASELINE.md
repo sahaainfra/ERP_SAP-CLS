@@ -12936,6 +12936,48 @@ Indexes:
 - ix_pol_version_status: company_id, version_status, effective_from
 - ux_pol_version_no (unique): policy_id, version_no
 
+## proc_item_params
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER |  |  |  |
+| lead_time_days | INTEGER | yes |  | 0 |
+| moq | INTEGER | yes |  | 0 |
+| pack_size | INTEGER | yes |  | 0 |
+| safety_stock | INTEGER | yes |  | 0 |
+| long_lead | INTEGER | yes |  | 0 |
+| capacity_note | TEXT |  |  |  |
+| effective_from | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_item_params_vendor: vendor_id
+- ix_proc_item_params_item: item_id, status
+- ix_proc_item_params_company: company_id, status
+- ux_proc_item_params_live (unique): company_id, item_id, , effective_from
+
 ## proc_material_requests
 
 | Column | Type | Not null | Key | Default |
@@ -13026,6 +13068,182 @@ Indexes:
 - ix_proc_mr_lines_item: item_id
 - ix_proc_mr_lines_company: company_id
 - ux_proc_mr_lines_no (unique): mr_id, line_no
+
+## proc_mrp_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| week_start | TEXT | yes |  |  |
+| gross_req | INTEGER | yes |  | 0 |
+| free_stock | INTEGER | yes |  | 0 |
+| open_po | INTEGER | yes |  | 0 |
+| in_transit | INTEGER | yes |  | 0 |
+| open_pr | INTEGER | yes |  | 0 |
+| safety_stock | INTEGER | yes |  | 0 |
+| net_req | INTEGER | yes |  | 0 |
+| proposed_qty | INTEGER | yes |  | 0 |
+| projected_end | INTEGER | yes |  | 0 |
+| required_by | TEXT |  |  |  |
+| order_by | TEXT |  |  |  |
+| late | INTEGER | yes |  | 0 |
+| source_activities_json | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), run_id -> proc_mrp_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_mrp_lines_item: item_id
+- ix_proc_mrp_lines_company: company_id
+- ux_proc_mrp_lines (unique): run_id, item_id, week_start
+
+## proc_mrp_proposals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty | INTEGER | yes |  |  |
+| proposed_qty | INTEGER | yes |  |  |
+| required_by | TEXT | yes |  |  |
+| order_by | TEXT | yes |  |  |
+| late | INTEGER | yes |  | 0 |
+| long_lead | INTEGER | yes |  | 0 |
+| lead_days | INTEGER | yes |  | 0 |
+| vendor_id | INTEGER |  |  |  |
+| alternates_json | TEXT |  |  |  |
+| substitute_item_id | INTEGER |  |  |  |
+| decision | TEXT | yes |  | 'OPEN' |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| modified | INTEGER | yes |  | 0 |
+| pr_id | INTEGER |  |  |  |
+| source_activities_json | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: pr_id -> proc_requisitions(id), substitute_item_id -> mdm_items(id), vendor_id -> mdm_partners(id), item_id -> mdm_items(id), org_project_id -> org_projects(id), run_id -> proc_mrp_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_mrp_proposals_sub: substitute_item_id
+- ix_proc_mrp_proposals_vendor: vendor_id
+- ix_proc_mrp_proposals_pr: pr_id
+- ix_proc_mrp_proposals_item: item_id
+- ix_proc_mrp_proposals_project: org_project_id, decision, order_by
+- ix_proc_mrp_proposals_run: run_id, decision
+- ix_proc_mrp_proposals_company: company_id, decision
+
+## proc_mrp_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| run_kind | TEXT | yes |  | 'ON_DEMAND' |
+| horizon_weeks | INTEGER | yes |  | 12 |
+| buffer_days | INTEGER | yes |  | 3 |
+| include_mto | INTEGER | yes |  | 1 |
+| parameters_json | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| schedule_id | INTEGER |  |  |  |
+| run_at | TEXT |  |  |  |
+| run_by | TEXT |  |  |  |
+| item_count | INTEGER | yes |  | 0 |
+| shortage_count | INTEGER | yes |  | 0 |
+| proposal_count | INTEGER | yes |  | 0 |
+| warnings_json | TEXT |  |  |  |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proc_mrp_runs(id), schedule_id -> plan_schedules(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_mrp_runs_parent: parent_id
+- ix_proc_mrp_runs_schedule: schedule_id
+- ix_proc_mrp_runs_project: org_project_id, status, run_at
+- ix_proc_mrp_runs_company: company_id, status
+- ux_proc_mrp_runs_doc (unique): company_id, doc_no
+
+## proc_open_supply
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| supply_kind | TEXT | yes |  |  |
+| doc_ref | TEXT | yes |  |  |
+| balance_qty | INTEGER | yes |  | 0 |
+| expected_on | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_open_supply_project: org_project_id
+- ix_proc_open_supply_item: item_id, expected_on
+- ux_proc_open_supply (unique): company_id, org_project_id, item_id, supply_kind, doc_ref
 
 ## proc_pr_lines
 

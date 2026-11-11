@@ -8243,3 +8243,37 @@ paths:
     post: { summary: Amend an approved requisition by a revision, tags: [proc], responses: { '201': { description: Created } } }
   /api/v1/proc/stock/ingest:
     post: { summary: Load free stock levels of items in stores (until the stock module keeps them), tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/runs:
+    get: { summary: MRP runs, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Prepare an MRP run of a project, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/runs/{id}:
+    get: { summary: One run with its result lines, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change the parameters of a run not yet made, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/runs/{id}/submit:
+    post: { summary: Make the run (requirements, netting, proposals), tags: [proc], responses: { '202': { description: Accepted } } }
+  /api/v1/proc/runs/{id}/amend:
+    post: { summary: A new run with the same parameters, to supersede this one, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/runs/{id}/import:
+    post: { summary: Add hand-entered demand to a run not yet made, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/runs/{id}/heatmap:
+    get: { summary: Shortage heat-map by item and week, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/runs/{id}/long-lead:
+    get: { summary: Long-lead items with order-by dates and supplier capacity, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/runs/{id}/export:
+    get: { summary: Export of the result, the heat-map or the long-lead list (XLSX, CSV, PDF), tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/proposals:
+    get: { summary: PR proposals of the runs, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/proposals/accept:
+    post: { summary: Accept proposals into a draft purchase requisition (never an approved one), tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/proposals/{id}:
+    get: { summary: One proposal with its alternates and activities, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change a proposal before it is accepted, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/proposals/{id}/reject:
+    post: { summary: Reject a proposal with a reason, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/item-params:
+    get: { summary: Item planning parameters, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Propose planning parameters of an item (maker), tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/item-params/{id}/submit:
+    post: { summary: Send the parameters for approval (procurement manager), tags: [proc], responses: { '202': { description: Accepted } } }
+  /api/v1/proc/supply/ingest:
+    post: { summary: Load open orders and goods in transit until the order part keeps them, tags: [proc], responses: { '201': { description: Created } } }
