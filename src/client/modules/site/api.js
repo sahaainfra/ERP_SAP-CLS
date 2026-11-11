@@ -109,6 +109,18 @@ export const st = {
   normAct: async (id, action, b = {}) => (await api.post(`/site/productivity/norms/${id}/${action}`, b, idem())).data,
   normHistory: async (id) => (await api.get(`/site/productivity/norms/${id}/history`)).data,
   refreshBoq: async (projectId) => (await api.post('/site/productivity/norms/refresh-boq', { projectId }, idem())).data,
+  // part 14.07: the project control engine
+  ctlProjects: async () => (await api.get('/site/control/projects')).data,
+  ctlDashboard: async (q) => (await api.get(`/site/control/dashboard?${q}`)).data,
+  ctlVariance: async (q) => (await api.get(`/site/control/variance?${q}`)).data,
+  ctlDrill: async (q) => (await api.get(`/site/control/drill?${q}`)).data,
+  ctlRuns: async (projectId) => (await api.get(`/site/control/reconciliation?projectId=${projectId}`)).data,
+  ctlReconcile: async (projectId) => (await api.post('/site/control/reconciliation/run', { projectId }, idem())).data,
+  alloc: async (id) => (await api.get(`/site/control/unallocated/${id}`)).data,
+  allocOptions: async (projectId) => (await api.get(`/site/control/unallocated/options?projectId=${projectId}`)).data,
+  allocSubmit: async (id, b) => (await api.post(`/site/control/unallocated/${id}/submit`, b, idem())).data,
+  allocWithdraw: async (id, reason) => (await api.post(`/site/control/unallocated/${id}/withdraw`, { reason }, idem())).data,
+  allocHistory: async (id) => (await api.get(`/site/control/unallocated/${id}/history`)).data,
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
 export const DPR_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
@@ -137,6 +149,8 @@ export const PRD_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'COM
 export const fmtPct = (n) => (n == null ? '—' : `${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 })} %`);
 export const fmtRatio = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 export const fmtRs = (n) => (n == null ? '—' : `₹ ${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`);
+export const ALLOC_TONE = { OPEN: 'DRAFT', SUBMITTED: 'IN_REVIEW', ALLOCATED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', CLEARED: 'CANCELLED' };
+export const PRIORITY_TONE = { HIGH: 'OVERDUE', MEDIUM: 'IN_REVIEW', NORMAL: 'DRAFT' };
 export const NORM_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
 export const LOSS_CODES = ['IDLE', 'REWORK', 'WEATHER', 'MATERIAL_SHORTAGE', 'DRAWING_DELAY', 'BREAKDOWN', 'OTHER'];
 export const daysAgo = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);

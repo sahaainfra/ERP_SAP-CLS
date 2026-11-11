@@ -1310,3 +1310,12 @@ Module `site`, flag `ff.site.p1406`, tables `prod_norms`, `prod_actuals`, `prod_
 - **Norms** (FR-01, AC-04): from the BOQ rate analysis or entered, approved through `SITE_PROD_NORM` (PM) and audited (ADR-505).
 - **Losses** (FR-03): recorded on site or derived from breakdowns, weather, drawing hindrances and idle plant (ADR-506). **Benchmarks and trends** (FR-04) across sites and projects for the same activity type. **Alerts** (FR-05) below `site.productivity.alert_pct` for `site.productivity.alert_days` days (ADR-507).
 - **Events**: `site.productivity.updated`, `site.productivity.low`. **API**: 21 routes under `/api/v1/site/productivity`. **Permissions**: `site.productivity.{view,configure,submit,approve,cancel,record,export}`.
+
+## 108. Project control engine (part 14.07)
+Module `site`, flag `ff.site.p1407`, tables `ctl_facts`, `ctl_unallocated`, `ctl_recon_runs` (migration 204), seed 205.
+- **Facts** (FR-01, BR-01): rebuilt from the approved budget (12.01), the commitments and actuals (12.03) and the progress (14.05) by project, WBS node, cost code, resource type and period; nothing can be typed in (ADR-508).
+- **Updates and reconciliation** (FR-02, BR-02): the events `bud.actual.posted`, `bud.commitment.changed`, `bud.budget.*`, `bud.change.approved`, `site.period.closed` and `site.dpr.approved` rebuild the facts of their project; the nightly job `site.control_reconcile` compares them with the ledgers, records a run, alerts above the tolerance and rebuilds (ADR-509).
+- **No double counting** (FR-03): material cost at issue for stock items and at receipt for direct delivery, or every receipt, by `site.control.material_cost_at` (ADR-510).
+- **Views** (FR-04, FR-05): facts by WBS, cost code, cost head, resource and month; dashboard with exceptions; quantity and rate variance that add up to the cost variance (ADR-512); drill-down to the budget lines, commitments, postings and activities.
+- **Unallocated costs** (FR-06, section 9): queue, QS or PCMGR propose, PM approves, overlay on the facts (ADR-511).
+- **Events**: `site.control.updated`, `site.control.reconciliation_failed`. **API**: 15 routes under `/api/v1/site/control`. **Permissions**: `site.control.{view,submit,approve,export,reconcile}`.

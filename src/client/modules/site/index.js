@@ -20,6 +20,9 @@ import ClientProgressPage from './ClientProgressPage.jsx';
 import ProductivityDashboardPage from './ProductivityDashboardPage.jsx';
 import ProductivityReportPage from './ProductivityReportPage.jsx';
 import ProductivityNormsPage from './ProductivityNormsPage.jsx';
+import ControlDashboardPage from './ControlDashboardPage.jsx';
+import ControlVariancePage from './ControlVariancePage.jsx';
+import ControlUnallocatedPage from './ControlUnallocatedPage.jsx';
 import ProductivityRecordsPage from './ProductivityRecordsPage.jsx';
 
 registerModule({
@@ -48,5 +51,8 @@ registerModule({
     { path: '/site/productivity-report', label: 'Productivity Variance and Loss Reasons', icon: 'erp.group.projects', permission: 'site.productivity.view', flag: 'ff.site.p1406', Page: ProductivityReportPage },
     { path: '/site/productivity-norms', label: 'Productivity Norms', icon: 'erp.group.projects', permission: 'site.productivity.view', flag: 'ff.site.p1406', Page: ProductivityNormsPage },
     { path: '/site/productivity-records', label: 'Productivity Records', icon: 'erp.group.projects', permission: 'site.productivity.view', flag: 'ff.site.p1406', Page: ProductivityRecordsPage },
+    { path: '/site/control', label: 'Project Cost Control', icon: 'erp.group.projects', permission: 'site.control.view', flag: 'ff.site.p1407', Page: ControlDashboardPage },
+    { path: '/site/control-variance', label: 'Quantity and Rate Variance Analysis', icon: 'erp.group.projects', permission: 'site.control.view', flag: 'ff.site.p1407', Page: ControlVariancePage },
+    { path: '/site/control-unallocated', label: 'Unallocated Costs', icon: 'erp.group.projects', permission: 'site.control.view', flag: 'ff.site.p1407', Page: ControlUnallocatedPage },
   ],
 });

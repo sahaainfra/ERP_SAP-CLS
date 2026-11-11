@@ -3770,6 +3770,137 @@ Foreign keys: connector_id -> core_connectors(id)
 Indexes:
 - ux_core_webhook_receipts_delivery (unique): connector_id, delivery_id
 
+## ctl_facts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| resource_type | TEXT | yes |  | 'OTHER' |
+| period_key | TEXT | yes |  | '' |
+| planned_qty | INTEGER | yes |  | 0 |
+| planned_cost | INTEGER | yes |  | 0 |
+| budget_qty | INTEGER | yes |  | 0 |
+| budget_cost | INTEGER | yes |  | 0 |
+| committed_cost | INTEGER | yes |  | 0 |
+| actual_qty | INTEGER | yes |  | 0 |
+| actual_cost | INTEGER | yes |  | 0 |
+| earned_cost | INTEGER | yes |  | 0 |
+| certified_value | INTEGER | yes |  | 0 |
+| billed_value | INTEGER | yes |  | 0 |
+| forecast_cost | INTEGER |  |  |  |
+| refreshed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctl_facts_period: org_project_id, period_key
+- ix_ctl_facts_code: cost_code_id
+- ix_ctl_facts_wbs: wbs_id
+- ix_ctl_facts_company: company_id, org_project_id
+- ux_ctl_facts_key (unique): org_project_id, , , resource_type, period_key
+
+## ctl_recon_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| run_kind | TEXT | yes |  |  |
+| status | TEXT | yes |  |  |
+| tolerance | INTEGER | yes |  | 0 |
+| checked | INTEGER | yes |  | 0 |
+| diff_count | INTEGER | yes |  | 0 |
+| diff_json | TEXT |  |  |  |
+| run_at | TEXT | yes |  |  |
+| run_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctl_recon_runs_project: org_project_id, run_at
+- ix_ctl_recon_runs_company: company_id, org_project_id
+
+## ctl_unallocated
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| src_type | TEXT | yes |  |  |
+| src_id | TEXT | yes |  |  |
+| src_line_id | TEXT | yes |  | '' |
+| doc_ref | TEXT |  |  |  |
+| vendor_name | TEXT |  |  |  |
+| description | TEXT |  |  |  |
+| resource_type | TEXT | yes |  | 'OTHER' |
+| amount | INTEGER | yes |  | 0 |
+| qty | INTEGER | yes |  | 0 |
+| actual_date | TEXT | yes |  |  |
+| reason | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| alloc_wbs_id | INTEGER |  |  |  |
+| alloc_cost_code_id | INTEGER |  |  |  |
+| allocated_to_json | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: alloc_cost_code_id -> fin_cost_codes(id), alloc_wbs_id -> proj_wbs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctl_unallocated_code: alloc_cost_code_id
+- ix_ctl_unallocated_wbs: alloc_wbs_id
+- ix_ctl_unallocated_project: org_project_id, status
+- ix_ctl_unallocated_company: company_id, status
+- ux_ctl_unallocated_src (unique): company_id, src_type, src_id, src_line_id
+
 ## doc_annotations
 
 | Column | Type | Not null | Key | Default |

@@ -8180,3 +8180,27 @@ paths:
     patch: { summary: Change a draft or returned norm, tags: [site], responses: { '200': { description: OK } } }
   /api/v1/site/productivity/norms/{id}/submit:
     post: { summary: Send the norm for approval (PM), tags: [site], responses: { '202': { description: Accepted } } }
+  /api/v1/site/control/facts:
+    get: { summary: Control facts of a project by WBS node, cost code, cost head, resource or month, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/dashboard:
+    get: { summary: Project cost control dashboard (budget, committed, actual, earned, exceptions), tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/variance:
+    get: { summary: Quantity and rate variance analysis, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/variance/export:
+    get: { summary: Export of the variance analysis (XLSX, CSV, PDF), tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/drill:
+    get: { summary: Source documents behind a figure of the facts, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/reconciliation:
+    get: { summary: Reconciliation runs of a project, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/reconciliation/run:
+    post: { summary: Reconcile the facts against the ledgers now and rebuild what differs, tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/control/refresh:
+    post: { summary: Rebuild the facts of a project from their owners, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/unallocated:
+    get: { summary: Queue of unallocated costs, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/unallocated/{id}:
+    get: { summary: One unallocated cost, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/control/unallocated/{id}/submit:
+    post: { summary: Propose the allocation and send it for approval (PM), tags: [site], responses: { '202': { description: Accepted } } }
+  /api/v1/site/control/unallocated/{id}/withdraw:
+    post: { summary: Withdraw an allocation waiting for approval, tags: [site], responses: { '200': { description: OK } } }
