@@ -1271,3 +1271,11 @@ Module `site` (new, flag `ff.site.p1401`), tables `site_work_fronts`, `site_dail
 - **Board** (FR-06): `GET /board?siteId&date`; `GET /wa-mobile?date` for the phone (my approval tasks of type `SITE_WA` and the approved WAs I can close).
 - **Events**: `site.wa.approved` (also on an emergency WA's creation), `site.wa.closed`, `site.daily_plan.issued`. **Permissions**: `site.work_authorisation.{view,create,edit,delete,submit,approve,cancel,amend,print,export,close}`, `site.work_front.{view,manage}`, `site.daily_plan.{view,manage}`, `site.wa.use`. **Browser**: Site Work Board, Work Authorisations, Daily Work Plan, Approve and Close WA; English and Hindi.
 
+## 103. Daily Progress Report (part 14.02)
+Module `site` (flag `ff.site.p1402`), tables `site_dprs`, `site_dpr_work`, `site_dpr_labour`, `site_dpr_materials`, `site_dpr_equipment`, `site_dpr_photos`, `site_dpr_notes`. Services `modules/site/dpr.js` (reports) and `dpr-reports.js` (missing, compliance, reports).
+
+- **Reports** (FR-01 to FR-05, ADR-491, ADR-492): `/dprs` (list, export, create, get, update, delete, `submit`, `withdraw`, `cancel`, `amend`, `history`, `print`, `pdf`), `/dprs/prefill`, `/dprs/options`, `/dprs/sites`, `PATCH /dprs/:id/photos/:fileId`. Workflow type `SITE_DPR`: the construction manager or the project manager; an amendment, the project manager. Parameters: `site.dpr.cutoff_time` (19:00), `site.dpr.qty_tolerance_pct` (5), `site.dpr.labour_tolerance_pct` (10), `site.dpr.distribution_roles` (PM).
+- **Offline** (FR-04, ADR-493): the form `dpr` of the offline engine with the masters `dpr_prefill` (today and yesterday of each site), `dpr_contractors` and `dpr_items`; the photos follow the command and attach to the report it made.
+- **Reports and compliance** (FR-07): `GET /dprs/report?period=DAY|WEEK|MONTH|RANGE`, `/dprs/report/export` (XLSX, CSV, PDF), `/dprs/missing`, `/dprs/compliance`; the widget `site.dpr_compliance`.
+- **Event**: `site.dpr.approved` (work, labour, materials, equipment, weather, hindrances; amendments with `supersedes`). **Permissions**: `site.dpr.{view,create,edit,delete,submit,approve,cancel,amend,print,export,report}`. **Browser**: DPR Entry (phone), DPR Register and the report, Daily Site and Progress Reports, DPR Compliance; English and Hindi.
+
