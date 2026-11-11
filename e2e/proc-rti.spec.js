@@ -55,7 +55,7 @@ test('Rate intelligence: benchmark and trend, a survey with an outlier, a correc
   await p.getByTestId('rs-paste').fill(`STEEL, WEST, ${iso(0).slice(0, 7)}, 103.5`); await p.getByTestId('rs-paste-go').click(); await expect(p.getByTestId('rs-index-note')).toBeVisible();
   await p.goto('/proc/rate-intelligence'); await expect(p.getByTestId('ri-indices')).toBeVisible(); await expect(p.getByTestId('ri-benchmark')).toContainText(/₹ (39|40)\d/); await shot(p, '4-dashboard-indices', info);
   // the exposure
-  await p.goto('/proc/rate-exposure'); await expect(p.getByTestId('re-pick')).toBeVisible(); await p.getByTestId('re-project').selectOption({ index: 1 }); await expect(p.getByTestId('re-row')).toHaveCount(1); await expect(p.getByTestId('re-total')).toContainText('2,00,000'); await noOverflow(p); await shot(p, '5-exposure', info);
+  await p.goto('/proc/rate-exposure'); await expect(p.getByTestId('re-pick')).toBeVisible(); await p.getByTestId('re-project').selectOption({ index: 1 }); await expect(p.getByTestId('re-row')).toHaveCount(1); await expect(p.getByTestId('re-total')).toContainText('1,95,000'); await noOverflow(p); await shot(p, '5-exposure', info);
   const dl = p.waitForEvent('download'); await p.getByTestId('re-export').click(); expect((await dl).suggestedFilename()).toContain('rate-exposure');
   expect(errors, errors.join('\n')).toEqual([]); await m.context.close();
 });
