@@ -13325,6 +13325,97 @@ Indexes:
 - ix_proc_pr_sources_company: company_id
 - ux_proc_pr_sources (unique): pr_line_id, mr_line_id
 
+## proc_quotation_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| quotation_id | INTEGER | yes |  |  |
+| rfq_line_id | INTEGER | yes |  |  |
+| offered_qty | INTEGER | yes |  |  |
+| rate | INTEGER | yes |  |  |
+| discount_pct | INTEGER | yes |  | 0 |
+| gst_rate | INTEGER | yes |  | 0 |
+| freight | INTEGER | yes |  | 0 |
+| loading | INTEGER | yes |  | 0 |
+| other_charges | INTEGER | yes |  | 0 |
+| landed_rate | INTEGER | yes |  | 0 |
+| landed_amount | INTEGER | yes |  | 0 |
+| make | TEXT |  |  |  |
+| deviation | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: rfq_line_id -> proc_rfq_lines(id), quotation_id -> proc_quotations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_quotation_lines_rfq_line: rfq_line_id
+- ix_proc_quotation_lines_company: company_id
+- ux_proc_quotation_lines (unique): quotation_id, rfq_line_id
+
+## proc_quotations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| rfq_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| quote_ref | TEXT |  |  |  |
+| quote_date | TEXT | yes |  |  |
+| valid_until | TEXT | yes |  |  |
+| delivery_days | INTEGER | yes |  | 0 |
+| payment_terms | TEXT |  |  |  |
+| freight_terms | TEXT |  |  |  |
+| gst_inclusive | INTEGER | yes |  | 0 |
+| gst_recoverable | INTEGER | yes |  | 1 |
+| version_no | INTEGER | yes |  | 1 |
+| parent_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| entered_via | TEXT | yes |  | 'MANUAL' |
+| entered_by | TEXT |  |  |  |
+| received_at | TEXT |  |  |  |
+| total_landed | INTEGER | yes |  | 0 |
+| deviations | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proc_quotations(id), org_project_id -> org_projects(id), vendor_id -> mdm_partners(id), rfq_id -> proc_rfqs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_quotations_parent: parent_id
+- ix_proc_quotations_project: org_project_id
+- ix_proc_quotations_vendor: vendor_id
+- ix_proc_quotations_rfq: rfq_id, vendor_id, version_no
+- ix_proc_quotations_company: company_id, status
+- ux_proc_quotations_doc (unique): company_id, doc_no
+
 ## proc_requisitions
 
 | Column | Type | Not null | Key | Default |
@@ -13382,6 +13473,173 @@ Indexes:
 - ix_proc_pr_project: org_project_id, status, required_by
 - ix_proc_pr_company: company_id, status
 - ux_proc_pr_doc (unique): company_id, doc_no
+
+## proc_rfq_clarifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rfq_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER |  |  |  |
+| asked_by | TEXT | yes |  |  |
+| question | TEXT | yes |  |  |
+| answer | TEXT |  |  |  |
+| answered_by | TEXT |  |  |  |
+| answered_at | TEXT |  |  |  |
+| share_all | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), rfq_id -> proc_rfqs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_rfq_clar_vendor: vendor_id
+- ix_proc_rfq_clar_rfq: rfq_id, answered_at
+- ix_proc_rfq_clar_company: company_id
+
+## proc_rfq_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rfq_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| pr_line_id | INTEGER | yes |  |  |
+| item_id | INTEGER |  |  |  |
+| service_desc | TEXT |  |  |  |
+| qty | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| spec | TEXT |  |  |  |
+| required_by | TEXT |  |  |  |
+| delivery_site_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: delivery_site_id -> org_sites(id), item_id -> mdm_items(id), pr_line_id -> proc_pr_lines(id), rfq_id -> proc_rfqs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_rfq_lines_delivery_site_id: delivery_site_id
+- ix_proc_rfq_lines_item: item_id
+- ix_proc_rfq_lines_pr: pr_line_id
+- ix_proc_rfq_lines_company: company_id
+- ux_proc_rfq_lines_no (unique): rfq_id, line_no
+
+## proc_rfq_vendors
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rfq_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| channel | TEXT | yes |  | 'EMAIL' |
+| contact_to | TEXT |  |  |  |
+| token_hash | TEXT |  |  |  |
+| token_expires | TEXT |  |  |  |
+| token_used_at | TEXT |  |  |  |
+| response_status | TEXT | yes |  | 'INVITED' |
+| sent_at | TEXT |  |  |  |
+| send_status | TEXT |  |  |  |
+| send_note | TEXT |  |  |  |
+| viewed_at | TEXT |  |  |  |
+| responded_at | TEXT |  |  |  |
+| decline_reason | TEXT |  |  |  |
+| reminder_count | INTEGER | yes |  | 0 |
+| last_reminder_at | TEXT |  |  |  |
+| regret_sent_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), rfq_id -> proc_rfqs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_rfq_vendors_status: response_status, last_reminder_at
+- ix_proc_rfq_vendors_vendor: vendor_id
+- ix_proc_rfq_vendors_company: company_id
+- ux_proc_rfq_vendors_token (unique): token_hash
+- ux_proc_rfq_vendors (unique): rfq_id, vendor_id
+
+## proc_rfqs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| issue_date | TEXT |  |  |  |
+| due_date | TEXT | yes |  |  |
+| terms_json | TEXT |  |  |  |
+| est_total | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| justified | INTEGER | yes |  | 0 |
+| justification | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| issued_at | TEXT |  |  |  |
+| issued_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proc_rfqs(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_rfqs_parent: parent_id
+- ix_proc_rfqs_project: org_project_id, status, due_date
+- ix_proc_rfqs_company: company_id, status
+- ux_proc_rfqs_doc (unique): company_id, doc_no
 
 ## proc_stock_levels
 

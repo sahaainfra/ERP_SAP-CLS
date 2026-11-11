@@ -19,6 +19,15 @@ export async function download(path, name) {
   const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 const get = async (p) => (await api.get(`/proc${p}`)).data; const post = async (p, b, ok) => (await api.post(`/proc${p}`, b ?? {}, ok ?? idem())).data;
+export const RFQ_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', ISSUED: 'APPROVED', CLOSED: 'COMPLETED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const QUOTE_TONE = { DRAFT: 'DRAFT', RECEIVED: 'APPROVED', SUPERSEDED: 'CANCELLED', WITHDRAWN: 'RETURNED', CANCELLED: 'CANCELLED' };
+export const RESPONSE_TONE = { INVITED: 'DRAFT', SENT: 'IN_REVIEW', VIEWED: 'IN_REVIEW', RESPONDED: 'APPROVED', DECLINED: 'REJECTED' };
+/** The vendor's page: no sign-in, the link is the proof (part 15.03). */
+const pub = async (method, token, path, body) => {
+  const res = await fetch(`/api/v1/proc/vendor-quote/${encodeURIComponent(token)}${path}`, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); const j = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(j?.error?.message ?? 'Something went wrong'); e.status = res.status; e.details = j?.error?.details ?? []; throw e; } return j.data;
+};
+export const vq = { info: (t) => pub('GET', t, ''), submit: (t, b) => pub('POST', t, '/submit', b), decline: (t, reason) => pub('POST', t, '/decline', { reason }), ask: (t, question) => pub('POST', t, '/clarify', { question }) };
 export const pc = {
   projects: () => get('/projects'),
   mrOptions: (projectId) => get(`/material-requests/options?projectId=${projectId}`),
@@ -63,4 +72,22 @@ export const pc = {
   paramAct: (id, action, b) => post(`/item-params/${id}/${action}`, b),
   paramHistory: (id) => get(`/item-params/${id}/history`),
   approvedMrs: async (projectId) => (await api.get(`/proc/material-requests?filter[status]=APPROVED&filter[projectId]=${projectId}&pageSize=100`)).data,
+  // part 15.03: RFQs and quotations
+  rfqOptions: (projectId, ids = []) => get(`/rfqs/options?projectId=${projectId}${ids.length ? `&prLineIds=${ids.join(',')}` : ''}`),
+  rfqVendors: (projectId, ids = [], q = '') => get(`/rfqs/vendors?projectId=${projectId}${ids.length ? `&prLineIds=${ids.join(',')}` : ''}${q ? `&q=${encodeURIComponent(q)}` : ''}`),
+  rfq: (id) => get(`/rfqs/${id}`),
+  rfqCreate: (b) => post('/rfqs', b),
+  rfqUpdate: async (id, b) => (await api.patch(`/proc/rfqs/${id}`, b, idem())).data,
+  rfqDelete: async (id) => (await api.delete(`/proc/rfqs/${id}`)).data,
+  rfqAct: (id, action, b) => post(`/rfqs/${id}/${action}`, b),
+  rfqAnswer: (id, cid, b) => post(`/rfqs/${id}/clarifications/${cid}/answer`, b),
+  rfqHistory: (id) => get(`/rfqs/${id}/history`),
+  comparison: (id) => get(`/rfqs/${id}/comparison`),
+  issuedRfqs: async () => (await api.get('/proc/rfqs?filter[status]=ISSUED&pageSize=100')).data,
+  quote: (id) => get(`/quotations/${id}`),
+  quoteCreate: (b) => post('/quotations', b),
+  quoteUpdate: async (id, b) => (await api.patch(`/proc/quotations/${id}`, b, idem())).data,
+  quoteDelete: async (id) => (await api.delete(`/proc/quotations/${id}`)).data,
+  quoteAct: (id, action, b) => post(`/quotations/${id}/${action}`, b),
+  quoteHistory: (id) => get(`/quotations/${id}/history`),
 };

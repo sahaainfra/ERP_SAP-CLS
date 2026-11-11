@@ -9,9 +9,9 @@ import { d3, nowIso, q3, rid, same } from './base.js';
 export const PARAM_DOC = 'PROC_ITEM_PARAM';
 export const PARAM_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', APPROVED: 'In force', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', SUPERSEDED: 'Superseded' };
 export const paramList = defineList({
-  code: 'proc.item_params', label: 'Item planning parameters', permission: 'proc.item_param.view', from: 'proc_item_params x JOIN mdm_items i ON i.id = x.item_id LEFT JOIN mdm_partners v ON v.id = x.vendor_id', where: 'x.deleted_at IS NULL', searchable: ['i.code', 'i.name', 'v.display_name'], defaultSort: 'item',
+  code: 'proc.item_params', label: 'Item planning parameters', permission: 'proc.item_param.view', from: 'proc_item_params x JOIN mdm_items i ON i.id = x.item_id LEFT JOIN mdm_partners v ON v.id = x.vendor_id', where: 'x.deleted_at IS NULL', searchable: ['i.code', 'i.name', 'v.trade_name'], defaultSort: 'item',
   columns: {
-    item: { sql: 'i.code', type: 'text', label: 'Item' }, itemName: { sql: 'i.name', type: 'text', label: 'Name' }, vendor: { sql: 'COALESCE(v.display_name, v.legal_name)', type: 'text', label: 'Supplier' }, leadDays: { sql: 'x.lead_time_days', type: 'number', label: 'Lead time (days)' },
+    item: { sql: 'i.code', type: 'text', label: 'Item' }, itemName: { sql: 'i.name', type: 'text', label: 'Name' }, vendor: { sql: 'COALESCE(v.trade_name, v.legal_name)', type: 'text', label: 'Supplier' }, leadDays: { sql: 'x.lead_time_days', type: 'number', label: 'Lead time (days)' },
     moq: { sql: 'x.moq', type: 'text', label: 'Minimum order' }, safety: { sql: 'x.safety_stock', type: 'text', label: 'Safety stock' }, longLead: { sql: "CASE WHEN x.long_lead = 1 THEN 'YES' ELSE 'NO' END", type: 'enum', label: 'Long lead', options: [['YES', 'Yes'], ['NO', 'No']] },
     effectiveFrom: { sql: 'x.effective_from', type: 'date', label: 'From' }, status: { sql: 'x.status', type: 'enum', label: 'Status', options: Object.entries(PARAM_STATUS) },
   },
@@ -23,8 +23,8 @@ export function createItemParamService({ db, base }) {
     const r = db.prepare('SELECT * FROM proc_item_params WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); if (!r || !may(actor, 'proc.item_param.view')) throw notFound('That planning parameter does not exist.'); if (key !== 'proc.item_param.view') need(actor, key, 'do that with a planning parameter'); return r;
   };
   const view = (actor, r) => {
-    const it = itemOf(r.company_id, r.item_id); const v = r.vendor_id ? db.prepare('SELECT display_name, legal_name FROM mdm_partners WHERE id = ?').get(r.vendor_id) : null; const own = same(r.requested_by, actor.user); const can = (k) => may(actor, k);
-    return { id: r.id, itemId: r.item_id, itemCode: it?.code, itemName: it?.name, uom: it?.base_uom, vendorId: r.vendor_id, vendor: v?.display_name ?? v?.legal_name ?? null, leadTimeDays: r.lead_time_days, moq: d3(r.moq), packSize: d3(r.pack_size), safetyStock: d3(r.safety_stock), longLead: Boolean(r.long_lead), capacityNote: r.capacity_note, effectiveFrom: r.effective_from, status: r.status, statusLabel: PARAM_STATUS[r.status],
+    const it = itemOf(r.company_id, r.item_id); const v = r.vendor_id ? db.prepare('SELECT trade_name, legal_name FROM mdm_partners WHERE id = ?').get(r.vendor_id) : null; const own = same(r.requested_by, actor.user); const can = (k) => may(actor, k);
+    return { id: r.id, itemId: r.item_id, itemCode: it?.code, itemName: it?.name, uom: it?.base_uom, vendorId: r.vendor_id, vendor: v?.trade_name ?? v?.legal_name ?? null, leadTimeDays: r.lead_time_days, moq: d3(r.moq), packSize: d3(r.pack_size), safetyStock: d3(r.safety_stock), longLead: Boolean(r.long_lead), capacityNote: r.capacity_note, effectiveFrom: r.effective_from, status: r.status, statusLabel: PARAM_STATUS[r.status],
       requestedBy: r.requested_by, approvedBy: r.approved_by, approvedAt: r.approved_at, workflowInstanceId: r.workflow_instance_id, rowVersion: r.version,
       can: { edit: can('proc.item_param.edit') && ['DRAFT', 'RETURNED'].includes(r.status), submit: can('proc.item_param.submit') && ['DRAFT', 'RETURNED'].includes(r.status), withdraw: r.status === 'SUBMITTED' && own, cancel: can('proc.item_param.cancel') && ['DRAFT', 'RETURNED', 'SUBMITTED'].includes(r.status), delete: can('proc.item_param.edit') && r.status === 'DRAFT' && !r.workflow_instance_id, approve: can('proc.item_param.approve') && r.status === 'SUBMITTED' && !own } };
   };

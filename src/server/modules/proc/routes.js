@@ -1,9 +1,11 @@
 import { Router } from 'express';
-import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest } from './validators.js';
+import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk } from './validators.js';
+import { HttpError } from '../../platform/http/errors.js';
+import { createRateLimiter } from '../../platform/integrations/breaker.js';
 
 /** /api/v1/proc: material requests and purchase requisitions (part 15.01). Rights and scope are checked in the services. */
 export function procRoutes(svc, { idempotent, idempotentRequired }) {
-  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate;
+  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate; const rf = svc.rfqSvc.rfqs; const qt = svc.rfqSvc.quotes;
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
@@ -78,5 +80,51 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   r.post('/item-params/:id/cancel', idempotent, (req, res) => ok(res, ip.cancel(req.actor, pid(req), parseReason(req.body))));
   r.get('/item-params/:id/history', (req, res) => ok(res, ip.history(req.actor, pid(req))));
   r.post('/supply/ingest', idempotentRequired, (req, res) => ok(res, svc.mrpSvc.ingestSupply(req.actor, parseSupplyIngest(req.body)), 201));
+  // RFQs (15.03): `submit` sends the single-source justification for approval; `issue` sends the RFQ to the vendors
+  r.get('/rfqs/options', (req, res) => { const q = parseRfqOptionsQ(req.query); ok(res, rf.options(req.actor, q.projectId, q.prLineIds)); });
+  r.get('/rfqs/vendors', (req, res) => ok(res, rf.vendors(req.actor, parseVendorsQ(req.query))));
+  r.get('/rfqs', (req, res) => res.json(rf.list(req.actor, req.query)));
+  r.post('/rfqs', idempotentRequired, (req, res) => ok(res, rf.create(req.actor, parseRfqCreate(req.body)), 201));
+  r.get('/rfqs/:id', (req, res) => ok(res, rf.get(req.actor, pid(req))));
+  r.patch('/rfqs/:id', idempotent, (req, res) => ok(res, rf.update(req.actor, pid(req), parseRfqUpdate(req.body))));
+  r.delete('/rfqs/:id', (req, res) => ok(res, rf.remove(req.actor, pid(req))));
+  r.post('/rfqs/:id/submit', idempotentRequired, (req, res) => ok(res, rf.submit(req.actor, pid(req)), 202));
+  r.post('/rfqs/:id/withdraw', idempotent, (req, res) => ok(res, rf.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rfqs/:id/issue', idempotentRequired, (req, res) => ok(res, rf.issue(req.actor, pid(req))));
+  r.post('/rfqs/:id/reissue', idempotentRequired, (req, res) => ok(res, rf.reissue(req.actor, pid(req), parseReissue(req.body))));
+  r.post('/rfqs/:id/remind', idempotent, (req, res) => ok(res, rf.remind(req.actor, pid(req))));
+  r.post('/rfqs/:id/close', idempotentRequired, (req, res) => ok(res, rf.close(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rfqs/:id/cancel', idempotent, (req, res) => ok(res, rf.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rfqs/:id/amend', idempotentRequired, (req, res) => ok(res, rf.amend(req.actor, pid(req), parseRfqAmend(req.body))));
+  r.post('/rfqs/:id/regret', idempotentRequired, (req, res) => ok(res, rf.regret(req.actor, pid(req), parseRegret(req.body))));
+  r.post('/rfqs/:id/clarifications', idempotentRequired, (req, res) => ok(res, rf.ask(req.actor, pid(req), parseAsk(req.body)), 201));
+  r.post('/rfqs/:id/clarifications/:cid/answer', idempotent, (req, res) => ok(res, rf.answer(req.actor, pid(req), parseId(req.params.cid), parseAnswer(req.body))));
+  r.get('/rfqs/:id/comparison', (req, res) => ok(res, rf.comparison(req.actor, pid(req))));
+  r.get('/rfqs/:id/history', (req, res) => ok(res, rf.history(req.actor, pid(req))));
+  r.get('/rfqs/:id/print', (req, res) => file(res, rf.print(req.actor, pid(req))));
+  // vendor quotations
+  r.get('/quotations', (req, res) => res.json(qt.list(req.actor, req.query)));
+  r.post('/quotations', idempotentRequired, (req, res) => ok(res, qt.create(req.actor, parseQuoteCreate(req.body)), 201));
+  r.get('/quotations/:id', (req, res) => ok(res, qt.get(req.actor, pid(req))));
+  r.patch('/quotations/:id', idempotent, (req, res) => ok(res, qt.update(req.actor, pid(req), parseQuoteUpdate(req.body))));
+  r.delete('/quotations/:id', (req, res) => ok(res, qt.remove(req.actor, pid(req))));
+  r.post('/quotations/:id/submit', idempotentRequired, (req, res) => ok(res, qt.submit(req.actor, pid(req))));
+  r.post('/quotations/:id/withdraw', idempotent, (req, res) => ok(res, qt.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/quotations/:id/cancel', idempotent, (req, res) => ok(res, qt.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/quotations/:id/amend', idempotentRequired, (req, res) => ok(res, qt.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/quotations/:id/import', idempotentRequired, (req, res) => ok(res, qt.importLines(req.actor, pid(req), parseQuoteImport(req.body))));
+  r.get('/quotations/:id/history', (req, res) => ok(res, qt.history(req.actor, pid(req))));
+  r.get('/quotations/:id/print', (req, res) => file(res, qt.print(req.actor, pid(req))));
+  return r;
+}
+
+/** The vendor's side of an RFQ with no sign-in: the link is the proof, it works until the due date plus the grace days and is used up by the quotation. Rate limited per address. */
+export function vendorQuoteRoutes({ portal }) {
+  const r = Router(); const limiter = createRateLimiter();
+  const limit = (name, perMinute) => (req, _res, next) => (limiter.take(`${name}:${req.ip}`, perMinute).ok ? next() : next(new HttpError(429, 'RATE_LIMITED', 'Too many attempts from this address. Wait a minute and try again.')));
+  r.get('/vendor-quote/:token', limit('vq-look', 30), (req, res) => res.json({ data: portal.info(parseToken(req.params.token)) }));
+  r.post('/vendor-quote/:token/submit', limit('vq-submit', 10), (req, res) => res.status(201).json({ data: portal.submit(parseToken(req.params.token), parseVendorQuote(req.body)) }));
+  r.post('/vendor-quote/:token/decline', limit('vq-decline', 10), (req, res) => res.json({ data: portal.decline(parseToken(req.params.token), parseVendorDecline(req.body)) }));
+  r.post('/vendor-quote/:token/clarify', limit('vq-ask', 10), (req, res) => res.status(201).json({ data: portal.clarify(parseToken(req.params.token), parseVendorAsk(req.body)) }));
   return r;
 }
