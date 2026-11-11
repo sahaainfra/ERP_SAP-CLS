@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck } from './validators.js';
+import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck, parseRcCreate, parseRcUpdate, parseRcImport, parseIndexSet, parseIndexQ, parsePvRequest, parseSoCreate, parseSoUpdate, parseSoImport, parseSeCreate, parseSeUpdate, parseSeImport } from './validators.js';
 import { HttpError } from '../../platform/http/errors.js';
 import { createRateLimiter } from '../../platform/integrations/breaker.js';
 
 /** /api/v1/proc: material requests and purchase requisitions (part 15.01). Rights and scope are checked in the services. */
 export function procRoutes(svc, { idempotent, idempotentRequired }) {
-  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate; const rf = svc.rfqSvc.rfqs; const qt = svc.rfqSvc.quotes; const cs = svc.csSvc.css; const po = svc.poSvc.pos; const am = svc.poSvc.amendments; const px = svc.poSvc.extra; const rc = svc.poSvc.receipts;
+  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate; const rf = svc.rfqSvc.rfqs; const qt = svc.rfqSvc.quotes; const cs = svc.csSvc.css; const po = svc.poSvc.pos; const am = svc.poSvc.amendments; const px = svc.poSvc.extra; const rc = svc.poSvc.receipts; const rcs = svc.rcSvc.rcs; const ix = svc.rcSvc.indices; const pv = svc.rcSvc.pv; const so = svc.soSvc.sos; const se = svc.soSvc.ses;
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
@@ -155,6 +155,51 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   r.post('/purchase-orders/:id/import', idempotentRequired, (req, res) => ok(res, po.importLines(req.actor, pid(req), parsePoImport(req.body))));
   r.get('/purchase-orders/:id/history', (req, res) => ok(res, po.history(req.actor, pid(req))));
   r.get('/purchase-orders/:id/print', (req, res) => file(res, po.print(req.actor, pid(req))));
+  // rate contracts, price variation (15.06)
+  r.get('/rate-contracts/indices', (req, res) => ok(res, ix.list(req.actor, parseIndexQ(req.query).code)));
+  r.post('/rate-contracts/indices', idempotentRequired, (req, res) => ok(res, ix.set(req.actor, parseIndexSet(req.body)), 201));
+  r.get('/rate-contracts', (req, res) => res.json(rcs.list(req.actor, req.query)));
+  r.post('/rate-contracts', idempotentRequired, (req, res) => ok(res, rcs.create(req.actor, parseRcCreate(req.body)), 201));
+  r.get('/rate-contracts/:id', (req, res) => ok(res, rcs.get(req.actor, pid(req))));
+  r.patch('/rate-contracts/:id', idempotent, (req, res) => ok(res, rcs.update(req.actor, pid(req), parseRcUpdate(req.body))));
+  r.delete('/rate-contracts/:id', (req, res) => ok(res, rcs.remove(req.actor, pid(req))));
+  r.post('/rate-contracts/:id/submit', idempotentRequired, (req, res) => ok(res, rcs.submit(req.actor, pid(req)), 202));
+  r.post('/rate-contracts/:id/withdraw', idempotent, (req, res) => ok(res, rcs.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rate-contracts/:id/cancel', idempotent, (req, res) => ok(res, rcs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rate-contracts/:id/close', idempotentRequired, (req, res) => ok(res, rcs.close(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rate-contracts/:id/amend', idempotentRequired, (req, res) => ok(res, rcs.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/rate-contracts/:id/import', idempotentRequired, (req, res) => ok(res, rcs.importLines(req.actor, pid(req), parseRcImport(req.body))));
+  r.post('/rate-contracts/:id/price-variation', idempotentRequired, (req, res) => ok(res, pv.request(req.actor, pid(req), parsePvRequest(req.body)), 202));
+  r.get('/rate-contracts/:id/history', (req, res) => ok(res, rcs.history(req.actor, pid(req))));
+  r.get('/rate-contracts/:id/print', (req, res) => file(res, rcs.print(req.actor, pid(req))));
+  // service orders and service entry sheets (15.06)
+  r.get('/service-orders/options', (req, res) => ok(res, so.options(req.actor, parsePoOptionsQ(req.query).projectId)));
+  r.get('/service-orders', (req, res) => res.json(so.list(req.actor, req.query)));
+  r.post('/service-orders', idempotentRequired, (req, res) => ok(res, so.create(req.actor, parseSoCreate(req.body)), 201));
+  r.get('/service-orders/:id', (req, res) => ok(res, so.get(req.actor, pid(req))));
+  r.patch('/service-orders/:id', idempotent, (req, res) => ok(res, so.update(req.actor, pid(req), parseSoUpdate(req.body))));
+  r.delete('/service-orders/:id', (req, res) => ok(res, so.remove(req.actor, pid(req))));
+  r.post('/service-orders/:id/submit', idempotentRequired, (req, res) => ok(res, so.submit(req.actor, pid(req)), 202));
+  r.post('/service-orders/:id/withdraw', idempotent, (req, res) => ok(res, so.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/service-orders/:id/cancel', idempotent, (req, res) => ok(res, so.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/service-orders/:id/close', idempotentRequired, (req, res) => ok(res, so.close(req.actor, pid(req), parseReason(req.body))));
+  r.post('/service-orders/:id/amend', idempotentRequired, (req, res) => ok(res, so.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/service-orders/:id/import', idempotentRequired, (req, res) => ok(res, so.importLines(req.actor, pid(req), parseSoImport(req.body))));
+  r.get('/service-orders/:id/history', (req, res) => ok(res, so.history(req.actor, pid(req))));
+  r.get('/service-orders/:id/print', (req, res) => file(res, so.print(req.actor, pid(req))));
+  r.get('/service-entries/orders', (req, res) => ok(res, se.orders(req.actor)));
+  r.get('/service-entries', (req, res) => res.json(se.list(req.actor, req.query)));
+  r.post('/service-entries', idempotentRequired, (req, res) => ok(res, se.create(req.actor, parseSeCreate(req.body)), 201));
+  r.get('/service-entries/:id', (req, res) => ok(res, se.get(req.actor, pid(req))));
+  r.patch('/service-entries/:id', idempotent, (req, res) => ok(res, se.update(req.actor, pid(req), parseSeUpdate(req.body))));
+  r.delete('/service-entries/:id', (req, res) => ok(res, se.remove(req.actor, pid(req))));
+  r.post('/service-entries/:id/submit', idempotentRequired, (req, res) => ok(res, se.submit(req.actor, pid(req)), 202));
+  r.post('/service-entries/:id/withdraw', idempotent, (req, res) => ok(res, se.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/service-entries/:id/cancel', idempotent, (req, res) => ok(res, se.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/service-entries/:id/amend', idempotentRequired, (req, res) => ok(res, se.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/service-entries/:id/import', idempotentRequired, (req, res) => ok(res, se.importLines(req.actor, pid(req), parseSeImport(req.body))));
+  r.get('/service-entries/:id/history', (req, res) => ok(res, se.history(req.actor, pid(req))));
+  r.get('/service-entries/:id/print', (req, res) => file(res, se.print(req.actor, pid(req))));
   return r;
 }
 

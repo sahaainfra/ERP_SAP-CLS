@@ -36,6 +36,7 @@ const vpoCall = async (method, token, path, body) => {
   if (!res.ok) { const e = new Error(j?.error?.message ?? 'Something went wrong'); e.status = res.status; e.details = j?.error?.details ?? []; throw e; } return j.data;
 };
 export const vpo = { info: (t) => vpoCall('GET', t, ''), ack: (t, note) => vpoCall('POST', t, '/acknowledge', { note }), dispatch: (t, b) => vpoCall('POST', t, '/dispatch', b) };
+export const RC_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CLOSED: 'COMPLETED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
 export const pc = {
   projects: () => get('/projects'),
   mrOptions: (projectId) => get(`/material-requests/options?projectId=${projectId}`),
@@ -118,4 +119,27 @@ export const pc = {
   amendAct: (id, aid, action, b) => post(`/purchase-orders/${id}/amendments/${aid}/${action}`, b),
   tracker: (q) => get(`/purchase-orders/tracker${q ? `?${q}` : ''}`),
   performance: () => get('/purchase-orders/performance'),
+  // part 15.06: rate contracts, service orders, service entry sheets
+  rc: (id) => get(`/rate-contracts/${id}`),
+  rcCreate: (b) => post('/rate-contracts', b),
+  rcUpdate: async (id, b) => (await api.patch(`/proc/rate-contracts/${id}`, b, idem())).data,
+  rcDelete: async (id) => (await api.delete(`/proc/rate-contracts/${id}`)).data,
+  rcAct: (id, action, b) => post(`/rate-contracts/${id}/${action}`, b),
+  rcHistory: (id) => get(`/rate-contracts/${id}/history`),
+  indices: (code) => get(`/rate-contracts/indices${code ? `?code=${encodeURIComponent(code)}` : ''}`),
+  indexSet: (b) => post('/rate-contracts/indices', b),
+  soOptions: (projectId) => get(`/service-orders/options?projectId=${projectId}`),
+  so: (id) => get(`/service-orders/${id}`),
+  soCreate: (b) => post('/service-orders', b),
+  soUpdate: async (id, b) => (await api.patch(`/proc/service-orders/${id}`, b, idem())).data,
+  soDelete: async (id) => (await api.delete(`/proc/service-orders/${id}`)).data,
+  soAct: (id, action, b) => post(`/service-orders/${id}/${action}`, b),
+  soHistory: (id) => get(`/service-orders/${id}/history`),
+  seOrders: () => get('/service-entries/orders'),
+  se: (id) => get(`/service-entries/${id}`),
+  seCreate: (b) => post('/service-entries', b),
+  seUpdate: async (id, b) => (await api.patch(`/proc/service-entries/${id}`, b, idem())).data,
+  seDelete: async (id) => (await api.delete(`/proc/service-entries/${id}`)).data,
+  seAct: (id, action, b) => post(`/service-entries/${id}/${action}`, b),
+  seHistory: (id) => get(`/service-entries/${id}/history`),
 };

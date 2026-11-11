@@ -8385,6 +8385,82 @@ paths:
     post: { summary: Public: the vendor acknowledges the order, tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/dispatch:
     post: { summary: Public: the vendor tells the dispatch (ASN), tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/rate-contracts/indices:
+    get: { summary: Price index values by code and month, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Enter an index value (by hand or loaded), tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/rate-contracts:
+    get: { summary: Rate contracts with consumption and expiry, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Make a rate contract, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}:
+    get: { summary: The contract with lines, call-offs, price-variation history, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned contract, tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a draft, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/submit:
+    post: { summary: Send for approval, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/withdraw:
+    post: { summary: Withdraw from approval, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/cancel:
+    post: { summary: Cancel the contract, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/close:
+    post: { summary: Close a contract in force, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/amend:
+    post: { summary: A new revision of a contract in force, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/import:
+    post: { summary: Add lines by item code, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/price-variation:
+    post: { summary: Work out the revision for a month from the index and send it for approval, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/history:
+    get: { summary: Approvals and audit trail, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-contracts/{id}/print:
+    get: { summary: The contract as a PDF, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders/options:
+    get: { summary: Vendors, sites and pricing kinds for a project, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders:
+    get: { summary: Service orders, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Make a service order, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/service-orders/{id}:
+    get: { summary: The order with lines, certification and sheets, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned order, tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a draft, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/submit:
+    post: { summary: Send for approval by value, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/withdraw:
+    post: { summary: Withdraw from approval, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/cancel:
+    post: { summary: Cancel (not once services are certified), tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/close:
+    post: { summary: Close the order and release its commitment, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/amend:
+    post: { summary: A new revision of an order in force, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/import:
+    post: { summary: Add lines, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/history:
+    get: { summary: Approvals and audit trail, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-orders/{id}/print:
+    get: { summary: The order as a PDF, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-entries/orders:
+    get: { summary: Service orders a sheet can be made for, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-entries:
+    get: { summary: Service entry sheets, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Make a sheet for a period, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/service-entries/{id}:
+    get: { summary: The sheet, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned sheet, tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a draft, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-entries/{id}/submit:
+    post: { summary: Send for certification (site engineer, then project manager), tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/service-entries/{id}/withdraw:
+    post: { summary: Withdraw from certification, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-entries/{id}/cancel:
+    post: { summary: Cancel; a certified sheet is reversed, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-entries/{id}/amend:
+    post: { summary: A copy of a certified sheet that replaces it, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/service-entries/{id}/import:
+    post: { summary: Load quantities by order line number, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-entries/{id}/history:
+    get: { summary: Approvals and audit trail, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/service-entries/{id}/print:
+    get: { summary: The sheet as a PDF, tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/stock/ingest:
     post: { summary: Load free stock levels of items in stores (until the stock module keeps them), tags: [proc], responses: { '201': { description: Created } } }
   /api/v1/proc/runs:

@@ -20,6 +20,8 @@ import { PARAM_DOC, PARAM_STATUS, createItemParamService } from './item-params.j
 import { RFQ_DOC, RFQ_STATUS, QUOTE_STATUS, createRfqService } from './rfq.js';
 import { CS_DOC, CS_STATUS, createCsService } from './cs.js';
 import { PO_DOC, AMEND_DOC, CLOSE_DOC, ADV_DOC, PO_STATUS, createPoService } from './po.js';
+import { RC_DOC, PV_DOC, RC_STATUS, PV_STATUS, createRcService } from './rc.js';
+import { SO_DOC, SES_DOC, SO_STATUS, SES_STATUS, createSoService } from './so.js';
 import { procRoutes, vendorQuoteRoutes } from './routes.js';
 
 const services = new WeakMap();
@@ -60,12 +62,23 @@ for (const [type, description] of [
   ['proc.po.received', 'Goods were received against a purchase order (part 15.05): data { poId, docNo, lines: [{ lineId, receivedQty, acceptedQty, balanceQty }] }.'],
   ['proc.po.overdue', 'A delivery of a purchase order is past its date (part 15.05): data { poId, docNo, lines: [{ lineNo, dueDate, balanceQty }] }.'],
   ['proc.po.advance_approved', 'An advance payment against a purchase order was approved (part 15.05): data { poId, docNo, advanceId, advanceNo, amount, neededBy, vendorName }. For the payment request (23.04).'],
+  ['proc.rc.approved', 'A rate contract came into force (part 15.06): data { rcId, docNo, vendorId, validFrom, validTo, ceilingValue, supersedes, lines: [{ lineId, itemId, rate, uom, ceilingQty }] }. Rates in rupees. For call-off orders and the rate lookup of requisitions.'],
+  ['proc.rc.pv_applied', 'A price-variation revision of a rate contract was approved and the rates changed (part 15.06): data { rcId, docNo, revisionId, indexCode, period, indexValue, effectiveFrom, lines: [{ rcLineId, oldRate, newRate }] }.'],
+  ['proc.rc.cancelled', 'A rate contract was cancelled (part 15.06): data { rcId, docNo, reason, wasInForce }.'],
+  ['proc.rc.closed', 'A rate contract in force was closed (part 15.06): data { rcId, docNo, reason }.'],
+  ['proc.rc.ceiling_reached', 'The ceiling of a rate contract is used (part 15.06): data { rcId, docNo, usedPct }.'],
+  ['proc.rc.expiring', 'A rate contract ends within the days set or has ended (part 15.06): data { rcId, docNo, validTo, daysLeft }.'],
+  ['proc.so.approved', 'A service order was approved; its commitment is in the ledger (part 15.06): data { soId, docNo, projectId, vendorId, totalValue, supersedes, startDate, endDate, lines: [{ lineId, lineNo, description, qty, rate, amount }] }.'],
+  ['proc.so.closed', 'A service order was closed and its commitment released (part 15.06): data { soId, docNo, reason, certifiedValue }.'],
+  ['proc.so.cancelled', 'A service order was cancelled (part 15.06): data { soId, docNo, reason }.'],
+  ['proc.service_entry.approved', 'A service entry sheet was certified (part 15.06): data { sesId, docNo, soId, soNo, vendorId, periodFrom, periodTo, amount, supersedes, lines: [{ soLineId, qty, rate, amount }] }. For invoice matching (22.06).'],
+  ['proc.service_entry.reversed', 'A certified service entry sheet was cancelled and its certification undone (part 15.06): data { sesId, docNo, soId, reason, amount }.'],
   ['proc.stock.levels_loaded', 'Free stock levels of items in stores were loaded for the stock check (part 15.01): data { levels, changed }. Until the stock module (16.01) keeps them.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proc', description });
 
 integrityRegistry.register({
-  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS), proc_comparative_statements: Object.keys(CS_STATUS), proc_purchase_orders: Object.keys(PO_STATUS), proc_po_amendments: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_po_advances: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_dispatches: ['DISPATCHED', 'RECEIVED', 'CANCELLED'] },
-  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }, { table: 'proc_comparative_statements', columns: ['company_id', 'doc_no'] }, { table: 'proc_purchase_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_po_advances', columns: ['company_id', 'doc_no'] }, { table: 'proc_dispatches', columns: ['company_id', 'asn_no'] }],
+  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS), proc_comparative_statements: Object.keys(CS_STATUS), proc_purchase_orders: Object.keys(PO_STATUS), proc_rate_contracts: Object.keys(RC_STATUS), proc_rc_revisions: Object.keys(PV_STATUS), proc_service_orders: Object.keys(SO_STATUS), proc_service_entries: Object.keys(SES_STATUS), proc_po_amendments: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_po_advances: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_dispatches: ['DISPATCHED', 'RECEIVED', 'CANCELLED'] },
+  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }, { table: 'proc_comparative_statements', columns: ['company_id', 'doc_no'] }, { table: 'proc_purchase_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_po_advances', columns: ['company_id', 'doc_no'] }, { table: 'proc_dispatches', columns: ['company_id', 'asn_no'] }, { table: 'proc_rate_contracts', columns: ['company_id', 'doc_no'] }, { table: 'proc_service_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_service_entries', columns: ['company_id', 'doc_no'] }],
 });
 
 /** Module "proc": procurement (M15). Part 15.01 holds the material requests (site indents) and the purchase requisitions. The tables are `proc_*`. */
@@ -75,8 +88,8 @@ export const proc = {
   routePrefix: '/api/v1/proc',
   ownerPart: '15.01',
   status: 'Material requests (site indents) against work authorisations with the stock of the site, nearby stores and the central warehouse; fulfilment by issue, transfer or purchase; purchase requisitions from consolidated requests or direct, with stock, budget and duplicate checks, approval by value and an emergency path.',
-  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations', 'proc_purchase_orders', 'proc_po_lines', 'proc_po_schedules', 'proc_po_amendments', 'proc_dispatches', 'proc_po_receipts', 'proc_po_advances'],
-  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements', 'purchase-orders'],
+  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations', 'proc_purchase_orders', 'proc_po_lines', 'proc_po_schedules', 'proc_po_amendments', 'proc_dispatches', 'proc_po_receipts', 'proc_po_advances', 'proc_price_indices', 'proc_rate_contracts', 'proc_rc_lines', 'proc_rc_revisions', 'proc_service_orders', 'proc_so_lines', 'proc_service_entries', 'proc_se_lines'],
+  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements', 'purchase-orders', 'rate-contracts', 'service-orders', 'service-entries'],
 
   mount(api, { db, config: appConfig, publicApi }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proc_requisitions'").get()) return;
@@ -84,8 +97,8 @@ export const proc = {
     const base = createBase({ db }); const stockSvc = createStockService({ db, base }); const mrSvc = createMrService({ db, base, stock: stockSvc }); const prSvc = createPrService({ db, base, stock: stockSvc, mr: mrSvc });
     const mrpSvc = createMrpService({ db, base, stock: stockSvc, pr: prSvc }); const paramSvc = createItemParamService({ db, base });
     const rfqSvc = createRfqService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '' });
-    const csSvc = createCsService({ db, base }); const poSvc = createPoService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '' });
-    const svc = { poSvc, poDecide: poSvc.decide, amendDecide: poSvc.amendDecide, advanceDecide: poSvc.advanceDecide, csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
+    const csSvc = createCsService({ db, base }); const rcSvc = createRcService({ db, base }); const soSvc = createSoService({ db, base }); const poSvc = createPoService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '', rc: rcSvc });
+    const svc = { rcSvc, soSvc, rcDecide: rcSvc.decide, pvDecide: rcSvc.pvDecide, soDecide: soSvc.decide, sesDecide: soSvc.sesDecide, poSvc, poDecide: poSvc.decide, amendDecide: poSvc.amendDecide, advanceDecide: poSvc.advanceDecide, csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
     listExports.register('proc.mrp_runs', { source: (actor, req) => mrpSvc.mrp.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.material_requests', { source: (actor, req) => mrSvc.mrs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.requisitions', { source: (actor, req) => prSvc.prs.exportSource(actor, req), hidden: () => [] });
@@ -93,10 +106,16 @@ export const proc = {
     listExports.register('proc.quotations', { source: (actor, req) => rfqSvc.quotes.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.comparative_statements', { source: (actor, req) => csSvc.css.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.purchase_orders', { source: (actor, req) => poSvc.pos.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.rate_contracts', { source: (actor, req) => rcSvc.rcs.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.service_orders', { source: (actor, req) => soSvc.sos.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.service_entries', { source: (actor, req) => soSvc.ses.exportSource(actor, req), hidden: () => [] });
     const runtime = runtimeOf(db);
     // FR-06 (15.05): every morning at 09:00 India time the buyer is told of orders with a delivery past its date
     runtime?.jobs?.register('proc.po_overdue', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1505')) continue; n += poSvc.extra.sweep(); break; } ctx.log(`Told the buyers of ${n} order(s) with a delivery past its date`); return { orders: n }; }, { maxAttempts: 2, description: 'Tells the buyer of each approved purchase order that has a delivery past its date.' });
     runtime?.scheduler?.define({ code: 'proc.po_overdue_daily', cron: '30 3 * * *', jobType: 'proc.po_overdue', description: 'Every day 09:00 India time: purchase orders with overdue deliveries are told to the buyer' });
+    // FR-03 (15.06): every morning at 09:30 India time contracts near their ceiling or end are told, and a new index value without a revision
+    runtime?.jobs?.register('proc.rc_alerts', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1506')) continue; n += rcSvc.sweep(); break; } ctx.log(`Told ${n} alert(s) on rate contracts`); return { alerts: n }; }, { maxAttempts: 2, description: 'Tells procurement of rate contracts that reached 80 or 100 percent of their ceiling, end soon, or have a new index value waiting for a price-variation revision.' });
+    runtime?.scheduler?.define({ code: 'proc.rc_alerts_daily', cron: '0 4 * * *', jobType: 'proc.rc_alerts', description: 'Every day 09:30 India time: rate contract ceiling, expiry and price-variation alerts' });
     // FR-07: every morning at 08:00 India time vendors who have not answered are reminded and the issuer is told what is due
     runtime?.jobs?.register('proc.rfq_reminders', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1503')) continue; n += rfqSvc.rfqs.sweep(); break; } ctx.log(`Told the issuers of ${n} RFQ(s) that are due with vendors who have not answered`); return { rfqs: n }; }, { maxAttempts: 2, description: 'Reminds the vendors who have not answered an RFQ that closes soon and tells the buyer what is due.' });
     runtime?.scheduler?.define({ code: 'proc.rfq_reminders_daily', cron: '30 2 * * *', jobType: 'proc.rfq_reminders', description: 'Every day 08:00 India time: reminders to vendors of RFQs that close soon' });
@@ -112,6 +131,7 @@ export const proc = {
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1501') ? next() : next(notFound('Material requests and purchase requisitions are not enabled for your company yet (feature flag ff.proc.p1501 is OFF).'))));
     router.use(/^\/(runs|proposals|item-params|supply|mrp)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1502') ? next() : next(notFound('Material demand planning (MRP) is not enabled for your company yet (feature flag ff.proc.p1502 is OFF).'))));
     router.use(/^\/(rfqs|quotations)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1503') ? next() : next(notFound('RFQs and vendor quotations are not enabled for your company yet (feature flag ff.proc.p1503 is OFF).'))));
+    router.use(/^\/(rate-contracts|service-orders|service-entries)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1506') ? next() : next(notFound('Rate contracts and service orders are not enabled for your company yet (feature flag ff.proc.p1506 is OFF).'))));
     router.use(/^\/purchase-orders(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1505') ? next() : next(notFound('Purchase orders are not enabled for your company yet (feature flag ff.proc.p1505 is OFF).'))));
     router.use(/^\/comparative-statements(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1504') ? next() : next(notFound('Comparative statements are not enabled for your company yet (feature flag ff.proc.p1504 is OFF).'))));
     router.use(procRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
@@ -393,3 +413,72 @@ fileEntities.register({
     return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.po_site_id ?? undefined, canView: true, canEdit: at('proc.purchase_order.edit') && (open || r.status === 'APPROVED'), locked: !open && r.status !== 'APPROVED' };
   },
 });
+
+// ---- rate contracts (part 15.06, section 9): procurement manager, commercial manager, the direction above a ceiling of ₹ 1 crore; a price-variation revision: procurement manager, commercial manager ----------------------------------------
+const rline = (db, id) => db.prepare('SELECT x.*, COALESCE(v.trade_name, v.legal_name) AS vname FROM proc_rate_contracts x JOIN mdm_partners v ON v.id = x.vendor_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: RC_DOC, label: 'Rate contract', processOwner: 'PROCMGR', route: () => '/proc/rate-contracts',
+  describe(db, companyId, id) { const r = rline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.doc_no} ${r.title} with ${r.vname}`, originator: r.requested_by, amount: (r.ceiling_value || 0) / 100 } : null; },
+  summarise(db, _actor, id) { const r = rline(db, Number(id)); if (!r) return null; const ls = db.prepare('SELECT description, uom, rate, ceiling_qty FROM proc_rc_lines WHERE rc_id = ? AND deleted_at IS NULL ORDER BY line_no').all(r.id); return { fields: [{ label: 'Vendor', value: r.vname }, { label: 'Valid', value: `${r.valid_from} to ${r.valid_to}` }, { label: 'Ceiling value', value: r.ceiling_value ? String(r.ceiling_value / 100) : 'none' }, { label: 'Price variation', value: r.pv_json ? 'yes' : 'no' }, { label: 'Lines', value: ls.map((l) => `${l.description}: ${l.rate / 100} per ${l.uom}${l.ceiling_qty ? `, up to ${l.ceiling_qty / 1000}` : ''}`).join('; ') }] }; },
+  defaultDefinition: { name: 'Rate contract: the procurement manager, the commercial manager, the direction above a ceiling of ₹ 1 crore', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24), approver('COMMGR', 'Commercial manager', 'COMMGR', 24), approver('DIR', 'Direction (ceiling above ₹ 1 crore)', 'DIR', 48, { field: 'needDir', op: 'eq', value: 'yes' })] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.rcDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.rcDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.rcDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.rcDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+const pvline = (db, id) => db.prepare('SELECT v.*, x.doc_no, x.company_id AS cid FROM proc_rc_revisions v JOIN proc_rate_contracts x ON x.id = v.rc_id WHERE v.id = ?').get(id);
+workflowTypes.register({
+  docType: PV_DOC, label: 'Price-variation revision', processOwner: 'PROCMGR', route: () => '/proc/rate-contracts',
+  describe(db, companyId, id) { const v = pvline(db, Number(id)); return v && v.cid === companyId ? { ref: `${v.doc_no}/PV${v.revision_no}`, title: `${v.doc_no} price variation ${v.index_code} ${v.period}`, originator: v.requested_by } : null; },
+  summarise(db, _actor, id) { const v = pvline(db, Number(id)); if (!v) return null; const ch = JSON.parse(v.changes_json ?? '[]'); return { fields: [{ label: 'Contract', value: v.doc_no }, { label: 'Index', value: `${v.index_code} ${v.period}: ${v.index_value / 10000} against a base of ${v.base_index / 10000}` }, { label: 'Effective from', value: v.effective_from }, { label: 'Rates', value: ch.map((c) => `${c.description}: ${c.oldRate / 100} to ${c.newRate / 100} (${c.changePct}%)`).join('; ') }] }; },
+  defaultDefinition: { name: 'Price-variation revision: the procurement manager, the commercial manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24), approver('COMMGR', 'Commercial manager', 'COMMGR', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.pvDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.pvDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.pvDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.pvDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+const soline = (db, id) => db.prepare('SELECT x.*, p.code, COALESCE(v.trade_name, v.legal_name) AS vname FROM proc_service_orders x JOIN org_projects p ON p.id = x.org_project_id JOIN mdm_partners v ON v.id = x.vendor_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: SO_DOC, label: 'Service order', processOwner: 'PROCMGR', route: (id) => `/proc/service-orders?id=${id}`,
+  describe(db, companyId, id) { const r = soline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.code}: ${r.doc_no} ${r.title} with ${r.vname} ${r.total_value / 100}`, originator: r.requested_by, projectId: r.org_project_id, siteId: r.so_site_id ?? undefined, amount: r.total_value / 100 } : null; },
+  summarise(db, _actor, id) { const r = soline(db, Number(id)); if (!r) return null; const ls = db.prepare('SELECT description, pricing_kind, qty, uom, rate FROM proc_so_lines WHERE so_id = ? AND deleted_at IS NULL ORDER BY line_no').all(r.id); return { fields: [{ label: 'Project', value: r.code }, { label: 'Vendor', value: r.vname }, { label: 'Period', value: `${r.start_date} to ${r.end_date}` }, { label: 'Scope', value: r.scope }, { label: 'Value', value: String(r.total_value / 100) }, { label: 'Lines', value: ls.map((l) => `${l.description}: ${l.qty / 1000} ${l.uom} at ${l.rate / 100} (${l.pricing_kind.toLowerCase().replace('_', ' ')})`).join('; ') }] }; },
+  defaultDefinition: { name: 'Service order: as purchase orders, by value', settings: { resubmit: 'first', distinctApprovers: true }, steps: banded('') },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.soDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.soDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.soDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.soDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+const seline = (db, id) => db.prepare('SELECT e.*, o.doc_no AS so_no, o.title FROM proc_service_entries e JOIN proc_service_orders o ON o.id = e.so_id WHERE e.id = ?').get(id);
+workflowTypes.register({
+  docType: SES_DOC, label: 'Service entry sheet', processOwner: 'PM', route: (id) => `/proc/service-entries?id=${id}`,
+  describe(db, companyId, id) { const e = seline(db, Number(id)); return e && e.company_id === companyId ? { ref: e.doc_no, title: `${e.doc_no} for ${e.so_no}: ${e.entry_amount / 100}`, originator: e.requested_by, projectId: e.org_project_id, amount: e.entry_amount / 100 } : null; },
+  summarise(db, _actor, id) { const e = seline(db, Number(id)); if (!e) return null; const ls = db.prepare('SELECT l.qty, l.rate, o.description, o.uom FROM proc_se_lines l JOIN proc_so_lines o ON o.id = l.so_line_id WHERE l.se_id = ? AND l.deleted_at IS NULL').all(e.id); return { fields: [{ label: 'Order', value: `${e.so_no} ${e.title}` }, { label: 'Period', value: `${e.period_from} to ${e.period_to}` }, { label: 'Amount', value: String(e.entry_amount / 100) }, { label: 'Services', value: ls.map((l) => `${l.description}: ${l.qty / 1000} ${l.uom}`).join('; ') }] }; },
+  defaultDefinition: { name: 'Service entry sheet: a site engineer certifies, then the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('SE', 'Site engineer (certifies the work)', 'SE', 24), approver('PM', 'Project manager', 'PM', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.sesDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.sesDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.sesDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.sesDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+/** @type {any[][]} */
+const reg3 = [
+  ['proc_rate_contract', 'Rate contract', 'proc.rate_contract.view', 'proc_rate_contracts', 'rcSvc', (s, a, id) => s.rcSvc.rcs.get(a, id), (r) => ({ companyId: null, status: r.status }), (r) => ({ label: `${r.docNo} ${r.vendor}`, status: r.status }), '/proc/rate-contracts'],
+  ['proc_service_order', 'Service order', 'proc.service_order.view', 'proc_service_orders', 'soSvc', (s, a, id) => s.soSvc.sos.get(a, id), (r) => ({ projectId: r.projectId, siteId: r.siteId ?? undefined, status: r.status }), (r) => ({ label: `${r.docNo} ${r.vendor}`, status: r.status }), '/proc/service-orders'],
+  ['proc_service_entry', 'Service entry sheet', 'proc.service_entry.view', 'proc_service_entries', 'soSvc', (s, a, id) => s.soSvc.ses.get(a, id), (r) => ({ projectId: r.projectId, status: r.status }), (r) => ({ label: `${r.docNo} ${r.soNo}`, status: r.status }), '/proc/service-entries'],
+];
+for (const [type, label, perm, table, , get, acc, sum, route] of reg3) {
+  objectTypes.register({
+    type, label, permission: perm, route: (id) => `${route}?id=${id}`, attachmentEntity: type, approvalTarget: type,
+    access(db, actor, id) { const s = procOf(db); if (!s) return null; try { return { companyId: actor.companyId, ...acc(get(s, actor, Number(id))) }; } catch { return null; } },
+    auditEntities: (id) => [{ entity: table, id }],
+    summary(db, actor, id) { const s = procOf(db); if (!s) return null; try { return sum(get(s, actor, Number(id))); } catch { return null; } },
+    related: () => [], projectRecords(db, companyId, projectId, limit) { const col = table === 'proc_rate_contracts' ? null : 'org_project_id'; if (!col) return []; return db.prepare(`SELECT id FROM ${table} WHERE company_id = ? AND ${col} = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?`).all(companyId, projectId, limit).map((x) => x.id); },
+    search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${table} WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, limit).map((x) => x.id); },
+  });
+  fileEntities.register({
+    entity: type, label: `${label} (documents, scans, certificates)`,
+    resolve(db, actor, id) {
+      const r = db.prepare(`SELECT * FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const pj = r.org_project_id ?? undefined; const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: pj }).allowed; if (!at(perm)) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
+      return { companyId: r.company_id, projectId: pj, canView: true, canEdit: at(String(perm).replace('.view', '.edit')) && (open || r.status === 'APPROVED'), locked: !open && r.status !== 'APPROVED' };
+    },
+  });
+}

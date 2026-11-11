@@ -13492,6 +13492,35 @@ Indexes:
 - ix_proc_po_amend_po: po_id, status
 - ix_proc_po_amend_company: company_id
 
+## proc_po_line_rc
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| po_line_id | INTEGER | yes |  |  |
+| rc_line_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: rc_line_id -> proc_rc_lines(id), po_line_id -> proc_po_lines(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_po_line_rc_rc: rc_line_id
+- ix_proc_po_line_rc_company: company_id
+- ux_proc_po_line_rc_line (unique): po_line_id
+
 ## proc_po_lines
 
 | Column | Type | Not null | Key | Default |
@@ -13552,6 +13581,35 @@ Indexes:
 - ix_proc_po_lines_pr: pr_line_id
 - ix_proc_po_lines_company: company_id
 - ux_proc_po_lines_no (unique): po_id, line_no
+
+## proc_po_rc
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| po_id | INTEGER | yes |  |  |
+| rc_id | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: rc_id -> proc_rate_contracts(id), po_id -> proc_purchase_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_po_rc_rc: rc_id
+- ix_proc_po_rc_company: company_id
+- ux_proc_po_rc_po (unique): po_id
 
 ## proc_po_receipts
 
@@ -13699,6 +13757,35 @@ Indexes:
 - ix_proc_pr_sources_mr: mr_line_id
 - ix_proc_pr_sources_company: company_id
 - ux_proc_pr_sources (unique): pr_line_id, mr_line_id
+
+## proc_price_indices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| index_code | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| index_value | INTEGER | yes |  |  |
+| index_source | TEXT | yes |  | 'MANUAL' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_proc_price_indices (unique): company_id, index_code, period
 
 ## proc_purchase_orders
 
@@ -13871,6 +13958,137 @@ Indexes:
 - ix_proc_quotations_rfq: rfq_id, vendor_id, version_no
 - ix_proc_quotations_company: company_id, status
 - ux_proc_quotations_doc (unique): company_id, doc_no
+
+## proc_rate_contracts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| valid_from | TEXT | yes |  |  |
+| valid_to | TEXT | yes |  |  |
+| ceiling_value | INTEGER | yes |  | 0 |
+| consumed_value | INTEGER | yes |  | 0 |
+| projects_json | TEXT | yes |  | '[]' |
+| regions_json | TEXT | yes |  | '[]' |
+| pv_json | TEXT |  |  |  |
+| terms | TEXT |  |  |  |
+| payment_terms | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| alerted_80 | INTEGER | yes |  | 0 |
+| alerted_100 | INTEGER | yes |  | 0 |
+| alerted_expiry | INTEGER | yes |  | 0 |
+| cancel_reason | TEXT |  |  |  |
+| close_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proc_rate_contracts(id), vendor_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_rc_parent: parent_id
+- ix_proc_rc_valid: valid_to
+- ix_proc_rc_vendor: vendor_id, status
+- ix_proc_rc_company: company_id, status
+- ux_proc_rc_doc (unique): company_id, doc_no
+
+## proc_rc_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rc_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| item_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| rate | INTEGER | yes |  |  |
+| base_rate | INTEGER | yes |  |  |
+| tax_code | TEXT |  |  |  |
+| ceiling_qty | INTEGER | yes |  | 0 |
+| consumed_qty | INTEGER | yes |  | 0 |
+| pv_linked | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), rc_id -> proc_rate_contracts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_rc_lines_item: item_id
+- ix_proc_rc_lines_company: company_id
+- ux_proc_rc_lines (unique): rc_id, line_no
+
+## proc_rc_revisions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| rc_id | INTEGER | yes |  |  |
+| revision_no | INTEGER | yes |  |  |
+| index_code | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| index_value | INTEGER | yes |  |  |
+| base_index | INTEGER | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| changes_json | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: rc_id -> proc_rate_contracts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_rc_rev_rc: rc_id, status
+- ix_proc_rc_rev_company: company_id
 
 ## proc_requisitions
 
@@ -14096,6 +14314,177 @@ Indexes:
 - ix_proc_rfqs_project: org_project_id, status, due_date
 - ix_proc_rfqs_company: company_id, status
 - ux_proc_rfqs_doc (unique): company_id, doc_no
+
+## proc_se_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| se_id | INTEGER | yes |  |  |
+| so_line_id | INTEGER | yes |  |  |
+| qty | INTEGER | yes |  |  |
+| rate | INTEGER | yes |  |  |
+| line_amount | INTEGER | yes |  | 0 |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: so_line_id -> proc_so_lines(id), se_id -> proc_service_entries(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_se_lines_so_line: so_line_id
+- ix_proc_se_lines_company: company_id
+- ux_proc_se_lines (unique): se_id, so_line_id
+
+## proc_service_entries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| so_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period_from | TEXT | yes |  |  |
+| period_to | TEXT | yes |  |  |
+| entry_amount | INTEGER | yes |  | 0 |
+| certified_by | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proc_service_entries(id), org_project_id -> org_projects(id), so_id -> proc_service_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_se_parent: parent_id
+- ix_proc_se_project: org_project_id
+- ix_proc_se_so: so_id, status
+- ix_proc_se_company: company_id, status
+- ux_proc_se_doc (unique): company_id, doc_no
+
+## proc_service_orders
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| so_site_id | INTEGER |  |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| scope | TEXT | yes |  |  |
+| deliverables | TEXT |  |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT | yes |  |  |
+| payment_terms | TEXT |  |  |  |
+| terms | TEXT |  |  |  |
+| total_value | INTEGER | yes |  | 0 |
+| certified_value | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| close_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proc_service_orders(id), vendor_id -> mdm_partners(id), so_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_so_parent: parent_id
+- ix_proc_so_site: so_site_id
+- ix_proc_so_vendor: vendor_id
+- ix_proc_so_project: org_project_id, status
+- ix_proc_so_company: company_id, status
+- ux_proc_so_doc (unique): company_id, doc_no
+
+## proc_so_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| so_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| description | TEXT | yes |  |  |
+| pricing_kind | TEXT | yes |  | 'PER_UNIT' |
+| uom | TEXT | yes |  |  |
+| qty | INTEGER | yes |  |  |
+| rate | INTEGER | yes |  |  |
+| line_amount | INTEGER | yes |  | 0 |
+| tax_code | TEXT |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| certified_qty | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), so_id -> proc_service_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_so_lines_cost_code: cost_code_id
+- ix_proc_so_lines_wbs: wbs_id
+- ix_proc_so_lines_company: company_id
+- ux_proc_so_lines (unique): so_id, line_no
 
 ## proc_stock_levels
 

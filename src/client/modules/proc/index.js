@@ -15,6 +15,9 @@ import PurchaseOrdersPage from './PurchaseOrdersPage.jsx';
 import PoNewPage from './PoNewPage.jsx';
 import PoAmendPage from './PoAmendPage.jsx';
 import PoTrackerPage from './PoTrackerPage.jsx';
+import RateContractsPage from './RateContractsPage.jsx';
+import ServiceOrdersPage from './ServiceOrdersPage.jsx';
+import ServiceEntriesPage from './ServiceEntriesPage.jsx';
 
 registerModule({
   code: 'proc',
@@ -36,5 +39,8 @@ registerModule({
     { path: '/proc/po-new', label: 'Create Purchase Order', icon: 'erp.group.supply', permission: 'proc.purchase_order.create', flag: 'ff.proc.p1505', Page: PoNewPage },
     { path: '/proc/po-amend', label: 'Purchase Order Amendment', icon: 'erp.group.supply', permission: 'proc.purchase_order.amend', flag: 'ff.proc.p1505', Page: PoAmendPage },
     { path: '/proc/po-tracker', label: 'Open PO and Delivery Tracker', icon: 'erp.group.supply', permission: 'proc.purchase_order.view', flag: 'ff.proc.p1505', Page: PoTrackerPage },
+    { path: '/proc/rate-contracts', label: 'Rate Contracts', icon: 'erp.group.supply', permission: 'proc.rate_contract.view', flag: 'ff.proc.p1506', Page: RateContractsPage },
+    { path: '/proc/service-orders', label: 'Service Orders', icon: 'erp.group.supply', permission: 'proc.service_order.view', flag: 'ff.proc.p1506', Page: ServiceOrdersPage },
+    { path: '/proc/service-entries', label: 'Service Entry Sheets', icon: 'erp.group.supply', permission: 'proc.service_entry.view', flag: 'ff.proc.p1506', Page: ServiceEntriesPage },
   ],
 });

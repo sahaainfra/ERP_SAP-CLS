@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS proc_po_line_rc;
+DROP TABLE IF EXISTS proc_po_rc;
+DROP TABLE IF EXISTS proc_se_lines;
+DROP TABLE IF EXISTS proc_service_entries;
+DROP TABLE IF EXISTS proc_so_lines;
+DROP TABLE IF EXISTS proc_service_orders;
+DROP TABLE IF EXISTS proc_rc_revisions;
+DROP TABLE IF EXISTS proc_rc_lines;
+DROP TABLE IF EXISTS proc_rate_contracts;
+DROP TABLE IF EXISTS proc_price_indices;
