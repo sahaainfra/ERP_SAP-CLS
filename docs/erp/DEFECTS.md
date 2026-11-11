@@ -530,3 +530,8 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-519 | RC | There is no external feed for the steel and other indices (RBI, JPC): values are entered by hand or loaded, and a price-variation revision is requested by the buyer when the value is in; the job only tells procurement that a value is waiting. The region of a contract is stored but not used to narrow call-offs. | Low | Not built | 27.x, 15.06 | Open |
 | D-520 | SO | Service orders carry the value without GST and the place of supply is not resolved; the certified sheet is published as an event for invoice matching (22.06) which does not exist yet. A service order is not sent to the vendor with an acknowledgement link as a purchase order is. | Medium | Dependencies not built | 23.07, 22.06 | Open |
 | D-521 | RC | A rate contract is not offered to the requisition rate lookup of 15.01 yet (the provider hook `rateContracts.register` exists): the estimated rate on a requisition does not use it until a part wires it; and the rate contract has no vendor-facing page. | Low | Later parts | 15.01, 25.02 | Open |
+| D-522 | XPD | Shipment tracking is entered by hand: no carrier or GPS feed. |
+| D-523 | XPD | Affected activities are found only through BOQ norms of the item; an item not in any norm names no activity. |
+| D-524 | XPD | Look-ahead (13.04) and gate entry (16.02) do not exist yet; the events are published and not yet consumed. |
+| D-525 | XPD | The vendor updates milestones only on the order link; vendor documents are matched to the plan by the order number text in `po_ref`. |
+| D-526 | XPD | The inspection agency is free text and the e-way bill number is not checked against the GST portal. |

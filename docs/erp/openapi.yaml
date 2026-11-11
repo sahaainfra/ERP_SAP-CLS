@@ -8461,6 +8461,83 @@ paths:
     get: { summary: Approvals and audit trail, tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/service-entries/{id}/print:
     get: { summary: The sheet as a PDF, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting/dashboard:
+    get: { summary: 'Read expediting/dashboard (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting/orders:
+    get: { summary: 'Read expediting/orders (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/options:
+    get: { summary: 'Read expediting-plans/options (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans:
+    get: { summary: 'Read expediting-plans (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: 'Do expediting-plans (part 15.07)', tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}:
+    get: { summary: 'Read expediting-plans/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change expediting-plans/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete expediting-plans/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/submit:
+    post: { summary: 'Do expediting-plans/{id}/submit (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/withdraw:
+    post: { summary: 'Do expediting-plans/{id}/withdraw (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/cancel:
+    post: { summary: 'Do expediting-plans/{id}/cancel (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/close:
+    post: { summary: 'Do expediting-plans/{id}/close (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/amend:
+    post: { summary: 'Do expediting-plans/{id}/amend (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/import:
+    post: { summary: 'Do expediting-plans/{id}/import (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/history:
+    get: { summary: 'Read expediting-plans/{id}/history (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/print:
+    get: { summary: 'Read expediting-plans/{id}/print (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/expediting-plans/{id}/milestones/{mid}:
+    patch: { summary: 'Change expediting-plans/{id}/milestones/{mid} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections:
+    get: { summary: 'Read inspections (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inspections (part 15.07)', tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/inspections/{id}:
+    get: { summary: 'Read inspections/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inspections/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inspections/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/result:
+    post: { summary: 'Do inspections/{id}/result (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/submit:
+    post: { summary: 'Do inspections/{id}/submit (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/withdraw:
+    post: { summary: 'Do inspections/{id}/withdraw (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/cancel:
+    post: { summary: 'Do inspections/{id}/cancel (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/amend:
+    post: { summary: 'Do inspections/{id}/amend (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/import:
+    post: { summary: 'Do inspections/{id}/import (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/history:
+    get: { summary: 'Read inspections/{id}/history (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/inspections/{id}/print:
+    get: { summary: 'Read inspections/{id}/print (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/shipments:
+    get: { summary: 'Read shipments (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: 'Do shipments (part 15.07)', tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/shipments/{id}:
+    get: { summary: 'Read shipments/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change shipments/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete shipments/{id} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/shipments/{id}/dispatch:
+    post: { summary: 'Do shipments/{id}/dispatch (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/shipments/{id}/track:
+    post: { summary: 'Do shipments/{id}/track (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/shipments/{id}/deliver:
+    post: { summary: 'Do shipments/{id}/deliver (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/shipments/{id}/cancel:
+    post: { summary: 'Do shipments/{id}/cancel (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/shipments/{id}/history:
+    get: { summary: 'Read shipments/{id}/history (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/shipments/{id}/print:
+    get: { summary: 'Read shipments/{id}/print (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-po/{token}/milestones:
+    get: { summary: 'Read vendor-po/{token}/milestones (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-po/{token}/milestones/{mid}:
+    post: { summary: 'Do vendor-po/{token}/milestones/{mid} (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/stock/ingest:
     post: { summary: Load free stock levels of items in stores (until the stock module keeps them), tags: [proc], responses: { '201': { description: Created } } }
   /api/v1/proc/runs:

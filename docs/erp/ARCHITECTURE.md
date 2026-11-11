@@ -1367,3 +1367,10 @@ Module `proc`, flag `ff.proc.p1506`, tables `proc_price_indices`, `proc_rate_con
 - **Service orders** (FR-05, ADR-545): `PROC_SO` by value, commitment at approval; **service entry sheets** `PROC_SES` (a site engineer, then the project manager) certify the work; certified quantities are recomputed from the approved sheets; events `proc.service_entry.approved` and `.reversed` for invoice matching (22.06).
 - **API**: 46 routes under `/api/v1/proc` (`rate-contracts`, `service-orders`, `service-entries`). **Permissions**: `proc.rate_contract.*` (and `.rates`, `.index`, `.pv`), `proc.service_order.*` (`.rates`), `proc.service_entry.*`. **Browser**: Rate Contracts, Service Orders, Service Entry Sheets, and the rate contract source on Create Purchase Order; English and Hindi.
 
+## 115. Expediting, vendor inspection and long-lead logistics (part 15.07)
+Module `proc`, flag `ff.proc.p1507`, tables `xpd_expediting_plans`, `xpd_milestones`, `xpd_inspections`, `xpd_shipments`, `xpd_shipment_events`; service `src/server/modules/proc/xpd.js`.
+- **Plan and risk** (ADR-546, ADR-547): `assess` works out the arrival date and the risk; `reassess` stores it and publishes `proc.expediting.eta_updated` and `.delay_detected` (with affected activities) when newly or more late; job `proc.xpd_sweep`.
+- **Inspections** (ADR-548): `PROC_IRN` (quality engineer, quality manager); IRN number at approval; event `proc.inspection.irn_issued`.
+- **Shipments** (ADR-549): control `CP-PROC-07`; events `proc.shipment.dispatched` and `.delivered`.
+- **Vendor**: public routes `GET/POST /vendor-po/:token/milestones` behind the flag.
+- **Permissions**: `proc.expediting_plan.*` (and `.progress`), `proc.inspection.*` (and `.result`), `proc.shipment.*`.
