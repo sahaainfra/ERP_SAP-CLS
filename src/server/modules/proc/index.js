@@ -25,10 +25,19 @@ import { SO_DOC, SES_DOC, SO_STATUS, SES_STATUS, createSoService } from './so.js
 import { XPD_DOC, IRN_DOC, XPD_STATUS, INSP_STATUS, SHIP_STATUS, createXpdService } from './xpd.js';
 import { PREQ_DOC, SUSP_DOC, APPROVAL_STATUS, createVndService } from './vnd.js';
 import { createRtiService } from './rti.js';
+import { createAnaService } from './ana.js';
+import { registerProject360Widget } from '../proj/p360.js';
 import { procRoutes, vendorQuoteRoutes } from './routes.js';
 
 const services = new WeakMap();
 export const procOf = (db) => services.get(db) ?? null;
+// the procurement slot of Project 360 (10.08, FR of 15.10): the figures of the project from the analytics service, only for a person who may see procurement analytics and where the part is on
+registerProject360Widget('procurement', (ctx) => {
+  const s = procOf(ctx.db); const pid = ctx.project.project_id;
+  if (!s || !s.flags.isOn(ctx.actor, 'ff.proc.p1510')) return { figures: [], rows: [], note: 'The procurement dashboard is not enabled for your company yet.' };
+  if (!s.base.may(ctx.actor, 'proc.analytics.view', pid)) return { figures: [], rows: [], note: 'You have no right to see procurement analytics for this project.' };
+  return s.anaSvc.projectWidget(ctx.actor, pid);
+});
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -104,7 +113,7 @@ export const proc = {
   ownerPart: '15.01',
   status: 'Material requests (site indents) against work authorisations with the stock of the site, nearby stores and the central warehouse; fulfilment by issue, transfer or purchase; purchase requisitions from consolidated requests or direct, with stock, budget and duplicate checks, approval by value and an emergency path.',
   tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations', 'proc_purchase_orders', 'proc_po_lines', 'proc_po_schedules', 'proc_po_amendments', 'proc_dispatches', 'proc_po_receipts', 'proc_po_advances', 'proc_price_indices', 'proc_rate_contracts', 'proc_rc_lines', 'proc_rc_revisions', 'proc_service_orders', 'proc_so_lines', 'proc_service_entries', 'proc_se_lines', 'rti_observations', 'rti_indices', 'vnd_prequalifications', 'vnd_avl', 'vnd_scorecards', 'vnd_score_inputs', 'vnd_suspensions', 'vnd_actions', 'xpd_expediting_plans', 'xpd_milestones', 'xpd_inspections', 'xpd_shipments', 'xpd_shipment_events'],
-  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements', 'purchase-orders', 'rate-contracts', 'service-orders', 'service-entries', 'expediting-plans', 'inspections', 'shipments', 'expediting', 'prequalifications', 'avl', 'avl-suspensions', 'vendor-scorecards', 'vendor-ranking', 'vendor-actions', 'rate-intelligence', 'rate-exposure', 'rate-observations', 'rate-indices'],
+  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements', 'purchase-orders', 'rate-contracts', 'service-orders', 'service-entries', 'expediting-plans', 'inspections', 'shipments', 'expediting', 'prequalifications', 'avl', 'avl-suspensions', 'vendor-scorecards', 'vendor-ranking', 'vendor-actions', 'rate-intelligence', 'rate-exposure', 'rate-observations', 'rate-indices', 'analytics'],
 
   mount(api, { db, config: appConfig, publicApi }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proc_requisitions'").get()) return;
@@ -113,7 +122,7 @@ export const proc = {
     const mrpSvc = createMrpService({ db, base, stock: stockSvc, pr: prSvc }); const paramSvc = createItemParamService({ db, base });
     const rfqSvc = createRfqService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '' });
     const csSvc = createCsService({ db, base }); const rcSvc = createRcService({ db, base }); const soSvc = createSoService({ db, base }); const poSvc = createPoService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '', rc: rcSvc });
-    const xpdSvc = createXpdService({ db, base }); const vndSvc = createVndService({ db, base }); const rtiSvc = createRtiService({ db, base }); const svc = { rtiSvc, vndSvc, preqDecide: vndSvc.decide, suspDecide: vndSvc.suspDecide, xpdSvc, xpdDecide: xpdSvc.decide, irnDecide: xpdSvc.irnDecide, rcSvc, soSvc, rcDecide: rcSvc.decide, pvDecide: rcSvc.pvDecide, soDecide: soSvc.decide, sesDecide: soSvc.sesDecide, poSvc, poDecide: poSvc.decide, amendDecide: poSvc.amendDecide, advanceDecide: poSvc.advanceDecide, csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
+    const xpdSvc = createXpdService({ db, base }); const vndSvc = createVndService({ db, base }); const rtiSvc = createRtiService({ db, base }); const anaSvc = createAnaService({ db, base }); const svc = { flags, anaSvc, rtiSvc, vndSvc, preqDecide: vndSvc.decide, suspDecide: vndSvc.suspDecide, xpdSvc, xpdDecide: xpdSvc.decide, irnDecide: xpdSvc.irnDecide, rcSvc, soSvc, rcDecide: rcSvc.decide, pvDecide: rcSvc.pvDecide, soDecide: soSvc.decide, sesDecide: soSvc.sesDecide, poSvc, poDecide: poSvc.decide, amendDecide: poSvc.amendDecide, advanceDecide: poSvc.advanceDecide, csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
     listExports.register('proc.mrp_runs', { source: (actor, req) => mrpSvc.mrp.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.material_requests', { source: (actor, req) => mrSvc.mrs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.requisitions', { source: (actor, req) => prSvc.prs.exportSource(actor, req), hidden: () => [] });
@@ -164,6 +173,7 @@ export const proc = {
     router.use(/^\/(runs|proposals|item-params|supply|mrp)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1502') ? next() : next(notFound('Material demand planning (MRP) is not enabled for your company yet (feature flag ff.proc.p1502 is OFF).'))));
     router.use(/^\/(rfqs|quotations)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1503') ? next() : next(notFound('RFQs and vendor quotations are not enabled for your company yet (feature flag ff.proc.p1503 is OFF).'))));
     router.use(/^\/(rate-contracts|service-orders|service-entries)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1506') ? next() : next(notFound('Rate contracts and service orders are not enabled for your company yet (feature flag ff.proc.p1506 is OFF).'))));
+    router.use(/^\/analytics(?=\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1510') ? next() : next(notFound('The procurement dashboard is not enabled for your company yet (feature flag ff.proc.p1510 is OFF).'))));
     router.use(/^\/(rate-intelligence|rate-exposure|rate-observations|rate-indices)(?=\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1509') ? next() : next(notFound('Material rate intelligence is not enabled for your company yet (feature flag ff.proc.p1509 is OFF).'))));
     router.use(/^\/(prequalifications|avl|avl-suspensions|vendor-scorecards|vendor-ranking|vendor-actions)(?=\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1508') ? next() : next(notFound('Vendor prequalification, the approved vendor list and scorecards are not enabled for your company yet (feature flag ff.proc.p1508 is OFF).'))));
     router.use(/^\/(expediting-plans|inspections|shipments|expediting)(?=\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1507') ? next() : next(notFound('Expediting, vendor inspection and shipments are not enabled for your company yet (feature flag ff.proc.p1507 is OFF).'))));

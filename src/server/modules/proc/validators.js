@@ -167,3 +167,6 @@ const rtiIndexRow = z.object({ group: text(40).min(2), region: text(30).min(1).o
 export const parseRtiIndex = (b) => parse(rtiIndexRow.transform(defined), b ?? {});
 export const parseRtiIndexImport = (b) => parse(z.object({ rows: z.array(rtiIndexRow.transform(defined)).min(1).max(500) }).strict(), b ?? {});
 export const parseIntelQ = (q) => parse(z.object({ region: text(30).optional(), itemId: id.optional(), months: z.coerce.number().int().min(1).max(36).optional(), group: text(40).optional(), q: text(60).optional() }).strict(), q ?? {});
+
+// ---- procurement dashboard and analytics (part 15.10) ------------------------------------------------------------------------------------------------------------------------------------------------------
+export const parseAnaQ = (q) => parse(z.object({ projectId: id.optional(), from: day.optional(), to: day.optional(), groupBy: z.enum(['category', 'vendor', 'project', 'month']).optional(), key: text(60).optional() }).strict(), q ?? {});
