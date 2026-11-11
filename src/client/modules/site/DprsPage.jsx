@@ -135,7 +135,7 @@ export default function DprsPage() {
         </div>
       )}
       <ListReport listCode="site.dprs" endpoint="/site/dprs" title={t('dpr.register')} session={session.data} rowHref={(r) => `/site/dprs?id=${r.id}`} onOpen={(r) => navigateTo(`/site/dprs?id=${r.id}`)}
-        cardFields={[{ key: 'dprDate', label: t('f.date') }, { key: 'site', label: t('f.site') }, { key: 'supervisor', label: t('wa.supervisor') }, { key: 'late', label: t('dpr.lateCol') }]} statusKey="status"
+        cardFields={['dprDate', 'site', 'supervisor', 'late']} statusKey="status"
         empty={{ title: t('dpr.emptyTitle'), text: t('dpr.emptyBody') }} />
     </section>
   );

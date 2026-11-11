@@ -50,7 +50,8 @@ export const dprList = defineList({
   },
 });
 
-export function createDprService({ db }) {
+/** @param {{ db: any, dayContext?: (companyId: number, siteId: number, date: string) => any }} deps */
+export function createDprService({ db, dayContext = () => null }) {
   const authz = authzOf(db);
   const store = createParameterStore(db);
   const param = (companyId, key) => store.get(key, { companyId, date: todayIST() });
@@ -281,7 +282,7 @@ export function createDprService({ db }) {
     prefill(actor, { siteId, date, scope: sc = 'SITE', supervisor }) {
       const s = siteRow(actor, siteId); notFuture(date); const sup = supervisor ?? actor.user; const p = prefillView(prefill(actor.companyId, s, date, { scope: sc, supervisor: sup }));
       const ex = db.prepare(`SELECT id, doc_no, status FROM site_dprs WHERE dpr_site_id = ? AND dpr_date = ? AND scope = ? AND parent_dpr_id IS NULL AND deleted_at IS NULL AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED')${sc === 'SUPERVISOR' ? ' AND lower(supervisor) = lower(?)' : ''}`).get(s.id, date, sc, ...(sc === 'SUPERVISOR' ? [sup] : []));
-      return { site: { id: s.id, code: s.code, name: s.name, projectId: s.org_project_id, projectCode: s.pcode }, ...p, existing: ex ? { id: ex.id, docNo: ex.doc_no, status: ex.status } : null,
+      return { site: { id: s.id, code: s.code, name: s.name, projectId: s.org_project_id, projectCode: s.pcode }, ...p, conditions: dayContext(actor.companyId, s.id, date), existing: ex ? { id: ex.id, docNo: ex.doc_no, status: ex.status } : null,
         canCreate: may(actor, 'site.dpr.create', s.org_project_id, s.id), tolerance: { qtyPct: tolerances(actor.companyId).qty, labourPct: tolerances(actor.companyId).labour }, cutoff: param(actor.companyId, 'site.dpr.cutoff_time') };
     },
     /** The sites a person may report for, for the pickers. */
@@ -298,10 +299,16 @@ export function createDprService({ db }) {
       const dup = db.prepare(`SELECT doc_no FROM site_dprs WHERE dpr_site_id = ? AND dpr_date = ? AND scope = ? AND parent_dpr_id IS NULL AND deleted_at IS NULL AND status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'RETURNED')${sc === 'SUPERVISOR' ? ' AND lower(supervisor) = lower(?)' : ''}`).get(s.id, b.dprDate, sc, ...(sc === 'SUPERVISOR' ? [sup] : []));
       if (dup) throw conflict(`${dup.doc_no} is already the ${sc === 'SITE' ? 'report of this site' : `report of ${sup}`} for ${b.dprDate}: open it instead.`);
       return transaction(db, () => {
+        // part 14.03: with the prefill, a report with no weather of its own takes the weather record of the site and day
+        const wx = b.usePrefill && !b.weatherCode && b.rainMm == null ? dayContext(actor.companyId, s.id, b.dprDate)?.weather : null;
         const id = Number(db.prepare("INSERT INTO site_dprs (company_id, doc_no, org_project_id, dpr_site_id, dpr_date, supervisor, scope, work_front_id, weather_code, rain_mm, weather_ref, summary, status, requested_by, project_id, site_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, ?, ?)")
-          .run(actor.companyId, number(actor.companyId, actor.user), s.org_project_id, s.id, b.dprDate, sup, sc, b.workFrontId ?? null, b.weatherCode ?? null, b.rainMm ?? null, b.weatherRef ?? null, b.summary ?? null, actor.user, s.org_project_id, s.id, actor.user, extra.sourceType ?? 'api', extra.sourceId ?? null).lastInsertRowid);
+          .run(actor.companyId, number(actor.companyId, actor.user), s.org_project_id, s.id, b.dprDate, sup, sc, b.workFrontId ?? null, b.weatherCode ?? wx?.code ?? null, b.rainMm ?? wx?.rainMm ?? null, b.weatherRef ?? wx?.ref ?? null, b.summary ?? null, actor.user, s.org_project_id, s.id, actor.user, extra.sourceType ?? 'api', extra.sourceId ?? null).lastInsertRowid);
         const r = fresh(id); let input = { work: b.work ?? [], labour: b.labour ?? [], materials: b.materials ?? [], equipment: b.equipment ?? [], notes: b.notes ?? [] };
-        if (b.usePrefill) { const p = prefillView(prefill(actor.companyId, s, b.dprDate, { scope: sc, supervisor: sup })); input = { work: p.work.map((w) => ({ waId: w.waId, qty: w.qty })), labour: p.labour.map((l) => ({ category: l.category, contractorId: l.contractorId, trade: l.trade, headcount: l.headcount, manDays: l.manDays, otHours: l.otHours })), materials: p.materials.map((m) => ({ itemId: m.itemId, qty: m.qty, waId: m.waId, issueRef: m.issueRef })), equipment: p.equipment.map((e) => ({ label: e.label, equipmentKey: e.equipmentKey, hoursWorked: e.hoursWorked, hoursIdle: e.hoursIdle, hoursBreakdown: e.hoursBreakdown, logRef: e.logRef })), notes: [...p.notes, ...(p.nextDay ? [{ type: 'NEXT_DAY', text: p.nextDay }] : [])] }; }
+        if (b.usePrefill) { const p = prefillView(prefill(actor.companyId, s, b.dprDate, { scope: sc, supervisor: sup })); input = { work: p.work.map((w) => ({ waId: w.waId, qty: w.qty })), labour: p.labour.map((l) => ({ category: l.category, contractorId: l.contractorId, trade: l.trade, headcount: l.headcount, manDays: l.manDays, otHours: l.otHours })), materials: p.materials.map((m) => ({ itemId: m.itemId, qty: m.qty, waId: m.waId, issueRef: m.issueRef })), equipment: p.equipment.map((e) => ({ label: e.label, equipmentKey: e.equipmentKey, hoursWorked: e.hoursWorked, hoursIdle: e.hoursIdle, hoursBreakdown: e.hoursBreakdown, logRef: e.logRef })), notes: [...p.notes, ...(p.nextDay ? [{ type: 'NEXT_DAY', text: p.nextDay }] : [])] };
+          // part 14.03: the hindrances and the visits recorded for the day come into the report, linked to their records (a note that is already there is not repeated)
+          const cx = dayContext(actor.companyId, s.id, b.dprDate); const have = (t) => input.notes.some((n) => n.text === t);
+          for (const h of cx?.hindrances ?? []) { const t = `${h.docNo}: ${h.title}`; if (!have(t)) input.notes.push({ type: 'HINDRANCE', text: t, linkedEntity: 'site_hindrance', linkedId: String(h.rootId) }); }
+          for (const v of cx?.visitors ?? []) { const t = `${v.name}${v.organisation ? ` (${v.organisation})` : ''}: ${v.purpose}`; if (!have(t)) input.notes.push({ type: 'VISITOR', text: t }); } }
         const d = derive(r, input); fail(d.p); writeSections(actor, r, d);
         audit(actor, 'site_dprs', id, 'create', actor.companyId, { newValues: { date: b.dprDate, scope: sc, prefill: Boolean(b.usePrefill), work: d.work.length } }); return dprs.get(actor, id);
       });

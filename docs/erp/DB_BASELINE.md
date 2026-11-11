@@ -14679,6 +14679,41 @@ Indexes:
 - ux_site_daily_plans_day (unique): dp_site_id, plan_date, supervisor
 - ux_site_daily_plans_doc (unique): company_id, doc_no
 
+## site_diary
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| dy_site_id | INTEGER | yes |  |  |
+| diary_date | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| entry_text | TEXT | yes |  |  |
+| signed_by | TEXT |  |  |  |
+| signed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: dy_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_diary_unsigned: company_id, diary_date
+- ix_site_diary_project: org_project_id, diary_date
+- ix_site_diary_site: dy_site_id, diary_date, category
+- ix_site_diary_company: company_id, diary_date
+
 ## site_dpr_equipment
 
 | Column | Type | Not null | Key | Default |
@@ -14964,6 +14999,101 @@ Indexes:
 - ux_site_dprs_site_day (unique): dpr_site_id, dpr_date
 - ux_site_dprs_doc (unique): company_id, doc_no
 
+## site_hindrances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| hin_site_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| hin_type | TEXT | yes |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT |  |  |  |
+| affected_json | TEXT | yes |  | '{}' |
+| responsible_party | TEXT | yes |  |  |
+| responsible_name | TEXT |  |  |  |
+| letter_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 1 |
+| parent_hindrance_id | INTEGER |  |  |  |
+| closure_notes | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| escalated_at | TEXT |  |  |  |
+| escalation_level | INTEGER | yes |  | 0 |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_hindrance_id -> site_hindrances(id), letter_id -> engg_letters(id), hin_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_hindrances_open: company_id, start_date
+- ix_site_hindrances_parent: parent_hindrance_id
+- ix_site_hindrances_letter: letter_id
+- ix_site_hindrances_site: hin_site_id, status, start_date
+- ix_site_hindrances_project: org_project_id, start_date
+- ix_site_hindrances_company: company_id, status
+- ux_site_hindrances_doc (unique): company_id, doc_no
+
+## site_visitors
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| vis_site_id | INTEGER | yes |  |  |
+| visit_date | TEXT | yes |  |  |
+| time_in | TEXT |  |  |  |
+| time_out | TEXT |  |  |  |
+| visitor_name | TEXT | yes |  |  |
+| organisation | TEXT |  |  |  |
+| visitor_type | TEXT | yes |  | 'OFFICIAL' |
+| purpose | TEXT | yes |  |  |
+| instructions | TEXT |  |  |  |
+| linked_letter_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: linked_letter_id -> engg_letters(id), vis_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_visitors_letter: linked_letter_id
+- ix_site_visitors_project: org_project_id, visit_date
+- ix_site_visitors_site: vis_site_id, visit_date
+- ix_site_visitors_company: company_id, visit_date
+
 ## site_wa_resources
 
 | Column | Type | Not null | Key | Default |
@@ -15044,6 +15174,51 @@ Indexes:
 - ix_site_wa_uses_project: org_project_id, use_date
 - ix_site_wa_uses_company_id: company_id, use_date
 - ux_site_wa_uses_source (unique): company_id, use_kind, src_entity, src_id, 
+
+## site_weather
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| wx_site_id | INTEGER | yes |  |  |
+| wx_date | TEXT | yes |  |  |
+| rainfall_mm | INTEGER |  |  |  |
+| temp_min | INTEGER |  |  |  |
+| temp_max | INTEGER |  |  |  |
+| humidity_pct | INTEGER |  |  |  |
+| wind_kmh | INTEGER |  |  |  |
+| condition_code | TEXT |  |  |  |
+| source | TEXT | yes |  | 'MANUAL' |
+| connector_code | TEXT |  |  |  |
+| hours_lost | INTEGER | yes |  | 0 |
+| shutdown | INTEGER | yes |  | 0 |
+| shutdown_reason | TEXT |  |  |  |
+| pour_restricted | INTEGER | yes |  | 0 |
+| pour_reason | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: wx_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_weather_shutdown: company_id, shutdown, wx_date
+- ix_site_weather_project: org_project_id, wx_date
+- ix_site_weather_company: company_id, wx_date
+- ux_site_weather_site_day (unique): wx_site_id, wx_date
 
 ## site_work_authorisations
 

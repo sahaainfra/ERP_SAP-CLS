@@ -43,6 +43,35 @@ export const st = {
   dprMissing: async (q = '') => (await api.get(`/site/dprs/missing?${q}`)).data,
   dprCompliance: async (q = '') => (await api.get(`/site/dprs/compliance?${q}`)).data,
   dprReport: async (q) => (await api.get(`/site/dprs/report?${q}`)).data,
+  // part 14.03: weather, hindrances, diary and visitors
+  wxSites: async () => (await api.get('/site/weather/sites')).data,
+  weather: async (id) => (await api.get(`/site/weather/${id}`)).data,
+  wxLookup: async (siteId, date) => (await api.get(`/site/weather/lookup?siteId=${siteId}&date=${date}`)).data,
+  wxMonthly: async (q) => (await api.get(`/site/weather/monthly?${q}`)).data,
+  createWeather: async (b) => (await api.post('/site/weather', b, idem())).data,
+  updateWeather: async (id, b) => (await api.patch(`/site/weather/${id}`, b, idem())).data,
+  removeWeather: async (id) => (await api.delete(`/site/weather/${id}`)).data,
+  fetchWeather: async (b) => (await api.post('/site/weather/fetch', b, idem())).data,
+  hinSites: async () => (await api.get('/site/hindrances/sites')).data,
+  hinOptions: async (siteId) => (await api.get(`/site/hindrances/options?siteId=${siteId}`)).data,
+  hindrance: async (id) => (await api.get(`/site/hindrances/${id}`)).data,
+  createHindrance: async (b) => (await api.post('/site/hindrances', b, idem())).data,
+  updateHindrance: async (id, b) => (await api.patch(`/site/hindrances/${id}`, b, idem())).data,
+  removeHindrance: async (id) => (await api.delete(`/site/hindrances/${id}`)).data,
+  hinAct: async (id, action, b = {}) => (await api.post(`/site/hindrances/${id}/${action}`, b, idem())).data,
+  hinHistory: async (id) => (await api.get(`/site/hindrances/${id}/history`)).data,
+  diarySites: async () => (await api.get('/site/diary/sites')).data,
+  diaryEntry: async (id) => (await api.get(`/site/diary/${id}`)).data,
+  createDiary: async (b) => (await api.post('/site/diary', b, idem())).data,
+  updateDiary: async (id, b) => (await api.patch(`/site/diary/${id}`, b, idem())).data,
+  removeDiary: async (id) => (await api.delete(`/site/diary/${id}`)).data,
+  signDiary: async (id) => (await api.post(`/site/diary/${id}/sign`, {}, idem())).data,
+  signDay: async (b) => (await api.post('/site/diary/sign-day', b, idem())).data,
+  visSites: async () => (await api.get('/site/visitors/sites')).data,
+  visitor: async (id) => (await api.get(`/site/visitors/${id}`)).data,
+  createVisitor: async (b) => (await api.post('/site/visitors', b, idem())).data,
+  updateVisitor: async (id, b) => (await api.patch(`/site/visitors/${id}`, b, idem())).data,
+  removeVisitor: async (id) => (await api.delete(`/site/visitors/${id}`)).data,
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
 export const DPR_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
@@ -59,3 +88,8 @@ export async function openPrint(path) {
   const res = await fetch(`/api/v1/site${path}`, { headers: authHeaders() }); if (!res.ok) { w?.close(); throw new Error(String(res.status)); }
   const url = URL.createObjectURL(await res.blob()); if (w) w.location.href = url; else window.location.href = url;
 }
+export const HIN_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'AT_RISK', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', CLOSED: 'COMPLETED', SUPERSEDED: 'CANCELLED' };
+export const HIN_TYPES = ['SITE_NOT_HANDED_OVER', 'DRAWINGS_PENDING', 'UTILITY_SHIFTING', 'LOCAL_ISSUES', 'APPROVALS', 'OTHER'];
+export const PARTIES = ['CLIENT', 'CONSULTANT', 'THIRD_PARTY', 'AUTHORITY', 'CONTRACTOR'];
+export const DIARY_CATEGORIES = ['GENERAL', 'PROGRESS', 'INSTRUCTION', 'HINDRANCE', 'QUALITY', 'SAFETY', 'MATERIAL', 'VISITOR'];
+export const VISITOR_TYPES = ['OFFICIAL', 'CLIENT', 'CONSULTANT', 'AUTHORITY', 'OTHER'];

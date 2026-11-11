@@ -65,3 +65,35 @@ export const parseDprReportExportQ = (q) => parse(z.object({ ...reportQ, format:
 const mark = z.object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100), text: text(200).min(1) }).strict();
 export const parsePhoto = (b) => given(parse(z.object({ caption: optText(300), lat: z.number().min(-90).max(90).nullish().transform((v) => v ?? null), lng: z.number().min(-180).max(180).nullish().transform((v) => v ?? null), takenAt: z.string().datetime({ offset: true }).nullish().transform((v) => v ?? null), locationId: optId, markup: z.array(mark).max(30).optional() }).strict(), b ?? {}), b);
 export const parseDprSiteQ = (q) => parse(z.object({ siteId: id }).strict(), q ?? {});
+
+// ---- site diary, weather, hindrances and site conditions (part 14.03) ----
+const temp = z.number().finite().min(-80).max(70).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+const optNum = (schema) => schema.nullish().transform((v) => v ?? null);
+const hhmm = time.nullish().transform((v) => v ?? null);
+const HIN_TYPE = z.enum(['SITE_NOT_HANDED_OVER', 'DRAWINGS_PENDING', 'UTILITY_SHIFTING', 'LOCAL_ISSUES', 'APPROVALS', 'OTHER']);
+const PARTY = z.enum(['CLIENT', 'CONSULTANT', 'THIRD_PARTY', 'AUTHORITY', 'CONTRACTOR']);
+const affected = z.object({ activityIds: z.array(id).max(50).optional(), locationIds: z.array(id).max(50).optional(), text: optText(500).optional() }).strict();
+const weatherFields = {
+  rainfallMm: optNum(qty.max(2000)), tempMin: optNum(temp), tempMax: optNum(temp), humidityPct: optNum(z.number().int().min(0).max(100)), windKmh: optNum(qty.max(500)),
+  hoursLost: qty.max(24).optional(), shutdown: z.boolean().optional(), shutdownReason: optText(500), notes: optText(1000),
+};
+const weatherRefine = (x) => x.tempMin == null || x.tempMax == null || x.tempMin <= x.tempMax;
+const weatherMsg = { message: 'The lowest temperature is not above the highest', path: ['tempMin'] };
+export const parseWeatherCreate = (b) => parse(z.object({ siteId: id, date: day, ...weatherFields }).strict().refine(weatherRefine, weatherMsg), b ?? {});
+export const parseWeatherUpdate = (b) => given(parse(z.object({ ...weatherFields, rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseWeatherFetch = (b) => parse(z.object({ siteId: id, date: day }).strict(), b ?? {});
+export const parseWeatherQ = (q) => parse(z.object({ siteId: id.optional(), projectId: id.optional(), from: day.optional(), to: day.optional(), year: z.coerce.number().int().min(2000).max(2100).optional() }).strict(), q ?? {});
+export const parseWeatherSiteQ = (q) => parse(z.object({ siteId: id, date: day }).strict(), q ?? {});
+const hin = { title: text(200).min(3, 'Give a title'), description: optText(4000), type: HIN_TYPE, startDate: day, endDate: day.nullish().transform((v) => v || null), affected: affected.optional(), responsibleParty: PARTY, responsibleName: optText(120), letterId: optId };
+export const parseHindranceCreate = (b) => parse(z.object({ siteId: id, ...hin }).strict().refine((x) => !x.endDate || x.endDate >= x.startDate, { message: 'The end is not before the start', path: ['endDate'] }), b ?? {});
+export const parseHindranceUpdate = (b) => given(parse(z.object({ title: hin.title.optional(), description: hin.description, type: HIN_TYPE.optional(), startDate: day.optional(), endDate: hin.endDate, affected: affected.optional(), responsibleParty: PARTY.optional(), responsibleName: hin.responsibleName, letterId: optId, rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseHindranceClose = (b) => parse(z.object({ endDate: day, closureNotes: text(2000).min(5, 'Say how it was resolved (at least 5 characters)') }).strict(), b ?? {});
+export const parseHindranceQ = (q) => parse(z.object({ siteId: id.optional(), projectId: id.optional() }).strict(), q ?? {});
+const diaryFields = { category: z.enum(['GENERAL', 'PROGRESS', 'INSTRUCTION', 'HINDRANCE', 'QUALITY', 'SAFETY', 'MATERIAL', 'VISITOR']), text: text(4000).min(3, 'Write the note') };
+export const parseDiaryCreate = (b) => parse(z.object({ siteId: id, date: day, ...diaryFields }).strict(), b ?? {});
+export const parseDiaryUpdate = (b) => given(parse(z.object({ category: diaryFields.category.optional(), text: diaryFields.text.optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+const visitor = { visitorName: text(120).min(2, 'Give the name'), organisation: optText(160), visitorType: z.enum(['OFFICIAL', 'CLIENT', 'CONSULTANT', 'AUTHORITY', 'OTHER']).default('OFFICIAL'), purpose: text(500).min(3, 'Give the purpose'), instructions: optText(2000), timeIn: hhmm, timeOut: hhmm, linkedLetterId: optId };
+const visitTimes = (x) => !x.timeIn || !x.timeOut || x.timeOut >= x.timeIn;
+export const parseVisitorCreate = (b) => parse(z.object({ siteId: id, date: day, ...visitor }).strict().refine(visitTimes, { message: 'The time out is not before the time in', path: ['timeOut'] }), b ?? {});
+export const parseVisitorUpdate = (b) => given(parse(z.object({ visitorName: visitor.visitorName.optional(), organisation: visitor.organisation, visitorType: z.enum(['OFFICIAL', 'CLIENT', 'CONSULTANT', 'AUTHORITY', 'OTHER']).optional(), purpose: visitor.purpose.optional(), instructions: visitor.instructions, timeIn: hhmm, timeOut: hhmm, linkedLetterId: optId, rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseSiteDayQ = (q) => parse(z.object({ siteId: id.optional(), projectId: id.optional(), from: day.optional(), to: day.optional() }).strict(), q ?? {});

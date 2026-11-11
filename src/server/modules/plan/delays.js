@@ -14,7 +14,7 @@ import { calculate, isoOf, ordOf } from './cpm.js';
 // The delay register and time-impact records (part 13.05).
 // - A delay (FR-01) is an event with its dates, cause, responsibility, the activities it touches, its mitigation and concurrency notes. Its classification (cause and responsibility) is approved by the
 //   project manager and then the commercial manager; the planner who prepared it never decides it. Approved, it is locked; a change is a revision that replaces it when approved.
-// - Drafts come by themselves (FR-02) from the RFIs answered with a time impact (11.02); hindrances and weather shutdowns (14.03) are not built yet.
+// - Drafts come by themselves (FR-02) from the RFIs answered with a time impact (11.02), from the approved hindrances that have lasted long enough and from the weather shutdowns above the threshold (14.03).
 // - A time-impact analysis (FR-03) puts a fragnet into a copy of the schedule as at the event date, works the copy out with the CPM pass of 13.01 and compares the completion dates; the schedule and the
 //   baselines are never written (BR-01): the copy is in memory and only the result is kept, with the picture it was made from.
 // - Evidence (FR-04) links the RFIs, letters, drawings and files the delay rests on; the summary (FR-05) totals the delays by cause and responsibility, excusable and compensable, for the EOT claims (21.06).
@@ -328,5 +328,44 @@ export function createDelayService({ db, plan }) {
     });
   }
 
-  return { delays, evidence, tia, summary, summaryExport, claims, fromRfi, delayDecide: delays.decide };
+
+  // ---- FR-02 (14.03): drafts from the hindrances and the weather shutdowns of the site ------------------------------------------------------------------------------------------------
+  const HIN_CAUSE = { SITE_NOT_HANDED_OVER: 'LATE_HANDOVER', DRAWINGS_PENDING: 'LATE_DRAWINGS', UTILITY_SHIFTING: 'OTHER', LOCAL_ISSUES: 'OTHER', APPROVALS: 'STATUTORY', OTHER: 'OTHER' };
+  const PARTY_RESP = { CLIENT: 'EMPLOYER', CONSULTANT: 'EMPLOYER', AUTHORITY: 'EMPLOYER', THIRD_PARTY: 'NEUTRAL', CONTRACTOR: 'CONTRACTOR' };
+  /** One draft for each source (a hindrance with its amendments, or a weather day): a later event for the same source updates the draft while it is a draft and leaves a decided delay alone. */
+  function siteDraft(companyId, { entity, srcId, pid, title, description, cause, responsibility, start, end, days, affected, evidence }) {
+    const s = currentSchedule(companyId, pid); const sys = { user: 'system', companyId };
+    const have = db.prepare("SELECT id, status FROM plan_delays WHERE src_entity = ? AND src_id = ? AND company_id = ? AND deleted_at IS NULL AND status NOT IN ('CANCELLED', 'REJECTED', 'SUPERSEDED') ORDER BY id DESC").get(entity, String(srcId), companyId);
+    return transaction(db, () => {
+      if (have) {
+        if (have.status === 'DRAFT') { db.prepare('UPDATE plan_delays SET title = ?, start_date = ?, end_date = ?, delay_days = ?, affected_activities_json = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(title, start, end, days, JSON.stringify(affected), 'system', nowIso(), have.id); audit(sys, 'plan_delays', have.id, 'update', companyId, { reason: `${entity} ${srcId} changed`, newValues: { days } }); }
+        return have.id;
+      }
+      const id = Number(db.prepare("INSERT INTO plan_delays (company_id, doc_no, doc_date, org_project_id, schedule_id, title, description, cause_category, responsibility, start_date, end_date, delay_days, affected_activities_json, revision_no, status, src_entity, src_id, requested_by, project_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'DRAFT', ?, ?, NULL, ?, 'system', ?, ?)")
+        .run(companyId, numberFor(companyId, 'system'), todayIST(), pid, s?.id ?? null, title, description, cause, responsibility, start, end, days, JSON.stringify(affected), entity, String(srcId), pid, entity, String(srcId)).lastInsertRowid);
+      for (const e of evidence) db.prepare("INSERT OR IGNORE INTO plan_delay_evidence (company_id, delay_id, entity, entity_id, label, project_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, 'system', ?)").run(companyId, id, e.entity, String(e.id), String(e.label).slice(0, 300), pid, entity);
+      audit(sys, 'plan_delays', id, 'create', companyId, { reason: `Drafted from ${entity} ${srcId}`, newValues: { days } });
+      publishEvent(db, { type: 'plan.delay.drafted', entity: 'plan_delay', entityId: id, actorId: 'system', companyId, projectId: pid, data: { delayId: id, projectId: pid, source: entity, sourceId: srcId, delayDays: days } });
+      return id;
+    });
+  }
+  /** `site.hindrance.approved` and `site.hindrance.closed`: a hindrance that has lasted the threshold (from its start to its end, or to today while it is open) is drafted as a delay of the activities it names. */
+  function fromHindrance(e) {
+    const d = e.data ?? {}; const companyId = Number(e.companyId ?? e.company_id); const pid = Number(d.projectId); if (!companyId || !pid || !d.hindranceId || !d.startDate) return null;
+    const end = d.endDate ?? todayIST(); const days = ordOf(end) - ordOf(d.startDate) + 1; if (!(days >= Math.max(1, Number(d.thresholdDays ?? 1)))) return null;
+    const evidence = []; if (d.letterId) { const l = db.prepare('SELECT id, letter_no, subject FROM engg_letters WHERE id = ? AND company_id = ?').get(Number(d.letterId), companyId); if (l) evidence.push({ entity: 'engg_letter', id: l.id, label: `${l.letter_no}: ${l.subject}` }); }
+    for (const f of db.prepare("SELECT id, original_name FROM core_files WHERE company_id = ? AND linked_entity = 'site_hindrance' AND linked_id = ? AND deleted_at IS NULL ORDER BY id LIMIT 20").all(companyId, Number(d.hindranceId))) evidence.push({ entity: 'core_file', id: f.id, label: f.original_name });
+    return siteDraft(companyId, { entity: 'site_hindrance', srcId: d.rootId ?? d.hindranceId, pid, title: `${d.docNo}: ${d.title}`.slice(0, 200), cause: HIN_CAUSE[d.type] ?? 'OTHER', responsibility: PARTY_RESP[d.responsibleParty] ?? 'NEUTRAL', start: d.startDate, end, days,
+      description: `Drafted from hindrance ${d.docNo} (${String(d.type).replace(/_/g, ' ').toLowerCase()}, responsible: ${String(d.responsibleParty).replace(/_/g, ' ').toLowerCase()}${d.responsibleName ? `, ${d.responsibleName}` : ''}), ${d.endDate ? `closed on ${d.endDate}` : 'still open'}. Check the cause, the responsibility and the activities, then analyse the impact.`,
+      affected: (d.activities ?? []).map((a) => ({ activityId: a.id, code: a.code, name: a.name })), evidence });
+  }
+  /** `site.weather.shutdown`: a day lost to weather (at or above the threshold of hours) is drafted as a neutral, excusable delay; the same day is drafted once. */
+  function fromWeather(e) {
+    const d = e.data ?? {}; const companyId = Number(e.companyId ?? e.company_id); const pid = Number(d.projectId); if (!companyId || !pid || !d.weatherId || !d.date || !(Number(d.delayDays) >= 1)) return null;
+    return siteDraft(companyId, { entity: 'site_weather', srcId: d.weatherId, pid, title: `Weather shutdown at ${d.siteCode ?? 'site'} on ${d.date}`.slice(0, 200), cause: 'WEATHER', responsibility: 'NEUTRAL', start: d.date, end: isoOf(ordOf(d.date) + Number(d.delayDays) - 1), days: Number(d.delayDays), evidence: [], affected: [],
+      description: `Drafted from the weather record of ${d.siteCode ?? 'the site'} for ${d.date}: ${d.hoursLost} hours lost${d.condition ? ` (${String(d.condition).replace(/_/g, ' ').toLowerCase()}${d.rainfallMm ? `, ${d.rainfallMm} mm rain` : ''})` : ''}. ${d.reason ?? ''} Check the activities and analyse the impact.` });
+  }
+  function fromSite(e) { return e.type === 'site.weather.shutdown' ? fromWeather(e) : fromHindrance(e); }
+
+  return { delays, evidence, tia, summary, summaryExport, claims, fromRfi, fromSite, delayDecide: delays.decide };
 }

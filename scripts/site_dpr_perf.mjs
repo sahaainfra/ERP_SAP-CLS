@@ -7,7 +7,6 @@ import { DatabaseSync } from 'node:sqlite';
 import { migrateUp } from '../src/server/platform/db/index.js';
 import { todayIST } from '../src/shared/dates.js';
 import { isoOf, ordOf } from '../src/server/modules/plan/cpm.js';
-import { createSiteService } from '../src/server/modules/site/service.js';
 import { createDprService } from '../src/server/modules/site/dpr.js';
 import { createDprReports } from '../src/server/modules/site/dpr-reports.js';
 
@@ -49,7 +48,7 @@ for (const x of P) for (let k = 0; k < 2000; k += 1) {
 for (const x of P) for (let k = 0; k < 14; k += 1) insW.run(`WAR/${x.pid}/${k}`, x.pid, x.site, day(k), x.acts[k % 50], x.pid, x.site);
 db.exec('COMMIT'); db.exec('ANALYZE');
 console.log(`${db.prepare('SELECT COUNT(*) AS n FROM site_dprs').get().n} reports, ${db.prepare('SELECT COUNT(*) AS n FROM site_dpr_work').get().n} work lines, ${db.prepare('SELECT COUNT(*) AS n FROM site_dpr_labour').get().n} labour lines, ${db.prepare('SELECT COUNT(*) AS n FROM site_dpr_notes').get().n} notes.\n`);
-const site = createSiteService({ db }); const dprSvc = createDprService({ db }); const rep = createDprReports({ db, base: dprSvc.base }); const d = dprSvc.dprs;
+const dprSvc = createDprService({ db }); const rep = createDprReports({ db, base: dprSvc.base }); const d = dprSvc.dprs;
 const se = { user: 'perf-se', roles: ['SE', 'PLAN'], companyId: 1 };
 const results = []; const sorted = (ms) => [...ms].sort((a, b) => a - b);
 const record = (label, limit, ms) => { const p = sorted(ms)[Math.floor(ms.length * 0.95)] ?? 0; results.push({ label, p, limit }); console.log(`${label.padEnd(52)} p50 ${sorted(ms)[Math.floor(ms.length / 2)].toFixed(1).padStart(8)} ms   p95 ${p.toFixed(1).padStart(8)} ms   limit ${limit} ms`); };
@@ -60,7 +59,7 @@ time('DPR register, approved of a site', 500, (i) => d.list(se, { 'filter[status
 time('DPR register, late of a project', 500, (i) => d.list(se, { 'filter[late]': '1', 'filter[projectId]': String(X(i).pid), pageSize: '50' }));
 time('DPR register, search', 500, (i) => d.list(se, { q: `sup${i % 9}`, pageSize: '25' }));
 time('one DPR with its sections and photos', 300, (i) => d.get(se, one(i)));
-time('prefill of a site and day', 500, (i) => d.prefill(se, { siteId: X(i).site, date: day(i % 14) }));
+time('prefill of a site and day', 500, (i) => d.prefill(se, { siteId: X(i).site, date: day(i % 14), supervisor: undefined }));
 time('a DPR started from the prefill', 800, (i) => { const x = X(i); const dt = day(2100 + i); insW.run(`WAN/${i}`, x.pid, x.site, dt, x.acts[i % 50], x.pid, x.site); return d.create(se, { siteId: x.site, dprDate: dt, usePrefill: true }); });
 time('missing days of the last week', 500, () => rep.missing(se, {}), 5);
 time('compliance of 14 days (50 sites)', 500, () => rep.compliance(se, {}), 5);

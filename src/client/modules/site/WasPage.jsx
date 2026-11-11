@@ -165,7 +165,7 @@ export default function WasPage() {
         </div>
       )}
       <ListReport listCode="site.work_authorisations" endpoint="/site/work-authorisations" title={t('wa.title')} session={session.data} rowHref={(r) => `/site/work-authorisations?id=${r.id}`} onOpen={(r) => navigateTo(`/site/work-authorisations?id=${r.id}`)}
-        cardFields={[{ key: 'planDate', label: t('f.date') }, { key: 'site', label: t('f.site') }, { key: 'activity', label: t('wa.activity') }, { key: 'plannedQty', label: t('wa.qtyShort') }]} statusKey="status"
+        cardFields={['planDate', 'site', 'activity', 'plannedQty']} statusKey="status"
         empty={{ title: t('wa.emptyTitle'), text: t('wa.emptyBody') }} />
     </section>
   );

@@ -1279,3 +1279,12 @@ Module `site` (flag `ff.site.p1402`), tables `site_dprs`, `site_dpr_work`, `site
 - **Reports and compliance** (FR-07): `GET /dprs/report?period=DAY|WEEK|MONTH|RANGE`, `/dprs/report/export` (XLSX, CSV, PDF), `/dprs/missing`, `/dprs/compliance`; the widget `site.dpr_compliance`.
 - **Event**: `site.dpr.approved` (work, labour, materials, equipment, weather, hindrances; amendments with `supersedes`). **Permissions**: `site.dpr.{view,create,edit,delete,submit,approve,cancel,amend,print,export,report}`. **Browser**: DPR Entry (phone), DPR Register and the report, Daily Site and Progress Reports, DPR Compliance; English and Hindi.
 
+
+## 104. Site diary, weather, hindrances and site conditions (part 14.03)
+Module `site`, flag `ff.site.p1403`, tables `site_weather`, `site_hindrances`, `site_diary`, `site_visitors` (migration 196), seed 197.
+- **Weather** (FR-01): one record a site and day; measures in thousandths; the server derives the condition and the concrete-pour restriction from `site.weather.pour_*` parameters; `POST /weather/fetch` calls the hub connector (ADR-494); `GET /weather/monthly` feeds the rainfall chart. A shutdown with hours lost at or above `site.weather.shutdown_delay_hours` publishes `site.weather.shutdown`.
+- **Hindrances** (FR-02, BR-01): workflow `SITE_HINDRANCE` (CM, then PM; the raiser never decides); locked on approval; amendment replaces; `close` needs end date and evidence (ADR-496); daily job `site.hindrance_escalation` escalates those open beyond `site.hindrance.escalate_days`. Events `site.hindrance.approved|closed|escalated`.
+- **Delays** (FR-05, ADR-495): `plan.delays.fromSite` consumes the events and drafts or updates delays.
+- **Diary and visitors** (FR-03, FR-04): the diary is signed off by a person other than its writer and then locked; attachments through the file service (`site_diary`, `site_hindrance`).
+- **DPR** (14.02): the prefill carries `conditions` (weather, hindrances, visits); a report started from it takes the weather record and adds linked hindrance and visitor notes.
+- **API**: 42 routes under `/api/v1/site/{weather,hindrances,diary,visitors}`. **Permissions**: `site.{weather,hindrance,diary,visitor}.*` plus `site.hindrance.close`, `site.diary.sign`.

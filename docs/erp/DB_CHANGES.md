@@ -199,6 +199,8 @@ Every migration is additive, idempotent and reversible (`.up.sql` and `.down.sql
 | 20261030000043_seed_ui_p0304 | 03.04 | reference-seed rows for `ff.ui.p0304` (default OFF; ON in development and test), the shared reason codes and the documents the sample material request needs | deletes those seed rows |
 | 20261030000041_seed_flag_ui_p0303 | 03.03 | reference-seed rows for `ff.ui.p0303` (default OFF; ON in development and test) | deletes those seed rows |
 | 20261030000039_seed_ui_p0302 | 03.02 | reference-seed rows for `ff.ui.p0302` (default OFF; ON in development and test), document type `SAMPLE_MR` (numbered at submit) and the definition of `ui.sample_request` | deletes those seed rows |
+| 20261124000197_seed_site_p1403 | 14.03 | reference-seed rows for `ff.site.p1403` (default OFF; ON in development and test), four navigation entries under the Site group (weather log, hindrance register, site diary, visitor log), four page-tracker rows and the notification templates `site.hindrance.approved`, `site.hindrance.rejected`, `site.hindrance.escalated` and `site.weather.shutdown` (in-app and e-mail, English and Hindi) | deletes those seed rows |
+| 20261124000196_site_conditions | 14.03 | tables `site_weather` (the weather of a site and day: measures, hours lost, shutdown, pour restriction, source), `site_hindrances` (approval-controlled: type, dates, affected activities and locations, responsible party, letter, closure, escalation, revisions), `site_diary` (notes by category with the sign-off) and `site_visitors` (visits with purpose, instructions and a linked letter) | drops the four tables |
 
 Existing objects altered or dropped: none. Schema-diff against `schema/baseline.json`: clean.
 

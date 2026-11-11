@@ -86,7 +86,7 @@ export default function DailyPage() {
         </form>
       )}
       <ListReport listCode="site.daily_plans" endpoint="/site/daily-plans" title={t('dp.list')} session={session.data} rowHref={(r) => `/site/daily-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/site/daily-plans?id=${r.id}`)}
-        cardFields={[{ key: 'planDate', label: t('f.date') }, { key: 'site', label: t('f.site') }, { key: 'supervisor', label: t('wa.supervisor') }, { key: 'lines', label: t('dp.lines') }]} statusKey="status"
+        cardFields={['docNo', 'planDate', 'site', 'supervisor']} statusKey="status"
         empty={{ title: t('dp.emptyTitle'), text: t('dp.emptyBody') }} />
       <p className="muted"><Link to="/site/board">{t('bd.title')}</Link> · <Link to="/plan/weekly">{t('dp.weekly')}</Link> · {fmtDate(today())}</p>
     </section>

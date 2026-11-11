@@ -7,6 +7,10 @@ import DprEntryPage from './DprEntryPage.jsx';
 import DprsPage from './DprsPage.jsx';
 import DprReportPage from './DprReportPage.jsx';
 import DprCompliancePage from './DprCompliancePage.jsx';
+import WeatherPage from './WeatherPage.jsx';
+import HindrancesPage from './HindrancesPage.jsx';
+import DiaryPage from './DiaryPage.jsx';
+import VisitorsPage from './VisitorsPage.jsx';
 
 registerModule({
   code: 'site',
@@ -20,5 +24,9 @@ registerModule({
     { path: '/site/dprs', label: 'DPR Register', icon: 'erp.group.projects', permission: 'site.dpr.view', flag: 'ff.site.p1402', Page: DprsPage },
     { path: '/site/dpr-report', label: 'Daily Site and Progress Reports', icon: 'erp.group.projects', permission: 'site.dpr.report', flag: 'ff.site.p1402', Page: DprReportPage },
     { path: '/site/dpr-compliance', label: 'DPR Compliance', icon: 'erp.group.projects', permission: 'site.dpr.report', flag: 'ff.site.p1402', Page: DprCompliancePage },
+    { path: '/site/weather', label: 'Weather Log', icon: 'erp.group.projects', permission: 'site.weather.view', flag: 'ff.site.p1403', Page: WeatherPage },
+    { path: '/site/hindrances', label: 'Hindrance Register', icon: 'erp.group.projects', permission: 'site.hindrance.view', flag: 'ff.site.p1403', Page: HindrancesPage },
+    { path: '/site/diary', label: 'Site Diary', icon: 'erp.group.projects', permission: 'site.diary.view', flag: 'ff.site.p1403', Page: DiaryPage },
+    { path: '/site/visitors', label: 'Visitor Log', icon: 'erp.group.projects', permission: 'site.visitor.view', flag: 'ff.site.p1403', Page: VisitorsPage },
   ],
 });

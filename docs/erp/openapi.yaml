@@ -8002,6 +8002,40 @@ paths:
     post:
       summary: "Site execution (14.01): POST /wa-uses"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/weather:
+    get: { summary: Weather log (list), tags: [site], responses: { '200': { description: OK } } }
+    post: { summary: Record the weather of a site and day, tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/weather/fetch:
+    post: { summary: Fetch the weather through the integration hub, tags: [site], responses: { '201': { description: Recorded } } }
+  /api/v1/site/weather/monthly:
+    get: { summary: Rainfall and hours lost by month, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/weather/{id}:
+    get: { summary: One weather record, tags: [site], responses: { '200': { description: OK } } }
+    patch: { summary: Change a weather record, tags: [site], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a weather record, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/hindrances:
+    get: { summary: Hindrance register, tags: [site], responses: { '200': { description: OK } } }
+    post: { summary: Raise a hindrance (draft), tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/hindrances/{id}:
+    get: { summary: One hindrance with evidence, delay and reports, tags: [site], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned hindrance, tags: [site], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a draft hindrance, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/hindrances/{id}/submit:
+    post: { summary: Send for approval (CM then PM), tags: [site], responses: { '202': { description: Accepted } } }
+  /api/v1/site/hindrances/{id}/close:
+    post: { summary: Close with an end date and evidence, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/hindrances/{id}/amend:
+    post: { summary: Amend an approved hindrance, tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/diary:
+    get: { summary: Site diary (list), tags: [site], responses: { '200': { description: OK } } }
+    post: { summary: Add a diary entry, tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/diary/{id}/sign:
+    post: { summary: Sign off an entry (not its writer), tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/diary/sign-day:
+    post: { summary: Sign off a site and day, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/visitors:
+    get: { summary: Visitor log (list), tags: [site], responses: { '200': { description: OK } } }
+    post: { summary: Record a visit, tags: [site], responses: { '201': { description: Created } } }
   /api/v1/site/dprs:
     get:
       summary: "Daily progress report (14.02): GET /dprs"

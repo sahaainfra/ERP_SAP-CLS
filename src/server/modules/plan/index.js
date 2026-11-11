@@ -91,6 +91,7 @@ export const plan = {
     const dl = createDelayService({ db, plan: svc.plan }); svc.delays = dl; svc.delayDecide = dl.delayDecide;
     listExports.register('plan.delays', { source: (actor, req) => dl.delays.exportSource(actor, req), hidden: () => [] });
     runtimeOf(db)?.bus?.subscribe(['engg.rfi.responded'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.plan.p1305')) dl.fromRfi(e); }, { consumer: 'plan.delays' });
+    runtimeOf(db)?.bus?.subscribe(['site.hindrance.approved', 'site.hindrance.closed', 'site.weather.shutdown'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.plan.p1305')) dl.fromSite(e); }, { consumer: 'plan.delays.site' });
     const p1305 = Router();
     p1305.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plan.p1305') ? next() : next(notFound('The delay register is not enabled for your company yet (feature flag ff.plan.p1305 is OFF).'))));
     p1305.use(delayRoutes(dl, { exportsOf: () => listExportsOf(db) }, mw));
