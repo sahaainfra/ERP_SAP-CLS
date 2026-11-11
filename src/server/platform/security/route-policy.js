@@ -2224,6 +2224,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/site/control/unallocated/:id/submit', g: 'permission', k: 'site.control.submit', s: 'parseAllocSubmit', scope: 'company', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/site/control/unallocated/:id/withdraw', g: 'permission', k: 'site.control.view', s: 'parseReason', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/site/control/unallocated/:id/history', g: 'permission', k: 'site.control.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/proc/projects', g: 'permission', k: 'proc.material_request.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/material-requests/options', g: 'permission', k: 'proc.material_request.view', s: 'parseProjectQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/material-requests/availability', g: 'permission', k: 'proc.material_request.view', s: 'parseAvailQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/material-requests', g: 'permission', k: 'proc.material_request.view', s: null, scope: 'company', rate: 'read', audit: false },

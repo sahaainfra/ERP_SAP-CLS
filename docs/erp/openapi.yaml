@@ -8204,3 +8204,42 @@ paths:
     post: { summary: Propose the allocation and send it for approval (PM), tags: [site], responses: { '202': { description: Accepted } } }
   /api/v1/site/control/unallocated/{id}/withdraw:
     post: { summary: Withdraw an allocation waiting for approval, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/proc/projects:
+    get: { summary: Projects with the right to raise requests or requisitions, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/material-requests:
+    get: { summary: Material requests (site indents) with fulfilment status, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Raise a material request, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/material-requests/options:
+    get: { summary: Sites, work authorisations, WBS nodes and cost codes of a project, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/material-requests/availability:
+    get: { summary: Free stock of an item at the site, nearby stores and the central warehouse, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/material-requests/{id}:
+    get: { summary: One material request with its lines, stock and requisitions, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned request, tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a draft, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/material-requests/{id}/submit:
+    post: { summary: Send for approval (construction manager), tags: [proc], responses: { '202': { description: Accepted } } }
+  /api/v1/proc/material-requests/{id}/fulfil:
+    post: { summary: Meet lines by issue or transfer, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/material-requests/{id}/amend:
+    post: { summary: Amend an approved request by a revision, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/requisitions:
+    get: { summary: Purchase requisitions, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Raise a direct purchase requisition (or an emergency one), tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/requisitions/consolidate/preview:
+    post: { summary: Preview the consolidation of material requests, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/requisitions/consolidate:
+    post: { summary: Consolidate material requests into a draft requisition with the trace of each line, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/requisitions/{id}:
+    get: { summary: One requisition with its lines and the trace to the requests, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned requisition, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/requisitions/{id}/checks:
+    get: { summary: Stock, budget and duplicate checks of a requisition, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/requisitions/{id}/submit:
+    post: { summary: Send for approval by value, tags: [proc], responses: { '202': { description: Accepted } } }
+  /api/v1/proc/requisitions/{id}/close:
+    post: { summary: Short-close an approved requisition, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/requisitions/{id}/amend:
+    post: { summary: Amend an approved requisition by a revision, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/stock/ingest:
+    post: { summary: Load free stock levels of items in stores (until the stock module keeps them), tags: [proc], responses: { '201': { description: Created } } }

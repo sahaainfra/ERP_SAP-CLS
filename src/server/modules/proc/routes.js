@@ -7,6 +7,7 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.get('/projects', (req, res) => ok(res, m.projects(req.actor)));
   // material requests
   r.get('/material-requests/options', (req, res) => ok(res, m.options(req.actor, parseProjectQ(req.query).projectId)));
   r.get('/material-requests/availability', (req, res) => ok(res, m.availability(req.actor, parseAvailQ(req.query))));
