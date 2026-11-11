@@ -8594,6 +8594,30 @@ paths:
     post: { summary: 'Do vendor-actions/{id}/respond (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-actions/{id}/close:
     post: { summary: 'Do vendor-actions/{id}/close (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-intelligence/dashboard:
+    get: { summary: 'Read rate-intelligence/dashboard (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-intelligence/series:
+    get: { summary: 'Read rate-intelligence/series (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-intelligence/benchmark:
+    get: { summary: 'Read rate-intelligence/benchmark (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-intelligence/items:
+    get: { summary: 'Read rate-intelligence/items (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-intelligence/projects:
+    get: { summary: 'Read rate-intelligence/projects (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-exposure:
+    get: { summary: 'Read rate-exposure (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-observations:
+    get: { summary: 'Read rate-observations (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: 'Do rate-observations (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-observations/{id}:
+    get: { summary: 'Read rate-observations/{id} (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-observations/{id}/correct:
+    post: { summary: 'Do rate-observations/{id}/correct (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-indices:
+    get: { summary: 'Read rate-indices (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: 'Do rate-indices (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/rate-indices/import:
+    post: { summary: 'Do rate-indices/import (part 15.09)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones:
     get: { summary: 'Read vendor-po/{token}/milestones (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones/{mid}:

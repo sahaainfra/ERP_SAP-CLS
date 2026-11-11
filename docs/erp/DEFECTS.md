@@ -540,3 +540,8 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-529 | VND | Price competitiveness uses only approved comparative statements; vendors that never quoted score nothing on price. |
 | D-530 | VND | The visit report file is attached through the document service (`vnd_prequalification`); the visit date and notes are required for strategic categories, a file is not. |
 | D-531 | VND | Scorecard periods are calendar quarters or months, not financial-year quarters. |
+| D-532 | RTI | The contract price indices of 15.06 (`proc_price_indices`) and the market indices of this part (`rti_indices`) are separate; a market index does not yet drive a contract revision. |
+| D-533 | RTI | Estimation resource rates (06.06) have no hook to read the benchmark yet; only the comparative statement and the purchase order do. |
+| D-534 | RTI | Index uploads and surveys are audited data entry by the procurement manager, not maker-checker; thresholds are parameters of the parameter engine. |
+| D-535 | RTI | Region is the delivery state of the purchase order; quotations, awards and contracts carry no region and count for all regions. Specification keys are free text and are not yet used to split a benchmark. |
+| D-536 | RTI | A contract rate revised by price variation does not add a new observation; the history keeps the rate as first approved. |

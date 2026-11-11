@@ -26,6 +26,9 @@ import PrequalificationsPage from './PrequalificationsPage.jsx';
 import AvlPage from './AvlPage.jsx';
 import VendorScorecardsPage from './VendorScorecardsPage.jsx';
 import VendorRankingPage from './VendorRankingPage.jsx';
+import RateIntelligencePage from './RateIntelligencePage.jsx';
+import RateExposurePage from './RateExposurePage.jsx';
+import RateSurveyPage from './RateSurveyPage.jsx';
 
 registerModule({
   code: 'proc',
@@ -58,5 +61,8 @@ registerModule({
     { path: '/proc/avl', label: 'Approved Vendor List', icon: 'erp.group.supply', permission: 'proc.avl.view', flag: 'ff.proc.p1508', Page: AvlPage },
     { path: '/proc/vendor-scorecards', label: 'Vendor Scorecards', icon: 'erp.group.supply', permission: 'proc.vendor_score.view', flag: 'ff.proc.p1508', Page: VendorScorecardsPage },
     { path: '/proc/vendor-ranking', label: 'Vendor Ranking', icon: 'erp.group.supply', permission: 'proc.vendor_score.view', flag: 'ff.proc.p1508', Page: VendorRankingPage },
+    { path: '/proc/rate-intelligence', label: 'Rate Intelligence', icon: 'erp.group.supply', permission: 'proc.rate_intel.view', flag: 'ff.proc.p1509', Page: RateIntelligencePage },
+    { path: '/proc/rate-exposure', label: 'Project Rate Exposure', icon: 'erp.group.supply', permission: 'proc.rate_intel.view', flag: 'ff.proc.p1509', Page: RateExposurePage },
+    { path: '/proc/rate-survey', label: 'Market Survey and Index Upload', icon: 'erp.group.supply', permission: 'proc.rate_intel.survey', flag: 'ff.proc.p1509', Page: RateSurveyPage },
   ],
 });

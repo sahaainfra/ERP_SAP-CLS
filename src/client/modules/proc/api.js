@@ -177,3 +177,18 @@ export const pv8 = {
   ranking: (q) => get(`/vendor-ranking${q ? `?${q}` : ''}`),
   actionCreate: (b) => post('/vendor-actions', b), actionAct: (id, action, b) => post(`/vendor-actions/${id}/${action}`, b),
 };
+
+/** Material rate intelligence (part 15.09). Benchmarks, trends, volatility and exposures come from the server. */
+export const ri = {
+  dashboard: (region) => get(`/rate-intelligence/dashboard${region ? `?region=${encodeURIComponent(region)}` : ''}`),
+  series: (itemId, region, months = 12) => get(`/rate-intelligence/series?itemId=${itemId}${region ? `&region=${encodeURIComponent(region)}` : ''}&months=${months}`),
+  items: (q) => get(`/rate-intelligence/items?q=${encodeURIComponent(q ?? '')}`), projects: () => get('/rate-intelligence/projects'),
+  exposure: (projectId) => get(`/rate-exposure?projectId=${projectId}`),
+  obs: (id) => get(`/rate-observations/${id}`), survey: (b) => post('/rate-observations', b), correct: (id, b) => post(`/rate-observations/${id}/correct`, b),
+  indices: (group) => get(`/rate-indices${group ? `?group=${encodeURIComponent(group)}` : ''}`), indexSet: (b) => post('/rate-indices', b), indexImport: (rows) => post('/rate-indices/import', { rows }),
+};
+/** A CSV the browser saves, with cells that start like a formula neutralised. */
+export function saveCsv(name, rows) {
+  const cell = (v) => { let s = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; return `"${s.replaceAll('"', '""')}"`; };
+  const url = URL.createObjectURL(new Blob([rows.map((r) => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

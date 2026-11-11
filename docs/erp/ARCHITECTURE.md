@@ -1383,3 +1383,10 @@ Module `proc`, flag `ff.proc.p1508`, tables `vnd_prequalifications`, `vnd_avl`, 
 - **Scorecard** (ADR-550): `gather` collects evidence, `metricsFromEvidence` and `compose` work out the measures and total; `proc.vendor.scorecard_computed`.
 - **Suspension** (ADR-552): `PROC_AVLSUSP` (procurement manager, direction); `proc.vendor.suspended`. Job `proc.vnd_reeval`.
 - **Permissions**: `proc.prequalification.*`, `proc.avl.{view,suspend,approve,export}`, `proc.vendor_score.{view,compute,input,export}`, `proc.vendor_action.{view,create,edit,close}`.
+
+## 117. Material rate intelligence and price benchmarking (part 15.09)
+Module `proc`, flag `ff.proc.p1509`, tables `rti_observations`, `rti_indices`; service `src/server/modules/proc/rti.js`.
+- **History** (ADR-554, ADR-556): `harvest` takes in approved quotation, award, order and contract lines once each; `insert` normalises to the base unit and marks outliers; update and delete are refused by triggers.
+- **Benchmark** (ADR-555): `benchmark` is the median of the window; `rateBenchmarks.lookup` in `pr.js` is how the comparative statement (`market_rate`) and purchase order (`benchmark_rate`) ask for it.
+- **Exposure** (ADR-557): `exposure` multiplies the remaining MRP quantity by the benchmark less the budget rate.
+- **Permissions**: `proc.rate_intel.{view,survey,index,export}`. Job `proc.rti_harvest`.
