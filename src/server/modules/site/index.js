@@ -28,6 +28,8 @@ import { PRD_DOC, PRD_STATUS, createProgressService } from './progress.js';
 import { progressRoutes } from './progress-routes.js';
 import { NORM_DOC, NORM_STATUS, createProductivityService } from './productivity.js';
 import { productivityRoutes } from './productivity-routes.js';
+import { ALLOC_DOC, ALLOC_STATUS, createControlService } from './control.js';
+import { controlRoutes } from './control-routes.js';
 import { planOf } from '../plan/index.js';
 
 const services = new WeakMap();
@@ -55,11 +57,13 @@ for (const [type, description] of [
   ['site.period.closed', 'A progress period was closed by approval, PLAN then PM, or an amendment replaced a closed one (part 14.05; the part calls it prog.period.closed): data { periodId, docNo, projectId, periodType, periodStart, periodEnd, revisionNo, supersedes, physical, planned, financial (percent), forecastFinish, bac, pv, ev, ac (rupees), spi, cpi, tcpi (ratios), eac, snapshotHash }. For the control engine (14.07), dashboards, client reports and the EAC (23.11).'],
   ['site.productivity.updated', 'The productivity records of an approved DPR were written (part 14.06): data { projectId, siteId, date, dprId, lines, activities: [code] }. For resource planning (17.08), the performance KPIs (07.11) and forecasting (28.03); the records are read at GET /site/productivity/rows.'],
   ['site.productivity.low', 'An activity of a site was below site.productivity.alert_pct of its norm on each of the last site.productivity.alert_days days (part 14.06): data { alertId, projectId, siteId, activityCode, days, fromDate, toDate, avgPctOfNorm }.'],
+  ['site.control.updated', 'The control facts of a project were rebuilt from their owners (part 14.07): data { projectId, why, facts, unallocated }. For Project 360 (10.08), the cost-value reconciliation (22.09), the estimate at completion (23.11), the project P&L (23.12) and the control tower (27.04); the figures are read at GET /site/control/facts.'],
+  ['site.control.reconciliation_failed', 'The nightly (or requested) reconciliation of the control facts against the source ledgers found a difference above site.control.recon_tolerance_minor (part 14.07): data { projectId, runId, differences, tolerance }.'],
   ['site.daily_plan.issued', 'A daily work plan of a site and a supervisor was issued and its lines raised as work authorisations in draft (part 14.01): data { planId, docNo, projectId, siteId, planDate, supervisor, waIds }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'site', description });
 
 integrityRegistry.register({
-  statuses: { prod_norms: Object.keys(NORM_STATUS), prod_alerts: ['OPEN', 'CLEARED'], prs_periods: Object.keys(PRD_STATUS), site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
+  statuses: { ctl_unallocated: Object.keys(ALLOC_STATUS), ctl_recon_runs: ['CLEAN', 'DIFFERENCES'], prod_norms: Object.keys(NORM_STATUS), prod_alerts: ['OPEN', 'CLEARED'], prs_periods: Object.keys(PRD_STATUS), site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
   uniqueKeys: [{ table: 'site_work_authorisations', columns: ['company_id', 'wa_no'] }, { table: 'site_daily_plans', columns: ['company_id', 'doc_no'] }, { table: 'site_dprs', columns: ['company_id', 'doc_no'] }, { table: 'site_hindrances', columns: ['company_id', 'doc_no'] }, { table: 'site_instructions', columns: ['company_id', 'doc_no'] }, { table: 'prs_periods', columns: ['company_id', 'doc_no'] }],
 });
 
@@ -70,8 +74,8 @@ export const site = {
   routePrefix: '/api/v1/site',
   ownerPart: '14.01',
   status: 'Work fronts of a site with their activities, status and open constraints; daily work plans of a site and a supervisor from the approved weekly plans (13.04) or copied from the day before; work authorisations (WA) with activity, WBS, location, quantity, crews, materials and plant from the norms, the budget line (12.03), the drawing revision (11.01), the permit and hold points, the time window and the supervisor, approved by the construction manager and by the project manager when outside the plan; emergency WAs regularised within 24 hours; closure with the quantity done and the reconciliation of what was used; the uses of attendance, stores, plant, DPR and measurement booked against a WA (CP-SITE-02).',
-  tables: ['prod_norms', 'prod_actuals', 'prod_losses', 'prod_alerts', 'prs_periods', 'prs_activity_progress', 'prs_evm', 'prs_weights', 'site_instructions', 'site_instruction_acks', 'site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
-  resources: ['productivity', 'periods', 'progress', 'instructions', 'weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
+  tables: ['ctl_facts', 'ctl_unallocated', 'ctl_recon_runs', 'prod_norms', 'prod_actuals', 'prod_losses', 'prod_alerts', 'prs_periods', 'prs_activity_progress', 'prs_evm', 'prs_weights', 'site_instructions', 'site_instruction_acks', 'site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
+  resources: ['control', 'productivity', 'periods', 'progress', 'instructions', 'weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'site_work_authorisations'").get()) return;
@@ -85,6 +89,8 @@ export const site = {
     runtimeOf(db)?.bus?.subscribe(['site.dpr.approved'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.site.p1405')) svc.progressSvc.onDpr(e); }, { consumer: 'site.progress' });
     svc.productivitySvc = createProductivityService({ db }); svc.normDecide = svc.productivitySvc.normDecide; 
     runtimeOf(db)?.bus?.subscribe(['site.dpr.approved'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.site.p1406')) svc.productivitySvc.onDpr(e); }, { consumer: 'site.productivity' });
+    svc.controlSvc = createControlService({ db, evaluate: (c, p, d) => svc.progressSvc.evaluate(c, p, d) }); svc.allocDecide = svc.controlSvc.allocDecide;
+    runtimeOf(db)?.bus?.subscribe(['bud.actual.posted', 'bud.commitment.changed', 'bud.budget.approved', 'bud.budget.revised', 'bud.change.approved', 'site.period.closed', 'site.dpr.approved'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.site.p1407')) svc.controlSvc.onEvent(e); }, { consumer: 'site.control' });
     const dprSvc = createDprService({ db, dayContext: (...a) => conditions.dayContext(...a) }); svc.dpr = dprSvc; svc.dprReports = createDprReports({ db, base: dprSvc.base }); svc.dprDecide = dprSvc.dprDecide;
     listExports.register('site.dprs', { source: (actor, req) => dprSvc.dprs.exportSource(actor, req), hidden: () => [] });
     registerWeatherProviders(integrationsOf(db, { vaultKey: appConfig.vaultKey ?? undefined }).providers);
@@ -95,6 +101,9 @@ export const site = {
     runtime?.scheduler?.define({ code: 'site.hindrance_escalation_daily', cron: '30 1 * * *', jobType: 'site.hindrance_escalation', description: 'Daily 07:00 India time: escalate the hindrances that have stayed open too long' });
     runtime?.jobs?.register('site.instruction_reminders', (ctx) => { const n = svc.instructionsSvc.instructions.remind(); ctx.log(`Reminded about ${n} instruction(s)`); return { reminded: n }; }, { maxAttempts: 2, description: 'Reminds the construction manager and the project manager of issued instructions past their compliance date.' });
     runtime?.scheduler?.define({ code: 'site.instruction_reminders_daily', cron: '45 1 * * *', jobType: 'site.instruction_reminders', description: 'Daily 07:15 India time: remind about issued instructions past their compliance date' });
+    // BR-02: every night the facts are reconciled against the source ledgers; what differs above the tolerance is an alert and is rebuilt
+    runtime?.jobs?.register('site.control_reconcile', (ctx) => { const out = { projects: 0, clean: 0, differing: 0 }; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.site.p1407')) continue; const r = svc.controlSvc.nightly(c.id); out.projects += r.projects; out.clean += r.clean; out.differing += r.differing; } ctx.log(`Reconciled ${out.projects} project(s): ${out.clean} clean, ${out.differing} with differences`); return out; }, { maxAttempts: 2, description: 'Reconciles the project control facts against the budget, commitment and actual cost ledgers and the progress, alerts on differences above the tolerance and rebuilds them.' });
+    runtime?.scheduler?.define({ code: 'site.control_reconcile_nightly', cron: '15 21 * * *', jobType: 'site.control_reconcile', description: 'Nightly 02:45 India time: reconcile the project control facts against the source ledgers' });
     const router = Router();
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1401') ? next() : next(notFound('Work authorisation is not enabled for your company yet (feature flag ff.site.p1401 is OFF).'))));
     router.use(siteRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
@@ -102,6 +111,8 @@ export const site = {
     p1402.use((req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1402') ? next() : next(notFound('The daily progress report is not enabled for your company yet (feature flag ff.site.p1402 is OFF).'))));
     p1402.use(dprRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use('/dprs', p1402);
+    router.use('/control', (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1407') ? next() : next(notFound('The project control engine is not enabled for your company yet (feature flag ff.site.p1407 is OFF).'))));
+    router.use('/control', controlRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use('/productivity', (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1406') ? next() : next(notFound('Productivity tracking is not enabled for your company yet (feature flag ff.site.p1406 is OFF).'))));
     router.use('/productivity', productivityRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use(['/periods', '/progress'], (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1405') ? next() : next(notFound('Progress measurement is not enabled for your company yet (feature flag ff.site.p1405 is OFF).'))));
@@ -392,4 +403,35 @@ objectTypes.register({
   related: () => [],
   search() { return []; },
   projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM prod_norms WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+
+// ---- the approval of the allocation of an unallocated cost (part 14.07): the quantity surveyor or project controls propose, the project manager approves; whoever proposed it never decides it. The ledger row of 12.03 is not changed. -------------------------
+const aline = (db, id) => db.prepare('SELECT x.*, p.code FROM ctl_unallocated x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(id);
+const wbsText = (db, id) => { if (!id) return 'none'; const w = db.prepare('SELECT code, name FROM proj_wbs WHERE id = ?').get(id); return w ? `${w.code} ${w.name}` : String(id); };
+const codeText = (db, id) => { if (!id) return 'none'; const c = db.prepare('SELECT code, name FROM fin_cost_codes WHERE id = ?').get(id); return c ? `${c.code} ${c.name}` : String(id); };
+workflowTypes.register({
+  docType: ALLOC_DOC, label: 'Allocation of an unallocated cost', processOwner: 'PM', route: (id) => `/site/control-unallocated?id=${id}`,
+  describe(db, companyId, id) { const r = aline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_ref ?? r.src_id, title: `${r.code}: ${r.doc_ref ?? r.src_id} ${r.amount / 100} to ${wbsText(db, r.alloc_wbs_id)} / ${codeText(db, r.alloc_cost_code_id)}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = aline(db, Number(id)); if (!r) return null; return { fields: [{ label: 'Project', value: r.code }, { label: 'Document', value: `${r.doc_ref ?? r.src_id} (${r.src_type})` }, { label: 'Amount', value: String(r.amount / 100) }, { label: 'Why it is unallocated', value: r.reason.replaceAll('_', ' ').toLowerCase() }, { label: 'Allocate to WBS node', value: wbsText(db, r.alloc_wbs_id) }, { label: 'Allocate to cost code', value: codeText(db, r.alloc_cost_code_id) }, { label: 'Proposed by', value: r.requested_by ?? '' }] }; },
+  defaultDefinition: { name: 'Unallocated cost: the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PM', 'Project manager', 'PM', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => siteOf(db)?.allocDecide(instance, actor, 'APPROVED'),
+    onRejected: (db, { instance, actor, comment }) => siteOf(db)?.allocDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => siteOf(db)?.allocDecide(instance, actor, 'RETURNED', comment),
+    onCancelled: (db, { instance, actor, comment }) => siteOf(db)?.allocDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+evidenceProviders.register(ALLOC_DOC, ({ db, instance }) => {
+  const r = aline(db, Number(instance.docId)); if (!r) return { sections: [] };
+  const left = db.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(amount), 0) AS a FROM ctl_unallocated WHERE org_project_id = ? AND status IN ('OPEN', 'RETURNED', 'SUBMITTED') AND deleted_at IS NULL").get(r.org_project_id);
+  return { sections: [{ code: 'site-alloc-checks', title: 'Before you approve the allocation', kind: 'metrics', items: [{ label: 'Cost', value: `${r.doc_ref ?? r.src_id}: ${r.amount / 100}`, format: 'text' }, { label: 'Allocate to WBS node', value: wbsText(db, r.alloc_wbs_id), format: 'text' }, { label: 'Allocate to cost code', value: codeText(db, r.alloc_cost_code_id), format: 'text' }, { label: 'Still unallocated on the project', value: `${left.n} line(s), ${left.a / 100}`, format: 'text' }] }] };
+});
+objectTypes.register({
+  type: 'ctl_alloc', label: 'Unallocated cost', permission: 'site.control.view', route: (id) => `/site/control-unallocated?id=${id}`, attachmentEntity: 'ctl_alloc', approvalTarget: 'ctl_alloc',
+  access(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.controlSvc.unallocated.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'ctl_unallocated', id }],
+  summary(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.controlSvc.unallocated.get(actor, Number(id)); return { label: `${r.projectCode} ${r.docRef ?? r.sourceId} unallocated cost`, status: r.status }; } catch { return null; } },
+  related: () => [],
+  search() { return []; },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM ctl_unallocated WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
 });

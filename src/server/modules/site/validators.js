@@ -136,3 +136,17 @@ export const parseProdQ = (q) => parse(z.object({ projectId: id.optional(), site
 export const parseProdExportQ = (q) => parse(z.object({ projectId: id.optional(), siteId: id.optional(), from: day.optional(), to: day.optional(), groupBy: z.enum(['ACTIVITY', 'WORK_TYPE', 'CREW', 'CONTRACTOR', 'SITE', 'WEEK']).optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q ?? {});
 export const parseLossCreate = (b) => parse(z.object({ siteId: id, date: day, activityCode: optText(40), reasonCode: LOSS, hoursLost: z.number().finite().gt(0).max(240).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals'), note: optText(500) }).strict(), b ?? {});
 export const parseLossQ = (q) => parse(z.object({ projectId: id.optional(), siteId: id.optional(), from: day.optional(), to: day.optional() }).strict(), q ?? {});
+// Part 14.07: the project control engine.
+const ctlGroup = z.enum(['WBS', 'COST_CODE', 'COST_HEAD', 'RESOURCE', 'MONTH']);
+const month = z.string().regex(/^\d{4}-\d{2}$/, 'Use a month such as 2026-11');
+const resType = z.enum(['MATERIAL', 'LABOUR', 'EQUIPMENT', 'TRANSPORT', 'SUBCONTRACT', 'OTHER']);
+export const parseCtlQ = (q) => parse(z.object({ projectId: id, groupBy: ctlGroup.optional(), period: month.optional() }).strict(), q ?? {});
+export const parseCtlExportQ = (q) => parse(z.object({ projectId: id, groupBy: ctlGroup.optional(), period: month.optional(), format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q ?? {});
+// keys = "wbsId:costCodeId:resourceType" (0 for none, empty for any), the same filter the explicit parameters give
+export const parseCtlDrillQ = (q) => {
+  const v = parse(z.object({ projectId: id, measure: z.enum(['BUDGET', 'PLANNED', 'COMMITTED', 'ACTUAL', 'EARNED', 'UNALLOCATED']), wbsId: z.coerce.number().int().min(0).optional(), costCodeId: z.coerce.number().int().min(0).optional(), resourceType: resType.optional(), period: month.optional(), keys: z.string().max(80).optional() }).strict(), q ?? {});
+  if (v.keys) { const [w, c, r] = v.keys.split(':'); if (v.wbsId === undefined && w !== undefined && w !== '') v.wbsId = Number(w); if (v.costCodeId === undefined && c !== undefined && c !== '') v.costCodeId = Number(c); if (v.resourceType === undefined && r) v.resourceType = parse(resType, r); }
+  delete v.keys; return v;
+};
+export const parseCtlProject = (b) => parse(z.object({ projectId: id }).strict(), b ?? {});
+export const parseAllocSubmit = (b) => parse(z.object({ wbsId: optId, costCodeId: optId, note: optText(500), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {});
