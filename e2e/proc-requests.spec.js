@@ -25,7 +25,6 @@ test.afterEach(async ({ browser }) => { for (const c of browser.contexts()) awai
 // consolidates it into a requisition, which free stock stops until an exception is approved; the project manager approves it; a site engineer never sees the rates.
 const OUT = 'docs/erp/screenshots/proc-requests';
 const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
-const day = (n) => new Date(Date.now() + 19_800_000 + n * 86_400_000).toISOString().slice(0, 10);
 
 async function seed(request, c, t) {
   const db = new DatabaseSync('data/e2e.sqlite'); db.exec('PRAGMA busy_timeout = 8000;');

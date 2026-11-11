@@ -2242,7 +2242,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/proc/material-requests/:id/print', g: 'permission', k: 'proc.material_request.print', s: 'parseId', scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/proc/requisitions/options', g: 'permission', k: 'proc.requisition.view', s: 'parseProjectQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/requisitions/rate', g: 'permission', k: 'proc.requisition.view', s: 'parseRateQ', scope: 'company', rate: 'read', audit: false },
-  { m: 'POST', p: '/api/v1/proc/requisitions/consolidate/preview', g: 'permission', k: 'proc.requisition.create', s: 'parseConsolidate', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/proc/requisitions/consolidate/preview', g: 'permission', k: 'proc.requisition.create', s: 'parseConsolidate', scope: 'company', rate: 'read', audit: true },
   { m: 'POST', p: '/api/v1/proc/requisitions/consolidate', g: 'permission', k: 'proc.requisition.create', s: 'parseConsolidate', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/proc/requisitions', g: 'permission', k: 'proc.requisition.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/proc/requisitions', g: 'permission', k: 'proc.requisition.create', s: 'parsePrCreate', scope: 'company', rate: 'write', audit: true },
