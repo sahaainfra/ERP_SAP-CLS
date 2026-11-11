@@ -401,7 +401,10 @@ export const parseColRead = (b) => parse(z.object({ ids: z.array(z.number().int(
 // ---- part 04.15: the offline field engine ----
 const OFF_ID = z.string().trim().regex(/^[A-Za-z0-9_-]{8,64}$/, 'Use the id the device made (8 to 64 letters, digits, - or _)');
 const OFF_DEVICE = z.string().trim().regex(/^[A-Za-z0-9_-]{8,64}$/, 'Use the device id (8 to 64 letters, digits, - or _)');
-const OFF_VALUES = z.record(z.string().max(40), z.union([z.string().max(2000), z.number(), z.boolean(), z.null()])).refine((o) => Object.keys(o).length <= 40, 'At most 40 fields');
+const OFF_SCALAR = z.union([z.string().max(2000), z.number(), z.boolean(), z.null()]);
+// a form may carry lines (the sections of a daily progress report, part 14.02): a list of flat records, one level deep
+const OFF_LINES = z.array(z.record(z.string().max(40), OFF_SCALAR).refine((o) => Object.keys(o).length <= 20, 'At most 20 fields in a line')).max(300);
+const OFF_VALUES = z.record(z.string().max(40), z.union([OFF_SCALAR, OFF_LINES])).refine((o) => Object.keys(o).length <= 40, 'At most 40 fields');
 const OFF_COMMAND = z.object({
   id: OFF_ID, seq: z.number().int().min(0).max(1_000_000_000).default(0), type: z.string().regex(/^[a-z][a-z_]{1,40}$/), op: z.enum(['create', 'update']).default('create'),
   ref: OFF_ID.optional(), clientRef: OFF_ID.optional(), entityId: z.union([z.string().max(60), z.number().int()]).transform(String).optional(),

@@ -8002,3 +8002,84 @@ paths:
     post:
       summary: "Site execution (14.01): POST /wa-uses"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    post:
+      summary: "Daily progress report (14.02): POST /dprs"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/export:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/sites:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/sites"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/options:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/options"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/prefill:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/prefill"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/missing:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/missing"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/compliance:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/compliance"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/report:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/report"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/report/export:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/report/export"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    patch:
+      summary: "Daily progress report (14.02): PATCH /dprs/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+    delete:
+      summary: "Daily progress report (14.02): DELETE /dprs/:id"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/submit:
+    post:
+      summary: "Daily progress report (14.02): POST /dprs/:id/submit"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/withdraw:
+    post:
+      summary: "Daily progress report (14.02): POST /dprs/:id/withdraw"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/cancel:
+    post:
+      summary: "Daily progress report (14.02): POST /dprs/:id/cancel"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/amend:
+    post:
+      summary: "Daily progress report (14.02): POST /dprs/:id/amend"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/history:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/:id/history"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/print:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/:id/print"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/pdf:
+    get:
+      summary: "Daily progress report (14.02): GET /dprs/:id/pdf"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/dprs/{id}/photos/{fileId}:
+    patch:
+      summary: "Daily progress report (14.02): PATCH /dprs/:id/photos/:fileId"
+      responses: { '200': { description: '{ data }' }, '403': { description: no permission } }

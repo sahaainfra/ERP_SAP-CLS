@@ -163,7 +163,7 @@ export function createOfflineService({ db, storage }) {
     clientCreatedAt: r.client_created_at, effectiveAt: r.effective_at, receivedAt: r.received_at, processedAt: r.processed_at, confirmedBy: r.confirmed_by, resolution: r.resolution, resolvedBy: r.resolved_by, user: r.user_ref, label: JSON.parse(r.payload_json || '{}').label ?? null });
   const resultOf = (r, replayed = false) => ({ logId: r.id, commandId: r.command_id, status: r.status, entityId: r.server_entity_id, version: r.result_json ? JSON.parse(r.result_json).version ?? null : null, replayed, error: r.error_message, conflict: r.conflict_json ? JSON.parse(r.conflict_json) : null, retry: r.status === 'DEFERRED' });
   const FIELD_LABEL = (form, key) => form.fields.find((f) => f.key === key)?.label ?? key;
-  const sameValue = (a, b) => String(a ?? '') === String(b ?? '');
+  const sameValue = (a, b) => (typeof a === 'object' && a !== null) || (typeof b === 'object' && b !== null) ? JSON.stringify(a ?? null) === JSON.stringify(b ?? null) : String(a ?? '') === String(b ?? '');
 
   /** Run one command for `actor`. Returns { status, entityId, version, error, conflict }. Throws nothing a person should see as a crash: a refusal is a REJECTED outcome. */
   function execute(actor, form, c, ctx) {

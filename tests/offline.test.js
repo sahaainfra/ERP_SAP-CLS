@@ -52,7 +52,8 @@ test('FR-08 the engine lists the offline forms, available or planned, and regist
   assert.equal(forms.sample_doc.available, true);
   assert.deepEqual(forms.sample_doc.rules, { titleMin: 3, titleMax: 200, amountPattern: '^\\d{1,13}(\\.\\d{1,2})?$', amountMin: '0.01' });
   assert.deepEqual([forms.attendance_punch.available, forms.attendance_punch.planned], [true, undefined]); // built in 07.05
-  for (const c of ['dpr', 'material_request', 'grn_count', 'inspection_checklist', 'hse_observation', 'log_book_entry']) assert.deepEqual([forms[c].available, forms[c].planned], [false, true], c);
+  assert.deepEqual([forms.dpr.available, forms.dpr.planned], [true, undefined]); // built in 14.02
+  for (const c of ['material_request', 'grn_count', 'inspection_checklist', 'hse_observation', 'log_book_entry']) assert.deepEqual([forms[c].available, forms[c].planned], [false, true], c);
   assert.equal(api.db.prepare('SELECT COUNT(*) AS n FROM off_devices').get().n, 1);
 });
 
@@ -241,7 +242,7 @@ test('FR-09 the difference between the device clock and the server clock is meas
 test('FR-02 masters: the subsets a role needs, a delta since the last time, removed rows, and nothing for a role with no form', async () => {
   const { api, project, call } = await setup();
   const full = (await call(se, 'GET', '/masters')).json.data;
-  assert.deepEqual(Object.keys(full.masters).sort(), ['people', 'projects', 'sites']);
+  assert.deepEqual(Object.keys(full.masters).sort(), ['dpr_contractors', 'dpr_items', 'dpr_prefill', 'people', 'projects', 'sites'], 'the daily progress report (14.02) keeps its own lists on the phone');
   assert.deepEqual(full.masters.projects.rows.map((p) => p.code), ['P1']);
   assert.equal(full.masters.projects.full, true);
   assert.ok(Date.parse(full.expiresAt) > Date.now() + 71 * 3_600_000, 'the copy may be used for 72 hours without contact');

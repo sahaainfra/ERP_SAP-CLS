@@ -43,3 +43,25 @@ export const parseUse = (b) => parse(z.object({
   projectId: id, siteId: optId, waId: optId, kind: z.enum(['ATTENDANCE', 'MATERIAL_ISSUE', 'PLANT_LOG', 'DPR', 'MEASUREMENT']), srcEntity: z.string().trim().regex(/^[a-z][a-z0-9_]{1,40}$/, 'A source such as inv_issue'), srcId: text(60).min(1),
   resourceType: RES.optional(), itemId: optId, trade: optText(60), crewId: optId, resKey: optText(80), label: optText(200), qty: qty.default(0), uom: optText(20), date: day.optional(),
 }).strict(), b ?? {});
+
+// ---- the daily progress report (part 14.02) ----
+const WEATHER = z.enum(['CLEAR', 'CLOUDY', 'RAIN', 'HEAVY_RAIN', 'STORM', 'FOG', 'HOT', 'COLD']);
+const optWeather = WEATHER.nullish().transform((v) => v ?? null);
+const workLine = z.object({ waId: id, qty, remarks: optText(500), reason: optText(500) }).strict();
+const labourLine = z.object({ category: z.enum(['STAFF', 'CONTRACT']), contractorId: optId, trade: text(60).min(2, 'Name the trade'), headcount: z.number().int().min(0).max(5000), manDays: qty.max(100000), otHours: qty.max(100000).optional(), reason: optText(500) }).strict()
+  .refine((x) => x.category !== 'CONTRACT' || x.contractorId, { message: 'Choose the contractor', path: ['contractorId'] });
+const materialLine = z.object({ itemId: id, qty, waId: optId, issueRef: optText(80), reason: optText(500) }).strict();
+const equipmentLine = z.object({ label: text(120).min(2, 'Name the equipment'), equipmentKey: optText(80), hoursWorked: qty.max(24).optional(), hoursIdle: qty.max(24).optional(), hoursBreakdown: qty.max(24).optional(), logRef: optText(80), reason: optText(500) }).strict();
+const noteLine = z.object({ type: z.enum(['HINDRANCE', 'VISITOR', 'INSTRUCTION', 'QUALITY', 'SAFETY', 'NEXT_DAY']), text: text(2000).min(2, 'Write the note'), linkedEntity: optText(60), linkedId: optText(60) }).strict();
+const sections = { work: z.array(workLine).max(200), labour: z.array(labourLine).max(200), materials: z.array(materialLine).max(300), equipment: z.array(equipmentLine).max(100), notes: z.array(noteLine).max(200) };
+const dprHeader = { weatherCode: optWeather, rainMm: z.number().int().min(0).max(2000).nullish().transform((v) => v ?? null), weatherRef: optText(80), summary: optText(4000), workFrontId: optId };
+export const parseDprCreate = (b) => parse(z.object({ siteId: id, dprDate: day, supervisor: optText(80), scope: z.enum(['SITE', 'SUPERVISOR']).optional(), usePrefill: z.boolean().optional(), ...dprHeader, ...Object.fromEntries(Object.entries(sections).map(([k, v]) => [k, v.optional()])) }).strict(), b ?? {});
+export const parseDprUpdate = (b) => given(parse(z.object({ supervisor: optText(80), ...dprHeader, ...Object.fromEntries(Object.entries(sections).map(([k, v]) => [k, v.optional()])), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parsePrefillQ = (q) => parse(z.object({ siteId: id, date: day, scope: z.enum(['SITE', 'SUPERVISOR']).optional(), supervisor: optText(80) }).strict(), q ?? {});
+export const parseDprRangeQ = (q) => parse(z.object({ from: day.optional(), to: day.optional(), projectId: id.optional(), siteId: id.optional() }).strict(), q ?? {});
+const reportQ = { period: z.enum(['DAY', 'WEEK', 'MONTH', 'RANGE']).optional(), date: day.optional(), from: day.optional(), to: day.optional(), projectId: id.optional(), siteId: id.optional() };
+export const parseDprReportQ = (q) => parse(z.object(reportQ).strict(), q ?? {});
+export const parseDprReportExportQ = (q) => parse(z.object({ ...reportQ, format: z.enum(['xlsx', 'csv', 'pdf']).default('xlsx') }).strict(), q ?? {});
+const mark = z.object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100), text: text(200).min(1) }).strict();
+export const parsePhoto = (b) => given(parse(z.object({ caption: optText(300), lat: z.number().min(-90).max(90).nullish().transform((v) => v ?? null), lng: z.number().min(-180).max(180).nullish().transform((v) => v ?? null), takenAt: z.string().datetime({ offset: true }).nullish().transform((v) => v ?? null), locationId: optId, markup: z.array(mark).max(30).optional() }).strict(), b ?? {}), b);
+export const parseDprSiteQ = (q) => parse(z.object({ siteId: id }).strict(), q ?? {});
