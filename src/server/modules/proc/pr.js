@@ -22,6 +22,8 @@ export const BUDGET_STATUS = { NOT_CHECKED: 'Not checked', OK: 'Within the budge
 const EDITABLE = ['DRAFT', 'RETURNED'];
 /** Rate contracts (11.03) are not live; a provider registered here is asked first and may return { rate (paise a unit), ref }. */
 export const rateContracts = { providers: [], register(fn) { this.providers.push(fn); } };
+/** Market benchmarks (15.09): providers are kept per database; `lookup` returns the first usable answer { rate, count, uom } for the item and region, or null. */
+export const rateBenchmarks = { providers: [], register(fn, db) { this.providers.push({ fn, db }); }, lookup(db, q) { for (const p of this.providers) { if (p.db !== db) continue; try { const r = p.fn(q); if (r?.rate > 0) return r; } catch { /* keep what the caller had */ } } return null; } };
 
 controlRegistry.define({
   code: 'CP-PROC-01', module: 'proc', stage: 'VERIFY', description: 'No purchase requisition while free stock at the same or a nearby store covers the need, unless an exception is approved', enforcement: 'EXCEPTION', evidenceRequired: true, escalationLevel: 1, ownerRole: 'PROCMGR', mode: 'ENFORCE',

@@ -11,6 +11,7 @@ import { workflowOf } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
 import { budOf } from '../bud/budgets.js';
 import { d3, json, nowIso, q3, rid, rs, same } from './base.js';
+import { rateBenchmarks } from './pr.js';
 
 // Purchase orders (part 15.05). An order is made from an approved comparative statement (the rates are the quoted ones) or directly with a reason; it carries its terms, lines (GST split by the place of supply, BR-03) and a delivery schedule, and is
 // approved by value (procurement manager, project manager above ₹ 5 lakh, project director above ₹ 25 lakh, the direction above ₹ 1 crore). On approval the commitment is posted to the budget ledger (12.03), the order is sent to the vendor with a link to
@@ -132,7 +133,7 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
       if (rate == null) problems.push({ field: `lines.${i}.rate`, message: 'Give the rate' }); if (!uom) problems.push({ field: `lines.${i}.uom`, message: 'Give the unit' }); if (!description) problems.push({ field: `lines.${i}.description`, message: 'Describe the item' });
       if (item && uom && !base.uomOk(item, uom)) problems.push({ field: `lines.${i}.uom`, message: `${uom} is not a unit of ${item.code}` });
       const taxCode = x.taxCode ?? rl?.tax_code ?? item?.gst_code ?? null; const byCode = gstOf(actor.companyId, taxCode, ctx.date); if (x.taxCode && byCode == null) problems.push({ field: `lines.${i}.taxCode`, message: 'Not an active GST rate code' }); if (byCode != null) gst = byCode; gst ??= 0;
-      const bench = item?.last_purchase_amount > 0 ? item.last_purchase_amount : null; if (!rl && bench && rate != null && rate > Math.round(bench * (1 + vpct / 100))) variance = true;
+      const mk = item && uom && String(uom).toLowerCase() === String(item.base_uom).toLowerCase() ? rateBenchmarks.lookup(db, { companyId: actor.companyId, itemId: item.id, region: ctx.deliveryState ?? null, date: ctx.date }) : null; const bench = mk?.rate ?? (item?.last_purchase_amount > 0 ? item.last_purchase_amount : null); if (!rl && bench && rate != null && rate > Math.round(bench * (1 + vpct / 100))) variance = true;
       const calc = computeLine({ qty, rate: rate ?? 0, discountPct: discount ?? 0, gstPct: gst, supply: ctx.supply, freight });
       const sched = (x.schedule?.length ? x.schedule : [{ dueDate: x.requiredBy ?? cl?.required_by ?? ctx.defaultDue, qty: x.qty }]).map((s) => ({ dueDate: s.dueDate, qty: q3(s.qty) }));
       if (sched.reduce((n, s) => n + s.qty, 0) !== qty) problems.push({ field: `lines.${i}.schedule`, message: 'The scheduled quantities add up to the quantity of the line' }); if (sched.some((s) => !s.dueDate || s.dueDate < ctx.date)) problems.push({ field: `lines.${i}.schedule`, message: 'A delivery date is not in the past' });

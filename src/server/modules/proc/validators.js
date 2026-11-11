@@ -158,3 +158,12 @@ export const parseAvlCheckQ = (q) => parse(z.object({ partnerId: id, categoryId:
 export const parseActionCreate = (b) => parse(z.object({ partnerId: id, scorecardId: id.optional(), kind: z.enum(['REVIEW', 'CAR', 'DEVELOPMENT']), title: text(200).min(3), detail: optText(2000), owner: optText(60), dueDate: day.nullish().transform((v) => v || null) }).strict().transform(defined), b ?? {});
 export const parseActionRespond = (b) => parse(z.object({ response: text(2000).min(3, 'Say what was done') }).strict(), b ?? {});
 export const parseActionClose = (b) => parse(z.object({ note: optText(500) }).strict(), b ?? {});
+
+// ---- material rate intelligence (part 15.09) ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+const rateNum = z.number().finite().min(0.0001).max(1e9).refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, 'At most two decimals');
+export const parseSurvey = (b) => parse(z.object({ itemId: id, region: text(30).min(1).optional(), spec: optText(80), vendorId: id.optional(), date: day, rate: rateNum, uom: text(20).min(1), note: optText(500) }).strict().transform(defined), b ?? {});
+export const parseCorrection = (b) => parse(z.object({ rate: rateNum, reason }).strict(), b ?? {});
+const rtiIndexRow = z.object({ group: text(40).min(2), region: text(30).min(1).optional(), period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month such as 2026-09'), value: z.number().finite().min(0.0001).max(1e7) }).strict();
+export const parseRtiIndex = (b) => parse(rtiIndexRow.transform(defined), b ?? {});
+export const parseRtiIndexImport = (b) => parse(z.object({ rows: z.array(rtiIndexRow.transform(defined)).min(1).max(500) }).strict(), b ?? {});
+export const parseIntelQ = (q) => parse(z.object({ region: text(30).optional(), itemId: id.optional(), months: z.coerce.number().int().min(1).max(36).optional(), group: text(40).optional(), q: text(60).optional() }).strict(), q ?? {});

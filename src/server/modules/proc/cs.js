@@ -7,7 +7,7 @@ import { controlRegistry, protocolOf } from '../../platform/protocol/index.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { workflowOf } from '../../platform/workflow/index.js';
 import { todayIST } from '../../../shared/dates.js';
-import { rateContracts } from './pr.js';
+import { rateBenchmarks, rateContracts } from './pr.js';
 import { d3, json, nowIso, q3, rid, rs, same } from './base.js';
 
 // Comparative statement and vendor selection (part 15.04). From the quotations received for an RFQ the statement lays out every line against every vendor with the landed rate, the rank (equal rates share a rank), the technical compliance and
@@ -81,9 +81,9 @@ export function createCsService({ db, base }) {
   function writeMatrix(rfq, cs, keep) {
     const cells = cellsFor(rfq); const ls = rfqLines(rfq.id); const now = nowIso(); db.prepare('UPDATE proc_cs_lines SET deleted_at = ?, is_active = 0 WHERE cs_id = ? AND deleted_at IS NULL').run(now, cs.id);
     for (const l of ls) {
-      const row_ = cells.filter((c) => c.rfqLineId === l.id); const { ranks } = rankCells(row_); const b = benchmarks(rfq, l); const rcs = l.item_id ? (rateContracts.providers.map((fn) => { try { return fn({ companyId: rfq.company_id, projectId: rfq.org_project_id, itemId: l.item_id, vendorId: null }); } catch { return null; } }).find((x) => x?.rate > 0)?.rate ?? null) : null;
+      const row_ = cells.filter((c) => c.rfqLineId === l.id); const { ranks } = rankCells(row_); const b = benchmarks(rfq, l); const mk = l.item_id ? rateBenchmarks.lookup(db, { companyId: rfq.company_id, itemId: l.item_id, date: todayIST() }) : null; const rcs = l.item_id ? (rateContracts.providers.map((fn) => { try { return fn({ companyId: rfq.company_id, projectId: rfq.org_project_id, itemId: l.item_id, vendorId: null }); } catch { return null; } }).find((x) => x?.rate > 0)?.rate ?? null) : null;
       for (const c of row_) { const old = keep?.get(`${l.id}:${c.vendorId}`); const rank = ranks.get(c.vendorId);
-        db.prepare("INSERT INTO proc_cs_lines (company_id, cs_id, rfq_line_id, vendor_id, quotation_id, quotation_line_id, offered_qty, landed_rate, rank_no, is_l1, compliance, selected_qty, last_po_rate, last_project_rate, budget_rate, rc_rate, project_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'proc_quotation', ?)").run(rfq.company_id, cs.id, l.id, c.vendorId, c.quotationId, c.quotationLineId, c.offeredQty, c.landedRate, rank, rank === 1 ? 1 : 0, old?.compliance ?? (c.deviation ? 'DEVIATION' : 'YES'), Math.min(old?.selected ?? 0, c.offeredQty), b.lastPo, b.lastProject, b.budget, rcs, rfq.org_project_id, cs.requested_by, String(c.quotationId)); }
+        db.prepare("INSERT INTO proc_cs_lines (company_id, cs_id, rfq_line_id, vendor_id, quotation_id, quotation_line_id, offered_qty, landed_rate, rank_no, is_l1, compliance, selected_qty, last_po_rate, last_project_rate, budget_rate, rc_rate, market_rate, project_id, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'proc_quotation', ?)").run(rfq.company_id, cs.id, l.id, c.vendorId, c.quotationId, c.quotationLineId, c.offeredQty, c.landedRate, rank, rank === 1 ? 1 : 0, old?.compliance ?? (c.deviation ? 'DEVIATION' : 'YES'), Math.min(old?.selected ?? 0, c.offeredQty), b.lastPo, b.lastProject, b.budget, rcs, mk?.rate ?? null, rfq.org_project_id, cs.requested_by, String(c.quotationId)); }
     }
   }
   /** The vendor who quoted every line in full with the lowest total, or null. */
@@ -136,7 +136,7 @@ export function createCsService({ db, base }) {
       const ranked = o.vendors.filter((v) => v.fullQuote).sort((a, b) => a.totalLanded - b.totalLanded); ranked.forEach((v, i) => { v.overallRank = i > 0 && v.totalLanded === ranked[i - 1].totalLanded ? ranked[i - 1].overallRank : i + 1; });
       o.lines = rl.map((l) => { const it = l.item_id ? itemOf(r.company_id, l.item_id) : null; const mine = lines.filter((c) => c.rfq_line_id === l.id); const b = mine[0];
         return { rfqLineId: l.id, lineNo: l.line_no, itemId: l.item_id, itemCode: it?.code ?? null, itemName: it?.name ?? l.service_desc, qty: d3(l.qty), uom: l.uom, spec: l.spec,
-          benchmarks: { lastPo: rs(b?.last_po_rate ?? null), lastProject: rs(b?.last_project_rate ?? null), budget: rs(b?.budget_rate ?? null), rateContract: rs(b?.rc_rate ?? null), market: null },
+          benchmarks: { lastPo: rs(b?.last_po_rate ?? null), lastProject: rs(b?.last_project_rate ?? null), budget: rs(b?.budget_rate ?? null), rateContract: rs(b?.rc_rate ?? null), market: rs(b?.market_rate ?? null) },
           selectedQty: d3(mine.reduce((n, c) => n + c.selected_qty, 0)),
           cells: vendors.map((v) => { const c = mine.find((x) => x.vendor_id === v); const q = c ? db.prepare('SELECT delivery_days, valid_until, payment_terms FROM proc_quotations WHERE id = ?').get(c.quotation_id) : null; const ql = c ? db.prepare('SELECT make, deviation, rate FROM proc_quotation_lines WHERE id = ?').get(c.quotation_line_id) : null;
             return c ? { vendorId: v, quoted: true, rate: rs(ql?.rate ?? 0), landedRate: rs(c.landed_rate), landedAmount: rs(Math.round((c.landed_rate * Math.min(c.offered_qty, l.qty)) / 1000)), offeredQty: d3(c.offered_qty), rank: c.rank_no, isL1: Boolean(c.is_l1), compliance: c.compliance, make: ql?.make ?? null, deviation: ql?.deviation ?? null, deliveryDays: q.delivery_days, selectedQty: d3(c.selected_qty), vsLastPo: c.last_po_rate ? Math.round(((c.landed_rate - c.last_po_rate) / c.last_po_rate) * 1000) / 10 : null, vsBudget: c.budget_rate ? Math.round(((c.landed_rate - c.budget_rate) / c.budget_rate) * 1000) / 10 : null } : { vendorId: v, quoted: false }; }) }; });

@@ -16267,6 +16267,82 @@ Indexes:
 - ix_ra_sor_items_company: company_id, item_code
 - ux_ra_sor_items_code (unique): book_id, item_code
 
+## rti_indices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| index_group | TEXT | yes |  |  |
+| region_code | TEXT | yes |  | 'ALL' |
+| period | TEXT | yes |  |  |
+| index_value | INTEGER | yes |  |  |
+| index_source | TEXT | yes |  | 'MANUAL' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_rti_idx_key (unique): company_id, index_group, region_code, period
+
+## rti_observations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| spec_key | TEXT | yes |  | '' |
+| region_code | TEXT | yes |  | 'ALL' |
+| org_project_id | INTEGER |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| obs_date | TEXT | yes |  |  |
+| rate | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| landed_rate | INTEGER | yes |  |  |
+| base_uom | TEXT | yes |  |  |
+| base_landed_rate | INTEGER | yes |  |  |
+| basis | TEXT | yes |  | 'LANDED' |
+| is_outlier | INTEGER | yes |  | 0 |
+| outlier_reason | TEXT |  |  |  |
+| supersedes_id | INTEGER |  |  |  |
+| correction_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT | yes |  |  |
+| source_id | TEXT | yes |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supersedes_id -> rti_observations(id), vendor_id -> mdm_partners(id), org_project_id -> org_projects(id), item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rti_obs_supersedes: supersedes_id
+- ix_rti_obs_vendor: vendor_id
+- ix_rti_obs_project: org_project_id
+- ix_rti_obs_item: company_id, item_id, region_code, obs_date
+- ix_rti_obs_item_id: item_id
+- ux_rti_obs_source (unique): company_id, source_type, source_id
+
 ## sec_conversations
 
 | Column | Type | Not null | Key | Default |
