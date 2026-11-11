@@ -35,7 +35,7 @@ const vpoCall = async (method, token, path, body) => {
   const res = await fetch(`/api/v1/proc/vendor-po/${encodeURIComponent(token)}${path}`, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); const j = await res.json().catch(() => ({}));
   if (!res.ok) { const e = new Error(j?.error?.message ?? 'Something went wrong'); e.status = res.status; e.details = j?.error?.details ?? []; throw e; } return j.data;
 };
-export const vpo = { info: (t) => vpoCall('GET', t, ''), ack: (t, note) => vpoCall('POST', t, '/acknowledge', { note }), dispatch: (t, b) => vpoCall('POST', t, '/dispatch', b) };
+export const vpo = { info: (t) => vpoCall('GET', t, ''), ack: (t, note) => vpoCall('POST', t, '/acknowledge', { note }), dispatch: (t, b) => vpoCall('POST', t, '/dispatch', b), milestones: (t) => vpoCall('GET', t, '/milestones'), milestone: (t, id, b) => vpoCall('POST', t, `/milestones/${id}`, b) };
 export const RC_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CLOSED: 'COMPLETED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
 export const pc = {
   projects: () => get('/projects'),
@@ -142,4 +142,22 @@ export const pc = {
   seDelete: async (id) => (await api.delete(`/proc/service-entries/${id}`)).data,
   seAct: (id, action, b) => post(`/service-entries/${id}/${action}`, b),
   seHistory: (id) => get(`/service-entries/${id}/history`),
+};
+
+export const XPD_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CLOSED: 'COMPLETED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const SHIP_TONE = { PLANNED: 'DRAFT', DISPATCHED: 'IN_REVIEW', IN_TRANSIT: 'IN_REVIEW', DELIVERED: 'COMPLETED', CANCELLED: 'CANCELLED' };
+export const MS_TONE = { PENDING: 'DRAFT', IN_PROGRESS: 'IN_REVIEW', DONE: 'APPROVED', DELAYED: 'REJECTED' };
+const patch = async (p, b) => (await api.patch(`/proc${p}`, b, idem())).data;
+/** Expediting plans, vendor inspections and shipments (part 15.07). The risk, the arrival date, the clearance and the activities affected come from the server. */
+export const px = {
+  dashboard: (projectId) => get(`/expediting/dashboard${projectId ? `?projectId=${projectId}` : ''}`),
+  orders: (projectId) => get(`/expediting/orders?projectId=${projectId}`),
+  planOptions: (projectId) => get(`/expediting-plans/options?projectId=${projectId}`),
+  plan: (id) => get(`/expediting-plans/${id}`), planCreate: (b) => post('/expediting-plans', b), planUpdate: (id, b) => patch(`/expediting-plans/${id}`, b),
+  planDelete: async (id) => (await api.delete(`/proc/expediting-plans/${id}`)).data, planAct: (id, action, b) => post(`/expediting-plans/${id}/${action}`, b), planHistory: (id) => get(`/expediting-plans/${id}/history`),
+  progress: (id, mid, b) => patch(`/expediting-plans/${id}/milestones/${mid}`, b),
+  insp: (id) => get(`/inspections/${id}`), inspCreate: (b) => post('/inspections', b), inspUpdate: (id, b) => patch(`/inspections/${id}`, b),
+  inspDelete: async (id) => (await api.delete(`/proc/inspections/${id}`)).data, inspAct: (id, action, b) => post(`/inspections/${id}/${action}`, b), inspHistory: (id) => get(`/inspections/${id}/history`),
+  ship: (id) => get(`/shipments/${id}`), shipCreate: (b) => post('/shipments', b), shipUpdate: (id, b) => patch(`/shipments/${id}`, b),
+  shipDelete: async (id) => (await api.delete(`/proc/shipments/${id}`)).data, shipAct: (id, action, b) => post(`/shipments/${id}/${action}`, b),
 };

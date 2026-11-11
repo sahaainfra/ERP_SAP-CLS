@@ -117,3 +117,27 @@ const seLine = z.object({ soLineId: id, qty, note: optText(300) }).strict();
 export const parseSeCreate = (b) => parse(z.object({ soId: id, periodFrom: day, periodTo: day, lines: z.array(seLine).min(1, 'Certify at least one line').max(300) }).strict(), b ?? {});
 export const parseSeUpdate = (b) => defined(parse(z.object({ periodFrom: day.optional(), periodTo: day.optional(), lines: z.array(seLine).min(1).max(300).optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}));
 export const parseSeImport = (b) => parse(z.object({ rows: z.array(z.object({ lineNo: z.number().int().min(1), qty, note: optText(300) }).strict()).min(1).max(300) }).strict(), b ?? {});
+
+// ---- expediting, inspections and shipments (part 15.07) ----------------------------------------------------------------------------------------------------------------------------------------------
+const KIND = z.enum(['DRAWING_APPROVAL', 'RAW_MATERIAL', 'MANUFACTURING', 'TESTING', 'DISPATCH', 'OTHER']);
+const msRow = z.object({ name: text(120).min(2), kind: KIND.optional(), plannedDate: day, forecastDate: day.nullish().transform((v) => v || null) }).strict();
+const xpdFields = { requiredOnSite: day.optional(), transitDays: z.number().int().min(0).max(365).optional(), longLead: z.boolean().optional(), inspectionRequired: z.boolean().optional(), expediter: optText(60), milestones: z.array(msRow).min(1).max(40).optional() };
+export const parseXpdCreate = (b) => parse(z.object({ poId: id, ...xpdFields }).strict(), b ?? {});
+export const parseXpdUpdate = (b) => parse(z.object({ ...xpdFields, rowVersion: z.number().int().optional() }).strict().transform(defined), b ?? {});
+export const parseXpdImport = (b) => parse(z.object({ rows: z.array(msRow).min(1).max(40) }).strict(), b ?? {});
+export const parseMilestoneProgress = (b) => parse(z.object({ forecastDate: day.nullish().transform((v) => v || null).optional(), actualDate: day.nullish().transform((v) => v || null).optional(), status: z.enum(['PENDING', 'IN_PROGRESS', 'DONE', 'DELAYED']).optional(), remarks: optText(500).optional() }).strict().transform(defined), b ?? {});
+export const parseVendorMilestone = (b) => parse(z.object({ forecastDate: day.nullish().transform((v) => v || null).optional(), actualDate: day.nullish().transform((v) => v || null).optional(), remarks: optText(500).optional() }).strict().transform(defined), b ?? {});
+const iLine = z.object({ poLineId: id, qty }).strict();
+const inspFields = { itype: z.enum(['STAGE', 'FINAL', 'TPI']), mandatory: z.boolean().optional(), callDate: day, inspector: optText(80), agency: optText(120), location: optText(160), scope: optText(1000), lines: z.array(iLine).max(300).optional() };
+export const parseInspCreate = (b) => parse(z.object({ poId: id, ...inspFields }).strict(), b ?? {});
+export const parseInspUpdate = (b) => parse(z.object({ ...inspFields, rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+const punch = z.object({ point: text(300).min(3), severity: z.enum(['MINOR', 'MAJOR', 'CRITICAL']).optional(), status: z.enum(['OPEN', 'CLOSED']).optional() }).strict();
+export const parseInspResult = (b) => parse(z.object({ inspectionDate: day, result: z.enum(['PASSED', 'PASSED_WITH_PUNCH', 'FAILED']), inspector: optText(80), punchPoints: z.array(punch).max(200).optional() }).strict(), b ?? {});
+export const parsePunchImport = (b) => parse(z.object({ rows: z.array(punch).min(1).max(200) }).strict(), b ?? {});
+const shipFields = { transporter: optText(120), vehicleNo: optText(30), lrNo: optText(60), blNo: optText(60), ewayBillNo: optText(30), packingList: optText(1000), packages: z.number().int().min(0).max(100000).optional(), isOdc: z.boolean().optional(), odcPermitNo: optText(60), odcValidTo: day.nullish().transform((v) => v || null), odcDimensions: optText(200), eta: day.nullish().transform((v) => v || null), lines: z.array(iLine).max(300).optional() };
+export const parseShipCreate = (b) => parse(z.object({ poId: id, ...shipFields }).strict(), b ?? {});
+export const parseShipUpdate = (b) => parse(z.object({ ...shipFields, rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parseShipDispatch = (b) => parse(z.object({ dispatchedOn: day.optional(), eta: day.optional(), location: optText(120) }).strict().transform(defined), b ?? {});
+export const parseShipTrack = (b) => parse(z.object({ location: optText(120), note: optText(300), eta: day.optional() }).strict().transform(defined), b ?? {});
+export const parseShipDeliver = (b) => parse(z.object({ deliveredOn: day.optional() }).strict().transform(defined), b ?? {});
+export const parseDashQ = (q) => parse(z.object({ projectId: id.optional() }).strict(), q ?? {});

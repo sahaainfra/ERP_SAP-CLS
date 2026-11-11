@@ -18,6 +18,10 @@ import PoTrackerPage from './PoTrackerPage.jsx';
 import RateContractsPage from './RateContractsPage.jsx';
 import ServiceOrdersPage from './ServiceOrdersPage.jsx';
 import ServiceEntriesPage from './ServiceEntriesPage.jsx';
+import ExpeditingDashboardPage from './ExpeditingDashboardPage.jsx';
+import ExpeditingPlansPage from './ExpeditingPlansPage.jsx';
+import InspectionsPage from './InspectionsPage.jsx';
+import ShipmentsPage from './ShipmentsPage.jsx';
 
 registerModule({
   code: 'proc',
@@ -42,5 +46,9 @@ registerModule({
     { path: '/proc/rate-contracts', label: 'Rate Contracts', icon: 'erp.group.supply', permission: 'proc.rate_contract.view', flag: 'ff.proc.p1506', Page: RateContractsPage },
     { path: '/proc/service-orders', label: 'Service Orders', icon: 'erp.group.supply', permission: 'proc.service_order.view', flag: 'ff.proc.p1506', Page: ServiceOrdersPage },
     { path: '/proc/service-entries', label: 'Service Entry Sheets', icon: 'erp.group.supply', permission: 'proc.service_entry.view', flag: 'ff.proc.p1506', Page: ServiceEntriesPage },
+    { path: '/proc/expediting', label: 'Expediting Dashboard', icon: 'erp.group.supply', permission: 'proc.expediting_plan.view', flag: 'ff.proc.p1507', Page: ExpeditingDashboardPage },
+    { path: '/proc/expediting-plans', label: 'Expediting Plans', icon: 'erp.group.supply', permission: 'proc.expediting_plan.view', flag: 'ff.proc.p1507', Page: ExpeditingPlansPage },
+    { path: '/proc/inspections', label: 'Vendor Inspections', icon: 'erp.group.supply', permission: 'proc.inspection.view', flag: 'ff.proc.p1507', Page: InspectionsPage },
+    { path: '/proc/shipments', label: 'Shipments Tracker', icon: 'erp.group.supply', permission: 'proc.shipment.view', flag: 'ff.proc.p1507', Page: ShipmentsPage },
   ],
 });

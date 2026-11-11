@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react';
 import { vpo, fmtDate, fmtQty } from './api.js';
 
+// The milestones panel (part 15.07, FR-01): the vendor tells the forecast date, the actual date and a note of each milestone of the expediting plan; the planned dates stay as the buyer approved them.
+function Milestones({ tk }) {
+  const [data, setData] = useState(null); const [edit, setEdit] = useState({}); const [msg, setMsg] = useState(null); const [err, setErr] = useState(null);
+  const load = () => vpo.milestones(tk).then(setData).catch(() => setData({ plan: null, milestones: [] }));
+  useEffect(() => { load(); }, []);
+  if (!data?.plan) return null;
+  const set = (m, k, v) => setEdit({ ...edit, [m.id]: { ...(edit[m.id] ?? {}), [k]: v } });
+  const save = async (m) => { setMsg(null); setErr(null); const e = edit[m.id] ?? {}; try { const r = await vpo.milestone(tk, m.id, { forecastDate: e.forecastDate ?? m.forecastDate ?? null, actualDate: e.actualDate ?? m.actualDate ?? null, remarks: e.remarks ?? m.remarks ?? null }); setMsg(r.message); setEdit({}); await load(); } catch (x) { setErr(x.message); } };
+  return (
+    <div className="mdm-panel" data-testid="vp-milestones"><h2>Your progress</h2><p className="muted">Required at site by {fmtDate(data.plan.requiredOnSite)}. Tell us the date you now expect each step to finish, and the date it finished.</p>
+      {msg && <p role="status" className="mdm-banner" data-testid="vp-ms-done">{msg}</p>}{err && <p className="field-error" role="alert" data-testid="vp-ms-error">{err}</p>}
+      <div className="table-scroll"><table className="data-table"><thead><tr><th>Step</th><th>Planned</th><th>Expected</th><th>Finished</th><th>Note</th><th /></tr></thead><tbody>{data.milestones.map((m) => <tr key={m.id} data-testid="vp-ms"><td>{m.name}</td><td>{fmtDate(m.plannedDate)}</td>
+        <td><input type="date" value={edit[m.id]?.forecastDate ?? m.forecastDate ?? ''} onChange={(e) => set(m, 'forecastDate', e.target.value)} style={{ minHeight: 44 }} aria-label={`${m.name} expected`} data-testid="vp-ms-forecast" /></td>
+        <td><input type="date" max={today()} value={edit[m.id]?.actualDate ?? m.actualDate ?? ''} onChange={(e) => set(m, 'actualDate', e.target.value)} style={{ minHeight: 44 }} aria-label={`${m.name} finished`} /></td>
+        <td><input value={edit[m.id]?.remarks ?? m.remarks ?? ''} maxLength={500} onChange={(e) => set(m, 'remarks', e.target.value)} style={{ minHeight: 44 }} aria-label={`${m.name} note`} /></td>
+        <td><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => save(m)} data-testid="vp-ms-save">Save</button></td></tr>)}</tbody></table></div></div>
+  );
+}
+
 // The vendor's page for an order (part 15.05, FR-04, FR-06): no sign-in, the link is the proof. The vendor reads the order, acknowledges it and tells the dispatch (advance shipping notice).
 const token = () => new URLSearchParams(window.location.search).get('token') ?? '';
 const field = { minHeight: 44, width: '100%', boxSizing: 'border-box' };
@@ -32,6 +51,7 @@ export default function VendorPoPage() {
         {info.lines.filter((l) => l.balanceQty > 0).map((l) => <label key={l.id}>{l.lineNo}. {l.description} ({l.uom})<input type="number" min="0" step="0.001" max={l.balanceQty} value={qty[l.id] ?? ''} onChange={(e) => setQty({ ...qty, [l.id]: e.target.value })} style={field} data-testid="vp-qty" /></label>)}
         <div className="form-grid"><label>Dispatch date<input type="date" value={f.dispatchDate} onChange={(e) => setF({ ...f, dispatchDate: e.target.value })} style={field} /></label><label>Expected at site<input type="date" value={f.expectedArrival} onChange={(e) => setF({ ...f, expectedArrival: e.target.value })} style={field} data-testid="vp-arrival" /></label><label>Vehicle number<input value={f.vehicleNo} maxLength={30} onChange={(e) => setF({ ...f, vehicleNo: e.target.value })} style={field} data-testid="vp-vehicle" /></label><label>E-way bill<input value={f.ewayBillNo} maxLength={30} onChange={(e) => setF({ ...f, ewayBillNo: e.target.value })} style={field} /></label><label>Your invoice number<input value={f.vendorInvoiceNo} maxLength={60} onChange={(e) => setF({ ...f, vendorInvoiceNo: e.target.value })} style={field} /></label><label>LR / challan number<input value={f.lrNo} maxLength={60} onChange={(e) => setF({ ...f, lrNo: e.target.value })} style={field} /></label></div>
         <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || Object.values(qty).every((v) => !(Number(v) > 0))} data-testid="vp-send">Send the dispatch details</button></div></form>}
+      {info.status === 'APPROVED' && <Milestones tk={token()} />}
     </>,
   );
 }

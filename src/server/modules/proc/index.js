@@ -22,6 +22,7 @@ import { CS_DOC, CS_STATUS, createCsService } from './cs.js';
 import { PO_DOC, AMEND_DOC, CLOSE_DOC, ADV_DOC, PO_STATUS, createPoService } from './po.js';
 import { RC_DOC, PV_DOC, RC_STATUS, PV_STATUS, createRcService } from './rc.js';
 import { SO_DOC, SES_DOC, SO_STATUS, SES_STATUS, createSoService } from './so.js';
+import { XPD_DOC, IRN_DOC, XPD_STATUS, INSP_STATUS, SHIP_STATUS, createXpdService } from './xpd.js';
 import { procRoutes, vendorQuoteRoutes } from './routes.js';
 
 const services = new WeakMap();
@@ -73,12 +74,20 @@ for (const [type, description] of [
   ['proc.so.cancelled', 'A service order was cancelled (part 15.06): data { soId, docNo, reason }.'],
   ['proc.service_entry.approved', 'A service entry sheet was certified (part 15.06): data { sesId, docNo, soId, soNo, vendorId, periodFrom, periodTo, amount, supersedes, lines: [{ soLineId, qty, rate, amount }] }. For invoice matching (22.06).'],
   ['proc.service_entry.reversed', 'A certified service entry sheet was cancelled and its certification undone (part 15.06): data { sesId, docNo, soId, reason, amount }.'],
+  ['proc.expediting.plan_approved', 'An expediting plan was approved (part 15.07): data { planId, docNo, poId, requiredOnSite, eta, supersedes }.'],
+  ['proc.expediting.milestone_updated', 'A milestone of an expediting plan was updated by the buyer or the vendor (part 15.07): data { planId, docNo, milestoneId, name, forecastDate, actualDate, status, via }.'],
+  ['proc.expediting.eta_updated', 'The date an ordered item will reach the site changed (part 15.07): data { planId, docNo, poId, poNo, eta, requiredOnSite, daysLate, items: [{ itemId, qty, uom }] }. For the look-ahead constraints (13.04).'],
+  ['proc.expediting.delay_detected', 'An ordered item is expected after the date required on site (part 15.07): data { planId, docNo, poId, poNo, eta, requiredOnSite, daysLate, milestones, activities: [{ activityId, code, name, start, finish, daysBeforeArrival }] }.'],
+  ['proc.inspection.irn_issued', 'An inspection release note was issued (part 15.07): data { inspectionId, docNo, irnNo, poId, type, result, supersedes }.'],
+  ['proc.inspection.failed', 'An inspection at the vendor works failed (part 15.07): data { inspectionId, docNo, poId, type }.'],
+  ['proc.shipment.dispatched', 'A shipment left the vendor (part 15.07): data { shipmentId, shipmentNo, poId, poNo, vendorId, transporter, vehicleNo, lrNo, ewayBillNo, eta, isOdc, clearance, lines: [{ poLineId, lineNo, qty, uom }] }. For the gate entry (16.02).'],
+  ['proc.shipment.delivered', 'A shipment was delivered at site (part 15.07): data { shipmentId, shipmentNo, poId, deliveredOn, lines }.'],
   ['proc.stock.levels_loaded', 'Free stock levels of items in stores were loaded for the stock check (part 15.01): data { levels, changed }. Until the stock module (16.01) keeps them.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proc', description });
 
 integrityRegistry.register({
-  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS), proc_comparative_statements: Object.keys(CS_STATUS), proc_purchase_orders: Object.keys(PO_STATUS), proc_rate_contracts: Object.keys(RC_STATUS), proc_rc_revisions: Object.keys(PV_STATUS), proc_service_orders: Object.keys(SO_STATUS), proc_service_entries: Object.keys(SES_STATUS), proc_po_amendments: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_po_advances: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_dispatches: ['DISPATCHED', 'RECEIVED', 'CANCELLED'] },
-  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }, { table: 'proc_comparative_statements', columns: ['company_id', 'doc_no'] }, { table: 'proc_purchase_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_po_advances', columns: ['company_id', 'doc_no'] }, { table: 'proc_dispatches', columns: ['company_id', 'asn_no'] }, { table: 'proc_rate_contracts', columns: ['company_id', 'doc_no'] }, { table: 'proc_service_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_service_entries', columns: ['company_id', 'doc_no'] }],
+  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS), proc_comparative_statements: Object.keys(CS_STATUS), proc_purchase_orders: Object.keys(PO_STATUS), proc_rate_contracts: Object.keys(RC_STATUS), proc_rc_revisions: Object.keys(PV_STATUS), proc_service_orders: Object.keys(SO_STATUS), proc_service_entries: Object.keys(SES_STATUS), xpd_expediting_plans: Object.keys(XPD_STATUS), xpd_inspections: Object.keys(INSP_STATUS), xpd_shipments: Object.keys(SHIP_STATUS), proc_po_amendments: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_po_advances: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_dispatches: ['DISPATCHED', 'RECEIVED', 'CANCELLED'] },
+  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }, { table: 'proc_comparative_statements', columns: ['company_id', 'doc_no'] }, { table: 'proc_purchase_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_po_advances', columns: ['company_id', 'doc_no'] }, { table: 'proc_dispatches', columns: ['company_id', 'asn_no'] }, { table: 'proc_rate_contracts', columns: ['company_id', 'doc_no'] }, { table: 'proc_service_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_service_entries', columns: ['company_id', 'doc_no'] }, { table: 'xpd_expediting_plans', columns: ['company_id', 'doc_no'] }, { table: 'xpd_inspections', columns: ['company_id', 'doc_no'] }, { table: 'xpd_shipments', columns: ['company_id', 'doc_no'] }],
 });
 
 /** Module "proc": procurement (M15). Part 15.01 holds the material requests (site indents) and the purchase requisitions. The tables are `proc_*`. */
@@ -88,8 +97,8 @@ export const proc = {
   routePrefix: '/api/v1/proc',
   ownerPart: '15.01',
   status: 'Material requests (site indents) against work authorisations with the stock of the site, nearby stores and the central warehouse; fulfilment by issue, transfer or purchase; purchase requisitions from consolidated requests or direct, with stock, budget and duplicate checks, approval by value and an emergency path.',
-  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations', 'proc_purchase_orders', 'proc_po_lines', 'proc_po_schedules', 'proc_po_amendments', 'proc_dispatches', 'proc_po_receipts', 'proc_po_advances', 'proc_price_indices', 'proc_rate_contracts', 'proc_rc_lines', 'proc_rc_revisions', 'proc_service_orders', 'proc_so_lines', 'proc_service_entries', 'proc_se_lines'],
-  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements', 'purchase-orders', 'rate-contracts', 'service-orders', 'service-entries'],
+  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations', 'proc_purchase_orders', 'proc_po_lines', 'proc_po_schedules', 'proc_po_amendments', 'proc_dispatches', 'proc_po_receipts', 'proc_po_advances', 'proc_price_indices', 'proc_rate_contracts', 'proc_rc_lines', 'proc_rc_revisions', 'proc_service_orders', 'proc_so_lines', 'proc_service_entries', 'proc_se_lines', 'xpd_expediting_plans', 'xpd_milestones', 'xpd_inspections', 'xpd_shipments', 'xpd_shipment_events'],
+  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements', 'purchase-orders', 'rate-contracts', 'service-orders', 'service-entries', 'expediting-plans', 'inspections', 'shipments', 'expediting'],
 
   mount(api, { db, config: appConfig, publicApi }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proc_requisitions'").get()) return;
@@ -98,7 +107,7 @@ export const proc = {
     const mrpSvc = createMrpService({ db, base, stock: stockSvc, pr: prSvc }); const paramSvc = createItemParamService({ db, base });
     const rfqSvc = createRfqService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '' });
     const csSvc = createCsService({ db, base }); const rcSvc = createRcService({ db, base }); const soSvc = createSoService({ db, base }); const poSvc = createPoService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '', rc: rcSvc });
-    const svc = { rcSvc, soSvc, rcDecide: rcSvc.decide, pvDecide: rcSvc.pvDecide, soDecide: soSvc.decide, sesDecide: soSvc.sesDecide, poSvc, poDecide: poSvc.decide, amendDecide: poSvc.amendDecide, advanceDecide: poSvc.advanceDecide, csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
+    const xpdSvc = createXpdService({ db, base }); const svc = { xpdSvc, xpdDecide: xpdSvc.decide, irnDecide: xpdSvc.irnDecide, rcSvc, soSvc, rcDecide: rcSvc.decide, pvDecide: rcSvc.pvDecide, soDecide: soSvc.decide, sesDecide: soSvc.sesDecide, poSvc, poDecide: poSvc.decide, amendDecide: poSvc.amendDecide, advanceDecide: poSvc.advanceDecide, csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
     listExports.register('proc.mrp_runs', { source: (actor, req) => mrpSvc.mrp.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.material_requests', { source: (actor, req) => mrSvc.mrs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.requisitions', { source: (actor, req) => prSvc.prs.exportSource(actor, req), hidden: () => [] });
@@ -109,7 +118,13 @@ export const proc = {
     listExports.register('proc.rate_contracts', { source: (actor, req) => rcSvc.rcs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.service_orders', { source: (actor, req) => soSvc.sos.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.service_entries', { source: (actor, req) => soSvc.ses.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.expediting_plans', { source: (actor, req) => xpdSvc.plans.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.inspections', { source: (actor, req) => xpdSvc.insps.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.shipments', { source: (actor, req) => xpdSvc.ships.exportSource(actor, req), hidden: () => [] });
     const runtime = runtimeOf(db);
+    // FR-05 (15.07): every morning at 08:30 India time milestones past their date are told and the plans at risk are worked out again
+    runtime?.jobs?.register('proc.xpd_sweep', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1507')) continue; n += xpdSvc.sweep(); break; } ctx.log(`Told ${n} expediting alert(s)`); return { alerts: n }; }, { maxAttempts: 2, description: 'Marks milestones past their date as delayed, works out the date each ordered item reaches the site and tells procurement, the project manager and the planner of items expected after the date required.' });
+    runtime?.scheduler?.define({ code: 'proc.xpd_sweep_daily', cron: '0 3 * * *', jobType: 'proc.xpd_sweep', description: 'Every day 08:30 India time: expediting delay alerts' });
     // FR-06 (15.05): every morning at 09:00 India time the buyer is told of orders with a delivery past its date
     runtime?.jobs?.register('proc.po_overdue', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1505')) continue; n += poSvc.extra.sweep(); break; } ctx.log(`Told the buyers of ${n} order(s) with a delivery past its date`); return { orders: n }; }, { maxAttempts: 2, description: 'Tells the buyer of each approved purchase order that has a delivery past its date.' });
     runtime?.scheduler?.define({ code: 'proc.po_overdue_daily', cron: '30 3 * * *', jobType: 'proc.po_overdue', description: 'Every day 09:00 India time: purchase orders with overdue deliveries are told to the buyer' });
@@ -132,13 +147,14 @@ export const proc = {
     router.use(/^\/(runs|proposals|item-params|supply|mrp)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1502') ? next() : next(notFound('Material demand planning (MRP) is not enabled for your company yet (feature flag ff.proc.p1502 is OFF).'))));
     router.use(/^\/(rfqs|quotations)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1503') ? next() : next(notFound('RFQs and vendor quotations are not enabled for your company yet (feature flag ff.proc.p1503 is OFF).'))));
     router.use(/^\/(rate-contracts|service-orders|service-entries)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1506') ? next() : next(notFound('Rate contracts and service orders are not enabled for your company yet (feature flag ff.proc.p1506 is OFF).'))));
+    router.use(/^\/(expediting-plans|inspections|shipments|expediting)(?=\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1507') ? next() : next(notFound('Expediting, vendor inspection and shipments are not enabled for your company yet (feature flag ff.proc.p1507 is OFF).'))));
     router.use(/^\/purchase-orders(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1505') ? next() : next(notFound('Purchase orders are not enabled for your company yet (feature flag ff.proc.p1505 is OFF).'))));
     router.use(/^\/comparative-statements(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1504') ? next() : next(notFound('Comparative statements are not enabled for your company yet (feature flag ff.proc.p1504 is OFF).'))));
     router.use(procRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/proc', router);
     // the vendor's page: no sign-in, the link is the proof; switched off with the flag of the company that issued it
-    publicApi.use('/proc', (req, res, next) => { const t = String(req.path).match(/^\/vendor-quote\/([A-Za-z0-9_-]+)/)?.[1]; if (!t) return next(); const v = db.prepare('SELECT company_id FROM proc_rfq_vendors WHERE token_hash = ?').get(createHash('sha256').update(t).digest('hex')); return v && flags.isOn({ companyId: v.company_id }, 'ff.proc.p1503') ? next() : next(notFound('This link is not valid.')); }, vendorQuoteRoutes({ portal: rfqSvc.portal, po: poSvc }));
-    publicApi.use('/proc', (req, res, next) => { const tk = String(req.path).match(/^\/vendor-po\/([A-Za-z0-9_-]+)/)?.[1]; if (!tk) return next(); const v = db.prepare('SELECT company_id FROM proc_purchase_orders WHERE ack_token_hash = ?').get(createHash('sha256').update(tk).digest('hex')); return v && flags.isOn({ companyId: v.company_id }, 'ff.proc.p1505') ? next() : next(notFound('This link is not valid.')); });
+    publicApi.use('/proc', (req, res, next) => { const t = String(req.path).match(/^\/vendor-quote\/([A-Za-z0-9_-]+)/)?.[1]; if (!t) return next(); const v = db.prepare('SELECT company_id FROM proc_rfq_vendors WHERE token_hash = ?').get(createHash('sha256').update(t).digest('hex')); return v && flags.isOn({ companyId: v.company_id }, 'ff.proc.p1503') ? next() : next(notFound('This link is not valid.')); }, vendorQuoteRoutes({ portal: rfqSvc.portal, po: poSvc, xpd: xpdSvc }));
+    publicApi.use('/proc', (req, res, next) => { const tk = String(req.path).match(/^\/vendor-po\/([A-Za-z0-9_-]+)/)?.[1]; if (!tk) return next(); const v = db.prepare('SELECT company_id FROM proc_purchase_orders WHERE ack_token_hash = ?').get(createHash('sha256').update(tk).digest('hex')); return v && flags.isOn({ companyId: v.company_id }, /\/milestones/.test(req.path) ? 'ff.proc.p1507' : 'ff.proc.p1505') ? next() : next(notFound('This link is not valid.')); });
   },
 };
 
@@ -298,7 +314,7 @@ for (const [entity, table, view, edit, label] of [['proc_rfq', 'proc_rfqs', 'pro
     entity, label,
     resolve(db, actor, id) {
       const r = db.prepare(`SELECT company_id, org_project_id, status FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null;
-      const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at(view)) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
+      const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at(view)) return null; const open = ['DRAFT', 'RETURNED', 'PLANNED'].includes(r.status);
       return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at(edit) && (open || (entity === 'proc_rfq' && r.status === 'ISSUED')), locked: !open && r.status !== 'ISSUED' };
     },
   });
@@ -339,7 +355,7 @@ fileEntities.register({
   entity: 'proc_comparative_statement', label: 'Comparative statement (negotiation minutes, technical evaluation, justification)',
   resolve(db, actor, id) {
     const r = db.prepare('SELECT company_id, org_project_id, status FROM proc_comparative_statements WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
-    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('proc.comparative_statement.view')) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('proc.comparative_statement.view')) return null; const open = ['DRAFT', 'RETURNED', 'PLANNED'].includes(r.status);
     return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at('proc.comparative_statement.edit') && open, locked: !open };
   },
 });
@@ -409,7 +425,7 @@ fileEntities.register({
   entity: 'proc_purchase_order', label: 'Purchase order (drawings, specifications, test certificates, signed copy)',
   resolve(db, actor, id) {
     const r = db.prepare('SELECT company_id, org_project_id, po_site_id, status FROM proc_purchase_orders WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
-    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.po_site_id }).allowed; if (!at('proc.purchase_order.view')) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.po_site_id }).allowed; if (!at('proc.purchase_order.view')) return null; const open = ['DRAFT', 'RETURNED', 'PLANNED'].includes(r.status);
     return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.po_site_id ?? undefined, canView: true, canEdit: at('proc.purchase_order.edit') && (open || r.status === 'APPROVED'), locked: !open && r.status !== 'APPROVED' };
   },
 });
@@ -459,8 +475,34 @@ workflowTypes.register({
     onReturned: (db, { instance, actor, comment }) => procOf(db)?.sesDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.sesDecide(instance, actor, 'CANCELLED', comment),
   },
 });
+// ---- expediting plan (15.07) and the inspection release note ------------------------------------------------------------------------------------------------------------------------------------
+const xline = (db, id) => db.prepare('SELECT x.*, o.doc_no AS ono, p.code AS pcode, COALESCE(v.trade_name, v.legal_name) AS vname FROM xpd_expediting_plans x JOIN proc_purchase_orders o ON o.id = x.po_id JOIN org_projects p ON p.id = x.org_project_id JOIN mdm_partners v ON v.id = o.vendor_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: XPD_DOC, label: 'Expediting plan', processOwner: 'PROCMGR', route: (id) => `/proc/expediting-plans?id=${id}`,
+  describe(db, companyId, id) { const r = xline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.pcode}: ${r.doc_no} for ${r.ono} with ${r.vname}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = xline(db, Number(id)); if (!r) return null; const ms = db.prepare('SELECT name, planned_date FROM xpd_milestones WHERE plan_id = ? AND deleted_at IS NULL ORDER BY seq_no').all(r.id); return { fields: [{ label: 'Order', value: `${r.ono} ${r.vname}` }, { label: 'Required on site', value: r.required_on_site }, { label: 'Long lead', value: r.long_lead ? 'yes' : 'no' }, { label: 'Inspection before dispatch', value: r.inspection_required ? 'required' : 'not required' }, { label: 'Milestones', value: ms.map((m) => `${m.name} ${m.planned_date}`).join('; ') }] }; },
+  defaultDefinition: { name: 'Expediting plan: the procurement manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.xpdDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.xpdDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.xpdDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.xpdDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+const irnline = (db, id) => db.prepare('SELECT x.*, o.doc_no AS ono, p.code AS pcode, COALESCE(v.trade_name, v.legal_name) AS vname FROM xpd_inspections x JOIN proc_purchase_orders o ON o.id = x.po_id JOIN org_projects p ON p.id = x.org_project_id JOIN mdm_partners v ON v.id = o.vendor_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: IRN_DOC, label: 'Inspection release note', processOwner: 'QCMGR', route: (id) => `/proc/inspections?id=${id}`,
+  describe(db, companyId, id) { const r = irnline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.pcode}: ${r.doc_no} on ${r.ono} with ${r.vname}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = irnline(db, Number(id)); if (!r) return null; const pp = JSON.parse(r.punch_points_json ?? '[]'); return { fields: [{ label: 'Order', value: `${r.ono} ${r.vname}` }, { label: 'Type', value: r.itype.toLowerCase() }, { label: 'Inspected', value: `${r.inspection_date ?? ''} by ${r.inspector ?? ''}${r.agency ? ` (${r.agency})` : ''}` }, { label: 'Result', value: r.result.toLowerCase().replaceAll('_', ' ') }, { label: 'Punch points', value: pp.map((x) => `${x.point} (${x.severity.toLowerCase()})`).join('; ') || 'none' }] }; },
+  defaultDefinition: { name: 'Inspection release note: a quality engineer reviews, the quality manager releases', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('QCE', 'Quality engineer (reviews the inspection)', 'QCE', 24), approver('QCMGR', 'Quality manager (releases)', 'QCMGR', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.irnDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.irnDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.irnDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.irnDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
 /** @type {any[][]} */
 const reg3 = [
+  ['xpd_expediting_plan', 'Expediting plan', 'proc.expediting_plan.view', 'xpd_expediting_plans', 'xpdSvc', (s, a, id) => s.xpdSvc.plans.get(a, id), (r) => ({ projectId: r.projectId, status: r.status }), (r) => ({ label: `${r.docNo} ${r.poNo}`, status: r.status }), '/proc/expediting-plans'],
+  ['xpd_inspection', 'Vendor inspection', 'proc.inspection.view', 'xpd_inspections', 'xpdSvc', (s, a, id) => s.xpdSvc.insps.get(a, id), (r) => ({ projectId: r.projectId, status: r.status }), (r) => ({ label: `${r.docNo} ${r.poNo}`, status: r.status }), '/proc/inspections'],
+  ['xpd_shipment', 'Shipment', 'proc.shipment.view', 'xpd_shipments', 'xpdSvc', (s, a, id) => s.xpdSvc.ships.get(a, id), (r) => ({ projectId: r.projectId, status: r.status }), (r) => ({ label: `${r.docNo} ${r.poNo}`, status: r.status }), '/proc/shipments'],
   ['proc_rate_contract', 'Rate contract', 'proc.rate_contract.view', 'proc_rate_contracts', 'rcSvc', (s, a, id) => s.rcSvc.rcs.get(a, id), (r) => ({ companyId: null, status: r.status }), (r) => ({ label: `${r.docNo} ${r.vendor}`, status: r.status }), '/proc/rate-contracts'],
   ['proc_service_order', 'Service order', 'proc.service_order.view', 'proc_service_orders', 'soSvc', (s, a, id) => s.soSvc.sos.get(a, id), (r) => ({ projectId: r.projectId, siteId: r.siteId ?? undefined, status: r.status }), (r) => ({ label: `${r.docNo} ${r.vendor}`, status: r.status }), '/proc/service-orders'],
   ['proc_service_entry', 'Service entry sheet', 'proc.service_entry.view', 'proc_service_entries', 'soSvc', (s, a, id) => s.soSvc.ses.get(a, id), (r) => ({ projectId: r.projectId, status: r.status }), (r) => ({ label: `${r.docNo} ${r.soNo}`, status: r.status }), '/proc/service-entries'],
@@ -477,7 +519,7 @@ for (const [type, label, perm, table, , get, acc, sum, route] of reg3) {
   fileEntities.register({
     entity: type, label: `${label} (documents, scans, certificates)`,
     resolve(db, actor, id) {
-      const r = db.prepare(`SELECT * FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const pj = r.org_project_id ?? undefined; const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: pj }).allowed; if (!at(perm)) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
+      const r = db.prepare(`SELECT * FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const pj = r.org_project_id ?? undefined; const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: pj }).allowed; if (!at(perm)) return null; const open = ['DRAFT', 'RETURNED', 'PLANNED'].includes(r.status);
       return { companyId: r.company_id, projectId: pj, canView: true, canEdit: at(String(perm).replace('.view', '.edit')) && (open || r.status === 'APPROVED'), locked: !open && r.status !== 'APPROVED' };
     },
   });

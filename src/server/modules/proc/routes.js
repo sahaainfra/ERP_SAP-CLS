@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck, parseRcCreate, parseRcUpdate, parseRcImport, parseIndexSet, parseIndexQ, parsePvRequest, parseSoCreate, parseSoUpdate, parseSoImport, parseSeCreate, parseSeUpdate, parseSeImport } from './validators.js';
+import { parseDashQ, parseXpdCreate, parseXpdUpdate, parseXpdImport, parseMilestoneProgress, parseVendorMilestone, parseInspCreate, parseInspUpdate, parseInspResult, parsePunchImport, parseShipCreate, parseShipUpdate, parseShipDispatch, parseShipTrack, parseShipDeliver, parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck, parseRcCreate, parseRcUpdate, parseRcImport, parseIndexSet, parseIndexQ, parsePvRequest, parseSoCreate, parseSoUpdate, parseSoImport, parseSeCreate, parseSeUpdate, parseSeImport } from './validators.js';
 import { HttpError } from '../../platform/http/errors.js';
 import { createRateLimiter } from '../../platform/integrations/breaker.js';
 
@@ -200,11 +200,54 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   r.post('/service-entries/:id/import', idempotentRequired, (req, res) => ok(res, se.importLines(req.actor, pid(req), parseSeImport(req.body))));
   r.get('/service-entries/:id/history', (req, res) => ok(res, se.history(req.actor, pid(req))));
   r.get('/service-entries/:id/print', (req, res) => file(res, se.print(req.actor, pid(req))));
+  // expediting plans, inspections and shipments (part 15.07)
+  const xp = svc.xpdSvc.plans; const xi = svc.xpdSvc.insps; const xs = svc.xpdSvc.ships;
+  r.get('/expediting/dashboard', (req, res) => ok(res, svc.xpdSvc.dashboard(req.actor, parseDashQ(req.query).projectId ?? null)));
+  r.get('/expediting/orders', (req, res) => ok(res, svc.xpdSvc.orders(req.actor, parseProjectQ(req.query).projectId)));
+  r.get('/expediting-plans/options', (req, res) => ok(res, xp.options(req.actor, parseProjectQ(req.query).projectId)));
+  r.get('/expediting-plans', (req, res) => res.json(xp.list(req.actor, req.query)));
+  r.post('/expediting-plans', idempotentRequired, (req, res) => ok(res, xp.create(req.actor, parseXpdCreate(req.body)), 201));
+  r.get('/expediting-plans/:id', (req, res) => ok(res, xp.get(req.actor, pid(req))));
+  r.patch('/expediting-plans/:id', idempotent, (req, res) => ok(res, xp.update(req.actor, pid(req), parseXpdUpdate(req.body))));
+  r.delete('/expediting-plans/:id', (req, res) => ok(res, xp.remove(req.actor, pid(req))));
+  r.post('/expediting-plans/:id/submit', idempotentRequired, (req, res) => ok(res, xp.submit(req.actor, pid(req)), 202));
+  r.post('/expediting-plans/:id/withdraw', idempotent, (req, res) => ok(res, xp.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/expediting-plans/:id/cancel', idempotent, (req, res) => ok(res, xp.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/expediting-plans/:id/close', idempotent, (req, res) => ok(res, xp.close(req.actor, pid(req), parseReason(req.body))));
+  r.post('/expediting-plans/:id/amend', idempotentRequired, (req, res) => ok(res, xp.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/expediting-plans/:id/import', idempotentRequired, (req, res) => ok(res, xp.importMilestones(req.actor, pid(req), parseXpdImport(req.body))));
+  r.patch('/expediting-plans/:id/milestones/:mid', idempotent, (req, res) => ok(res, xp.progress(req.actor, pid(req), parseId(req.params.mid), parseMilestoneProgress(req.body))));
+  r.get('/expediting-plans/:id/history', (req, res) => ok(res, xp.history(req.actor, pid(req))));
+  r.get('/expediting-plans/:id/print', (req, res) => file(res, xp.print(req.actor, pid(req))));
+  r.get('/inspections', (req, res) => res.json(xi.list(req.actor, req.query)));
+  r.post('/inspections', idempotentRequired, (req, res) => ok(res, xi.create(req.actor, parseInspCreate(req.body)), 201));
+  r.get('/inspections/:id', (req, res) => ok(res, xi.get(req.actor, pid(req))));
+  r.patch('/inspections/:id', idempotent, (req, res) => ok(res, xi.update(req.actor, pid(req), parseInspUpdate(req.body))));
+  r.delete('/inspections/:id', (req, res) => ok(res, xi.remove(req.actor, pid(req))));
+  r.post('/inspections/:id/result', idempotent, (req, res) => ok(res, xi.result(req.actor, pid(req), parseInspResult(req.body))));
+  r.post('/inspections/:id/submit', idempotentRequired, (req, res) => ok(res, xi.submit(req.actor, pid(req)), 202));
+  r.post('/inspections/:id/withdraw', idempotent, (req, res) => ok(res, xi.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/inspections/:id/cancel', idempotent, (req, res) => ok(res, xi.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/inspections/:id/amend', idempotentRequired, (req, res) => ok(res, xi.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/inspections/:id/import', idempotentRequired, (req, res) => ok(res, xi.importPunch(req.actor, pid(req), parsePunchImport(req.body))));
+  r.get('/inspections/:id/history', (req, res) => ok(res, xi.history(req.actor, pid(req))));
+  r.get('/inspections/:id/print', (req, res) => file(res, xi.print(req.actor, pid(req))));
+  r.get('/shipments', (req, res) => res.json(xs.list(req.actor, req.query)));
+  r.post('/shipments', idempotentRequired, (req, res) => ok(res, xs.create(req.actor, parseShipCreate(req.body)), 201));
+  r.get('/shipments/:id', (req, res) => ok(res, xs.get(req.actor, pid(req))));
+  r.patch('/shipments/:id', idempotent, (req, res) => ok(res, xs.update(req.actor, pid(req), parseShipUpdate(req.body))));
+  r.delete('/shipments/:id', (req, res) => ok(res, xs.remove(req.actor, pid(req))));
+  r.post('/shipments/:id/dispatch', idempotentRequired, (req, res) => ok(res, xs.dispatch(req.actor, pid(req), parseShipDispatch(req.body))));
+  r.post('/shipments/:id/track', idempotent, (req, res) => ok(res, xs.track(req.actor, pid(req), parseShipTrack(req.body))));
+  r.post('/shipments/:id/deliver', idempotentRequired, (req, res) => ok(res, xs.deliver(req.actor, pid(req), parseShipDeliver(req.body))));
+  r.post('/shipments/:id/cancel', idempotent, (req, res) => ok(res, xs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/shipments/:id/history', (req, res) => ok(res, xs.history(req.actor, pid(req))));
+  r.get('/shipments/:id/print', (req, res) => file(res, xs.print(req.actor, pid(req))));
   return r;
 }
 
 /** The vendor's side of an RFQ with no sign-in: the link is the proof, it works until the due date plus the grace days and is used up by the quotation. Rate limited per address. */
-export function vendorQuoteRoutes({ portal, po: svc }) {
+export function vendorQuoteRoutes({ portal, po: svc, xpd }) {
   const r = Router(); const limiter = createRateLimiter();
   const limit = (name, perMinute) => (req, _res, next) => (limiter.take(`${name}:${req.ip}`, perMinute).ok ? next() : next(new HttpError(429, 'RATE_LIMITED', 'Too many attempts from this address. Wait a minute and try again.')));
   r.get('/vendor-quote/:token', limit('vq-look', 30), (req, res) => res.json({ data: portal.info(parseToken(req.params.token)) }));
@@ -213,6 +256,8 @@ export function vendorQuoteRoutes({ portal, po: svc }) {
   r.get('/vendor-po/:token', limit('vp-look', 30), (req, res) => res.json({ data: svc.portal.info(parseToken(req.params.token)) }));
   r.post('/vendor-po/:token/acknowledge', limit('vp-ack', 10), (req, res) => res.json({ data: svc.portal.acknowledge(parseToken(req.params.token), parseVendorAck(req.body)) }));
   r.post('/vendor-po/:token/dispatch', limit('vp-asn', 10), (req, res) => res.status(201).json({ data: svc.portal.dispatch(parseToken(req.params.token), parseDispatch(req.body)) }));
+  r.get('/vendor-po/:token/milestones', limit('vp-ms', 30), (req, res) => res.json({ data: xpd.portal.milestones(parseToken(req.params.token)) }));
+  r.post('/vendor-po/:token/milestones/:mid', limit('vp-msu', 20), (req, res) => res.json({ data: xpd.portal.update(parseToken(req.params.token), parseId(req.params.mid), parseVendorMilestone(req.body)) }));
   r.post('/vendor-quote/:token/clarify', limit('vq-ask', 10), (req, res) => res.status(201).json({ data: portal.clarify(parseToken(req.params.token), parseVendorAsk(req.body)) }));
   return r;
 }

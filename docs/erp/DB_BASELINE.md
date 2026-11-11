@@ -20333,3 +20333,230 @@ Indexes:
 - ux_xl_templates_pending (unique): company_id, import_type
 - ux_xl_templates_active (unique): company_id, import_type
 - ux_xl_templates_version (unique): company_id, import_type, template_version
+
+## xpd_expediting_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| po_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| required_on_site | TEXT | yes |  |  |
+| transit_days | INTEGER | yes |  | 7 |
+| long_lead | INTEGER | yes |  | 1 |
+| inspection_required | INTEGER | yes |  | 0 |
+| expediter | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| eta | TEXT |  |  |  |
+| days_late | INTEGER | yes |  | 0 |
+| at_risk | INTEGER | yes |  | 0 |
+| alerted_late | INTEGER | yes |  | 0 |
+| alerted_on | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| close_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> xpd_expediting_plans(id), org_project_id -> org_projects(id), po_id -> proc_purchase_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_xpd_plan_parent: parent_id
+- ix_xpd_plan_project: org_project_id, status, at_risk
+- ix_xpd_plan_po: po_id, status
+- ix_xpd_plan_company: company_id, status
+- ux_xpd_plan_doc (unique): company_id, doc_no
+
+## xpd_inspections
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| po_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| itype | TEXT | yes |  | 'FINAL' |
+| mandatory | INTEGER | yes |  | 1 |
+| call_date | TEXT | yes |  |  |
+| inspection_date | TEXT |  |  |  |
+| inspector | TEXT |  |  |  |
+| agency | TEXT |  |  |  |
+| location | TEXT |  |  |  |
+| scope | TEXT |  |  |  |
+| result | TEXT | yes |  | 'PENDING' |
+| punch_points_json | TEXT |  |  |  |
+| lines_json | TEXT |  |  |  |
+| irn_no | TEXT |  |  |  |
+| irn_date | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> xpd_inspections(id), org_project_id -> org_projects(id), po_id -> proc_purchase_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_xpd_insp_parent: parent_id
+- ix_xpd_insp_project: org_project_id, call_date
+- ix_xpd_insp_po: po_id, status
+- ix_xpd_insp_company: company_id, status
+- ux_xpd_insp_irn (unique): company_id, irn_no
+- ux_xpd_insp_doc (unique): company_id, doc_no
+
+## xpd_milestones
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plan_id | INTEGER | yes |  |  |
+| seq_no | INTEGER | yes |  |  |
+| name | TEXT | yes |  |  |
+| kind | TEXT | yes |  | 'OTHER' |
+| planned_date | TEXT | yes |  |  |
+| forecast_date | TEXT |  |  |  |
+| actual_date | TEXT |  |  |  |
+| ms_status | TEXT | yes |  | 'PENDING' |
+| updated_via | TEXT | yes |  | 'BUYER' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: plan_id -> xpd_expediting_plans(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_xpd_ms_status: ms_status, planned_date
+- ix_xpd_ms_company: company_id
+- ux_xpd_ms_seq (unique): plan_id, seq_no
+
+## xpd_shipment_events
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| shipment_id | INTEGER | yes |  |  |
+| event_at | TEXT | yes |  |  |
+| location | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| eta_after | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: shipment_id -> xpd_shipments(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_xpd_ship_ev_ship: shipment_id, event_at
+- ix_xpd_ship_ev_company: company_id
+
+## xpd_shipments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| po_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| transporter | TEXT |  |  |  |
+| vehicle_no | TEXT |  |  |  |
+| lr_no | TEXT |  |  |  |
+| bl_no | TEXT |  |  |  |
+| eway_bill_no | TEXT |  |  |  |
+| packing_list | TEXT |  |  |  |
+| packages | INTEGER | yes |  | 0 |
+| is_odc | INTEGER | yes |  | 0 |
+| odc_permit_no | TEXT |  |  |  |
+| odc_valid_to | TEXT |  |  |  |
+| odc_dimensions | TEXT |  |  |  |
+| dispatched_on | TEXT |  |  |  |
+| eta | TEXT |  |  |  |
+| delivered_on | TEXT |  |  |  |
+| lines_json | TEXT | yes |  | '[]' |
+| clearance | TEXT | yes |  | 'NOT_CHECKED' |
+| irn_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'PLANNED' |
+| requested_by | TEXT | yes |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: irn_id -> xpd_inspections(id), org_project_id -> org_projects(id), po_id -> proc_purchase_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_xpd_ship_irn: irn_id
+- ix_xpd_ship_project: org_project_id, eta
+- ix_xpd_ship_po: po_id, status
+- ix_xpd_ship_company: company_id, status
+- ux_xpd_ship_doc (unique): company_id, doc_no
