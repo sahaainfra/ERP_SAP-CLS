@@ -12,7 +12,7 @@ const P = '/api/v1/proc'; const W = '/api/v1/workflow';
 const opened = []; after(async () => { for (const a of opened) await a.close(); });
 let seq = 0; const key = () => ({ 'content-type': 'application/json', 'idempotency-key': `vnd-${Date.now().toString(36)}-${(seq += 1)}-${Math.random().toString(36).slice(2, 8)}` });
 const as = (roles, user, company = '1') => ({ roles, user, company });
-const ic = as('PROCIC', 'vic1'); const mgr = as('PROCMGR', 'vmgr1'); const mgr2 = as('PROCMGR', 'vmgr2'); const qcm = as('QCMGR', 'vqcm1'); const dir = as('DIR', 'vdir1'); const com = as('COMMGR', 'vcom1'); const pm = as('PM', 'vpm1'); const sk = as('SK', 'vsk1'); const hse = as('HSEO', 'vhse1'); const other = as('PROCMGR', 'vmgrx', '2');
+const ic = as('PROCIC', 'vic1'); const mgr = as('PROCMGR', 'vmgr1'); const qcm = as('QCMGR', 'vqcm1'); const dir = as('DIR', 'vdir1'); const pm = as('PM', 'vpm1'); const sk = as('SK', 'vsk1'); const hse = as('HSEO', 'vhse1'); const other = as('PROCMGR', 'vmgrx', '2');
 const TODAY = todayIST(); const plus = (n) => new Date(Date.parse(`${TODAY}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 const ANS = (n) => ['FINANCIALS', 'EXPERIENCE', 'CAPACITY', 'CERTIFICATIONS', 'REFERENCES'].map((section) => ({ section, score: n }));
 

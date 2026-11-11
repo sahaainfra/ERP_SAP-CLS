@@ -549,7 +549,7 @@ for (const [type, label, perm, table, , get, acc, sum, route] of reg3) {
     access(db, actor, id) { const s = procOf(db); if (!s) return null; try { return { companyId: actor.companyId, ...acc(get(s, actor, Number(id))) }; } catch { return null; } },
     auditEntities: (id) => [{ entity: table, id }],
     summary(db, actor, id) { const s = procOf(db); if (!s) return null; try { return sum(get(s, actor, Number(id))); } catch { return null; } },
-    related: () => [], projectRecords(db, companyId, projectId, limit) { const col = table === 'proc_rate_contracts' ? null : 'org_project_id'; if (!col) return []; return db.prepare(`SELECT id FROM ${table} WHERE company_id = ? AND ${col} = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?`).all(companyId, projectId, limit).map((x) => x.id); },
+    related: () => [], projectRecords(db, companyId, projectId, limit) { const col = ['proc_rate_contracts', 'vnd_prequalifications', 'vnd_suspensions'].includes(table) ? null : 'org_project_id'; if (!col) return []; return db.prepare(`SELECT id FROM ${table} WHERE company_id = ? AND ${col} = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?`).all(companyId, projectId, limit).map((x) => x.id); },
     search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${table} WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, limit).map((x) => x.id); },
   });
   fileEntities.register({
