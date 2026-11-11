@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Field, errorInfo } from '../core/pages/ui.jsx';
-import { pc, px } from './api.js';
+import { px } from './api.js';
 
 // Pieces the expediting, inspection and shipment pages share (part 15.07).
 export const refresh = (qc) => { qc.invalidateQueries({ queryKey: ['proc'] }); qc.invalidateQueries({ queryKey: ['list'] }); };
@@ -25,7 +25,7 @@ export function History({ t, data, testId }) {
 
 /** The project and the approved order a new document is made against; the lines of the order are given to the children. */
 export function ProjectOrder({ t, projectId, setProjectId, orderId, setOrderId, error, prefix, children, lockOrder = false }) {
-  const pq = useQuery({ queryKey: ['proc', 'projects'], queryFn: pc.projects, retry: false });
+  const pq = useQuery({ queryKey: ['proc', 'projects'], queryFn: px.projects, retry: false });
   const oq = useQuery({ queryKey: ['proc', 'xpd-orders', projectId], queryFn: () => px.orders(projectId), enabled: Boolean(projectId), retry: false });
   const order = (oq.data?.orders ?? []).find((o) => String(o.id) === String(orderId)) ?? null;
   return (

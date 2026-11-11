@@ -2398,6 +2398,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/proc/service-orders/:id/history', g: 'permission', k: 'proc.service_order.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/service-orders/:id/print', g: 'permission', k: 'proc.service_order.print', s: 'parseId', scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/proc/expediting/dashboard', g: 'permission', k: 'proc.expediting_plan.view', s: 'parseDashQ', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/proc/expediting/projects', g: 'permission', k: 'proc.expediting_plan.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/expediting/orders', g: 'permission', k: 'proc.expediting_plan.view', s: 'parseProjectQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/expediting-plans/options', g: 'permission', k: 'proc.expediting_plan.create', s: 'parseProjectQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/proc/expediting-plans', g: 'permission', k: 'proc.expediting_plan.view', s: null, scope: 'company', rate: 'read', audit: false },

@@ -203,6 +203,7 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   // expediting plans, inspections and shipments (part 15.07)
   const xp = svc.xpdSvc.plans; const xi = svc.xpdSvc.insps; const xs = svc.xpdSvc.ships;
   r.get('/expediting/dashboard', (req, res) => ok(res, svc.xpdSvc.dashboard(req.actor, parseDashQ(req.query).projectId ?? null)));
+  r.get('/expediting/projects', (req, res) => ok(res, svc.xpdSvc.projects(req.actor)));
   r.get('/expediting/orders', (req, res) => ok(res, svc.xpdSvc.orders(req.actor, parseProjectQ(req.query).projectId)));
   r.get('/expediting-plans/options', (req, res) => ok(res, xp.options(req.actor, parseProjectQ(req.query).projectId)));
   r.get('/expediting-plans', (req, res) => res.json(xp.list(req.actor, req.query)));

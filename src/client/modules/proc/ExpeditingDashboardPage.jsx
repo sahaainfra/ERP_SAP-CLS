@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
-import { fmtDate, pc, px } from './api.js';
+import { fmtDate, px } from './api.js';
 
 // Expediting dashboard (part 15.07, FR-05): long-lead items, milestones past their date, orders expected after the date required on site (with the activities that wait for them), inspections called, shipments on their way and dispatches blocked for want of a release note.
 export default function ExpeditingDashboardPage() {
   const t = useT('proc'); usePageTitle(t('x.dashTitle')); const [projectId, setProjectId] = useState('');
-  const pq = useQuery({ queryKey: ['proc', 'projects'], queryFn: pc.projects, retry: false }); const q = useQuery({ queryKey: ['proc', 'xpd-dash', projectId], queryFn: () => px.dashboard(projectId), retry: false });
+  const pq = useQuery({ queryKey: ['proc', 'projects'], queryFn: px.projects, retry: false }); const q = useQuery({ queryKey: ['proc', 'xpd-dash', projectId], queryFn: () => px.dashboard(projectId), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('x.dashTitle')} permission="proc.expediting_plan.view" />;
   if (q.isPending) return <Skeleton label={t('x.dashTitle')} rows={4} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;

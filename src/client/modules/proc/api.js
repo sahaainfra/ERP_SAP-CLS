@@ -151,6 +151,7 @@ const patch = async (p, b) => (await api.patch(`/proc${p}`, b, idem())).data;
 /** Expediting plans, vendor inspections and shipments (part 15.07). The risk, the arrival date, the clearance and the activities affected come from the server. */
 export const px = {
   dashboard: (projectId) => get(`/expediting/dashboard${projectId ? `?projectId=${projectId}` : ''}`),
+  projects: () => get('/expediting/projects'),
   orders: (projectId) => get(`/expediting/orders?projectId=${projectId}`),
   planOptions: (projectId) => get(`/expediting-plans/options?projectId=${projectId}`),
   plan: (id) => get(`/expediting-plans/${id}`), planCreate: (b) => post('/expediting-plans', b), planUpdate: (id, b) => patch(`/expediting-plans/${id}`, b),

@@ -337,6 +337,8 @@ export function createXpdService({ db, base }) {
     },
   };
 
+  /** The projects the actor may use for plans, inspections or shipments. */
+  const projects = (actor) => db.prepare("SELECT id, code, name FROM org_projects WHERE company_id = ? AND deleted_at IS NULL AND status = 'ACTIVE' ORDER BY code").all(actor.companyId).filter((p) => ['proc.expediting_plan.view', 'proc.inspection.view', 'proc.shipment.view'].some((k) => may(actor, k, p.id)));
   /** The approved orders of a project with their lines and balances: what an inspection or a shipment is made against. */
   function orders(actor, projectId) {
     const p = base.project(actor, projectId, 'proc.expediting_plan.view', 'proc.expediting_plan.view');
@@ -376,5 +378,5 @@ export function createXpdService({ db, base }) {
     milestones(token) { const po = byToken(token); const plan = db.prepare("SELECT * FROM xpd_expediting_plans WHERE po_id = ? AND status = 'APPROVED' AND deleted_at IS NULL").get(po.id); if (!plan) return { plan: null, milestones: [] }; return { plan: { docNo: plan.doc_no, requiredOnSite: plan.required_on_site }, milestones: msOf(plan.id).map((m) => ({ id: m.id, name: m.name, plannedDate: m.planned_date, forecastDate: m.forecast_date, actualDate: m.actual_date, status: m.ms_status, remarks: m.remarks })) }; },
     update(token, mid, b) { const po = byToken(token); const plan = db.prepare("SELECT * FROM xpd_expediting_plans WHERE po_id = ? AND status = 'APPROVED' AND deleted_at IS NULL").get(po.id); if (!plan) throw notFound('There is no plan to update.'); progress(plan.id, mid, { forecastDate: b.forecastDate, actualDate: b.actualDate, remarks: b.remarks, ...(b.actualDate === undefined ? {} : {}) }, { user: `vendor:${vname(po.vendor_id).code}`, via: 'VENDOR', companyId: po.company_id }); return { message: 'Thank you. The buyer is told.' }; },
   };
-  return { plans, insps, ships, portal, orders, dashboard, sweep, assess, decide: plans.decide, irnDecide: insps.decide, number_ };
+  return { plans, insps, ships, portal, orders, projects, dashboard, sweep, assess, decide: plans.decide, irnDecide: insps.decide, number_ };
 }
