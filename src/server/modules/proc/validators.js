@@ -70,3 +70,11 @@ export const parseToken = (t) => parse(z.string().regex(/^[A-Za-z0-9_-]{20,80}$/
 export const parseVendorQuote = (b) => parse(z.object({ quoteRef: optText(60), validUntil: day, deliveryDays: z.number().int().min(0).max(1000).default(0), paymentTerms: optText(300), freightTerms: optText(300), gstInclusive: z.boolean().default(false), deviations: optText(1000), lines: z.array(qLine).min(1, 'Quote at least one line').max(300) }).strict(), b ?? {});
 export const parseVendorDecline = (b) => parse(z.object({ reason: optText(500) }).strict(), b ?? {});
 export const parseVendorAsk = (b) => parse(z.object({ question: text(1000).min(5, 'Write the question') }).strict(), b ?? {});
+
+// Part 15.04: comparative statements.
+const csPick = z.object({ rfqLineId: id, vendorId: id, qty: z.number().finite().min(0).max(1e9).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals') }).strict();
+const csReason = z.enum(['TECHNICAL', 'DELIVERY', 'QUALITY', 'OTHER']);
+export const parseCsCreate = (b) => parse(z.object({ rfqId: id, recommendationType: z.enum(['OVERALL_L1', 'SPLIT_L1', 'CUSTOM']).default('OVERALL_L1'), selections: z.array(csPick).max(600).optional(), reasonCode: csReason.nullish().transform((x) => x ?? null), justification: optText(2000) }).strict().refine((x) => x.recommendationType !== 'CUSTOM' || (x.selections?.length ?? 0) > 0, { message: 'Give the selection', path: ['selections'] }), b ?? {});
+export const parseCsUpdate = (b) => defined(parse(z.object({ recommendationType: z.enum(['OVERALL_L1', 'SPLIT_L1', 'CUSTOM']).optional(), selections: z.array(csPick).max(600).optional(), reasonCode: csReason.nullish().optional(), justification: optText(2000).optional(), refresh: z.boolean().optional(), compliance: z.array(z.object({ rfqLineId: id, vendorId: id, value: z.enum(['YES', 'NO', 'DEVIATION']) }).strict()).max(600).optional(), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}));
+export const parseCsImport = (b) => parse(z.object({ rows: z.array(z.object({ lineNo: z.number().int().min(1), vendorId: id, qty: csPick.shape.qty }).strict()).min(1).max(600) }).strict(), b ?? {});
+export const parseCsNegotiate = (b) => parse(z.object({ vendorId: id, note: text(1000).min(5, 'Write what was asked and agreed') }).strict(), b ?? {});

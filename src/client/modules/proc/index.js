@@ -10,6 +10,7 @@ import ItemParamsPage from './ItemParamsPage.jsx';
 import RfqsPage from './RfqsPage.jsx';
 import RfqNewPage from './RfqNewPage.jsx';
 import QuotationEntryPage from './QuotationEntryPage.jsx';
+import ComparativeStatementsPage from './ComparativeStatementsPage.jsx';
 
 registerModule({
   code: 'proc',
@@ -26,5 +27,6 @@ registerModule({
     { path: '/proc/rfqs', label: 'RFQs', icon: 'erp.group.supply', permission: 'proc.rfq.view', flag: 'ff.proc.p1503', Page: RfqsPage },
     { path: '/proc/rfq-new', label: 'Create RFQ from PRs', icon: 'erp.group.supply', permission: 'proc.rfq.create', flag: 'ff.proc.p1503', Page: RfqNewPage },
     { path: '/proc/quotation-entry', label: 'Quotation Entry', icon: 'erp.group.supply', permission: 'proc.quotation.view', flag: 'ff.proc.p1503', Page: QuotationEntryPage },
+    { path: '/proc/comparative-statements', label: 'Comparative Statements', icon: 'erp.group.supply', permission: 'proc.comparative_statement.view', flag: 'ff.proc.p1504', Page: ComparativeStatementsPage },
   ],
 });

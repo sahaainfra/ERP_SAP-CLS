@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk } from './validators.js';
+import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate } from './validators.js';
 import { HttpError } from '../../platform/http/errors.js';
 import { createRateLimiter } from '../../platform/integrations/breaker.js';
 
 /** /api/v1/proc: material requests and purchase requisitions (part 15.01). Rights and scope are checked in the services. */
 export function procRoutes(svc, { idempotent, idempotentRequired }) {
-  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate; const rf = svc.rfqSvc.rfqs; const qt = svc.rfqSvc.quotes;
+  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate; const rf = svc.rfqSvc.rfqs; const qt = svc.rfqSvc.quotes; const cs = svc.csSvc.css;
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
@@ -115,6 +115,21 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   r.post('/quotations/:id/import', idempotentRequired, (req, res) => ok(res, qt.importLines(req.actor, pid(req), parseQuoteImport(req.body))));
   r.get('/quotations/:id/history', (req, res) => ok(res, qt.history(req.actor, pid(req))));
   r.get('/quotations/:id/print', (req, res) => file(res, qt.print(req.actor, pid(req))));
+  // comparative statements (15.04): `create` generates the matrix and the recommendation from the quotations received
+  r.get('/comparative-statements/rfqs', (req, res) => ok(res, cs.rfqs(req.actor)));
+  r.get('/comparative-statements', (req, res) => res.json(cs.list(req.actor, req.query)));
+  r.post('/comparative-statements', idempotentRequired, (req, res) => ok(res, cs.create(req.actor, parseCsCreate(req.body)), 201));
+  r.get('/comparative-statements/:id', (req, res) => ok(res, cs.get(req.actor, pid(req))));
+  r.patch('/comparative-statements/:id', idempotent, (req, res) => ok(res, cs.update(req.actor, pid(req), parseCsUpdate(req.body))));
+  r.delete('/comparative-statements/:id', (req, res) => ok(res, cs.remove(req.actor, pid(req))));
+  r.post('/comparative-statements/:id/submit', idempotentRequired, (req, res) => ok(res, cs.submit(req.actor, pid(req)), 202));
+  r.post('/comparative-statements/:id/withdraw', idempotent, (req, res) => ok(res, cs.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/comparative-statements/:id/cancel', idempotent, (req, res) => ok(res, cs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/comparative-statements/:id/amend', idempotentRequired, (req, res) => ok(res, cs.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/comparative-statements/:id/import', idempotentRequired, (req, res) => ok(res, cs.importSelections(req.actor, pid(req), parseCsImport(req.body))));
+  r.post('/comparative-statements/:id/negotiations', idempotentRequired, (req, res) => ok(res, cs.negotiate(req.actor, pid(req), parseCsNegotiate(req.body)), 201));
+  r.get('/comparative-statements/:id/history', (req, res) => ok(res, cs.history(req.actor, pid(req))));
+  r.get('/comparative-statements/:id/print', (req, res) => file(res, cs.print(req.actor, pid(req))));
   return r;
 }
 

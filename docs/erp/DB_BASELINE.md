@@ -12936,6 +12936,137 @@ Indexes:
 - ix_pol_version_status: company_id, version_status, effective_from
 - ux_pol_version_no (unique): policy_id, version_no
 
+## proc_comparative_statements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| rfq_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| recommendation_type | TEXT | yes |  | 'OVERALL_L1' |
+| recommended_split_json | TEXT |  |  |  |
+| non_l1 | INTEGER | yes |  | 0 |
+| reason_code | TEXT |  |  |  |
+| justification | TEXT |  |  |  |
+| total_value | INTEGER | yes |  | 0 |
+| savings_vs_budget | INTEGER | yes |  | 0 |
+| round_no | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> proc_comparative_statements(id), org_project_id -> org_projects(id), rfq_id -> proc_rfqs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_cs_parent: parent_id
+- ix_proc_cs_project: org_project_id, status
+- ix_proc_cs_rfq: rfq_id, status
+- ix_proc_cs_company: company_id, status
+- ux_proc_cs_doc (unique): company_id, doc_no
+
+## proc_cs_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| cs_id | INTEGER | yes |  |  |
+| rfq_line_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| quotation_id | INTEGER | yes |  |  |
+| quotation_line_id | INTEGER | yes |  |  |
+| offered_qty | INTEGER | yes |  | 0 |
+| landed_rate | INTEGER | yes |  | 0 |
+| rank_no | INTEGER | yes |  | 0 |
+| is_l1 | INTEGER | yes |  | 0 |
+| compliance | TEXT | yes |  | 'YES' |
+| selected_qty | INTEGER | yes |  | 0 |
+| last_po_rate | INTEGER |  |  |  |
+| last_project_rate | INTEGER |  |  |  |
+| budget_rate | INTEGER |  |  |  |
+| rc_rate | INTEGER |  |  |  |
+| market_rate | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: quotation_line_id -> proc_quotation_lines(id), quotation_id -> proc_quotations(id), vendor_id -> mdm_partners(id), rfq_line_id -> proc_rfq_lines(id), cs_id -> proc_comparative_statements(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_cs_lines_quotation_line: quotation_line_id
+- ix_proc_cs_lines_quotation: quotation_id
+- ix_proc_cs_lines_vendor: vendor_id
+- ix_proc_cs_lines_rfq_line: rfq_line_id
+- ix_proc_cs_lines_company: company_id
+- ux_proc_cs_lines (unique): cs_id, rfq_line_id, vendor_id
+
+## proc_cs_negotiations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| cs_id | INTEGER | yes |  |  |
+| round_no | INTEGER | yes |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| note | TEXT | yes |  |  |
+| quotation_before_id | INTEGER |  |  |  |
+| quotation_after_id | INTEGER |  |  |  |
+| recorded_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: quotation_after_id -> proc_quotations(id), quotation_before_id -> proc_quotations(id), vendor_id -> mdm_partners(id), cs_id -> proc_comparative_statements(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_proc_cs_neg_after: quotation_after_id
+- ix_proc_cs_neg_before: quotation_before_id
+- ix_proc_cs_neg_vendor: vendor_id
+- ix_proc_cs_neg_cs: cs_id, round_no
+- ix_proc_cs_neg_company: company_id
+
 ## proc_item_params
 
 | Column | Type | Not null | Key | Default |

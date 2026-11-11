@@ -82,6 +82,7 @@ function Rfq({ t, id }) {
         {can.delete && <button type="button" className="btn" onClick={async () => { if (window.confirm(t('q.deleteAsk')) && await run(() => pc.rfqDelete(r.id))) navigateTo('/proc/rfqs'); }} data-testid="rfq-delete">{t('q.delete')}</button>}
         {can.print && <button type="button" className="btn" onClick={() => download(`/rfqs/${r.id}/print`, `${r.docNo.replaceAll('/', '-')}.pdf`).catch(() => setError({ form: t('q.fileFailed') }))} data-testid="rfq-print">{t('q.print')}</button>}
         {r.workflowInstanceId && <Link to={`/workflow/instance?id=${r.workflowInstanceId}`}>{t('q.approval')}</Link>}
+        {['ISSUED', 'CLOSED'].includes(r.status) && r.respondedCount > 0 && <Link to={`/proc/comparative-statements?new=1&rfq=${r.id}`}>{t('c.make')}</Link>}
       </div>
       {r.taskId && (
         <div className="mdm-panel no-print" data-testid="rfq-decide"><h2>{t('q.decide')}</h2>

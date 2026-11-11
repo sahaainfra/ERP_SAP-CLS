@@ -28,6 +28,7 @@ const pub = async (method, token, path, body) => {
   if (!res.ok) { const e = new Error(j?.error?.message ?? 'Something went wrong'); e.status = res.status; e.details = j?.error?.details ?? []; throw e; } return j.data;
 };
 export const vq = { info: (t) => pub('GET', t, ''), submit: (t, b) => pub('POST', t, '/submit', b), decline: (t, reason) => pub('POST', t, '/decline', { reason }), ask: (t, question) => pub('POST', t, '/clarify', { question }) };
+export const CS_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
 export const pc = {
   projects: () => get('/projects'),
   mrOptions: (projectId) => get(`/material-requests/options?projectId=${projectId}`),
@@ -90,4 +91,12 @@ export const pc = {
   quoteDelete: async (id) => (await api.delete(`/proc/quotations/${id}`)).data,
   quoteAct: (id, action, b) => post(`/quotations/${id}/${action}`, b),
   quoteHistory: (id) => get(`/quotations/${id}/history`),
+  // part 15.04: comparative statements
+  csRfqs: () => get('/comparative-statements/rfqs'),
+  cs: (id) => get(`/comparative-statements/${id}`),
+  csCreate: (b) => post('/comparative-statements', b),
+  csUpdate: async (id, b) => (await api.patch(`/proc/comparative-statements/${id}`, b, idem())).data,
+  csDelete: async (id) => (await api.delete(`/proc/comparative-statements/${id}`)).data,
+  csAct: (id, action, b) => post(`/comparative-statements/${id}/${action}`, b),
+  csHistory: (id) => get(`/comparative-statements/${id}/history`),
 };

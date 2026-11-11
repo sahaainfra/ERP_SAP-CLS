@@ -8309,6 +8309,31 @@ paths:
     post: { summary: Public: the vendor declines to quote, tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-quote/{token}/clarify:
     post: { summary: Public: the vendor asks a question, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/comparative-statements/rfqs:
+    get: { summary: RFQs a statement can be made for, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/comparative-statements:
+    get: { summary: Comparative statements, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Generate a statement from the quotations of an RFQ with the recommendation, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/comparative-statements/{id}:
+    get: { summary: The statement: matrix, ranks, benchmarks, recommendation, negotiations, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change the recommendation, selection, compliance or justification; refresh from the quotations, tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a draft, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/comparative-statements/{id}/submit:
+    post: { summary: Send for approval by value (one level higher when not L1), tags: [proc], responses: { '202': { description: Accepted } } }
+  /api/v1/proc/comparative-statements/{id}/withdraw:
+    post: { summary: Withdraw from approval, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/comparative-statements/{id}/cancel:
+    post: { summary: Cancel the statement, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/comparative-statements/{id}/amend:
+    post: { summary: A new revision of an approved statement, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/comparative-statements/{id}/import:
+    post: { summary: Load the selection by RFQ line number, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/comparative-statements/{id}/negotiations:
+    post: { summary: Record a negotiation round, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/proc/comparative-statements/{id}/history:
+    get: { summary: Approvals and audit trail, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/comparative-statements/{id}/print:
+    get: { summary: The statement as a PDF, tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/stock/ingest:
     post: { summary: Load free stock levels of items in stores (until the stock module keeps them), tags: [proc], responses: { '201': { description: Created } } }
   /api/v1/proc/runs:

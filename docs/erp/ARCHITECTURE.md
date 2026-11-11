@@ -1342,3 +1342,12 @@ Module `proc`, flag `ff.proc.p1503`, tables `proc_rfqs`, `proc_rfq_lines`, `proc
 - **Quotations** (FR-04 to FR-06): entered by procurement (grid, import by line number) or by the vendor; the landed rate is `landed()` (ADR-528); versions supersede; withdraw, cancel; regret letters; the clarification log; amend of the due date and terms; reminders by a daily job and on request.
 - **Comparison and outputs**: `GET /rfqs/:id/comparison` (landed rate per line and vendor, the lowest marked) for 15.04; events `proc.rfq.issued`, `.amended`, `.closed`, `.cancelled`, `proc.quotation.received`, `.withdrawn`, `proc.rate.observed` (for 15.09).
 - **API**: 33 routes under `/api/v1/proc` (`rfqs`, `quotations`) and 4 public ones (`vendor-quote`). **Permissions**: `proc.rfq.*`, `proc.quotation.*` (rates only with `proc.quotation.rates`, BR-02). **Browser**: RFQs (list and object), Create RFQ from PRs, Quotation Entry, and the vendor page; English and Hindi.
+
+## 112. Comparative statement and vendor selection (part 15.04)
+Module `proc`, flag `ff.proc.p1504`, tables `proc_comparative_statements`, `proc_cs_lines`, `proc_cs_negotiations` (migration 212), seed 213.
+- **Statement** (FR-01, FR-02): generated from the latest received quotation of each vendor; the matrix of lines against vendors with landed rate, rank (ties share a rank), compliance, delivery, make and validity; benchmarks per line (last purchase of the company and of the project, the estimate on the requisition, rate contract); vendor totals and overall rank (ADR-531, ADR-532).
+- **Recommendation** (FR-03, BR-01, BR-02): overall L1, L1 of each line with a split award, or chosen by hand; the quantity never exceeds the RFQ quantity or the offer; a non-L1 choice needs a reason and goes one level higher (control CP-PROC-04, ADR-533, ADR-534).
+- **Negotiation** (FR-04): rounds with the quotation before and after; the statement is stale until refreshed.
+- **Approval** (FR-05): workflow `PROC_CS`, procurement manager, project manager, project director, direction by value; approval closes the RFQ and publishes `proc.cs.approved` with the awards for 15.05 (ADR-535); amend supersedes; cancel publishes `proc.cs.cancelled`.
+- **API**: 14 routes under `/api/v1/proc/comparative-statements`. **Permissions**: `proc.comparative_statement.*`. **Browser**: Comparative Statements (list, matrix object, generate), print as PDF; English and Hindi.
+

@@ -18,6 +18,7 @@ import { PR_DOC, PR_STATUS, createPrService } from './pr.js';
 import { RUN_STATUS, createMrpService } from './mrp.js';
 import { PARAM_DOC, PARAM_STATUS, createItemParamService } from './item-params.js';
 import { RFQ_DOC, RFQ_STATUS, QUOTE_STATUS, createRfqService } from './rfq.js';
+import { CS_DOC, CS_STATUS, createCsService } from './cs.js';
 import { procRoutes, vendorQuoteRoutes } from './routes.js';
 
 const services = new WeakMap();
@@ -45,12 +46,16 @@ for (const [type, description] of [
   ['proc.quotation.received', 'A vendor quotation was recorded as received, keyed in by procurement or entered by the vendor (part 15.03): data { rfqId, quotationId, quotationNo, rfqNo, projectId, vendorId, versionNo, validUntil, totalLanded, via }. For the comparative statement (15.04).'],
   ['proc.quotation.withdrawn', 'A received quotation was withdrawn (part 15.03): data { rfqId, quotationId, vendorId, reason }.'],
   ['proc.rate.observed', 'A rate quoted by a vendor for an item, with its landed rate (part 15.03): data { quotationId, vendorId, itemId, uom, rate, discountPct, landedRate, gstRate, gstInclusive, observedOn, validUntil, source }. Rates in paise. For the rate intelligence (15.09).'],
+  ['proc.cs.generated', 'A comparative statement was generated from the quotations of an RFQ (part 15.04): data { csId, docNo, rfqId, projectId, type }.'],
+  ['proc.cs.approved', 'A comparative statement was approved: the vendor selection is final (part 15.04): data { csId, docNo, rfqId, projectId, totalValue, nonL1, supersedes, awards: [{ rfqLineId, prLineId, itemId, serviceDesc, vendorId, quotationId, qty, uom, rate, landedRate, gstRate, make, requiredBy, deliverySiteId }] }. Rates in paise, quantities in thousandths. For the purchase order (15.05).'],
+  ['proc.cs.rejected', 'A comparative statement was not approved (part 15.04): data { csId, docNo, rfqId, projectId, reason }.'],
+  ['proc.cs.cancelled', 'A comparative statement was cancelled; an approved one may no longer be ordered from (part 15.04): data { csId, docNo, rfqId, projectId, reason, wasApproved }.'],
   ['proc.stock.levels_loaded', 'Free stock levels of items in stores were loaded for the stock check (part 15.01): data { levels, changed }. Until the stock module (16.01) keeps them.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proc', description });
 
 integrityRegistry.register({
-  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS) },
-  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }],
+  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS), proc_comparative_statements: Object.keys(CS_STATUS) },
+  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }, { table: 'proc_comparative_statements', columns: ['company_id', 'doc_no'] }],
 });
 
 /** Module "proc": procurement (M15). Part 15.01 holds the material requests (site indents) and the purchase requisitions. The tables are `proc_*`. */
@@ -60,8 +65,8 @@ export const proc = {
   routePrefix: '/api/v1/proc',
   ownerPart: '15.01',
   status: 'Material requests (site indents) against work authorisations with the stock of the site, nearby stores and the central warehouse; fulfilment by issue, transfer or purchase; purchase requisitions from consolidated requests or direct, with stock, budget and duplicate checks, approval by value and an emergency path.',
-  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications'],
-  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations'],
+  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations'],
+  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements'],
 
   mount(api, { db, config: appConfig, publicApi }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proc_requisitions'").get()) return;
@@ -69,12 +74,14 @@ export const proc = {
     const base = createBase({ db }); const stockSvc = createStockService({ db, base }); const mrSvc = createMrService({ db, base, stock: stockSvc }); const prSvc = createPrService({ db, base, stock: stockSvc, mr: mrSvc });
     const mrpSvc = createMrpService({ db, base, stock: stockSvc, pr: prSvc }); const paramSvc = createItemParamService({ db, base });
     const rfqSvc = createRfqService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '' });
-    const svc = { base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
+    const csSvc = createCsService({ db, base });
+    const svc = { csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
     listExports.register('proc.mrp_runs', { source: (actor, req) => mrpSvc.mrp.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.material_requests', { source: (actor, req) => mrSvc.mrs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.requisitions', { source: (actor, req) => prSvc.prs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.rfqs', { source: (actor, req) => rfqSvc.rfqs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.quotations', { source: (actor, req) => rfqSvc.quotes.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.comparative_statements', { source: (actor, req) => csSvc.css.exportSource(actor, req), hidden: () => [] });
     const runtime = runtimeOf(db);
     // FR-07: every morning at 08:00 India time vendors who have not answered are reminded and the issuer is told what is due
     runtime?.jobs?.register('proc.rfq_reminders', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1503')) continue; n += rfqSvc.rfqs.sweep(); break; } ctx.log(`Told the issuers of ${n} RFQ(s) that are due with vendors who have not answered`); return { rfqs: n }; }, { maxAttempts: 2, description: 'Reminds the vendors who have not answered an RFQ that closes soon and tells the buyer what is due.' });
@@ -91,6 +98,7 @@ export const proc = {
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1501') ? next() : next(notFound('Material requests and purchase requisitions are not enabled for your company yet (feature flag ff.proc.p1501 is OFF).'))));
     router.use(/^\/(runs|proposals|item-params|supply|mrp)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1502') ? next() : next(notFound('Material demand planning (MRP) is not enabled for your company yet (feature flag ff.proc.p1502 is OFF).'))));
     router.use(/^\/(rfqs|quotations)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1503') ? next() : next(notFound('RFQs and vendor quotations are not enabled for your company yet (feature flag ff.proc.p1503 is OFF).'))));
+    router.use(/^\/comparative-statements(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1504') ? next() : next(notFound('Comparative statements are not enabled for your company yet (feature flag ff.proc.p1504 is OFF).'))));
     router.use(procRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/proc', router);
     // the vendor's page: no sign-in, the link is the proof; switched off with the flag of the company that issued it
@@ -259,3 +267,43 @@ for (const [entity, table, view, edit, label] of [['proc_rfq', 'proc_rfqs', 'pro
     },
   });
 }
+
+// ---- the approval of a comparative statement (part 15.04, section 9): the procurement manager, the project manager, the project director above the first band, the direction above the second; one level higher when the vendor is not the L1 -------------
+const csline = (db, id) => db.prepare('SELECT x.*, p.code, f.doc_no AS rfq_no, f.title FROM proc_comparative_statements x JOIN org_projects p ON p.id = x.org_project_id JOIN proc_rfqs f ON f.id = x.rfq_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: CS_DOC, label: 'Comparative statement', processOwner: 'PROCMGR', route: (id) => `/proc/comparative-statements?id=${id}`,
+  describe(db, companyId, id) { const r = csline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.code}: ${r.doc_no} for ${r.rfq_no} ${r.total_value / 100}${r.non_l1 ? ' (not L1)' : ''}`, originator: r.requested_by, projectId: r.org_project_id, amount: r.total_value / 100 } : null; },
+  summarise(db, _actor, id) {
+    const r = csline(db, Number(id)); if (!r) return null; const vs = db.prepare('SELECT DISTINCT vendor_id FROM proc_cs_lines WHERE cs_id = ? AND selected_qty > 0 AND deleted_at IS NULL').all(r.id).map((v) => db.prepare('SELECT COALESCE(trade_name, legal_name) AS n FROM mdm_partners WHERE id = ?').get(v.vendor_id)?.n);
+    return { fields: [{ label: 'Project', value: r.code }, { label: 'RFQ', value: `${r.rfq_no}: ${r.title}` }, { label: 'Recommendation', value: r.recommendation_type }, { label: 'Selected vendors', value: vs.join(', ') }, { label: 'Value', value: String(r.total_value / 100) }, { label: 'Against the estimate', value: String(r.savings_vs_budget / 100) }, ...(r.non_l1 ? [{ label: 'Not the L1', value: `${r.reason_code}: ${r.justification}` }] : [])] };
+  },
+  defaultDefinition: { name: 'Comparative statement: the procurement manager, the project manager, the project director above ₹ 5 lakh, the direction above ₹ 50 lakh; one level higher when the vendor is not the L1', settings: { resubmit: 'first', distinctApprovers: true },
+    steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24), approver('PM', 'Project manager', 'PM', 24), approver('PD', 'Project director (value above the first band, or not L1)', 'PD', 24, { field: 'needPd', op: 'eq', value: 'yes' }), approver('DIR', 'Direction (value above the second band, or not L1)', 'DIR', 48, { field: 'needDir', op: 'eq', value: 'yes' })] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.csDecide(instance, actor, 'APPROVED'),
+    onRejected: (db, { instance, actor, comment }) => procOf(db)?.csDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.csDecide(instance, actor, 'RETURNED', comment),
+    onCancelled: (db, { instance, actor, comment }) => procOf(db)?.csDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+evidenceProviders.register(CS_DOC, ({ db, instance }) => {
+  const r = csline(db, Number(instance.docId)); if (!r) return { sections: [] }; const l1 = db.prepare('SELECT COALESCE(SUM(ROUND(l.qty * c.landed_rate / 1000.0)), 0) AS v FROM proc_cs_lines c JOIN proc_rfq_lines l ON l.id = c.rfq_line_id WHERE c.cs_id = ? AND c.is_l1 = 1 AND c.selected_qty > 0 AND c.deleted_at IS NULL').get(r.id);
+  return { sections: [{ code: 'proc-cs-evidence', title: 'Before you approve the vendor selection', kind: 'metrics', items: [{ label: 'Selected value', value: String(r.total_value / 100), format: 'text' }, { label: 'Against the estimate on the requisitions', value: String(r.savings_vs_budget / 100), format: 'text', tone: r.savings_vs_budget < 0 ? 'bad' : undefined }, { label: 'Recommendation', value: r.recommendation_type.toLowerCase().replace('_', ' '), format: 'text' }, { label: 'Not the L1', value: r.non_l1 ? `yes: ${r.reason_code}: ${r.justification}` : 'no', format: 'text', tone: r.non_l1 ? 'warn' : undefined }, { label: 'Negotiation rounds', value: String(r.round_no), format: 'text' }, { label: 'L1 lines selected', value: l1.v ? 'yes' : 'no', format: 'text' }] }] };
+});
+objectTypes.register({
+  type: 'proc_comparative_statement', label: 'Comparative statement', permission: 'proc.comparative_statement.view', route: (id) => `/proc/comparative-statements?id=${id}`, attachmentEntity: 'proc_comparative_statement', approvalTarget: 'proc_comparative_statement',
+  access(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.csSvc.css.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'proc_comparative_statements', id }],
+  summary(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.csSvc.css.get(actor, Number(id)); return { label: `${r.docNo} ${r.rfqNo}`, status: r.status }; } catch { return null; } },
+  related(db, actor, id) { const s = procOf(db); if (!s) return []; try { const r = s.csSvc.css.get(actor, Number(id)); return [{ kind: 'request for quotation', label: r.rfqNo, route: `/proc/rfqs?id=${r.rfqId}` }, ...r.vendors.map((v) => ({ kind: 'quotation', label: `${v.quotationNo} (${v.name})`, route: `/proc/quotation-entry?id=${v.quotationId}` }))]; } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'proc.comparative_statement.view').allowed) return []; return db.prepare('SELECT id, org_project_id FROM proc_comparative_statements WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, limit).filter((x) => authzOf(db).check(actor, 'proc.comparative_statement.view', { companyId: actor.companyId, projectId: x.org_project_id }).allowed).map((x) => x.id); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM proc_comparative_statements WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+fileEntities.register({
+  entity: 'proc_comparative_statement', label: 'Comparative statement (negotiation minutes, technical evaluation, justification)',
+  resolve(db, actor, id) {
+    const r = db.prepare('SELECT company_id, org_project_id, status FROM proc_comparative_statements WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('proc.comparative_statement.view')) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
+    return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at('proc.comparative_statement.edit') && open, locked: !open };
+  },
+});
