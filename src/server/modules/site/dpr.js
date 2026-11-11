@@ -271,7 +271,12 @@ export function createDprService({ db }) {
         rows: () => runList(db, dprList, req, { ...opts, limit: null, map: (x) => { const v = listRow(x); return { ...v, scope: SCOPES[v.scope], revisionNo: String(v.revisionNo), status: v.statusLabel }; } }).data,
         describe: (r) => [r.q ? `Search: ${r.q}` : 'All daily progress reports you may see'], count: () => countList(db, dprList, req, opts) };
     },
-    get(actor, id) { return view(actor, row(actor, id), { detail: true }); },
+    get(actor, id) {
+      const v = view(actor, row(actor, id), { detail: true });
+      // the task the person decides it by, so the page can approve, return or reject without a trip to the inbox
+      if (v.can.approve && v.workflowInstanceId) v.taskId = workflowOf(db).listTasks(actor, { mine: 'assigned', limit: 200 }).rows.find((t) => t.instance?.id === v.workflowInstanceId)?.id ?? null;
+      return v;
+    },
     /** What a day offers a report of a site (FR-02): the prefill, with the report already made for it, if any. */
     prefill(actor, { siteId, date, scope: sc = 'SITE', supervisor }) {
       const s = siteRow(actor, siteId); notFuture(date); const sup = supervisor ?? actor.user; const p = prefillView(prefill(actor.companyId, s, date, { scope: sc, supervisor: sup }));

@@ -29,8 +29,29 @@ export const st = {
   updateDaily: async (id, b) => (await api.patch(`/site/daily-plans/${id}`, b, idem())).data,
   dailyAct: async (id, action, b = {}) => (await api.post(`/site/daily-plans/${id}/${action}`, b, idem())).data,
   mobile: async (date) => (await api.get(`/site/wa-mobile?date=${date}`)).data,
+  // part 14.02: the daily progress report
+  dprSites: async () => (await api.get('/site/dprs/sites')).data,
+  dprOptions: async (siteId) => (await api.get(`/site/dprs/options?siteId=${siteId}`)).data,
+  dprPrefill: async (siteId, date, scope, supervisor) => (await api.get(`/site/dprs/prefill?siteId=${siteId}&date=${date}${scope ? `&scope=${scope}` : ''}${supervisor ? `&supervisor=${encodeURIComponent(supervisor)}` : ''}`)).data,
+  dpr: async (id) => (await api.get(`/site/dprs/${id}`)).data,
+  createDpr: async (b) => (await api.post('/site/dprs', b, idem())).data,
+  updateDpr: async (id, b) => (await api.patch(`/site/dprs/${id}`, b, idem())).data,
+  removeDpr: async (id) => (await api.delete(`/site/dprs/${id}`)).data,
+  dprAct: async (id, action, b = {}) => (await api.post(`/site/dprs/${id}/${action}`, b, idem())).data,
+  dprHistory: async (id) => (await api.get(`/site/dprs/${id}/history`)).data,
+  dprPhoto: async (id, fileId, b) => (await api.patch(`/site/dprs/${id}/photos/${fileId}`, b, idem())).data,
+  dprMissing: async (q = '') => (await api.get(`/site/dprs/missing?${q}`)).data,
+  dprCompliance: async (q = '') => (await api.get(`/site/dprs/compliance?${q}`)).data,
+  dprReport: async (q) => (await api.get(`/site/dprs/report?${q}`)).data,
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
+export const DPR_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const WEATHER_CODES = ['CLEAR', 'CLOUDY', 'RAIN', 'HEAVY_RAIN', 'STORM', 'FOG', 'HOT', 'COLD'];
+export const NOTE_TYPES = ['HINDRANCE', 'VISITOR', 'INSTRUCTION', 'QUALITY', 'SAFETY', 'NEXT_DAY'];
+export async function download(path, name) {
+  const res = await fetch(`/api/v1/site${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
+  const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+}
 export const fmtDate = (iso) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—');
 export const fmtQty = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { maximumFractionDigits: 3 }));
 export async function openPrint(path) {

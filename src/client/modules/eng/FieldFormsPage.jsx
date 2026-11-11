@@ -79,7 +79,9 @@ export default function FieldFormsPage() {
         <ul className="field-tiles" aria-label="Forms">
           {off.forms.map((f) => (
             <li key={f.code}>
-              {f.available
+              {f.available && f.route
+                ? <Link to={f.route} data-testid={`form-${f.code}`}><Icon name="erp.field.field" size={32} /><strong>{f.label}</strong></Link>
+                : f.available
                 ? <a href={`/field/forms?form=${f.code}`} onClick={(e) => { e.preventDefault(); choose(f.code); }} data-testid={`form-${f.code}`}><Icon name="erp.field.field" size={32} /><strong>{f.label}</strong></a>
                 : <span className="is-disabled" data-testid={`form-${f.code}`} aria-disabled="true"><Icon name="erp.field.field" size={32} /><strong>{f.label}</strong><span className="muted small">{f.planned ? `Available with part ${f.module}` : 'You may not use this form'}</span></span>}
             </li>

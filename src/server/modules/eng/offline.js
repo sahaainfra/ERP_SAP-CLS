@@ -139,7 +139,7 @@ export function createOfflineService({ db, storage }) {
   const masters = {
     forms(actor) {
       /** @type {any[]} */
-      const forms = [...offlineForms.values()].map((f) => ({ code: f.code, label: f.label, labelHi: f.labelHi ?? null, module: f.module, fields: f.fields, available: anywhere(actor, f.permission), rules: anywhere(actor, f.permission) ? f.rules(db, actor) : null }));
+      const forms = [...offlineForms.values()].map((f) => ({ code: f.code, label: f.label, labelHi: f.labelHi ?? null, module: f.module, route: f.route ?? null, fields: f.fields, available: anywhere(actor, f.permission), rules: anywhere(actor, f.permission) ? f.rules(db, actor) : null }));
       for (const [code, label, part] of FORM_CODES_PLANNED) if (!offlineForms.has(code)) forms.push({ code, label, labelHi: null, module: part, fields: [], available: false, planned: true, rules: null });
       return forms;
     },

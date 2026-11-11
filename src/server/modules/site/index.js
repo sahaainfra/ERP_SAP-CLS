@@ -154,7 +154,7 @@ fileEntities.register({
 // ---- the offline engine (04.15): the DPR is a form of the phone; its photos follow the command and are attached to the report it made ------------------------------------------------------------------
 const dprIssues = (values) => { try { const rest = { ...values }; delete rest.submit; parseDprCreate(rest); return []; } catch (e) { return (e?.details ?? [{ field: 'form', message: e?.message ?? 'The report is not valid.' }]).map((d) => ({ field: d.field, message: `${d.field}: ${d.message}` })); } };
 registerOfflineForm({
-  code: 'dpr', label: 'Daily progress report', labelHi: 'दैनिक प्रगति रिपोर्ट', module: '14.02', permission: 'site.dpr.create', attachmentEntity: 'site_dpr',
+  code: 'dpr', label: 'Daily progress report', labelHi: 'दैनिक प्रगति रिपोर्ट', module: '14.02', route: '/site/dpr-entry', permission: 'site.dpr.create', attachmentEntity: 'site_dpr',
   fields: [{ key: 'siteId', label: 'Site', labelHi: 'साइट', type: 'site', required: true }, { key: 'dprDate', label: 'Date', labelHi: 'तारीख', type: 'text', required: true }],
   rules: () => ({}),
   validate: (values, _rules, op) => (op === 'update' ? [] : dprIssues(values)),
