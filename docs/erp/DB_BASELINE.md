@@ -12805,6 +12805,179 @@ Indexes:
 - ix_pol_version_status: company_id, version_status, effective_from
 - ux_pol_version_no (unique): policy_id, version_no
 
+## prod_actuals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| prod_site_id | INTEGER | yes |  |  |
+| work_date | TEXT | yes |  |  |
+| activity_id | INTEGER |  |  |  |
+| activity_code | TEXT | yes |  |  |
+| work_type | TEXT | yes |  |  |
+| crew_id | INTEGER |  |  |  |
+| contractor_id | INTEGER |  |  |  |
+| dpr_id | INTEGER | yes |  |  |
+| dpr_work_id | INTEGER |  |  |  |
+| dpr_scope | TEXT |  |  |  |
+| qty | INTEGER | yes |  |  |
+| uom | TEXT |  |  |  |
+| man_days | INTEGER | yes |  | 0 |
+| machine_hours | INTEGER | yes |  | 0 |
+| alloc_basis | TEXT | yes |  | 'WA' |
+| norm_labour | INTEGER |  |  |  |
+| norm_equipment | INTEGER |  |  |  |
+| productivity | INTEGER |  |  |  |
+| productivity_machine | INTEGER |  |  |  |
+| variance_pct | INTEGER |  |  |  |
+| machine_variance_pct | INTEGER |  |  |  |
+| shortfall_md | INTEGER | yes |  | 0 |
+| loss_reason | TEXT |  |  |  |
+| derived_reason | TEXT |  |  |  |
+| outlier | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: dpr_id -> site_dprs(id), contractor_id -> mdm_partners(id), crew_id -> hr_crews(id), activity_id -> plan_activities(id), prod_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prod_actuals_outlier: company_id, work_date
+- ix_prod_actuals_activity: activity_id
+- ix_prod_actuals_contractor: contractor_id, work_date
+- ix_prod_actuals_crew: crew_id, work_date
+- ix_prod_actuals_dpr: dpr_id
+- ix_prod_actuals_type: company_id, work_type, work_date
+- ix_prod_actuals_company: company_id, work_date
+- ix_prod_actuals_site: prod_site_id, work_date, activity_code
+- ix_prod_actuals_project: org_project_id, work_date
+
+## prod_alerts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| alert_site_id | INTEGER | yes |  |  |
+| activity_code | TEXT | yes |  |  |
+| work_type | TEXT | yes |  |  |
+| days | INTEGER | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| avg_pct | INTEGER | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| raised_at | TEXT | yes |  |  |
+| cleared_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: alert_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prod_alerts_project: org_project_id, status
+- ix_prod_alerts_company: company_id, status
+- ux_prod_alerts_open (unique): alert_site_id, activity_code
+
+## prod_losses
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| loss_site_id | INTEGER | yes |  |  |
+| loss_date | TEXT | yes |  |  |
+| activity_code | TEXT |  |  |  |
+| reason_code | TEXT | yes |  |  |
+| hours_lost | INTEGER | yes |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: loss_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prod_losses_company: company_id, loss_date
+- ix_prod_losses_project: org_project_id, loss_date
+- ix_prod_losses_site: loss_site_id, loss_date
+
+## prod_norms
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| activity_code | TEXT | yes |  |  |
+| work_type | TEXT | yes |  |  |
+| resource_type | TEXT | yes |  |  |
+| output_per_unit | INTEGER | yes |  |  |
+| uom | TEXT |  |  |  |
+| source | TEXT | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| note | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_prod_norms_type: company_id, work_type
+- ix_prod_norms_project: org_project_id, activity_code, resource_type, status
+- ix_prod_norms_company: company_id, status
+- ux_prod_norms_live (unique): org_project_id, activity_code, resource_type, source, effective_from
+
 ## proj_360_widgets
 
 | Column | Type | Not null | Key | Default |

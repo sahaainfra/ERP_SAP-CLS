@@ -8155,3 +8155,28 @@ paths:
     patch:
       summary: "Daily progress report (14.02): PATCH /dprs/:id/photos/:fileId"
       responses: { '200': { description: '{ data }' }, '403': { description: no permission } }
+  /api/v1/site/productivity/dashboard:
+    get: { summary: Productivity dashboard (by activity type, crew, contractor, trend, worst performers), tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/report:
+    get: { summary: Productivity variance and loss reasons, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/report/export:
+    get: { summary: Export of the productivity report (XLSX, CSV, PDF), tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/benchmarks:
+    get: { summary: Benchmarks of an activity type across sites and projects, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/alerts:
+    get: { summary: Productivity alerts, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/rows:
+    get: { summary: Productivity records behind the figures, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/losses:
+    get: { summary: Losses recorded on site, tags: [site], responses: { '200': { description: OK } } }
+    post: { summary: Record a loss, tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/productivity/norms:
+    get: { summary: Productivity norms, tags: [site], responses: { '200': { description: OK } } }
+    post: { summary: Enter a norm, tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/productivity/norms/refresh-boq:
+    post: { summary: Load norms from the BOQ rate analysis, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/norms/{id}:
+    get: { summary: One norm, tags: [site], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned norm, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/productivity/norms/{id}/submit:
+    post: { summary: Send the norm for approval (PM), tags: [site], responses: { '202': { description: Accepted } } }

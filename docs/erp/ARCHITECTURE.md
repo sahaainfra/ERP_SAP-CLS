@@ -1303,3 +1303,10 @@ Module `site`, flag `ff.site.p1405`, tables `prs_activity_progress`, `prs_period
 - **Periods** (FR-02, BR-02): `SITE_PROGRESS_PERIOD`, PLAN prepares and PM closes; the snapshot is taken at sending and again at close, `prs_evm` rows are kept, `site.period.closed` is published (ADR-500).
 - **Reports** (FR-05, FR-06): dashboard, S-curves, progress by WBS and activity (XLSX, CSV, PDF), client report (percentages only, from the snapshot of a closed period). Money needs `site.period.cost`.
 - **API**: 22 routes under `/api/v1/site/periods` and `/api/v1/site/progress`. **Permissions**: `site.period.*` and `site.period.cost`.
+
+## 107. Productivity tracking and analysis (part 14.06)
+Module `site`, flag `ff.site.p1406`, tables `prod_norms`, `prod_actuals`, `prod_losses`, `prod_alerts` (migration 202), seed 203.
+- **Actuals** (FR-02, BR-01): the consumer of `site.dpr.approved` writes one row per DPR work line with man-days allocated by the crew's planned man-days, machine-hours, contractor, crew, variance from the norm, man-days lost and the reason; an amendment replaces its parent; a replay changes nothing; outliers above `site.productivity.outlier_factor` times the norm are flagged and excluded (ADR-503, ADR-504).
+- **Norms** (FR-01, AC-04): from the BOQ rate analysis or entered, approved through `SITE_PROD_NORM` (PM) and audited (ADR-505).
+- **Losses** (FR-03): recorded on site or derived from breakdowns, weather, drawing hindrances and idle plant (ADR-506). **Benchmarks and trends** (FR-04) across sites and projects for the same activity type. **Alerts** (FR-05) below `site.productivity.alert_pct` for `site.productivity.alert_days` days (ADR-507).
+- **Events**: `site.productivity.updated`, `site.productivity.low`. **API**: 21 routes under `/api/v1/site/productivity`. **Permissions**: `site.productivity.{view,configure,submit,approve,cancel,record,export}`.

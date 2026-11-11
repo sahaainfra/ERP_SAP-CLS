@@ -59,7 +59,7 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'site', description });
 
 integrityRegistry.register({
-  statuses: { prod_norms: Object.keys(NORM_STATUS), prs_periods: Object.keys(PRD_STATUS), site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
+  statuses: { prod_norms: Object.keys(NORM_STATUS), prod_alerts: ['OPEN', 'CLEARED'], prs_periods: Object.keys(PRD_STATUS), site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
   uniqueKeys: [{ table: 'site_work_authorisations', columns: ['company_id', 'wa_no'] }, { table: 'site_daily_plans', columns: ['company_id', 'doc_no'] }, { table: 'site_dprs', columns: ['company_id', 'doc_no'] }, { table: 'site_hindrances', columns: ['company_id', 'doc_no'] }, { table: 'site_instructions', columns: ['company_id', 'doc_no'] }, { table: 'prs_periods', columns: ['company_id', 'doc_no'] }],
 });
 
