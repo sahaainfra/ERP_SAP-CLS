@@ -19694,6 +19694,251 @@ Indexes:
 - ix_ui_widgets_module: module, sort_order
 - sqlite_autoindex_ui_widgets_1 (unique): code
 
+## vnd_actions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| scorecard_id | INTEGER |  |  |  |
+| kind | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| detail | TEXT |  |  |  |
+| owner_user | TEXT |  |  |  |
+| due_date | TEXT |  |  |  |
+| action_status | TEXT | yes |  | 'OPEN' |
+| response | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: scorecard_id -> vnd_scorecards(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_vnd_action_score: scorecard_id
+- ix_vnd_action_partner: partner_id, action_status
+- ix_vnd_action_list: company_id, action_status
+- ux_vnd_action_doc (unique): company_id, doc_no
+
+## vnd_avl
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| category_id | INTEGER | yes |  |  |
+| region_code | TEXT | yes |  | 'ALL' |
+| avl_status | TEXT | yes |  | 'APPROVED' |
+| valid_from | TEXT | yes |  |  |
+| valid_until | TEXT |  |  |  |
+| prequal_id | INTEGER |  |  |  |
+| conditions | TEXT |  |  |  |
+| suspended_reason | TEXT |  |  |  |
+| suspended_on | TEXT |  |  |  |
+| reminded_for | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: prequal_id -> vnd_prequalifications(id), category_id -> mdm_item_categories(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_vnd_avl_partner: partner_id
+- ix_vnd_avl_prequal: prequal_id
+- ix_vnd_avl_category: category_id, avl_status
+- ix_vnd_avl_list: company_id, avl_status, valid_until
+- ux_vnd_avl_key (unique): company_id, partner_id, category_id, region_code
+
+## vnd_prequalifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| category_ids_json | TEXT | yes |  | '[]' |
+| regions_json | TEXT | yes |  | '[]' |
+| strategic | INTEGER | yes |  | 0 |
+| questionnaire_json | TEXT | yes |  | '[]' |
+| score | INTEGER | yes |  | 0 |
+| visit_date | TEXT |  |  |  |
+| visit_notes | TEXT |  |  |  |
+| visit_report_file_id | INTEGER |  |  |  |
+| result | TEXT | yes |  | 'PENDING' |
+| valid_until | TEXT |  |  |  |
+| conditions | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 0 |
+| parent_id | INTEGER |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_id -> vnd_prequalifications(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_vnd_preq_parent: parent_id
+- ix_vnd_preq_partner: partner_id, status
+- ix_vnd_preq_list: company_id, status
+- ux_vnd_preq_doc (unique): company_id, doc_no
+
+## vnd_score_inputs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| value_pct | INTEGER | yes |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_vnd_input_partner: partner_id
+- ix_vnd_input_key: company_id, partner_id, period, kind
+
+## vnd_scorecards
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_from | TEXT | yes |  |  |
+| period_to | TEXT | yes |  |  |
+| on_time_pct | INTEGER |  |  |  |
+| quality_pct | INTEGER |  |  |  |
+| price_score | INTEGER |  |  |  |
+| responsiveness | INTEGER |  |  |  |
+| safety_score | INTEGER |  |  |  |
+| invoice_accuracy | INTEGER |  |  |  |
+| weights_json | TEXT | yes |  | '{}' |
+| evidence_json | TEXT | yes |  | '{}' |
+| total_score | INTEGER |  |  |  |
+| rating | TEXT | yes |  | 'NA' |
+| computed_at | TEXT | yes |  |  |
+| computed_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_vnd_score_partner: partner_id, period_to
+- ix_vnd_score_list: company_id, period, rating
+- ux_vnd_score_key (unique): company_id, partner_id, period
+
+## vnd_suspensions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| doc_date | TEXT | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| avl_ids_json | TEXT | yes |  | '[]' |
+| reason | TEXT | yes |  |  |
+| auto_suggested | INTEGER | yes |  | 0 |
+| scorecard_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: scorecard_id -> vnd_scorecards(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_vnd_susp_score: scorecard_id
+- ix_vnd_susp_partner: partner_id, status
+- ix_vnd_susp_list: company_id, status
+- ux_vnd_susp_doc (unique): company_id, doc_no
+
 ## wf_approval_policies
 
 | Column | Type | Not null | Key | Default |

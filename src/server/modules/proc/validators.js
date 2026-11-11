@@ -141,3 +141,20 @@ export const parseShipDispatch = (b) => parse(z.object({ dispatchedOn: day.optio
 export const parseShipTrack = (b) => parse(z.object({ location: optText(120), note: optText(300), eta: day.optional() }).strict().transform(defined), b ?? {});
 export const parseShipDeliver = (b) => parse(z.object({ deliveredOn: day.optional() }).strict().transform(defined), b ?? {});
 export const parseDashQ = (q) => parse(z.object({ projectId: id.optional() }).strict(), q ?? {});
+
+// ---- vendor prequalification, the approved vendor list and scorecards (part 15.08) -----------------------------------------------------------------------------------------------------------------------------
+const answer = z.object({ section: z.enum(['FINANCIALS', 'EXPERIENCE', 'CAPACITY', 'CERTIFICATIONS', 'REFERENCES']), score: z.number().min(0).max(100), note: optText(500) }).strict();
+const preqFields = { categoryIds: z.array(id).min(1).max(30), regions: z.array(text(30).min(1)).max(20).optional(), strategic: z.boolean().optional(), answers: z.array(answer).max(5).optional(), visitDate: day.nullish().transform((v) => v || null), visitNotes: optText(2000), validUntil: day.nullish().transform((v) => v || null), conditions: optText(1000) };
+export const parsePreqCreate = (b) => parse(z.object({ partnerId: id, ...preqFields }).strict(), b ?? {});
+export const parsePreqUpdate = (b) => parse(z.object({ ...preqFields, rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parsePreqImport = (b) => parse(z.object({ rows: z.array(answer).min(1).max(5) }).strict(), b ?? {});
+export const parseVisitReport = (b) => parse(z.object({ fileId: id }).strict(), b ?? {});
+export const parseSuspCreate = (b) => parse(z.object({ partnerId: id, avlIds: z.array(id).max(200).optional(), reason }).strict(), b ?? {});
+const period = z.string().regex(/^\d{4}-(Q[1-4]|0[1-9]|1[0-2])$/, 'Use a period such as 2026-Q3 or 2026-09');
+export const parseScoreCompute = (b) => parse(z.object({ partnerId: id, period }).strict(), b ?? {});
+export const parseScoreInput = (b) => parse(z.object({ partnerId: id, period, kind: z.enum(['SAFETY', 'INVOICE_ACCURACY', 'QUALITY']), value: z.number().min(0).max(100), note: optText(500) }).strict(), b ?? {});
+export const parseRankQ = (q) => parse(z.object({ categoryId: id.optional(), period: period.optional() }).strict(), q ?? {});
+export const parseAvlCheckQ = (q) => parse(z.object({ partnerId: id, categoryId: id, region: text(30).optional() }).strict(), q ?? {});
+export const parseActionCreate = (b) => parse(z.object({ partnerId: id, scorecardId: id.optional(), kind: z.enum(['REVIEW', 'CAR', 'DEVELOPMENT']), title: text(200).min(3), detail: optText(2000), owner: optText(60), dueDate: day.nullish().transform((v) => v || null) }).strict().transform(defined), b ?? {});
+export const parseActionRespond = (b) => parse(z.object({ response: text(2000).min(3, 'Say what was done') }).strict(), b ?? {});
+export const parseActionClose = (b) => parse(z.object({ note: optText(500) }).strict(), b ?? {});

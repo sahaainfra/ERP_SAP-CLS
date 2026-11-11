@@ -8534,6 +8534,66 @@ paths:
     get: { summary: 'Read shipments/{id}/history (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/shipments/{id}/print:
     get: { summary: 'Read shipments/{id}/print (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/options:
+    get: { summary: 'Read prequalifications/options (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications:
+    get: { summary: 'Read prequalifications (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: 'Do prequalifications (part 15.08)', tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}:
+    get: { summary: 'Read prequalifications/{id} (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change prequalifications/{id} (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete prequalifications/{id} (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/submit:
+    post: { summary: 'Do prequalifications/{id}/submit (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/withdraw:
+    post: { summary: 'Do prequalifications/{id}/withdraw (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/cancel:
+    post: { summary: 'Do prequalifications/{id}/cancel (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/amend:
+    post: { summary: 'Do prequalifications/{id}/amend (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/import:
+    post: { summary: 'Do prequalifications/{id}/import (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/visit-report:
+    post: { summary: 'Do prequalifications/{id}/visit-report (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/history:
+    get: { summary: 'Read prequalifications/{id}/history (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/prequalifications/{id}/print:
+    get: { summary: 'Read prequalifications/{id}/print (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/avl/check:
+    get: { summary: 'Read avl/check (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/avl:
+    get: { summary: 'Read avl (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/avl-suspensions:
+    get: { summary: 'Read avl-suspensions (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: 'Do avl-suspensions (part 15.08)', tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/avl-suspensions/{id}:
+    get: { summary: 'Read avl-suspensions/{id} (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/avl-suspensions/{id}/submit:
+    post: { summary: 'Do avl-suspensions/{id}/submit (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/avl-suspensions/{id}/withdraw:
+    post: { summary: 'Do avl-suspensions/{id}/withdraw (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/avl-suspensions/{id}/cancel:
+    post: { summary: 'Do avl-suspensions/{id}/cancel (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/avl-suspensions/{id}/history:
+    get: { summary: 'Read avl-suspensions/{id}/history (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-scorecards:
+    get: { summary: 'Read vendor-scorecards (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-scorecards/compute:
+    post: { summary: 'Do vendor-scorecards/compute (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-scorecards/inputs:
+    post: { summary: 'Do vendor-scorecards/inputs (part 15.08)', tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/vendor-scorecards/partner/{id}:
+    get: { summary: 'Read vendor-scorecards/partner/{id} (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-scorecards/{id}:
+    get: { summary: 'Read vendor-scorecards/{id} (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-ranking:
+    get: { summary: 'Read vendor-ranking (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-actions:
+    post: { summary: 'Do vendor-actions (part 15.08)', tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/vendor-actions/{id}/respond:
+    post: { summary: 'Do vendor-actions/{id}/respond (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-actions/{id}/close:
+    post: { summary: 'Do vendor-actions/{id}/close (part 15.08)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones:
     get: { summary: 'Read vendor-po/{token}/milestones (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones/{mid}:

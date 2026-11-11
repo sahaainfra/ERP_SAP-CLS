@@ -49,5 +49,7 @@ export function createBase({ db }) {
   const uomOk = (item, uom) => Boolean(item && (lower(item.base_uom) === lower(uom) || db.prepare('SELECT 1 FROM mdm_item_uoms WHERE item_id = ? AND uom = ? COLLATE NOCASE AND deleted_at IS NULL').get(item.id, uom)));
   const uomsOf = (itemId) => { const it = db.prepare('SELECT base_uom FROM mdm_items WHERE id = ?').get(itemId); return it ? [it.base_uom, ...db.prepare('SELECT uom FROM mdm_item_uoms WHERE item_id = ? AND deleted_at IS NULL').all(itemId).map((x) => x.uom)] : []; };
   const budgetOf = (projectId) => db.prepare("SELECT * FROM bud_budgets WHERE org_project_id = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY version_no DESC, id DESC LIMIT 1").get(projectId) ?? null;
-  return { authz, param, may, need, fail, audit, notify, number, project, siteOf, wbsOf, codeOf, itemOf, uomOk, uomsOf, budgetOf };
+  /** Checks other parts add to the eligibility of a vendor for an RFQ (15.08: the approved vendor list): (companyId, vendorId, rfq) -> reason or null. */
+  const gates = [];
+  return { gates, authz, param, may, need, fail, audit, notify, number, project, siteOf, wbsOf, codeOf, itemOf, uomOk, uomsOf, budgetOf };
 }

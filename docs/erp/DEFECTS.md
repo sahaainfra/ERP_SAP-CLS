@@ -535,3 +535,8 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-524 | XPD | Look-ahead (13.04) and gate entry (16.02) do not exist yet; the events are published and not yet consumed. |
 | D-525 | XPD | The vendor updates milestones only on the order link; vendor documents are matched to the plan by the order number text in `po_ref`. |
 | D-526 | XPD | The inspection agency is free text and the e-way bill number is not checked against the GST portal. |
+| D-527 | VND | Quality, safety and invoice accuracy are entered by hand until inspections (18.03), subcontractor safety (19.x) and invoice matching (22.06) exist; quality uses GRN acceptance when receipts exist. |
+| D-528 | VND | The vendor picker of an RFQ (15.03) does not show the approved-list result; the RFQ is refused at issue. |
+| D-529 | VND | Price competitiveness uses only approved comparative statements; vendors that never quoted score nothing on price. |
+| D-530 | VND | The visit report file is attached through the document service (`vnd_prequalification`); the visit date and notes are required for strategic categories, a file is not. |
+| D-531 | VND | Scorecard periods are calendar quarters or months, not financial-year quarters. |

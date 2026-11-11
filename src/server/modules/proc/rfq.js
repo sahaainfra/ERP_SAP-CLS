@@ -87,10 +87,11 @@ export function createRfqService({ db, base, baseUrl = () => '' }) {
   const contactOf = (vendorId, channel) => { const c = db.prepare('SELECT email, mobile FROM mdm_partner_contacts WHERE partner_id = ? AND deleted_at IS NULL ORDER BY is_primary DESC, id LIMIT 1').get(vendorId); if (channel === 'EMAIL') return c?.email ?? null; if (channel === 'WHATSAPP') { const m = String(c?.mobile ?? '').replace(/[\s-]/g, ''); return !m ? null : m.startsWith('+') ? m : m.length === 10 ? `+91${m}` : `+${m}`; } return null; };
 
   // ---- the vendors: active ones of the partner master, matched by category and region (FR-02) -----------------------------------------------------------------------------------------------------------------
-  const eligibility = (companyId, vendorId) => {
+  const eligibility = (companyId, vendorId, rfq = null) => {
     const p = db.prepare('SELECT id, partner_status, status_reason FROM mdm_partners WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(vendorId), companyId); if (!p) return 'Not a business partner of this company';
     if (!db.prepare("SELECT 1 FROM mdm_partner_roles WHERE partner_id = ? AND partner_role IN ('VENDOR', 'SERVICE_PROVIDER', 'SUBCONTRACTOR') AND deleted_at IS NULL").get(p.id)) return 'Not a vendor';
-    if (p.partner_status !== 'ACTIVE') return p.partner_status === 'ON_HOLD' ? 'On hold: it is not sent an enquiry' : p.partner_status === 'BLACKLISTED' ? 'Blacklisted: it is not sent an enquiry' : `Not active (${p.partner_status.toLowerCase().replace('_', ' ')})`; return null;
+    if (p.partner_status !== 'ACTIVE') return p.partner_status === 'ON_HOLD' ? 'On hold: it is not sent an enquiry' : p.partner_status === 'BLACKLISTED' ? 'Blacklisted: it is not sent an enquiry' : `Not active (${p.partner_status.toLowerCase().replace('_', ' ')})`;
+    for (const g of base.gates ?? []) { const why = g(companyId, p.id, rfq); if (why) return why; } return null;
   };
   const vendorChoices = (actor, { projectId, prLineIds = [], q = '' }) => {
     project(actor, projectId, 'proc.rfq.view'); const cats = new Set(); const cs = prLineIds.length ? db.prepare(`SELECT DISTINCT c.code, c.name FROM proc_pr_lines l JOIN mdm_items i ON i.id = l.item_id JOIN mdm_item_categories c ON c.id = i.category_id WHERE l.id IN (${prLineIds.map(() => '?').join(',')})`).all(...prLineIds) : [];
@@ -228,7 +229,7 @@ export function createRfqService({ db, base, baseUrl = () => '' }) {
     issue(actor, id) {
       const r = row(actor, id, 'proc.rfq.issue'); if (!EDITABLE.includes(r.status)) throw unprocessable('Only a draft or a returned RFQ is issued.'); const ls = linesOf(r.id); const vs = vendorsOf(r.id);
       if (!ls.length) throw unprocessable('The RFQ has no lines.'); if (!vs.length) throw unprocessable('Choose the vendors the RFQ goes to.'); if (r.due_date < todayIST()) throw unprocessable('The due date has passed: change it first.');
-      for (const v of vs) { const why = eligibility(r.company_id, v.vendor_id); if (why) throw unprocessable(`${vname(v.vendor_id).name}: ${why}`); }
+      for (const v of vs) { const why = eligibility(r.company_id, v.vendor_id, r); if (why) throw unprocessable(`${vname(v.vendor_id).name}: ${why}`); }
       if (short(r, vs.length) && !r.justified) protocolOf(db).enforce(actor, 'CP-PROC-03', { entity: 'proc_rfq', entityId: String(r.id), amount: Number(rs(r.est_total)), valueAtRisk: Number(rs(r.est_total)), ref: r.doc_no, vendors: vs.length, minimum: minVendors(r.company_id), message: `${r.doc_no} goes to ${vs.length} vendor(s); ${minVendors(r.company_id)} are needed above ${rs(threshold(r.company_id))} unless the single-source justification is approved.` });
       return transaction(db, () => {
         const now = nowIso(); const links = []; const expires = expiryOf(r.company_id, r.due_date);
@@ -244,7 +245,7 @@ export function createRfqService({ db, base, baseUrl = () => '' }) {
     /** A vendor lost its link, or has quoted and must revise: a new link replaces the old, which stops working. */
     reissue(actor, id, { vendorId }) {
       const r = row(actor, id, 'proc.rfq.issue'); if (r.status !== 'ISSUED') throw unprocessable('Links are issued again only while the RFQ is issued.'); const v = db.prepare('SELECT * FROM proc_rfq_vendors WHERE rfq_id = ? AND vendor_id = ? AND deleted_at IS NULL').get(r.id, rid(vendorId)); if (!v) throw notFound('That vendor is not on the RFQ.');
-      const why = eligibility(r.company_id, v.vendor_id); if (why) throw unprocessable(why);
+      const why = eligibility(r.company_id, v.vendor_id, r); if (why) throw unprocessable(why);
       return transaction(db, () => { const token = newToken(); const expires = expiryOf(r.company_id, r.due_date); const url = link(token); const sent = dispatch(actor, r, { ...v, token_expires: expires }, url, 'invite'); const now = nowIso();
         db.prepare("UPDATE proc_rfq_vendors SET token_hash = ?, token_expires = ?, token_used_at = NULL, response_status = CASE WHEN response_status IN ('RESPONDED', 'DECLINED') THEN 'SENT' ELSE response_status END, send_status = ?, send_note = ?, sent_at = COALESCE(?, sent_at), updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(hash(token), expires, sent.status, sent.note ?? null, sent.sent ? now : null, actor.user, now, v.id);
         audit(actor, 'proc_rfq_vendors', v.id, 'reissue', r.company_id, { newValues: { vendorId: v.vendor_id } }); return { vendorId: v.vendor_id, vendor: vname(v.vendor_id).name, sendStatus: sent.status, note: sent.note ?? null, url, rfq: rfqs.get(actor, r.id) }; });

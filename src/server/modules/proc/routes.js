@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parseDashQ, parseXpdCreate, parseXpdUpdate, parseXpdImport, parseMilestoneProgress, parseVendorMilestone, parseInspCreate, parseInspUpdate, parseInspResult, parsePunchImport, parseShipCreate, parseShipUpdate, parseShipDispatch, parseShipTrack, parseShipDeliver, parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck, parseRcCreate, parseRcUpdate, parseRcImport, parseIndexSet, parseIndexQ, parsePvRequest, parseSoCreate, parseSoUpdate, parseSoImport, parseSeCreate, parseSeUpdate, parseSeImport } from './validators.js';
+import { parsePreqCreate, parsePreqUpdate, parsePreqImport, parseVisitReport, parseSuspCreate, parseScoreCompute, parseScoreInput, parseRankQ, parseAvlCheckQ, parseActionCreate, parseActionRespond, parseActionClose, parseDashQ, parseXpdCreate, parseXpdUpdate, parseXpdImport, parseMilestoneProgress, parseVendorMilestone, parseInspCreate, parseInspUpdate, parseInspResult, parsePunchImport, parseShipCreate, parseShipUpdate, parseShipDispatch, parseShipTrack, parseShipDeliver, parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck, parseRcCreate, parseRcUpdate, parseRcImport, parseIndexSet, parseIndexQ, parsePvRequest, parseSoCreate, parseSoUpdate, parseSoImport, parseSeCreate, parseSeUpdate, parseSeImport } from './validators.js';
 import { HttpError } from '../../platform/http/errors.js';
 import { createRateLimiter } from '../../platform/integrations/breaker.js';
 
@@ -244,6 +244,40 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   r.post('/shipments/:id/cancel', idempotent, (req, res) => ok(res, xs.cancel(req.actor, pid(req), parseReason(req.body))));
   r.get('/shipments/:id/history', (req, res) => ok(res, xs.history(req.actor, pid(req))));
   r.get('/shipments/:id/print', (req, res) => file(res, xs.print(req.actor, pid(req))));
+  // vendor prequalification, approved vendor list and scorecards (part 15.08)
+  const vq = svc.vndSvc.preqs; const va = svc.vndSvc.avl; const vs = svc.vndSvc.suspensions; const vc = svc.vndSvc.scores; const vact = svc.vndSvc.acts;
+  r.get('/prequalifications/options', (req, res) => ok(res, vq.options(req.actor)));
+  r.get('/prequalifications', (req, res) => res.json(vq.list(req.actor, req.query)));
+  r.post('/prequalifications', idempotentRequired, (req, res) => ok(res, vq.create(req.actor, parsePreqCreate(req.body)), 201));
+  r.get('/prequalifications/:id', (req, res) => ok(res, vq.get(req.actor, pid(req))));
+  r.patch('/prequalifications/:id', idempotent, (req, res) => ok(res, vq.update(req.actor, pid(req), parsePreqUpdate(req.body))));
+  r.delete('/prequalifications/:id', (req, res) => ok(res, vq.remove(req.actor, pid(req))));
+  r.post('/prequalifications/:id/submit', idempotentRequired, (req, res) => ok(res, vq.submit(req.actor, pid(req)), 202));
+  r.post('/prequalifications/:id/withdraw', idempotent, (req, res) => ok(res, vq.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/prequalifications/:id/cancel', idempotent, (req, res) => ok(res, vq.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/prequalifications/:id/amend', idempotentRequired, (req, res) => ok(res, vq.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/prequalifications/:id/import', idempotentRequired, (req, res) => ok(res, vq.importAnswers(req.actor, pid(req), parsePreqImport(req.body))));
+  r.post('/prequalifications/:id/visit-report', idempotent, (req, res) => ok(res, vq.attachReport(req.actor, pid(req), parseVisitReport(req.body).fileId)));
+  r.get('/prequalifications/:id/history', (req, res) => ok(res, vq.history(req.actor, pid(req))));
+  r.get('/prequalifications/:id/print', (req, res) => file(res, vq.print(req.actor, pid(req))));
+  r.get('/avl/check', (req, res) => { const q = parseAvlCheckQ(req.query); ok(res, va.check(req.actor, q.partnerId, q.categoryId, q.region ?? null)); });
+  r.get('/avl', (req, res) => res.json(va.list(req.actor, req.query)));
+  r.get('/avl-suspensions', (req, res) => res.json(vs.list(req.actor, req.query)));
+  r.post('/avl-suspensions', idempotentRequired, (req, res) => ok(res, vs.create(req.actor, parseSuspCreate(req.body)), 201));
+  r.get('/avl-suspensions/:id', (req, res) => ok(res, vs.get(req.actor, pid(req))));
+  r.post('/avl-suspensions/:id/submit', idempotentRequired, (req, res) => ok(res, vs.submit(req.actor, pid(req)), 202));
+  r.post('/avl-suspensions/:id/withdraw', idempotent, (req, res) => ok(res, vs.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/avl-suspensions/:id/cancel', idempotent, (req, res) => ok(res, vs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/avl-suspensions/:id/history', (req, res) => ok(res, vs.history(req.actor, pid(req))));
+  r.get('/vendor-scorecards', (req, res) => res.json(vc.list(req.actor, req.query)));
+  r.post('/vendor-scorecards/compute', idempotent, (req, res) => { const b = parseScoreCompute(req.body); ok(res, vc.compute(req.actor, b.partnerId, b.period)); });
+  r.post('/vendor-scorecards/inputs', idempotent, (req, res) => ok(res, vc.input(req.actor, parseScoreInput(req.body)), 201));
+  r.get('/vendor-scorecards/partner/:id', (req, res) => ok(res, vc.partner(req.actor, pid(req))));
+  r.get('/vendor-scorecards/:id', (req, res) => ok(res, vc.get(req.actor, pid(req))));
+  r.get('/vendor-ranking', (req, res) => ok(res, vc.ranking(req.actor, parseRankQ(req.query))));
+  r.post('/vendor-actions', idempotentRequired, (req, res) => ok(res, vact.create(req.actor, parseActionCreate(req.body)), 201));
+  r.post('/vendor-actions/:id/respond', idempotent, (req, res) => ok(res, vact.respond(req.actor, pid(req), parseActionRespond(req.body))));
+  r.post('/vendor-actions/:id/close', idempotent, (req, res) => ok(res, vact.close(req.actor, pid(req), parseActionClose(req.body))));
   return r;
 }
 

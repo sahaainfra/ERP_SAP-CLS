@@ -1374,3 +1374,12 @@ Module `proc`, flag `ff.proc.p1507`, tables `xpd_expediting_plans`, `xpd_milesto
 - **Shipments** (ADR-549): control `CP-PROC-07`; events `proc.shipment.dispatched` and `.delivered`.
 - **Vendor**: public routes `GET/POST /vendor-po/:token/milestones` behind the flag.
 - **Permissions**: `proc.expediting_plan.*` (and `.progress`), `proc.inspection.*` (and `.result`), `proc.shipment.*`.
+
+
+## 116. Vendor prequalification, approved vendor list and scorecards (part 15.08)
+Module `proc`, flag `ff.proc.p1508`, tables `vnd_prequalifications`, `vnd_avl`, `vnd_scorecards`, `vnd_score_inputs`, `vnd_suspensions`, `vnd_actions`; service `src/server/modules/proc/vnd.js`.
+- **Prequalification**: `PROC_PREQ` (procurement manager, quality manager, direction when strategic); approval writes `vnd_avl` rows per category and region and publishes `proc.vendor.avl_updated`.
+- **RFQ gate** (ADR-551): `base.gates` is read by `eligibility` in `rfq.js`.
+- **Scorecard** (ADR-550): `gather` collects evidence, `metricsFromEvidence` and `compose` work out the measures and total; `proc.vendor.scorecard_computed`.
+- **Suspension** (ADR-552): `PROC_AVLSUSP` (procurement manager, direction); `proc.vendor.suspended`. Job `proc.vnd_reeval`.
+- **Permissions**: `proc.prequalification.*`, `proc.avl.{view,suspend,approve,export}`, `proc.vendor_score.{view,compute,input,export}`, `proc.vendor_action.{view,create,edit,close}`.

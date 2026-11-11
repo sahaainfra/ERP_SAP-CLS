@@ -162,3 +162,18 @@ export const px = {
   ship: (id) => get(`/shipments/${id}`), shipCreate: (b) => post('/shipments', b), shipUpdate: (id, b) => patch(`/shipments/${id}`, b),
   shipDelete: async (id) => (await api.delete(`/proc/shipments/${id}`)).data, shipAct: (id, action, b) => post(`/shipments/${id}/${action}`, b),
 };
+
+export const AVL_TONE = { APPROVED: 'APPROVED', CONDITIONAL: 'RETURNED', SUSPENDED: 'REJECTED', EXPIRED: 'CANCELLED' };
+export const RATING_TONE = { A: 'APPROVED', B: 'APPROVED', C: 'RETURNED', D: 'REJECTED', NA: 'DRAFT' };
+export const RESULT_TONE = { PENDING: 'DRAFT', QUALIFIED: 'APPROVED', CONDITIONAL: 'RETURNED', NOT_QUALIFIED: 'REJECTED' };
+export const pct = (n) => (n == null ? '—' : `${(n / 10000).toLocaleString('en-IN', { maximumFractionDigits: 1 })}%`);
+/** Vendor prequalification, the approved vendor list, scorecards and actions (part 15.08). The scores, ratings, eligibility and ranks come from the server. */
+export const pv8 = {
+  options: () => get('/prequalifications/options'),
+  preq: (id) => get(`/prequalifications/${id}`), preqCreate: (b) => post('/prequalifications', b), preqUpdate: (id, b) => patch(`/prequalifications/${id}`, b),
+  preqDelete: async (id) => (await api.delete(`/proc/prequalifications/${id}`)).data, preqAct: (id, action, b) => post(`/prequalifications/${id}/${action}`, b), preqHistory: (id) => get(`/prequalifications/${id}/history`),
+  susp: (id) => get(`/avl-suspensions/${id}`), suspCreate: (b) => post('/avl-suspensions', b), suspAct: (id, action, b) => post(`/avl-suspensions/${id}/${action}`, b), suspHistory: (id) => get(`/avl-suspensions/${id}/history`),
+  partner: (id) => get(`/vendor-scorecards/partner/${id}`), compute: (b) => post('/vendor-scorecards/compute', b), input: (b) => post('/vendor-scorecards/inputs', b),
+  ranking: (q) => get(`/vendor-ranking${q ? `?${q}` : ''}`),
+  actionCreate: (b) => post('/vendor-actions', b), actionAct: (id, action, b) => post(`/vendor-actions/${id}/${action}`, b),
+};

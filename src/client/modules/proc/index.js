@@ -22,6 +22,10 @@ import ExpeditingDashboardPage from './ExpeditingDashboardPage.jsx';
 import ExpeditingPlansPage from './ExpeditingPlansPage.jsx';
 import InspectionsPage from './InspectionsPage.jsx';
 import ShipmentsPage from './ShipmentsPage.jsx';
+import PrequalificationsPage from './PrequalificationsPage.jsx';
+import AvlPage from './AvlPage.jsx';
+import VendorScorecardsPage from './VendorScorecardsPage.jsx';
+import VendorRankingPage from './VendorRankingPage.jsx';
 
 registerModule({
   code: 'proc',
@@ -50,5 +54,9 @@ registerModule({
     { path: '/proc/expediting-plans', label: 'Expediting Plans', icon: 'erp.group.supply', permission: 'proc.expediting_plan.view', flag: 'ff.proc.p1507', Page: ExpeditingPlansPage },
     { path: '/proc/inspections', label: 'Vendor Inspections', icon: 'erp.group.supply', permission: 'proc.inspection.view', flag: 'ff.proc.p1507', Page: InspectionsPage },
     { path: '/proc/shipments', label: 'Shipments Tracker', icon: 'erp.group.supply', permission: 'proc.shipment.view', flag: 'ff.proc.p1507', Page: ShipmentsPage },
+    { path: '/proc/prequalifications', label: 'Vendor Prequalifications', icon: 'erp.group.supply', permission: 'proc.prequalification.view', flag: 'ff.proc.p1508', Page: PrequalificationsPage },
+    { path: '/proc/avl', label: 'Approved Vendor List', icon: 'erp.group.supply', permission: 'proc.avl.view', flag: 'ff.proc.p1508', Page: AvlPage },
+    { path: '/proc/vendor-scorecards', label: 'Vendor Scorecards', icon: 'erp.group.supply', permission: 'proc.vendor_score.view', flag: 'ff.proc.p1508', Page: VendorScorecardsPage },
+    { path: '/proc/vendor-ranking', label: 'Vendor Ranking', icon: 'erp.group.supply', permission: 'proc.vendor_score.view', flag: 'ff.proc.p1508', Page: VendorRankingPage },
   ],
 });
