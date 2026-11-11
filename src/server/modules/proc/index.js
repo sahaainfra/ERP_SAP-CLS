@@ -19,6 +19,7 @@ import { RUN_STATUS, createMrpService } from './mrp.js';
 import { PARAM_DOC, PARAM_STATUS, createItemParamService } from './item-params.js';
 import { RFQ_DOC, RFQ_STATUS, QUOTE_STATUS, createRfqService } from './rfq.js';
 import { CS_DOC, CS_STATUS, createCsService } from './cs.js';
+import { PO_DOC, AMEND_DOC, CLOSE_DOC, ADV_DOC, PO_STATUS, createPoService } from './po.js';
 import { procRoutes, vendorQuoteRoutes } from './routes.js';
 
 const services = new WeakMap();
@@ -50,12 +51,21 @@ for (const [type, description] of [
   ['proc.cs.approved', 'A comparative statement was approved: the vendor selection is final (part 15.04): data { csId, docNo, rfqId, projectId, totalValue, nonL1, supersedes, awards: [{ rfqLineId, prLineId, itemId, serviceDesc, vendorId, quotationId, qty, uom, rate, landedRate, gstRate, make, requiredBy, deliverySiteId }] }. Rates in paise, quantities in thousandths. For the purchase order (15.05).'],
   ['proc.cs.rejected', 'A comparative statement was not approved (part 15.04): data { csId, docNo, rfqId, projectId, reason }.'],
   ['proc.cs.cancelled', 'A comparative statement was cancelled; an approved one may no longer be ordered from (part 15.04): data { csId, docNo, rfqId, projectId, reason, wasApproved }.'],
+  ['proc.po.approved', 'A purchase order was approved and sent to the vendor; the commitment is in the ledger (part 15.05): data { poId, docNo, projectId, vendorId, totalAmount, totalBasic, supplyType, csId, lines: [{ lineId, lineNo, prLineId, itemId, qty, uom, rate, discountPct, gstPct, amount, deliverySiteId, wbsId, costCodeId, schedule: [{ dueDate, qty }] }] }. For the goods receipt (16.02/16.03), expediting (15.07), invoice matching (22.06), the supplier portal (25.02).'],
+  ['proc.po.amended', 'An amendment of a purchase order was approved (part 15.05): data { poId, docNo, amendmentNo, deltaAmount, totalAmount, reason, lines: [{ prLineId, qty }] } where qty is the change.'],
+  ['proc.po.closed', 'A purchase order was short-closed or delivered in full (part 15.05): data { poId, docNo, reason, shortClosed }.'],
+  ['proc.po.cancelled', 'A purchase order was cancelled; nothing was received (part 15.05): data { poId, docNo, reason, lines: [{ prLineId, qty }] } with negative quantities that return the balance to the requisition.'],
+  ['proc.po.acknowledged', 'The vendor acknowledged a purchase order (part 15.05): data { poId, docNo, acknowledgedBy }.'],
+  ['proc.po.dispatched', 'A dispatch (advance shipping notice) was recorded against a purchase order (part 15.05): data { poId, docNo, dispatchId, asnNo, expectedArrival, ewayBillNo, lines: [{ poLineId, qty }] }.'],
+  ['proc.po.received', 'Goods were received against a purchase order (part 15.05): data { poId, docNo, lines: [{ lineId, receivedQty, acceptedQty, balanceQty }] }.'],
+  ['proc.po.overdue', 'A delivery of a purchase order is past its date (part 15.05): data { poId, docNo, lines: [{ lineNo, dueDate, balanceQty }] }.'],
+  ['proc.po.advance_approved', 'An advance payment against a purchase order was approved (part 15.05): data { poId, docNo, advanceId, advanceNo, amount, neededBy, vendorName }. For the payment request (23.04).'],
   ['proc.stock.levels_loaded', 'Free stock levels of items in stores were loaded for the stock check (part 15.01): data { levels, changed }. Until the stock module (16.01) keeps them.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'proc', description });
 
 integrityRegistry.register({
-  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS), proc_comparative_statements: Object.keys(CS_STATUS) },
-  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }, { table: 'proc_comparative_statements', columns: ['company_id', 'doc_no'] }],
+  statuses: { proc_material_requests: Object.keys(MR_STATUS), proc_requisitions: Object.keys(PR_STATUS), proc_mrp_runs: Object.keys(RUN_STATUS), proc_item_params: Object.keys(PARAM_STATUS), proc_rfqs: Object.keys(RFQ_STATUS), proc_quotations: Object.keys(QUOTE_STATUS), proc_comparative_statements: Object.keys(CS_STATUS), proc_purchase_orders: Object.keys(PO_STATUS), proc_po_amendments: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_po_advances: ['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED'], proc_dispatches: ['DISPATCHED', 'RECEIVED', 'CANCELLED'] },
+  uniqueKeys: [{ table: 'proc_material_requests', columns: ['company_id', 'doc_no'] }, { table: 'proc_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'proc_mrp_runs', columns: ['company_id', 'doc_no'] }, { table: 'proc_rfqs', columns: ['company_id', 'doc_no'] }, { table: 'proc_quotations', columns: ['company_id', 'doc_no'] }, { table: 'proc_comparative_statements', columns: ['company_id', 'doc_no'] }, { table: 'proc_purchase_orders', columns: ['company_id', 'doc_no'] }, { table: 'proc_po_advances', columns: ['company_id', 'doc_no'] }, { table: 'proc_dispatches', columns: ['company_id', 'asn_no'] }],
 });
 
 /** Module "proc": procurement (M15). Part 15.01 holds the material requests (site indents) and the purchase requisitions. The tables are `proc_*`. */
@@ -65,8 +75,8 @@ export const proc = {
   routePrefix: '/api/v1/proc',
   ownerPart: '15.01',
   status: 'Material requests (site indents) against work authorisations with the stock of the site, nearby stores and the central warehouse; fulfilment by issue, transfer or purchase; purchase requisitions from consolidated requests or direct, with stock, budget and duplicate checks, approval by value and an emergency path.',
-  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations'],
-  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements'],
+  tables: ['proc_material_requests', 'proc_mr_lines', 'proc_requisitions', 'proc_pr_lines', 'proc_pr_sources', 'proc_stock_levels', 'proc_mrp_runs', 'proc_mrp_lines', 'proc_mrp_proposals', 'proc_item_params', 'proc_open_supply', 'proc_rfqs', 'proc_rfq_lines', 'proc_rfq_vendors', 'proc_quotations', 'proc_quotation_lines', 'proc_rfq_clarifications', 'proc_comparative_statements', 'proc_cs_lines', 'proc_cs_negotiations', 'proc_purchase_orders', 'proc_po_lines', 'proc_po_schedules', 'proc_po_amendments', 'proc_dispatches', 'proc_po_receipts', 'proc_po_advances'],
+  resources: ['material-requests', 'requisitions', 'stock', 'runs', 'proposals', 'item-params', 'supply', 'mrp', 'rfqs', 'quotations', 'comparative-statements', 'purchase-orders'],
 
   mount(api, { db, config: appConfig, publicApi }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'proc_requisitions'").get()) return;
@@ -74,20 +84,24 @@ export const proc = {
     const base = createBase({ db }); const stockSvc = createStockService({ db, base }); const mrSvc = createMrService({ db, base, stock: stockSvc }); const prSvc = createPrService({ db, base, stock: stockSvc, mr: mrSvc });
     const mrpSvc = createMrpService({ db, base, stock: stockSvc, pr: prSvc }); const paramSvc = createItemParamService({ db, base });
     const rfqSvc = createRfqService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '' });
-    const csSvc = createCsService({ db, base });
-    const svc = { csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
+    const csSvc = createCsService({ db, base }); const poSvc = createPoService({ db, base, baseUrl: () => appConfig.publicUrl ?? appConfig.appUrl ?? '' });
+    const svc = { poSvc, poDecide: poSvc.decide, amendDecide: poSvc.amendDecide, advanceDecide: poSvc.advanceDecide, csSvc, csDecide: csSvc.decide, base, stockSvc, mrSvc, prSvc, mrpSvc, paramSvc, rfqSvc, rfqDecide: rfqSvc.decide, mrDecide: mrSvc.decide, prDecide: prSvc.decide, paramDecide: paramSvc.decide }; services.set(db, svc);
     listExports.register('proc.mrp_runs', { source: (actor, req) => mrpSvc.mrp.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.material_requests', { source: (actor, req) => mrSvc.mrs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.requisitions', { source: (actor, req) => prSvc.prs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.rfqs', { source: (actor, req) => rfqSvc.rfqs.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.quotations', { source: (actor, req) => rfqSvc.quotes.exportSource(actor, req), hidden: () => [] });
     listExports.register('proc.comparative_statements', { source: (actor, req) => csSvc.css.exportSource(actor, req), hidden: () => [] });
+    listExports.register('proc.purchase_orders', { source: (actor, req) => poSvc.pos.exportSource(actor, req), hidden: () => [] });
     const runtime = runtimeOf(db);
+    // FR-06 (15.05): every morning at 09:00 India time the buyer is told of orders with a delivery past its date
+    runtime?.jobs?.register('proc.po_overdue', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1505')) continue; n += poSvc.extra.sweep(); break; } ctx.log(`Told the buyers of ${n} order(s) with a delivery past its date`); return { orders: n }; }, { maxAttempts: 2, description: 'Tells the buyer of each approved purchase order that has a delivery past its date.' });
+    runtime?.scheduler?.define({ code: 'proc.po_overdue_daily', cron: '30 3 * * *', jobType: 'proc.po_overdue', description: 'Every day 09:00 India time: purchase orders with overdue deliveries are told to the buyer' });
     // FR-07: every morning at 08:00 India time vendors who have not answered are reminded and the issuer is told what is due
     runtime?.jobs?.register('proc.rfq_reminders', (ctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: c.id }, 'ff.proc.p1503')) continue; n += rfqSvc.rfqs.sweep(); break; } ctx.log(`Told the issuers of ${n} RFQ(s) that are due with vendors who have not answered`); return { rfqs: n }; }, { maxAttempts: 2, description: 'Reminds the vendors who have not answered an RFQ that closes soon and tells the buyer what is due.' });
     runtime?.scheduler?.define({ code: 'proc.rfq_reminders_daily', cron: '30 2 * * *', jobType: 'proc.rfq_reminders', description: 'Every day 08:00 India time: reminders to vendors of RFQs that close soon' });
     // the orders of 15.04 tell the balance to order
-    runtime?.bus?.subscribe(['proc.po.approved', 'proc.po.cancelled'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.proc.p1501')) prSvc.onPoEvent(e); }, { consumer: 'proc.pr_balance' });
+    runtime?.bus?.subscribe(['proc.po.approved', 'proc.po.cancelled', 'proc.po.amended'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.proc.p1501')) prSvc.onPoEvent(e); }, { consumer: 'proc.pr_balance' });
     // FR-06: an emergency purchase not regularised in time is told, once
     runtime?.jobs?.register('proc.emergency_regularisation', (ctx) => { const n = prSvc.sweepEmergencies(); ctx.log(`Told about ${n} emergency purchase(s) not regularised in time`); return { overdue: n }; }, { maxAttempts: 2, description: 'Tells the project manager, the project director and the procurement manager of emergency purchases (CP-PROC-06) that were not regularised within the hours the company allows.' });
     runtime?.scheduler?.define({ code: 'proc.emergency_regularisation_hourly', cron: '10 * * * *', jobType: 'proc.emergency_regularisation', description: 'Hourly: emergency purchases past their regularisation time are told to the project manager and the procurement manager' });
@@ -98,11 +112,13 @@ export const proc = {
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1501') ? next() : next(notFound('Material requests and purchase requisitions are not enabled for your company yet (feature flag ff.proc.p1501 is OFF).'))));
     router.use(/^\/(runs|proposals|item-params|supply|mrp)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1502') ? next() : next(notFound('Material demand planning (MRP) is not enabled for your company yet (feature flag ff.proc.p1502 is OFF).'))));
     router.use(/^\/(rfqs|quotations)(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1503') ? next() : next(notFound('RFQs and vendor quotations are not enabled for your company yet (feature flag ff.proc.p1503 is OFF).'))));
+    router.use(/^\/purchase-orders(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1505') ? next() : next(notFound('Purchase orders are not enabled for your company yet (feature flag ff.proc.p1505 is OFF).'))));
     router.use(/^\/comparative-statements(\/|$)/, (req, _res, next) => (flags.isOn(req.actor, 'ff.proc.p1504') ? next() : next(notFound('Comparative statements are not enabled for your company yet (feature flag ff.proc.p1504 is OFF).'))));
     router.use(procRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/proc', router);
     // the vendor's page: no sign-in, the link is the proof; switched off with the flag of the company that issued it
-    publicApi.use('/proc', (req, res, next) => { const t = String(req.path).match(/^\/vendor-quote\/([A-Za-z0-9_-]+)/)?.[1]; if (!t) return next(); const v = db.prepare('SELECT company_id FROM proc_rfq_vendors WHERE token_hash = ?').get(createHash('sha256').update(t).digest('hex')); return v && flags.isOn({ companyId: v.company_id }, 'ff.proc.p1503') ? next() : next(notFound('This link is not valid.')); }, vendorQuoteRoutes({ portal: rfqSvc.portal }));
+    publicApi.use('/proc', (req, res, next) => { const t = String(req.path).match(/^\/vendor-quote\/([A-Za-z0-9_-]+)/)?.[1]; if (!t) return next(); const v = db.prepare('SELECT company_id FROM proc_rfq_vendors WHERE token_hash = ?').get(createHash('sha256').update(t).digest('hex')); return v && flags.isOn({ companyId: v.company_id }, 'ff.proc.p1503') ? next() : next(notFound('This link is not valid.')); }, vendorQuoteRoutes({ portal: rfqSvc.portal, po: poSvc }));
+    publicApi.use('/proc', (req, res, next) => { const tk = String(req.path).match(/^\/vendor-po\/([A-Za-z0-9_-]+)/)?.[1]; if (!tk) return next(); const v = db.prepare('SELECT company_id FROM proc_purchase_orders WHERE ack_token_hash = ?').get(createHash('sha256').update(tk).digest('hex')); return v && flags.isOn({ companyId: v.company_id }, 'ff.proc.p1505') ? next() : next(notFound('This link is not valid.')); });
   },
 };
 
@@ -305,5 +321,75 @@ fileEntities.register({
     const r = db.prepare('SELECT company_id, org_project_id, status FROM proc_comparative_statements WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
     const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id }).allowed; if (!at('proc.comparative_statement.view')) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
     return { companyId: r.company_id, projectId: r.org_project_id, canView: true, canEdit: at('proc.comparative_statement.edit') && open, locked: !open };
+  },
+});
+
+// ---- purchase orders (part 15.05, section 9): the procurement manager; the project manager above ₹ 5 lakh (or a rate above the benchmark, or an emergency); the project director above ₹ 25 lakh; the direction above ₹ 1 crore ------------------------
+const poline = (db, id) => db.prepare('SELECT x.*, p.code, COALESCE(v.trade_name, v.legal_name) AS vname FROM proc_purchase_orders x JOIN org_projects p ON p.id = x.org_project_id JOIN mdm_partners v ON v.id = x.vendor_id WHERE x.id = ?').get(id);
+const banded = (name) => [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24), approver('PM', 'Project manager (above ₹ 5 lakh, a rate above the benchmark, or an emergency)', 'PM', 24, { field: 'needPm', op: 'eq', value: 'yes' }), approver('PD', 'Project director (above ₹ 25 lakh)', 'PD', 24, { field: 'needPd', op: 'eq', value: 'yes' }), approver('DIR', 'Direction (above ₹ 1 crore)', 'DIR', 48, { field: 'needDir', op: 'eq', value: 'yes' })].map((s) => ({ ...s, name: `${s.name}${name ? ` — ${name}` : ''}` }));
+workflowTypes.register({
+  docType: PO_DOC, label: 'Purchase order', processOwner: 'PROCMGR', route: (id) => `/proc/purchase-orders?id=${id}`,
+  describe(db, companyId, id) { const r = poline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.code}: ${r.doc_no} to ${r.vname} ${r.total_amount / 100}`, originator: r.requested_by, projectId: r.org_project_id, siteId: r.po_site_id ?? undefined, amount: r.total_amount / 100 } : null; },
+  summarise(db, _actor, id) {
+    const r = poline(db, Number(id)); if (!r) return null; const ls = db.prepare('SELECT description, qty, uom, rate, cs_rate FROM proc_po_lines WHERE po_id = ? AND deleted_at IS NULL ORDER BY line_no').all(r.id);
+    return { fields: [{ label: 'Project', value: r.code }, { label: 'Vendor', value: r.vname }, { label: 'Source', value: r.po_source === 'CS' ? 'Comparative statement' : `Direct: ${r.direct_reason ?? ''}` }, { label: 'Basic', value: String(r.total_basic / 100) }, { label: 'GST', value: `${r.total_tax / 100} (${r.supply_type})` }, { label: 'Total', value: String(r.total_amount / 100) }, { label: 'Payment', value: `${r.payment_terms ?? ''}${r.advance_pct ? `, advance ${r.advance_pct / 10000}%` : ''}` }, { label: 'Lines', value: ls.map((l) => `${l.description}: ${l.qty / 1000} ${l.uom} at ${l.rate / 100}${l.cs_rate != null && l.rate > l.cs_rate ? ' (above the statement)' : ''}`).join('; ') }] };
+  },
+  defaultDefinition: { name: 'Purchase order: the procurement manager; the project manager above ₹ 5 lakh; the project director above ₹ 25 lakh; the direction above ₹ 1 crore', settings: { resubmit: 'first', distinctApprovers: true }, steps: banded('') },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.poDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.poDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.poDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.poDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+const aline = (db, id) => db.prepare('SELECT a.*, x.doc_no, x.company_id AS cid, x.org_project_id, x.total_amount AS po_total FROM proc_po_amendments a JOIN proc_purchase_orders x ON x.id = a.po_id WHERE a.id = ?').get(id);
+workflowTypes.register({
+  docType: AMEND_DOC, label: 'Purchase order amendment', processOwner: 'PROCMGR', route: () => '/proc/purchase-orders',
+  describe(db, companyId, id) { const a = aline(db, Number(id)); return a && a.cid === companyId ? { ref: `${a.doc_no}/A${a.amendment_no}`, title: `${a.doc_no} amendment ${a.amendment_no}: ${a.delta_amount / 100}`, originator: a.requested_by, projectId: a.org_project_id, amount: Math.abs(a.delta_amount) / 100 } : null; },
+  summarise(db, _actor, id) { const a = aline(db, Number(id)); if (!a) return null; const ch = JSON.parse(a.changes_json ?? '[]'); return { fields: [{ label: 'Order', value: a.doc_no }, { label: 'Reason', value: a.reason }, { label: 'Change in value', value: String(a.delta_amount / 100) }, { label: 'New total', value: String(a.new_total / 100) }, { label: 'Rate increase', value: a.rate_increase ? 'yes' : 'no' }, { label: 'Changes', value: ch.map((c) => `${c.lineNo ? `line ${c.lineNo} ` : ''}${c.field}: ${c.before} to ${c.after}`).join('; ') }] }; },
+  defaultDefinition: { name: 'Purchase order amendment: by the size of the change; a rate increase always with the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: banded('') },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.amendDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.amendDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.amendDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.amendDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+workflowTypes.register({
+  docType: CLOSE_DOC, label: 'Purchase order short-close or cancel', processOwner: 'PROCMGR', route: () => '/proc/purchase-orders',
+  describe(db, companyId, id) { const a = aline(db, Number(id)); return a && a.cid === companyId ? { ref: `${a.doc_no}/${a.kind}`, title: `${a.doc_no} ${a.kind === 'CANCEL' ? 'cancel' : 'short-close'}: ${a.reason}`, originator: a.requested_by, projectId: a.org_project_id } : null; },
+  summarise(db, _actor, id) { const a = aline(db, Number(id)); if (!a) return null; const ls = db.prepare('SELECT description, qty, received_qty, balance_qty, uom FROM proc_po_lines WHERE po_id = ? AND deleted_at IS NULL ORDER BY line_no').all(a.po_id); return { fields: [{ label: 'Order', value: a.doc_no }, { label: 'Request', value: a.kind === 'CANCEL' ? 'Cancel (nothing is received)' : 'Short-close (the rest is given up and the commitment released)' }, { label: 'Reason', value: a.reason }, { label: 'Lines', value: ls.map((l) => `${l.description}: ordered ${l.qty / 1000}, received ${l.received_qty / 1000}, left ${l.balance_qty / 1000} ${l.uom}`).join('; ') }] }; },
+  defaultDefinition: { name: 'Purchase order short-close or cancel: the procurement manager, the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24), approver('PM', 'Project manager', 'PM', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.amendDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.amendDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.amendDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.amendDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+const advline = (db, id) => db.prepare('SELECT a.*, x.doc_no AS po_no, x.company_id AS cid, x.org_project_id, x.vendor_id FROM proc_po_advances a JOIN proc_purchase_orders x ON x.id = a.po_id WHERE a.id = ?').get(id);
+workflowTypes.register({
+  docType: ADV_DOC, label: 'Advance payment against a purchase order', processOwner: 'PROCMGR', route: () => '/proc/purchase-orders',
+  describe(db, companyId, id) { const a = advline(db, Number(id)); return a && a.cid === companyId ? { ref: a.doc_no, title: `${a.doc_no} against ${a.po_no}: ${a.advance_amount / 100}`, originator: a.requested_by, projectId: a.org_project_id, amount: a.advance_amount / 100 } : null; },
+  summarise(db, _actor, id) { const a = advline(db, Number(id)); if (!a) return null; return { fields: [{ label: 'Order', value: a.po_no }, { label: 'Vendor', value: db.prepare('SELECT COALESCE(trade_name, legal_name) AS n FROM mdm_partners WHERE id = ?').get(a.vendor_id)?.n }, { label: 'Advance', value: String(a.advance_amount / 100) }, { label: 'Needed by', value: a.needed_by ?? '' }, { label: 'Reason', value: a.reason }] }; },
+  defaultDefinition: { name: 'Advance against a purchase order: the procurement manager, the commercial manager, the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24), approver('COMMGR', 'Commercial manager', 'COMMGR', 24), approver('CFO', 'CFO', 'CFO', 48)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => procOf(db)?.advanceDecide(instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => procOf(db)?.advanceDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => procOf(db)?.advanceDecide(instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => procOf(db)?.advanceDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+evidenceProviders.register(PO_DOC, ({ db, instance }) => {
+  const r = poline(db, Number(instance.docId)); if (!r) return { sections: [] }; const ls = db.prepare('SELECT description, rate, cs_rate, benchmark_rate FROM proc_po_lines WHERE po_id = ? AND deleted_at IS NULL').all(r.id); const above = ls.filter((l) => l.cs_rate != null && l.rate > l.cs_rate); const hi = ls.filter((l) => l.benchmark_rate && l.rate > l.benchmark_rate);
+  return { sections: [{ code: 'proc-po-evidence', title: 'Before you approve the order', kind: 'metrics', items: [{ label: 'Value (basic / GST / total)', value: `${r.total_basic / 100} / ${r.total_tax / 100} / ${r.total_amount / 100}`, format: 'text' }, { label: 'GST', value: r.supply_type === 'INTRA' ? 'CGST and SGST (same state)' : r.supply_type === 'INTER' ? 'IGST (another state)' : 'none: the vendor has no GSTIN', format: 'text', tone: r.supply_type === 'NONE' ? 'warn' : undefined }, { label: 'Source', value: r.po_source === 'CS' ? 'approved comparative statement' : `direct: ${r.direct_reason ?? ''}`, format: 'text' }, { label: 'Lines above the statement rate', value: String(above.length), format: 'text', tone: above.length ? 'bad' : undefined }, { label: 'Lines above the benchmark', value: String(hi.length), format: 'text', tone: hi.length ? 'warn' : undefined }, { label: 'Payment terms', value: `${r.payment_terms ?? 'not stated'}${r.advance_pct ? `, advance ${r.advance_pct / 10000}%` : ''}`, format: 'text' }] }] };
+});
+objectTypes.register({
+  type: 'proc_purchase_order', label: 'Purchase order', permission: 'proc.purchase_order.view', route: (id) => `/proc/purchase-orders?id=${id}`, attachmentEntity: 'proc_purchase_order', approvalTarget: 'proc_purchase_order',
+  access(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.poSvc.pos.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, siteId: r.siteId ?? undefined, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'proc_purchase_orders', id }],
+  summary(db, actor, id) { const s = procOf(db); if (!s) return null; try { const r = s.poSvc.pos.get(actor, Number(id)); return { label: `${r.docNo} ${r.vendor}`, status: r.status }; } catch { return null; } },
+  related(db, actor, id) { const s = procOf(db); if (!s) return []; try { const r = s.poSvc.pos.get(actor, Number(id)); const prs = new Map(r.lines.filter((l) => l.prId).map((l) => [l.prId, l.prNo])); return [...(r.csId ? [{ kind: 'comparative statement', label: r.csNo, route: `/proc/comparative-statements?id=${r.csId}` }] : []), ...[...prs.entries()].map(([prId, prNo]) => ({ kind: 'purchase requisition', label: prNo, route: `/proc/requisitions?id=${prId}` }))]; } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'proc.purchase_order.view').allowed) return []; return db.prepare('SELECT id, org_project_id, po_site_id FROM proc_purchase_orders WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, limit).filter((x) => authzOf(db).check(actor, 'proc.purchase_order.view', { companyId: actor.companyId, projectId: x.org_project_id, siteId: x.po_site_id }).allowed).map((x) => x.id); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM proc_purchase_orders WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+fileEntities.register({
+  entity: 'proc_purchase_order', label: 'Purchase order (drawings, specifications, test certificates, signed copy)',
+  resolve(db, actor, id) {
+    const r = db.prepare('SELECT company_id, org_project_id, po_site_id, status FROM proc_purchase_orders WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.po_site_id }).allowed; if (!at('proc.purchase_order.view')) return null; const open = ['DRAFT', 'RETURNED'].includes(r.status);
+    return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.po_site_id ?? undefined, canView: true, canEdit: at('proc.purchase_order.edit') && (open || r.status === 'APPROVED'), locked: !open && r.status !== 'APPROVED' };
   },
 });

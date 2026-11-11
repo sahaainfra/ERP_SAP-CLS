@@ -222,18 +222,18 @@ test('BR-01 a control goes to ENFORCE only after 14 days of OBSERVE data and an 
 
 test('FR-01 FR-04 the registry: a control written as data, reason codes with a company\'s own changes, and the reason picker of the dialogs', async () => {
   const api = await setup();
-  const body = { code: 'CP-PROC-05', module: 'proc', stage: 'VERIFY', description: 'A purchase over the limit needs an exception', enforcement: 'EXCEPTION', rule: { field: 'amount', op: 'gt', threshold: 'limit' }, thresholds: { limit: 100000 }, escalationLevel: 2, ownerRole: 'PROCMGR' };
+  const body = { code: 'CP-PROC-09', module: 'proc', stage: 'VERIFY', description: 'A purchase over the limit needs an exception', enforcement: 'EXCEPTION', rule: { field: 'amount', op: 'gt', threshold: 'limit' }, thresholds: { limit: 100000 }, escalationLevel: 2, ownerRole: 'PROCMGR' };
   assert.equal((await api.call('POST', `${P}/control-points`, { ...pm, headers: key('n'), body })).status, 403);
   assert.equal((await api.call('POST', `${P}/control-points`, { ...sys, headers: key('n'), body: { ...body, code: 'CP-X-1' } })).status, 400);
   assert.equal((await api.call('POST', `${P}/control-points`, { ...sys, headers: key('n'), body })).status, 201);
   assert.equal((await api.call('POST', `${P}/control-points`, { ...sys, headers: key('n'), body })).status, 409);
-  const one = (await api.call('GET', `${P}/control-points/CP-PROC-05`, pm)).json.data;
+  const one = (await api.call('GET', `${P}/control-points/CP-PROC-09`, pm)).json.data;
   assert.deepEqual([one.mode, one.rule.kind, one.thresholds.limit], ['OFF', 'expression', 100000]);
   const prot = (await import('../src/server/platform/protocol/index.js')).protocolOf(api.db);
-  api.db.prepare("UPDATE pcs_control_points SET mode = 'WARN' WHERE code = 'CP-PROC-05'").run();
-  assert.equal(prot.check({ companyId: 1, user: 'u' }, 'CP-PROC-05', { entity: 'po', entityId: '1', amount: 250000 }).outcome, 'warn');
-  assert.equal(prot.check({ companyId: 1, user: 'u' }, 'CP-PROC-05', { entity: 'po', entityId: '2', amount: 5 }).outcome, 'pass');
-  assert.equal((await api.call('DELETE', `${P}/control-points/CP-PROC-05`, { ...sys, headers: key('d') })).status, 422, 'put it OFF first');
+  api.db.prepare("UPDATE pcs_control_points SET mode = 'WARN' WHERE code = 'CP-PROC-09'").run();
+  assert.equal(prot.check({ companyId: 1, user: 'u' }, 'CP-PROC-09', { entity: 'po', entityId: '1', amount: 250000 }).outcome, 'warn');
+  assert.equal(prot.check({ companyId: 1, user: 'u' }, 'CP-PROC-09', { entity: 'po', entityId: '2', amount: 5 }).outcome, 'pass');
+  assert.equal((await api.call('DELETE', `${P}/control-points/CP-PROC-09`, { ...sys, headers: key('d') })).status, 422, 'put it OFF first');
   assert.equal((await api.call('DELETE', `${P}/control-points/CP-ENG-01`, { ...sys, headers: key('d') })).status, 422, 'a module control is never removed');
   // reason codes: the ones the dialogs always offered, and the new ones
   const cancel = (await api.call('GET', `/api/v1/ui/reason-codes?for=cancel`, pm)).json.data;

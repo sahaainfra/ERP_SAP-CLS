@@ -11,6 +11,10 @@ import RfqsPage from './RfqsPage.jsx';
 import RfqNewPage from './RfqNewPage.jsx';
 import QuotationEntryPage from './QuotationEntryPage.jsx';
 import ComparativeStatementsPage from './ComparativeStatementsPage.jsx';
+import PurchaseOrdersPage from './PurchaseOrdersPage.jsx';
+import PoNewPage from './PoNewPage.jsx';
+import PoAmendPage from './PoAmendPage.jsx';
+import PoTrackerPage from './PoTrackerPage.jsx';
 
 registerModule({
   code: 'proc',
@@ -28,5 +32,9 @@ registerModule({
     { path: '/proc/rfq-new', label: 'Create RFQ from PRs', icon: 'erp.group.supply', permission: 'proc.rfq.create', flag: 'ff.proc.p1503', Page: RfqNewPage },
     { path: '/proc/quotation-entry', label: 'Quotation Entry', icon: 'erp.group.supply', permission: 'proc.quotation.view', flag: 'ff.proc.p1503', Page: QuotationEntryPage },
     { path: '/proc/comparative-statements', label: 'Comparative Statements', icon: 'erp.group.supply', permission: 'proc.comparative_statement.view', flag: 'ff.proc.p1504', Page: ComparativeStatementsPage },
+    { path: '/proc/purchase-orders', label: 'Purchase Orders', icon: 'erp.group.supply', permission: 'proc.purchase_order.view', flag: 'ff.proc.p1505', Page: PurchaseOrdersPage },
+    { path: '/proc/po-new', label: 'Create Purchase Order', icon: 'erp.group.supply', permission: 'proc.purchase_order.create', flag: 'ff.proc.p1505', Page: PoNewPage },
+    { path: '/proc/po-amend', label: 'Purchase Order Amendment', icon: 'erp.group.supply', permission: 'proc.purchase_order.amend', flag: 'ff.proc.p1505', Page: PoAmendPage },
+    { path: '/proc/po-tracker', label: 'Open PO and Delivery Tracker', icon: 'erp.group.supply', permission: 'proc.purchase_order.view', flag: 'ff.proc.p1505', Page: PoTrackerPage },
   ],
 });

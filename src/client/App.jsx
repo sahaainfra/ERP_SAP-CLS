@@ -1,6 +1,7 @@
 import ApproveLinkPage from './modules/eng/ApproveLinkPage.jsx';
 import VerifyPage from './modules/eng/VerifyPage.jsx';
 import VendorQuotePage from './modules/proc/VendorQuotePage.jsx';
+import VendorPoPage from './modules/proc/VendorPoPage.jsx';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ChatDock from './modules/msg/ChatDock.jsx';
@@ -213,6 +214,7 @@ export default function App({ authMode = 'dev-headers' }) {
   if (window.location.pathname === '/verify' || window.location.pathname.startsWith('/verify/')) return <VerifyPage />;
   // the page a vendor opens from the enquiry it was sent (part 15.03): the link is the proof
   if (window.location.pathname === '/vendor-quote') return <VendorQuotePage />;
+  if (window.location.pathname === '/vendor-po') return <VendorPoPage />;
   if (authMode !== 'iam') return <Shell iam={false} user={null} />;
   if (!user) {
     const notice = wasSignedIn.current ? 'signed-out' : '';

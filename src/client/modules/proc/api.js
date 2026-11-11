@@ -29,6 +29,13 @@ const pub = async (method, token, path, body) => {
 };
 export const vq = { info: (t) => pub('GET', t, ''), submit: (t, b) => pub('POST', t, '/submit', b), decline: (t, reason) => pub('POST', t, '/decline', { reason }), ask: (t, question) => pub('POST', t, '/clarify', { question }) };
 export const CS_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
+export const PO_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CLOSED: 'COMPLETED', CANCELLED: 'CANCELLED' };
+export const DELIVERY_TONE = { NOT_DELIVERED: 'DRAFT', PARTIAL: 'IN_REVIEW', DELIVERED: 'APPROVED' };
+const vpoCall = async (method, token, path, body) => {
+  const res = await fetch(`/api/v1/proc/vendor-po/${encodeURIComponent(token)}${path}`, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); const j = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(j?.error?.message ?? 'Something went wrong'); e.status = res.status; e.details = j?.error?.details ?? []; throw e; } return j.data;
+};
+export const vpo = { info: (t) => vpoCall('GET', t, ''), ack: (t, note) => vpoCall('POST', t, '/acknowledge', { note }), dispatch: (t, b) => vpoCall('POST', t, '/dispatch', b) };
 export const pc = {
   projects: () => get('/projects'),
   mrOptions: (projectId) => get(`/material-requests/options?projectId=${projectId}`),
@@ -99,4 +106,16 @@ export const pc = {
   csDelete: async (id) => (await api.delete(`/proc/comparative-statements/${id}`)).data,
   csAct: (id, action, b) => post(`/comparative-statements/${id}/${action}`, b),
   csHistory: (id) => get(`/comparative-statements/${id}/history`),
+  // part 15.05: purchase orders
+  poOptions: (projectId) => get(`/purchase-orders/options?projectId=${projectId}`),
+  po: (id) => get(`/purchase-orders/${id}`),
+  poCreate: (b) => post('/purchase-orders', b),
+  poUpdate: async (id, b) => (await api.patch(`/proc/purchase-orders/${id}`, b, idem())).data,
+  poDelete: async (id) => (await api.delete(`/proc/purchase-orders/${id}`)).data,
+  poAct: (id, action, b) => post(`/purchase-orders/${id}/${action}`, b),
+  poHistory: (id) => get(`/purchase-orders/${id}/history`),
+  amend: (id, aid) => get(`/purchase-orders/${id}/amendments/${aid}`),
+  amendAct: (id, aid, action, b) => post(`/purchase-orders/${id}/amendments/${aid}/${action}`, b),
+  tracker: (q) => get(`/purchase-orders/tracker${q ? `?${q}` : ''}`),
+  performance: () => get('/purchase-orders/performance'),
 };

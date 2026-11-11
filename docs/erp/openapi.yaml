@@ -8334,6 +8334,57 @@ paths:
     get: { summary: Approvals and audit trail, tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/comparative-statements/{id}/print:
     get: { summary: The statement as a PDF, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/options:
+    get: { summary: Approved statements with something left to order, vendors, GST rates, defaults, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/tracker:
+    get: { summary: Open deliveries by due date with the days overdue, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/performance:
+    get: { summary: Vendor delivery performance: on time, quantity, quality, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/receipts/ingest:
+    post: { summary: Post goods received against order lines (until the stock module does), tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/purchase-orders:
+    get: { summary: Purchase orders with delivery status, tags: [proc], responses: { '200': { description: OK } } }
+    post: { summary: Make an order from an approved statement or directly with a reason, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}:
+    get: { summary: The order with lines, schedule, GST split, amendments, dispatches, receipts, advances, tags: [proc], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned order, tags: [proc], responses: { '200': { description: OK } } }
+    delete: { summary: Delete a draft, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/submit:
+    post: { summary: Send for approval by value, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/withdraw:
+    post: { summary: Withdraw from approval, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/cancel:
+    post: { summary: Ask to cancel (refused once goods are received); approved by the procurement manager and project manager, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/short-close:
+    post: { summary: Ask to short-close; approved by the procurement manager and project manager; releases the commitment, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/amend:
+    post: { summary: Make a draft amendment with the before and after, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/amendments/{aid}:
+    get: { summary: An amendment with its comparison, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/amendments/{aid}/submit:
+    post: { summary: Send an amendment for approval by the size of the change, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/amendments/{aid}/discard:
+    post: { summary: Discard a draft amendment, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/amendments/{aid}/withdraw:
+    post: { summary: Withdraw an amendment from approval, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/resend:
+    post: { summary: Send to the vendor again with a new link (returned once), tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/dispatches:
+    post: { summary: Record a dispatch (ASN) for the vendor, tags: [proc], responses: { '201': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/advances:
+    post: { summary: Ask for an advance payment against the order, tags: [proc], responses: { '202': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/import:
+    post: { summary: Add lines by item code to a draft direct order, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/history:
+    get: { summary: Approvals and audit trail, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/purchase-orders/{id}/print:
+    get: { summary: The order as a PDF, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-po/{token}:
+    get: { summary: Public: the vendor opens its order with the tokenised link, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-po/{token}/acknowledge:
+    post: { summary: Public: the vendor acknowledges the order, tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/proc/vendor-po/{token}/dispatch:
+    post: { summary: Public: the vendor tells the dispatch (ASN), tags: [proc], responses: { '201': { description: OK } } }
   /api/v1/proc/stock/ingest:
     post: { summary: Load free stock levels of items in stores (until the stock module keeps them), tags: [proc], responses: { '201': { description: Created } } }
   /api/v1/proc/runs:

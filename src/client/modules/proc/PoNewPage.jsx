@@ -1,0 +1,66 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useT } from '../../platform/i18n/index.js';
+import ItemSelector from '../../platform/items/ItemSelector.jsx';
+import { NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
+import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { addDays, pc } from './api.js';
+import { useSearch } from '../site/parts.jsx';
+
+// Create a purchase order (part 15.05, FR-01 to FR-03): from an approved comparative statement (the quoted rates, discount, GST and quantities come with it; the vendor is chosen from those selected) or directly with a reason.
+// The terms follow the vendor and the place of supply decides CGST and SGST or IGST on the server. A draft is saved and sent for approval from the order.
+export default function PoNewPage() {
+  const t = useT('proc'); usePageTitle(t('o.new')); const sp = useSearch(); const editId = Number(sp.get('edit')) || null;
+  const pq = useQuery({ queryKey: ['proc', 'projects'], queryFn: pc.projects, retry: false }); const eq = useQuery({ queryKey: ['proc', 'po', editId], queryFn: () => pc.po(editId), enabled: Boolean(editId), retry: false });
+  const [f, setF] = useState(null); const [rows, setRows] = useState(null); const [picking, setPicking] = useState(false); const [error, setError] = useState(null); const [busy, setBusy] = useState(false);
+  const e = eq.data; const projects = pq.data ?? []; const projectId = f?.projectId || (e ? String(e.projectId) : projects[0] ? String(projects[0].id) : '');
+  const oq = useQuery({ queryKey: ['proc', 'po-options', projectId], queryFn: () => pc.poOptions(projectId), enabled: Boolean(projectId), retry: false }); const o = oq.data;
+  const tm = e?.terms ?? {}; const form = f ?? { source: e?.source ?? 'CS', csId: e?.csId ? String(e.csId) : '', vendorId: e ? String(e.vendorId) : '', vendorGstinId: '', directReason: e?.directReason ?? '', stateCode: tm.deliveryStateCode ?? '', deliveryAddress: tm.deliveryAddress ?? '', paymentTerms: tm.paymentTerms ?? '30 days from receipt', advancePct: String(tm.advancePct ?? 0), creditDays: String(tm.creditDays ?? 30), priceBasis: tm.priceBasis ?? 'FOR_SITE', warrantyTerms: tm.warrantyTerms ?? '', ldTerms: tm.ldTerms ?? '', documentsRequired: tm.documentsRequired ?? '', isEmergency: e?.isEmergency ?? false, deliveryDate: addDays(14) };
+  const lines = rows ?? (e && e.source === 'DIRECT' ? e.lines.map((l) => ({ itemId: l.itemId, label: `${l.itemCode ?? ''} ${l.description}`, uoms: [l.uom], uom: l.uom, qty: String(l.qty), rate: String(l.rate ?? ''), discountPct: String(l.discountPct), taxCode: l.taxCode ?? '', dueDate: l.schedule[0]?.dueDate ?? addDays(14) })) : []);
+  if (pq.error?.status === 403 || oq.error?.status === 403) return <NoPermission what={t('o.new')} permission="proc.purchase_order.create" />;
+  if (pq.isPending || (editId && eq.isPending)) return <Skeleton label={t('o.new')} rows={4} />;
+  const set = (k, v) => setF({ ...form, [k]: v }); const setRow = (i, k, v) => setRows(lines.map((l, j) => (j === i ? { ...l, [k]: v } : l)));
+  const stmt = o?.statements.find((s) => String(s.id) === form.csId); const vend = stmt?.vendors.find((v) => String(v.vendorId) === form.vendorId);
+  const terms = () => ({ deliveryAddress: form.deliveryAddress.trim() || null, deliveryStateCode: form.stateCode || o?.defaultStateCode || undefined, paymentTerms: form.paymentTerms.trim() || null, advancePct: Number(form.advancePct || 0), creditDays: Number(form.creditDays || 0), priceBasis: form.priceBasis, warrantyTerms: form.warrantyTerms.trim() || null, ldTerms: form.ldTerms.trim() || null, documentsRequired: form.documentsRequired.trim() || null });
+  const directLines = () => lines.map((l) => ({ itemId: l.itemId, qty: Number(l.qty), uom: l.uom, rate: Number(l.rate), discountPct: l.discountPct ? Number(l.discountPct) : undefined, taxCode: l.taxCode || null, schedule: [{ dueDate: l.dueDate, qty: Number(l.qty) }] }));
+  const save = async () => { setError(null); setBusy(true); try { const d = editId ? await pc.poUpdate(editId, { terms: terms(), ...(e.source === 'DIRECT' ? { lines: directLines() } : {}), rowVersion: e.rowVersion }) : await pc.poCreate(form.source === 'CS' ? { projectId: Number(projectId), source: 'CS', csId: Number(form.csId), vendorId: Number(form.vendorId), vendorGstinId: form.vendorGstinId ? Number(form.vendorGstinId) : null, deliveryDate: form.deliveryDate, terms: terms() } : { projectId: Number(projectId), source: 'DIRECT', vendorId: Number(form.vendorId), directReason: form.directReason.trim(), isEmergency: form.isEmergency, terms: terms(), lines: directLines() }); navigateTo(`/proc/purchase-orders?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
+  const ready = form.source === 'CS' ? form.csId && form.vendorId : form.vendorId && lines.length > 0;
+  return (
+    <section aria-labelledby="pon-h" data-testid="proc-po-form"><h1 id="pon-h">{editId ? t('o.edit') : t('o.new')}</h1><p className="muted">{t('o.newHelp')}</p><p><Link to="/proc/purchase-orders">{t('o.back')}</Link></p>
+      <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
+        <div className="form-grid">
+          <Field label={t('o.project')} name="projectId" error={error}><select value={projectId} disabled={Boolean(editId)} onChange={(ev) => setF({ ...form, projectId: ev.target.value, csId: '', vendorId: '' })} style={{ minHeight: 44 }} data-testid="pon-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
+          {!editId && <Field label={t('o.source')} name="source" error={error}><select value={form.source} onChange={(ev) => setF({ ...form, source: ev.target.value, vendorId: '' })} style={{ minHeight: 44 }} data-testid="pon-source"><option value="CS">{t('o.srcCs')}</option><option value="DIRECT">{t('o.srcDirect')}</option></select></Field>}
+          {form.source === 'CS' && !editId && <Field label={t('o.statement')} name="csId" error={error}><select value={form.csId} onChange={(ev) => setF({ ...form, csId: ev.target.value, vendorId: '' })} style={{ minHeight: 44 }} data-testid="pon-cs"><option value="">{t('o.choose')}</option>{(o?.statements ?? []).map((s) => <option key={s.id} value={s.id}>{s.docNo}</option>)}</select></Field>}
+          {form.source === 'CS' && !editId && <Field label={t('o.vendor')} name="vendorId" error={error}><select value={form.vendorId} onChange={(ev) => setF({ ...form, vendorId: ev.target.value })} style={{ minHeight: 44 }} data-testid="pon-vendor"><option value="">{t('o.choose')}</option>{(stmt?.vendors ?? []).filter((v) => v.left).map((v) => <option key={v.vendorId} value={v.vendorId}>{v.name}</option>)}</select></Field>}
+          {form.source === 'DIRECT' && !editId && <Field label={t('o.vendor')} name="vendorId" error={error}><select value={form.vendorId} onChange={(ev) => setF({ ...form, vendorId: ev.target.value })} style={{ minHeight: 44 }} data-testid="pon-vendor"><option value="">{t('o.choose')}</option>{(o?.vendors ?? []).map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}</select></Field>}
+          {vend && vend.gstins.length > 1 && <Field label={t('o.gstin')} name="vendorGstinId" error={error}><select value={form.vendorGstinId} onChange={(ev) => set('vendorGstinId', ev.target.value)} style={{ minHeight: 44 }}>{vend.gstins.map((g) => <option key={g.id} value={g.id}>{g.gstin}</option>)}</select></Field>}
+          {form.source === 'DIRECT' && <Field label={t('o.directReason')} name="directReason" error={error}><input value={form.directReason} maxLength={500} onChange={(ev) => set('directReason', ev.target.value)} style={{ minHeight: 44 }} data-testid="pon-reason" /></Field>}
+          <Field label={t('o.stateCode')} name="terms.deliveryStateCode" error={error} hint={t('o.stateHint')}><input value={form.stateCode || o?.defaultStateCode || ''} maxLength={2} onChange={(ev) => set('stateCode', ev.target.value)} style={{ minHeight: 44 }} data-testid="pon-state" /></Field>
+          <Field label={t('o.deliverTo')} name="terms.deliveryAddress" error={error}><input value={form.deliveryAddress} maxLength={500} onChange={(ev) => set('deliveryAddress', ev.target.value)} style={{ minHeight: 44 }} data-testid="pon-address" /></Field>
+          {form.source === 'CS' && !editId && <Field label={t('o.deliveryDate')} name="deliveryDate" error={error}><input type="date" value={form.deliveryDate} onChange={(ev) => set('deliveryDate', ev.target.value)} style={{ minHeight: 44 }} /></Field>}
+          <Field label={t('o.priceBasis')} name="terms.priceBasis" error={error}><select value={form.priceBasis} onChange={(ev) => set('priceBasis', ev.target.value)} style={{ minHeight: 44 }}>{Object.entries(o?.bases ?? { FOR_SITE: 'FOR site' }).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
+          <Field label={t('o.payment')} name="terms.paymentTerms" error={error}><input value={form.paymentTerms} maxLength={500} onChange={(ev) => set('paymentTerms', ev.target.value)} style={{ minHeight: 44 }} data-testid="pon-payment" /></Field>
+          <Field label={t('o.advancePct')} name="terms.advancePct" error={error}><input type="number" min="0" max="100" step="0.01" value={form.advancePct} onChange={(ev) => set('advancePct', ev.target.value)} style={{ minHeight: 44 }} data-testid="pon-advance" /></Field>
+          <Field label={t('o.creditDays')} name="terms.creditDays" error={error}><input type="number" min="0" value={form.creditDays} onChange={(ev) => set('creditDays', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+          <Field label={t('o.warranty')} name="terms.warrantyTerms" error={error}><input value={form.warrantyTerms} maxLength={500} onChange={(ev) => set('warrantyTerms', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+          <Field label={t('o.ld')} name="terms.ldTerms" error={error}><input value={form.ldTerms} maxLength={1000} onChange={(ev) => set('ldTerms', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+          <Field label={t('o.docsRequired')} name="terms.documentsRequired" error={error}><input value={form.documentsRequired} maxLength={1000} onChange={(ev) => set('documentsRequired', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+        </div>
+        {form.source === 'DIRECT' && <><h2>{t('o.lines')}</h2>{lines.length === 0 && <p className="muted">{t('o.noLines')}</p>}
+          {lines.map((l, i) => <div key={i} className="mdm-panel" data-testid="pon-line"><strong>{l.label}</strong><div className="form-grid">
+            <Field label={t('o.qty')} name={`lines.${i}.qty`} error={error}><input type="number" min="0" step="0.001" value={l.qty} onChange={(ev) => setRow(i, 'qty', ev.target.value)} style={{ minHeight: 44 }} data-testid="pon-qty" /></Field>
+            <Field label={t('o.uom')} name={`lines.${i}.uom`} error={error}><select value={l.uom} onChange={(ev) => setRow(i, 'uom', ev.target.value)} style={{ minHeight: 44 }}>{l.uoms.map((u) => <option key={u} value={u}>{u}</option>)}</select></Field>
+            <Field label={t('o.rate')} name={`lines.${i}.rate`} error={error}><input type="number" min="0" step="0.01" value={l.rate} onChange={(ev) => setRow(i, 'rate', ev.target.value)} style={{ minHeight: 44 }} data-testid="pon-rate" /></Field>
+            <Field label={t('o.discount')} name={`lines.${i}.discountPct`} error={error}><input type="number" min="0" max="100" step="0.01" value={l.discountPct} onChange={(ev) => setRow(i, 'discountPct', ev.target.value)} style={{ minHeight: 44 }} /></Field>
+            <Field label={t('o.taxCode')} name={`lines.${i}.taxCode`} error={error}><select value={l.taxCode} onChange={(ev) => setRow(i, 'taxCode', ev.target.value)} style={{ minHeight: 44 }}><option value="">{t('o.fromItem')}</option>{(o?.gstRates ?? []).map((g) => <option key={g.code} value={g.code}>{g.code} · {g.description}</option>)}</select></Field>
+            <Field label={t('o.dueDate')} name={`lines.${i}.schedule`} error={error}><input type="date" value={l.dueDate} onChange={(ev) => setRow(i, 'dueDate', ev.target.value)} style={{ minHeight: 44 }} /></Field></div>
+            <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setRows(lines.filter((_, j) => j !== i))}>{t('o.removeLine')}</button></div>)}
+          <div className="actions-row"><button type="button" className="btn" style={{ minHeight: 48 }} onClick={() => setPicking(true)} data-testid="pon-add">{t('o.addItems')}</button></div>
+          <ItemSelector open={picking} onClose={() => setPicking(false)} onPick={(items) => setRows([...lines, ...items.map((it) => ({ itemId: it.id, label: `${it.code} · ${it.name}`, uoms: it.uoms ?? [it.uom], uom: it.uom, qty: '', rate: '', discountPct: '', taxCode: '', dueDate: addDays(14) }))])} title={t('o.addItems')} /></>}
+        {error?.form && <p className="field-error" role="alert" data-testid="pon-error">{error.form}</p>}
+        <div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !ready} data-testid="pon-save">{t('o.saveDraft')}</button></div>
+      </form>
+    </section>
+  );
+}

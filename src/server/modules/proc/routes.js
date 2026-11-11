@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate } from './validators.js';
+import { parseAvailQ, parseConsolidate, parseId, parseMrCreate, parseMrFulfil, parseMrImport, parseMrUpdate, parsePrCreate, parsePrImport, parsePrUpdate, parseProjectQ, parseRateQ, parseReason, parseStockIngest, parseRunCreate, parseRunUpdate, parseRunImport, parseRunExport, parseProposalModify, parseProposalAccept, parseParamCreate, parseParamUpdate, parseSupplyIngest, parseRfqCreate, parseRfqUpdate, parseRfqAmend, parseRfqOptionsQ, parseVendorsQ, parseReissue, parseRegret, parseAsk, parseAnswer, parseQuoteCreate, parseQuoteUpdate, parseQuoteImport, parseToken, parseVendorQuote, parseVendorDecline, parseVendorAsk, parseCsCreate, parseCsUpdate, parseCsImport, parseCsNegotiate, parsePoCreate, parsePoUpdate, parsePoImport, parsePoOptionsQ, parseAmendCreate, parseAmendId, parseDispatch, parseReceipts, parseAdvance, parseTrackerQ, parsePerfQ, parseVendorAck } from './validators.js';
 import { HttpError } from '../../platform/http/errors.js';
 import { createRateLimiter } from '../../platform/integrations/breaker.js';
 
 /** /api/v1/proc: material requests and purchase requisitions (part 15.01). Rights and scope are checked in the services. */
 export function procRoutes(svc, { idempotent, idempotentRequired }) {
-  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate; const rf = svc.rfqSvc.rfqs; const qt = svc.rfqSvc.quotes; const cs = svc.csSvc.css;
+  const r = Router(); const run = svc.mrpSvc.mrp; const pp = svc.mrpSvc.props; const ip = svc.paramSvc.params; const m = svc.mrSvc.mrs; const p = svc.prSvc.prs; const c = svc.prSvc.consolidate; const rf = svc.rfqSvc.rfqs; const qt = svc.rfqSvc.quotes; const cs = svc.csSvc.css; const po = svc.poSvc.pos; const am = svc.poSvc.amendments; const px = svc.poSvc.extra; const rc = svc.poSvc.receipts;
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
@@ -130,16 +130,44 @@ export function procRoutes(svc, { idempotent, idempotentRequired }) {
   r.post('/comparative-statements/:id/negotiations', idempotentRequired, (req, res) => ok(res, cs.negotiate(req.actor, pid(req), parseCsNegotiate(req.body)), 201));
   r.get('/comparative-statements/:id/history', (req, res) => ok(res, cs.history(req.actor, pid(req))));
   r.get('/comparative-statements/:id/print', (req, res) => file(res, cs.print(req.actor, pid(req))));
+  // purchase orders (15.05)
+  r.get('/purchase-orders/options', (req, res) => ok(res, po.options(req.actor, parsePoOptionsQ(req.query).projectId)));
+  r.get('/purchase-orders/tracker', (req, res) => ok(res, px.tracker(req.actor, parseTrackerQ(req.query))));
+  r.get('/purchase-orders/performance', (req, res) => ok(res, rc.performance(req.actor, parsePerfQ(req.query))));
+  r.post('/purchase-orders/receipts/ingest', idempotentRequired, (req, res) => ok(res, rc.ingest(req.actor, parseReceipts(req.body)), 201));
+  r.get('/purchase-orders', (req, res) => res.json(po.list(req.actor, req.query)));
+  r.post('/purchase-orders', idempotentRequired, (req, res) => ok(res, po.create(req.actor, parsePoCreate(req.body)), 201));
+  r.get('/purchase-orders/:id', (req, res) => ok(res, po.get(req.actor, pid(req))));
+  r.patch('/purchase-orders/:id', idempotent, (req, res) => ok(res, po.update(req.actor, pid(req), parsePoUpdate(req.body))));
+  r.delete('/purchase-orders/:id', (req, res) => ok(res, po.remove(req.actor, pid(req))));
+  r.post('/purchase-orders/:id/submit', idempotentRequired, (req, res) => ok(res, po.submit(req.actor, pid(req)), 202));
+  r.post('/purchase-orders/:id/withdraw', idempotent, (req, res) => ok(res, po.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/purchase-orders/:id/cancel', idempotentRequired, (req, res) => ok(res, am.close(req.actor, pid(req), 'CANCEL', parseReason(req.body)), 202));
+  r.post('/purchase-orders/:id/short-close', idempotentRequired, (req, res) => ok(res, am.close(req.actor, pid(req), 'SHORT_CLOSE', parseReason(req.body)), 202));
+  r.post('/purchase-orders/:id/amend', idempotentRequired, (req, res) => ok(res, am.create(req.actor, pid(req), parseAmendCreate(req.body)), 201));
+  r.get('/purchase-orders/:id/amendments/:aid', (req, res) => ok(res, am.get(req.actor, pid(req), parseAmendId(req.params.aid))));
+  r.post('/purchase-orders/:id/amendments/:aid/submit', idempotentRequired, (req, res) => ok(res, am.submit(req.actor, pid(req), parseAmendId(req.params.aid)), 202));
+  r.post('/purchase-orders/:id/amendments/:aid/discard', idempotent, (req, res) => ok(res, am.discard(req.actor, pid(req), parseAmendId(req.params.aid), parseReason(req.body))));
+  r.post('/purchase-orders/:id/amendments/:aid/withdraw', idempotent, (req, res) => ok(res, am.withdraw(req.actor, pid(req), parseAmendId(req.params.aid), parseReason(req.body))));
+  r.post('/purchase-orders/:id/resend', idempotentRequired, (req, res) => ok(res, px.resend(req.actor, pid(req))));
+  r.post('/purchase-orders/:id/dispatches', idempotentRequired, (req, res) => ok(res, px.dispatch(req.actor, pid(req), parseDispatch(req.body)), 201));
+  r.post('/purchase-orders/:id/advances', idempotentRequired, (req, res) => ok(res, px.advanceRequest(req.actor, pid(req), parseAdvance(req.body)), 202));
+  r.post('/purchase-orders/:id/import', idempotentRequired, (req, res) => ok(res, po.importLines(req.actor, pid(req), parsePoImport(req.body))));
+  r.get('/purchase-orders/:id/history', (req, res) => ok(res, po.history(req.actor, pid(req))));
+  r.get('/purchase-orders/:id/print', (req, res) => file(res, po.print(req.actor, pid(req))));
   return r;
 }
 
 /** The vendor's side of an RFQ with no sign-in: the link is the proof, it works until the due date plus the grace days and is used up by the quotation. Rate limited per address. */
-export function vendorQuoteRoutes({ portal }) {
+export function vendorQuoteRoutes({ portal, po: svc }) {
   const r = Router(); const limiter = createRateLimiter();
   const limit = (name, perMinute) => (req, _res, next) => (limiter.take(`${name}:${req.ip}`, perMinute).ok ? next() : next(new HttpError(429, 'RATE_LIMITED', 'Too many attempts from this address. Wait a minute and try again.')));
   r.get('/vendor-quote/:token', limit('vq-look', 30), (req, res) => res.json({ data: portal.info(parseToken(req.params.token)) }));
   r.post('/vendor-quote/:token/submit', limit('vq-submit', 10), (req, res) => res.status(201).json({ data: portal.submit(parseToken(req.params.token), parseVendorQuote(req.body)) }));
   r.post('/vendor-quote/:token/decline', limit('vq-decline', 10), (req, res) => res.json({ data: portal.decline(parseToken(req.params.token), parseVendorDecline(req.body)) }));
+  r.get('/vendor-po/:token', limit('vp-look', 30), (req, res) => res.json({ data: svc.portal.info(parseToken(req.params.token)) }));
+  r.post('/vendor-po/:token/acknowledge', limit('vp-ack', 10), (req, res) => res.json({ data: svc.portal.acknowledge(parseToken(req.params.token), parseVendorAck(req.body)) }));
+  r.post('/vendor-po/:token/dispatch', limit('vp-asn', 10), (req, res) => res.status(201).json({ data: svc.portal.dispatch(parseToken(req.params.token), parseDispatch(req.body)) }));
   r.post('/vendor-quote/:token/clarify', limit('vq-ask', 10), (req, res) => res.status(201).json({ data: portal.clarify(parseToken(req.params.token), parseVendorAsk(req.body)) }));
   return r;
 }
