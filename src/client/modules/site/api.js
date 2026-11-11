@@ -72,6 +72,17 @@ export const st = {
   createVisitor: async (b) => (await api.post('/site/visitors', b, idem())).data,
   updateVisitor: async (id, b) => (await api.patch(`/site/visitors/${id}`, b, idem())).data,
   removeVisitor: async (id) => (await api.delete(`/site/visitors/${id}`)).data,
+  // part 14.04: site instructions and memos
+  insSites: async () => (await api.get('/site/instructions/sites')).data,
+  insOptions: async (siteId) => (await api.get(`/site/instructions/options?siteId=${siteId}`)).data,
+  insTracker: async (q = '') => (await api.get(`/site/instructions/tracker?${q}`)).data,
+  instruction: async (id) => (await api.get(`/site/instructions/${id}`)).data,
+  createInstruction: async (b) => (await api.post('/site/instructions', b, idem())).data,
+  updateInstruction: async (id, b) => (await api.patch(`/site/instructions/${id}`, b, idem())).data,
+  removeInstruction: async (id) => (await api.delete(`/site/instructions/${id}`)).data,
+  insAct: async (id, action, b = {}) => (await api.post(`/site/instructions/${id}/${action}`, b, idem())).data,
+  insAck: async (id, ackId, action, b = {}) => (await api.post(`/site/instructions/${id}/recipients/${ackId}/${action}`, b, idem())).data,
+  insHistory: async (id) => (await api.get(`/site/instructions/${id}/history`)).data,
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
 export const DPR_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
@@ -93,3 +104,6 @@ export const HIN_TYPES = ['SITE_NOT_HANDED_OVER', 'DRAWINGS_PENDING', 'UTILITY_S
 export const PARTIES = ['CLIENT', 'CONSULTANT', 'THIRD_PARTY', 'AUTHORITY', 'CONTRACTOR'];
 export const DIARY_CATEGORIES = ['GENERAL', 'PROGRESS', 'INSTRUCTION', 'HINDRANCE', 'QUALITY', 'SAFETY', 'MATERIAL', 'VISITOR'];
 export const VISITOR_TYPES = ['OFFICIAL', 'CLIENT', 'CONSULTANT', 'AUTHORITY', 'OTHER'];
+export const INS_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', OPEN: 'AT_RISK', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', CLOSED: 'COMPLETED', SUPERSEDED: 'CANCELLED' };
+export const INS_TYPES = ['EI', 'CI', 'ISI', 'MEMO'];
+export const PARTY_TYPES = ['SUBCONTRACTOR', 'CREW', 'PERSON'];

@@ -15055,6 +15055,116 @@ Indexes:
 - ix_site_hindrances_company: company_id, status
 - ux_site_hindrances_doc (unique): company_id, doc_no
 
+## site_instruction_acks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| instruction_id | INTEGER | yes |  |  |
+| party_type | TEXT | yes |  |  |
+| party_id | INTEGER |  |  |  |
+| party_name | TEXT | yes |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| acknowledged_by | TEXT |  |  |  |
+| compliance_note | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: instruction_id -> site_instructions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_instruction_acks_open: company_id, party_type, party_id
+- ix_site_instruction_acks_instruction: instruction_id
+
+## site_instructions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| ins_site_id | INTEGER | yes |  |  |
+| ins_type | TEXT | yes |  |  |
+| ins_date | TEXT | yes |  |  |
+| their_ref | TEXT |  |  |  |
+| from_party | TEXT | yes |  |  |
+| to_party | TEXT |  |  |  |
+| subject | TEXT | yes |  |  |
+| description | TEXT |  |  |  |
+| location_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| due_date | TEXT |  |  |  |
+| cost_implication | INTEGER | yes |  | 0 |
+| time_implication | INTEGER | yes |  | 0 |
+| backcharge | INTEGER | yes |  | 0 |
+| backcharge_amount | INTEGER |  |  |  |
+| backcharge_partner_id | INTEGER |  |  |  |
+| letter_id | INTEGER |  |  |  |
+| notice_due_date | TEXT |  |  |  |
+| variation_decision | TEXT |  |  |  |
+| variation_ref | TEXT |  |  |  |
+| variation_note | TEXT |  |  |  |
+| variation_by | TEXT |  |  |  |
+| variation_at | TEXT |  |  |  |
+| parties_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| revision_no | INTEGER | yes |  | 1 |
+| parent_instruction_id | INTEGER |  |  |  |
+| closure_notes | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| reminded_at | TEXT |  |  |  |
+| reminder_level | INTEGER | yes |  | 0 |
+| reason | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| issued_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_instruction_id -> site_instructions(id), letter_id -> engg_letters(id), backcharge_partner_id -> mdm_partners(id), activity_id -> plan_activities(id), location_id -> proj_locations(id), ins_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_site_instructions_parent: parent_instruction_id
+- ix_site_instructions_letter: letter_id
+- ix_site_instructions_partner: backcharge_partner_id
+- ix_site_instructions_activity: activity_id
+- ix_site_instructions_location: location_id
+- ix_site_instructions_due: company_id, due_date
+- ix_site_instructions_type: company_id, ins_type, status
+- ix_site_instructions_site: ins_site_id, status, ins_date
+- ix_site_instructions_project: org_project_id, ins_date
+- ix_site_instructions_company: company_id, status
+- ux_site_instructions_doc (unique): company_id, doc_no
+
 ## site_visitors
 
 | Column | Type | Not null | Key | Default |

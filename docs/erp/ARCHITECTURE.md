@@ -1288,3 +1288,10 @@ Module `site`, flag `ff.site.p1403`, tables `site_weather`, `site_hindrances`, `
 - **Diary and visitors** (FR-03, FR-04): the diary is signed off by a person other than its writer and then locked; attachments through the file service (`site_diary`, `site_hindrance`).
 - **DPR** (14.02): the prefill carries `conditions` (weather, hindrances, visits); a report started from it takes the weather record and adds linked hindrance and visitor notes.
 - **API**: 42 routes under `/api/v1/site/{weather,hindrances,diary,visitors}`. **Permissions**: `site.{weather,hindrance,diary,visitor}.*` plus `site.hindrance.close`, `site.diary.sign`.
+
+## 105. Site instructions and memos (part 14.04)
+Module `site`, flag `ff.site.p1404`, tables `site_instructions`, `site_instruction_acks` (migration 198), seed 199.
+- **Types**: EI and CI (received), ISI (issued to subcontractors and crews), MEMO. A received one is registered; with a cost or time implication it sets the notice due date (`site.instruction.notice_days`) and publishes `site.instruction.variation_requested` (ADR-497). An issued one is issued directly, or CM then PM when it carries a back-charge (`SITE_INSTRUCTION`, ADR-498) and then publishes `site.instruction.backcharge`.
+- **Acknowledgement and compliance**: one row a recipient; acknowledged by the coordinator or site, complied with a note and at least one file (`site_instruction_ack`); `site.instruction_reminders` job reminds CM and PM of those past their date.
+- **BR-01**: close needs the variation decision when there is a cost implication, and every recipient's compliance when issued. Amendment replaces an open instruction.
+- **API**: 21 routes under `/api/v1/site/instructions` including `/tracker`. **Permissions**: `site.instruction.*` with `acknowledge`, `comply`, `close`, `variation`, `cost`.

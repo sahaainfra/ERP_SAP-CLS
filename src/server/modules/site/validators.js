@@ -97,3 +97,21 @@ const visitTimes = (x) => !x.timeIn || !x.timeOut || x.timeOut >= x.timeIn;
 export const parseVisitorCreate = (b) => parse(z.object({ siteId: id, date: day, ...visitor }).strict().refine(visitTimes, { message: 'The time out is not before the time in', path: ['timeOut'] }), b ?? {});
 export const parseVisitorUpdate = (b) => given(parse(z.object({ visitorName: visitor.visitorName.optional(), organisation: visitor.organisation, visitorType: z.enum(['OFFICIAL', 'CLIENT', 'CONSULTANT', 'AUTHORITY', 'OTHER']).optional(), purpose: visitor.purpose.optional(), instructions: visitor.instructions, timeIn: hhmm, timeOut: hhmm, linkedLetterId: optId, rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
 export const parseSiteDayQ = (q) => parse(z.object({ siteId: id.optional(), projectId: id.optional(), from: day.optional(), to: day.optional() }).strict(), q ?? {});
+
+// ---- site instructions and memos (part 14.04) ----
+const INS_TYPE = z.enum(['EI', 'CI', 'ISI', 'MEMO']);
+const party = z.object({ type: z.enum(['SUBCONTRACTOR', 'CREW', 'PERSON']), id: optId, name: optText(160) }).strict()
+  .refine((x) => x.type === 'PERSON' ? x.name : x.id, { message: 'Choose the subcontractor or crew, or name the person', path: ['id'] });
+const ins = {
+  type: INS_TYPE, date: day, theirRef: optText(80), fromParty: text(160).min(2, 'Say who it is from'), toParty: optText(160), subject: text(200).min(3, 'Give a subject'), description: optText(4000),
+  locationId: optId, activityId: optId, dueDate: day.nullish().transform((v) => v || null), costImplication: z.boolean().optional(), timeImplication: z.boolean().optional(),
+  backcharge: z.boolean().optional(), backchargeAmount: money.nullish().transform((v) => v ?? null), backchargePartnerId: optId, letterId: optId, parties: z.array(party).max(30).optional(),
+};
+export const parseInstructionCreate = (b) => parse(z.object({ siteId: id, ...ins }).strict(), b ?? {});
+export const parseInstructionUpdate = (b) => given(parse(z.object({ ...Object.fromEntries(Object.entries(ins).filter(([k]) => k !== 'type').map(([k, v]) => [k, v.optional ? v.optional() : v])), rowVersion: z.number().int().min(1).optional() }).strict(), b ?? {}), b);
+export const parseInstructionQ = (q) => parse(z.object({ siteId: id.optional(), projectId: id.optional() }).strict(), q ?? {});
+export const parseAckAdd = (b) => parse(z.object({ parties: z.array(party).min(1).max(30) }).strict(), b ?? {});
+export const parseAckAct = (b) => parse(z.object({ note: optText(2000) }).strict(), b ?? {});
+export const parseComply = (b) => parse(z.object({ note: text(2000).min(5, 'Say what was done (at least 5 characters)') }).strict(), b ?? {});
+export const parseInstructionClose = (b) => parse(z.object({ closureNotes: text(2000).min(5, 'Say how it was closed (at least 5 characters)') }).strict(), b ?? {});
+export const parseVariationDecision = (b) => parse(z.object({ decision: z.enum(['ACCEPTED', 'REJECTED', 'WITHDRAWN']), ref: optText(80), note: optText(1000) }).strict(), b ?? {});

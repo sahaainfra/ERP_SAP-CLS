@@ -68,7 +68,7 @@ export const diaryList = defineList({
   code: 'site.diary', label: 'Site diary', permission: 'site.diary.view', from: 'site_diary x JOIN org_projects p ON p.id = x.org_project_id JOIN org_sites s ON s.id = x.dy_site_id', where: 'x.deleted_at IS NULL', searchable: ['x.entry_text', 'p.code', 's.code', 'x.created_by'], defaultSort: '-date',
   columns: {
     date: { sql: 'x.diary_date', type: 'date', label: 'Date' }, project: { sql: 'p.code', type: 'text', label: 'Project' }, projectId: { sql: 'x.org_project_id', type: 'number', label: 'Project id' }, site: { sql: 's.code', type: 'text', label: 'Site' }, siteId: { sql: 'x.dy_site_id', type: 'number', label: 'Site id' },
-    category: { sql: 'x.category', type: 'enum', label: 'Category', options: Object.entries(DIARY_CATEGORIES) }, text: { sql: 'x.entry_text', type: 'text', label: 'Note' }, enteredBy: { sql: 'x.created_by', type: 'text', label: 'Entered by' }, signed: { sql: 'CASE WHEN x.signed_at IS NULL THEN 0 ELSE 1 END', type: 'enum', label: 'Signed off', options: [['1', 'Signed off'], ['0', 'Not signed']] },
+    category: { sql: 'x.category', type: 'enum', label: 'Category', options: Object.entries(DIARY_CATEGORIES) }, text: { sql: 'x.entry_text', type: 'text', label: 'Note' }, enteredBy: { sql: 'x.created_by', type: 'text', label: 'Entered by' }, signed: { sql: "CASE WHEN x.signed_at IS NULL THEN '0' ELSE '1' END", type: 'enum', label: 'Signed off', options: [['1', 'Signed off'], ['0', 'Not signed']] },
   },
 });
 export const visitorList = defineList({

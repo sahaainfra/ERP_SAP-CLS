@@ -8036,6 +8036,24 @@ paths:
   /api/v1/site/visitors:
     get: { summary: Visitor log (list), tags: [site], responses: { '200': { description: OK } } }
     post: { summary: Record a visit, tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/instructions:
+    get: { summary: Instruction register (received and issued), tags: [site], responses: { '200': { description: OK } } }
+    post: { summary: Record an instruction or memo (draft), tags: [site], responses: { '201': { description: Created } } }
+  /api/v1/site/instructions/tracker:
+    get: { summary: Compliance tracker, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/instructions/{id}:
+    get: { summary: One instruction with recipients, tags: [site], responses: { '200': { description: OK } } }
+    patch: { summary: Change a draft or returned instruction, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/instructions/{id}/submit:
+    post: { summary: Register, issue or send for approval (back-charge), tags: [site], responses: { '202': { description: Accepted } } }
+  /api/v1/site/instructions/{id}/close:
+    post: { summary: Close (variation decision and compliance first), tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/instructions/{id}/variation-decision:
+    post: { summary: Record the variation decision, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/instructions/{id}/recipients/{ackId}/acknowledge:
+    post: { summary: Acknowledge for a recipient, tags: [site], responses: { '200': { description: OK } } }
+  /api/v1/site/instructions/{id}/recipients/{ackId}/comply:
+    post: { summary: Record a recipient's compliance with evidence, tags: [site], responses: { '200': { description: OK } } }
   /api/v1/site/dprs:
     get:
       summary: "Daily progress report (14.02): GET /dprs"

@@ -22,6 +22,8 @@ import { parseDprCreate } from './validators.js';
 import { HIN_DOC, HIN_STATUS, createConditionsService } from './conditions.js';
 import { conditionsRoutes } from './conditions-routes.js';
 import { registerWeatherProviders } from './weather-provider.js';
+import { INS_DOC, INS_STATUS, INS_TYPES, createInstructionService } from './instructions.js';
+import { instructionRoutes } from './instruction-routes.js';
 
 const services = new WeakMap();
 export const siteOf = (db) => services.get(db) ?? null;
@@ -37,12 +39,19 @@ for (const [type, description] of [
   ['site.hindrance.escalated', 'A hindrance open for longer than site.hindrance.escalate_days was escalated to the construction manager and the project manager (part 14.03): data { hindranceId, docNo, projectId, siteId, level, openDays }.'],
   ['site.weather.recorded', 'The weather of a site and day was recorded, entered or fetched (part 14.03): data { weatherId, projectId, siteId, date, condition, rainfallMm, hoursLost, shutdown, pourRestricted }. For the daily progress report (14.02).'],
   ['site.weather.shutdown', 'A weather shutdown reached the hours that make a delay (part 14.03): data { weatherId, projectId, siteId, siteCode, date, hoursLost, delayDays, condition, rainfallMm, reason }. Planning (13.05) drafts a delay from it.'],
+  ['site.instruction.registered', 'An instruction received from the engineer or the client was registered (part 14.04): data { instructionId, docNo, projectId, siteId, type (EI or CI), direction, date, theirRef, fromParty, toParty, subject, description, locationId, activityId, dueDate, costImplication, timeImplication, noticeDueDate, letterId, supersedes, parties }.'],
+  ['site.instruction.variation_requested', 'A received instruction with a cost or time implication needs a variation (part 14.04): the data of site.instruction.registered with source { type, id }. For the variation draft (21.05) and the notice (11.05); 21.05 answers with the decision at POST /site/instructions/:id/variation-decision.'],
+  ['site.instruction.issued', 'An internal site instruction or memo was issued, after approval when it carries a back-charge (part 14.04): data as site.instruction.registered with the parties it went to.'],
+  ['site.instruction.backcharge', 'An issued instruction carries a back-charge to a subcontractor (part 14.04): data as site.instruction.issued with backchargePartnerId and backchargeAmount in rupees. For the deduction in the subcontractor bill (22.05).'],
+  ['site.instruction.acknowledged', 'A recipient acknowledged an issued instruction (part 14.04): data { instructionId, docNo, party }.'],
+  ['site.instruction.variation_decided', 'The variation decision of a costly instruction was recorded (part 14.04): data { instructionId, docNo, decision, ref }.'],
+  ['site.instruction.closed', 'An instruction was closed after compliance and, for a cost implication, the variation decision (part 14.04): data as site.instruction.registered with variationDecision and variationRef.'],
   ['site.daily_plan.issued', 'A daily work plan of a site and a supervisor was issued and its lines raised as work authorisations in draft (part 14.01): data { planId, docNo, projectId, siteId, planDate, supervisor, waIds }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'site', description });
 
 integrityRegistry.register({
-  statuses: { site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
-  uniqueKeys: [{ table: 'site_work_authorisations', columns: ['company_id', 'wa_no'] }, { table: 'site_daily_plans', columns: ['company_id', 'doc_no'] }, { table: 'site_dprs', columns: ['company_id', 'doc_no'] }, { table: 'site_hindrances', columns: ['company_id', 'doc_no'] }],
+  statuses: { site_instructions: Object.keys(INS_STATUS), site_hindrances: Object.keys(HIN_STATUS), site_dprs: Object.keys(DPR_STATUS), site_work_authorisations: Object.keys(WA_STATUS), site_work_fronts: Object.keys(FRONT_STATUS), site_daily_plans: Object.keys(DAILY_STATUS) },
+  uniqueKeys: [{ table: 'site_work_authorisations', columns: ['company_id', 'wa_no'] }, { table: 'site_daily_plans', columns: ['company_id', 'doc_no'] }, { table: 'site_dprs', columns: ['company_id', 'doc_no'] }, { table: 'site_hindrances', columns: ['company_id', 'doc_no'] }, { table: 'site_instructions', columns: ['company_id', 'doc_no'] }],
 });
 
 /** Module "site": site execution and progress control (M14). Part 14.01 holds work fronts, daily work plans and work authorisations ("no plan, no work"). The tables are `site_*`. */
@@ -52,8 +61,8 @@ export const site = {
   routePrefix: '/api/v1/site',
   ownerPart: '14.01',
   status: 'Work fronts of a site with their activities, status and open constraints; daily work plans of a site and a supervisor from the approved weekly plans (13.04) or copied from the day before; work authorisations (WA) with activity, WBS, location, quantity, crews, materials and plant from the norms, the budget line (12.03), the drawing revision (11.01), the permit and hold points, the time window and the supervisor, approved by the construction manager and by the project manager when outside the plan; emergency WAs regularised within 24 hours; closure with the quantity done and the reconciliation of what was used; the uses of attendance, stores, plant, DPR and measurement booked against a WA (CP-SITE-02).',
-  tables: ['site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
-  resources: ['weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
+  tables: ['site_instructions', 'site_instruction_acks', 'site_weather', 'site_hindrances', 'site_diary', 'site_visitors', 'site_dprs', 'site_dpr_work', 'site_dpr_labour', 'site_dpr_materials', 'site_dpr_equipment', 'site_dpr_photos', 'site_dpr_notes', 'site_work_fronts', 'site_daily_plans', 'site_daily_plan_lines', 'site_work_authorisations', 'site_wa_resources', 'site_wa_uses'],
+  resources: ['instructions', 'weather', 'hindrances', 'diary', 'visitors', 'dprs', 'sites', 'board', 'wa-mobile', 'work-fronts', 'work-authorisations', 'daily-plans', 'wa-uses'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'site_work_authorisations'").get()) return;
@@ -62,6 +71,7 @@ export const site = {
     listExports.register('site.work_authorisations', { source: (actor, req) => svc.was.exportSource(actor, req), hidden: () => [] });
     // part 14.02: the daily progress report, its reports and its compliance
     const conditions = createConditionsService({ db, integrations: integrationsOf(db, { vaultKey: appConfig.vaultKey ?? undefined }) }); svc.conditions = conditions; svc.hindranceDecide = conditions.hindranceDecide;
+    svc.instructionsSvc = createInstructionService({ db }); svc.instructionDecide = svc.instructionsSvc.instructionDecide; listExports.register('site.instructions', { source: (actor, req) => svc.instructionsSvc.instructions.exportSource(actor, req), hidden: () => [] });
     const dprSvc = createDprService({ db, dayContext: (...a) => conditions.dayContext(...a) }); svc.dpr = dprSvc; svc.dprReports = createDprReports({ db, base: dprSvc.base }); svc.dprDecide = dprSvc.dprDecide;
     listExports.register('site.dprs', { source: (actor, req) => dprSvc.dprs.exportSource(actor, req), hidden: () => [] });
     registerWeatherProviders(integrationsOf(db, { vaultKey: appConfig.vaultKey ?? undefined }).providers);
@@ -70,6 +80,8 @@ export const site = {
     const runtime = runtimeOf(db);
     runtime?.jobs?.register('site.hindrance_escalation', (ctx) => { const n = conditions.hindrances.escalate(); ctx.log(`Escalated ${n} hindrance(s)`); return { escalated: n }; }, { maxAttempts: 2, description: 'Escalates the hindrances open for longer than site.hindrance.escalate_days to the construction manager and the project manager.' });
     runtime?.scheduler?.define({ code: 'site.hindrance_escalation_daily', cron: '30 1 * * *', jobType: 'site.hindrance_escalation', description: 'Daily 07:00 India time: escalate the hindrances that have stayed open too long' });
+    runtime?.jobs?.register('site.instruction_reminders', (ctx) => { const n = svc.instructionsSvc.instructions.remind(); ctx.log(`Reminded about ${n} instruction(s)`); return { reminded: n }; }, { maxAttempts: 2, description: 'Reminds the construction manager and the project manager of issued instructions past their compliance date.' });
+    runtime?.scheduler?.define({ code: 'site.instruction_reminders_daily', cron: '45 1 * * *', jobType: 'site.instruction_reminders', description: 'Daily 07:15 India time: remind about issued instructions past their compliance date' });
     const router = Router();
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1401') ? next() : next(notFound('Work authorisation is not enabled for your company yet (feature flag ff.site.p1401 is OFF).'))));
     router.use(siteRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
@@ -77,6 +89,8 @@ export const site = {
     p1402.use((req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1402') ? next() : next(notFound('The daily progress report is not enabled for your company yet (feature flag ff.site.p1402 is OFF).'))));
     p1402.use(dprRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use('/dprs', p1402);
+    router.use('/instructions', (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1404') ? next() : next(notFound('Site instructions are not enabled for your company yet (feature flag ff.site.p1404 is OFF).'))));
+    router.use('/instructions', instructionRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     router.use(['/weather', '/hindrances', '/diary', '/visitors'], (req, _res, next) => (flags.isOn(req.actor, 'ff.site.p1403') ? next() : next(notFound('Site diary, weather and hindrances are not enabled for your company yet (feature flag ff.site.p1403 is OFF).'))));
     router.use(conditionsRoutes(svc, { exportsOf: () => listExportsOf(db) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/site', router);
@@ -245,5 +259,52 @@ fileEntities.register({
     const r = db.prepare('SELECT company_id, org_project_id, dy_site_id, signed_at FROM site_diary WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
     const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.dy_site_id }).allowed; if (!at('site.diary.view')) return null;
     return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.dy_site_id, canView: true, canEdit: at('site.diary.edit') && !r.signed_at, locked: Boolean(r.signed_at) };
+  },
+});
+
+// ---- the approval of an instruction with a back-charge (part 14.04): the construction manager, then the project manager; whoever raised it never decides it. ----------------------------------------------
+const iline = (db, id) => db.prepare('SELECT x.*, p.code, s.code AS scode FROM site_instructions x JOIN org_projects p ON p.id = x.org_project_id JOIN org_sites s ON s.id = x.ins_site_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: INS_DOC, label: 'Site instruction with a back-charge', processOwner: 'PM', route: (id) => `/site/instructions?id=${id}`,
+  describe(db, companyId, id) { const r = iline(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.code}/${r.scode}: ${r.subject}${r.parent_instruction_id ? ' (amendment)' : ''}`, originator: r.requested_by, projectId: r.org_project_id, siteId: r.ins_site_id } : null; },
+  summarise(db, _actor, id) { const r = iline(db, Number(id)); if (!r) return null; const sub = r.backcharge_partner_id ? db.prepare('SELECT legal_name FROM mdm_partners WHERE id = ?').get(r.backcharge_partner_id)?.legal_name : null; return { fields: [{ label: 'Site', value: `${r.code} / ${r.scode}` }, { label: 'Type', value: INS_TYPES[r.ins_type] }, { label: 'Subject', value: r.subject }, { label: 'To', value: r.to_party ?? '—' }, { label: 'Back-charge to', value: sub ?? '—' }, { label: 'Compliance due', value: r.due_date ?? '—' }, ...(r.reason ? [{ label: 'Reason for the amendment', value: r.reason }] : [])] }; },
+  defaultDefinition: { name: 'Instruction with a back-charge: the construction manager, then the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('CM', 'Construction manager', 'CM', 12), approver('PM', 'Project manager', 'PM', 24)] },
+  hooks: {
+    onApproved: (db, { instance, actor }) => siteOf(db)?.instructionDecide(instance, actor, 'APPROVED'),
+    onRejected: (db, { instance, actor, comment }) => siteOf(db)?.instructionDecide(instance, actor, 'REJECTED', comment),
+    onReturned: (db, { instance, actor, comment }) => siteOf(db)?.instructionDecide(instance, actor, 'RETURNED', comment),
+    onCancelled: (db, { instance, actor, comment }) => siteOf(db)?.instructionDecide(instance, actor, 'CANCELLED', comment),
+  },
+});
+evidenceProviders.register(INS_DOC, ({ db, instance }) => {
+  const r = iline(db, Number(instance.docId)); if (!r) return { sections: [] }; const par = json(r.parties_json, []); const sub = r.backcharge_partner_id ? db.prepare('SELECT legal_name FROM mdm_partners WHERE id = ?').get(r.backcharge_partner_id)?.legal_name : null;
+  return { sections: [{ code: 'site-instruction-checks', title: 'Before you approve the instruction and its back-charge', kind: 'metrics', items: [
+    { label: 'Instruction', value: `${INS_TYPES[r.ins_type]}: ${r.subject}`, format: 'text' }, { label: 'Issued to', value: par.map((x) => x.name).join(', ') || '—', format: 'text', tone: par.length ? undefined : 'warn' },
+    { label: 'Back-charge to', value: sub ?? 'not named', format: 'text', tone: sub ? undefined : 'warn' }, { label: 'Back-charge amount (Rs)', value: r.backcharge_amount == null ? 'not given' : r.backcharge_amount / 100, format: r.backcharge_amount == null ? 'text' : 'number', tone: r.backcharge_amount == null ? 'warn' : undefined },
+    { label: 'Compliance due', value: r.due_date ?? '—', format: 'text' }] }] };
+});
+objectTypes.register({
+  type: 'site_instruction', label: 'Site instruction', permission: 'site.instruction.view', route: (id) => `/site/instructions?id=${id}`, attachmentEntity: 'site_instruction', approvalTarget: 'site_instruction',
+  access(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.instructionsSvc.instructions.get(actor, Number(id)); return { companyId: actor.companyId, projectId: r.projectId, siteId: r.siteId, status: r.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'site_instructions', id }],
+  summary(db, actor, id) { const s = siteOf(db); if (!s) return null; try { const r = s.instructionsSvc.instructions.get(actor, Number(id)); return { label: `${r.docNo} ${r.siteCode}: ${r.subject}`, status: r.status }; } catch { return null; } },
+  related(db, actor, id) { const s = siteOf(db); if (!s) return []; try { const r = s.instructionsSvc.instructions.get(actor, Number(id)); return [...(r.letter ? [{ kind: 'letter', label: `${r.letter.letterNo} ${r.letter.subject}`, to: `/engg/letters?id=${r.letter.id}`, direction: 'in' }] : []), ...(r.variationRef ? [{ kind: 'variation', label: r.variationRef, to: null, direction: 'out' }] : []), ...(r.previous ? [{ kind: 'site instruction', label: `${r.previous.docNo} (the revision it replaces)`, to: `/site/instructions?id=${r.previous.id}`, direction: 'in' }] : [])]; } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'site.instruction.view').allowed) return []; return db.prepare('SELECT id, org_project_id, ins_site_id FROM site_instructions WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `${q}%`, limit).filter((x) => authzOf(db).check(actor, 'site.instruction.view', { companyId: actor.companyId, projectId: x.org_project_id, siteId: x.ins_site_id }).allowed).map((x) => ({ id: x.id })); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM site_instructions WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+fileEntities.register({
+  entity: 'site_instruction', label: 'Site instruction (the instruction as received, drawings, photographs)',
+  resolve(db, actor, id) {
+    const r = db.prepare('SELECT company_id, org_project_id, ins_site_id, status FROM site_instructions WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.ins_site_id }).allowed; if (!at('site.instruction.view')) return null;
+    return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.ins_site_id, canView: true, canEdit: at('site.instruction.edit') && ['DRAFT', 'RETURNED', 'OPEN'].includes(r.status), locked: ['CLOSED', 'CANCELLED', 'REJECTED', 'SUPERSEDED'].includes(r.status) };
+  },
+});
+fileEntities.register({
+  entity: 'site_instruction_ack', label: 'Compliance evidence of an instruction (photographs, the signed sheet)',
+  resolve(db, actor, id) {
+    const r = db.prepare('SELECT a.company_id, a.closed_at, x.org_project_id, x.ins_site_id, x.status FROM site_instruction_acks a JOIN site_instructions x ON x.id = a.instruction_id WHERE a.id = ? AND a.company_id = ? AND a.deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null;
+    const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.ins_site_id }).allowed; if (!at('site.instruction.view')) return null;
+    return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.ins_site_id, canView: true, canEdit: at('site.instruction.comply') && r.status === 'OPEN' && !r.closed_at, locked: r.status !== 'OPEN' || Boolean(r.closed_at) };
   },
 });

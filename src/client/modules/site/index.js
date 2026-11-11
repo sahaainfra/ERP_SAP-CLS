@@ -11,6 +11,8 @@ import WeatherPage from './WeatherPage.jsx';
 import HindrancesPage from './HindrancesPage.jsx';
 import DiaryPage from './DiaryPage.jsx';
 import VisitorsPage from './VisitorsPage.jsx';
+import InstructionsPage from './InstructionsPage.jsx';
+import InstructionIssuePage from './InstructionIssuePage.jsx';
 
 registerModule({
   code: 'site',
@@ -28,5 +30,7 @@ registerModule({
     { path: '/site/hindrances', label: 'Hindrance Register', icon: 'erp.group.projects', permission: 'site.hindrance.view', flag: 'ff.site.p1403', Page: HindrancesPage },
     { path: '/site/diary', label: 'Site Diary', icon: 'erp.group.projects', permission: 'site.diary.view', flag: 'ff.site.p1403', Page: DiaryPage },
     { path: '/site/visitors', label: 'Visitor Log', icon: 'erp.group.projects', permission: 'site.visitor.view', flag: 'ff.site.p1403', Page: VisitorsPage },
+    { path: '/site/instructions', label: 'Site Instructions', icon: 'erp.group.projects', permission: 'site.instruction.view', flag: 'ff.site.p1404', Page: InstructionsPage },
+    { path: '/site/instruction-issue', label: 'Issue Instruction', icon: 'erp.group.projects', permission: 'site.instruction.create', flag: 'ff.site.p1404', Page: InstructionIssuePage },
   ],
 });
