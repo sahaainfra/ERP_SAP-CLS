@@ -2595,7 +2595,6 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/inv/transfers/options', g: 'permission', k: 'inv.transfer.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/inv/transfers/prefill', g: 'permission', k: 'inv.transfer.create', s: 'parseTransferPrefillQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/inv/transfers', g: 'permission', k: 'inv.transfer.view', s: null, scope: 'company', rate: 'read', audit: false },
-  { m: 'POST', p: '/api/v1/inv/transfers', g: 'permission', k: 'inv.transfer.create', s: 'parseTransferCreate', scope: 'company', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/inv/transfers/import', g: 'permission', k: 'inv.transfer.import', s: 'parseTransferImport', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/inv/transfers/:id', g: 'permission', k: 'inv.transfer.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'PATCH', p: '/api/v1/inv/transfers/:id', g: 'permission', k: 'inv.transfer.edit', s: 'parseTransferUpdate', scope: 'company', rate: 'write', audit: true },
