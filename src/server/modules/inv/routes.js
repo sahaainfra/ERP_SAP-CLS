@@ -178,6 +178,8 @@ export function issueRoutes(svc, { idempotent, idempotentRequired, flags }) {
 export function transferRoutes(svc, { idempotent, idempotentRequired, flags }) {
   const r = Router(); const { transfers, inTransit } = svc.transfer; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  // the single-item movement of 16.01 (POST /transfers with an item in the body) stays where it was: it falls through to that router
+  r.use(['/transfers', '/in-transit'], (req, _res, next) => (req.method === 'POST' && req.originalUrl.split('?')[0].replace(/\/$/, '').endsWith('/inv/transfers') && req.body?.itemId !== undefined ? next('router') : next()));
   r.use(['/transfers', '/in-transit'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1605') ? next() : next(notFound('Stock transfers are not enabled for your company yet (feature flag ff.inv.p1605 is OFF).'))));
   r.get('/transfers/summary', (req, res) => ok(res, transfers.summary(req.actor)));
   r.get('/transfers/options', (req, res) => ok(res, transfers.options(req.actor)));
