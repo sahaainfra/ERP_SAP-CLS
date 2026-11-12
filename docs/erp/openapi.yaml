@@ -8965,5 +8965,74 @@ paths:
     get: { summary: 'Read inv/transfers/{id}/history (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/transfers/{id}/print:
     get: { summary: 'Read inv/transfers/{id}/print (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/due:
+    get: { summary: 'Read inv/count-plans/due (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/queue:
+    get: { summary: 'Read inv/count-plans/queue (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans:
+    get: { summary: 'Read inv/count-plans (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/count-plans (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/import:
+    post: { summary: 'Do inv/count-plans/import (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}:
+    get: { summary: 'Read inv/count-plans/{id} (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/count-plans/{id} (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Do inv/count-plans/{id} (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/submit:
+    post: { summary: 'Do inv/count-plans/{id}/submit (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/withdraw:
+    post: { summary: 'Do inv/count-plans/{id}/withdraw (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/cancel:
+    post: { summary: 'Do inv/count-plans/{id}/cancel (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/amend:
+    post: { summary: 'Do inv/count-plans/{id}/amend (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/start:
+    post: { summary: 'Do inv/count-plans/{id}/start (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/sheet:
+    get: { summary: 'Read inv/count-plans/{id}/sheet (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/counts:
+    post: { summary: 'Do inv/count-plans/{id}/counts (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/close:
+    post: { summary: 'Do inv/count-plans/{id}/close (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/review:
+    post: { summary: 'Do inv/count-plans/{id}/review (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/adjustment:
+    post: { summary: 'Do inv/count-plans/{id}/adjustment (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/history:
+    get: { summary: 'Read inv/count-plans/{id}/history (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-plans/{id}/print:
+    get: { summary: 'Read inv/count-plans/{id}/print (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/count-variance:
+    get: { summary: 'Read inv/count-variance (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-entries:
+    get: { summary: 'Read inv/scrap-entries (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/scrap-entries (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-entries/{id}:
+    get: { summary: 'Read inv/scrap-entries/{id} (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-entries/{id}/cancel:
+    post: { summary: 'Do inv/scrap-entries/{id}/cancel (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals:
+    get: { summary: 'Read inv/scrap-disposals (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/scrap-disposals (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/import:
+    post: { summary: 'Do inv/scrap-disposals/import (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/{id}:
+    get: { summary: 'Read inv/scrap-disposals/{id} (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/scrap-disposals/{id} (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Do inv/scrap-disposals/{id} (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/{id}/submit:
+    post: { summary: 'Do inv/scrap-disposals/{id}/submit (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/{id}/withdraw:
+    post: { summary: 'Do inv/scrap-disposals/{id}/withdraw (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/{id}/cancel:
+    post: { summary: 'Do inv/scrap-disposals/{id}/cancel (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/{id}/amend:
+    post: { summary: 'Do inv/scrap-disposals/{id}/amend (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/{id}/history:
+    get: { summary: 'Read inv/scrap-disposals/{id}/history (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scrap-disposals/{id}/print:
+    get: { summary: 'Read inv/scrap-disposals/{id}/print (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/expiry:
+    get: { summary: 'Read inv/expiry (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/in-transit:
     get: { summary: 'Read inv/in-transit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }

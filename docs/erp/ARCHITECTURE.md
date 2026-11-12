@@ -1435,3 +1435,11 @@ Module `inv`, flag `ff.inv.p1605`, tables `inv_transfers`, `inv_transfer_lines`,
 - **Events**: `inv.transfer.dispatched`, `inv.transfer.received` (per receipt), `inv.transfer.written_off`, and `inv.stock.transferred` between projects. Job `inv.transfer_aged`. Parameters `inv.transfer.eway_threshold`, `inv.transfer.transit_alert_days`.
 - **Permissions**: `inv.transfer.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,dispatch,receive,resolve}`.
 
+
+## 124. Physical verification, adjustments, scrap and disposal (part 16.06)
+Module `inv`, flag `ff.inv.p1606`, tables `inv_count_plans`, `inv_count_lines`, `inv_scrap_entries`, `inv_scrap_disposals`; service `src/server/modules/inv/count.js` (routes `countRoutes`, gated by the flag).
+- **Count** (ADR-584, ADR-585): plans (full, cycle by ABC class), `start` (freeze), blind `sheet`, `record` counts and recounts, `close`, `review` reasons, `adjust` (raises a 16.01 adjustment); `due` list and `dueSweep`. Parameters `inv.count.tolerance_pct`, `inv.count.freeze`.
+- **Adjustment** (ADR-586, ADR-587): workflow `INV_ADJ_BAND` with the `beforeApprove` hook (SoD-09) added to the workflow engine; approval posts through the 16.01 engine and closes the plan.
+- **Scrap** (ADR-588, ADR-589): `entries` (register, held stock), `disposals` (sale, auction, write-off; workflow `INV_SCRAP`; gate pass `createForDisposal`); **expiry** report and daily job `inv.count_expiry_daily` (parameter `inv.expiry.alert_days`).
+- **Events**: `inv.count.closed`, `inv.scrap.recorded`, `inv.scrap.disposed`, `inv.scrap.sold`.
+- **Permissions**: `inv.count_plan.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,start,count,review}` and `inv.scrap_disposal.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,register}`.

@@ -23,6 +23,10 @@ import TransferNewPage from './TransferNewPage.jsx';
 import TransferReceivePage from './TransferReceivePage.jsx';
 import InTransitPage from './InTransitPage.jsx';
 
+import CountPlansPage from './CountPlansPage.jsx';
+import BlindCountPage from './BlindCountPage.jsx';
+import CountVariancePage from './CountVariancePage.jsx';
+import ScrapPage from './ScrapPage.jsx';
 registerModule({
   code: 'inv',
   label: 'Stores and Inventory',
@@ -50,5 +54,9 @@ registerModule({
     { path: '/inv/transfer-new', label: 'Transfer Request', icon: 'erp.group.supply', permission: 'inv.transfer.create', flag: 'ff.inv.p1605', Page: TransferNewPage },
     { path: '/inv/transfer-receive', label: 'Receive Transfer', icon: 'erp.group.supply', permission: 'inv.transfer.receive', flag: 'ff.inv.p1605', Page: TransferReceivePage },
     { path: '/inv/in-transit', label: 'In-Transit Stock Ageing', icon: 'erp.group.supply', permission: 'inv.transfer.view', flag: 'ff.inv.p1605', Page: InTransitPage },
+    { path: '/inv/count-plans', label: 'Count Plans', icon: 'erp.group.supply', permission: 'inv.count_plan.view', flag: 'ff.inv.p1606', Page: CountPlansPage },
+    { path: '/inv/blind-count', label: 'Blind Count', icon: 'erp.group.supply', permission: 'inv.count_plan.count', flag: 'ff.inv.p1606', Page: BlindCountPage },
+    { path: '/inv/count-variance', label: 'Count Variance', icon: 'erp.group.supply', permission: 'inv.count_plan.view', flag: 'ff.inv.p1606', Page: CountVariancePage },
+    { path: '/inv/scrap', label: 'Scrap, Disposal and Expiry', icon: 'erp.group.supply', permission: 'inv.scrap_disposal.view', flag: 'ff.inv.p1606', Page: ScrapPage },
   ],
 });

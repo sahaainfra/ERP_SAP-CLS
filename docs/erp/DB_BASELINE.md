@@ -8181,6 +8181,103 @@ Indexes:
 - ix_inv_bin_company: company_id
 - ux_inv_bin_code (unique): store_id, code
 
+## inv_count_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plan_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| bin_id | INTEGER | yes |  |  |
+| batch_no | TEXT | yes |  | '' |
+| owner_project_id | INTEGER |  |  |  |
+| abc_class | TEXT |  |  |  |
+| book_qty | INTEGER | yes |  | 0 |
+| rate | INTEGER | yes |  | 0 |
+| counted_qty | INTEGER |  |  |  |
+| recount_qty | INTEGER |  |  |  |
+| final_qty | INTEGER |  |  |  |
+| variance_qty | INTEGER | yes |  | 0 |
+| variance_value | INTEGER | yes |  | 0 |
+| needs_recount | INTEGER | yes |  | 0 |
+| reason | TEXT |  |  |  |
+| counted_by | TEXT |  |  |  |
+| counted_at | TEXT |  |  |  |
+| recounted_by | TEXT |  |  |  |
+| recounted_at | TEXT |  |  |  |
+| line_status | TEXT | yes |  | 'PENDING' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: owner_project_id -> org_projects(id), bin_id -> inv_bins(id), item_id -> mdm_items(id), plan_id -> inv_count_plans(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_cln_owner: owner_project_id
+- ix_inv_cln_bin: bin_id
+- ix_inv_cln_item: item_id
+- ix_inv_cln_company: company_id
+- ux_inv_cln_no (unique): plan_id, line_no
+
+## inv_count_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| store_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| plan_type | TEXT | yes |  |  |
+| abc_class | TEXT |  |  |  |
+| scheduled_date | TEXT | yes |  |  |
+| freeze | INTEGER | yes |  | 1 |
+| scope_json | TEXT | yes |  | '{}' |
+| tolerance_pct | INTEGER | yes |  | 0 |
+| adjustment_id | INTEGER |  |  |  |
+| started_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: adjustment_id -> inv_adjustments(id), org_project_id -> org_projects(id), store_id -> inv_stores(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_cpl_adj: adjustment_id
+- ix_inv_cpl_project: org_project_id
+- ix_inv_cpl_store: store_id, status
+- ix_inv_cpl_list: company_id, status, scheduled_date
+- ux_inv_cpl_doc (unique): company_id, doc_no
+
 ## inv_fifo_layers
 
 | Column | Type | Not null | Key | Default |
@@ -8783,6 +8880,102 @@ Indexes:
 - ix_inv_rtv_project: org_project_id
 - ix_inv_rtv_list: company_id, status, rtv_date
 - ux_inv_rtv_doc (unique): company_id, doc_no
+
+## inv_scrap_disposals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| disposal_date | TEXT | yes |  |  |
+| store_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| method | TEXT | yes |  |  |
+| buyer_partner_id | INTEGER |  |  |  |
+| invoice_no | TEXT |  |  |  |
+| items_json | TEXT | yes |  | '[]' |
+| weight_kg | INTEGER | yes |  | 0 |
+| book_value | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| gate_pass_id | INTEGER |  |  |  |
+| reason | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| posted_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: gate_pass_id -> inv_gate_passes(id), buyer_partner_id -> mdm_partners(id), org_project_id -> org_projects(id), store_id -> inv_stores(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_dsp_pass: gate_pass_id
+- ix_inv_dsp_buyer: buyer_partner_id
+- ix_inv_dsp_project: org_project_id
+- ix_inv_dsp_store: store_id
+- ix_inv_dsp_list: company_id, status, disposal_date
+- ux_inv_dsp_doc (unique): company_id, doc_no
+
+## inv_scrap_entries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| entry_date | TEXT | yes |  |  |
+| store_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| item_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| scrap_source | TEXT | yes |  |  |
+| from_stock | INTEGER | yes |  | 0 |
+| batch_no | TEXT |  |  |  |
+| qty | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| weight_kg | INTEGER | yes |  | 0 |
+| book_value | INTEGER | yes |  | 0 |
+| entry_status | TEXT | yes |  | 'HELD' |
+| disposal_id | INTEGER |  |  |  |
+| recorded_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), org_project_id -> org_projects(id), store_id -> inv_stores(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_scr_disposal: disposal_id
+- ix_inv_scr_item: item_id
+- ix_inv_scr_project: org_project_id
+- ix_inv_scr_store: store_id
+- ix_inv_scr_list: company_id, entry_status, entry_date
+- ux_inv_scr_doc (unique): company_id, doc_no
 
 ## inv_site_returns
 

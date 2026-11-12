@@ -54,6 +54,15 @@ export const tr = {
   transfer: (id) => get(`/transfers/${id}`), create: (b) => post('/transfers', b), update: (id, b) => patch(`/transfers/${id}`, b), act: (id, action, b) => post(`/transfers/${id}/${action}`, b), history: (id) => get(`/transfers/${id}/history`),
   resolve: (id, did, b) => post(`/transfers/${id}/discrepancies/${did}/resolve`, b), inTransit: (q) => get(`/in-transit${qs(q)}`), incoming: () => get('/transfers?pageSize=50&filter[status]=IN_TRANSIT'),
 };
+export const COUNT_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'IN_REVIEW', COUNTING: 'IN_REVIEW', REVIEW: 'IN_REVIEW', ADJUSTED: 'IN_REVIEW', CLOSED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', HELD: 'IN_REVIEW', DISPOSED: 'APPROVED' };
+/** Physical verification, scrap and expiry (part 16.06): book quantities are never sent to a counter, and variance values, bands and what a person may do come from the server. */
+export const cn = {
+  due: () => get('/count-plans/due'), queue: () => get('/count-plans/queue'), plan: (id) => get(`/count-plans/${id}`), sheet: (id) => get(`/count-plans/${id}/sheet`), create: (b) => post('/count-plans', b), update: (id, b) => patch(`/count-plans/${id}`, b),
+  act: (id, action, b) => post(`/count-plans/${id}/${action}`, b), history: (id) => get(`/count-plans/${id}/history`), counts: (id, b) => post(`/count-plans/${id}/counts`, b), review: (id, reasons) => post(`/count-plans/${id}/review`, { reasons }), adjust: (id) => post(`/count-plans/${id}/adjustment`),
+  variance: (q) => get(`/count-variance${qs(q)}`), entries: (q) => get(`/scrap-entries${qs(q)}`), entryCreate: (b) => post('/scrap-entries', b), entryCancel: (id, reason) => post(`/scrap-entries/${id}/cancel`, { reason }),
+  disposal: (id) => get(`/scrap-disposals/${id}`), disposalCreate: (b) => post('/scrap-disposals', b), disposalUpdate: (id, b) => patch(`/scrap-disposals/${id}`, b), disposalAct: (id, action, b) => post(`/scrap-disposals/${id}/${action}`, b), disposalHistory: (id) => get(`/scrap-disposals/${id}/history`),
+  expiry: (q) => get(`/expiry${qs(q)}`), dealers: (q) => get(`/gate/vendors${qs({ q })}`),
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
