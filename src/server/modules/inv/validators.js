@@ -106,3 +106,16 @@ export const parseFreeIssueQ = (q) => parse(z.object({ projectId: id.optional(),
 export const parseReconcile = (b) => parse(z.object({ projectId: id, period }).strict(), b ?? {});
 export const parseDrillQ = (q) => parse(z.object({ projectId: id, subcontractorId: id, itemId: id }).strict(), q ?? {});
 export const parseCertify = (b) => parse(z.object({ rows: z.array(z.object({ projectId: id, subcontractorId: id, boqLineId: id, period, certifiedQty: zqty, certificateRef: optText(60) }).strict()).min(1).max(500) }).strict(), b ?? {});
+
+// ---- inter-store transfers (part 16.05) ----
+const trLine = z.object({ itemId: id, qty: rqty, uom: text(20).min(1).optional(), batchNo: optText(40) }).strict().transform(defined);
+export const parseTransferCreate = (b) => parse(z.object({ fromStoreId: id, toStoreId: id, requiredBy: day.nullish().transform((v) => v || null), mrId: id.nullish().transform((v) => v || undefined), interState: z.boolean().optional(), reason: optText(500), lines: z.array(trLine).min(1).max(200) }).strict().transform(defined), b ?? {});
+export const parseTransferUpdate = (b) => parse(z.object({ requiredBy: day.nullish().transform((v) => v || null), interState: z.boolean(), reason: optText(500), lines: z.array(trLine).min(1).max(200), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parseTransferPrefillQ = (q) => parse(z.object({ mrId: id }).strict(), q ?? {});
+export const parseDispatch = (b) => parse(z.object({ vehicleNo: vehicle.nullish().transform((v) => v || null), driverName: optText(80), ewayBillNo: optText(20), interState: z.boolean().optional(), lines: z.array(z.object({ lineId: id, qty: rqty }).strict()).max(200).optional() }).strict().transform(defined), b ?? {});
+export const parseReceive = (b) => parse(z.object({ final: z.boolean().optional(), lines: z.array(z.object({ lineId: id, receivedQty: zqty.optional(), damagedQty: zqty.optional(), note: optText(300) }).strict()).min(1).max(200) }).strict().transform(defined), b ?? {});
+export const parseTransferPhoto = (b) => parse(z.object({ fileId: id, kind: z.enum(['MATERIAL', 'DAMAGE', 'CHALLAN', 'OTHER']) }).strict(), b ?? {});
+export const parseResolve = (b) => parse(z.object({ action: z.enum(['WRITE_OFF', 'RETURN_TO_SOURCE', 'ACCEPT']), note: z.string().trim().min(5, 'Say why (at least 5 characters)').max(500) }).strict(), b ?? {});
+const tImp = z.object({ fromStore: text(20).min(2), toStore: text(20).min(2), itemCode: text(40).min(1), qty: rqty }).strict();
+export const parseTransferImport = (b) => parse(z.object({ rows: z.array(tImp).min(1).max(500) }).strict(), b ?? {});
+export const parseTransitQ = (q) => parse(z.object({ storeId: id.optional(), projectId: id.optional() }).strict(), q ?? {});

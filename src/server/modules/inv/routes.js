@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ } from './validators.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -171,5 +171,33 @@ export function issueRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.get('/free-issue/drill', (req, res) => ok(res, freeIssue.drill(req.actor, parseDrillQ(req.query))));
   r.post('/free-issue/reconcile', idempotentRequired, (req, res) => ok(res, freeIssue.reconcile(req.actor, parseReconcile(req.body))));
   r.post('/free-issue/certified', idempotentRequired, (req, res) => ok(res, freeIssue.certify(req.actor, parseCertify(req.body)), 201));
+  return r;
+}
+
+/** /api/v1/inv stock transfers and in-transit stock (part 16.05). Behind its own flag, ff.inv.p1605. */
+export function transferRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { transfers, inTransit } = svc.transfer; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use(['/transfers', '/in-transit'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1605') ? next() : next(notFound('Stock transfers are not enabled for your company yet (feature flag ff.inv.p1605 is OFF).'))));
+  r.get('/transfers/summary', (req, res) => ok(res, transfers.summary(req.actor)));
+  r.get('/transfers/options', (req, res) => ok(res, transfers.options(req.actor)));
+  r.get('/transfers/prefill', (req, res) => ok(res, transfers.prefill(req.actor, parseTransferPrefillQ(req.query))));
+  r.get('/transfers', (req, res) => res.json(transfers.list(req.actor, req.query)));
+  r.post('/transfers', idempotentRequired, (req, res) => ok(res, transfers.create(req.actor, parseTransferCreate(req.body)), 201));
+  r.post('/transfers/import', idempotentRequired, (req, res) => ok(res, transfers.importRows(req.actor, parseTransferImport(req.body)), 201));
+  r.get('/transfers/:id', (req, res) => ok(res, transfers.get(req.actor, pid(req))));
+  r.patch('/transfers/:id', idempotent, (req, res) => ok(res, transfers.update(req.actor, pid(req), parseTransferUpdate(req.body))));
+  r.delete('/transfers/:id', (req, res) => ok(res, transfers.remove(req.actor, pid(req))));
+  r.post('/transfers/:id/submit', idempotentRequired, (req, res) => ok(res, transfers.submit(req.actor, pid(req)), 202));
+  r.post('/transfers/:id/withdraw', idempotent, (req, res) => ok(res, transfers.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/transfers/:id/cancel', idempotent, (req, res) => ok(res, transfers.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/transfers/:id/amend', idempotent, (req, res) => ok(res, transfers.amend(req.actor, pid(req))));
+  r.post('/transfers/:id/dispatch', idempotentRequired, (req, res) => ok(res, transfers.dispatch(req.actor, pid(req), parseDispatch(req.body))));
+  r.post('/transfers/:id/receive', idempotentRequired, (req, res) => ok(res, transfers.receive(req.actor, pid(req), parseReceive(req.body))));
+  r.post('/transfers/:id/photos', idempotent, (req, res) => ok(res, transfers.photo(req.actor, pid(req), parseTransferPhoto(req.body))));
+  r.post('/transfers/:id/discrepancies/:did/resolve', idempotentRequired, (req, res) => ok(res, transfers.resolve(req.actor, pid(req), parseId(req.params.did), parseResolve(req.body))));
+  r.get('/transfers/:id/history', (req, res) => ok(res, transfers.history(req.actor, pid(req))));
+  r.get('/transfers/:id/print', (req, res) => file(res, transfers.print(req.actor, pid(req))));
+  r.get('/in-transit', (req, res) => ok(res, inTransit.report(req.actor, parseTransitQ(req.query))));
   return r;
 }
