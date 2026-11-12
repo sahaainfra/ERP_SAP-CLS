@@ -8429,6 +8429,119 @@ Indexes:
 - ix_inv_gwt_slip: slip_file_id
 - ix_inv_gwt_inward: inward_id, superseded
 
+## inv_grn_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| grn_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| po_line_id | INTEGER |  |  |  |
+| item_id | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| ordered_qty | INTEGER | yes |  | 0 |
+| balance_qty | INTEGER | yes |  | 0 |
+| challan_qty | INTEGER | yes |  | 0 |
+| received_qty | INTEGER | yes |  |  |
+| accepted_qty | INTEGER | yes |  | 0 |
+| rejected_qty | INTEGER | yes |  | 0 |
+| rate | INTEGER | yes |  | 0 |
+| line_value | INTEGER | yes |  | 0 |
+| batch_no | TEXT |  |  |  |
+| heat_no | TEXT |  |  |  |
+| mfg_date | TEXT |  |  |  |
+| cert_file_id | INTEGER |  |  |  |
+| inspection_required | INTEGER | yes |  | 0 |
+| inspection_status | TEXT | yes |  | 'NA' |
+| released_qty | INTEGER | yes |  | 0 |
+| qc_rejected_qty | INTEGER | yes |  | 0 |
+| returned_qty | INTEGER | yes |  | 0 |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| direct_charge | INTEGER | yes |  | 0 |
+| excess_qty | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), cert_file_id -> core_files(id), item_id -> mdm_items(id), po_line_id -> proc_po_lines(id), grn_id -> inv_grns(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_grnl_insp: company_id, inspection_status
+- ix_inv_grnl_cost: cost_code_id
+- ix_inv_grnl_wbs: wbs_id
+- ix_inv_grnl_cert: cert_file_id
+- ix_inv_grnl_item: item_id
+- ix_inv_grnl_po_line: po_line_id
+- ux_inv_grnl_no (unique): grn_id, line_no
+
+## inv_grns
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| received_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| store_id | INTEGER | yes |  |  |
+| po_id | INTEGER |  |  |  |
+| gate_inward_id | INTEGER |  |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| challan_no | TEXT |  |  |  |
+| challan_date | TEXT |  |  |  |
+| invoice_no | TEXT |  |  |  |
+| emergency | INTEGER | yes |  | 0 |
+| emergency_why | TEXT |  |  |  |
+| excess | INTEGER | yes |  | 0 |
+| total_value | INTEGER | yes |  | 0 |
+| photos_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| posted_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), gate_inward_id -> inv_gate_inward(id), po_id -> proc_purchase_orders(id), store_id -> inv_stores(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_grn_vendor: vendor_id
+- ix_inv_grn_gate: gate_inward_id
+- ix_inv_grn_po: po_id
+- ix_inv_grn_store: store_id, status
+- ix_inv_grn_site: org_site_id
+- ix_inv_grn_project: org_project_id
+- ix_inv_grn_list: company_id, status, received_date
+- ux_inv_grn_doc (unique): company_id, doc_no
+
 ## inv_reservations
 
 | Column | Type | Not null | Key | Default |
@@ -8467,6 +8580,56 @@ Indexes:
 - ix_inv_res_source: company_id, source_type, source_id
 - ix_inv_res_item: company_id, store_id, item_id, reservation_status
 - ux_inv_res_doc (unique): company_id, doc_no
+
+## inv_rtvs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| rtv_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| grn_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| store_id | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| lines_json | TEXT | yes |  | '[]' |
+| total_value | INTEGER | yes |  | 0 |
+| gate_pass_id | INTEGER |  |  |  |
+| debit_note_trigger | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| posted_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: gate_pass_id -> inv_gate_passes(id), store_id -> inv_stores(id), vendor_id -> mdm_partners(id), grn_id -> inv_grns(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_rtv_pass: gate_pass_id
+- ix_inv_rtv_store: store_id
+- ix_inv_rtv_vendor: vendor_id
+- ix_inv_rtv_grn: grn_id
+- ix_inv_rtv_project: org_project_id
+- ix_inv_rtv_list: company_id, status, rtv_date
+- ux_inv_rtv_doc (unique): company_id, doc_no
 
 ## inv_stock_ledger
 
