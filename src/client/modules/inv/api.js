@@ -39,6 +39,14 @@ export const gr = {
   grn: (id) => get(`/grns/${id}`), create: (b) => post('/grns', b), update: (id, b) => patch(`/grns/${id}`, b), act: (id, action, b) => post(`/grns/${id}/${action}`, b), history: (id) => get(`/grns/${id}/history`),
   rtv: (id) => get(`/rtvs/${id}`), rtvCreate: (b) => post('/rtvs', b), rtvUpdate: (id, b) => patch(`/rtvs/${id}`, b), rtvAct: (id, action, b) => post(`/rtvs/${id}/${action}`, b), rtvHistory: (id) => get(`/rtvs/${id}/history`),
 };
+export const ISSUE_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'IN_REVIEW', POSTED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+/** Material issue, site returns and the free-issue ledger (part 16.04): authorised quantities, excess, values and what a person may do come from the server. */
+export const is = {
+  summary: () => get('/issues/summary'), was: () => get('/issues/work-authorisations'), targets: (q) => get(`/issues/targets${qs({ q })}`), prefill: (q) => get(`/issues/prefill${qs(q)}`),
+  issue: (id) => get(`/issues/${id}`), create: (b) => post('/issues', b), update: (id, b) => patch(`/issues/${id}`, b), act: (id, action, b) => post(`/issues/${id}/${action}`, b), history: (id) => get(`/issues/${id}/history`),
+  ret: (id) => get(`/site-returns/${id}`), retCreate: (b) => post('/site-returns', b), retAct: (id, action, b) => post(`/site-returns/${id}/${action}`, b), retHistory: (id) => get(`/site-returns/${id}/history`),
+  freeProjects: () => get('/free-issue/projects'), free: (q) => get(`/free-issue${qs(q)}`), drill: (q) => get(`/free-issue/drill${qs(q)}`), reconcile: (b) => post('/free-issue/reconcile', b), certify: (rows) => post('/free-issue/certified', { rows }),
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));

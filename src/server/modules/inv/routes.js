@@ -166,6 +166,7 @@ export function issueRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.post('/site-returns/:id/amend', idempotent, (req, res) => ok(res, siteReturns.amend(req.actor, pid(req))));
   r.get('/site-returns/:id/history', (req, res) => ok(res, siteReturns.history(req.actor, pid(req))));
   r.get('/site-returns/:id/print', (req, res) => file(res, siteReturns.print(req.actor, pid(req))));
+  r.get('/free-issue/projects', (req, res) => ok(res, freeIssue.projects(req.actor)));
   r.get('/free-issue', (req, res) => ok(res, freeIssue.report(req.actor, parseFreeIssueQ(req.query))));
   r.get('/free-issue/drill', (req, res) => ok(res, freeIssue.drill(req.actor, parseDrillQ(req.query))));
   r.post('/free-issue/reconcile', idempotentRequired, (req, res) => ok(res, freeIssue.reconcile(req.actor, parseReconcile(req.body))));

@@ -1,0 +1,49 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useT } from '../../platform/i18n/index.js';
+import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
+import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { useSession } from '../core/api/index.js';
+import { fmtQty, is, iv } from './api.js';
+import { OfflineNotice, useOnline, useQrScan } from './GateParts.jsx';
+
+// Issue Material (part 16.04, FR-01, FR-02), a mobile screen for the storekeeper: pick the work authorisation (the authorised quantities are filled in), who receives the material, and the lines (an item QR can be scanned); then the receiver acknowledges with a code or a signature on the slip.
+const TYPES = ['OWN_CREW', 'SUBCO_FREE', 'SUBCO_CHARGEABLE', 'EQUIPMENT'];
+export default function IssueNewPage() {
+  const t = useT('inv'); usePageTitle(t('i.newTitle')); const online = useOnline(); const session = useSession(); const perms = session.data?.permissions ?? [];
+  const [f, setF] = useState({ waId: '', storeId: '', type: 'OWN_CREW', toKind: 'PERSON', toId: '', toName: '', receiverUser: '', reason: '', lines: [] }); const [q, setQ] = useState(''); const [code, setCode] = useState(''); const [error, setError] = useState(null); const [busy, setBusy] = useState(false); const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  const wq = useQuery({ queryKey: ['inv', 'issue-was'], queryFn: is.was, retry: false }); const sq = useQuery({ queryKey: ['inv', 'stores-pick'], queryFn: iv.stores, retry: false }); const tq = useQuery({ queryKey: ['inv', 'issue-targets', q], queryFn: () => is.targets(q), retry: false });
+  const pf = useQuery({ queryKey: ['inv', 'issue-prefill', f.waId], queryFn: async () => { const d = await is.prefill({ waId: f.waId }); setF((x) => ({ ...x, lines: d.lines.map((l) => ({ itemId: l.itemId, item: l.item, uom: l.uom, authorised: l.authorisedQty, balance: l.balanceQty, qty: '', batchNo: '', chargeRate: '' })) })); return d; }, enabled: Boolean(f.waId), retry: false });
+  const { video, scanning, scan } = useQrScan((c) => setCode(c), () => setError({ form: t('i.noCamera') }));
+  if (wq.error?.status === 403 || (session.isSuccess && !perms.includes('inv.issue.create'))) return <NoPermission what={t('i.newTitle')} permission="inv.issue.create" />;
+  if (wq.isPending) return <Skeleton label={t('i.newTitle')} rows={4} />; if (wq.isError) return <ErrorState error={wq.error} onRetry={wq.refetch} />;
+  const line = (i, k, v) => setF((x) => ({ ...x, lines: x.lines.map((l, j) => (j === i ? { ...l, [k]: v } : l)) }));
+  const lookup = () => { const i = f.lines.findIndex((l) => l.item.toLowerCase().includes(code.trim().toLowerCase())); if (i < 0) setError({ form: t('i.notOnWa') }); else { setError(null); document.querySelector(`[data-testid="is-qty-${i}"]`)?.focus(); } };
+  const body = () => ({ storeId: Number(f.storeId), type: f.type, ...(f.waId ? { waId: Number(f.waId) } : {}), receiverUser: f.receiverUser || null, reason: f.reason || null, issuedTo: f.toKind === 'SUBCONTRACTOR' ? { type: 'SUBCONTRACTOR', id: Number(f.toId) } : f.toKind === 'CREW' && f.toId ? { type: 'CREW', id: Number(f.toId) } : { type: f.toKind, name: f.toName },
+    lines: f.lines.filter((l) => Number(l.qty) > 0).map((l) => ({ itemId: l.itemId, qty: Number(l.qty), uom: l.uom, batchNo: l.batchNo || null, ...(l.chargeRate ? { chargeRate: Number(l.chargeRate) } : {}) })) });
+  const save = async (send) => { setError(null); setBusy(true); try { let d = await is.create(body()); if (send) d = await is.act(d.id, 'submit'); navigateTo(`/inv/issues?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
+  const kind = f.type.startsWith('SUBCO') ? 'SUBCONTRACTOR' : f.type === 'EQUIPMENT' ? 'EQUIPMENT' : null; const toKind = kind ?? (f.toKind === 'CREW' ? 'CREW' : 'PERSON');
+  const bad = !f.storeId || !f.waId || !f.lines.some((l) => Number(l.qty) > 0) || (toKind === 'SUBCONTRACTOR' && !f.toId) || (toKind !== 'SUBCONTRACTOR' && !(f.toKind === 'CREW' && f.toId) && !f.toName.trim());
+  return (
+    <section aria-labelledby="in-h" data-testid="issue-new"><h1 id="in-h">{t('i.newTitle')}</h1><p className="muted">{t('i.newHelp')}</p><p><Link to="/inv/issues">{t('i.issuesTitle')}</Link></p><OfflineNotice t={t} on={online} />
+      <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
+        <Field label={t('i.wa')} name="waId" error={error}><select value={f.waId} onChange={(ev) => set('waId', ev.target.value)} style={{ minHeight: 48 }} data-testid="is-wa"><option value="">{t('choose')}</option>{wq.data.map((w) => <option key={w.id} value={w.id}>{w.waNo} · {w.activity ?? ''} · {w.date}</option>)}</select></Field>
+        <Field label={t('g.store')} name="storeId" error={error}><select value={f.storeId} onChange={(ev) => set('storeId', ev.target.value)} style={{ minHeight: 48 }} data-testid="is-store"><option value="">{t('choose')}</option>{(sq.data ?? []).filter((s) => s.status === 'ACTIVE').map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field>
+        <Field label={t('i.type')} name="type" error={error}><select value={f.type} onChange={(ev) => setF((x) => ({ ...x, type: ev.target.value, toKind: ev.target.value.startsWith('SUBCO') ? 'SUBCONTRACTOR' : ev.target.value === 'EQUIPMENT' ? 'EQUIPMENT' : 'PERSON', toId: '', toName: '' }))} style={{ minHeight: 48 }} data-testid="is-type">{TYPES.map((x) => <option key={x} value={x}>{t(`i.it.${x}`)}</option>)}</select></Field>
+        {!kind && <Field label={t('i.toKind')} name="toKind" error={error}><select value={f.toKind} onChange={(ev) => setF((x) => ({ ...x, toKind: ev.target.value, toId: '', toName: '' }))} style={{ minHeight: 48 }} data-testid="is-tokind"><option value="PERSON">{t('i.person')}</option><option value="CREW">{t('i.crew')}</option></select></Field>}
+        {toKind === 'SUBCONTRACTOR' ? <><Field label={t('i.search')} name="q" error={null}><input value={q} onChange={(ev) => setQ(ev.target.value)} style={{ minHeight: 48 }} data-testid="is-q" /></Field><Field label={t('i.subcontractor')} name="toId" error={error}><select value={f.toId} onChange={(ev) => set('toId', ev.target.value)} style={{ minHeight: 48 }} data-testid="is-sub"><option value="">{t('choose')}</option>{(tq.data?.subcontractors ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></Field></>
+          : f.toKind === 'CREW' ? <Field label={t('i.crew')} name="toId" error={error}><select value={f.toId} onChange={(ev) => set('toId', ev.target.value)} style={{ minHeight: 48 }} data-testid="is-crew"><option value="">{t('choose')}</option>{(tq.data?.crews ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
+          : <Field label={toKind === 'EQUIPMENT' ? t('i.equipment') : t('i.person')} name="toName" error={error}><input value={f.toName} onChange={(ev) => set('toName', ev.target.value)} maxLength={120} style={{ minHeight: 48 }} data-testid="is-name" /></Field>}
+        <Field label={t('i.receiverUser')} name="receiverUser" error={error}><input value={f.receiverUser} onChange={(ev) => set('receiverUser', ev.target.value)} maxLength={60} style={{ minHeight: 48 }} data-testid="is-receiver" /></Field></div>
+      {pf.isPending && f.waId ? <Skeleton label={t('i.lines')} rows={2} /> : f.lines.length > 0 && (<>
+        <div className="actions-row"><input aria-label={t('i.scanItem')} value={code} onChange={(ev) => setCode(ev.target.value)} placeholder={t('i.scanItem')} style={{ minHeight: 48 }} data-testid="is-scan-code" /><button type="button" className="btn" style={{ minHeight: 48 }} onClick={scan} data-testid="is-scan">{t('g.scan')}</button><button type="button" className="btn" style={{ minHeight: 48 }} onClick={lookup} data-testid="is-find">{t('i.find')}</button></div>
+        {scanning && <video ref={video} className="att-video" playsInline muted aria-label={t('g.cameraLabel')} />}{!scanning && <video ref={video} hidden />}
+        {f.lines.map((l, i) => (<div key={l.itemId} className="mdm-panel" data-testid={`is-line-${i}`}><h3>{l.item}</h3><p className="muted">{t('i.authorised')}: {fmtQty(l.authorised)} {l.uom} · {t('i.balance')}: {fmtQty(l.balance)}</p>
+          <div className="form-grid"><Field label={t('i.qty')} name={`lines.${i}.qty`} error={error}><input type="number" inputMode="decimal" min="0" step="0.001" value={l.qty} onChange={(ev) => line(i, 'qty', ev.target.value)} style={{ minHeight: 48, fontSize: 18 }} data-testid={`is-qty-${i}`} /></Field>
+            <Field label={t('r.batchNo')} name={`lines.${i}.batchNo`} error={error}><input value={l.batchNo} onChange={(ev) => line(i, 'batchNo', ev.target.value)} maxLength={40} style={{ minHeight: 48 }} /></Field>
+            {f.type === 'SUBCO_CHARGEABLE' && <Field label={t('i.chargeRate')} name={`lines.${i}.chargeRate`} error={error}><input type="number" inputMode="decimal" min="0" step="0.01" value={l.chargeRate} onChange={(ev) => line(i, 'chargeRate', ev.target.value)} style={{ minHeight: 48 }} data-testid={`is-rate-${i}`} /></Field>}</div>
+          {Number(l.qty) > l.balance && <p className="mdm-banner" role="status" data-testid={`is-over-${i}`}>{t('i.overNote')}</p>}</div>))}</>)}
+      {error?.form && <p className="field-error" role="alert" data-testid="is-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
+      <div className="actions-row"><button type="submit" className="btn" style={{ minHeight: 52 }} disabled={busy || bad} data-testid="is-save">{t('saveDraft')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 52 }} disabled={busy || bad || !online} onClick={() => save(true)} data-testid="is-send">{t('i.makeReady')}</button></div></form></section>
+  );
+}

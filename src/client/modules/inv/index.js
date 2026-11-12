@@ -14,6 +14,10 @@ import GatePassPage from './GatePassPage.jsx';
 import GrnNewPage from './GrnNewPage.jsx';
 import GrnsPage from './GrnsPage.jsx';
 import RtvsPage from './RtvsPage.jsx';
+import IssueNewPage from './IssueNewPage.jsx';
+import IssuesPage from './IssuesPage.jsx';
+import SiteReturnsPage from './SiteReturnsPage.jsx';
+import FreeIssuePage from './FreeIssuePage.jsx';
 
 registerModule({
   code: 'inv',
@@ -34,5 +38,9 @@ registerModule({
     { path: '/inv/grn-new', label: 'Create GRN', icon: 'erp.group.supply', permission: 'inv.grn.create', flag: 'ff.inv.p1603', Page: GrnNewPage },
     { path: '/inv/grns', label: 'Goods Receipts (GRNs)', icon: 'erp.group.supply', permission: 'inv.grn.view', flag: 'ff.inv.p1603', Page: GrnsPage },
     { path: '/inv/rtvs', label: 'Returns to Vendor', icon: 'erp.group.supply', permission: 'inv.rtv.view', flag: 'ff.inv.p1603', Page: RtvsPage },
+    { path: '/inv/issue-new', label: 'Issue Material', icon: 'erp.group.supply', permission: 'inv.issue.create', flag: 'ff.inv.p1604', Page: IssueNewPage },
+    { path: '/inv/issues', label: 'Material Issues', icon: 'erp.group.supply', permission: 'inv.issue.view', flag: 'ff.inv.p1604', Page: IssuesPage },
+    { path: '/inv/site-returns', label: 'Site Returns', icon: 'erp.group.supply', permission: 'inv.site_return.view', flag: 'ff.inv.p1604', Page: SiteReturnsPage },
+    { path: '/inv/free-issue', label: 'Subcontractor Free-Issue Reconciliation', icon: 'erp.group.supply', permission: 'inv.free_issue.view', flag: 'ff.inv.p1604', Page: FreeIssuePage },
   ],
 });

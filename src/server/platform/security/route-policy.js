@@ -2586,6 +2586,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/inv/site-returns/:id/amend', g: 'permission', k: 'inv.site_return.amend', s: 'parseId', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/inv/site-returns/:id/history', g: 'permission', k: 'inv.site_return.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/inv/site-returns/:id/print', g: 'permission', k: 'inv.site_return.print', s: 'parseId', scope: 'company', rate: 'export', audit: true },
+  { m: 'GET', p: '/api/v1/inv/free-issue/projects', g: 'permission', k: 'inv.free_issue.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/inv/free-issue', g: 'permission', k: 'inv.free_issue.view', s: 'parseFreeIssueQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/inv/free-issue/drill', g: 'permission', k: 'inv.free_issue.view', s: 'parseDrillQ', scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/inv/free-issue/reconcile', g: 'permission', k: 'inv.free_issue.reconcile', s: 'parseReconcile', scope: 'company', rate: 'write', audit: true },
