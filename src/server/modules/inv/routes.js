@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { forbidden, notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ, parseReorderChange, parseReorderChangeUpdate, parseReorderRecalc, parseReorderImport, parseReorderParamsQ, parseSuggestionConvert, parseAgeingQ, parseLabelTargetsQ, parseLabelPrint, parseScanQ, parseRtaMovement, parseRtaMovementUpdate, parseRtaImport, parseRtaAsset, parseRtaAssetUpdate, parseRtaHireQ, parseRtaBill, parseRtaRecQ, parseRtaRecUpdate, parseRtaHoldingQ, parseAssetCreate, parseAssetUpdate, parseAssetImport, parseAstHandover, parseAssetAck, parseAstAssetReturn, parseAstInspect, parseAstCalibrate, parseAstRepairOut, parseAstRepairIn, parseAstDispose, parseAstLossCreate, parseAstLossUpdate, parseAstStatementQ, parseAstCalDueQ } from './validators.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ, parseReorderChange, parseReorderChangeUpdate, parseReorderRecalc, parseReorderImport, parseReorderParamsQ, parseSuggestionConvert, parseAgeingQ, parseLabelTargetsQ, parseLabelPrint, parseScanQ, parseRtaMovement, parseRtaMovementUpdate, parseRtaImport, parseRtaAsset, parseRtaAssetUpdate, parseRtaHireQ, parseRtaBill, parseRtaRecQ, parseRtaRecUpdate, parseRtaHoldingQ, parseAssetCreate, parseAssetUpdate, parseAssetImport, parseAstHandover, parseAssetAck, parseAstAssetReturn, parseAstInspect, parseAstCalibrate, parseAstRepairOut, parseAstRepairIn, parseAstDispose, parseAstLossCreate, parseAstLossUpdate, parseAstStatementQ, parseAstCalDueQ, parseMrcGenerate, parseMrcLines, parseMrcStatusQ, parseMrcTrendQ, parseMrcImport, parseMrcContribution, parseMrcMaterial, parseMrcMaterialUpdate } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -361,5 +361,35 @@ export function assetRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.get('/custody-statement/print', (req, res) => file(res, report.printStatement(req.actor, parseAstStatementQ(req.query).employeeId)));
   r.get('/custody-statement', (req, res) => ok(res, report.statement(req.actor, parseAstStatementQ(req.query).employeeId)));
   r.get('/calibration-due', (req, res) => ok(res, report.calibrationDue(req.actor, parseAstCalDueQ(req.query))));
+  return r;
+}
+
+/** /api/v1/inv monthly material reconciliation: key materials, status, reconciliations, trend (part 16.10). Behind its own flag, ff.inv.p1610. */
+export function mrcRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { keyMaterials, recons } = svc.mrc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use(['/reconciliations', '/reconciliation-materials'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1610') ? next() : next(notFound('Monthly material reconciliation is not enabled for your company yet.'))));
+  r.get('/reconciliation-materials/candidates', (req, res) => ok(res, keyMaterials.candidates(req.actor)));
+  r.get('/reconciliation-materials', (req, res) => ok(res, keyMaterials.list(req.actor)));
+  r.post('/reconciliation-materials', idempotentRequired, (req, res) => ok(res, keyMaterials.add(req.actor, parseMrcMaterial(req.body)), 201));
+  r.patch('/reconciliation-materials/:id', idempotent, (req, res) => ok(res, keyMaterials.update(req.actor, pid(req), parseMrcMaterialUpdate(req.body))));
+  r.delete('/reconciliation-materials/:id', (req, res) => ok(res, keyMaterials.remove(req.actor, pid(req))));
+  r.get('/reconciliations/status', (req, res) => ok(res, recons.status(req.actor, parseMrcStatusQ(req.query).period)));
+  r.get('/reconciliations/trend', (req, res) => ok(res, recons.trend(req.actor, parseMrcTrendQ(req.query))));
+  r.get('/reconciliations/lines/:id/drilldown', (req, res) => ok(res, recons.drilldown(req.actor, pid(req))));
+  r.get('/reconciliations', (req, res) => res.json(recons.list(req.actor, req.query)));
+  r.post('/reconciliations', idempotentRequired, (req, res) => ok(res, recons.generate(req.actor, parseMrcGenerate(req.body)), 201));
+  r.post('/reconciliations/import', idempotentRequired, (req, res) => ok(res, recons.importRows(req.actor, parseMrcImport(req.body))));
+  r.get('/reconciliations/:id', (req, res) => ok(res, recons.get(req.actor, pid(req))));
+  r.patch('/reconciliations/:id', idempotent, (req, res) => ok(res, recons.updateLines(req.actor, pid(req), parseMrcLines(req.body))));
+  r.delete('/reconciliations/:id', (req, res) => ok(res, recons.remove(req.actor, pid(req))));
+  r.post('/reconciliations/:id/recompute', idempotentRequired, (req, res) => ok(res, recons.recompute(req.actor, pid(req))));
+  r.post('/reconciliations/:id/submit', idempotentRequired, (req, res) => ok(res, recons.submit(req.actor, pid(req)), 202));
+  r.post('/reconciliations/:id/withdraw', idempotent, (req, res) => ok(res, recons.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/reconciliations/:id/cancel', idempotent, (req, res) => ok(res, recons.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/reconciliations/:id/amend', idempotent, (req, res) => ok(res, recons.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.post('/reconciliations/:id/contributions', idempotent, (req, res) => ok(res, recons.contribute(req.actor, pid(req), parseMrcContribution(req.body)), 201));
+  r.get('/reconciliations/:id/history', (req, res) => ok(res, recons.history(req.actor, pid(req))));
+  r.get('/reconciliations/:id/print', (req, res) => file(res, recons.print(req.actor, pid(req))));
   return r;
 }
