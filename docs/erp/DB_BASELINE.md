@@ -8622,6 +8622,7 @@ Foreign keys: mr_line_id -> proc_mr_lines(id), item_id -> mdm_items(id), issue_i
 Indexes:
 - ix_inv_issl_mr: mr_line_id
 - ix_inv_issl_item: item_id
+- ix_inv_issl_company: company_id
 - ux_inv_issl_no (unique): issue_id, line_no
 
 ## inv_issues

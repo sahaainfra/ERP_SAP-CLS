@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS inv_issue_lines (
   CHECK (returned_qty <= qty)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_inv_issl_no ON inv_issue_lines (issue_id, line_no);
+CREATE INDEX IF NOT EXISTS ix_inv_issl_company ON inv_issue_lines (company_id);
 CREATE INDEX IF NOT EXISTS ix_inv_issl_item ON inv_issue_lines (item_id);
 CREATE INDEX IF NOT EXISTS ix_inv_issl_mr ON inv_issue_lines (mr_line_id);
 
