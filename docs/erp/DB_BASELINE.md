@@ -8215,6 +8215,220 @@ Indexes:
 - ix_inv_fifo_ledger: ledger_id
 - ix_inv_fifo_open: company_id, store_id, item_id, qty_remaining, id
 
+## inv_gate_appointments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| expected_on | TEXT | yes |  |  |
+| expected_slot | TEXT |  |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER |  |  |  |
+| po_id | INTEGER |  |  |  |
+| shipment_id | INTEGER |  |  |  |
+| vehicle_no | TEXT |  |  |  |
+| driver_name | TEXT |  |  |  |
+| driver_phone | TEXT |  |  |  |
+| material_desc | TEXT |  |  |  |
+| status | TEXT | yes |  | 'SCHEDULED' |
+| cancel_reason | TEXT |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: shipment_id -> xpd_shipments(id), po_id -> proc_purchase_orders(id), vendor_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_gapp_shipment: shipment_id
+- ix_inv_gapp_po: po_id
+- ix_inv_gapp_vendor: vendor_id
+- ix_inv_gapp_site: org_site_id
+- ix_inv_gapp_project: org_project_id
+- ix_inv_gapp_list: company_id, status, expected_on
+- ux_inv_gapp_doc (unique): company_id, doc_no
+
+## inv_gate_inward
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| entry_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| appointment_id | INTEGER |  |  |  |
+| vehicle_no | TEXT | yes |  |  |
+| driver_name | TEXT | yes |  |  |
+| driver_phone | TEXT |  |  |  |
+| transporter | TEXT |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| po_id | INTEGER |  |  |  |
+| shipment_id | INTEGER |  |  |  |
+| challan_no | TEXT |  |  |  |
+| challan_date | TEXT |  |  |  |
+| challan_kg | INTEGER |  |  |  |
+| eway_bill_no | TEXT |  |  |  |
+| material_desc | TEXT | yes |  |  |
+| time_in | TEXT |  |  |  |
+| time_out | TEXT |  |  |  |
+| unloading_store_id | INTEGER |  |  |  |
+| unloading_note | TEXT |  |  |  |
+| unexpected | INTEGER | yes |  | 0 |
+| unexpected_why | TEXT |  |  |  |
+| flags_json | TEXT | yes |  | '[]' |
+| photos_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| handed_over_by | TEXT |  |  |  |
+| handed_over_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: unloading_store_id -> inv_stores(id), shipment_id -> xpd_shipments(id), po_id -> proc_purchase_orders(id), vendor_id -> mdm_partners(id), appointment_id -> inv_gate_appointments(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_gin_vehicle: company_id, vehicle_no
+- ix_inv_gin_store: unloading_store_id
+- ix_inv_gin_shipment: shipment_id
+- ix_inv_gin_po: po_id
+- ix_inv_gin_vendor: vendor_id
+- ix_inv_gin_appt: appointment_id
+- ix_inv_gin_site: org_site_id, status
+- ix_inv_gin_project: org_project_id
+- ix_inv_gin_list: company_id, status, entry_date
+- ux_inv_gin_doc (unique): company_id, doc_no
+
+## inv_gate_passes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| pass_date | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| pass_type | TEXT | yes |  |  |
+| returnable | INTEGER | yes |  | 0 |
+| expected_return | TEXT |  |  |  |
+| items_json | TEXT | yes |  | '[]' |
+| reference_type | TEXT |  |  |  |
+| reference_id | TEXT |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| vehicle_no | TEXT |  |  |  |
+| driver_name | TEXT |  |  |  |
+| destination | TEXT | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| qr_code | TEXT | yes |  |  |
+| time_out | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| returned_on | TEXT |  |  |  |
+| returned_note | TEXT |  |  |  |
+| overdue_notified_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| amendment_no | INTEGER | yes |  | 0 |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_gps_overdue: company_id, returnable, status, expected_return
+- ix_inv_gps_vendor: vendor_id
+- ix_inv_gps_site: org_site_id, status
+- ix_inv_gps_project: org_project_id
+- ix_inv_gps_list: company_id, status, pass_date
+- ux_inv_gps_qr (unique): qr_code
+- ux_inv_gps_doc (unique): company_id, doc_no
+
+## inv_gate_weighments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| inward_id | INTEGER | yes |  |  |
+| gross_kg | INTEGER |  |  |  |
+| tare_kg | INTEGER |  |  |  |
+| net_kg | INTEGER |  |  |  |
+| challan_kg | INTEGER |  |  |  |
+| variance_pct | INTEGER |  |  |  |
+| tolerance_pct | INTEGER | yes |  | 0 |
+| flagged | INTEGER | yes |  | 0 |
+| weigh_source | TEXT | yes |  | 'MANUAL' |
+| device_ref | TEXT |  |  |  |
+| slip_file_id | INTEGER |  |  |  |
+| weighed_by | TEXT | yes |  |  |
+| weighed_at | TEXT | yes |  |  |
+| superseded | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: slip_file_id -> core_files(id), inward_id -> inv_gate_inward(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_inv_gwt_flag: company_id, flagged
+- ix_inv_gwt_slip: slip_file_id
+- ix_inv_gwt_inward: inward_id, superseded
+
 ## inv_reservations
 
 | Column | Type | Not null | Key | Default |

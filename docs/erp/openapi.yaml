@@ -8740,3 +8740,74 @@ paths:
     post: { summary: Send the parameters for approval (procurement manager), tags: [proc], responses: { '202': { description: Accepted } } }
   /api/v1/proc/supply/ingest:
     post: { summary: Load open orders and goods in transit until the order part keeps them, tags: [proc], responses: { '201': { description: Created } } }
+  /api/v1/inv/gate/options:
+    get: { summary: 'Read inv/gate/options (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/gate/dashboard:
+    get: { summary: 'Read inv/gate/dashboard (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/gate/vendors:
+    get: { summary: 'Read inv/gate/vendors (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/gate/purchase-orders:
+    get: { summary: 'Read inv/gate/purchase-orders (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/gate/check:
+    post: { summary: 'Do inv/gate/check (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/appointments:
+    get: { summary: 'Read inv/appointments (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/appointments (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/appointments/{id}/cancel:
+    post: { summary: 'Do inv/appointments/{id}/cancel (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward:
+    get: { summary: 'Read inv/inward (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/inward (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/import:
+    post: { summary: 'Do inv/inward/import (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}:
+    get: { summary: 'Read inv/inward/{id} (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/inward/{id} (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/inward/{id} (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/submit:
+    post: { summary: 'Do inv/inward/{id}/submit (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/withdraw:
+    post: { summary: 'Do inv/inward/{id}/withdraw (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/cancel:
+    post: { summary: 'Do inv/inward/{id}/cancel (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/amend:
+    post: { summary: 'Do inv/inward/{id}/amend (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/weighment:
+    post: { summary: 'Do inv/inward/{id}/weighment (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/unloading:
+    post: { summary: 'Do inv/inward/{id}/unloading (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/handover:
+    post: { summary: 'Do inv/inward/{id}/handover (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/exit:
+    post: { summary: 'Do inv/inward/{id}/exit (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/photos:
+    post: { summary: 'Do inv/inward/{id}/photos (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/history:
+    get: { summary: 'Read inv/inward/{id}/history (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/inward/{id}/print:
+    get: { summary: 'Read inv/inward/{id}/print (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes:
+    get: { summary: 'Read inv/passes (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/passes (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/import:
+    post: { summary: 'Do inv/passes/import (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/verify:
+    post: { summary: 'Do inv/passes/verify (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}:
+    get: { summary: 'Read inv/passes/{id} (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/passes/{id} (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/passes/{id} (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}/submit:
+    post: { summary: 'Do inv/passes/{id}/submit (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}/withdraw:
+    post: { summary: 'Do inv/passes/{id}/withdraw (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}/cancel:
+    post: { summary: 'Do inv/passes/{id}/cancel (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}/amend:
+    post: { summary: 'Do inv/passes/{id}/amend (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}/return:
+    post: { summary: 'Do inv/passes/{id}/return (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}/history:
+    get: { summary: 'Read inv/passes/{id}/history (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/passes/{id}/print:
+    get: { summary: 'Read inv/passes/{id}/print (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }

@@ -1405,3 +1405,12 @@ Module `inv` (new), flag `ff.inv.p1601`, tables `inv_stores`, `inv_store_changes
 - **Stores** (ADR-563): `INV_STORE`, `INV_STORE_CHG`; **adjustments**: `INV_ADJ` posts on approval.
 - **Events** (ADR-564): `inv.stock.moved`, `inv.stock.transferred`, `inv.stock.reserved`, `inv.store.activated`, `inv.integrity.failed`; the subscriber `proc.stock_levels` in 15.01 updates `proc_stock_levels`.
 - **Permissions**: `inv.store.{view,create,edit,approve,export,all}`, `inv.bin.{view,manage}`, `inv.stock.{view,values,post,import,reverse,export,reconcile}`, `inv.reservation.{view,manage}`, `inv.adjustment.{view,create,submit,approve,cancel}`.
+
+## 120. Gate entry, weighbridge, vehicle and delivery control (part 16.02)
+Module `inv`, flag `ff.inv.p1602`, tables `inv_gate_appointments`, `inv_gate_inward`, `inv_gate_weighments`, `inv_gate_passes`; service `src/server/modules/inv/gate.js` (routes in `routes.js` `gateRoutes`, mounted before the 16.01 router and gated per path by its own flag).
+- **Entry** (ADR-565): `checkPo` flags the delivery; `INV_GATE_IN` (store manager) only for flagged entries. **Weighbridge** (ADR-566): `weigh`, `unload`, `handover`, `exit`.
+- **Passes** (ADR-567, ADR-568): `INV_GATE_PASS` (CM or STOREMGR, then PM for non-returnable and scrap); `verify` (QR, once), `markReturned`, `sweepOverdue`.
+- **Events**: `inv.gate.entered`, `inv.gate.flagged`, `inv.gate.handed_over` (to 16.03), `inv.gate.exited`, `inv.weighment.recorded`, `inv.weighment.variance`, `inv.gatepass.approved`, `inv.gatepass.out` (to 19.06), `inv.gatepass.returned`, `inv.gatepass.overdue`. Consumes `proc.shipment.dispatched` (15.07): consumer `inv.gate_appointments` makes an expected delivery. Job `inv.gate_daily` (08:00 India time): overdue passes told, missed appointments marked.
+- **Parameters**: `inv.gate.weight_tolerance_pct` (percent x10000, 2% by default), `inv.gate.pass_validity_days`.
+- **Permissions**: `inv.inward.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,weigh,handover,exit}`, `inv.pass.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,verify,return}`, `inv.appointment.{view,create,cancel}`. Guards and security supervisors enter and weigh; storekeepers and store managers hand over and request passes; CM, STOREMGR and PM approve; procurement reads.
+
