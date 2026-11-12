@@ -35,3 +35,30 @@ export const parseValuationQ = (q) => parse(z.object({ groupBy: z.enum(['store',
 export const parseDashQ = (q) => parse(z.object({ projectId: id.optional() }).strict(), q ?? {});
 export const parseResQ = (q) => parse(z.object({ storeId: id.optional(), itemId: id.optional(), status: z.enum(['ACTIVE', 'CONSUMED', 'RELEASED']).optional() }).strict(), q ?? {});
 export const parseItemsQ = (q) => parse(z.object({ q: text(60).optional(), ids: z.string().regex(/^\d+(,\d+)*$/).optional() }).strict(), q ?? {});
+
+// ---- gate control (part 16.02) ----
+const vehicle = z.string().trim().min(4, 'Give the vehicle number').max(20).regex(/^[A-Za-z0-9][A-Za-z0-9 -]*$/, 'Use letters, digits, spaces or -');
+const phone = optText(15).refine((v) => v == null || /^\+?\d{7,14}$/.test(v), 'Give 7 to 14 digits');
+const wt = z.number().finite().min(0.001).max(1e6).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+const inwardFields = { vehicleNo: vehicle, driverName: text(80).min(2), driverPhone: phone, transporter: optText(120), vendorId: id.nullish().transform((v) => v || null), poId: id.nullish().transform((v) => v || null), shipmentId: id.nullish().transform((v) => v || null), appointmentId: id.nullish().transform((v) => v || null), challanNo: optText(40), challanDate: day.nullish().transform((v) => v || null), challanKg: wt.nullish(), ewayBillNo: optText(20), materialDesc: text(300).min(3) };
+export const parseInwardCreate = (b) => parse(z.object({ siteId: id, ...inwardFields, itemIds: z.array(id).max(50).optional() }).strict().transform(defined), b ?? {});
+export const parseInwardUpdate = (b) => parse(z.object({ ...inwardFields, rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parseGateCheck = (b) => parse(z.object({ siteId: id, poId: id.nullish().transform((v) => v || null), vendorId: id.nullish().transform((v) => v || null), challanNo: optText(40), itemIds: z.array(id).max(50).optional() }).strict().transform(defined), b ?? {});
+export const parseWeigh = (b) => parse(z.object({ grossKg: wt.optional(), tareKg: wt.optional(), source: z.enum(['MANUAL', 'DEVICE']).optional(), deviceRef: optText(60), slipFileId: id.optional() }).strict().refine((v) => v.grossKg != null || v.tareKg != null, { message: 'Give the gross or the tare weight' }).transform(defined), b ?? {});
+export const parseUnload = (b) => parse(z.object({ storeId: id, note: optText(300) }).strict(), b ?? {});
+export const parsePhoto = (b) => parse(z.object({ fileId: id, kind: z.enum(['VEHICLE', 'CHALLAN', 'SLIP', 'OTHER']) }).strict(), b ?? {});
+const inRow = z.object({ siteCode: text(30).min(1), projectCode: optText(30), vehicleNo: vehicle, driverName: text(80).min(2), driverPhone: phone, transporter: optText(120), materialDesc: text(300).min(3), challanNo: optText(40), ewayBillNo: optText(20), poNo: optText(40) }).strict().transform(defined);
+export const parseInwardImport = (b) => parse(z.object({ rows: z.array(inRow).min(1).max(200) }).strict(), b ?? {});
+export const parsePoQ = (q) => parse(z.object({ q: text(40).optional(), vendorId: id.optional() }).strict(), q ?? {});
+export const parseGateQ = (q) => parse(z.object({ siteId: id.optional() }).strict(), q ?? {});
+export const parseVendorQ = (q) => parse(z.object({ q: text(60).optional() }).strict(), q ?? {});
+const PTYPES = ['RETURNABLE', 'NON_RETURNABLE', 'SCRAP', 'VENDOR_RETURN'];
+const passItem = z.object({ description: text(200).min(2), qty: qty, uom: text(20).min(1), itemId: id.nullish().transform((v) => v || null), assetRef: optText(60), remarks: optText(200) }).strict();
+const passFields = { type: z.enum(PTYPES), expectedReturn: day.nullish().transform((v) => v || null), items: z.array(passItem).min(1).max(100), referenceType: optText(30), referenceId: optText(60), vendorId: id.nullish().transform((v) => v || null), vehicleNo: vehicle.nullish().transform((v) => v || null), driverName: optText(80), destination: text(200).min(2), purpose: text(300).min(3) };
+export const parsePassCreate = (b) => parse(z.object({ siteId: id, ...passFields }).strict().transform(defined), b ?? {});
+export const parsePassUpdate = (b) => parse(z.object({ ...passFields, rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parseVerify = (b) => parse(z.object({ code: z.string().trim().min(6).max(60), vehicleNo: vehicle.nullish().transform((v) => v || null) }).strict().transform(defined), b ?? {});
+export const parseReturn = (b) => parse(z.object({ note: optText(300) }).strict(), b ?? {});
+const pRow = z.object({ siteCode: text(30).min(1), projectCode: optText(30), type: z.enum(PTYPES), expectedReturn: day.nullish().transform((v) => v || null), destination: text(200).min(2), purpose: text(300).min(3), vehicleNo: vehicle.nullish().transform((v) => v || null), driverName: optText(80), description: text(200).min(2), qty, uom: text(20).min(1) }).strict().transform(defined);
+export const parsePassImport = (b) => parse(z.object({ rows: z.array(pRow).min(1).max(200) }).strict(), b ?? {});
+export const parseApptCreate = (b) => parse(z.object({ siteId: id, expectedOn: day, slot: optText(30), vendorId: id.nullish().transform((v) => v || null), poId: id.nullish().transform((v) => v || null), vehicleNo: vehicle.nullish().transform((v) => v || null), driverName: optText(80), driverPhone: phone, materialDesc: optText(300) }).strict().transform(defined), b ?? {});

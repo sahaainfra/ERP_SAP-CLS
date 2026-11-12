@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ } from './validators.js';
+import { notFound } from '../../platform/http/errors.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -42,5 +43,52 @@ export function invRoutes(svc, { idempotent, idempotentRequired }) {
   r.post('/adjustments/:id/withdraw', idempotent, (req, res) => ok(res, s.adjustments.withdraw(req.actor, pid(req), parseReason(req.body))));
   r.post('/adjustments/:id/cancel', idempotent, (req, res) => ok(res, s.adjustments.cancel(req.actor, pid(req), parseReason(req.body))));
   r.get('/adjustments/:id/history', (req, res) => ok(res, s.adjustments.history(req.actor, pid(req))));
+  return r;
+}
+
+/** /api/v1/inv gate control (part 16.02): appointments, inbound gate entries and the weighbridge, outbound gate passes, the gate register. Behind its own flag, ff.inv.p1602. */
+export function gateRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const g = svc.gate; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use(['/gate', '/inward', '/passes', '/appointments'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1602') ? next() : next(notFound('Gate control is not enabled for your company yet (feature flag ff.inv.p1602 is OFF).'))));
+  r.get('/gate/options', (req, res) => ok(res, g.options(req.actor)));
+  r.get('/gate/dashboard', (req, res) => ok(res, g.dashboard(req.actor, parseGateQ(req.query))));
+  r.get('/gate/vendors', (req, res) => ok(res, g.vendors(req.actor, parseVendorQ(req.query).q ?? '')));
+  r.get('/gate/purchase-orders', (req, res) => ok(res, g.inward.lookupPo(req.actor, parsePoQ(req.query))));
+  r.post('/gate/check', (req, res) => ok(res, g.inward.check(req.actor, parseGateCheck(req.body))));
+  r.get('/appointments', (req, res) => res.json(g.appointments.list(req.actor, req.query)));
+  r.post('/appointments', idempotentRequired, (req, res) => ok(res, g.appointments.create(req.actor, parseApptCreate(req.body)), 201));
+  r.post('/appointments/:id/cancel', idempotent, (req, res) => ok(res, g.appointments.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/inward', (req, res) => res.json(g.inward.list(req.actor, req.query)));
+  r.post('/inward', idempotentRequired, (req, res) => ok(res, g.inward.create(req.actor, parseInwardCreate(req.body)), 201));
+  r.post('/inward/import', idempotentRequired, (req, res) => ok(res, g.inward.importRows(req.actor, parseInwardImport(req.body)), 201));
+  r.get('/inward/:id', (req, res) => ok(res, g.inward.get(req.actor, pid(req))));
+  r.patch('/inward/:id', idempotent, (req, res) => ok(res, g.inward.update(req.actor, pid(req), parseInwardUpdate(req.body))));
+  r.delete('/inward/:id', (req, res) => ok(res, g.inward.remove(req.actor, pid(req))));
+  r.post('/inward/:id/submit', idempotentRequired, (req, res) => ok(res, g.inward.submit(req.actor, pid(req)), 202));
+  r.post('/inward/:id/withdraw', idempotent, (req, res) => ok(res, g.inward.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/inward/:id/cancel', idempotent, (req, res) => ok(res, g.inward.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/inward/:id/amend', idempotent, (req, res) => ok(res, g.inward.amend(req.actor, pid(req), parseReason(req.body))));
+  r.post('/inward/:id/weighment', idempotentRequired, (req, res) => ok(res, g.inward.weigh(req.actor, pid(req), parseWeigh(req.body))));
+  r.post('/inward/:id/unloading', idempotent, (req, res) => ok(res, g.inward.unload(req.actor, pid(req), parseUnload(req.body))));
+  r.post('/inward/:id/handover', idempotentRequired, (req, res) => ok(res, g.inward.handover(req.actor, pid(req))));
+  r.post('/inward/:id/exit', idempotentRequired, (req, res) => ok(res, g.inward.exit(req.actor, pid(req))));
+  r.post('/inward/:id/photos', idempotent, (req, res) => ok(res, g.inward.photo(req.actor, pid(req), parsePhoto(req.body))));
+  r.get('/inward/:id/history', (req, res) => ok(res, g.inward.history(req.actor, pid(req))));
+  r.get('/inward/:id/print', (req, res) => file(res, g.inward.print(req.actor, pid(req))));
+  r.get('/passes', (req, res) => res.json(g.passes.list(req.actor, req.query)));
+  r.post('/passes', idempotentRequired, (req, res) => ok(res, g.passes.create(req.actor, parsePassCreate(req.body)), 201));
+  r.post('/passes/import', idempotentRequired, (req, res) => ok(res, g.passes.importRows(req.actor, parsePassImport(req.body)), 201));
+  r.post('/passes/verify', idempotentRequired, (req, res) => ok(res, g.passes.verify(req.actor, parseVerify(req.body))));
+  r.get('/passes/:id', (req, res) => ok(res, g.passes.get(req.actor, pid(req))));
+  r.patch('/passes/:id', idempotent, (req, res) => ok(res, g.passes.update(req.actor, pid(req), parsePassUpdate(req.body))));
+  r.delete('/passes/:id', (req, res) => ok(res, g.passes.remove(req.actor, pid(req))));
+  r.post('/passes/:id/submit', idempotentRequired, (req, res) => ok(res, g.passes.submit(req.actor, pid(req)), 202));
+  r.post('/passes/:id/withdraw', idempotent, (req, res) => ok(res, g.passes.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/passes/:id/cancel', idempotent, (req, res) => ok(res, g.passes.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/passes/:id/amend', idempotent, (req, res) => ok(res, g.passes.amend(req.actor, pid(req), parseReason(req.body))));
+  r.post('/passes/:id/return', idempotent, (req, res) => ok(res, g.passes.markReturned(req.actor, pid(req), parseReturn(req.body))));
+  r.get('/passes/:id/history', (req, res) => ok(res, g.passes.history(req.actor, pid(req))));
+  r.get('/passes/:id/print', (req, res) => file(res, g.passes.print(req.actor, pid(req))));
   return r;
 }
