@@ -78,7 +78,7 @@ registerModule({
     { path: '/inv/rta-issue', label: 'Issue or Return Assets', icon: 'erp.group.supply', permission: 'inv.movement.create', flag: 'ff.inv.p1608', Page: RtaIssuePage },
     { path: '/inv/rta-hire', label: 'Hire Charges and Recoveries', icon: 'erp.group.supply', permission: 'inv.rta_hire.view', flag: 'ff.inv.p1608', Page: RtaHirePage },
     { path: '/inv/small-assets', label: 'Small Asset Register', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: SmallAssetsPage },
-    { path: '/inv/asset-scan', label: 'Issue or Return by QR', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: AssetScanPage },
+    { path: '/inv/asset-scan', label: 'Issue or Return by QR', icon: 'erp.group.supply', permission: 'inv.small_asset.acknowledge', flag: 'ff.inv.p1609', Page: AssetScanPage },
     { path: '/inv/custody', label: 'Custody Statement and Calibration Due', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: CustodyPage },
   ],
 });
