@@ -77,6 +77,12 @@ export const ra = {
   movement: (id) => get(`/rta/movements/${id}`), create: (b) => post('/rta/movements', b), update: (id, b) => patch(`/rta/movements/${id}`, b), act: (id, action, b) => post(`/rta/movements/${id}/${action}`, b), history: (id) => get(`/rta/movements/${id}/history`),
   hire: (q) => get(`/rta/hire${qs(q)}`), bill: (id, b) => post(`/rta/hire/${id}/bill`, b), recoveries: (q) => get(`/rta/recoveries${qs(q)}`), recUpdate: (id, b) => patch(`/rta/recoveries/${id}`, b), recAct: (id, action, b) => post(`/rta/recoveries/${id}/${action}`, b),
 };
+/** Tools and small-asset custody (part 16.09): conditions, calibration state, what a person may do and the custody history come from the server. */
+export const at = {
+  options: () => get('/small-assets/options'), mine: () => get('/small-assets/mine'), asset: (id) => get(`/small-assets/${id}`), create: (b) => post('/small-assets', b), update: (id, b) => patch(`/small-assets/${id}`, b), act: (id, action, b) => post(`/small-assets/${id}/${action}`, b), history: (id) => get(`/small-assets/${id}/history`), tag: (id) => get(`/small-assets/${id}/tag`),
+  loss: (id) => get(`/loss-reports/${id}`), lossCreate: (b) => post('/loss-reports', b), lossUpdate: (id, b) => patch(`/loss-reports/${id}`, b), lossAct: (id, action, b) => post(`/loss-reports/${id}/${action}`, b), lossHistory: (id) => get(`/loss-reports/${id}/history`),
+  statement: (employeeId) => get(`/custody-statement${qs({ employeeId })}`), calibration: (days) => get(`/calibration-due${qs({ days })}`),
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));

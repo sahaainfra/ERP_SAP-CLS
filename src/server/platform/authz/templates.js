@@ -565,7 +565,7 @@ const AST_DO = ['inv.small_asset.view', 'inv.small_asset.create', 'inv.small_ass
 const AST_READ = ['inv.small_asset.view', 'inv.small_asset.print', 'inv.small_asset.export', 'inv.loss_report.view', 'inv.loss_report.print', 'inv.loss_report.export'];
 const ADDED_16_09 = {
   SK: AST_DO, STOREMGR: [...AST_DO, 'inv.small_asset.approve', 'inv.small_asset.amend', 'inv.small_asset.export', 'inv.small_asset.import', 'inv.small_asset.dispose', 'inv.small_asset.statement', 'inv.loss_report.amend', 'inv.loss_report.export'],
-  CM: [...AST_READ, 'inv.loss_report.approve'], PM: [...AST_READ, 'inv.loss_report.approve', 'inv.small_asset.approve'], HRMGR: [...AST_READ, 'inv.loss_report.approve', 'inv.small_asset.statement'], EMP: ['inv.small_asset.acknowledge'],
+  CM: [...AST_READ, 'inv.loss_report.approve'], PM: [...AST_READ, 'inv.loss_report.approve', 'inv.small_asset.approve'], HRMGR: [...AST_READ, 'inv.loss_report.approve', 'inv.small_asset.statement'], EMP: ['inv.small_asset.view', 'inv.small_asset.acknowledge'],
   PROCMGR: AST_READ, ACCMGR: AST_READ, AUD: AST_READ,
 };
 const RTA_DO = ['inv.movement.view', 'inv.movement.create', 'inv.movement.edit', 'inv.movement.delete', 'inv.movement.submit', 'inv.movement.cancel', 'inv.movement.print'];
