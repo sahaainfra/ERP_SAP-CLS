@@ -8948,6 +8948,7 @@ Foreign keys: param_id -> inv_reorder_params(id), org_project_id -> org_projects
 
 Indexes:
 - ix_inv_rsg_project: org_project_id
+- ix_inv_reorder_suggestions_param_id: param_id
 - ix_inv_rsg_item: item_id
 - ix_inv_rsg_list: company_id, status, priority
 - ux_inv_rsg_open (unique): store_id, item_id

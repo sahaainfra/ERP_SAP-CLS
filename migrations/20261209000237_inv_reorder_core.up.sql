@@ -105,6 +105,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_inv_rsg_doc ON inv_reorder_suggestions (com
 CREATE UNIQUE INDEX IF NOT EXISTS ux_inv_rsg_open ON inv_reorder_suggestions (store_id, item_id) WHERE status = 'OPEN' AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS ix_inv_rsg_list ON inv_reorder_suggestions (company_id, status, priority);
 CREATE INDEX IF NOT EXISTS ix_inv_rsg_item ON inv_reorder_suggestions (item_id);
+CREATE INDEX IF NOT EXISTS ix_inv_reorder_suggestions_param_id ON inv_reorder_suggestions (param_id);
 CREATE INDEX IF NOT EXISTS ix_inv_rsg_project ON inv_reorder_suggestions (org_project_id);
 
 CREATE TABLE IF NOT EXISTS inv_labels (
