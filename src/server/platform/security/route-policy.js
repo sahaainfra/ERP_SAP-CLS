@@ -2491,7 +2491,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/inv/gate/dashboard', g: 'permission', k: 'inv.inward.view', s: 'parseGateQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/inv/gate/vendors', g: 'permission', k: 'inv.inward.view', s: 'parseVendorQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/inv/gate/purchase-orders', g: 'permission', k: 'inv.inward.create', s: 'parsePoQ', scope: 'company', rate: 'read', audit: false },
-  { m: 'POST', p: '/api/v1/inv/gate/check', g: 'permission', k: 'inv.inward.create', s: 'parseGateCheck', scope: 'company', rate: 'write', audit: false },
+  { m: 'POST', p: '/api/v1/inv/gate/check', g: 'permission', k: 'inv.inward.create', s: 'parseGateCheck', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/inv/appointments', g: 'permission', k: 'inv.appointment.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/inv/appointments', g: 'permission', k: 'inv.appointment.create', s: 'parseApptCreate', scope: 'company', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/inv/appointments/:id/cancel', g: 'permission', k: 'inv.appointment.cancel', s: 'parseReason', scope: 'company', rate: 'write', audit: true },
