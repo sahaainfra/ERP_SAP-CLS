@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
@@ -10,10 +10,10 @@ import { OfflineNotice, PhotoButton, filePhoto, useOnline } from './GateParts.js
 
 // Receive Transfer (part 16.05, FR-03), a mobile screen for the storekeeper of the destination: what came and in what state, photos of any damage, and whether this is everything (the rest is then recorded as short).
 function Receive({ t, id }) {
-  const online = useOnline(); const q = useQuery({ queryKey: ['inv', 'transfer', id], queryFn: () => tr.transfer(id), retry: false }); const [v, setV] = useState({}); const [final, setFinal] = useState(false); const [photo, setPhoto] = useState(null); const [error, setError] = useState(null); const [busy, setBusy] = useState(false); usePageTitle(t('tr.receiveTitle'));
+  const online = useOnline(); const qc = useQueryClient(); const q = useQuery({ queryKey: ['inv', 'transfer', id], queryFn: () => tr.transfer(id), retry: false }); const [v, setV] = useState({}); const [final, setFinal] = useState(false); const [photo, setPhoto] = useState(null); const [error, setError] = useState(null); const [busy, setBusy] = useState(false); usePageTitle(t('tr.receiveTitle'));
   if (q.error?.status === 403 || q.error?.status === 404) return <NoPermission what={t('tr.receiveTitle')} permission="inv.transfer.receive" />; if (q.isPending) return <Skeleton label={t('tr.receiveTitle')} rows={3} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const x = q.data; const rows = x.lines.filter((l) => l.inTransitQty > 0);
-  const send = async () => { setError(null); setBusy(true); try { let d = await tr.act(x.id, 'receive', { final, lines: rows.map((l) => ({ lineId: l.id, receivedQty: Number(v[l.id]?.rec || 0), damagedQty: Number(v[l.id]?.dam || 0), note: v[l.id]?.note || undefined })).filter((l) => l.receivedQty > 0 || l.damagedQty > 0 || final) }); if (photo) { const up = await filePhoto(photo, 'inv_transfer', x.id); d = await tr.act(x.id, 'photos', { fileId: up.id, kind: 'DAMAGE' }); } navigateTo(`/inv/transfers?id=${d.id}`); } catch (e) { setError(errorInfo(e)); } finally { setBusy(false); } };
+  const send = async () => { setError(null); setBusy(true); try { let d = await tr.act(x.id, 'receive', { final, lines: rows.map((l) => ({ lineId: l.id, receivedQty: Number(v[l.id]?.rec || 0), damagedQty: Number(v[l.id]?.dam || 0), note: v[l.id]?.note || undefined })).filter((l) => l.receivedQty > 0 || l.damagedQty > 0 || final) }); if (photo) { const up = await filePhoto(photo, 'inv_transfer', x.id); d = await tr.act(x.id, 'photos', { fileId: up.id, kind: 'DAMAGE' }); } qc.setQueryData(['inv', 'transfer', d.id], d); qc.invalidateQueries({ queryKey: ['inv'] }); navigateTo(`/inv/transfers?id=${d.id}`); } catch (e) { setError(errorInfo(e)); } finally { setBusy(false); } };
   const any = rows.some((l) => Number(v[l.id]?.rec) > 0 || Number(v[l.id]?.dam) > 0) || final;
   return (
     <section aria-labelledby="rc-h" data-testid="transfer-receive-form"><h1 id="rc-h">{x.docNo}</h1><p className="muted">{x.from} → {x.to} · {t('tr.dispatched')} {x.dispatchDate ? fmtDate(x.dispatchDate) : ''} · {x.vehicleNo ?? ''}</p><p><Link to="/inv/transfer-receive">{t('tr.receiveTitle')}</Link></p><OfflineNotice t={t} on={online} />
