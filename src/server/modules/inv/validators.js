@@ -162,3 +162,23 @@ export const parseRtaBill = (b) => parse(z.object({ billNo: text(40).min(1), bil
 export const parseRtaRecQ = (q) => parse(z.object({ status: z.enum(['DRAFT', 'SUBMITTED', 'RETURNED', 'APPROVED', 'REJECTED', 'CANCELLED']).optional() }).strict().transform(defined), q ?? {});
 export const parseRtaRecUpdate = (b) => parse(z.object({ disposition: z.enum(['RECOVER', 'WRITE_OFF']), reason: optText(500), rowVersion: z.number().int() }).partial().strict().transform(defined), b ?? {});
 export const parseRtaHoldingQ = (q) => parse(z.object({ itemId: id.optional() }).strict().transform(defined), q ?? {});
+
+// ---- part 16.09: tools and small-asset custody ----
+const COND = ['NEW', 'GOOD', 'FAIR', 'REPAIRABLE', 'DAMAGED', 'SCRAP'];
+const assetFields = { itemId: id, storeId: id, tagCode: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{1,39}$/, 'Use 2 to 40 letters, digits, . _ or -').optional(), serialNo: optText(60), make: optText(60), model: optText(60), purchaseRef: optText(60), purchaseDate: day.nullish().transform((v) => v || null), value: money, condition: z.enum(COND), calibrationRequired: z.boolean(), calibrationDue: day.nullish().transform((v) => v || null), inspectionDays: z.number().int().min(0).max(3650) };
+export const parseAssetCreate = (b) => parse(z.object(assetFields).partial({ tagCode: true, serialNo: true, make: true, model: true, purchaseRef: true, purchaseDate: true, value: true, condition: true, calibrationRequired: true, calibrationDue: true, inspectionDays: true }).strict().transform(defined), b ?? {});
+export const parseAssetUpdate = (b) => parse(z.object({ ...assetFields, rowVersion: z.number().int() }).partial().strict().transform(defined), b ?? {});
+export const parseAssetImport = (b) => parse(z.object({ rows: z.array(z.object({ storeCode: text(20).min(2), itemCode: text(40).min(1), tagCode: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{1,39}$/).optional(), serialNo: text(60).optional(), make: text(60).optional(), model: text(60).optional(), value: money.optional(), purchaseRef: text(60).optional(), calibrationDue: day.optional() }).strict().transform(defined)).min(1).max(1000) }).strict(), b ?? {});
+export const parseAstHandover = (b) => parse(z.object({ custodianType: z.enum(['EMPLOYEE', 'PARTY']), custodianId: id, note: optText(300) }).strict().transform(defined), b ?? {});
+export const parseAssetAck = (b) => parse(z.object({ method: z.enum(['OTP', 'SIGNATURE']).default('OTP'), otp: z.string().trim().regex(/^\d{6}$/, 'The code has 6 digits').optional(), signedBy: optText(80) }).strict().transform(defined), b ?? {});
+export const parseAstAssetReturn = (b) => parse(z.object({ condition: z.enum(COND), storeId: id.optional(), note: optText(300) }).strict().transform(defined), b ?? {});
+export const parseAstInspect = (b) => parse(z.object({ date: day.optional(), passed: z.boolean(), condition: z.enum(COND).optional(), nextDays: z.number().int().min(0).max(3650).optional(), note: optText(300) }).strict().transform(defined), b ?? {});
+export const parseAstCalibrate = (b) => parse(z.object({ date: day.optional(), certificateNo: text(60).min(2), lab: optText(120), dueDate: day, note: optText(300) }).strict().transform(defined), b ?? {});
+export const parseAstRepairOut = (b) => parse(z.object({ reference: optText(80), note: optText(300) }).strict().transform(defined), b ?? {});
+export const parseAstRepairIn = (b) => parse(z.object({ condition: z.enum(COND), cost: money.optional(), reference: optText(80), note: optText(300) }).strict().transform(defined), b ?? {});
+export const parseAstDispose = (b) => parse(z.object({ method: z.enum(['SCRAP', 'SALE', 'WRITE_OFF']), amount: money.optional(), reason }).strict().transform(defined), b ?? {});
+const lossFieldsZ = { assetId: id, kind: z.enum(['LOSS', 'DAMAGE', 'THEFT']), reportDate: day, description: text(1000).min(5, 'Say what happened'), investigation: optText(2000), recoveryFrom: z.enum(['SALARY', 'SUBCONTRACTOR', 'WRITE_OFF', 'NONE']), recoveryPartyId: id, recoveryAmount: money };
+export const parseAstLossCreate = (b) => parse(z.object(lossFieldsZ).partial({ reportDate: true, investigation: true, recoveryFrom: true, recoveryPartyId: true, recoveryAmount: true }).strict().transform(defined), b ?? {});
+export const parseAstLossUpdate = (b) => parse(z.object({ ...lossFieldsZ, rowVersion: z.number().int() }).omit({ assetId: true }).partial().strict().transform(defined), b ?? {});
+export const parseAstStatementQ = (q) => parse(z.object({ employeeId: id }).strict(), q ?? {});
+export const parseAstCalDueQ = (q) => parse(z.object({ days: z.coerce.number().int().min(0).max(365).optional() }).strict().transform(defined), q ?? {});

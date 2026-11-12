@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { forbidden, notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ, parseReorderChange, parseReorderChangeUpdate, parseReorderRecalc, parseReorderImport, parseReorderParamsQ, parseSuggestionConvert, parseAgeingQ, parseLabelTargetsQ, parseLabelPrint, parseScanQ, parseRtaMovement, parseRtaMovementUpdate, parseRtaImport, parseRtaAsset, parseRtaAssetUpdate, parseRtaHireQ, parseRtaBill, parseRtaRecQ, parseRtaRecUpdate, parseRtaHoldingQ } from './validators.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ, parseReorderChange, parseReorderChangeUpdate, parseReorderRecalc, parseReorderImport, parseReorderParamsQ, parseSuggestionConvert, parseAgeingQ, parseLabelTargetsQ, parseLabelPrint, parseScanQ, parseRtaMovement, parseRtaMovementUpdate, parseRtaImport, parseRtaAsset, parseRtaAssetUpdate, parseRtaHireQ, parseRtaBill, parseRtaRecQ, parseRtaRecUpdate, parseRtaHoldingQ, parseAssetCreate, parseAssetUpdate, parseAssetImport, parseAstHandover, parseAssetAck, parseAstAssetReturn, parseAstInspect, parseAstCalibrate, parseAstRepairOut, parseAstRepairIn, parseAstDispose, parseAstLossCreate, parseAstLossUpdate, parseAstStatementQ, parseAstCalDueQ } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -314,5 +314,52 @@ export function rtaRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.post('/rta/recoveries/:id/submit', idempotentRequired, (req, res) => ok(res, recoveries.submit(req.actor, pid(req)), 202));
   r.post('/rta/recoveries/:id/withdraw', idempotent, (req, res) => ok(res, recoveries.withdraw(req.actor, pid(req), parseReason(req.body))));
   r.post('/rta/recoveries/:id/cancel', idempotent, (req, res) => ok(res, recoveries.cancel(req.actor, pid(req), parseReason(req.body))));
+  return r;
+}
+
+/** /api/v1/inv small assets, loss reports, custody statement and calibration due (part 16.09). Behind its own flag, ff.inv.p1609. */
+export function assetRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { assets, custody, losses, disposal, report } = svc.asset; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use(['/small-assets', '/loss-reports', '/custody-statement', '/calibration-due'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1609') ? next() : next(notFound('Tool and small-asset custody is not enabled for your company yet.'))));
+  r.get('/small-assets/options', (req, res) => ok(res, assets.options(req.actor)));
+  r.get('/small-assets/mine', (req, res) => ok(res, custody.mine(req.actor)));
+  r.get('/small-assets', (req, res) => res.json(assets.list(req.actor, req.query)));
+  r.post('/small-assets', idempotentRequired, (req, res) => ok(res, assets.create(req.actor, parseAssetCreate(req.body)), 201));
+  r.post('/small-assets/import', idempotentRequired, (req, res) => ok(res, assets.importRows(req.actor, parseAssetImport(req.body)), 201));
+  r.get('/small-assets/:id', (req, res) => ok(res, assets.get(req.actor, pid(req))));
+  r.patch('/small-assets/:id', idempotent, (req, res) => ok(res, assets.update(req.actor, pid(req), parseAssetUpdate(req.body))));
+  r.delete('/small-assets/:id', (req, res) => ok(res, assets.remove(req.actor, pid(req))));
+  r.post('/small-assets/:id/submit', idempotentRequired, (req, res) => ok(res, assets.submit(req.actor, pid(req)), 202));
+  r.post('/small-assets/:id/withdraw', idempotent, (req, res) => ok(res, assets.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/small-assets/:id/cancel', idempotent, (req, res) => ok(res, assets.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/small-assets/:id/amend', idempotent, (req, res) => ok(res, assets.amend(req.actor, pid(req), parseReason(req.body))));
+  r.get('/small-assets/:id/history', (req, res) => ok(res, assets.history(req.actor, pid(req))));
+  r.get('/small-assets/:id/print', (req, res) => file(res, assets.print(req.actor, pid(req))));
+  r.get('/small-assets/:id/tag', (req, res) => ok(res, assets.tag(req.actor, pid(req))));
+  r.post('/small-assets/:id/issue', idempotentRequired, (req, res) => ok(res, custody.issue(req.actor, pid(req), parseAstHandover(req.body)), 201));
+  r.post('/small-assets/:id/transfer', idempotentRequired, (req, res) => ok(res, custody.transfer(req.actor, pid(req), parseAstHandover(req.body)), 201));
+  r.post('/small-assets/:id/cancel-handover', idempotent, (req, res) => ok(res, custody.cancelIssue(req.actor, pid(req), parseReason(req.body))));
+  r.post('/small-assets/:id/acknowledge', idempotentRequired, (req, res) => ok(res, custody.acknowledge(req.actor, pid(req), parseAssetAck(req.body))));
+  r.post('/small-assets/:id/return', idempotentRequired, (req, res) => ok(res, custody.return(req.actor, pid(req), parseAstAssetReturn(req.body))));
+  r.post('/small-assets/:id/inspect', idempotent, (req, res) => ok(res, custody.inspect(req.actor, pid(req), parseAstInspect(req.body))));
+  r.post('/small-assets/:id/calibrate', idempotent, (req, res) => ok(res, custody.calibrate(req.actor, pid(req), parseAstCalibrate(req.body))));
+  r.post('/small-assets/:id/repair-out', idempotent, (req, res) => ok(res, custody.repairOut(req.actor, pid(req), parseAstRepairOut(req.body))));
+  r.post('/small-assets/:id/repair-in', idempotent, (req, res) => ok(res, custody.repairIn(req.actor, pid(req), parseAstRepairIn(req.body))));
+  r.post('/small-assets/:id/dispose', idempotentRequired, (req, res) => ok(res, disposal.request(req.actor, pid(req), parseAstDispose(req.body)), 202));
+  r.get('/loss-reports', (req, res) => res.json(losses.list(req.actor, req.query)));
+  r.post('/loss-reports', idempotentRequired, (req, res) => ok(res, losses.create(req.actor, parseAstLossCreate(req.body)), 201));
+  r.get('/loss-reports/:id', (req, res) => ok(res, losses.get(req.actor, pid(req))));
+  r.patch('/loss-reports/:id', idempotent, (req, res) => ok(res, losses.update(req.actor, pid(req), parseAstLossUpdate(req.body))));
+  r.delete('/loss-reports/:id', (req, res) => ok(res, losses.remove(req.actor, pid(req))));
+  r.post('/loss-reports/:id/submit', idempotentRequired, (req, res) => ok(res, losses.submit(req.actor, pid(req)), 202));
+  r.post('/loss-reports/:id/withdraw', idempotent, (req, res) => ok(res, losses.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/loss-reports/:id/cancel', idempotent, (req, res) => ok(res, losses.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/loss-reports/:id/amend', idempotent, (req, res) => ok(res, losses.amend(req.actor, pid(req)), 201));
+  r.get('/loss-reports/:id/history', (req, res) => ok(res, losses.history(req.actor, pid(req))));
+  r.get('/loss-reports/:id/print', (req, res) => file(res, losses.print(req.actor, pid(req))));
+  r.get('/custody-statement/print', (req, res) => file(res, report.printStatement(req.actor, parseAstStatementQ(req.query).employeeId)));
+  r.get('/custody-statement', (req, res) => ok(res, report.statement(req.actor, parseAstStatementQ(req.query).employeeId)));
+  r.get('/calibration-due', (req, res) => ok(res, report.calibrationDue(req.actor, parseAstCalDueQ(req.query))));
   return r;
 }
