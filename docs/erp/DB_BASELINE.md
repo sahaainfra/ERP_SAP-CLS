@@ -14552,6 +14552,148 @@ Indexes:
 - ux_plan_weekly_plans_week (unique): org_project_id, , week_start, revision_no
 - ux_plan_weekly_plans_doc (unique): company_id, doc_no
 
+## plt_documents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| doc_number | TEXT |  |  |  |
+| issuer | TEXT |  |  |  |
+| valid_from | TEXT |  |  |  |
+| valid_until | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| mandatory | INTEGER | yes |  | 1 |
+| doc_status | TEXT | yes |  | 'CURRENT' |
+| superseded_by | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: superseded_by -> plt_documents(id), file_id -> core_files(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_documents_superseded_by: superseded_by
+- ix_plt_doc_file: file_id
+- ix_plt_doc_expiry: company_id, doc_status, valid_until
+- ix_plt_doc_eq: equipment_id, doc_type, doc_status
+
+## plt_equipment
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| asset_code | TEXT | yes |  |  |
+| class_item_id | INTEGER | yes |  |  |
+| make | TEXT |  |  |  |
+| model | TEXT |  |  |  |
+| mfg_year | INTEGER |  |  |  |
+| serial_no | TEXT |  |  |  |
+| chassis_no | TEXT |  |  |  |
+| engine_no | TEXT |  |  |  |
+| reg_no | TEXT |  |  |  |
+| capacity | TEXT |  |  |  |
+| ownership | TEXT | yes |  | 'OWNED' |
+| owner_partner_id | INTEGER |  |  |  |
+| purchase_value | INTEGER | yes |  | 0 |
+| purchase_date | TEXT |  |  |  |
+| meter_type | TEXT | yes |  | 'HOURS' |
+| fuel_type | TEXT | yes |  | 'DIESEL' |
+| tank_capacity | INTEGER | yes |  | 0 |
+| fuel_norm | INTEGER | yes |  | 0 |
+| fuel_norm_unit | TEXT | yes |  | 'L_PER_HOUR' |
+| gps_device_id | TEXT |  |  |  |
+| road_vehicle | INTEGER | yes |  | 0 |
+| lifting | INTEGER | yes |  | 0 |
+| operator_required | INTEGER | yes |  | 0 |
+| operator_licence_class | TEXT |  |  |  |
+| equip_state | TEXT | yes |  | 'AVAILABLE' |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| state_since | TEXT |  |  |  |
+| state_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), owner_partner_id -> mdm_partners(id), class_item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_eq_reg: company_id, reg_no
+- ix_plt_eq_list: company_id, status, equip_state, ownership
+- ix_plt_eq_site: org_site_id
+- ix_plt_eq_project: org_project_id
+- ix_plt_eq_owner: owner_partner_id
+- ix_plt_eq_class: class_item_id
+- ux_plt_eq_code (unique): company_id, asset_code
+- ux_plt_eq_doc (unique): company_id, doc_no
+
+## plt_timeline
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| event | TEXT | yes |  |  |
+| from_state | TEXT |  |  |  |
+| to_state | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| note | TEXT |  |  |  |
+| done_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_timeline_company_id: company_id
+- ix_plt_timeline_org_site_id: org_site_id
+- ix_plt_tl_project: org_project_id
+- ix_plt_tl_eq: equipment_id, id
+
 ## pol_acknowledgements
 
 | Column | Type | Not null | Key | Default |
