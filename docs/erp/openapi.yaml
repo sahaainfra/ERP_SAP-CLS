@@ -9131,5 +9131,77 @@ paths:
     post: { summary: 'Do inv/rta/recoveries/{id}/withdraw (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/rta/recoveries/{id}/cancel:
     post: { summary: 'Do inv/rta/recoveries/{id}/cancel (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/options:
+    get: { summary: 'Read inv/small-assets/options (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/mine:
+    get: { summary: 'Read inv/small-assets/mine (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets:
+    get: { summary: 'Read inv/small-assets (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/small-assets (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/import:
+    post: { summary: 'Do inv/small-assets/import (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}:
+    get: { summary: 'Read inv/small-assets/{id} (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/small-assets/{id} (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Do inv/small-assets/{id} (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/submit:
+    post: { summary: 'Do inv/small-assets/{id}/submit (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/withdraw:
+    post: { summary: 'Do inv/small-assets/{id}/withdraw (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/cancel:
+    post: { summary: 'Do inv/small-assets/{id}/cancel (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/amend:
+    post: { summary: 'Do inv/small-assets/{id}/amend (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/history:
+    get: { summary: 'Read inv/small-assets/{id}/history (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/print:
+    get: { summary: 'Read inv/small-assets/{id}/print (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/tag:
+    get: { summary: 'Read inv/small-assets/{id}/tag (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/issue:
+    post: { summary: 'Do inv/small-assets/{id}/issue (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/transfer:
+    post: { summary: 'Do inv/small-assets/{id}/transfer (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/cancel-handover:
+    post: { summary: 'Do inv/small-assets/{id}/cancel-handover (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/acknowledge:
+    post: { summary: 'Do inv/small-assets/{id}/acknowledge (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/return:
+    post: { summary: 'Do inv/small-assets/{id}/return (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/inspect:
+    post: { summary: 'Do inv/small-assets/{id}/inspect (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/calibrate:
+    post: { summary: 'Do inv/small-assets/{id}/calibrate (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/repair-out:
+    post: { summary: 'Do inv/small-assets/{id}/repair-out (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/repair-in:
+    post: { summary: 'Do inv/small-assets/{id}/repair-in (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/small-assets/{id}/dispose:
+    post: { summary: 'Do inv/small-assets/{id}/dispose (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports:
+    get: { summary: 'Read inv/loss-reports (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/loss-reports (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports/{id}:
+    get: { summary: 'Read inv/loss-reports/{id} (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/loss-reports/{id} (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Do inv/loss-reports/{id} (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports/{id}/submit:
+    post: { summary: 'Do inv/loss-reports/{id}/submit (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports/{id}/withdraw:
+    post: { summary: 'Do inv/loss-reports/{id}/withdraw (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports/{id}/cancel:
+    post: { summary: 'Do inv/loss-reports/{id}/cancel (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports/{id}/amend:
+    post: { summary: 'Do inv/loss-reports/{id}/amend (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports/{id}/history:
+    get: { summary: 'Read inv/loss-reports/{id}/history (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/loss-reports/{id}/print:
+    get: { summary: 'Read inv/loss-reports/{id}/print (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/custody-statement/print:
+    get: { summary: 'Read inv/custody-statement/print (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/custody-statement:
+    get: { summary: 'Read inv/custody-statement (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/calibration-due:
+    get: { summary: 'Read inv/calibration-due (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/in-transit:
     get: { summary: 'Read inv/in-transit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }

@@ -269,6 +269,168 @@ Indexes:
 - ix_alr_rules_company: company_id, status, enabled
 - ux_alr_rules_version (unique): , code, rule_version
 
+## ast_custody_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| action | TEXT | yes |  |  |
+| from_type | TEXT |  |  |  |
+| from_id | INTEGER | yes |  | 0 |
+| from_name | TEXT |  |  |  |
+| to_type | TEXT |  |  |  |
+| to_id | INTEGER | yes |  | 0 |
+| to_name | TEXT |  |  |  |
+| log_date | TEXT | yes |  |  |
+| ack_method | TEXT |  |  |  |
+| ack_status | TEXT | yes |  | 'NA' |
+| ack_hash | TEXT |  |  |  |
+| ack_expires | TEXT |  |  |  |
+| ack_attempts | INTEGER | yes |  | 0 |
+| ack_by | TEXT |  |  |  |
+| ack_at | TEXT |  |  |  |
+| asset_condition | TEXT |  |  |  |
+| reference | TEXT |  |  |  |
+| cost | INTEGER | yes |  | 0 |
+| note | TEXT |  |  |  |
+| done_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: asset_id -> ast_small_assets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_astlog_to: company_id, to_type, to_id
+- ix_astlog_list: company_id, action, log_date
+- ix_astlog_asset: asset_id, id
+
+## ast_loss_reports
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| reported_by | TEXT | yes |  |  |
+| report_date | TEXT | yes |  |  |
+| loss_kind | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| investigation | TEXT |  |  |  |
+| custodian_type | TEXT |  |  |  |
+| custodian_id | INTEGER | yes |  | 0 |
+| custodian_name | TEXT |  |  |  |
+| recovery_from | TEXT | yes |  | 'NONE' |
+| recovery_party_id | INTEGER | yes |  | 0 |
+| recovery_amount | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), asset_id -> ast_small_assets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_astloss_project: org_project_id
+- ix_astloss_asset: asset_id
+- ix_astloss_list: company_id, status, report_date
+- ux_astloss_doc (unique): company_id, doc_no
+
+## ast_small_assets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| tag_code | TEXT | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| store_id | INTEGER | yes |  |  |
+| serial_no | TEXT |  |  |  |
+| make | TEXT |  |  |  |
+| model | TEXT |  |  |  |
+| purchase_ref | TEXT |  |  |  |
+| asset_value | INTEGER | yes |  | 0 |
+| custodian_type | TEXT | yes |  | 'STORE' |
+| custodian_id | INTEGER | yes |  | 0 |
+| custodian_name | TEXT |  |  |  |
+| asset_condition | TEXT | yes |  | 'GOOD' |
+| calibration_required | INTEGER | yes |  | 0 |
+| calibration_due | TEXT |  |  |  |
+| inspection_days | INTEGER | yes |  | 0 |
+| last_inspection | TEXT |  |  |  |
+| next_inspection | TEXT |  |  |  |
+| asset_state | TEXT | yes |  | 'IN_STORE' |
+| pending_log_id | INTEGER |  |  |  |
+| purchase_date | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| dispose_status | TEXT | yes |  | 'NONE' |
+| dispose_method | TEXT |  |  |  |
+| dispose_amount | INTEGER | yes |  | 0 |
+| dispose_reason | TEXT |  |  |  |
+| dispose_workflow_id | INTEGER |  |  |  |
+| disposed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: store_id -> inv_stores(id), org_project_id -> org_projects(id), item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ast_calibration: company_id, calibration_due
+- ix_ast_custodian: company_id, custodian_type, custodian_id
+- ix_ast_project: org_project_id
+- ix_ast_store: store_id
+- ix_ast_item: item_id
+- ix_ast_list: company_id, status, asset_state
+- ux_ast_tag (unique): company_id, tag_code
+- ux_ast_doc (unique): company_id, doc_no
+
 ## att_anomalies
 
 | Column | Type | Not null | Key | Default |

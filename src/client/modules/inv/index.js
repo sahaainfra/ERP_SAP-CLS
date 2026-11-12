@@ -35,6 +35,9 @@ import RtaDashboardPage from './RtaDashboardPage.jsx';
 import RtaMovementsPage from './RtaMovementsPage.jsx';
 import RtaIssuePage from './RtaIssuePage.jsx';
 import RtaHirePage from './RtaHirePage.jsx';
+import SmallAssetsPage from './SmallAssetsPage.jsx';
+import AssetScanPage from './AssetScanPage.jsx';
+import CustodyPage from './CustodyPage.jsx';
 registerModule({
   code: 'inv',
   label: 'Stores and Inventory',
@@ -74,5 +77,8 @@ registerModule({
     { path: '/inv/rta-movements', label: 'Returnable Asset Movements', icon: 'erp.group.supply', permission: 'inv.movement.view', flag: 'ff.inv.p1608', Page: RtaMovementsPage },
     { path: '/inv/rta-issue', label: 'Issue or Return Assets', icon: 'erp.group.supply', permission: 'inv.movement.create', flag: 'ff.inv.p1608', Page: RtaIssuePage },
     { path: '/inv/rta-hire', label: 'Hire Charges and Recoveries', icon: 'erp.group.supply', permission: 'inv.rta_hire.view', flag: 'ff.inv.p1608', Page: RtaHirePage },
+    { path: '/inv/small-assets', label: 'Small Asset Register', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: SmallAssetsPage },
+    { path: '/inv/asset-scan', label: 'Issue or Return by QR', icon: 'erp.group.supply', permission: 'inv.small_asset.acknowledge', flag: 'ff.inv.p1609', Page: AssetScanPage },
+    { path: '/inv/custody', label: 'Custody Statement and Calibration Due', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: CustodyPage },
   ],
 });
