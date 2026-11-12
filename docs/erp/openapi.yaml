@@ -8865,3 +8865,67 @@ paths:
     get: { summary: 'Read inv/rtvs/{id}/history (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/rtvs/{id}/print:
     get: { summary: 'Read inv/rtvs/{id}/print (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/summary:
+    get: { summary: 'Read inv/issues/summary (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/work-authorisations:
+    get: { summary: 'Read inv/issues/work-authorisations (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/targets:
+    get: { summary: 'Read inv/issues/targets (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/prefill:
+    get: { summary: 'Read inv/issues/prefill (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues:
+    get: { summary: 'Read inv/issues (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/issues (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/import:
+    post: { summary: 'Do inv/issues/import (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}:
+    get: { summary: 'Read inv/issues/{id} (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/issues/{id} (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/issues/{id} (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/submit:
+    post: { summary: 'Do inv/issues/{id}/submit (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/withdraw:
+    post: { summary: 'Do inv/issues/{id}/withdraw (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/cancel:
+    post: { summary: 'Do inv/issues/{id}/cancel (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/amend:
+    post: { summary: 'Do inv/issues/{id}/amend (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/ack-code:
+    post: { summary: 'Do inv/issues/{id}/ack-code (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/acknowledge:
+    post: { summary: 'Do inv/issues/{id}/acknowledge (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/history:
+    get: { summary: 'Read inv/issues/{id}/history (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/issues/{id}/print:
+    get: { summary: 'Read inv/issues/{id}/print (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns:
+    get: { summary: 'Read inv/site-returns (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/site-returns (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/import:
+    post: { summary: 'Do inv/site-returns/import (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/{id}:
+    get: { summary: 'Read inv/site-returns/{id} (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/site-returns/{id} (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/site-returns/{id} (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/{id}/submit:
+    post: { summary: 'Do inv/site-returns/{id}/submit (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/{id}/withdraw:
+    post: { summary: 'Do inv/site-returns/{id}/withdraw (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/{id}/cancel:
+    post: { summary: 'Do inv/site-returns/{id}/cancel (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/{id}/amend:
+    post: { summary: 'Do inv/site-returns/{id}/amend (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/{id}/history:
+    get: { summary: 'Read inv/site-returns/{id}/history (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/site-returns/{id}/print:
+    get: { summary: 'Read inv/site-returns/{id}/print (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/free-issue/projects:
+    get: { summary: 'Read inv/free-issue/projects (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/free-issue:
+    get: { summary: 'Read inv/free-issue (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/free-issue/drill:
+    get: { summary: 'Read inv/free-issue/drill (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/free-issue/reconcile:
+    post: { summary: 'Do inv/free-issue/reconcile (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/free-issue/certified:
+    post: { summary: 'Do inv/free-issue/certified (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }

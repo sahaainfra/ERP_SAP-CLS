@@ -1421,3 +1421,10 @@ Module `inv`, flag `ff.inv.p1603`, tables `inv_grns`, `inv_grn_lines`, `inv_rtvs
 - **Events**: `inv.grn.posted` (consumer `proc.po_receipts_from_grn`, ADR-572), `inv.grn.inspected`, `inv.grn.amended`, `inv.rtv.posted`. Parameter `inv.grn.excess_tolerance_pct`.
 - **Permissions**: `inv.grn.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,inspect,emergency}`, `inv.rtv.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import}`.
 
+## 122. Material issue, site returns and the free-issue ledger (part 16.04)
+Module `inv`, flag `ff.inv.p1604`, tables `inv_issues`, `inv_issue_lines`, `inv_site_returns`, `inv_sub_certified`, `inv_free_issue_ledger`; service `src/server/modules/inv/issue.js` (routes `issueRoutes`, gated per path by its own flag).
+- **Issue** (ADR-574, ADR-575, ADR-576): `buildLines` (authorisation, tolerance), `submit` (control CP-INV-01; workflow `INV_ISSUE` for chargeable issues: SUBCO then QS), `ackCode`, `acknowledge` (posts through `stock.postOut`, `wbsId`).
+- **Site return** (ADR-577): `INV_SITE_RETURN` (store manager); `decide` posts a RETURN at the issue rate. **Free issue** (ADR-578): `certify`, `reconcile`, `report`, `drill`.
+- **Events**: `inv.issue.posted`, `inv.site_return.posted`, `inv.free_issue.excess`. Parameters `inv.issue.wa_tolerance_pct`, `inv.issue.ack_minutes`.
+- **Permissions**: `inv.issue.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,acknowledge}`, `inv.site_return.{...}`, `inv.free_issue.{view,reconcile,certify,export}`.
+
