@@ -82,3 +82,27 @@ export const parseRtvCreate = (b) => parse(z.object({ grnId: id, reason, lines: 
 export const parseRtvUpdate = (b) => parse(z.object({ reason, lines: z.array(rtvLine).min(1).max(100), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
 const rImp = z.object({ grnNo: text(40).min(1), itemCode: text(40).min(1), qty: rqty, reason }).strict();
 export const parseRtvImport = (b) => parse(z.object({ rows: z.array(rImp).min(1).max(500) }).strict(), b ?? {});
+
+// ---- material issue, site returns and the free-issue ledger (part 16.04) ----
+const issueLine = z.object({ itemId: id, qty: rqty, uom: text(20).min(1).optional(), batchNo: optText(40), chargeRate: z.number().finite().min(0).max(1e9).refine((n) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6, 'At most two decimals').optional() }).strict().transform(defined);
+const issuedTo = z.object({ type: z.enum(['CREW', 'SUBCONTRACTOR', 'EQUIPMENT', 'PERSON']), id: id.nullish().transform((v) => v || undefined), name: optText(120) }).strict().transform(defined);
+const ITYPES = ['OWN_CREW', 'SUBCO_FREE', 'SUBCO_CHARGEABLE', 'EQUIPMENT'];
+const issueHead = { waId: id.nullish().transform((v) => v || undefined), mrId: id.nullish().transform((v) => v || undefined), activityId: id.nullish().transform((v) => v || undefined), wbsId: id.nullish().transform((v) => v || undefined), costCodeId: id.nullish().transform((v) => v || undefined), projectId: id.optional(), receiverUser: optText(60), reason: optText(500) };
+export const parseIssueCreate = (b) => parse(z.object({ storeId: id, type: z.enum(ITYPES), issuedTo, ...issueHead, lines: z.array(issueLine).min(1).max(100) }).strict().transform(defined), b ?? {});
+export const parseIssueUpdate = (b) => parse(z.object({ type: z.enum(ITYPES), issuedTo, wbsId: id.nullish().transform((v) => v || undefined), costCodeId: id.nullish().transform((v) => v || undefined), receiverUser: optText(60), reason: optText(500), lines: z.array(issueLine).min(1).max(100), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parseIssuePrefillQ = (q) => parse(z.object({ waId: id.optional(), mrId: id.optional() }).strict(), q ?? {});
+export const parseTargetQ = (q) => parse(z.object({ q: text(60).optional() }).strict(), q ?? {});
+export const parseAck = (b) => parse(z.object({ method: z.enum(['OTP', 'SIGNATURE']), otp: z.string().trim().regex(/^\d{6}$/, 'The code has six digits').optional(), receiverName: optText(120), signatureFileId: id.optional() }).strict().transform(defined).superRefine((v, c) => { if (v.method === 'OTP' && !v.otp) c.addIssue({ code: 'custom', path: ['otp'], message: 'Type the code the receiver reads out' }); }), b ?? {});
+const iImp = z.object({ storeCode: text(20).min(2), waNo: text(40).min(1), crewName: text(120).min(2), itemCode: text(40).min(1), qty: rqty, batchNo: optText(40) }).strict().transform(defined);
+export const parseIssueImport = (b) => parse(z.object({ rows: z.array(iImp).min(1).max(500) }).strict(), b ?? {});
+const CONDS = ['GOOD', 'DAMAGED', 'SCRAP'];
+const retLine = z.object({ issueLineId: id, qty: rqty }).strict();
+export const parseReturnCreate = (b) => parse(z.object({ issueId: id, condition: z.enum(CONDS), reason, lines: z.array(retLine).min(1).max(100) }).strict(), b ?? {});
+export const parseReturnUpdate = (b) => parse(z.object({ condition: z.enum(CONDS), reason, lines: z.array(retLine).min(1).max(100), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+const rImp2 = z.object({ issueNo: text(40).min(1), itemCode: text(40).min(1), qty: rqty, condition: z.enum(CONDS), reason }).strict();
+export const parseReturnImport = (b) => parse(z.object({ rows: z.array(rImp2).min(1).max(500) }).strict(), b ?? {});
+const period = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month such as 2026-12');
+export const parseFreeIssueQ = (q) => parse(z.object({ projectId: id.optional(), period: period.optional(), subcontractorId: id.optional() }).strict(), q ?? {});
+export const parseReconcile = (b) => parse(z.object({ projectId: id, period }).strict(), b ?? {});
+export const parseDrillQ = (q) => parse(z.object({ projectId: id, subcontractorId: id, itemId: id }).strict(), q ?? {});
+export const parseCertify = (b) => parse(z.object({ rows: z.array(z.object({ projectId: id, subcontractorId: id, boqLineId: id, period, certifiedQty: zqty, certificateRef: optText(60) }).strict()).min(1).max(500) }).strict(), b ?? {});

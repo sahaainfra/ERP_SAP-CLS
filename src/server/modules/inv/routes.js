@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate } from './validators.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -128,5 +128,47 @@ export function grnRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.post('/rtvs/:id/amend', idempotent, (req, res) => ok(res, rtvs.amend(req.actor, pid(req))));
   r.get('/rtvs/:id/history', (req, res) => ok(res, rtvs.history(req.actor, pid(req))));
   r.get('/rtvs/:id/print', (req, res) => file(res, rtvs.print(req.actor, pid(req))));
+  return r;
+}
+
+/** /api/v1/inv material issue, site returns and the free-issue ledger (part 16.04). Behind its own flag, ff.inv.p1604. */
+export function issueRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { issues, siteReturns, freeIssue } = svc.issue; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use(['/issues', '/site-returns', '/free-issue'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1604') ? next() : next(notFound('Material issue is not enabled for your company yet (feature flag ff.inv.p1604 is OFF).'))));
+  r.get('/issues/summary', (req, res) => ok(res, issues.summary(req.actor)));
+  r.get('/issues/work-authorisations', (req, res) => ok(res, issues.workAuths(req.actor)));
+  r.get('/issues/targets', (req, res) => ok(res, issues.targets(req.actor, parseTargetQ(req.query).q ?? '')));
+  r.get('/issues/prefill', (req, res) => ok(res, issues.prefill(req.actor, parseIssuePrefillQ(req.query))));
+  r.get('/issues', (req, res) => res.json(issues.list(req.actor, req.query)));
+  r.post('/issues', idempotentRequired, (req, res) => ok(res, issues.create(req.actor, parseIssueCreate(req.body)), 201));
+  r.post('/issues/import', idempotentRequired, (req, res) => ok(res, issues.importRows(req.actor, parseIssueImport(req.body)), 201));
+  r.get('/issues/:id', (req, res) => ok(res, issues.get(req.actor, pid(req))));
+  r.patch('/issues/:id', idempotent, (req, res) => ok(res, issues.update(req.actor, pid(req), parseIssueUpdate(req.body))));
+  r.delete('/issues/:id', (req, res) => ok(res, issues.remove(req.actor, pid(req))));
+  r.post('/issues/:id/submit', idempotentRequired, (req, res) => ok(res, issues.submit(req.actor, pid(req)), 202));
+  r.post('/issues/:id/withdraw', idempotent, (req, res) => ok(res, issues.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/issues/:id/cancel', idempotent, (req, res) => ok(res, issues.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/issues/:id/amend', idempotent, (req, res) => ok(res, issues.amend(req.actor, pid(req))));
+  r.post('/issues/:id/ack-code', idempotent, (req, res) => ok(res, issues.ackCode(req.actor, pid(req))));
+  r.post('/issues/:id/acknowledge', idempotentRequired, (req, res) => ok(res, issues.acknowledge(req.actor, pid(req), parseAck(req.body))));
+  r.get('/issues/:id/history', (req, res) => ok(res, issues.history(req.actor, pid(req))));
+  r.get('/issues/:id/print', (req, res) => file(res, issues.print(req.actor, pid(req))));
+  r.get('/site-returns', (req, res) => res.json(siteReturns.list(req.actor, req.query)));
+  r.post('/site-returns', idempotentRequired, (req, res) => ok(res, siteReturns.create(req.actor, parseReturnCreate(req.body)), 201));
+  r.post('/site-returns/import', idempotentRequired, (req, res) => ok(res, siteReturns.importRows(req.actor, parseReturnImport(req.body)), 201));
+  r.get('/site-returns/:id', (req, res) => ok(res, siteReturns.get(req.actor, pid(req))));
+  r.patch('/site-returns/:id', idempotent, (req, res) => ok(res, siteReturns.update(req.actor, pid(req), parseReturnUpdate(req.body))));
+  r.delete('/site-returns/:id', (req, res) => ok(res, siteReturns.remove(req.actor, pid(req))));
+  r.post('/site-returns/:id/submit', idempotentRequired, (req, res) => ok(res, siteReturns.submit(req.actor, pid(req)), 202));
+  r.post('/site-returns/:id/withdraw', idempotent, (req, res) => ok(res, siteReturns.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/site-returns/:id/cancel', idempotent, (req, res) => ok(res, siteReturns.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/site-returns/:id/amend', idempotent, (req, res) => ok(res, siteReturns.amend(req.actor, pid(req))));
+  r.get('/site-returns/:id/history', (req, res) => ok(res, siteReturns.history(req.actor, pid(req))));
+  r.get('/site-returns/:id/print', (req, res) => file(res, siteReturns.print(req.actor, pid(req))));
+  r.get('/free-issue', (req, res) => ok(res, freeIssue.report(req.actor, parseFreeIssueQ(req.query))));
+  r.get('/free-issue/drill', (req, res) => ok(res, freeIssue.drill(req.actor, parseDrillQ(req.query))));
+  r.post('/free-issue/reconcile', idempotentRequired, (req, res) => ok(res, freeIssue.reconcile(req.actor, parseReconcile(req.body))));
+  r.post('/free-issue/certified', idempotentRequired, (req, res) => ok(res, freeIssue.certify(req.actor, parseCertify(req.body)), 201));
   return r;
 }
