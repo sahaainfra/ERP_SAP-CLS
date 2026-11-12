@@ -38,6 +38,8 @@ import RtaHirePage from './RtaHirePage.jsx';
 import SmallAssetsPage from './SmallAssetsPage.jsx';
 import AssetScanPage from './AssetScanPage.jsx';
 import CustodyPage from './CustodyPage.jsx';
+import ReconciliationsPage from './ReconciliationsPage.jsx';
+import WastageTrendPage from './WastageTrendPage.jsx';
 registerModule({
   code: 'inv',
   label: 'Stores and Inventory',
@@ -80,5 +82,7 @@ registerModule({
     { path: '/inv/small-assets', label: 'Small Asset Register', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: SmallAssetsPage },
     { path: '/inv/asset-scan', label: 'Issue or Return by QR', icon: 'erp.group.supply', permission: 'inv.small_asset.acknowledge', flag: 'ff.inv.p1609', Page: AssetScanPage },
     { path: '/inv/custody', label: 'Custody Statement and Calibration Due', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: CustodyPage },
+    { path: '/inv/reconciliations', label: 'Monthly Material Reconciliation', icon: 'erp.group.supply', permission: 'inv.reconciliation.view', flag: 'ff.inv.p1610', Page: ReconciliationsPage },
+    { path: '/inv/wastage-trend', label: 'Wastage Trend', icon: 'erp.group.supply', permission: 'inv.reconciliation.view', flag: 'ff.inv.p1610', Page: WastageTrendPage },
   ],
 });
