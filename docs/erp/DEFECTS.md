@@ -549,3 +549,8 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-538 | ANA | Spend is the value of approved and closed purchase orders by approval date; amendments change the order value but not its date, and service orders (15.06) are not in the spend yet. |
 | D-539 | ANA | Savings against the budget rate need the budget rate on the statement line; lines without one are left out of the base. |
 | D-540 | ANA | Exports are CSV; XLSX/PDF and e-mail schedules of the report standard are not built. Control exceptions are shown only to those who see every project. |
+| D-541 | INV | In-transit quantity stays zero and the pending goods-receipt and issue tiles of the dashboard are not shown until the transfer, GRN and issue documents (16.02 to 16.06) exist; stock is posted by hand with a reason until then. |
+| D-542 | INV | Inspection hold and release change the balance row only; the quality inspection document (18.03) will drive them. |
+| D-543 | INV | Reservations are held against the oldest free rows of the item in the store at the time; a later receipt does not change an existing reservation. |
+| D-544 | INV | Exports are CSV (ledger, valuation) and the list engine export for stores and balances; XLSX/PDF and e-mail schedules of the report standard are not built. |
+| D-545 | INV | Financial posting (23.02) and project cost (14.07) consume `inv.stock.moved`; those parts do not exist yet, so no journal is made. |

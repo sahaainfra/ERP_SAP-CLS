@@ -1398,3 +1398,10 @@ Module `proc`, flag `ff.proc.p1510`, no table; service `src/server/modules/proc/
 - **Savings and competition** (ADR-559, ADR-560): awarded statement lines against the budget rate and L2; orders without competition.
 - **Project 360**: `registerProject360Widget('procurement', ...)` in `index.js` supplies the slot from `projectWidget`.
 - **Permissions**: `proc.analytics.{view,export}`. Parameters `proc.ana.target_*`.
+
+## 119. Stores, stock ledger and valuation (part 16.01)
+Module `inv` (new), flag `ff.inv.p1601`, tables `inv_stores`, `inv_store_changes`, `inv_bins`, `inv_stock_ledger`, `inv_balances`, `inv_valuation`, `inv_fifo_layers`, `inv_reservations`, `inv_adjustments`; services `src/server/modules/inv/stock.js` (engine) and `service.js`.
+- **Engine** (ADR-561, ADR-562): `postOne` and `postOut`; `wavgOut` and `fifoOut`; `integrity`.
+- **Stores** (ADR-563): `INV_STORE`, `INV_STORE_CHG`; **adjustments**: `INV_ADJ` posts on approval.
+- **Events** (ADR-564): `inv.stock.moved`, `inv.stock.transferred`, `inv.stock.reserved`, `inv.store.activated`, `inv.integrity.failed`; the subscriber `proc.stock_levels` in 15.01 updates `proc_stock_levels`.
+- **Permissions**: `inv.store.{view,create,edit,approve,export,all}`, `inv.bin.{view,manage}`, `inv.stock.{view,values,post,import,reverse,export,reconcile}`, `inv.reservation.{view,manage}`, `inv.adjustment.{view,create,submit,approve,cancel}`.

@@ -8630,6 +8630,76 @@ paths:
     get: { summary: 'Read analytics/cycle-time (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/analytics/compliance:
     get: { summary: 'Read analytics/compliance (part 15.10)', tags: [proc], responses: { '200': { description: OK } } }
+  /api/v1/inv/projects:
+    get: { summary: 'Read inv/projects (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/items:
+    get: { summary: 'Read inv/items (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/dashboard:
+    get: { summary: 'Read inv/dashboard (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/integrity:
+    get: { summary: 'Read inv/integrity (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/options:
+    get: { summary: 'Read inv/stores/options (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores:
+    get: { summary: 'Read inv/stores (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/stores (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/stores/{id}:
+    get: { summary: 'Read inv/stores/{id} (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/stores/{id} (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/submit:
+    post: { summary: 'Do inv/stores/{id}/submit (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/withdraw:
+    post: { summary: 'Do inv/stores/{id}/withdraw (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/cancel:
+    post: { summary: 'Do inv/stores/{id}/cancel (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/change:
+    post: { summary: 'Do inv/stores/{id}/change (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/deactivate:
+    post: { summary: 'Do inv/stores/{id}/deactivate (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/reactivate:
+    post: { summary: 'Do inv/stores/{id}/reactivate (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/history:
+    get: { summary: 'Read inv/stores/{id}/history (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/stores/{id}/bins:
+    post: { summary: 'Do inv/stores/{id}/bins (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/bins/{id}:
+    patch: { summary: 'Change inv/bins/{id} (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/bins/{id} (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/balances:
+    get: { summary: 'Read inv/balances (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/ledger:
+    get: { summary: 'Read inv/ledger (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/valuation:
+    get: { summary: 'Read inv/valuation (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/movements:
+    post: { summary: 'Do inv/movements (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/transfers:
+    post: { summary: 'Do inv/transfers (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/inspection:
+    post: { summary: 'Do inv/inspection (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/ledger/{id}/reverse:
+    post: { summary: 'Do inv/ledger/{id}/reverse (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/opening-stock:
+    post: { summary: 'Do inv/opening-stock (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/reservations:
+    get: { summary: 'Read inv/reservations (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/reservations (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/reservations/{id}/release:
+    post: { summary: 'Do inv/reservations/{id}/release (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/adjustments:
+    get: { summary: 'Read inv/adjustments (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/adjustments (part 16.01)', tags: [inv], responses: { '201': { description: OK } } }
+  /api/v1/inv/adjustments/{id}:
+    get: { summary: 'Read inv/adjustments/{id} (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/adjustments/{id} (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/adjustments/{id}/submit:
+    post: { summary: 'Do inv/adjustments/{id}/submit (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/adjustments/{id}/withdraw:
+    post: { summary: 'Do inv/adjustments/{id}/withdraw (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/adjustments/{id}/cancel:
+    post: { summary: 'Do inv/adjustments/{id}/cancel (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/adjustments/{id}/history:
+    get: { summary: 'Read inv/adjustments/{id}/history (part 16.01)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones:
     get: { summary: 'Read vendor-po/{token}/milestones (part 15.07)', tags: [proc], responses: { '200': { description: OK } } }
   /api/v1/proc/vendor-po/{token}/milestones/{mid}:
