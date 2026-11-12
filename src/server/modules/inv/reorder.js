@@ -13,6 +13,7 @@ import { json, nowIso, rid, same } from '../proc/base.js';
 export const INV_REORDER_DOC = 'INV_REORDER';
 export const CHANGE_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', RETURNED: 'Returned for correction', APPROVED: 'Approved', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
 export const SUGGESTION_STATUS = { OPEN: 'To decide', CONVERTED: 'Material request made', DISMISSED: 'Dismissed', SUPERSEDED: 'No longer needed' };
+/** @type {[string, number, number][]} */
 export const BUCKETS = [['0-30', 0, 30], ['31-90', 31, 90], ['91-180', 91, 180], ['181-365', 181, 365], ['>365', 366, Infinity]];
 const EDITABLE = ['DRAFT', 'RETURNED']; const IN_TYPES = ['OPENING', 'RECEIPT', 'RETURN', 'TRANSFER_IN', 'ADJUSTMENT'];
 
