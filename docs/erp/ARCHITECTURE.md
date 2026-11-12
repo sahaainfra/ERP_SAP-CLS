@@ -1414,3 +1414,10 @@ Module `inv`, flag `ff.inv.p1602`, tables `inv_gate_appointments`, `inv_gate_inw
 - **Parameters**: `inv.gate.weight_tolerance_pct` (percent x10000, 2% by default), `inv.gate.pass_validity_days`.
 - **Permissions**: `inv.inward.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,weigh,handover,exit}`, `inv.pass.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,verify,return}`, `inv.appointment.{view,create,cancel}`. Guards and security supervisors enter and weigh; storekeepers and store managers hand over and request passes; CM, STOREMGR and PM approve; procurement reads.
 
+## 121. Goods receipt, inspection hold and returns to vendor (part 16.03)
+Module `inv`, flag `ff.inv.p1603`, tables `inv_grns`, `inv_grn_lines`, `inv_rtvs`; service `src/server/modules/inv/grn.js` (routes `grnRoutes`, gated per path by its own flag).
+- **GRN** (ADR-569, ADR-571): `buildLines` (order balance, tolerance, batch, WBS), `decide` (posts through `stock.postOne`); workflow `INV_GRN` (store manager or construction manager; procurement manager for excess or no order).
+- **Inspection** (ADR-570): `inspect` releases or fails the held quantity. **Returns** (ADR-573): `INV_RTV` (procurement manager), `decide` takes stock out and raises the gate pass through `gate.passes.createForReturn`.
+- **Events**: `inv.grn.posted` (consumer `proc.po_receipts_from_grn`, ADR-572), `inv.grn.inspected`, `inv.grn.amended`, `inv.rtv.posted`. Parameter `inv.grn.excess_tolerance_pct`.
+- **Permissions**: `inv.grn.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,inspect,emergency}`, `inv.rtv.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import}`.
+

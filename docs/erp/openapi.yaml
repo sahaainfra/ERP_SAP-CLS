@@ -8811,3 +8811,57 @@ paths:
     get: { summary: 'Read inv/passes/{id}/history (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/passes/{id}/print:
     get: { summary: 'Read inv/passes/{id}/print (part 16.02)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/summary:
+    get: { summary: 'Read inv/grns/summary (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/ready:
+    get: { summary: 'Read inv/grns/ready (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/prefill:
+    get: { summary: 'Read inv/grns/prefill (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns:
+    get: { summary: 'Read inv/grns (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/grns (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/import:
+    post: { summary: 'Do inv/grns/import (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}:
+    get: { summary: 'Read inv/grns/{id} (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/grns/{id} (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/grns/{id} (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/submit:
+    post: { summary: 'Do inv/grns/{id}/submit (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/withdraw:
+    post: { summary: 'Do inv/grns/{id}/withdraw (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/cancel:
+    post: { summary: 'Do inv/grns/{id}/cancel (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/amend:
+    post: { summary: 'Do inv/grns/{id}/amend (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/inspection:
+    post: { summary: 'Do inv/grns/{id}/inspection (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/photos:
+    post: { summary: 'Do inv/grns/{id}/photos (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/certificates:
+    post: { summary: 'Do inv/grns/{id}/certificates (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/history:
+    get: { summary: 'Read inv/grns/{id}/history (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/grns/{id}/print:
+    get: { summary: 'Read inv/grns/{id}/print (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs:
+    get: { summary: 'Read inv/rtvs (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/rtvs (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/import:
+    post: { summary: 'Do inv/rtvs/import (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/{id}:
+    get: { summary: 'Read inv/rtvs/{id} (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/rtvs/{id} (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/rtvs/{id} (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/{id}/submit:
+    post: { summary: 'Do inv/rtvs/{id}/submit (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/{id}/withdraw:
+    post: { summary: 'Do inv/rtvs/{id}/withdraw (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/{id}/cancel:
+    post: { summary: 'Do inv/rtvs/{id}/cancel (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/{id}/amend:
+    post: { summary: 'Do inv/rtvs/{id}/amend (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/{id}/history:
+    get: { summary: 'Read inv/rtvs/{id}/history (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rtvs/{id}/print:
+    get: { summary: 'Read inv/rtvs/{id}/print (part 16.03)', tags: [inv], responses: { '200': { description: OK } } }

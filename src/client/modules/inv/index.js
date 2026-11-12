@@ -11,6 +11,9 @@ import GateExitPage from './GateExitPage.jsx';
 import GateRegisterPage from './GateRegisterPage.jsx';
 import GatePassesPage from './GatePassesPage.jsx';
 import GatePassPage from './GatePassPage.jsx';
+import GrnNewPage from './GrnNewPage.jsx';
+import GrnsPage from './GrnsPage.jsx';
+import RtvsPage from './RtvsPage.jsx';
 
 registerModule({
   code: 'inv',
@@ -28,5 +31,8 @@ registerModule({
     { path: '/inv/gate-register', label: 'Gate Register', icon: 'erp.group.supply', permission: 'inv.inward.view', flag: 'ff.inv.p1602', Page: GateRegisterPage },
     { path: '/inv/gate-passes', label: 'Returnable Gate Passes', icon: 'erp.group.supply', permission: 'inv.pass.view', flag: 'ff.inv.p1602', Page: GatePassesPage },
     { path: '/inv/gate-pass', label: 'Gate Pass Request', icon: 'erp.group.supply', permission: 'inv.pass.view', flag: 'ff.inv.p1602', Page: GatePassPage },
+    { path: '/inv/grn-new', label: 'Create GRN', icon: 'erp.group.supply', permission: 'inv.grn.create', flag: 'ff.inv.p1603', Page: GrnNewPage },
+    { path: '/inv/grns', label: 'Goods Receipts (GRNs)', icon: 'erp.group.supply', permission: 'inv.grn.view', flag: 'ff.inv.p1603', Page: GrnsPage },
+    { path: '/inv/rtvs', label: 'Returns to Vendor', icon: 'erp.group.supply', permission: 'inv.rtv.view', flag: 'ff.inv.p1603', Page: RtvsPage },
   ],
 });

@@ -32,6 +32,13 @@ export const gt = {
   passDelete: async (id) => (await api.delete(`/inv/passes/${id}`)).data,
   waiting: () => get('/inward?pageSize=50&filter[status]=HANDED_OVER&sort=-date'),
 };
+export const GRN_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+/** Goods receipts and returns to vendor (part 16.03): the server works out rejected quantities, excess, values, what may go back and what a person may do. */
+export const gr = {
+  summary: () => get('/grns/summary'), ready: () => get('/grns/ready'), prefill: (q) => get(`/grns/prefill${qs(q)}`),
+  grn: (id) => get(`/grns/${id}`), create: (b) => post('/grns', b), update: (id, b) => patch(`/grns/${id}`, b), act: (id, action, b) => post(`/grns/${id}/${action}`, b), history: (id) => get(`/grns/${id}/history`),
+  rtv: (id) => get(`/rtvs/${id}`), rtvCreate: (b) => post('/rtvs', b), rtvUpdate: (id, b) => patch(`/rtvs/${id}`, b), rtvAct: (id, action, b) => post(`/rtvs/${id}/${action}`, b), rtvHistory: (id) => get(`/rtvs/${id}/history`),
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
