@@ -47,6 +47,13 @@ export const is = {
   ret: (id) => get(`/site-returns/${id}`), retCreate: (b) => post('/site-returns', b), retAct: (id, action, b) => post(`/site-returns/${id}/${action}`, b), retHistory: (id) => get(`/site-returns/${id}/history`),
   freeProjects: () => get('/free-issue/projects'), free: (q) => get(`/free-issue${qs(q)}`), drill: (q) => get(`/free-issue/drill${qs(q)}`), reconcile: (b) => post('/free-issue/reconcile', b), certify: (rows) => post('/free-issue/certified', { rows }),
 };
+export const TRANSFER_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'IN_REVIEW', IN_TRANSIT: 'IN_REVIEW', RECEIVED: 'APPROVED', DISCREPANCY: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+/** Stock transfers and in-transit stock (part 16.05): quantities in transit, values, what is held and what a person may do come from the server. */
+export const tr = {
+  summary: () => get('/transfers/summary'), options: () => get('/transfers/options'), prefill: (q) => get(`/transfers/prefill${qs(q)}`),
+  transfer: (id) => get(`/transfers/${id}`), create: (b) => post('/transfers', b), update: (id, b) => patch(`/transfers/${id}`, b), act: (id, action, b) => post(`/transfers/${id}/${action}`, b), history: (id) => get(`/transfers/${id}/history`),
+  resolve: (id, did, b) => post(`/transfers/${id}/discrepancies/${did}/resolve`, b), inTransit: (q) => get(`/in-transit${qs(q)}`), incoming: () => get('/transfers?pageSize=50&filter[status]=IN_TRANSIT'),
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));

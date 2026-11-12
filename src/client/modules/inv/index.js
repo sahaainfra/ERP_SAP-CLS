@@ -18,6 +18,10 @@ import IssueNewPage from './IssueNewPage.jsx';
 import IssuesPage from './IssuesPage.jsx';
 import SiteReturnsPage from './SiteReturnsPage.jsx';
 import FreeIssuePage from './FreeIssuePage.jsx';
+import TransfersPage from './TransfersPage.jsx';
+import TransferNewPage from './TransferNewPage.jsx';
+import TransferReceivePage from './TransferReceivePage.jsx';
+import InTransitPage from './InTransitPage.jsx';
 
 registerModule({
   code: 'inv',
@@ -42,5 +46,9 @@ registerModule({
     { path: '/inv/issues', label: 'Material Issues', icon: 'erp.group.supply', permission: 'inv.issue.view', flag: 'ff.inv.p1604', Page: IssuesPage },
     { path: '/inv/site-returns', label: 'Site Returns', icon: 'erp.group.supply', permission: 'inv.site_return.view', flag: 'ff.inv.p1604', Page: SiteReturnsPage },
     { path: '/inv/free-issue', label: 'Subcontractor Free-Issue Reconciliation', icon: 'erp.group.supply', permission: 'inv.free_issue.view', flag: 'ff.inv.p1604', Page: FreeIssuePage },
+    { path: '/inv/transfers', label: 'Stock Transfers', icon: 'erp.group.supply', permission: 'inv.transfer.view', flag: 'ff.inv.p1605', Page: TransfersPage },
+    { path: '/inv/transfer-new', label: 'Transfer Request', icon: 'erp.group.supply', permission: 'inv.transfer.create', flag: 'ff.inv.p1605', Page: TransferNewPage },
+    { path: '/inv/transfer-receive', label: 'Receive Transfer', icon: 'erp.group.supply', permission: 'inv.transfer.receive', flag: 'ff.inv.p1605', Page: TransferReceivePage },
+    { path: '/inv/in-transit', label: 'In-Transit Stock Ageing', icon: 'erp.group.supply', permission: 'inv.transfer.view', flag: 'ff.inv.p1605', Page: InTransitPage },
   ],
 });
