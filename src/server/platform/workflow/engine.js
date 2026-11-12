@@ -351,6 +351,7 @@ export function createWorkflowEngine({ db, now = () => new Date() }) {
       if (action === 'answer') return answer(actor, task, inst, comment);
       if (version !== undefined && version !== task.version) throw conflict('This task was changed by someone else. Refresh it and decide again.');
       if (actor.user === inst.submitted_by && inst.status === 'RUNNING' && task.status === 'OPEN') throw SOD('You raised this document, so someone else must decide on it.');
+      if (action === 'approve') workflowTypes.get(inst.doc_type)?.hooks?.beforeApprove?.(db, { instance: present(inst), actor });
       const why = whyNot(actor, task, inst);
       if (why) throw (task.status !== 'OPEN' || inst.status !== 'RUNNING' ? conflict(why) : forbidden(why));
       const steps = stepsOf(inst);
