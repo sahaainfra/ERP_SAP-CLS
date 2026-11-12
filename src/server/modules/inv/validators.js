@@ -134,3 +134,17 @@ export const parseDisposalCreate = (b) => parse(z.object({ storeId: id, method: 
 export const parseDisposalUpdate = (b) => parse(z.object({ method: z.enum(DM), buyerPartnerId: id, invoiceNo: optText(40), amount: money, reason: optText(500), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
 export const parseScrapImport = (b) => parse(z.object({ rows: z.array(z.object({ storeCode: text(20).min(2), source: z.enum(SRC), description: text(200).min(2), qty: rqty, uom: text(20).min(1), weightKg: zqty.optional() }).strict().transform(defined)).min(1).max(500) }).strict(), b ?? {});
 export const parseExpiryQ = (q) => parse(z.object({ storeId: id.optional(), all: z.enum(['1']).optional() }).strict().transform((v) => ({ ...v, all: v.all === '1' })), q ?? {});
+
+// ---- part 16.07: reorder control, ageing and labels ----
+const rq0 = z.number().finite().min(0).max(1e9).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+const reorderLine = z.object({ itemId: id, minQty: rq0, maxQty: rq0, reorderLevel: rq0, reorderQty: rq0, leadDays: z.number().int().min(0).max(365).default(0), autoCalc: z.boolean().default(false) }).strict();
+export const parseReorderChange = (b) => parse(z.object({ storeId: id, effectiveFrom: day.optional(), reason: optText(500), lines: z.array(reorderLine).min(1).max(500) }).strict().transform(defined), b ?? {});
+export const parseReorderChangeUpdate = (b) => parse(z.object({ effectiveFrom: day, reason: optText(500), lines: z.array(reorderLine).min(1).max(500), rowVersion: z.number().int() }).partial().strict().transform(defined), b ?? {});
+export const parseReorderRecalc = (b) => parse(z.object({ storeId: id }).strict(), b ?? {});
+export const parseReorderImport = (b) => parse(z.object({ rows: z.array(z.object({ storeCode: text(20).min(2), itemCode: text(40).min(1), minQty: rq0, maxQty: rq0, reorderLevel: rq0, reorderQty: rq0, leadDays: z.number().int().min(0).max(365).optional(), autoCalc: z.boolean().optional() }).strict().transform(defined)).min(1).max(1000) }).strict(), b ?? {});
+export const parseReorderParamsQ = (q) => parse(z.object({ storeId: id.optional() }).strict().transform(defined), q ?? {});
+export const parseSuggestionConvert = (b) => parse(z.object({ ids: z.array(id).min(1).max(200) }).strict(), b ?? {});
+export const parseAgeingQ = (q) => parse(z.object({ storeId: id.optional(), itemId: id.optional(), class: z.enum(['ACTIVE', 'SLOW', 'NON_MOVING']).optional() }).strict().transform(defined), q ?? {});
+export const parseLabelTargetsQ = (q) => parse(z.object({ q: text(60).optional(), storeId: id.optional() }).strict().transform(defined), q ?? {});
+export const parseLabelPrint = (b) => parse(z.object({ type: z.enum(['ITEM', 'BIN', 'BATCH']), format: z.enum(['THERMAL', 'A4']), copies: z.number().int().min(1).max(100).default(1), storeId: id.optional(), refs: z.array(z.object({ itemId: id.optional(), binId: id.optional(), batchNo: text(40).optional() }).strict().transform(defined)).min(1).max(200) }).strict().transform(defined), b ?? {});
+export const parseScanQ = (q) => parse(z.object({ code: text(120).min(1) }).strict(), q ?? {});

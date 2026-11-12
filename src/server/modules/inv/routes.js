@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ } from './validators.js';
+import { forbidden, notFound } from '../../platform/http/errors.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ, parseReorderChange, parseReorderChangeUpdate, parseReorderRecalc, parseReorderImport, parseReorderParamsQ, parseSuggestionConvert, parseAgeingQ, parseLabelTargetsQ, parseLabelPrint, parseScanQ } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -247,5 +247,36 @@ export function countRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.get('/scrap-disposals/:id/history', (req, res) => ok(res, disposals.history(req.actor, pid(req))));
   r.get('/scrap-disposals/:id/print', (req, res) => file(res, disposals.print(req.actor, pid(req))));
   r.get('/expiry', (req, res) => ok(res, expiry.report(req.actor, parseExpiryQ(req.query))));
+  return r;
+}
+
+/** /api/v1/inv reorder control, stock ageing, redeployment, labels and scanning (part 16.07). Behind its own flag, ff.inv.p1607. */
+export function reorderRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { params, changes, suggestions, ageing, labels } = svc.reorder; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  r.use(['/reorder-params', '/reorder-changes', '/reorder-suggestions', '/ageing', '/redeployment', '/labels', '/scan'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1607') ? next() : next(notFound('Reorder control, ageing and labels are not enabled for your company yet.'))));
+  r.get('/reorder-params/options', (req, res) => ok(res, params.options(req.actor)));
+  r.get('/reorder-params', (req, res) => ok(res, params.list(req.actor, parseReorderParamsQ(req.query))));
+  r.get('/reorder-changes', (req, res) => res.json(changes.list(req.actor, req.query)));
+  r.post('/reorder-changes', idempotentRequired, (req, res) => ok(res, changes.create(req.actor, parseReorderChange(req.body)), 201));
+  r.post('/reorder-changes/import', idempotentRequired, (req, res) => ok(res, changes.importRows(req.actor, parseReorderImport(req.body)), 201));
+  r.post('/reorder-changes/recalc', idempotentRequired, (req, res) => ok(res, changes.recalc(req.actor, parseReorderRecalc(req.body)), 201));
+  r.get('/reorder-changes/:id', (req, res) => ok(res, changes.get(req.actor, pid(req))));
+  r.patch('/reorder-changes/:id', idempotent, (req, res) => ok(res, changes.update(req.actor, pid(req), parseReorderChangeUpdate(req.body))));
+  r.post('/reorder-changes/:id/submit', idempotentRequired, (req, res) => ok(res, changes.submit(req.actor, pid(req)), 202));
+  r.post('/reorder-changes/:id/withdraw', idempotent, (req, res) => ok(res, changes.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/reorder-changes/:id/cancel', idempotent, (req, res) => ok(res, changes.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/reorder-changes/:id/history', (req, res) => ok(res, changes.history(req.actor, pid(req))));
+  r.get('/reorder-suggestions/summary', (req, res) => ok(res, suggestions.summary(req.actor)));
+  r.get('/reorder-suggestions', (req, res) => res.json(suggestions.list(req.actor, req.query)));
+  r.post('/reorder-suggestions/run', idempotentRequired, (req, res) => { if (!svc.base.may(req.actor, 'inv.reorder.suggest')) throw forbidden('You may not run the reorder check (permission inv.reorder.suggest).'); ok(res, suggestions.run(req.actor)); });
+  r.post('/reorder-suggestions/convert', idempotentRequired, (req, res) => ok(res, suggestions.convert(req.actor, parseSuggestionConvert(req.body)), 201));
+  r.get('/reorder-suggestions/:id', (req, res) => ok(res, suggestions.get(req.actor, pid(req))));
+  r.post('/reorder-suggestions/:id/dismiss', idempotent, (req, res) => ok(res, suggestions.dismiss(req.actor, pid(req), parseReason(req.body))));
+  r.get('/ageing', (req, res) => ok(res, ageing.report(req.actor, parseAgeingQ(req.query))));
+  r.get('/redeployment', (req, res) => ok(res, ageing.redeploy(req.actor)));
+  r.get('/labels/targets', (req, res) => ok(res, labels.targets(req.actor, parseLabelTargetsQ(req.query))));
+  r.get('/labels/log', (req, res) => ok(res, labels.log(req.actor)));
+  r.post('/labels', idempotentRequired, (req, res) => ok(res, labels.print(req.actor, parseLabelPrint(req.body)), 201));
+  r.get('/scan', (req, res) => ok(res, labels.resolve(req.actor, parseScanQ(req.query).code)));
   return r;
 }
