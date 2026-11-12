@@ -21,6 +21,22 @@ export const iv = {
   adj: (id) => get(`/adjustments/${id}`), adjCreate: (b) => post('/adjustments', b), adjUpdate: (id, b) => patch(`/adjustments/${id}`, b), adjAct: (id, action, b) => post(`/adjustments/${id}/${action}`, b), adjHistory: (id) => get(`/adjustments/${id}/history`),
   decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
 };
+export const GATE_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', AT_GATE: 'IN_REVIEW', UNLOADING: 'IN_REVIEW', HANDED_OVER: 'APPROVED', EXITED: 'APPROVED', APPROVED: 'APPROVED', OUT: 'IN_REVIEW', CLOSED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' }) : '—');
+/** Gate control (part 16.02): the server decides every flag, variance and what a person may do. */
+export const gt = {
+  options: () => get('/gate/options'), dashboard: (q) => get(`/gate/dashboard${qs(q)}`), vendors: (q) => get(`/gate/vendors${qs({ q })}`), pos: (q) => get(`/gate/purchase-orders${qs(q)}`), check: (b) => post('/gate/check', b),
+  appointments: () => get('/appointments?pageSize=50&filter[status]=SCHEDULED'),
+  inward: (id) => get(`/inward/${id}`), inCreate: (b) => post('/inward', b), inUpdate: (id, b) => patch(`/inward/${id}`, b), inAct: (id, action, b) => post(`/inward/${id}/${action}`, b), inHistory: (id) => get(`/inward/${id}/history`),
+  pass: (id) => get(`/passes/${id}`), passCreate: (b) => post('/passes', b), passUpdate: (id, b) => patch(`/passes/${id}`, b), passAct: (id, action, b) => post(`/passes/${id}/${action}`, b), passHistory: (id) => get(`/passes/${id}/history`), verify: (b) => post('/passes/verify', b),
+  passDelete: async (id) => (await api.delete(`/inv/passes/${id}`)).data,
+  waiting: () => get('/inward?pageSize=50&filter[status]=HANDED_OVER&sort=-date'),
+};
+/** A file the server makes (print), saved by the browser. */
+export async function download(path, name) {
+  const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
+  const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 /** A CSV the browser saves, with cells that start like a formula neutralised. */
 export function saveCsv(name, rows) {
   const cell = (v) => { let s = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; return `"${s.replaceAll('"', '""')}"`; };

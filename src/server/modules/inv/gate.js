@@ -18,7 +18,7 @@ export const PASS_STATUS = { DRAFT: 'Draft', SUBMITTED: 'Waiting for approval', 
 export const PASS_TYPES = { RETURNABLE: 'Returnable (tools or equipment)', NON_RETURNABLE: 'Non-returnable (transfer or sale)', SCRAP: 'Scrap', VENDOR_RETURN: 'Material returned to a vendor' };
 export const APPT_STATUS = { SCHEDULED: 'Expected', ARRIVED: 'Arrived', MISSED: 'Missed', CANCELLED: 'Cancelled' };
 export const FLAGS = { NO_PO: 'No purchase order is quoted for this delivery.', PO_NOT_OPEN: 'The purchase order is not open for delivery.', VENDOR_MISMATCH: 'The vendor is not the vendor of the purchase order.', SITE_MISMATCH: 'The purchase order is for another project or site.', PO_FULLY_RECEIVED: 'The purchase order is already fully received.', ITEM_NOT_ON_PO: 'An item is not on the purchase order or has no balance to receive.', DUPLICATE_CHALLAN: 'This vendor challan number was already entered.', WEIGHT_VARIANCE: 'The weighed quantity differs from the challan by more than the tolerance.' };
-const EDITABLE = ['DRAFT', 'RETURNED']; const PHOTO_KINDS = ['VEHICLE', 'CHALLAN', 'SLIP', 'OTHER'];
+const EDITABLE = ['DRAFT', 'RETURNED'];
 const NEEDS_PM = ['NON_RETURNABLE', 'SCRAP'];
 
 for (const [key, def, description, min, max] of [
@@ -64,6 +64,7 @@ export function createGateService({ db, base, invSvc }) {
     if (!s || !may(actor, key, s.org_project_id, s.id)) throw notFound('That site does not exist, or you may not use it.'); return s;
   };
   const fileOf = (actor, fileId, entity, entityId) => { const f = db.prepare('SELECT id, original_name FROM core_files WHERE id = ? AND company_id = ? AND linked_entity = ? AND linked_id = ?').get(rid(fileId), actor.companyId, entity, entityId); if (!f) throw unprocessable('That file is not attached to this record. Upload it to the record first.'); return f; };
+  const taskOf = (actor, instanceId) => workflowOf(db).listTasks(actor, { mine: 'assigned', limit: 200 }).rows.find((t) => t.instance?.id === instanceId)?.id ?? null;
   const partner = (id) => (id ? db.prepare('SELECT id, code, legal_name AS name FROM mdm_partners WHERE id = ?').get(id) : null);
 
   // ---- the purchase order at the gate (FR-02) --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -109,6 +110,7 @@ export function createGateService({ db, base, invSvc }) {
       can: { edit: can('inv.inward.edit') && EDITABLE.includes(r.status), delete: can('inv.inward.delete') && r.status === 'DRAFT', submit: can('inv.inward.submit') && EDITABLE.includes(r.status), withdraw: r.status === 'SUBMITTED' && own, cancel: can('inv.inward.cancel') && ['DRAFT', 'RETURNED', 'SUBMITTED', 'AT_GATE'].includes(r.status), amend: can('inv.inward.amend') && ['AT_GATE', 'UNLOADING'].includes(r.status),
         weigh: can('inv.inward.weigh') && ['AT_GATE', 'UNLOADING'].includes(r.status), unload: can('inv.inward.handover') && ['AT_GATE', 'UNLOADING'].includes(r.status), handover: can('inv.inward.handover') && r.status === 'UNLOADING', exit: can('inv.inward.exit') && r.status === 'HANDED_OVER', photo: can('inv.inward.edit') || can('inv.inward.weigh') || can('inv.inward.create') } };
     if (detail) {
+      o.can.approve = r.status === 'SUBMITTED' && !own && can('inv.inward.approve'); if (o.can.approve && r.workflow_instance_id) o.taskId = taskOf(actor, r.workflow_instance_id);
       o.photos = photosOf(r); o.po = r.po_id ? { id: r.po_id, docNo: po?.doc_no, lines: poLines(r.po_id) } : null;
       o.unloadingStore = r.unloading_store_id ? db.prepare('SELECT id, code, name FROM inv_stores WHERE id = ?').get(r.unloading_store_id) : null; o.weighments = db.prepare('SELECT * FROM inv_gate_weighments WHERE inward_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id).map((x) => ({ ...weighView(x), superseded: Boolean(x.superseded) }));
     }
@@ -119,14 +121,14 @@ export function createGateService({ db, base, invSvc }) {
     if (!r || !may(actor, 'inv.inward.view', r.org_project_id, r.org_site_id)) throw notFound('That gate entry does not exist.'); if (key !== 'inv.inward.view') need(actor, key, 'do that to this gate entry', r.org_project_id, r.org_site_id); return r;
   };
   const apptOf = (actor, id, site) => { if (!id) return null; const a = db.prepare('SELECT * FROM inv_gate_appointments WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); if (!a || a.org_site_id !== site.id) throw unprocessable('That appointment is not for this site.'); return a; };
-  const inwardFields = (actor, b, site) => ({ vehicle_no: vno(b.vehicleNo), driver_name: b.driverName, driver_phone: b.driverPhone ?? null, transporter: b.transporter ?? null, challan_no: b.challanNo ?? null, challan_date: b.challanDate ?? null, challan_kg: b.challanKg == null ? null : t3(b.challanKg), eway_bill_no: b.ewayBillNo ?? null, material_desc: b.materialDesc, po_id: b.poId ?? null, vendor_id: b.vendorId ?? null, shipment_id: b.shipmentId ?? null, appointment_id: b.appointmentId ?? null });
+  const inwardFields = (actor, b) => ({ vehicle_no: vno(b.vehicleNo), driver_name: b.driverName, driver_phone: b.driverPhone ?? null, transporter: b.transporter ?? null, challan_no: b.challanNo ?? null, challan_date: b.challanDate ?? null, challan_kg: b.challanKg == null ? null : t3(b.challanKg), eway_bill_no: b.ewayBillNo ?? null, material_desc: b.materialDesc, po_id: b.poId ?? null, vendor_id: b.vendorId ?? null, shipment_id: b.shipmentId ?? null, appointment_id: b.appointmentId ?? null });
   const inward = {
     list(actor, query) { const sc = scope(actor, 'inv.inward.view'); return runList(db, inwardList, parseListRequest(inwardList, query), { select: 'x.*', scopeSql: sc.sql, params: sc.params, tieBreaker: 'x.id', map: (r) => ({ id: r.id, docNo: r.doc_no, date: r.entry_date, vehicle: r.vehicle_no, driver: r.driver_name, site: db.prepare('SELECT name FROM org_sites WHERE id = ?').get(r.org_site_id)?.name, vendor: partner(r.vendor_id)?.name ?? null, po: r.po_id ? db.prepare('SELECT doc_no FROM proc_purchase_orders WHERE id = ?').get(r.po_id)?.doc_no : null, challan: r.challan_no, timeIn: r.time_in, timeOut: r.time_out, unexpected: Boolean(r.unexpected), status: r.status, statusLabel: INWARD_STATUS[r.status] }) }); },
     get: (actor, id) => inwardView(actor, inRow(actor, id), { detail: true }),
     check: (actor, b) => { const site = siteOf(actor, b.siteId, 'inv.inward.create'); const c = checkPo(actor, b, site); return { flags: flagList(c.flags), unexpected: c.flags.length > 0, vendorId: c.vendorId }; },
     lookupPo,
     create(actor, b) {
-      const site = siteOf(actor, b.siteId, 'inv.inward.create'); apptOf(actor, b.appointmentId, site); const c = checkPo(actor, b, site); const f = inwardFields(actor, { ...b, vendorId: c.vendorId }, site);
+      const site = siteOf(actor, b.siteId, 'inv.inward.create'); apptOf(actor, b.appointmentId, site); const c = checkPo(actor, b, site); const f = inwardFields(actor, { ...b, vendorId: c.vendorId });
       return transaction(db, () => {
         const no = number(actor.companyId, actor.user, 'INV_GATE_INWARD', 'inv_gate_inward', 'GIN');
         const id = Number(db.prepare("INSERT INTO inv_gate_inward (company_id, doc_no, entry_date, org_project_id, org_site_id, appointment_id, vehicle_no, driver_name, driver_phone, transporter, vendor_id, po_id, shipment_id, challan_no, challan_date, challan_kg, eway_bill_no, material_desc, unexpected, flags_json, status, requested_by, project_id, site_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?, ?, ?, 'api')")
@@ -137,7 +139,7 @@ export function createGateService({ db, base, invSvc }) {
     update(actor, id, b) {
       const r = inRow(actor, id, 'inv.inward.edit'); if (!EDITABLE.includes(r.status)) throw conflict('Only a draft or a returned entry is changed.'); if (b.rowVersion && b.rowVersion !== r.version) throw conflict('Someone changed this entry; reload it.');
       const site = db.prepare('SELECT t.id, t.org_project_id FROM org_sites t WHERE t.id = ?').get(r.org_site_id); const merged = { vehicleNo: r.vehicle_no, driverName: r.driver_name, driverPhone: r.driver_phone, transporter: r.transporter, challanNo: r.challan_no, challanDate: r.challan_date, challanKg: kg(r.challan_kg), ewayBillNo: r.eway_bill_no, materialDesc: r.material_desc, poId: r.po_id, vendorId: r.vendor_id, shipmentId: r.shipment_id, appointmentId: r.appointment_id, ...b };
-      const c = checkPo(actor, merged, site, r.id); const f = inwardFields(actor, { ...merged, vendorId: merged.vendorId ?? c.vendorId }, site);
+      const c = checkPo(actor, merged, site, r.id); const f = inwardFields(actor, { ...merged, vendorId: merged.vendorId ?? c.vendorId });
       db.prepare('UPDATE inv_gate_inward SET vehicle_no = ?, driver_name = ?, driver_phone = ?, transporter = ?, challan_no = ?, challan_date = ?, challan_kg = ?, eway_bill_no = ?, material_desc = ?, po_id = ?, vendor_id = ?, shipment_id = ?, appointment_id = ?, unexpected = ?, flags_json = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?')
         .run(f.vehicle_no, f.driver_name, f.driver_phone, f.transporter, f.challan_no, f.challan_date, f.challan_kg, f.eway_bill_no, f.material_desc, f.po_id, f.vendor_id, f.shipment_id, f.appointment_id, c.flags.length ? 1 : 0, JSON.stringify(flagList(c.flags)), actor.user, nowIso(), r.id);
       audit(actor, 'inv_gate_inward', r.id, 'update', r.company_id); return inward.get(actor, r.id);
@@ -271,7 +273,7 @@ export function createGateService({ db, base, invSvc }) {
     const o = { id: p.id, docNo: p.doc_no, date: p.pass_date, siteId: p.org_site_id, site: site?.name, projectId: p.org_project_id, type: p.pass_type, typeLabel: PASS_TYPES[p.pass_type], returnable: Boolean(p.returnable), expectedReturn: p.expected_return, vendorId: p.vendor_id, vendor: partner(p.vendor_id)?.name ?? null, referenceType: p.reference_type, referenceId: p.reference_id, vehicleNo: p.vehicle_no, driverName: p.driver_name, destination: p.destination, purpose: p.purpose,
       timeOut: p.time_out, verifiedBy: p.verified_by, returnedOn: p.returned_on, returnedNote: p.returned_note, overdue: overdueOf(p), daysOverdue: overdueOf(p) ? Math.round((Date.parse(`${todayIST()}T00:00:00Z`) - Date.parse(`${p.expected_return}T00:00:00Z`)) / 86_400_000) : 0, status: p.status, statusLabel: PASS_STATUS[p.status], requestedBy: p.requested_by, approvedBy: p.approved_by, approvedAt: p.approved_at, workflowInstanceId: p.workflow_instance_id, amendmentNo: p.amendment_no, cancelReason: p.cancel_reason, rowVersion: p.version, itemCount: json(p.items_json, []).length,
       can: { edit: can('inv.pass.edit') && EDITABLE.includes(p.status), delete: can('inv.pass.delete') && p.status === 'DRAFT', submit: can('inv.pass.submit') && EDITABLE.includes(p.status), withdraw: p.status === 'SUBMITTED' && own, cancel: can('inv.pass.cancel') && ['DRAFT', 'RETURNED', 'SUBMITTED', 'APPROVED'].includes(p.status), amend: can('inv.pass.amend') && p.status === 'APPROVED', verify: can('inv.pass.verify') && p.status === 'APPROVED', markReturned: can('inv.pass.return') && p.status === 'OUT' && Boolean(p.returnable) } };
-    if (detail) { o.items = itemsOut(json(p.items_json, [])); if (['APPROVED', 'OUT', 'CLOSED'].includes(p.status)) { o.qrCode = p.qr_code; o.qrImage = qrImage(p.qr_code); } }
+    if (detail) { o.can.approve = p.status === 'SUBMITTED' && !own && can('inv.pass.approve'); if (o.can.approve && p.workflow_instance_id) o.taskId = taskOf(actor, p.workflow_instance_id); o.items = itemsOut(json(p.items_json, [])); if (['APPROVED', 'OUT', 'CLOSED'].includes(p.status)) { o.qrCode = p.qr_code; o.qrImage = qrImage(p.qr_code); } }
     return o;
   };
   const pRow = (actor, id, key = 'inv.pass.view') => {
