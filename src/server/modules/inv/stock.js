@@ -50,6 +50,8 @@ export function createStockEngine({ db, base }) {
     const store = t.store; const companyId = store.company_id; const item = itemOf(companyId, t.itemId); const problems = [];
     if (!item) fail([{ field: 'itemId', message: 'Not an item of this company' }]); if (!item.stock_tracked) fail([{ field: 'itemId', message: `${item.code} is not kept in stock` }]);
     if (store.store_status !== 'ACTIVE') throw unprocessable(`The store ${store.code} is not active: stock moves only in an approved store.`);
+    // 16.06 BR-02: while a count of this item is running in the store the stock does not move (the count window freeze)
+    const frozen = db.prepare("SELECT p.doc_no FROM inv_count_plans p WHERE p.store_id = ? AND p.status = 'COUNTING' AND p.freeze = 1 AND p.deleted_at IS NULL AND EXISTS (SELECT 1 FROM inv_count_lines l WHERE l.plan_id = p.id AND l.item_id = ? AND l.deleted_at IS NULL)").get(store.id, item.id); if (frozen) throw unprocessable(`${item.code} is being counted in ${store.code} (${frozen.doc_no}): it cannot move until the count is closed.`);
     const batch = (t.batchNo ?? '').trim(); const serial = (t.serialNo ?? '').trim(); const dir = t.type === 'REVALUATION' ? 'NONE' : (t.direction ?? (IN_TYPES.has(t.type) ? 'IN' : OUT_TYPES.has(t.type) ? 'OUT' : null));
     if (!dir) throw unprocessable('Give the direction of the entry.'); if (t.type !== 'REVALUATION' && !(t.qty > 0)) problems.push({ field: 'qty', message: 'Give a quantity above zero' });
     if (item.batch_tracked && !batch && t.type !== 'REVALUATION') problems.push({ field: 'batchNo', message: `${item.code} is kept by batch: give the batch number` });

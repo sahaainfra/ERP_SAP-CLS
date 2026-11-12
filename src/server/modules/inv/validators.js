@@ -119,3 +119,18 @@ export const parseResolve = (b) => parse(z.object({ action: z.enum(['WRITE_OFF',
 const tImp = z.object({ fromStore: text(20).min(2), toStore: text(20).min(2), itemCode: text(40).min(1), qty: rqty }).strict();
 export const parseTransferImport = (b) => parse(z.object({ rows: z.array(tImp).min(1).max(500) }).strict(), b ?? {});
 export const parseTransitQ = (q) => parse(z.object({ storeId: id.optional(), projectId: id.optional() }).strict(), q ?? {});
+
+// ---- physical verification and scrap (part 16.06) ----
+export const parseCountCreate = (b) => parse(z.object({ storeId: id, type: z.enum(['FULL', 'CYCLE']), abcClass: z.enum(['A', 'B', 'C']).optional(), scheduledDate: day, freeze: z.boolean().optional(), itemIds: z.array(id).max(500).optional() }).strict().transform(defined), b ?? {});
+export const parseCountUpdate = (b) => parse(z.object({ scheduledDate: day, abcClass: z.enum(['A', 'B', 'C']), freeze: z.boolean(), itemIds: z.array(id).max(500), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parseCounts = (b) => parse(z.object({ recount: z.boolean().optional(), lines: z.array(z.object({ lineId: id, qty: zqty }).strict()).min(1).max(500) }).strict().transform(defined), b ?? {});
+export const parseReasons = (b) => parse(z.object({ reasons: z.array(z.object({ lineId: id, reason: z.string().trim().min(3, 'Say why (at least 3 characters)').max(300) }).strict()).min(1).max(500) }).strict(), b ?? {});
+export const parseCountImport = (b) => parse(z.object({ planId: id, rows: z.array(z.object({ itemCode: text(40).min(1), bin: optText(20), batchNo: optText(40), qty: zqty }).strict().transform(defined)).min(1).max(1000) }).strict(), b ?? {});
+export const parseVarianceQ = (q) => parse(z.object({ planId: id.optional(), storeId: id.optional() }).strict(), q ?? {});
+const SRC = ['CUT_PIECES', 'DAMAGED', 'EXPIRED', 'COUNT_LOSS', 'OTHER'];
+export const parseScrapEntry = (b) => parse(z.object({ storeId: id, source: z.enum(SRC), description: text(200).min(2), itemId: id.optional(), batchNo: optText(40), qty: rqty, uom: text(20).min(1).optional(), weightKg: zqty.optional(), fromStock: z.boolean().optional() }).strict().transform(defined), b ?? {});
+const DM = ['SALE', 'AUCTION', 'WRITE_OFF'];
+export const parseDisposalCreate = (b) => parse(z.object({ storeId: id, method: z.enum(DM), buyerPartnerId: id.optional(), invoiceNo: optText(40), amount: money.optional(), reason: optText(500), entryIds: z.array(id).min(1).max(200) }).strict().transform(defined), b ?? {});
+export const parseDisposalUpdate = (b) => parse(z.object({ method: z.enum(DM), buyerPartnerId: id, invoiceNo: optText(40), amount: money, reason: optText(500), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parseScrapImport = (b) => parse(z.object({ rows: z.array(z.object({ storeCode: text(20).min(2), source: z.enum(SRC), description: text(200).min(2), qty: rqty, uom: text(20).min(1), weightKg: zqty.optional() }).strict().transform(defined)).min(1).max(500) }).strict(), b ?? {});
+export const parseExpiryQ = (q) => parse(z.object({ storeId: id.optional(), all: z.enum(['1']).optional() }).strict().transform((v) => ({ ...v, all: v.all === '1' })), q ?? {});

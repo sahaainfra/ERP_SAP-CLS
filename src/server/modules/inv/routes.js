@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ } from './validators.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -201,5 +201,51 @@ export function transferRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.get('/transfers/:id/history', (req, res) => ok(res, transfers.history(req.actor, pid(req))));
   r.get('/transfers/:id/print', (req, res) => file(res, transfers.print(req.actor, pid(req))));
   r.get('/in-transit', (req, res) => ok(res, inTransit.report(req.actor, parseTransitQ(req.query))));
+  return r;
+}
+
+/** /api/v1/inv physical verification, count variance, scrap and expiry (part 16.06). Behind its own flag, ff.inv.p1606. */
+export function countRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { plans, entries, disposals, expiry } = svc.count; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use(['/count-plans', '/count-variance', '/scrap-entries', '/scrap-disposals', '/expiry'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1606') ? next() : next(notFound('Physical verification and scrap are not enabled for your company yet (feature flag ff.inv.p1606 is OFF).'))));
+  r.get('/count-plans/due', (req, res) => ok(res, plans.due(req.actor)));
+  r.get('/count-plans/queue', (req, res) => ok(res, plans.queue(req.actor)));
+  r.get('/count-plans', (req, res) => res.json(plans.list(req.actor, req.query)));
+  r.post('/count-plans', idempotentRequired, (req, res) => ok(res, plans.create(req.actor, parseCountCreate(req.body)), 201));
+  r.post('/count-plans/import', idempotentRequired, (req, res) => { const b = parseCountImport(req.body); ok(res, plans.importRows(req.actor, b), 201); });
+  r.get('/count-plans/:id', (req, res) => ok(res, plans.get(req.actor, pid(req))));
+  r.patch('/count-plans/:id', idempotent, (req, res) => ok(res, plans.update(req.actor, pid(req), parseCountUpdate(req.body))));
+  r.delete('/count-plans/:id', (req, res) => ok(res, plans.remove(req.actor, pid(req))));
+  r.post('/count-plans/:id/submit', idempotentRequired, (req, res) => ok(res, plans.submit(req.actor, pid(req)), 202));
+  r.post('/count-plans/:id/withdraw', idempotent, (req, res) => ok(res, plans.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/count-plans/:id/cancel', idempotent, (req, res) => ok(res, plans.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/count-plans/:id/amend', idempotent, (req, res) => ok(res, plans.amend(req.actor, pid(req))));
+  r.post('/count-plans/:id/start', idempotentRequired, (req, res) => ok(res, plans.start(req.actor, pid(req))));
+  r.get('/count-plans/:id/sheet', (req, res) => ok(res, plans.sheet(req.actor, pid(req))));
+  r.post('/count-plans/:id/counts', idempotentRequired, (req, res) => { const b = parseCounts(req.body); ok(res, plans.record(req.actor, pid(req), { lines: b.lines, recount: Boolean(b.recount) })); });
+  r.post('/count-plans/:id/close', idempotentRequired, (req, res) => ok(res, plans.close(req.actor, pid(req))));
+  r.post('/count-plans/:id/review', idempotent, (req, res) => ok(res, plans.review(req.actor, pid(req), parseReasons(req.body))));
+  r.post('/count-plans/:id/adjustment', idempotentRequired, (req, res) => ok(res, plans.adjust(req.actor, pid(req)), 201));
+  r.get('/count-plans/:id/history', (req, res) => ok(res, plans.history(req.actor, pid(req))));
+  r.get('/count-plans/:id/print', (req, res) => file(res, plans.print(req.actor, pid(req))));
+  r.get('/count-variance', (req, res) => ok(res, plans.variance(req.actor, parseVarianceQ(req.query))));
+  r.get('/scrap-entries', (req, res) => res.json(entries.list(req.actor, req.query)));
+  r.post('/scrap-entries', idempotentRequired, (req, res) => ok(res, entries.create(req.actor, parseScrapEntry(req.body)), 201));
+  r.get('/scrap-entries/:id', (req, res) => ok(res, entries.get(req.actor, pid(req))));
+  r.post('/scrap-entries/:id/cancel', idempotent, (req, res) => ok(res, entries.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/scrap-disposals', (req, res) => res.json(disposals.list(req.actor, req.query)));
+  r.post('/scrap-disposals', idempotentRequired, (req, res) => ok(res, disposals.create(req.actor, parseDisposalCreate(req.body)), 201));
+  r.post('/scrap-disposals/import', idempotentRequired, (req, res) => ok(res, disposals.importRows(req.actor, parseScrapImport(req.body)), 201));
+  r.get('/scrap-disposals/:id', (req, res) => ok(res, disposals.get(req.actor, pid(req))));
+  r.patch('/scrap-disposals/:id', idempotent, (req, res) => ok(res, disposals.update(req.actor, pid(req), parseDisposalUpdate(req.body))));
+  r.delete('/scrap-disposals/:id', (req, res) => ok(res, disposals.remove(req.actor, pid(req))));
+  r.post('/scrap-disposals/:id/submit', idempotentRequired, (req, res) => ok(res, disposals.submit(req.actor, pid(req)), 202));
+  r.post('/scrap-disposals/:id/withdraw', idempotent, (req, res) => ok(res, disposals.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/scrap-disposals/:id/cancel', idempotent, (req, res) => ok(res, disposals.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/scrap-disposals/:id/amend', idempotent, (req, res) => ok(res, disposals.amend(req.actor, pid(req))));
+  r.get('/scrap-disposals/:id/history', (req, res) => ok(res, disposals.history(req.actor, pid(req))));
+  r.get('/scrap-disposals/:id/print', (req, res) => file(res, disposals.print(req.actor, pid(req))));
+  r.get('/expiry', (req, res) => ok(res, expiry.report(req.actor, parseExpiryQ(req.query))));
   return r;
 }
