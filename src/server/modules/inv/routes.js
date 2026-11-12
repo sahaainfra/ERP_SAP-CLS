@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { forbidden, notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ, parseReorderChange, parseReorderChangeUpdate, parseReorderRecalc, parseReorderImport, parseReorderParamsQ, parseSuggestionConvert, parseAgeingQ, parseLabelTargetsQ, parseLabelPrint, parseScanQ } from './validators.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate, parseAck, parseCertify, parseDrillQ, parseFreeIssueQ, parseIssueCreate, parseIssueImport, parseIssuePrefillQ, parseIssueUpdate, parseReconcile, parseReturnCreate, parseReturnImport, parseReturnUpdate, parseTargetQ, parseDispatch, parseReceive, parseResolve, parseTransferCreate, parseTransferImport, parseTransferPhoto, parseTransferPrefillQ, parseTransferUpdate, parseTransitQ, parseCountCreate, parseCountImport, parseCountUpdate, parseCounts, parseDisposalCreate, parseDisposalUpdate, parseExpiryQ, parseReasons, parseScrapEntry, parseScrapImport, parseVarianceQ, parseReorderChange, parseReorderChangeUpdate, parseReorderRecalc, parseReorderImport, parseReorderParamsQ, parseSuggestionConvert, parseAgeingQ, parseLabelTargetsQ, parseLabelPrint, parseScanQ, parseRtaMovement, parseRtaMovementUpdate, parseRtaImport, parseRtaAsset, parseRtaAssetUpdate, parseRtaHireQ, parseRtaBill, parseRtaRecQ, parseRtaRecUpdate, parseRtaHoldingQ } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -278,5 +278,41 @@ export function reorderRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.get('/labels/log', (req, res) => ok(res, labels.log(req.actor)));
   r.post('/labels', idempotentRequired, (req, res) => ok(res, labels.print(req.actor, parseLabelPrint(req.body)), 201));
   r.get('/scan', (req, res) => ok(res, labels.resolve(req.actor, parseScanQ(req.query).code)));
+  return r;
+}
+
+/** /api/v1/inv/rta returnable site assets: catalogue, movements, hire charges, recoveries, dashboard (part 16.08). Behind its own flag, ff.inv.p1608. The movements live under /rta because /inv/movements is the stock movement of 16.01. */
+export function rtaRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { catalogue, movements, hire, recoveries, dashboard } = svc.rta; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use('/rta', (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1608') ? next() : next(notFound('Returnable site assets are not enabled for your company yet.'))));
+  r.get('/rta/dashboard', (req, res) => ok(res, dashboard.summary(req.actor)));
+  r.get('/rta/reconciliation', (req, res) => ok(res, dashboard.reconcile(req.actor)));
+  r.get('/rta/options', (req, res) => ok(res, movements.options(req.actor)));
+  r.get('/rta/holdings', (req, res) => ok(res, movements.holdings(req.actor, parseRtaHoldingQ(req.query))));
+  r.get('/rta/catalogue/candidates', (req, res) => ok(res, catalogue.candidates(req.actor)));
+  r.get('/rta/catalogue', (req, res) => ok(res, catalogue.list(req.actor)));
+  r.post('/rta/catalogue', idempotentRequired, (req, res) => ok(res, catalogue.create(req.actor, parseRtaAsset(req.body)), 201));
+  r.patch('/rta/catalogue/:id', idempotent, (req, res) => ok(res, catalogue.update(req.actor, pid(req), parseRtaAssetUpdate(req.body))));
+  r.get('/rta/movements', (req, res) => res.json(movements.list(req.actor, req.query)));
+  r.post('/rta/movements', idempotentRequired, (req, res) => ok(res, movements.create(req.actor, parseRtaMovement(req.body)), 201));
+  r.post('/rta/movements/import', idempotentRequired, (req, res) => ok(res, movements.importRows(req.actor, parseRtaImport(req.body)), 201));
+  r.get('/rta/movements/:id', (req, res) => ok(res, movements.get(req.actor, pid(req))));
+  r.patch('/rta/movements/:id', idempotent, (req, res) => ok(res, movements.update(req.actor, pid(req), parseRtaMovementUpdate(req.body))));
+  r.delete('/rta/movements/:id', (req, res) => ok(res, movements.remove(req.actor, pid(req))));
+  r.post('/rta/movements/:id/submit', idempotentRequired, (req, res) => ok(res, movements.submit(req.actor, pid(req)), 202));
+  r.post('/rta/movements/:id/withdraw', idempotent, (req, res) => ok(res, movements.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rta/movements/:id/cancel', idempotent, (req, res) => ok(res, movements.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rta/movements/:id/amend', idempotent, (req, res) => ok(res, movements.amend(req.actor, pid(req)), 201));
+  r.get('/rta/movements/:id/history', (req, res) => ok(res, movements.history(req.actor, pid(req))));
+  r.get('/rta/movements/:id/print', (req, res) => file(res, movements.print(req.actor, pid(req))));
+  r.get('/rta/hire', (req, res) => ok(res, hire.list(req.actor, parseRtaHireQ(req.query))));
+  r.post('/rta/hire/:id/bill', idempotent, (req, res) => ok(res, hire.verifyBill(req.actor, pid(req), parseRtaBill(req.body))));
+  r.get('/rta/recoveries', (req, res) => ok(res, recoveries.list(req.actor, parseRtaRecQ(req.query))));
+  r.get('/rta/recoveries/:id', (req, res) => ok(res, recoveries.get(req.actor, pid(req))));
+  r.patch('/rta/recoveries/:id', idempotent, (req, res) => ok(res, recoveries.update(req.actor, pid(req), parseRtaRecUpdate(req.body))));
+  r.post('/rta/recoveries/:id/submit', idempotentRequired, (req, res) => ok(res, recoveries.submit(req.actor, pid(req)), 202));
+  r.post('/rta/recoveries/:id/withdraw', idempotent, (req, res) => ok(res, recoveries.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rta/recoveries/:id/cancel', idempotent, (req, res) => ok(res, recoveries.cancel(req.actor, pid(req), parseReason(req.body))));
   return r;
 }
