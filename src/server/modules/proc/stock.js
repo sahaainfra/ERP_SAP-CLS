@@ -28,8 +28,8 @@ export function createStockService({ db, base }) {
     return out;
   }
   /** What a service call or the ingest route may give: levels of items in stores, the latest figure replacing the one before. */
-  function ingest(actor, { levels }) {
-    need(actor, 'proc.stock.ingest', 'load the stock levels'); const day = todayIST(); const problems = []; const rows = [];
+  function apply(actor, { levels }) {
+    const day = todayIST(); const problems = []; const rows = [];
     levels.forEach((l, i) => { const it = db.prepare('SELECT id FROM mdm_items WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(l.itemId, actor.companyId); if (!it) problems.push({ field: `levels.${i}.itemId`, message: 'Not an item of this company' }); if (l.siteId && !db.prepare('SELECT 1 FROM org_sites WHERE id = ? AND company_id = ?').get(l.siteId, actor.companyId)) problems.push({ field: `levels.${i}.siteId`, message: 'Not a site of this company' }); rows.push(l); });
     fail(problems);
     return transaction(db, () => {
@@ -43,5 +43,9 @@ export function createStockService({ db, base }) {
       return { levels: rows.length, changed };
     });
   }
-  return { availability, ingest };
+  /** The levels from outside, for a person who holds the right to load them. */
+  const ingest = (actor, b) => { need(actor, 'proc.stock.ingest', 'load the stock levels'); return apply(actor, b); };
+  /** The levels the stock module (16.01) reports after a movement: no person, the module's own event (the right is checked where the movement was made). */
+  const apply_ = (companyId, levels) => apply({ user: 'system', companyId, roles: ['SYSTEM'] }, { levels });
+  return { availability, ingest, apply: apply_ };
 }

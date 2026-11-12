@@ -241,6 +241,7 @@ CREATE TABLE IF NOT EXISTS inv_reservations (
   item_id         INTEGER NOT NULL REFERENCES mdm_items (id),
   qty             INTEGER NOT NULL CHECK (qty > 0),
   qty_consumed    INTEGER NOT NULL DEFAULT 0 CHECK (qty_consumed >= 0),
+  alloc_json      TEXT    NOT NULL DEFAULT '[]',
   reservation_status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (reservation_status IN ('ACTIVE', 'CONSUMED', 'RELEASED')),
   needed_by       TEXT,
   released_reason TEXT,
