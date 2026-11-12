@@ -17723,6 +17723,242 @@ Indexes:
 - ix_ra_sor_items_company: company_id, item_code
 - ux_ra_sor_items_code (unique): book_id, item_code
 
+## rta_assets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| asset_group | TEXT | yes |  |  |
+| unit_weight | INTEGER | yes |  | 0 |
+| internal_rate | INTEGER | yes |  | 0 |
+| charge_basis | TEXT | yes |  | 'DAY' |
+| replacement_value | INTEGER | yes |  | 0 |
+| life_months | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rta_asset_item_id: item_id
+- ux_rta_asset_item (unique): company_id, item_id
+
+## rta_damage_recoveries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| movement_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| party_id | INTEGER |  |  |  |
+| loss_kind | TEXT | yes |  |  |
+| qty | INTEGER | yes |  |  |
+| amount | INTEGER | yes |  | 0 |
+| disposition | TEXT | yes |  |  |
+| reason | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: party_id -> mdm_partners(id), org_project_id -> org_projects(id), item_id -> mdm_items(id), movement_id -> rta_movements(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rta_rec_party: party_id
+- ix_rta_rec_project: org_project_id
+- ix_rta_rec_item: item_id
+- ix_rta_rec_movement: movement_id
+- ix_rta_rec_list: company_id, status
+- ux_rta_rec_doc (unique): company_id, doc_no
+
+## rta_hire_periods
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| vendor_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| movement_id | INTEGER |  |  |  |
+| holder_key | TEXT | yes |  | '' |
+| qty | INTEGER | yes |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT |  |  |  |
+| rate | INTEGER | yes |  | 0 |
+| charge_basis | TEXT | yes |  |  |
+| amount | INTEGER | yes |  | 0 |
+| period_status | TEXT | yes |  | 'OPEN' |
+| order_ref | TEXT |  |  |  |
+| bill_no | TEXT |  |  |  |
+| bill_amount | INTEGER |  |  |  |
+| bill_diff | INTEGER |  |  |  |
+| bill_status | TEXT |  |  |  |
+| bill_by | TEXT |  |  |  |
+| bill_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: movement_id -> rta_movements(id), org_project_id -> org_projects(id), vendor_id -> mdm_partners(id), item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rta_hire_holder: company_id, holder_key
+- ix_rta_hire_movement: movement_id
+- ix_rta_hire_project: org_project_id
+- ix_rta_hire_vendor: vendor_id
+- ix_rta_hire_item: item_id
+- ix_rta_hire_list: company_id, kind, period_status
+
+## rta_movements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| movement_type | TEXT | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| from_store_id | INTEGER |  |  |  |
+| to_store_id | INTEGER |  |  |  |
+| party_id | INTEGER |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| holding_id | INTEGER |  |  |  |
+| dest_project_id | INTEGER |  |  |  |
+| dest_site_id | INTEGER |  |  |  |
+| work_front | TEXT |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| ownership | TEXT | yes |  | 'OWNED' |
+| hire_id | INTEGER | yes |  | 0 |
+| qty | INTEGER | yes |  |  |
+| qty_good | INTEGER | yes |  | 0 |
+| qty_repairable | INTEGER | yes |  | 0 |
+| qty_scrap | INTEGER | yes |  | 0 |
+| qty_lost | INTEGER | yes |  | 0 |
+| movement_date | TEXT | yes |  |  |
+| expected_return | TEXT |  |  |  |
+| hire_rate | INTEGER | yes |  | 0 |
+| hire_basis | TEXT |  |  |  |
+| order_ref | TEXT |  |  |  |
+| reason | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| posted_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: dest_site_id -> org_sites(id), dest_project_id -> org_projects(id), holding_id -> rta_positions(id), vendor_id -> mdm_partners(id), party_id -> mdm_partners(id), to_store_id -> inv_stores(id), from_store_id -> inv_stores(id), org_project_id -> org_projects(id), item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rta_mov_dsite: dest_site_id
+- ix_rta_mov_dproject: dest_project_id
+- ix_rta_mov_holding: holding_id
+- ix_rta_mov_vendor: vendor_id
+- ix_rta_mov_party: party_id
+- ix_rta_mov_to: to_store_id
+- ix_rta_mov_from: from_store_id
+- ix_rta_mov_project: org_project_id
+- ix_rta_mov_item: item_id
+- ix_rta_mov_list: company_id, status, movement_date
+- ux_rta_mov_doc (unique): company_id, doc_no
+
+## rta_positions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| location_type | TEXT | yes |  |  |
+| location_id | INTEGER | yes |  | 0 |
+| party_id | INTEGER | yes |  | 0 |
+| holder_project_id | INTEGER | yes |  | 0 |
+| holder_site_id | INTEGER | yes |  | 0 |
+| work_front | TEXT | yes |  | '' |
+| ownership | TEXT | yes |  | 'OWNED' |
+| hire_id | INTEGER | yes |  | 0 |
+| qty | INTEGER | yes |  | 0 |
+| since_date | TEXT | yes |  |  |
+| expected_return | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rta_pos_list: company_id, location_type
+- ix_rta_pos_item: item_id
+- ux_rta_pos_key (unique): company_id, item_id, location_type, location_id, party_id, holder_project_id, holder_site_id, work_front, ownership, hire_id
+
 ## rti_indices
 
 | Column | Type | Not null | Key | Default |

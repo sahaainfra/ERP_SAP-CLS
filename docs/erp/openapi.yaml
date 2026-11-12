@@ -9080,5 +9080,56 @@ paths:
     post: { summary: 'Do inv/labels (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/scan:
     get: { summary: 'Read inv/scan (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/dashboard:
+    get: { summary: 'Read inv/rta/dashboard (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/reconciliation:
+    get: { summary: 'Read inv/rta/reconciliation (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/options:
+    get: { summary: 'Read inv/rta/options (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/holdings:
+    get: { summary: 'Read inv/rta/holdings (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/catalogue/candidates:
+    get: { summary: 'Read inv/rta/catalogue/candidates (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/catalogue:
+    get: { summary: 'Read inv/rta/catalogue (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/rta/catalogue (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/catalogue/{id}:
+    patch: { summary: 'Do inv/rta/catalogue/{id} (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements:
+    get: { summary: 'Read inv/rta/movements (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/rta/movements (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/import:
+    post: { summary: 'Do inv/rta/movements/import (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/{id}:
+    get: { summary: 'Read inv/rta/movements/{id} (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/rta/movements/{id} (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Do inv/rta/movements/{id} (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/{id}/submit:
+    post: { summary: 'Do inv/rta/movements/{id}/submit (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/{id}/withdraw:
+    post: { summary: 'Do inv/rta/movements/{id}/withdraw (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/{id}/cancel:
+    post: { summary: 'Do inv/rta/movements/{id}/cancel (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/{id}/amend:
+    post: { summary: 'Do inv/rta/movements/{id}/amend (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/{id}/history:
+    get: { summary: 'Read inv/rta/movements/{id}/history (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/movements/{id}/print:
+    get: { summary: 'Read inv/rta/movements/{id}/print (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/hire:
+    get: { summary: 'Read inv/rta/hire (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/hire/{id}/bill:
+    post: { summary: 'Do inv/rta/hire/{id}/bill (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/recoveries:
+    get: { summary: 'Read inv/rta/recoveries (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/recoveries/{id}:
+    get: { summary: 'Read inv/rta/recoveries/{id} (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/rta/recoveries/{id} (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/recoveries/{id}/submit:
+    post: { summary: 'Do inv/rta/recoveries/{id}/submit (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/recoveries/{id}/withdraw:
+    post: { summary: 'Do inv/rta/recoveries/{id}/withdraw (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/rta/recoveries/{id}/cancel:
+    post: { summary: 'Do inv/rta/recoveries/{id}/cancel (part 16.08)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/in-transit:
     get: { summary: 'Read inv/in-transit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }

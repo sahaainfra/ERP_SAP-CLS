@@ -1451,3 +1451,11 @@ Module `inv`, flag `ff.inv.p1607`, tables `inv_reorder_params`, `inv_reorder_cha
 - **Ageing** (ADR-593): `ageing.report` (buckets 0-30, 31-90, 91-180, 181-365, > 365; classes by `inv.ageing.slow_days`, `inv.ageing.nonmoving_days`), `ageing.redeploy`.
 - **Labels and scanning** (ADR-594): `labels.print` (logs and returns QR SVGs), `labels.resolve` behind `GET /inv/scan`; the client `ScanInput` is used in the GRN, issue, transfer and count screens.
 - **Events**: `inv.reorder.suggested`. **Permissions**: `inv.reorder.{view,edit,submit,approve,cancel,export,import,suggest}`, `inv.ageing.{view,export}`, `inv.label.{view,print}`.
+
+## 126. Returnable site assets (part 16.08)
+Module `inv`, flag `ff.inv.p1608`, tables `rta_assets`, `rta_positions`, `rta_movements`, `rta_hire_periods`, `rta_damage_recoveries`; service `src/server/modules/inv/rta.js` (routes `rtaRoutes`, under `/api/v1/inv/rta`).
+- **Movements** (ADR-596, ADR-597): receipt, issue, return, transfer, hire-in, hire-out, repair out and in; workflow `INV_RTA_MOVEMENT`; posting on approval between `rta_positions`.
+- **Hire** (ADR-598): `hireCharge` in quantity-days, `closeHire` cuts a closed slice, internal periods closed first-in first-out; vendor bill checked by `hire.verifyBill` (`inv.rta.bill_tolerance_pct`).
+- **Recoveries** (ADR-599): made at the approval of a return; workflow `INV_RTA_RECOVERY` (CM or QS, then PM); events `inv.rta.recovery_approved`, `inv.rta.hire_charged`, `inv.rta.moved`.
+- **Dashboard and reconciliation**: `dashboard.summary` (by location, idle `inv.rta.idle_days`, overdue), `dashboard.reconcile`; daily job `inv.rta_overdue` (08:30 India time).
+- **Permissions**: `inv.movement.*`, `inv.rta_asset.edit`, `inv.rta_hire.{view,verify,export}`, `inv.rta_recovery.{view,submit,approve}`.
