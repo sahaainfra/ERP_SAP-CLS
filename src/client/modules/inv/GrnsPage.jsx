@@ -33,7 +33,7 @@ function Grn({ t, id }) {
       <div className="actions-row no-print">
         {can.inspect && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || !Object.values(res).some((v) => Number(v.p) > 0 || Number(v.f) > 0)} onClick={inspect} data-testid="grn-inspect">{t('r.saveInspection')}</button>}
         {can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => gr.act(g.id, 'submit'), t('submitted'))} data-testid="grn-submit">{t('sendForApproval')}</button>}
-        {can.returnToVendor && <Link to={`/inv/rtvs?new=1&grn=${g.id}`} data-testid="grn-rtv">{t('r.returnToVendor')}</Link>}
+        {can.returnToVendor && <button type="button" className="btn" style={{ minHeight: 48 }} onClick={() => navigateTo(`/inv/rtvs?new=1&grn=${g.id}`)} data-testid="grn-rtv">{t('r.returnToVendor')}</button>}
         {can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('withdrawn'))}>{t('withdraw')}</button>}
         {can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('cancelled'))} data-testid="grn-cancel">{t('cancel')}</button>}
         {can.amend && <button type="button" className="btn" onClick={() => { const inv = window.prompt(t('r.newInvoiceNo')); if (inv) why2(inv); }}>{t('r.amendDocs')}</button>}
