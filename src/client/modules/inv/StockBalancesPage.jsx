@@ -13,7 +13,7 @@ export default function StockBalancesPage() {
   const t = useT('inv'); usePageTitle(t('balancesTitle')); const session = useSession(); const perms = session.data?.permissions ?? []; const { error, note, busy, run } = useRunner(); const [r, setR] = useState({ storeId: '', itemId: '', qty: '', sourceType: 'WORK_AUTHORISATION', sourceId: '' });
   const rq = useQuery({ queryKey: ['inv', 'reservations'], queryFn: () => iv.reservations({ status: 'ACTIVE' }), retry: false }); const sq = useQuery({ queryKey: ['inv', 'stores-pick'], queryFn: iv.stores, retry: false }); const iq = useQuery({ queryKey: ['inv', 'items-pick'], queryFn: () => iv.items(''), retry: false });
   if (rq.error?.status === 403) return <NoPermission what={t('balancesTitle')} permission="inv.reservation.view" />;
-  const canReserve = perms.includes('inv.reservation.manage');
+  const canReserve = perms.includes('inv.reservation.reserve');
   return (
     <section aria-labelledby="sb-h" data-testid="inv-sb"><h1 id="sb-h">{t('balancesTitle')}</h1><p className="muted">{t('balancesIntro')}</p>
       <div className="actions-row no-print"><Link to="/inv/ledger">{t('ledgerTitle')}</Link> <Link to="/inv/dashboard">{t('dashTitle')}</Link> {perms.includes('inv.stock.post') && <Link to="/inv/posting">{t('postingTitle')}</Link>}</div>
