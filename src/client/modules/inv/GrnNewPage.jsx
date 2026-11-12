@@ -1,3 +1,4 @@
+import { ScanInput } from './ScanParts.jsx';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
@@ -29,7 +30,8 @@ export default function GrnNewPage() {
           : <ul className="plain-list">{rd.data.map((e) => <li key={e.id} className="mdm-panel"><strong>{e.vehicleNo}</strong> · {e.docNo} · {e.material} · {e.poNo ?? t('g.noPo')} · {e.store} <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} onClick={() => setSrc({ gateInwardId: e.id, poId: null })} data-testid={`gn-pick-${e.id}`}>{t('r.makeGrn')}</button></li>)}</ul>}
         <Field label={t('r.orSearchPo')} name="q" error={null}><input value={q} onChange={(ev) => setQ(ev.target.value)} style={{ minHeight: 48 }} placeholder={t('g.typeToSearch')} data-testid="gn-po-q" /></Field>
         {(pq.data ?? []).map((p) => <button key={p.id} type="button" className="btn" style={{ minHeight: 48 }} onClick={() => setSrc({ gateInwardId: null, poId: p.id })} data-testid={`gn-po-${p.id}`}>{p.docNo} · {p.vendor}</button>)}</div>}
-      {src.gateInwardId || src.poId ? pf.isPending ? <Skeleton label={t('r.newTitle')} rows={4} /> : pf.isError ? <ErrorState error={pf.error} onRetry={pf.refetch} /> : f && (
+      {src.gateInwardId || src.poId ? pf.isPending ? <Skeleton label={t('r.newTitle')} rows={4} /> : pf.isError ? <ErrorState error={pf.error} onRetry={pf.refetch} /> : f && (<>
+        <ScanInput t={t} testId="gn-scan" onResult={(r) => { const i = f.lines.findIndex((l) => String(l.item).startsWith(`${r.code} `) || String(l.item) === r.code); if (i < 0) return; if (r.batchNo) line(i, 'batchNo', r.batchNo); setTimeout(() => document.querySelector(`[data-testid="gn-received-${i}"]`)?.focus(), 0); }} />
         <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
           <p><strong>{pf.data.vendor}</strong> · {pf.data.poNo ?? t('g.noPo')}{pf.data.gateNo ? ` · ${pf.data.gateNo}` : ''}{pf.data.netKg != null ? ` · ${t('g.net')} ${fmtQty(pf.data.netKg)} kg` : ''}</p>
           <div className="form-grid"><Field label={t('g.store')} name="storeId" error={error}><select value={f.storeId} onChange={(ev) => set('storeId', ev.target.value)} style={{ minHeight: 48 }} data-testid="gn-store"><option value="">{t('choose')}</option>{(sq.data ?? []).filter((s) => s.status === 'ACTIVE').map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field>
@@ -50,7 +52,7 @@ export default function GrnNewPage() {
               {!l.stockTracked && <p className="muted">{t('r.directCharge')}</p>}</div>))}
           <div className="actions-row">{[['MATERIAL', 'r.photoMaterial'], ['CHALLAN', 'g.photoChallan']].map(([kind, key]) => <PhotoButton key={kind} label={t(key)} done={Boolean(photos[kind])} onPick={(file) => setPhotos((x) => ({ ...x, [kind]: file }))} testId={`gn-photo-${kind.toLowerCase()}`} />)}</div>
           {error?.form && <p className="field-error" role="alert" data-testid="gn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
-          <div className="actions-row"><button type="submit" className="btn" style={{ minHeight: 52 }} disabled={busy || bad} data-testid="gn-save">{t('saveDraft')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 52 }} disabled={busy || bad || !online} onClick={() => save(true)} data-testid="gn-send">{t('sendForApproval')}</button></div></form>) : null}
+          <div className="actions-row"><button type="submit" className="btn" style={{ minHeight: 52 }} disabled={busy || bad} data-testid="gn-save">{t('saveDraft')}</button><button type="button" className="btn btn-primary" style={{ minHeight: 52 }} disabled={busy || bad || !online} onClick={() => save(true)} data-testid="gn-send">{t('sendForApproval')}</button></div></form></>) : null}
     </section>
   );
 }

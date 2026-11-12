@@ -6,6 +6,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtQty, iv, today, tr } from './api.js';
+import { ScanInput } from './ScanParts.jsx';
 
 // Transfer Request (part 16.05, FR-01): from store, to store, items, quantities and the date it is wanted. The request is approved by the construction manager of the source; between projects the project managers of both approve too.
 export default function TransferNewPage() {
@@ -22,6 +23,7 @@ export default function TransferNewPage() {
   const bad = !f.fromStoreId || !f.toStoreId || f.fromStoreId === f.toStoreId || !f.lines.some((l) => l.itemId && Number(l.qty) > 0);
   return (
     <section aria-labelledby="tn-h" data-testid="transfer-new"><h1 id="tn-h">{t('tr.newTitle')}</h1><p className="muted">{t('tr.newHelp')}</p><p><Link to="/inv/transfers">{t('tr.title')}</Link>{pf.data ? ` · ${pf.data.mrNo}` : ''}</p>
+      <ScanInput t={t} testId="tn-scan" onResult={(r) => { if (r.itemId) setF((x) => { const i = x.lines.findIndex((l) => !l.itemId); return i >= 0 ? { ...x, lines: x.lines.map((l, j) => (j === i ? { ...l, itemId: String(r.itemId) } : l)) } : { ...x, lines: [...x.lines, { itemId: String(r.itemId), qty: '' }] }; }); }} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('tr.from')} name="fromStoreId" error={error}><select value={f.fromStoreId} onChange={(ev) => set('fromStoreId', ev.target.value)} style={{ minHeight: 48 }} data-testid="tn-from"><option value="">{t('choose')}</option>{stores.map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}{s.project ? ` (${s.project})` : ''}</option>)}</select></Field>
         <Field label={t('tr.to')} name="toStoreId" error={error}><select value={f.toStoreId} onChange={(ev) => set('toStoreId', ev.target.value)} style={{ minHeight: 48 }} data-testid="tn-to"><option value="">{t('choose')}</option>{stores.filter((s) => String(s.id) !== f.fromStoreId).map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}{s.project ? ` (${s.project})` : ''}</option>)}</select></Field>

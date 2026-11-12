@@ -1,3 +1,4 @@
+import { ScanInput } from './ScanParts.jsx';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
@@ -26,6 +27,7 @@ export default function IssueNewPage() {
   const bad = !f.storeId || !f.waId || !f.lines.some((l) => Number(l.qty) > 0) || (toKind === 'SUBCONTRACTOR' && !f.toId) || (toKind !== 'SUBCONTRACTOR' && !(f.toKind === 'CREW' && f.toId) && !f.toName.trim());
   return (
     <section aria-labelledby="in-h" data-testid="issue-new"><h1 id="in-h">{t('i.newTitle')}</h1><p className="muted">{t('i.newHelp')}</p><p><Link to="/inv/issues">{t('i.issuesTitle')}</Link></p><OfflineNotice t={t} on={online} />
+      <ScanInput t={t} testId="is-scan" onResult={(r) => { const i = f.lines.findIndex((l) => l.itemId === r.itemId || String(l.item).startsWith(`${r.code} `)); if (i >= 0) setTimeout(() => document.querySelector(`[data-testid="is-qty-${i}"]`)?.focus(), 0); }} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('i.wa')} name="waId" error={error}><select value={f.waId} onChange={(ev) => set('waId', ev.target.value)} style={{ minHeight: 48 }} data-testid="is-wa"><option value="">{t('choose')}</option>{wq.data.map((w) => <option key={w.id} value={w.id}>{w.waNo} · {w.activity ?? ''} · {w.date}</option>)}</select></Field>
         <Field label={t('g.store')} name="storeId" error={error}><select value={f.storeId} onChange={(ev) => set('storeId', ev.target.value)} style={{ minHeight: 48 }} data-testid="is-store"><option value="">{t('choose')}</option>{(sq.data ?? []).filter((s) => s.status === 'ACTIVE').map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field>

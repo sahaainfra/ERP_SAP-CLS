@@ -37,7 +37,7 @@ export const parseRolePatch = (b) =>
 export const parseRoleChange = (b) =>
   parse(
     z.object({
-      permissions: z.object({ allow: z.array(key).max(500), deny: z.array(key).max(500).default([]) }).strict().optional(),
+      permissions: z.object({ allow: z.array(key).max(1000), deny: z.array(key).max(1000).default([]) }).strict().optional(),
       masks: z.array(z.object({ entity: z.string().min(1).max(60), field: z.string().min(1).max(60), rule: z.enum(/** @type {[string, ...string[]]} */ (MASK_RULES)) }).strict()).max(200).optional(),
       clearance: z.enum(/** @type {[string, ...string[]]} */ (CONFIDENTIALITY_LEVELS)).optional(),
       activate: z.boolean().optional(),

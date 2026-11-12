@@ -56,6 +56,7 @@ test('FR-02 a suggestion is dismissed with a reason; stock that recovers closes 
   assert.deepEqual(await r.run(), { made: 1, closed: 0 }, 'a dismissed suggestion lets the next check suggest again'); const s2 = (await r.open()).data[0];
   r.d.prepare("UPDATE inv_balances SET qty_in_transit = 20000 WHERE store_id = ? AND item_id = ?").run(st.id, r.cement); assert.deepEqual(await r.run(), { made: 0, closed: 1 }, 'projected 50 is above 40 once the transit counts'); assert.equal((await r.call(mgr, 'GET', `/reorder-suggestions/${s2.id}`)).json.data.status, 'SUPERSEDED');
   await r.move(st2, r.steel, 'RECEIPT', 5); await r.setParams(st2, [L(r.steel)]); await r.run(); const s3 = (await r.open()).data.find((x) => x.store === 'RP-B'); const bad = await r.call(mgr, 'POST', '/reorder-suggestions/convert', { ids: [s3.id] }); assert.equal(bad.status, 400); assert.match(JSON.stringify(bad.json), /no project and site/);
+  r.d.prepare('UPDATE inv_balances SET qty_in_transit = 0 WHERE store_id = ?').run(st.id); await r.run(); const s4 = (await r.open()).data.find((x) => x.store === 'RP-A'); assert.equal(s4.priority, 'NORMAL'); const ok = await r.call(mgr, 'POST', '/reorder-suggestions/convert', { ids: [s4.id] }); assert.equal(ok.status, 201, JSON.stringify(ok.json)); assert.equal(ok.json.data.requests[0].status, 'DRAFT');
 });
 
 test('FR-01 the automatic calculation works out the figures from the issues of the last days; they are a draft change that needs approval; an import makes one change per store', async () => {

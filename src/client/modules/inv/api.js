@@ -63,6 +63,13 @@ export const cn = {
   disposal: (id) => get(`/scrap-disposals/${id}`), disposalCreate: (b) => post('/scrap-disposals', b), disposalUpdate: (id, b) => patch(`/scrap-disposals/${id}`, b), disposalAct: (id, action, b) => post(`/scrap-disposals/${id}/${action}`, b), disposalHistory: (id) => get(`/scrap-disposals/${id}/history`),
   expiry: (q) => get(`/expiry${qs(q)}`), dealers: (q) => get(`/gate/vendors${qs({ q })}`),
 };
+/** Reorder control, stock ageing, labels and scanning (part 16.07): projections, ageing, redeployment and label codes come from the server. */
+export const ro = {
+  options: () => get('/reorder-params/options'), params: (storeId) => get(`/reorder-params${qs({ storeId })}`), change: (id) => get(`/reorder-changes/${id}`), changeCreate: (b) => post('/reorder-changes', b), changeUpdate: (id, b) => patch(`/reorder-changes/${id}`, b),
+  changeAct: (id, action, b) => post(`/reorder-changes/${id}/${action}`, b), changeHistory: (id) => get(`/reorder-changes/${id}/history`), recalc: (storeId) => post('/reorder-changes/recalc', { storeId }), importRows: (rows) => post('/reorder-changes/import', { rows }),
+  summary: () => get('/reorder-suggestions/summary'), suggestions: (status) => get(`/reorder-suggestions?pageSize=100${status ? `&filter[status]=${status}` : ''}`), run: () => post('/reorder-suggestions/run'), convert: (ids) => post('/reorder-suggestions/convert', { ids }), dismiss: (id, reason) => post(`/reorder-suggestions/${id}/dismiss`, { reason }),
+  ageing: (q) => get(`/ageing${qs(q)}`), redeploy: () => get('/redeployment'), targets: (q) => get(`/labels/targets${qs(q)}`), print: (b) => post('/labels', b), labelLog: () => get('/labels/log'), scan: (code) => get(`/scan${qs({ code })}`),
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));

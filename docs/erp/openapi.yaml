@@ -9034,5 +9034,51 @@ paths:
     get: { summary: 'Read inv/scrap-disposals/{id}/print (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/expiry:
     get: { summary: 'Read inv/expiry (part 16.06)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-params/options:
+    get: { summary: 'Read inv/reorder-params/options (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-params:
+    get: { summary: 'Read inv/reorder-params (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes:
+    get: { summary: 'Read inv/reorder-changes (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/reorder-changes (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes/import:
+    post: { summary: 'Do inv/reorder-changes/import (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes/recalc:
+    post: { summary: 'Do inv/reorder-changes/recalc (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes/{id}:
+    get: { summary: 'Read inv/reorder-changes/{id} (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/reorder-changes/{id} (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes/{id}/submit:
+    post: { summary: 'Do inv/reorder-changes/{id}/submit (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes/{id}/withdraw:
+    post: { summary: 'Do inv/reorder-changes/{id}/withdraw (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes/{id}/cancel:
+    post: { summary: 'Do inv/reorder-changes/{id}/cancel (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-changes/{id}/history:
+    get: { summary: 'Read inv/reorder-changes/{id}/history (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-suggestions/summary:
+    get: { summary: 'Read inv/reorder-suggestions/summary (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-suggestions:
+    get: { summary: 'Read inv/reorder-suggestions (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-suggestions/run:
+    post: { summary: 'Do inv/reorder-suggestions/run (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-suggestions/convert:
+    post: { summary: 'Do inv/reorder-suggestions/convert (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-suggestions/{id}:
+    get: { summary: 'Read inv/reorder-suggestions/{id} (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reorder-suggestions/{id}/dismiss:
+    post: { summary: 'Do inv/reorder-suggestions/{id}/dismiss (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/ageing:
+    get: { summary: 'Read inv/ageing (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/redeployment:
+    get: { summary: 'Read inv/redeployment (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/labels/targets:
+    get: { summary: 'Read inv/labels/targets (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/labels/log:
+    get: { summary: 'Read inv/labels/log (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/labels:
+    post: { summary: 'Do inv/labels (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/scan:
+    get: { summary: 'Read inv/scan (part 16.07)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/in-transit:
     get: { summary: 'Read inv/in-transit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }

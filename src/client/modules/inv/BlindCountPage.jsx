@@ -7,6 +7,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { cn } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import { ScanInput } from './ScanParts.jsx';
 
 // Blind Count (part 16.06, FR-02), made for the phone in the yard: the counter sees the item and the bin, never the book quantity; scanning or typing the item code finds the line; a difference beyond the tolerance comes back as a recount for another person.
 function Sheet({ t, id }) {
@@ -21,6 +22,7 @@ function Sheet({ t, id }) {
       {error?.form && <p className="field-error" role="alert" data-testid="sheet-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="sheet-note">{note}</p>}
       <div className="actions-row"><button type="button" className={`btn${recount ? '' : ' btn-primary'}`} style={{ minHeight: 48 }} onClick={() => setMode('count')} data-testid="mode-count">{t('cn.count')}</button><button type="button" className={`btn${recount ? ' btn-primary' : ''}`} style={{ minHeight: 48 }} onClick={() => setMode('recount')} data-testid="mode-recount">{t('cn.recount')}</button></div>
       <label>{t('cn.scanItem')}<input value={scan} onChange={(ev) => setScan(ev.target.value)} inputMode="search" autoComplete="off" style={{ minHeight: 48 }} data-testid="sheet-scan" /></label>
+      <ScanInput t={t} testId="sheet-qr" onResult={(r) => { if (r.code) setScan(r.code); }} />
       {lines.length === 0 ? <div className="mdm-panel" data-testid="sheet-empty"><h2>{t('cn.sheetEmptyTitle')}</h2><p>{t('cn.sheetEmptyBody')}</p></div> : (
         <ul className="card-list" data-testid="sheet-lines">{lines.map((l) => <li key={l.id} className="mdm-panel" data-testid={`sheet-line-${l.lineNo}`}><strong>{l.item}</strong><div className="muted">{l.bin}{l.batchNo ? ` · ${l.batchNo}` : ''} · {l.uom}</div>
           <label>{t('cn.qtyFound')}<input type="number" inputMode="decimal" min="0" step="any" value={vals[l.id] ?? ''} onChange={(ev) => setVals({ ...vals, [l.id]: ev.target.value })} style={{ minHeight: 56, fontSize: 20 }} data-testid={`sheet-qty-${l.lineNo}`} /></label></li>)}</ul>)}

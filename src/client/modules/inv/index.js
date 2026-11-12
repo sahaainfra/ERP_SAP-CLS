@@ -27,6 +27,10 @@ import CountPlansPage from './CountPlansPage.jsx';
 import BlindCountPage from './BlindCountPage.jsx';
 import CountVariancePage from './CountVariancePage.jsx';
 import ScrapPage from './ScrapPage.jsx';
+import ReorderParamsPage from './ReorderParamsPage.jsx';
+import ReorderSuggestionsPage from './ReorderSuggestionsPage.jsx';
+import AgeingPage from './AgeingPage.jsx';
+import LabelsPage from './LabelsPage.jsx';
 registerModule({
   code: 'inv',
   label: 'Stores and Inventory',
@@ -58,5 +62,9 @@ registerModule({
     { path: '/inv/blind-count', label: 'Blind Count', icon: 'erp.group.supply', permission: 'inv.count_plan.count', flag: 'ff.inv.p1606', Page: BlindCountPage },
     { path: '/inv/count-variance', label: 'Count Variance', icon: 'erp.group.supply', permission: 'inv.count_plan.view', flag: 'ff.inv.p1606', Page: CountVariancePage },
     { path: '/inv/scrap', label: 'Scrap, Disposal and Expiry', icon: 'erp.group.supply', permission: 'inv.scrap_disposal.view', flag: 'ff.inv.p1606', Page: ScrapPage },
+    { path: '/inv/reorder-params', label: 'Reorder Parameters', icon: 'erp.group.supply', permission: 'inv.reorder.view', flag: 'ff.inv.p1607', Page: ReorderParamsPage },
+    { path: '/inv/reorder-suggestions', label: 'Reorder Suggestions', icon: 'erp.group.supply', permission: 'inv.reorder.view', flag: 'ff.inv.p1607', Page: ReorderSuggestionsPage },
+    { path: '/inv/ageing', label: 'Stock Ageing and Non-moving', icon: 'erp.group.supply', permission: 'inv.ageing.view', flag: 'ff.inv.p1607', Page: AgeingPage },
+    { path: '/inv/labels', label: 'Print Labels', icon: 'erp.group.supply', permission: 'inv.label.print', flag: 'ff.inv.p1607', Page: LabelsPage },
   ],
 });

@@ -1443,3 +1443,11 @@ Module `inv`, flag `ff.inv.p1606`, tables `inv_count_plans`, `inv_count_lines`, 
 - **Scrap** (ADR-588, ADR-589): `entries` (register, held stock), `disposals` (sale, auction, write-off; workflow `INV_SCRAP`; gate pass `createForDisposal`); **expiry** report and daily job `inv.count_expiry_daily` (parameter `inv.expiry.alert_days`).
 - **Events**: `inv.count.closed`, `inv.scrap.recorded`, `inv.scrap.disposed`, `inv.scrap.sold`.
 - **Permissions**: `inv.count_plan.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,start,count,review}` and `inv.scrap_disposal.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,register}`.
+
+## 125. Reorder control, stock ageing and labels (part 16.07)
+Module `inv`, flag `ff.inv.p1607`, tables `inv_reorder_params`, `inv_reorder_changes`, `inv_reorder_suggestions`, `inv_labels`; service `src/server/modules/inv/reorder.js` (routes `reorderRoutes`, gated by the flag).
+- **Parameters** (ADR-590): live values changed by approved change sets (workflow `INV_REORDER`); `changes.recalc` works the figures out from the issues (`inv.reorder.history_days`, `inv.reorder.safety_days`); CSV import makes one draft change per store.
+- **Suggestions** (ADR-591, ADR-592): `suggestions.run` (daily job `inv.reorder_check` at 08:00 India time), `convert` (draft material requests through `procOf(db).mrSvc.mrs.create`), `dismiss`.
+- **Ageing** (ADR-593): `ageing.report` (buckets 0-30, 31-90, 91-180, 181-365, > 365; classes by `inv.ageing.slow_days`, `inv.ageing.nonmoving_days`), `ageing.redeploy`.
+- **Labels and scanning** (ADR-594): `labels.print` (logs and returns QR SVGs), `labels.resolve` behind `GET /inv/scan`; the client `ScanInput` is used in the GRN, issue, transfer and count screens.
+- **Events**: `inv.reorder.suggested`. **Permissions**: `inv.reorder.{view,edit,submit,approve,cancel,export,import,suggest}`, `inv.ageing.{view,export}`, `inv.label.{view,print}`.
