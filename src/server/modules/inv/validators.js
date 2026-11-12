@@ -182,3 +182,15 @@ export const parseAstLossCreate = (b) => parse(z.object(lossFieldsZ).partial({ r
 export const parseAstLossUpdate = (b) => parse(z.object({ ...lossFieldsZ, rowVersion: z.number().int() }).omit({ assetId: true }).partial().strict().transform(defined), b ?? {});
 export const parseAstStatementQ = (q) => parse(z.object({ employeeId: id }).strict(), q ?? {});
 export const parseAstCalDueQ = (q) => parse(z.object({ days: z.coerce.number().int().min(0).max(365).optional() }).strict().transform(defined), q ?? {});
+
+// ---- part 16.10: monthly material reconciliation ----
+const mrcPeriod = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month such as 2026-10');
+const MRC_REASONS = ['NORM_LOW', 'SPILLAGE', 'PILFERAGE', 'SUB_WASTAGE', 'REWORK', 'DPR_MISSING', 'STOCK_ERROR', 'OTHER'];
+export const parseMrcGenerate = (b) => parse(z.object({ projectId: id, siteId: id, period: mrcPeriod }).strict(), b ?? {});
+export const parseMrcLines = (b) => parse(z.object({ lines: z.array(z.object({ lineId: id, reasonCode: z.enum(MRC_REASONS).nullish(), explanation: z.string().trim().max(1000).nullish(), recoveryPartyId: id.nullish(), recoveryAmount: money.optional() }).strict().transform(defined)).max(200).default([]), note: optText(500).optional(), rowVersion: z.number().int().optional() }).strict().transform(defined), b ?? {});
+export const parseMrcStatusQ = (q) => parse(z.object({ period: mrcPeriod }).strict(), q ?? {});
+export const parseMrcTrendQ = (q) => parse(z.object({ itemId: id.optional(), siteId: id.optional(), from: mrcPeriod.optional(), to: mrcPeriod.optional() }).strict().transform(defined), q ?? {});
+export const parseMrcImport = (b) => parse(z.object({ rows: z.array(z.object({ docNo: text(40).min(3), itemCode: text(40).min(1), reasonCode: z.enum(MRC_REASONS).optional(), explanation: text(1000).optional() }).strict().transform(defined)).min(1).max(1000) }).strict(), b ?? {});
+export const parseMrcContribution = (b) => parse(z.object({ note: text(1000).min(3, 'Write the note'), lineId: id.optional() }).strict().transform(defined), b ?? {});
+export const parseMrcMaterial = (b) => parse(z.object({ itemId: id, defaultWastagePct: z.number().finite().min(0).max(100).optional() }).strict().transform(defined), b ?? {});
+export const parseMrcMaterialUpdate = (b) => parse(z.object({ defaultWastagePct: z.number().finite().min(0).max(100), rowVersion: z.number().int().optional() }).strict().transform(defined), b ?? {});

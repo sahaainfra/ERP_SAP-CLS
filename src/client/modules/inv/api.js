@@ -83,6 +83,12 @@ export const at = {
   loss: (id) => get(`/loss-reports/${id}`), lossCreate: (b) => post('/loss-reports', b), lossUpdate: (id, b) => patch(`/loss-reports/${id}`, b), lossAct: (id, action, b) => post(`/loss-reports/${id}/${action}`, b), lossHistory: (id) => get(`/loss-reports/${id}/history`),
   statement: (employeeId) => get(`/custody-statement${qs({ employeeId })}`), calibration: (days) => get(`/calibration-due${qs({ days })}`),
 };
+/** Monthly material reconciliation (part 16.10): every figure, variance and flag is worked out by the server; the page only shows them and takes the explanations. */
+export const mc = {
+  status: (period) => get(`/reconciliations/status${qs({ period })}`), recon: (id) => get(`/reconciliations/${id}`), generate: (b) => post('/reconciliations', b), recompute: (id) => post(`/reconciliations/${id}/recompute`), save: (id, b) => patch(`/reconciliations/${id}`, b), act: (id, action, b) => post(`/reconciliations/${id}/${action}`, b),
+  history: (id) => get(`/reconciliations/${id}/history`), drill: (lineId) => get(`/reconciliations/lines/${lineId}/drilldown`), contribute: (id, b) => post(`/reconciliations/${id}/contributions`, b), trend: (q) => get(`/reconciliations/trend${qs(q)}`),
+  materials: () => get('/reconciliation-materials'), candidates: () => get('/reconciliation-materials/candidates'), addMaterial: (b) => post('/reconciliation-materials', b), updateMaterial: (id, b) => patch(`/reconciliation-materials/${id}`, b), removeMaterial: async (id) => (await api.delete(`/inv/reconciliation-materials/${id}`)).data,
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));

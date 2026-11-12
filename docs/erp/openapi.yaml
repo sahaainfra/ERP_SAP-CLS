@@ -9203,5 +9203,44 @@ paths:
     get: { summary: 'Read inv/custody-statement (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/calibration-due:
     get: { summary: 'Read inv/calibration-due (part 16.09)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliation-materials/candidates:
+    get: { summary: 'Read inv/reconciliation-materials/candidates (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliation-materials:
+    get: { summary: 'Read inv/reconciliation-materials (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/reconciliation-materials (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliation-materials/{id}:
+    patch: { summary: 'Do inv/reconciliation-materials/{id} (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Do inv/reconciliation-materials/{id} (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/status:
+    get: { summary: 'Read inv/reconciliations/status (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/trend:
+    get: { summary: 'Read inv/reconciliations/trend (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/lines/{id}/drilldown:
+    get: { summary: 'Read inv/reconciliations/lines/{id}/drilldown (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations:
+    get: { summary: 'Read inv/reconciliations (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/reconciliations (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/import:
+    post: { summary: 'Do inv/reconciliations/import (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}:
+    get: { summary: 'Read inv/reconciliations/{id} (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Do inv/reconciliations/{id} (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Do inv/reconciliations/{id} (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/recompute:
+    post: { summary: 'Do inv/reconciliations/{id}/recompute (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/submit:
+    post: { summary: 'Do inv/reconciliations/{id}/submit (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/withdraw:
+    post: { summary: 'Do inv/reconciliations/{id}/withdraw (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/cancel:
+    post: { summary: 'Do inv/reconciliations/{id}/cancel (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/amend:
+    post: { summary: 'Do inv/reconciliations/{id}/amend (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/contributions:
+    post: { summary: 'Do inv/reconciliations/{id}/contributions (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/history:
+    get: { summary: 'Read inv/reconciliations/{id}/history (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/reconciliations/{id}/print:
+    get: { summary: 'Read inv/reconciliations/{id}/print (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/in-transit:
     get: { summary: 'Read inv/in-transit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
