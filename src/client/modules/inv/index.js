@@ -31,6 +31,10 @@ import ReorderParamsPage from './ReorderParamsPage.jsx';
 import ReorderSuggestionsPage from './ReorderSuggestionsPage.jsx';
 import AgeingPage from './AgeingPage.jsx';
 import LabelsPage from './LabelsPage.jsx';
+import RtaDashboardPage from './RtaDashboardPage.jsx';
+import RtaMovementsPage from './RtaMovementsPage.jsx';
+import RtaIssuePage from './RtaIssuePage.jsx';
+import RtaHirePage from './RtaHirePage.jsx';
 registerModule({
   code: 'inv',
   label: 'Stores and Inventory',
@@ -66,5 +70,9 @@ registerModule({
     { path: '/inv/reorder-suggestions', label: 'Reorder Suggestions', icon: 'erp.group.supply', permission: 'inv.reorder.view', flag: 'ff.inv.p1607', Page: ReorderSuggestionsPage },
     { path: '/inv/ageing', label: 'Stock Ageing and Non-moving', icon: 'erp.group.supply', permission: 'inv.ageing.view', flag: 'ff.inv.p1607', Page: AgeingPage },
     { path: '/inv/labels', label: 'Print Labels', icon: 'erp.group.supply', permission: 'inv.label.print', flag: 'ff.inv.p1607', Page: LabelsPage },
+    { path: '/inv/rta', label: 'Formwork and Scaffolding', icon: 'erp.group.supply', permission: 'inv.movement.view', flag: 'ff.inv.p1608', Page: RtaDashboardPage },
+    { path: '/inv/rta-movements', label: 'Returnable Asset Movements', icon: 'erp.group.supply', permission: 'inv.movement.view', flag: 'ff.inv.p1608', Page: RtaMovementsPage },
+    { path: '/inv/rta-issue', label: 'Issue or Return Assets', icon: 'erp.group.supply', permission: 'inv.movement.create', flag: 'ff.inv.p1608', Page: RtaIssuePage },
+    { path: '/inv/rta-hire', label: 'Hire Charges and Recoveries', icon: 'erp.group.supply', permission: 'inv.rta_hire.view', flag: 'ff.inv.p1608', Page: RtaHirePage },
   ],
 });

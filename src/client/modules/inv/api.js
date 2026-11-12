@@ -70,6 +70,13 @@ export const ro = {
   summary: () => get('/reorder-suggestions/summary'), suggestions: (status) => get(`/reorder-suggestions?pageSize=100${status ? `&filter[status]=${status}` : ''}`), run: () => post('/reorder-suggestions/run'), convert: (ids) => post('/reorder-suggestions/convert', { ids }), dismiss: (id, reason) => post(`/reorder-suggestions/${id}/dismiss`, { reason }),
   ageing: (q) => get(`/ageing${qs(q)}`), redeploy: () => get('/redeployment'), targets: (q) => get(`/labels/targets${qs(q)}`), print: (b) => post('/labels', b), labelLog: () => get('/labels/log'), scan: (code) => get(`/scan${qs({ code })}`),
 };
+/** Returnable site assets (part 16.08): quantities by location, hire charges, recoveries and what a person may do come from the server. */
+export const ra = {
+  dashboard: () => get('/rta/dashboard'), reconciliation: () => get('/rta/reconciliation'), options: () => get('/rta/options'), holdings: (itemId) => get(`/rta/holdings${qs({ itemId })}`),
+  catalogue: () => get('/rta/catalogue'), candidates: () => get('/rta/catalogue/candidates'), assetCreate: (b) => post('/rta/catalogue', b), assetUpdate: (id, b) => patch(`/rta/catalogue/${id}`, b),
+  movement: (id) => get(`/rta/movements/${id}`), create: (b) => post('/rta/movements', b), update: (id, b) => patch(`/rta/movements/${id}`, b), act: (id, action, b) => post(`/rta/movements/${id}/${action}`, b), history: (id) => get(`/rta/movements/${id}/history`),
+  hire: (q) => get(`/rta/hire${qs(q)}`), bill: (id, b) => post(`/rta/hire/${id}/bill`, b), recoveries: (q) => get(`/rta/recoveries${qs(q)}`), recUpdate: (id, b) => patch(`/rta/recoveries/${id}`, b), recAct: (id, action, b) => post(`/rta/recoveries/${id}/${action}`, b),
+};
 /** A file the server makes (print), saved by the browser. */
 export async function download(path, name) {
   const res = await fetch(`/api/v1/inv${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
