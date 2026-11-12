@@ -11,7 +11,8 @@ import { runtimeOf } from '../../platform/runtime/index.js';
 import { createFlagService } from '../core/api.js';
 import { createBase } from '../proc/base.js';
 import { ADJ_STATUS, INV_ADJ_DOC, INV_CHG_DOC, INV_STORE_DOC, STORE_STATUS, createInvService } from './service.js';
-import { invRoutes, gateRoutes } from './routes.js';
+import { invRoutes, gateRoutes, grnRoutes } from './routes.js';
+import { GRN_STATUS, INV_GRN_DOC, INV_RTV_DOC, RTV_STATUS, createGrnService } from './grn.js';
 import { APPT_STATUS, INV_INWARD_DOC, INV_PASS_DOC, INWARD_STATUS, PASS_STATUS, PASS_TYPES, createGateService } from './gate.js';
 
 const services = new WeakMap();
@@ -34,12 +35,16 @@ for (const [type, description] of [
   ['inv.gatepass.out', 'A gate pass was verified at the gate and the material left the site (part 16.02, to 19.06): data { passId, docNo, type, returnable, expectedReturn, siteId, vehicleNo, timeOut, items }.'],
   ['inv.gatepass.returned', 'Returnable material came back (part 16.02): data { passId, docNo, returnedOn, late }.'],
   ['inv.gatepass.overdue', 'A returnable gate pass is past its return date (part 16.02, FR-06): data { passId, docNo, expectedReturn, daysOverdue }.'],
+  ['inv.grn.posted', 'A goods receipt was approved and posted (part 16.03): data { grnId, docNo, receivedOn, storeId, storeCode, poId, vendorId, gateInwardId, challanNo, invoiceNo, emergency, totalValue, lines [{ lineId, poLineId, itemId, uom, receivedQty, acceptedQty, rejectedQty, rate, value, inspectionRequired, directCharge, wbsId, costCodeId, ledgerNo }] }. Stock (16.01) is posted in the same transaction; the purchase order (15.05), the accrual (23.02), inspection (18.03), the vendor scorecard (15.08) and invoice matching (22.06) consume it.'],
+  ['inv.grn.inspected', 'Quality control passed or failed part of a goods receipt (part 16.03): data { grnId, docNo, poId, vendorId, lines [{ lineId, itemId, passedQty, failedQty, status }] }.'],
+  ['inv.grn.amended', 'The documents of a posted goods receipt were corrected (part 16.03): data { grnId, docNo, challanNo, invoiceNo, amendmentNo }.'],
+  ['inv.rtv.posted', 'Material was returned to a vendor and left the stock (part 16.03, FR-05): data { rtvId, docNo, grnId, grnNo, poId, vendorId, storeId, reason, totalValue, gatePassId, debitNote, lines }. The debit note (23.03) is triggered by it.'],
   ['inv.integrity.failed', 'The nightly check found the stock balances different from the ledger (part 16.01): data { problems, kinds }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'inv', description });
 
 integrityRegistry.register({
-  statuses: { inv_stores: Object.keys(STORE_STATUS), inv_adjustments: Object.keys(ADJ_STATUS), inv_gate_inward: Object.keys(INWARD_STATUS), inv_gate_passes: Object.keys(PASS_STATUS), inv_gate_appointments: Object.keys(APPT_STATUS) },
-  uniqueKeys: [{ table: 'inv_gate_inward', columns: ['company_id', 'doc_no'] }, { table: 'inv_gate_passes', columns: ['company_id', 'doc_no'] }, { table: 'inv_gate_appointments', columns: ['company_id', 'doc_no'] }, { table: 'inv_stores', columns: ['company_id', 'code'] }, { table: 'inv_stock_ledger', columns: ['company_id', 'doc_no'] }, { table: 'inv_adjustments', columns: ['company_id', 'doc_no'] }, { table: 'inv_reservations', columns: ['company_id', 'doc_no'] }, { table: 'inv_store_changes', columns: ['company_id', 'doc_no'] }],
+  statuses: { inv_stores: Object.keys(STORE_STATUS), inv_adjustments: Object.keys(ADJ_STATUS), inv_gate_inward: Object.keys(INWARD_STATUS), inv_gate_passes: Object.keys(PASS_STATUS), inv_grns: Object.keys(GRN_STATUS), inv_rtvs: Object.keys(RTV_STATUS), inv_gate_appointments: Object.keys(APPT_STATUS) },
+  uniqueKeys: [{ table: 'inv_grns', columns: ['company_id', 'doc_no'] }, { table: 'inv_rtvs', columns: ['company_id', 'doc_no'] }, { table: 'inv_gate_inward', columns: ['company_id', 'doc_no'] }, { table: 'inv_gate_passes', columns: ['company_id', 'doc_no'] }, { table: 'inv_gate_appointments', columns: ['company_id', 'doc_no'] }, { table: 'inv_stores', columns: ['company_id', 'code'] }, { table: 'inv_stock_ledger', columns: ['company_id', 'doc_no'] }, { table: 'inv_adjustments', columns: ['company_id', 'doc_no'] }, { table: 'inv_reservations', columns: ['company_id', 'doc_no'] }, { table: 'inv_store_changes', columns: ['company_id', 'doc_no'] }],
 });
 
 /** Module "inv": stores, inventory and site logistics (M16). Part 16.01 holds the stores, bins, the append-only stock ledger, balances, valuation, reservations and adjustments. The tables are `inv_*`. */
@@ -49,17 +54,19 @@ export const inv = {
   routePrefix: '/api/v1/inv',
   ownerPart: '16.01',
   status: 'Stores and warehouses with bins, an append-only stock ledger, balances by item, store, bin, batch and owner, moving weighted average or FIFO valuation, reservations, project ownership with inter-project transfers, approved adjustments and revaluation, opening stock import and a nightly check that balances equal the ledger.',
-  tables: ['inv_stores', 'inv_store_changes', 'inv_bins', 'inv_stock_ledger', 'inv_balances', 'inv_valuation', 'inv_fifo_layers', 'inv_reservations', 'inv_adjustments', 'inv_gate_appointments', 'inv_gate_inward', 'inv_gate_weighments', 'inv_gate_passes'],
-  resources: ['stores', 'bins', 'balances', 'ledger', 'valuation', 'movements', 'transfers', 'inspection', 'opening-stock', 'reservations', 'adjustments', 'dashboard', 'integrity', 'gate', 'inward', 'passes', 'appointments'],
+  tables: ['inv_stores', 'inv_store_changes', 'inv_bins', 'inv_stock_ledger', 'inv_balances', 'inv_valuation', 'inv_fifo_layers', 'inv_reservations', 'inv_adjustments', 'inv_gate_appointments', 'inv_gate_inward', 'inv_gate_weighments', 'inv_gate_passes', 'inv_grns', 'inv_grn_lines', 'inv_rtvs'],
+  resources: ['stores', 'bins', 'balances', 'ledger', 'valuation', 'movements', 'transfers', 'inspection', 'opening-stock', 'reservations', 'adjustments', 'dashboard', 'integrity', 'gate', 'inward', 'passes', 'appointments', 'grns', 'rtvs'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'inv_stores'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db }); const invSvc = createInvService({ db, base });
-    const gateSvc = createGateService({ db, base, invSvc }); const svc = { flags, base, invSvc, gate: gateSvc, inwardDecide: gateSvc.inward.decide, passDecide: gateSvc.passes.decide, storeDecide: invSvc.stores.decide, changeDecide: invSvc.stores.changeDecide, adjDecide: invSvc.adjustments.decide }; services.set(db, svc);
+    const gateSvc = createGateService({ db, base, invSvc }); const grnSvc = createGrnService({ db, base, invSvc, gate: gateSvc }); const svc = { flags, base, invSvc, gate: gateSvc, grn: grnSvc, grnDecide: grnSvc.grns.decide, rtvDecide: grnSvc.rtvs.decide, inwardDecide: gateSvc.inward.decide, passDecide: gateSvc.passes.decide, storeDecide: invSvc.stores.decide, changeDecide: invSvc.stores.changeDecide, adjDecide: invSvc.adjustments.decide }; services.set(db, svc);
     listExports.register('inv.stores', { source: (actor, req) => invSvc.stores.exportSource(actor, req), hidden: () => [] });
     listExports.register('inv.balances', { source: (actor, req) => invSvc.balances.exportSource(actor, req), hidden: () => [] });
     listExports.register('inv.gate_inward', { source: (actor, req) => { base.need(actor, 'inv.inward.export', 'export the gate register'); return gateSvc.inward.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('inv.gate_passes', { source: (actor, req) => { base.need(actor, 'inv.pass.export', 'export gate passes'); return gateSvc.passes.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('inv.grns', { source: (actor, req) => { base.need(actor, 'inv.grn.export', 'export goods receipts'); return grnSvc.grns.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('inv.rtvs', { source: (actor, req) => { base.need(actor, 'inv.rtv.export', 'export returns to vendor'); return grnSvc.rtvs.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
     // 16.02: a dispatched shipment (15.07) is an expected delivery at the site; every morning the late returnables are told and missed appointments marked
     runtime?.bus?.subscribe(['proc.shipment.dispatched'], (e) => { if (flags.isOn({ companyId: Number(e.companyId ?? e.company_id) }, 'ff.inv.p1602')) gateSvc.appointments.onShipment(e); }, { consumer: 'inv.gate_appointments' });
@@ -70,6 +77,7 @@ export const inv = {
     runtime?.scheduler?.define({ code: 'inv.integrity_check_nightly', cron: '0 21 * * *', jobType: 'inv.integrity_check', description: 'Every night 02:30 India time: the stock balances are checked against the ledger' });
     const gateRouter = gateRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags });
     api.use('/inv', gateRouter);
+    api.use('/inv', grnRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
     const router = Router();
     router.use((req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1601') ? next() : next(notFound('Stores and stock are not enabled for your company yet (feature flag ff.inv.p1601 is OFF).'))));
     router.use(invRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
@@ -117,9 +125,27 @@ workflowTypes.register({
     { ...approver('CM', 'Construction manager or store manager', 'CM', 8), approvers: [{ kind: 'role', role: 'CM' }, { kind: 'role', role: 'STOREMGR' }] }, approver('PM', 'Project manager (non-returnable material or scrap)', 'PM', 24, { field: 'needPm', op: 'eq', value: 'yes' })] }, hooks: hooks('passDecide'),
 });
 
+const gLine = (db, id) => db.prepare('SELECT g.*, s.code AS scode, v.legal_name AS vname FROM inv_grns g JOIN inv_stores s ON s.id = g.store_id JOIN mdm_partners v ON v.id = g.vendor_id WHERE g.id = ?').get(id);
+workflowTypes.register({
+  docType: INV_GRN_DOC, label: 'Goods receipt', processOwner: 'STOREMGR', route: (id) => `/inv/grns?id=${id}`,
+  describe(db, companyId, id) { const g = gLine(db, Number(id)); return g && g.company_id === companyId ? { ref: g.doc_no, title: `${g.doc_no} ${g.vname} into ${g.scode}`, originator: g.requested_by, projectId: g.org_project_id } : null; },
+  summarise(db, _actor, id) { const g = gLine(db, Number(id)); if (!g) return null; const ls = db.prepare('SELECT l.*, i.code FROM inv_grn_lines l JOIN mdm_items i ON i.id = l.item_id WHERE l.grn_id = ? AND l.deleted_at IS NULL ORDER BY l.line_no').all(g.id); return { fields: [{ label: 'Vendor', value: g.vname }, { label: 'Store', value: g.scode }, { label: 'Challan', value: g.challan_no ?? 'none' }, { label: 'Order', value: g.po_id ? db.prepare('SELECT doc_no FROM proc_purchase_orders WHERE id = ?').get(g.po_id)?.doc_no : `none (emergency: ${g.emergency_why})` }, { label: 'Excess over the order', value: g.excess ? 'yes' : 'no' }, { label: 'Lines', value: ls.map((l) => `${l.code}: received ${l.received_qty / 1000}, accepted ${l.accepted_qty / 1000}`).join('; ') }] }; },
+  defaultDefinition: { name: 'Goods receipt: the store manager or construction manager; the procurement manager for an excess or a receipt without an order', settings: { resubmit: 'first', distinctApprovers: true }, steps: [
+    { ...approver('STOREMGR', 'Store manager or construction manager', 'STOREMGR', 12), approvers: [{ kind: 'role', role: 'STOREMGR' }, { kind: 'role', role: 'CM' }] }, approver('PROCMGR', 'Procurement manager (excess or no order)', 'PROCMGR', 24, { field: 'needProc', op: 'eq', value: 'yes' })] }, hooks: hooks('grnDecide'),
+});
+const rLine = (db, id) => db.prepare('SELECT r.*, v.legal_name AS vname, g.doc_no AS gno FROM inv_rtvs r JOIN mdm_partners v ON v.id = r.vendor_id JOIN inv_grns g ON g.id = r.grn_id WHERE r.id = ?').get(id);
+workflowTypes.register({
+  docType: INV_RTV_DOC, label: 'Return to vendor', processOwner: 'PROCMGR', route: (id) => `/inv/rtvs?id=${id}`,
+  describe(db, companyId, id) { const r = rLine(db, Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.doc_no} ${r.vname}: ${r.reason}`, originator: r.requested_by, projectId: r.org_project_id, amount: r.total_value } : null; },
+  summarise(db, _actor, id) { const r = rLine(db, Number(id)); if (!r) return null; return { fields: [{ label: 'Vendor', value: r.vname }, { label: 'Receipt', value: r.gno }, { label: 'Reason', value: r.reason }, { label: 'Value', value: String(r.total_value / 100) }, { label: 'Lines', value: JSON.parse(r.lines_json ?? '[]').map((l) => `${l.qty / 1000} ${l.uom}`).join('; ') }] }; },
+  defaultDefinition: { name: 'Return to vendor: the procurement manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PROCMGR', 'Procurement manager', 'PROCMGR', 24)] }, hooks: hooks('rtvDecide'),
+});
+
 /** @type {any[][]} */
 const invObjects = [
   ['inv_store', 'Store', 'inv.store.view', 'inv_stores', (s, a, id) => s.invSvc.stores.get(a, id), (r) => ({ projectId: r.projectId ?? undefined, status: r.status }), (r) => ({ label: `${r.code} ${r.name}`, status: r.status }), '/inv/stores', 'code'],
+  ['inv_grn', 'Goods receipt', 'inv.grn.view', 'inv_grns', (s, a, id) => s.grn.grns.get(a, id), (r) => ({ projectId: r.projectId ?? undefined, status: r.status }), (r) => ({ label: `${r.docNo} ${r.vendor}`, status: r.status }), '/inv/grns', 'doc_no'],
+  ['inv_rtv', 'Return to vendor', 'inv.rtv.view', 'inv_rtvs', (s, a, id) => s.grn.rtvs.get(a, id), (r) => ({ projectId: r.projectId ?? undefined, status: r.status }), (r) => ({ label: `${r.docNo} ${r.vendor}`, status: r.status }), '/inv/rtvs', 'doc_no'],
   ['inv_gate_inward', 'Gate entry', 'inv.inward.view', 'inv_gate_inward', (s, a, id) => s.gate.inward.get(a, id), (r) => ({ projectId: r.projectId ?? undefined, status: r.status }), (r) => ({ label: `${r.docNo} ${r.vehicleNo}`, status: r.status }), '/inv/gate-entry', 'doc_no'],
   ['inv_gate_pass', 'Gate pass', 'inv.pass.view', 'inv_gate_passes', (s, a, id) => s.gate.passes.get(a, id), (r) => ({ projectId: r.projectId ?? undefined, status: r.status }), (r) => ({ label: `${r.docNo} ${r.destination}`, status: r.status }), '/inv/gate-pass', 'doc_no'],
   ['inv_adjustment', 'Stock adjustment', 'inv.adjustment.view', 'inv_adjustments', (s, a, id) => s.invSvc.adjustments.get(a, id), (r) => ({ status: r.status }), (r) => ({ label: `${r.docNo} ${r.store}`, status: r.status }), '/inv/adjustments', 'doc_no'],

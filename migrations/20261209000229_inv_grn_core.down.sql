@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS inv_rtvs;
+DROP TABLE IF EXISTS inv_grn_lines;
+DROP TABLE IF EXISTS inv_grns;

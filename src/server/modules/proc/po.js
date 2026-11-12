@@ -369,8 +369,8 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
     const l = db.prepare('SELECT received_qty FROM proc_po_lines WHERE id = ?').get(lineId); let left = l.received_qty; for (const s of schedOf(lineId)) { const q = Math.min(left, s.qty); db.prepare('UPDATE proc_po_schedules SET received_qty = ? WHERE id = ?').run(q, s.id); left -= q; }
   }
   const receipts = {
-    ingest(actor, { receipts: rows }) {
-      need(actor, 'proc.purchase_order.receipts', 'post receipts'); const problems = []; const out = { posted: 0, duplicates: 0 };
+    ingest(actor, { receipts: rows }, { system = false } = {}) {
+      if (!system) need(actor, 'proc.purchase_order.receipts', 'post receipts'); const problems = []; const out = { posted: 0, duplicates: 0 };
       rows.forEach((x, i) => { const l = db.prepare('SELECT l.*, p.status AS pstatus, p.company_id AS cid FROM proc_po_lines l JOIN proc_purchase_orders p ON p.id = l.po_id WHERE l.id = ? AND l.deleted_at IS NULL').get(x.poLineId); if (!l || l.cid !== actor.companyId) { problems.push({ field: `receipts.${i}.poLineId`, message: 'Not a line of an order of this company' }); return; } if (l.pstatus !== 'APPROVED') problems.push({ field: `receipts.${i}.poLineId`, message: 'The order is not open' }); const tol = Number(param(actor.companyId, 'proc.po.qty_tolerance_pct') ?? 5); if (l.received_qty + q3(x.qty) > l.qty + Math.round((l.qty * tol) / 100)) problems.push({ field: `receipts.${i}.qty`, message: 'More than the order quantity and tolerance' }); if (x.acceptedQty > x.qty) problems.push({ field: `receipts.${i}.acceptedQty`, message: 'Accepted is not more than received' }); });
       fail(problems);
       return transaction(db, () => { const touched = new Set();

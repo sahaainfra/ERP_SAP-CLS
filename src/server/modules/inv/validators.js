@@ -62,3 +62,23 @@ export const parseReturn = (b) => parse(z.object({ note: optText(300) }).strict(
 const pRow = z.object({ siteCode: text(30).min(1), projectCode: optText(30), type: z.enum(PTYPES), expectedReturn: day.nullish().transform((v) => v || null), destination: text(200).min(2), purpose: text(300).min(3), vehicleNo: vehicle.nullish().transform((v) => v || null), driverName: optText(80), description: text(200).min(2), qty, uom: text(20).min(1) }).strict().transform(defined);
 export const parsePassImport = (b) => parse(z.object({ rows: z.array(pRow).min(1).max(200) }).strict(), b ?? {});
 export const parseApptCreate = (b) => parse(z.object({ siteId: id, expectedOn: day, slot: optText(30), vendorId: id.nullish().transform((v) => v || null), poId: id.nullish().transform((v) => v || null), vehicleNo: vehicle.nullish().transform((v) => v || null), driverName: optText(80), driverPhone: phone, materialDesc: optText(300) }).strict().transform(defined), b ?? {});
+
+// ---- goods receipt and returns to vendor (part 16.03) ----
+const rqty = z.number().finite().min(0.001).max(1e9).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+const zqty = z.number().finite().min(0).max(1e9).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+const grnLine = z.object({ poLineId: id.nullish().transform((v) => v || undefined), itemId: id.optional(), uom: text(20).min(1).optional(), rate: money.optional(), challanQty: zqty.optional(), receivedQty: rqty, acceptedQty: zqty.optional(), batchNo: optText(40), heatNo: optText(40), mfgDate: day.nullish().transform((v) => v || null), certFileId: id.nullish().transform((v) => v || null), inspectionRequired: z.boolean().optional(), wbsId: id.nullish().transform((v) => v || null), costCodeId: id.nullish().transform((v) => v || null) }).strict().transform(defined);
+const grnHead = { challanNo: optText(40), challanDate: day.nullish().transform((v) => v || null), invoiceNo: optText(40), receivedDate: day.optional() };
+export const parseGrnCreate = (b) => parse(z.object({ storeId: id.optional(), gateInwardId: id.optional(), poId: id.optional(), vendorId: id.optional(), emergency: z.boolean().optional(), emergencyWhy: optText(500), ...grnHead, lines: z.array(grnLine).min(1).max(200) }).strict().transform(defined), b ?? {});
+export const parseGrnUpdate = (b) => parse(z.object({ ...grnHead, lines: z.array(grnLine).min(1).max(200), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+export const parsePrefillQ = (q) => parse(z.object({ gateInwardId: id.optional(), poId: id.optional() }).strict(), q ?? {});
+export const parseGrnPhoto = (b) => parse(z.object({ fileId: id, kind: z.enum(['MATERIAL', 'CHALLAN', 'DAMAGE', 'OTHER']) }).strict(), b ?? {});
+export const parseGrnCert = (b) => parse(z.object({ lineId: id, fileId: id }).strict(), b ?? {});
+export const parseGrnAmend = (b) => parse(z.object({ reason, ...grnHead }).strict().transform(defined), b ?? {});
+export const parseInspect = (b) => parse(z.object({ results: z.array(z.object({ lineId: id, passedQty: zqty.optional(), failedQty: zqty.optional(), note: optText(300) }).strict()).min(1).max(200) }).strict(), b ?? {});
+const gImp = z.object({ storeCode: text(20).min(2), poNo: text(40).min(1), itemCode: text(40).min(1), challanNo: optText(40), receivedQty: rqty, acceptedQty: zqty.optional(), batchNo: optText(40) }).strict().transform(defined);
+export const parseGrnImport = (b) => parse(z.object({ rows: z.array(gImp).min(1).max(500) }).strict(), b ?? {});
+const rtvLine = z.object({ grnLineId: id, qty: rqty, note: optText(200) }).strict();
+export const parseRtvCreate = (b) => parse(z.object({ grnId: id, reason, lines: z.array(rtvLine).min(1).max(100) }).strict(), b ?? {});
+export const parseRtvUpdate = (b) => parse(z.object({ reason, lines: z.array(rtvLine).min(1).max(100), rowVersion: z.number().int().optional() }).partial().strict().transform(defined), b ?? {});
+const rImp = z.object({ grnNo: text(40).min(1), itemCode: text(40).min(1), qty: rqty, reason }).strict();
+export const parseRtvImport = (b) => parse(z.object({ rows: z.array(rImp).min(1).max(500) }).strict(), b ?? {});

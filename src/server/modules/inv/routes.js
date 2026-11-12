@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh } from './validators.js';
+import { parseAdjCreate, parseAdjUpdate, parseBin, parseBinUpdate, parseCardQ, parseDashQ, parseId, parseInspection, parseItemsQ, parseMovement, parseOpening, parseReason, parseResQ, parseReservation, parseStoreChange, parseStoreCreate, parseStoreUpdate, parseTransfer, parseValuationQ, parseApptCreate, parseGateCheck, parseGateQ, parseInwardCreate, parseInwardImport, parseInwardUpdate, parsePassCreate, parsePassImport, parsePassUpdate, parsePhoto, parsePoQ, parseReturn, parseUnload, parseVendorQ, parseVerify, parseWeigh, parseGrnAmend, parseGrnCert, parseGrnCreate, parseGrnImport, parseGrnPhoto, parseGrnUpdate, parseInspect, parsePrefillQ, parseRtvCreate, parseRtvImport, parseRtvUpdate } from './validators.js';
 
 /** /api/v1/inv: stores, bins, the stock ledger, balances, valuation, reservations and adjustments (part 16.01). Rights and scope are checked in the services. */
 export function invRoutes(svc, { idempotent, idempotentRequired }) {
@@ -90,5 +90,43 @@ export function gateRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.post('/passes/:id/return', idempotent, (req, res) => ok(res, g.passes.markReturned(req.actor, pid(req), parseReturn(req.body))));
   r.get('/passes/:id/history', (req, res) => ok(res, g.passes.history(req.actor, pid(req))));
   r.get('/passes/:id/print', (req, res) => file(res, g.passes.print(req.actor, pid(req))));
+  return r;
+}
+
+/** /api/v1/inv goods receipts and returns to vendor (part 16.03). Behind its own flag, ff.inv.p1603. */
+export function grnRoutes(svc, { idempotent, idempotentRequired, flags }) {
+  const r = Router(); const { grns, rtvs } = svc.grn; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+  const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
+  r.use(['/grns', '/rtvs'], (req, _res, next) => (flags.isOn(req.actor, 'ff.inv.p1603') ? next() : next(notFound('Goods receipts are not enabled for your company yet (feature flag ff.inv.p1603 is OFF).'))));
+  r.get('/grns/summary', (req, res) => ok(res, grns.summary(req.actor)));
+  r.get('/grns/ready', (req, res) => ok(res, grns.ready(req.actor)));
+  r.get('/grns/prefill', (req, res) => ok(res, grns.prefill(req.actor, parsePrefillQ(req.query))));
+  r.get('/grns', (req, res) => res.json(grns.list(req.actor, req.query)));
+  r.post('/grns', idempotentRequired, (req, res) => ok(res, grns.create(req.actor, parseGrnCreate(req.body)), 201));
+  r.post('/grns/import', idempotentRequired, (req, res) => ok(res, grns.importRows(req.actor, parseGrnImport(req.body)), 201));
+  r.get('/grns/:id', (req, res) => ok(res, grns.get(req.actor, pid(req))));
+  r.patch('/grns/:id', idempotent, (req, res) => ok(res, grns.update(req.actor, pid(req), parseGrnUpdate(req.body))));
+  r.delete('/grns/:id', (req, res) => ok(res, grns.remove(req.actor, pid(req))));
+  r.post('/grns/:id/submit', idempotentRequired, (req, res) => ok(res, grns.submit(req.actor, pid(req)), 202));
+  r.post('/grns/:id/withdraw', idempotent, (req, res) => ok(res, grns.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/grns/:id/cancel', idempotent, (req, res) => ok(res, grns.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/grns/:id/amend', idempotent, (req, res) => ok(res, grns.amend(req.actor, pid(req), parseGrnAmend(req.body))));
+  r.post('/grns/:id/inspection', idempotentRequired, (req, res) => ok(res, grns.inspect(req.actor, pid(req), parseInspect(req.body))));
+  r.post('/grns/:id/photos', idempotent, (req, res) => ok(res, grns.photo(req.actor, pid(req), parseGrnPhoto(req.body))));
+  r.post('/grns/:id/certificates', idempotent, (req, res) => ok(res, grns.certificate(req.actor, pid(req), parseGrnCert(req.body))));
+  r.get('/grns/:id/history', (req, res) => ok(res, grns.history(req.actor, pid(req))));
+  r.get('/grns/:id/print', (req, res) => file(res, grns.print(req.actor, pid(req))));
+  r.get('/rtvs', (req, res) => res.json(rtvs.list(req.actor, req.query)));
+  r.post('/rtvs', idempotentRequired, (req, res) => ok(res, rtvs.create(req.actor, parseRtvCreate(req.body)), 201));
+  r.post('/rtvs/import', idempotentRequired, (req, res) => ok(res, rtvs.importRows(req.actor, parseRtvImport(req.body)), 201));
+  r.get('/rtvs/:id', (req, res) => ok(res, rtvs.get(req.actor, pid(req))));
+  r.patch('/rtvs/:id', idempotent, (req, res) => ok(res, rtvs.update(req.actor, pid(req), parseRtvUpdate(req.body))));
+  r.delete('/rtvs/:id', (req, res) => ok(res, rtvs.remove(req.actor, pid(req))));
+  r.post('/rtvs/:id/submit', idempotentRequired, (req, res) => ok(res, rtvs.submit(req.actor, pid(req)), 202));
+  r.post('/rtvs/:id/withdraw', idempotent, (req, res) => ok(res, rtvs.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rtvs/:id/cancel', idempotent, (req, res) => ok(res, rtvs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/rtvs/:id/amend', idempotent, (req, res) => ok(res, rtvs.amend(req.actor, pid(req))));
+  r.get('/rtvs/:id/history', (req, res) => ok(res, rtvs.history(req.actor, pid(req))));
+  r.get('/rtvs/:id/print', (req, res) => file(res, rtvs.print(req.actor, pid(req))));
   return r;
 }
