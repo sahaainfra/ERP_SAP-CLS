@@ -44,7 +44,7 @@ async function seed(c, t) {
 }
 
 test('Goods receipt: made from the gate entry, approved and posted; QC passes part and fails part; the failed and rejected material goes back on an approved return', async ({ browser, request }, info) => {
-  test.setTimeout(300_000);
+  test.setTimeout(90_000);
   const t = `r${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}`; const c = await company(request, t.toUpperCase()); const s = await seed(c, t);
   const k = await open(browser, info, c, 'SK', s.u('sk'), '/inv/grn-new'); const p = k.page; const errors = watch(p);
   await expect(p.getByTestId('grn-new')).toBeVisible(); await expect(p.getByTestId('gn-source')).toContainText('MH12AB1234'); await noOverflow(p); await shot(p, '1-pick', info); await p.getByTestId(/gn-pick-/).first().click();
