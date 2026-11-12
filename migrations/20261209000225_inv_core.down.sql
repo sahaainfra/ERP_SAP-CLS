@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS inv_adjustments;
+DROP TABLE IF EXISTS inv_reservations;
+DROP TABLE IF EXISTS inv_fifo_layers;
+DROP TABLE IF EXISTS inv_valuation;
+DROP TABLE IF EXISTS inv_balances;
+DROP TRIGGER IF EXISTS trg_inv_ledger_no_delete;
+DROP TRIGGER IF EXISTS trg_inv_ledger_no_update;
+DROP TABLE IF EXISTS inv_stock_ledger;
+DROP TABLE IF EXISTS inv_bins;
+DROP TABLE IF EXISTS inv_store_changes;
+DROP TABLE IF EXISTS inv_stores;
