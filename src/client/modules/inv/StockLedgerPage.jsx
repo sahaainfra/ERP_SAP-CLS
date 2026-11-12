@@ -18,7 +18,7 @@ export default function StockLedgerPage() {
     <section aria-labelledby="lg-h" data-testid="inv-lg"><h1 id="lg-h">{t('ledgerTitle')}</h1><p className="muted">{t('ledgerIntro')}</p>
       <div className="mdm-panel no-print" data-testid="lg-params"><div className="form-grid">
         <label>{t('item')}<select value={f.itemId} onChange={(ev) => set('itemId', ev.target.value)} style={{ minHeight: 44 }} data-testid="lg-item"><option value="">{t('choose')}</option>{(iq.data ?? []).map((i) => <option key={i.id} value={i.id}>{i.code} · {i.name}</option>)}</select></label>
-        <label>{t('store')}<select value={f.storeId} onChange={(ev) => set('storeId', ev.target.value)} style={{ minHeight: 44 }} data-testid="lg-store"><option value="">{t('allStores')}</option>{(sq.data?.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.code}</option>)}</select></label>
+        <label>{t('store')}<select value={f.storeId} onChange={(ev) => set('storeId', ev.target.value)} style={{ minHeight: 44 }} data-testid="lg-store"><option value="">{t('allStores')}</option>{(sq.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.code}</option>)}</select></label>
         <label>{t('from')}<input type="date" value={f.from} onChange={(ev) => set('from', ev.target.value)} style={{ minHeight: 44 }} data-testid="lg-from" /></label>
         <label>{t('to')}<input type="date" value={f.to} onChange={(ev) => set('to', ev.target.value)} style={{ minHeight: 44 }} data-testid="lg-to" /></label></div></div>
       {!f.itemId ? <p className="muted" data-testid="lg-pick">{t('pickItem')}</p> : q.isPending ? <Skeleton label={t('ledgerTitle')} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} />

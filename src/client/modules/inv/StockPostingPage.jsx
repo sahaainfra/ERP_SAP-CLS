@@ -13,7 +13,7 @@ export default function StockPostingPage() {
   if (sq.error?.status === 403) return <NoPermission what={t('postingTitle')} permission="inv.stock.post" />;
   if (sq.isPending || iq.isPending) return <Skeleton label={t('postingTitle')} rows={3} />;
   if (sq.isError) return <ErrorState error={sq.error} onRetry={sq.refetch} />;
-  const stores = (sq.data?.data ?? []).filter((s) => s.status === 'ACTIVE'); const needsRate = ['RECEIPT', 'RETURN'].includes(f.kind);
+  const stores = (sq.data ?? []).filter((s) => s.status === 'ACTIVE'); const needsRate = ['RECEIPT', 'RETURN'].includes(f.kind);
   const post = () => mv.run(async () => { const common = { itemId: Number(f.itemId), qty: Number(f.qty), batchNo: f.batchNo || null, serialNo: f.serialNo || null, date: f.date, reason: f.reason }; const r = f.kind === 'TRANSFER' ? await iv.transfer({ ...common, fromStoreId: Number(f.storeId), toStoreId: Number(f.toStoreId) }) : await iv.move({ ...common, storeId: Number(f.storeId), type: f.kind, ...(needsRate ? { rate: Number(f.rate) } : {}) }); setOut(r); return r; }, t('posted'));
   const load = () => { const rows = paste.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const [storeCode, itemCode, qty, rate, batchNo, binCode, projectCode] = l.split(',').map((x) => x.trim()); return { storeCode, itemCode, qty: Number(qty), rate: Number(rate), batchNo: batchNo || undefined, binCode: binCode || undefined, projectCode: projectCode || undefined }; }); op.run(() => iv.opening(rows), t('openingLoaded')).then((x) => x && setPaste('')); };
   const entries = out ? (out.entries ?? [...(out.out ?? []), ...(out.in ?? [])]) : [];
