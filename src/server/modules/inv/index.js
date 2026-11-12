@@ -12,8 +12,10 @@ import { createFlagService } from '../core/api.js';
 import { procOf } from '../proc/index.js';
 import { createBase } from '../proc/base.js';
 import { ADJ_STATUS, INV_ADJ_DOC, INV_CHG_DOC, INV_STORE_DOC, STORE_STATUS, createInvService } from './service.js';
-import { invRoutes, gateRoutes, grnRoutes, issueRoutes, transferRoutes, countRoutes, reorderRoutes, rtaRoutes, assetRoutes, mrcRoutes } from './routes.js';
+import { invRoutes, gateRoutes, grnRoutes, issueRoutes, transferRoutes, countRoutes, reorderRoutes, rtaRoutes, assetRoutes, mrcRoutes, mmdRoutes } from './routes.js';
 import { INV_MRC_DOC, MRC_STATUS, createMrcService } from './mrc.js';
+import { createMmdService } from './mmd.js';
+import { registerProject360Widget } from '../proj/p360.js';
 import { ASSET_STATUS, INV_ASSET_DISPOSE_DOC, INV_ASSET_DOC, INV_ASSET_LOSS_DOC, LOSS_STATUS, createAssetService } from './asset.js';
 import { INV_RTA_MOVE_DOC, INV_RTA_REC_DOC, MOVE_STATUS, MOVE_TYPES, REC_STATUS, createRtaService } from './rta.js';
 import { CHANGE_STATUS, INV_REORDER_DOC, SUGGESTION_STATUS, createReorderService } from './reorder.js';
@@ -25,6 +27,13 @@ import { APPT_STATUS, INV_INWARD_DOC, INV_PASS_DOC, INWARD_STATUS, PASS_STATUS, 
 
 const services = new WeakMap();
 export const invOf = (db) => services.get(db) ?? null;
+// the stores slot of Project 360 (10.08, part 16.11): the stock figures of the project, only for a person who may see the materials dashboard and where the part is on
+registerProject360Widget('stores', (ctx) => {
+  const s = invOf(ctx.db); const pid = ctx.project.project_id;
+  if (!s || !s.flags.isOn(ctx.actor, 'ff.inv.p1611')) return { figures: [], rows: [], note: 'The materials dashboard is not enabled for your company yet.' };
+  if (!s.base.may(ctx.actor, 'inv.dashboard.view', pid)) return { figures: [], rows: [], note: 'You have no right to see the materials dashboard for this project.' };
+  return s.mmd.projectWidget(ctx.actor, pid);
+});
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -88,7 +97,7 @@ export const inv = {
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'inv_stores'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db }); const invSvc = createInvService({ db, base });
-    const gateSvc = createGateService({ db, base, invSvc }); const grnSvc = createGrnService({ db, base, invSvc, gate: gateSvc }); const issueSvc = createIssueService({ db, base, invSvc }); const trfSvc = createTransferService({ db, base, invSvc, gate: gateSvc }); const cntSvc = createCountService({ db, base, invSvc, gate: gateSvc }); const mrcSvc = createMrcService({ db, base, invSvc }); const assetSvc = createAssetService({ db, base, invSvc }); const rtaSvc = createRtaService({ db, base, invSvc }); const reorderSvc = createReorderService({ db, base, invSvc, mr: () => procOf(db)?.mrSvc?.mrs ?? null }); const svc = { mrc: mrcSvc, mrcDecide: mrcSvc.recons.decide, asset: assetSvc, assetDecide: assetSvc.assets.decide, lossDecide: assetSvc.losses.decide, disposeDecide: assetSvc.disposal.decide, rta: rtaSvc, rtaMoveDecide: rtaSvc.movements.decide, rtaRecDecide: rtaSvc.recoveries.decide, reorder: reorderSvc, reorderDecide: reorderSvc.changes.decide, flags, base, invSvc, gate: gateSvc, grn: grnSvc, issue: issueSvc, count: cntSvc, countDecide: cntSvc.plans.decide, scrapDecide: cntSvc.disposals.decide, transfer: trfSvc, transferDecide: trfSvc.transfers.decide, discDecide: trfSvc.transfers.decideWriteOff, issueDecide: issueSvc.issues.decide, returnDecide: issueSvc.siteReturns.decide, grnDecide: grnSvc.grns.decide, rtvDecide: grnSvc.rtvs.decide, inwardDecide: gateSvc.inward.decide, passDecide: gateSvc.passes.decide, storeDecide: invSvc.stores.decide, changeDecide: invSvc.stores.changeDecide, adjDecide: invSvc.adjustments.decide, adjGuard: invSvc.adjustments.guard }; services.set(db, svc);
+    const gateSvc = createGateService({ db, base, invSvc }); const grnSvc = createGrnService({ db, base, invSvc, gate: gateSvc }); const issueSvc = createIssueService({ db, base, invSvc }); const trfSvc = createTransferService({ db, base, invSvc, gate: gateSvc }); const cntSvc = createCountService({ db, base, invSvc, gate: gateSvc }); const mrcSvc = createMrcService({ db, base, invSvc }); const assetSvc = createAssetService({ db, base, invSvc }); const rtaSvc = createRtaService({ db, base, invSvc }); const reorderSvc = createReorderService({ db, base, invSvc, mr: () => procOf(db)?.mrSvc?.mrs ?? null }); const mmdSvc = createMmdService({ db, base, mrc: () => mrcSvc, proc: () => procOf(db), flags }); const svc = { mmd: mmdSvc, mrc: mrcSvc, mrcDecide: mrcSvc.recons.decide, asset: assetSvc, assetDecide: assetSvc.assets.decide, lossDecide: assetSvc.losses.decide, disposeDecide: assetSvc.disposal.decide, rta: rtaSvc, rtaMoveDecide: rtaSvc.movements.decide, rtaRecDecide: rtaSvc.recoveries.decide, reorder: reorderSvc, reorderDecide: reorderSvc.changes.decide, flags, base, invSvc, gate: gateSvc, grn: grnSvc, issue: issueSvc, count: cntSvc, countDecide: cntSvc.plans.decide, scrapDecide: cntSvc.disposals.decide, transfer: trfSvc, transferDecide: trfSvc.transfers.decide, discDecide: trfSvc.transfers.decideWriteOff, issueDecide: issueSvc.issues.decide, returnDecide: issueSvc.siteReturns.decide, grnDecide: grnSvc.grns.decide, rtvDecide: grnSvc.rtvs.decide, inwardDecide: gateSvc.inward.decide, passDecide: gateSvc.passes.decide, storeDecide: invSvc.stores.decide, changeDecide: invSvc.stores.changeDecide, adjDecide: invSvc.adjustments.decide, adjGuard: invSvc.adjustments.guard }; services.set(db, svc);
     listExports.register('inv.stores', { source: (actor, req) => invSvc.stores.exportSource(actor, req), hidden: () => [] });
     listExports.register('inv.balances', { source: (actor, req) => invSvc.balances.exportSource(actor, req), hidden: () => [] });
     listExports.register('inv.gate_inward', { source: (actor, req) => { base.need(actor, 'inv.inward.export', 'export the gate register'); return gateSvc.inward.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
@@ -133,6 +142,7 @@ export const inv = {
     api.use('/inv', reorderRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
     api.use('/inv', rtaRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
     api.use('/inv', assetRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+    api.use('/inv', mmdRoutes(svc, { flags }));
     api.use('/inv', mrcRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
     api.use('/inv', transferRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
     api.use('/inv', issueRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
