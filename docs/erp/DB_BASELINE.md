@@ -8226,6 +8226,7 @@ Indexes:
 | item_id | INTEGER | yes |  |  |
 | qty | INTEGER | yes |  |  |
 | qty_consumed | INTEGER | yes |  | 0 |
+| alloc_json | TEXT | yes |  | '[]' |
 | reservation_status | TEXT | yes |  | 'ACTIVE' |
 | needed_by | TEXT |  |  |  |
 | released_reason | TEXT |  |  |  |
