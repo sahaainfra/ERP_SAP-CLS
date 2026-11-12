@@ -8929,3 +8929,41 @@ paths:
     post: { summary: 'Do inv/free-issue/reconcile (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/free-issue/certified:
     post: { summary: 'Do inv/free-issue/certified (part 16.04)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers:
+    post: { summary: 'Do inv/transfers (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+    get: { summary: 'Read inv/transfers (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+    post: { summary: 'Do inv/transfers (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/summary:
+    get: { summary: 'Read inv/transfers/summary (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/options:
+    get: { summary: 'Read inv/transfers/options (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/prefill:
+    get: { summary: 'Read inv/transfers/prefill (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/import:
+    post: { summary: 'Do inv/transfers/import (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}:
+    get: { summary: 'Read inv/transfers/{id} (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+    patch: { summary: 'Change inv/transfers/{id} (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+    delete: { summary: 'Delete inv/transfers/{id} (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/submit:
+    post: { summary: 'Do inv/transfers/{id}/submit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/withdraw:
+    post: { summary: 'Do inv/transfers/{id}/withdraw (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/cancel:
+    post: { summary: 'Do inv/transfers/{id}/cancel (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/amend:
+    post: { summary: 'Do inv/transfers/{id}/amend (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/dispatch:
+    post: { summary: 'Do inv/transfers/{id}/dispatch (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/receive:
+    post: { summary: 'Do inv/transfers/{id}/receive (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/photos:
+    post: { summary: 'Do inv/transfers/{id}/photos (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/discrepancies/{did}/resolve:
+    post: { summary: 'Do inv/transfers/{id}/discrepancies/{did}/resolve (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/history:
+    get: { summary: 'Read inv/transfers/{id}/history (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/transfers/{id}/print:
+    get: { summary: 'Read inv/transfers/{id}/print (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/inv/in-transit:
+    get: { summary: 'Read inv/in-transit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }

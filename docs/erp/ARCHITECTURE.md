@@ -1428,3 +1428,10 @@ Module `inv`, flag `ff.inv.p1604`, tables `inv_issues`, `inv_issue_lines`, `inv_
 - **Events**: `inv.issue.posted`, `inv.site_return.posted`, `inv.free_issue.excess`. Parameters `inv.issue.wa_tolerance_pct`, `inv.issue.ack_minutes`.
 - **Permissions**: `inv.issue.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,acknowledge}`, `inv.site_return.{...}`, `inv.free_issue.{view,reconcile,certify,export}`.
 
+## 123. Inter-store transfers and in-transit stock (part 16.05)
+Module `inv`, flag `ff.inv.p1605`, tables `inv_transfers`, `inv_transfer_lines`, `inv_transfer_discrepancies`; service `src/server/modules/inv/transfer.js` (routes `transferRoutes`, gated per path by its own flag).
+- **Transfer** (ADR-579, ADR-581, ADR-582): `dispatch` (TRANSFER_OUT, `qty_in_transit`, gate pass `createForTransfer`, e-way bill), `receive` (TRANSFER_IN, discrepancies); workflow `INV_TRANSFER` (CM or STOREMGR; then two PMs between projects).
+- **Discrepancies** (ADR-580): `resolve` (accept, return to source, write-off through `INV_TRANSFER_DISC`: STOREMGR then PROCMGR). **Report**: `inTransit.report` (ageing), `sweepAged`.
+- **Events**: `inv.transfer.dispatched`, `inv.transfer.received` (per receipt), `inv.transfer.written_off`, and `inv.stock.transferred` between projects. Job `inv.transfer_aged`. Parameters `inv.transfer.eway_threshold`, `inv.transfer.transit_alert_days`.
+- **Permissions**: `inv.transfer.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,dispatch,receive,resolve}`.
+
