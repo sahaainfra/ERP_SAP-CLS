@@ -1459,3 +1459,11 @@ Module `inv`, flag `ff.inv.p1608`, tables `rta_assets`, `rta_positions`, `rta_mo
 - **Recoveries** (ADR-599): made at the approval of a return; workflow `INV_RTA_RECOVERY` (CM or QS, then PM); events `inv.rta.recovery_approved`, `inv.rta.hire_charged`, `inv.rta.moved`.
 - **Dashboard and reconciliation**: `dashboard.summary` (by location, idle `inv.rta.idle_days`, overdue), `dashboard.reconcile`; daily job `inv.rta_overdue` (08:30 India time).
 - **Permissions**: `inv.movement.*`, `inv.rta_asset.edit`, `inv.rta_hire.{view,verify,export}`, `inv.rta_recovery.{view,submit,approve}`.
+
+## 127. Tools and small-asset custody (part 16.09)
+Module `inv`, flag `ff.inv.p1609`, tables `ast_small_assets`, `ast_custody_log`, `ast_loss_reports`; service `src/server/modules/inv/asset.js` (routes `assetRoutes`, gated by the flag).
+- **Register** (ADR-601): `assets` (create, update, submit, amend, import, QR tag); workflow `INV_ASSET`; event `inv.asset.registered` (capitalisation flag).
+- **Custody** (ADR-602, ADR-603): `custody.issue`, `transfer`, `acknowledge` (receiver code or signature), `return`, `inspect`, `calibrate`, `repairOut`, `repairIn`; event `inv.asset.custody_changed`.
+- **Loss and disposal** (ADR-604): `losses` (workflow `INV_ASSET_LOSS`, event `inv.asset.recovery_approved`), `disposal` (`INV_ASSET_DISPOSE`, event `inv.asset.disposed`).
+- **Reports**: `report.statement` (custody statement, PDF), `report.calibrationDue`, daily job `inv.asset_due` (07:45 India time).
+- **Parameters**: `inv.asset.ack_minutes`, `inv.asset.capitalise_threshold`, `inv.asset.due_days`. **Permissions**: `inv.small_asset.*` (incl. `custody`, `acknowledge`, `dispose`, `statement`) and `inv.loss_report.*`.
