@@ -11434,6 +11434,166 @@ Indexes:
 - ix_mdm_uoms_company: company_id, row_status
 - ux_mdm_uoms_key (unique): , code
 
+## mrc_contributions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| recon_id | INTEGER | yes |  |  |
+| line_id | INTEGER |  |  |  |
+| contributor_role | TEXT | yes |  |  |
+| note | TEXT | yes |  |  |
+| contributed_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: line_id -> mrc_lines(id), recon_id -> mrc_reconciliations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mrc_contrib_company: company_id
+- ix_mrc_contrib_line: line_id
+- ix_mrc_contrib_recon: recon_id
+
+## mrc_key_materials
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| default_wastage_pct | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mrc_km_item_id: item_id
+- ux_mrc_km_item (unique): company_id, item_id
+
+## mrc_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| recon_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| opening | INTEGER | yes |  | 0 |
+| receipts | INTEGER | yes |  | 0 |
+| transfers_in | INTEGER | yes |  | 0 |
+| transfers_out | INTEGER | yes |  | 0 |
+| returns_vendor | INTEGER | yes |  | 0 |
+| issues | INTEGER | yes |  | 0 |
+| site_returns | INTEGER | yes |  | 0 |
+| adjustments | INTEGER | yes |  | 0 |
+| book_closing | INTEGER | yes |  | 0 |
+| physical_closing | INTEGER |  |  |  |
+| count_plan_id | INTEGER |  |  |  |
+| executed_ref | TEXT |  |  |  |
+| theoretical_base | INTEGER | yes |  | 0 |
+| theoretical | INTEGER | yes |  | 0 |
+| actual | INTEGER | yes |  | 0 |
+| variance | INTEGER | yes |  | 0 |
+| variance_pct | INTEGER |  |  |  |
+| allowed_wastage_pct | INTEGER | yes |  | 0 |
+| wastage_pct | INTEGER |  |  |  |
+| over_allowed | INTEGER | yes |  | 0 |
+| avg_rate | INTEGER | yes |  | 0 |
+| reason_code | TEXT |  |  |  |
+| explanation | TEXT |  |  |  |
+| recovery_party_id | INTEGER |  |  |  |
+| recovery_amount | INTEGER | yes |  | 0 |
+| sort_order | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: recovery_party_id -> mdm_partners(id), item_id -> mdm_items(id), recon_id -> mrc_reconciliations(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mrc_lines_party: recovery_party_id
+- ix_mrc_lines_item: item_id
+- ix_mrc_lines_company: company_id
+- ux_mrc_line (unique): recon_id, item_id
+
+## mrc_reconciliations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_start | TEXT | yes |  |  |
+| period_end | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| computed_at | TEXT |  |  |  |
+| generated_by | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mrc_site: org_site_id
+- ix_mrc_project: org_project_id
+- ix_mrc_list: company_id, status, period
+- ux_mrc_site_period (unique): company_id, org_site_id, period
+- ux_mrc_doc (unique): company_id, doc_no
+
 ## msg_acknowledgements
 
 | Column | Type | Not null | Key | Default |

@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS mrc_lines (
   book_closing    INTEGER NOT NULL DEFAULT 0,
   physical_closing INTEGER,
   count_plan_id   INTEGER,
-  executed_qty_ref TEXT,
+  executed_ref TEXT,
   theoretical_base INTEGER NOT NULL DEFAULT 0,
   theoretical     INTEGER NOT NULL DEFAULT 0,
   actual          INTEGER NOT NULL DEFAULT 0,

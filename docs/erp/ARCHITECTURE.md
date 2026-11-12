@@ -1467,3 +1467,11 @@ Module `inv`, flag `ff.inv.p1609`, tables `ast_small_assets`, `ast_custody_log`,
 - **Loss and disposal** (ADR-604): `losses` (workflow `INV_ASSET_LOSS`, event `inv.asset.recovery_approved`), `disposal` (`INV_ASSET_DISPOSE`, event `inv.asset.disposed`).
 - **Reports**: `report.statement` (custody statement, PDF), `report.calibrationDue`, daily job `inv.asset_due` (07:45 India time).
 - **Parameters**: `inv.asset.ack_minutes`, `inv.asset.capitalise_threshold`, `inv.asset.due_days`. **Permissions**: `inv.small_asset.*` (incl. `custody`, `acknowledge`, `dispose`, `statement`) and `inv.loss_report.*`.
+
+## 128. Monthly material reconciliation (part 16.10)
+Module `inv`, flag `ff.inv.p1610`, tables `mrc_key_materials`, `mrc_reconciliations`, `mrc_lines`, `mrc_contributions`; service `src/server/modules/inv/mrc.js` (routes `mrcRoutes`, gated by the flag).
+- **Figures** (ADR-606, ADR-607, ADR-608): `computeLine` from the stock ledger, the counts (16.06), the approved progress reports and the BOQ norms; `generate`, `recompute`, `submit` (BR-02), `amend` (ADR-610).
+- **Status and close**: `status(period)`, `missing(companyId, period)` for the monthly close (BR-01); job `inv.mrc_monthly` on the 2nd of the month.
+- **Approval**: workflow `INV_MRC` (project manager, then project director or director); events `inv.reconciliation.approved`, `inv.reconciliation.recovery_approved`.
+- **Reports**: `trend` (wastage by material, site and month, top variances), `drilldown` (ledger entries and the work behind the theoretical figure).
+- **Parameters**: `inv.mrc.tolerance_pct`, `inv.mrc.min_explanation`. **Permissions**: `inv.reconciliation.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,configure,contribute}`.
