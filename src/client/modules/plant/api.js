@@ -54,3 +54,11 @@ export const mt = {
   job: (id) => get(`/job-cards/${id}`), create: (b) => post('/job-cards', b), update: (id, b) => patch(`/job-cards/${id}`, b), act: (id, action, b) => post(`/job-cards/${id}/${action}`, b), history: (id) => get(`/job-cards/${id}/history`),
   spareAdd: (id, b) => post(`/job-cards/${id}/spares`, b), spareAct: (id, sid, action, b) => post(`/job-cards/${id}/spares/${sid}/${action}`, b),
 };
+
+// Hire: agreements, bills and the comparison with owned cost (part 17.06).
+export const HIRE_TONE = REQ_TONE;
+export const hr = {
+  options: () => get('/hire-agreements/options'), agreement: (id) => get(`/hire-agreements/${id}`), agrCreate: (b) => post('/hire-agreements', b), agrUpdate: (id, b) => patch(`/hire-agreements/${id}`, b), agrAct: (id, action, b) => post(`/hire-agreements/${id}/${action}`, b), agrHistory: (id) => get(`/hire-agreements/${id}/history`),
+  bill: (id) => get(`/hire-bills/${id}`), billPreview: (b) => post('/hire-bills/preview', b), billCreate: (b) => post('/hire-bills', b), billUpdate: (id, b) => patch(`/hire-bills/${id}`, b), billAct: (id, action, b) => post(`/hire-bills/${id}/${action}`, b), billHistory: (id) => get(`/hire-bills/${id}/history`),
+  agreements: (q) => api.get(`/plant/hire-agreements${qs(q)}`), comparison: (q) => get(`/hire/comparison${qs(q)}`),
+};

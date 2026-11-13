@@ -1,16 +1,17 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parsePlanCreate, parsePlanUpdate, parseJobCreate, parseJobUpdate, parseJobImport, parseJobComplete, parseWarranty, parseSpareAdd, parseSpareReturn, parseSpareCancel, parseMaintQ, parseMaintExportQ, parseDashMaintQ, parseHistQ, parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
+import { parseAgrCreate, parseAgrUpdate, parseAgrImport, parseBillCreate, parseBillUpdate, parseHireQ, parsePlanCreate, parsePlanUpdate, parseJobCreate, parseJobUpdate, parseJobImport, parseJobComplete, parseWarranty, parseSpareAdd, parseSpareReturn, parseSpareCancel, parseMaintQ, parseMaintExportQ, parseDashMaintQ, parseHistQ, parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
 
 /** /api/v1/plant: the equipment register, its documents and certificates, status, dashboard and exports (part 17.01). Behind its own flag, ff.plant.p1701. */
-export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc, maintsvc }) {
-  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const { plans, due, jobs: jc, spares } = maintsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc, maintsvc, hiresvc }) {
+  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const { plans, due, jobs: jc, spares } = maintsvc; const { agreements: ag, bills: hb } = hiresvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
   r.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1701') ? next() : next(notFound('Plant and equipment is not enabled for your company yet.'))));
   r.use(['/requisitions', '/allocations', '/operators', '/availability', '/gantt'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1702') ? next() : next(notFound('Equipment allocation is not enabled for your company yet.'))));
   r.use(['/logs', '/breakdowns', '/utilisation'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1703') ? next() : next(notFound('Equipment log books are not enabled for your company yet.'))));
   r.use(['/issues', '/fuel'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1704') ? next() : next(notFound('Fuel management is not enabled for your company yet.'))));
   r.use(['/job-cards', '/pm', '/maintenance'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1705') ? next() : next(notFound('Maintenance is not enabled for your company yet.'))));
+  r.use(['/hire-agreements', '/hire-bills', '/hire'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1706') ? next() : next(notFound('Equipment hire is not enabled for your company yet.'))));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard(req.actor, parseDashQ(req.query))));
   r.get('/dashboard/drill', (req, res) => ok(res, svc.drill(req.actor, parseDrillQ(req.query))));
   r.get('/dashboard/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
@@ -172,5 +173,35 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc,
   r.post('/job-cards/:id/spares/:sid/issue', idempotentRequired, (req, res) => ok(res, spares.issue(req.actor, pid(req), parseId(req.params.sid))));
   r.post('/job-cards/:id/spares/:sid/return', idempotentRequired, (req, res) => ok(res, spares.returnUnused(req.actor, pid(req), parseId(req.params.sid), parseSpareReturn(req.body))));
   r.post('/job-cards/:id/spares/:sid/cancel', idempotent, (req, res) => ok(res, spares.cancel(req.actor, pid(req), parseId(req.params.sid), parseSpareCancel(req.body))));
+  // equipment hire (part 17.06, flag ff.plant.p1706)
+  r.get('/hire-agreements/options', (req, res) => ok(res, ag.options(req.actor)));
+  r.get('/hire-agreements/export', (req, res) => file(res, hiresvc.exportCsv(req.actor, { kind: 'agreements' })));
+  r.get('/hire-agreements', (req, res) => res.json(ag.list(req.actor, req.query)));
+  r.post('/hire-agreements', idempotentRequired, (req, res) => ok(res, ag.create(req.actor, parseAgrCreate(req.body)), 201));
+  r.get('/hire-agreements/:id', (req, res) => ok(res, ag.get(req.actor, pid(req))));
+  r.patch('/hire-agreements/:id', idempotent, (req, res) => ok(res, ag.update(req.actor, pid(req), parseAgrUpdate(req.body))));
+  r.delete('/hire-agreements/:id', (req, res) => ok(res, ag.remove(req.actor, pid(req))));
+  r.post('/hire-agreements/:id/submit', idempotentRequired, (req, res) => ok(res, ag.submit(req.actor, pid(req)), 202));
+  r.post('/hire-agreements/:id/withdraw', idempotent, (req, res) => ok(res, ag.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/hire-agreements/:id/cancel', idempotent, (req, res) => ok(res, ag.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/hire-agreements/:id/amend', idempotent, (req, res) => ok(res, ag.amend(req.actor, pid(req), parseReason(req.body))));
+  r.get('/hire-agreements/:id/history', (req, res) => ok(res, ag.history(req.actor, pid(req))));
+  r.get('/hire-agreements/:id/print', (req, res) => file(res, ag.print(req.actor, pid(req))));
+  r.post('/hire-agreements/import', idempotentRequired, (req, res) => ok(res, ag.importRows(req.actor, parseAgrImport(req.body)), 201));
+  r.get('/hire-bills/export', (req, res) => file(res, hiresvc.exportCsv(req.actor, { kind: 'bills' })));
+  r.get('/hire-bills', (req, res) => res.json(hb.list(req.actor, req.query)));
+  r.post('/hire-bills', idempotentRequired, (req, res) => ok(res, hb.create(req.actor, parseBillCreate(req.body)), 201));
+  r.get('/hire-bills/:id', (req, res) => ok(res, hb.get(req.actor, pid(req))));
+  r.patch('/hire-bills/:id', idempotent, (req, res) => ok(res, hb.update(req.actor, pid(req), parseBillUpdate(req.body))));
+  r.delete('/hire-bills/:id', (req, res) => ok(res, hb.remove(req.actor, pid(req))));
+  r.post('/hire-bills/:id/submit', idempotentRequired, (req, res) => ok(res, hb.submit(req.actor, pid(req)), 202));
+  r.post('/hire-bills/:id/withdraw', idempotent, (req, res) => ok(res, hb.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/hire-bills/:id/cancel', idempotent, (req, res) => ok(res, hb.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/hire-bills/:id/amend', idempotent, (req, res) => ok(res, hb.amend(req.actor, pid(req), parseReason(req.body))));
+  r.get('/hire-bills/:id/history', (req, res) => ok(res, hb.history(req.actor, pid(req))));
+  r.get('/hire-bills/:id/print', (req, res) => file(res, hb.print(req.actor, pid(req))));
+  r.post('/hire-bills/preview', idempotent, (req, res) => ok(res, hb.preview(req.actor, parseBillCreate(req.body))));
+  r.get('/hire/comparison', (req, res) => ok(res, hiresvc.comparison(req.actor, parseHireQ(req.query))));
+  r.get('/hire/export', (req, res) => file(res, hiresvc.exportCsv(req.actor, parseHireQ(req.query))));
   return r;
 }

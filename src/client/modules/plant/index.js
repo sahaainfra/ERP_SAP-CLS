@@ -20,6 +20,9 @@ import FuelAnomaliesPage from './FuelAnomaliesPage.jsx';
 import MaintenancePage from './MaintenancePage.jsx';
 import PmSchedulePage from './PmSchedulePage.jsx';
 import JobCardsPage from './JobCardsPage.jsx';
+import HireAgreementsPage from './HireAgreementsPage.jsx';
+import HireBillPage from './HireBillPage.jsx';
+import HireComparisonPage from './HireComparisonPage.jsx';
 
 registerModule({
   code: 'plant',
@@ -46,5 +49,8 @@ registerModule({
     { path: '/plant/maintenance', label: 'Maintenance Dashboard', icon: 'erp.group.plant', permission: 'plant.maint.report', flag: 'ff.plant.p1705', Page: MaintenancePage },
     { path: '/plant/pm-schedule', label: 'PM Schedule', icon: 'erp.group.plant', permission: 'plant.pm.view', flag: 'ff.plant.p1705', Page: PmSchedulePage },
     { path: '/plant/job-cards', label: 'Job Cards', icon: 'erp.group.plant', permission: 'plant.job_card.view', flag: 'ff.plant.p1705', Page: JobCardsPage },
+    { path: '/plant/hire-agreements', label: 'Hire Agreements', icon: 'erp.group.plant', permission: 'plant.hire_agreement.view', flag: 'ff.plant.p1706', Page: HireAgreementsPage },
+    { path: '/plant/hire-bill', label: 'Compute Hire Bill', icon: 'erp.group.plant', permission: 'plant.hire_bill.create', flag: 'ff.plant.p1706', Page: HireBillPage },
+    { path: '/plant/hire-comparison', label: 'Hire Cost vs Owned Cost', icon: 'erp.group.plant', permission: 'plant.hire.report', flag: 'ff.plant.p1706', Page: HireComparisonPage },
   ],
 });

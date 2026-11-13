@@ -15017,6 +15017,113 @@ Indexes:
 - ix_plt_ft_project: org_project_id
 - ux_plt_ft_code (unique): company_id, code
 
+## plt_hire_agreements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| direction | TEXT | yes |  |  |
+| partner_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| charge_basis | TEXT | yes |  |  |
+| hire_rate | INTEGER | yes |  |  |
+| min_guarantee | INTEGER | yes |  | 0 |
+| fuel_included | INTEGER | yes |  | 0 |
+| operator_included | INTEGER | yes |  | 0 |
+| idle_rule | TEXT | yes |  | 'NO_IDLE' |
+| breakdown_rule | TEXT | yes |  | 'DEDUCT' |
+| mob_charge | INTEGER | yes |  | 0 |
+| demob_charge | INTEGER | yes |  | 0 |
+| gst_bp | INTEGER | yes |  | 0 |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| monthly_value | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), partner_id -> mdm_partners(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_ha_status: company_id, status
+- ix_plt_ha_site: org_site_id
+- ix_plt_ha_project: org_project_id
+- ix_plt_ha_partner: partner_id
+- ix_plt_ha_equip: equipment_id, status
+- ux_plt_ha_doc (unique): company_id, doc_no
+
+## plt_hire_bills
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| agreement_id | INTEGER | yes |  |  |
+| period_from | TEXT | yes |  |  |
+| period_to | TEXT | yes |  |  |
+| working_hrs | INTEGER | yes |  | 0 |
+| idle_hrs | INTEGER | yes |  | 0 |
+| breakdown_hrs | INTEGER | yes |  | 0 |
+| pending_hrs | INTEGER | yes |  | 0 |
+| guarantee_hrs | INTEGER | yes |  | 0 |
+| billable_hrs | INTEGER | yes |  | 0 |
+| dispute_hrs | INTEGER | yes |  | 0 |
+| dispute_reason | TEXT |  |  |  |
+| hire_amount | INTEGER | yes |  | 0 |
+| mob_amount | INTEGER | yes |  | 0 |
+| fuel_recovery | INTEGER | yes |  | 0 |
+| gst_amount | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| log_count | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: agreement_id -> plt_hire_agreements(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_hb_period: period_from, period_to
+- ix_plt_hb_status: company_id, status
+- ix_plt_hb_agr: agreement_id, status
+- ux_plt_hb_doc (unique): company_id, doc_no
+
 ## plt_job_cards
 
 | Column | Type | Not null | Key | Default |
