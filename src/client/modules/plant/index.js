@@ -17,6 +17,9 @@ import FuelIssuesPage from './FuelIssuesPage.jsx';
 import FuelTanksPage from './FuelTanksPage.jsx';
 import FuelReportsPage from './FuelReportsPage.jsx';
 import FuelAnomaliesPage from './FuelAnomaliesPage.jsx';
+import MaintenancePage from './MaintenancePage.jsx';
+import PmSchedulePage from './PmSchedulePage.jsx';
+import JobCardsPage from './JobCardsPage.jsx';
 
 registerModule({
   code: 'plant',
@@ -40,5 +43,8 @@ registerModule({
     { path: '/plant/fuel-tanks', label: 'Fuel Stores', icon: 'erp.group.plant', permission: 'plant.fuel.receive', flag: 'ff.plant.p1704', Page: FuelTanksPage },
     { path: '/plant/fuel-reports', label: 'Fuel Reports', icon: 'erp.group.plant', permission: 'plant.fuel.report', flag: 'ff.plant.p1704', Page: FuelReportsPage },
     { path: '/plant/fuel-anomalies', label: 'Fuel Anomalies', icon: 'erp.group.plant', permission: 'plant.fuel.report', flag: 'ff.plant.p1704', Page: FuelAnomaliesPage },
+    { path: '/plant/maintenance', label: 'Maintenance Dashboard', icon: 'erp.group.plant', permission: 'plant.maint.report', flag: 'ff.plant.p1705', Page: MaintenancePage },
+    { path: '/plant/pm-schedule', label: 'PM Schedule', icon: 'erp.group.plant', permission: 'plant.pm.view', flag: 'ff.plant.p1705', Page: PmSchedulePage },
+    { path: '/plant/job-cards', label: 'Job Cards', icon: 'erp.group.plant', permission: 'plant.job_card.view', flag: 'ff.plant.p1705', Page: JobCardsPage },
   ],
 });

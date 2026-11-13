@@ -1,15 +1,16 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
+import { parsePlanCreate, parsePlanUpdate, parseJobCreate, parseJobUpdate, parseJobImport, parseJobComplete, parseWarranty, parseSpareAdd, parseSpareReturn, parseSpareCancel, parseMaintQ, parseMaintExportQ, parseDashMaintQ, parseHistQ, parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
 
 /** /api/v1/plant: the equipment register, its documents and certificates, status, dashboard and exports (part 17.01). Behind its own flag, ff.plant.p1701. */
-export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc }) {
-  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc, maintsvc }) {
+  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const { plans, due, jobs: jc, spares } = maintsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
   r.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1701') ? next() : next(notFound('Plant and equipment is not enabled for your company yet.'))));
   r.use(['/requisitions', '/allocations', '/operators', '/availability', '/gantt'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1702') ? next() : next(notFound('Equipment allocation is not enabled for your company yet.'))));
   r.use(['/logs', '/breakdowns', '/utilisation'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1703') ? next() : next(notFound('Equipment log books are not enabled for your company yet.'))));
   r.use(['/issues', '/fuel'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1704') ? next() : next(notFound('Fuel management is not enabled for your company yet.'))));
+  r.use(['/job-cards', '/pm', '/maintenance'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1705') ? next() : next(notFound('Maintenance is not enabled for your company yet.'))));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard(req.actor, parseDashQ(req.query))));
   r.get('/dashboard/drill', (req, res) => ok(res, svc.drill(req.actor, parseDrillQ(req.query))));
   r.get('/dashboard/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
@@ -138,5 +139,38 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc,
   r.post('/fuel/anomalies/:id/withdraw', idempotent, (req, res) => ok(res, anomalies.withdraw(req.actor, pid(req), parseReason(req.body))));
   r.post('/fuel/anomalies/:id/confirm', idempotentRequired, (req, res) => ok(res, anomalies.confirm(req.actor, pid(req), parseAnomConfirm(req.body))));
   r.get('/fuel/anomalies/:id/history', (req, res) => ok(res, anomalies.history(req.actor, pid(req))));
+  // preventive maintenance, job cards and spares (part 17.05, flag ff.plant.p1705)
+  r.get('/maintenance/dashboard', (req, res) => ok(res, maintsvc.dashboard(req.actor, parseDashMaintQ(req.query))));
+  r.get('/maintenance/metrics', (req, res) => ok(res, maintsvc.metrics(req.actor, parseMaintQ(req.query))));
+  r.get('/maintenance/history', (req, res) => ok(res, maintsvc.serviceHistory(req.actor, parseHistQ(req.query).equipmentId)));
+  r.get('/maintenance/export', (req, res) => file(res, maintsvc.exportCsv(req.actor, parseMaintExportQ(req.query))));
+  r.get('/pm/plans', (req, res) => res.json(plans.list(req.actor, req.query)));
+  r.post('/pm/plans', idempotentRequired, (req, res) => ok(res, plans.create(req.actor, parsePlanCreate(req.body)), 201));
+  r.get('/pm/plans/:id', (req, res) => ok(res, plans.get(req.actor, pid(req))));
+  r.patch('/pm/plans/:id', idempotent, (req, res) => ok(res, plans.update(req.actor, pid(req), parsePlanUpdate(req.body))));
+  r.get('/pm/due', (req, res) => res.json(due.list(req.actor, req.query)));
+  r.get('/job-cards/options', (req, res) => ok(res, jc.options(req.actor)));
+  r.get('/job-cards/export', (req, res) => file(res, maintsvc.exportCsv(req.actor, { kind: 'jobs' })));
+  r.get('/job-cards', (req, res) => res.json(jc.list(req.actor, req.query)));
+  r.post('/job-cards', idempotentRequired, (req, res) => ok(res, jc.create(req.actor, parseJobCreate(req.body)), 201));
+  r.post('/job-cards/import', idempotentRequired, (req, res) => ok(res, jc.importRows(req.actor, parseJobImport(req.body)), 201));
+  r.get('/job-cards/:id', (req, res) => ok(res, jc.get(req.actor, pid(req))));
+  r.patch('/job-cards/:id', idempotent, (req, res) => ok(res, jc.update(req.actor, pid(req), parseJobUpdate(req.body))));
+  r.delete('/job-cards/:id', (req, res) => ok(res, jc.remove(req.actor, pid(req))));
+  r.post('/job-cards/:id/files', idempotent, (req, res) => ok(res, jc.attach(req.actor, pid(req), parseFuelIssueAttach(req.body))));
+  r.post('/job-cards/:id/submit', idempotentRequired, (req, res) => ok(res, jc.submit(req.actor, pid(req)), 202));
+  r.post('/job-cards/:id/withdraw', idempotent, (req, res) => ok(res, jc.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/job-cards/:id/cancel', idempotent, (req, res) => ok(res, jc.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/job-cards/:id/amend', idempotent, (req, res) => ok(res, jc.amend(req.actor, pid(req), parseReason(req.body))));
+  r.post('/job-cards/:id/start', idempotentRequired, (req, res) => ok(res, jc.start(req.actor, pid(req))));
+  r.post('/job-cards/:id/complete', idempotentRequired, (req, res) => ok(res, jc.complete(req.actor, pid(req), parseJobComplete(req.body))));
+  r.post('/job-cards/:id/warranty', idempotent, (req, res) => ok(res, jc.warranty(req.actor, pid(req), parseWarranty(req.body))));
+  r.get('/job-cards/:id/history', (req, res) => ok(res, jc.history(req.actor, pid(req))));
+  r.get('/job-cards/:id/print', (req, res) => file(res, jc.print(req.actor, pid(req))));
+  r.post('/job-cards/:id/spares', idempotentRequired, (req, res) => ok(res, spares.add(req.actor, pid(req), parseSpareAdd(req.body)), 201));
+  r.post('/job-cards/:id/spares/:sid/reserve', idempotentRequired, (req, res) => ok(res, spares.reserve(req.actor, pid(req), parseId(req.params.sid))));
+  r.post('/job-cards/:id/spares/:sid/issue', idempotentRequired, (req, res) => ok(res, spares.issue(req.actor, pid(req), parseId(req.params.sid))));
+  r.post('/job-cards/:id/spares/:sid/return', idempotentRequired, (req, res) => ok(res, spares.returnUnused(req.actor, pid(req), parseId(req.params.sid), parseSpareReturn(req.body))));
+  r.post('/job-cards/:id/spares/:sid/cancel', idempotent, (req, res) => ok(res, spares.cancel(req.actor, pid(req), parseId(req.params.sid), parseSpareCancel(req.body))));
   return r;
 }

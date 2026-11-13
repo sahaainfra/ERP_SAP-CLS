@@ -15017,6 +15017,117 @@ Indexes:
 - ix_plt_ft_project: org_project_id
 - ux_plt_ft_code (unique): company_id, code
 
+## plt_job_cards
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| job_type | TEXT | yes |  |  |
+| pm_status_ids_json | TEXT | yes |  | '[]' |
+| breakdown_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| complaint | TEXT | yes |  |  |
+| diagnosis | TEXT |  |  |  |
+| work_done | TEXT |  |  |  |
+| opened_at | TEXT | yes |  |  |
+| started_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| downtime_start | TEXT |  |  |  |
+| downtime_end | TEXT |  |  |  |
+| downtime_hrs | INTEGER | yes |  | 0 |
+| meter_at_service | INTEGER |  |  |  |
+| mechanic | TEXT |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| external_ref | TEXT |  |  |  |
+| external_cost | INTEGER | yes |  | 0 |
+| labour_hrs | INTEGER | yes |  | 0 |
+| labour_cost | INTEGER | yes |  | 0 |
+| spares_cost | INTEGER | yes |  | 0 |
+| total_cost | INTEGER | yes |  | 0 |
+| warranty | INTEGER | yes |  | 0 |
+| warranty_ref | TEXT |  |  |  |
+| warranty_status | TEXT | yes |  | 'NONE' |
+| warranty_amount | INTEGER | yes |  | 0 |
+| prior_state | TEXT |  |  |  |
+| job_status | TEXT | yes |  | 'OPEN' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), breakdown_id -> plt_breakdowns(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_jc_status: company_id, status, job_status
+- ix_plt_jc_vendor: vendor_id
+- ix_plt_jc_site: org_site_id
+- ix_plt_jc_project: org_project_id
+- ix_plt_jc_bd: breakdown_id
+- ix_plt_jc_equip: equipment_id, job_status
+- ux_plt_jc_doc (unique): company_id, doc_no
+
+## plt_job_spares
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| job_card_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| store_id | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| qty | INTEGER | yes |  |  |
+| spare_status | TEXT | yes |  | 'REQUESTED' |
+| reservation_id | INTEGER |  |  |  |
+| ledger_ids_json | TEXT | yes |  | '[]' |
+| issued_qty | INTEGER | yes |  | 0 |
+| returned_qty | INTEGER | yes |  | 0 |
+| unit_cost | INTEGER | yes |  | 0 |
+| cost | INTEGER | yes |  | 0 |
+| issued_by | TEXT |  |  |  |
+| issued_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: reservation_id -> inv_reservations(id), store_id -> inv_stores(id), item_id -> mdm_items(id), job_card_id -> plt_job_cards(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_job_spares_company_id: company_id
+- ix_plt_js_resv: reservation_id
+- ix_plt_js_store: store_id
+- ix_plt_js_item: item_id
+- ix_plt_js_job: job_card_id
+
 ## plt_logs
 
 | Column | Type | Not null | Key | Default |
@@ -15135,6 +15246,78 @@ Indexes:
 - ix_plt_op_person: company_id, person_type, person_id, assign_status
 - ix_plt_op_alloc: allocation_id
 - ix_plt_op_eq: equipment_id, assign_status, from_date, to_date
+
+## plt_pm_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| task | TEXT | yes |  |  |
+| class_item_id | INTEGER |  |  |  |
+| equipment_id | INTEGER |  |  |  |
+| interval_type | TEXT | yes |  |  |
+| interval_value | INTEGER | yes |  |  |
+| warn_before | INTEGER | yes |  | 0 |
+| critical | INTEGER | yes |  | 0 |
+| checklist_json | TEXT | yes |  | '[]' |
+| plan_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: equipment_id -> plt_equipment(id), class_item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_pmp_equip: equipment_id
+- ix_plt_pmp_class: class_item_id
+- ux_plt_pmp_code (unique): company_id, code
+
+## plt_pm_status
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plan_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| last_done_meter | INTEGER | yes |  | 0 |
+| last_done_date | TEXT | yes |  |  |
+| next_due_meter | INTEGER |  |  |  |
+| next_due_date | TEXT |  |  |  |
+| due_state | TEXT | yes |  | 'OK' |
+| last_told_on | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: equipment_id -> plt_equipment(id), plan_id -> plt_pm_plans(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_pms_state: company_id, due_state
+- ix_plt_pms_equip: equipment_id
+- ux_plt_pms_plan_eq (unique): plan_id, equipment_id
 
 ## plt_requisitions
 

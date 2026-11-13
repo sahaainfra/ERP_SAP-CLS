@@ -45,3 +45,12 @@ export const fu = {
   anomaly: (id) => get(`/fuel/anomalies/${id}`), anomalySummary: () => get('/fuel/anomalies/summary'), anomalyAct: (id, action, b) => post(`/fuel/anomalies/${id}/${action}`, b), anomalyHistory: (id) => get(`/fuel/anomalies/${id}/history`),
   list: async (p, q) => (await api.get(`/plant${p}${qs(q)}`)),
 };
+
+// Maintenance: plans, job cards, spares, dashboard and metrics (part 17.05).
+export const JOB_TONE = REQ_TONE; export const WORK_TONE = { OPEN: 'DRAFT', IN_PROGRESS: 'IN_REVIEW', CLOSED: 'APPROVED' }; export const PM_TONE = { OK: 'APPROVED', DUE: 'RETURNED', OVERDUE: 'REJECTED' };
+export const mt = {
+  dashboard: (q) => get(`/maintenance/dashboard${qs(q)}`), metrics: (q) => get(`/maintenance/metrics${qs(q)}`), serviceHistory: (equipmentId) => get(`/maintenance/history${qs({ equipmentId })}`),
+  options: () => get('/job-cards/options'), plans: (q) => api.get(`/plant/pm/plans${qs(q)}`), planCreate: (b) => post('/pm/plans', b), planUpdate: (id, b) => patch(`/pm/plans/${id}`, b), due: (q) => api.get(`/plant/pm/due${qs(q)}`),
+  job: (id) => get(`/job-cards/${id}`), create: (b) => post('/job-cards', b), update: (id, b) => patch(`/job-cards/${id}`, b), act: (id, action, b) => post(`/job-cards/${id}/${action}`, b), history: (id) => get(`/job-cards/${id}/history`),
+  spareAdd: (id, b) => post(`/job-cards/${id}/spares`, b), spareAct: (id, sid, action, b) => post(`/job-cards/${id}/spares/${sid}/${action}`, b),
+};
