@@ -12,6 +12,7 @@ import { createBase } from '../proc/base.js';
 import { registerProject360Widget } from '../proj/p360.js';
 import { trainingOf } from '../hr/training.js';
 import { EQUIP_STATE, EQUIP_STATUS, PLANT_EQUIP_DOC, createPlantService } from './equipment.js';
+import { PLANT_LOG_DOC, createLogService } from './logs.js';
 import { PLANT_ALLOC_DOC, PLANT_REQ_DOC, REQ_STATUS, PHASE, createAllocService } from './alloc.js';
 import { plantRoutes } from './routes.js';
 
@@ -40,13 +41,16 @@ for (const [type, description] of [
   ['plant.allocation.mobilised', 'A machine left for its site (part 17.02): data { allocationId, docNo, equipmentId, assetCode, toProjectId, toSiteId, fromProjectId, fromSiteId, vehicleNo, gatePassId, dispatchMeter, dispatchedOn }.'],
   ['plant.allocation.arrived', 'A machine arrived and was accepted against the checklist; it is deployed at the site (part 17.02): data { allocationId, docNo, equipmentId, assetCode, projectId, siteId, arrivedOn, arrivalMeter, meterType, fromDate, toDate, rate, rateBasis, transfer, failedItems, operators }. The log books (17.03) start from it.'],
   ['plant.allocation.demobilised', 'A machine left its site and the allocation was released (part 17.02): data { allocationId, docNo, equipmentId, projectId, siteId, arrivedOn, departedOn, usage (meter units), meterType, rate, rateBasis, source }. Internal and hire charges (17.06) read the usage.'],
+  ['plant.log.approved', 'An equipment log was verified (part 17.03): data { logId, docNo, equipmentId, assetCode, classItemId, allocationId, projectId, siteId, logDate, shift, operatorType, operatorId, startMeter, endMeter, meterType, workingHrs, idleHrs, idleReason, breakdownHrs, waId, activityId, wbsId, costCodeId, workQty, workUom, fuelLitres, fuelRef, hire, vendorId, rate (rupees), rateBasis, cost (rupees), flags }. The daily progress report (14.02) reads the plant use it records; plant cost (14.07), hire billing (17.06), maintenance hours (17.05) and fuel norms (17.04) consume it.'],
+  ['plant.breakdown.reported', 'A breakdown of a machine was reported and the machine is marked in breakdown (part 17.03): data { breakdownId, docNo, equipmentId, assetCode, classItemId, allocationId, projectId, siteId, category, description, reportedOn, meterType, jobCardRequested }. Maintenance (17.05) raises the job card.'],
+  ['plant.breakdown.resolved', 'A breakdown was resolved (part 17.03): data { breakdownId, docNo, equipmentId, assetCode, projectId, siteId, reportedOn, resolvedOn, downtimeDays, resolution }.'],
   ['plant.operator.assigned', 'An operator with a valid certificate was assigned to a machine (part 17.02): data { assignmentId, equipmentId, assetCode, allocationId, personType, personId, shift, fromDate, toDate, certTypes }.'],
   ['plant.operator.ended', 'An operator assignment ended (part 17.02): data { assignmentId, equipmentId, personType, personId, reason }.'],
   ['plant.certificate.expired', 'A statutory certificate expired and the machine can no longer be allocated or logged (part 17.01): data { equipmentId, assetCode, docType, validUntil }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'plant', description });
 
 integrityRegistry.register({
-  statuses: { plt_equipment: Object.keys(EQUIP_STATUS), plt_requisitions: Object.keys(REQ_STATUS), plt_allocations: Object.keys(REQ_STATUS) }, uniqueKeys: [{ table: 'plt_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'plt_allocations', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'asset_code'] }],
+  statuses: { plt_equipment: Object.keys(EQUIP_STATUS), plt_requisitions: Object.keys(REQ_STATUS), plt_allocations: Object.keys(REQ_STATUS), plt_logs: Object.keys(REQ_STATUS) }, uniqueKeys: [{ table: 'plt_logs', columns: ['company_id', 'doc_no'] }, { table: 'plt_breakdowns', columns: ['company_id', 'doc_no'] }, { table: 'plt_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'plt_allocations', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'asset_code'] }],
 });
 
 export const plant = {
@@ -55,19 +59,20 @@ export const plant = {
   routePrefix: '/api/v1/plant',
   ownerPart: '17.01',
   status: 'Equipment and vehicle register (owned, hired, subcontractor) with approval, documents and statutory certificates with expiry alerts, status and location, history timeline, QR tag, fleet import and the plant dashboard. A mandatory certificate that is missing or has expired blocks allocation and logging.',
-  tables: ['plt_equipment', 'plt_documents', 'plt_timeline', 'plt_requisitions', 'plt_allocations', 'plt_operator_assignments'],
-  resources: ['equipment', 'documents', 'dashboard', 'requisitions', 'allocations', 'operators', 'availability', 'gantt'],
+  tables: ['plt_equipment', 'plt_documents', 'plt_timeline', 'plt_requisitions', 'plt_allocations', 'plt_operator_assignments', 'plt_logs', 'plt_breakdowns'],
+  resources: ['equipment', 'documents', 'dashboard', 'requisitions', 'allocations', 'operators', 'availability', 'gantt', 'logs', 'breakdowns', 'utilisation'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plt_equipment'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db }); const svc = createPlantService({ db, base, flags }); const alloc = createAllocService({ db, base, flags, equipment: svc, training: () => trainingOf(db) });
-    services.set(db, { svc, alloc, flags, base, equipmentDecide: svc.equipment.decide, reqDecide: alloc.requisitions.decide, allocDecide: alloc.allocations.decide });
+    const logsvc = createLogService({ db, base, flags, equipment: svc, alloc }); services.set(db, { svc, alloc, logsvc, flags, base, equipmentDecide: svc.equipment.decide, reqDecide: alloc.requisitions.decide, allocDecide: alloc.allocations.decide, logDecide: logsvc.logs.decide });
+    listExports.register('plant.logs', { source: (actor, req) => { base.need(actor, 'plant.log.export', 'export equipment logs'); return logsvc.logs.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('plant.requisitions', { source: (actor, req) => { base.need(actor, 'plant.requisition.export', 'export requisitions'); return alloc.requisitions.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('plant.allocations', { source: (actor, req) => { base.need(actor, 'plant.allocation.export', 'export allocations'); return alloc.allocations.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('plant.equipment', { source: (actor, req) => { base.need(actor, 'plant.equipment.export', 'export the equipment register'); return svc.equipment.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
     runtime?.jobs?.register('plant.cert_expiry_daily', (ctx) => { const n = svc.documents.sweep(); ctx.log(`Told about ${n} certificate(s) expired or expiring`); return { told: n }; }, { maxAttempts: 2, description: 'Statutory certificates of equipment that have expired or expire soon' });
     runtime?.scheduler?.define({ code: 'plant.cert_expiry_morning', cron: '0 2 * * *', jobType: 'plant.cert_expiry_daily', description: 'Every morning 07:30 India time: certificates that expired or expire soon are told to the plant managers' });
-    api.use('/plant', plantRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags, alloc }));
+    api.use('/plant', plantRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags, alloc, logsvc }));
   },
 };
 
@@ -135,3 +140,23 @@ objectTypes.register({
   projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM plt_allocations WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
 });
 void PHASE;
+
+// ---- the verification of a log (part 17.03) -------------------------------------------------------------------------------------------------------------------------------------------------------------
+const lgLine = (db, id) => db.prepare('SELECT x.*, e.asset_code, e.ownership, p.code AS pcode FROM plt_logs x JOIN plt_equipment e ON e.id = x.equipment_id JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: PLANT_LOG_DOC, label: 'Equipment log verification', processOwner: 'PMSUP', route: (id) => `/plant/logs?id=${id}`,
+  describe(db, companyId, id) { const l = lgLine(db, Number(id)); return l && l.company_id === companyId ? { ref: l.doc_no, title: `${l.doc_no} ${l.asset_code} ${l.log_date} (${l.pcode})`, originator: l.requested_by, projectId: l.org_project_id, siteId: l.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const l = lgLine(db, Number(id)); if (!l) return null; const fl = JSON.parse(l.anomalies_json || '[]'); return { fields: [{ label: 'Equipment', value: l.asset_code }, { label: 'Date / shift', value: `${l.log_date} ${l.shift}` }, { label: 'Operator', value: l.operator_name ?? '-' }, { label: 'Meter start / end', value: `${l.start_meter / 1000} / ${l.end_meter / 1000}` }, { label: 'Working / idle / breakdown h', value: `${l.working_hrs / 1000} / ${l.idle_hrs / 1000} / ${l.breakdown_hrs / 1000}` }, { label: 'Work done', value: `${l.work_qty / 1000} ${l.work_uom ?? ''}` }, { label: 'Fuel (l)', value: String(l.fuel_litres / 1000) }, { label: 'Flags', value: fl.length ? fl.map((f) => f.message).join('; ') : 'none' }, ...(l.anomaly_note ? [{ label: 'Explanation', value: l.anomaly_note }] : []), ...(l.ownership !== 'OWNED' ? [{ label: 'Vendor representative', value: l.vendor_rep ?? 'not signed' }] : [])] }; },
+  defaultDefinition: { name: 'Equipment log: the plant supervisor, then the site engineer; hired equipment also the project manager (the vendor signs the log)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PMSUP', 'Plant supervisor (verification)', 'PMSUP', 24), approver('SE', 'Site engineer', 'SE', 24), approver('PM', 'Project manager (hired equipment)', 'PM', 48, { field: 'needPm', op: 'eq', value: 'yes' })] }, hooks: hookOf('logDecide'),
+});
+objectTypes.register({
+  type: 'plt_log', label: 'Equipment log', permission: 'plant.log.view', route: (id) => `/plant/logs?id=${id}`, attachmentEntity: 'plt_logs', approvalTarget: 'plt_log',
+  access(db, actor, id) { const s = plantOf(db); if (!s) return null; try { const l = s.logsvc.logs.get(actor, Number(id)); return { companyId: actor.companyId, projectId: l.projectId, siteId: l.siteId ?? undefined, status: l.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'plt_logs', id }], summary(db, actor, id) { const s = plantOf(db); if (!s) return null; try { const l = s.logsvc.logs.get(actor, Number(id)); return { label: `${l.docNo} ${l.assetCode} ${l.date}`, status: l.status }; } catch { return null; } },
+  related(db, actor, id) { const s = plantOf(db); if (!s) return []; try { const l = s.logsvc.logs.get(actor, Number(id)); return [{ kind: 'equipment', label: l.assetCode, route: `/plant/equipment?id=${l.equipmentId}` }, { kind: 'allocation', label: l.allocation, route: `/plant/allocations?id=${l.allocationId}` }, ...(l.wa ? [{ kind: 'work authorisation', label: l.wa, route: `/site/work-authorisations?id=${l.waId}` }] : [])]; } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'plant.log.view').allowed) return []; return db.prepare('SELECT id, org_project_id, org_site_id FROM plt_logs WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, limit).filter((x) => authzOf(db).check(actor, 'plant.log.view', { companyId: actor.companyId, projectId: x.org_project_id, siteId: x.org_site_id }).allowed).map((x) => x.id); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM plt_logs WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+fileEntities.register({ entity: 'plt_logs', label: 'Equipment log (meter photograph, vendor signature)', resolve: (db, actor, id) => {
+  const r = db.prepare('SELECT company_id, org_project_id AS pid, org_site_id AS sid, status FROM plt_logs WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.pid, siteId: r.sid }).allowed; if (!at('plant.log.view')) return null;
+  return { companyId: r.company_id, projectId: r.pid ?? undefined, siteId: r.sid ?? undefined, canView: true, canEdit: at('plant.log.edit') && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) }; } });

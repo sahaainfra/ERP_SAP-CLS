@@ -27,3 +27,11 @@ export const pa = {
   candidates: (q) => get(`/operators/candidates${qs({ q })}`), assign: (b) => post('/operators', b), endOperator: (id, reason) => post(`/operators/${id}/end`, { reason }),
   reqList: async (q) => (await api.get(`/plant/requisitions${qs(q)}`)),
 };
+
+// Log books, breakdowns and utilisation (part 17.03).
+export const LOG_TONE = REQ_TONE;
+export const lg = {
+  options: (q) => get(`/logs/options${qs(q)}`), log: (id) => get(`/logs/${id}`), create: (b) => post('/logs', b), update: (id, b) => patch(`/logs/${id}`, b), act: (id, action, b) => post(`/logs/${id}/${action}`, b), attach: (id, b) => post(`/logs/${id}/files`, b), history: (id) => get(`/logs/${id}/history`),
+  worklist: async (q) => (await api.get(`/plant/logs/worklist${qs(q)}`)), breakdown: (id) => get(`/breakdowns/${id}`), report: (b) => post('/breakdowns', b), resolve: (id, b) => post(`/breakdowns/${id}/resolve`, b),
+  utilisation: (q) => get(`/utilisation${qs(q)}`), records: (q) => get(`/utilisation/records${qs(q)}`),
+};

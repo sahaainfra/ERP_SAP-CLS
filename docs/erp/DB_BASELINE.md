@@ -14617,6 +14617,51 @@ Indexes:
 - ix_plt_alloc_eq: equipment_id, from_date, to_date
 - ux_plt_alloc_doc (unique): company_id, doc_no
 
+## plt_breakdowns
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| allocation_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| category | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| reported_on | TEXT | yes |  |  |
+| reported_at | TEXT | yes |  |  |
+| reported_by | TEXT | yes |  |  |
+| prior_state | TEXT | yes |  | 'AVAILABLE' |
+| breakdown_status | TEXT | yes |  | 'OPEN' |
+| resolved_on | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolution | TEXT |  |  |  |
+| job_card_ref | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), allocation_id -> plt_allocations(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_bd_site: org_site_id
+- ix_plt_bd_project: org_project_id
+- ix_plt_bd_alloc: allocation_id
+- ix_plt_bd_eq: equipment_id, breakdown_status
+- ux_plt_bd_doc (unique): company_id, doc_no
+
 ## plt_documents
 
 | Column | Type | Not null | Key | Default |
@@ -14722,6 +14767,86 @@ Indexes:
 - ix_plt_eq_class: class_item_id
 - ux_plt_eq_code (unique): company_id, asset_code
 - ux_plt_eq_doc (unique): company_id, doc_no
+
+## plt_logs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| allocation_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| log_date | TEXT | yes |  |  |
+| shift | TEXT | yes |  | 'GENERAL' |
+| operator_type | TEXT |  |  |  |
+| operator_id | INTEGER |  |  |  |
+| operator_name | TEXT |  |  |  |
+| start_meter | INTEGER | yes |  |  |
+| end_meter | INTEGER | yes |  |  |
+| working_hrs | INTEGER | yes |  | 0 |
+| idle_hrs | INTEGER | yes |  | 0 |
+| idle_reason | TEXT |  |  |  |
+| breakdown_hrs | INTEGER | yes |  | 0 |
+| breakdown_id | INTEGER |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| work_qty | INTEGER | yes |  | 0 |
+| work_uom | TEXT |  |  |  |
+| fuel_litres | INTEGER | yes |  | 0 |
+| fuel_ref | TEXT |  |  |  |
+| meter_photo_file_id | INTEGER |  |  |  |
+| anomalies_json | TEXT | yes |  | '[]' |
+| anomaly_note | TEXT |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| vendor_rep | TEXT |  |  |  |
+| vendor_signed_at | TEXT |  |  |  |
+| vendor_signature_file_id | INTEGER |  |  |  |
+| charge_rate | INTEGER | yes |  | 0 |
+| charge_basis | TEXT | yes |  | 'DAY' |
+| cost_amount | INTEGER | yes |  | 0 |
+| use_recorded | INTEGER | yes |  | 0 |
+| use_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_signature_file_id -> core_files(id), vendor_id -> mdm_partners(id), meter_photo_file_id -> core_files(id), wbs_id -> proj_wbs(id), activity_id -> plan_activities(id), wa_id -> site_work_authorisations(id), breakdown_id -> plt_breakdowns(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), allocation_id -> plt_allocations(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_logs_list: company_id, status, log_date
+- ix_plt_logs_sign: vendor_signature_file_id
+- ix_plt_logs_photo: meter_photo_file_id
+- ix_plt_logs_breakdown: breakdown_id
+- ix_plt_logs_vendor: vendor_id
+- ix_plt_logs_wbs: wbs_id
+- ix_plt_logs_activity: activity_id
+- ix_plt_logs_wa: wa_id
+- ix_plt_logs_site: org_site_id
+- ix_plt_logs_project: org_project_id, log_date
+- ix_plt_logs_alloc: allocation_id
+- ix_plt_logs_eq: equipment_id, log_date, shift
+- ux_plt_logs_doc (unique): company_id, doc_no
 
 ## plt_operator_assignments
 

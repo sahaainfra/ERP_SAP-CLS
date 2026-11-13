@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
+import { parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
 
 /** /api/v1/plant: the equipment register, its documents and certificates, status, dashboard and exports (part 17.01). Behind its own flag, ff.plant.p1701. */
-export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc }) {
-  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc }) {
+  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
   r.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1701') ? next() : next(notFound('Plant and equipment is not enabled for your company yet.'))));
   r.use(['/requisitions', '/allocations', '/operators', '/availability', '/gantt'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1702') ? next() : next(notFound('Equipment allocation is not enabled for your company yet.'))));
+  r.use(['/logs', '/breakdowns', '/utilisation'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1703') ? next() : next(notFound('Equipment log books are not enabled for your company yet.'))));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard(req.actor, parseDashQ(req.query))));
   r.get('/dashboard/drill', (req, res) => ok(res, svc.drill(req.actor, parseDrillQ(req.query))));
   r.get('/dashboard/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
@@ -75,5 +76,29 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc 
   r.post('/operators', idempotentRequired, (req, res) => ok(res, operators.assign(req.actor, parseAssign(req.body)), 201));
   r.post('/operators/:id/end', idempotent, (req, res) => ok(res, operators.end(req.actor, pid(req), parseReason(req.body))));
   r.get('/equipment/:id/operators', (req, res) => ok(res, operators.list(req.actor, pid(req), parseOpsQ(req.query))));
+  // log books, breakdowns and utilisation (part 17.03, flag ff.plant.p1703)
+  r.get('/logs/options', (req, res) => ok(res, logs.options(req.actor, parseLogOptionsQ(req.query))));
+  r.get('/logs/export', (req, res) => file(res, logsvc.exportCsv(req.actor, { ...req.query, kind: 'logs' })));
+  r.get('/logs/worklist', (req, res) => res.json(logsvc.worklist(req.actor, req.query)));
+  r.get('/logs', (req, res) => res.json(logs.list(req.actor, req.query)));
+  r.post('/logs', idempotentRequired, (req, res) => ok(res, logs.create(req.actor, parseLogCreate(req.body)), 201));
+  r.post('/logs/import', idempotentRequired, (req, res) => ok(res, logs.importRows(req.actor, parseLogImport(req.body)), 201));
+  r.get('/logs/:id', (req, res) => ok(res, logs.get(req.actor, pid(req))));
+  r.patch('/logs/:id', idempotent, (req, res) => ok(res, logs.update(req.actor, pid(req), parseLogUpdate(req.body))));
+  r.delete('/logs/:id', (req, res) => ok(res, logs.remove(req.actor, pid(req))));
+  r.post('/logs/:id/files', idempotent, (req, res) => ok(res, logs.attach(req.actor, pid(req), parseLogAttach(req.body))));
+  r.post('/logs/:id/submit', idempotentRequired, (req, res) => ok(res, logs.submit(req.actor, pid(req)), 202));
+  r.post('/logs/:id/withdraw', idempotent, (req, res) => ok(res, logs.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/logs/:id/cancel', idempotent, (req, res) => ok(res, logs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/logs/:id/amend', idempotent, (req, res) => ok(res, logs.amend(req.actor, pid(req), parseReason(req.body))));
+  r.get('/logs/:id/history', (req, res) => ok(res, logs.history(req.actor, pid(req))));
+  r.get('/logs/:id/print', (req, res) => file(res, logs.print(req.actor, pid(req))));
+  r.get('/breakdowns', (req, res) => res.json(breakdowns.list(req.actor, req.query)));
+  r.post('/breakdowns', idempotentRequired, (req, res) => ok(res, breakdowns.report(req.actor, parseBdReport(req.body)), 201));
+  r.get('/breakdowns/:id', (req, res) => ok(res, breakdowns.get(req.actor, pid(req))));
+  r.post('/breakdowns/:id/resolve', idempotentRequired, (req, res) => ok(res, breakdowns.resolve(req.actor, pid(req), parseBdResolve(req.body))));
+  r.get('/utilisation', (req, res) => ok(res, logsvc.utilisation(req.actor, parseUtilQ(req.query))));
+  r.get('/utilisation/records', (req, res) => ok(res, logsvc.drill(req.actor, parseUtilDrillQ(req.query))));
+  r.get('/utilisation/export', (req, res) => file(res, logsvc.exportCsv(req.actor, parseUtilQ(req.query))));
   return r;
 }
