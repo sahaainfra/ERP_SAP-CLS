@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
+import { parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
 
 /** /api/v1/plant: the equipment register, its documents and certificates, status, dashboard and exports (part 17.01). Behind its own flag, ff.plant.p1701. */
-export function plantRoutes(svc, { idempotent, idempotentRequired, flags }) {
-  const r = Router(); const { equipment, documents } = svc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc }) {
+  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
   r.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1701') ? next() : next(notFound('Plant and equipment is not enabled for your company yet.'))));
+  r.use(['/requisitions', '/allocations', '/operators', '/availability', '/gantt'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1702') ? next() : next(notFound('Equipment allocation is not enabled for your company yet.'))));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard(req.actor, parseDashQ(req.query))));
   r.get('/dashboard/drill', (req, res) => ok(res, svc.drill(req.actor, parseDrillQ(req.query))));
   r.get('/dashboard/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
@@ -32,5 +33,47 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.patch('/documents/:id', idempotent, (req, res) => ok(res, documents.update(req.actor, pid(req), parseDocUpdate(req.body))));
   r.post('/documents/:id/file', idempotent, (req, res) => ok(res, documents.attach(req.actor, pid(req), parseDocAttach(req.body))));
   r.delete('/documents/:id', (req, res) => ok(res, documents.remove(req.actor, pid(req), parseReason(req.body))));
+  // requisitions, allocations, operators and the availability calendar (part 17.02, flag ff.plant.p1702)
+  r.get('/availability', (req, res) => ok(res, alloc.availability(req.actor, parseAvailQ(req.query))));
+  r.get('/gantt', (req, res) => ok(res, alloc.gantt(req.actor, parseGanttQ(req.query))));
+  r.get('/gantt/export', (req, res) => file(res, alloc.ganttCsv(req.actor, parseGanttQ(req.query))));
+  r.get('/requisitions/options', (req, res) => ok(res, requisitions.options(req.actor)));
+  r.get('/requisitions/export', (req, res) => file(res, alloc.exportCsv(req.actor, 'requisitions', req.query)));
+  r.get('/requisitions', (req, res) => res.json(requisitions.list(req.actor, req.query)));
+  r.post('/requisitions', idempotentRequired, (req, res) => ok(res, requisitions.create(req.actor, parseReqCreate(req.body)), 201));
+  r.post('/requisitions/import', idempotentRequired, (req, res) => ok(res, requisitions.importRows(req.actor, parseReqImport(req.body)), 201));
+  r.get('/requisitions/:id', (req, res) => ok(res, requisitions.get(req.actor, pid(req))));
+  r.patch('/requisitions/:id', idempotent, (req, res) => ok(res, requisitions.update(req.actor, pid(req), parseReqUpdate(req.body))));
+  r.delete('/requisitions/:id', (req, res) => ok(res, requisitions.remove(req.actor, pid(req))));
+  r.post('/requisitions/:id/submit', idempotentRequired, (req, res) => ok(res, requisitions.submit(req.actor, pid(req)), 202));
+  r.post('/requisitions/:id/withdraw', idempotent, (req, res) => ok(res, requisitions.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/requisitions/:id/cancel', idempotent, (req, res) => ok(res, requisitions.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/requisitions/:id/amend', idempotent, (req, res) => ok(res, requisitions.amend(req.actor, pid(req), parseReason(req.body))));
+  r.post('/requisitions/:id/hire', idempotentRequired, (req, res) => ok(res, requisitions.hire(req.actor, pid(req), parseHire(req.body))));
+  r.get('/requisitions/:id/history', (req, res) => ok(res, requisitions.history(req.actor, pid(req))));
+  r.get('/requisitions/:id/print', (req, res) => file(res, requisitions.print(req.actor, pid(req))));
+  r.get('/allocations/options', (req, res) => ok(res, alloc.allocOptions(req.actor)));
+  r.get('/allocations/export', (req, res) => file(res, alloc.exportCsv(req.actor, 'allocations', req.query)));
+  r.get('/allocations', (req, res) => res.json(allocations.list(req.actor, req.query)));
+  r.post('/allocations', idempotentRequired, (req, res) => ok(res, allocations.create(req.actor, parseAllocCreate(req.body)), 201));
+  r.post('/allocations/import', idempotentRequired, (req, res) => ok(res, allocations.importRows(req.actor, parseAllocImport(req.body)), 201));
+  r.get('/allocations/:id', (req, res) => ok(res, allocations.get(req.actor, pid(req))));
+  r.patch('/allocations/:id', idempotent, (req, res) => ok(res, allocations.update(req.actor, pid(req), parseAllocUpdate(req.body))));
+  r.patch('/allocations/:id/dates', idempotent, (req, res) => ok(res, allocations.reschedule(req.actor, pid(req), parseDates(req.body))));
+  r.delete('/allocations/:id', (req, res) => ok(res, allocations.remove(req.actor, pid(req))));
+  r.post('/allocations/:id/submit', idempotentRequired, (req, res) => ok(res, allocations.submit(req.actor, pid(req)), 202));
+  r.post('/allocations/:id/withdraw', idempotent, (req, res) => ok(res, allocations.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/allocations/:id/cancel', idempotent, (req, res) => ok(res, allocations.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/allocations/:id/amend', idempotent, (req, res) => ok(res, allocations.amend(req.actor, pid(req), parseReason(req.body))));
+  r.post('/allocations/:id/mobilise', idempotentRequired, (req, res) => ok(res, allocations.mobilise(req.actor, pid(req), parseMobilise(req.body))));
+  r.post('/allocations/:id/arrive', idempotentRequired, (req, res) => ok(res, allocations.arrive(req.actor, pid(req), parseArrive(req.body))));
+  r.post('/allocations/:id/demobilise', idempotentRequired, (req, res) => ok(res, allocations.demobilise(req.actor, pid(req), parseDemobilise(req.body))));
+  r.post('/allocations/:id/transfer', idempotentRequired, (req, res) => ok(res, allocations.transfer(req.actor, pid(req), parseTransfer(req.body)), 201));
+  r.get('/allocations/:id/history', (req, res) => ok(res, allocations.history(req.actor, pid(req))));
+  r.get('/allocations/:id/print', (req, res) => file(res, allocations.print(req.actor, pid(req))));
+  r.get('/operators/candidates', (req, res) => ok(res, operators.candidates(req.actor, parseCandidatesQ(req.query).q ?? '')));
+  r.post('/operators', idempotentRequired, (req, res) => ok(res, operators.assign(req.actor, parseAssign(req.body)), 201));
+  r.post('/operators/:id/end', idempotent, (req, res) => ok(res, operators.end(req.actor, pid(req), parseReason(req.body))));
+  r.get('/equipment/:id/operators', (req, res) => ok(res, operators.list(req.actor, pid(req), parseOpsQ(req.query))));
   return r;
 }

@@ -36,3 +36,25 @@ const KINDS = ['fleet', 'expired', 'expiring', 'nonCompliant', 'pending', ...STA
 export const parseDrillQ = (v) => parse(z.object({ ...q, kind: z.enum(KINDS) }).strict(), v ?? {});
 export const parseExportQ = (v) => parse(z.object({ ...q, kind: z.enum(['register', ...KINDS]).optional() }).strict(), v ?? {});
 export const parseScanQ = (v) => parse(z.object({ code: text(80).min(1) }).strict(), v ?? {});
+
+// Requisitions, allocations, operators and the availability calendar (part 17.02).
+const PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT']; const BASES = ['HOUR', 'DAY', 'MONTH']; const meter = z.number().finite().min(0).max(1e9).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+const reqBody = { projectId: id, siteId: id.nullish().transform((v) => v ?? null), classItemId: id, capacity: opt(80), qty: z.number().int().min(1).max(1000), fromDate: day, toDate: day, purpose: text(300).min(3, 'Say what the equipment is for'), activityId: id.nullish().transform((v) => v ?? null), priority: z.enum(PRIORITIES) };
+export const parseReqCreate = (b) => parse(z.object({ ...reqBody, qty: reqBody.qty.default(1), priority: reqBody.priority.default('NORMAL') }).strict(), b ?? {});
+export const parseReqUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(reqBody).map(([k, v]) => [k, v.optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseHire = (b) => parse(z.object({ qty: z.number().int().min(0).max(1000), reason: text(500).min(5, 'Say why (at least 5 characters)') }).strict(), b ?? {});
+const allocBody = { equipmentId: id, projectId: id, siteId: id.nullish().transform((v) => v ?? null), requisitionId: id.nullish().transform((v) => v ?? null), fromDate: day, toDate: day, internalRate: money, rateBasis: z.enum(BASES) };
+export const parseAllocCreate = (b) => parse(z.object({ ...allocBody, internalRate: allocBody.internalRate.default(0), rateBasis: allocBody.rateBasis.default('DAY') }).strict(), b ?? {});
+export const parseAllocUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(allocBody).map(([k, v]) => [k, v.optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseDates = (b) => parse(z.object({ fromDate: day, toDate: day, rowVersion: z.number().int().optional() }).strict(), b ?? {});
+export const parseMobilise = (b) => parse(z.object({ vehicleNo: opt(20), trailerNo: opt(20), driverName: opt(80), gatePassNo: opt(40), dispatchMeter: meter.nullish().transform((v) => v ?? null), dispatchedOn: day.optional(), note: opt(300) }).strict(), b ?? {});
+export const parseArrive = (b) => parse(z.object({ arrivalMeter: meter, arrivedOn: day.optional(), checklist: z.array(z.object({ code: text(30), result: z.enum(['PASS', 'FAIL', 'NA']), note: opt(300) }).strict()).max(30) }).strict(), b ?? {});
+export const parseDemobilise = (b) => parse(z.object({ departureMeter: meter, departedOn: day.optional(), note: opt(300) }).strict(), b ?? {});
+export const parseTransfer = (b) => parse(z.object({ toProjectId: id, toSiteId: id.nullish().transform((v) => v ?? null), onDate: day.optional(), toDate: day.optional(), reason: text(300).min(5, 'Say why (at least 5 characters)') }).strict(), b ?? {});
+export const parseAllocImport = (b) => parse(z.object({ rows: z.array(z.object({ assetCode: text(40), projectCode: text(60), siteCode: opt(60), requisitionNo: opt(40), fromDate: day, toDate: day, internalRate: money.optional(), rateBasis: z.enum(BASES).optional() }).strict()).min(1).max(2000) }).strict(), b ?? {});
+export const parseReqImport = (b) => parse(z.object({ rows: z.array(z.object({ projectCode: text(60), siteCode: opt(60), classCode: text(60), capacity: opt(80), qty: z.number().int().min(1).max(1000).optional(), fromDate: day, toDate: day, purpose: text(300).min(3), priority: z.enum(PRIORITIES).optional() }).strict()).min(1).max(2000) }).strict(), b ?? {});
+export const parseAvailQ = (v) => parse(z.object({ classItemId: id.optional(), fromDate: day.optional(), toDate: day.optional(), excludeAllocationId: id.optional() }).strict(), v ?? {});
+export const parseGanttQ = (v) => parse(z.object({ from: day.optional(), to: day.optional(), projectId: id.optional(), classItemId: id.optional() }).strict(), v ?? {});
+export const parseAssign = (b) => parse(z.object({ equipmentId: id, allocationId: id.nullish().transform((v) => v ?? null), personType: z.enum(['EMPLOYEE', 'WORKER']), personId: id, shift: z.enum(['GENERAL', 'DAY', 'NIGHT']).default('GENERAL'), fromDate: day, toDate: day }).strict(), b ?? {});
+export const parseCandidatesQ = (v) => parse(z.object({ q: text(60).optional() }).strict(), v ?? {});
+export const parseOpsQ = (v) => parse(z.object({ on: day.optional() }).strict(), v ?? {});

@@ -16,3 +16,14 @@ export const pl = {
   myTasks: async () => ((await api.get('/workflow/tasks?mine=assigned')).data?.rows ?? []).filter((t) => String(t.instance?.docType ?? t.instance?.doc_type ?? '').startsWith('PLANT_')).length,
   exportFile: async (q, name, path = '/dashboard/export') => { const res = await fetch(`/api/v1/plant${path}${qs(q)}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); },
 };
+
+// Requisitions, allocations, operators and the availability calendar (part 17.02).
+export const REQ_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+export const PHASE_TONE = { PLANNED: 'DRAFT', IN_TRANSIT: 'IN_REVIEW', ON_SITE: 'APPROVED', RELEASED: 'CANCELLED' };
+export const pa = {
+  options: () => get('/allocations/options'), reqOptions: () => get('/requisitions/options'), availability: (q) => get(`/availability${qs(q)}`), gantt: (q) => get(`/gantt${qs(q)}`),
+  req: (id) => get(`/requisitions/${id}`), reqCreate: (b) => post('/requisitions', b), reqUpdate: (id, b) => patch(`/requisitions/${id}`, b), reqAct: (id, action, b) => post(`/requisitions/${id}/${action}`, b), reqHistory: (id) => get(`/requisitions/${id}/history`),
+  alloc: (id) => get(`/allocations/${id}`), allocCreate: (b) => post('/allocations', b), allocUpdate: (id, b) => patch(`/allocations/${id}`, b), allocDates: (id, b) => patch(`/allocations/${id}/dates`, b), allocAct: (id, action, b) => post(`/allocations/${id}/${action}`, b), allocHistory: (id) => get(`/allocations/${id}/history`),
+  candidates: (q) => get(`/operators/candidates${qs({ q })}`), assign: (b) => post('/operators', b), endOperator: (id, reason) => post(`/operators/${id}/end`, { reason }),
+  reqList: async (q) => (await api.get(`/plant/requisitions${qs(q)}`)),
+};
