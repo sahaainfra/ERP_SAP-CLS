@@ -11,7 +11,8 @@ const EDITABLE = ['DRAFT', 'RETURNED'];
  * The approval life of one kind of quality document, written once: the row with its rights, send for approval (the workflow engine), withdraw, cancel, history and the outcome of the approval. Each part gives what is special:
  * the permission prefix, the table, the workflow type, the context of the workflow, what must hold before it is sent (`beforeSubmit`) and what follows an approval or another outcome (`onApproved`, `onOutcome`).
  */
-export function createFlow({ db, base, docType, table, perm, label, route, ctx, title, where = (r) => ({ pid: r.org_project_id ?? null, sid: r.org_site_id ?? null }), beforeSubmit = () => {}, onApproved = () => {}, onOutcome = () => {}, notifyCode, numberKey, prefix }) {
+/** @param {any} o */
+export function createFlow({ db, base, docType, table, perm, label, route, ctx, title, where = (r) => ({ pid: r.org_project_id ?? null, sid: r.org_site_id ?? null }), beforeSubmit = (/** @type {any} */ _a, /** @type {any} */ _r) => {}, onApproved = (/** @type {any} */ _a, /** @type {any} */ _r) => {}, onOutcome = (/** @type {any} */ _a, /** @type {any} */ _r, /** @type {any} */ _s, /** @type {any} */ _c) => {}, notifyCode, numberKey, prefix }) {
   const { authz, may, audit, notify, number } = base; void authz;
   const at = (r) => where(r);
   const flow = {

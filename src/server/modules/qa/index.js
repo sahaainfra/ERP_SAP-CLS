@@ -58,6 +58,7 @@ export const qa = {
 const approver = (code, name, role, slaHours, when = null) => ({ code, name, type: 'approval', mode: 'single', approvers: [{ kind: 'role', role }], slaHours, requireAttachment: false, checklist: [], when, notify: [], action: null });
 const decideHook = (docType) => ({ onApproved: (db, { instance, actor }) => qaOf(db)?.deciders[docType](instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'REJECTED', comment), onReturned: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'CANCELLED', comment) });
 /** Registers the workflow type of an approval document of the module: `table` and `title(row)` describe it in the inbox. */
+/** @param {any} o */
 export function registerQaWorkflow({ docType, label, table, owner, route, name, steps, title, fields, amount }) {
   workflowTypes.register({
     docType, label, processOwner: owner, route: (id) => `${route}${id}`,
