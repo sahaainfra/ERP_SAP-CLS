@@ -194,3 +194,12 @@ export const parseMrcImport = (b) => parse(z.object({ rows: z.array(z.object({ d
 export const parseMrcContribution = (b) => parse(z.object({ note: text(1000).min(3, 'Write the note'), lineId: id.optional() }).strict().transform(defined), b ?? {});
 export const parseMrcMaterial = (b) => parse(z.object({ itemId: id, defaultWastagePct: z.number().finite().min(0).max(100).optional() }).strict().transform(defined), b ?? {});
 export const parseMrcMaterialUpdate = (b) => parse(z.object({ defaultWastagePct: z.number().finite().min(0).max(100), rowVersion: z.number().int().optional() }).strict().transform(defined), b ?? {});
+
+// Materials management dashboard (part 16.11): the filters of the dashboard, the drill-down, the funnel and the exports.
+const mmdBase = { projectId: id.optional(), storeId: id.optional(), from: day.optional(), to: day.optional() };
+export const parseMmdQ = (q) => parse(z.object(mmdBase).strict(), q ?? {});
+export const parseMmdDrillQ = (q) => parse(z.object({ ...mmdBase, kind: z.enum(['inventory', 'belowReorder', 'pendingGrn', 'openMrs', 'issuesToday', 'inTransit', 'nonMoving', 'wastage', 'mrsAwaiting', 'returnsPending', 'countsDue']) }).strict(), q ?? {});
+export const parseMmdFunnelQ = (q) => parse(z.object({ ...mmdBase, itemId: id.optional(), categoryId: id.optional(), q: z.string().trim().max(80).optional() }).strict(), q ?? {});
+export const parseMmdStageQ = (q) => parse(z.object({ ...mmdBase, itemId: id, stage: z.enum(['required', 'pr', 'po', 'delivered', 'accepted', 'issued', 'consumed']) }).strict(), q ?? {});
+export const parseMmdExportQ = (q) => parse(z.object({ ...mmdBase, kind: z.enum(['kpis', 'funnel', 'inventory', 'belowReorder', 'pendingGrn', 'openMrs', 'issuesToday', 'inTransit', 'nonMoving', 'wastage', 'mrsAwaiting', 'returnsPending', 'countsDue']).optional(), itemId: id.optional(), categoryId: id.optional(), q: z.string().trim().max(80).optional() }).strict(), q ?? {});
+export const parseMmdStoresQ = (q) => parse(z.object({ projectId: id.optional() }).strict(), q ?? {});

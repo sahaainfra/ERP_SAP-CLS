@@ -1475,3 +1475,12 @@ Module `inv`, flag `ff.inv.p1610`, tables `mrc_key_materials`, `mrc_reconciliati
 - **Approval**: workflow `INV_MRC` (project manager, then project director or director); events `inv.reconciliation.approved`, `inv.reconciliation.recovery_approved`.
 - **Reports**: `trend` (wastage by material, site and month, top variances), `drilldown` (ledger entries and the work behind the theoretical figure).
 - **Parameters**: `inv.mrc.tolerance_pct`, `inv.mrc.min_explanation`. **Permissions**: `inv.reconciliation.{view,create,edit,delete,submit,approve,cancel,amend,print,export,import,configure,contribute}`.
+
+## 129. Materials management dashboard (part 16.11)
+Module `inv`, flag `ff.inv.p1611`, no table; service `src/server/modules/inv/mmd.js` (routes `mmdRoutes`, `/api/v1/inv/materials`). Every figure is worked out on request from the ledger, valuation and documents inside the data scope; the inventory value is checked against the ledger sum at the same entry (BR-01). Calls the services of 16.10 and 15.10. Permissions `inv.dashboard.{view,export}`; parameters `inv.mmd.*`; fills the Project 360 `stores` slot.
+
+## 130. Equipment register, documents and statutory certificates (part 17.01)
+Module `plant` (new), flag `ff.plant.p1701`, tables `plt_equipment`, `plt_documents`, `plt_timeline`; folder `src/server/modules/plant/` (`equipment.js` service, `routes.js`, `validators.js`, `index.js` with the workflow type `PLANT_EQUIPMENT`, events, object and file entities, job `plant.cert_expiry_daily`). `allocatable` / `assertAllocatable` is the single check for expired or missing mandatory certificates (BR-01) that allocation (17.02) and logs (17.03) call. Permissions `plant.equipment.*`, `plant.document.manage`; parameters `plant.cert.*`, `plant.dash.target_utilisation_pct`; fills the Project 360 `plant` slot.
+
+## 131. Mobilisation, allocation, transfer and demobilisation (part 17.02)
+Module `plant`, flag `ff.plant.p1702`, tables `plt_requisitions`, `plt_allocations`, `plt_operator_assignments`; service `src/server/modules/plant/alloc.js` (routes in `routes.js`, gated per path). One live allocation per machine (`clashes`); a transfer is an allocation that takes over on arrival; the machine's status and place change only through `equipment.setState(..., internal)` of 17.01. Workflows `PLANT_REQUISITION`, `PLANT_ALLOCATION`. Operators are checked with `trainingOf(db).certs.check` (07.10). Permissions `plant.requisition.*`, `plant.allocation.*`, `plant.operator.assign`.

@@ -100,3 +100,11 @@ export function saveCsv(name, rows) {
   const url = URL.createObjectURL(new Blob([rows.map((r) => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 export { authHeaders };
+
+// Materials management dashboard (part 16.11): the figures, drill-downs and the funnel come from the server; the pages never work them out.
+export const mm = {
+  dashboard: (q) => get(`/materials/dashboard${qs(q)}`), drill: (q) => get(`/materials/drill${qs(q)}`), funnel: (q) => get(`/materials/funnel${qs(q)}`), stage: (q) => get(`/materials/funnel/records${qs(q)}`),
+  projects: () => get('/materials/projects'), stores: (projectId) => get(`/materials/stores${qs({ projectId })}`), categories: () => get('/materials/categories'),
+  myTasks: async () => { const rows = (await api.get('/workflow/tasks?mine=assigned')).data?.rows ?? []; return rows.filter((t) => String(t.instance?.docType ?? t.instance?.doc_type ?? '').startsWith('INV_') || String(t.instance?.docType ?? t.instance?.doc_type ?? '').startsWith('PROC_MR')).length; },
+  exportFile: async (q, name) => { const res = await fetch(`/api/v1/inv/materials/export${qs(q)}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); },
+};

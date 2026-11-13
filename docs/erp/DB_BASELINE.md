@@ -14552,6 +14552,302 @@ Indexes:
 - ux_plan_weekly_plans_week (unique): org_project_id, , week_start, revision_no
 - ux_plan_weekly_plans_doc (unique): company_id, doc_no
 
+## plt_allocations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| requisition_id | INTEGER |  |  |  |
+| alloc_kind | TEXT | yes |  | 'ALLOCATION' |
+| transfer_from_id | INTEGER |  |  |  |
+| transfer_reason | TEXT |  |  |  |
+| source | TEXT | yes |  | 'OWN' |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| internal_rate | INTEGER | yes |  | 0 |
+| charge_basis | TEXT | yes |  | 'DAY' |
+| estimated_amount | INTEGER | yes |  | 0 |
+| phase | TEXT | yes |  | 'PLANNED' |
+| vehicle_no | TEXT |  |  |  |
+| trailer_no | TEXT |  |  |  |
+| driver_name | TEXT |  |  |  |
+| gate_pass_id | INTEGER |  |  |  |
+| dispatched_on | TEXT |  |  |  |
+| dispatch_meter | INTEGER |  |  |  |
+| arrived_on | TEXT |  |  |  |
+| arrival_meter | INTEGER |  |  |  |
+| arrival_checklist_json | TEXT | yes |  | '[]' |
+| departed_on | TEXT |  |  |  |
+| departure_meter | INTEGER |  |  |  |
+| demob_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: gate_pass_id -> inv_gate_passes(id), transfer_from_id -> plt_allocations(id), requisition_id -> plt_requisitions(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_alloc_list: company_id, status, phase
+- ix_plt_alloc_gate: gate_pass_id
+- ix_plt_alloc_from: transfer_from_id
+- ix_plt_alloc_req: requisition_id
+- ix_plt_alloc_site: org_site_id
+- ix_plt_alloc_project: org_project_id
+- ix_plt_alloc_eq: equipment_id, from_date, to_date
+- ux_plt_alloc_doc (unique): company_id, doc_no
+
+## plt_documents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| doc_type | TEXT | yes |  |  |
+| doc_number | TEXT |  |  |  |
+| issuer | TEXT |  |  |  |
+| valid_from | TEXT |  |  |  |
+| valid_until | TEXT |  |  |  |
+| file_id | INTEGER |  |  |  |
+| mandatory | INTEGER | yes |  | 1 |
+| doc_status | TEXT | yes |  | 'CURRENT' |
+| superseded_by | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: superseded_by -> plt_documents(id), file_id -> core_files(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_documents_superseded_by: superseded_by
+- ix_plt_doc_file: file_id
+- ix_plt_doc_expiry: company_id, doc_status, valid_until
+- ix_plt_doc_eq: equipment_id, doc_type, doc_status
+
+## plt_equipment
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| asset_code | TEXT | yes |  |  |
+| class_item_id | INTEGER | yes |  |  |
+| make | TEXT |  |  |  |
+| model | TEXT |  |  |  |
+| mfg_year | INTEGER |  |  |  |
+| serial_no | TEXT |  |  |  |
+| chassis_no | TEXT |  |  |  |
+| engine_no | TEXT |  |  |  |
+| reg_no | TEXT |  |  |  |
+| capacity | TEXT |  |  |  |
+| ownership | TEXT | yes |  | 'OWNED' |
+| owner_partner_id | INTEGER |  |  |  |
+| purchase_value | INTEGER | yes |  | 0 |
+| purchase_date | TEXT |  |  |  |
+| meter_type | TEXT | yes |  | 'HOURS' |
+| fuel_type | TEXT | yes |  | 'DIESEL' |
+| tank_capacity | INTEGER | yes |  | 0 |
+| fuel_norm | INTEGER | yes |  | 0 |
+| fuel_norm_unit | TEXT | yes |  | 'L_PER_HOUR' |
+| gps_device_id | TEXT |  |  |  |
+| road_vehicle | INTEGER | yes |  | 0 |
+| lifting | INTEGER | yes |  | 0 |
+| operator_required | INTEGER | yes |  | 0 |
+| operator_licence_class | TEXT |  |  |  |
+| equip_state | TEXT | yes |  | 'AVAILABLE' |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| state_since | TEXT |  |  |  |
+| state_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), owner_partner_id -> mdm_partners(id), class_item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_eq_reg: company_id, reg_no
+- ix_plt_eq_list: company_id, status, equip_state, ownership
+- ix_plt_eq_site: org_site_id
+- ix_plt_eq_project: org_project_id
+- ix_plt_eq_owner: owner_partner_id
+- ix_plt_eq_class: class_item_id
+- ux_plt_eq_code (unique): company_id, asset_code
+- ux_plt_eq_doc (unique): company_id, doc_no
+
+## plt_operator_assignments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| allocation_id | INTEGER |  |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| person_name | TEXT | yes |  |  |
+| shift | TEXT | yes |  | 'GENERAL' |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| cert_types_json | TEXT | yes |  | '[]' |
+| assign_status | TEXT | yes |  | 'ACTIVE' |
+| ended_reason | TEXT |  |  |  |
+| assigned_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: allocation_id -> plt_allocations(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_op_person: company_id, person_type, person_id, assign_status
+- ix_plt_op_alloc: allocation_id
+- ix_plt_op_eq: equipment_id, assign_status, from_date, to_date
+
+## plt_requisitions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| class_item_id | INTEGER | yes |  |  |
+| capacity | TEXT |  |  |  |
+| qty | INTEGER | yes |  | 1 |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| activity_id | INTEGER |  |  |  |
+| priority | TEXT | yes |  | 'NORMAL' |
+| hire_qty | INTEGER | yes |  | 0 |
+| hire_reason | TEXT |  |  |  |
+| hire_decided_by | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: activity_id -> plan_activities(id), class_item_id -> mdm_items(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_req_list: company_id, status, from_date
+- ix_plt_req_activity: activity_id
+- ix_plt_req_class: class_item_id
+- ix_plt_req_site: org_site_id
+- ix_plt_req_project: org_project_id
+- ux_plt_req_doc (unique): company_id, doc_no
+
+## plt_timeline
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| event | TEXT | yes |  |  |
+| from_state | TEXT |  |  |  |
+| to_state | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| note | TEXT |  |  |  |
+| done_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_timeline_company_id: company_id
+- ix_plt_timeline_org_site_id: org_site_id
+- ix_plt_tl_project: org_project_id
+- ix_plt_tl_eq: equipment_id, id
+
 ## pol_acknowledgements
 
 | Column | Type | Not null | Key | Default |

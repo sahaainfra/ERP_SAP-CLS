@@ -40,6 +40,8 @@ import AssetScanPage from './AssetScanPage.jsx';
 import CustodyPage from './CustodyPage.jsx';
 import ReconciliationsPage from './ReconciliationsPage.jsx';
 import WastageTrendPage from './WastageTrendPage.jsx';
+import MaterialsDashboardPage from './MaterialsDashboardPage.jsx';
+import MaterialFunnelPage from './MaterialFunnelPage.jsx';
 registerModule({
   code: 'inv',
   label: 'Stores and Inventory',
@@ -84,5 +86,7 @@ registerModule({
     { path: '/inv/custody', label: 'Custody Statement and Calibration Due', icon: 'erp.group.supply', permission: 'inv.small_asset.view', flag: 'ff.inv.p1609', Page: CustodyPage },
     { path: '/inv/reconciliations', label: 'Monthly Material Reconciliation', icon: 'erp.group.supply', permission: 'inv.reconciliation.view', flag: 'ff.inv.p1610', Page: ReconciliationsPage },
     { path: '/inv/wastage-trend', label: 'Wastage Trend', icon: 'erp.group.supply', permission: 'inv.reconciliation.view', flag: 'ff.inv.p1610', Page: WastageTrendPage },
+    { path: '/inv/materials-dashboard', label: 'Materials Management Dashboard', icon: 'erp.group.supply', permission: 'inv.dashboard.view', flag: 'ff.inv.p1611', Page: MaterialsDashboardPage },
+    { path: '/inv/material-funnel', label: 'Material Lifecycle Funnel', icon: 'erp.group.supply', permission: 'inv.dashboard.view', flag: 'ff.inv.p1611', Page: MaterialFunnelPage },
   ],
 });

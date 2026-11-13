@@ -57,9 +57,11 @@ test('T-01 every live widget equals its source; no slot shows sample data; BR-02
   const mp = slot(d, 'map'); assert.deepEqual([figure(mp, 'located'), figure(mp, 'locations')], [1, 2]); assert.equal(figure(mp, 'progress'), null, 'no progress has been recorded: no number'); assert.ok(mp.note);
   assert.deepEqual([figure(slot(d, 'team'), 'members'), figure(slot(d, 'actions'), 'open'), figure(slot(d, 'wbs'), 'nodes'), figure(slot(d, 'boq'), 'versions')], [0, 0, 0, 0]);
   // FR-06: the slots of modules that are not live name the part, show no figure
-  for (const [code, part] of [['progress', '14.05'], ['schedule', '13.x'], ['budget', '12.x and 14.07'], ['stores', '16.x'], ['plant', '17.x'], ['quality', '18.x'], ['hse', '19.x'], ['billing', '22.x and 23.x'], ['documents', '11.x']]) {
+  for (const [code, part] of [['progress', '14.05'], ['schedule', '13.x'], ['budget', '12.x and 14.07'], ['quality', '18.x'], ['hse', '19.x'], ['billing', '22.x and 23.x'], ['documents', '11.x']]) {
     const w = slot(d, code); assert.deepEqual([w.status, w.figures.length, w.ownerPart], ['NOT_LIVE', 0, part], code); assert.ok(w.emptyText.includes(part.split(' ')[0]) || w.emptyText.includes('not live'), `${code}: ${w.emptyText}`);
   }
+  { const w = slot(d, 'plant'); assert.equal(w.status, 'LIVE', 'part 17.01 supplies the plant slot'); assert.ok(w.figures.length === 0 || w.figures.every((f) => f.value === 0), 'no equipment in this project'); }
+  { const w = slot(d, 'stores'); assert.equal(w.status, 'LIVE', 'part 16.11 supplies the stores slot'); assert.deepEqual(w.figures.map((f) => f.key), ['value', 'reorder', 'inspection', 'mrs', 'transit']); assert.ok(w.figures.every((f) => f.value === 0), 'no stock in this project'); }
   { const w = slot(d, 'procurement'); assert.equal(w.status, 'LIVE', 'part 15.10 supplies the procurement slot'); assert.deepEqual(w.figures.map((f) => f.key), ['openPrs', 'posPending', 'overdue', 'spendFy']); assert.ok(w.figures.every((f) => f.value === 0), 'no procurement data in this project'); }
   assert.deepEqual(d.healthItems.filter((h) => h.level === 'NONE').map((h) => h.code), ['COST', 'QUALITY', 'SAFETY', 'CASH'], 'no data is not green');
   // BR-02: a quantity surveyor holds no right to risks or issues: those widgets are not there, the empty slots still are
