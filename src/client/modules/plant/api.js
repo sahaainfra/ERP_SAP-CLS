@@ -69,3 +69,10 @@ export const fl = {
   tower: (q) => get(`/fleet/tower${qs(q)}`), costs: (q) => get(`/fleet/costs${qs(q)}`), replacement: (q) => get(`/fleet/replacement${qs(q)}`), items: (id) => get(`/fleet/equipment/${id}/cost-items`), itemAdd: (id, b) => post(`/fleet/equipment/${id}/cost-items`, b), snapshot: (b) => post('/fleet/snapshots', b),
   disposal: (id) => get(`/disposal-recs/${id}`), disposalCreate: (b) => post('/disposal-recs', b), disposalAct: (id, action, b) => post(`/disposal-recs/${id}/${action}`, b), disposalHistory: (id) => get(`/disposal-recs/${id}/history`), disposals: (q) => api.get(`/plant/disposal-recs${qs(q)}`),
 };
+
+// Cross-project resource and capacity planning (part 17.08).
+export const RP_TONE = REQ_TONE;
+export const cp = {
+  heatmap: (q) => get(`/capacity/heatmap${qs(q)}`), gaps: (q) => get(`/capacity/gaps${qs(q)}`), refresh: () => post('/capacity/refresh', {}),
+  options: () => get('/resource-plans/options'), evaluate: (b) => post('/resource-plans/evaluate', b), plan: (id) => get(`/resource-plans/${id}`), create: (b) => post('/resource-plans', b), update: (id, b) => patch(`/resource-plans/${id}`, b), act: (id, action, b) => post(`/resource-plans/${id}/${action}`, b), history: (id) => get(`/resource-plans/${id}/history`),
+};

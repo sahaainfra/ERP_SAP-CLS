@@ -132,3 +132,10 @@ export const parseTelQ = (v) => parse(z.object({ from: day.optional(), to: day.o
 export const parseSuggestQ = (v) => parse(z.object({ equipmentId: id, date: day.optional() }).strict(), v ?? {});
 export const parseDisposalCreate = (b) => parse(z.object({ equipmentId: id, reason: text(500).min(10, 'Say why (at least 10 characters)'), estValue: money }).strict(), b ?? {});
 export const parseDisposalUpdate = (b) => defined(parse(z.object({ reason: text(500).min(10).optional(), estValue: money.optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+
+// Cross-project resource and capacity planning (part 17.08).
+const rpAction = z.object({ kind: z.enum(['MOVE', 'HIRE', 'HIRE_IN']), resourceType: z.enum(['LABOUR', 'PLANT']), key: text(40).min(1), qty: z.number().finite().positive().max(100000).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals'), fromProjectId: id.nullish().transform((v) => v ?? null), toProjectId: id, weekFrom: day, weekTo: day, needsAccommodation: z.boolean().optional() }).strict();
+export const parseCapacityQ = (v) => parse(z.object({ type: z.enum(['LABOUR', 'PLANT']).optional(), weeks: z.coerce.number().int().min(2).max(26).optional(), projectId: id.optional(), refresh: z.coerce.boolean().optional() }).strict(), v ?? {});
+export const parsePlanBody = (b) => parse(z.object({ name: text(120).min(3), planDate: day.optional(), actions: z.array(rpAction).min(1).max(50) }).strict(), b ?? {});
+export const parsePlanEdit = (b) => defined(parse(z.object({ name: text(120).min(3).optional(), planDate: day.optional(), actions: z.array(rpAction).min(1).max(50).optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseEvaluate = (b) => parse(z.object({ planDate: day.optional(), actions: z.array(rpAction).min(1).max(50) }).strict(), b ?? {});

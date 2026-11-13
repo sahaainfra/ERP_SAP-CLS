@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseFleetQ, parseCostItem, parseSnapshot, parseSnapshotQ, parseIngest, parseTelQ, parseSuggestQ, parseDisposalCreate, parseDisposalUpdate, parseAgrCreate, parseAgrUpdate, parseAgrImport, parseBillCreate, parseBillUpdate, parseHireQ, parsePlanCreate, parsePlanUpdate, parseJobCreate, parseJobUpdate, parseJobImport, parseJobComplete, parseWarranty, parseSpareAdd, parseSpareReturn, parseSpareCancel, parseMaintQ, parseMaintExportQ, parseDashMaintQ, parseHistQ, parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
+import { parseCapacityQ, parsePlanBody, parsePlanEdit, parseEvaluate, parseFleetQ, parseCostItem, parseSnapshot, parseSnapshotQ, parseIngest, parseTelQ, parseSuggestQ, parseDisposalCreate, parseDisposalUpdate, parseAgrCreate, parseAgrUpdate, parseAgrImport, parseBillCreate, parseBillUpdate, parseHireQ, parsePlanCreate, parsePlanUpdate, parseJobCreate, parseJobUpdate, parseJobImport, parseJobComplete, parseWarranty, parseSpareAdd, parseSpareReturn, parseSpareCancel, parseMaintQ, parseMaintExportQ, parseDashMaintQ, parseHistQ, parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
 
 /** /api/v1/plant: the equipment register, its documents and certificates, status, dashboard and exports (part 17.01). Behind its own flag, ff.plant.p1701. */
-export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc, maintsvc, hiresvc, fleetsvc }) {
-  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const { plans, due, jobs: jc, spares } = maintsvc; const { agreements: ag, bills: hb } = hiresvc; const { items: ci, telematics: tm, disposals: ds } = fleetsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc, maintsvc, hiresvc, fleetsvc, capsvc }) {
+  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const { plans, due, jobs: jc, spares } = maintsvc; const { agreements: ag, bills: hb } = hiresvc; const { items: ci, telematics: tm, disposals: ds } = fleetsvc; const { plans: rp } = capsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
   r.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1701') ? next() : next(notFound('Plant and equipment is not enabled for your company yet.'))));
   r.use(['/requisitions', '/allocations', '/operators', '/availability', '/gantt'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1702') ? next() : next(notFound('Equipment allocation is not enabled for your company yet.'))));
@@ -13,6 +13,7 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc,
   r.use(['/job-cards', '/pm', '/maintenance'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1705') ? next() : next(notFound('Maintenance is not enabled for your company yet.'))));
   r.use(['/hire-agreements', '/hire-bills', '/hire'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1706') ? next() : next(notFound('Equipment hire is not enabled for your company yet.'))));
   r.use(['/fleet', '/telematics', '/disposal-recs'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1707') ? next() : next(notFound('The fleet control tower is not enabled for your company yet.'))));
+  r.use(['/capacity', '/resource-plans'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1708') ? next() : next(notFound('Resource planning is not enabled for your company yet.'))));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard(req.actor, parseDashQ(req.query))));
   r.get('/dashboard/drill', (req, res) => ok(res, svc.drill(req.actor, parseDrillQ(req.query))));
   r.get('/dashboard/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
@@ -229,5 +230,22 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc,
   r.post('/disposal-recs/:id/cancel', idempotent, (req, res) => ok(res, ds.cancel(req.actor, pid(req), parseReason(req.body))));
   r.get('/disposal-recs/:id/history', (req, res) => ok(res, ds.history(req.actor, pid(req))));
   r.get('/disposal-recs/:id/print', (req, res) => file(res, ds.print(req.actor, pid(req))));
+  // cross-project resource and capacity planning (part 17.08, flag ff.plant.p1708)
+  r.get('/capacity/heatmap', (req, res) => ok(res, capsvc.grid(req.actor, parseCapacityQ(req.query))));
+  r.get('/capacity/gaps', (req, res) => ok(res, capsvc.gaps(req.actor, parseCapacityQ(req.query))));
+  r.post('/capacity/refresh', idempotent, (req, res) => ok(res, capsvc.grid(req.actor, { refresh: true }) && { refreshed: true }));
+  r.get('/capacity/export', (req, res) => file(res, capsvc.exportCsv(req.actor, parseCapacityQ(req.query))));
+  r.get('/resource-plans/options', (req, res) => ok(res, rp.options(req.actor)));
+  r.post('/resource-plans/evaluate', idempotent, (req, res) => ok(res, rp.evaluate(req.actor, parseEvaluate(req.body))));
+  r.get('/resource-plans', (req, res) => res.json(rp.list(req.actor, req.query)));
+  r.post('/resource-plans', idempotentRequired, (req, res) => ok(res, rp.create(req.actor, parsePlanBody(req.body)), 201));
+  r.get('/resource-plans/:id', (req, res) => ok(res, rp.get(req.actor, pid(req))));
+  r.patch('/resource-plans/:id', idempotent, (req, res) => ok(res, rp.update(req.actor, pid(req), parsePlanEdit(req.body))));
+  r.delete('/resource-plans/:id', (req, res) => ok(res, rp.remove(req.actor, pid(req))));
+  r.post('/resource-plans/:id/submit', idempotentRequired, (req, res) => ok(res, rp.submit(req.actor, pid(req)), 202));
+  r.post('/resource-plans/:id/withdraw', idempotent, (req, res) => ok(res, rp.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/resource-plans/:id/cancel', idempotent, (req, res) => ok(res, rp.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/resource-plans/:id/history', (req, res) => ok(res, rp.history(req.actor, pid(req))));
+  r.get('/resource-plans/:id/print', (req, res) => file(res, rp.print(req.actor, pid(req))));
   return r;
 }

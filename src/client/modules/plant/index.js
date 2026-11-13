@@ -26,6 +26,9 @@ import HireComparisonPage from './HireComparisonPage.jsx';
 import FleetTowerPage from './FleetTowerPage.jsx';
 import OwningCostPage from './OwningCostPage.jsx';
 import ReplacementPage from './ReplacementPage.jsx';
+import CapacityPage from './CapacityPage.jsx';
+import ShortagePage from './ShortagePage.jsx';
+import ResourcePlansPage from './ResourcePlansPage.jsx';
 
 registerModule({
   code: 'plant',
@@ -58,5 +61,8 @@ registerModule({
     { path: '/plant/fleet-tower', label: 'Fleet Control Tower', icon: 'erp.group.plant', permission: 'plant.fleet.view', flag: 'ff.plant.p1707', Page: FleetTowerPage },
     { path: '/plant/owning-cost', label: 'Owning and Operating Cost', icon: 'erp.group.plant', permission: 'plant.fleet.costs', flag: 'ff.plant.p1707', Page: OwningCostPage },
     { path: '/plant/replacement', label: 'Replacement Candidates', icon: 'erp.group.plant', permission: 'plant.fleet.view', flag: 'ff.plant.p1707', Page: ReplacementPage },
+    { path: '/plant/capacity', label: 'Resource Capacity Heat-map', icon: 'erp.group.plant', permission: 'plant.capacity.view', flag: 'ff.plant.p1708', Page: CapacityPage },
+    { path: '/plant/shortage-surplus', label: 'Shortage and Surplus', icon: 'erp.group.plant', permission: 'plant.capacity.view', flag: 'ff.plant.p1708', Page: ShortagePage },
+    { path: '/plant/resource-plans', label: 'Resource Plan Scenario', icon: 'erp.group.plant', permission: 'plant.resource_plan.view', flag: 'ff.plant.p1708', Page: ResourcePlansPage },
   ],
 });

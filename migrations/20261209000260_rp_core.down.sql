@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS rp_requests;
+DROP TABLE IF EXISTS rp_plans;
+DROP TABLE IF EXISTS rp_supply;
+DROP TABLE IF EXISTS rp_demand;

@@ -19150,6 +19150,149 @@ Indexes:
 - ix_ra_sor_items_company: company_id, item_code
 - ux_ra_sor_items_code (unique): book_id, item_code
 
+## rp_demand
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| week_start | TEXT | yes |  |  |
+| resource_type | TEXT | yes |  |  |
+| res_key | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| qty_required | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rp_demand_company: company_id, week_start
+- ux_rp_demand_key (unique): org_project_id, week_start, resource_type, res_key
+
+## rp_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| plan_date | TEXT | yes |  |  |
+| scenario_json | TEXT | yes |  | '{"actions":[]}' |
+| projects_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_rp_plans_status: company_id, status
+- ux_rp_plans_doc (unique): company_id, doc_no
+
+## rp_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plan_id | INTEGER | yes |  |  |
+| action_no | INTEGER | yes |  |  |
+| kind | TEXT | yes |  |  |
+| target_module | TEXT | yes |  |  |
+| resource_type | TEXT | yes |  |  |
+| res_key | TEXT | yes |  |  |
+| qty | INTEGER | yes |  |  |
+| from_project_id | INTEGER |  |  |  |
+| to_project_id | INTEGER | yes |  |  |
+| from_week | TEXT | yes |  |  |
+| to_week | TEXT | yes |  |  |
+| request_status | TEXT | yes |  | 'RAISED' |
+| ref_doc | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: to_project_id -> org_projects(id), from_project_id -> org_projects(id), plan_id -> rp_plans(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rp_requests_company: company_id, request_status
+- ix_rp_requests_to: to_project_id
+- ix_rp_requests_from: from_project_id
+- ix_rp_requests_plan: plan_id
+
+## rp_supply
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| week_start | TEXT | yes |  |  |
+| resource_type | TEXT | yes |  |  |
+| res_key | TEXT | yes |  |  |
+| label | TEXT | yes |  |  |
+| qty_available | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_rp_supply_project: org_project_id
+- ix_rp_supply_company: company_id, week_start
+- ux_rp_supply_key (unique): , week_start, resource_type, res_key
+
 ## rta_assets
 
 | Column | Type | Not null | Key | Default |
