@@ -14,6 +14,7 @@ import { trainingOf } from '../hr/training.js';
 import { EQUIP_STATE, EQUIP_STATUS, PLANT_EQUIP_DOC, createPlantService } from './equipment.js';
 import { PLANT_LOG_DOC, createLogService } from './logs.js';
 import { PLANT_ALLOC_DOC, PLANT_REQ_DOC, REQ_STATUS, PHASE, createAllocService } from './alloc.js';
+import { PLANT_FUEL_ANOMALY_DOC, PLANT_FUEL_ISSUE_DOC, createFuelService } from './fuel.js';
 import { plantRoutes } from './routes.js';
 
 const services = new WeakMap();
@@ -46,11 +47,17 @@ for (const [type, description] of [
   ['plant.breakdown.resolved', 'A breakdown was resolved (part 17.03): data { breakdownId, docNo, equipmentId, assetCode, projectId, siteId, reportedOn, resolvedOn, downtimeDays, resolution }.'],
   ['plant.operator.assigned', 'An operator with a valid certificate was assigned to a machine (part 17.02): data { assignmentId, equipmentId, assetCode, allocationId, personType, personId, shift, fromDate, toDate, certTypes }.'],
   ['plant.operator.ended', 'An operator assignment ended (part 17.02): data { assignmentId, equipmentId, personType, personId, reason }.'],
+  ['plant.fuel.received', 'Fuel was received into a tank against a goods receipt or from a pump (part 17.04): data { receiptId, docNo, tankId, tankCode, fuelType, litres, rate (rupees a litre), amount (rupees), source, grnId, vendorId, projectId, siteId, receiptDate }.'],
+  ['plant.fuel.issue_approved', 'A fuel issue to a machine was verified (part 17.04): data { issueId, docNo, tankId, tankCode, fuelType, equipmentId, assetCode, classItemId, allocationId, projectId, siteId, issueAt, litres, meterReading, rate (rupees a litre), cost (rupees), consumption, norm, deviationPct, anomalies [rule codes] }. Equipment cost (17.07) and project cost (14.07) take the cost; ESG (19.05) the litres.'],
+  ['plant.fuel.reconciled', 'A tank dip was recorded and reconciled with the book (part 17.04): data { dipId, tankId, tankCode, date, opening, receipts, issues, book, dip, variance, withinTolerance, projectId, siteId } in litres.'],
+  ['plant.fuel.anomaly_raised', 'A fuel detection rule raised an anomaly (part 17.04): data { anomalyId, docNo, rule, severity, equipmentId, assetCode, tankId, tankCode, issueId, dipId, logId, projectId, siteId, litresAtRisk, details }. The detection tower (27.09) reads it.'],
+  ['plant.fuel.anomaly_accepted', 'An explanation of a fuel anomaly was accepted by the plant supervisor and the project manager (part 17.04): data { anomalyId, docNo, rule, reasonCode, equipmentId, tankId, issueId, projectId, siteId }.'],
+  ['plant.fuel.leakage_confirmed', 'A fuel anomaly was investigated and confirmed as loss (part 17.04): data { anomalyId, docNo, rule, equipmentId, tankId, issueId, projectId, siteId, litres, value (rupees), note }. The detection tower (27.09) takes it.'],
   ['plant.certificate.expired', 'A statutory certificate expired and the machine can no longer be allocated or logged (part 17.01): data { equipmentId, assetCode, docType, validUntil }.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'plant', description });
 
 integrityRegistry.register({
-  statuses: { plt_equipment: Object.keys(EQUIP_STATUS), plt_requisitions: Object.keys(REQ_STATUS), plt_allocations: Object.keys(REQ_STATUS), plt_logs: Object.keys(REQ_STATUS) }, uniqueKeys: [{ table: 'plt_logs', columns: ['company_id', 'doc_no'] }, { table: 'plt_breakdowns', columns: ['company_id', 'doc_no'] }, { table: 'plt_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'plt_allocations', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'asset_code'] }],
+  statuses: { plt_equipment: Object.keys(EQUIP_STATUS), plt_requisitions: Object.keys(REQ_STATUS), plt_allocations: Object.keys(REQ_STATUS), plt_logs: Object.keys(REQ_STATUS), plt_fuel_issues: Object.keys(REQ_STATUS) }, uniqueKeys: [{ table: 'plt_fuel_issues', columns: ['company_id', 'doc_no'] }, { table: 'plt_fuel_tanks', columns: ['company_id', 'code'] }, { table: 'plt_fuel_anomalies', columns: ['company_id', 'doc_no'] }, { table: 'plt_logs', columns: ['company_id', 'doc_no'] }, { table: 'plt_breakdowns', columns: ['company_id', 'doc_no'] }, { table: 'plt_requisitions', columns: ['company_id', 'doc_no'] }, { table: 'plt_allocations', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'doc_no'] }, { table: 'plt_equipment', columns: ['company_id', 'asset_code'] }],
 });
 
 export const plant = {
@@ -59,20 +66,23 @@ export const plant = {
   routePrefix: '/api/v1/plant',
   ownerPart: '17.01',
   status: 'Equipment and vehicle register (owned, hired, subcontractor) with approval, documents and statutory certificates with expiry alerts, status and location, history timeline, QR tag, fleet import and the plant dashboard. A mandatory certificate that is missing or has expired blocks allocation and logging.',
-  tables: ['plt_equipment', 'plt_documents', 'plt_timeline', 'plt_requisitions', 'plt_allocations', 'plt_operator_assignments', 'plt_logs', 'plt_breakdowns'],
-  resources: ['equipment', 'documents', 'dashboard', 'requisitions', 'allocations', 'operators', 'availability', 'gantt', 'logs', 'breakdowns', 'utilisation'],
+  tables: ['plt_equipment', 'plt_documents', 'plt_timeline', 'plt_requisitions', 'plt_allocations', 'plt_operator_assignments', 'plt_logs', 'plt_breakdowns', 'plt_fuel_tanks', 'plt_fuel_receipts', 'plt_fuel_issues', 'plt_fuel_dips', 'plt_fuel_anomalies'],
+  resources: ['equipment', 'documents', 'dashboard', 'requisitions', 'allocations', 'operators', 'availability', 'gantt', 'logs', 'breakdowns', 'utilisation', 'issues', 'fuel'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plt_equipment'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db }); const svc = createPlantService({ db, base, flags }); const alloc = createAllocService({ db, base, flags, equipment: svc, training: () => trainingOf(db) });
-    const logsvc = createLogService({ db, base, flags, equipment: svc, alloc }); services.set(db, { svc, alloc, logsvc, flags, base, equipmentDecide: svc.equipment.decide, reqDecide: alloc.requisitions.decide, allocDecide: alloc.allocations.decide, logDecide: logsvc.logs.decide });
+    const logsvc = createLogService({ db, base, flags, equipment: svc, alloc }); const fuelsvc = createFuelService({ db, base, flags, equipment: svc, logsvc }); services.set(db, { svc, alloc, logsvc, fuelsvc, flags, base, issueDecide: fuelsvc.issues.decide, anomalyDecide: fuelsvc.anomalies.decide, equipmentDecide: svc.equipment.decide, reqDecide: alloc.requisitions.decide, allocDecide: alloc.allocations.decide, logDecide: logsvc.logs.decide });
     listExports.register('plant.logs', { source: (actor, req) => { base.need(actor, 'plant.log.export', 'export equipment logs'); return logsvc.logs.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('plant.requisitions', { source: (actor, req) => { base.need(actor, 'plant.requisition.export', 'export requisitions'); return alloc.requisitions.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('plant.allocations', { source: (actor, req) => { base.need(actor, 'plant.allocation.export', 'export allocations'); return alloc.allocations.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('plant.equipment', { source: (actor, req) => { base.need(actor, 'plant.equipment.export', 'export the equipment register'); return svc.equipment.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('plant.fuel_issues', { source: (actor, req) => { base.need(actor, 'plant.issue.export', 'export fuel issues'); return fuelsvc.issues.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
+    runtime?.jobs?.register('plant.fuel_sweep', (ctx) => { let raised = 0; let missing = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { const r = fuelsvc.sweep(c.id); raised += r.raised; missing += r.dipsMissing; } ctx.log(`Raised ${raised} anomaly(ies); ${missing} tank(s) without a dip`); return { raised, missing }; }, { maxAttempts: 2, description: 'Fuel rules that need the day to be over: issues to machines not logged as working, fuel in the log against fuel issued, tanks without a dip' });
+    runtime?.scheduler?.define({ code: 'plant.fuel_sweep_night', cron: '30 19 * * *', jobType: 'plant.fuel_sweep', description: 'Every night 01:00 India time: the fuel detection rules for the days gone by' });
     runtime?.jobs?.register('plant.cert_expiry_daily', (ctx) => { const n = svc.documents.sweep(); ctx.log(`Told about ${n} certificate(s) expired or expiring`); return { told: n }; }, { maxAttempts: 2, description: 'Statutory certificates of equipment that have expired or expire soon' });
     runtime?.scheduler?.define({ code: 'plant.cert_expiry_morning', cron: '0 2 * * *', jobType: 'plant.cert_expiry_daily', description: 'Every morning 07:30 India time: certificates that expired or expire soon are told to the plant managers' });
-    api.use('/plant', plantRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags, alloc, logsvc }));
+    api.use('/plant', plantRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags, alloc, logsvc, fuelsvc }));
   },
 };
 
@@ -160,3 +170,33 @@ objectTypes.register({
 fileEntities.register({ entity: 'plt_logs', label: 'Equipment log (meter photograph, vendor signature)', resolve: (db, actor, id) => {
   const r = db.prepare('SELECT company_id, org_project_id AS pid, org_site_id AS sid, status FROM plt_logs WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.pid, siteId: r.sid }).allowed; if (!at('plant.log.view')) return null;
   return { companyId: r.company_id, projectId: r.pid ?? undefined, siteId: r.sid ?? undefined, canView: true, canEdit: at('plant.log.edit') && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) }; } });
+
+// ---- fuel issue verification and the acceptance of an anomaly (part 17.04) ----------------------------------------------------------------------------------------------------------------------
+const fiLine = (db, id) => db.prepare('SELECT x.*, e.asset_code, t.code AS tcode FROM plt_fuel_issues x JOIN plt_equipment e ON e.id = x.equipment_id JOIN plt_fuel_tanks t ON t.id = x.tank_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: PLANT_FUEL_ISSUE_DOC, label: 'Fuel issue verification', processOwner: 'PMSUP', route: (id) => `/plant/fuel-issues?id=${id}`,
+  describe(db, companyId, id) { const i = fiLine(db, Number(id)); return i && i.company_id === companyId ? { ref: i.doc_no, title: `${i.doc_no} ${i.asset_code} ${i.litres / 1000} l from ${i.tcode}`, originator: i.requested_by, projectId: i.org_project_id ?? undefined, siteId: i.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const i = fiLine(db, Number(id)); if (!i) return null; const fl = db.prepare("SELECT rule_code FROM plt_fuel_anomalies WHERE issue_id = ? AND anomaly_status <> 'VOID'").all(i.id).map((x) => x.rule_code); return { fields: [{ label: 'Equipment', value: i.asset_code }, { label: 'Tank', value: i.tcode }, { label: 'Issued at', value: i.issue_at.replace('T', ' ') }, { label: 'Litres', value: String(i.litres / 1000) }, { label: 'Meter now / before', value: `${i.meter_reading / 1000} / ${i.prev_meter == null ? '-' : i.prev_meter / 1000}` }, { label: 'Consumption / norm', value: i.consumption == null ? '-' : `${i.consumption / 1000} / ${i.norm == null ? '-' : i.norm / 1000}` }, { label: 'Issued by / received by', value: `${i.issued_by} / ${i.received_by}` }, { label: 'Flags', value: fl.length ? fl.join(', ') : 'none' }] }; },
+  defaultDefinition: { name: 'Fuel issue: verified by the plant supervisor (not the person who entered it)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PMSUP', 'Plant supervisor (verification)', 'PMSUP', 24)] }, hooks: hookOf('issueDecide'),
+});
+const faLine = (db, id) => db.prepare('SELECT x.*, e.asset_code, t.code AS tcode FROM plt_fuel_anomalies x LEFT JOIN plt_equipment e ON e.id = x.equipment_id LEFT JOIN plt_fuel_tanks t ON t.id = x.tank_id WHERE x.id = ?').get(id);
+workflowTypes.register({
+  docType: PLANT_FUEL_ANOMALY_DOC, label: 'Fuel anomaly acceptance', processOwner: 'PM', route: (id) => `/plant/fuel-anomalies?id=${id}`,
+  describe(db, companyId, id) { const a = faLine(db, Number(id)); return a && a.company_id === companyId ? { ref: a.doc_no, title: `${a.doc_no} ${a.rule_code} ${a.asset_code ?? a.tcode ?? ''}`, originator: a.explained_by, projectId: a.org_project_id ?? undefined, siteId: a.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const a = faLine(db, Number(id)); if (!a) return null; return { fields: [{ label: 'Rule', value: a.rule_code }, { label: 'Equipment / tank', value: a.asset_code ?? a.tcode ?? '-' }, { label: 'Detected on', value: a.detected_on }, { label: 'Litres at risk', value: String(a.litres_at_risk / 1000) }, { label: 'Reason', value: a.reason_code ?? '-' }, { label: 'Explanation', value: a.explanation ?? '-' }, { label: 'Explained by', value: a.explained_by ?? '-' }] }; },
+  defaultDefinition: { name: 'Fuel anomaly acceptance: the plant supervisor, then the project manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('PMSUP', 'Plant supervisor', 'PMSUP', 24), approver('PM', 'Project manager', 'PM', 48)] }, hooks: hookOf('anomalyDecide'),
+});
+objectTypes.register({
+  type: 'plt_fuel_issue', label: 'Fuel issue', permission: 'plant.issue.view', route: (id) => `/plant/fuel-issues?id=${id}`, attachmentEntity: 'plt_fuel_issues', approvalTarget: 'plt_fuel_issue',
+  access(db, actor, id) { const s = plantOf(db); if (!s) return null; try { const i = s.fuelsvc.issues.get(actor, Number(id)); return { companyId: actor.companyId, projectId: i.projectId ?? undefined, siteId: i.siteId ?? undefined, status: i.status }; } catch { return null; } },
+  auditEntities: (id) => [{ entity: 'plt_fuel_issues', id }], summary(db, actor, id) { const s = plantOf(db); if (!s) return null; try { const i = s.fuelsvc.issues.get(actor, Number(id)); return { label: `${i.docNo} ${i.assetCode} ${i.litres} l`, status: i.status }; } catch { return null; } },
+  related(db, actor, id) { const s = plantOf(db); if (!s) return []; try { const i = s.fuelsvc.issues.get(actor, Number(id)); return [{ kind: 'equipment', label: i.assetCode, route: `/plant/equipment?id=${i.equipmentId}` }, ...i.anomalies.map((a) => ({ kind: 'anomaly', label: a.docNo, route: `/plant/fuel-anomalies?id=${a.id}` }))]; } catch { return []; } },
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'plant.issue.view').allowed) return []; return db.prepare('SELECT id, org_project_id, org_site_id FROM plt_fuel_issues WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, limit).filter((x) => authzOf(db).check(actor, 'plant.issue.view', { companyId: actor.companyId, projectId: x.org_project_id, siteId: x.org_site_id }).allowed).map((x) => x.id); },
+  projectRecords(db, companyId, projectId, limit) { return db.prepare('SELECT id FROM plt_fuel_issues WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?').all(companyId, projectId, limit).map((x) => x.id); },
+});
+fileEntities.register({ entity: 'plt_fuel_issues', label: 'Fuel issue (meter and pump photograph)', resolve: (db, actor, id) => {
+  const r = db.prepare('SELECT company_id, org_project_id AS pid, org_site_id AS sid, status FROM plt_fuel_issues WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.pid, siteId: r.sid }).allowed; if (!at('plant.issue.view')) return null;
+  return { companyId: r.company_id, projectId: r.pid ?? undefined, siteId: r.sid ?? undefined, canView: true, canEdit: at('plant.issue.edit') && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) }; } });
+fileEntities.register({ entity: 'plt_fuel_dips', label: 'Tank dip (photograph)', resolve: (db, actor, id) => {
+  const r = db.prepare('SELECT company_id, org_project_id AS pid, org_site_id AS sid FROM plt_fuel_dips WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.pid, siteId: r.sid }).allowed; if (!at('plant.fuel.dip') && !at('plant.fuel.report')) return null;
+  return { companyId: r.company_id, projectId: r.pid ?? undefined, siteId: r.sid ?? undefined, canView: true, canEdit: at('plant.fuel.dip'), locked: false }; } });

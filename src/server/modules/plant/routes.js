@@ -1,14 +1,15 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
+import { parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
 
 /** /api/v1/plant: the equipment register, its documents and certificates, status, dashboard and exports (part 17.01). Behind its own flag, ff.plant.p1701. */
-export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc }) {
-  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc }) {
+  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
   r.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1701') ? next() : next(notFound('Plant and equipment is not enabled for your company yet.'))));
   r.use(['/requisitions', '/allocations', '/operators', '/availability', '/gantt'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1702') ? next() : next(notFound('Equipment allocation is not enabled for your company yet.'))));
   r.use(['/logs', '/breakdowns', '/utilisation'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1703') ? next() : next(notFound('Equipment log books are not enabled for your company yet.'))));
+  r.use(['/issues', '/fuel'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1704') ? next() : next(notFound('Fuel management is not enabled for your company yet.'))));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard(req.actor, parseDashQ(req.query))));
   r.get('/dashboard/drill', (req, res) => ok(res, svc.drill(req.actor, parseDrillQ(req.query))));
   r.get('/dashboard/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
@@ -100,5 +101,42 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc,
   r.get('/utilisation', (req, res) => ok(res, logsvc.utilisation(req.actor, parseUtilQ(req.query))));
   r.get('/utilisation/records', (req, res) => ok(res, logsvc.drill(req.actor, parseUtilDrillQ(req.query))));
   r.get('/utilisation/export', (req, res) => file(res, logsvc.exportCsv(req.actor, parseUtilQ(req.query))));
+  // fuel management and anti-leakage control (part 17.04, flag ff.plant.p1704)
+  r.get('/issues/options', (req, res) => ok(res, issues.options(req.actor)));
+  r.get('/issues/export', (req, res) => file(res, fuelsvc.exportCsv(req.actor, { ...req.query, kind: 'issues' })));
+  r.get('/issues', (req, res) => res.json(issues.list(req.actor, req.query)));
+  r.post('/issues', idempotentRequired, (req, res) => ok(res, issues.create(req.actor, parseFuelIssueCreate(req.body)), 201));
+  r.post('/issues/import', idempotentRequired, (req, res) => ok(res, issues.importRows(req.actor, parseFuelIssueImport(req.body)), 201));
+  r.get('/issues/:id', (req, res) => ok(res, issues.get(req.actor, pid(req))));
+  r.patch('/issues/:id', idempotent, (req, res) => ok(res, issues.update(req.actor, pid(req), parseFuelIssueUpdate(req.body))));
+  r.delete('/issues/:id', (req, res) => ok(res, issues.remove(req.actor, pid(req))));
+  r.post('/issues/:id/files', idempotent, (req, res) => ok(res, issues.attach(req.actor, pid(req), parseFuelIssueAttach(req.body))));
+  r.post('/issues/:id/submit', idempotentRequired, (req, res) => ok(res, issues.submit(req.actor, pid(req)), 202));
+  r.post('/issues/:id/withdraw', idempotent, (req, res) => ok(res, issues.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/issues/:id/cancel', idempotent, (req, res) => ok(res, issues.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/issues/:id/amend', idempotent, (req, res) => ok(res, issues.amend(req.actor, pid(req), parseReason(req.body))));
+  r.get('/issues/:id/history', (req, res) => ok(res, issues.history(req.actor, pid(req))));
+  r.get('/issues/:id/print', (req, res) => file(res, issues.print(req.actor, pid(req))));
+  r.get('/fuel/tanks', (req, res) => res.json(tanks.list(req.actor, req.query)));
+  r.post('/fuel/tanks', idempotentRequired, (req, res) => ok(res, tanks.create(req.actor, parseTankCreate(req.body)), 201));
+  r.get('/fuel/tanks/:id', (req, res) => ok(res, tanks.get(req.actor, pid(req))));
+  r.patch('/fuel/tanks/:id', idempotent, (req, res) => ok(res, tanks.update(req.actor, pid(req), parseTankUpdate(req.body))));
+  r.post('/fuel/tanks/:id/receipts', idempotentRequired, (req, res) => ok(res, tanks.receive(req.actor, pid(req), parseFuelReceive(req.body)), 201));
+  r.get('/fuel/receipts', (req, res) => ok(res, receipts.list(req.actor, parseReceiptsQ(req.query))));
+  r.get('/fuel/receipts/:id', (req, res) => ok(res, receipts.get(req.actor, pid(req))));
+  r.post('/fuel/receipts/:id/cancel', idempotent, (req, res) => ok(res, receipts.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/fuel/dips', idempotentRequired, (req, res) => ok(res, dips.record(req.actor, parseDipRecord(req.body)), 201));
+  r.post('/fuel/dips/:id/file', idempotent, (req, res) => ok(res, dips.attach(req.actor, pid(req), parseFuelIssueAttach(req.body))));
+  r.get('/fuel/reconciliation', (req, res) => ok(res, dips.reconciliation(req.actor, parseFuelReconQ(req.query))));
+  r.get('/fuel/consumption', (req, res) => ok(res, fuelsvc.consumption(req.actor, parseFuelConsQ(req.query))));
+  r.get('/fuel/consumption/records', (req, res) => ok(res, fuelsvc.drill(req.actor, parseFuelDrillQ(req.query))));
+  r.get('/fuel/export', (req, res) => file(res, fuelsvc.exportCsv(req.actor, parseFuelExportQ(req.query))));
+  r.get('/fuel/anomalies/summary', (req, res) => ok(res, anomalies.summary(req.actor)));
+  r.get('/fuel/anomalies', (req, res) => res.json(anomalies.list(req.actor, req.query)));
+  r.get('/fuel/anomalies/:id', (req, res) => ok(res, anomalies.get(req.actor, pid(req))));
+  r.post('/fuel/anomalies/:id/explain', idempotentRequired, (req, res) => ok(res, anomalies.explain(req.actor, pid(req), parseAnomExplain(req.body)), 202));
+  r.post('/fuel/anomalies/:id/withdraw', idempotent, (req, res) => ok(res, anomalies.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/fuel/anomalies/:id/confirm', idempotentRequired, (req, res) => ok(res, anomalies.confirm(req.actor, pid(req), parseAnomConfirm(req.body))));
+  r.get('/fuel/anomalies/:id/history', (req, res) => ok(res, anomalies.history(req.actor, pid(req))));
   return r;
 }

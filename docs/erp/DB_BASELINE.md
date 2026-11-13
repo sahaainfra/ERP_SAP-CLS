@@ -14768,6 +14768,255 @@ Indexes:
 - ux_plt_eq_code (unique): company_id, asset_code
 - ux_plt_eq_doc (unique): company_id, doc_no
 
+## plt_fuel_anomalies
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| severity | TEXT | yes |  | 'MEDIUM' |
+| equipment_id | INTEGER |  |  |  |
+| tank_id | INTEGER |  |  |  |
+| issue_id | INTEGER |  |  |  |
+| dip_id | INTEGER |  |  |  |
+| log_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| detected_on | TEXT | yes |  |  |
+| details_json | TEXT | yes |  | '{}' |
+| dedupe_key | TEXT | yes |  |  |
+| litres_at_risk | INTEGER | yes |  | 0 |
+| anomaly_status | TEXT | yes |  | 'OPEN' |
+| reason_code | TEXT |  |  |  |
+| explanation | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| explained_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| review_comment | TEXT |  |  |  |
+| confirmed_by | TEXT |  |  |  |
+| confirmed_at | TEXT |  |  |  |
+| confirm_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), log_id -> plt_logs(id), dip_id -> plt_fuel_dips(id), issue_id -> plt_fuel_issues(id), tank_id -> plt_fuel_tanks(id), equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_fa_list: company_id, anomaly_status, detected_on
+- ix_plt_fa_site: org_site_id
+- ix_plt_fa_project: org_project_id
+- ix_plt_fa_log: log_id
+- ix_plt_fa_dip: dip_id
+- ix_plt_fa_issue: issue_id
+- ix_plt_fa_tank: tank_id
+- ix_plt_fa_eq: equipment_id
+- ux_plt_fa_key (unique): company_id, dedupe_key
+- ux_plt_fa_doc (unique): company_id, doc_no
+
+## plt_fuel_dips
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tank_id | INTEGER | yes |  |  |
+| dip_date | TEXT | yes |  |  |
+| dip_litres | INTEGER | yes |  |  |
+| opening_litres | INTEGER | yes |  | 0 |
+| receipts | INTEGER | yes |  | 0 |
+| issues | INTEGER | yes |  | 0 |
+| book_litres | INTEGER | yes |  | 0 |
+| variance | INTEGER | yes |  | 0 |
+| tolerance | INTEGER | yes |  | 0 |
+| within_tolerance | INTEGER | yes |  | 1 |
+| photo_file_id | INTEGER |  |  |  |
+| recorded_by | TEXT | yes |  |  |
+| note | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), photo_file_id -> core_files(id), tank_id -> plt_fuel_tanks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_fd_site: org_site_id
+- ix_plt_fd_project: org_project_id
+- ix_plt_fd_photo: photo_file_id
+- ix_plt_fd_company: company_id, dip_date
+- ux_plt_fd_tank_date (unique): tank_id, dip_date
+
+## plt_fuel_issues
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| tank_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| allocation_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| issue_at | TEXT | yes |  |  |
+| issue_date | TEXT | yes |  |  |
+| meter_reading | INTEGER | yes |  |  |
+| prev_issue_id | INTEGER |  |  |  |
+| prev_meter | INTEGER |  |  |  |
+| no_advance_reason | TEXT |  |  |  |
+| litres | INTEGER | yes |  |  |
+| full_tank | INTEGER | yes |  | 1 |
+| issued_by | TEXT | yes |  |  |
+| received_by | TEXT | yes |  |  |
+| photo_file_id | INTEGER |  |  |  |
+| rate | INTEGER | yes |  | 0 |
+| cost_amount | INTEGER | yes |  | 0 |
+| consumption | INTEGER |  |  |  |
+| norm | INTEGER |  |  |  |
+| deviation_pct | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT | yes |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: photo_file_id -> core_files(id), prev_issue_id -> plt_fuel_issues(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), allocation_id -> plt_allocations(id), equipment_id -> plt_equipment(id), tank_id -> plt_fuel_tanks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_fi_list: company_id, status, issue_date
+- ix_plt_fi_photo: photo_file_id
+- ix_plt_fi_prev: prev_issue_id
+- ix_plt_fi_site: org_site_id
+- ix_plt_fi_project: org_project_id, issue_date
+- ix_plt_fi_alloc: allocation_id
+- ix_plt_fi_eq: equipment_id, issue_at
+- ix_plt_fi_tank: tank_id, issue_date
+- ux_plt_fi_doc (unique): company_id, doc_no
+
+## plt_fuel_receipts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| tank_id | INTEGER | yes |  |  |
+| receipt_date | TEXT | yes |  |  |
+| source | TEXT | yes |  |  |
+| grn_id | INTEGER |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| bill_no | TEXT |  |  |  |
+| petty_ref | TEXT |  |  |  |
+| litres | INTEGER | yes |  |  |
+| rate | INTEGER | yes |  | 0 |
+| amount | INTEGER | yes |  | 0 |
+| received_by | TEXT | yes |  |  |
+| receipt_status | TEXT | yes |  | 'LIVE' |
+| cancel_reason | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), vendor_id -> mdm_partners(id), grn_id -> inv_grns(id), tank_id -> plt_fuel_tanks(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_fr_site: org_site_id
+- ix_plt_fr_project: org_project_id
+- ix_plt_fr_vendor: vendor_id
+- ix_plt_fr_grn: grn_id
+- ix_plt_fr_tank: tank_id, receipt_date
+- ux_plt_fr_doc (unique): company_id, doc_no
+
+## plt_fuel_tanks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| tank_type | TEXT | yes |  |  |
+| fuel_type | TEXT | yes |  | 'DIESEL' |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| capacity | INTEGER | yes |  | 0 |
+| opening_litres | INTEGER | yes |  | 0 |
+| opening_date | TEXT | yes |  |  |
+| opening_rate | INTEGER | yes |  | 0 |
+| card_no | TEXT |  |  |  |
+| tank_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_ft_site: org_site_id
+- ix_plt_ft_project: org_project_id
+- ux_plt_ft_code (unique): company_id, code
+
 ## plt_logs
 
 | Column | Type | Not null | Key | Default |

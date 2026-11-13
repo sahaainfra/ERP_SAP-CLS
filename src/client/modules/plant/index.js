@@ -11,6 +11,12 @@ import LogEntryPage from './LogEntryPage.jsx';
 import LogsPage from './LogsPage.jsx';
 import LogVerificationPage from './LogVerificationPage.jsx';
 import UtilisationPage from './UtilisationPage.jsx';
+import FuelIssuePage from './FuelIssuePage.jsx';
+import FuelDipPage from './FuelDipPage.jsx';
+import FuelIssuesPage from './FuelIssuesPage.jsx';
+import FuelTanksPage from './FuelTanksPage.jsx';
+import FuelReportsPage from './FuelReportsPage.jsx';
+import FuelAnomaliesPage from './FuelAnomaliesPage.jsx';
 
 registerModule({
   code: 'plant',
@@ -28,5 +34,11 @@ registerModule({
     { path: '/plant/logs', label: 'Equipment Log Books', icon: 'erp.group.plant', permission: 'plant.log.view', flag: 'ff.plant.p1703', Page: LogsPage },
     { path: '/plant/log-verification', label: 'Log Verification', icon: 'erp.group.plant', permission: 'plant.log.approve', flag: 'ff.plant.p1703', Page: LogVerificationPage },
     { path: '/plant/utilisation', label: 'Utilisation and Availability', icon: 'erp.group.plant', permission: 'plant.log.report', flag: 'ff.plant.p1703', Page: UtilisationPage },
+    { path: '/plant/fuel-issue', label: 'Fuel Issue', icon: 'erp.group.plant', permission: 'plant.issue.create', flag: 'ff.plant.p1704', Page: FuelIssuePage },
+    { path: '/plant/fuel-dip', label: 'Tank Dip Entry', icon: 'erp.group.plant', permission: 'plant.fuel.dip', flag: 'ff.plant.p1704', Page: FuelDipPage },
+    { path: '/plant/fuel-issues', label: 'Fuel Issues', icon: 'erp.group.plant', permission: 'plant.issue.view', flag: 'ff.plant.p1704', Page: FuelIssuesPage },
+    { path: '/plant/fuel-tanks', label: 'Fuel Stores', icon: 'erp.group.plant', permission: 'plant.fuel.receive', flag: 'ff.plant.p1704', Page: FuelTanksPage },
+    { path: '/plant/fuel-reports', label: 'Fuel Reports', icon: 'erp.group.plant', permission: 'plant.fuel.report', flag: 'ff.plant.p1704', Page: FuelReportsPage },
+    { path: '/plant/fuel-anomalies', label: 'Fuel Anomalies', icon: 'erp.group.plant', permission: 'plant.fuel.report', flag: 'ff.plant.p1704', Page: FuelAnomaliesPage },
   ],
 });

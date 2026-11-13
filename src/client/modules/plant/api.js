@@ -35,3 +35,13 @@ export const lg = {
   worklist: async (q) => (await api.get(`/plant/logs/worklist${qs(q)}`)), breakdown: (id) => get(`/breakdowns/${id}`), report: (b) => post('/breakdowns', b), resolve: (id, b) => post(`/breakdowns/${id}/resolve`, b),
   utilisation: (q) => get(`/utilisation${qs(q)}`), records: (q) => get(`/utilisation/records${qs(q)}`),
 };
+
+// Fuel: tanks, receipts, issues, dips, reports and anomalies (part 17.04).
+export const FUEL_TONE = REQ_TONE; export const ANOM_TONE = { OPEN: 'RETURNED', SUBMITTED: 'IN_REVIEW', ACCEPTED: 'APPROVED', CONFIRMED: 'REJECTED', VOID: 'CANCELLED' };
+export const fu = {
+  options: () => get('/issues/options'), issue: (id) => get(`/issues/${id}`), create: (b) => post('/issues', b), update: (id, b) => patch(`/issues/${id}`, b), act: (id, action, b) => post(`/issues/${id}/${action}`, b), attach: (id, fileId) => post(`/issues/${id}/files`, { fileId }), history: (id) => get(`/issues/${id}/history`),
+  tank: (id) => get(`/fuel/tanks/${id}`), tankCreate: (b) => post('/fuel/tanks', b), tankUpdate: (id, b) => patch(`/fuel/tanks/${id}`, b), receive: (id, b) => post(`/fuel/tanks/${id}/receipts`, b), receipts: (q) => get(`/fuel/receipts${qs(q)}`), cancelReceipt: (id, reason) => post(`/fuel/receipts/${id}/cancel`, { reason }),
+  dip: (b) => post('/fuel/dips', b), dipFile: (id, fileId) => post(`/fuel/dips/${id}/file`, { fileId }), reconciliation: (q) => get(`/fuel/reconciliation${qs(q)}`), consumption: (q) => get(`/fuel/consumption${qs(q)}`), records: (q) => get(`/fuel/consumption/records${qs(q)}`),
+  anomaly: (id) => get(`/fuel/anomalies/${id}`), anomalySummary: () => get('/fuel/anomalies/summary'), anomalyAct: (id, action, b) => post(`/fuel/anomalies/${id}/${action}`, b), anomalyHistory: (id) => get(`/fuel/anomalies/${id}/history`),
+  list: async (p, q) => (await api.get(`/plant${p}${qs(q)}`)),
+};
