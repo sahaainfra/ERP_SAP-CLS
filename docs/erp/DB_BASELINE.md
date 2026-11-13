@@ -18944,6 +18944,263 @@ Indexes:
 - ix_prs_weights_company: company_id
 - ux_prs_weights (unique): org_project_id, activity_code
 
+## qa_checklist_templates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| name | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| sections_json | TEXT | yes |  | '[]' |
+| scoring_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_ct_module: company_id, module, status
+- ux_qa_ct_code (unique): company_id, code, version_no
+
+## qa_inspection_answers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| inspection_id | INTEGER | yes |  |  |
+| question_code | TEXT | yes |  |  |
+| section_code | TEXT |  |  |  |
+| answer | TEXT |  |  |  |
+| num_value | INTEGER |  |  |  |
+| text_value | TEXT |  |  |  |
+| passed | INTEGER |  |  |  |
+| within_tolerance | INTEGER |  |  |  |
+| photo_file_ids | TEXT | yes |  | '[]' |
+| remark | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: inspection_id -> qa_inspections(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_ia_company: company_id
+- ux_qa_ia_q (unique): inspection_id, question_code
+
+## qa_inspections
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| template_id | INTEGER | yes |  |  |
+| module | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| planned_point_id | INTEGER |  |  |  |
+| itp_step_code | TEXT |  |  |  |
+| entity_type | TEXT |  |  |  |
+| entity_id | TEXT |  |  |  |
+| subject | TEXT |  |  |  |
+| inspected_by | TEXT | yes |  |  |
+| inspected_at | TEXT | yes |  |  |
+| lat_e6 | INTEGER |  |  |  |
+| lng_e6 | INTEGER |  |  |  |
+| result | TEXT |  |  |  |
+| score_bp | INTEGER |  |  |  |
+| signatures_json | TEXT | yes |  | '[]' |
+| defects_json | TEXT | yes |  | '[]' |
+| client_ref | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: wa_id -> site_work_authorisations(id), activity_id -> plan_activities(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), template_id -> qa_checklist_templates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_in_entity: entity_type, entity_id
+- ix_qa_in_wa: wa_id
+- ix_qa_in_activity: activity_id
+- ix_qa_in_location: location_id
+- ix_qa_in_site: org_site_id
+- ix_qa_in_project: org_project_id, module, result
+- ix_qa_in_template: template_id
+- ux_qa_in_client (unique): company_id, client_ref
+- ux_qa_in_doc (unique): company_id, doc_no
+
+## qa_itps
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| title | TEXT | yes |  |  |
+| activity_type | TEXT | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| standard_ref | TEXT |  |  |  |
+| steps_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_itp_project: org_project_id
+- ix_qa_itp_type: company_id, activity_type, status
+- ux_qa_itp_code (unique): company_id, code, version_no
+
+## qa_planned_points
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| itp_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| activity_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| step_code | TEXT | yes |  |  |
+| seq_no | INTEGER | yes |  | 0 |
+| point_type | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| point_status | TEXT | yes |  | 'PLANNED' |
+| inspection_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: inspection_id -> qa_inspections(id), location_id -> proj_locations(id), wbs_id -> proj_wbs(id), activity_id -> plan_activities(id), org_project_id -> org_projects(id), itp_id -> qa_itps(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_pp_company: company_id
+- ix_qa_pp_inspection: inspection_id
+- ix_qa_pp_wbs: wbs_id
+- ix_qa_pp_location: location_id
+- ix_qa_pp_activity: activity_id
+- ix_qa_pp_project: org_project_id, point_status
+- ux_qa_pp_key (unique): itp_id, activity_id, , step_code
+
+## qa_quality_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| revision | INTEGER | yes |  | 1 |
+| summary | TEXT |  |  |  |
+| document_file_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_qp_site: org_site_id
+- ix_qa_qp_project: org_project_id, status
+- ux_qa_qp_doc (unique): company_id, doc_no
+
 ## ra_analyses
 
 | Column | Type | Not null | Key | Default |
