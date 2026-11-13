@@ -14662,6 +14662,117 @@ Indexes:
 - ix_plt_bd_eq: equipment_id, breakdown_status
 - ux_plt_bd_doc (unique): company_id, doc_no
 
+## plt_cost_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| item_type | TEXT | yes |  |  |
+| monthly_amount | INTEGER | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  | '9999-12-31' |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_ci_company: company_id
+- ix_plt_ci_equip: equipment_id, item_type
+
+## plt_cost_snapshots
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| owning_cost | INTEGER | yes |  | 0 |
+| operating_cost | INTEGER | yes |  | 0 |
+| fuel_cost | INTEGER | yes |  | 0 |
+| maintenance_cost | INTEGER | yes |  | 0 |
+| hire_cost | INTEGER | yes |  | 0 |
+| operator_cost | INTEGER | yes |  | 0 |
+| hours | INTEGER | yes |  | 0 |
+| km | INTEGER | yes |  | 0 |
+| cost_per_hour | INTEGER |  |  |  |
+| cost_per_km | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_cs_company: company_id, period
+- ux_plt_cs_eq_period (unique): equipment_id, period
+
+## plt_disposal_recs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| flags_json | TEXT | yes |  | '[]' |
+| age_years | INTEGER |  |  |  |
+| purchase_value | INTEGER | yes |  | 0 |
+| repair_cost | INTEGER | yes |  | 0 |
+| utilisation_bp | INTEGER |  |  |  |
+| est_value | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_dr_equip: equipment_id, status
+- ux_plt_dr_doc (unique): company_id, doc_no
+
 ## plt_documents
 
 | Column | Type | Not null | Key | Default |
@@ -15475,6 +15586,40 @@ Indexes:
 - ix_plt_req_site: org_site_id
 - ix_plt_req_project: org_project_id
 - ux_plt_req_doc (unique): company_id, doc_no
+
+## plt_telematics
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| equipment_id | INTEGER | yes |  |  |
+| ts | TEXT | yes |  |  |
+| lat_e6 | INTEGER |  |  |  |
+| lng_e6 | INTEGER |  |  |  |
+| engine_hours | INTEGER |  |  |  |
+| ignition | INTEGER |  |  |  |
+| fuel_level | INTEGER |  |  |  |
+| source | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: equipment_id -> plt_equipment(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_plt_tm_company: company_id, ts
+- ux_plt_tm_eq_ts (unique): equipment_id, ts, source
 
 ## plt_timeline
 

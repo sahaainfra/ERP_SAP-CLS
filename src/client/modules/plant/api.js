@@ -62,3 +62,10 @@ export const hr = {
   bill: (id) => get(`/hire-bills/${id}`), billPreview: (b) => post('/hire-bills/preview', b), billCreate: (b) => post('/hire-bills', b), billUpdate: (id, b) => patch(`/hire-bills/${id}`, b), billAct: (id, action, b) => post(`/hire-bills/${id}/${action}`, b), billHistory: (id) => get(`/hire-bills/${id}/history`),
   agreements: (q) => api.get(`/plant/hire-agreements${qs(q)}`), comparison: (q) => get(`/hire/comparison${qs(q)}`),
 };
+
+// Fleet control tower, owning and operating cost, telematics and disposal recommendations (part 17.07).
+export const FLEET_TONE = REQ_TONE;
+export const fl = {
+  tower: (q) => get(`/fleet/tower${qs(q)}`), costs: (q) => get(`/fleet/costs${qs(q)}`), replacement: (q) => get(`/fleet/replacement${qs(q)}`), items: (id) => get(`/fleet/equipment/${id}/cost-items`), itemAdd: (id, b) => post(`/fleet/equipment/${id}/cost-items`, b), snapshot: (b) => post('/fleet/snapshots', b),
+  disposal: (id) => get(`/disposal-recs/${id}`), disposalCreate: (b) => post('/disposal-recs', b), disposalAct: (id, action, b) => post(`/disposal-recs/${id}/${action}`, b), disposalHistory: (id) => get(`/disposal-recs/${id}/history`), disposals: (q) => api.get(`/plant/disposal-recs${qs(q)}`),
+};

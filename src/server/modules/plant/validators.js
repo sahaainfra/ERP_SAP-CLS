@@ -121,3 +121,14 @@ export const parseAgrImport = (b) => parse(z.object({ rows: z.array(z.object({ a
 export const parseBillCreate = (b) => parse(z.object({ agreementId: id, periodFrom: day, periodTo: day, disputeHrs: z.number().finite().min(-100000).max(100000).optional(), disputeReason: opt(300) }).strict(), b ?? {});
 export const parseBillUpdate = (b) => defined(parse(z.object({ disputeHrs: z.number().finite().min(-100000).max(100000).optional(), disputeReason: opt(300), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
 export const parseHireQ = (v) => parse(z.object({ from: day.optional(), to: day.optional(), kind: z.enum(['agreements', 'bills', 'comparison']).optional() }).strict(), v ?? {});
+
+// Fleet control tower: cost items, snapshots, telematics, disposal recommendations (part 17.07).
+export const parseFleetQ = (v) => parse(z.object({ from: day.optional(), to: day.optional(), groupBy: z.enum(['equipment', 'class']).optional(), projectId: id.optional(), classItemId: id.optional(), kind: z.enum(['costs', 'candidates']).optional() }).strict(), v ?? {});
+export const parseCostItem = (b) => parse(z.object({ type: z.enum(['DEPRECIATION', 'EMI', 'INSURANCE', 'PERMIT', 'OPERATOR', 'OTHER']), monthlyAmount: money, from: day, to: day.nullish().transform((v) => v ?? null), note: opt(200) }).strict(), b ?? {});
+export const parseSnapshot = (b) => parse(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/, 'Use a month such as 2026-11') }).strict(), b ?? {});
+export const parseSnapshotQ = (v) => parse(z.object({ equipmentId: id }).strict(), v ?? {});
+export const parseIngest = (b) => parse(z.object({ source: text(40).min(1), readings: z.array(z.object({ assetCode: text(40), timestamp: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?/, 'Use a date and time such as 2026-12-01T09:30:00'), lat: z.number().min(-90).max(90).nullish(), lng: z.number().min(-180).max(180).nullish(), engineHours: hrs.nullish(), ignition: z.boolean().nullish(), fuelLevel: hrs.nullish() }).strict()).min(1).max(500) }).strict(), b ?? {});
+export const parseTelQ = (v) => parse(z.object({ from: day.optional(), to: day.optional(), projectId: id.optional(), classItemId: id.optional() }).strict(), v ?? {});
+export const parseSuggestQ = (v) => parse(z.object({ equipmentId: id, date: day.optional() }).strict(), v ?? {});
+export const parseDisposalCreate = (b) => parse(z.object({ equipmentId: id, reason: text(500).min(10, 'Say why (at least 10 characters)'), estValue: money }).strict(), b ?? {});
+export const parseDisposalUpdate = (b) => defined(parse(z.object({ reason: text(500).min(10).optional(), estValue: money.optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));

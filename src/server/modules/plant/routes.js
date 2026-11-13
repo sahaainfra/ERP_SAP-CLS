@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseAgrCreate, parseAgrUpdate, parseAgrImport, parseBillCreate, parseBillUpdate, parseHireQ, parsePlanCreate, parsePlanUpdate, parseJobCreate, parseJobUpdate, parseJobImport, parseJobComplete, parseWarranty, parseSpareAdd, parseSpareReturn, parseSpareCancel, parseMaintQ, parseMaintExportQ, parseDashMaintQ, parseHistQ, parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
+import { parseFleetQ, parseCostItem, parseSnapshot, parseSnapshotQ, parseIngest, parseTelQ, parseSuggestQ, parseDisposalCreate, parseDisposalUpdate, parseAgrCreate, parseAgrUpdate, parseAgrImport, parseBillCreate, parseBillUpdate, parseHireQ, parsePlanCreate, parsePlanUpdate, parseJobCreate, parseJobUpdate, parseJobImport, parseJobComplete, parseWarranty, parseSpareAdd, parseSpareReturn, parseSpareCancel, parseMaintQ, parseMaintExportQ, parseDashMaintQ, parseHistQ, parseTankCreate, parseTankUpdate, parseFuelReceive, parseReceiptsQ, parseFuelIssueCreate, parseFuelIssueUpdate, parseFuelIssueAttach, parseFuelIssueImport, parseDipRecord, parseFuelReconQ, parseFuelConsQ, parseFuelDrillQ, parseFuelExportQ, parseAnomExplain, parseAnomConfirm, parseBdReport, parseBdResolve, parseLogAttach, parseLogCreate, parseLogImport, parseLogOptionsQ, parseLogUpdate, parseUtilDrillQ, parseUtilQ, parseAllocCreate, parseAllocImport, parseAllocUpdate, parseArrive, parseAssign, parseAvailQ, parseCandidatesQ, parseDates, parseDemobilise, parseGanttQ, parseHire, parseMobilise, parseOpsQ, parseReqCreate, parseReqImport, parseReqUpdate, parseTransfer, parseDashQ, parseDocAttach, parseDocCreate, parseDocUpdate, parseDrillQ, parseEquipCreate, parseEquipImport, parseEquipUpdate, parseExportQ, parseId, parseReason, parseScanQ, parseState } from './validators.js';
 
 /** /api/v1/plant: the equipment register, its documents and certificates, status, dashboard and exports (part 17.01). Behind its own flag, ff.plant.p1701. */
-export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc, maintsvc, hiresvc }) {
-  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const { plans, due, jobs: jc, spares } = maintsvc; const { agreements: ag, bills: hb } = hiresvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
+export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc, logsvc, fuelsvc, maintsvc, hiresvc, fleetsvc }) {
+  const r = Router(); const { equipment, documents } = svc; const { requisitions, allocations, operators } = alloc; const { logs, breakdowns } = logsvc; const { tanks, receipts, issues, dips, anomalies } = fuelsvc; const { plans, due, jobs: jc, spares } = maintsvc; const { agreements: ag, bills: hb } = hiresvc; const { items: ci, telematics: tm, disposals: ds } = fleetsvc; const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => parseId(req.params.id);
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
   r.use((req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1701') ? next() : next(notFound('Plant and equipment is not enabled for your company yet.'))));
   r.use(['/requisitions', '/allocations', '/operators', '/availability', '/gantt'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1702') ? next() : next(notFound('Equipment allocation is not enabled for your company yet.'))));
@@ -12,6 +12,7 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc,
   r.use(['/issues', '/fuel'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1704') ? next() : next(notFound('Fuel management is not enabled for your company yet.'))));
   r.use(['/job-cards', '/pm', '/maintenance'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1705') ? next() : next(notFound('Maintenance is not enabled for your company yet.'))));
   r.use(['/hire-agreements', '/hire-bills', '/hire'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1706') ? next() : next(notFound('Equipment hire is not enabled for your company yet.'))));
+  r.use(['/fleet', '/telematics', '/disposal-recs'], (req, _res, next) => (flags.isOn(req.actor, 'ff.plant.p1707') ? next() : next(notFound('The fleet control tower is not enabled for your company yet.'))));
   r.get('/dashboard', (req, res) => ok(res, svc.dashboard(req.actor, parseDashQ(req.query))));
   r.get('/dashboard/drill', (req, res) => ok(res, svc.drill(req.actor, parseDrillQ(req.query))));
   r.get('/dashboard/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
@@ -203,5 +204,30 @@ export function plantRoutes(svc, { idempotent, idempotentRequired, flags, alloc,
   r.post('/hire-bills/preview', idempotent, (req, res) => ok(res, hb.preview(req.actor, parseBillCreate(req.body))));
   r.get('/hire/comparison', (req, res) => ok(res, hiresvc.comparison(req.actor, parseHireQ(req.query))));
   r.get('/hire/export', (req, res) => file(res, hiresvc.exportCsv(req.actor, parseHireQ(req.query))));
+  // fleet control tower, owning and operating cost, telematics and disposal recommendations (part 17.07, flag ff.plant.p1707)
+  r.get('/fleet/tower', (req, res) => ok(res, fleetsvc.tower(req.actor, parseFleetQ(req.query))));
+  r.get('/fleet/kpis', (req, res) => ok(res, fleetsvc.kpis(req.actor, parseFleetQ(req.query))));
+  r.get('/fleet/costs', (req, res) => ok(res, fleetsvc.costs(req.actor, parseFleetQ(req.query))));
+  r.get('/fleet/replacement', (req, res) => ok(res, fleetsvc.replacement.candidates(req.actor, parseFleetQ(req.query))));
+  r.get('/fleet/export', (req, res) => file(res, fleetsvc.exportCsv(req.actor, parseFleetQ(req.query))));
+  r.get('/fleet/equipment/:id/cost-items', (req, res) => ok(res, ci.list(req.actor, pid(req))));
+  r.post('/fleet/equipment/:id/cost-items', idempotentRequired, (req, res) => ok(res, ci.add(req.actor, pid(req), parseCostItem(req.body)), 201));
+  r.delete('/fleet/cost-items/:id', (req, res) => ok(res, ci.remove(req.actor, pid(req))));
+  r.get('/fleet/snapshots', (req, res) => ok(res, fleetsvc.snapshots(req.actor, parseSnapshotQ(req.query))));
+  r.post('/fleet/snapshots', idempotentRequired, (req, res) => ok(res, fleetsvc.snapshot(req.actor, parseSnapshot(req.body)), 201));
+  r.post('/telematics/ingest', idempotentRequired, (req, res) => ok(res, tm.ingest(req.actor, parseIngest(req.body)), 201));
+  r.get('/telematics/positions', (req, res) => ok(res, tm.positions(req.actor, parseTelQ(req.query))));
+  r.get('/telematics/alerts', (req, res) => ok(res, tm.alerts(req.actor, parseTelQ(req.query))));
+  r.get('/telematics/suggest', (req, res) => ok(res, tm.suggest(req.actor, parseSuggestQ(req.query))));
+  r.get('/disposal-recs', (req, res) => res.json(ds.list(req.actor, req.query)));
+  r.post('/disposal-recs', idempotentRequired, (req, res) => ok(res, ds.create(req.actor, parseDisposalCreate(req.body)), 201));
+  r.get('/disposal-recs/:id', (req, res) => ok(res, ds.get(req.actor, pid(req))));
+  r.patch('/disposal-recs/:id', idempotent, (req, res) => ok(res, ds.update(req.actor, pid(req), parseDisposalUpdate(req.body))));
+  r.delete('/disposal-recs/:id', (req, res) => ok(res, ds.remove(req.actor, pid(req))));
+  r.post('/disposal-recs/:id/submit', idempotentRequired, (req, res) => ok(res, ds.submit(req.actor, pid(req)), 202));
+  r.post('/disposal-recs/:id/withdraw', idempotent, (req, res) => ok(res, ds.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/disposal-recs/:id/cancel', idempotent, (req, res) => ok(res, ds.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/disposal-recs/:id/history', (req, res) => ok(res, ds.history(req.actor, pid(req))));
+  r.get('/disposal-recs/:id/print', (req, res) => file(res, ds.print(req.actor, pid(req))));
   return r;
 }
