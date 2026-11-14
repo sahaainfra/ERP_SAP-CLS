@@ -5635,6 +5635,60 @@ Indexes:
 - ix_ctr_eot_awards_company_id: company_id
 - ux_ctr_eot_claim (unique): claim_id
 
+## ctr_escalation_calcs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  | 'CLIENT' |
+| contract_id | INTEGER | yes |  |  |
+| work_order_id | INTEGER |  |  |  |
+| formula_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| bill_ref | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| r_value_paise | INTEGER | yes |  |  |
+| excluded_paise | INTEGER | yes |  | 0 |
+| exclusions_json | TEXT | yes |  | '[]' |
+| eligible_paise | INTEGER | yes |  | 0 |
+| components_json | TEXT | yes |  | '[]' |
+| trace_json | TEXT | yes |  | '[]' |
+| net_bp | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), formula_id -> ctr_pvc_formulas(id), work_order_id -> ctr_work_orders(id), contract_id -> ctr_contracts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_escalation_calcs_org_site_id: org_site_id
+- ix_ctr_escalation_calcs_org_project_id: org_project_id
+- ix_ctr_escalation_calcs_formula_id: formula_id
+- ix_ctr_escalation_calcs_work_order_id: work_order_id
+- ix_ctr_escalation_calcs_contract_id: contract_id
+- ux_ctr_esc_bill (unique): company_id, contract_id, , bill_ref
+- ux_ctr_esc_doc (unique): company_id, doc_no
+
 ## ctr_insurance_claims
 
 | Column | Type | Not null | Key | Default |
@@ -5721,6 +5775,51 @@ Indexes:
 - ux_ctr_ins_no (unique): company_id, insurer, policy_no
 - ux_ctr_ins_doc (unique): company_id, doc_no
 
+## ctr_ld_assessments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| contract_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| completion_date | TEXT | yes |  |  |
+| eot_days | INTEGER | yes |  | 0 |
+| effective_date | TEXT | yes |  |  |
+| forecast_date | TEXT | yes |  |  |
+| delay_days | INTEGER | yes |  | 0 |
+| ld_rate_bp | INTEGER | yes |  | 0 |
+| ld_basis | TEXT | yes |  |  |
+| base_value_paise | INTEGER | yes |  | 0 |
+| gross_paise | INTEGER | yes |  | 0 |
+| cap_paise | INTEGER | yes |  | 0 |
+| ld_paise | INTEGER | yes |  | 0 |
+| capped | INTEGER | yes |  | 0 |
+| deducted_paise | INTEGER | yes |  | 0 |
+| deductions_json | TEXT | yes |  | '[]' |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), contract_id -> ctr_contracts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_ld_assessments_org_project_id: org_project_id
+- ix_ctr_ld_assessments_contract_id: contract_id
+- ux_ctr_ld_key (unique): company_id, contract_id, as_of
+
 ## ctr_milestones
 
 | Column | Type | Not null | Key | Default |
@@ -5799,6 +5898,79 @@ Indexes:
 - ix_ctr_obligations_clause_id: clause_id
 - ix_ctr_obligations_contract_id: contract_id
 - ix_ctr_obligations_company_id: company_id
+
+## ctr_pvc_formulas
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  | 'CLIENT' |
+| contract_id | INTEGER | yes |  |  |
+| work_order_id | INTEGER |  |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| base_month | TEXT | yes |  |  |
+| components_json | TEXT | yes |  |  |
+| exclusions_json | TEXT | yes |  | '[]' |
+| threshold_bp | INTEGER | yes |  | 0 |
+| cap_bp | INTEGER | yes |  | 0 |
+| fixed_bp | INTEGER | yes |  | 0 |
+| formula_status | TEXT | yes |  | 'ACTIVE' |
+| clause_ref | TEXT |  |  |  |
+| change_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), work_order_id -> ctr_work_orders(id), contract_id -> ctr_contracts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_pvc_formulas_org_project_id: org_project_id
+- ix_ctr_pvc_formulas_work_order_id: work_order_id
+- ix_ctr_pvc_formulas_contract_id: contract_id
+- ux_ctr_pvf_active (unique): company_id, contract_id, 
+
+## ctr_pvc_index_refs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| index_code | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| document_ref | TEXT | yes |  |  |
+| notified_on | TEXT |  |  |  |
+| document_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_pvc_index_refs_company_id: company_id
+- ux_ctr_pir_key (unique): company_id, index_code, period
 
 ## ctr_sub_compliance
 
