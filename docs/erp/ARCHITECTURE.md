@@ -1514,3 +1514,6 @@ Module `qa`, flag `ff.qa.p1802`, table `qa_inspection_requests`; service `src/se
 
 ## 141. Non-conformance reports and CAPA (part 18.04)
 Module `qa`, flag `ff.qa.p1804`, tables `qa_ncrs`, `qa_capa_actions`; service `src/server/modules/qa/ncr.js`. The NCR is a lifecycle record with two approvals, closure (`QA_NCR_CLOSURE`, steps by severity) and concession (`QA_NCR_CONCESSION`); a review that does not approve puts the NCR back where it was (`review_from`). Actions are tasks in the task engine (04.08). Repeat detection is computed from the NCR table, not stored.
+
+## 142. Concrete pour cards, cubes and traceability (part 18.05)
+Module `qa`, flag `ff.qa.p1805`, tables `qa_pour_cards`, `qa_pour_tickets`, `qa_cube_samples`, `qa_cube_results`; service `src/server/modules/qa/pour.js`. The pour card is the approval (clearance to pour); the pour, tickets and cubes are execution records after it. `requiredMean`, `groupVerdict` and `sdOf` are the one IS 456 calculation; groups are derived from the 28-day results in cast order, never stored.
