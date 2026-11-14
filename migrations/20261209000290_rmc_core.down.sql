@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS bp_mix_designs;
+DROP TABLE IF EXISTS bp_scales;
+DROP TABLE IF EXISTS bp_silos;
+DROP TABLE IF EXISTS bp_plants;

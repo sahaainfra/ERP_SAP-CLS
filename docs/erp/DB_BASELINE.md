@@ -1432,6 +1432,618 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bp_batches
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| batch_ref | TEXT |  |  |  |
+| plant_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| requisition_id | INTEGER |  |  |  |
+| mix_design_id | INTEGER | yes |  |  |
+| grade | TEXT | yes |  |  |
+| batch_time | TEXT | yes |  |  |
+| qty_milli | INTEGER | yes |  |  |
+| actual_weights_json | TEXT | yes |  | '[]' |
+| theoretical_json | TEXT | yes |  | '[]' |
+| max_variance_bp | INTEGER | yes |  | 0 |
+| variance_flag | INTEGER | yes |  | 0 |
+| origin | TEXT | yes |  | 'MANUAL' |
+| batch_status | TEXT | yes |  | 'ACTIVE' |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: mix_design_id -> bp_mix_designs(id), requisition_id -> bp_requisitions(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), plant_id -> bp_plants(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_batch_time: plant_id, batch_time
+- ix_bp_batches_mix_design_id: mix_design_id
+- ix_bp_batches_requisition_id: requisition_id
+- ix_bp_batches_org_site_id: org_site_id
+- ix_bp_batches_org_project_id: org_project_id
+- ux_bp_batch_ref (unique): plant_id, batch_ref
+- ux_bp_batch_doc (unique): company_id, doc_no
+
+## bp_budgets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plant_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| volume_milli | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: plant_id -> bp_plants(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_budgets_company_id: company_id
+- ux_bp_bud (unique): plant_id, period, category
+
+## bp_charges
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| plant_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| grade | TEXT | yes |  |  |
+| volume_milli | INTEGER | yes |  |  |
+| rate_paise | INTEGER | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| cost_alloc_paise | INTEGER | yes |  |  |
+| variance_paise | INTEGER | yes |  |  |
+| posted_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), plant_id -> bp_plants(id), period_id -> bp_cost_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_charges_org_project_id: org_project_id
+- ix_bp_charges_plant_id: plant_id
+- ix_bp_charges_company_id: company_id
+- ux_bp_ch (unique): period_id, org_project_id, grade
+
+## bp_cost_grades
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| grade | TEXT | yes |  |  |
+| volume_milli | INTEGER | yes |  |  |
+| material_paise | INTEGER | yes |  |  |
+| conversion_paise | INTEGER | yes |  |  |
+| total_paise | INTEGER | yes |  |  |
+| per_m3_paise | INTEGER | yes |  |  |
+| rate_paise | INTEGER | yes |  | 0 |
+| revenue_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: period_id -> bp_cost_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_cost_grades_company_id: company_id
+- ux_bp_cg (unique): period_id, grade
+
+## bp_cost_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| category | TEXT | yes |  |  |
+| grade | TEXT |  |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| line_origin | TEXT | yes |  | 'AUTO' |
+| basis | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: period_id -> bp_cost_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_cost_lines_period_id: period_id
+- ix_bp_cost_lines_company_id: company_id
+
+## bp_cost_periods
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| plant_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| material_paise | INTEGER | yes |  | 0 |
+| power_paise | INTEGER | yes |  | 0 |
+| fuel_paise | INTEGER | yes |  | 0 |
+| labour_paise | INTEGER | yes |  | 0 |
+| maintenance_paise | INTEGER | yes |  | 0 |
+| depreciation_paise | INTEGER | yes |  | 0 |
+| overhead_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| volume_milli | INTEGER | yes |  | 0 |
+| produced_milli | INTEGER | yes |  | 0 |
+| wasted_milli | INTEGER | yes |  | 0 |
+| per_m3_paise | INTEGER | yes |  | 0 |
+| revenue_paise | INTEGER | yes |  | 0 |
+| period_status | TEXT | yes |  | 'OPEN' |
+| collected_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| reopen_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), plant_id -> bp_plants(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_cost_periods_org_site_id: org_site_id
+- ix_bp_cost_periods_org_project_id: org_project_id
+- ux_bp_cp_plant (unique): plant_id, period
+- ux_bp_cp_doc (unique): company_id, doc_no
+
+## bp_delivery_tickets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| ticket_no | TEXT | yes |  |  |
+| qr_code | TEXT | yes |  |  |
+| requisition_id | INTEGER | yes |  |  |
+| plant_id | INTEGER |  |  |  |
+| supplier_id | INTEGER |  |  |  |
+| batch_id | INTEGER |  |  |  |
+| mix_design_id | INTEGER |  |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| grade | TEXT | yes |  |  |
+| qty_milli | INTEGER | yes |  |  |
+| truck_no | TEXT | yes |  |  |
+| driver | TEXT |  |  |  |
+| driver_phone | TEXT |  |  |  |
+| batched_at | TEXT |  |  |  |
+| departed_at | TEXT |  |  |  |
+| arrived_at | TEXT |  |  |  |
+| unload_start | TEXT |  |  |  |
+| unload_end | TEXT |  |  |  |
+| slump_mm | INTEGER |  |  |  |
+| temperature_c | INTEGER |  |  |  |
+| slump_flag | INTEGER | yes |  | 0 |
+| received_by | TEXT |  |  |  |
+| returned_milli | INTEGER | yes |  | 0 |
+| wasted_milli | INTEGER | yes |  | 0 |
+| return_reason | TEXT |  |  |  |
+| outside_premises | INTEGER | yes |  | 0 |
+| eway_no | TEXT |  |  |  |
+| ticket_state | TEXT | yes |  | 'DISPATCHED' |
+| pour_ticket_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: pour_ticket_id -> qa_pour_tickets(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), mix_design_id -> bp_mix_designs(id), batch_id -> bp_batches(id), supplier_id -> mdm_partners(id), plant_id -> bp_plants(id), requisition_id -> bp_requisitions(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_delivery_tickets_pour_ticket_id: pour_ticket_id
+- ix_bp_delivery_tickets_org_site_id: org_site_id
+- ix_bp_delivery_tickets_org_project_id: org_project_id
+- ix_bp_delivery_tickets_mix_design_id: mix_design_id
+- ix_bp_delivery_tickets_batch_id: batch_id
+- ix_bp_delivery_tickets_supplier_id: supplier_id
+- ix_bp_delivery_tickets_plant_id: plant_id
+- ix_bp_delivery_tickets_requisition_id: requisition_id
+- ux_bp_tkt_no (unique): company_id, ticket_no
+- ux_bp_tkt_doc (unique): company_id, doc_no
+
+## bp_mix_designs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| plant_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| grade | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| proportions_json | TEXT | yes |  | '[]' |
+| binder_milli | INTEGER | yes |  | 0 |
+| wc_ratio_milli | INTEGER | yes |  | 0 |
+| volume_ppm | INTEGER | yes |  | 0 |
+| slump_mm | INTEGER | yes |  | 0 |
+| trial_results_json | TEXT | yes |  | '[]' |
+| effective_from | TEXT |  |  |  |
+| effective_to | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), plant_id -> bp_plants(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_mix_designs_org_site_id: org_site_id
+- ix_bp_mix_designs_org_project_id: org_project_id
+- ix_bp_mix_designs_plant_id: plant_id
+- ux_bp_mix_code (unique): company_id, code, version_no
+- ux_bp_mix_doc (unique): company_id, doc_no
+
+## bp_plants
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| equipment_id | INTEGER |  |  |  |
+| make_model | TEXT |  |  |  |
+| capacity_m3h_milli | INTEGER | yes |  | 0 |
+| ownership | TEXT | yes |  | 'OWN' |
+| cc_code | TEXT |  |  |  |
+| head_code | TEXT |  |  |  |
+| project_ids_json | TEXT | yes |  | '[]' |
+| crew_json | TEXT | yes |  | '[]' |
+| plant_status | TEXT | yes |  | 'ACTIVE' |
+| version_no | INTEGER | yes |  | 1 |
+| root_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: equipment_id -> plt_equipment(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_plants_equipment_id: equipment_id
+- ix_bp_plants_location_id: location_id
+- ix_bp_plants_org_site_id: org_site_id
+- ix_bp_plants_org_project_id: org_project_id
+- ux_bp_plants_code (unique): company_id, code, version_no
+- ux_bp_plants_doc (unique): company_id, doc_no
+- ix_bp_plants_root: root_id
+
+## bp_requisitions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| pour_card_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| location_text | TEXT |  |  |  |
+| grade | TEXT | yes |  |  |
+| qty_milli | INTEGER | yes |  |  |
+| required_at | TEXT | yes |  |  |
+| pump_required | INTEGER | yes |  | 0 |
+| slump_mm | INTEGER |  |  |  |
+| plant_id | INTEGER |  |  |  |
+| mix_design_id | INTEGER |  |  |  |
+| supplier_id | INTEGER |  |  |  |
+| slot_from | TEXT |  |  |  |
+| slot_to | TEXT |  |  |  |
+| scheduled_by | TEXT |  |  |  |
+| scheduled_at | TEXT |  |  |  |
+| prod_status | TEXT | yes |  | 'PENDING' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: supplier_id -> mdm_partners(id), mix_design_id -> bp_mix_designs(id), plant_id -> bp_plants(id), location_id -> proj_locations(id), pour_card_id -> qa_pour_cards(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_req_board: company_id, prod_status, required_at
+- ix_bp_requisitions_supplier_id: supplier_id
+- ix_bp_requisitions_mix_design_id: mix_design_id
+- ix_bp_requisitions_plant_id: plant_id
+- ix_bp_requisitions_location_id: location_id
+- ix_bp_requisitions_pour_card_id: pour_card_id
+- ix_bp_requisitions_org_site_id: org_site_id
+- ix_bp_requisitions_org_project_id: org_project_id
+- ux_bp_req_doc (unique): company_id, doc_no
+
+## bp_scales
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plant_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| scale_type | TEXT | yes |  |  |
+| capacity_milli | INTEGER | yes |  | 0 |
+| calibrated_on | TEXT |  |  |  |
+| calibration_due | TEXT |  |  |  |
+| certificate_ref | TEXT |  |  |  |
+| scale_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: plant_id -> bp_plants(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_scales_company_id: company_id
+- ux_bp_scales_code (unique): plant_id, code
+
+## bp_silo_moves
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| silo_id | INTEGER | yes |  |  |
+| batch_id | INTEGER |  |  |  |
+| delta_milli | INTEGER | yes |  |  |
+| level_after_milli | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| moved_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: batch_id -> bp_batches(id), silo_id -> bp_silos(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_moves_batch: batch_id
+- ix_bp_moves_silo: silo_id, moved_at
+- ix_bp_moves_company: company_id
+
+## bp_silos
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| plant_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| kind | TEXT | yes |  | 'SILO' |
+| capacity_milli | INTEGER | yes |  |  |
+| current_level_milli | INTEGER | yes |  | 0 |
+| uom | TEXT | yes |  | 'KG' |
+| silo_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), plant_id -> bp_plants(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_silos_item_id: item_id
+- ix_bp_silos_company_id: company_id
+- ux_bp_silos_code (unique): plant_id, code
+
+## bp_transfer_rates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| plant_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| grade | TEXT | yes |  |  |
+| rate_paise | INTEGER | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| previous_paise | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), plant_id -> bp_plants(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bp_transfer_rates_org_site_id: org_site_id
+- ix_bp_transfer_rates_org_project_id: org_project_id
+- ix_bp_tr_plant: plant_id, grade, effective_from
+- ux_bp_tr_doc (unique): company_id, doc_no
+
 ## bud_actuals
 
 | Column | Type | Not null | Key | Default |

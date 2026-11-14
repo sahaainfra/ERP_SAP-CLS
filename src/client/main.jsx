@@ -30,6 +30,7 @@ import './modules/inv/index.js';
 import './modules/plant/index.js';
 import './modules/qa/index.js';
 import './modules/hse/index.js';
+import './modules/rmc/index.js';
 import './modules/fin/index.js';
 import { initAuth } from './platform/api/index.js';
 import { installPrintLogging } from './platform/audit/index.js';
