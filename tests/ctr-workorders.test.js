@@ -8,7 +8,7 @@ import { ctrOf } from '../src/server/modules/ctr/index.js';
 const U = { ...BASE, sub: as('SUBCO', 'sub1') };
 const opened = []; after(async () => { for (const a of opened) await a.close(); });
 const day = (n) => new Date(Date.now() + 5.5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
-async function world(o = {}) {
+async function world() {
   const r = await ready(opened); const k = await approvedContract(r); const d = r.d;
   const sub = Number(d.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, constitution, partner_status, steward_role, created_by) VALUES (1, 'SUB1', 'Shree Earthworks', 'Shree', 'PARTNERSHIP', 'ACTIVE', 'PROCMGR', 'test')").run().lastInsertRowid);
   fill(d, 'mdm_partner_roles', { company_id: 1, partner_id: sub, partner_role: 'SUBCONTRACTOR' });
