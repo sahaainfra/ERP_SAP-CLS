@@ -1574,3 +1574,6 @@ Module `ctr`, flag `ff.ctr.p2105`, tables `ctr_change_requests`, `ctr_variation_
 
 ## 161. Claims, Notices, EOT & Disputes (part 21.06)
 Module `ctr`, flag `ff.ctr.p2106`, tables `ctr_claims`, `ctr_claim_events`, `ctr_claim_quantum`, `ctr_claim_evidence`, `ctr_claim_log`, `ctr_eot_awards`, `ctr_disputes`, `ctr_dispute_log`; service `src/server/modules/ctr/claims.js`; contract adapter `applyEot` in `contracts.js`. The evidence table is immutable by trigger.
+
+## 162. Price Escalation, PVC & Liquidated Damages Computation (part 21.07)
+Module `ctr`, flag `ff.ctr.p2107`, tables `ctr_pvc_formulas`, `ctr_pvc_index_refs`, `ctr_escalation_calcs`, `ctr_ld_assessments`; service `src/server/modules/ctr/pvc.js`. The escalation and the LD are worked out only by `escalationOf` and `ldOf`; the index values stay in the shared master.
