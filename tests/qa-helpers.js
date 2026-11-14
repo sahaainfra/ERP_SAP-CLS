@@ -61,3 +61,11 @@ export async function receiveForInspection(r, qty = 100) {
   const full = (await ic(U.stm, 'GET', `/grns/${g.json.data.id}`)).json.data; return { grnId: full.id, lineId: full.lines[0].id, itemId: item, categoryId: cat, vendorId: vendor, storeId: sc.json.data.id };
 }
 export const stockOf = (r, itemId) => ({ ...r.d.prepare('SELECT COALESCE(SUM(qty_on_hand), 0) AS onHand, COALESCE(SUM(qty_inspection), 0) AS inspection FROM inv_balances WHERE item_id = ?').get(itemId) });
+/** A subcontractor of the company. */
+export const partnerOf = (r, name = 'Sub Builders') => Number(r.d.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, constitution, partner_status, steward_role, created_by) VALUES (1, ?, ?, ?, 'PRIVATE_LIMITED', 'ACTIVE', 'PROCMGR', 'test')").run(`P-${nextSeq()}`, name, name).lastInsertRowid);
+/** An inspection of a one-question checklist, answered and (when `approve`) approved: result PASS or FAIL as asked. */
+export async function simpleInspection(r, { pass = true, approve = true } = {}) {
+  const t = await activeTemplate(r, { code: `SI-${nextSeq()}`, sections: [{ code: 'S', title: 'Check', questions: [{ code: 'A', text: 'Surface is sound', type: 'YESNO', critical: true }] }] });
+  const c = await r.call(U.qce, 'POST', '/inspections', { templateId: t.id, projectId: r.A, siteId: r.site, activityId: r.a1, answers: [{ questionCode: 'A', answer: pass ? 'YES' : 'NO' }], signatures: [{ role: 'INSPECTOR', name: 'QC Engineer' }] }); assert.equal(c.status, 201, JSON.stringify(c.json));
+  assert.equal((await r.call(U.qce, 'POST', `/inspections/${c.json.data.id}/submit`)).status, 202); if (approve) assert.equal((await r.act(U.qcm, r.wf('qa_inspections', c.json.data.id))).status, 200); return c.json.data.id;
+}

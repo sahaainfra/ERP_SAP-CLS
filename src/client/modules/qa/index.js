@@ -10,6 +10,8 @@ import TestRequestsPage from './TestRequestsPage.jsx';
 import ComplianceReportPage from './ComplianceReportPage.jsx';
 import LabEquipmentPage from './LabEquipmentPage.jsx';
 import TestCataloguePage from './TestCataloguePage.jsx';
+import NcrsPage, { NcrRaisePage } from './NcrsPage.jsx';
+import NcrAnalysisPage from './NcrAnalysisPage.jsx';
 
 registerModule({
   code: 'qa',
@@ -26,6 +28,9 @@ registerModule({
     { path: '/qa/test-compliance', label: 'Test Frequency Compliance', icon: 'erp.qhse.qa', permission: 'qa.test_request.view', flag: 'ff.qa.p1803', Page: ComplianceReportPage },
     { path: '/qa/lab-equipment', label: 'Lab Equipment and Calibration', icon: 'erp.qhse.qa', permission: 'qa.lab_equipment.view', flag: 'ff.qa.p1803', Page: LabEquipmentPage },
     { path: '/qa/test-catalogue', label: 'Test Catalogue', icon: 'erp.qhse.qa', permission: 'qa.test_catalogue.view', flag: 'ff.qa.p1803', Page: TestCataloguePage },
+    { path: '/qa/ncrs', label: 'NCR Register', icon: 'erp.qhse.qa', permission: 'qa.ncr.view', flag: 'ff.qa.p1804', Page: NcrsPage },
+    { path: '/qa/ncrs/new', label: 'Raise NCR', icon: 'erp.qhse.qa', permission: 'qa.ncr.create', flag: 'ff.qa.p1804', Page: NcrRaisePage },
+    { path: '/qa/ncr-analysis', label: 'NCR Analysis', icon: 'erp.qhse.qa', permission: 'qa.ncr.view', flag: 'ff.qa.p1804', Page: NcrAnalysisPage },
     { path: '/qa/inspections', label: 'Inspections', icon: 'erp.qhse.qa', permission: 'qa.inspection.view', flag: 'ff.qa.p1801', Page: InspectionsPage },
   ],
 });

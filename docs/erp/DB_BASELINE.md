@@ -18944,6 +18944,42 @@ Indexes:
 - ix_prs_weights_company: company_id
 - ux_prs_weights (unique): org_project_id, activity_code
 
+## qa_capa_actions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| ncr_id | INTEGER | yes |  |  |
+| capa_type | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| owner_user | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| completed_on | TEXT |  |  |  |
+| completion_note | TEXT |  |  |  |
+| evidence_file_ids | TEXT | yes |  | '[]' |
+| task_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: ncr_id -> qa_ncrs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_capa_ncr: ncr_id
+- ix_qa_capa_company: company_id, status, due_date
+
 ## qa_checklist_templates
 
 | Column | Type | Not null | Key | Default |
@@ -19217,6 +19253,74 @@ Indexes:
 - ix_qa_le_site: org_site_id
 - ix_qa_le_project: org_project_id
 - ux_qa_le_code (unique): company_id, code
+
+## qa_ncrs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| origin_kind | TEXT | yes |  | 'OTHER' |
+| origin_id | TEXT |  |  |  |
+| location_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| ncr_type | TEXT | yes |  | 'WORKMANSHIP' |
+| severity | TEXT | yes |  |  |
+| responsible_type | TEXT | yes |  | 'OWN_CREW' |
+| responsible_id | INTEGER |  |  |  |
+| spec_ref | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| disposition | TEXT |  |  |  |
+| root_cause_json | TEXT | yes |  | '{}' |
+| rectification_cost | INTEGER | yes |  | 0 |
+| backcharge | INTEGER | yes |  | 0 |
+| backcharge_status | TEXT | yes |  | 'NONE' |
+| rectified_on | TEXT |  |  |  |
+| rectified_by | TEXT |  |  |  |
+| rectification_note | TEXT |  |  |  |
+| reinspection_kind | TEXT |  |  |  |
+| reinspection_ref_id | INTEGER |  |  |  |
+| reinspection_verified | INTEGER | yes |  | 0 |
+| concession_status | TEXT | yes |  | 'NONE' |
+| concession_reason | TEXT |  |  |  |
+| review_from | TEXT |  |  |  |
+| review_requested_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closure_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: responsible_id -> mdm_partners(id), activity_id -> plan_activities(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_ncr_origin: origin_kind, origin_id
+- ix_qa_ncr_responsible: responsible_id, ncr_type
+- ix_qa_ncr_activity: activity_id
+- ix_qa_ncr_location: location_id
+- ix_qa_ncr_site: org_site_id
+- ix_qa_ncr_project: org_project_id, status, severity
+- ux_qa_ncr_doc (unique): company_id, doc_no
 
 ## qa_planned_points
 

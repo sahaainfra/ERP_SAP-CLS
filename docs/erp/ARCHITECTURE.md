@@ -1511,3 +1511,6 @@ Module `qa`, flag `ff.qa.p1802`, table `qa_inspection_requests`; service `src/se
 
 
 ## 140. Material testing, laboratory and calibration (part 18.03)\nModule `qa`, flag `ff.qa.p1803`, tables `qa_test_catalogue`, `qa_lab_equipment`, `qa_test_requests`, `qa_test_results`; service `src/server/modules/qa/tests.js`. The stock is moved only by 16.03: `release` calls the receipt inspection (`invOf(db).grn.grns.inspect`) with the approver as an enriched actor. Limits are copied to each result so a catalogue change never rewrites history.
+
+## 141. Non-conformance reports and CAPA (part 18.04)
+Module `qa`, flag `ff.qa.p1804`, tables `qa_ncrs`, `qa_capa_actions`; service `src/server/modules/qa/ncr.js`. The NCR is a lifecycle record with two approvals, closure (`QA_NCR_CLOSURE`, steps by severity) and concession (`QA_NCR_CONCESSION`); a review that does not approve puts the NCR back where it was (`review_from`). Actions are tasks in the task engine (04.08). Repeat detection is computed from the NCR table, not stored.
