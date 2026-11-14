@@ -1568,3 +1568,6 @@ Module `ctr`, flag `ff.ctr.p2103`, tables `ctr_work_orders`, `ctr_wo_items`, `ct
 
 ## 159. Subcontractor Workspace, Compliance, Labour Strength & Performance (part 21.04)
 Module `ctr`, flag `ff.ctr.p2104`, tables `ctr_sub_compliance`, `ctr_sub_waivers`, `ctr_sub_manpower`, `ctr_sub_holds`, `ctr_sub_ratings`; service `src/server/modules/ctr/subcontractors.js`. The hold is computed only by `holdReasons` and recomputed on every change; the daily job opens the month, sets holds, tells shortfalls and rates.
+
+## 160. Change & Variation Management (part 21.05)
+Module `ctr`, flag `ff.ctr.p2105`, tables `ctr_change_requests`, `ctr_variation_orders`, `ctr_vo_items`; service `src/server/modules/ctr/variations.js`; BOQ hook `reviseFromVariation` in `src/server/modules/proj/boq.js`. Values are worked out only in the service; the variation order alone moves the contract value.
