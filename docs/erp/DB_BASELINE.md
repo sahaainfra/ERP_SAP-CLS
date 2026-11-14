@@ -2107,6 +2107,267 @@ Indexes:
 - ix_bud_phasing_company_id: company_id
 - ux_bud_phasing (unique): line_id, period
 
+## camp_allocations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| camp_id | INTEGER | yes |  |  |
+| room_id | INTEGER | yes |  |  |
+| bed_no | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| person_code | TEXT | yes |  |  |
+| person_name | TEXT | yes |  |  |
+| contractor_id | INTEGER |  |  |  |
+| from_date | TEXT | yes |  |  |
+| check_in | TEXT |  |  |  |
+| check_out | TEXT |  |  |  |
+| alloc_status | TEXT | yes |  | 'ALLOCATED' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contractor_id -> mdm_partners(id), room_id -> camp_rooms(id), camp_id -> camp_camps(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_camp_al_contractor: contractor_id, alloc_status
+- ix_camp_al_camp: camp_id, alloc_status
+- ux_camp_al_person (unique): company_id, person_type, person_id
+- ux_camp_al_bed (unique): room_id, bed_no
+- ux_camp_al_doc (unique): company_id, doc_no
+
+## camp_assets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| camp_id | INTEGER | yes |  |  |
+| asset_name | TEXT | yes |  |  |
+| category | TEXT | yes |  | 'FURNITURE' |
+| qty | INTEGER | yes |  |  |
+| asset_condition | TEXT | yes |  | 'GOOD' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: camp_id -> camp_camps(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_camp_assets_company_id: company_id
+- ix_camp_as_camp: camp_id, category
+
+## camp_camps
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| amenities_json | TEXT | yes |  | '[]' |
+| in_charge | TEXT |  |  |  |
+| camp_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_camp_location: location_id
+- ix_camp_project: org_project_id
+- ix_camp_site: org_site_id, camp_status
+- ux_camp_code (unique): company_id, code
+
+## camp_inspections
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| camp_id | INTEGER | yes |  |  |
+| area | TEXT | yes |  |  |
+| inspection_id | INTEGER |  |  |  |
+| inspected_on | TEXT | yes |  |  |
+| result | TEXT | yes |  |  |
+| observation_id | INTEGER |  |  |  |
+| inspected_by | TEXT | yes |  |  |
+| findings | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: observation_id -> hse_observations(id), inspection_id -> qa_inspections(id), camp_id -> camp_camps(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_camp_inspections_company_id: company_id
+- ix_camp_in_observation: observation_id
+- ix_camp_in_inspection: inspection_id
+- ix_camp_in_camp: camp_id, inspected_on
+
+## camp_meals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| camp_id | INTEGER | yes |  |  |
+| contractor_id | INTEGER |  |  |  |
+| meal_date | TEXT | yes |  |  |
+| meal | TEXT | yes |  |  |
+| planned_count | INTEGER | yes |  | 0 |
+| served_count | INTEGER | yes |  | 0 |
+| rate_paise | INTEGER | yes |  | 0 |
+| recovered | INTEGER | yes |  | 0 |
+| entered_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contractor_id -> mdm_partners(id), camp_id -> camp_camps(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_camp_meals_company_id: company_id
+- ix_camp_meal_contractor: contractor_id, meal_date
+- ix_camp_meal_date: camp_id, meal_date
+- ux_camp_meal (unique): camp_id, , meal_date, meal
+
+## camp_recoveries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| camp_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| contractor_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| meals_served | INTEGER | yes |  | 0 |
+| mess_paise | INTEGER | yes |  | 0 |
+| bed_days | INTEGER | yes |  | 0 |
+| rent_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contractor_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), camp_id -> camp_camps(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_camp_recoveries_org_site_id: org_site_id
+- ix_camp_rc_project: org_project_id
+- ix_camp_rc_camp: camp_id
+- ix_camp_rc_contractor: contractor_id, period, status
+- ux_camp_rc_doc (unique): company_id, doc_no
+
+## camp_rooms
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| camp_id | INTEGER | yes |  |  |
+| block | TEXT | yes |  | 'A' |
+| room_no | TEXT | yes |  |  |
+| beds | INTEGER | yes |  |  |
+| room_type | TEXT | yes |  | 'DORMITORY' |
+| room_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: camp_id -> camp_camps(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_camp_rooms_company_id: company_id
+- ix_camp_room_status: camp_id, room_status
+- ux_camp_room (unique): camp_id, block, room_no
+
 ## col_comments
 
 | Column | Type | Not null | Key | Default |
@@ -5291,6 +5552,157 @@ Indexes:
 - ix_engg_vdr_items_company_id: company_id
 - ux_engg_vdr_items_no (unique): company_id, vdr_no
 
+## esg_emission_factors
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| metric | TEXT | yes |  |  |
+| scope_no | INTEGER | yes |  |  |
+| factor_milli | INTEGER | yes |  |  |
+| unit | TEXT | yes |  |  |
+| factor_source | TEXT | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| factor_status | TEXT | yes |  | 'DRAFT' |
+| entered_by | TEXT | yes |  |  |
+| activated_by | TEXT |  |  |  |
+| activated_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_esg_ef_metric: company_id, metric, factor_status, effective_from
+- ux_esg_ef_ver (unique): company_id, metric, version_no
+
+## esg_permits
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| permit_type | TEXT | yes |  |  |
+| permit_no | TEXT | yes |  |  |
+| authority | TEXT | yes |  |  |
+| valid_from | TEXT | yes |  |  |
+| valid_until | TEXT | yes |  |  |
+| file_id | INTEGER |  |  |  |
+| alerted_state | TEXT |  |  |  |
+| consent_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_esg_pm_site: org_site_id
+- ix_esg_pm_project: org_project_id, valid_until
+- ux_esg_pm_no (unique): company_id, permit_type, permit_no
+
+## esg_readings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| metric | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| reading_date | TEXT | yes |  |  |
+| value_milli | INTEGER | yes |  |  |
+| uom | TEXT | yes |  |  |
+| limit_milli | INTEGER |  |  |  |
+| breach | INTEGER | yes |  | 0 |
+| origin | TEXT | yes |  | 'MANUAL' |
+| entered_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_esg_rd_pull (unique): company_id, source_type, source_id
+- ix_esg_rd_breach: company_id, breach, reading_date
+- ix_esg_rd_project: org_project_id, period
+- ix_esg_rd_site: org_site_id, metric, period
+
+## esg_waste
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| waste_date | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| qty_milli | INTEGER | yes |  |  |
+| disposal_method | TEXT | yes |  |  |
+| vendor_id | INTEGER |  |  |  |
+| manifest_no | TEXT |  |  |  |
+| manifest_file_id | INTEGER |  |  |  |
+| entered_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_esg_waste_company_id: company_id
+- ix_esg_w_vendor: vendor_id
+- ix_esg_w_project: org_project_id, category
+- ix_esg_w_site: org_site_id, waste_date
+
 ## ess_requests
 
 | Column | Type | Not null | Key | Default |
@@ -7377,6 +7789,797 @@ Indexes:
 - ix_hr_transfers_to_project: to_project_id
 - ix_hr_transfers_employee: employee_id
 - ix_hr_transfers_company_id: company_id
+
+## hse_contractor_scores
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| workers | INTEGER | yes |  | 0 |
+| induction_bp | INTEGER | yes |  | 10000 |
+| ppe_bp | INTEGER | yes |  | 10000 |
+| violations | INTEGER | yes |  | 0 |
+| incidents | INTEGER | yes |  | 0 |
+| score | INTEGER | yes |  | 0 |
+| band | TEXT | yes |  | 'A' |
+| computed_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_cs_partner: partner_id
+- ux_hse_cs_period (unique): company_id, partner_id, period
+
+## hse_equipment_register
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| equip_type | TEXT | yes |  |  |
+| tag | TEXT | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| location_text | TEXT |  |  |  |
+| capacity | TEXT |  |  |  |
+| expiry_date | TEXT |  |  |  |
+| last_inspected_on | TEXT |  |  |  |
+| last_inspection_id | INTEGER |  |  |  |
+| alerted_state | TEXT |  |  |  |
+| eq_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: last_inspection_id -> qa_inspections(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_eq_inspection: last_inspection_id
+- ix_hse_eq_location: location_id
+- ix_hse_eq_project: org_project_id
+- ix_hse_eq_site: org_site_id, eq_status, expiry_date
+- ux_hse_eq_tag (unique): company_id, tag
+
+## hse_hira
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| activity_type | TEXT |  |  |  |
+| title | TEXT | yes |  |  |
+| hazards_json | TEXT | yes |  | '[]' |
+| max_score | INTEGER | yes |  | 0 |
+| max_residual | INTEGER | yes |  | 0 |
+| risk_level | TEXT | yes |  | 'LOW' |
+| version_no | INTEGER | yes |  | 1 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: activity_id -> plan_activities(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_hira_activity: activity_id
+- ix_hse_hira_site: org_site_id
+- ix_hse_hira_project: org_project_id, status, risk_level
+- ux_hse_hira_doc (unique): company_id, doc_no
+
+## hse_incident_actions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| incident_id | INTEGER | yes |  |  |
+| action_type | TEXT | yes |  |  |
+| action | TEXT | yes |  |  |
+| owner_user | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| done_on | TEXT |  |  |  |
+| done_note | TEXT |  |  |  |
+| evidence_file_id | INTEGER |  |  |  |
+| action_status | TEXT | yes |  | 'OPEN' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: incident_id -> hse_incidents(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_ia_due: company_id, action_status, due_date
+- ix_hse_ia_incident: incident_id, action_status
+
+## hse_incidents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| incident_type | TEXT | yes |  |  |
+| classification | TEXT | yes |  |  |
+| severity | TEXT | yes |  |  |
+| occurred_at | TEXT | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| location_text | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| persons_json | TEXT | yes |  | '[]' |
+| immediate_action | TEXT |  |  |  |
+| photo_file_ids | TEXT | yes |  | '[]' |
+| lost_days | INTEGER | yes |  | 0 |
+| return_to_work_on | TEXT |  |  |  |
+| investigation_json | TEXT | yes |  | '{}' |
+| statutory_json | TEXT | yes |  | '[]' |
+| insurance_json | TEXT | yes |  | '[]' |
+| lessons_title | TEXT |  |  |  |
+| lessons_text | TEXT |  |  |  |
+| lessons_shared_at | TEXT |  |  |  |
+| serious_alerted | INTEGER | yes |  | 0 |
+| permits_suspended | INTEGER | yes |  | 0 |
+| reported_by | TEXT | yes |  |  |
+| incident_status | TEXT | yes |  | 'REPORTED' |
+| closed_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_inc_lessons: company_id, lessons_shared_at
+- ix_hse_inc_state: company_id, incident_status
+- ix_hse_inc_location: location_id
+- ix_hse_inc_project: org_project_id, classification
+- ix_hse_inc_site: org_site_id, occurred_at
+- ux_hse_inc_doc (unique): company_id, doc_no
+
+## hse_induction_content
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| body | TEXT | yes |  |  |
+| quiz_json | TEXT | yes |  | '[]' |
+| pass_pct | INTEGER | yes |  | 70 |
+| validity_days | INTEGER | yes |  | 365 |
+| content_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_ic_site: org_site_id
+- ix_hse_ic_project: org_project_id
+- ux_hse_ic_code (unique): company_id, code
+
+## hse_inductions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| content_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| person_code | TEXT | yes |  |  |
+| person_name | TEXT | yes |  |  |
+| induction_date | TEXT | yes |  |  |
+| conducted_by | TEXT | yes |  |  |
+| quiz_score_pct | INTEGER |  |  |  |
+| passed | INTEGER | yes |  | 0 |
+| valid_until | TEXT |  |  |  |
+| answers_json | TEXT | yes |  | '[]' |
+| via | TEXT | yes |  | 'MANUAL' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: content_id -> hse_induction_content(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_in_person: person_type, person_id, valid_until
+- ix_hse_in_content: content_id
+- ix_hse_in_project: org_project_id
+- ix_hse_in_site: org_site_id, status
+- ux_hse_in_doc (unique): company_id, doc_no
+
+## hse_inspection_schedules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| register_type | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| template_id | INTEGER | yes |  |  |
+| frequency_days | INTEGER | yes |  |  |
+| next_due | TEXT | yes |  |  |
+| last_done_on | TEXT |  |  |  |
+| last_inspection_id | INTEGER |  |  |  |
+| last_result | TEXT |  |  |  |
+| schedule_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: last_inspection_id -> qa_inspections(id), template_id -> qa_checklist_templates(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_is_inspection: last_inspection_id
+- ix_hse_is_template: template_id
+- ix_hse_is_project: org_project_id
+- ix_hse_is_site: org_site_id, schedule_status, next_due
+- ux_hse_is_code (unique): company_id, code
+
+## hse_jsa
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| hira_id | INTEGER |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| task | TEXT | yes |  |  |
+| method_statement_ref | TEXT |  |  |  |
+| steps_json | TEXT | yes |  | '[]' |
+| participants_json | TEXT | yes |  | '[]' |
+| jsa_status | TEXT | yes |  | 'DRAFT' |
+| prepared_by | TEXT | yes |  |  |
+| valid_on | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: activity_id -> plan_activities(id), wa_id -> site_work_authorisations(id), hira_id -> hse_hira(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_jsa_activity: activity_id
+- ix_hse_jsa_wa: wa_id
+- ix_hse_jsa_hira: hira_id
+- ix_hse_jsa_site: org_site_id
+- ix_hse_jsa_project: org_project_id, jsa_status
+- ux_hse_jsa_doc (unique): company_id, doc_no
+
+## hse_medical_records
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| worker_id | INTEGER | yes |  |  |
+| fitness | TEXT | yes |  |  |
+| examined_on | TEXT | yes |  |  |
+| valid_until | TEXT |  |  |  |
+| recorded_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: worker_id -> lab_workers(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_med_company: company_id, valid_until
+- ix_hse_med_worker: worker_id, examined_on
+
+## hse_observations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| obs_type | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| location_text | TEXT |  |  |  |
+| photo_file_ids | TEXT | yes |  | '[]' |
+| responsible_type | TEXT | yes |  | 'OWN_CREW' |
+| responsible_id | INTEGER |  |  |  |
+| severity | TEXT | yes |  | 'LOW' |
+| immediate_action | TEXT |  |  |  |
+| action_required | TEXT |  |  |  |
+| due_at | TEXT |  |  |  |
+| schedule_id | INTEGER |  |  |  |
+| inspection_id | INTEGER |  |  |  |
+| observed_by | TEXT | yes |  |  |
+| obs_status | TEXT | yes |  | 'OPEN' |
+| action_done_by | TEXT |  |  |  |
+| action_done_on | TEXT |  |  |  |
+| action_note | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_on | TEXT |  |  |  |
+| escalation_level | INTEGER | yes |  | 0 |
+| escalated_at | TEXT |  |  |  |
+| penalty_amount | INTEGER | yes |  | 0 |
+| penalty_reason | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: inspection_id -> qa_inspections(id), schedule_id -> hse_inspection_schedules(id), responsible_id -> mdm_partners(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_ob_due: obs_status, due_at
+- ix_hse_ob_inspection: inspection_id
+- ix_hse_ob_schedule: schedule_id
+- ix_hse_ob_location: location_id
+- ix_hse_ob_party: responsible_id
+- ix_hse_ob_project: org_project_id, obs_type
+- ix_hse_ob_site: org_site_id, obs_status, severity
+- ux_hse_ob_doc (unique): company_id, doc_no
+
+## hse_permit_types
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| name_hi | TEXT |  |  |  |
+| risk_class | TEXT | yes |  | 'NORMAL' |
+| required_certs_json | TEXT | yes |  | '[]' |
+| checklist_template_id | INTEGER |  |  |  |
+| requires_gas_test | INTEGER | yes |  | 0 |
+| gases_json | TEXT | yes |  | '[]' |
+| requires_isolation | INTEGER | yes |  | 0 |
+| max_hours | INTEGER | yes |  | 12 |
+| conflicts_json | TEXT | yes |  | '[]' |
+| ppe_json | TEXT | yes |  | '[]' |
+| type_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: checklist_template_id -> qa_checklist_templates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_pt_template: checklist_template_id
+- ux_hse_pt_code (unique): company_id, code
+
+## hse_permits
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| type_id | INTEGER | yes |  |  |
+| risk_class | TEXT | yes |  | 'NORMAL' |
+| location_id | INTEGER |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| jsa_id | INTEGER |  |  |  |
+| checklist_inspection_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| work_description | TEXT |  |  |  |
+| supervisor | TEXT | yes |  |  |
+| valid_from | TEXT | yes |  |  |
+| valid_to | TEXT | yes |  |  |
+| extension_count | INTEGER | yes |  | 0 |
+| workers_json | TEXT | yes |  | '[]' |
+| ppe_json | TEXT | yes |  | '[]' |
+| emergency_text | TEXT |  |  |  |
+| gas_tests_json | TEXT | yes |  | '[]' |
+| isolations_json | TEXT | yes |  | '[]' |
+| permit_status | TEXT | yes |  | 'PENDING' |
+| activated_at | TEXT |  |  |  |
+| suspended_at | TEXT |  |  |  |
+| suspended_reason | TEXT |  |  |  |
+| expired_at | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| handback_json | TEXT |  |  |  |
+| hold_reason | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: checklist_inspection_id -> qa_inspections(id), jsa_id -> hse_jsa(id), wa_id -> site_work_authorisations(id), location_id -> proj_locations(id), type_id -> hse_permit_types(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_pm_window: permit_status, valid_to
+- ix_hse_pm_inspection: checklist_inspection_id
+- ix_hse_pm_jsa: jsa_id
+- ix_hse_pm_wa: wa_id
+- ix_hse_pm_location: location_id, permit_status
+- ix_hse_pm_type: type_id
+- ix_hse_pm_project: org_project_id, status
+- ix_hse_pm_site: org_site_id, permit_status
+- ux_hse_pm_doc (unique): company_id, doc_no
+
+## hse_plans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| document_file_id | INTEGER |  |  |  |
+| emergency_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_pl_site: org_site_id
+- ix_hse_pl_project: org_project_id, status
+- ux_hse_pl_doc (unique): company_id, doc_no
+
+## hse_ppe_issues
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| ppe_item_id | INTEGER | yes |  |  |
+| person_type | TEXT | yes |  |  |
+| person_id | INTEGER | yes |  |  |
+| person_code | TEXT | yes |  |  |
+| person_name | TEXT | yes |  |  |
+| issue_date | TEXT | yes |  |  |
+| qty | INTEGER | yes |  | 1 |
+| replace_due | TEXT |  |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| via | TEXT | yes |  | 'MANUAL' |
+| issue_ref | TEXT |  |  |  |
+| replaces_id | INTEGER |  |  |  |
+| returned_on | TEXT |  |  |  |
+| return_condition | TEXT |  |  |  |
+| issued_by | TEXT | yes |  |  |
+| issue_status | TEXT | yes |  | 'ISSUED' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: replaces_id -> hse_ppe_issues(id), ppe_item_id -> hse_ppe_items(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_pi_replaces: replaces_id
+- ix_hse_pi_due: issue_status, replace_due
+- ix_hse_pi_project: org_project_id
+- ix_hse_pi_site: org_site_id, issue_status
+- ix_hse_pi_item: ppe_item_id
+- ix_hse_pi_person: person_type, person_id, issue_status
+- ux_hse_pi_doc (unique): company_id, doc_no
+
+## hse_ppe_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| name_hi | TEXT |  |  |  |
+| item_id | INTEGER |  |  |  |
+| replace_days | INTEGER |  |  |  |
+| ppe_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_pp_item: item_id
+- ux_hse_pp_code (unique): company_id, code
+
+## hse_toolbox_talks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| talk_date | TEXT | yes |  |  |
+| topic_id | INTEGER |  |  |  |
+| topic_text | TEXT | yes |  |  |
+| conducted_by | TEXT | yes |  |  |
+| attendees_json | TEXT | yes |  | '[]' |
+| attendee_count | INTEGER | yes |  | 0 |
+| photo_file_ids | TEXT | yes |  | '[]' |
+| duration_min | INTEGER |  |  |  |
+| notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: topic_id -> hse_toolbox_topics(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hse_tk_topic: topic_id
+- ix_hse_tk_project: org_project_id
+- ix_hse_tk_site: org_site_id, talk_date
+- ux_hse_tk_doc (unique): company_id, doc_no
+
+## hse_toolbox_topics
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| body | TEXT |  |  |  |
+| category | TEXT |  |  |  |
+| frequency | TEXT | yes |  | 'WEEKLY' |
+| topic_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_hse_tt_code (unique): company_id, code
 
 ## iam_access_campaigns
 
@@ -20425,6 +21628,296 @@ Indexes:
 - ix_rti_obs_item: company_id, item_id, region_code, obs_date
 - ix_rti_obs_item_id: item_id
 - ux_rti_obs_source (unique): company_id, source_type, source_id
+
+## scy_checkpoints
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| post_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| qr_token | TEXT | yes |  |  |
+| lat | REAL |  |  |  |
+| lng | REAL |  |  |  |
+| interval_min | INTEGER | yes |  | 120 |
+| active_from | TEXT | yes |  | '00:00' |
+| active_to | TEXT | yes |  | '23:59' |
+| last_alert_slot | TEXT |  |  |  |
+| cp_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: post_id -> scy_posts(id), org_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scy_cp_post: post_id
+- ix_scy_cp_site: org_site_id, cp_status
+- ux_scy_cp_token (unique): qr_token
+- ux_scy_cp_code (unique): company_id, code
+
+## scy_handovers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| post_id | INTEGER | yes |  |  |
+| shift_date | TEXT | yes |  |  |
+| shift | TEXT | yes |  |  |
+| from_guard_id | INTEGER | yes |  |  |
+| to_guard_id | INTEGER |  |  |  |
+| notes | TEXT |  |  |  |
+| items_json | TEXT | yes |  | '[]' |
+| acknowledged_by | TEXT |  |  |  |
+| acknowledged_at | TEXT |  |  |  |
+| logged_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: to_guard_id -> lab_workers(id), from_guard_id -> lab_workers(id), post_id -> scy_posts(id), org_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scy_handovers_company_id: company_id
+- ix_scy_ho_to: to_guard_id
+- ix_scy_ho_from: from_guard_id
+- ix_scy_ho_post: post_id, shift_date
+- ix_scy_ho_site: org_site_id, shift_date
+
+## scy_incidents
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| post_id | INTEGER |  |  |  |
+| incident_type | TEXT | yes |  |  |
+| occurred_at | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| action_taken | TEXT |  |  |  |
+| investigation | TEXT |  |  |  |
+| loss_estimate | INTEGER | yes |  | 0 |
+| reported_by | TEXT | yes |  |  |
+| photo_file_ids | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: post_id -> scy_posts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scy_in_post: post_id
+- ix_scy_in_project: org_project_id, incident_type
+- ix_scy_in_site: org_site_id, occurred_at
+- ux_scy_in_doc (unique): company_id, doc_no
+
+## scy_patrol_scans
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| checkpoint_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| guard_id | INTEGER | yes |  |  |
+| scanned_at | TEXT | yes |  |  |
+| lat | REAL |  |  |  |
+| lng | REAL |  |  |  |
+| distance_m | INTEGER |  |  |  |
+| off_site | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: guard_id -> lab_workers(id), org_site_id -> org_sites(id), checkpoint_id -> scy_checkpoints(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scy_patrol_scans_company_id: company_id
+- ix_scy_ps_guard: guard_id, scanned_at
+- ix_scy_ps_site: org_site_id, scanned_at
+- ix_scy_ps_cp: checkpoint_id, scanned_at
+
+## scy_posts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| post_type | TEXT | yes |  | 'GATE' |
+| required_guards | INTEGER | yes |  | 1 |
+| agency_id | INTEGER |  |  |  |
+| post_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: agency_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scy_post_agency: agency_id
+- ix_scy_post_project: org_project_id
+- ix_scy_post_site: org_site_id, post_status
+- ux_scy_post_code (unique): company_id, code
+
+## scy_rosters
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| assignments_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scy_ro_project: org_project_id
+- ix_scy_ro_site: org_site_id, period, status
+- ux_scy_ro_doc (unique): company_id, doc_no
+
+## scy_visitors
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| visitor_name | TEXT | yes |  |  |
+| phone | TEXT |  |  |  |
+| organisation | TEXT |  |  |  |
+| id_type | TEXT |  |  |  |
+| id_ref_masked | TEXT |  |  |  |
+| host_user | TEXT | yes |  |  |
+| purpose | TEXT | yes |  |  |
+| expected_on | TEXT | yes |  |  |
+| vehicle_no | TEXT |  |  |  |
+| photo_file_id | INTEGER |  |  |  |
+| badge_token | TEXT | yes |  |  |
+| pre_registered | INTEGER | yes |  | 0 |
+| safety_briefed | INTEGER | yes |  | 0 |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| decline_reason | TEXT |  |  |  |
+| check_in | TEXT |  |  |  |
+| check_out | TEXT |  |  |  |
+| checked_in_by | TEXT |  |  |  |
+| overstay_alerted | INTEGER | yes |  | 0 |
+| visit_status | TEXT | yes |  | 'AWAITING_HOST' |
+| status | TEXT | yes |  | 'DRAFT' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_scy_vi_project: org_project_id
+- ix_scy_vi_host: company_id, host_user, visit_status
+- ix_scy_vi_site: org_site_id, visit_status, expected_on
+- ux_scy_vi_badge (unique): badge_token
+- ux_scy_vi_doc (unique): company_id, doc_no
 
 ## sec_conversations
 

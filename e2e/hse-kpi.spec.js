@@ -1,0 +1,21 @@
+import { test, expect } from '@playwright/test';
+import { api, company, db, fill, noOverflow, open, watch, world } from './hse-helpers.js';
+
+// Part 19.08 in the browser: the project manager reads the HSE dashboard (LTIFR, TRIR, safe man-hours, leading indicators, trend, sites), filters it, exports the figures and the monthly PDF; the HSE engineer sees the same site. Desktop and mobile.
+const OUT = 'docs/erp/screenshots/hse-kpi';
+const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
+const day = (n) => new Date(Date.now() + 5.5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
+test('HSE dashboard: rates from man-hours and incidents, safe man-hours, leading indicators, trend, sites, export and monthly report', async ({ browser, request }, info) => {
+  test.setTimeout(120_000);
+  const t = `h${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}`; const c = await company(request, t.toUpperCase()); const s = world(c, t, [['pm', 'PM'], ['he', 'HSEE'], ['ho', 'HSEO'], ['se', 'SE']]);
+  const d = db(); fill(d, 'att_daily', { company_id: c, person_type: 'WORKER', person_id: 1, work_date: day(-20), daily_site_id: s.site, status: 'PRESENT', worked_minutes: 500_000 * 60, computed_at: '2026-01-01T00:00:00Z' }); fill(d, 'att_daily', { company_id: c, person_type: 'WORKER', person_id: 2, work_date: day(-1), daily_site_id: s.site, status: 'PRESENT', worked_minutes: 1000 * 60, computed_at: '2026-01-01T00:00:00Z' }); d.close();
+  await api(request, c, 'SE', s.u('se'), 'post', '/hse/incidents', { projectId: s.A, siteId: s.site, incidentType: 'INJURY', classification: 'LTI', lostDays: 10, occurredAt: new Date(Date.now() + 5.5 * 3600_000 - 48 * 3_600_000).toISOString().slice(0, 16), description: 'A worker slipped on the shuttering and hurt a wrist', persons: [{ kind: 'OTHER', name: 'Ramesh Kumar', role: 'INJURED', injury: 'Wrist sprain' }], immediateAction: 'First aid given' });
+  await api(request, c, 'SE', s.u('se'), 'post', '/hse/incidents', { projectId: s.A, siteId: s.site, incidentType: 'NEAR_MISS', occurredAt: new Date(Date.now() + 5.5 * 3600_000 - 3_600_000).toISOString().slice(0, 16), description: 'A load swung close to the crew', persons: [], immediateAction: 'Area cleared' });
+  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/hse/dashboard'); const p = pm.page; const errors = watch(p);
+  await expect(p.getByTestId('hse-dashboard')).toBeVisible(); await expect(p.getByTestId('hse-kpi-ltifr-value')).toHaveText('2'); await expect(p.getByTestId('hse-kpi-ltifr')).toHaveAttribute('data-status', 'red'); await expect(p.getByTestId('hse-kpi-severityRate-value')).toContainText('19.96'); await expect(p.getByTestId('hse-safe-value')).toHaveText('1,000'); await expect(p.getByTestId('hse-dash-site-row')).toHaveCount(1); await expect(p.getByTestId('hse-dash-exception').first()).toBeVisible();
+  await noOverflow(p); await shot(p, '1-dashboard', info);
+  await p.getByTestId('hse-dash-project').selectOption(String(s.A)); await p.getByTestId('hse-dash-site').selectOption(String(s.site)); await expect(p.getByTestId('hse-dash-site-row')).toHaveCount(1); await p.getByTestId('hse-dash-from').fill(day(-2)); await p.getByTestId('hse-dash-to').fill(day(0)); await expect(p.getByTestId('hse-kpi-manHours-value')).toHaveText('1,000 h'); await expect(p.getByTestId('hse-dash-period')).toContainText('rates per 10,00,000'); await shot(p, '2-filtered', info);
+  const dl = p.waitForEvent('download'); await p.getByTestId('hse-dash-export').click(); expect((await dl).suggestedFilename()).toContain('hse-kpis'); const pdf = p.waitForEvent('download'); await p.getByTestId('hse-dash-report').click(); expect((await pdf).suggestedFilename()).toMatch(/hse-report-\d{4}-\d{2}\.pdf/);
+  const he = await open(browser, info, c, 'HSEE', s.u('he'), '/hse/dashboard'); await expect(he.page.getByTestId('hse-dashboard')).toBeVisible(); await expect(he.page.getByTestId('hse-dash-export')).toHaveCount(0); await expect(he.page.getByTestId('hse-dash-report')).toHaveCount(0); await noOverflow(he.page); await shot(he.page, '3-engineer', info);
+  expect(errors, errors.join('\n')).toEqual([]);
+});

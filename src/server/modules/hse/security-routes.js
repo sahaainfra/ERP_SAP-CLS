@@ -1,0 +1,56 @@
+import { notFound } from '../../platform/http/errors.js';
+import * as v from './validators.js';
+
+/** /api/v1/hse security: posts, patrols, rosters, visitors, security incidents and handovers (part 19.06, flag ff.hse.p1906). */
+export function securityRoutes(r, svc, { ok, pid, file, idempotent, idempotentRequired, flags }) {
+  const { posts, patrol, rosters, visitors, secIncidents, handovers } = svc; const q = (req) => req.query;
+  r.use(['/security-posts', '/checkpoints', '/patrol', '/rosters', '/visitors', '/security-incidents', '/handovers', '/gate-movements'], (req, _res, next) => (flags.isOn(req.actor, 'ff.hse.p1906') ? next() : next(notFound('Security management is not enabled for your company yet.'))));
+  r.get('/security-posts/options', (req, res) => ok(res, posts.options(req.actor)));
+  r.get('/security-posts', (req, res) => res.json(posts.list(req.actor, q(req))));
+  r.post('/security-posts', idempotentRequired, (req, res) => ok(res, posts.create(req.actor, v.parsePostCreate(req.body)), 201));
+  r.get('/security-posts/:id', (req, res) => ok(res, posts.get(req.actor, pid(req))));
+  r.patch('/security-posts/:id', idempotent, (req, res) => ok(res, posts.update(req.actor, pid(req), v.parsePostUpdate(req.body))));
+  r.get('/checkpoints', (req, res) => ok(res, posts.checkpoints(req.actor, v.parseSiteQ(q(req)).siteId)));
+  r.post('/checkpoints', idempotentRequired, (req, res) => ok(res, posts.addCheckpoint(req.actor, v.parseCheckpointCreate(req.body)), 201));
+  r.post('/patrol/scan', idempotentRequired, (req, res) => ok(res, patrol.scan(req.actor, v.parseScan(req.body)), 201));
+  r.get('/patrol/compliance', (req, res) => ok(res, patrol.compliance(req.actor, v.parsePatrolQ(q(req)))));
+  r.get('/rosters/options', (req, res) => ok(res, rosters.options(req.actor)));
+  r.get('/rosters/board', (req, res) => ok(res, rosters.board(req.actor, v.parseRosterQ(q(req)))));
+  r.get('/rosters', (req, res) => res.json(rosters.list(req.actor, q(req))));
+  r.post('/rosters', idempotentRequired, (req, res) => ok(res, rosters.create(req.actor, v.parseRosterCreate(req.body)), 201));
+  r.get('/rosters/:id', (req, res) => ok(res, rosters.get(req.actor, pid(req))));
+  r.patch('/rosters/:id', idempotent, (req, res) => ok(res, rosters.update(req.actor, pid(req), v.parseRosterUpdate(req.body))));
+  r.delete('/rosters/:id', (req, res) => ok(res, rosters.remove(req.actor, pid(req))));
+  r.post('/rosters/:id/submit', idempotentRequired, (req, res) => ok(res, rosters.submit(req.actor, pid(req)), 202));
+  r.post('/rosters/:id/withdraw', idempotent, (req, res) => ok(res, rosters.withdraw(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/rosters/:id/cancel', idempotent, (req, res) => ok(res, rosters.cancel(req.actor, pid(req), v.parseReason(req.body))));
+  r.get('/rosters/:id/history', (req, res) => ok(res, rosters.history(req.actor, pid(req))));
+  r.get('/rosters/:id/print', (req, res) => file(res, rosters.print(req.actor, pid(req))));
+  r.get('/visitors/options', (req, res) => ok(res, visitors.options(req.actor)));
+  r.get('/visitors/export', (req, res) => file(res, svc.exportVisitors(req.actor)));
+  r.post('/visitors/check-in', idempotentRequired, (req, res) => ok(res, visitors.checkIn(req.actor, v.parseVisitorGate(req.body))));
+  r.post('/visitors/check-out', idempotentRequired, (req, res) => ok(res, visitors.checkOut(req.actor, v.parseVisitorGate(req.body))));
+  r.get('/visitors', (req, res) => res.json(visitors.list(req.actor, q(req))));
+  r.post('/visitors', idempotentRequired, (req, res) => ok(res, visitors.create(req.actor, v.parseVisitorCreate(req.body)), 201));
+  r.get('/visitors/:id', (req, res) => ok(res, visitors.get(req.actor, pid(req))));
+  r.post('/visitors/:id/approve', idempotent, (req, res) => ok(res, visitors.decide(req.actor, pid(req), true, null)));
+  r.post('/visitors/:id/decline', idempotent, (req, res) => ok(res, visitors.decide(req.actor, pid(req), false, v.parseVisitorDecline(req.body).reason)));
+  r.post('/visitors/:id/cancel', idempotent, (req, res) => ok(res, visitors.cancel(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/visitors/:id/photo', idempotent, (req, res) => ok(res, visitors.photo(req.actor, pid(req), v.parseFileAttach(req.body))));
+  r.get('/visitors/:id/badge', (req, res) => file(res, visitors.badge(req.actor, pid(req))));
+  r.get('/gate-movements', (req, res) => ok(res, visitors.gateMovements(req.actor, v.parseGateQ(q(req)))));
+  r.get('/security-incidents/options', (req, res) => ok(res, secIncidents.options(req.actor)));
+  r.get('/security-incidents', (req, res) => res.json(secIncidents.list(req.actor, q(req))));
+  r.post('/security-incidents', idempotentRequired, (req, res) => ok(res, secIncidents.create(req.actor, v.parseSecIncidentCreate(req.body)), 201));
+  r.get('/security-incidents/:id', (req, res) => ok(res, secIncidents.get(req.actor, pid(req))));
+  r.patch('/security-incidents/:id', idempotent, (req, res) => ok(res, secIncidents.update(req.actor, pid(req), v.parseSecIncidentUpdate(req.body))));
+  r.delete('/security-incidents/:id', (req, res) => ok(res, secIncidents.remove(req.actor, pid(req))));
+  r.post('/security-incidents/:id/submit', idempotentRequired, (req, res) => ok(res, secIncidents.submit(req.actor, pid(req)), 202));
+  r.post('/security-incidents/:id/withdraw', idempotent, (req, res) => ok(res, secIncidents.withdraw(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/security-incidents/:id/cancel', idempotent, (req, res) => ok(res, secIncidents.cancel(req.actor, pid(req), v.parseReason(req.body))));
+  r.get('/security-incidents/:id/history', (req, res) => ok(res, secIncidents.history(req.actor, pid(req))));
+  r.get('/security-incidents/:id/print', (req, res) => file(res, secIncidents.print(req.actor, pid(req))));
+  r.get('/handovers', (req, res) => ok(res, handovers.list(req.actor, q(req).siteId ? { siteId: Number(q(req).siteId) } : {})));
+  r.post('/handovers', idempotentRequired, (req, res) => ok(res, handovers.create(req.actor, v.parseHandover(req.body)), 201));
+  r.post('/handovers/:id/acknowledge', idempotent, (req, res) => ok(res, handovers.acknowledge(req.actor, pid(req))));
+}

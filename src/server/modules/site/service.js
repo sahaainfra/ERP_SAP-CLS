@@ -174,7 +174,7 @@ export function createSiteService({ db }) {
     out.push(r.in_plan ? { code: 'PLAN', result: 'PASS', message: 'In the approved weekly plan of the day.' } : { code: 'PLAN', result: 'WARN', message: r.is_emergency ? 'Emergency work, outside the plan: the project manager regularises it.' : 'Outside the weekly plan: the project manager also approves it.' });
     return out;
   }
-  const problemsOf = (checks) => checks.filter((c) => c.result === 'FAIL' && ['DRAWING', 'BUDGET', 'PERMIT', 'HOLD_POINT'].includes(c.code)).map((c) => c.message);
+  const problemsOf = (checks) => checks.filter((c) => c.result === 'FAIL' && ['DRAWING', 'BUDGET', 'PERMIT', 'HOLD_POINT', 'JSA', 'PERMIT_TO_WORK'].includes(c.code)).map((c) => c.message);
   /** CP-SITE-01: a WARN mode lets the WA through with its warnings written down; ENFORCE stops it. */
   const enforceChecks = (actor, r, checks) => protocolOf(db).enforce(actor, 'CP-SITE-01', { entity: 'site_wa', entityId: String(r.id), problems: problemsOf(checks), ref: r.wa_no, projectId: r.org_project_id, siteId: r.wa_site_id });
 
