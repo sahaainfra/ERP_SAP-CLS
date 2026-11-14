@@ -1432,6 +1432,90 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bill_mb_entries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| boq_line_id | INTEGER | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| ir_id | INTEGER |  |  |  |
+| dpr_work_id | INTEGER |  |  |  |
+| drawing_id | INTEGER |  |  |  |
+| drawing_ref | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| template | TEXT | yes |  | 'VOLUME' |
+| nos_th | INTEGER |  |  |  |
+| length_th | INTEGER |  |  |  |
+| breadth_th | INTEGER |  |  |  |
+| depth_th | INTEGER |  |  |  |
+| deduction_th | INTEGER | yes |  | 0 |
+| qty_th | INTEGER | yes |  |  |
+| uom | TEXT |  |  |  |
+| measured_by | TEXT | yes |  |  |
+| measured_on | TEXT | yes |  |  |
+| client_check_required | INTEGER | yes |  | 0 |
+| check_status | TEXT | yes |  | 'NOT_CHECKED' |
+| checked_qty_th | INTEGER |  |  |  |
+| check_pct_bp | INTEGER | yes |  | 0 |
+| check_diff_th | INTEGER |  |  |  |
+| checked_by | TEXT |  |  |  |
+| checker_name | TEXT |  |  |  |
+| checker_org | TEXT |  |  |  |
+| checked_on | TEXT |  |  |  |
+| signature_ref | TEXT |  |  |  |
+| check_note | TEXT |  |  |  |
+| certified_qty_th | INTEGER |  |  |  |
+| certified_on | TEXT |  |  |  |
+| bill_period | TEXT |  |  |  |
+| mb_book | INTEGER | yes |  | 1 |
+| mb_page | INTEGER |  |  |  |
+| mb_line | INTEGER |  |  |  |
+| bill_ref | TEXT |  |  |  |
+| eligibility_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: drawing_id -> engg_drawings(id), dpr_work_id -> site_dpr_work(id), ir_id -> qa_inspection_requests(id), activity_id -> plan_activities(id), wa_id -> site_work_authorisations(id), location_id -> proj_locations(id), boq_line_id -> proj_boq_lines(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_mb_period: company_id, org_project_id, bill_period
+- ix_bill_mb_status: company_id, org_project_id, status, boq_line_id
+- ix_bill_mb_entries_drawing_id: drawing_id
+- ix_bill_mb_entries_dpr_work_id: dpr_work_id
+- ix_bill_mb_entries_ir_id: ir_id
+- ix_bill_mb_entries_activity_id: activity_id
+- ix_bill_mb_entries_wa_id: wa_id
+- ix_bill_mb_entries_location_id: location_id
+- ix_bill_mb_entries_boq_line_id: boq_line_id
+- ix_bill_mb_entries_org_site_id: org_site_id
+- ix_bill_mb_entries_org_project_id: org_project_id
+- ux_bill_mb_page (unique): company_id, org_project_id, mb_book, mb_line
+- ux_bill_mb_doc (unique): company_id, doc_no
+
 ## bp_batches
 
 | Column | Type | Not null | Key | Default |
