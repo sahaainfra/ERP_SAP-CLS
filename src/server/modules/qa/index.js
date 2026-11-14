@@ -11,11 +11,14 @@ import { createBase } from '../proc/base.js';
 import { registerOfflineForm, registerOfflineMaster } from '../eng/offline.js';
 import { STATUS } from './flow.js';
 import { createInspectService } from './inspect.js';
+import { createRequestService, holdGate } from './requests.js';
+import { irRoutes } from './ir-routes.js';
+import { waCheckHooks } from '../site/service.js';
 import { qaRoutes } from './routes.js';
 
 const services = new WeakMap();
 export const qaOf = (db) => services.get(db) ?? null;
-export const QA_DOCS = { plan: 'QA_QUALITY_PLAN', itp: 'QA_ITP', template: 'QA_TEMPLATE', inspection: 'QA_INSPECTION' };
+export const QA_DOCS = { ir: 'QA_IR', plan: 'QA_QUALITY_PLAN', itp: 'QA_ITP', template: 'QA_TEMPLATE', inspection: 'QA_INSPECTION' };
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -25,12 +28,15 @@ for (const [type, description] of [
   ['qa.template.activated', 'A checklist template version was approved and is in force (part 18.01): data { templateId, code, version, module }.'],
   ['qa.inspection.submitted', 'An inspection was completed and sent for approval (part 18.01): data { inspectionId, docNo, module, template, templateVersion, projectId, siteId, locationId, activityId, waId, itpStepCode, entityType, entityId, result, scorePct, defects [], inspectedBy, inspectedAt }.'],
   ['qa.inspection.approved', 'An inspection was approved (part 18.01): same data as qa.inspection.submitted. Failed items become defects for NCRs (18.04) and snags (18.06).'],
+  ['qa.ir.raised', 'An inspection request was raised (part 18.02): data { requestId, docNo, projectId, siteId, locationId, activityId, waId, plannedPointId, itpStepCode, pointType, holdPoint, consultantRequired, reinspectionOfId, requestedFor }.'],
+  ['qa.ir.approved', 'An inspection request was approved by the quality engineer (and the consultant when required), with or without comments (part 18.02): same data as qa.ir.raised plus result. A hold point released here lets the next activities start: work authorisations (14.01) and measurement lines (22.01) read it.'],
+  ['qa.ir.rejected', 'An inspection request was rejected (part 18.02): same data as qa.ir.approved plus reasonCode. A re-inspection request linked to it is needed (BR-01).'],
   ['qa.inspection.failed', 'An inspection failed (part 18.01): same data as qa.inspection.submitted; the quality control manager is told and defects can be raised as NCRs (18.04).'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'qa', description });
 
 integrityRegistry.register({
-  statuses: { qa_quality_plans: Object.keys(STATUS), qa_itps: Object.keys(STATUS), qa_checklist_templates: Object.keys(STATUS), qa_inspections: Object.keys(STATUS) },
-  uniqueKeys: [{ table: 'qa_quality_plans', columns: ['company_id', 'doc_no'] }, { table: 'qa_inspections', columns: ['company_id', 'doc_no'] }],
+  statuses: { qa_quality_plans: Object.keys(STATUS), qa_itps: Object.keys(STATUS), qa_checklist_templates: Object.keys(STATUS), qa_inspections: Object.keys(STATUS), qa_inspection_requests: Object.keys(STATUS) },
+  uniqueKeys: [{ table: 'qa_quality_plans', columns: ['company_id', 'doc_no'] }, { table: 'qa_inspections', columns: ['company_id', 'doc_no'] }, { table: 'qa_inspection_requests', columns: ['company_id', 'doc_no'] }],
 });
 
 export const qa = {
@@ -39,24 +45,26 @@ export const qa = {
   routePrefix: '/api/v1/qa',
   ownerPart: '18.01',
   status: 'Quality plans, the ITP library with hold/witness/review/surveillance points applied to activities, versioned checklist templates and inspections with tolerance, photo and signature rules, offline on the phone.',
-  tables: ['qa_quality_plans', 'qa_itps', 'qa_checklist_templates', 'qa_inspections', 'qa_inspection_answers', 'qa_planned_points'],
-  resources: ['quality-plans', 'itps', 'templates', 'inspections', 'planned-points', 'export'],
+  tables: ['qa_inspection_requests', 'qa_quality_plans', 'qa_itps', 'qa_checklist_templates', 'qa_inspections', 'qa_inspection_answers', 'qa_planned_points'],
+  resources: ['inspection-requests', 'hold-points', 'ir-analysis', 'quality-plans', 'itps', 'templates', 'inspections', 'planned-points', 'export'],
   /** Later parts of the module add their routes and services here. */
   parts: new Map(),
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'qa_inspections'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db }); const svc = createInspectService({ db, base, flags });
     const deciders = { [QA_DOCS.plan]: svc.flows.plan.decide, [QA_DOCS.itp]: svc.flows.itp.decide, [QA_DOCS.template]: svc.flows.template.decide, [QA_DOCS.inspection]: svc.flows.inspection.decide };
-    const ctx = { svc, base, flags, deciders, parts: {} }; for (const [, make] of qa.parts) make(db, ctx);
+    const irs = createRequestService({ db, base, flags }); deciders[QA_DOCS.ir] = irs.flow.decide;
+    const ctx = { svc, base, flags, deciders, irs, parts: { ir: (r, h) => irRoutes(r, irs, h) } }; for (const [, make] of qa.parts) make(db, ctx);
     services.set(db, ctx);
     listExports.register('qa.inspections', { source: (actor, req) => { base.need(actor, 'qa.inspection.export', 'export inspections'); return svc.inspections.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('qa.inspection_requests', { source: (actor, req) => { base.need(actor, 'qa.inspection_request.export', 'export inspection requests'); return irs.requests.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('qa.itps', { source: (actor, req) => { base.need(actor, 'qa.itp.export', 'export ITPs'); return svc.itps.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     api.use('/qa', qaRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags, parts: ctx.parts }));
   },
 };
 
 const approver = (code, name, role, slaHours, when = null) => ({ code, name, type: 'approval', mode: 'single', approvers: [{ kind: 'role', role }], slaHours, requireAttachment: false, checklist: [], when, notify: [], action: null });
-const decideHook = (docType) => ({ onApproved: (db, { instance, actor }) => qaOf(db)?.deciders[docType](instance, actor, 'APPROVED'), onRejected: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'REJECTED', comment), onReturned: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'CANCELLED', comment) });
+const decideHook = (docType) => ({ onApproved: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'APPROVED', comment), onRejected: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'REJECTED', comment), onReturned: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'RETURNED', comment), onCancelled: (db, { instance, actor, comment }) => qaOf(db)?.deciders[docType](instance, actor, 'CANCELLED', comment) });
 /** Registers the workflow type of an approval document of the module: `table` and `title(row)` describe it in the inbox. */
 /** @param {any} o */
 export function registerQaWorkflow({ docType, label, table, owner, route, name, steps, title, fields, amount }) {
@@ -68,6 +76,8 @@ export function registerQaWorkflow({ docType, label, table, owner, route, name, 
     hooks: decideHook(docType),
   });
 }
+// the work authorisation (14.01) is stopped while a hold point before its activity is not released (part 18.02, BR-01)
+waCheckHooks.push((db, r) => { if (!r.activity_id) return null; const pts = holdGate(db, { activityId: r.activity_id, locationId: r.location_id ?? null }); if (!pts.length) return null; return { code: 'HOLD_POINT', result: 'FAIL', message: `Hold point ${pts.map((p) => `${p.activityCode} ${p.stepCode}`).join(', ')} is not released: raise and clear an inspection request (18.02).` }; });
 const tpl = (db, id) => db.prepare('SELECT code, name, version_no FROM qa_checklist_templates WHERE id = ?').get(id);
 registerQaWorkflow({ docType: QA_DOCS.plan, label: 'Quality plan', table: 'qa_quality_plans', owner: 'QCMGR', route: '/qa/quality-plans?id=', name: 'Quality plan: the quality control manager', steps: [approver('QCMGR', 'Quality control manager', 'QCMGR', 48)], title: (_db, r) => r.title, fields: (_db, r) => [{ label: 'Plan', value: r.doc_no }, { label: 'Title', value: r.title }, { label: 'Revision', value: String(r.revision) }] });
 registerQaWorkflow({ docType: QA_DOCS.itp, label: 'Inspection and test plan', table: 'qa_itps', owner: 'QCMGR', route: '/qa/itps?id=', name: 'ITP: the quality control manager', steps: [approver('QCMGR', 'Quality control manager', 'QCMGR', 48)], title: (_db, r) => `${r.title} v${r.version_no}`, fields: (_db, r) => [{ label: 'ITP', value: `${r.code} v${r.version_no}` }, { label: 'Activity', value: r.activity_type }, { label: 'Steps', value: String(JSON.parse(r.steps_json).length) }] });
@@ -78,6 +88,9 @@ registerQaWorkflow({ docType: QA_DOCS.inspection, label: 'Inspection', table: 'q
   steps: [approver('QCMGR', 'Quality control manager', 'QCMGR', 24, { field: 'module', op: 'in', value: ['QUALITY', 'HANDOVER', 'SNAG'] }), approver('HSEO', 'HSE officer', 'HSEO', 24, { field: 'module', op: 'eq', value: 'HSE' }), approver('PLANTMGR', 'Plant manager', 'PLANTMGR', 24, { field: 'module', op: 'eq', value: 'PLANT' }), approver('STOREMGR', 'Store manager', 'STOREMGR', 24, { field: 'module', op: 'eq', value: 'STORES' })],
   title: (db, r) => `${tpl(db, r.template_id)?.name ?? ''} ${r.result ?? ''}`, fields: (db, r) => [{ label: 'Checklist', value: `${tpl(db, r.template_id)?.name} v${tpl(db, r.template_id)?.version_no}` }, { label: 'Result', value: r.result ?? '-' }, { label: 'Score %', value: r.score_bp == null ? '-' : String(r.score_bp / 100) }, { label: 'Inspected by', value: r.inspected_by }] });
 
+registerQaWorkflow({ docType: QA_DOCS.ir, label: 'Inspection request', table: 'qa_inspection_requests', owner: 'QCE', route: '/qa/inspection-requests?id=', name: 'Inspection request: the quality engineer inspects; the consultant also, when required',
+  steps: [approver('QCE', 'Quality engineer (inspection)', 'QCE', 24), approver('XCON', 'Consultant', 'X-CON', 48, { field: 'consultant', op: 'eq', value: 'yes' })],
+  title: (_db, r) => r.description, fields: (_db, r) => [{ label: 'Request', value: r.doc_no }, { label: 'What', value: r.description }, { label: 'Point', value: r.point_type }, { label: 'Wanted for', value: r.requested_for }] });
 const objectOf = (type, table, perm, route, label) => objectTypes.register({
   type: table, label, permission: `${perm}.view`, route: (id) => `${route}${id}`, attachmentEntity: table, approvalTarget: table,
   access(db, actor, id) { const r = db.prepare(`SELECT * FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r || !authzOf(db).check(actor, `${perm}.view`, { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined }).allowed) return null; return { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined, status: r.status }; },
@@ -88,6 +101,7 @@ const objectOf = (type, table, perm, route, label) => objectTypes.register({
   projectRecords(db, companyId, projectId, limit) { return table === 'qa_itps' || table === 'qa_checklist_templates' ? [] : db.prepare(`SELECT id FROM ${table} WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?`).all(companyId, projectId, limit).map((x) => x.id); },
 });
 void objectOf;
+objectOf('ir', 'qa_inspection_requests', 'qa.inspection_request', '/qa/inspection-requests?id=', 'Inspection request');
 objectOf('plan', 'qa_quality_plans', 'qa.quality_plan', '/qa/quality-plans?id=', 'Quality plan');
 objectOf('inspection', 'qa_inspections', 'qa.inspection', '/qa/inspections?id=', 'Inspection');
 objectOf('itp', 'qa_itps', 'qa.itp', '/qa/itps?id=', 'Inspection and test plan');
@@ -98,6 +112,7 @@ const fileAccess = (table, perm, edit) => (db, actor, id) => {
   return { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined, canView: true, canEdit: at(`${perm}.${edit}`) && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) };
 };
 fileEntities.register({ entity: 'qa_quality_plans', label: 'Quality plan (document)', resolve: fileAccess('qa_quality_plans', 'qa.quality_plan', 'edit') });
+fileEntities.register({ entity: 'qa_inspection_requests', label: 'Inspection request (photographs and records)', resolve: fileAccess('qa_inspection_requests', 'qa.inspection_request', 'edit') });
 fileEntities.register({ entity: 'qa_inspections', label: 'Inspection (photographs and signatures)', resolve: fileAccess('qa_inspections', 'qa.inspection', 'edit') });
 
 // ---- the phone (04.15): the whole inspection is one command; its photographs follow, named <question code>__<anything> ------------------------------------------------------------------------------

@@ -8,7 +8,7 @@ export const Q = '/api/v1/qa'; export const W = '/api/v1/workflow';
 let seq = 0; export const nextSeq = () => (seq += 1);
 export const key = () => ({ 'content-type': 'application/json', 'idempotency-key': `qa-${Date.now().toString(36)}-${(seq += 1)}-${Math.random().toString(36).slice(2, 8)}` });
 export const as = (roles, user, company = '1') => ({ roles, user, company });
-export const U = { qce: as('QCE', 'qce1'), qce2: as('QCE', 'qce2'), qcm: as('QCMGR', 'qcm1'), hsee: as('HSEE', 'hsee1'), hseo: as('HSEO', 'hseo1'), pmsup: as('PMSUP', 'pmsup1'), plm: as('PLANTMGR', 'plm1'), sk: as('SK', 'sk1'), stm: as('STOREMGR', 'stm1'), se: as('SE', 'se1'), pm: as('PM', 'pm1'), pd: as('PD', 'pd1'), dir: as('DIR', 'dir1'), aud: as('AUD', 'aud1'), cm: as('CM', 'cm1'), other: as('QCMGR', 'qcmx', '2') };
+export const U = { qce: as('QCE', 'qce1'), qce2: as('QCE', 'qce2'), qcm: as('QCMGR', 'qcm1'), hsee: as('HSEE', 'hsee1'), hseo: as('HSEO', 'hseo1'), pmsup: as('PMSUP', 'pmsup1'), plm: as('PLANTMGR', 'plm1'), sk: as('SK', 'sk1'), stm: as('STOREMGR', 'stm1'), se: as('SE', 'se1'), pm: as('PM', 'pm1'), pd: as('PD', 'pd1'), dir: as('DIR', 'dir1'), aud: as('AUD', 'aud1'), cm: as('CM', 'cm1'), xcon: as('X-CON', 'xcon1'), other: as('QCMGR', 'qcmx', '2') };
 export function fill(d, table, vals) {
   const cols = d.prepare(`PRAGMA table_info(${table})`).all(); const sql = d.prepare('SELECT sql FROM sqlite_master WHERE name = ?').get(table).sql; const names = []; const params = [];
   const first = (name) => { const m = new RegExp(`CHECK \\(${name} IN \\(([^)]*)\\)\\)`).exec(sql); return m ? m[1].split(',')[0].trim().replace(/^'|'$/g, '') : null; };
@@ -39,4 +39,12 @@ export async function activeTemplate(r, o = {}) {
   const code = o.code ?? `CT-${nextSeq()}`; const c = await r.call(U.qce, 'POST', '/templates', { code, name: 'Pre-pour check', module: o.module ?? 'QUALITY', sections: o.sections ?? sections(), scoring: { passPct: 80 } }); assert.equal(c.status, 201, JSON.stringify(c.json));
   const id = c.json.data.id; assert.equal((await r.call(U.qce, 'POST', `/templates/${id}/submit`)).status, 202); const w = r.wf('qa_checklist_templates', id); const approvers = { HSE: U.hseo, PLANT: U.plm, STORES: U.stm };
   if (approvers[o.module]) assert.equal((await r.act(approvers[o.module], w)).status, 200); assert.equal((await r.act(U.qcm, w)).status, 200); return { id, code };
+}
+/** An approved ITP applied to the first activity of the project; the second activity follows it. Returns the planned points. */
+export async function plannedPoints(r) {
+  const c = await r.call(U.qce, 'POST', '/itps', { code: `ITP-${nextSeq()}`, title: 'RCC footing', activityType: 'RCC', steps: [{ code: 'S1', seq: 1, description: 'Check formwork and cover', pointType: 'HOLD' }, { code: 'S2', seq: 2, description: 'Witness slump', pointType: 'WITNESS' }] }); assert.equal(c.status, 201, JSON.stringify(c.json));
+  assert.equal((await r.call(U.qce, 'POST', `/itps/${c.json.data.id}/submit`)).status, 202); assert.equal((await r.act(U.qcm, r.wf('qa_itps', c.json.data.id))).status, 200);
+  assert.equal((await r.call(U.qce, 'POST', `/itps/${c.json.data.id}/apply`, { projectId: r.A, activityIds: [r.a1] })).status, 201);
+  fill(r.d, 'plan_dependencies', { company_id: 1, schedule_id: r.sch, pred_id: r.a1, succ_id: r.a2 });
+  return (await r.call(U.qce, 'GET', `/planned-points?projectId=${r.A}&activityId=${r.a1}`)).json.data;
 }

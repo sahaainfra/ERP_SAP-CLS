@@ -20,11 +20,11 @@ export function useRecord(kind, id, what, permission) {
 }
 export function Status({ x }) { const t = useT('qa'); return <StatusBadge status={QA_TONE[x.status]} label={t(`st.${x.status}`)} />; }
 /** The actions of a document: what the server says the person can do, the decision panel for an approver, and the history. */
-export function DocBar({ kind, x, printName, extra = null }) {
+export function DocBar({ kind, x, printName, extra = null, beforeDecide = null }) {
   const t = useT('qa'); const { error, setError, note, busy, run } = useRunner(); const [comment, setComment] = useState(''); const can = x.can ?? {};
   const hq = useQuery({ queryKey: ['qa', kind, 'history', x.id, x.status], queryFn: () => qa.history(kind, x.id), retry: false });
   const why = (action, msg) => { const r = globalThis.prompt(t('why')); if (r) run(() => qa.act(kind, x.id, action, { reason: r }), msg); };
-  const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => qa.decide(x.taskId, action, comment.trim() || null), t(`done.${action}`)); };
+  const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(async () => { await beforeDecide?.(action); return qa.decide(x.taskId, action, comment.trim() || null); }, t(`done.${action}`)); };
   return (
     <>
       {error?.form && <p className="field-error" role="alert" data-testid="qa-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="qa-note">{note}</p>}
@@ -38,7 +38,7 @@ export function DocBar({ kind, x, printName, extra = null }) {
       </div>
       {x.approve && x.taskId && (
         <div className="mdm-panel no-print" data-testid="qa-decide"><h2>{t('decision')}</h2>
-          <label>{t('comment')}<textarea value={comment} onChange={(ev) => setComment(ev.target.value)} rows={2} style={{ width: '100%' }} /></label>
+          <label>{t('comment')}<textarea value={comment} onChange={(ev) => setComment(ev.target.value)} rows={2} style={{ width: "100%" }} data-testid="qa-comment" /></label>
           <div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="qa-approve">{t('approve')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('return')} data-testid="qa-return">{t('returnIt')}</button><button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('reject')} data-testid="qa-reject">{t('reject')}</button></div>
         </div>
       )}

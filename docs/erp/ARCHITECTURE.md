@@ -1505,3 +1505,6 @@ Module `plant`, flag `ff.plant.p1708`, tables `rp_demand`, `rp_supply`, `rp_plan
 
 ## 138. Quality plans, ITPs and the inspection checklist engine (part 18.01)
 Module `qa`, flag `ff.qa.p1801`, tables `qa_quality_plans`, `qa_itps`, `qa_checklist_templates`, `qa_inspections`, `qa_inspection_answers`, `qa_planned_points`; service `src/server/modules/qa/inspect.js`. `flow.js` is the one approval life (row, rights, submit, withdraw, cancel, history, outcome) shared by every approval document of the module; later parts of M18 plug in through `qa.parts` (services and route mounters). `evaluate` is the one place an inspection result is worked out; the client never sends a result. Versions: `(company, code, version_no)`; approving a version supersedes the earlier one.
+
+## 139. Inspection requests and hold points (part 18.02)
+Module `qa`, flag `ff.qa.p1802`, table `qa_inspection_requests`; service `src/server/modules/qa/requests.js`. `holdGate` is the one place that says which hold points before an activity are not released; the work authorisation reads it through `waCheckHooks` (site service) and measurement lines through `/hold-points/check`. Findings are saved by `assess` before the workflow decision.

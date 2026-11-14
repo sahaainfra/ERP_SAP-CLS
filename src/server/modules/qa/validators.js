@@ -42,3 +42,11 @@ export const parseInspectionUpdate = (b) => defined(parse(z.object({ subject: op
 export const parsePhoto = (b) => parse(z.object({ questionCode: text(30), fileId: id }).strict(), b ?? {});
 export const parseSign = (b) => parse(signature, b ?? {});
 export const parseInspectionImport = (b) => ({ rows: parse(z.object({ rows: z.array(z.any()).min(1).max(500) }).strict(), b ?? {}).rows.map((x) => parseInspectionCreate(x)) });
+// inspection requests (part 18.02)
+const IR_REASONS = ['WORKMANSHIP', 'MATERIAL', 'DRAWING', 'SAFETY', 'INCOMPLETE', 'DOCUMENTS', 'OTHER'];
+export const parseIrCreate = (b) => parse(z.object({ projectId: id, siteId: id.nullish().transform((v) => v ?? null), locationId: id.nullish().transform((v) => v ?? null), activityId: id.nullish().transform((v) => v ?? null), waId: id.nullish().transform((v) => v ?? null), plannedPointId: id.nullish().transform((v) => v ?? null), itpStepCode: opt(30), pointType: z.enum(POINTS).default('HOLD'), description: opt(500), requestedFor: day, consultantRequired: z.boolean().default(false), reinspectionOfId: id.nullish().transform((v) => v ?? null), submit: z.boolean().optional() }).strict(), b ?? {});
+export const parseIrUpdate = (b) => defined(parse(z.object({ description: text(500).min(3).optional(), requestedFor: day.optional(), consultantRequired: z.boolean().optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseIrAssess = (b) => parse(z.object({ inspectionId: id.nullish().transform((v) => v ?? null), reasonCode: z.enum(IR_REASONS).nullish().transform((v) => v ?? null), assessment: opt(2000) }).strict(), b ?? {});
+export const parseIrOptionsQ = (q) => parse(z.object({ projectId: id.optional() }).passthrough(), q ?? {});
+export const parseGateQ = (q) => parse(z.object({ activityId: id.optional(), locationId: id.optional() }).passthrough(), q ?? {});
+export const parseIrAnalysisQ = (q) => parse(z.object({ projectId: id.optional(), from: day.optional(), to: day.optional() }).passthrough(), q ?? {});

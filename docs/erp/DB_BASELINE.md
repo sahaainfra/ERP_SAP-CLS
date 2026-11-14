@@ -19018,6 +19018,65 @@ Indexes:
 - ix_qa_ia_company: company_id
 - ux_qa_ia_q (unique): inspection_id, question_code
 
+## qa_inspection_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| wa_id | INTEGER |  |  |  |
+| planned_point_id | INTEGER |  |  |  |
+| itp_step_code | TEXT |  |  |  |
+| point_type | TEXT | yes |  | 'HOLD' |
+| description | TEXT | yes |  |  |
+| requested_for | TEXT | yes |  |  |
+| requested_at | TEXT |  |  |  |
+| consultant_required | INTEGER | yes |  | 0 |
+| inspection_id | INTEGER |  |  |  |
+| reinspection_of_id | INTEGER |  |  |  |
+| result | TEXT |  |  |  |
+| reason_code | TEXT |  |  |  |
+| assessment | TEXT |  |  |  |
+| assessed_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: reinspection_of_id -> qa_inspection_requests(id), inspection_id -> qa_inspections(id), planned_point_id -> qa_planned_points(id), wa_id -> site_work_authorisations(id), activity_id -> plan_activities(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_ir_reinspect: reinspection_of_id
+- ix_qa_ir_inspection: inspection_id
+- ix_qa_ir_point: planned_point_id
+- ix_qa_ir_wa: wa_id
+- ix_qa_ir_activity: activity_id
+- ix_qa_ir_location: location_id
+- ix_qa_ir_site: org_site_id
+- ix_qa_ir_project: org_project_id, status, requested_for
+- ux_qa_ir_doc (unique): company_id, doc_no
+
 ## qa_inspections
 
 | Column | Type | Not null | Key | Default |

@@ -635,3 +635,4 @@ Register of known gaps. Severity: Critical, High, Medium, Low. The scan output o
 | D-624 | QA | The consultant step of the quality plan and ITP chains (spec: QCE then QCMGR then consultant) is not built: there is no consultant flag on the plan or ITP yet. Target 18.02 (consultant_required on requests). |
 | D-625 | QA | Photographs sent by the offline engine join their question by file name (`<question code>__name`), because the engine attaches files to the record, not to a field. Target: field-level media links in 04.15. |
 | D-626 | QA | `scripts/nav_check.mjs` reports `/proc/quotation-entry` (registry permission differs from the page). It predates 18.01 and is not touched here. |
+| D-627 | QA | The measurement book (22.01) does not exist yet: the eligibility of a measurement line is answered by `GET /api/v1/qa/hold-points/check?activityId&locationId` and the event `qa.ir.approved`; 22.01 must call it when a line is entered. Target 22.01. |
