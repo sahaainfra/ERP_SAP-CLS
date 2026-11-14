@@ -1562,3 +1562,6 @@ Module `ctr` (new), flag `ff.ctr.p2101`, tables `ctr_contracts`, `ctr_clauses`, 
 
 ## 157. Securities: Bank Guarantees, Insurance, Retention & Deposits (part 21.02)
 Module `ctr`, flag `ff.ctr.p2102`, tables `ctr_bank_guarantees`, `ctr_bg_events`, `ctr_advances`, `ctr_insurances`, `ctr_insurance_claims`, `ctr_bank_limits`; service `src/server/modules/ctr/securities.js`. Approved records change only through confirmed requests; the daily sweep alerts once per offset.
+
+## 158. Subcontract & Work Order Management (Item-Rate and Labour-Rate) (part 21.03)
+Module `ctr`, flag `ff.ctr.p2103`, tables `ctr_work_orders`, `ctr_wo_items`, `ctr_wo_free_issue`, `ctr_wo_amendments`; service `src/server/modules/ctr/workorders.js`. Value, margin and flags are worked out only in the service; the commitment is posted and amended by the delta through the budget ledger.
