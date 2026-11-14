@@ -1432,6 +1432,111 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bill_deviation_statements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| ds_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER |  |  |  |
+| period | TEXT | yes |  |  |
+| threshold_bp | INTEGER | yes |  |  |
+| items_json | TEXT | yes |  | '[]' |
+| item_count | INTEGER | yes |  | 0 |
+| over_count | INTEGER | yes |  | 0 |
+| under_count | INTEGER | yes |  | 0 |
+| net_effect_paise | INTEGER | yes |  | 0 |
+| notes | TEXT |  |  |  |
+| client_state | TEXT | yes |  | 'NOT_SENT' |
+| sent_on | TEXT |  |  |  |
+| client_ref | TEXT |  |  |  |
+| responded_on | TEXT |  |  |  |
+| outcome | TEXT | yes |  | 'NONE' |
+| cr_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cr_id -> ctr_change_requests(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_ds_status: company_id, org_project_id, status, period
+- ix_bill_deviation_statements_cr_id: cr_id
+- ix_bill_deviation_statements_contract_id: contract_id
+- ix_bill_deviation_statements_org_site_id: org_site_id
+- ix_bill_deviation_statements_org_project_id: org_project_id
+- ux_bill_ds_no (unique): company_id, org_project_id, ds_no
+- ux_bill_ds_doc (unique): company_id, doc_no
+
+## bill_extra_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| kind | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT | yes |  |  |
+| provisional_qty_th | INTEGER | yes |  |  |
+| provisional_rate_x4 | INTEGER | yes |  | 0 |
+| substitutes_boq_line_id | INTEGER |  |  |  |
+| reason | TEXT | yes |  |  |
+| instruction_ref | TEXT |  |  |  |
+| ds_id | INTEGER |  |  |  |
+| cr_id | INTEGER |  |  |  |
+| decision_state | TEXT | yes |  | 'PENDING' |
+| decided_by | TEXT |  |  |  |
+| decided_on | TEXT |  |  |  |
+| decision_ref | TEXT |  |  |  |
+| decision_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cr_id -> ctr_change_requests(id), ds_id -> bill_deviation_statements(id), substitutes_boq_line_id -> proj_boq_lines(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_xi_state: company_id, org_project_id, decision_state
+- ix_bill_extra_items_cr_id: cr_id
+- ix_bill_extra_items_ds_id: ds_id
+- ix_bill_extra_items_substitutes_boq_line_id: substitutes_boq_line_id
+- ix_bill_extra_items_org_site_id: org_site_id
+- ix_bill_extra_items_org_project_id: org_project_id
+- ux_bill_xi_doc (unique): company_id, doc_no
+
 ## bill_mb_entries
 
 | Column | Type | Not null | Key | Default |
@@ -1515,6 +1620,39 @@ Indexes:
 - ix_bill_mb_entries_org_project_id: org_project_id
 - ux_bill_mb_page (unique): company_id, org_project_id, mb_book, mb_line
 - ux_bill_mb_doc (unique): company_id, doc_no
+
+## bill_qty_forecasts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| item_code | TEXT | yes |  |  |
+| boq_line_id | INTEGER | yes |  |  |
+| forecast_qty_th | INTEGER | yes |  |  |
+| basis | TEXT | yes |  |  |
+| updated_on | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: boq_line_id -> proj_boq_lines(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_qty_forecasts_boq_line_id: boq_line_id
+- ix_bill_qty_forecasts_org_project_id: org_project_id
+- ux_bill_fc_item (unique): company_id, org_project_id, item_code
 
 ## bp_batches
 

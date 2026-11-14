@@ -1580,3 +1580,6 @@ Module `ctr`, flag `ff.ctr.p2107`, tables `ctr_pvc_formulas`, `ctr_pvc_index_ref
 
 ## 163. Measurement Book & Check Measurement (part 22.01)
 Module `bill`, flag `ff.bill.p2201`, table `bill_mb_entries`; service `src/server/modules/bill/mb.js`. The quantity is worked out only by `mbQty`; the eligibility only by `eligibility`; certified quantity is read by billing through `certifiedQtyOf`.
+
+## 164. Quantity Reconciliation, Deviation Statements & Extra Items (part 22.02)
+Module `bill`, flag `ff.bill.p2202`, tables `bill_deviation_statements`, `bill_qty_forecasts`, `bill_extra_items`; services `recon.js` and `deviation.js`. The chain is read only through `recon.rows`; a statement is built only from it.
