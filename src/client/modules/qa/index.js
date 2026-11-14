@@ -18,6 +18,9 @@ import { AcceptancePage, TraceabilityPage } from './ConcretePages.jsx';
 import SnagWalkPage from './SnagWalkPage.jsx';
 import SnagsPage from './SnagsPage.jsx';
 import { SnagStatusPage, SnagReportPage } from './SnagReportsPage.jsx';
+import DashboardPage from './DashboardPage.jsx';
+import ControlChartsPage from './ControlChartsPage.jsx';
+import RatingsPage from './RatingsPage.jsx';
 
 registerModule({
   code: 'qa',
@@ -45,6 +48,9 @@ registerModule({
     { path: '/qa/snags', label: 'Snag Register', icon: 'erp.qhse.qa', permission: 'qa.snag.view', flag: 'ff.qa.p1806', Page: SnagsPage },
     { path: '/qa/snag-status', label: 'Snag Status by Area and Party', icon: 'erp.qhse.qa', permission: 'qa.snag.view', flag: 'ff.qa.p1806', Page: SnagStatusPage },
     { path: '/qa/snag-report', label: 'Unit Snag Report', icon: 'erp.qhse.qa', permission: 'qa.snag.view', flag: 'ff.qa.p1806', Page: SnagReportPage },
+    { path: '/qa/dashboard', label: 'Quality Dashboard', icon: 'erp.qhse.qa', permission: 'qa.dashboard.view', flag: 'ff.qa.p1807', Page: DashboardPage },
+    { path: '/qa/control-charts', label: 'Concrete Control Charts', icon: 'erp.qhse.qa', permission: 'qa.dashboard.view', flag: 'ff.qa.p1807', Page: ControlChartsPage },
+    { path: '/qa/ratings', label: 'Quality Ratings', icon: 'erp.qhse.qa', permission: 'qa.dashboard.view', flag: 'ff.qa.p1807', Page: RatingsPage },
     { path: '/qa/inspections', label: 'Inspections', icon: 'erp.qhse.qa', permission: 'qa.inspection.view', flag: 'ff.qa.p1801', Page: InspectionsPage },
   ],
 });

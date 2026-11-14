@@ -104,3 +104,8 @@ export const parseSnagClose = (b) => parse(z.object({ note: opt(1000) }).strict(
 export const parseSnagStatusQ = (q) => parse(z.object({ projectId: id.optional(), punchClass: z.enum(['A', 'B', 'C']).optional() }).passthrough(), q ?? {});
 export const parsePlansQ = (q) => parse(z.object({ projectId: id }).passthrough(), q ?? {});
 export const parseUnitReportQ = (q) => parse(z.object({ locationId: id }).passthrough(), q ?? {});
+// dashboard, control charts and ratings (part 18.07)
+export const parseDashQ = (q) => parse(z.object({ projectId: id.optional(), from: day.optional(), to: day.optional() }).passthrough(), q ?? {});
+export const parseChartQ = (q) => parse(z.object({ projectId: id.optional(), grade: text(10).optional(), supplierId: id.optional(), from: day.optional(), to: day.optional() }).passthrough(), q ?? {});
+export const parseRatingsQ = (q) => parse(z.object({ projectId: id.optional(), by: z.enum(['site', 'subcontractor', 'supplier']).optional(), from: day.optional(), to: day.optional() }).passthrough(), q ?? {});
+export const parseDashExportQ = (q) => parse(z.object({ kind: z.enum(['kpis', 'chart', 'ratings']).optional(), projectId: id.optional(), grade: text(10).optional(), supplierId: id.optional(), by: z.enum(['site', 'subcontractor', 'supplier']).optional(), from: day.optional(), to: day.optional() }).passthrough(), q ?? {});

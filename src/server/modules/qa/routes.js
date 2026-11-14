@@ -21,6 +21,7 @@ export function qaRoutes(svc, { idempotent, idempotentRequired, flags, parts = {
     r.get(`${path}/:id/print`, (req, res) => file(res, s.print(req.actor, pid(req))));
   };
   r.get('/export', (req, res) => file(res, svc.exportCsv(req.actor, parseExportQ(req.query))));
+  r.get('/projects', (req, res) => ok(res, svc.lookupProjects(req.actor)));
   r.get('/activities', (req, res) => ok(res, planned.activities(req.actor, parsePlannedQ(req.query).projectId)));
   r.get('/planned-points', (req, res) => ok(res, planned.list(req.actor, parsePlannedQ(req.query))));
   r.get('/inspections/options', (req, res) => ok(res, inspections.options(req.actor, parseModuleQ(req.query))));

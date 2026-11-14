@@ -9,7 +9,7 @@ import { sel } from './QaParts.jsx';
 
 // Test Frequency Compliance (part 18.03, FR-05): for every test with a frequency rule, what was received, how many tests that needs, how many were requested; a shortfall is overdue and opens the tests behind it.
 export default function ComplianceReportPage() {
-  const t = useT('qa'); usePageTitle(t('tc.title')); const [projectId, setProjectId] = useState(''); const oq = useQuery({ queryKey: ['qa', 'ir-options-a'], queryFn: () => qa.get('/inspection-requests/options'), retry: false });
+  const t = useT('qa'); usePageTitle(t('tc.title')); const [projectId, setProjectId] = useState(''); const oq = useQuery({ queryKey: ['qa', 'projects'], queryFn: () => qa.get('/projects').then((p) => ({ projects: p })), retry: false });
   const q = useQuery({ queryKey: ['qa', 'compliance', projectId], queryFn: () => qa.get(`/test-compliance${projectId ? `?projectId=${projectId}` : ''}`), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('tc.title')} permission="qa.test_request.view" />; if (q.isPending) return <Skeleton label={t('tc.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data;

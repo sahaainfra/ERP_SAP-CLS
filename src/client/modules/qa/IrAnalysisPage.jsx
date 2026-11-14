@@ -8,7 +8,7 @@ import { sel } from './QaParts.jsx';
 
 // IR Rejection Analysis (part 18.02): how many requests are open and how old, the first-time approval rate, why requests are rejected and which are waiting for a re-inspection. Every figure opens the requests behind it.
 export default function IrAnalysisPage() {
-  const t = useT('qa'); usePageTitle(t('ira.title')); const [projectId, setProjectId] = useState(''); const oq = useQuery({ queryKey: ['qa', 'ir-options-a'], queryFn: () => qa.get('/inspection-requests/options'), retry: false });
+  const t = useT('qa'); usePageTitle(t('ira.title')); const [projectId, setProjectId] = useState(''); const oq = useQuery({ queryKey: ['qa', 'projects'], queryFn: () => qa.get('/projects').then((p) => ({ projects: p })), retry: false });
   const q = useQuery({ queryKey: ['qa', 'ir-analysis', projectId], queryFn: () => qa.get(`/ir-analysis${projectId ? `?projectId=${projectId}` : ''}`), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('ira.title')} permission="qa.inspection_request.view" />; if (q.isPending) return <Skeleton label={t('ira.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const a = q.data; const tile = (k, v, to) => <div key={k} className="mdm-panel" data-testid={`ira-${k}`}><div className="muted">{t(`ira.${k}`)}</div><strong style={{ fontSize: '1.6rem' }}>{v}</strong>{to && <div><Link to={to}>{t('ira.open')}</Link></div>}</div>;

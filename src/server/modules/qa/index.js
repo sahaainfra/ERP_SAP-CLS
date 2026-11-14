@@ -1,5 +1,5 @@
 import { authzOf } from '../../platform/authz/index.js';
-import { eventTypes } from '../../platform/events/index.js';
+import { eventTypes, publishEvent } from '../../platform/events/index.js';
 import { idempotency } from '../../platform/http/idempotency.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { integrityRegistry } from '../../platform/integrity/index.js';
@@ -21,6 +21,10 @@ import { createPourService } from './pour.js';
 import { pourRoutes } from './pour-routes.js';
 import { createSnagService } from './snags.js';
 import { snagRoutes } from './snag-routes.js';
+import { createDashService } from './dash.js';
+import { dashRoutes } from './dash-routes.js';
+import { registerProject360Widget } from '../proj/p360.js';
+import { widgetRegistry } from '../../platform/widgets/index.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { waCheckHooks } from '../site/service.js';
 import { qaRoutes } from './routes.js';
@@ -28,6 +32,15 @@ import { qaRoutes } from './routes.js';
 const services = new WeakMap();
 export const qaOf = (db) => services.get(db) ?? null;
 export const QA_DOCS = { pour: 'QA_POUR_CARD', ncrClosure: 'QA_NCR_CLOSURE', ncrConcession: 'QA_NCR_CONCESSION', test: 'QA_TEST', ir: 'QA_IR', plan: 'QA_QUALITY_PLAN', itp: 'QA_ITP', template: 'QA_TEMPLATE', inspection: 'QA_INSPECTION' };
+
+// the quality slot of Project 360 (10.08, part 18.07): the figures of the project, only for a person who may see the quality dashboard and where the part is on
+registerProject360Widget('quality', (ctx) => {
+  const s = qaOf(ctx.db); const pid = ctx.project.project_id;
+  if (!s || !s.flags.isOn(ctx.actor, 'ff.qa.p1807')) return { figures: [], rows: [], note: 'The quality dashboard is not enabled for your company yet.' };
+  if (!s.base.may(ctx.actor, 'qa.dashboard.view', pid)) return { figures: [], rows: [], note: 'You have no right to see the quality figures of this project.' };
+  return s.dsh.projectWidget(ctx.actor, pid);
+});
+for (const code of ['qa.first_time_ir', 'qa.open_ncr']) widgetRegistry.register({ code, provider: (ctx) => qaOf(ctx.db)?.dsh.widget(ctx.actor, code) ?? { value: 0, unit: '', previous: null, trendPct: null, target: null, status: 'neutral', note: 'The quality dashboard is not available.' } });
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -58,6 +71,7 @@ for (const [type, description] of [
   ['qa.snag.closed', 'A snag was verified and closed by someone other than the person who rectified it (part 18.06): same data as qa.snag.raised plus closedOn, ageDays, reopenCount. Handover (26.02) and commissioning (26.01) read the open punches; the quality dashboard (18.07) the closure.'],
   ['qa.snag.reopened', 'A rectification did not hold and the snag went back to its party (part 18.06): same data plus reason, reopenCount.'],
   ['qa.snag.backcharge_raised', 'A closed snag carries a back-charge against a subcontractor or supplier (part 18.06): data { snagId, docNo, projectId, responsibleType, partnerId, amount (rupees) }. Subcontractor bills (22.05) deduct it.'],
+  ['qa.rating.published', 'The quality score of a supplier for the period was published for the vendor scorecard (part 18.07): data { partnerId, name, score, band, period { from, to }, lots, rejected, concessions, ncrs, cubes, cubeFails }. Vendor scorecards (15.08) take it.'],
   ['qa.inspection.failed', 'An inspection failed (part 18.01): same data as qa.inspection.submitted; the quality control manager is told and defects can be raised as NCRs (18.04).'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'qa', description });
 
@@ -73,7 +87,7 @@ export const qa = {
   ownerPart: '18.01',
   status: 'Quality plans, the ITP library with hold/witness/review/surveillance points applied to activities, versioned checklist templates and inspections with tolerance, photo and signature rules, offline on the phone.',
   tables: ['qa_snags', 'qa_pour_cards', 'qa_pour_tickets', 'qa_cube_samples', 'qa_cube_results', 'qa_ncrs', 'qa_capa_actions', 'qa_test_catalogue', 'qa_lab_equipment', 'qa_test_requests', 'qa_test_results', 'qa_inspection_requests', 'qa_quality_plans', 'qa_itps', 'qa_checklist_templates', 'qa_inspections', 'qa_inspection_answers', 'qa_planned_points'],
-  resources: ['snags', 'snag-status', 'snag-report', 'pour-cards', 'cube-samples', 'cube-results', 'concrete-acceptance', 'concrete-traceability', 'ncrs', 'ncr-analysis', 'test-requests', 'test-catalogue', 'lab-equipment', 'receiving', 'test-compliance', 'inspection-requests', 'hold-points', 'ir-analysis', 'quality-plans', 'itps', 'templates', 'inspections', 'planned-points', 'export'],
+  resources: ['dashboard', 'control-charts', 'ratings', 'snags', 'snag-status', 'snag-report', 'pour-cards', 'cube-samples', 'cube-results', 'concrete-acceptance', 'concrete-traceability', 'ncrs', 'ncr-analysis', 'test-requests', 'test-catalogue', 'lab-equipment', 'receiving', 'test-compliance', 'inspection-requests', 'hold-points', 'ir-analysis', 'quality-plans', 'itps', 'templates', 'inspections', 'planned-points', 'export'],
   /** Later parts of the module add their routes and services here. */
   parts: new Map(),
   mount(api, { db, config: appConfig }) {
@@ -85,7 +99,8 @@ export const qa = {
     const ncv = createNcrService({ db, base, flags }); deciders[QA_DOCS.ncrClosure] = ncv.decides.QA_NCR_CLOSURE; deciders[QA_DOCS.ncrConcession] = ncv.decides.QA_NCR_CONCESSION;
     const pov = createPourService({ db, base, flags, ncv: () => ncv }); deciders[QA_DOCS.pour] = pov.flow.decide;
     const sgv = createSnagService({ db, base, flags });
-    const ctx = { svc, base, flags, deciders, irs, tsv, ncv, pov, sgv, parts: { snag: (r, h) => snagRoutes(r, sgv, h), pour: (r, h) => pourRoutes(r, pov, h), ncr: (r, h) => ncrRoutes(r, ncv, h), ir: (r, h) => irRoutes(r, irs, h), tests: (r, h) => testRoutes(r, tsv, h) } }; for (const [, make] of qa.parts) make(db, ctx);
+    const dsh = createDashService({ db, base, flags, tests: tsv, pour: pov });
+    const ctx = { svc, base, flags, deciders, irs, tsv, ncv, pov, sgv, dsh, parts: { dash: (r, h) => dashRoutes(r, dsh, h), snag: (r, h) => snagRoutes(r, sgv, h), pour: (r, h) => pourRoutes(r, pov, h), ncr: (r, h) => ncrRoutes(r, ncv, h), ir: (r, h) => irRoutes(r, irs, h), tests: (r, h) => testRoutes(r, tsv, h) } }; for (const [, make] of qa.parts) make(db, ctx);
     services.set(db, ctx);
     listExports.register('qa.inspections', { source: (actor, req) => { base.need(actor, 'qa.inspection.export', 'export inspections'); return svc.inspections.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('qa.inspection_requests', { source: (actor, req) => { base.need(actor, 'qa.inspection_request.export', 'export inspection requests'); return irs.requests.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
@@ -94,6 +109,8 @@ export const qa = {
     listExports.register('qa.pour_cards', { source: (actor, req) => { base.need(actor, 'qa.pour_card.export', 'export pour cards'); return pov.cards.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('qa.snags', { source: (actor, req) => { base.need(actor, 'qa.snag.export', 'export snags'); return sgv.snags.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
+    runtime?.jobs?.register('qa.rating_publish', (jctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { const sc = dsh.supplierScores(c.id); for (const x of sc.rows) { publishEvent(db, { type: 'qa.rating.published', entity: 'mdm_partners', entityId: x.id, actorId: 'system', companyId: c.id, data: { partnerId: x.id, name: x.name, score: x.score, band: x.band, period: sc.period, ...x.counts } }); n += 1; } } jctx.log(`Published ${n} supplier quality score(s)`); return { published: n }; }, { maxAttempts: 2, description: 'The quality score of each supplier, published for the vendor scorecards' });
+    runtime?.scheduler?.define({ code: 'qa.rating_publish_night', cron: '10 21 * * *', jobType: 'qa.rating_publish', description: 'Every night 02:40 India time: supplier quality scores are published' });
     runtime?.jobs?.register('qa.snag_sweep', (jctx) => { let told = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) told += sgv.sweep(c.id).told; jctx.log(`Told about ${told} snag(s) past their date`); return { told }; }, { maxAttempts: 2, description: 'Snags past their due date, told to the plant and quality supervisors' });
     runtime?.scheduler?.define({ code: 'qa.snag_sweep_morning', cron: '55 2 * * *', jobType: 'qa.snag_sweep', description: 'Every morning 08:25 India time: overdue snags are told' });
     runtime?.jobs?.register('qa.cube_sweep', (jctx) => { let told = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) told += pov.sweep(c.id).told; jctx.log(`Told about ${told} cube test(s) due or overdue`); return { told }; }, { maxAttempts: 2, description: 'Cube tests due today or overdue, told to the quality engineers' });

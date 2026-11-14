@@ -9,7 +9,7 @@ import { sel } from './QaParts.jsx';
 
 // Concrete Strength Acceptance and Concrete Traceability (part 18.05): the groups of four 28-day results by grade against the IS 456 mean and individual limits; and the chain from a batch, truck, sample or pour to the cubes and their results.
 export function AcceptancePage() {
-  const t = useT('qa'); usePageTitle(t('ca.title')); const [projectId, setProjectId] = useState(''); const oq = useQuery({ queryKey: ['qa', 'ir-options-a'], queryFn: () => qa.get('/inspection-requests/options'), retry: false });
+  const t = useT('qa'); usePageTitle(t('ca.title')); const [projectId, setProjectId] = useState(''); const oq = useQuery({ queryKey: ['qa', 'projects'], queryFn: () => qa.get('/projects').then((p) => ({ projects: p })), retry: false });
   const q = useQuery({ queryKey: ['qa', 'acceptance', projectId], queryFn: () => qa.get(`/concrete-acceptance${projectId ? `?projectId=${projectId}` : ''}`), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('ca.title')} permission="qa.pour_card.view" />; if (q.isPending) return <Skeleton label={t('ca.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const a = q.data;
