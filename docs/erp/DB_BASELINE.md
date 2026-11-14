@@ -4936,6 +4936,41 @@ Indexes:
 - ix_ctl_unallocated_company: company_id, status
 - ux_ctl_unallocated_src (unique): company_id, src_type, src_id, src_line_id
 
+## ctr_advances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| contract_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| partner_id | INTEGER |  |  |  |
+| advance_kind | TEXT | yes |  | 'MOBILISATION' |
+| ref_no | TEXT | yes |  |  |
+| advance_paise | INTEGER | yes |  |  |
+| recovered_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), org_project_id -> org_projects(id), contract_id -> ctr_contracts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_advances_partner_id: partner_id
+- ix_ctr_advances_org_project_id: org_project_id
+- ix_ctr_advances_company_id: company_id
+- ux_ctr_adv_ref (unique): contract_id, ref_no
+
 ## ctr_amendments
 
 | Column | Type | Not null | Key | Default |
@@ -4982,6 +5017,139 @@ Indexes:
 - ix_ctr_amendments_org_project_id: org_project_id
 - ix_ctr_amendments_contract_id: contract_id
 - ux_ctr_amd_doc (unique): company_id, doc_no
+
+## ctr_bank_guarantees
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| bg_no | TEXT | yes |  |  |
+| direction | TEXT | yes |  |  |
+| bg_type | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER |  |  |  |
+| partner_id | INTEGER |  |  |  |
+| advance_id | INTEGER |  |  |  |
+| bank_id | INTEGER |  |  |  |
+| bank_name | TEXT | yes |  |  |
+| original_paise | INTEGER | yes |  |  |
+| current_paise | INTEGER | yes |  |  |
+| issue_date | TEXT | yes |  |  |
+| expiry_date | TEXT | yes |  |  |
+| claim_expiry | TEXT |  |  |  |
+| linked_type | TEXT | yes |  | 'CONTRACT' |
+| linked_id | INTEGER |  |  |  |
+| linked_ref | TEXT |  |  |  |
+| margin_bp | INTEGER | yes |  | 0 |
+| commission_bp | INTEGER | yes |  | 0 |
+| commission_paise | INTEGER | yes |  | 0 |
+| bg_state | TEXT | yes |  | 'REQUESTED' |
+| released_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bank_id -> mdm_banks(id), partner_id -> mdm_partners(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_bg_expiry: company_id, bg_state, expiry_date
+- ix_ctr_bank_guarantees_bank_id: bank_id
+- ix_ctr_bank_guarantees_partner_id: partner_id
+- ix_ctr_bank_guarantees_contract_id: contract_id
+- ix_ctr_bank_guarantees_org_site_id: org_site_id
+- ix_ctr_bank_guarantees_org_project_id: org_project_id
+- ux_ctr_bg_no (unique): company_id, bank_name, bg_no
+- ux_ctr_bg_doc (unique): company_id, doc_no
+
+## ctr_bank_limits
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bank_name | TEXT | yes |  |  |
+| limit_kind | TEXT | yes |  | 'BG' |
+| limit_paise | INTEGER | yes |  |  |
+| valid_to | TEXT |  |  |  |
+| margin_bp | INTEGER | yes |  | 0 |
+| limit_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_ctr_lim (unique): company_id, bank_name, limit_kind
+
+## ctr_bg_events
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bg_id | INTEGER | yes |  |  |
+| event_kind | TEXT | yes |  |  |
+| event_status | TEXT | yes |  | 'REQUESTED' |
+| amount_before_paise | INTEGER | yes |  |  |
+| amount_after_paise | INTEGER | yes |  |  |
+| expiry_before | TEXT |  |  |  |
+| expiry_after | TEXT |  |  |  |
+| reference_no | TEXT |  |  |  |
+| reason | TEXT | yes |  |  |
+| requested_by | TEXT | yes |  |  |
+| decided_by | TEXT |  |  |  |
+| decided_at | TEXT |  |  |  |
+| decision_note | TEXT |  |  |  |
+| commission_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bg_id -> ctr_bank_guarantees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_bg_events_bg_id: bg_id
+- ix_ctr_bg_events_company_id: company_id
 
 ## ctr_clauses
 
@@ -5090,6 +5258,92 @@ Indexes:
 - ix_ctr_contracts_org_project_id: org_project_id
 - ux_ctr_contracts_no (unique): company_id, contract_no
 - ux_ctr_contracts_doc (unique): company_id, doc_no
+
+## ctr_insurance_claims
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| policy_id | INTEGER | yes |  |  |
+| claim_no | TEXT | yes |  |  |
+| incident_ref | TEXT |  |  |  |
+| incident_date | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| claimed_paise | INTEGER | yes |  |  |
+| settled_paise | INTEGER | yes |  | 0 |
+| claim_status | TEXT | yes |  | 'INTIMATED' |
+| settled_on | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: policy_id -> ctr_insurances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_insurance_claims_company_id: company_id
+- ux_ctr_clm_no (unique): policy_id, claim_no
+
+## ctr_insurances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER |  |  |  |
+| policy_type | TEXT | yes |  |  |
+| policy_no | TEXT | yes |  |  |
+| insurer | TEXT | yes |  |  |
+| sum_insured_paise | INTEGER | yes |  |  |
+| premium_paise | INTEGER | yes |  | 0 |
+| valid_from | TEXT | yes |  |  |
+| valid_to | TEXT | yes |  |  |
+| coverage | TEXT |  |  |  |
+| renewal_of_id | INTEGER |  |  |  |
+| ins_state | TEXT | yes |  | 'ACTIVE' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: renewal_of_id -> ctr_insurances(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_ins_valid: company_id, ins_state, valid_to
+- ix_ctr_insurances_renewal_of_id: renewal_of_id
+- ix_ctr_insurances_contract_id: contract_id
+- ix_ctr_insurances_org_site_id: org_site_id
+- ix_ctr_insurances_org_project_id: org_project_id
+- ux_ctr_ins_no (unique): company_id, insurer, policy_no
+- ux_ctr_ins_doc (unique): company_id, doc_no
 
 ## ctr_milestones
 

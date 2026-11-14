@@ -1559,3 +1559,6 @@ Flag `ff.rmc.p2003`, tables `bp_cost_periods`, `bp_cost_lines`, `bp_cost_grades`
 
 ## 156. Client Contract Register, Clauses, Obligations & Milestones (part 21.01)
 Module `ctr` (new), flag `ff.ctr.p2101`, tables `ctr_contracts`, `ctr_clauses`, `ctr_obligations`, `ctr_milestones`, `ctr_amendments`, `ctr_value_log`; service `src/server/modules/ctr/contracts.js`. `valueOf` and `recompute` are the only places the revised value is worked out: the value columns of a contract are written from its value history, which receives the original at activation, each approved amendment in its approval transaction and each variation through `applyVariation`. `termsOf(companyId, projectId)` is how billing (22.03), securities (21.02), PVC/LD (21.07) and claims (21.06) read the terms of the approved contract. The approval factory `createFlow` gives the lifecycle; workflow types `CTR_CONTRACT` and `CTR_AMENDMENT` with the chain commercial manager, project director, director.
+
+## 157. Securities: Bank Guarantees, Insurance, Retention & Deposits (part 21.02)
+Module `ctr`, flag `ff.ctr.p2102`, tables `ctr_bank_guarantees`, `ctr_bg_events`, `ctr_advances`, `ctr_insurances`, `ctr_insurance_claims`, `ctr_bank_limits`; service `src/server/modules/ctr/securities.js`. Approved records change only through confirmed requests; the daily sweep alerts once per offset.
