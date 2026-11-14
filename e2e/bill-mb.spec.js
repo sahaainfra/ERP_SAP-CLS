@@ -4,7 +4,6 @@ import { api, company, db, fill, noOverflow, open, watch, world } from './hse-he
 // Part 22.01 in the browser: the site engineer records a measurement on the phone form (the server works out the quantity and runs the checks), sends it; the quantity surveyor records the check measurement and approves; the project manager certifies; the entry is locked with its page of the book; a second entry beyond the BOQ quantity shows the warning; the abstract and the book in print.
 const OUT = 'docs/erp/screenshots/bill-mb';
 const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
-const day = (n) => new Date(Date.now() + 5.5 * 3600_000 + n * 86_400_000).toISOString().slice(0, 10);
 async function decide(request, c, roles, user) { const tasks = (await api(request, c, roles, user, 'get', '/workflow/tasks?mine=assigned')).rows; for (const t of tasks) await api(request, c, roles, user, 'post', `/workflow/tasks/${t.id}/act`, { action: 'approve', comment: 'ok' }); return tasks.length; }
 test('Measurement book: record on the phone, check measurement, certification, lock, warning beyond the BOQ, abstract and book', async ({ browser, request }, info) => {
   test.setTimeout(180_000);
