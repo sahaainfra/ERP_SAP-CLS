@@ -1520,3 +1520,6 @@ Module `qa`, flag `ff.qa.p1805`, tables `qa_pour_cards`, `qa_pour_tickets`, `qa_
 
 ## 143. Snags and punch lists (part 18.06)
 Module `qa`, flag `ff.qa.p1806`, table `qa_snags`; service `src/server/modules/qa/snags.js`. A snag has no approval document: the control is the verification, written once in `close` (after-photograph present, verifier is not the rectifier). Rectify is the `submit` right and verify, close and reopen the `approve` right. A pin is a share (0..1) of the plan, stored in tenths of a percent of a hundredth; the plan itself is a drawing's current revision, shown by the client.
+
+## 144. Quality dashboard and statistical quality control (part 18.07)
+Module `qa`, flag `ff.qa.p1807`, no table; service `src/server/modules/qa/dash.js`. `load` reads the quality tables inside a scope (a person's data scope, or the whole company for the nightly job), so the dashboard, the Project 360 slot, the widgets and the supplier scores share one source. `controlLimits` is the one X-bar and R calculation. A rating is 100 less the points the page shows, so a score can always be explained.
