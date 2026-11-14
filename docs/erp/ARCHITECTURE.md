@@ -1565,3 +1565,6 @@ Module `ctr`, flag `ff.ctr.p2102`, tables `ctr_bank_guarantees`, `ctr_bg_events`
 
 ## 158. Subcontract & Work Order Management (Item-Rate and Labour-Rate) (part 21.03)
 Module `ctr`, flag `ff.ctr.p2103`, tables `ctr_work_orders`, `ctr_wo_items`, `ctr_wo_free_issue`, `ctr_wo_amendments`; service `src/server/modules/ctr/workorders.js`. Value, margin and flags are worked out only in the service; the commitment is posted and amended by the delta through the budget ledger.
+
+## 159. Subcontractor Workspace, Compliance, Labour Strength & Performance (part 21.04)
+Module `ctr`, flag `ff.ctr.p2104`, tables `ctr_sub_compliance`, `ctr_sub_waivers`, `ctr_sub_manpower`, `ctr_sub_holds`, `ctr_sub_ratings`; service `src/server/modules/ctr/subcontractors.js`. The hold is computed only by `holdReasons` and recomputed on every change; the daily job opens the month, sets holds, tells shortfalls and rates.
