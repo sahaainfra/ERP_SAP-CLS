@@ -3705,7 +3705,7 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/rmc/silos/:id/level', g: 'permission', k: 'rmc.silo.edit', s: 'parseSiloLevel', scope: 'company', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/rmc/plants/:id/scales', g: 'permission', k: 'rmc.scale.edit', s: 'parseScaleCreate', scope: 'company', rate: 'write', audit: true },
   { m: 'PATCH', p: '/api/v1/rmc/scales/:id', g: 'permission', k: 'rmc.scale.edit', s: 'parseScaleUpdate', scope: 'company', rate: 'write', audit: true },
-  { m: 'POST', p: '/api/v1/rmc/mix-designs/check', g: 'permission', k: 'rmc.mix_design.view', s: 'parseMixCheck', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/rmc/mix-designs/check', g: 'permission', k: 'rmc.mix_design.view', s: 'parseMixCheck', scope: 'company', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/rmc/mix-designs/options', g: 'permission', k: 'rmc.mix_design.create', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/rmc/mix-designs/export', g: 'permission', k: 'rmc.mix_design.export', s: null, scope: 'company', rate: 'export', audit: true },
   { m: 'POST', p: '/api/v1/rmc/mix-designs/import', g: 'permission', k: 'rmc.mix_design.create', s: null, scope: 'company', rate: 'write', audit: true },
