@@ -1577,3 +1577,6 @@ Module `ctr`, flag `ff.ctr.p2106`, tables `ctr_claims`, `ctr_claim_events`, `ctr
 
 ## 162. Price Escalation, PVC & Liquidated Damages Computation (part 21.07)
 Module `ctr`, flag `ff.ctr.p2107`, tables `ctr_pvc_formulas`, `ctr_pvc_index_refs`, `ctr_escalation_calcs`, `ctr_ld_assessments`; service `src/server/modules/ctr/pvc.js`. The escalation and the LD are worked out only by `escalationOf` and `ldOf`; the index values stay in the shared master.
+
+## 163. Measurement Book & Check Measurement (part 22.01)
+Module `bill`, flag `ff.bill.p2201`, table `bill_mb_entries`; service `src/server/modules/bill/mb.js`. The quantity is worked out only by `mbQty`; the eligibility only by `eligibility`; certified quantity is read by billing through `certifiedQtyOf`.
