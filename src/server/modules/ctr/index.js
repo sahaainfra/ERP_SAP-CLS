@@ -103,6 +103,11 @@ fileEntities.register({ entity: 'ctr_contracts', label: 'Client contract (agreem
   return { ...scope, canView: true, canEdit: at('ctr.contract.edit') || at('ctr.amendment.create'), locked: false };
 } });
 
+fileEntities.register({ entity: 'ctr_work_orders', label: 'Work order (signed copy, scope, drawings, acceptance)', resolve: (db, actor, id) => {
+  const r = db.prepare('SELECT * FROM ctr_work_orders WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const scope = { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined }; const at = (k) => a.check(actor, k, scope).allowed; if (!at('ctr.work_order.view')) return null;
+  return { ...scope, canView: true, canEdit: at('ctr.work_order.edit') || at('ctr.work_order.accept'), locked: false };
+} });
+
 registerProject360Widget('contract', (ctx) => {
   const s = ctrOf(ctx.db); const pid = ctx.project.project_id;
   if (!s || !s.flags.isOn(ctx.actor, 'ff.ctr.p2101')) return { figures: [], rows: [], note: 'Contract management is not enabled for your company yet.' };
