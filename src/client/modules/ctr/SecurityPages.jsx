@@ -14,7 +14,7 @@ import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './CtrParts
 const nf = new Intl.NumberFormat('en-IN'); const money = (n) => (n == null ? '—' : `₹ ${nf.format(n)}`);
 const STATE_TONE = { REQUESTED: 'DRAFT', ACTIVE: 'APPROVED', EXTENDED: 'APPROVED', REDUCED: 'APPROVED', RELEASED: 'CANCELLED', INVOKED: 'REJECTED', EXPIRED: 'REJECTED', RENEWED: 'CANCELLED' };
 const EV_TONE = { REQUESTED: 'IN_REVIEW', DONE: 'APPROVED', REJECTED: 'REJECTED' };
-const BG_TYPES = ['PERFORMANCE', 'ADVANCE', 'BID', 'RETENTION', 'SECURITY_DEPOSIT', 'FINANCIAL', 'OTHER'];
+const BG_TYPES = ['PERFORMANCE', 'ADVANCE', 'EMD', 'RETENTION', 'SECURITY_DEPOSIT', 'FINANCIAL', 'OTHER'];
 const blankBg = { projectId: '', contractId: '', direction: 'GIVEN', bgType: 'PERFORMANCE', bgNo: '', bankName: '', partnerId: '', amount: '', issueDate: '', expiryDate: '', claimExpiry: '', marginPct: '0', commissionPct: '0', linkedRef: '' };
 
 function BgForm({ initial, onSave, busy, error, isNew }) {

@@ -5461,6 +5461,204 @@ Indexes:
 - ix_ctr_value_log_contract_id: contract_id
 - ix_ctr_value_log_company_id: company_id
 
+## ctr_wo_amendments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| wo_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| amendment_no | INTEGER | yes |  |  |
+| description | TEXT | yes |  |  |
+| changes_json | TEXT | yes |  | '[]' |
+| new_end_date | TEXT |  |  |  |
+| delta_paise | INTEGER | yes |  | 0 |
+| negative_margin | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), wo_id -> ctr_work_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_wo_amendments_org_site_id: org_site_id
+- ix_ctr_wo_amendments_org_project_id: org_project_id
+- ix_ctr_wo_amendments_wo_id: wo_id
+- ux_ctr_woa_doc (unique): company_id, doc_no
+
+## ctr_wo_free_issue
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| wo_id | INTEGER | yes |  |  |
+| item_id | INTEGER | yes |  |  |
+| uom | TEXT |  |  |  |
+| norm_th | INTEGER | yes |  | 0 |
+| wastage_bp | INTEGER | yes |  | 0 |
+| chargeable_rate_x4 | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), wo_id -> ctr_work_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_wo_free_issue_item_id: item_id
+- ix_ctr_wo_free_issue_company_id: company_id
+- ux_ctr_wo_fi (unique): wo_id, item_id
+
+## ctr_wo_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| wo_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| item_kind | TEXT | yes |  | 'BOQ' |
+| boq_line_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| qty_th | INTEGER | yes |  | 0 |
+| rate_x4 | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  | 0 |
+| wbs_id | INTEGER |  |  |  |
+| client_boq_line_id | INTEGER |  |  |  |
+| client_rate_x4 | INTEGER | yes |  | 0 |
+| due_date | TEXT |  |  |  |
+| executed_qty_th | INTEGER | yes |  | 0 |
+| billed_qty_th | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: client_boq_line_id -> proj_boq_lines(id), wbs_id -> proj_wbs(id), boq_line_id -> proj_boq_lines(id), wo_id -> ctr_work_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_wo_items_client_boq_line_id: client_boq_line_id
+- ix_ctr_wo_items_wbs_id: wbs_id
+- ix_ctr_wo_items_boq_line_id: boq_line_id
+- ix_ctr_wo_items_company_id: company_id
+- ux_ctr_wo_item_line (unique): wo_id, line_no
+
+## ctr_work_orders
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| wo_no | TEXT | yes |  |  |
+| wo_type | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER |  |  |  |
+| subcontractor_id | INTEGER | yes |  |  |
+| work_package_id | INTEGER |  |  |  |
+| cs_id | INTEGER |  |  |  |
+| selection_kind | TEXT | yes |  | 'NEGOTIATED' |
+| justification | TEXT |  |  |  |
+| title | TEXT | yes |  |  |
+| scope_text | TEXT |  |  |  |
+| start_date | TEXT | yes |  |  |
+| end_date | TEXT | yes |  |  |
+| value_paise | INTEGER | yes |  | 0 |
+| retention_bp | INTEGER | yes |  | 0 |
+| sd_bp | INTEGER | yes |  | 0 |
+| advance_bp | INTEGER | yes |  | 0 |
+| advance_recovery_bp | INTEGER | yes |  | 0 |
+| tds_section | TEXT |  |  |  |
+| gst_mode | TEXT | yes |  | 'FORWARD' |
+| gst_bp | INTEGER | yes |  | 1800 |
+| payment_days | INTEGER | yes |  | 30 |
+| ld_bp | INTEGER | yes |  | 0 |
+| ld_cap_bp | INTEGER | yes |  | 0 |
+| safety_penalty_paise | INTEGER | yes |  | 0 |
+| terms_json | TEXT | yes |  | '{}' |
+| negative_margin | INTEGER | yes |  | 0 |
+| over_budget | INTEGER | yes |  | 0 |
+| amendment_no | INTEGER | yes |  | 0 |
+| wo_state | TEXT | yes |  | 'PREPARING' |
+| accepted_by | TEXT |  |  |  |
+| accepted_at | TEXT |  |  |  |
+| acceptance_ref | TEXT |  |  |  |
+| closed_on | TEXT |  |  |  |
+| final_bill_ref | TEXT |  |  |  |
+| close_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cs_id -> proc_comparative_statements(id), work_package_id -> proj_work_packages(id), subcontractor_id -> mdm_partners(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_wo_state: company_id, wo_state, end_date
+- ix_ctr_work_orders_cs_id: cs_id
+- ix_ctr_work_orders_work_package_id: work_package_id
+- ix_ctr_work_orders_subcontractor_id: subcontractor_id
+- ix_ctr_work_orders_contract_id: contract_id
+- ix_ctr_work_orders_org_site_id: org_site_id
+- ix_ctr_work_orders_org_project_id: org_project_id
+- ux_ctr_wo_no (unique): company_id, wo_no
+- ux_ctr_wo_doc (unique): company_id, doc_no
+
 ## doc_annotations
 
 | Column | Type | Not null | Key | Default |

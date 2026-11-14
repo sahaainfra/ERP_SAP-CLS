@@ -11730,7 +11730,7 @@ export default {
     "bg.type": "प्रकार",
     "bg.t.PERFORMANCE": "निष्पादन",
     "bg.t.ADVANCE": "अग्रिम",
-    "bg.t.BID": "निविदा / अग्रिम धन",
+    "bg.t.EMD": "अग्रिम धन (EMD)",
     "bg.t.RETENTION": "प्रतिधारण",
     "bg.t.SECURITY_DEPOSIT": "सुरक्षा जमा",
     "bg.t.FINANCIAL": "वित्तीय",

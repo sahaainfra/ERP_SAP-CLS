@@ -11730,7 +11730,7 @@ export default {
     "bg.type": "Type",
     "bg.t.PERFORMANCE": "Performance",
     "bg.t.ADVANCE": "Advance",
-    "bg.t.BID": "Bid / earnest money",
+    "bg.t.EMD": "Earnest money (EMD)",
     "bg.t.RETENTION": "Retention",
     "bg.t.SECURITY_DEPOSIT": "Security deposit",
     "bg.t.FINANCIAL": "Financial",
