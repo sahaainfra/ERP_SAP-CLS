@@ -15,13 +15,15 @@ import { createContractService } from './contracts.js';
 import { createSecurityService } from './securities.js';
 import { securityRoutes } from './security-routes.js';
 import { createWorkOrderService } from './workorders.js';
+import { createSubcontractorService } from './subcontractors.js';
+import { subcontractorRoutes } from './sub-routes.js';
 import { workOrderRoutes } from './wo-routes.js';
 import { ctrRoutes } from './routes.js';
 
 // Contracts, subcontracts and commercial (module M21): client contracts with clauses, obligations, milestones and amendments (21.01); later securities, subcontracts, variations, claims, price variation and LD.
 const services = new WeakMap();
 export const ctrOf = (db) => services.get(db) ?? null;
-export const CTR_DOCS = { contract: 'CTR_CONTRACT', amendment: 'CTR_AMENDMENT', bg: 'CTR_BG', insurance: 'CTR_INSURANCE', workOrder: 'CTR_WORK_ORDER', woAmendment: 'CTR_WO_AMENDMENT' };
+export const CTR_DOCS = { contract: 'CTR_CONTRACT', amendment: 'CTR_AMENDMENT', bg: 'CTR_BG', insurance: 'CTR_INSURANCE', workOrder: 'CTR_WORK_ORDER', woAmendment: 'CTR_WO_AMENDMENT', subWaiver: 'CTR_SUB_WAIVER' };
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
@@ -44,12 +46,17 @@ for (const [type, description] of [
   ['ctr.wo.accepted', 'The subcontractor accepted the work order (part 21.03): the data of ctr.wo.approved plus acceptedBy and reference.'],
   ['ctr.wo.amended', 'An amendment of a work order was approved and applied (part 21.03): the data of ctr.wo.approved after the change plus amendmentId, amendmentDocNo, amendmentNo, description, before, after and delta; the commitment moved by the delta.'],
   ['ctr.wo.closed', 'A work order was closed with its final bill (part 21.03): the data of ctr.wo.approved plus finalBillRef and releasedCommitment.'],
+  ['ctr.sub.hold_changed', 'The payment hold of a subcontractor on a project was set or lifted (part 21.04 BR-01): data { subcontractorId, subcontractor, projectId, hold, reasons }. Accounts payable (23.03, 23.04) and the bills of the subcontractor (22.05) stop or release payment on it.'],
+  ['ctr.sub.compliance_verified', 'The monthly compliance of a subcontractor was verified (part 21.04): data { complianceId, docNo, subcontractorId, projectId, period, missing, scorePct, hold }.'],
+  ['ctr.sub.waiver_approved', 'A compliance waiver for payment was approved (part 21.04): data { waiverId, docNo, complianceId, subcontractorId, projectId, items, validUntil, reason, hold }.'],
+  ['ctr.sub.shortfall', 'The labour strength of a subcontractor was short of the committed manpower (part 21.04 FR-03): data { subcontractorId, projectId, date, committed, actual, shortfallPct }.'],
+  ['ctr.sub.rated', 'A subcontractor was rated for a period (part 21.04 FR-06): data { subcontractorId, subcontractor, projectId, period, progress, quality, safety, compliance, total, band, weights, details }. The vendor scorecard (15.08) reads it.'],
   ['ctr.security.expiring', 'A guarantee or policy is within an alert offset of its expiry (part 21.02 FR-04): data { kind, bgId or insuranceId, projectId, expiryDate or validTo, daysLeft, offset }. The alert engine (04.09) reads it.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'ctr', description });
 
 integrityRegistry.register({
-  statuses: { ctr_contracts: Object.keys(STATUS), ctr_amendments: Object.keys(STATUS), ctr_obligations: ['OPEN', 'DONE', 'WAIVED'], ctr_bank_guarantees: Object.keys(STATUS), ctr_insurances: Object.keys(STATUS), ctr_work_orders: Object.keys(STATUS), ctr_wo_amendments: Object.keys(STATUS), ctr_milestones: ['PENDING', 'ACHIEVED', 'BILLED'] },
-  uniqueKeys: [{ table: 'ctr_contracts', columns: ['company_id', 'doc_no'] }, { table: 'ctr_contracts', columns: ['company_id', 'contract_no'] }, { table: 'ctr_amendments', columns: ['company_id', 'doc_no'] }, { table: 'ctr_bank_guarantees', columns: ['company_id', 'doc_no'] }, { table: 'ctr_insurances', columns: ['company_id', 'doc_no'] }, { table: 'ctr_work_orders', columns: ['company_id', 'doc_no'] }, { table: 'ctr_work_orders', columns: ['company_id', 'wo_no'] }, { table: 'ctr_wo_amendments', columns: ['company_id', 'doc_no'] }, { table: 'ctr_clauses', columns: ['contract_id', 'clause_no'] }, { table: 'ctr_milestones', columns: ['contract_id', 'code'] }],
+  statuses: { ctr_contracts: Object.keys(STATUS), ctr_amendments: Object.keys(STATUS), ctr_obligations: ['OPEN', 'DONE', 'WAIVED'], ctr_bank_guarantees: Object.keys(STATUS), ctr_insurances: Object.keys(STATUS), ctr_sub_waivers: Object.keys(STATUS), ctr_sub_compliance: ['OPEN', 'SUBMITTED', 'VERIFIED', 'RETURNED'], ctr_work_orders: Object.keys(STATUS), ctr_wo_amendments: Object.keys(STATUS), ctr_milestones: ['PENDING', 'ACHIEVED', 'BILLED'] },
+  uniqueKeys: [{ table: 'ctr_contracts', columns: ['company_id', 'doc_no'] }, { table: 'ctr_contracts', columns: ['company_id', 'contract_no'] }, { table: 'ctr_amendments', columns: ['company_id', 'doc_no'] }, { table: 'ctr_bank_guarantees', columns: ['company_id', 'doc_no'] }, { table: 'ctr_insurances', columns: ['company_id', 'doc_no'] }, { table: 'ctr_work_orders', columns: ['company_id', 'doc_no'] }, { table: 'ctr_work_orders', columns: ['company_id', 'wo_no'] }, { table: 'ctr_wo_amendments', columns: ['company_id', 'doc_no'] }, { table: 'ctr_sub_compliance', columns: ['company_id', 'doc_no'] }, { table: 'ctr_sub_waivers', columns: ['company_id', 'doc_no'] }, { table: 'ctr_clauses', columns: ['contract_id', 'clause_no'] }, { table: 'ctr_milestones', columns: ['contract_id', 'code'] }],
 });
 
 export const ctr = {
@@ -58,15 +65,15 @@ export const ctr = {
   routePrefix: '/api/v1/ctr',
   ownerPart: '21.01',
   status: 'Client contract register made from the commercial baseline, key clauses with time-bars, obligations calendar with reminders, payment milestones, value tracking and amendments through approval.',
-  tables: ['ctr_contracts', 'ctr_clauses', 'ctr_obligations', 'ctr_milestones', 'ctr_amendments', 'ctr_value_log', 'ctr_bank_guarantees', 'ctr_bg_events', 'ctr_advances', 'ctr_insurances', 'ctr_insurance_claims', 'ctr_bank_limits', 'ctr_work_orders', 'ctr_wo_items', 'ctr_wo_free_issue', 'ctr_wo_amendments'],
-  resources: ['contracts', 'clauses', 'obligations', 'milestones', 'amendments', 'bank-guarantees', 'bg-requests', 'insurances', 'insurance-claims', 'bank-limits', 'securities', 'work-orders', 'wo-amendments', 'wo-margin'],
+  tables: ['ctr_contracts', 'ctr_clauses', 'ctr_obligations', 'ctr_milestones', 'ctr_amendments', 'ctr_value_log', 'ctr_bank_guarantees', 'ctr_bg_events', 'ctr_advances', 'ctr_insurances', 'ctr_insurance_claims', 'ctr_bank_limits', 'ctr_work_orders', 'ctr_wo_items', 'ctr_wo_free_issue', 'ctr_wo_amendments', 'ctr_sub_compliance', 'ctr_sub_waivers', 'ctr_sub_manpower', 'ctr_sub_holds', 'ctr_sub_ratings'],
+  resources: ['contracts', 'clauses', 'obligations', 'milestones', 'amendments', 'bank-guarantees', 'bg-requests', 'insurances', 'insurance-claims', 'bank-limits', 'securities', 'work-orders', 'wo-amendments', 'wo-margin', 'subcontractors', 'sub-compliance', 'sub-waivers', 'sub-manpower', 'sub-strength', 'sub-ratings', 'sub-payment-check'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ctr_contracts'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
-    const cs = createContractService({ db, base, flags }); const sc = createSecurityService({ db, base, flags, contracts: cs.contracts }); const wk = createWorkOrderService({ db, base, flags });
-    const deciders = { [CTR_DOCS.contract]: cs.contracts.decide, [CTR_DOCS.amendment]: cs.amendments.decide, [CTR_DOCS.bg]: sc.guarantees.decide, [CTR_DOCS.insurance]: sc.insurances.decide, [CTR_DOCS.workOrder]: wk.workOrders.decide, [CTR_DOCS.woAmendment]: wk.woAmendments.decide };
-    const svc = { ...cs, ...sc, ...wk, securities: sc };
-    const ctx = { svc, base, flags, deciders, parts: { securities: (r, h) => securityRoutes(r, svc, h), workOrders: (r, h) => workOrderRoutes(r, svc, h) } };
+    const cs = createContractService({ db, base, flags }); const sc = createSecurityService({ db, base, flags, contracts: cs.contracts }); const wk = createWorkOrderService({ db, base, flags }); const sw = createSubcontractorService({ db, base, flags, workOrders: wk.workOrders });
+    const deciders = { [CTR_DOCS.contract]: cs.contracts.decide, [CTR_DOCS.amendment]: cs.amendments.decide, [CTR_DOCS.bg]: sc.guarantees.decide, [CTR_DOCS.insurance]: sc.insurances.decide, [CTR_DOCS.workOrder]: wk.workOrders.decide, [CTR_DOCS.woAmendment]: wk.woAmendments.decide, [CTR_DOCS.subWaiver]: sw.subcontractors.waivers.decide };
+    const svc = { ...cs, ...sc, ...wk, ...sw, securities: sc };
+    const ctx = { svc, base, flags, deciders, parts: { securities: (r, h) => securityRoutes(r, svc, h), workOrders: (r, h) => workOrderRoutes(r, svc, h), subcontractors: (r, h) => subcontractorRoutes(r, svc, h) } };
     services.set(db, ctx);
     listExports.register('ctr.contracts', { source: (actor, req) => { base.need(actor, 'ctr.contract.export', 'export contracts'); return cs.contracts.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: (actor) => (authzOf(db).check(actor, 'ctr.contract.value').allowed ? [] : ['original', 'revised']) });
     listExports.register('ctr.amendments', { source: (actor, req) => { base.need(actor, 'ctr.amendment.export', 'export amendments'); return cs.amendments.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
@@ -77,6 +84,8 @@ export const ctr = {
     listExports.register('ctr.work_orders', { source: (actor, req) => { base.need(actor, 'ctr.work_order.export', 'export work orders'); return wk.workOrders.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('ctr.insurances', { source: (actor, req) => { base.need(actor, 'ctr.insurance.export', 'export insurance policies'); return sc.insurances.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     runtime?.jobs?.register('ctr.security_sweep', (jctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) n += sc.securitySweep(c.id).told; jctx.log(`${n} expiry alert(s)`); return { n }; }, { maxAttempts: 2, description: 'Bank guarantees and insurance policies within an alert offset of their expiry, told to the commercial and accounts managers; what has run out is closed' });
+    runtime?.jobs?.register('ctr.sub_sweep', (jctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) { const r = sw.subcontractors.sweep(c.id); n += r.opened + r.holdChanges + r.shortfalls + r.rated; } jctx.log(`${n} subcontractor change(s)`); return { n }; }, { maxAttempts: 2, description: 'Opens last month\'s compliance of the live subcontractors, sets payment holds past the due dates, tells yesterday\'s labour shortfall and rates the month' });
+    runtime?.scheduler?.define({ code: 'ctr.sub_sweep_morning', cron: '40 2 * * *', jobType: 'ctr.sub_sweep', description: 'Every morning 08:10 India time: subcontractor compliance, holds, labour shortfall and ratings' });
     runtime?.scheduler?.define({ code: 'ctr.security_sweep_morning', cron: '20 2 * * *', jobType: 'ctr.security_sweep', description: 'Every morning 07:50 India time: guarantee and policy expiry alerts' });
     api.use('/ctr', ctrRoutes(svc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags, parts: ctx.parts }));
   },
@@ -136,3 +145,4 @@ registerCtrWorkflow({ docType: CTR_DOCS.insurance, label: 'Insurance policy', ta
 const woChain = [approver('COMMGR', 'Commercial manager', 'COMMGR', 24), approver('PD', 'Project director (above Rs 10 lakh)', 'PD', 48, { field: 'needsPd', op: 'eq', value: 1 }), approver('DIR', 'Director (above Rs 50 lakh or a negative margin)', 'DIR', 72, { field: 'needsDir', op: 'eq', value: 1 })];
 registerCtrWorkflow({ docType: CTR_DOCS.workOrder, label: 'Subcontract work order', table: 'ctr_work_orders', route: '/ctr/work-orders?id=', name: 'Work order: the commercial manager; the project director above Rs 10 lakh; the director above Rs 50 lakh or for a negative margin', steps: woChain, title: (r) => `${r.wo_no} ${r.title}`, fields: (r, db) => [{ label: 'Work order', value: `${r.wo_no} (${r.wo_type})` }, { label: 'Subcontractor', value: db.prepare('SELECT legal_name FROM mdm_partners WHERE id = ?').get(r.subcontractor_id)?.legal_name ?? '-' }, { label: 'Value', value: String((r.value_paise ?? 0) / 100) }, { label: 'Negative margin', value: r.negative_margin ? 'Yes' : 'No' }] });
 registerCtrWorkflow({ docType: CTR_DOCS.woAmendment, label: 'Work order amendment', table: 'ctr_wo_amendments', route: '/ctr/work-orders?amendment=', name: 'Work order amendment: by the band of the change', steps: woChain, title: (a) => `amendment ${a.amendment_no}`, fields: (a, db) => [{ label: 'Work order', value: db.prepare('SELECT wo_no FROM ctr_work_orders WHERE id = ?').get(a.wo_id)?.wo_no ?? '-' }, { label: 'Value change', value: String((a.delta_paise ?? 0) / 100) }] });
+registerCtrWorkflow({ docType: CTR_DOCS.subWaiver, label: 'Compliance waiver for payment', table: 'ctr_sub_waivers', route: '/ctr/sub-compliance?waiver=', name: 'Compliance waiver: the commercial manager, then the project director', steps: [approver('COMMGR', 'Commercial manager', 'COMMGR', 24), approver('PD', 'Project director', 'PD', 48)], title: (r) => `waiver ${r.doc_no}`, fields: (r, db) => [{ label: 'Subcontractor', value: db.prepare('SELECT legal_name FROM mdm_partners WHERE id = ?').get(r.subcontractor_id)?.legal_name ?? '-' }, { label: 'Items waived', value: JSON.parse(r.items_json).join(', ') }, { label: 'Valid until', value: r.valid_until }, { label: 'Reason', value: r.reason }] });

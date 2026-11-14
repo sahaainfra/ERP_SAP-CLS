@@ -69,3 +69,18 @@ export const parseWoAccept = (b) => parse(z.object({ acceptedBy: text(120).min(2
 export const parseWoClose = (b) => parse(z.object({ finalBillRef: text(80).min(2), note: opt(500) }).strict(), b ?? {});
 export const parseWoProgress = (b) => parse(z.object({ lines: z.array(z.object({ lineNo: z.number().int().min(1), executed: z.number().min(0), billed: z.number().min(0) }).strict()).min(1).max(500) }).strict(), b ?? {});
 export const parseMarginQ = (q) => parse(z.object({ projectId: id.optional(), woId: id.optional(), negativeOnly: z.coerce.boolean().optional() }).passthrough(), q ?? {});
+// subcontractor workspace (21.04)
+const period = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month such as 2026-12');
+export const SUB_ITEMS = ['CLRA', 'PF', 'ESI', 'WAGE_REG', 'WC_INSURANCE', 'GST_RETURN', 'BOCW'];
+export const parseSubOpen = (b) => parse(z.object({ period, subcontractorId: id.optional(), projectId: id.optional() }).strict(), b ?? {});
+export const parseSubItems = (b) => parse(z.object({ items: z.array(z.object({ code: z.enum(SUB_ITEMS), status: z.enum(['OK', 'MISSING', 'NA']), ref: opt(80), validUntil: oday, note: opt(300) }).strict()).min(1).max(20), rowVersion: z.number().int().optional() }).strict(), b ?? {});
+export const parseSubVerify = (b) => parse(z.object({ approve: z.boolean(), note: opt(500) }).strict().refine((v) => v.approve || (v.note ?? '').length >= 5, 'Say why it is returned (at least 5 characters)'), b ?? {});
+export const parseSubListQ = (q) => parse(z.object({ projectId: id.optional(), subcontractorId: id.optional(), period: period.optional(), state: z.enum(['OPEN', 'SUBMITTED', 'VERIFIED', 'RETURNED', 'HOLD']).optional(), page: z.coerce.number().int().min(1).optional(), pageSize: z.coerce.number().int().min(1).max(200).optional() }).passthrough(), q ?? {});
+export const parseWaiverCreate = (b) => parse(z.object({ complianceId: id, items: z.array(z.enum(SUB_ITEMS)).min(1).max(10), reason: text(1000).min(10, 'Say why (at least 10 characters)'), validUntil: day }).strict(), b ?? {});
+export const parseWaiverUpdate = (b) => defined(parse(z.object({ items: z.array(z.enum(SUB_ITEMS)).min(1).max(10).optional(), reason: text(1000).min(10).optional(), validUntil: day.optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseManpower = (b) => parse(z.object({ subcontractorId: id, projectId: id, tradeCode: text(40).min(2), committed: z.number().int().min(0).max(100000), fromDate: day, toDate: oday }).strict(), b ?? {});
+export const parseStrengthQ = (q) => parse(z.object({ projectId: id, subcontractorId: id.optional(), from: day.optional(), to: day.optional() }).passthrough(), q ?? {});
+export const parseWorkspaceQ = (q) => parse(z.object({ subcontractorId: id, projectId: id }).passthrough(), q ?? {});
+export const parseRatingRun = (b) => parse(z.object({ period, projectId: id.optional(), subcontractorId: id.optional() }).strict(), b ?? {});
+export const parseRatingQ = (q) => parse(z.object({ projectId: id.optional(), subcontractorId: id.optional(), period: period.optional() }).passthrough(), q ?? {});
+export const parseGateQ = (q) => parse(z.object({ subcontractorId: id, projectId: id }).passthrough(), q ?? {});
