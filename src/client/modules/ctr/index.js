@@ -1,5 +1,6 @@
 import { registerModule } from '../../platform/shell/registry.js';
 import ContractsPage from './ContractsPage.jsx';
+import { ClaimWatchlistPage, ClaimsPage, DisputesPage } from './ClaimPages.jsx';
 import { VariationSummaryPage, VariationsPage } from './VariationPages.jsx';
 import { SubCompliancePage, SubStrengthPage, SubcontractorsPage } from './SubcontractorPages.jsx';
 import { WoMarginPage, WorkOrdersPage } from './WorkOrderPages.jsx';
@@ -23,5 +24,8 @@ registerModule({
     { path: '/ctr/sub-strength', label: 'Labour Strength vs Committed', icon: 'erp.group.commercial', permission: 'ctr.sub_workspace.view', flag: 'ff.ctr.p2104', Page: SubStrengthPage },
     { path: '/ctr/variations', label: 'Variation Register', icon: 'erp.group.commercial', permission: 'ctr.change.view', flag: 'ff.ctr.p2105', Page: VariationsPage },
     { path: '/ctr/variation-summary', label: 'Variation Summary', icon: 'erp.group.commercial', permission: 'ctr.change.view', flag: 'ff.ctr.p2105', Page: VariationSummaryPage },
+    { path: '/ctr/claims', label: 'Claims Register', icon: 'erp.group.commercial', permission: 'ctr.claim.view', flag: 'ff.ctr.p2106', Page: ClaimsPage },
+    { path: '/ctr/claim-watchlist', label: 'Time-bar Watchlist', icon: 'erp.group.commercial', permission: 'ctr.claim.view', flag: 'ff.ctr.p2106', Page: ClaimWatchlistPage },
+    { path: '/ctr/disputes', label: 'Disputes', icon: 'erp.group.commercial', permission: 'ctr.dispute.view', flag: 'ff.ctr.p2106', Page: DisputesPage },
   ],
 });
