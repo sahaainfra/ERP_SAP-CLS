@@ -12,6 +12,9 @@ import LabEquipmentPage from './LabEquipmentPage.jsx';
 import TestCataloguePage from './TestCataloguePage.jsx';
 import NcrsPage, { NcrRaisePage } from './NcrsPage.jsx';
 import NcrAnalysisPage from './NcrAnalysisPage.jsx';
+import PourCardsPage from './PourCardsPage.jsx';
+import CubeRegisterPage from './CubeRegisterPage.jsx';
+import { AcceptancePage, TraceabilityPage } from './ConcretePages.jsx';
 
 registerModule({
   code: 'qa',
@@ -31,6 +34,10 @@ registerModule({
     { path: '/qa/ncrs', label: 'NCR Register', icon: 'erp.qhse.qa', permission: 'qa.ncr.view', flag: 'ff.qa.p1804', Page: NcrsPage },
     { path: '/qa/ncrs/new', label: 'Raise NCR', icon: 'erp.qhse.qa', permission: 'qa.ncr.create', flag: 'ff.qa.p1804', Page: NcrRaisePage },
     { path: '/qa/ncr-analysis', label: 'NCR Analysis', icon: 'erp.qhse.qa', permission: 'qa.ncr.view', flag: 'ff.qa.p1804', Page: NcrAnalysisPage },
+    { path: '/qa/pour-cards', label: 'Pour Cards', icon: 'erp.qhse.qa', permission: 'qa.pour_card.view', flag: 'ff.qa.p1805', Page: PourCardsPage },
+    { path: '/qa/cubes', label: 'Cube Register', icon: 'erp.qhse.qa', permission: 'qa.pour_card.view', flag: 'ff.qa.p1805', Page: CubeRegisterPage },
+    { path: '/qa/concrete-acceptance', label: 'Concrete Strength Acceptance', icon: 'erp.qhse.qa', permission: 'qa.pour_card.view', flag: 'ff.qa.p1805', Page: AcceptancePage },
+    { path: '/qa/concrete-traceability', label: 'Concrete Traceability', icon: 'erp.qhse.qa', permission: 'qa.pour_card.view', flag: 'ff.qa.p1805', Page: TraceabilityPage },
     { path: '/qa/inspections', label: 'Inspections', icon: 'erp.qhse.qa', permission: 'qa.inspection.view', flag: 'ff.qa.p1801', Page: InspectionsPage },
   ],
 });

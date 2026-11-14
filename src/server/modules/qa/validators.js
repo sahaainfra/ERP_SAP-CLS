@@ -78,3 +78,16 @@ export const parseNcrAnalysisQ = (q) => parse(z.object({ projectId: id.optional(
 export const parseBackchargeQ = (q) => parse(z.object({ partnerId: id.optional(), status: z.enum(['PENDING', 'POSTED']).optional() }).passthrough(), q ?? {});
 export const parseBackchargePosted = (b) => parse(z.object({ ref: text(120).min(2) }).strict(), b ?? {});
 export const parseCapaCancel = parseReason;
+// concrete pour cards, cubes and traceability (part 18.05)
+const volume = z.number().finite().min(0).max(100000).refine((n) => Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6, 'At most three decimals');
+const irLink = z.object({ kind: z.enum(['REINFORCEMENT', 'SHUTTERING', 'EMBEDMENT', 'OTHER']), irId: id }).strict();
+const checkItem = z.object({ code: z.enum(['REBAR', 'COVER', 'SHUTTERING', 'CLEANING', 'EMBEDMENTS', 'EQUIPMENT', 'CURING']), result: z.enum(['YES', 'NO', 'NA']).nullable() }).strict();
+export const parsePourCreate = (b) => parse(z.object({ projectId: id, siteId: id.nullish().transform((v) => v ?? null), locationId: id.nullish().transform((v) => v ?? null), activityId: id.nullish().transform((v) => v ?? null), element: text(200).min(2), grade: text(10).min(2), fck: z.number().int().min(5).max(100), plannedVolume: volume, plannedOn: day.nullish().transform((v) => v ?? null) }).strict(), b ?? {});
+export const parsePourUpdate = (b) => defined(parse(z.object({ element: text(200).min(2).optional(), grade: text(10).min(2).optional(), fck: z.number().int().min(5).max(100).optional(), plannedVolume: volume.optional(), plannedOn: day.nullish().optional(), locationId: id.nullish().optional(), activityId: id.nullish().optional(), irLinks: z.array(irLink).max(8).optional(), checks: z.array(checkItem).max(12).optional(), weather: opt(200).optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parsePourRecord = (b) => defined(parse(z.object({ pourStart: z.string().max(40).optional(), pourEnd: z.string().max(40).optional(), weather: opt(200).optional() }).strict(), b ?? {}));
+export const parseTicket = (b) => parse(z.object({ ticketNo: text(60).min(1), batchRef: opt(80), truckNo: opt(30), vendorId: id.nullish().transform((v) => v ?? null), qty: volume.refine((n) => n > 0, 'Give the quantity delivered'), deliveredAt: z.string().max(40).optional(), slumpMm: z.number().int().min(0).max(300).nullish().transform((v) => v ?? null), temperatureC: z.number().int().min(-10).max(60).nullish().transform((v) => v ?? null) }).strict(), b ?? {});
+export const parseSampleCreate = (b) => parse(z.object({ ticketId: id.nullish().transform((v) => v ?? null), cubes: z.number().int().min(3).max(12), castDate: day }).strict(), b ?? {});
+export const parseCubeResult = (b) => parse(z.object({ ageDays: z.number().int().min(1).max(365), strengths: z.array(z.number().finite().min(0).max(200)).min(1).max(12), testedOn: day, equipmentId: id.nullish().transform((v) => v ?? null) }).strict(), b ?? {});
+export const parseScanQ = (q) => parse(z.object({ code: text(120).min(1) }).passthrough(), q ?? {});
+export const parseAcceptanceQ = (q) => parse(z.object({ projectId: id.optional(), grade: text(10).optional(), kind: z.enum(['cards', 'cubes', 'acceptance']).optional() }).passthrough(), q ?? {});
+export const parseTraceQ = (q) => parse(z.object({ q: text(80).optional() }).passthrough(), q ?? {});

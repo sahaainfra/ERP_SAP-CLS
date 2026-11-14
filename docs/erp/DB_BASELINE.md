@@ -19018,6 +19018,81 @@ Indexes:
 - ix_qa_ct_module: company_id, module, status
 - ux_qa_ct_code (unique): company_id, code, version_no
 
+## qa_cube_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| sample_id | INTEGER | yes |  |  |
+| age_days | INTEGER | yes |  |  |
+| strengths_json | TEXT | yes |  |  |
+| mean_e3 | INTEGER | yes |  |  |
+| min_e3 | INTEGER | yes |  |  |
+| tested_on | TEXT | yes |  |  |
+| equipment_id | INTEGER |  |  |  |
+| acceptance | TEXT | yes |  |  |
+| ncr_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: ncr_id -> qa_ncrs(id), equipment_id -> qa_lab_equipment(id), sample_id -> qa_cube_samples(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_cr_ncr: ncr_id
+- ix_qa_cr_equipment: equipment_id
+- ix_qa_cr_company: company_id, tested_on
+- ux_qa_cr_age (unique): sample_id, age_days
+
+## qa_cube_samples
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| pour_card_id | INTEGER | yes |  |  |
+| ticket_id | INTEGER |  |  |  |
+| cubes_count | INTEGER | yes |  |  |
+| cast_date | TEXT | yes |  |  |
+| due_7 | TEXT | yes |  |  |
+| due_28 | TEXT | yes |  |  |
+| qr_code | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: ticket_id -> qa_pour_tickets(id), pour_card_id -> qa_pour_cards(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_cs_due28: company_id, due_28
+- ix_qa_cs_due7: company_id, due_7
+- ix_qa_cs_ticket: ticket_id
+- ix_qa_cs_card: pour_card_id
+- ux_qa_cs_no (unique): company_id, doc_no
+
 ## qa_inspection_answers
 
 | Column | Type | Not null | Key | Default |
@@ -19363,6 +19438,95 @@ Indexes:
 - ix_qa_pp_activity: activity_id
 - ix_qa_pp_project: org_project_id, point_status
 - ux_qa_pp_key (unique): itp_id, activity_id, , step_code
+
+## qa_pour_cards
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| activity_id | INTEGER |  |  |  |
+| element | TEXT | yes |  |  |
+| grade | TEXT | yes |  |  |
+| fck_mpa | INTEGER | yes |  |  |
+| planned_volume | INTEGER | yes |  | 0 |
+| actual_volume | INTEGER | yes |  | 0 |
+| planned_on | TEXT |  |  |  |
+| ir_links_json | TEXT | yes |  | '[]' |
+| checks_json | TEXT | yes |  | '[]' |
+| weather | TEXT |  |  |  |
+| pour_status | TEXT | yes |  | 'PLANNED' |
+| pour_start | TEXT |  |  |  |
+| pour_end | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: activity_id -> plan_activities(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_pc_activity: activity_id
+- ix_qa_pc_location: location_id
+- ix_qa_pc_site: org_site_id
+- ix_qa_pc_project: org_project_id, status, planned_on
+- ux_qa_pc_doc (unique): company_id, doc_no
+
+## qa_pour_tickets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| pour_card_id | INTEGER | yes |  |  |
+| ticket_no | TEXT | yes |  |  |
+| batch_ref | TEXT |  |  |  |
+| truck_no | TEXT |  |  |  |
+| vendor_id | INTEGER |  |  |  |
+| qty | INTEGER | yes |  |  |
+| delivered_at | TEXT | yes |  |  |
+| slump_mm | INTEGER |  |  |  |
+| temperature_c | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: vendor_id -> mdm_partners(id), pour_card_id -> qa_pour_cards(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_pt_batch: batch_ref
+- ix_qa_pt_vendor: vendor_id
+- ix_qa_pt_card: pour_card_id
+- ux_qa_pt_ticket (unique): company_id, ticket_no
 
 ## qa_quality_plans
 
