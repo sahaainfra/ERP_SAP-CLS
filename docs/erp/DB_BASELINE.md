@@ -5151,6 +5151,66 @@ Indexes:
 - ix_ctr_bg_events_bg_id: bg_id
 - ix_ctr_bg_events_company_id: company_id
 
+## ctr_change_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| cr_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  | 'CLIENT' |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER |  |  |  |
+| work_order_id | INTEGER |  |  |  |
+| origin_type | TEXT | yes |  |  |
+| origin_ref | TEXT |  |  |  |
+| origin_id | INTEGER |  |  |  |
+| title | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| technical_review | TEXT |  |  |  |
+| technical_by | TEXT |  |  |  |
+| technical_at | TEXT |  |  |  |
+| qs_json | TEXT | yes |  | '{}' |
+| value_claimed_paise | INTEGER | yes |  | 0 |
+| time_claimed_days | INTEGER | yes |  | 0 |
+| cr_state | TEXT | yes |  | 'PREPARING' |
+| client_ref | TEXT |  |  |  |
+| to_client_on | TEXT |  |  |  |
+| response_on | TEXT |  |  |  |
+| response_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: work_order_id -> ctr_work_orders(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_cr_state: company_id, cr_state
+- ix_ctr_change_requests_work_order_id: work_order_id
+- ix_ctr_change_requests_contract_id: contract_id
+- ix_ctr_change_requests_org_site_id: org_site_id
+- ix_ctr_change_requests_org_project_id: org_project_id
+- ux_ctr_cr_no (unique): company_id, cr_no
+- ux_ctr_cr_doc (unique): company_id, doc_no
+
 ## ctr_clauses
 
 | Column | Type | Not null | Key | Default |
@@ -5652,6 +5712,105 @@ Indexes:
 - ux_ctr_vlog_ref (unique): contract_id, entry_kind, ref_type, ref_id
 - ix_ctr_value_log_contract_id: contract_id
 - ix_ctr_value_log_company_id: company_id
+
+## ctr_variation_orders
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| vo_no | TEXT | yes |  |  |
+| kind | TEXT | yes |  | 'CLIENT' |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER |  |  |  |
+| work_order_id | INTEGER |  |  |  |
+| cr_id | INTEGER | yes |  |  |
+| client_ref | TEXT |  |  |  |
+| title | TEXT | yes |  |  |
+| value_approved_paise | INTEGER | yes |  | 0 |
+| time_approved_days | INTEGER | yes |  | 0 |
+| approved_on | TEXT |  |  |  |
+| vo_state | TEXT | yes |  | 'RECORDED' |
+| boq_version_id | INTEGER |  |  |  |
+| outputs_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: boq_version_id -> proj_boq_versions(id), cr_id -> ctr_change_requests(id), work_order_id -> ctr_work_orders(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_variation_orders_boq_version_id: boq_version_id
+- ix_ctr_variation_orders_cr_id: cr_id
+- ix_ctr_variation_orders_work_order_id: work_order_id
+- ix_ctr_variation_orders_contract_id: contract_id
+- ix_ctr_variation_orders_org_site_id: org_site_id
+- ix_ctr_variation_orders_org_project_id: org_project_id
+- ux_ctr_vo_no (unique): company_id, vo_no
+- ux_ctr_vo_doc (unique): company_id, doc_no
+
+## ctr_vo_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| vo_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| boq_line_id | INTEGER |  |  |  |
+| wo_line_no | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| qty_change_th | INTEGER | yes |  | 0 |
+| rate_x4 | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  | 0 |
+| basis_kind | TEXT | yes |  |  |
+| basis_ref | TEXT |  |  |  |
+| analysis_id | INTEGER |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| is_extra | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), analysis_id -> ra_analyses(id), boq_line_id -> proj_boq_lines(id), vo_id -> ctr_variation_orders(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_vo_items_cost_code_id: cost_code_id
+- ix_ctr_vo_items_wbs_id: wbs_id
+- ix_ctr_vo_items_analysis_id: analysis_id
+- ix_ctr_vo_items_boq_line_id: boq_line_id
+- ix_ctr_vo_items_company_id: company_id
+- ux_ctr_voi_line (unique): vo_id, line_no
 
 ## ctr_wo_amendments
 

@@ -212,13 +212,22 @@ export function createWorkOrderService({ db, base, flags }) {
       commitWo(actor, f); audit(actor, 'ctr_work_orders', wo.id, 'amend', wo.company_id, { reason: a.description, oldValues: { value: rs(before) }, newValues: { value: rs(f.value_paise) } });
       evt('ctr.wo.amended', actor, wo.company_id, 'ctr_wo_amendments', a.id, { ...woData(f), amendmentId: a.id, amendmentDocNo: a.doc_no, amendmentNo: a.amendment_no, description: a.description, before: rs(before), after: rs(f.value_paise), delta: rs(f.value_paise - before) }, wo.org_project_id);
     } });
+  /** The amendment draft of a work order: the changes are checked, the delta and the margin are worked out. */
+  function make(actor, wo, b) {
+      if (wo.status !== 'APPROVED' || wo.wo_state === 'CLOSED') throw unprocessable('Only a live work order is amended.'); if (db.prepare("SELECT 1 FROM ctr_wo_amendments WHERE wo_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND deleted_at IS NULL").get(wo.id)) throw conflict('An amendment of this work order is open already.');
+      if (!b.changes.length && !b.newEndDate) fail([{ field: 'changes', message: 'Change at least one item or the end date' }]); if (b.newEndDate && b.newEndDate < wo.start_date) fail([{ field: 'newEndDate', message: 'The new end date is before the start' }]);
+      const its = applied(wo, b.changes); const after = its.reduce((n, x) => n + x.amount_paise, 0); const neg = its.some((x) => marginOf(x.qty_th, x.rate_x4, x.client_rate_x4).negative);
+      return transaction(db, () => { const no = aflow.next(actor); const n = db.prepare('SELECT COALESCE(MAX(amendment_no), 0) + 1 AS n FROM ctr_wo_amendments WHERE wo_id = ?').get(wo.id).n; const aid = Number(db.prepare('INSERT INTO ctr_wo_amendments (company_id, doc_no, wo_id, org_project_id, org_site_id, amendment_no, description, changes_json, new_end_date, delta_paise, negative_margin, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(wo.company_id, no, wo.id, wo.org_project_id, wo.org_site_id, n, b.description, JSON.stringify(b.changes), b.newEndDate, after - wo.value_paise, neg ? 1 : 0, actor.user, 'manual').lastInsertRowid); audit(actor, 'ctr_wo_amendments', aid, 'create', wo.company_id); return aid; });
+  }
   const amendments = {
     ...aflow,
     create(actor, id, b) {
-      const wo = flow.row(actor, id, 'ctr.work_order.amend'); if (wo.status !== 'APPROVED' || wo.wo_state === 'CLOSED') throw unprocessable('Only a live work order is amended.'); if (db.prepare("SELECT 1 FROM ctr_wo_amendments WHERE wo_id = ? AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND deleted_at IS NULL").get(wo.id)) throw conflict('An amendment of this work order is open already.');
-      if (!b.changes.length && !b.newEndDate) fail([{ field: 'changes', message: 'Change at least one item or the end date' }]); if (b.newEndDate && b.newEndDate < wo.start_date) fail([{ field: 'newEndDate', message: 'The new end date is before the start' }]);
-      const its = applied(wo, b.changes); const after = its.reduce((n, x) => n + x.amount_paise, 0); const neg = its.some((x) => marginOf(x.qty_th, x.rate_x4, x.client_rate_x4).negative);
-      return transaction(db, () => { const no = aflow.next(actor); const n = db.prepare('SELECT COALESCE(MAX(amendment_no), 0) + 1 AS n FROM ctr_wo_amendments WHERE wo_id = ?').get(wo.id).n; const aid = Number(db.prepare('INSERT INTO ctr_wo_amendments (company_id, doc_no, wo_id, org_project_id, org_site_id, amendment_no, description, changes_json, new_end_date, delta_paise, negative_margin, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(wo.company_id, no, wo.id, wo.org_project_id, wo.org_site_id, n, b.description, JSON.stringify(b.changes), b.newEndDate, after - wo.value_paise, neg ? 1 : 0, actor.user, 'manual').lastInsertRowid); audit(actor, 'ctr_wo_amendments', aid, 'create', wo.company_id); return amendments.get(actor, aid); });
+      const wo = flow.row(actor, id, 'ctr.work_order.amend'); const aid = make(actor, wo, b); return amendments.get(actor, aid);
+    },
+    /** FR-04 of 21.05: an approved subcontract variation or the back-to-back of a client variation drafts the amendment of a work order; the commercial manager reviews and sends it. */
+    draftFor(companyId, woId, b, user = 'system') {
+      const wo = db.prepare('SELECT * FROM ctr_work_orders WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(woId), companyId); if (!wo) throw notFound('That work order does not exist.');
+      return { id: make({ user, companyId, roles: ['SYSTEM'] }, wo, b) };
     },
     get(actor, id) {
       const a = aflow.row(actor, id); const wo = db.prepare('SELECT * FROM ctr_work_orders WHERE id = ?').get(a.wo_id); const mg = canMargin(actor, wo); const changes = JSON.parse(a.changes_json); const before = itemsOf(wo.id); const after = a.status === 'APPROVED' ? itemsOf(wo.id) : applied(wo, changes);
