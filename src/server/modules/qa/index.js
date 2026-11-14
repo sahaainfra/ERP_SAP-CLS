@@ -19,6 +19,8 @@ import { createNcrService } from './ncr.js';
 import { ncrRoutes } from './ncr-routes.js';
 import { createPourService } from './pour.js';
 import { pourRoutes } from './pour-routes.js';
+import { createSnagService } from './snags.js';
+import { snagRoutes } from './snag-routes.js';
 import { runtimeOf } from '../../platform/runtime/index.js';
 import { waCheckHooks } from '../site/service.js';
 import { qaRoutes } from './routes.js';
@@ -51,12 +53,17 @@ for (const [type, description] of [
   ['qa.pour.completed', 'A concrete pour was completed (part 18.05): same data as qa.pour.approved, with the volume poured.'],
   ['qa.cube.tested', 'A cube result was recorded at an age (part 18.05): data { sampleId, sampleNo, resultId, pourCardId, pourNo, projectId, element, grade, fck, ageDays, mean, lowest, acceptance }. The quality dashboard (18.07) reads it.'],
   ['qa.cube.failed', 'A cube result failed IS 456, individually or as a group of four (part 18.05): same data as qa.cube.tested plus reason (INDIVIDUAL|GROUP), required, groupMean. An NCR (18.04) with core tests or a load test follows.'],
+  ['qa.snag.raised', 'A snag was raised on a plan or in a room (part 18.06): data { snagId, docNo, projectId, siteId, locationId, unitRef, category, punchClass, priority, responsibleType, partnerId, dueDate, status, raisedKind }.'],
+  ['qa.snag.rectified', 'The responsible party reported a snag rectified, with an after-photograph (part 18.06): same data as qa.snag.raised.'],
+  ['qa.snag.closed', 'A snag was verified and closed by someone other than the person who rectified it (part 18.06): same data as qa.snag.raised plus closedOn, ageDays, reopenCount. Handover (26.02) and commissioning (26.01) read the open punches; the quality dashboard (18.07) the closure.'],
+  ['qa.snag.reopened', 'A rectification did not hold and the snag went back to its party (part 18.06): same data plus reason, reopenCount.'],
+  ['qa.snag.backcharge_raised', 'A closed snag carries a back-charge against a subcontractor or supplier (part 18.06): data { snagId, docNo, projectId, responsibleType, partnerId, amount (rupees) }. Subcontractor bills (22.05) deduct it.'],
   ['qa.inspection.failed', 'An inspection failed (part 18.01): same data as qa.inspection.submitted; the quality control manager is told and defects can be raised as NCRs (18.04).'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'qa', description });
 
 integrityRegistry.register({
-  statuses: { qa_quality_plans: Object.keys(STATUS), qa_itps: Object.keys(STATUS), qa_checklist_templates: Object.keys(STATUS), qa_inspections: Object.keys(STATUS), qa_inspection_requests: Object.keys(STATUS), qa_test_requests: Object.keys(STATUS), qa_pour_cards: Object.keys(STATUS), qa_ncrs: ['DRAFT', 'OPEN', 'RECTIFIED', 'CONCESSION_REVIEW', 'CLOSURE_REVIEW', 'CLOSED', 'CANCELLED'] },
-  uniqueKeys: [{ table: 'qa_quality_plans', columns: ['company_id', 'doc_no'] }, { table: 'qa_inspections', columns: ['company_id', 'doc_no'] }, { table: 'qa_inspection_requests', columns: ['company_id', 'doc_no'] }, { table: 'qa_test_requests', columns: ['company_id', 'doc_no'] }, { table: 'qa_ncrs', columns: ['company_id', 'doc_no'] }, { table: 'qa_pour_cards', columns: ['company_id', 'doc_no'] }, { table: 'qa_cube_samples', columns: ['company_id', 'doc_no'] }, { table: 'qa_test_catalogue', columns: ['company_id', 'code'] }, { table: 'qa_lab_equipment', columns: ['company_id', 'code'] }],
+  statuses: { qa_quality_plans: Object.keys(STATUS), qa_itps: Object.keys(STATUS), qa_checklist_templates: Object.keys(STATUS), qa_inspections: Object.keys(STATUS), qa_inspection_requests: Object.keys(STATUS), qa_test_requests: Object.keys(STATUS), qa_pour_cards: Object.keys(STATUS), qa_snags: ['OPEN', 'RECTIFIED', 'CLOSED', 'CANCELLED'], qa_ncrs: ['DRAFT', 'OPEN', 'RECTIFIED', 'CONCESSION_REVIEW', 'CLOSURE_REVIEW', 'CLOSED', 'CANCELLED'] },
+  uniqueKeys: [{ table: 'qa_quality_plans', columns: ['company_id', 'doc_no'] }, { table: 'qa_inspections', columns: ['company_id', 'doc_no'] }, { table: 'qa_inspection_requests', columns: ['company_id', 'doc_no'] }, { table: 'qa_test_requests', columns: ['company_id', 'doc_no'] }, { table: 'qa_ncrs', columns: ['company_id', 'doc_no'] }, { table: 'qa_pour_cards', columns: ['company_id', 'doc_no'] }, { table: 'qa_snags', columns: ['company_id', 'doc_no'] }, { table: 'qa_cube_samples', columns: ['company_id', 'doc_no'] }, { table: 'qa_test_catalogue', columns: ['company_id', 'code'] }, { table: 'qa_lab_equipment', columns: ['company_id', 'code'] }],
 });
 
 export const qa = {
@@ -65,8 +72,8 @@ export const qa = {
   routePrefix: '/api/v1/qa',
   ownerPart: '18.01',
   status: 'Quality plans, the ITP library with hold/witness/review/surveillance points applied to activities, versioned checklist templates and inspections with tolerance, photo and signature rules, offline on the phone.',
-  tables: ['qa_pour_cards', 'qa_pour_tickets', 'qa_cube_samples', 'qa_cube_results', 'qa_ncrs', 'qa_capa_actions', 'qa_test_catalogue', 'qa_lab_equipment', 'qa_test_requests', 'qa_test_results', 'qa_inspection_requests', 'qa_quality_plans', 'qa_itps', 'qa_checklist_templates', 'qa_inspections', 'qa_inspection_answers', 'qa_planned_points'],
-  resources: ['pour-cards', 'cube-samples', 'cube-results', 'concrete-acceptance', 'concrete-traceability', 'ncrs', 'ncr-analysis', 'test-requests', 'test-catalogue', 'lab-equipment', 'receiving', 'test-compliance', 'inspection-requests', 'hold-points', 'ir-analysis', 'quality-plans', 'itps', 'templates', 'inspections', 'planned-points', 'export'],
+  tables: ['qa_snags', 'qa_pour_cards', 'qa_pour_tickets', 'qa_cube_samples', 'qa_cube_results', 'qa_ncrs', 'qa_capa_actions', 'qa_test_catalogue', 'qa_lab_equipment', 'qa_test_requests', 'qa_test_results', 'qa_inspection_requests', 'qa_quality_plans', 'qa_itps', 'qa_checklist_templates', 'qa_inspections', 'qa_inspection_answers', 'qa_planned_points'],
+  resources: ['snags', 'snag-status', 'snag-report', 'pour-cards', 'cube-samples', 'cube-results', 'concrete-acceptance', 'concrete-traceability', 'ncrs', 'ncr-analysis', 'test-requests', 'test-catalogue', 'lab-equipment', 'receiving', 'test-compliance', 'inspection-requests', 'hold-points', 'ir-analysis', 'quality-plans', 'itps', 'templates', 'inspections', 'planned-points', 'export'],
   /** Later parts of the module add their routes and services here. */
   parts: new Map(),
   mount(api, { db, config: appConfig }) {
@@ -77,14 +84,18 @@ export const qa = {
     const tsv = createTestService({ db, base, flags }); deciders[QA_DOCS.test] = tsv.flow.decide;
     const ncv = createNcrService({ db, base, flags }); deciders[QA_DOCS.ncrClosure] = ncv.decides.QA_NCR_CLOSURE; deciders[QA_DOCS.ncrConcession] = ncv.decides.QA_NCR_CONCESSION;
     const pov = createPourService({ db, base, flags, ncv: () => ncv }); deciders[QA_DOCS.pour] = pov.flow.decide;
-    const ctx = { svc, base, flags, deciders, irs, tsv, ncv, pov, parts: { pour: (r, h) => pourRoutes(r, pov, h), ncr: (r, h) => ncrRoutes(r, ncv, h), ir: (r, h) => irRoutes(r, irs, h), tests: (r, h) => testRoutes(r, tsv, h) } }; for (const [, make] of qa.parts) make(db, ctx);
+    const sgv = createSnagService({ db, base, flags });
+    const ctx = { svc, base, flags, deciders, irs, tsv, ncv, pov, sgv, parts: { snag: (r, h) => snagRoutes(r, sgv, h), pour: (r, h) => pourRoutes(r, pov, h), ncr: (r, h) => ncrRoutes(r, ncv, h), ir: (r, h) => irRoutes(r, irs, h), tests: (r, h) => testRoutes(r, tsv, h) } }; for (const [, make] of qa.parts) make(db, ctx);
     services.set(db, ctx);
     listExports.register('qa.inspections', { source: (actor, req) => { base.need(actor, 'qa.inspection.export', 'export inspections'); return svc.inspections.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('qa.inspection_requests', { source: (actor, req) => { base.need(actor, 'qa.inspection_request.export', 'export inspection requests'); return irs.requests.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('qa.test_requests', { source: (actor, req) => { base.need(actor, 'qa.test_request.export', 'export test requests'); return tsv.requests.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('qa.ncrs', { source: (actor, req) => { base.need(actor, 'qa.ncr.export', 'export NCRs'); return ncv.ncrs.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('qa.pour_cards', { source: (actor, req) => { base.need(actor, 'qa.pour_card.export', 'export pour cards'); return pov.cards.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('qa.snags', { source: (actor, req) => { base.need(actor, 'qa.snag.export', 'export snags'); return sgv.snags.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
+    runtime?.jobs?.register('qa.snag_sweep', (jctx) => { let told = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) told += sgv.sweep(c.id).told; jctx.log(`Told about ${told} snag(s) past their date`); return { told }; }, { maxAttempts: 2, description: 'Snags past their due date, told to the plant and quality supervisors' });
+    runtime?.scheduler?.define({ code: 'qa.snag_sweep_morning', cron: '55 2 * * *', jobType: 'qa.snag_sweep', description: 'Every morning 08:25 India time: overdue snags are told' });
     runtime?.jobs?.register('qa.cube_sweep', (jctx) => { let told = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) told += pov.sweep(c.id).told; jctx.log(`Told about ${told} cube test(s) due or overdue`); return { told }; }, { maxAttempts: 2, description: 'Cube tests due today or overdue, told to the quality engineers' });
     runtime?.scheduler?.define({ code: 'qa.cube_sweep_morning', cron: '50 2 * * *', jobType: 'qa.cube_sweep', description: 'Every morning 08:20 India time: cube tests due or overdue are told' });
     runtime?.jobs?.register('qa.ncr_sweep', (jctx) => { let told = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) told += ncv.sweep(c.id).told; jctx.log(`Told about ${told} overdue action(s)`); return { told }; }, { maxAttempts: 2, description: 'Corrective and preventive actions past their date, told to their owners and the quality control manager' });
@@ -146,6 +157,7 @@ const objectOf = (type, table, perm, route, label) => objectTypes.register({
   projectRecords(db, companyId, projectId, limit) { return table === 'qa_itps' || table === 'qa_checklist_templates' ? [] : db.prepare(`SELECT id FROM ${table} WHERE company_id = ? AND org_project_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT ?`).all(companyId, projectId, limit).map((x) => x.id); },
 });
 void objectOf;
+objectOf('snag', 'qa_snags', 'qa.snag', '/qa/snags?id=', 'Snag');
 objectOf('pour', 'qa_pour_cards', 'qa.pour_card', '/qa/pour-cards?id=', 'Concrete pour card');
 objectOf('ncr', 'qa_ncrs', 'qa.ncr', '/qa/ncrs?id=', 'Non-conformance report');
 objectOf('test', 'qa_test_requests', 'qa.test_request', '/qa/test-requests?id=', 'Material test');
@@ -160,6 +172,7 @@ const fileAccess = (table, perm, edit) => (db, actor, id) => {
   return { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined, canView: true, canEdit: at(`${perm}.${edit}`) && ['DRAFT', 'RETURNED'].includes(r.status), locked: !['DRAFT', 'RETURNED'].includes(r.status) };
 };
 fileEntities.register({ entity: 'qa_quality_plans', label: 'Quality plan (document)', resolve: fileAccess('qa_quality_plans', 'qa.quality_plan', 'edit') });
+fileEntities.register({ entity: 'qa_snags', label: 'Snag (before and after photographs)', resolve: (db, actor, id) => { const r = db.prepare('SELECT * FROM qa_snags WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined }).allowed; if (!at('qa.snag.view')) return null; return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined, canView: true, canEdit: at('qa.snag.create') || at('qa.snag.edit') || at('qa.snag.submit'), locked: ['CLOSED', 'CANCELLED'].includes(r.status) }; } });
 fileEntities.register({ entity: 'qa_pour_cards', label: 'Concrete pour card (photographs)', resolve: (db, actor, id) => { const r = db.prepare('SELECT * FROM qa_pour_cards WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined }).allowed; if (!at('qa.pour_card.view')) return null; return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined, canView: true, canEdit: at('qa.pour_card.edit') || at('qa.pour_card.record'), locked: r.pour_status === 'COMPLETED' }; } });
 fileEntities.register({ entity: 'qa_ncrs', label: 'NCR (photographs and evidence)', resolve: (db, actor, id) => { const r = db.prepare('SELECT * FROM qa_ncrs WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined }).allowed; if (!at('qa.ncr.view')) return null; return { companyId: r.company_id, projectId: r.org_project_id, siteId: r.org_site_id ?? undefined, canView: true, canEdit: (at('qa.ncr.edit') || at('qa.ncr.rectify') || at('qa.ncr.create')) && !['CLOSED', 'CANCELLED'].includes(r.status), locked: ['CLOSED', 'CANCELLED'].includes(r.status) }; } });
 fileEntities.register({ entity: 'qa_capa_actions', label: 'Corrective or preventive action (evidence)', resolve: (db, actor, id) => { const c = db.prepare('SELECT c.*, n.org_project_id AS pid, n.org_site_id AS sid FROM qa_capa_actions c JOIN qa_ncrs n ON n.id = c.ncr_id WHERE c.id = ? AND c.company_id = ? AND c.deleted_at IS NULL').get(Number(id), actor.companyId); if (!c) return null; const a = authzOf(db); const at = (k) => a.check(actor, k, { companyId: c.company_id, projectId: c.pid, siteId: c.sid ?? undefined }).allowed; if (!at('qa.ncr.view')) return null; return { companyId: c.company_id, projectId: c.pid, siteId: c.sid ?? undefined, canView: true, canEdit: c.owner_user === actor.user || at('qa.ncr.edit') || at('qa.ncr.rectify'), locked: c.status !== 'OPEN' }; } });

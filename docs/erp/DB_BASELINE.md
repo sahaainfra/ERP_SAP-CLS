@@ -19568,6 +19568,67 @@ Indexes:
 - ix_qa_qp_project: org_project_id, status
 - ux_qa_qp_doc (unique): company_id, doc_no
 
+## qa_snags
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| location_id | INTEGER |  |  |  |
+| unit_ref | TEXT |  |  |  |
+| drawing_id | INTEGER |  |  |  |
+| pin_x | INTEGER |  |  |  |
+| pin_y | INTEGER |  |  |  |
+| category | TEXT | yes |  |  |
+| punch_class | TEXT | yes |  | 'B' |
+| priority | TEXT | yes |  | 'MEDIUM' |
+| description | TEXT | yes |  |  |
+| responsible_type | TEXT | yes |  | 'OWN_CREW' |
+| responsible_id | INTEGER |  |  |  |
+| due_date | TEXT |  |  |  |
+| raised_kind | TEXT | yes |  | 'INTERNAL' |
+| inspection_id | INTEGER |  |  |  |
+| before_photos_json | TEXT | yes |  | '[]' |
+| after_photos_json | TEXT | yes |  | '[]' |
+| rectified_by | TEXT |  |  |  |
+| rectified_on | TEXT |  |  |  |
+| rectification_note | TEXT |  |  |  |
+| closed_by | TEXT |  |  |  |
+| closed_on | TEXT |  |  |  |
+| reopen_count | INTEGER | yes |  | 0 |
+| backcharge | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'OPEN' |
+| raised_by | TEXT | yes |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: inspection_id -> qa_inspections(id), responsible_id -> mdm_partners(id), drawing_id -> engg_drawings(id), location_id -> proj_locations(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_sn_inspection: inspection_id
+- ix_qa_sn_due: company_id, due_date
+- ix_qa_sn_responsible: responsible_id, status
+- ix_qa_sn_drawing: drawing_id
+- ix_qa_sn_location: location_id, status
+- ix_qa_sn_site: org_site_id
+- ix_qa_sn_project: org_project_id, status, punch_class
+- ux_qa_sn_doc (unique): company_id, doc_no
+
 ## qa_test_catalogue
 
 | Column | Type | Not null | Key | Default |

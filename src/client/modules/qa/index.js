@@ -15,6 +15,9 @@ import NcrAnalysisPage from './NcrAnalysisPage.jsx';
 import PourCardsPage from './PourCardsPage.jsx';
 import CubeRegisterPage from './CubeRegisterPage.jsx';
 import { AcceptancePage, TraceabilityPage } from './ConcretePages.jsx';
+import SnagWalkPage from './SnagWalkPage.jsx';
+import SnagsPage from './SnagsPage.jsx';
+import { SnagStatusPage, SnagReportPage } from './SnagReportsPage.jsx';
 
 registerModule({
   code: 'qa',
@@ -38,6 +41,10 @@ registerModule({
     { path: '/qa/cubes', label: 'Cube Register', icon: 'erp.qhse.qa', permission: 'qa.pour_card.view', flag: 'ff.qa.p1805', Page: CubeRegisterPage },
     { path: '/qa/concrete-acceptance', label: 'Concrete Strength Acceptance', icon: 'erp.qhse.qa', permission: 'qa.pour_card.view', flag: 'ff.qa.p1805', Page: AcceptancePage },
     { path: '/qa/concrete-traceability', label: 'Concrete Traceability', icon: 'erp.qhse.qa', permission: 'qa.pour_card.view', flag: 'ff.qa.p1805', Page: TraceabilityPage },
+    { path: '/qa/snag-walk', label: 'Snag Walk', icon: 'erp.qhse.qa', permission: 'qa.snag.create', flag: 'ff.qa.p1806', Page: SnagWalkPage },
+    { path: '/qa/snags', label: 'Snag Register', icon: 'erp.qhse.qa', permission: 'qa.snag.view', flag: 'ff.qa.p1806', Page: SnagsPage },
+    { path: '/qa/snag-status', label: 'Snag Status by Area and Party', icon: 'erp.qhse.qa', permission: 'qa.snag.view', flag: 'ff.qa.p1806', Page: SnagStatusPage },
+    { path: '/qa/snag-report', label: 'Unit Snag Report', icon: 'erp.qhse.qa', permission: 'qa.snag.view', flag: 'ff.qa.p1806', Page: SnagReportPage },
     { path: '/qa/inspections', label: 'Inspections', icon: 'erp.qhse.qa', permission: 'qa.inspection.view', flag: 'ff.qa.p1801', Page: InspectionsPage },
   ],
 });
