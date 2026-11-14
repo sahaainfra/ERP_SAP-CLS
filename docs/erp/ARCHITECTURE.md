@@ -1571,3 +1571,6 @@ Module `ctr`, flag `ff.ctr.p2104`, tables `ctr_sub_compliance`, `ctr_sub_waivers
 
 ## 160. Change & Variation Management (part 21.05)
 Module `ctr`, flag `ff.ctr.p2105`, tables `ctr_change_requests`, `ctr_variation_orders`, `ctr_vo_items`; service `src/server/modules/ctr/variations.js`; BOQ hook `reviseFromVariation` in `src/server/modules/proj/boq.js`. Values are worked out only in the service; the variation order alone moves the contract value.
+
+## 161. Claims, Notices, EOT & Disputes (part 21.06)
+Module `ctr`, flag `ff.ctr.p2106`, tables `ctr_claims`, `ctr_claim_events`, `ctr_claim_quantum`, `ctr_claim_evidence`, `ctr_claim_log`, `ctr_eot_awards`, `ctr_disputes`, `ctr_dispute_log`; service `src/server/modules/ctr/claims.js`; contract adapter `applyEot` in `contracts.js`. The evidence table is immutable by trigger.
