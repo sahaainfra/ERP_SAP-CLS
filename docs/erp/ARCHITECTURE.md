@@ -1508,3 +1508,6 @@ Module `qa`, flag `ff.qa.p1801`, tables `qa_quality_plans`, `qa_itps`, `qa_check
 
 ## 139. Inspection requests and hold points (part 18.02)
 Module `qa`, flag `ff.qa.p1802`, table `qa_inspection_requests`; service `src/server/modules/qa/requests.js`. `holdGate` is the one place that says which hold points before an activity are not released; the work authorisation reads it through `waCheckHooks` (site service) and measurement lines through `/hold-points/check`. Findings are saved by `assess` before the workflow decision.
+
+
+## 140. Material testing, laboratory and calibration (part 18.03)\nModule `qa`, flag `ff.qa.p1803`, tables `qa_test_catalogue`, `qa_lab_equipment`, `qa_test_requests`, `qa_test_results`; service `src/server/modules/qa/tests.js`. The stock is moved only by 16.03: `release` calls the receipt inspection (`invOf(db).grn.grns.inspect`) with the approver as an enriched actor. Limits are copied to each result so a catalogue change never rewrites history.

@@ -19178,6 +19178,46 @@ Indexes:
 - ix_qa_itp_type: company_id, activity_type, status
 - ux_qa_itp_code (unique): company_id, code, version_no
 
+## qa_lab_equipment
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| name | TEXT | yes |  |  |
+| make | TEXT |  |  |  |
+| serial_no | TEXT |  |  |  |
+| last_calibrated | TEXT |  |  |  |
+| calibration_due | TEXT |  |  |  |
+| interval_days | INTEGER | yes |  | 365 |
+| certificate_file_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: certificate_file_id -> core_files(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_le_cert: certificate_file_id
+- ix_qa_le_due: company_id, calibration_due
+- ix_qa_le_site: org_site_id
+- ix_qa_le_project: org_project_id
+- ux_qa_le_code (unique): company_id, code
+
 ## qa_planned_points
 
 | Column | Type | Not null | Key | Default |
@@ -19259,6 +19299,142 @@ Indexes:
 - ix_qa_qp_site: org_site_id
 - ix_qa_qp_project: org_project_id, status
 - ux_qa_qp_doc (unique): company_id, doc_no
+
+## qa_test_catalogue
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| material_category_id | INTEGER |  |  |  |
+| material_item_id | INTEGER |  |  |  |
+| standard | TEXT |  |  |  |
+| parameters_json | TEXT | yes |  | '[]' |
+| freq_basis | TEXT | yes |  | 'NONE' |
+| freq_qty | INTEGER | yes |  | 0 |
+| freq_uom | TEXT |  |  |  |
+| lab_type | TEXT | yes |  | 'SITE' |
+| status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: material_item_id -> mdm_items(id), material_category_id -> mdm_item_categories(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_tc_item: material_item_id
+- ix_qa_tc_category: material_category_id
+- ux_qa_tc_code (unique): company_id, code
+
+## qa_test_requests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| catalogue_id | INTEGER |  |  |  |
+| material_item_id | INTEGER |  |  |  |
+| grn_id | INTEGER |  |  |  |
+| grn_line_id | INTEGER |  |  |  |
+| lot_qty | INTEGER | yes |  | 0 |
+| sample_ref | TEXT |  |  |  |
+| lab_type | TEXT | yes |  | 'SITE' |
+| lab_name | TEXT |  |  |  |
+| requested_on | TEXT | yes |  |  |
+| sampled_on | TEXT |  |  |  |
+| visual_ok | INTEGER |  |  |  |
+| documents_ok | INTEGER |  |  |  |
+| sampling_decision | TEXT | yes |  | 'TEST' |
+| certificate_file_id | INTEGER |  |  |  |
+| result | TEXT |  |  |  |
+| concession_ref | TEXT |  |  |  |
+| concession_reason | TEXT |  |  |  |
+| outcome | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: certificate_file_id -> core_files(id), grn_line_id -> inv_grn_lines(id), grn_id -> inv_grns(id), material_item_id -> mdm_items(id), catalogue_id -> qa_test_catalogue(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_tr_cert: certificate_file_id
+- ix_qa_tr_line: grn_line_id
+- ix_qa_tr_grn: grn_id
+- ix_qa_tr_item: material_item_id
+- ix_qa_tr_catalogue: catalogue_id
+- ix_qa_tr_site: org_site_id
+- ix_qa_tr_project: org_project_id, status
+- ux_qa_tr_doc (unique): company_id, doc_no
+
+## qa_test_results
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| request_id | INTEGER | yes |  |  |
+| parameter_code | TEXT | yes |  |  |
+| parameter_name | TEXT | yes |  |  |
+| unit | TEXT |  |  |  |
+| value_e3 | INTEGER | yes |  |  |
+| limit_min_e3 | INTEGER |  |  |  |
+| limit_max_e3 | INTEGER |  |  |  |
+| passed | INTEGER | yes |  |  |
+| equipment_id | INTEGER |  |  |  |
+| tested_on | TEXT | yes |  |  |
+| certificate_file_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: certificate_file_id -> core_files(id), equipment_id -> qa_lab_equipment(id), request_id -> qa_test_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_qa_trs_cert: certificate_file_id
+- ix_qa_trs_equipment: equipment_id
+- ix_qa_trs_company: company_id
+- ux_qa_trs_param (unique): request_id, parameter_code
 
 ## ra_analyses
 
