@@ -20,6 +20,8 @@ import { planOf } from '../plan/index.js';
 //   emergencies go on to the project manager. Approved, it is locked; a change is a revision. Closure (FR-04) records the quantity done and reconciles what was used against what was authorised.
 // - An emergency WA (FR-05) is usable at once and is regularised through the same chain within 24 hours.
 // - Attendance, material issue, plant logs, DPR and measurement (FR-07) name a WA through POST /site/wa-uses; a use without a WA or beyond what it authorises goes to CP-SITE-02.
+/** Checks other modules add to a work authorisation: `(db, waRow) => { code, result, message } | null`. Quality adds the hold-point check (part 18.02). */
+export const waCheckHooks = [];
 export const WA_DOC = 'SITE_WA';
 export const WA_STATUS = { DRAFT: 'Draft', EMERGENCY: 'Emergency (to be regularised)', SUBMITTED: 'Waiting for approval', APPROVED: 'Approved', RETURNED: 'Returned for correction', REJECTED: 'Rejected', CANCELLED: 'Cancelled', CLOSED: 'Closed', SUPERSEDED: 'Superseded by a revision' };
 export const FRONT_STATUS = { OPEN: 'Open', BLOCKED: 'Blocked', IN_PROGRESS: 'In progress', COMPLETED: 'Completed' };
@@ -168,10 +170,11 @@ export function createSiteService({ db }) {
     if (r.permit_required) out.push(r.permit_ref ? { code: 'PERMIT', result: 'PASS', message: `Permit ${r.permit_ref} (the permit-to-work register, 19.02, is not live: the reference is recorded).` } : { code: 'PERMIT', result: 'FAIL', message: 'A permit to work is needed and none is named.' });
     else out.push({ code: 'PERMIT', result: 'NA', message: 'No permit needed.' });
     out.push(r.hold_points ? { code: 'HOLD_POINTS', result: 'WARN', message: `Hold points: ${r.hold_points} (inspection requests, 18.02, are not live: release them on site).` } : { code: 'HOLD_POINTS', result: 'NA', message: 'No hold point.' });
+    for (const hook of waCheckHooks) { const c = hook(db, r); if (c) out.push(c); }
     out.push(r.in_plan ? { code: 'PLAN', result: 'PASS', message: 'In the approved weekly plan of the day.' } : { code: 'PLAN', result: 'WARN', message: r.is_emergency ? 'Emergency work, outside the plan: the project manager regularises it.' : 'Outside the weekly plan: the project manager also approves it.' });
     return out;
   }
-  const problemsOf = (checks) => checks.filter((c) => c.result === 'FAIL' && ['DRAWING', 'BUDGET', 'PERMIT'].includes(c.code)).map((c) => c.message);
+  const problemsOf = (checks) => checks.filter((c) => c.result === 'FAIL' && ['DRAWING', 'BUDGET', 'PERMIT', 'HOLD_POINT', 'JSA', 'PERMIT_TO_WORK'].includes(c.code)).map((c) => c.message);
   /** CP-SITE-01: a WARN mode lets the WA through with its warnings written down; ENFORCE stops it. */
   const enforceChecks = (actor, r, checks) => protocolOf(db).enforce(actor, 'CP-SITE-01', { entity: 'site_wa', entityId: String(r.id), problems: problemsOf(checks), ref: r.wa_no, projectId: r.org_project_id, siteId: r.wa_site_id });
 

@@ -1,0 +1,94 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useT } from '../../platform/i18n/index.js';
+import ListReport from '../../platform/list/ListReport.jsx';
+import StatusBadge from '../../platform/design/StatusBadge.jsx';
+import { authHeaders } from '../../platform/api/index.js';
+import { browserTransport, uploadFile } from '../../platform/files/upload.js';
+import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import { useSession } from '../core/api/index.js';
+import { useSearch } from '../site/parts.jsx';
+import { fmtDate, qa } from './api.js';
+import { DocBar, sel, useRecord, useRunner } from './QaParts.jsx';
+
+// NCR register and NCR object (part 18.04): the report with its root cause, actions (CAPA), rectification, re-inspection, concession and closure by severity; plus the raise form for a phone and the analysis.
+const transport = browserTransport(authHeaders); const NCR_TONE = { DRAFT: 'DRAFT', OPEN: 'IN_REVIEW', RECTIFIED: 'RETURNED', CONCESSION_REVIEW: 'IN_REVIEW', CLOSURE_REVIEW: 'IN_REVIEW', CLOSED: 'APPROVED', CANCELLED: 'CANCELLED' }; const SEV_TONE = { MINOR: 'DRAFT', MAJOR: 'RETURNED', CRITICAL: 'REJECTED' };
+const DISPOSITIONS = ['REWORK', 'REPAIR', 'USE_AS_IS', 'REJECT']; const TYPES = ['WORKMANSHIP', 'MATERIAL', 'DRAWING', 'SAFETY', 'DOCUMENTATION', 'OTHER']; const RESP = ['OWN_CREW', 'SUBCONTRACTOR', 'SUPPLIER']; const SEVS = ['MINOR', 'MAJOR', 'CRITICAL'];
+const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
+function Ncr({ id }) {
+  const t = useT('qa'); const { q, guard } = useRecord('/ncrs', id, t('ncr.title'), 'qa.ncr.view'); const { error, run, busy, note } = useRunner(); usePageTitle(t('ncr.title'));
+  const [f, setF] = useState(null); const [capa, setCapa] = useState({ type: 'CORRECTIVE', description: '', ownerUser: '', dueDate: today() }); const [rect, setRect] = useState(''); const [ins, setIns] = useState('');
+  const iq = useQuery({ queryKey: ['qa', 'ncr-inspections', id], queryFn: () => qa.get('/inspections?pageSize=50'), enabled: Boolean(q.data?.can?.reinspect), retry: false });
+  if (guard) return guard; const x = q.data; if (x.can.edit && !f) setF({ disposition: x.disposition ?? '', severity: x.severity, rcText: x.rootCause.text ?? '', rcWhys: (x.rootCause.whys ?? []).join('\n'), cost: x.rectificationCost ?? '', backcharge: x.backcharge ?? '' });
+  const saveDetails = () => run(() => qa.edit('/ncrs', x.id, { disposition: f.disposition || null, severity: f.severity, rootCause: { method: '5WHY', text: f.rcText || null, whys: f.rcWhys.split('\n').map((s) => s.trim()).filter(Boolean) }, ...(x.can.costs ? { rectificationCost: Number(f.cost) || 0, backcharge: Number(f.backcharge) || 0 } : {}), rowVersion: x.version }), t('saved'));
+  const act = (action, body, msg) => run(() => qa.act('/ncrs', x.id, action, body), msg); const addCapa = async () => { const d = await run(() => qa.act('/ncrs', x.id, 'capa', capa), t('ncr.capaAdded')); if (d) setCapa({ ...capa, description: '' }); };
+  const upload = (capaId) => async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(async () => { const up = await uploadFile(file, { transport, entity: 'qa_capa_actions', entityId: capaId }); return qa.act('/ncrs', x.id, `capa/${capaId}/complete`, { evidenceFileIds: [up.id] }); }, t('ncr.capaDone')); };
+  const photo = async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(() => uploadFile(file, { transport, entity: 'qa_ncrs', entityId: x.id }), t('ncr.photoAdded')); };
+  return (
+    <div data-testid="qa-ncr-object" data-status={x.status} data-severity={x.severity}><h1 id="ncr-h">{x.docNo} <StatusBadge status={NCR_TONE[x.status]} label={t(`ncrs.${x.status}`)} /> <StatusBadge status={SEV_TONE[x.severity]} label={t(`sev.${x.severity}`)} /> {x.repeat && <StatusBadge status="REJECTED" label={t('ncr.repeatN', { n: x.repeatCount })} />}</h1>
+      <p><Link to="/qa/ncrs">{t('ncr.title')}</Link> · {x.project} · {t(`nt.${x.type}`)} · {x.responsible ?? t(`resp.${x.responsibleType}`)} · {t('ncr.age', { n: x.ageDays })}{x.origin ? ` · ${x.origin.docNo}` : ''}{x.specRef ? ` · ${x.specRef}` : ''}</p><p>{x.description}</p>
+      {error?.form && <p className="field-error" role="alert" data-testid="ncr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="ncr-note">{note}</p>}
+      <DocBar kind="/ncrs" x={x} printName={`${x.docNo.replaceAll('/', '-')}.pdf`} extra={<>
+        {x.can.raise && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => act('raise', {}, t('ncr.raised'))} data-testid="ncr-raise">{t('ncr.raise')}</button>}
+        {x.can.requestClosure && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => act('request-closure', {}, t('ncr.closureSent'))} data-testid="ncr-closure">{t('ncr.requestClosure')}</button>}
+        {x.can.requestConcession && <button type="button" className="btn" style={{ minHeight: 48 }} disabled={busy} onClick={() => { const r = globalThis.prompt(t('ncr.concessionWhy')); if (r) act('request-concession', { reason: r }, t('ncr.concessionSent')); }} data-testid="ncr-concession">{t('ncr.requestConcession')}</button>}
+        {x.can.edit && <label className="btn" style={{ minHeight: 44 }}>{t('perf.photo')}<input type="file" accept="image/*" capture="environment" hidden onChange={photo} disabled={busy} data-testid="ncr-photo" /></label>}</>} />
+      {x.concessionStatus !== 'NONE' && <p data-testid="ncr-concession-status">{t('ncr.concession')}: {t(`conc.${x.concessionStatus}`)}{x.concessionReason ? ` · ${x.concessionReason}` : ''}</p>}
+      {x.can.edit && f && (
+        <div className="mdm-panel no-print" data-testid="ncr-edit"><h2>{t('ncr.details')}</h2><div className="form-grid">
+          <Field label={t('ncr.disposition')} name="disposition" error={error}><select value={f.disposition} onChange={(e) => setF({ ...f, disposition: e.target.value })} style={sel} data-testid="ncr-disposition"><option value="">—</option>{DISPOSITIONS.map((d) => <option key={d} value={d}>{t(`disp.${d}`)}</option>)}</select></Field>
+          <Field label={t('ncr.severity')} name="severity" error={error}><select value={f.severity} onChange={(e) => setF({ ...f, severity: e.target.value })} style={sel}>{SEVS.map((s) => <option key={s} value={s}>{t(`sev.${s}`)}</option>)}</select></Field>
+          {x.can.costs && <><Field label={t('ncr.cost')} name="rectificationCost" error={error}><input type="number" min="0" step="0.01" value={f.cost} onChange={(e) => setF({ ...f, cost: e.target.value })} style={sel} data-testid="ncr-cost" /></Field><Field label={t('ncr.backcharge')} name="backcharge" error={error}><input type="number" min="0" step="0.01" value={f.backcharge} onChange={(e) => setF({ ...f, backcharge: e.target.value })} style={sel} data-testid="ncr-backcharge" /></Field></>}</div>
+          <Field label={t('ncr.rootCause')} name="rootCause" error={error}><textarea rows={2} value={f.rcText} onChange={(e) => setF({ ...f, rcText: e.target.value })} maxLength={2000} style={{ width: '100%' }} data-testid="ncr-rootcause" /></Field>
+          <Field label={t('ncr.whys')} name="whys" error={error}><textarea rows={3} value={f.rcWhys} onChange={(e) => setF({ ...f, rcWhys: e.target.value })} maxLength={2000} style={{ width: '100%' }} data-testid="ncr-whys" /></Field>
+          <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={saveDetails} data-testid="ncr-save">{t('save')}</button></div>)}
+      {!x.can.edit && x.rootCause.text && <p data-testid="ncr-rootcause-view">{t('ncr.rootCause')}: {x.rootCause.text}{(x.rootCause.whys ?? []).length ? ` (${x.rootCause.whys.join(' > ')})` : ''}</p>}
+      <div className="table-scroll"><table className="data-table" data-testid="ncr-capa"><caption>{t('ncr.capa')}</caption><thead><tr><th>{t('tpl.type')}</th><th>{t('ncr.action')}</th><th>{t('ncr.owner')}</th><th>{t('ncr.due')}</th><th>{t('tc.status')}</th><th /></tr></thead>
+        <tbody>{x.capa.length === 0 ? <tr><td colSpan={6}>{t('ncr.noCapa')}</td></tr> : x.capa.map((c) => <tr key={c.id} data-testid="ncr-capa-row" data-status={c.status} data-overdue={String(c.overdue)}><td>{t(`capa.${c.type}`)}</td><td>{c.description}</td><td>{c.owner}</td><td>{fmtDate(c.dueDate)}{c.overdue ? ` · ${t('ir.overdue')}` : ''}</td><td>{t(`capas.${c.status}`)}</td>
+          <td>{c.status === 'OPEN' && ['OPEN', 'RECTIFIED'].includes(x.status) && <label className="btn">{t('ncr.complete')}<input type="file" hidden onChange={upload(c.id)} disabled={busy} data-testid="ncr-capa-complete" /></label>}{c.status === 'OPEN' && ['OPEN', 'RECTIFIED'].includes(x.status) && <button type="button" className="btn" disabled={busy} onClick={() => act(`capa/${c.id}/complete`, { note: t('ncr.doneNote') }, t('ncr.capaDone'))} data-testid="ncr-capa-done">{t('ncr.markDone')}</button>}</td></tr>)}</tbody></table></div>
+      {x.can.edit && <div className="mdm-panel no-print" data-testid="ncr-capa-add"><h2>{t('ncr.addAction')}</h2><div className="form-grid"><Field label={t('tpl.type')} name="type" error={error}><select value={capa.type} onChange={(e) => setCapa({ ...capa, type: e.target.value })} style={sel}><option value="CORRECTIVE">{t('capa.CORRECTIVE')}</option><option value="PREVENTIVE">{t('capa.PREVENTIVE')}</option></select></Field>
+        <Field label={t('ncr.action')} name="description" error={error}><input value={capa.description} onChange={(e) => setCapa({ ...capa, description: e.target.value })} maxLength={1000} style={sel} data-testid="capa-description" /></Field><Field label={t('ncr.owner')} name="ownerUser" error={error}><input value={capa.ownerUser} onChange={(e) => setCapa({ ...capa, ownerUser: e.target.value })} maxLength={80} style={sel} data-testid="capa-owner" /></Field><Field label={t('ncr.due')} name="dueDate" error={error}><input type="date" min={today()} value={capa.dueDate} onChange={(e) => setCapa({ ...capa, dueDate: e.target.value })} style={sel} data-testid="capa-due" /></Field></div>
+        <button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy || !capa.description || !capa.ownerUser} onClick={addCapa} data-testid="capa-add">{t('ncr.addAction')}</button></div>}
+      {x.can.rectify && <div className="mdm-panel no-print" data-testid="ncr-rectify"><h2>{t('ncr.rectification')}</h2><Field label={t('ncr.rectNote')} name="note" error={error}><textarea rows={2} value={rect} onChange={(e) => setRect(e.target.value)} maxLength={1000} style={{ width: '100%' }} data-testid="ncr-rect-note" /></Field><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || rect.length < 5} onClick={() => act('rectify', { note: rect }, t('ncr.rectified'))} data-testid="ncr-rectify-go">{t('ncr.reportRectified')}</button></div>}
+      {x.rectifiedOn && <p data-testid="ncr-rectified-view">{t('ncr.rectification')}: {fmtDate(x.rectifiedOn)} · {x.rectifiedBy} · {x.rectificationNote}</p>}
+      {x.can.reinspect && <div className="mdm-panel no-print" data-testid="ncr-reinspect"><h2>{t('ncr.reinspection')}</h2>{x.reinspection?.verified ? <p>{t('ncr.verified')}</p> : <p className="muted">{t('ncr.reinspectHint')}</p>}
+        <Field label={t('ir.inspection')} name="inspectionId" error={error}><select value={ins} onChange={(e) => setIns(e.target.value)} style={sel} data-testid="ncr-ins"><option value="">—</option>{(iq.data ?? []).filter((i) => i.status === 'APPROVED' && i.result === 'PASS').map((i) => <option key={i.id} value={i.id}>{i.docNo} {i.template}</option>)}</select></Field>
+        <button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy || !ins} onClick={() => act('reinspection', { inspectionId: Number(ins) }, t('ncr.linked'))} data-testid="ncr-link">{t('ncr.linkInspection')}</button></div>}
+    </div>
+  );
+}
+export default function NcrsPage() {
+  const t = useT('qa'); usePageTitle(t('ncr.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
+  if (id) return <section aria-labelledby="ncr-h"><Ncr id={id} /></section>;
+  return (
+    <section aria-labelledby="ncrl-h" data-testid="qa-ncrs"><h1 id="ncrl-h">{t('ncr.title')}</h1><p className="muted">{t('ncr.intro')}</p>
+      <div className="actions-row no-print"><Link to="/qa/ncrs/new">{t('ncr.new')}</Link><Link to="/qa/ncr-analysis">{t('nca.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/ncrs/export', 'ncrs.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="ncr-export">{t('export')}</button></div>
+      <ListReport listCode="qa.ncrs" endpoint="/qa/ncrs" title={t('ncr.title')} session={session.data} rowHref={(r) => `/qa/ncrs?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/ncrs?id=${r.id}`)} cardFields={['docNo', 'severity', 'responsible', 'status']} statusKey="status" dateKey="raised" empty={{ title: t('ncr.emptyTitle'), text: t('ncr.emptyBody') }} />
+    </section>
+  );
+}
+export function NcrRaisePage() {
+  const t = useT('qa'); usePageTitle(t('ncr.new')); const sp = useSearch(); const { error, setError, run, busy } = useRunner(); const oq = useQuery({ queryKey: ['qa', 'ncr-options'], queryFn: () => qa.get('/ncrs/options'), retry: false }); const o = oq.data; const [photos, setPhotos] = useState([]);
+  const [f, setF] = useState({ projectId: '', siteId: '', originKind: sp.get('originKind') ?? 'OTHER', originId: sp.get('originId') ?? '', ncrType: 'WORKMANSHIP', severity: 'MINOR', responsibleType: 'OWN_CREW', responsibleId: '', specRef: '', description: '', locationId: null, activityId: null }); const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
+  const fromSource = async (kind, sid) => { set('originKind', kind); set('originId', sid); if (!sid) return; try { const p = await qa.get(`/ncrs/prefill?originKind=${kind}&originId=${sid}`); setF((s) => ({ ...s, originKind: kind, originId: sid, projectId: String(p.projectId), siteId: p.siteId ? String(p.siteId) : '', ncrType: p.ncrType, severity: p.severity, description: p.description, locationId: p.locationId ?? null, activityId: p.activityId ?? null })); } catch (e) { setError(errorInfo(e)); } };
+  const send = async () => { const body = { projectId: Number(f.projectId), siteId: f.siteId ? Number(f.siteId) : null, originKind: f.originKind, originId: f.originId || null, locationId: f.locationId, activityId: f.activityId, ncrType: f.ncrType, severity: f.severity, responsibleType: f.responsibleType, responsibleId: f.responsibleId ? Number(f.responsibleId) : null, specRef: f.specRef || null, description: f.description, raise: true };
+    const d = await run(async () => { const n = await qa.make('/ncrs', body); for (const file of photos) await uploadFile(file, { transport, entity: 'qa_ncrs', entityId: n.id }); return n; }, t('ncr.raised')); if (d) navigateTo(`/qa/ncrs?id=${d.id}`); };
+  const big = { minHeight: 48, fontSize: '1rem' };
+  return (
+    <section aria-labelledby="ncrn-h" data-testid="qa-ncr-raise"><h1 id="ncrn-h">{t('ncr.new')}</h1><p className="muted"><Link to="/qa/ncrs">{t('ncr.title')}</Link></p>
+      {error?.form && <p className="field-error" role="alert" data-testid="ncrn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
+      <div className="mdm-panel"><div className="form-grid">
+        <Field label={t('ncr.fromInspection')} name="originId" error={error}><select value={f.originKind === 'INSPECTION' ? f.originId : ''} onChange={(e) => fromSource('INSPECTION', e.target.value)} style={big} data-testid="ncrn-from"><option value="">—</option>{(o?.failedInspections ?? []).map((i) => <option key={i.id} value={i.id}>{i.docNo} ({i.defects})</option>)}</select></Field>
+        <Field label={t('project')} name="projectId" error={error}><select value={f.projectId} onChange={(e) => set('projectId', e.target.value)} style={big} data-testid="ncrn-project"><option value="">—</option>{(o?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>
+        <Field label={t('site')} name="siteId" error={error}><select value={f.siteId} onChange={(e) => set('siteId', e.target.value)} style={big}><option value="">—</option>{(o?.sites ?? []).filter((s) => String(s.projectId) === String(f.projectId)).map((s) => <option key={s.id} value={s.id}>{s.code}</option>)}</select></Field>
+        <Field label={t('ncr.type')} name="ncrType" error={error}><select value={f.ncrType} onChange={(e) => set('ncrType', e.target.value)} style={big}>{TYPES.map((x) => <option key={x} value={x}>{t(`nt.${x}`)}</option>)}</select></Field>
+        <Field label={t('ncr.severity')} name="severity" error={error}><select value={f.severity} onChange={(e) => set('severity', e.target.value)} style={big} data-testid="ncrn-severity">{SEVS.map((x) => <option key={x} value={x}>{t(`sev.${x}`)}</option>)}</select></Field>
+        <Field label={t('ncr.responsible')} name="responsibleType" error={error}><select value={f.responsibleType} onChange={(e) => set('responsibleType', e.target.value)} style={big} data-testid="ncrn-resp">{RESP.map((x) => <option key={x} value={x}>{t(`resp.${x}`)}</option>)}</select></Field>
+        {f.responsibleType !== 'OWN_CREW' && <Field label={t('ncr.party')} name="responsibleId" error={error}><select value={f.responsibleId} onChange={(e) => set('responsibleId', e.target.value)} style={big} data-testid="ncrn-party"><option value="">—</option>{(o?.partners ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></Field>}
+        <Field label={t('ncr.spec')} name="specRef" error={error}><input value={f.specRef} onChange={(e) => set('specRef', e.target.value)} maxLength={200} style={big} /></Field></div>
+        <Field label={t('ncr.description')} name="description" error={error}><textarea rows={3} value={f.description} onChange={(e) => set('description', e.target.value)} maxLength={2000} style={{ width: '100%', fontSize: '1rem' }} data-testid="ncrn-description" /></Field>
+        <div className="actions-row"><label className="btn" style={big}>{t('perf.photo')}<input type="file" accept="image/*" capture="environment" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) setPhotos((p) => [...p, file]); e.target.value = ''; }} data-testid="ncrn-photo" /></label><span className="muted" data-testid="ncrn-photos">{photos.length}</span></div>
+        <div className="actions-row"><button type="button" className="btn btn-primary" style={big} disabled={busy || !f.projectId || f.description.length < 5} onClick={send} data-testid="ncrn-send">{t('ncr.raise')}</button></div></div>
+    </section>
+  );
+}

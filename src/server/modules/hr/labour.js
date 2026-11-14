@@ -596,9 +596,19 @@ export function createLabourService({ db, dep, vaultKey }) {
     const b = String(badge).trim(); const token = b.startsWith('LAB:') ? b.slice(4) : null;
     return db.prepare(`SELECT id FROM lab_workers WHERE company_id = ? AND root_id = id AND deleted_at IS NULL AND ${token ? 'qr_token = ?' : 'worker_code = ? COLLATE NOCASE'}`).get(companyId, token ?? b)?.id ?? null;
   };
+  /** The adapter of HSE (part 19.01): the induction or medical status that the HSE module has recorded is written on the worker, with the audit trail and the clearance event, so that the deployment guard (BR-02) reads one truth. Only the fields given change. */
+  const applyHse = (actor, workerId, b) => {
+    const w = db.prepare('SELECT * FROM lab_workers WHERE id = ? AND company_id = ? AND deleted_at IS NULL AND root_id = id').get(workerId, actor.companyId); if (!w) return null;
+    const next = { induction: b.inductionStatus ?? w.induction_status, inductionDate: 'inductionDate' in b ? b.inductionDate : w.induction_date, medical: b.medicalStatus ?? w.medical_status, medicalUntil: 'medicalValidUntil' in b ? b.medicalValidUntil : w.medical_valid_until };
+    if (next.induction === w.induction_status && next.inductionDate === w.induction_date && next.medical === w.medical_status && next.medicalUntil === w.medical_valid_until) return w;
+    db.prepare('UPDATE lab_workers SET induction_status = ?, induction_date = ?, medical_status = ?, medical_valid_until = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(next.induction, next.inductionDate ?? null, next.medical, next.medicalUntil ?? null, actor.user, nowIso(), w.id);
+    writeAudit(db, { entity: 'lab_workers', entityId: w.id, action: 'clearance', reason: b.reason ?? 'HSE', oldValues: { induction: w.induction_status, medical: w.medical_status }, newValues: { induction: next.induction, medical: next.medical }, actor: actor.user, companyId: actor.companyId });
+    event('lab.worker.clearance_changed', actor, 'lab_worker', w.id, w.company_id, { workerCode: w.worker_code, induction: next.induction, medical: next.medical, medicalValidUntil: next.medicalUntil ?? null }, null, null);
+    return db.prepare('SELECT * FROM lab_workers WHERE id = ?').get(w.id);
+  };
   const approvals = { /* the worklist is the common approval inbox (04.03) */ };
   void approvals; void usernameOf; void root;
-  return { workers, register, lookup, contractors, wages, cycle, widget, applicable: (c, q) => applicable(c, q), minimumWage, punchCheck, byToken, decisions: { worker: decideWorker, wage: decideWage }, trades };
+  return { workers, register, lookup, contractors, wages, cycle, widget, applicable: (c, q) => applicable(c, q), minimumWage, punchCheck, byToken, applyHse, decisions: { worker: decideWorker, wage: decideWage }, trades };
 }
 
 fileEntities.register({

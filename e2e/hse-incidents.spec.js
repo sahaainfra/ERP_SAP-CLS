@@ -1,0 +1,24 @@
+import { test, expect } from '@playwright/test';
+import { api, company, jpeg, noOverflow, open, watch, world, iso } from './hse-helpers.js';
+
+// Part 19.03 in the browser: a supervisor reports an injury on the phone layout with a photograph; the HSE engineer upgrades it to a lost-time injury, investigates, sets an action, records the statutory notification;
+// the action is done, the closure is approved by the HSE engineer, the project manager and the director; the lesson is shared and shows in the bulletin. Desktop and mobile.
+const OUT = 'docs/erp/screenshots/hse-incidents';
+const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
+test('Incident: report, classify, investigate, actions, statutory, closure approval, lesson shared', async ({ browser, request }, info) => {
+  test.setTimeout(300_000);
+  const t = `i${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}`; const c = await company(request, t.toUpperCase()); const s = world(c, t, [['cs', 'CSUP'], ['he', 'HSEE'], ['h2', 'HSEE'], ['pm', 'PM'], ['di', 'DIR'], ['se', 'SE']]);
+  const cs = await open(browser, info, c, 'CSUP', s.u('cs'), '/hse/incident-report'); const p = cs.page; const errors = watch(p);
+  await expect(p.getByTestId('hse-incident-report')).toBeVisible(); await p.getByTestId('hse-project').selectOption(String(s.A)); await p.getByTestId('hse-site').selectOption(String(s.site)); await p.getByTestId('hse-inc-what').fill('A worker slipped on the wet shuttering and hurt a wrist'); await p.getByTestId('hse-inc-person').fill('Ramesh Kumar'); await p.getByTestId('hse-inc-immediate').fill('First aid given');
+  await p.getByTestId('hse-inc-photo').setInputFiles({ name: 'scene.jpg', mimeType: 'image/jpeg', buffer: jpeg('scene') }); await noOverflow(p); await shot(p, '1-report', info); await p.getByTestId('hse-inc-send').click(); await expect(p.getByTestId('hse-incident-object')).toHaveAttribute('data-state', 'REPORTED'); await expect(p.getByTestId('hse-inc-lost-view')).toContainText('1 photo'); const url = p.url().replace(/^https?:\/\/[^/]+/, '');
+  const he = await open(browser, info, c, 'HSEE', s.u('he'), url); const h = he.page; await h.getByTestId('hse-inc-reclass').selectOption('LTI'); await h.getByTestId('hse-inc-reclass-lost').fill('4'); await h.getByTestId('hse-inc-reclass-go').click(); await expect(h.getByTestId('hse-inc-lost-view')).toContainText('Lost days: 4');
+  await h.getByTestId('hse-inv-root').fill('No mats on the wet slab'); await h.getByTestId('hse-inv-save').click(); await expect(h.getByTestId('hse-inc-note')).toBeVisible(); await h.getByTestId('hse-act-text').fill('Fit anti-slip mats on every wet slab'); await h.getByTestId('hse-act-owner').fill(s.u('se')); await h.getByTestId('hse-act-due').fill(iso(5)); await h.getByTestId('hse-act-add').click(); await expect(h.getByTestId('hse-inc-action-row')).toHaveCount(1);
+  await h.getByTestId('hse-st-authority').fill('Inspector of Factories'); await h.getByTestId('hse-st-form').fill('Form 18'); await h.getByTestId('hse-st-date').fill(iso(0)); await h.getByTestId('hse-st-add').click(); await expect(h.getByTestId('hse-inc-statutory')).toContainText('Form 18'); await noOverflow(h); await shot(h, '2-investigation', info);
+  const se = await open(browser, info, c, 'SE', s.u('se'), url); await se.page.getByTestId('hse-inc-action-done').click(); await expect(se.page.getByTestId('hse-inc-action-row')).toContainText('Done');
+  await h.reload(); await h.getByTestId('hse-submit').click(); await expect(h.getByTestId('hse-incident-object')).toHaveAttribute('data-state', 'CLOSURE_REVIEW');
+  for (const [roles, user] of [['HSEE', 'h2'], ['PM', 'pm'], ['DIR', 'di']]) { const a = await open(browser, info, c, roles, s.u(user), url); await a.page.getByTestId('hse-approve').click(); await expect(a.page.getByTestId('hse-note')).toBeVisible(); }
+  await h.reload(); await expect(h.getByTestId('hse-incident-object')).toHaveAttribute('data-state', 'CLOSED'); await h.getByTestId('hse-ls-title').fill('Wet shuttering'); await h.getByTestId('hse-ls-text').fill('Keep shuttering dry and fit mats on wet slabs.'); await h.getByTestId('hse-ls-share').click(); await expect(h.getByTestId('hse-inc-lesson')).toBeVisible(); await noOverflow(h); await shot(h, '3-closed', info);
+  await se.page.goto('/hse/lessons'); await expect(se.page.getByTestId('hse-les-card')).toHaveCount(1); await noOverflow(se.page); await shot(se.page, '4-lessons', info);
+  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/hse/incidents'); await expect(pm.page.getByTestId('hse-incidents')).toBeVisible(); await expect(pm.page.getByTestId('hse-inc-stats')).toContainText('1 incident'); await noOverflow(pm.page); await shot(pm.page, '5-register', info); void api;
+  expect(errors, errors.join('\n')).toEqual([]);
+});

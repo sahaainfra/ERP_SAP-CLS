@@ -27,3 +27,52 @@ export const pa = {
   candidates: (q) => get(`/operators/candidates${qs({ q })}`), assign: (b) => post('/operators', b), endOperator: (id, reason) => post(`/operators/${id}/end`, { reason }),
   reqList: async (q) => (await api.get(`/plant/requisitions${qs(q)}`)),
 };
+
+// Log books, breakdowns and utilisation (part 17.03).
+export const LOG_TONE = REQ_TONE;
+export const lg = {
+  options: (q) => get(`/logs/options${qs(q)}`), log: (id) => get(`/logs/${id}`), create: (b) => post('/logs', b), update: (id, b) => patch(`/logs/${id}`, b), act: (id, action, b) => post(`/logs/${id}/${action}`, b), attach: (id, b) => post(`/logs/${id}/files`, b), history: (id) => get(`/logs/${id}/history`),
+  worklist: async (q) => (await api.get(`/plant/logs/worklist${qs(q)}`)), breakdown: (id) => get(`/breakdowns/${id}`), report: (b) => post('/breakdowns', b), resolve: (id, b) => post(`/breakdowns/${id}/resolve`, b),
+  utilisation: (q) => get(`/utilisation${qs(q)}`), records: (q) => get(`/utilisation/records${qs(q)}`),
+};
+
+// Fuel: tanks, receipts, issues, dips, reports and anomalies (part 17.04).
+export const FUEL_TONE = REQ_TONE; export const ANOM_TONE = { OPEN: 'RETURNED', SUBMITTED: 'IN_REVIEW', ACCEPTED: 'APPROVED', CONFIRMED: 'REJECTED', VOID: 'CANCELLED' };
+export const fu = {
+  options: () => get('/issues/options'), issue: (id) => get(`/issues/${id}`), create: (b) => post('/issues', b), update: (id, b) => patch(`/issues/${id}`, b), act: (id, action, b) => post(`/issues/${id}/${action}`, b), attach: (id, fileId) => post(`/issues/${id}/files`, { fileId }), history: (id) => get(`/issues/${id}/history`),
+  tank: (id) => get(`/fuel/tanks/${id}`), tankCreate: (b) => post('/fuel/tanks', b), tankUpdate: (id, b) => patch(`/fuel/tanks/${id}`, b), receive: (id, b) => post(`/fuel/tanks/${id}/receipts`, b), receipts: (q) => get(`/fuel/receipts${qs(q)}`), cancelReceipt: (id, reason) => post(`/fuel/receipts/${id}/cancel`, { reason }),
+  dip: (b) => post('/fuel/dips', b), dipFile: (id, fileId) => post(`/fuel/dips/${id}/file`, { fileId }), reconciliation: (q) => get(`/fuel/reconciliation${qs(q)}`), consumption: (q) => get(`/fuel/consumption${qs(q)}`), records: (q) => get(`/fuel/consumption/records${qs(q)}`),
+  anomaly: (id) => get(`/fuel/anomalies/${id}`), anomalySummary: () => get('/fuel/anomalies/summary'), anomalyAct: (id, action, b) => post(`/fuel/anomalies/${id}/${action}`, b), anomalyHistory: (id) => get(`/fuel/anomalies/${id}/history`),
+  list: async (p, q) => (await api.get(`/plant${p}${qs(q)}`)),
+};
+
+// Maintenance: plans, job cards, spares, dashboard and metrics (part 17.05).
+export const JOB_TONE = REQ_TONE; export const WORK_TONE = { OPEN: 'DRAFT', IN_PROGRESS: 'IN_REVIEW', CLOSED: 'APPROVED' }; export const PM_TONE = { OK: 'APPROVED', DUE: 'RETURNED', OVERDUE: 'REJECTED' };
+export const mt = {
+  dashboard: (q) => get(`/maintenance/dashboard${qs(q)}`), metrics: (q) => get(`/maintenance/metrics${qs(q)}`), serviceHistory: (equipmentId) => get(`/maintenance/history${qs({ equipmentId })}`),
+  options: () => get('/job-cards/options'), plans: (q) => api.get(`/plant/pm/plans${qs(q)}`), planCreate: (b) => post('/pm/plans', b), planUpdate: (id, b) => patch(`/pm/plans/${id}`, b), due: (q) => api.get(`/plant/pm/due${qs(q)}`),
+  job: (id) => get(`/job-cards/${id}`), create: (b) => post('/job-cards', b), update: (id, b) => patch(`/job-cards/${id}`, b), act: (id, action, b) => post(`/job-cards/${id}/${action}`, b), history: (id) => get(`/job-cards/${id}/history`),
+  spareAdd: (id, b) => post(`/job-cards/${id}/spares`, b), spareAct: (id, sid, action, b) => post(`/job-cards/${id}/spares/${sid}/${action}`, b),
+};
+
+// Hire: agreements, bills and the comparison with owned cost (part 17.06).
+export const HIRE_TONE = REQ_TONE;
+export const hr = {
+  options: () => get('/hire-agreements/options'), agreement: (id) => get(`/hire-agreements/${id}`), agrCreate: (b) => post('/hire-agreements', b), agrUpdate: (id, b) => patch(`/hire-agreements/${id}`, b), agrAct: (id, action, b) => post(`/hire-agreements/${id}/${action}`, b), agrHistory: (id) => get(`/hire-agreements/${id}/history`),
+  bill: (id) => get(`/hire-bills/${id}`), billPreview: (b) => post('/hire-bills/preview', b), billCreate: (b) => post('/hire-bills', b), billUpdate: (id, b) => patch(`/hire-bills/${id}`, b), billAct: (id, action, b) => post(`/hire-bills/${id}/${action}`, b), billHistory: (id) => get(`/hire-bills/${id}/history`),
+  agreements: (q) => api.get(`/plant/hire-agreements${qs(q)}`), comparison: (q) => get(`/hire/comparison${qs(q)}`),
+};
+
+// Fleet control tower, owning and operating cost, telematics and disposal recommendations (part 17.07).
+export const FLEET_TONE = REQ_TONE;
+export const fl = {
+  tower: (q) => get(`/fleet/tower${qs(q)}`), costs: (q) => get(`/fleet/costs${qs(q)}`), replacement: (q) => get(`/fleet/replacement${qs(q)}`), items: (id) => get(`/fleet/equipment/${id}/cost-items`), itemAdd: (id, b) => post(`/fleet/equipment/${id}/cost-items`, b), snapshot: (b) => post('/fleet/snapshots', b),
+  disposal: (id) => get(`/disposal-recs/${id}`), disposalCreate: (b) => post('/disposal-recs', b), disposalAct: (id, action, b) => post(`/disposal-recs/${id}/${action}`, b), disposalHistory: (id) => get(`/disposal-recs/${id}/history`), disposals: (q) => api.get(`/plant/disposal-recs${qs(q)}`),
+};
+
+// Cross-project resource and capacity planning (part 17.08).
+export const RP_TONE = REQ_TONE;
+export const cp = {
+  heatmap: (q) => get(`/capacity/heatmap${qs(q)}`), gaps: (q) => get(`/capacity/gaps${qs(q)}`), refresh: () => post('/capacity/refresh', {}),
+  options: () => get('/resource-plans/options'), evaluate: (b) => post('/resource-plans/evaluate', b), plan: (id) => get(`/resource-plans/${id}`), create: (b) => post('/resource-plans', b), update: (id, b) => patch(`/resource-plans/${id}`, b), act: (id, action, b) => post(`/resource-plans/${id}/${action}`, b), history: (id) => get(`/resource-plans/${id}/history`),
+};

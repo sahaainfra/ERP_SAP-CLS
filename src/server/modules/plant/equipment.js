@@ -20,6 +20,8 @@ export const DOC_TYPES = { RC: 'Registration certificate (RC)', INSURANCE: 'Insu
 export const FUEL_TYPES = { DIESEL: 'Diesel', PETROL: 'Petrol', CNG: 'CNG', ELECTRIC: 'Electric', NONE: 'No fuel' };
 /** Where a machine may go from where it is. Disposal is final; deployment needs a project and passes the certificate check. */
 export const TRANSITIONS = { AVAILABLE: ['DEPLOYED', 'UNDER_MAINTENANCE', 'BREAKDOWN', 'IDLE', 'DEMOBILISED', 'DISPOSED'], DEPLOYED: ['DEPLOYED', 'AVAILABLE', 'UNDER_MAINTENANCE', 'BREAKDOWN', 'IDLE', 'DEMOBILISED'], UNDER_MAINTENANCE: ['AVAILABLE', 'DEPLOYED', 'BREAKDOWN', 'IDLE', 'DISPOSED'], BREAKDOWN: ['AVAILABLE', 'UNDER_MAINTENANCE', 'IDLE', 'DISPOSED'], IDLE: ['AVAILABLE', 'DEPLOYED', 'UNDER_MAINTENANCE', 'BREAKDOWN', 'DEMOBILISED', 'DISPOSED'], DEMOBILISED: ['AVAILABLE', 'DEPLOYED', 'DISPOSED'], DISPOSED: [] };
+/** Further checks other parts add to `allocatable` (17.05: an overdue critical service): each takes (equipment row, date) and returns the problems [{ code, message }] that block. */
+export const allocatableChecks = [];
 const EDITABLE = ['DRAFT', 'RETURNED']; const UNIT = { HOURS: 'L_PER_HOUR', KM: 'KM_PER_L' };
 const ROAD_TYPES = ['RC', 'INSURANCE', 'FITNESS', 'PUC']; const LIFT_TYPES = ['LOAD_TEST'];
 const satisfiers = (type) => (type === 'LOAD_TEST' ? ['LOAD_TEST', 'THIRD_PARTY_INSPECTION'] : [type]);
@@ -206,7 +208,8 @@ export function createPlantService({ db, base, flags }) {
       if (!e.approved_at || ['REJECTED', 'CANCELLED'].includes(e.status)) problems.push({ code: 'NOT_REGISTERED', message: 'This equipment is not registered (approved) yet.' });
       if (['DISPOSED', ...(opts.planning ? [] : ['DEMOBILISED'])].includes(e.equip_state)) problems.push({ code: 'STATE', message: `This equipment is ${EQUIP_STATE[e.equip_state].toLowerCase()}.` }); else if (['BREAKDOWN', 'UNDER_MAINTENANCE'].includes(e.equip_state)) problems.push({ code: 'STATE', message: `This equipment is ${EQUIP_STATE[e.equip_state].toLowerCase()}.` });
       const certs = comp.blocking.map((x) => ({ code: x.state === 'MISSING' ? 'CERT_MISSING' : 'CERT_EXPIRED', docType: x.docType, message: problemText(x) }));
-      return { allowed: problems.length === 0 && (certs.length === 0 || !blocks(e.company_id)), blockedByCertificate: certs.length > 0 && blocks(e.company_id), warnings: certs.length && !blocks(e.company_id) ? certs : [], problems: [...problems, ...(blocks(e.company_id) ? certs : [])], equipmentId: e.id, assetCode: e.asset_code, state: e.equip_state };
+      const extra = allocatableChecks.flatMap((f) => f(e, today));
+      return { allowed: problems.length === 0 && extra.length === 0 && (certs.length === 0 || !blocks(e.company_id)), blockedByCertificate: certs.length > 0 && blocks(e.company_id), warnings: certs.length && !blocks(e.company_id) ? certs : [], problems: [...problems, ...(blocks(e.company_id) ? certs : []), ...extra], equipmentId: e.id, assetCode: e.asset_code, state: e.equip_state };
     },
     assertAllocatable(actor, id, opts) { const r = equipment.allocatable(actor, id, opts); if (!r.allowed) throw unprocessable(`${r.assetCode} cannot be put to work: ${r.problems.map((p) => p.message).join('; ')}.`, r.problems); return r; },
     /** FR-03: the status and the current project and site. Deployment needs a project and passes the certificate check (BR-01). */
