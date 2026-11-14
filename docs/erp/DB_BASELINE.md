@@ -5211,6 +5211,208 @@ Indexes:
 - ux_ctr_cr_no (unique): company_id, cr_no
 - ux_ctr_cr_doc (unique): company_id, doc_no
 
+## ctr_claim_events
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| contract_id | INTEGER |  |  |  |
+| claim_id | INTEGER |  |  |  |
+| event_kind | TEXT | yes |  |  |
+| event_date | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| ref_entity | TEXT |  |  |  |
+| ref_id | INTEGER |  |  |  |
+| ref_label | TEXT |  |  |  |
+| time_bar_date | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: claim_id -> ctr_claims(id), contract_id -> ctr_contracts(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ux_ctr_ce_ref (unique): company_id, ref_entity, ref_id
+- ix_ctr_claim_events_claim_id: claim_id
+- ix_ctr_claim_events_contract_id: contract_id
+- ix_ctr_claim_events_org_project_id: org_project_id
+- ix_ctr_claim_events_company_id: company_id
+
+## ctr_claim_evidence
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| claim_id | INTEGER | yes |  |  |
+| entity | TEXT | yes |  |  |
+| entity_id | INTEGER | yes |  |  |
+| label | TEXT | yes |  |  |
+| snapshot_json | TEXT | yes |  |  |
+| snapshot_hash | TEXT | yes |  |  |
+| snapshot_file_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: claim_id -> ctr_claims(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_claim_evidence_claim_id: claim_id
+- ix_ctr_claim_evidence_company_id: company_id
+- ux_ctr_cev_key (unique): claim_id, entity, entity_id
+
+## ctr_claim_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| claim_id | INTEGER | yes |  |  |
+| seq | INTEGER | yes |  |  |
+| log_kind | TEXT | yes |  |  |
+| on_date | TEXT | yes |  |  |
+| eot_days | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  | 0 |
+| reference_no | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: claim_id -> ctr_claims(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_claim_log_claim_id: claim_id
+- ix_ctr_claim_log_company_id: company_id
+- ux_ctr_cl_seq (unique): claim_id, seq
+
+## ctr_claim_quantum
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| claim_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| head | TEXT | yes |  |  |
+| basis | TEXT | yes |  |  |
+| calculation_json | TEXT | yes |  | '{}' |
+| amount_paise | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: claim_id -> ctr_claims(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_claim_quantum_claim_id: claim_id
+- ix_ctr_claim_quantum_company_id: company_id
+- ux_ctr_cq_line (unique): claim_id, line_no
+
+## ctr_claims
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| claim_no | TEXT | yes |  |  |
+| claim_type | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| event_date | TEXT | yes |  |  |
+| clause_refs | TEXT |  |  |  |
+| entitlement | TEXT |  |  |  |
+| time_bar_days | INTEGER | yes |  | 28 |
+| time_bar_date | TEXT | yes |  |  |
+| notice_letter_id | INTEGER |  |  |  |
+| notice_date | TEXT |  |  |  |
+| bar_status | TEXT | yes |  | 'OPEN' |
+| delay_id | INTEGER |  |  |  |
+| eot_claimed_days | INTEGER | yes |  | 0 |
+| amount_claimed_paise | INTEGER | yes |  | 0 |
+| eot_granted_days | INTEGER |  |  |  |
+| amount_awarded_paise | INTEGER |  |  |  |
+| submission_no | INTEGER | yes |  | 0 |
+| claim_state | TEXT | yes |  | 'PREPARING' |
+| determined_on | TEXT |  |  |  |
+| determination_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: delay_id -> plan_delays(id), notice_letter_id -> engg_letters(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_clm_bar: company_id, bar_status, time_bar_date
+- ix_ctr_claims_delay_id: delay_id
+- ix_ctr_claims_notice_letter_id: notice_letter_id
+- ix_ctr_claims_contract_id: contract_id
+- ix_ctr_claims_org_site_id: org_site_id
+- ix_ctr_claims_org_project_id: org_project_id
+- ux_ctr_clm_doc (unique): company_id, doc_no
+
 ## ctr_clauses
 
 | Column | Type | Not null | Key | Default |
@@ -5318,6 +5520,120 @@ Indexes:
 - ix_ctr_contracts_org_project_id: org_project_id
 - ux_ctr_contracts_no (unique): company_id, contract_no
 - ux_ctr_contracts_doc (unique): company_id, doc_no
+
+## ctr_dispute_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| dispute_id | INTEGER | yes |  |  |
+| log_kind | TEXT | yes |  |  |
+| on_date | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  | 0 |
+| note | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: dispute_id -> ctr_disputes(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_dispute_log_dispute_id: dispute_id
+- ix_ctr_dispute_log_company_id: company_id
+
+## ctr_disputes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| dispute_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| claim_id | INTEGER |  |  |  |
+| contract_id | INTEGER | yes |  |  |
+| title | TEXT | yes |  |  |
+| forum | TEXT | yes |  |  |
+| stage | TEXT | yes |  |  |
+| amount_in_dispute_paise | INTEGER | yes |  | 0 |
+| next_hearing | TEXT |  |  |  |
+| counsel | TEXT |  |  |  |
+| cost_to_date_paise | INTEGER | yes |  | 0 |
+| dispute_state | TEXT | yes |  | 'OPEN' |
+| outcome | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contract_id -> ctr_contracts(id), claim_id -> ctr_claims(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_disputes_contract_id: contract_id
+- ix_ctr_disputes_claim_id: claim_id
+- ix_ctr_disputes_org_site_id: org_site_id
+- ix_ctr_disputes_org_project_id: org_project_id
+- ux_ctr_dsp_no (unique): company_id, dispute_no
+- ux_ctr_dsp_doc (unique): company_id, doc_no
+
+## ctr_eot_awards
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| claim_id | INTEGER | yes |  |  |
+| contract_id | INTEGER | yes |  |  |
+| days | INTEGER | yes |  |  |
+| completion_before | TEXT |  |  |  |
+| completion_after | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: contract_id -> ctr_contracts(id), claim_id -> ctr_claims(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ctr_eot_awards_contract_id: contract_id
+- ix_ctr_eot_awards_company_id: company_id
+- ux_ctr_eot_claim (unique): claim_id
 
 ## ctr_insurance_claims
 
