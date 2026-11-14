@@ -1556,3 +1556,24 @@ Flag `ff.rmc.p2002`, tables `bp_requisitions`, `bp_batches`, `bp_delivery_ticket
 
 ## 155. Batching Plant Costing & Cost per m3 (part 20.03)
 Flag `ff.rmc.p2003`, tables `bp_cost_periods`, `bp_cost_lines`, `bp_cost_grades`, `bp_transfer_rates`, `bp_charges`, `bp_budgets`; service `src/server/modules/rmc/costing.js`. `perM3` and `chargeOf` are the only places a cost per m3 or a charge is worked out (integer paise, volume in thousandths). The AUTO lines of a period are replaced on every collection and the MANUAL lines stay, so collecting is repeatable. `periods.close` collects once more, takes the volume from approved received tickets, shares the conversion cost over the grades by volume (the last grade takes the rounding) and writes the grade rows and the charges in one transaction; `reopen` deletes them and publishes `rmc.charge.reversed`. A transfer rate is looked up by plant, grade and the end of the month (`rateAt`). Costs and rates are served only to holders of `rmc.cost.view` or `rmc.transfer_rate.view`, so no field is masked inside a response.
+
+## 156. Client Contract Register, Clauses, Obligations & Milestones (part 21.01)
+Module `ctr` (new), flag `ff.ctr.p2101`, tables `ctr_contracts`, `ctr_clauses`, `ctr_obligations`, `ctr_milestones`, `ctr_amendments`, `ctr_value_log`; service `src/server/modules/ctr/contracts.js`. `valueOf` and `recompute` are the only places the revised value is worked out: the value columns of a contract are written from its value history, which receives the original at activation, each approved amendment in its approval transaction and each variation through `applyVariation`. `termsOf(companyId, projectId)` is how billing (22.03), securities (21.02), PVC/LD (21.07) and claims (21.06) read the terms of the approved contract. The approval factory `createFlow` gives the lifecycle; workflow types `CTR_CONTRACT` and `CTR_AMENDMENT` with the chain commercial manager, project director, director.
+
+## 157. Securities: Bank Guarantees, Insurance, Retention & Deposits (part 21.02)
+Module `ctr`, flag `ff.ctr.p2102`, tables `ctr_bank_guarantees`, `ctr_bg_events`, `ctr_advances`, `ctr_insurances`, `ctr_insurance_claims`, `ctr_bank_limits`; service `src/server/modules/ctr/securities.js`. Approved records change only through confirmed requests; the daily sweep alerts once per offset.
+
+## 158. Subcontract & Work Order Management (Item-Rate and Labour-Rate) (part 21.03)
+Module `ctr`, flag `ff.ctr.p2103`, tables `ctr_work_orders`, `ctr_wo_items`, `ctr_wo_free_issue`, `ctr_wo_amendments`; service `src/server/modules/ctr/workorders.js`. Value, margin and flags are worked out only in the service; the commitment is posted and amended by the delta through the budget ledger.
+
+## 159. Subcontractor Workspace, Compliance, Labour Strength & Performance (part 21.04)
+Module `ctr`, flag `ff.ctr.p2104`, tables `ctr_sub_compliance`, `ctr_sub_waivers`, `ctr_sub_manpower`, `ctr_sub_holds`, `ctr_sub_ratings`; service `src/server/modules/ctr/subcontractors.js`. The hold is computed only by `holdReasons` and recomputed on every change; the daily job opens the month, sets holds, tells shortfalls and rates.
+
+## 160. Change & Variation Management (part 21.05)
+Module `ctr`, flag `ff.ctr.p2105`, tables `ctr_change_requests`, `ctr_variation_orders`, `ctr_vo_items`; service `src/server/modules/ctr/variations.js`; BOQ hook `reviseFromVariation` in `src/server/modules/proj/boq.js`. Values are worked out only in the service; the variation order alone moves the contract value.
+
+## 161. Claims, Notices, EOT & Disputes (part 21.06)
+Module `ctr`, flag `ff.ctr.p2106`, tables `ctr_claims`, `ctr_claim_events`, `ctr_claim_quantum`, `ctr_claim_evidence`, `ctr_claim_log`, `ctr_eot_awards`, `ctr_disputes`, `ctr_dispute_log`; service `src/server/modules/ctr/claims.js`; contract adapter `applyEot` in `contracts.js`. The evidence table is immutable by trigger.
+
+## 162. Price Escalation, PVC & Liquidated Damages Computation (part 21.07)
+Module `ctr`, flag `ff.ctr.p2107`, tables `ctr_pvc_formulas`, `ctr_pvc_index_refs`, `ctr_escalation_calcs`, `ctr_ld_assessments`; service `src/server/modules/ctr/pvc.js`. The escalation and the LD are worked out only by `escalationOf` and `ldOf`; the index values stay in the shared master.

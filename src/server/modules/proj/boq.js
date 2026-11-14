@@ -266,6 +266,22 @@ export function createBoqService({ db }) {
     }
     retotal(to.id);
   }
+  /** The revised version of an approved variation as a copy of the latest frozen version; the caller has checked the right to ask. */
+  function revisedFor(actor, o, variationRef, name) {
+    const ok = variationProviders.map((f) => f(db, { companyId: actor.companyId, projectId: o.id, variationRef })).find(Boolean);
+    if (!ok) throw unprocessable(`Variation ${variationRef} is not an approved variation of this project: a revised BOQ is made only from an approved variation (21.05).`);
+    const base = db.prepare("SELECT * FROM proj_boq_versions WHERE org_project_id = ? AND status = 'APPROVED' AND vtype IN ('CONTRACT', 'REVISED') AND deleted_at IS NULL ORDER BY version_no DESC LIMIT 1").get(o.id);
+    if (!base) throw unprocessable('The contract BOQ is not frozen yet: there is nothing to revise.');
+    if (db.prepare("SELECT 1 FROM proj_boq_versions WHERE org_project_id = ? AND vtype = 'REVISED' AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND deleted_at IS NULL").get(o.id)) throw conflict('Another revised BOQ is open: finish or cancel it first.');
+    return transaction(db, () => {
+      const no = db.prepare('SELECT COALESCE(MAX(version_no), 0) + 1 AS n FROM proj_boq_versions WHERE org_project_id = ?').get(o.id).n;
+      const id = Number(db.prepare("INSERT INTO proj_boq_versions (company_id, doc_no, org_project_id, vtype, version_no, name, source_ref, parent_version_id, variation_ref, project_id, created_by, source_type, source_id) VALUES (?, ?, ?, 'REVISED', ?, ?, ?, ?, ?, ?, ?, 'proj_boq', ?)").run(actor.companyId, nextNo(actor), o.id, no, name?.trim() || `Revised BOQ for ${variationRef}`, `Variation ${ok.ref}`, base.id, variationRef, o.id, actor.user, String(o.id)).lastInsertRowid);
+      copyLines(actor, base, fresh(id));
+      writeAudit(db, { entity: 'proj_boq_versions', entityId: id, action: 'create_revised', newValues: { variation: variationRef, from: base.doc_no }, actor: actor.user, companyId: actor.companyId });
+      event('boq.version.created', actor, 'boq_version', id, actor.companyId, o.id, { projectId: o.id, versionId: id, type: 'REVISED', variationRef });
+      return id;
+    });
+  }
   const versions = {
     list(actor, query) {
       need(actor, 'proj.version.view', 'see BOQ versions'); const s = scopeSql(actor);
@@ -294,18 +310,20 @@ export function createBoqService({ db }) {
     /** BR-02: a revised version is made only from an approved variation (21.05), as a copy of the latest frozen version. */
     createRevised(actor, { projectId, variationRef, name }) {
       const o = project(actor, projectId, 'proj.version.create');
-      const ok = variationProviders.map((f) => f(db, { companyId: actor.companyId, projectId: o.id, variationRef })).find(Boolean);
-      if (!ok) throw unprocessable(`Variation ${variationRef} is not an approved variation of this project: a revised BOQ is made only from an approved variation (21.05).`);
-      const base = db.prepare("SELECT * FROM proj_boq_versions WHERE org_project_id = ? AND status = 'APPROVED' AND vtype IN ('CONTRACT', 'REVISED') AND deleted_at IS NULL ORDER BY version_no DESC LIMIT 1").get(o.id);
-      if (!base) throw unprocessable('The contract BOQ is not frozen yet: there is nothing to revise.');
-      if (db.prepare("SELECT 1 FROM proj_boq_versions WHERE org_project_id = ? AND vtype = 'REVISED' AND status IN ('DRAFT', 'SUBMITTED', 'RETURNED') AND deleted_at IS NULL").get(o.id)) throw conflict('Another revised BOQ is open: finish or cancel it first.');
+      return versions.get(actor, revisedFor(actor, o, variationRef, name));
+    },
+    /** FR-04 of 21.05: the approved variation makes its revised BOQ itself: the quantities of the varied items change and the extra items are added. What cannot be placed (a mapped quantity) is returned as a note for the QS. The variation order was approved by its own chain, so this path asks no BOQ right. */
+    reviseFromVariation(companyId, { projectId, variationRef, user, name, changes }) {
+      const o = orgOf(Number(projectId)); if (!o || o.company_id !== companyId) throw notFound('That project does not exist.'); const actor = { user, companyId, roles: ['SYSTEM'] }; const notes = [];
       return transaction(db, () => {
-        const no = db.prepare('SELECT COALESCE(MAX(version_no), 0) + 1 AS n FROM proj_boq_versions WHERE org_project_id = ?').get(o.id).n;
-        const id = Number(db.prepare("INSERT INTO proj_boq_versions (company_id, doc_no, org_project_id, vtype, version_no, name, source_ref, parent_version_id, variation_ref, project_id, created_by, source_type, source_id) VALUES (?, ?, ?, 'REVISED', ?, ?, ?, ?, ?, ?, ?, 'proj_boq', ?)").run(actor.companyId, nextNo(actor), o.id, no, name?.trim() || `Revised BOQ for ${variationRef}`, `Variation ${ok.ref}`, base.id, variationRef, o.id, actor.user, String(o.id)).lastInsertRowid);
-        copyLines(actor, base, fresh(id));
-        writeAudit(db, { entity: 'proj_boq_versions', entityId: id, action: 'create_revised', newValues: { variation: variationRef, from: base.doc_no }, actor: actor.user, companyId: actor.companyId });
-        event('boq.version.created', actor, 'boq_version', id, actor.companyId, o.id, { projectId: o.id, versionId: id, type: 'REVISED', variationRef });
-        return versions.get(actor, id);
+        const id = revisedFor(actor, o, variationRef, name); const v = fresh(id); const lines = db.prepare('SELECT * FROM proj_boq_lines WHERE version_id = ? AND deleted_at IS NULL').all(id);
+        for (const c of changes) {
+          try {
+            if (c.itemCode) { const l = lines.find((y) => y.item_code === c.itemCode); if (!l) { notes.push(`${c.itemCode}: not in the revised BOQ`); continue; } if (mappedQty(l.id).n > 0) { notes.push(`${c.itemCode}: its quantity is mapped to the WBS; change the mapping and the quantity by hand (${num(l.qty + c.qtyChange, 'quantity')} is the new quantity)`); continue; } const q = l.qty + c.qtyChange; if (q < 0) { notes.push(`${c.itemCode}: the quantity would go below zero`); continue; } db.prepare('UPDATE proj_boq_lines SET qty = ?, amount = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(q, Math.round((q * l.rate) / 100000), user, nowIso(), l.id); }
+            else putLine(actor, v, { kind: 'ITEM', itemCode: c.extraCode, description: c.description, uom: c.uom ?? undefined, qty: num(c.qtyChange, 'quantity'), rate: num(c.rate, 'rate'), isExtra: true, analysisId: c.analysisId ?? undefined, costCodeId: c.costCodeId ?? undefined });
+          } catch (e) { notes.push(`${c.itemCode ?? c.extraCode}: ${e.message}`); }
+        }
+        retotal(id); return { versionId: id, docNo: v.doc_no, notes };
       });
     },
     update(actor, id, b) {
