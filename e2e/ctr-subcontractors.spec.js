@@ -14,7 +14,7 @@ test('Subcontractor workspace: compliance, hold, waiver request, verification, s
   const sb = await open(browser, info, c, 'SUBCO', s.u('sb'), '/ctr/sub-compliance'); const p = sb.page; const errors = watch(p);
   await expect(p.getByTestId('ctr-sub-compliance')).toBeVisible(); await p.getByTestId('ctr-sc-open').click(); await expect(p.getByTestId('ctr-note')).toBeVisible();
   d.prepare("UPDATE ctr_sub_compliance SET due_date = ? WHERE company_id = ?").run(day(-3), c);
-  await p.reload(); await p.getByRole('link', { name: /CSC|T\// }).first().click().catch(async () => { await p.getByTestId('ctr-sub-compliance').locator('a').first().click(); }); await expect(p.getByTestId('ctr-sc-object')).toBeVisible(); const url = p.url().replace(/^https?:\/\/[^/]+/, '');
+  const cid = d.prepare('SELECT id FROM ctr_sub_compliance WHERE company_id = ?').get(c).id; await p.goto(`/ctr/sub-compliance?id=${cid}`); await expect(p.getByTestId('ctr-sc-object')).toBeVisible(); const url = p.url().replace(/^https?:\/\/[^/]+/, '');
   for (const code of ['CLRA', 'ESI', 'WAGE_REG', 'WC_INSURANCE', 'BOCW']) { await p.getByTestId(`ctr-sc-status-${code}`).selectOption('OK'); await p.getByTestId(`ctr-sc-ref-${code}`).fill(`${code}/${t}`); }
   await p.getByTestId('ctr-sc-status-GST_RETURN').selectOption('NA'); await noOverflow(p); await shot(p, '1-checklist', info); await p.getByTestId('ctr-sc-save').click(); await expect(p.getByTestId('ctr-note')).toBeVisible();
   await p.reload(); await expect(p.getByTestId('ctr-sc-object')).toHaveAttribute('data-missing', '1'); await expect(p.getByTestId('ctr-sc-overdue')).toBeVisible();
