@@ -3387,7 +3387,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/qa/snag-status', g: 'permission', k: 'qa.snag.view', s: 'parseSnagStatusQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/qa/snag-report', g: 'permission', k: 'qa.snag.view', s: 'parseUnitReportQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/qa/snag-report/pdf', g: 'permission', k: 'qa.snag.print', s: 'parseUnitReportQ', scope: 'company', rate: 'export', audit: true },
-  { m: 'GET', p: '/api/v1/qa/snags/options', g: 'permission', k: 'qa.snag.create', s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/qa/snags/options', g: 'permission', k: 'qa.snag.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/qa/snags/plans', g: 'permission', k: 'qa.snag.view', s: 'parsePlansQ', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/qa/snags/export', g: 'permission', k: 'qa.snag.export', s: null, scope: 'company', rate: 'export', audit: true },
   { m: 'GET', p: '/api/v1/qa/snags', g: 'permission', k: 'qa.snag.view', s: null, scope: 'company', rate: 'read', audit: false },

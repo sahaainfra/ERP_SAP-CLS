@@ -1517,3 +1517,6 @@ Module `qa`, flag `ff.qa.p1804`, tables `qa_ncrs`, `qa_capa_actions`; service `s
 
 ## 142. Concrete pour cards, cubes and traceability (part 18.05)
 Module `qa`, flag `ff.qa.p1805`, tables `qa_pour_cards`, `qa_pour_tickets`, `qa_cube_samples`, `qa_cube_results`; service `src/server/modules/qa/pour.js`. The pour card is the approval (clearance to pour); the pour, tickets and cubes are execution records after it. `requiredMean`, `groupVerdict` and `sdOf` are the one IS 456 calculation; groups are derived from the 28-day results in cast order, never stored.
+
+## 143. Snags and punch lists (part 18.06)
+Module `qa`, flag `ff.qa.p1806`, table `qa_snags`; service `src/server/modules/qa/snags.js`. A snag has no approval document: the control is the verification, written once in `close` (after-photograph present, verifier is not the rectifier). Rectify is the `submit` right and verify, close and reopen the `approve` right. A pin is a share (0..1) of the plan, stored in tenths of a percent of a hundredth; the plan itself is a drawing's current revision, shown by the client.
