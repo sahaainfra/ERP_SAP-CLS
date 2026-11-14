@@ -1,5 +1,6 @@
 import { registerModule } from '../../platform/shell/registry.js';
 import ContractsPage from './ContractsPage.jsx';
+import { EscalationsPage, LdExposurePage, PvcPage } from './PvcPages.jsx';
 import { ClaimWatchlistPage, ClaimsPage, DisputesPage } from './ClaimPages.jsx';
 import { VariationSummaryPage, VariationsPage } from './VariationPages.jsx';
 import { SubCompliancePage, SubStrengthPage, SubcontractorsPage } from './SubcontractorPages.jsx';
@@ -27,5 +28,8 @@ registerModule({
     { path: '/ctr/claims', label: 'Claims Register', icon: 'erp.group.commercial', permission: 'ctr.claim.view', flag: 'ff.ctr.p2106', Page: ClaimsPage },
     { path: '/ctr/claim-watchlist', label: 'Time-bar Watchlist', icon: 'erp.group.commercial', permission: 'ctr.claim.view', flag: 'ff.ctr.p2106', Page: ClaimWatchlistPage },
     { path: '/ctr/disputes', label: 'Disputes', icon: 'erp.group.commercial', permission: 'ctr.dispute.view', flag: 'ff.ctr.p2106', Page: DisputesPage },
+    { path: '/ctr/pvc', label: 'PVC Formulas and Price Indices', icon: 'erp.group.commercial', permission: 'ctr.pvc.view', flag: 'ff.ctr.p2107', Page: PvcPage },
+    { path: '/ctr/escalations', label: 'Escalation Computations', icon: 'erp.group.commercial', permission: 'ctr.escalation.view', flag: 'ff.ctr.p2107', Page: EscalationsPage },
+    { path: '/ctr/ld-exposure', label: 'LD Exposure', icon: 'erp.group.commercial', permission: 'ctr.ld.view', flag: 'ff.ctr.p2107', Page: LdExposurePage },
   ],
 });
