@@ -40,3 +40,11 @@ export const parseXiCreate = (b) => parse(z.object({ projectId: id, ...xiBase })
 export const parseXiUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(xiBase).filter(([k]) => k !== 'siteId').map(([k, f]) => [k, nd(f).optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
 export const parseXiDecide = (b) => parse(z.object({ decision: z.enum(['APPROVED', 'REJECTED']), decidedOn: day, decisionRef: opt(120), note: opt(500) }).strict(), b ?? {});
 export const parseImport = (b) => parse(z.object({ rows: z.array(z.record(z.string(), z.any())).max(500) }).passthrough(), b ?? {});
+
+// ---- part 22.03: the client RA bill ----
+const manualDed = z.object({ kind: z.enum(['SECURED_ADVANCE', 'CLIENT_MATERIAL', 'WATER_ELECTRICITY', 'OTHER']), label: opt(120), amount: z.number().gt(0).max(1e11), reason: text(300).min(3, 'Say what the recovery is for') }).strict();
+const cbBase = { siteId: oid, billType: z.enum(['RA', 'FINAL', 'ESCALATION', 'MILESTONE']).default('RA'), periodFrom: day, periodTo: day, supply: z.enum(['intra', 'inter']).default('intra'), gstPct: pct.nullish().transform((v) => v ?? null), manual: z.array(manualDed).max(30).default([]), ldAmount: z.number().min(0).max(1e11).nullish().transform((v) => v ?? 0), notes: opt(2000) };
+export const parseCbCreate = (b) => parse(z.object({ projectId: id, contractId: id, ...cbBase, net: z.number().optional() }).strict(), b ?? {});
+export const parseCbPreview = (b) => parse(z.object({ projectId: id, contractId: id, ...cbBase }).strict(), b ?? {});
+export const parseCbUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(cbBase).filter(([k]) => k !== 'siteId').map(([k, f]) => [k, nd(f).optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseCbSend = (b) => parse(z.object({ sentOn: day, clientRef: opt(120) }).strict(), b ?? {});

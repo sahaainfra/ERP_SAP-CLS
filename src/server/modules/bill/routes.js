@@ -6,7 +6,7 @@ import * as v from './validators.js';
 export function billRoutes(svc, { idempotent, idempotentRequired, flags }) {
   const r = Router(); const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => v.parseId(req.params.id); const q = (req) => req.query;
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
-  const { mb, recon, deviations, extras } = svc; const gate2 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2202') ? next() : next(notFound('Quantity reconciliation and deviation statements are not enabled for your company yet.')));
+  const { mb, recon, deviations, extras, clientBills } = svc; const gate3 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2203') ? next() : next(notFound('Client bills are not enabled for your company yet.'))); const gate2 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2202') ? next() : next(notFound('Quantity reconciliation and deviation statements are not enabled for your company yet.')));
   r.use('/mb-entries', (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2201') ? next() : next(notFound('The measurement book is not enabled for your company yet.'))));
   r.use(['/mb-abstract', '/mb-book'], (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2201') ? next() : next(notFound('The measurement book is not enabled for your company yet.'))));
   r.get('/mb-entries/options', (req, res) => ok(res, mb.options(req.actor)));
@@ -61,5 +61,22 @@ export function billRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.delete('/extra-items/:id', (req, res) => ok(res, extras.remove(req.actor, pid(req))));
   r.post('/extra-items/:id/withdraw', idempotent, (req, res) => ok(res, extras.withdraw(req.actor, pid(req), v.parseReason(req.body))));
   r.post('/extra-items/:id/decide', idempotentRequired, (req, res) => ok(res, extras.decide(req.actor, pid(req), v.parseXiDecide(req.body))));
+  r.use('/client-bills', gate3);
+  r.get('/client-bills/options', (req, res) => ok(res, clientBills.options(req.actor)));
+  r.get('/client-bills/export', (req, res) => file(res, clientBills.exportCsv(req.actor)));
+  r.post('/client-bills/import', idempotentRequired, (req, res) => ok(res, clientBills.importRows(req.actor, v.parseImport(req.body)), 201));
+  r.post('/client-bills/preview', idempotent, (req, res) => ok(res, clientBills.preview(req.actor, v.parseCbPreview(req.body))));
+  r.get('/client-bills', (req, res) => res.json(clientBills.list(req.actor, q(req))));
+  r.post('/client-bills', idempotentRequired, (req, res) => ok(res, clientBills.create(req.actor, v.parseCbCreate(req.body)), 201));
+  r.get('/client-bills/:id', (req, res) => ok(res, clientBills.get(req.actor, pid(req))));
+  r.patch('/client-bills/:id', idempotent, (req, res) => ok(res, clientBills.update(req.actor, pid(req), v.parseCbUpdate(req.body))));
+  r.delete('/client-bills/:id', (req, res) => ok(res, clientBills.remove(req.actor, pid(req))));
+  r.post('/client-bills/:id/submit', idempotentRequired, (req, res) => ok(res, clientBills.submit(req.actor, pid(req)), 202));
+  r.post('/client-bills/:id/withdraw', idempotent, (req, res) => ok(res, clientBills.withdraw(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/client-bills/:id/cancel', idempotent, (req, res) => ok(res, clientBills.cancel(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/client-bills/:id/amend', idempotent, (req, res) => ok(res, clientBills.amend(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/client-bills/:id/send', idempotentRequired, (req, res) => ok(res, clientBills.send(req.actor, pid(req), v.parseCbSend(req.body))));
+  r.get('/client-bills/:id/history', (req, res) => ok(res, clientBills.history(req.actor, pid(req))));
+  r.get('/client-bills/:id/print', (req, res) => file(res, clientBills.print(req.actor, pid(req))));
   return r;
 }

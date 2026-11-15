@@ -10,6 +10,7 @@ import { workflowTypes } from '../../platform/workflow/index.js';
 import { createFlagService } from '../core/api.js';
 import { createBase } from '../proc/base.js';
 import { STATUS } from '../qa/flow.js';
+import { createClientBillService } from './clientbill.js';
 import { createDeviationService } from './deviation.js';
 import { createMbService } from './mb.js';
 import { createReconService } from './recon.js';
@@ -18,12 +19,14 @@ import { billRoutes } from './routes.js';
 // Measurement and billing (module M22): the measurement book and check measurement (22.01); later quantity reconciliation, the client RA bill, subcontractor measurements and bills.
 const services = new WeakMap();
 export const billOf = (db) => services.get(db) ?? null;
-export const BILL_DOCS = { mb: 'BILL_MB_ENTRY', deviation: 'BILL_DEVIATION' };
+export const BILL_DOCS = { mb: 'BILL_MB_ENTRY', deviation: 'BILL_DEVIATION', clientBill: 'BILL_CLIENT_BILL' };
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
 for (const [type, description] of [
   ['bill.mb.certified', 'A measurement was certified and locked (part 22.01 FR-05): data { mbId, docNo, projectId, boqLineId, boqCode, description, locationId, waId, activityId, irId, uom, measuredQty, certifiedQty, checkedQty, checkStatus, measuredBy, measuredOn, certifiedOn, period, book, page, line }. The client RA bill (22.03), the quantity reconciliation (22.02) and the financial progress (14.05) read it.'],
+  ['bill.client.approved', 'A client bill was approved inside (part 22.03): data { billId, billNo, projectId, contractId, billType, gross, net }.'],
+  ['bill.client.submitted', 'A client bill was sent to the client (part 22.03 FR-05, for the certification of 22.04 and the cash forecast of 23.13): data { billId, docNo, billNo, seqNo, billType, projectId, contractId, periodFrom, periodTo, gross, cumGross, escalation, taxable, gst, deductions, net, sentOn, clientRef }.'],
   ['bill.qty.forecast', 'The forecast quantity of a BOQ item was set (part 22.02 FR-01, for the estimate at completion 23.11): data { projectId, boqCode, boqLineId, forecastQty, previous, revisedQty, uom, basis }.'],
   ['bill.deviation.approved', 'A deviation statement was approved inside (part 22.02 FR-02): data { dsId, docNo, dsNo, projectId, period, items, netEffect }.'],
   ['bill.deviation.responded', 'The client answered a deviation statement (part 22.02 FR-02, to the variations of 21.05): data { dsId, dsNo, projectId, decision, outcome, changeRequestId, items[{ boqCode, boqLineId, contractQty, projectedQty, deviationPct }] }.'],
@@ -32,26 +35,27 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'bill', description });
 
 integrityRegistry.register({
-  statuses: { bill_mb_entries: Object.keys(STATUS), bill_deviation_statements: Object.keys(STATUS) },
-  uniqueKeys: [{ table: 'bill_mb_entries', columns: ['company_id', 'doc_no'] }, { table: 'bill_deviation_statements', columns: ['company_id', 'doc_no'] }, { table: 'bill_extra_items', columns: ['company_id', 'doc_no'] }],
+  statuses: { bill_mb_entries: Object.keys(STATUS), bill_deviation_statements: Object.keys(STATUS), bill_client_bills: Object.keys(STATUS) },
+  uniqueKeys: [{ table: 'bill_mb_entries', columns: ['company_id', 'doc_no'] }, { table: 'bill_deviation_statements', columns: ['company_id', 'doc_no'] }, { table: 'bill_extra_items', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'bill_no'] }],
 });
 
 export const bill = {
   code: 'bill',
   name: 'Measurement and Billing',
   routePrefix: '/api/v1/bill',
-  ownerPart: '22.02',
-  status: 'Measurement book (22.01); quantity reconciliation, forecast quantities, deviation statements and the register of extra items (22.02).',
-  tables: ['bill_mb_entries', 'bill_deviation_statements', 'bill_qty_forecasts', 'bill_extra_items'],
-  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items'],
+  ownerPart: '22.03',
+  status: 'Measurement book (22.01); quantity reconciliation, forecast quantities, deviation statements and the register of extra items (22.02); the client RA bill (22.03).',
+  tables: ['bill_mb_entries', 'bill_deviation_statements', 'bill_qty_forecasts', 'bill_extra_items', 'bill_client_bills', 'bill_client_bill_items'],
+  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items', 'client-bills'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bill_mb_entries'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
-    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide }; const svc = { ...m, ...rc, ...dv };
+    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const cb = createClientBillService({ db, base, mb: m.mb }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide, [BILL_DOCS.clientBill]: cb.clientBills.decide }; const svc = { ...m, ...rc, ...dv, ...cb };
     services.set(db, { svc, base, flags, deciders });
     listExports.register('bill.mb_entries', { source: (actor, req) => { base.need(actor, 'bill.mb_entry.export', 'export measurements'); return m.mb.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.deviation_statements', { source: (actor, req) => { base.need(actor, 'bill.deviation_statement.export', 'export deviation statements'); return dv.deviations.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.extra_items', { source: (actor, req) => { base.need(actor, 'bill.extra_item.export', 'export extra items'); return dv.extras.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('bill.client_bills', { source: (actor, req) => { base.need(actor, 'bill.client_bill.export', 'export client bills'); return cb.clientBills.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
     runtime?.jobs?.register('bill.qty_sweep', (jctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) n += rc.recon.sweep(c.id).told; jctx.log(`${n} quantity limit alert(s)`); return { n }; }, { maxAttempts: 2, description: 'Tells the QS and the project manager of BOQ items beyond, approaching or forecast beyond their quantity.' });
     runtime?.scheduler?.define({ code: 'bill.qty_sweep_morning', cron: '15 3 * * *', jobType: 'bill.qty_sweep', description: 'Every morning 08:45 India time: BOQ items approaching their quantity' });
@@ -71,6 +75,7 @@ const billObject = (table, perm, route, label, codeCol = 'doc_no') => objectType
 
 billObject('bill_mb_entries', 'bill.mb_entry', '/bill/mb-entries?id=', 'Measurement', 'doc_no');
 billObject('bill_deviation_statements', 'bill.deviation_statement', '/bill/deviations?id=', 'Deviation statement', 'ds_no');
+billObject('bill_client_bills', 'bill.client_bill', '/bill/client-bills?id=', 'Client bill', 'bill_no');
 billObject('bill_extra_items', 'bill.extra_item', '/bill/deviations?extra=', 'Extra item', 'doc_no');
 
 fileEntities.register({ entity: 'bill_mb_entries', label: 'Measurement (sketch, photographs, drawing marks)', resolve: (db, actor, id) => {
@@ -103,4 +108,17 @@ workflowTypes.register({
   summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM bill_deviation_statements WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Statement', value: r.ds_no }, { label: 'Period', value: r.period }, { label: 'Items', value: `${r.item_count} (${r.over_count} over, ${r.under_count} under)` }, { label: 'Net effect (INR)', value: String(r.net_effect_paise / 100) }] } : null; },
   defaultDefinition: { name: 'Deviation statement: the QS prepares, the commercial manager and the project manager approve', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('COMMGR', 'Commercial manager', 'COMMGR', 48), approver('PM', 'Project manager', 'PM', 48)] },
   hooks: decideHook(BILL_DOCS.deviation),
+});
+
+fileEntities.register({ entity: 'bill_client_bills', label: 'Client bill (test reports, photographs, supporting documents)', resolve: (db, actor, id) => {
+  const r = db.prepare('SELECT * FROM bill_client_bills WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const scope = { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined }; const at = (k) => a.check(actor, k, scope).allowed; if (!at('bill.client_bill.view')) return null;
+  return { ...scope, canView: true, canEdit: (at('bill.client_bill.edit') && ['DRAFT', 'RETURNED'].includes(r.status)) || at('bill.client_bill.send'), locked: false };
+} });
+
+workflowTypes.register({
+  docType: BILL_DOCS.clientBill, label: 'Client RA bill', processOwner: 'QS', route: (id) => `/bill/client-bills?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM bill_client_bills WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.bill_no, title: `Client bill ${r.bill_no} (${r.period_from} to ${r.period_to})`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM bill_client_bills WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Bill', value: r.bill_no }, { label: 'Period', value: `${r.period_from} to ${r.period_to}` }, { label: 'Value of work (INR)', value: String(r.gross_paise / 100) }, { label: 'GST (INR)', value: String(r.gst_paise / 100) }, { label: 'Deductions (INR)', value: String(r.deductions_paise / 100) }, { label: 'Net payable (INR)', value: String(r.net_paise / 100) }] } : null; },
+  defaultDefinition: { name: 'Client bill: the QS checks, the project manager and the commercial manager approve', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('QS', 'QS (check)', 'QS', 24), approver('PM', 'Project manager', 'PM', 48), approver('COMMGR', 'Commercial manager', 'COMMGR', 48)] },
+  hooks: decideHook(BILL_DOCS.clientBill),
 });
