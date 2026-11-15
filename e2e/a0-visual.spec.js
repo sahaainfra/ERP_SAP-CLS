@@ -38,7 +38,7 @@ for (const theme of THEMES) {
         // a page of changing content: its content is hidden (not covered by a mask, which would cover the fixed bar of a phone when the content grows)
         if (VOLATILE.has(p.route)) await page.addStyleTag({ content: 'main > *:not(:first-child), .sh-crumbs { visibility: hidden !important; }' }); // a rule, so a page that draws again keeps it
         await expect(page).toHaveScreenshot(`${pageCode(p.route)}-${theme}-${size.width}.png`, {
-          animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 20_000, // a large page under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
+          animations: 'disabled', caret: 'hide', scale: 'css', maxDiffPixelRatio: 0.01, timeout: 60_000, // a large page (the registry grows with every part) under the load of the whole run needs longer than 5 s to settle; the comparison is unchanged
         });
       }
     }
