@@ -1708,6 +1708,62 @@ Indexes:
 - ux_bill_cb_no (unique): company_id, bill_no
 - ux_bill_cb_doc (unique): company_id, doc_no
 
+## bill_cvr_reports
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| period | TEXT | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| value_lines_json | TEXT | yes |  | '[]' |
+| expense_lines_json | TEXT | yes |  | '[]' |
+| assessments_json | TEXT | yes |  | '{}' |
+| value_paise | INTEGER | yes |  | 0 |
+| cost_paise | INTEGER | yes |  | 0 |
+| margin_paise | INTEGER | yes |  | 0 |
+| margin_bp | INTEGER |  |  |  |
+| budget_margin_bp | INTEGER |  |  |  |
+| prev_margin_bp | INTEGER |  |  |  |
+| prev_report_id | INTEGER |  |  |  |
+| forecast_value_paise | INTEGER |  |  |  |
+| forecast_cost_paise | INTEGER |  |  |  |
+| forecast_margin_bp | INTEGER |  |  |  |
+| commentary_qs | TEXT |  |  |  |
+| commentary_pm | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: prev_report_id -> bill_cvr_reports(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_cvr_status: company_id, org_project_id, status, period
+- ix_bill_cvr_reports_prev_report_id: prev_report_id
+- ix_bill_cvr_reports_org_site_id: org_site_id
+- ix_bill_cvr_reports_org_project_id: org_project_id
+- ux_bill_cvr_period (unique): company_id, org_project_id, period
+- ux_bill_cvr_doc (unique): company_id, doc_no
+
 ## bill_deviation_statements
 
 | Column | Type | Not null | Key | Default |

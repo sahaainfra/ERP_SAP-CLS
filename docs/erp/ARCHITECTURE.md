@@ -1601,3 +1601,6 @@ Module `bill`, flag `ff.bill.p2207`, tables `bill_retention_ledger`, `bill_advan
 
 ## 170. QS Management Dashboard (part 22.08)
 Module `bill`, flag `ff.bill.p2208`, no table; service `qsdash.js`. Reads only; the Project 360 slot `qs` and the widgets are registered by the module.
+
+## 171. Commercial Control: CVR, Margin Tracking & Contract Control Tower (part 22.09)
+Module `bill`, flag `ff.bill.p2209`, table `bill_cvr_reports`; service `cvr.js`. The CVR is built only by `build` on the server; an approved report is never changed.

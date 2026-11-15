@@ -97,3 +97,17 @@ export const parseRetentionQ = (q) => parse(z.object({ partyType: z.enum(['CLIEN
 
 export const parseQsQ = (q) => parse(z.object({ projectId: id.optional() }).passthrough(), q ?? {});
 export const parseQsDrillQ = (q) => parse(z.object({ projectId: id.optional(), kind: z.enum(['workNotMeasured', 'measuredNotCertified', 'certifiedNotBilled', 'unbilledWip', 'variationPipeline', 'claimsPending', 'overdueSubmission', 'billedNotCollected', 'mbPending', 'billsToPrepare', 'certAwaited', 'deviationDue']) }).passthrough(), q ?? {});
+
+// ---- part 22.09: the CVR and the control tower ----
+const cvrPeriod = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Use a month such as 2026-11');
+const assess = z.object({
+  claims: z.array(z.object({ claimId: id, probabilityPct: z.number().min(0).max(100), note: text(500).nullish() }).strict()).max(200).default([]),
+  accruals: z.array(z.object({ label: text(200).min(1), amount: z.number().gt(0).max(1e12), note: text(500).nullish() }).strict()).max(100).default([]),
+  valueProvisions: z.array(z.object({ label: text(200).min(1), amount: z.number().gt(0).max(1e12), note: text(500).nullish() }).strict()).max(100).default([]),
+  costProvisions: z.array(z.object({ kind: z.enum(['RECTIFICATION', 'DLP', 'OTHER']), amount: z.number().gt(0).max(1e12), note: text(500).nullish() }).strict()).max(100).default([]),
+}).strict();
+export const parseCvrCreate = (b) => parse(z.object({ projectId: id, siteId: oid, period: cvrPeriod, commentaryQs: opt(2000), assessments: assess.default({ claims: [], accruals: [], valueProvisions: [], costProvisions: [] }) }).strict(), b ?? {});
+export const parseCvrPreview = (b) => parse(z.object({ projectId: id, period: cvrPeriod, assessments: assess.default({ claims: [], accruals: [], valueProvisions: [], costProvisions: [] }) }).strict(), b ?? {});
+export const parseCvrUpdate = (b) => defined(parse(z.object({ commentaryQs: nd(opt(2000)).optional(), assessments: nd(assess).optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseCvrComment = (b) => parse(z.object({ commentary: text(2000).min(5, 'Give the commentary') }).strict(), b ?? {});
+export const parseTowerQ = (q) => parse(z.object({ projectId: id.optional() }).passthrough(), q ?? {});

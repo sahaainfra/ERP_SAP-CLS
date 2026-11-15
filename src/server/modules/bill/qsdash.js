@@ -114,6 +114,8 @@ export function createQsDashService({ db, base, recon }) {
     widget(actor, code) {
       try { const d = qs.dashboard(actor, {}); const k = d.kpis.find((x) => x.key === (code === 'bill.unbilled_wip' ? 'unbilledWip' : 'certifiedNotBilled')); return { value: k.value ?? 0, unit: ' Rs', previous: null, trendPct: null, target: null, status: k.status, note: k.note ?? '' }; } catch { return { value: 0, unit: '', previous: null, trendPct: null, target: null, status: 'neutral', note: 'You have no right to see the QS figures.' }; }
     },
+    /** For the CVR (22.09): the chain in money of a project and the value of a quantity at a rate. */
+    chain: (companyId, pid) => chainOf(companyId, pid), valueOf: (qty, rate) => itemValue(qty, rate),
     /** 23.05 plugs the receipts in here. */
     setCollectionsProvider(fn) { collections = fn; },
   };

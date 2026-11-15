@@ -21,6 +21,7 @@ import { createInvoiceService } from './invoice.js';
 import { createMbService } from './mb.js';
 import { createReconService } from './recon.js';
 import { createQsDashService } from './qsdash.js';
+import { createCvrService } from './cvr.js';
 import { registerProject360Widget } from '../proj/p360.js';
 import { widgetRegistry } from '../../platform/widgets/index.js';
 import { billRoutes } from './routes.js';
@@ -37,13 +38,14 @@ registerProject360Widget('qs', (ctx) => {
   return s.svc.qs.projectWidget(ctx.actor, pid);
 });
 for (const code of ['bill.unbilled_wip', 'bill.certified_not_billed']) widgetRegistry.register({ code, provider: (ctx) => (billOf(ctx.db)?.flags.isOn(ctx.actor, 'ff.bill.p2208') ? billOf(ctx.db).svc.qs.widget(ctx.actor, code) : { value: 0, unit: '', previous: null, trendPct: null, target: null, status: 'neutral', note: 'The QS dashboard is not available.' }) });
-export const BILL_DOCS = { mb: 'BILL_MB_ENTRY', deviation: 'BILL_DEVIATION', clientBill: 'BILL_CLIENT_BILL', certification: 'BILL_CERTIFICATION', taxInvoice: 'BILL_TAX_INVOICE', subBill: 'BILL_SUB_BILL', vendorInvoice: 'BILL_VENDOR_INVOICE', advance: 'BILL_ADVANCE', release: 'BILL_RELEASE' };
+export const BILL_DOCS = { mb: 'BILL_MB_ENTRY', deviation: 'BILL_DEVIATION', clientBill: 'BILL_CLIENT_BILL', certification: 'BILL_CERTIFICATION', taxInvoice: 'BILL_TAX_INVOICE', subBill: 'BILL_SUB_BILL', vendorInvoice: 'BILL_VENDOR_INVOICE', advance: 'BILL_ADVANCE', release: 'BILL_RELEASE', cvr: 'BILL_CVR' };
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
 for (const [type, description] of [
   ['bill.mb.certified', 'A measurement was certified and locked (part 22.01 FR-05): data { mbId, docNo, projectId, boqLineId, boqCode, description, locationId, waId, activityId, irId, uom, measuredQty, certifiedQty, checkedQty, checkStatus, measuredBy, measuredOn, certifiedOn, period, book, page, line }. The client RA bill (22.03), the quantity reconciliation (22.02) and the financial progress (14.05) read it.'],
   ['bill.advance.approved', 'An advance received or given was approved (part 22.07): data { advanceId, docNo, refNo, projectId, direction, partyType, partyId, contractId, woId, type, amount, advanceDate, rule, interestPct }.'],
+  ['bill.cvr.approved', 'A monthly cost-value reconciliation was approved and locked (part 22.09, for the monthly MIS 27.07, the estimate at completion 23.11 and the P&L checks 23.12): data { reportId, docNo, projectId, period, asOf, value, cost, margin, marginPct, budgetMarginPct, forecastValue, forecastCost, forecastMarginPct }.'],
   ['bill.release.approved', 'A release of retention or security deposit was approved and posted to the ledger (part 22.07, for the payables 23.03, the receivables 23.05 and the cash forecast 23.13): data { releaseId, docNo, projectId, kind, partyType, partyId, contractId, woId, basis, amount, balanceAfter, direction, waived }.'],
   ['ap.invoice.matched', 'A vendor invoice was approved after its match (part 22.06, for the accounts payable 23.03 and the GST reconciliation 23.08): data { invoiceId, invoiceNo, invoiceDate, fy, kind, projectId, vendorId, vendorGstin, poId, serviceEntryId, hireBillId, taxable, tax, total, debit, payable, dueDate, irn, matchStatus, overrideReason, itc[{ hsn, gstPct, taxable, tax }] }.'],
   ['bill.vendor_invoice.resolved', 'An exception of a vendor invoice was resolved by a debit note (part 22.06 FR-03): data { invoiceId, invoiceNo, vendorId, kind, debitNote, ref }.'],
@@ -63,22 +65,22 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'bill', description });
 
 integrityRegistry.register({
-  statuses: { bill_mb_entries: Object.keys(STATUS), bill_deviation_statements: Object.keys(STATUS), bill_client_bills: Object.keys(STATUS), bill_certifications: Object.keys(STATUS), bill_tax_invoices: Object.keys(STATUS), bill_sub_bills: Object.keys(STATUS), bill_vendor_invoices: Object.keys(STATUS), bill_advances: Object.keys(STATUS), bill_releases: Object.keys(STATUS) },
-  uniqueKeys: [{ table: 'bill_mb_entries', columns: ['company_id', 'doc_no'] }, { table: 'bill_deviation_statements', columns: ['company_id', 'doc_no'] }, { table: 'bill_extra_items', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'bill_no'] }, { table: 'bill_certifications', columns: ['company_id', 'doc_no'] }, { table: 'bill_tax_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_measurements', columns: ['company_id', 'doc_no'] }, { table: 'bill_vendor_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_advances', columns: ['company_id', 'doc_no'] }, { table: 'bill_releases', columns: ['company_id', 'doc_no'] }],
+  statuses: { bill_mb_entries: Object.keys(STATUS), bill_deviation_statements: Object.keys(STATUS), bill_client_bills: Object.keys(STATUS), bill_certifications: Object.keys(STATUS), bill_tax_invoices: Object.keys(STATUS), bill_sub_bills: Object.keys(STATUS), bill_vendor_invoices: Object.keys(STATUS), bill_advances: Object.keys(STATUS), bill_releases: Object.keys(STATUS), bill_cvr_reports: Object.keys(STATUS) },
+  uniqueKeys: [{ table: 'bill_mb_entries', columns: ['company_id', 'doc_no'] }, { table: 'bill_deviation_statements', columns: ['company_id', 'doc_no'] }, { table: 'bill_extra_items', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'bill_no'] }, { table: 'bill_certifications', columns: ['company_id', 'doc_no'] }, { table: 'bill_tax_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_measurements', columns: ['company_id', 'doc_no'] }, { table: 'bill_vendor_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_advances', columns: ['company_id', 'doc_no'] }, { table: 'bill_releases', columns: ['company_id', 'doc_no'] }, { table: 'bill_cvr_reports', columns: ['company_id', 'doc_no'] }],
 });
 
 export const bill = {
   code: 'bill',
   name: 'Measurement and Billing',
   routePrefix: '/api/v1/bill',
-  ownerPart: '22.08',
+  ownerPart: '22.09',
   status: 'Measurement book (22.01); quantity reconciliation, forecast quantities, deviation statements and the register of extra items (22.02); the client RA bill (22.03); the client certification and the GST tax invoice (22.04); the subcontractor measurement and bills (22.05); vendor invoices, the match and the invoice hub (22.06); the retention, deposit and advance ledgers (22.07).',
-  tables: ['bill_mb_entries', 'bill_deviation_statements', 'bill_qty_forecasts', 'bill_extra_items', 'bill_client_bills', 'bill_client_bill_items', 'bill_certifications', 'bill_tax_invoices', 'bill_invoice_counters', 'bill_sub_measurements', 'bill_sub_bills', 'bill_sub_bill_items', 'bill_sub_claims', 'bill_vendor_invoices', 'bill_vendor_invoice_lines', 'bill_retention_ledger', 'bill_advances', 'bill_advance_recoveries', 'bill_releases'],
-  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items', 'client-bills', 'certifications', 'tax-invoices', 'cert-analysis', 'sub-measurements', 'sub-bills', 'vendor-invoices', 'invoice-hub', 'retention', 'advances', 'releases', 'qs-dashboard'],
+  tables: ['bill_cvr_reports', 'bill_mb_entries', 'bill_deviation_statements', 'bill_qty_forecasts', 'bill_extra_items', 'bill_client_bills', 'bill_client_bill_items', 'bill_certifications', 'bill_tax_invoices', 'bill_invoice_counters', 'bill_sub_measurements', 'bill_sub_bills', 'bill_sub_bill_items', 'bill_sub_claims', 'bill_vendor_invoices', 'bill_vendor_invoice_lines', 'bill_retention_ledger', 'bill_advances', 'bill_advance_recoveries', 'bill_releases'],
+  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items', 'client-bills', 'certifications', 'tax-invoices', 'cert-analysis', 'sub-measurements', 'sub-bills', 'vendor-invoices', 'invoice-hub', 'retention', 'advances', 'releases', 'qs-dashboard', 'reports', 'control-tower'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bill_mb_entries'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
-    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const cb = createClientBillService({ db, base, mb: m.mb }); const ce = createCertService({ db, base }); const iv = createInvoiceService({ db, base }); const sb = createSubService({ db, base, mb: m.mb }); const vi = createVinvService({ db, base }); const hb = createHubService({ db, base }); const lg = createLedgerService({ db, base }); const qd = createQsDashService({ db, base, recon: rc.recon }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide, [BILL_DOCS.clientBill]: cb.clientBills.decide, [BILL_DOCS.certification]: ce.certifications.decide, [BILL_DOCS.taxInvoice]: iv.taxInvoices.decide, [BILL_DOCS.subBill]: sb.subBills.decide, [BILL_DOCS.vendorInvoice]: vi.vendorInvoices.decide, [BILL_DOCS.advance]: lg.advances.decide, [BILL_DOCS.release]: lg.releases.decide }; const svc = { ...m, ...rc, ...dv, ...cb, ...ce, ...iv, ...sb, ...vi, ...hb, ...lg, ...qd };
+    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const cb = createClientBillService({ db, base, mb: m.mb }); const ce = createCertService({ db, base }); const iv = createInvoiceService({ db, base }); const sb = createSubService({ db, base, mb: m.mb }); const vi = createVinvService({ db, base }); const hb = createHubService({ db, base }); const lg = createLedgerService({ db, base }); const qd = createQsDashService({ db, base, recon: rc.recon }); const cv = createCvrService({ db, base, qsdash: qd.qs }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide, [BILL_DOCS.clientBill]: cb.clientBills.decide, [BILL_DOCS.certification]: ce.certifications.decide, [BILL_DOCS.taxInvoice]: iv.taxInvoices.decide, [BILL_DOCS.subBill]: sb.subBills.decide, [BILL_DOCS.vendorInvoice]: vi.vendorInvoices.decide, [BILL_DOCS.advance]: lg.advances.decide, [BILL_DOCS.cvr]: cv.reports.decide, [BILL_DOCS.release]: lg.releases.decide }; const svc = { ...m, ...rc, ...dv, ...cb, ...ce, ...iv, ...sb, ...vi, ...hb, ...lg, ...qd, ...cv };
     services.set(db, { svc, base, flags, deciders });
     listExports.register('bill.mb_entries', { source: (actor, req) => { base.need(actor, 'bill.mb_entry.export', 'export measurements'); return m.mb.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.deviation_statements', { source: (actor, req) => { base.need(actor, 'bill.deviation_statement.export', 'export deviation statements'); return dv.deviations.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
@@ -90,6 +92,7 @@ export const bill = {
     listExports.register('bill.sub_measurements', { source: (actor, req) => { base.need(actor, 'bill.sub_measure.export', 'export measurements'); return sb.subMeasures.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.vendor_invoices', { source: (actor, req) => { base.need(actor, 'bill.vendor_invoice.export', 'export vendor invoices'); return vi.vendorInvoices.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.advances', { source: (actor, req) => { base.need(actor, 'bill.advance.export', 'export advances'); return lg.advances.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('bill.cvr', { source: (actor, req) => { base.need(actor, 'bill.report.export', 'export CVR reports'); return cv.reports.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.releases', { source: (actor, req) => { base.need(actor, 'bill.release.export', 'export releases'); return lg.releases.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
     runtime?.bus?.subscribe('bill.client.certified', (event) => lg.ledger.onClientCertified(event), { consumer: 'bill.ledger_client' });
@@ -118,6 +121,7 @@ billObject('bill_tax_invoices', 'bill.tax_invoice', '/bill/tax-invoices?id=', 'T
 billObject('bill_sub_bills', 'bill.sub_bill', '/bill/sub-bills?id=', 'Subcontractor bill', 'bill_no');
 billObject('bill_vendor_invoices', 'bill.vendor_invoice', '/bill/vendor-invoices?id=', 'Vendor invoice', 'doc_no');
 billObject('bill_advances', 'bill.advance', '/bill/advances?id=', 'Advance', 'doc_no');
+billObject('bill_cvr_reports', 'bill.report', '/bill/cvr?id=', 'CVR', 'doc_no');
 billObject('bill_releases', 'bill.release', '/bill/releases?id=', 'Release request', 'doc_no');
 billObject('bill_extra_items', 'bill.extra_item', '/bill/deviations?extra=', 'Extra item', 'doc_no');
 
@@ -166,7 +170,7 @@ workflowTypes.register({
   hooks: decideHook(BILL_DOCS.clientBill),
 });
 
-for (const [entity, perm, label, table] of [['bill_advances', 'bill.advance', 'Advance (agreement, guarantee, receipt)', 'bill_advances'], ['bill_releases', 'bill.release', 'Release request (completion certificate, no-defects note, guarantee)', 'bill_releases'], ['bill_vendor_invoices', 'bill.vendor_invoice', 'Vendor invoice (invoice copy, e-way bill, test certificates)', 'bill_vendor_invoices'], ['bill_sub_bills', 'bill.sub_bill', 'Subcontractor bill (test reports, photographs, supporting documents)', 'bill_sub_bills'], ['bill_certifications', 'bill.certification', 'Certification (certificate, correspondence, joint measurement)', 'bill_certifications'], ['bill_tax_invoices', 'bill.tax_invoice', 'Tax invoice (supporting documents)', 'bill_tax_invoices']]) {
+for (const [entity, perm, label, table] of [['bill_cvr_reports', 'bill.report', 'CVR (working papers, assessments, correspondence)', 'bill_cvr_reports'], ['bill_advances', 'bill.advance', 'Advance (agreement, guarantee, receipt)', 'bill_advances'], ['bill_releases', 'bill.release', 'Release request (completion certificate, no-defects note, guarantee)', 'bill_releases'], ['bill_vendor_invoices', 'bill.vendor_invoice', 'Vendor invoice (invoice copy, e-way bill, test certificates)', 'bill_vendor_invoices'], ['bill_sub_bills', 'bill.sub_bill', 'Subcontractor bill (test reports, photographs, supporting documents)', 'bill_sub_bills'], ['bill_certifications', 'bill.certification', 'Certification (certificate, correspondence, joint measurement)', 'bill_certifications'], ['bill_tax_invoices', 'bill.tax_invoice', 'Tax invoice (supporting documents)', 'bill_tax_invoices']]) {
   fileEntities.register({ entity, label, resolve: (db, actor, id) => {
     const r = db.prepare(`SELECT * FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const scope = { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined }; const at = (k) => a.check(actor, k, scope).allowed; if (!at(`${perm}.view`)) return null;
     return { ...scope, canView: true, canEdit: at(`${perm}.edit`) && ['DRAFT', 'RETURNED'].includes(r.status), locked: r.status === 'APPROVED' };
@@ -218,4 +222,12 @@ workflowTypes.register({
   summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM bill_releases WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Release', value: r.doc_no }, { label: 'Party', value: r.party_type }, { label: 'Basis', value: r.release_basis }, { label: 'Amount (INR)', value: String(r.amount_paise / 100) }, { label: 'Balance before (INR)', value: String(r.balance_before_paise / 100) }, { label: 'Released regardless', value: r.waiver_reason ?? '' }] } : null; },
   defaultDefinition: { name: 'Release: the commercial manager, the project manager and the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [apr('COMMGR', 'Commercial manager', 'COMMGR', 48), apr('PM', 'Project manager', 'PM', 48), apr('CFO', 'CFO', 'CFO', 72)] },
   hooks: decideHook(BILL_DOCS.release),
+});
+
+workflowTypes.register({
+  docType: BILL_DOCS.cvr, label: 'Monthly CVR', processOwner: 'COMMGR', route: (id) => `/bill/cvr?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM bill_cvr_reports WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `CVR ${r.period} ${r.doc_no}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM bill_cvr_reports WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'CVR', value: r.doc_no }, { label: 'Month', value: r.period }, { label: 'Value (INR)', value: String(r.value_paise / 100) }, { label: 'Cost (INR)', value: String(r.cost_paise / 100) }, { label: 'Margin (INR)', value: String(r.margin_paise / 100) }, { label: 'Margin %', value: r.margin_bp == null ? '' : String(r.margin_bp / 100) }] } : null; },
+  defaultDefinition: { name: 'CVR: the project manager, the commercial manager, the project director when the month shows a loss', settings: { resubmit: 'first', distinctApprovers: true }, steps: [apr('PM', 'Project manager', 'PM', 48), apr('COMMGR', 'Commercial manager', 'COMMGR', 48), apr('PD', 'Project director (a loss)', 'PD', 72, { field: 'loss', op: 'eq', value: 1 })] },
+  hooks: decideHook(BILL_DOCS.cvr),
 });
