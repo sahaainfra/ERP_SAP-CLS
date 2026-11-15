@@ -1586,3 +1586,6 @@ Module `bill`, flag `ff.bill.p2202`, tables `bill_deviation_statements`, `bill_q
 
 ## 165. Client RA Bill Preparation (part 22.03)
 Module `bill`, flag `ff.bill.p2203`, tables `bill_client_bills`, `bill_client_bill_items`; service `src/server/modules/bill/clientbill.js`. The bill is built only by `build`, on the server, at preview, save and submit; deductions only through the calculation engine.
+
+## 166. Client Certification, Tax Invoice & Receivable Handoff (part 22.04)
+Module `bill`, flag `ff.bill.p2204`, tables `bill_certifications`, `bill_tax_invoices`, `bill_invoice_counters`; services `cert.js` and `invoice.js`. The invoice number is taken only in `invoice.js` `onApproved`, inside the approval transaction.

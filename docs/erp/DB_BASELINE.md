@@ -1432,6 +1432,68 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bill_certifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| cert_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER | yes |  |  |
+| bill_id | INTEGER | yes |  |  |
+| cert_date | TEXT | yes |  |  |
+| submitted_gross_paise | INTEGER | yes |  | 0 |
+| submitted_net_paise | INTEGER | yes |  | 0 |
+| certified_gross_paise | INTEGER | yes |  | 0 |
+| certified_escalation_paise | INTEGER | yes |  | 0 |
+| certified_taxable_paise | INTEGER | yes |  | 0 |
+| certified_gst_paise | INTEGER | yes |  | 0 |
+| certified_gst_json | TEXT | yes |  | '{}' |
+| certified_deductions_json | TEXT | yes |  | '[]' |
+| certified_deductions_paise | INTEGER | yes |  | 0 |
+| certified_net_paise | INTEGER | yes |  | 0 |
+| diff_gross_paise | INTEGER | yes |  | 0 |
+| diff_net_paise | INTEGER | yes |  | 0 |
+| diff_pct_bp | INTEGER | yes |  | 0 |
+| big_diff | INTEGER | yes |  | 0 |
+| items_json | TEXT | yes |  | '[]' |
+| disputed_paise | INTEGER | yes |  | 0 |
+| due_date | TEXT |  |  |  |
+| file_ref | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bill_id -> bill_client_bills(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_cert_status: company_id, org_project_id, status, cert_date
+- ix_bill_certifications_contract_id: contract_id
+- ix_bill_certifications_org_site_id: org_site_id
+- ix_bill_certifications_org_project_id: org_project_id
+- ux_bill_cert_bill (unique): bill_id
+- ux_bill_cert_doc (unique): company_id, doc_no
+
 ## bill_client_bill_items
 
 | Column | Type | Not null | Key | Default |
@@ -1654,6 +1716,34 @@ Indexes:
 - ix_bill_extra_items_org_project_id: org_project_id
 - ux_bill_xi_doc (unique): company_id, doc_no
 
+## bill_invoice_counters
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| gstin | TEXT | yes |  |  |
+| fy | TEXT | yes |  |  |
+| last_seq | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_bill_ic_key (unique): company_id, gstin, fy
+
 ## bill_mb_entries
 
 | Column | Type | Not null | Key | Default |
@@ -1770,6 +1860,74 @@ Indexes:
 - ix_bill_qty_forecasts_boq_line_id: boq_line_id
 - ix_bill_qty_forecasts_org_project_id: org_project_id
 - ux_bill_fc_item (unique): company_id, org_project_id, item_code
+
+## bill_tax_invoices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| invoice_no | TEXT |  |  |  |
+| invoice_date | TEXT |  |  |  |
+| fy | TEXT |  |  |  |
+| seq_no | INTEGER |  |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER | yes |  |  |
+| bill_id | INTEGER | yes |  |  |
+| certification_id | INTEGER |  |  |  |
+| gstin_from | TEXT | yes |  |  |
+| gstin_to | TEXT | yes |  |  |
+| place_state | TEXT | yes |  |  |
+| supply | TEXT | yes |  |  |
+| sac_code | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| taxable_paise | INTEGER | yes |  |  |
+| gst_pct_bp | INTEGER | yes |  | 0 |
+| cgst_paise | INTEGER | yes |  | 0 |
+| sgst_paise | INTEGER | yes |  | 0 |
+| igst_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| due_date | TEXT |  |  |  |
+| irn_state | TEXT | yes |  | 'NONE' |
+| irn | TEXT |  |  |  |
+| ack_no | TEXT |  |  |  |
+| ack_date | TEXT |  |  |  |
+| ar_state | TEXT | yes |  | 'NOT_HANDED' |
+| ar_ref | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: certification_id -> bill_certifications(id), bill_id -> bill_client_bills(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_ti_status: company_id, org_project_id, status, invoice_date
+- ix_bill_tax_invoices_certification_id: certification_id
+- ix_bill_tax_invoices_contract_id: contract_id
+- ix_bill_tax_invoices_org_site_id: org_site_id
+- ix_bill_tax_invoices_org_project_id: org_project_id
+- ux_bill_ti_bill (unique): bill_id
+- ux_bill_ti_seq (unique): gstin_from, fy, seq_no
+- ux_bill_ti_no (unique): gstin_from, invoice_no
+- ux_bill_ti_doc (unique): company_id, doc_no
 
 ## bp_batches
 

@@ -48,3 +48,18 @@ export const parseCbCreate = (b) => parse(z.object({ projectId: id, contractId: 
 export const parseCbPreview = (b) => parse(z.object({ projectId: id, contractId: id, ...cbBase }).strict(), b ?? {});
 export const parseCbUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(cbBase).filter(([k]) => k !== 'siteId').map(([k, f]) => [k, nd(f).optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
 export const parseCbSend = (b) => parse(z.object({ sentOn: day, clientRef: opt(120) }).strict(), b ?? {});
+
+// ---- part 22.04: certification and tax invoice ----
+const certItem = z.object({ lineNo: z.number().int().min(1), certifiedQty: z.number().min(0).max(1e10), reason: opt(300), carryForward: z.boolean().default(false) }).strict();
+const certDed = z.object({ kind: z.enum(['RETENTION', 'ADVANCE_RECOVERY', 'SECURED_ADVANCE', 'CLIENT_MATERIAL', 'WATER_ELECTRICITY', 'CESS', 'TDS', 'GST_TDS', 'LD', 'OTHER']), label: opt(120), certified: z.number().min(0).max(1e11), reason: opt(300) }).strict();
+const certBase = { items: z.array(certItem).max(2000).default([]), escalation: z.number().min(-1e11).max(1e11).nullish().transform((v) => v ?? null), escalationReason: opt(300), deductions: z.array(certDed).max(40).default([]), certDate: day, fileRef: opt(200), notes: opt(2000) };
+export const parseCertCreate = (b) => parse(z.object({ billId: id, siteId: oid, certNo: text(60).min(1, 'Give the certificate number'), ...certBase, certifiedNet: z.number().optional() }).strict(), b ?? {});
+export const parseCertPreview = (b) => parse(z.object({ billId: id, ...certBase }).strict(), b ?? {});
+export const parseCertUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(certBase).map(([k, f]) => [k, nd(f).optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseCertAnalysisQ = (q) => parse(z.object({ projectId: id, from: day.optional(), to: day.optional(), differencesOnly: bool }).passthrough(), q ?? {});
+export const parseBillIdQ = (q) => parse(z.object({ billId: id }).passthrough(), q ?? {});
+const tiBase = { siteId: oid, certificationId: oid, billId: oid, gstinFrom: text(15), gstinTo: text(15), sacCode: opt(10), description: opt(300) };
+export const parseTiCreate = (b) => parse(z.object({ ...tiBase, total: z.number().optional() }).strict(), b ?? {});
+export const parseTiPreview = (b) => parse(z.object(tiBase).strict(), b ?? {});
+export const parseTiUpdate = (b) => defined(parse(z.object({ gstinFrom: text(15).optional(), gstinTo: text(15).optional(), sacCode: opt(10).optional(), description: opt(300).optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseIrn = (b) => parse(z.object({ irn: z.string().regex(/^[0-9a-f]{64}$/i, 'The IRN has 64 hexadecimal characters'), ackNo: text(40).min(1), ackDate: day }).strict(), b ?? {});
