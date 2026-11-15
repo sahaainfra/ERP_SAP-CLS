@@ -70,10 +70,8 @@ export function dayFraction(day, start, end) {
 /** The fill of a heat map cell: the more, the darker, never fully white (a zero stays visible as a cell). */
 export const heatFill = (value, max) => `color-mix(in srgb, var(--erp-chart-1) ${Math.round(8 + (max > 0 ? (value / max) * 82 : 0))}%, var(--erp-color-bg-surface))`;
 
-/** The colour of series number i (the design tokens have eight; after that they repeat). */
-export const seriesColour = (i) => `var(--erp-chart-${(i % 8) + 1})`;
-
-export const formatCount = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN', { maximumFractionDigits: 1 }) : String(n ?? ''));
+// the series colours and the number format are the one chart theme of part 166.2 (U-08)
+export { seriesColour, formatCount } from './theme.js';
 
 /** Every chart read as a table: { columns: [label], rows: [[cell]] }. The accessible alternative and the source of the CSV. */
 export function chartTable(type, d) {

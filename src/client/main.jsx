@@ -10,6 +10,7 @@ import '@fontsource/ibm-plex-sans-devanagari/600.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './design-tokens.css';
 import './styles.css';
+import './ui-v3.css'; // the UI v3 page patterns (part 166.2)
 import './modules/core/index.js'; // each module registers its pages with the shell
 import './modules/iam/index.js';
 import './modules/ui/index.js';

@@ -1115,5 +1115,47 @@
    "label": "Daily morning report",
    "glyph_hint": "chart-column"
   }
+ },
+ "kpi": {
+  "erp.kpi.money": {
+   "glyph_hint": "indian-rupee",
+   "meaning": "An amount of money (value, cost, margin, retention, outstanding)"
+  },
+  "erp.kpi.quantity": {
+   "glyph_hint": "ruler",
+   "meaning": "A quantity of work or material"
+  },
+  "erp.kpi.count": {
+   "glyph_hint": "hash",
+   "meaning": "A number of records (bills, claims, items waiting)"
+  },
+  "erp.kpi.percent": {
+   "glyph_hint": "percent",
+   "meaning": "A ratio or percentage"
+  },
+  "erp.kpi.time": {
+   "glyph_hint": "clock",
+   "meaning": "Days, hours, a duration or a delay"
+  },
+  "erp.kpi.safety": {
+   "glyph_hint": "hard-hat",
+   "meaning": "A safety figure (incidents, permits, man-hours without injury)"
+  },
+  "erp.kpi.quality": {
+   "glyph_hint": "badge-check",
+   "meaning": "A quality figure (inspections, NCRs, pass rate)"
+  },
+  "erp.kpi.people": {
+   "glyph_hint": "users",
+   "meaning": "People (head count, attendance, labour)"
+  },
+  "erp.kpi.risk": {
+   "glyph_hint": "triangle-alert",
+   "meaning": "A risk, shortage, dispute or exception"
+  },
+  "erp.kpi.capacity": {
+   "glyph_hint": "gauge",
+   "meaning": "Capacity or utilisation"
+  }
  }
 }

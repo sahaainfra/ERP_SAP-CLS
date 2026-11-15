@@ -44,8 +44,8 @@ test('a time axis, the heat of a cell and the series colours come from the token
   assert.match(heatFill(0, 10), /8%/);
   assert.match(heatFill(10, 10), /90%/);
   assert.match(heatFill(3, 0), /8%/, 'nothing to compare with');
-  assert.equal(seriesColour(0), 'var(--erp-chart-1)');
-  assert.equal(seriesColour(8), 'var(--erp-chart-1)', 'repeats after eight');
+  assert.equal(seriesColour(0), 'var(--ui-c1, var(--erp-chart-1))', 'the UI v3 chart theme (part 166.2, U-08), falling back to the design token');
+  assert.equal(seriesColour(8), 'var(--ui-c1, var(--erp-chart-1))', 'repeats after eight');
 });
 
 test('every chart can be read as a table, and the table as CSV that a spreadsheet cannot run', () => {

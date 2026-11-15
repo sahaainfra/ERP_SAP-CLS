@@ -65,6 +65,12 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const [menuOpen, setMenuOpen] = useState(false);
   const searchOn = useFlagOn('ff.ui.p0308'); // global search and the command palette (part 03.08)
   const device = useFlagOn('ff.ui.p0306'); // layouts, install and device capabilities (part 03.06)
+  const uiV3 = useFlagOn('ff.ui.p16602'); // the UI v3 page patterns (part 166.2): src/client/ui-v3.css styles them under :root[data-ui-v3]
+  useEffect(() => {
+    const root = document.documentElement;
+    if (uiV3) root.dataset.uiV3 = 'on'; else delete root.dataset.uiV3;
+    return () => { delete root.dataset.uiV3; };
+  }, [uiV3]);
   const layout = useLayout();
   useLowBandwidth(); // keeps the page's low-bandwidth mark (the data saver, a slow connection, or the person's choice) in step
   // the menu is a rail on a tablet unless the person chose otherwise

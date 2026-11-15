@@ -6,7 +6,7 @@ import { GLYPHS } from './icon-map.js';
 // erp.group.finance, erp.cx.crane or a module key); the registry says which glyph that is, so a module never picks a glyph itself.
 const hintOf = (v) => (typeof v === 'string' ? v : v?.glyph_hint);
 const KEYS = new Map();
-for (const g of ['groups', 'actions', 'states', 'modules']) for (const [k, v] of Object.entries(registry[g])) KEYS.set(k, hintOf(v));
+for (const g of ['groups', 'actions', 'states', 'modules', 'kpi']) for (const [k, v] of Object.entries(registry[g] ?? {})) KEYS.set(k, hintOf(v));
 
 /** Every registry key with its group and meaning, for the style guide. */
 export const ICON_KEYS = [
@@ -15,6 +15,7 @@ export const ICON_KEYS = [
   ...Object.entries(registry.states).map(([k, v]) => ({ key: k, group: 'States', meaning: v.meaning ?? k.replace('erp.state.', '') })),
   ...Object.keys(registry.construction).map((k) => ({ key: k, group: 'Construction', meaning: k.replace('erp.cx.', '').replace(/-/g, ' ') })),
   ...Object.entries(registry.modules).map(([k, v]) => ({ key: k, group: 'Modules', meaning: v.label ?? '' })),
+  ...Object.entries(registry.kpi ?? {}).map(([k, v]) => ({ key: k, group: 'Key figures', meaning: v.meaning ?? '' })),
 ];
 export const SIZES = registry.sizes;
 export const knownIcon = (name) => KEYS.has(name) || name in CONSTRUCTION_GLYPHS;

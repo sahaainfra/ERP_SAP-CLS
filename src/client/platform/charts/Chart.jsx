@@ -1,6 +1,8 @@
 import { useId, useRef, useState } from 'react';
 import { arcPath, areaPath, bands, chartTable, dayFraction, formatCount, heatFill, linePath, niceTicks, seriesColour, sliceAngles, toCsv } from './scale.js';
 import { downloadCsv } from '../../modules/core/pages/ui.jsx';
+import { isEmptyChart } from './theme.js';
+import { EmptyState } from '../feedback/states.jsx';
 
 // The chart library (part 03.07, FR-08). Every chart is drawn in SVG from the design tokens (--erp-chart-1..8 and the status colours, so
 // light and dark themes both work), has a tooltip on hover and focus, a legend, the same data as a table (the accessible alternative),
@@ -224,6 +226,8 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   const id = useId();
   const svgRef = useRef(null);
   const [tip, setTip] = useState(null);
+  // nothing to draw: the empty state of the chart theme, not an empty frame with axes (part 166.2, U-08)
+  if (isEmptyChart(type, data)) return <figure className="ch ch-empty" data-chart={type} data-testid="chart-empty"><EmptyState compact title={title ? `No data for ${title}` : 'No data to chart'} message="Change the filters or the period to see figures here." /></figure>;
   const table = chartTable(type, data);
   const pointCount = table.rows.length;
   const body = type === 'donut' ? <Donut data={data} onDrill={onDrill} setTip={setTip} />

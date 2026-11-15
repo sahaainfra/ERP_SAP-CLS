@@ -1,0 +1,133 @@
+/*
+ * UI v3 page patterns (part 166.2). The shared components PageHeader, KpiRow/KpiTile, Card/CardGrid, Section, StatusBadge variants and the
+ * chart theme. The first block is structure every page needs whatever the flag (the components are used everywhere); the look of the
+ * Fiori-style pages (header card, tiles with icons, overview cards, phone layouts) is under :root[data-ui-v3], which the shell sets while
+ * the feature flag ff.ui.p16602 is ON. Colours, spacing and type come from the design tokens only.
+ */
+
+/* ---------- structure (flag on or off) ---------- */
+:root {
+  --ui-c1: var(--erp-chart-1); --ui-c2: var(--erp-chart-2); --ui-c3: var(--erp-chart-3); --ui-c4: var(--erp-chart-4);
+  --ui-c5: var(--erp-chart-5); --ui-c6: var(--erp-chart-6); --ui-c7: var(--erp-chart-7); --ui-c8: var(--erp-chart-8);
+}
+.ph { display: block; margin: 0 0 var(--erp-space-3); min-width: 0; }
+.ph-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-3) var(--erp-space-4); min-width: 0; }
+.ph-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-3); min-width: 0; flex: 1 1 16rem; }
+.ph-title h1 { min-width: 0; overflow-wrap: anywhere; }
+.ph-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-2); }
+.ph-subtitle { margin: var(--erp-space-2) 0 0; }
+.ph-meta { margin: var(--erp-space-2) 0 0; overflow-wrap: anywhere; }
+.ph-facts { display: flex; flex-wrap: wrap; gap: var(--erp-space-3) var(--erp-space-6); margin: var(--erp-space-3) 0 0; }
+.ph-fact dt { font: var(--erp-type-caption); color: var(--erp-color-text-secondary); }
+.ph-fact dd { margin: 0; font: var(--erp-type-label); }
+.ph-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
+.ph-more { position: relative; }
+.ph-more-btn { min-width: 44px; justify-content: center; }
+.ph-more-list { position: absolute; right: 0; top: calc(100% + 4px); z-index: var(--erp-z-dropdown); list-style: none; margin: 0; padding: var(--erp-space-2) 0; min-width: 12rem; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-md); box-shadow: var(--erp-elevation-2); }
+.ph-more-list button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: var(--erp-space-3) var(--erp-space-4); font: inherit; color: inherit; cursor: pointer; min-height: 44px; }
+.ph-more-list button:hover, .ph-more-list button:focus-visible { background: var(--erp-color-bg-hover); }
+
+.kpi-row { min-width: 0; }
+.kpi-tile { min-width: 0; }
+.kpi-head { display: flex; align-items: center; gap: var(--erp-space-2); min-width: 0; }
+.kpi-label { overflow-wrap: anywhere; }
+.kpi-figure { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--erp-space-1) var(--erp-space-2); min-width: 0; }
+.kpi-value { overflow-wrap: anywhere; }
+.kpi-unit { font: var(--erp-type-caption); color: var(--erp-color-text-secondary); }
+.kpi-trend { font: var(--erp-type-caption); }
+.kpi-trend-success { color: var(--erp-color-status-success-fg); }
+.kpi-trend-error { color: var(--erp-color-status-error-fg); }
+.kpi-trend-neutral { color: var(--erp-color-text-secondary); }
+.kpi-extra { display: block; }
+.kpi-link { position: relative; }
+.kpi-chevron { display: none; }
+
+.ui-card { min-width: 0; }
+.ui-card-head { display: flex; align-items: flex-start; gap: var(--erp-space-3); }
+.ui-card-titles { flex: 1; min-width: 0; }
+.ui-card-title { margin: 0; }
+.ui-card-subtitle { margin: var(--erp-space-1) 0 0; }
+.ui-card-body { min-width: 0; }
+.ui-card-foot { margin-top: var(--erp-space-3); }
+.ui-card-grid { display: grid; gap: var(--erp-space-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) { .ui-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .ui-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ui-section { margin-block: var(--erp-space-4); min-width: 0; }
+.ui-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-3); justify-content: space-between; }
+
+.badge-solid.tone-neutral { background: var(--erp-color-status-neutral-solid); }
+.badge-solid.tone-info { background: var(--erp-color-status-info-solid); }
+.badge-solid.tone-success { background: var(--erp-color-status-success-solid); }
+.badge-solid.tone-warning { background: var(--erp-color-status-warning-solid); }
+.badge-solid.tone-error { background: var(--erp-color-status-error-solid); }
+.badge-solid.tone-muted { background: var(--erp-color-status-muted-solid); }
+.badge-solid { color: var(--erp-color-text-on-primary); }
+.badge-outline { background: transparent; }
+.badge-dot { background: transparent; border-color: transparent; padding-inline: 0; color: var(--erp-color-text-primary); }
+.badge-dot .badge-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; padding: 0; }
+.tone-neutral .badge-dot { background: var(--erp-color-status-neutral-solid); }
+.tone-info .badge-dot { background: var(--erp-color-status-info-solid); }
+.tone-success .badge-dot { background: var(--erp-color-status-success-solid); }
+.tone-warning .badge-dot { background: var(--erp-color-status-warning-solid); }
+.tone-error .badge-dot { background: var(--erp-color-status-error-solid); }
+.tone-muted .badge-dot { background: var(--erp-color-status-muted-solid); }
+.badge-sm { padding: 0 8px; font: var(--erp-type-caption); }
+
+.ch-empty .state { padding: var(--erp-space-5); }
+
+/* ---------- the UI v3 look (ff.ui.p16602 ON) ---------- */
+/* page header: a card at the top of the page, title and status on the left, actions on the right */
+:root[data-ui-v3] .ph:not(.ph-sr-only) { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-lg); padding: var(--erp-space-4) var(--erp-space-5); box-shadow: var(--erp-elevation-1); margin-bottom: var(--erp-space-4); }
+:root[data-ui-v3] .ph-crumb { margin-bottom: var(--erp-space-2); }
+:root[data-ui-v3] .ph-facts { border-top: 1px solid var(--erp-color-border-subtle); padding-top: var(--erp-space-3); }
+:root[data-ui-v3] .ph-fact dd { font: var(--erp-type-title-sm, var(--erp-type-label)); }
+
+/* key figures: tiles with an icon, the label above the value, a tone on the left edge */
+:root[data-ui-v3] .kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--erp-space-3); margin: var(--erp-space-4) 0; max-width: none; }
+:root[data-ui-v3] .kpi-tile { display: flex; flex-direction: column; gap: var(--erp-space-2); background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary); border: 1px solid var(--erp-color-border-subtle); border-left: 4px solid var(--erp-color-border-strong); border-radius: var(--erp-radius-md); padding: var(--erp-space-3) var(--erp-space-4); box-shadow: var(--erp-elevation-1); margin: 0; min-width: 0; }
+:root[data-ui-v3] .kpi-tone-info { border-left-color: var(--erp-color-status-info-solid); }
+:root[data-ui-v3] .kpi-tone-success { border-left-color: var(--erp-color-status-success-solid); }
+:root[data-ui-v3] .kpi-tone-warning { border-left-color: var(--erp-color-status-warning-solid); }
+:root[data-ui-v3] .kpi-tone-error { border-left-color: var(--erp-color-status-error-solid); }
+:root[data-ui-v3] .kpi-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--erp-radius-md); background: var(--erp-color-brand-primary-tint); color: var(--erp-color-brand-primary-text); flex: none; }
+:root[data-ui-v3] .kpi-label { font: var(--erp-type-label); color: var(--erp-color-text-secondary); }
+:root[data-ui-v3] .kpi-value { font: var(--erp-type-kpi); color: var(--erp-color-text-primary); }
+:root[data-ui-v3] .kpi-link { display: flex; flex-direction: column; gap: var(--erp-space-2); color: inherit; text-decoration: none; padding-right: var(--erp-space-5); }
+:root[data-ui-v3] .kpi-chevron { display: block; position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: var(--erp-color-text-secondary); }
+:root[data-ui-v3] .kpi-link:hover .kpi-value { color: var(--erp-color-text-link); }
+
+/* overview cards */
+:root[data-ui-v3] .ui-card { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-lg); box-shadow: var(--erp-elevation-1); padding: 0; margin-block: 0 var(--erp-space-4); overflow: hidden; display: flex; flex-direction: column; }
+:root[data-ui-v3] .ui-card-head { padding: var(--erp-space-4) var(--erp-space-4) var(--erp-space-2); }
+:root[data-ui-v3] .ui-card-title { font: var(--erp-type-title-sm, var(--erp-type-title)); }
+:root[data-ui-v3] .ui-card-body { padding: var(--erp-space-2) var(--erp-space-4) var(--erp-space-4); flex: 1; }
+:root[data-ui-v3] .ui-card-foot { margin: 0; padding: var(--erp-space-3) var(--erp-space-4); border-top: 1px solid var(--erp-color-border-subtle); }
+:root[data-ui-v3] .ui-card-foot a { font: var(--erp-type-label); text-decoration: none; color: var(--erp-color-text-link); }
+:root[data-ui-v3] .ui-card-grid > .ui-card { margin: 0; }
+:root[data-ui-v3] .ui-section { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-lg); padding: var(--erp-space-4); }
+
+/* the form grid holds fields only: on a page that still lays out boxes in it, they wrap instead of overflowing */
+:root[data-ui-v3] .form-grid > .mdm-panel { min-width: 0; }
+
+/* matrices, registers and planners stay tables on a phone: they scroll inside their own box and never widen the page (U-06) */
+:root[data-ui-v3] [data-no-cards] { max-width: 100%; overflow-x: auto; }
+
+/* ---------- phones (≤ 767 px) ---------- */
+@media (max-width: 767px) {
+  :root[data-ui-v3] .ph:not(.ph-sr-only) { padding: var(--erp-space-3) var(--erp-space-4); border-radius: var(--erp-radius-md); }
+  :root[data-ui-v3] .ph-actions { width: 100%; }
+  :root[data-ui-v3] .ph-actions > .btn, :root[data-ui-v3] .ph-actions > button { flex: 1 1 auto; min-height: 44px; }
+  :root[data-ui-v3] .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--erp-space-2); }
+  :root[data-ui-v3] .kpi-tile { padding: var(--erp-space-3); }
+  :root[data-ui-v3] .kpi-icon { width: 28px; height: 28px; }
+  :root[data-ui-v3] .kpi-value { font-size: var(--erp-font-size-title, 1.25rem); }
+  :root[data-ui-v3] .ch-legend { justify-content: flex-start; }
+  /* the record's actions stay in reach: a bar stuck to the bottom of the screen (object page) */
+  :root[data-ui-v3] .op-actions { position: sticky; bottom: 0; z-index: 2; background: var(--erp-color-bg-surface); padding: var(--erp-space-2) 0; border-top: 1px solid var(--erp-color-border-subtle); }
+}
+
+@media print {
+  .ph { box-shadow: none !important; border: 0 !important; padding: 0 !important; }
+  .ph-actions, .ph-more { display: none !important; }
+  .kpi-tile { box-shadow: none !important; }
+}

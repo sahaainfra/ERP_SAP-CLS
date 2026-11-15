@@ -1,3 +1,4 @@
+import { KpiTile } from '../../../platform/design/Kpi.jsx';
 import { useEffect, useId } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { logExport } from '../../../platform/audit/index.js';
@@ -98,16 +99,10 @@ export const Link = ({ to, children }) => (
   <a href={to} onClick={(e) => { e.preventDefault(); navigateTo(to); }}>{children}</a>
 );
 
-/** A KPI tile: value, caption and a status colour; becomes a link when `to` is given (drill-down). */
-export function Tile({ label, value, status = 'neutral', to, hint, testId }) {
-  const body = (
-    <>
-      <span className="tile-value" data-testid={testId}>{value}</span>
-      <span className="tile-label">{label}</span>
-      {hint && <span className="muted small">{hint}</span>}
-    </>
-  );
-  return <div className={`tile tile-${status}`}>{to ? <Link to={to}>{body}</Link> : body}</div>;
+/** A KPI tile: value, caption and a status colour; becomes a link when `to` is given (drill-down). Since part 166.2 it is the shared KpiTile
+ * (platform/design/Kpi.jsx), so the older pages get the UI v3 tile with no change of their own; `kind` and `icon` pick the icon. */
+export function Tile({ label, value, status = 'neutral', to, hint, testId, kind, icon, unit }) {
+  return <KpiTile label={label} value={value} tone={status} to={to} valueTestid={testId} kind={kind} icon={icon} unit={unit}>{hint && <span className="muted small">{hint}</span>}</KpiTile>;
 }
 
 export function downloadCsv(filename, text, type = 'text/csv;charset=utf-8') {
