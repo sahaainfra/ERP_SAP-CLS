@@ -86,7 +86,7 @@ export function VendorInvoicesPage() {
   if (id) return <section aria-labelledby="vi-h"><Invoice id={id} /></section>;
   if (sp.get('new')) return <section aria-labelledby="vin-h"><h1 id="vin-h">{t('vi.register')}</h1><p><Link to="/bill/vendor-invoices">{t('vi.queue')}</Link></p><RegisterForm /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('vi.queue')} permission="bill.vendor_invoice.view" />; if (q.isPending) return <Skeleton label={t('vi.queue')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
-  const rows = (q.data.data ?? []).filter((r) => !FILTERS.find(([k]) => k === f)[1] || FILTERS.find(([k]) => k === f)[1](r)).filter((r) => !text || `${r.invoiceNo} ${r.vendor} ${r.docNo}`.toLowerCase().includes(text.toLowerCase())).sort((a, b) => Number(b.blocked) - Number(a.blocked) || b.ageDays - a.ageDays);
+  const rows = (Array.isArray(q.data) ? q.data : q.data.data ?? []).filter((r) => !FILTERS.find(([k]) => k === f)[1] || FILTERS.find(([k]) => k === f)[1](r)).filter((r) => !text || `${r.invoiceNo} ${r.vendor} ${r.docNo}`.toLowerCase().includes(text.toLowerCase())).sort((a, b) => Number(b.blocked) - Number(a.blocked) || b.ageDays - a.ageDays);
   return (
     <section aria-labelledby="vis-h" data-testid="bill-vendor-invoices"><h1 id="vis-h">{t('vi.queue')}</h1><p className="muted">{t('vi.intro')}</p>
       <div className="actions-row no-print"><Link to="/bill/vendor-invoices?new=1" data-testid="bill-vi-new">{t('vi.register')}</Link> · <Link to="/bill/invoice-hub">{t('hub.title')}</Link></div>
