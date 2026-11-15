@@ -67,6 +67,8 @@ test('AC-01 the look-ahead board shows the constraints found in engineering; a r
   const sch = await P('post', '/plan/schedules', { projectId: s.pid, name: 'Tower L working schedule', calendarId: cal.id, startDate: monday });
   await P('post', `/plan/schedules/${sch.id}/import`, { rows: [{ code: 'A10', name: 'Excavation', wbsCode: '1.1', duration: 5 }, { code: 'A20', name: 'PCC under footings', wbsCode: '1.1', duration: 3, predecessors: 'A10' }, { code: 'A30', name: 'Ground floor columns', wbsCode: '2', duration: 4 }] });
   await P('post', `/plan/schedules/${sch.id}/calculate`, {}); const desktop = info.project.name === 'desktop';
+  // 166.1: Excavation is planned to finish on the Friday; from a Saturday it would be a late predecessor of the PCC bed (true, but not what this test is about), so it is kept on time on any weekday
+  { const w = new DatabaseSync('data/e2e.sqlite'); w.exec('PRAGMA busy_timeout = 8000;'); const todayIst = new Date(Date.now() + 19_800_000).toISOString().slice(0, 10); w.prepare("UPDATE plan_activities SET ef = ? WHERE schedule_id = ? AND code = 'A10' AND ef < ?").run(todayIst, sch.id, todayIst); w.close(); }
 
   // ---- the board: the constraints appear when the planner looks for them ----
   const r = await open(browser, info, c, 'PLAN', planner, `/plan/lookahead?scheduleId=${sch.id}`); const errors = watch(r.page); const page = r.page;

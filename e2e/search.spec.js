@@ -88,8 +88,9 @@ test('FR-02 FR-03 AC-01 the palette opens with Ctrl+K anywhere, groups records, 
   // keyboard: arrows then Enter opens the record
   await palette(page).getByRole('combobox').fill('shuttering');
   await expect(hit).toBeVisible();
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('ArrowUp');
+  // later parts add pages that also match the word, so the keyboard goes down to the record (166.1) instead of assuming it is first
+  for (let i = 0; i < 12 && (await hit.getAttribute('aria-selected')) !== 'true'; i += 1) await page.keyboard.press('ArrowDown');
+  await expect(hit).toHaveAttribute('aria-selected', 'true');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/admin\/sample-requests\?open=\d+/);
   await expect(page.getByText('Pier cap shuttering').first()).toBeVisible();
