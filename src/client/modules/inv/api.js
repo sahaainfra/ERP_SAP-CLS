@@ -3,7 +3,8 @@ import { api, authHeaders } from '../../platform/api/index.js';
 // The data calls of the stores and stock pages (part 16.01). Balances, values, availability, valuation and what a person may do come from the server; the pages never work them out.
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
 export const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
-export const fmtDate = (iso) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—');
+// a date (2026-11-15) shows as that day; a timestamp (approval and audit history) shows its day in India time
+export const fmtDate = (iso) => (!iso ? '—' : String(iso).length > 10 ? new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }));
 export const fmtQty = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { maximumFractionDigits: 3 }));
 export const fmtRs = (paise) => (paise == null ? '—' : `₹ ${(paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
 export const STORE_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', ACTIVE: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', INACTIVE: 'CANCELLED' };

@@ -1,0 +1,539 @@
+/* =====================================================================================================================
+   ERP UI v3 — one design layer for every page, mobile-first.
+   Loaded after styles.css. It does not rename any class the pages use: it gives the classes that the 659 components
+   already share (mdm-panel, form-grid, data-table, grid, actions-row, tiles, kpi-*, role=tablist …) one consistent look
+   that follows the approved mockups (reference/ERP_UI_Mockups): white cards on a soft page, dark navy menu with an amber
+   marker, compact tables with grey headers, KPI tiles in a row, underline tabs, pill status badges.
+   Phone first: 16px inputs (no iOS zoom), 44px touch targets, tables become cards (responsiveTables.js), KPI tiles
+   two per row, actions that wrap, a text size every person can change (textSize.js).
+   ===================================================================================================================== */
+
+/* ---------- 0. Text size (S / M / L / XL) scales the type tokens ------------------------------------------------- */
+:root { --ui-ts: 1; }
+:root[data-text-size='s'] { --ui-ts: 0.9; }
+:root[data-text-size='l'] { --ui-ts: 1.12; }
+:root[data-text-size='xl'] { --ui-ts: 1.25; }
+:root {
+  --erp-type-caption: 400 calc(12px * var(--ui-ts)) / calc(16px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-body-sm: 400 calc(13px * var(--ui-ts)) / calc(18px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-body: 400 calc(14px * var(--ui-ts)) / calc(20px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-body-lg: 400 calc(16px * var(--ui-ts)) / calc(24px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-label: 500 calc(13px * var(--ui-ts)) / calc(18px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-title-sm: 600 calc(15px * var(--ui-ts)) / calc(20px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-title: 600 calc(16px * var(--ui-ts)) / calc(22px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-page-title: 600 calc(20px * var(--ui-ts)) / calc(28px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-type-kpi: 600 calc(22px * var(--ui-ts)) / calc(28px * var(--ui-ts)) var(--erp-font-sans);
+  --erp-density-font-size: calc(13.5px * var(--ui-ts));
+  --ui-card-radius: 14px;
+  --ui-card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 8px rgba(16, 24, 40, 0.05);
+  --ui-c1: #1D6FE0; --ui-c2: #16A34A; --ui-c3: #F59E0B; --ui-c4: #7C3AED; --ui-c5: #0EA5A4; --ui-c6: #E11D48; --ui-c7: #2563EB; --ui-c8: #C2410C;
+  --ui-gap: 14px;
+  --ui-touch: 36px;
+  --ui-nav-w: 248px;
+}
+@media (pointer: coarse), (max-width: 767px) { :root { --ui-touch: 44px; --ui-gap: 12px; } }
+
+/* ---------- 1. Page, typography, links ---------------------------------------------------------------------------- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { background: #F4F6FA; color: var(--erp-color-text-primary); font: var(--erp-type-body); -webkit-font-smoothing: antialiased; }
+h1 { font: var(--erp-type-page-title); letter-spacing: -0.01em; margin: 0 0 4px; }
+h2 { font: var(--erp-type-title); margin: 20px 0 10px; }
+h3 { font: var(--erp-type-title-sm); margin: 16px 0 8px; }
+h1 + p.muted, h1 + .muted { margin-top: 0; font: var(--erp-type-body-sm); }
+.muted { color: var(--erp-color-text-muted, var(--erp-color-text-secondary)); }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+main a:not(.btn):not([role='tab']):not([role='menuitem']) { color: var(--erp-color-text-link); text-decoration: none; text-underline-offset: 2px; }
+main a:not(.btn):not([role='tab']):not([role='menuitem']):hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--erp-color-focus-ring, var(--erp-color-brand-primary)); outline-offset: 2px; }
+
+/* ---------- 2. Application shell: white top bar, navy menu (mockup 02) ------------------------------------------ */
+.sh-header {
+  position: sticky; top: 0; z-index: var(--erp-z-sticky, 20);
+  background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary);
+  border-bottom: 1px solid var(--erp-color-border-subtle); min-height: 56px; gap: 8px;
+}
+.sh-header a, .sh-header .sh-icon, .sh-header .sh-user, .sh-header .sh-chip { color: var(--erp-color-text-primary); }
+.sh-header .sh-icon:hover, .sh-header .sh-user:hover, .sh-header .sh-chip:hover { background: var(--erp-color-bg-hover); }
+.sh-header .sh-chip .muted { color: var(--erp-color-text-muted); }
+.sh-brand { display: inline-flex; align-items: center; gap: 8px; }
+.sh-brand strong { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 32px; padding: 0 8px; border-radius: 8px; background: var(--erp-color-brand-accent); color: #161B22; font-size: 14px; letter-spacing: 0.04em; }
+.sh-search { background: var(--erp-color-bg-surface-sunken); border: 1px solid transparent; color: var(--erp-color-text-muted); border-radius: 999px; height: 38px; flex: 0 1 460px; margin-inline: auto; padding-inline: 14px; }
+.sh-search + .spacer { display: none; }
+.sh-create { background: var(--erp-color-brand-primary) !important; color: #fff !important; border-radius: 999px !important; }
+.sh-search:hover { background: var(--erp-color-bg-hover); }
+.sh-kbd { color: var(--erp-color-text-muted); }
+.sh-badge { background: var(--erp-color-status-error-solid); color: #fff; }
+
+/* light menu with a blue pill for the current page (SAP Horizon / BuildAxis references) */
+.sh-nav {
+  background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary);
+  border-right: 1px solid var(--erp-color-border-subtle); flex: 0 0 var(--ui-nav-w); width: var(--ui-nav-w);
+  position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 56px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 12px 0 24px; scrollbar-width: thin;
+}
+.sh-nav ul { margin: 0 0 6px; }
+.sh-group h2 { margin: 0; }
+.sh-group h2 button { color: var(--erp-color-text-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.07em; padding: 14px 20px 6px; background: transparent; min-height: 0; }
+.sh-group h2 button:hover { background: transparent; color: var(--erp-color-text-primary); }
+.sh-nav li a { width: auto; color: var(--erp-color-text-primary); margin: 1px 10px; padding: 8px 12px; min-height: 38px; border-radius: 10px; font-size: calc(13.5px * var(--ui-ts)); gap: 12px; }
+.sh-nav li a svg { color: var(--erp-color-text-secondary); }
+.sh-nav li a:hover { background: var(--erp-color-bg-hover); }
+.sh-nav li a[aria-current='page'] { background: var(--erp-color-brand-primary); color: var(--erp-color-text-on-primary, #fff); box-shadow: 0 4px 12px rgba(29, 79, 145, 0.25); font-weight: 600; }
+.sh-nav li a[aria-current='page'] svg { color: inherit; }
+.sh-nav a, .sh-nav button { color: inherit; }
+.app-shell[data-collapsed='true'] .sh-nav { flex-basis: 72px; width: 72px; padding: 8px 0; }
+.app-shell[data-collapsed='true'] .sh-nav li a { margin: 2px 10px; }
+
+.sh-body { background: #F4F6FA; }
+[data-theme='dark'] body, [data-theme='dark'] .sh-body { background: var(--erp-color-bg-page); }
+.app-shell main { max-width: 1440px; width: 100%; padding: 16px 20px 32px; }
+.sh-crumbs { margin-bottom: 8px; }
+.sh-crumbs ol { font: var(--erp-type-body-sm); }
+.sh-fav { margin-top: 0; }
+
+/* the development identity bar is a thin strip, not part of the page */
+.devbar { background: var(--erp-color-status-warning-bg); color: var(--erp-color-status-warning-fg); font: var(--erp-type-caption); padding-block: 4px; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.devbar input, .devbar select { min-height: 28px !important; height: 28px; font-size: 12px !important; padding: 0 6px; }
+
+/* ---------- 3. Cards and panels -------------------------------------------------------------------------------- */
+.mdm-panel, .card, .panel, .lp-card, .wd-card, .dash-card, .widget, section.box {
+  background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle);
+  border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); padding: 14px 16px; min-width: 0;
+}
+.mdm-panel { margin-block: 0 var(--ui-gap); }
+.mdm-panel > h2:first-child, .card > h2:first-child, .panel > h2:first-child { margin-top: 0; font: var(--erp-type-title-sm); }
+.mdm-panel > :last-child, .card > :last-child { margin-bottom: 0; }
+fieldset { border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius); background: var(--erp-color-bg-surface); padding: 12px 14px; }
+legend { font: var(--erp-type-title-sm); padding: 0 6px; }
+.empty-state { background: var(--erp-color-bg-surface); border: 1px dashed var(--erp-color-border-strong); border-radius: var(--ui-card-radius); padding: 28px 20px; text-align: center; }
+.empty-state h2 { margin-top: 0; }
+
+/* ---------- 4. KPI tiles in a row (mockup 02): every pattern the modules used ------------------------------------ */
+.kpi-row, .kpi-tiles, .tiles, .prf-kpis,
+.form-grid:has(> .mdm-panel > strong),
+.form-grid:has(> .mdm-panel > .muted + strong) {
+  display: grid; gap: var(--ui-gap); max-width: none;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  margin: 0 0 var(--ui-gap); padding: 0; list-style: none;
+}
+.form-grid:has(> .mdm-panel > strong) > .mdm-panel,
+.form-grid:has(> .mdm-panel > .muted + strong) > .mdm-panel,
+.kpi-tile, .tile, .prf-kpi {
+  margin: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px;
+  background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle);
+  border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); min-width: 0;
+}
+.form-grid:has(> .mdm-panel > strong) > .mdm-panel > .muted,
+.kpi-label, .tile-label, .tile > span:first-child { font: var(--erp-type-caption); color: var(--erp-color-text-muted); }
+.form-grid:has(> .mdm-panel > strong) > .mdm-panel > strong,
+.kpi-value, .tile-value, .tile strong, .prf-kpi strong {
+  font: 600 calc(clamp(18px, 1.45vw, 22px) * var(--ui-ts)) / 1.25 var(--erp-font-sans) !important; font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* each tile gets a tinted marker in the reference colours, so a row of figures reads at a glance */
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > * { position: relative; padding-left: 58px !important; min-height: 76px; justify-content: center; border-color: transparent; }
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > *::before {
+  content: ''; position: absolute; left: 14px; top: 50%; translate: 0 -50%; width: 32px; height: 32px; border-radius: 10px;
+  background: color-mix(in srgb, var(--ui-tile-c, var(--ui-c1)) 14%, transparent);
+  -webkit-mask: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-tile-c, var(--ui-c1)) 22%, transparent);
+}
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > *::after {
+  content: ''; position: absolute; left: 22px; top: 50%; translate: 0 -50%; width: 16px; height: 16px; background: var(--ui-tile-c, var(--ui-c1));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18'/%3E%3Cpath d='M7 15l4-4 3 3 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3v18h18'/%3E%3Cpath d='M7 15l4-4 3 3 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :nth-child(6n+2) { --ui-tile-c: var(--ui-c2); }
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :nth-child(6n+3) { --ui-tile-c: var(--ui-c3); }
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :nth-child(6n+4) { --ui-tile-c: var(--ui-c4); }
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :nth-child(6n+5) { --ui-tile-c: var(--ui-c5); }
+:is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :nth-child(6n) { --ui-tile-c: var(--ui-c6); }
+.tile-ok { --ui-tile-c: var(--erp-color-status-success-solid); }
+.tile-warn { --ui-tile-c: var(--erp-color-status-warning-solid); }
+.tile-bad, .tile-error { --ui-tile-c: var(--erp-color-status-error-solid); }
+.tile-ok { border-color: var(--erp-color-border-subtle); box-shadow: inset 3px 0 0 var(--erp-color-status-success-solid), var(--ui-card-shadow); background: var(--erp-color-bg-surface); color: inherit; }
+.tile-warn { box-shadow: inset 3px 0 0 var(--erp-color-status-warning-solid), var(--ui-card-shadow); background: var(--erp-color-bg-surface); color: inherit; }
+.tile-bad, .tile-error { box-shadow: inset 3px 0 0 var(--erp-color-status-error-solid), var(--ui-card-shadow); background: var(--erp-color-bg-surface); color: inherit; border-color: var(--erp-color-border-subtle); }
+.tile-bad strong, .tile-error .tile-value { color: var(--erp-color-status-error-fg); }
+
+/* ---------- 5. Forms -------------------------------------------------------------------------------------------- */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']), select, textarea {
+  min-height: var(--ui-touch); border: 1px solid var(--erp-color-border-control, var(--erp-color-border-strong)); border-radius: 8px;
+  background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary); font: var(--erp-type-body); padding: 6px 10px; max-width: 100%;
+}
+textarea { min-height: calc(var(--ui-touch) * 2); }
+input:disabled, select:disabled, textarea:disabled, input[readonly] { background: var(--erp-color-bg-surface-sunken); color: var(--erp-color-text-secondary); }
+input[type='checkbox'], input[type='radio'] { inline-size: 18px; block-size: 18px; accent-color: var(--erp-color-brand-primary); }
+label { font: var(--erp-type-label); }
+.form-grid { gap: 12px 16px; }
+.form-grid:not(:has(> .mdm-panel > strong)) { max-width: 72rem; }
+@media (min-width: 900px) {
+  /* simple field lists fill two columns on a wide screen; groups, tables and buttons take the full width */
+  .form-grid:not(:has(> .mdm-panel)):not(:has(> fieldset)):has(> label:nth-of-type(4)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-grid > :is(.actions-row, .actions, table, .table-scroll, h2, h3, p, fieldset, .wide, [data-wide]) { grid-column: 1 / -1; }
+}
+.field-error, .error-text, [role='alert'].inline { color: var(--erp-color-status-error-fg); font: var(--erp-type-caption); }
+
+/* ---------- 6. Buttons, links-as-buttons, action rows ------------------------------------------------------------ */
+.btn {
+  min-height: var(--ui-touch); padding: 0 14px; border-radius: 8px; font: 600 calc(13px * var(--ui-ts)) / 1.2 var(--erp-font-sans);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+  border: 1px solid var(--erp-color-border-control, var(--erp-color-border-strong)); background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.btn-primary { background: var(--erp-color-brand-primary); border-color: var(--erp-color-brand-primary); color: var(--erp-color-text-on-primary, #fff); }
+.btn-small { min-height: 30px; padding: 0 10px; margin-top: 0; font-size: calc(12px * var(--ui-ts)); }
+@media (pointer: coarse) { .btn-small { min-height: 38px; } }
+.btn-large { min-height: 52px; }
+.actions-row, .actions, .toolbar, .form-actions {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-block: 12px;
+}
+.actions-row:not([role='tablist']) > .btn-primary, .form-actions > .btn-primary { order: -1; }
+.btn-link { color: var(--erp-color-text-link); text-decoration: none; }
+.btn-link:hover { text-decoration: underline; }
+
+/* ---------- 7. Tabs (role=tablist): underline tabs, scroll sideways on a phone ---------------------------------- */
+[role='tablist'] {
+  display: flex; gap: 2px; border-bottom: 1px solid var(--erp-color-border-subtle); margin: 8px 0 14px;
+  overflow-x: auto; scrollbar-width: thin; flex-wrap: nowrap; justify-content: flex-start;
+}
+[role='tablist'] [role='tab'], [role='tablist'] > .btn {
+  background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; box-shadow: none;
+  color: var(--erp-color-text-secondary); font: 500 calc(13.5px * var(--ui-ts)) / 1.2 var(--erp-font-sans);
+  min-height: var(--ui-touch); padding: 0 12px; white-space: nowrap; flex: 0 0 auto; margin: 0;
+}
+[role='tablist'] [role='tab']:hover { color: var(--erp-color-text-primary); background: var(--erp-color-bg-hover); }
+[role='tablist'] [role='tab'][aria-selected='true'], [role='tablist'] > .btn-primary {
+  color: var(--erp-color-brand-primary-text, var(--erp-color-brand-primary)); border-bottom-color: var(--erp-color-brand-primary); background: transparent; font-weight: 600;
+}
+
+/* ---------- 8. Tables (mockup 11): grey header, quiet rows, numbers on the right -------------------------------- */
+.table-scroll { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); overflow-x: auto; margin-block: 0 var(--ui-gap); }
+.table-scroll > table { margin: 0; }
+table { border-collapse: collapse; width: 100%; font-size: var(--erp-density-font-size); }
+th { background: #F1F4F9; color: var(--erp-color-text-secondary); font: 600 calc(12px * var(--ui-ts)) / 1.3 var(--erp-font-sans); text-align: left; white-space: nowrap; border-bottom: 1px solid var(--erp-color-border-subtle); }
+td { border-bottom: 1px solid var(--erp-color-border-subtle); vertical-align: middle; }
+th, td { padding: var(--erp-cell-py, 8px) var(--erp-cell-px, 10px); }
+:root[data-density='comfortable'] th, :root[data-density='comfortable'] td { padding: 9px 10px; }
+tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
+/* key and value lists (a row header in the body, as in the bill summary of mockup 11) */
+tbody th { background: transparent; color: var(--erp-color-text-secondary); font: 500 calc(13px * var(--ui-ts)) / 1.4 var(--erp-font-sans); white-space: normal; }
+tbody tr:last-child th:only-of-type { color: var(--erp-color-text-primary); font-weight: 600; }
+tbody tr:hover td { background: var(--erp-color-bg-hover); }
+th.num, td.num { text-align: right; white-space: nowrap; }
+td .btn { min-height: 30px; }
+thead th { text-transform: none; letter-spacing: 0.01em; }
+.table-scroll > table > thead th:first-child { border-top-left-radius: var(--ui-card-radius); }
+.table-scroll > table > thead th:last-child { border-top-right-radius: var(--ui-card-radius); }
+caption { caption-side: top; text-align: left; font: var(--erp-type-title-sm); padding: 0 0 8px; }
+
+/* ---------- 9. Status badges and alerts ------------------------------------------------------------------------- */
+.badge, .status-badge, [class*='status-'][class*='badge'] { border-radius: 999px; font: 600 calc(11.5px * var(--ui-ts)) / 1 var(--erp-font-sans); padding: 4px 9px; }
+.state, .banner, .alert, .notice { border-radius: 8px; }
+
+/* ---------- 10. Popovers, menus, dialogs ------------------------------------------------------------------------ */
+.sh-pop, [role='dialog'] > div:first-child, .dialog, .modal { border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 24, 40, 0.18); }
+.sh-pop { padding: 12px; display: grid; gap: 10px; min-width: 240px; }
+.sh-pop .shell-field { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.sh-pop .shell-field select { max-width: none; width: 100%; }
+.ui-textsize { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ui-textsize button { min-height: 36px; border: 1px solid var(--erp-color-border-subtle); background: var(--erp-color-bg-surface); border-radius: 8px; cursor: pointer; color: var(--erp-color-text-primary); }
+.ui-textsize button[aria-pressed='true'] { border-color: var(--erp-color-brand-primary); background: var(--erp-color-brand-primary-tint, var(--erp-color-bg-selected)); font-weight: 600; }
+
+/* ---------- 11. Phone (< 768px): drawer menu, bottom bar, full-width actions ------------------------------------ */
+@media (max-width: 767px) {
+  .app-shell main { padding: 12px 12px calc(84px + env(safe-area-inset-bottom)); }
+  .sh-header { min-height: 52px; padding-inline: 4px; gap: 0; }
+  .sh-header > * { flex-shrink: 1; min-width: 0; }
+  .sh-header .sh-icon, .sh-header .sh-user { min-width: 40px; padding-inline: 6px; }
+  .sh-user-name { max-width: 64px; }
+  @media (max-width: 380px) { .sh-user-name { display: none; } }
+  .sh-search { flex: 0 0 auto; min-width: var(--ui-touch); padding: 0; justify-content: center; background: transparent; border: 0; }
+  .sh-nav { position: fixed; top: 52px; left: 0; bottom: 0; height: auto; width: min(86vw, 320px); z-index: var(--erp-z-modal, 50); box-shadow: 8px 0 24px rgba(0, 0, 0, 0.25); }
+  .sh-nav li a { min-height: 44px; font-size: calc(15px * var(--ui-ts)); }
+  .sh-crumbs { font-size: 12px; }
+  .sh-crumbs ol { display: none; }
+  h1 { font-size: calc(19px * var(--ui-ts)); line-height: 1.3; overflow-wrap: anywhere; }
+  .devbar { padding: 4px 8px; }
+  .devbar .shell-field input, .devbar .shell-field select { max-width: 7rem; }
+
+  /* every text box at 16px so iOS does not zoom while typing */
+  input:not([type='checkbox']):not([type='radio']), select, textarea { font-size: max(16px, calc(14px * var(--ui-ts))); width: 100%; }
+  .actions-row input, .actions-row select, .toolbar input, .toolbar select { width: auto; flex: 1 1 140px; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .form-grid:has(> .mdm-panel > strong), .form-grid:has(> .mdm-panel > .muted + strong),
+  .kpi-row, .kpi-tiles, .tiles, .prf-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px; }
+  .form-grid:has(> .mdm-panel > strong) > .mdm-panel > strong, .kpi-value, .tile-value, .tile strong { font-size: calc(17px * var(--ui-ts)) !important; line-height: 1.25 !important; }
+  .mdm-panel, .card, .panel { padding: 12px; border-radius: 10px; }
+
+  /* action rows: buttons share the width, the main action first and largest */
+  .actions-row, .form-actions { gap: 8px; }
+  .actions-row:not([role='tablist']) > .btn, .form-actions > .btn { flex: 1 1 calc(50% - 4px); }
+  .actions-row:not([role='tablist']) > .btn-primary, .form-actions > .btn-primary { flex-basis: 100%; min-height: 48px; font-size: 15px; }
+
+  /* ---- tables become cards (responsiveTables.js labelled the cells) ---- */
+  .table-scroll:has(> table[data-cards='on']) { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+  table[data-cards='on'], table[data-cards='on'] > tbody { display: block; width: 100%; }
+  table[data-cards='on'] > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  table[data-cards='on'] > tbody > tr {
+    display: block; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: 12px;
+    box-shadow: var(--ui-card-shadow); padding: 10px 12px; margin: 0 0 10px;
+  }
+  table[data-cards='on'] > tbody > tr:hover td { background: transparent; }
+  table[data-cards='on'] > tbody > tr > td { overflow-wrap: anywhere; border: 0; }
+  /* the first cell is the card title */
+  table[data-cards='on'] > tbody > tr > td:first-child { display: block; font-weight: 600; font-size: calc(15px * var(--ui-ts)); padding: 0 0 6px; margin-bottom: 4px; border-bottom: 1px solid var(--erp-color-border-subtle); text-align: left; }
+  /* other cells: column name on the left, value on the right */
+  table[data-cards='on'] > tbody > tr > td:not(:first-child) { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; text-align: right; font-variant-numeric: tabular-nums; }
+  table[data-cards='on'] > tbody > tr > td:not(:first-child)::before { content: attr(data-label); flex: 0 0 auto; max-width: 48%; color: var(--erp-color-text-muted); font: var(--erp-type-caption); text-align: left; }
+  table[data-cards='on'] > tbody > tr > td:not(:first-child) > * { margin-left: auto; }
+  table[data-cards='on'] > tbody > tr > td[data-label='']:not(:first-child) { justify-content: flex-start; flex-wrap: wrap; gap: 8px; padding-top: 8px; }
+  table[data-cards='on'] > tbody > tr > td[data-label='']:not(:first-child) > * { margin-left: 0; }
+  table[data-cards='on'] > tbody > tr > td[data-label='']::before { display: none; }
+  table[data-cards='on'] > tbody > tr > td:empty { display: none; }
+  table[data-cards='on'] > tbody > tr[data-full] { display: block; text-align: center; }
+  table[data-cards='on'] > tbody > tr[data-full] > td::before { display: none; }
+  table[data-cards='on'] > tbody > tr > td .btn { min-height: 40px; }
+  table[data-cards='on'] > tfoot { display: block; }
+  table[data-cards='on'] > tfoot > tr { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; background: var(--erp-color-bg-surface-sunken); border-radius: 12px; padding: 10px 12px; font-weight: 600; }
+  table[data-cards='on'] > tfoot > tr > td { border: 0; padding: 0; }
+
+  table[data-cards='on'] > caption { display: block; text-align: left; padding: 4px 0 8px; }
+
+  /* tables that are not cards (three columns or fewer, key and value lists, matrices) stay real tables:
+     undo the old phone rule of styles.css that broke every table into blocks */
+  table[data-cards='off'] { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+  table[data-cards='off'] > thead { display: table-header-group; }
+  table[data-cards='off'] > tbody { display: table-row-group; }
+  table[data-cards='off'] > tfoot { display: table-footer-group; }
+  table[data-cards='off'] tr { display: table-row; padding: 0; border: 0; }
+  table[data-cards='off'] th, table[data-cards='off'] td { display: table-cell; width: auto; padding: 8px 10px; border-bottom: 1px solid var(--erp-color-border-subtle); }
+  table[data-cards='off'] td::before { content: none; }
+  table[data-cards='off'] th.num, table[data-cards='off'] td.num { text-align: right; }
+  table[data-cards='off'] tbody th { background: transparent; color: var(--erp-color-text-secondary); font-weight: 500; white-space: normal; }
+  table[data-cards='off'] > caption { display: block; text-align: left; }
+
+  /* tables that stay tables scroll inside their card, with a hint of the hidden columns */
+  .table-scroll:not(:has(> table[data-cards='on'])) { -webkit-overflow-scrolling: touch; background-image: linear-gradient(to left, rgba(0,0,0,0.06), transparent 16px); background-attachment: local, scroll; }
+}
+
+/* ---------- 11b. Phone look (the user's reference app): navy band, rounded cards, pill tabs, amber main action --- */
+:root { --ui-band: var(--erp-color-brand-primary); --ui-band-text: #fff; --ui-band-muted: rgba(255, 255, 255, 0.78); }
+[data-theme='dark'] { --ui-band: #14243B; }
+[data-theme='high-contrast'] { --ui-band: var(--erp-color-bg-shell); }
+@media (max-width: 767px) {
+  /* the header, the breadcrumb row, the page title and its intro form one navy band. The band is the box-shadow of the
+     title (and of the intro line right under it), clipped at their bottom edge: it covers everything above them at any
+     height of text, and no wrapper element is ever painted. */
+  .sh-header { background: var(--ui-band); border-bottom: 0; color: var(--ui-band-text); }
+  .sh-header a, .sh-header .sh-icon, .sh-header .sh-user, .sh-header .sh-chip, .sh-header .sh-search, .sh-header .sh-chip .muted { color: var(--ui-band-text); }
+  .sh-header .sh-icon:hover, .sh-header .sh-user:hover, .sh-header .sh-search:hover { background: rgba(255, 255, 255, 0.12); }
+  .app-shell main { overflow-x: clip; position: relative; isolation: isolate; }
+  .app-shell main > .sh-crumbs { color: var(--ui-band-text); }
+  .app-shell main > .sh-crumbs a { color: var(--ui-band-text) !important; }
+  .app-shell main > .sh-crumbs .btn { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.4); color: var(--ui-band-text); min-height: 32px; }
+  /* the band is a layer behind the content (z-index -1 inside main), from the top of the screen down to the bottom of
+     the title or of the intro line under it; text and cards always paint above it */
+  .app-shell main > .sh-crumbs, .app-shell main h1:not(.visually-hidden):not(.sr-only), .app-shell main h1:not(.visually-hidden):not(.sr-only) + p, .app-shell main :has(> h1:not(.visually-hidden):not(.sr-only)) + p { position: relative; }
+  .app-shell main > .sh-crumbs { padding-bottom: 10px; margin-bottom: 14px; }
+  .app-shell main > .sh-crumbs::before, .app-shell main h1:not(.visually-hidden):not(.sr-only)::before, .app-shell main h1:not(.visually-hidden):not(.sr-only) + p::before, .app-shell main :has(> h1:not(.visually-hidden):not(.sr-only)) + p::before {
+    content: ''; position: absolute; z-index: -1; left: -100vmax; right: -100vmax; bottom: 0; height: 100vmax; background: var(--ui-band); pointer-events: none;
+  }
+  .app-shell main > .sh-crumbs:has(+ * h1:not(.visually-hidden):not(.sr-only)) { margin-bottom: 0; }
+  .app-shell main h1 { color: var(--ui-band-text); padding-bottom: 14px; margin-bottom: 0; }
+  .devbar { position: relative; z-index: 2; }
+  .app-shell main h1:has(+ p) { padding-bottom: 6px; }
+  .app-shell main :has(> h1) { margin-bottom: 0; }
+  .app-shell main :has(> h1) > .muted { color: var(--ui-band-muted); }
+  .app-shell main h1 + p, .app-shell main :has(> h1) + p { color: var(--ui-band-muted); padding-bottom: 16px; margin-top: 0; font: var(--erp-type-body-sm); }
+  .app-shell main h1 + p a, .app-shell main :has(> h1) + p a, .app-shell main h1 + p .muted { color: var(--ui-band-text) !important; }
+  .app-shell main h1 + p + *, .app-shell main :has(> h1) + p + *, .app-shell main h1:not(:has(+ p)) + * { margin-top: 16px; }
+
+  /* rounded, soft cards */
+  .mdm-panel, .card, .panel, fieldset, .table-scroll, table[data-cards='on'] > tbody > tr, .empty-state { border-radius: 16px; }
+  .mdm-panel, .card, .panel { box-shadow: 0 2px 10px rgba(16, 24, 40, 0.06); border-color: transparent; }
+
+  /* the first KPI is the hero figure across the full width, like a balance */
+  :is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :first-child { grid-column: 1 / -1; padding: 14px 16px; }
+  :is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :first-child :is(strong, .kpi-value, .tile-value) { font-size: calc(26px * var(--ui-ts)) !important; color: var(--erp-color-brand-primary-text, var(--erp-color-brand-primary)); }
+  :is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > * { border-radius: 16px; border-color: transparent; box-shadow: 0 2px 10px rgba(16, 24, 40, 0.06); }
+  :is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :not(:first-child) { padding-left: 14px !important; min-height: 0; }
+  :is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :not(:first-child)::before,
+  :is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > :not(:first-child)::after { display: none; }
+  :is(.kpi-row, .kpi-tiles, .tiles, .prf-kpis, .form-grid:has(> .mdm-panel > strong)) > * :is(strong, .kpi-value, .tile-value) { white-space: normal !important; overflow: visible !important; overflow-wrap: normal !important; }
+
+  /* tabs become a segmented pill control */
+  [role='tablist'] { background: var(--erp-color-bg-surface-sunken); border: 0; border-radius: 12px; padding: 4px; gap: 4px; }
+  [role='tablist'] [role='tab'], [role='tablist'] > .btn { border: 0; border-radius: 9px; min-height: 38px; padding: 0 14px; }
+  [role='tablist'] [role='tab'][aria-selected='true'], [role='tablist'] > .btn-primary { background: var(--erp-color-bg-surface); color: var(--erp-color-brand-primary-text, var(--erp-color-brand-primary)); box-shadow: 0 1px 4px rgba(16, 24, 40, 0.14); }
+
+  /* the main action of a page is the amber accent, large and full width */
+  .actions-row:not([role='tablist']) > .btn-primary, .form-actions > .btn-primary, .op-actions > .btn-primary, form > .btn-primary:last-child {
+    background: var(--erp-color-brand-accent); border-color: var(--erp-color-brand-accent); color: #161B22; border-radius: 12px; min-height: 50px; font-size: 16px; box-shadow: 0 4px 12px rgba(242, 169, 0, 0.3);
+  }
+  .btn { border-radius: 12px; }
+  input:not([type='checkbox']):not([type='radio']), select, textarea { border-radius: 12px; }
+
+  /* bottom bar: white, icons, the current page in a pill */
+  .sh-bottom { background: var(--erp-color-bg-surface); border-top: 0; box-shadow: 0 -4px 16px rgba(16, 24, 40, 0.08); padding-bottom: env(safe-area-inset-bottom); }
+  .sh-bottom a, .sh-bottom button { color: var(--erp-color-text-muted); font-size: 11px; border-radius: 12px; }
+  .sh-bottom a[aria-current='page'] { color: var(--erp-color-brand-primary-text, var(--erp-color-brand-primary)); font-weight: 600; }
+  .sh-bottom a[aria-current='page'] svg { background: var(--erp-color-brand-primary-tint, var(--erp-color-bg-selected)); border-radius: 10px; padding: 3px 10px; box-sizing: content-box; }
+}
+
+/* ---------- 12. Tablet ---------------------------------------------------------------------------------------- */
+@media (min-width: 768px) and (max-width: 1099px) {
+  :root { --ui-nav-w: 220px; }
+  .app-shell main { padding: 14px 16px 28px; }
+}
+
+/* ---------- 13. Dark and high-contrast keep the same structure ---------------------------------------------------- */
+[data-theme='dark'] { --ui-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }
+[data-theme='high-contrast'] .mdm-panel, [data-theme='high-contrast'] .card, [data-theme='high-contrast'] .table-scroll { border-color: var(--erp-color-border-strong); box-shadow: none; }
+
+
+/* ---------- 15. SAP Fiori page patterns on the shared components ------------------------------------------------
+   List report (154 pages): filter bar card on top, then the table card with "Title (count)" and the rows.
+   Object page: white header with the title, the key facts in columns and anchor tabs.
+   Overview / dashboards: masonry of cards, each with a title, a subtitle and a big KPI. */
+.lr { display: flex; flex-direction: column; gap: 0; }
+.lr-filterbar { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); padding: 12px 14px; display: grid; gap: 10px; margin-bottom: var(--ui-gap); }
+.lr-filterbar > p:empty { display: none; }
+.lr-bar { gap: 8px; }
+.lr-search { max-width: 28rem; border-radius: 999px !important; background: var(--erp-color-bg-surface-sunken) !important; border-color: transparent !important; padding-inline: 14px !important; }
+.lr-quick { gap: 6px; }
+.lr-chip { min-height: 30px; border-radius: 999px; font: 500 calc(12.5px * var(--ui-ts)) / 1 var(--erp-font-sans); }
+.lr-tablehead {
+  margin: 0; padding: 14px 16px 10px; background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-bottom: 0;
+  border-radius: var(--ui-card-radius) var(--ui-card-radius) 0 0; font: var(--erp-type-title-sm);
+}
+.lr-tablecount { color: var(--erp-color-text-muted); font-weight: 500; }
+.lr-tablehead + .lr-wrap { border-top-left-radius: 0; border-top-right-radius: 0; }
+.lr-wrap { border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); }
+.lr-table thead th { background: #F1F4F9; }
+.lr-table tbody td:first-child:not(.lr-sel), .lr-table tbody td.lr-freeze { font-weight: 600; }
+.lr-table tbody tr { cursor: default; }
+.lr-table tbody tr:hover td { background: #F5F8FD; }
+.notice:empty { display: none; }
+.pager { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 4px; color: var(--erp-color-text-muted); font: var(--erp-type-body-sm); }
+/* phone cards of the list: title in brand colour, a chevron to say the card opens */
+.lr-card { border-radius: 14px; border-color: transparent; box-shadow: 0 2px 10px rgba(16, 24, 40, 0.06); position: relative; padding-right: 34px; }
+.lr-card::after { content: '\203A'; position: absolute; right: 14px; top: 50%; translate: 0 -50%; font-size: 24px; color: var(--erp-color-text-muted); }
+
+/* object page header (Fiori object page) */
+.op-head { background: var(--erp-color-bg-surface); margin: 0 0 var(--ui-gap); padding: 16px 18px 0; border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); top: 56px; }
+.op-title-row h1 { margin: 0; }
+.op-subtitle { color: var(--erp-color-text-muted); margin: 2px 0 10px; }
+.op-figures { gap: 0 28px; grid-template-columns: repeat(auto-fill, minmax(150px, max-content)); margin: 10px 0 6px; }
+.op-figures > div { background: transparent; border: 0; padding: 4px 0; border-radius: 0; }
+.op-figures dt { color: var(--erp-color-text-muted); }
+.op-figures dd { font: 400 calc(20px * var(--ui-ts)) / 1.3 var(--erp-font-sans); color: var(--erp-color-text-primary); }
+.op-tabs { margin: 8px -18px 0; padding: 0 12px; border-top: 1px solid var(--erp-color-border-subtle); border-bottom: 0; background: transparent; }
+.op-tab.is-active { color: var(--erp-color-brand-primary-text, var(--erp-color-brand-primary)); border-bottom-color: var(--erp-color-brand-primary); font-weight: 600; }
+
+/* overview page / dashboards (Fiori overview page cards) */
+.dash-filters { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); padding: 12px 16px; margin: 0 0 var(--ui-gap); }
+.dash-grid { gap: var(--ui-gap); }
+.dash-item, .wd { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); padding: 0; display: flex; flex-direction: column; width: 100%; overflow: hidden; }
+.wd-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--erp-color-border-subtle); }
+.wd-title { font: 600 calc(15px * var(--ui-ts)) / 1.3 var(--erp-font-sans); }
+.wd-body { padding: 12px 16px 14px; }
+.wd-kpi-value { font: 300 calc(40px * var(--ui-ts)) / 1.1 var(--erp-font-sans); letter-spacing: -0.02em; color: var(--erp-color-text-primary); }
+.wd-kpi-unit { font: 500 calc(14px * var(--ui-ts)) / 1 var(--erp-font-sans); color: var(--erp-color-text-muted); margin-left: 4px; }
+.wd-rows { list-style: none; margin: 0 -16px; padding: 0; }
+.wd-row { display: block; padding: 10px 16px; border-bottom: 1px solid var(--erp-color-border-subtle); color: inherit; text-decoration: none; }
+.wd-row:last-child { border-bottom: 0; }
+.wd-row-title { font-weight: 500; }
+@media (max-width: 767px) {
+  .lr-filterbar { padding: 10px; border-radius: 16px; }
+  .lr-quick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .lr-quick::-webkit-scrollbar { display: none; }
+  .lr-chip { flex: 0 0 auto; }
+  .op-head { border-radius: 16px; padding: 14px 14px 0; position: static; }
+  .op-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .op-tabs { margin-inline: -14px; }
+  .dash-grid { grid-template-columns: 1fr !important; }
+  .dash-cell { grid-column: 1 / -1 !important; grid-row: auto !important; }
+}
+
+
+/* ---------- 16. Home (BuildAxis / SAP "My Home" references): greeting banner, to-do cards, coloured quick actions -- */
+.launchpad h2 { font: 600 calc(17px * var(--ui-ts)) / 1.3 var(--erp-font-sans); margin: 26px 0 12px; }
+.lp-hero {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px 28px;
+  padding: 26px 28px; border-radius: 18px; color: #fff; margin-bottom: 18px; position: relative; overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 18%, rgba(255, 255, 255, 0.16) 0 90px, transparent 91px),
+    radial-gradient(circle at 70% 135%, rgba(255, 255, 255, 0.08) 0 160px, transparent 161px),
+    linear-gradient(120deg, #163F75 0%, #1D4F91 45%, #2563EB 100%);
+  box-shadow: 0 10px 30px rgba(29, 79, 145, 0.25);
+}
+.lp-hero h1 { color: rgba(255, 255, 255, 0.8); font: 600 calc(12px * var(--ui-ts)) / 1 var(--erp-font-sans); letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 8px; }
+.lp-greet { font: 600 calc(30px * var(--ui-ts)) / 1.15 var(--erp-font-sans); margin: 0 0 6px; letter-spacing: -0.02em; }
+.lp-sub { margin: 0; color: rgba(255, 255, 255, 0.85); max-width: 46ch; }
+.lp-date { margin: 12px 0 0; display: inline-flex; padding: 5px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font: 500 calc(12.5px * var(--ui-ts)) / 1.2 var(--erp-font-sans); }
+.lp-hero-figures { display: grid; grid-template-columns: repeat(3, minmax(92px, 1fr)); gap: 10px; margin: 0; }
+.lp-hero-figures > div { background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 14px; padding: 12px 14px; backdrop-filter: blur(4px); }
+.lp-hero-figures dt { font: 500 calc(12px * var(--ui-ts)) / 1.2 var(--erp-font-sans); color: rgba(255, 255, 255, 0.8); }
+.lp-hero-figures dd { margin: 4px 0 0; font: 600 calc(26px * var(--ui-ts)) / 1.1 var(--erp-font-sans); }
+
+/* the home cards are not links in text: keep their own colours over the link colour of main */
+.app-shell main .lp-tiles a, .app-shell main .lp-pending a.lp-todo { color: var(--erp-color-text-primary); text-decoration: none; }
+.app-shell main .launchpad .lp-hero p.lp-greet { font: 600 calc(30px * var(--ui-ts)) / 1.15 var(--erp-font-sans); color: #fff; padding: 0; }
+.app-shell main .launchpad .lp-hero p.lp-greet::before { display: none; }
+
+/* what is waiting: Fiori "To Dos" cards */
+.lp-pending { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: var(--ui-gap); }
+.lp-pending a.lp-todo {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 12px; padding: 16px 18px; min-height: 96px;
+  background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius);
+  box-shadow: var(--ui-card-shadow); color: inherit; text-decoration: none; position: relative; overflow: hidden;
+}
+.lp-pending a.lp-todo::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--ui-c1); }
+.lp-todo-drafts::before { background: var(--ui-c3) !important; }
+.lp-todo-exports::before { background: var(--ui-c5) !important; }
+.lp-todo-label { font-weight: 600; grid-column: 1; }
+.lp-pending a.lp-todo strong { grid-column: 2; grid-row: 1 / span 2; font: 300 calc(38px * var(--ui-ts)) / 1 var(--erp-font-sans); color: var(--erp-color-brand-primary-text, var(--erp-color-brand-primary)); }
+.lp-todo-go { grid-column: 1; color: var(--erp-color-text-link); font: 500 calc(12.5px * var(--ui-ts)) / 1 var(--erp-font-sans); }
+.lp-pending a.lp-todo:hover { border-color: var(--erp-color-brand-primary); background: var(--erp-color-bg-surface); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(16, 24, 40, 0.08); }
+
+/* quick actions: coloured app tiles (SuccessFactors home / Fiori Pages) */
+.lp-tiles { grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+.lp-tiles a {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px; min-height: 120px;
+  background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius);
+  box-shadow: var(--ui-card-shadow); color: var(--erp-color-text-primary); text-decoration: none; transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.lp-tiles a:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(16, 24, 40, 0.10); border-color: var(--lp-c); background: var(--erp-color-bg-surface); }
+.lp-tile-icon { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 12px; background: var(--lp-c, var(--ui-c1)); color: #fff; box-shadow: 0 6px 14px color-mix(in srgb, var(--lp-c, var(--ui-c1)) 35%, transparent); }
+.lp-tiles a strong { font: 600 calc(14px * var(--ui-ts)) / 1.3 var(--erp-font-sans); }
+.lp-tiles a .muted { margin-top: auto; }
+
+/* favourites and recent: list cards with "count" header */
+.lp-columns { gap: var(--ui-gap); margin-top: 8px; }
+.lp-card { background: var(--erp-color-bg-surface); border: 1px solid var(--erp-color-border-subtle); border-radius: var(--ui-card-radius); box-shadow: var(--ui-card-shadow); padding: 4px 18px 10px; }
+.lp-card h2 { margin: 14px 0 6px; }
+.lp-list li { padding: 10px 0; border-bottom: 1px solid var(--erp-color-border-subtle); }
+.lp-list li:last-child { border-bottom: 0; }
+
+@media (max-width: 767px) {
+  .lp-hero { margin: 0 0 14px; padding: 18px; border-radius: 18px; }
+  .app-shell main .launchpad .lp-hero p.lp-greet { font-size: calc(23px * var(--ui-ts)); color: #fff !important; }
+  .lp-hero-figures { width: 100%; grid-template-columns: repeat(3, 1fr); }
+  .lp-hero-figures dd { font-size: calc(21px * var(--ui-ts)); }
+  .lp-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .lp-tiles a { min-height: 0; padding: 12px 6px; align-items: center; text-align: center; gap: 8px; border-radius: 16px; }
+  .lp-tiles a strong { font-size: calc(12px * var(--ui-ts)); }
+  .lp-tiles a .muted { display: none; }
+  .lp-pending { grid-template-columns: 1fr; gap: 10px; }
+  .lp-pending a.lp-todo { min-height: 0; padding: 14px 16px; border-radius: 16px; }
+  /* the home banner replaces the navy band of other pages */
+  .launchpad h1::before { display: none; }
+  .launchpad h1 { padding-bottom: 0; color: rgba(255, 255, 255, 0.8) !important; }
+}
+
+/* ---------- 14. Print: plain paper, no shell -------------------------------------------------------------------- */
+@media print {
+  .sh-header, .sh-nav, .sh-bottom, .devbar, .msg-dock { display: none !important; }
+  .mdm-panel, .card, .table-scroll { box-shadow: none; }
+  body, .sh-body { background: #fff; }
+}

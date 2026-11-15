@@ -10,6 +10,7 @@ import '@fontsource/ibm-plex-sans-devanagari/600.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './design-tokens.css';
 import './styles.css';
+import './ui-v3.css'; // UI v3: one mobile-first design layer over every page (after styles.css)
 import './modules/core/index.js'; // each module registers its pages with the shell
 import './modules/iam/index.js';
 import './modules/ui/index.js';
@@ -37,6 +38,8 @@ import './modules/fin/index.js';
 import { initAuth } from './platform/api/index.js';
 import { installPrintLogging } from './platform/audit/index.js';
 import { createQueryClient } from './platform/query/client.js';
+import { initTextSize } from './platform/design/textSize.js';
+import { installResponsiveTables } from './platform/design/responsiveTables.js';
 import App from './App.jsx';
 
 // Find out how people sign in, and resume a session from the cookie, before the first screen is drawn.
@@ -44,6 +47,7 @@ import App from './App.jsx';
 window.__erpOpenedAt = window.location.pathname;
 const { mode } = await initAuth();
 installPrintLogging();
+initTextSize(); // the person's text size on this device (UI v3)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -52,3 +56,4 @@ createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </StrictMode>,
 );
+installResponsiveTables(); // list tables become cards on a phone (UI v3)

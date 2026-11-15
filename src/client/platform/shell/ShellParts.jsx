@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { LANGUAGES, THEMES } from '../design/appearance.js';
+import { TEXT_SIZES, applyTextSize, storedTextSize } from '../design/textSize.js';
 import { breadcrumbs, entryFor, groupHolds } from './nav.js';
 import { useFavouriteActions, useFavourites } from './api.js';
 import { useToast } from '../feedback/Feedback.jsx';
@@ -111,6 +112,21 @@ export function Bell({ count, to, go }) {
   );
 }
 
+/** Text size for this device (UI v3): four steps, applied at once. */
+function TextSizeChooser({ label, names }) {
+  const [size, setSize] = useState(storedTextSize);
+  return (
+    <div className="shell-field" role="group" aria-label={label}>
+      <span>{label}</span>
+      <div className="ui-textsize">
+        {TEXT_SIZES.map((v, i) => (
+          <button key={v} type="button" aria-pressed={size === v} aria-label={names[v]} title={names[v]} data-testid={`text-size-${v}`} onClick={() => setSize(applyTextSize(v))} style={{ fontSize: `${12 + i * 2}px` }}>A</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function UserMenu({ name, theme, setTheme, language, setLanguage, profileRoute, go, onSignOut, deviceMenu = null }) {
   const t = useT('shell');
   const tc = useT('common');
@@ -129,6 +145,7 @@ export function UserMenu({ name, theme, setTheme, language, setLanguage, profile
           <label className="shell-field"><span>{t('account.theme')}</span>
             <select value={theme} onChange={(e) => setTheme(e.target.value)}>{THEMES.map((th) => <option key={th} value={th}>{tc(`theme.${th}`)}</option>)}</select>
           </label>
+          <TextSizeChooser label={t('account.textSize')} names={{ s: t('account.textSize.s'), m: t('account.textSize.m'), l: t('account.textSize.l'), xl: t('account.textSize.xl') }} />
           {deviceMenu}
           {onSignOut && <button type="button" role="menuitem" className="btn btn-small" onClick={() => { setOpen(false); onSignOut(); }}>{t('account.signOut')}</button>}
         </div>
