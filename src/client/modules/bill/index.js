@@ -1,4 +1,5 @@
 import { registerModule } from '../../platform/shell/registry.js';
+import { InvoiceHubPage, RegisterVendorInvoicePage, VendorInvoicesPage } from './VinvPages.jsx';
 import { PrepareSubBillPage, SubBillsPage, SubMeasurePage } from './SubPages.jsx';
 import { CertAnalysisPage, CertificationsPage, RecordCertificationPage } from './CertPages.jsx';
 import { TaxInvoicesPage } from './InvoicePages.jsx';
@@ -27,5 +28,8 @@ registerModule({
     { path: '/bill/sub-measure', label: 'Subcontractor Measurement', icon: 'erp.group.commercial', permission: 'bill.sub_measure.view', flag: 'ff.bill.p2205', Page: SubMeasurePage },
     { path: '/bill/sub-bills', label: 'Subcontractor Bills', icon: 'erp.group.commercial', permission: 'bill.sub_bill.view', flag: 'ff.bill.p2205', Page: SubBillsPage },
     { path: '/bill/sub-bill-new', label: 'Prepare Subcontractor Bill', icon: 'erp.group.commercial', permission: 'bill.sub_bill.create', flag: 'ff.bill.p2205', Page: PrepareSubBillPage },
+    { path: '/bill/vendor-invoices', label: 'Invoice Matching Queue', icon: 'erp.group.commercial', permission: 'bill.vendor_invoice.view', flag: 'ff.bill.p2206', Page: VendorInvoicesPage },
+    { path: '/bill/vendor-invoice-new', label: 'Register Vendor Invoice', icon: 'erp.group.commercial', permission: 'bill.vendor_invoice.create', flag: 'ff.bill.p2206', Page: RegisterVendorInvoicePage },
+    { path: '/bill/invoice-hub', label: 'Invoice Management Hub', icon: 'erp.group.commercial', permission: 'bill.invoice_hub.view', flag: 'ff.bill.p2206', Page: InvoiceHubPage },
   ],
 });

@@ -10,6 +10,8 @@ import { workflowTypes } from '../../platform/workflow/index.js';
 import { createFlagService } from '../core/api.js';
 import { createBase } from '../proc/base.js';
 import { STATUS } from '../qa/flow.js';
+import { createVinvService } from './vinv.js';
+import { createHubService } from './hub.js';
 import { createSubService } from './sub.js';
 import { createCertService } from './cert.js';
 import { createClientBillService } from './clientbill.js';
@@ -22,12 +24,14 @@ import { billRoutes } from './routes.js';
 // Measurement and billing (module M22): the measurement book and check measurement (22.01); later quantity reconciliation, the client RA bill, subcontractor measurements and bills.
 const services = new WeakMap();
 export const billOf = (db) => services.get(db) ?? null;
-export const BILL_DOCS = { mb: 'BILL_MB_ENTRY', deviation: 'BILL_DEVIATION', clientBill: 'BILL_CLIENT_BILL', certification: 'BILL_CERTIFICATION', taxInvoice: 'BILL_TAX_INVOICE', subBill: 'BILL_SUB_BILL' };
+export const BILL_DOCS = { mb: 'BILL_MB_ENTRY', deviation: 'BILL_DEVIATION', clientBill: 'BILL_CLIENT_BILL', certification: 'BILL_CERTIFICATION', taxInvoice: 'BILL_TAX_INVOICE', subBill: 'BILL_SUB_BILL', vendorInvoice: 'BILL_VENDOR_INVOICE' };
 
 /** @type {any} */
 const schema = { type: 'object', properties: {}, required: [] };
 for (const [type, description] of [
   ['bill.mb.certified', 'A measurement was certified and locked (part 22.01 FR-05): data { mbId, docNo, projectId, boqLineId, boqCode, description, locationId, waId, activityId, irId, uom, measuredQty, certifiedQty, checkedQty, checkStatus, measuredBy, measuredOn, certifiedOn, period, book, page, line }. The client RA bill (22.03), the quantity reconciliation (22.02) and the financial progress (14.05) read it.'],
+  ['ap.invoice.matched', 'A vendor invoice was approved after its match (part 22.06, for the accounts payable 23.03 and the GST reconciliation 23.08): data { invoiceId, invoiceNo, invoiceDate, fy, kind, projectId, vendorId, vendorGstin, poId, serviceEntryId, hireBillId, taxable, tax, total, debit, payable, dueDate, irn, matchStatus, overrideReason, itc[{ hsn, gstPct, taxable, tax }] }.'],
+  ['bill.vendor_invoice.resolved', 'An exception of a vendor invoice was resolved by a debit note (part 22.06 FR-03): data { invoiceId, invoiceNo, vendorId, kind, debitNote, ref }.'],
   ['bill.sub.measured', 'A subcontractor measurement was signed and verified (part 22.05 FR-01): data { measurementId, docNo, projectId, woId, woItemId, subcontractorId, qty, measuredBy, signedBy, verifiedBy }.'],
   ['bill.sub.approved', 'A subcontractor bill was approved (part 22.05, for the payables 23.03, the commitments 12.03 and the retention ledger 22.07): data { billId, billNo, seqNo, billType, projectId, woId, subcontractorId, periodFrom, periodTo, gross, cumGross, gst, rcm, tds, retention, securityDeposit, advanceRecovery, deductions, net, dueDate, gstMode }.'],
   ['bill.client.certified', 'The client certified a bill (part 22.04, for the receivables 23.05, the retention and advance ledgers 22.07, revenue 23.10, CVR 22.09 and the e-invoice 23.07): data { certId, certNo, certDate, billId, billNo, projectId, contractId, submittedGross, submittedNet, certifiedGross, escalation, taxable, gst, deductions, certifiedNet, retention, advanceRecovery, differencePct, disputed, dueDate }.'],
@@ -44,22 +48,22 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'bill', description });
 
 integrityRegistry.register({
-  statuses: { bill_mb_entries: Object.keys(STATUS), bill_deviation_statements: Object.keys(STATUS), bill_client_bills: Object.keys(STATUS), bill_certifications: Object.keys(STATUS), bill_tax_invoices: Object.keys(STATUS), bill_sub_bills: Object.keys(STATUS) },
-  uniqueKeys: [{ table: 'bill_mb_entries', columns: ['company_id', 'doc_no'] }, { table: 'bill_deviation_statements', columns: ['company_id', 'doc_no'] }, { table: 'bill_extra_items', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'bill_no'] }, { table: 'bill_certifications', columns: ['company_id', 'doc_no'] }, { table: 'bill_tax_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_measurements', columns: ['company_id', 'doc_no'] }],
+  statuses: { bill_mb_entries: Object.keys(STATUS), bill_deviation_statements: Object.keys(STATUS), bill_client_bills: Object.keys(STATUS), bill_certifications: Object.keys(STATUS), bill_tax_invoices: Object.keys(STATUS), bill_sub_bills: Object.keys(STATUS), bill_vendor_invoices: Object.keys(STATUS) },
+  uniqueKeys: [{ table: 'bill_mb_entries', columns: ['company_id', 'doc_no'] }, { table: 'bill_deviation_statements', columns: ['company_id', 'doc_no'] }, { table: 'bill_extra_items', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_client_bills', columns: ['company_id', 'bill_no'] }, { table: 'bill_certifications', columns: ['company_id', 'doc_no'] }, { table: 'bill_tax_invoices', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_bills', columns: ['company_id', 'doc_no'] }, { table: 'bill_sub_measurements', columns: ['company_id', 'doc_no'] }, { table: 'bill_vendor_invoices', columns: ['company_id', 'doc_no'] }],
 });
 
 export const bill = {
   code: 'bill',
   name: 'Measurement and Billing',
   routePrefix: '/api/v1/bill',
-  ownerPart: '22.05',
-  status: 'Measurement book (22.01); quantity reconciliation, forecast quantities, deviation statements and the register of extra items (22.02); the client RA bill (22.03); the client certification and the GST tax invoice (22.04); the subcontractor measurement and bills (22.05).',
-  tables: ['bill_mb_entries', 'bill_deviation_statements', 'bill_qty_forecasts', 'bill_extra_items', 'bill_client_bills', 'bill_client_bill_items', 'bill_certifications', 'bill_tax_invoices', 'bill_invoice_counters', 'bill_sub_measurements', 'bill_sub_bills', 'bill_sub_bill_items', 'bill_sub_claims'],
-  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items', 'client-bills', 'certifications', 'tax-invoices', 'cert-analysis', 'sub-measurements', 'sub-bills'],
+  ownerPart: '22.06',
+  status: 'Measurement book (22.01); quantity reconciliation, forecast quantities, deviation statements and the register of extra items (22.02); the client RA bill (22.03); the client certification and the GST tax invoice (22.04); the subcontractor measurement and bills (22.05); vendor invoices, the match and the invoice hub (22.06).',
+  tables: ['bill_mb_entries', 'bill_deviation_statements', 'bill_qty_forecasts', 'bill_extra_items', 'bill_client_bills', 'bill_client_bill_items', 'bill_certifications', 'bill_tax_invoices', 'bill_invoice_counters', 'bill_sub_measurements', 'bill_sub_bills', 'bill_sub_bill_items', 'bill_sub_claims', 'bill_vendor_invoices', 'bill_vendor_invoice_lines'],
+  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items', 'client-bills', 'certifications', 'tax-invoices', 'cert-analysis', 'sub-measurements', 'sub-bills', 'vendor-invoices', 'invoice-hub'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bill_mb_entries'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
-    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const cb = createClientBillService({ db, base, mb: m.mb }); const ce = createCertService({ db, base }); const iv = createInvoiceService({ db, base }); const sb = createSubService({ db, base, mb: m.mb }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide, [BILL_DOCS.clientBill]: cb.clientBills.decide, [BILL_DOCS.certification]: ce.certifications.decide, [BILL_DOCS.taxInvoice]: iv.taxInvoices.decide, [BILL_DOCS.subBill]: sb.subBills.decide }; const svc = { ...m, ...rc, ...dv, ...cb, ...ce, ...iv, ...sb };
+    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const cb = createClientBillService({ db, base, mb: m.mb }); const ce = createCertService({ db, base }); const iv = createInvoiceService({ db, base }); const sb = createSubService({ db, base, mb: m.mb }); const vi = createVinvService({ db, base }); const hb = createHubService({ db, base }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide, [BILL_DOCS.clientBill]: cb.clientBills.decide, [BILL_DOCS.certification]: ce.certifications.decide, [BILL_DOCS.taxInvoice]: iv.taxInvoices.decide, [BILL_DOCS.subBill]: sb.subBills.decide, [BILL_DOCS.vendorInvoice]: vi.vendorInvoices.decide }; const svc = { ...m, ...rc, ...dv, ...cb, ...ce, ...iv, ...sb, ...vi, ...hb };
     services.set(db, { svc, base, flags, deciders });
     listExports.register('bill.mb_entries', { source: (actor, req) => { base.need(actor, 'bill.mb_entry.export', 'export measurements'); return m.mb.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.deviation_statements', { source: (actor, req) => { base.need(actor, 'bill.deviation_statement.export', 'export deviation statements'); return dv.deviations.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
@@ -69,6 +73,7 @@ export const bill = {
     listExports.register('bill.tax_invoices', { source: (actor, req) => { base.need(actor, 'bill.tax_invoice.export', 'export tax invoices'); return iv.taxInvoices.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.sub_bills', { source: (actor, req) => { base.need(actor, 'bill.sub_bill.export', 'export subcontractor bills'); return sb.subBills.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.sub_measurements', { source: (actor, req) => { base.need(actor, 'bill.sub_measure.export', 'export measurements'); return sb.subMeasures.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+    listExports.register('bill.vendor_invoices', { source: (actor, req) => { base.need(actor, 'bill.vendor_invoice.export', 'export vendor invoices'); return vi.vendorInvoices.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
     runtime?.jobs?.register('bill.qty_sweep', (jctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) n += rc.recon.sweep(c.id).told; jctx.log(`${n} quantity limit alert(s)`); return { n }; }, { maxAttempts: 2, description: 'Tells the QS and the project manager of BOQ items beyond, approaching or forecast beyond their quantity.' });
     runtime?.scheduler?.define({ code: 'bill.qty_sweep_morning', cron: '15 3 * * *', jobType: 'bill.qty_sweep', description: 'Every morning 08:45 India time: BOQ items approaching their quantity' });
@@ -92,6 +97,7 @@ billObject('bill_client_bills', 'bill.client_bill', '/bill/client-bills?id=', 'C
 billObject('bill_certifications', 'bill.certification', '/bill/certifications?id=', 'Certification', 'cert_no');
 billObject('bill_tax_invoices', 'bill.tax_invoice', '/bill/tax-invoices?id=', 'Tax invoice', 'doc_no');
 billObject('bill_sub_bills', 'bill.sub_bill', '/bill/sub-bills?id=', 'Subcontractor bill', 'bill_no');
+billObject('bill_vendor_invoices', 'bill.vendor_invoice', '/bill/vendor-invoices?id=', 'Vendor invoice', 'doc_no');
 billObject('bill_extra_items', 'bill.extra_item', '/bill/deviations?extra=', 'Extra item', 'doc_no');
 
 fileEntities.register({ entity: 'bill_mb_entries', label: 'Measurement (sketch, photographs, drawing marks)', resolve: (db, actor, id) => {
@@ -139,7 +145,7 @@ workflowTypes.register({
   hooks: decideHook(BILL_DOCS.clientBill),
 });
 
-for (const [entity, perm, label, table] of [['bill_sub_bills', 'bill.sub_bill', 'Subcontractor bill (test reports, photographs, supporting documents)', 'bill_sub_bills'], ['bill_certifications', 'bill.certification', 'Certification (certificate, correspondence, joint measurement)', 'bill_certifications'], ['bill_tax_invoices', 'bill.tax_invoice', 'Tax invoice (supporting documents)', 'bill_tax_invoices']]) {
+for (const [entity, perm, label, table] of [['bill_vendor_invoices', 'bill.vendor_invoice', 'Vendor invoice (invoice copy, e-way bill, test certificates)', 'bill_vendor_invoices'], ['bill_sub_bills', 'bill.sub_bill', 'Subcontractor bill (test reports, photographs, supporting documents)', 'bill_sub_bills'], ['bill_certifications', 'bill.certification', 'Certification (certificate, correspondence, joint measurement)', 'bill_certifications'], ['bill_tax_invoices', 'bill.tax_invoice', 'Tax invoice (supporting documents)', 'bill_tax_invoices']]) {
   fileEntities.register({ entity, label, resolve: (db, actor, id) => {
     const r = db.prepare(`SELECT * FROM ${table} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r) return null; const a = authzOf(db); const scope = { companyId: r.company_id, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined }; const at = (k) => a.check(actor, k, scope).allowed; if (!at(`${perm}.view`)) return null;
     return { ...scope, canView: true, canEdit: at(`${perm}.edit`) && ['DRAFT', 'RETURNED'].includes(r.status), locked: r.status === 'APPROVED' };
@@ -167,4 +173,12 @@ workflowTypes.register({
   summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM bill_sub_bills WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Bill', value: r.bill_no }, { label: 'Value of work (INR)', value: String(r.gross_paise / 100) }, { label: 'Deductions (INR)', value: String(r.deductions_paise / 100) }, { label: 'Net payable (INR)', value: String(r.net_paise / 100) }, { label: 'Compliance', value: r.compliance_ok === 1 ? 'OK' : 'On hold' }] } : null; },
   defaultDefinition: { name: 'Subcontractor bill: the site engineer verifies, the QS checks, the project manager, the commercial manager above 10 lakh and the CFO above 50 lakh approve', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('SE', 'Site engineer (verify)', 'SE', 24), approver('QS', 'QS (check)', 'QS', 24), approver('PM', 'Project manager', 'PM', 48), approver('COMMGR', 'Commercial manager (above 10 lakh)', 'COMMGR', 48, { field: 'overPm', op: 'eq', value: 1 }), approver('CFO', 'CFO (above 50 lakh)', 'CFO', 72, { field: 'overCommgr', op: 'eq', value: 1 })] },
   hooks: decideHook(BILL_DOCS.subBill),
+});
+
+workflowTypes.register({
+  docType: BILL_DOCS.vendorInvoice, label: 'Vendor invoice', processOwner: 'ACCMGR', route: (id) => `/bill/vendor-invoices?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM bill_vendor_invoices WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.invoice_no, title: `Vendor invoice ${r.invoice_no} (${r.doc_no})`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM bill_vendor_invoices WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Invoice', value: r.invoice_no }, { label: 'Total (INR)', value: String(r.total_paise / 100) }, { label: 'Payable (INR)', value: String(r.payable_paise / 100) }, { label: 'Match', value: r.match_status }, { label: 'Variance (INR)', value: String(r.variance_paise / 100) }, { label: 'Override reason', value: r.override_reason ?? '' }] } : null; },
+  defaultDefinition: { name: 'Vendor invoice: the accounts manager approves; the procurement manager when a price is in exception; the CFO above the variance threshold', settings: { resubmit: 'first', distinctApprovers: true }, steps: [approver('ACCMGR', 'Accounts manager', 'ACCMGR', 24), approver('PROCMGR', 'Procurement manager (price exception)', 'PROCMGR', 48, { field: 'priceExc', op: 'eq', value: 1 }), approver('CFO', 'CFO (variance above the threshold)', 'CFO', 72, { field: 'overThreshold', op: 'eq', value: 1 })] },
+  hooks: decideHook(BILL_DOCS.vendorInvoice),
 });

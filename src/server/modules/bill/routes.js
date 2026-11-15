@@ -6,7 +6,7 @@ import * as v from './validators.js';
 export function billRoutes(svc, { idempotent, idempotentRequired, flags }) {
   const r = Router(); const ok = (res, data, status = 200) => res.status(status).json({ data }); const pid = (req) => v.parseId(req.params.id); const q = (req) => req.query;
   const file = (res, out) => res.status(200).set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' }).send(out.buffer);
-  const { subMeasures, subBills, mb, recon, deviations, extras, clientBills, certifications, taxInvoices } = svc; const gate5 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2205') ? next() : next(notFound('Subcontractor measurement and bills are not enabled for your company yet.'))); const gate4 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2204') ? next() : next(notFound('Certification and tax invoices are not enabled for your company yet.'))); const gate3 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2203') ? next() : next(notFound('Client bills are not enabled for your company yet.'))); const gate2 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2202') ? next() : next(notFound('Quantity reconciliation and deviation statements are not enabled for your company yet.')));
+  const { subMeasures, subBills, mb, recon, deviations, extras, clientBills, certifications, taxInvoices, vendorInvoices, invoiceHub } = svc; const gate6 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2206') ? next() : next(notFound('Vendor invoices and the invoice hub are not enabled for your company yet.'))); const gate5 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2205') ? next() : next(notFound('Subcontractor measurement and bills are not enabled for your company yet.'))); const gate4 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2204') ? next() : next(notFound('Certification and tax invoices are not enabled for your company yet.'))); const gate3 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2203') ? next() : next(notFound('Client bills are not enabled for your company yet.'))); const gate2 = (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2202') ? next() : next(notFound('Quantity reconciliation and deviation statements are not enabled for your company yet.')));
   r.use('/mb-entries', (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2201') ? next() : next(notFound('The measurement book is not enabled for your company yet.'))));
   r.use(['/mb-abstract', '/mb-book'], (req, _res, next) => (flags.isOn(req.actor, 'ff.bill.p2201') ? next() : next(notFound('The measurement book is not enabled for your company yet.'))));
   r.get('/mb-entries/options', (req, res) => ok(res, mb.options(req.actor)));
@@ -137,5 +137,23 @@ export function billRoutes(svc, { idempotent, idempotentRequired, flags }) {
   r.post('/sub-bills/:id/amend', idempotent, (req, res) => ok(res, subBills.amend(req.actor, pid(req), v.parseReason(req.body))));
   r.get('/sub-bills/:id/history', (req, res) => ok(res, subBills.history(req.actor, pid(req))));
   r.get('/sub-bills/:id/print', (req, res) => file(res, subBills.print(req.actor, pid(req))));
+  r.use(['/vendor-invoices', '/invoice-hub'], gate6);
+  r.get('/invoice-hub', (req, res) => ok(res, invoiceHub.dashboard(req.actor, v.parseHubQ(q(req)))));
+  r.get('/vendor-invoices/options', (req, res) => ok(res, vendorInvoices.options(req.actor)));
+  r.get('/vendor-invoices/export', (req, res) => file(res, vendorInvoices.exportCsv(req.actor)));
+  r.post('/vendor-invoices/import', idempotentRequired, (req, res) => ok(res, vendorInvoices.importRows(req.actor, v.parseImport(req.body)), 201));
+  r.post('/vendor-invoices/preview', idempotent, (req, res) => ok(res, vendorInvoices.preview(req.actor, v.parseViPreview(req.body))));
+  r.get('/vendor-invoices', (req, res) => res.json(vendorInvoices.list(req.actor, q(req))));
+  r.post('/vendor-invoices', idempotentRequired, (req, res) => ok(res, vendorInvoices.create(req.actor, v.parseViCreate(req.body)), 201));
+  r.get('/vendor-invoices/:id', (req, res) => ok(res, vendorInvoices.get(req.actor, pid(req))));
+  r.patch('/vendor-invoices/:id', idempotent, (req, res) => ok(res, vendorInvoices.update(req.actor, pid(req), v.parseViUpdate(req.body))));
+  r.delete('/vendor-invoices/:id', (req, res) => ok(res, vendorInvoices.remove(req.actor, pid(req))));
+  r.post('/vendor-invoices/:id/submit', idempotentRequired, (req, res) => ok(res, vendorInvoices.submit(req.actor, pid(req)), 202));
+  r.post('/vendor-invoices/:id/withdraw', idempotent, (req, res) => ok(res, vendorInvoices.withdraw(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/vendor-invoices/:id/cancel', idempotent, (req, res) => ok(res, vendorInvoices.cancel(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/vendor-invoices/:id/amend', idempotent, (req, res) => ok(res, vendorInvoices.amend(req.actor, pid(req), v.parseReason(req.body))));
+  r.post('/vendor-invoices/:id/resolve', idempotentRequired, (req, res) => ok(res, vendorInvoices.resolve(req.actor, pid(req), v.parseViResolve(req.body))));
+  r.get('/vendor-invoices/:id/history', (req, res) => ok(res, vendorInvoices.history(req.actor, pid(req))));
+  r.get('/vendor-invoices/:id/print', (req, res) => file(res, vendorInvoices.print(req.actor, pid(req))));
   return r;
 }

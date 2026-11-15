@@ -427,5 +427,13 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
       notify(r.company_id, 'proc.po.advance_decided', [`user:${a.requested_by}`], a.doc_no, r.doc_no, `The advance ${a.doc_no} against ${r.doc_no} is ${to.toLowerCase()}${comment ? `: ${comment}` : ''}.`, `/proc/purchase-orders?id=${r.id}`, a.id, { projectId: r.org_project_id });
     },
   };
-  return { pos, amendments, receipts, portal, extra, decide: pos.decide, amendDecide: amendments.decide, advanceDecide: extra.advanceDecide, computeLine };
+  /** The adapter for the vendor invoices (22.06): the quantity invoiced against a line of the order only goes up (an invoice approved) or down (an invoice cancelled after approval) and never beyond the quantity accepted. */
+  const invoicing = {
+    record(companyId, { poLineId, deltaTh }) {
+      const l = db.prepare('SELECT l.*, p.company_id AS cid FROM proc_po_lines l JOIN proc_purchase_orders p ON p.id = l.po_id WHERE l.id = ? AND l.deleted_at IS NULL').get(Number(poLineId)); if (!l || l.cid !== companyId) throw notFound('That order line does not exist.');
+      const next = l.invoiced_qty + deltaTh; if (next < 0) throw unprocessable(`Line ${l.line_no}: the invoiced quantity cannot go below zero.`); if (next > l.qty) throw unprocessable(`Line ${l.line_no}: the invoiced quantity ${next / 1000} is beyond the ordered ${l.qty / 1000}.`);
+      db.prepare('UPDATE proc_po_lines SET invoiced_qty = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(next, new Date().toISOString(), l.id); return { lineId: l.id, invoicedQty: next };
+    },
+  };
+  return { pos, amendments, invoicing, receipts, portal, extra, decide: pos.decide, amendDecide: amendments.decide, advanceDecide: extra.advanceDecide, computeLine };
 }
