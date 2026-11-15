@@ -1432,6 +1432,123 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bill_client_bill_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bill_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| item_kind | TEXT | yes |  | 'BOQ' |
+| boq_line_id | INTEGER |  |  |  |
+| milestone_id | INTEGER |  |  |  |
+| item_code | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| vo_no | TEXT |  |  |  |
+| rate_x4 | INTEGER | yes |  | 0 |
+| prev_qty_th | INTEGER | yes |  | 0 |
+| this_qty_th | INTEGER | yes |  | 0 |
+| cum_qty_th | INTEGER | yes |  | 0 |
+| certified_cum_th | INTEGER | yes |  | 0 |
+| prev_amount_paise | INTEGER | yes |  | 0 |
+| this_amount_paise | INTEGER | yes |  | 0 |
+| cum_amount_paise | INTEGER | yes |  | 0 |
+| mb_ids_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: milestone_id -> ctr_milestones(id), boq_line_id -> proj_boq_lines(id), bill_id -> bill_client_bills(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_client_bill_items_milestone_id: milestone_id
+- ix_bill_client_bill_items_boq_line_id: boq_line_id
+- ix_bill_client_bill_items_bill_id: bill_id
+- ix_bill_client_bill_items_company_id: company_id
+- ux_bill_cbi_line (unique): bill_id, line_no
+
+## bill_client_bills
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| bill_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| contract_id | INTEGER | yes |  |  |
+| bill_type | TEXT | yes |  | 'RA' |
+| seq_no | INTEGER | yes |  |  |
+| period_from | TEXT | yes |  |  |
+| period_to | TEXT | yes |  |  |
+| prev_bill_id | INTEGER |  |  |  |
+| supply | TEXT | yes |  | 'intra' |
+| gst_pct_bp | INTEGER | yes |  | 0 |
+| prev_gross_paise | INTEGER | yes |  | 0 |
+| gross_paise | INTEGER | yes |  | 0 |
+| cum_gross_paise | INTEGER | yes |  | 0 |
+| escalation_paise | INTEGER | yes |  | 0 |
+| escalation_calc_id | INTEGER |  |  |  |
+| taxable_paise | INTEGER | yes |  | 0 |
+| gst_json | TEXT | yes |  | '{}' |
+| gst_paise | INTEGER | yes |  | 0 |
+| manual_json | TEXT | yes |  | '[]' |
+| ld_input_paise | INTEGER | yes |  | 0 |
+| deductions_json | TEXT | yes |  | '[]' |
+| deductions_paise | INTEGER | yes |  | 0 |
+| net_paise | INTEGER | yes |  | 0 |
+| issues_json | TEXT | yes |  | '[]' |
+| mb_ids_json | TEXT | yes |  | '[]' |
+| client_state | TEXT | yes |  | 'NOT_SENT' |
+| sent_on | TEXT |  |  |  |
+| client_ref | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: escalation_calc_id -> ctr_escalation_calcs(id), prev_bill_id -> bill_client_bills(id), contract_id -> ctr_contracts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_cb_status: company_id, org_project_id, status, period_to
+- ix_bill_client_bills_escalation_calc_id: escalation_calc_id
+- ix_bill_client_bills_prev_bill_id: prev_bill_id
+- ix_bill_client_bills_contract_id: contract_id
+- ix_bill_client_bills_org_site_id: org_site_id
+- ix_bill_client_bills_org_project_id: org_project_id
+- ux_bill_cb_seq (unique): contract_id, seq_no
+- ux_bill_cb_no (unique): company_id, bill_no
+- ux_bill_cb_doc (unique): company_id, doc_no
+
 ## bill_deviation_statements
 
 | Column | Type | Not null | Key | Default |

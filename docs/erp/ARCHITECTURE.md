@@ -1583,3 +1583,6 @@ Module `bill`, flag `ff.bill.p2201`, table `bill_mb_entries`; service `src/serve
 
 ## 164. Quantity Reconciliation, Deviation Statements & Extra Items (part 22.02)
 Module `bill`, flag `ff.bill.p2202`, tables `bill_deviation_statements`, `bill_qty_forecasts`, `bill_extra_items`; services `recon.js` and `deviation.js`. The chain is read only through `recon.rows`; a statement is built only from it.
+
+## 165. Client RA Bill Preparation (part 22.03)
+Module `bill`, flag `ff.bill.p2203`, tables `bill_client_bills`, `bill_client_bill_items`; service `src/server/modules/bill/clientbill.js`. The bill is built only by `build`, on the server, at preview, save and submit; deductions only through the calculation engine.

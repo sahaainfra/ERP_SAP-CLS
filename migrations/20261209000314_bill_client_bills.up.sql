@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS bill_client_bill_items (
   remarks     TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bill_cbi_line ON bill_client_bill_items (bill_id, line_no);
+CREATE INDEX IF NOT EXISTS ix_bill_client_bill_items_company_id ON bill_client_bill_items (company_id);
 CREATE INDEX IF NOT EXISTS ix_bill_client_bill_items_bill_id ON bill_client_bill_items (bill_id);
 CREATE INDEX IF NOT EXISTS ix_bill_client_bill_items_boq_line_id ON bill_client_bill_items (boq_line_id);
 CREATE INDEX IF NOT EXISTS ix_bill_client_bill_items_milestone_id ON bill_client_bill_items (milestone_id);
