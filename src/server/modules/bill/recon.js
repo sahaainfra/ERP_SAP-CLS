@@ -67,6 +67,8 @@ export function createReconService({ db, base }) {
   }
   const totalsOf = (rs) => { const m = new Map(); for (const r of rs) { const t = m.get(r.uom ?? '') ?? { uom: r.uom ?? '', ...Object.fromEntries(CHAIN_COLS.map((c) => [c, 0])) }; m.set(r.uom ?? '', t); for (const c of CHAIN_COLS) if (c !== 'forecast') t[c] = Math.round((t[c] + (r[c] ?? 0)) * 1000) / 1000; } return [...m.values()]; };
   const recon = {
+    /** For the QS dashboard (22.08): the chain of every BOQ item of a project with the rate, read from here and never re-computed elsewhere. */
+    chainRows: (companyId, projectId) => rows(companyId, rid(projectId), { by: 'item', withRate: true }),
     options(actor) { gate(actor, 'bill.qty_recon.view', 'see the quantity reconciliation'); return { projects: db.prepare("SELECT id, code, name FROM org_projects WHERE company_id = ? AND deleted_at IS NULL AND status = 'ACTIVE' ORDER BY code").all(actor.companyId).filter((p) => base.may(actor, 'bill.qty_recon.view', p.id)), locations: db.prepare('SELECT id, project_id AS projectId, code, name FROM proj_locations WHERE company_id = ? AND deleted_at IS NULL ORDER BY code LIMIT 2000').all(actor.companyId), levels: Object.entries(LEVEL).map(([id, label]) => ({ id, label })) }; },
     /** FR-01 */
     report(actor, q) {

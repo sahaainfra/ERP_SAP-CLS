@@ -94,3 +94,6 @@ export const parseRelCreate = (b) => parse(z.object(relBase).strict(), b ?? {});
 export const parseRelPreview = (b) => parse(z.object(Object.fromEntries(Object.entries(relBase).filter(([k]) => !['siteId', 'waiverReason', 'notes'].includes(k)))).strict(), b ?? {});
 export const parseRelUpdate = (b) => defined(parse(z.object({ basis: relBase.basis.optional(), amount: relBase.amount.optional(), bgId: relBase.bgId.optional(), waiverReason: relBase.waiverReason.optional(), notes: relBase.notes.optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
 export const parseRetentionQ = (q) => parse(z.object({ partyType: z.enum(['CLIENT', 'SUBCONTRACTOR']).optional(), projectId: id.optional(), kind: z.enum(['RETENTION', 'SD']).optional(), scopeId: id.optional() }).passthrough(), q ?? {});
+
+export const parseQsQ = (q) => parse(z.object({ projectId: id.optional() }).passthrough(), q ?? {});
+export const parseQsDrillQ = (q) => parse(z.object({ projectId: id.optional(), kind: z.enum(['workNotMeasured', 'measuredNotCertified', 'certifiedNotBilled', 'unbilledWip', 'variationPipeline', 'claimsPending', 'overdueSubmission', 'billedNotCollected', 'mbPending', 'billsToPrepare', 'certAwaited', 'deviationDue']) }).passthrough(), q ?? {});

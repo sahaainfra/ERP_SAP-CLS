@@ -1598,3 +1598,6 @@ Module `bill`, flag `ff.bill.p2206`, tables `bill_vendor_invoices`, `bill_vendor
 
 ## 169. Retention, Security Deposit & Advance Recovery Ledgers (part 22.07)
 Module `bill`, flag `ff.bill.p2207`, tables `bill_retention_ledger`, `bill_advances`, `bill_advance_recoveries`, `bill_releases`; service `ledger.js`. The ledger is changed only by the consumers of the certified and approved bill events and by an approved release.
+
+## 170. QS Management Dashboard (part 22.08)
+Module `bill`, flag `ff.bill.p2208`, no table; service `qsdash.js`. Reads only; the Project 360 slot `qs` and the widgets are registered by the module.

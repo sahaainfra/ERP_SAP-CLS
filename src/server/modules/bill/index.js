@@ -20,11 +20,23 @@ import { createDeviationService } from './deviation.js';
 import { createInvoiceService } from './invoice.js';
 import { createMbService } from './mb.js';
 import { createReconService } from './recon.js';
+import { createQsDashService } from './qsdash.js';
+import { registerProject360Widget } from '../proj/p360.js';
+import { widgetRegistry } from '../../platform/widgets/index.js';
 import { billRoutes } from './routes.js';
 
 // Measurement and billing (module M22): the measurement book and check measurement (22.01); later quantity reconciliation, the client RA bill, subcontractor measurements and bills.
 const services = new WeakMap();
 export const billOf = (db) => services.get(db) ?? null;
+
+// the commercial slot of Project 360 (10.08, part 22.08) and the widgets of the dashboard framework (03.07): only for a person who may see the QS dashboard and where the part is on
+registerProject360Widget('qs', (ctx) => {
+  const s = billOf(ctx.db); const pid = ctx.project.project_id;
+  if (!s || !s.flags.isOn(ctx.actor, 'ff.bill.p2208')) return { figures: [], rows: [], note: 'The QS dashboard is not enabled for your company yet.' };
+  if (!s.base.may(ctx.actor, 'bill.qs_dashboard.view', pid)) return { figures: [], rows: [], note: 'You have no right to see the commercial figures of this project.' };
+  return s.svc.qs.projectWidget(ctx.actor, pid);
+});
+for (const code of ['bill.unbilled_wip', 'bill.certified_not_billed']) widgetRegistry.register({ code, provider: (ctx) => (billOf(ctx.db)?.flags.isOn(ctx.actor, 'ff.bill.p2208') ? billOf(ctx.db).svc.qs.widget(ctx.actor, code) : { value: 0, unit: '', previous: null, trendPct: null, target: null, status: 'neutral', note: 'The QS dashboard is not available.' }) });
 export const BILL_DOCS = { mb: 'BILL_MB_ENTRY', deviation: 'BILL_DEVIATION', clientBill: 'BILL_CLIENT_BILL', certification: 'BILL_CERTIFICATION', taxInvoice: 'BILL_TAX_INVOICE', subBill: 'BILL_SUB_BILL', vendorInvoice: 'BILL_VENDOR_INVOICE', advance: 'BILL_ADVANCE', release: 'BILL_RELEASE' };
 
 /** @type {any} */
@@ -59,14 +71,14 @@ export const bill = {
   code: 'bill',
   name: 'Measurement and Billing',
   routePrefix: '/api/v1/bill',
-  ownerPart: '22.07',
+  ownerPart: '22.08',
   status: 'Measurement book (22.01); quantity reconciliation, forecast quantities, deviation statements and the register of extra items (22.02); the client RA bill (22.03); the client certification and the GST tax invoice (22.04); the subcontractor measurement and bills (22.05); vendor invoices, the match and the invoice hub (22.06); the retention, deposit and advance ledgers (22.07).',
   tables: ['bill_mb_entries', 'bill_deviation_statements', 'bill_qty_forecasts', 'bill_extra_items', 'bill_client_bills', 'bill_client_bill_items', 'bill_certifications', 'bill_tax_invoices', 'bill_invoice_counters', 'bill_sub_measurements', 'bill_sub_bills', 'bill_sub_bill_items', 'bill_sub_claims', 'bill_vendor_invoices', 'bill_vendor_invoice_lines', 'bill_retention_ledger', 'bill_advances', 'bill_advance_recoveries', 'bill_releases'],
-  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items', 'client-bills', 'certifications', 'tax-invoices', 'cert-analysis', 'sub-measurements', 'sub-bills', 'vendor-invoices', 'invoice-hub', 'retention', 'advances', 'releases'],
+  resources: ['mb-entries', 'mb-abstract', 'mb-book', 'qty-recon', 'qty-limits', 'qty-forecasts', 'deviation-statements', 'extra-items', 'client-bills', 'certifications', 'tax-invoices', 'cert-analysis', 'sub-measurements', 'sub-bills', 'vendor-invoices', 'invoice-hub', 'retention', 'advances', 'releases', 'qs-dashboard'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'bill_mb_entries'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
-    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const cb = createClientBillService({ db, base, mb: m.mb }); const ce = createCertService({ db, base }); const iv = createInvoiceService({ db, base }); const sb = createSubService({ db, base, mb: m.mb }); const vi = createVinvService({ db, base }); const hb = createHubService({ db, base }); const lg = createLedgerService({ db, base }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide, [BILL_DOCS.clientBill]: cb.clientBills.decide, [BILL_DOCS.certification]: ce.certifications.decide, [BILL_DOCS.taxInvoice]: iv.taxInvoices.decide, [BILL_DOCS.subBill]: sb.subBills.decide, [BILL_DOCS.vendorInvoice]: vi.vendorInvoices.decide, [BILL_DOCS.advance]: lg.advances.decide, [BILL_DOCS.release]: lg.releases.decide }; const svc = { ...m, ...rc, ...dv, ...cb, ...ce, ...iv, ...sb, ...vi, ...hb, ...lg };
+    const m = createMbService({ db, base, flags }); const rc = createReconService({ db, base }); const dv = createDeviationService({ db, base, recon: rc.recon }); const cb = createClientBillService({ db, base, mb: m.mb }); const ce = createCertService({ db, base }); const iv = createInvoiceService({ db, base }); const sb = createSubService({ db, base, mb: m.mb }); const vi = createVinvService({ db, base }); const hb = createHubService({ db, base }); const lg = createLedgerService({ db, base }); const qd = createQsDashService({ db, base, recon: rc.recon }); const deciders = { [BILL_DOCS.mb]: m.mb.decide, [BILL_DOCS.deviation]: dv.deviations.decide, [BILL_DOCS.clientBill]: cb.clientBills.decide, [BILL_DOCS.certification]: ce.certifications.decide, [BILL_DOCS.taxInvoice]: iv.taxInvoices.decide, [BILL_DOCS.subBill]: sb.subBills.decide, [BILL_DOCS.vendorInvoice]: vi.vendorInvoices.decide, [BILL_DOCS.advance]: lg.advances.decide, [BILL_DOCS.release]: lg.releases.decide }; const svc = { ...m, ...rc, ...dv, ...cb, ...ce, ...iv, ...sb, ...vi, ...hb, ...lg, ...qd };
     services.set(db, { svc, base, flags, deciders });
     listExports.register('bill.mb_entries', { source: (actor, req) => { base.need(actor, 'bill.mb_entry.export', 'export measurements'); return m.mb.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('bill.deviation_statements', { source: (actor, req) => { base.need(actor, 'bill.deviation_statement.export', 'export deviation statements'); return dv.deviations.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });

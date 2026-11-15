@@ -4173,4 +4173,8 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/bill/releases/:id/amend', g: 'permission', k: 'bill.release.amend', s: 'parseReason', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/bill/releases/:id/history', g: 'permission', k: 'bill.release.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/bill/releases/:id/print', g: 'permission', k: 'bill.release.print', s: 'parseId', scope: 'company', rate: 'export', audit: true },
+  { m: 'GET', p: '/api/v1/bill/qs-dashboard', g: 'permission', k: 'bill.qs_dashboard.view', s: 'parseQsQ', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/bill/qs-dashboard/options', g: 'permission', k: 'bill.qs_dashboard.view', s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/bill/qs-dashboard/drill', g: 'permission', k: 'bill.qs_dashboard.view', s: 'parseQsDrillQ', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/bill/qs-dashboard/export', g: 'permission', k: 'bill.qs_dashboard.export', s: 'parseQsQ', scope: 'company', rate: 'export', audit: true },
 ];
