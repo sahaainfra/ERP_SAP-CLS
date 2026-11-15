@@ -3,6 +3,8 @@
 Construction ERP built part by part from the prompt pack (see `docs/erp/PROGRESS.csv`).
 
 ## Run it
+**Node 24 is required** (`.nvmrc`; run `nvm use`). The server stops at start-up with a clear message on an older Node, and `npm install` refuses it (`engine-strict`). CI runs on Node 24 only.
+
 ```
 npm install
 copy .env.example .env      (cp on macOS/Linux)

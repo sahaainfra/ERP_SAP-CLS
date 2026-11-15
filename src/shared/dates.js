@@ -43,8 +43,18 @@ export function formatBusinessDate(text) {
   return `${pad(day)}-${MONTHS[month - 1]}-${year}`;
 }
 
+/**
+ * The current instant. Tests and the weekday/year-end CI jobs fix it with ERP_TEST_NOW (an ISO timestamp, for example
+ * 2026-11-15T06:00:00Z for a Sunday); the variable is ignored when NODE_ENV is production and in the browser.
+ */
+export function clockNow() {
+  const env = typeof process !== 'undefined' ? process.env : undefined;
+  if (env?.ERP_TEST_NOW && env.NODE_ENV !== 'production') { const t = new Date(env.ERP_TEST_NOW); if (!Number.isNaN(t.getTime())) return t; }
+  return new Date();
+}
+
 /** Today's business date in Asia/Kolkata as YYYY-MM-DD. */
-export function todayIST(now = new Date()) {
+export function todayIST(now = clockNow()) {
   const p = istParts(now);
   return `${p.y}-${pad(p.m + 1)}-${pad(p.d)}`;
 }
@@ -54,4 +64,15 @@ export function financialYear(text) {
   const { year, month } = parseBusinessDate(text);
   const start = month >= 4 ? year : year - 1;
   return { label: `${start}-${String((start + 1) % 100).padStart(2, '0')}`, start: `${start}-04-01`, end: `${start + 1}-03-31` };
+}
+
+/**
+ * Whole days from `b` to `a` (a - b), for a business date "YYYY-MM-DD", an ISO timestamp or a Date. Text and numbers are
+ * converted before the subtraction, so a value that arrives from the database as a string never reaches `-` as a string.
+ * @param {string | number | Date} a
+ * @param {string | number | Date} b
+ */
+export function daysBetween(a, b) {
+  const ms = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00Z`) : new Date(v)).getTime();
+  return Math.round((ms(a) - ms(b)) / 86_400_000);
 }

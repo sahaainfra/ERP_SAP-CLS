@@ -3,7 +3,7 @@ import { toPdf } from '../../platform/export/index.js';
 import { conflict, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { toCsv } from '../../platform/security/csv.js';
-import { todayIST } from '../../../shared/dates.js';
+import { daysBetween, todayIST } from '../../../shared/dates.js';
 import { ctrOf } from '../ctr/index.js';
 import { nowIso, rid } from '../proc/base.js';
 import { qaHelpers } from '../qa/common.js';
@@ -17,7 +17,7 @@ export const RELEASE_BASIS = { COMPLETION: 'On completion', DLP_END: 'At the end
 const rs = (p) => (p == null ? null : p / 100); const paise = (r) => Math.round(Number(r) * 100);
 
 const addMonths = (d, n) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCMonth(x.getUTCMonth() + n); return x.toISOString().slice(0, 10); };
-const diffDays = (a, b) => Math.round((new Date(`${a}T00:00:00Z`) - new Date(`${b}T00:00:00Z`)) / 86_400_000);
+const diffDays = (a, b) => daysBetween(a, b);
 /** BR-01: what a bill recovers of an advance by its rule, never more than is outstanding (interest, where it applies, is on top and worked out from the days). */
 export function recoveryOf({ rule, billGross, outstanding, interestBp = 0, since, asOf }) {
   const want = rule.mode === 'FIXED' ? rule.fixedPaise : Math.round((billGross * rule.pctBp) / 10000); const principal = Math.max(0, Math.min(outstanding, want)); const interest = interestBp > 0 && outstanding > 0 && since && asOf > since ? Math.round((outstanding * diffDays(asOf, since) * interestBp) / (10000 * 365)) : 0;

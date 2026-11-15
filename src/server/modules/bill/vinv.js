@@ -4,7 +4,7 @@ import { conflict, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { toCsv } from '../../platform/security/csv.js';
-import { todayIST } from '../../../shared/dates.js';
+import { daysBetween, todayIST } from '../../../shared/dates.js';
 import { nowIso, rid } from '../proc/base.js';
 import { procOf } from '../proc/index.js';
 import { qaHelpers } from '../qa/common.js';
@@ -74,7 +74,7 @@ export function createVinvService({ db, base }) {
     for (const l of m.lines) db.prepare('INSERT INTO bill_vendor_invoice_lines (company_id, invoice_id, line_no, po_line_id, item_id, description, uom, hsn, qty_th, rate_paise, gst_pct_bp, taxable_paise, tax_paise, amount_paise, grn_qty_th, invoiced_before_th, po_rate_paise, match_result, match_json, created_by, source_type) VALUES ((SELECT company_id FROM bill_vendor_invoices WHERE id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(invoiceId, invoiceId, l.line_no, l.po_line_id, l.item_id, l.description, l.uom, l.hsn, l.qty_th, l.rate_paise, l.gst_pct_bp, l.taxable_paise, l.tax_paise, l.amount_paise, l.grn_qty_th, l.invoiced_before_th, l.po_rate_paise, l.match_result, JSON.stringify(l.notes), actorUser, 'manual');
   }
   const view = (actor, r, detail = false) => {
-    const c0 = flow.can(actor, r); const ex = JSON.parse(r.exceptions_json); const w = { pid: r.org_project_id, sid: r.org_site_id }; const ageDays = Math.max(0, Math.round((new Date(`${today()}T00:00:00Z`) - new Date(r.created_at)) / 86_400_000));
+    const c0 = flow.can(actor, r); const ex = JSON.parse(r.exceptions_json); const w = { pid: r.org_project_id, sid: r.org_site_id }; const ageDays = Math.max(0, daysBetween(today(), r.created_at));
     const o = { id: r.id, docNo: r.doc_no, projectId: r.org_project_id, project: pcode(r.org_project_id), vendorId: r.vendor_id, vendor: vendorName(r.vendor_id), invoiceKind: r.invoice_kind, kindLabel: KIND[r.invoice_kind], poId: r.po_id, soId: r.so_id, serviceEntryId: r.service_entry_id, hireBillId: r.hire_bill_id, vendorGstin: r.vendor_gstin, invoiceNo: r.invoice_no, invoiceDate: r.invoice_date, fy: r.fy, source: r.source, taxable: rs(r.taxable_paise), tax: rs(r.tax_paise), total: rs(r.total_paise), declaredTotal: rs(r.declared_total_paise), debit: rs(r.debit_paise), payable: rs(r.payable_paise), irn: r.irn, irnChecked: r.irn_checked === 1, dueDate: r.due_date,
       matchStatus: r.match_status, matchLabel: MATCH[r.match_status], exceptionCount: ex.length, blocked: r.blocked === 1, priceException: r.price_exception === 1, variance: rs(r.variance_paise), overrideReason: r.override_reason, apState: r.ap_state, apRef: r.ap_ref, paymentAllowed: r.status === 'APPROVED' && r.blocked === 0 && ['MATCHED', 'RESOLVED', 'OVERRIDDEN'].includes(r.match_status), ageDays, status: r.status, statusLabel: STATUS[r.status], version: r.version, requestedBy: r.requested_by,
       can: { ...c0, amend: false, resolve: ['DRAFT', 'RETURNED'].includes(r.status) && r.match_status === 'EXCEPTION' && may(actor, 'bill.vendor_invoice.resolve', w.pid, w.sid) } };

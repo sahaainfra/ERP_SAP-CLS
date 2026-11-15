@@ -46,6 +46,27 @@ jobs:
             test-results
           if-no-files-found: ignore
 
+  clock:
+    name: unit suite on a Sunday and on the last day of the year (part 166.1 F-09)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # ERP_TEST_NOW fixes the clock of the business date (src/shared/dates.js); 06:00 UTC is 11:30 in India
+        now: ['2026-11-15T06:00:00Z', '2027-03-31T06:00:00Z']
+    env:
+      ERP_TEST_NOW: ${{ matrix.now }}
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
   security:
     name: security
     runs-on: ubuntu-latest
