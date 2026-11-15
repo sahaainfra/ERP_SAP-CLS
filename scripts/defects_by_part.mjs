@@ -7,7 +7,7 @@ const root = new URL('../docs/erp/', import.meta.url); const check = process.arg
 const read = (f) => readFileSync(new URL(f, root), 'utf8');
 const HEAD = '| ID | Area | Description | Severity | Cause | Owning part | Status | Target part | Gate |\n|---|---|---|---|---|---|---|---|---|';
 import { cellsOf } from './defects_lib.mjs';
-const STATUS = /^(open|closed|fixed|done|accepted|deferred|partly[\w\s,.-]*|won't fix|ready[\w\s-]*)$/i; const SEVERITY = /^(critical|high|medium|low)$/i; const ONE = String.raw`(?:\d{2}\.(?:\d{2}|x)(?:\.\d+)?|\d{3}\.\d+)`; const PARTS = new RegExp(`^${ONE}(?:\\s*(?:,|/|and|&|;)\\s*${ONE})*(?:\\s*\\(.*\\))?$`, 'i');
+const SEVERITY = /^(critical|high|medium|low)$/i; 
 /** A row keeps its cells exactly as written (at most seven: ID, area, description, severity, cause, owning part, status); the two new columns are appended. */
 export function parseRow(line) {
   let c = cellsOf(line); if (c.length >= 9) c = c.slice(0, 7); const cells = [...c, ...Array(Math.max(0, 7 - c.length)).fill('')];
@@ -38,7 +38,7 @@ if (check) {
   const have = read('DEFECTS.md'); let bad = [];
   if (!have.includes('| Target part | Gate |')) bad.push('DEFECTS.md has no Target part and Gate columns');
   if (have !== register) bad.push('DEFECTS.md is not in the normalised form (run node scripts/defects_by_part.mjs)');
-  let by = ''; try { by = read('DEFECTS_BY_PART.md'); } catch { by = ''; }
+  let by; try { by = read('DEFECTS_BY_PART.md'); } catch { by = ''; }
   if (by !== list) bad.push('DEFECTS_BY_PART.md is out of date (run node scripts/defects_by_part.mjs)');
   const open0 = items.filter((d) => !d.closed && !d.target); if (open0.length) bad.push(`${open0.length} open defect(s) have no target part (${open0.slice(0, 5).map((d) => d.id).join(', ')}...)`);
   if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
