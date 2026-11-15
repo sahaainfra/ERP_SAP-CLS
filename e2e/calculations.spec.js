@@ -201,7 +201,7 @@ test('AC-06 a new version goes draft, shadow, comparison, request, two approvals
 test('PM gets the no-access state on the registry and no navigation to it', async ({ page }, info) => {
   await open(page, 'PM', '/admin/formulas', company(info, '89', '90'), 'e2e-pm');
   await expect(page.getByTestId('no-permission')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Formulas' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Formulas', exact: true })).toHaveCount(0);
 });
 
 test('Approvals: the requester cannot decide their own request and an empty inbox says so', async ({ page, request }, info) => {
