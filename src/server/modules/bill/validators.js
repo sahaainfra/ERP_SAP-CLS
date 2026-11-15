@@ -63,3 +63,14 @@ export const parseTiCreate = (b) => parse(z.object({ ...tiBase, total: z.number(
 export const parseTiPreview = (b) => parse(z.object(tiBase).strict(), b ?? {});
 export const parseTiUpdate = (b) => defined(parse(z.object({ gstinFrom: text(15).optional(), gstinTo: text(15).optional(), sacCode: opt(10).optional(), description: opt(300).optional(), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
 export const parseIrn = (b) => parse(z.object({ irn: z.string().regex(/^[0-9a-f]{64}$/i, 'The IRN has 64 hexadecimal characters'), ackNo: text(40).min(1), ackDate: day }).strict(), b ?? {});
+
+// ---- part 22.05: subcontractor measurement and bills ----
+const smBase = { woItemId: id, locationId: oid, description: text(500).min(3, 'Describe what was measured'), template: z.enum(TEMPLATES).default('QTY'), nos: dim, length: dim, breadth: dim, depth: dim, deduction: z.number().min(0).max(1e10).default(0), qty: z.number().min(0).max(1e10).nullish().transform((v) => v ?? null), measuredOn: day };
+export const parseSmCreate = (b) => parse(z.object({ woId: id, siteId: oid, ...smBase }).strict(), b ?? {});
+export const parseSmUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(smBase).filter(([k]) => k !== 'woItemId').map(([k, f]) => [k, nd(f).optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));
+export const parseSmSign = (b) => parse(z.object({ signer: text(120).min(2, 'Give the name of the person who signed'), signedOn: day, signatureRef: opt(160), method: z.enum(['MANUAL', 'OTP', 'PORTAL']).default('MANUAL') }).strict(), b ?? {});
+const sbManual = z.object({ kind: z.literal('OTHER').default('OTHER'), label: opt(120), amount: z.number().gt(0).max(1e11), reason: text(300).min(3, 'Say what the recovery is for') }).strict();
+const sbBase = { billType: z.enum(['RA', 'FINAL', 'MILESTONE']).default('RA'), periodFrom: day, periodTo: day, manual: z.array(sbManual).max(30).default([]), notes: opt(2000) };
+export const parseSbCreate = (b) => parse(z.object({ woId: id, siteId: oid, ...sbBase, net: z.number().optional() }).strict(), b ?? {});
+export const parseSbPreview = (b) => parse(z.object({ woId: id, ...sbBase }).strict(), b ?? {});
+export const parseSbUpdate = (b) => defined(parse(z.object({ ...Object.fromEntries(Object.entries(sbBase).map(([k, f]) => [k, nd(f).optional()])), rowVersion: z.number().int().optional() }).strict(), b ?? {}));

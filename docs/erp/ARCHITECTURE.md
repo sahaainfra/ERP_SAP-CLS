@@ -1589,3 +1589,6 @@ Module `bill`, flag `ff.bill.p2203`, tables `bill_client_bills`, `bill_client_bi
 
 ## 166. Client Certification, Tax Invoice & Receivable Handoff (part 22.04)
 Module `bill`, flag `ff.bill.p2204`, tables `bill_certifications`, `bill_tax_invoices`, `bill_invoice_counters`; services `cert.js` and `invoice.js`. The invoice number is taken only in `invoice.js` `onApproved`, inside the approval transaction.
+
+## 167. Subcontractor Measurement & Bills (part 22.05)
+Module `bill`, flag `ff.bill.p2205`, tables `bill_sub_measurements`, `bill_sub_bills`, `bill_sub_bill_items`, `bill_sub_claims`; service `src/server/modules/bill/sub.js`. A recovery is deducted only through `sources` and `bill_sub_claims`; the bill is built only by `build`.

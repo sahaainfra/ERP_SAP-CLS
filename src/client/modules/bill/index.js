@@ -1,4 +1,5 @@
 import { registerModule } from '../../platform/shell/registry.js';
+import { PrepareSubBillPage, SubBillsPage, SubMeasurePage } from './SubPages.jsx';
 import { CertAnalysisPage, CertificationsPage, RecordCertificationPage } from './CertPages.jsx';
 import { TaxInvoicesPage } from './InvoicePages.jsx';
 import { BillAbstractPage, ClientBillsPage, PrepareBillPage } from './ClientBillPages.jsx';
@@ -23,5 +24,8 @@ registerModule({
     { path: '/bill/certifications', label: 'Certifications', icon: 'erp.group.commercial', permission: 'bill.certification.view', flag: 'ff.bill.p2204', Page: CertificationsPage },
     { path: '/bill/tax-invoices', label: 'Tax Invoices', icon: 'erp.group.commercial', permission: 'bill.tax_invoice.view', flag: 'ff.bill.p2204', Page: TaxInvoicesPage },
     { path: '/bill/cert-analysis', label: 'Submitted vs Certified', icon: 'erp.group.commercial', permission: 'bill.certification.view', flag: 'ff.bill.p2204', Page: CertAnalysisPage },
+    { path: '/bill/sub-measure', label: 'Subcontractor Measurement', icon: 'erp.group.commercial', permission: 'bill.sub_measure.view', flag: 'ff.bill.p2205', Page: SubMeasurePage },
+    { path: '/bill/sub-bills', label: 'Subcontractor Bills', icon: 'erp.group.commercial', permission: 'bill.sub_bill.view', flag: 'ff.bill.p2205', Page: SubBillsPage },
+    { path: '/bill/sub-bill-new', label: 'Prepare Subcontractor Bill', icon: 'erp.group.commercial', permission: 'bill.sub_bill.create', flag: 'ff.bill.p2205', Page: PrepareSubBillPage },
   ],
 });

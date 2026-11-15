@@ -1861,6 +1861,210 @@ Indexes:
 - ix_bill_qty_forecasts_org_project_id: org_project_id
 - ux_bill_fc_item (unique): company_id, org_project_id, item_code
 
+## bill_sub_bill_items
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bill_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| wo_item_id | INTEGER | yes |  |  |
+| wo_line_no | INTEGER | yes |  |  |
+| item_kind | TEXT | yes |  | 'BOQ' |
+| description | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| rate_x4 | INTEGER | yes |  | 0 |
+| prev_qty_th | INTEGER | yes |  | 0 |
+| this_qty_th | INTEGER | yes |  | 0 |
+| cum_qty_th | INTEGER | yes |  | 0 |
+| measured_cum_th | INTEGER | yes |  | 0 |
+| client_cert_th | INTEGER |  |  |  |
+| prev_amount_paise | INTEGER | yes |  | 0 |
+| this_amount_paise | INTEGER | yes |  | 0 |
+| cum_amount_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: wo_item_id -> ctr_wo_items(id), bill_id -> bill_sub_bills(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_sub_bill_items_wo_item_id: wo_item_id
+- ix_bill_sub_bill_items_bill_id: bill_id
+- ix_bill_sub_bill_items_company_id: company_id
+- ux_bill_sbi_line (unique): bill_id, line_no
+
+## bill_sub_bills
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| bill_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| wo_id | INTEGER | yes |  |  |
+| subcontractor_id | INTEGER | yes |  |  |
+| bill_type | TEXT | yes |  | 'RA' |
+| seq_no | INTEGER | yes |  |  |
+| period_from | TEXT | yes |  |  |
+| period_to | TEXT | yes |  |  |
+| prev_bill_id | INTEGER |  |  |  |
+| prev_gross_paise | INTEGER | yes |  | 0 |
+| gross_paise | INTEGER | yes |  | 0 |
+| cum_gross_paise | INTEGER | yes |  | 0 |
+| gst_mode | TEXT | yes |  | 'FORWARD' |
+| gst_pct_bp | INTEGER | yes |  | 0 |
+| gst_paise | INTEGER | yes |  | 0 |
+| rcm_paise | INTEGER | yes |  | 0 |
+| tds_paise | INTEGER | yes |  | 0 |
+| manual_json | TEXT | yes |  | '[]' |
+| deductions_json | TEXT | yes |  | '[]' |
+| deductions_paise | INTEGER | yes |  | 0 |
+| net_paise | INTEGER | yes |  | 0 |
+| issues_json | TEXT | yes |  | '[]' |
+| meas_ids_json | TEXT | yes |  | '[]' |
+| compliance_ok | INTEGER | yes |  | 1 |
+| compliance_json | TEXT | yes |  | '[]' |
+| payable_state | TEXT | yes |  | 'NOT_POSTED' |
+| payable_ref | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: prev_bill_id -> bill_sub_bills(id), subcontractor_id -> mdm_partners(id), wo_id -> ctr_work_orders(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_sb_status: company_id, org_project_id, status, period_to
+- ix_bill_sub_bills_prev_bill_id: prev_bill_id
+- ix_bill_sub_bills_subcontractor_id: subcontractor_id
+- ix_bill_sub_bills_wo_id: wo_id
+- ix_bill_sub_bills_org_site_id: org_site_id
+- ix_bill_sub_bills_org_project_id: org_project_id
+- ux_bill_sb_seq (unique): wo_id, seq_no
+- ux_bill_sb_no (unique): company_id, bill_no
+- ux_bill_sb_doc (unique): company_id, doc_no
+
+## bill_sub_claims
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bill_id | INTEGER | yes |  |  |
+| source_kind | TEXT | yes |  |  |
+| source_ref | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| active | INTEGER | yes |  | 1 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bill_id -> bill_sub_bills(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_sub_claims_bill_id: bill_id
+- ix_bill_sub_claims_company_id: company_id
+- ux_bill_sc_src (unique): company_id, source_kind, source_ref
+
+## bill_sub_measurements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| wo_id | INTEGER | yes |  |  |
+| subcontractor_id | INTEGER | yes |  |  |
+| wo_item_id | INTEGER | yes |  |  |
+| location_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| template | TEXT | yes |  | 'QTY' |
+| nos_th | INTEGER |  |  |  |
+| length_th | INTEGER |  |  |  |
+| breadth_th | INTEGER |  |  |  |
+| depth_th | INTEGER |  |  |  |
+| deduction_th | INTEGER | yes |  | 0 |
+| qty_th | INTEGER | yes |  |  |
+| measured_by | TEXT | yes |  |  |
+| measured_on | TEXT | yes |  |  |
+| sub_signer | TEXT |  |  |  |
+| sub_signed_on | TEXT |  |  |  |
+| signature_ref | TEXT |  |  |  |
+| sign_method | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_on | TEXT |  |  |  |
+| bill_id | INTEGER |  |  |  |
+| meas_status | TEXT | yes |  | 'RECORDED' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bill_id -> bill_sub_bills(id), location_id -> proj_locations(id), wo_item_id -> ctr_wo_items(id), subcontractor_id -> mdm_partners(id), wo_id -> ctr_work_orders(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_sm_status: company_id, wo_id, meas_status
+- ix_bill_sub_measurements_bill_id: bill_id
+- ix_bill_sub_measurements_location_id: location_id
+- ix_bill_sub_measurements_wo_item_id: wo_item_id
+- ix_bill_sub_measurements_subcontractor_id: subcontractor_id
+- ix_bill_sub_measurements_wo_id: wo_id
+- ix_bill_sub_measurements_org_site_id: org_site_id
+- ix_bill_sub_measurements_org_project_id: org_project_id
+- ix_bill_sub_measurements_company_id: company_id
+- ux_bill_sm_doc (unique): company_id, doc_no
+
 ## bill_tax_invoices
 
 | Column | Type | Not null | Key | Default |
