@@ -1432,6 +1432,103 @@ Indexes:
 - ix_bd_stage_log_opportunity: opportunity_id
 - ix_bd_stage_log_company_id: company_id
 
+## bill_advance_recoveries
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| advance_id | INTEGER | yes |  |  |
+| rec_source | TEXT | yes |  |  |
+| rec_source_id | INTEGER | yes |  |  |
+| bill_ref | TEXT |  |  |  |
+| rec_date | TEXT | yes |  |  |
+| principal_paise | INTEGER | yes |  |  |
+| interest_paise | INTEGER | yes |  | 0 |
+| outstanding_paise | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: advance_id -> bill_advances(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_advance_recoveries_advance_id: advance_id
+- ix_bill_advance_recoveries_company_id: company_id
+- ux_bill_ar_src (unique): advance_id, rec_source, rec_source_id
+
+## bill_advances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| ref_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| direction | TEXT | yes |  |  |
+| party_type | TEXT | yes |  |  |
+| party_id | INTEGER | yes |  |  |
+| contract_id | INTEGER |  |  |  |
+| wo_id | INTEGER |  |  |  |
+| po_id | INTEGER |  |  |  |
+| adv_type | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| advance_date | TEXT | yes |  |  |
+| rule_mode | TEXT | yes |  | 'PCT_OF_BILL' |
+| rule_pct_bp | INTEGER | yes |  | 0 |
+| rule_fixed_paise | INTEGER | yes |  | 0 |
+| interest_bp | INTEGER | yes |  | 0 |
+| recovered_paise | INTEGER | yes |  | 0 |
+| interest_paise | INTEGER | yes |  | 0 |
+| bg_id | INTEGER |  |  |  |
+| adv_state | TEXT | yes |  | 'PROPOSED' |
+| notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bg_id -> ctr_bank_guarantees(id), po_id -> proc_purchase_orders(id), wo_id -> ctr_work_orders(id), contract_id -> ctr_contracts(id), party_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_adv_status: company_id, org_project_id, status, adv_state
+- ix_bill_advances_bg_id: bg_id
+- ix_bill_advances_po_id: po_id
+- ix_bill_advances_wo_id: wo_id
+- ix_bill_advances_contract_id: contract_id
+- ix_bill_advances_party_id: party_id
+- ix_bill_advances_org_site_id: org_site_id
+- ix_bill_advances_org_project_id: org_project_id
+- ux_bill_adv_ref (unique): company_id, party_id, ref_no
+- ux_bill_adv_doc (unique): company_id, doc_no
+
 ## bill_certifications
 
 | Column | Type | Not null | Key | Default |
@@ -1860,6 +1957,107 @@ Indexes:
 - ix_bill_qty_forecasts_boq_line_id: boq_line_id
 - ix_bill_qty_forecasts_org_project_id: org_project_id
 - ux_bill_fc_item (unique): company_id, org_project_id, item_code
+
+## bill_releases
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| release_type | TEXT | yes |  |  |
+| party_type | TEXT | yes |  |  |
+| party_id | INTEGER |  |  |  |
+| contract_id | INTEGER |  |  |  |
+| wo_id | INTEGER |  |  |  |
+| release_basis | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| balance_before_paise | INTEGER | yes |  | 0 |
+| bg_id | INTEGER |  |  |  |
+| checklist_json | TEXT | yes |  | '[]' |
+| waiver_reason | TEXT |  |  |  |
+| expected_date | TEXT |  |  |  |
+| released_on | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bg_id -> ctr_bank_guarantees(id), wo_id -> ctr_work_orders(id), contract_id -> ctr_contracts(id), party_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_rel_status: company_id, org_project_id, status
+- ix_bill_releases_bg_id: bg_id
+- ix_bill_releases_wo_id: wo_id
+- ix_bill_releases_contract_id: contract_id
+- ix_bill_releases_party_id: party_id
+- ix_bill_releases_org_site_id: org_site_id
+- ix_bill_releases_org_project_id: org_project_id
+- ux_bill_rel_doc (unique): company_id, doc_no
+
+## bill_retention_ledger
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| party_type | TEXT | yes |  |  |
+| kind | TEXT | yes |  |  |
+| contract_id | INTEGER |  |  |  |
+| wo_id | INTEGER |  |  |  |
+| party_id | INTEGER |  |  |  |
+| txn_type | TEXT | yes |  |  |
+| txn_source | TEXT | yes |  |  |
+| txn_source_id | INTEGER |  |  |  |
+| bill_ref | TEXT |  |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| txn_date | TEXT | yes |  |  |
+| balance_paise | INTEGER | yes |  |  |
+| release_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: party_id -> mdm_partners(id), wo_id -> ctr_work_orders(id), contract_id -> ctr_contracts(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_rl_scope: company_id, party_type, kind, contract_id, wo_id, id
+- ix_bill_retention_ledger_release_id: release_id
+- ix_bill_retention_ledger_party_id: party_id
+- ix_bill_retention_ledger_wo_id: wo_id
+- ix_bill_retention_ledger_contract_id: contract_id
+- ix_bill_retention_ledger_org_project_id: org_project_id
+- ix_bill_retention_ledger_company_id: company_id
+- ux_bill_rl_src (unique): company_id, txn_source, txn_source_id, kind, txn_type
 
 ## bill_sub_bill_items
 

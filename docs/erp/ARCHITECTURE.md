@@ -1595,3 +1595,6 @@ Module `bill`, flag `ff.bill.p2205`, tables `bill_sub_measurements`, `bill_sub_b
 
 ## 168. Vendor Invoices, Three-Way/Multi-Way Matching & Invoice Hub (part 22.06)
 Module `bill`, flag `ff.bill.p2206`, tables `bill_vendor_invoices`, `bill_vendor_invoice_lines`; services `vinv.js` and `hub.js`. The match is made only by `evaluate`, on the server, at save and at submit.
+
+## 169. Retention, Security Deposit & Advance Recovery Ledgers (part 22.07)
+Module `bill`, flag `ff.bill.p2207`, tables `bill_retention_ledger`, `bill_advances`, `bill_advance_recoveries`, `bill_releases`; service `ledger.js`. The ledger is changed only by the consumers of the certified and approved bill events and by an approved release.

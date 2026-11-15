@@ -1,4 +1,5 @@
 import { registerModule } from '../../platform/shell/registry.js';
+import { AdvancesPage, ReleasesPage, RetentionPage } from './LedgerPages.jsx';
 import { InvoiceHubPage, RegisterVendorInvoicePage, VendorInvoicesPage } from './VinvPages.jsx';
 import { PrepareSubBillPage, SubBillsPage, SubMeasurePage } from './SubPages.jsx';
 import { CertAnalysisPage, CertificationsPage, RecordCertificationPage } from './CertPages.jsx';
@@ -31,5 +32,8 @@ registerModule({
     { path: '/bill/vendor-invoices', label: 'Invoice Matching Queue', icon: 'erp.group.commercial', permission: 'bill.vendor_invoice.view', flag: 'ff.bill.p2206', Page: VendorInvoicesPage },
     { path: '/bill/vendor-invoice-new', label: 'Register Vendor Invoice', icon: 'erp.group.commercial', permission: 'bill.vendor_invoice.create', flag: 'ff.bill.p2206', Page: RegisterVendorInvoicePage },
     { path: '/bill/invoice-hub', label: 'Invoice Management Hub', icon: 'erp.group.commercial', permission: 'bill.invoice_hub.view', flag: 'ff.bill.p2206', Page: InvoiceHubPage },
+    { path: '/bill/retention', label: 'Retention Summary', icon: 'erp.group.commercial', permission: 'bill.retention.view', flag: 'ff.bill.p2207', Page: RetentionPage },
+    { path: '/bill/advances', label: 'Advances', icon: 'erp.group.commercial', permission: 'bill.advance.view', flag: 'ff.bill.p2207', Page: AdvancesPage },
+    { path: '/bill/releases', label: 'Release Requests', icon: 'erp.group.commercial', permission: 'bill.release.view', flag: 'ff.bill.p2207', Page: ReleasesPage },
   ],
 });
