@@ -22,6 +22,7 @@ export const cvrList = defineList({ code: 'bill.cvr', label: 'CVR reports', perm
 export function createCvrService({ db, base, qsdash }) {
   const { audit, fail, may } = base; const { evt, gate, scopeOf, pcode, projectOk } = qaHelpers({ db, base }); const today = () => todayIST(); const one = (sql, ...a) => db.prepare(sql).get(...a);
   /** Receipts against the bills (23.05 plugs them in); zero until then. */
+  /** @type {(companyId: number, id: number) => number} */
   let collections = () => 0;
   const needNote = (list, path, amountKey) => { for (const [i, x] of (list ?? []).entries()) if ((Number(x[amountKey]) || 0) > 0 && String(x.note ?? '').trim().length < 5) fail([{ field: `${path}.${i}.note`, message: 'Give the note that supports this assessment (at least 5 characters)' }]); };
 

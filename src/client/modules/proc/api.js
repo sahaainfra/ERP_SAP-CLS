@@ -9,7 +9,7 @@ export const RUN_TONE = { DRAFT: 'DRAFT', COMPLETED: 'APPROVED', CLOSED: 'COMPLE
 export const LEVEL_TONE = { NONE: 'DRAFT', OK: 'APPROVED', SHORT: 'RETURNED', CRITICAL: 'REJECTED' };
 export const PARAM_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', APPROVED: 'APPROVED', RETURNED: 'RETURNED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
 export const CHECK_TONE = { OK: 'APPROVED', WARNING: 'RETURNED', BLOCK: 'REJECTED', NOT_CHECKED: 'DRAFT', COVERED: 'REJECTED', PARTIAL: 'RETURNED', NONE: 'APPROVED', NA: 'DRAFT' };
-export const fmtDate = (iso) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—');
+export { fmtDate } from '../../../shared/dates.js';
 export const fmtQty = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { maximumFractionDigits: 3 }));
 export const fmtRs = (n) => (n == null ? '—' : `₹ ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
 

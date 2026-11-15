@@ -19,6 +19,7 @@ const rs = (p) => (p == null ? null : Math.round(p) / 100); const day = 86_400_0
 export function createQsDashService({ db, base, recon }) {
   const { may, param, audit } = base; const { gate, pcode } = qaHelpers({ db, base }); const today = () => todayIST(); const diff = (d) => Math.max(0, Math.round((Date.parse(`${today()}T00:00:00Z`) - Date.parse(`${String(d).slice(0, 10)}T00:00:00Z`)) / day));
   /** The collections of the client (23.05 supplies them when it is live): the money received against the bills of a project; zero until then. */
+  /** @type {(companyId: number, projectId: number) => number} */
   let collections = () => 0;
   const itemValue = (qty, rate) => Number(amountOf(Math.round(qty * 1000), rate ?? 0));
   const projectsOf = (actor, q) => db.prepare("SELECT id, code, name FROM org_projects WHERE company_id = ? AND deleted_at IS NULL AND status = 'ACTIVE' ORDER BY code").all(actor.companyId).filter((p) => (q.projectId ? p.id === q.projectId : true) && may(actor, 'bill.qs_dashboard.view', p.id));

@@ -5,7 +5,7 @@ import { conflict, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { parameterRegistry } from '../../platform/parameters/index.js';
 import { toCsv } from '../../platform/security/csv.js';
-import { todayIST } from '../../../shared/dates.js';
+import { daysBetween, todayIST } from '../../../shared/dates.js';
 import { nowIso, rid } from '../proc/base.js';
 import { qaHelpers } from '../qa/common.js';
 import { STATUS, createFlow } from '../qa/flow.js';
@@ -117,7 +117,7 @@ export function createCertService({ db, base }) {
     analysis(actor, q) {
       gate(actor, 'bill.certification.view', 'see the submitted against the certified'); const pj = projectOk(actor, q.projectId, 'bill.certification.view');
       const rows = db.prepare("SELECT b.id, b.bill_no, b.period_to, b.sent_on, b.gross_paise, b.net_paise, c.id AS cid, c.cert_no, c.cert_date, c.certified_gross_paise, c.certified_net_paise, c.diff_gross_paise, c.diff_pct_bp, c.big_diff, c.disputed_paise, c.status AS cstatus FROM bill_client_bills b LEFT JOIN bill_certifications c ON c.bill_id = b.id AND c.deleted_at IS NULL AND c.status NOT IN ('CANCELLED', 'REJECTED') WHERE b.company_id = ? AND b.org_project_id = ? AND b.deleted_at IS NULL AND b.status = 'APPROVED' AND b.client_state = 'SENT' AND (? IS NULL OR b.period_to >= ?) AND (? IS NULL OR b.period_to <= ?) ORDER BY b.seq_no").all(actor.companyId, pj.id, q.from ?? null, q.from ?? null, q.to ?? null, q.to ?? null)
-        .map((x) => ({ billId: x.id, billNo: x.bill_no, periodTo: x.period_to, sentOn: x.sent_on, submittedGross: rs(x.gross_paise), submittedNet: rs(x.net_paise), certId: x.cid, certNo: x.cert_no, certDate: x.cert_date, certifiedGross: x.cid ? rs(x.certified_gross_paise) : null, certifiedNet: x.cid ? rs(x.certified_net_paise) : null, diffGross: x.cid ? rs(x.diff_gross_paise) : null, diffPct: x.cid ? x.diff_pct_bp / 100 : null, bigDiff: x.big_diff === 1, disputed: rs(x.disputed_paise ?? 0), daysToCertify: x.cid ? Math.round((new Date(x.cert_date) - new Date(x.sent_on)) / 86_400_000) : null, certStatus: x.cstatus ?? 'NOT_CERTIFIED' })).filter((x) => !q.differencesOnly || (x.diffGross ?? 0) !== 0);
+        .map((x) => ({ billId: x.id, billNo: x.bill_no, periodTo: x.period_to, sentOn: x.sent_on, submittedGross: rs(x.gross_paise), submittedNet: rs(x.net_paise), certId: x.cid, certNo: x.cert_no, certDate: x.cert_date, certifiedGross: x.cid ? rs(x.certified_gross_paise) : null, certifiedNet: x.cid ? rs(x.certified_net_paise) : null, diffGross: x.cid ? rs(x.diff_gross_paise) : null, diffPct: x.cid ? x.diff_pct_bp / 100 : null, bigDiff: x.big_diff === 1, disputed: rs(x.disputed_paise ?? 0), daysToCertify: x.cid ? daysBetween(x.cert_date, x.sent_on) : null, certStatus: x.cstatus ?? 'NOT_CERTIFIED' })).filter((x) => !q.differencesOnly || (x.diffGross ?? 0) !== 0);
       const certd = rows.filter((x) => x.certId); const sum = (k) => Math.round(certd.reduce((n, x) => n + (x[k] ?? 0), 0) * 100) / 100;
       return { projectId: pj.id, project: pcode(pj.id), rows, totals: { bills: rows.length, certified: certd.length, waiting: rows.length - certd.length, submittedGross: Math.round(rows.reduce((n, x) => n + x.submittedGross, 0) * 100) / 100, certifiedGross: sum('certifiedGross'), diffGross: sum('diffGross'), disputed: sum('disputed'), avgDays: certd.length ? Math.round(certd.reduce((n, x) => n + x.daysToCertify, 0) / certd.length) : null }, thresholdPct: num(actor.companyId, 'bill.cert.diff_pct') };
     },

@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test';
 // Development-header mode (port 3100). The data-entry framework (part 03.02): the components gallery, the reference form (context
 // auto-fill, dependent lookups, paste from Excel, server errors on fields, submit and numbering), drafts after a crash, My Drafts, and a
 // form completed with the keyboard alone. Each viewport works in its own company, set up through the API first.
+// 166.1: a date that must still be ahead on the day the test runs is worked out from today (India), never typed
+const inDays = (n) => { const d = new Date(Date.now() + 5.5 * 3600_000 + n * 86_400_000); return `${String(d.getUTCDate()).padStart(2, '0')}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${d.getUTCFullYear()}`; };
 const pick = (info, desktop, mobile) => (info.project.name === 'desktop' ? desktop : mobile);
 const H = (roles, company, user) => ({ 'x-erp-user': user, 'x-erp-roles': roles, 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': `e2e-${Math.random().toString(36).slice(2, 12)}` });
 function watch(page) {
@@ -112,7 +114,7 @@ test('Reference form AC-02 T-01: context auto-fill, dependent lookups, 50 rows p
   await expect(page.locator('#f-title')).toBeFocused();
   // fill in, and paste 50 rows copied from Excel into the first cell (T-01)
   await page.locator('#f-title').fill('Footing F3 to F7 reinforcement');
-  await page.locator('#f-requiredBy').fill('10-11-2026');
+  await page.locator('#f-requiredBy').fill(inDays(30));
   await page.locator('#f-requiredBy').press('Tab');
   const rows = Array.from({ length: 50 }, (_, i) => `TMT bar ${8 + (i % 5) * 4} mm lot ${i + 1}\tMT\t${(i % 9) + 1}.5\t58,000`).join('\r\n');
   await page.locator('#f-lines-0-description').focus();

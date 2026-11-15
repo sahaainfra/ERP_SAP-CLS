@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { STATUS_TONE, fmtDate, isoOf, ordOf, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
 import ResourcesPanel from './ResourcesPanel.jsx';
+import { fmtDateTime } from '../../../shared/dates.js';
 
 // Gantt Planner (part 13.02, FR-01, FR-02, FR-05): the schedule as bars grouped by WBS node, with the critical path, progress, links, the data date and today, zoom, collapse, filters and chosen columns.
 // The planner drags a bar to move it, its right edge to stretch it, its end dot onto another bar to link them, or edits the selected activity in the panel; every change is tried on the server first
@@ -203,7 +204,7 @@ export default function GanttPage() {
           {act && d.can.resources && <ResourcesPanel key={`r${act.id}`} activity={act} projectId={s.projectId} canEdit={d.can.editResources} onSaved={refresh} />}
           {d.edits.length > 0 && (
             <details className="mdm-panel" data-testid="pgt-edits"><summary>{t('g.edits')}</summary>
-              <ol>{d.edits.map((x) => <li key={x.id} className={x.undoneAt ? 'muted' : ''}>{x.summary} <span className="muted">· {x.by} · {new Date(x.at).toLocaleString('en-IN')}{x.finishBefore !== x.finishAfter ? ` · ${fmtDate(x.finishBefore)} → ${fmtDate(x.finishAfter)}` : ''}{x.undoneAt ? ` · ${t('g.undoneBy', { u: x.undoneBy })}` : ''}</span></li>)}</ol>
+              <ol>{d.edits.map((x) => <li key={x.id} className={x.undoneAt ? 'muted' : ''}>{x.summary} <span className="muted">· {x.by} · {fmtDateTime(x.at)}{x.finishBefore !== x.finishAfter ? ` · ${fmtDate(x.finishBefore)} → ${fmtDate(x.finishAfter)}` : ''}{x.undoneAt ? ` · ${t('g.undoneBy', { u: x.undoneBy })}` : ''}</span></li>)}</ol>
             </details>
           )}
           <ConfirmDialog open={Boolean(pending)} title={t('g.conflictTitle')} confirmLabel={t('g.saveAnyway')} danger

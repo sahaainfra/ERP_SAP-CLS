@@ -1,5 +1,5 @@
 import { workflowOf } from '../../platform/workflow/index.js';
-import { todayIST } from '../../../shared/dates.js';
+import { daysBetween, todayIST } from '../../../shared/dates.js';
 import { qaHelpers } from '../qa/common.js';
 
 // The invoice management hub (part 22.06 FR-05): the bills the company sends to its clients, the bills it receives from subcontractors and the invoices it receives from vendors in one view, each with the stage it has reached, its age and the way to its source. Only what the person may see in each kind is shown.
@@ -8,7 +8,7 @@ export const TYPE = { CLIENT: 'Client bill', SUBCONTRACTOR: 'Subcontractor bill'
 const rs = (p) => p / 100; const BUCKETS = [['0-30', 0, 30], ['31-60', 31, 60], ['61-90', 61, 90], ['90+', 91, 100000]];
 
 export function createHubService({ db, base }) {
-  const { may } = base; const { gate, pcode } = qaHelpers({ db, base }); const today = () => todayIST(); const days = (d) => Math.max(0, Math.round((new Date(`${today()}T00:00:00Z`) - new Date(`${String(d).slice(0, 10)}T00:00:00Z`)) / 86_400_000));
+  const { may } = base; const { gate, pcode } = qaHelpers({ db, base }); const today = () => todayIST(); const days = (d) => Math.max(0, daysBetween(today(), String(d).slice(0, 10)));
   function collect(actor, q) {
     const rows = []; const pf = q.projectId ? ' AND x.org_project_id = ?' : ''; const pa = q.projectId ? [q.projectId] : []; const dr = `${q.from ? ' AND COALESCE(x.%D, x.created_at) >= ?' : ''}${q.to ? ' AND COALESCE(x.%D, x.created_at) <= ?' : ''}`; const dp = (col) => dr.replaceAll('%D', col); const da = [...(q.from ? [q.from] : []), ...(q.to ? [q.to] : [])];
     if (!q.type || q.type === 'CLIENT') for (const x of db.prepare(`SELECT x.*, k.contract_no, (SELECT c.status FROM bill_certifications c WHERE c.bill_id = x.id AND c.deleted_at IS NULL AND c.status NOT IN ('CANCELLED', 'REJECTED') LIMIT 1) AS cert_status, (SELECT t.ar_state FROM bill_tax_invoices t WHERE t.bill_id = x.id AND t.deleted_at IS NULL AND t.status = 'APPROVED' LIMIT 1) AS inv_ar, (SELECT 1 FROM bill_tax_invoices t WHERE t.bill_id = x.id AND t.deleted_at IS NULL AND t.status = 'APPROVED' LIMIT 1) AS invoiced FROM bill_client_bills x JOIN ctr_contracts k ON k.id = x.contract_id WHERE x.company_id = ? AND x.deleted_at IS NULL AND x.status NOT IN ('CANCELLED', 'REJECTED')${pf}${dp('period_to')} ORDER BY x.id DESC LIMIT 300`).all(actor.companyId, ...pa, ...da)) {

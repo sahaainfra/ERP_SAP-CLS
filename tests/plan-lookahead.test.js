@@ -47,13 +47,15 @@ async function boot() {
   assert.equal((await call(plan1, 'POST', `/schedules/${sid}/calculate`)).status, 200);
   return { api, d, call, act, hasTask, pid, sid, site, c1, c2, w11, w2, d1, d2, rfi, a };
 }
+// F-09: Excavation is planned to finish on the Friday of the week; on a Saturday or a Sunday it would count as a late predecessor of the PCC bed, which is true but not what these tests are about. They want it on time on any weekday (the late-predecessor case sets its own date).
+const onTime = (t) => t.d.prepare('UPDATE plan_activities SET ef = ? WHERE id = ? AND ef < ?').run(today, t.a.A10.id, today);
 const board = async (t, who = se, q = '') => { const r = await t.call(who, 'GET', `/schedules/${t.sid}/lookahead${q}`); assert.equal(r.status, 200, JSON.stringify(r.json)); return r.json.data; };
 const cons = async (t, q = '') => (await t.call(se, 'GET', `/constraints${q}`)).json.data;
 const byAct = (rows) => { const m = {}; for (const r of rows) (m[r.activity] ??= []).push(r); return m; };
 const drain = (t) => { const rt = runtimeOf(t.d); for (let i = 0; i < 4; i += 1) rt.bus.drain(); };
 
 test('T-01 an open RFI on a linked drawing raises a constraint by itself and closing the RFI clears it; drawings, a late predecessor and labour are found too', async () => {
-  const t = await boot();
+  const t = await boot(); onTime(t);
   // nothing is found until the schedule is looked at: the board reads, the detection writes
   assert.equal((await cons(t)).length, 0); const b0 = await board(t); assert.equal(b0.activities.length, 3); assert.ok(b0.activities.every((x) => x.ready));
   const det = await t.call(se, 'POST', `/schedules/${t.sid}/constraints/detect`); assert.equal(det.status, 200, JSON.stringify(det.json)); assert.equal(det.json.data.cleared, 0);
@@ -84,7 +86,7 @@ test('T-01 an open RFI on a linked drawing raises a constraint by itself and clo
 });
 
 test('FR-02 constraints logged by hand: owner, due date, clear; an automatic one is waived with a reason, not cleared; rights, isolation and the list', async () => {
-  const t = await boot(); await t.call(se, 'POST', `/schedules/${t.sid}/constraints/detect`); const open = await cons(t, '?filter[status]=OPEN'); const auto = open.find((x) => x.activity === 'A30' && x.type === 'LABOUR');
+  const t = await boot(); onTime(t); await t.call(se, 'POST', `/schedules/${t.sid}/constraints/detect`); const open = await cons(t, '?filter[status]=OPEN'); const auto = open.find((x) => x.activity === 'A30' && x.type === 'LABOUR');
   const body = { activityId: t.a.A20.id, type: 'PERMIT', description: 'Hot work permit for the cutting', owner: 'lse1', dueDate: nextMonday };
   assert.equal((await t.call(se, 'POST', '/constraints', { ...body, owner: 'nobody' })).status, 400); assert.equal((await t.call(se, 'POST', '/constraints', { ...body, type: 'WEATHER' })).status, 400); assert.equal((await t.call(aud, 'POST', '/constraints', body)).status, 403); assert.equal((await t.call(other, 'POST', '/constraints', body)).status, 404);
   assert.equal((await t.api.call('POST', `${P}/constraints`, { ...se, headers: { 'content-type': 'application/json' }, body })).status, 400, 'an Idempotency-Key is required');

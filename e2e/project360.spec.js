@@ -78,7 +78,7 @@ test('AC-01 Project 360 with live widgets and empty slots, tabs, period, and the
   await pm.page.getByTestId('p3-fig-risks-critical').getByRole('link').click(); await expect(pm.page).toHaveURL(/\/proj\/risks/); await expect(pm.page.getByTestId('risks')).toBeVisible();
   // tabs and the period
   await pm.page.goto(`/proj/project-360?projectId=${g.a}`); await pm.page.getByTestId('tab-time').click(); await expect(pm.page.getByTestId('p3-tab-time')).toBeVisible(); await expect(pm.page.getByTestId('p3-empty-schedule')).toContainText('13.x');
-  await pm.page.getByTestId('tab-resources').click(); await expect(pm.page.getByTestId('p3-widget-team')).toBeVisible(); await expect(pm.page.getByTestId('p3-empty-procurement')).toContainText('15.x');
+  await pm.page.getByTestId('tab-resources').click(); await expect(pm.page.getByTestId('p3-widget-team')).toBeVisible(); await expect(pm.page.getByTestId('p3-widget-procurement').or(pm.page.getByTestId('p3-empty-procurement'))).toBeVisible(); // 166.1: the slot is live once 15.x is built, or names the part that will bring it
   await shot(pm.page, '02-resources-tab');
   await pm.page.getByTestId('tab-overview').click(); await pm.page.getByTestId('p3-period').fill(day(60).slice(0, 7)); await expect(pm.page.getByTestId('p3-fig-milestones-due')).toContainText('1', { timeout: 15_000 });
   // the quantity surveyor: no risk and issue widgets, the page still draws

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { menu, userMenu } from './shell-helpers.js';
+import { menu, registryMenu, userMenu } from './shell-helpers.js';
 
 // Development-header mode (port 3100). The application shell (part 03.05): the menu per role, the route guard, the working context, the
 // launchpad with favourites and recent records, the bell, the keyboard, and the navigation registry's change by request and approval.
@@ -77,7 +77,10 @@ test('T-01 FR-01 FR-02 three roles see exactly the entries they may open; the te
   await expect(pmNav.getByRole('link', { name: 'Navigation Registry' })).toHaveCount(0);
   await expect(pmNav.getByRole('region', { name: 'Technical Console' })).toHaveCount(0);
   await expect(pmNav.getByRole('region', { name: 'Procurement' })).toBeVisible();
-  await expect(pmNav.getByRole('region', { name: 'Stores' })).toHaveCount(0); // a group with nothing for this role is not drawn
+  // a group is drawn only when the registry gives this role a page in it (read from the registry seed and the role template, so a part that adds a page cannot break this)
+  const pmMenu = registryMenu('PM'); const drawn = await pmNav.getByRole('region').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')).filter(Boolean));
+  for (const g of drawn) expect(pmMenu.groups.has(g) || ['Home', 'My Work', 'Account'].includes(g), `the group "${g}" is drawn for a PM but the registry gives the role no page in it`).toBe(true);
+  for (const name of ['Users', 'Navigation Registry']) expect(pmMenu.pages.has(name), `the registry must not give a PM "${name}"`).toBe(false);
   // the accounts manager: approvals are in My Work; still no administration
   const accNav = await menu(acc);
   await expect(accNav.getByRole('region', { name: 'My Work' }).getByRole('link', { name: 'Approvals', exact: true })).toBeVisible();
@@ -225,7 +228,7 @@ test('FR-04 FR-07 header and keyboard: search or go to, quick create, g-shortcut
   await expect(palette).toBeVisible();
   await palette.getByRole('combobox').fill('indent');
   await expect(palette.getByRole('option', { name: /Sample Material Requests/ })).toBeVisible();
-  await page.keyboard.press('Enter');
+  await palette.getByRole('option', { name: /Sample Material Requests/ }).click(); // later parts add pages that also match, so the entry is chosen by name, not by its place in the list
   await expect(page.getByRole('heading', { name: 'Sample Material Requests', exact: true })).toBeVisible();
   await expect(page).toHaveTitle(/Sample Material Requests/);
   await expect(page.getByRole('navigation', { name: 'You are here' }).getByRole('listitem')).toHaveText(['Home', 'Procurement', 'Sample Material Requests']);
@@ -307,7 +310,7 @@ test('AC-05 FR-01 FR-08 FR-09 the registry is changed by request and approval: a
     await expect(pm.getByRole('heading', { name: 'Sample Bills', level: 1 })).toBeVisible();
     // a second administrator approves
     const sys2 = await as(browser, info, w.company, 'SYSADM', 'e2e-reg-sys2', '/admin/navigation');
-    await sys2.getByRole('button', { name: 'Approve' }).click();
+    await sys2.getByRole('button', { name: 'Approve', exact: true }).click();
     await expect(sys2.getByText('No changes are waiting for approval.')).toBeVisible();
     // the menu now says Billing samples, and the page needs a project before it opens (FR-08)
     await pm.reload();

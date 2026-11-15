@@ -26,7 +26,6 @@ test.afterEach(async ({ browser }) => { for (const c of browser.contexts()) awai
 const OUT = 'docs/erp/screenshots/proc-mrp';
 const shot = async (page, name, info) => page.screenshot({ path: `${OUT}/${info.project.name}-${name}.png`, fullPage: true });
 const iso = (n) => new Date(Date.parse(`${new Date(Date.now() + 19_800_000).toISOString().slice(0, 10)}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
-const monday = (n) => { const d = new Date(`${iso(0)}T00:00:00Z`); return new Date(d.getTime() + (n - ((d.getUTCDay() + 6) % 7)) * 86_400_000).toISOString().slice(0, 10); };
 
 async function seed(request, c, t) {
   const db = new DatabaseSync('data/e2e.sqlite'); db.exec('PRAGMA busy_timeout = 8000;');
@@ -44,7 +43,7 @@ async function seed(request, c, t) {
   db.close();
   const cal = await api(request, c, 'PLAN', `${t}-plan`, 'post', '/plan/calendars', { code: 'SIX', name: 'Six-day week', workWeek: '1111110', reason: 'The site works Monday to Saturday' }); await api(request, c, 'PCMGR', `${t}-pcm`, 'post', `/plan/calendars/${cal.id}/activate`, {});
   const sch = await api(request, c, 'PLAN', `${t}-plan`, 'post', '/plan/schedules', { projectId: pid, name: 'Schedule', calendarId: cal.id, startDate: '2026-04-06' }); await api(request, c, 'PLAN', `${t}-plan`, 'post', `/plan/schedules/${sch.id}/import`, { rows: [{ code: 'A10', name: 'Slab concrete', duration: 14 }] });
-  const d = new DatabaseSync('data/e2e.sqlite'); d.exec('PRAGMA busy_timeout = 8000;'); const act = d.prepare('SELECT id FROM plan_activities WHERE schedule_id = ?').get(sch.id).id; const next = monday(7);
+  const d = new DatabaseSync('data/e2e.sqlite'); d.exec('PRAGMA busy_timeout = 8000;'); const act = d.prepare('SELECT id FROM plan_activities WHERE schedule_id = ?').get(sch.id).id; const next = iso(5); // 166.1: five days from today, whatever the weekday: the need date (three days earlier) is still ahead and the order-by date (the lead time before it) has passed
   d.prepare("UPDATE plan_activities SET es = ?, ef = ?, qty = 100000, uom = 'cum' WHERE id = ?").run(next, new Date(Date.parse(`${next}T00:00:00Z`) + 13 * 86_400_000).toISOString().slice(0, 10), act); d.prepare("UPDATE plan_schedules SET status = 'APPROVED' WHERE id = ?").run(sch.id); d.prepare("INSERT INTO plan_activity_boq (company_id, activity_id, boq_line_id, qty, created_by) VALUES (?, ?, ?, 100000, 'e2e')").run(c, act, line); d.close();
   await api(request, c, 'SYSADM', 'e2e-setup', 'post', '/proc/stock/ingest', { levels: [{ itemId: cement, storeCode: `${T}-ST`, storeName: 'Tower store', kind: 'SITE', siteId: s1, freeQty: 200 }] });
   await api(request, c, 'SYSADM', 'e2e-setup', 'post', '/proc/supply/ingest', { supplies: [{ projectId: pid, itemId: cement, kind: 'PO', docRef: 'PO/E2E/1', balanceQty: 100, expectedOn: iso(0) > next ? iso(0) : new Date(Date.parse(`${next}T00:00:00Z`) + 7 * 86_400_000).toISOString().slice(0, 10) }] });

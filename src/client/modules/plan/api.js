@@ -127,7 +127,7 @@ export async function svgToPng(svg, name) {
 export const RES_TYPES = ['LABOUR', 'PLANT', 'MATERIAL'];
 export const ordOf = (iso) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
 export const isoOf = (ord) => new Date(ord * 86_400_000).toISOString().slice(0, 10);
-export const fmtDate = (iso) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—');
+export { fmtDate } from '../../../shared/dates.js';
 export async function download(path, name) {
   const res = await fetch(`/api/v1/plan${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
   const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click();
