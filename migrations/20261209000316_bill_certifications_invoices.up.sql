@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS bill_tax_invoices (
   remarks     TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bill_ti_doc ON bill_tax_invoices (company_id, doc_no);
-CREATE UNIQUE INDEX IF NOT EXISTS ux_bill_ti_no ON bill_tax_invoices (gstin_from, invoice_no) WHERE invoice_no IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS ux_bill_ti_seq ON bill_tax_invoices (gstin_from, fy, seq_no) WHERE seq_no IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_bill_ti_no ON bill_tax_invoices (company_id, gstin_from, invoice_no) WHERE invoice_no IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_bill_ti_seq ON bill_tax_invoices (company_id, gstin_from, fy, seq_no) WHERE seq_no IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bill_ti_bill ON bill_tax_invoices (bill_id) WHERE deleted_at IS NULL AND status NOT IN ('CANCELLED', 'REJECTED');
 CREATE INDEX IF NOT EXISTS ix_bill_tax_invoices_org_project_id ON bill_tax_invoices (org_project_id);
 CREATE INDEX IF NOT EXISTS ix_bill_tax_invoices_org_site_id ON bill_tax_invoices (org_site_id);

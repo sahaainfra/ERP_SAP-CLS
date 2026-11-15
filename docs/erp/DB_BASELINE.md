@@ -1925,8 +1925,8 @@ Indexes:
 - ix_bill_tax_invoices_org_site_id: org_site_id
 - ix_bill_tax_invoices_org_project_id: org_project_id
 - ux_bill_ti_bill (unique): bill_id
-- ux_bill_ti_seq (unique): gstin_from, fy, seq_no
-- ux_bill_ti_no (unique): gstin_from, invoice_no
+- ux_bill_ti_seq (unique): company_id, gstin_from, fy, seq_no
+- ux_bill_ti_no (unique): company_id, gstin_from, invoice_no
 - ux_bill_ti_doc (unique): company_id, doc_no
 
 ## bp_batches
