@@ -2133,6 +2133,128 @@ Indexes:
 - ux_bill_ti_no (unique): company_id, gstin_from, invoice_no
 - ux_bill_ti_doc (unique): company_id, doc_no
 
+## bill_vendor_invoice_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| invoice_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| po_line_id | INTEGER |  |  |  |
+| item_id | INTEGER |  |  |  |
+| description | TEXT | yes |  |  |
+| uom | TEXT |  |  |  |
+| hsn | TEXT |  |  |  |
+| qty_th | INTEGER | yes |  | 0 |
+| rate_paise | INTEGER | yes |  | 0 |
+| gst_pct_bp | INTEGER | yes |  | 0 |
+| taxable_paise | INTEGER | yes |  | 0 |
+| tax_paise | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  | 0 |
+| grn_qty_th | INTEGER |  |  |  |
+| invoiced_before_th | INTEGER |  |  |  |
+| po_rate_paise | INTEGER |  |  |  |
+| match_result | TEXT | yes |  | 'NOT_MATCHED' |
+| match_json | TEXT | yes |  | '[]' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: item_id -> mdm_items(id), po_line_id -> proc_po_lines(id), invoice_id -> bill_vendor_invoices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_vendor_invoice_lines_item_id: item_id
+- ix_bill_vendor_invoice_lines_po_line_id: po_line_id
+- ix_bill_vendor_invoice_lines_invoice_id: invoice_id
+- ix_bill_vendor_invoice_lines_company_id: company_id
+- ux_bill_vil_line (unique): invoice_id, line_no
+
+## bill_vendor_invoices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| vendor_id | INTEGER | yes |  |  |
+| invoice_kind | TEXT | yes |  | 'PO' |
+| po_id | INTEGER |  |  |  |
+| so_id | INTEGER |  |  |  |
+| service_entry_id | INTEGER |  |  |  |
+| hire_bill_id | INTEGER |  |  |  |
+| vendor_gstin | TEXT |  |  |  |
+| invoice_no | TEXT | yes |  |  |
+| invoice_date | TEXT | yes |  |  |
+| fy | TEXT | yes |  |  |
+| source | TEXT | yes |  | 'MANUAL' |
+| taxable_paise | INTEGER | yes |  | 0 |
+| tax_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| declared_total_paise | INTEGER |  |  |  |
+| debit_paise | INTEGER | yes |  | 0 |
+| payable_paise | INTEGER | yes |  | 0 |
+| irn | TEXT |  |  |  |
+| irn_checked | INTEGER | yes |  | 0 |
+| due_date | TEXT |  |  |  |
+| match_status | TEXT | yes |  | 'NOT_MATCHED' |
+| exceptions_json | TEXT | yes |  | '[]' |
+| override_reason | TEXT |  |  |  |
+| resolution_json | TEXT | yes |  | '{}' |
+| blocked | INTEGER | yes |  | 0 |
+| price_exception | INTEGER | yes |  | 0 |
+| variance_paise | INTEGER | yes |  | 0 |
+| matched_at | TEXT |  |  |  |
+| ap_state | TEXT | yes |  | 'NOT_HANDED' |
+| ap_ref | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| workflow_instance_id | INTEGER |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: hire_bill_id -> plt_hire_bills(id), service_entry_id -> proc_service_entries(id), so_id -> proc_service_orders(id), po_id -> proc_purchase_orders(id), vendor_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_bill_vi_date: company_id, invoice_date
+- ix_bill_vi_status: company_id, org_project_id, status, match_status
+- ix_bill_vendor_invoices_hire_bill_id: hire_bill_id
+- ix_bill_vendor_invoices_service_entry_id: service_entry_id
+- ix_bill_vendor_invoices_so_id: so_id
+- ix_bill_vendor_invoices_po_id: po_id
+- ix_bill_vendor_invoices_vendor_id: vendor_id
+- ix_bill_vendor_invoices_org_site_id: org_site_id
+- ix_bill_vendor_invoices_org_project_id: org_project_id
+- ux_bill_vi_dup (unique): company_id, vendor_id, invoice_no, fy
+- ux_bill_vi_doc (unique): company_id, doc_no
+
 ## bp_batches
 
 | Column | Type | Not null | Key | Default |
