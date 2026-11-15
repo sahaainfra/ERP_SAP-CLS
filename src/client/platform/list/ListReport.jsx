@@ -310,6 +310,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
   const firstKey = shown[0]?.key;
   return (
     <div className="lr" data-testid={`list-${listCode}`}>
+      <div className="lr-filterbar">
       <div className="lr-bar" role="search">
         <input type="search" className="lr-search" aria-label={`Search ${title}`} placeholder="Search" value={state.q} onChange={(e) => update({ q: e.target.value })} />
         <ViewsMenu list={listCode} views={views.data ?? []} current={view} canShare={can('ui.view.share')} roles={session?.roles ?? []}
@@ -348,6 +349,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
           <li><button type="button" className="link" onClick={() => update({ filters: [], q: '' })}>Clear all</button></li>
         </ul>
       )}
+      </div>
       <p role="status" className="notice" data-testid="list-notice">{notice}</p>
       {actions.length > 0 && selected.size > 0 && (
         <div className="toolbar lr-bulk" role="group" aria-label="Actions for the selected rows" data-testid="bulk-bar">
@@ -387,6 +389,9 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
             />
           ))}
         </ul>
+      )}
+      {rows.length > 0 && !narrow && (
+        <p className="lr-tablehead" data-testid="list-tablehead"><span className="lr-tabletitle">{title}</span>{meta ? <span className="lr-tablecount"> ({meta.total})</span> : null}</p>
       )}
       {rows.length > 0 && !narrow && (
         <div className={`lr-wrap ${long ? 'is-long' : ''}`} onScroll={(e) => long && setScrollTop(e.currentTarget.scrollTop)} tabIndex={0} aria-label={`${title} table`}>

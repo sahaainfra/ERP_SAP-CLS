@@ -130,7 +130,8 @@ export async function download(path, name) {
   const res = await fetch(`/api/v1/site${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status));
   const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click();
 }
-export const fmtDate = (iso) => (iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—');
+// a date (2026-11-15) shows as that day; a timestamp (approval and audit history) shows its day in India time
+export const fmtDate = (iso) => (!iso ? '—' : String(iso).length > 10 ? new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }));
 export const fmtQty = (n) => (n == null ? '—' : Number(n).toLocaleString('en-IN', { maximumFractionDigits: 3 }));
 export async function openPrint(path) {
   const w = window.open('', '_blank');
