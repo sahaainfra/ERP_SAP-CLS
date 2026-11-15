@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import erp from './eslint-rules/no-hardcoded-color.js';
 import noText from './eslint-rules/no-hardcoded-text.js';
+import noLocalDate from './eslint-rules/no-local-date-format.js';
 
 export default [
   { ignores: ['node_modules/**', 'dist/**', '.deploy*/**', 'artifacts/**', 'coverage/**', 'reports/**', 'data/**', 'test-results/**', 'playwright-report/**'] },
@@ -23,6 +24,12 @@ export default [
     ignores: ['src/client/platform/design/icon-map.js'],
     plugins: { erp },
     rules: { 'erp/no-hardcoded-color': 'error' },
+  },
+  // part 166.1 F-04: one date and time format for the whole application
+  {
+    files: ['src/client/**/*.{js,jsx}'],
+    plugins: { dates: noLocalDate },
+    rules: { 'dates/no-local-date-format': 'error' },
   },
   // part 03.09, BR-01: the screens moved to the translation catalogue carry no text of their own
   {

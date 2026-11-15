@@ -4,6 +4,7 @@ import { Banner } from '../../platform/feedback/Feedback.jsx';
 import { EmptyState } from '../../platform/feedback/states.jsx';
 import { Field, FormDialog, QueryState, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
+import { fmtDateTime } from '../../../shared/dates.js';
 
 const PLACEMENT = { sidebar: 'Menu', user_menu: 'Account menu', console: 'Technical Console' };
 const CONTEXT = { '': 'Not needed', project: 'A project', site: 'A site' };
@@ -89,7 +90,7 @@ function HistoryDialog({ code, dialogRef }) {
         <ol className="history">
           {h.data.map((a) => (
             <li key={a.id}>
-              <strong>{a.actor}</strong> <span className="muted">{new Date(a.at).toLocaleString('en-IN')}</span> {a.reason && <em>{a.reason}</em>}
+              <strong>{a.actor}</strong> <span className="muted">{fmtDateTime(a.at)}</span> {a.reason && <em>{a.reason}</em>}
               <ul>{Object.keys(a.newValues ?? {}).map((k) => <li key={k}><code>{k}</code>: {String(a.oldValues?.[k] ?? 'none')} → {String(a.newValues[k] ?? 'none')}</li>)}</ul>
             </li>
           ))}
