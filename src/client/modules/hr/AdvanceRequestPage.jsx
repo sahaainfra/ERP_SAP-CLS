@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { exp } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Advance Request (HR, part 07.12, FR-02): a salary advance (recovered from salary in instalments by payroll) or a travel or imprest advance (settled against a claim). The manager approves, then HR (salary) or accounts, and the CFO above the limit;
 // accounts record the payment and from then the advance is outstanding. A salary advance shows its instalments for payroll.
@@ -32,7 +33,7 @@ export default function AdvanceRequestPage() {
   const per = v.type === 'SALARY' && Number(v.amount) > 0 ? Number(v.amount) / Math.max(1, Number(v.instalments || 1)) : null;
   return (
     <section aria-labelledby="ad-title" data-testid="advance" data-status={a?.status ?? 'NEW'}>
-      <h1 id="ad-title">{a ? <>{a.docNo} <StatusBadge status={TONE[a.status]} label={t(`ast.${a.status}`)} /></> : t('adv.title')}</h1>
+      <PageHeader id="ad-title" title={a ? <>{a.docNo} <StatusBadge status={TONE[a.status]} label={t(`ast.${a.status}`)} /></> : t('adv.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="ad-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="ad-note">{note}</p>}
       <form className="mdm-panel mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }} data-testid="ad-form" aria-label={t('adv.title')}>

@@ -9,6 +9,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { PARAM_TONE, fmtDate, fmtQty, today, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Item Planning Parameters (part 15.02, FR-03, FR-06, section 9): the lead time, minimum order, pack size and safety stock of an item, whether it is long-lead and what the supplier can supply. A change is made by planning or procurement and approved by
 // the procurement manager; the parameters in force are never edited, a new set is entered from a later date.
@@ -20,7 +21,7 @@ function ParamForm({ t, editing, onSaved, onCancel }) {
   const set = (k, v) => setF({ ...f, [k]: v });
   const save = async (e) => { e.preventDefault(); setError(null); setBusy(true); try { const body = { leadTimeDays: Number(f.leadTimeDays), moq: Number(f.moq), packSize: Number(f.packSize), safetyStock: Number(f.safetyStock), longLead: f.longLead, capacityNote: f.capacityNote.trim() || null, effectiveFrom: f.effectiveFrom }; const d = editing ? await pc.paramUpdate(editing.id, { ...body, rowVersion: editing.rowVersion }) : await pc.paramCreate({ itemId: f.itemId, ...body }); onSaved(d); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <form className="mdm-panel" onSubmit={save} data-testid="param-form" aria-label={t('p.paramsTitle')} noValidate><h1>{editing ? t('p.paramEdit') : t('p.paramNew')}</h1>
+    <form className="mdm-panel" onSubmit={save} data-testid="param-form" aria-label={t('p.paramsTitle')} noValidate><PageHeader title={editing ? t('p.paramEdit') : t('p.paramNew')} />
       <div className="form-grid">
         <Field label={t('p.item')} name="itemId" error={error}>{editing ? <strong>{f.label}</strong> : <><strong data-testid="param-item">{f.label || t('p.none')}</strong> <button type="button" className="btn" onClick={() => setPicking(true)} data-testid="param-pick">{t('p.chooseItem')}</button></>}</Field>
         <Field label={t('p.leadDays')} name="leadTimeDays" error={error}><input type="number" min="0" max="730" value={f.leadTimeDays} onChange={(e) => set('leadTimeDays', e.target.value)} style={{ minHeight: 44 }} data-testid="param-lead" /></Field>
@@ -49,7 +50,7 @@ function Param({ t, id, onGone }) {
   if (editing) return <ParamForm t={t} editing={x} onSaved={() => { setEditing(false); refresh(qc); }} onCancel={() => setEditing(false)} />;
   return (
     <div data-testid="param-object" data-status={x.status}>
-      <h1 id="param-h">{x.itemCode} · {x.itemName} <StatusBadge status={PARAM_TONE[x.status]} label={t(`p.ps.${x.status}`)} /></h1><p><Link to="/proc/item-params">{t('p.back')}</Link></p>
+      <PageHeader id="param-h" title={<>{x.itemCode} · {x.itemName} <StatusBadge status={PARAM_TONE[x.status]} label={t(`p.ps.${x.status}`)} /></>} meta={<Link to="/proc/item-params">{t('p.back')}</Link>} />
       <dl className="kv" data-testid="param-figures"><div><dt>{t('p.leadDays')}</dt><dd>{x.leadTimeDays}</dd></div><div><dt>{t('p.moq')}</dt><dd>{fmtQty(x.moq)} {x.uom}</dd></div><div><dt>{t('p.pack')}</dt><dd>{fmtQty(x.packSize)}</dd></div><div><dt>{t('p.safety')}</dt><dd>{fmtQty(x.safetyStock)}</dd></div><div><dt>{t('p.longLead')}</dt><dd>{x.longLead ? t('p.yes') : t('p.no')}</dd></div><div><dt>{t('p.effectiveFrom')}</dt><dd>{fmtDate(x.effectiveFrom)}</dd></div>{x.vendor && <div><dt>{t('p.supplier')}</dt><dd>{x.vendor}</dd></div>}{x.capacityNote && <div><dt>{t('p.capacity')}</dt><dd>{x.capacityNote}</dd></div>}{x.approvedBy && <div><dt>{t('p.approvedBy')}</dt><dd>{x.approvedBy}</dd></div>}</dl>
       {x.status === 'APPROVED' && <p className="muted" data-testid="param-locked">{t('p.paramLocked')}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="param-obj-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="param-note">{note}</p>}
@@ -76,7 +77,7 @@ export default function ItemParamsPage() {
   if (sp.get('new') === '1') return <section data-testid="proc-params"><ParamForm t={t} editing={null} onSaved={(d) => { refresh(qc); navigateTo(`/proc/item-params?id=${d.id}`); }} onCancel={() => navigateTo('/proc/item-params')} /></section>;
   return (
     <section aria-labelledby="params-h" data-testid="proc-params">
-      <h1 id="params-h">{t('p.paramsTitle')}</h1><p className="muted">{t('p.paramsIntro')}</p>
+      <PageHeader id="params-h" title={t('p.paramsTitle')} subtitle={t('p.paramsIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.item_param.edit') && <Link to="/proc/item-params?new=1">{t('p.paramNew')}</Link>} <Link to="/proc/mrp">{t('p.mrpTitle')}</Link></div>
       <ListReport listCode="proc.item_params" endpoint="/proc/item-params" title={t('p.paramsTitle')} session={session.data} rowHref={(r) => `/proc/item-params?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/item-params?id=${r.id}`)}
         cardFields={['item', 'leadDays', 'moq', 'safety', 'longLead']} statusKey="status" empty={{ title: t('p.paramsEmptyTitle'), text: t('p.paramsEmptyBody') }} />

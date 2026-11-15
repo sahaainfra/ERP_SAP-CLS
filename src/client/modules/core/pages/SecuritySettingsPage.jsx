@@ -3,6 +3,7 @@ import { formatDateTime } from '../../../platform/format.js';
 import RecordHistory from '../../../platform/audit/RecordHistory.jsx';
 import { useRequestSettingsChange, useSecuritySettings } from '../api/security.js';
 import { Field, Link, QueryState, downloadCsv, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const CLASSES = [['auth', 'Sign-in (password, captcha, reset, PIN)'], ['otp', 'Second step (code, enrolment, backup codes)'], ['export', 'Exports'], ['write', 'Changes to data'], ['read', 'Reading data'], ['webhook', 'Incoming webhooks']];
 const REFERRER = ['no-referrer', 'same-origin', 'strict-origin', 'strict-origin-when-cross-origin'];
@@ -41,8 +42,7 @@ export default function SecuritySettingsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Security &rsaquo; Settings</nav>
-      <div className="page-head"><h1 id="page-title">Security Settings</h1></div>
-      <p className="muted">How many requests of each kind are allowed per minute, the headers sent with every page, which other sites may call the API, and when an export of people&rsquo;s records needs approval. Changes are approved by someone other than the person who asks, and each one is kept in the history below.</p>
+      <PageHeader id="page-title" title={"Security Settings"} subtitle={"How many requests of each kind are allowed per minute, the headers sent with every page, which other sites may call the API, and when an export of people’s records needs approval. Changes are approved by someone other than the person who asks, and each one is kept in the history below."} />
       <p role="status" className="notice" data-testid="settings-notice">{notice}</p>
       <QueryState query={q} what="the security settings" permission="core.routes.view" />
       {d && form && (

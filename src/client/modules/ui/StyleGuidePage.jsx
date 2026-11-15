@@ -3,6 +3,8 @@ import Icon, { ICON_KEYS, SIZES } from '../../platform/design/Icon.jsx';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { QueryState, downloadCsv, usePageTitle } from '../core/pages/ui.jsx';
 import { useStyleGuide } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 const THEMES = [['light', 'Light'], ['dark', 'Dark'], ['high-contrast', 'High contrast']];
 const kebab = (k) => k.replace(/\./g, '-');
@@ -41,8 +43,7 @@ export default function StyleGuidePage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Design System</nav>
-      <div className="page-head"><h1 id="page-title">Design System</h1></div>
-      <p className="muted">The design tokens, themes and icons every screen is built from. They come from one file (<code>src/shared/design/design-tokens.json</code>); changing a token is a code change reviewed like any other, so nothing here is edited on screen.{d && (d.openToAll ? ` This ${d.environment} environment shows the page to everyone signed in.` : ' In production only people with ui.styleguide.view see it.')}</p>
+      <PageHeader id="page-title" title={"Design System"} subtitle={<>The design tokens, themes and icons every screen is built from. They come from one file (<code>src/shared/design/design-tokens.json</code>); changing a token is a code change reviewed like any other, so nothing here is edited on screen.{d && (d.openToAll ? ` This ${d.environment} environment shows the page to everyone signed in.` : ' In production only people with ui.styleguide.view see it.')}</>} />
       <QueryState query={q} what="the design tokens" permission="ui.styleguide.view" />
       {t && (
         <>
@@ -54,10 +55,10 @@ export default function StyleGuidePage() {
           <div className="theme-previews">{THEMES.map(([v, l]) => <ThemeSample key={v} theme={v} label={l} />)}</div>
 
           <h2>Contrast</h2>
-          <div className="tiles" data-testid="contrast-summary">
+          <KpiRow data-testid="contrast-summary">
             <div className={`tile ${d.contrast.failures.length ? 'tile-bad' : 'tile-ok'}`}><span>Text pairs below WCAG AA</span><strong>{d.contrast.failures.length}</strong><span className="muted small">of {d.contrast.rows.length} pairs in three themes</span></div>
             {THEMES.map(([v, l]) => <div key={v} className="tile"><span>{l}: meets AAA</span><strong>{d.contrast.aaaShare[v]}%</strong></div>)}
-          </div>
+          </KpiRow>
           <div className="toolbar">
             <label className="field field-inline"><span className="sr-only">Theme</span><select aria-label="Contrast theme" value={theme} onChange={(e) => setTheme(e.target.value)}><option value="">Every theme</option>{THEMES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
             <label><input type="checkbox" checked={onlyFail} onChange={(e) => setOnlyFail(e.target.checked)} /> Only pairs that fail</label>

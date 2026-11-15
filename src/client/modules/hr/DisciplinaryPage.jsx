@@ -7,6 +7,7 @@ import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, ext } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Disciplinary Cases (HR, part 07.13, FR-07, restricted): HR and the director see the cases; HR opens one (incident, category, severity) and takes it through show-cause (with the day to answer by), inquiry, action and closing, each a dated line
 // of the timeline; every look at a case is audited. An employee sees only the cases that concern them, without the file and the inquiry notes, and answers a show-cause here.
@@ -26,7 +27,7 @@ export default function DisciplinaryPage() {
   const c = (q.data ?? []).find((x) => x.id === open);
   return (
     <section aria-labelledby="dc-title" data-testid="disciplinary">
-      <h1 id="dc-title">{t('dsc.title')}</h1>
+      <PageHeader id="dc-title" title={t('dsc.title')} />
       <p className="muted small">{canManage ? t('dsc.restricted') : t('dsc.yours')}</p>
       {error?.form && <p className="field-error" role="alert" data-testid="dc-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="dc-note">{note}</p>}

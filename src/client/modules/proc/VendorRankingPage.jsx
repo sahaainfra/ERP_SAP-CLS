@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { AVL_TONE, RATING_TONE, pct, pv8 } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Vendor ranking by category (part 15.08): the vendors on the approved list for a category ordered by their score of a period, with the three headline measures; each row opens the vendor's scorecard.
 export default function VendorRankingPage() {
@@ -16,7 +17,7 @@ export default function VendorRankingPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data;
   return (
-    <section aria-labelledby="vr-h" data-testid="proc-vr"><h1 id="vr-h">{t('v.rankTitle')}</h1><p className="muted">{t('v.rankIntro')}</p>
+    <section aria-labelledby="vr-h" data-testid="proc-vr"><PageHeader id="vr-h" title={t('v.rankTitle')} subtitle={t('v.rankIntro')} />
       <div className="mdm-panel no-print" data-testid="vr-params"><div className="form-grid">
         <label>{t('v.category')}<select value={categoryId} onChange={(ev) => { setCategoryId(ev.target.value); setPeriod(''); }} style={{ minHeight: 44 }} data-testid="vr-category"><option value="">{t('x.choose')}</option>{d.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
         <label>{t('v.period')}<select value={period || d.period || ''} disabled={!categoryId} onChange={(ev) => setPeriod(ev.target.value)} style={{ minHeight: 44 }} data-testid="vr-period">{d.periods.length === 0 && <option value="">—</option>}{d.periods.map((p) => <option key={p} value={p}>{p}</option>)}</select></label></div></div>

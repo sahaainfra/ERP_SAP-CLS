@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useIntegrityRuns, useIntegritySummary, useRunIntegrity } from '../api/index.js';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const STATUS_LABEL = { pass: 'Passed', fail: 'Failed', not_applicable: 'Nothing to check yet', never: 'Not run yet' };
 const SKELETON = [0, 1, 2, 3, 4];
@@ -95,12 +97,12 @@ export default function DataHealthPage({ session }) {
   } else {
     body = (
       <>
-        <div className="tiles" aria-label="Summary of the last run">
+        <KpiRow aria-label="Summary of the last run">
           <div className="tile tile-ok"><strong data-testid="count-pass">{counts.pass}</strong><span>Passed</span></div>
           <div className={`tile ${counts.fail ? 'tile-bad' : ''}`}><strong data-testid="count-fail">{counts.fail}</strong><span>Failed</span></div>
           <div className="tile"><strong data-testid="count-na">{counts.not_applicable}</strong><span>Nothing to check yet</span></div>
           {counts.never > 0 && <div className="tile"><strong data-testid="count-never">{counts.never}</strong><span>Not run yet</span></div>}
-        </div>
+        </KpiRow>
         <p className="muted" data-testid="last-run">
           {d.runAt ? <>Last run {formatDateTime(d.runAt)} by {d.triggeredBy}.</> : 'The checks have not been run yet.'}
           {' '}Samples show identifiers only, never amounts or personal data.
@@ -151,8 +153,7 @@ export default function DataHealthPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Data Health</nav>
-      <div className="page-head"><h1 id="page-title">Database Integrity Report</h1></div>
-      <p className="muted">Finds orphan links, duplicate numbers, totals that do not add up, unbalanced journals, negative quantities, rows without a company and invalid statuses.</p>
+      <PageHeader id="page-title" title={"Database Integrity Report"} subtitle={"Finds orphan links, duplicate numbers, totals that do not add up, unbalanced journals, negative quantities, rows without a company and invalid statuses."} />
       <div className="toolbar">
         <button
           type="button"

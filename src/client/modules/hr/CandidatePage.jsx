@@ -8,6 +8,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { REQ_STATUS, recruit, rupees } from './api.js';
 import PrejoiningForm from './PrejoiningForm.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Candidate (HR, part 07.02): one candidate. Header: name, stage, requisition, source, days in the stage, what they ask; actions for the stage: reject (with a reason), make an offer, join. Tabs: Details · Interviews
 // (schedule, the panel's feedback with scores and recommendation, the result) · Offer (the offers and their answer) · Pre-joining (background verification, medical fitness, the details of the candidate, whose
@@ -30,7 +31,7 @@ export default function CandidatePage() {
     <section aria-labelledby="cd-title" data-testid="candidate-page">
       <p><Link to="/hr/recruitment">← Candidate Pipeline</Link></p>
       <header className="op-header">
-        <div className="page-head"><h1 id="cd-title">{c.name}</h1><StatusBadge status={c.stage === 'REJECTED' ? 'REJECTED' : c.stage === 'JOINED' ? 'COMPLETED' : 'ACTIVE'} label={c.stageLabel} /></div>
+        <PageHeader id="cd-title" title={c.name} status={<StatusBadge status={c.stage === 'REJECTED' ? 'REJECTED' : c.stage === 'JOINED' ? 'COMPLETED' : 'ACTIVE'} label={c.stageLabel} />} />
         <dl className="op-figures">
           <div><dt>Requisition</dt><dd>{c.requisition} · {c.designation}</dd></div><div><dt>Department</dt><dd>{c.department}</dd></div><div><dt>Source</dt><dd>{c.sourceLabel}{c.sourceDetail ? `: ${c.sourceDetail}` : ''}</dd></div>
           <div><dt>In this stage</dt><dd>{c.daysInStage} day(s)</dd></div>{c.expectedCtc && <div><dt>Expects / has</dt><dd>{rupees(c.expectedCtc)} / {rupees(c.currentCtc)}</dd></div>}{c.noticeDays != null && <div><dt>Notice</dt><dd>{c.noticeDays} days</dd></div>}

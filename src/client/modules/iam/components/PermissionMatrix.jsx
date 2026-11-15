@@ -60,7 +60,7 @@ export default function PermissionMatrix({ registry, grants, editable = false, o
         return (
           <section key={mod} aria-label={`Permissions of ${mod}`} className="card">
             <h3>{mod}{editable && <> <button type="button" className="btn btn-small" onClick={() => setAll(mod, 'allow')}>Allow all</button> <button type="button" className="btn btn-small" onClick={() => setAll(mod, 'none')}>Clear all</button></>}</h3>
-            <div className="table-wrap">
+            <div className="table-wrap" data-no-cards="">
               <table>
                 <caption className="sr-only">Permissions of {mod}: entities by actions</caption>
                 <thead><tr><th>Entity</th>{actions.map((a) => <th key={a}>{a.replace(/_/g, ' ')}</th>)}</tr></thead>

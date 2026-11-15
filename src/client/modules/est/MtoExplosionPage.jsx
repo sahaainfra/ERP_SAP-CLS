@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { mto, qty } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Material Requirement Explosion (part 09.02, FR-04, FR-06): the materials a take-off revision needs: each BOQ quantity times the components of its work item's bill of resources (06.03) with their wastage, or the material
 // item of an engineering MTO line as given; the steel of a bar bending schedule by diameter. A released revision shows the requirements stored for estimation and MRP; a draft shows them worked out live.
@@ -17,7 +18,7 @@ export default function MtoExplosionPage() {
   const chart = r && r.rows.length > 0 && r.rows.length <= 30 && { categories: r.rows.map((x) => x.itemCode ?? x.description), series: [{ name: t('exp.net'), values: r.rows.map((x) => Number(x.net)) }, { name: t('exp.wastage'), values: r.rows.map((x) => Math.round((Number(x.qty) - Number(x.net)) * 1000) / 1000) }] };
   return (
     <section aria-labelledby="exp-h" data-testid="mto-explosion">
-      <h1 id="exp-h">{t('exp.title')}</h1>
+      <PageHeader id="exp-h" title={t('exp.title')} />
       {!id ? <p className="muted">{t('delta.choose')} <Link to="/est/takeoffs">{t('to.list')}</Link></p> : q.isPending ? <Skeleton label={t('exp.title')} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : (<>
         <p data-testid="exp-head"><Link to={kind === 'bbs' ? `/est/bbs/sheet?id=${r.source.id}` : `/est/takeoff?id=${r.source.id}`}>{r.source.ref}</Link> · {r.stored ? t('exp.stored') : t('exp.live')}</p>
         {chart && <Chart type="stacked" data={chart} title={t('exp.chart')} exportName="material-requirements" />}

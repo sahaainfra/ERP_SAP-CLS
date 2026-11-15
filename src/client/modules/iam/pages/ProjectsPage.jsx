@@ -7,6 +7,8 @@ import { AssignDialog, HistoryPanel, ReasonDialog, RequestsPanel } from '../comp
 import OrgList, { FieldInput, StatusChip, labelOf, readForm } from '../components/OrgList.jsx';
 import { useAccess } from '../../../platform/access/Can.jsx';
 import { canWith } from '../../../platform/access/index.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 /**
  * What the person may do here (part 02.04): a role held for one project lets them work on that project only, so a button for a record
@@ -106,21 +108,18 @@ function ProjectObject({ id, session, back, openSite }) {
       <QueryState query={q} what="the project" permission="org.view" />
       {p && (
         <>
-          <div className="page-head">
-            <h1 id="page-title">{p.code} <span className="muted">{p.name}</span> <StatusChip status={p.status} /></h1>
-            <div className="actions">
+          <PageHeader id="page-title" title={<>{p.code} <span className="muted">{p.name}</span> <StatusChip status={p.status} /></>} actions={<><div className="actions">
               {manage && p.status !== 'CLOSED' && <button type="button" className="btn" onClick={() => edit.current?.showModal()}>Edit</button>}
               {manage && p.status !== 'CLOSED' && <button type="button" className="btn" onClick={() => assign.current?.showModal()}>Change manager</button>}
               {manage && p.status === 'DRAFT' && <button type="button" className="btn btn-primary" onClick={() => activation.current?.showModal()}>Request activation</button>}
               {manage && moves.map(([to, label]) => <button key={to} type="button" className="btn" onClick={() => { setMove({ to, label }); statusDialog.current?.showModal(); }}>{label}</button>)}
-            </div>
-          </div>
-          <div className="tiles">
+            </div></>} />
+          <KpiRow>
             <div className="tile"><span className="tile-value">{p.siteCount}</span><span className="tile-label">Sites</span></div>
             <div className="tile"><span className="tile-value">{p.pmName ?? 'Vacant'}</span><span className="tile-label">Project manager</span></div>
             <div className="tile"><span className="tile-value">{p.startDate ? formatDate(p.startDate) : '-'}</span><span className="tile-label">Start</span></div>
             <div className="tile"><span className="tile-value">{p.endDate ? formatDate(p.endDate) : '-'}</span><span className="tile-label">End</span></div>
-          </div>
+          </KpiRow>
           <p role="status" className="notice" data-testid="object-notice">{notice}</p>
           <Tabs kind="project" tab={tab} setTab={setTab} />
           <div role="tabpanel" aria-labelledby={`otab-${tab}`}>
@@ -187,20 +186,17 @@ function SiteObject({ id, session, back, openProject }) {
       <QueryState query={q} what="the site" permission="org.view" />
       {s && (
         <>
-          <div className="page-head">
-            <h1 id="page-title">{s.code} <span className="muted">{s.name}</span> <StatusChip status={s.status} /></h1>
-            <div className="actions">
+          <PageHeader id="page-title" title={<>{s.code} <span className="muted">{s.name}</span> <StatusChip status={s.status} /></>} actions={<><div className="actions">
               {manage && s.status !== 'INACTIVE' && <button type="button" className="btn" onClick={() => edit.current?.showModal()}>Edit</button>}
               {manage && s.status !== 'INACTIVE' && <button type="button" className="btn" onClick={() => assign.current?.showModal()}>Change in-charge</button>}
               {manage && ['DRAFT', 'INACTIVE'].includes(s.status) && <button type="button" className="btn btn-primary" onClick={() => activation.current?.showModal()}>Request activation</button>}
               {manage && s.status !== 'INACTIVE' && <button type="button" className="btn" onClick={() => deactivate.current?.showModal()}>Deactivate</button>}
-            </div>
-          </div>
-          <div className="tiles">
+            </div></>} />
+          <KpiRow>
             <div className="tile"><span className="tile-value">{s.inChargeName ?? 'Vacant'}</span><span className="tile-label">In-charge</span></div>
             <div className="tile"><span className="tile-value">{s.geofence.type === 'NONE' ? 'None' : s.geofence.type === 'CIRCLE' ? `${s.geofence.radiusM} m circle` : 'Polygon'}</span><span className="tile-label">Geofence</span></div>
             <div className="tile"><span className="tile-value">{s.workingStart && s.workingEnd ? `${s.workingStart} - ${s.workingEnd}` : '-'}</span><span className="tile-label">Working hours</span></div>
-          </div>
+          </KpiRow>
           <p role="status" className="notice" data-testid="object-notice">{notice}</p>
           <Tabs kind="site" tab={tab} setTab={setTab} />
           <div role="tabpanel" aria-labelledby={`otab-${tab}`}>
@@ -254,7 +250,7 @@ export default function ProjectsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Projects</nav>
-      <div className="page-head"><h1 id="page-title">Projects &amp; Sites</h1></div>
+      <PageHeader id="page-title" title={"Projects & Sites"} />
       <OrgList entity="projects" title="Projects" noun="project" columns={PROJECT_COLUMNS} fields={PROJECT_FIELDS} controlled canManage={may.company('org.project.manage')} onOpen={(r) => setSel({ kind: 'project', id: r.id })} filters={[{ name: 'type', label: 'Type', options: PROJECT_TYPES }]}
         hint="The basic project master. A new project is a draft until the project director and project control approve it; later parts enrich it." />
       <h2>Sites</h2>

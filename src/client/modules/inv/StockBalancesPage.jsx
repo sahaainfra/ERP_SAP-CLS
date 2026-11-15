@@ -7,6 +7,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { fmtDate, fmtQty, iv } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stock balances (part 16.01, FR-04, FR-06): by item, store, bin, batch and owner, with available, reserved, under inspection and in transit; reservations against work authorisations, material requests and transfers.
 export default function StockBalancesPage() {
@@ -15,7 +16,7 @@ export default function StockBalancesPage() {
   if (rq.error?.status === 403) return <NoPermission what={t('balancesTitle')} permission="inv.reservation.view" />;
   const canReserve = perms.includes('inv.reservation.reserve');
   return (
-    <section aria-labelledby="sb-h" data-testid="inv-sb"><h1 id="sb-h">{t('balancesTitle')}</h1><p className="muted">{t('balancesIntro')}</p>
+    <section aria-labelledby="sb-h" data-testid="inv-sb"><PageHeader id="sb-h" title={t('balancesTitle')} subtitle={t('balancesIntro')} />
       <div className="actions-row no-print"><Link to="/inv/ledger">{t('ledgerTitle')}</Link> <Link to="/inv/dashboard">{t('dashTitle')}</Link> {perms.includes('inv.stock.post') && <Link to="/inv/posting">{t('postingTitle')}</Link>}</div>
       <ListReport listCode="inv.balances" endpoint="/inv/balances" title={t('balancesTitle')} session={session.data} rowHref={(x) => `/inv/ledger?itemId=${x.itemId ?? ''}`} onOpen={(x) => navigateTo(`/inv/ledger?itemId=${x.itemId ?? ''}`)} cardFields={['itemCode', 'item', 'store', 'onHand', 'available']} empty={{ title: t('balancesEmptyTitle'), text: t('balancesEmptyBody') }} />
       <h2>{t('reservations')}</h2>

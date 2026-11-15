@@ -3,6 +3,8 @@ import globals from 'globals';
 import erp from './eslint-rules/no-hardcoded-color.js';
 import noText from './eslint-rules/no-hardcoded-text.js';
 import noLocalDate from './eslint-rules/no-local-date-format.js';
+import kpiInFormGrid from './eslint-rules/kpi-in-form-grid.js';
+import pageHeaderRequired from './eslint-rules/page-header-required.js';
 
 export default [
   { ignores: ['node_modules/**', 'dist/**', '.deploy*/**', 'artifacts/**', 'coverage/**', 'reports/**', 'data/**', 'test-results/**', 'playwright-report/**'] },
@@ -30,6 +32,16 @@ export default [
     files: ['src/client/**/*.{js,jsx}'],
     plugins: { dates: noLocalDate },
     rules: { 'dates/no-local-date-format': 'error' },
+  },
+  // part 166.2, FR-03: key figures are KpiTile/KpiRow, never boxes in the form grid; a page names itself with PageHeader
+  {
+    files: ['src/client/**/*.jsx'],
+    plugins: { ui: { rules: { ...kpiInFormGrid.rules, ...pageHeaderRequired.rules } } },
+    rules: { 'ui/kpi-in-form-grid': 'error', 'ui/page-header-required': 'error' },
+  },
+  {
+    files: ['src/client/platform/design/PageHeader.jsx'],
+    rules: { 'ui/page-header-required': 'off' },
   },
   // part 03.09, BR-01: the screens moved to the translation catalogue carry no text of their own
   {

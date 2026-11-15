@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, tdr } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Tender Calendar (business development, part 08.02, FR-07): the pre-bid meetings, submissions, openings and the team's task dates of the tenders in the person's scope, by month; a day with an event is listed below the month as well, so that a phone reads it as an agenda.
 // The owner and the team are reminded by the daily job on the days before each date.
@@ -26,7 +27,7 @@ export default function TenderCalendarPage() {
   const label = new Date(`${from}T00:00:00Z`).toLocaleDateString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' });
   return (
     <section aria-labelledby="cal-title" data-testid="tender-calendar">
-      <h1 id="cal-title">{t('cal.title')}</h1>
+      <PageHeader id="cal-title" title={t('cal.title')} />
       <div className="actions-row no-print">
         <button type="button" className="btn" onClick={() => setMonth(addMonth(month, -1))} data-testid="cal-prev" aria-label={t('cal.prev')}>‹</button>
         <strong data-testid="cal-month" aria-live="polite">{label}</strong>

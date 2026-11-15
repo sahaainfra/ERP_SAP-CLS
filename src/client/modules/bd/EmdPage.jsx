@@ -7,6 +7,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { EMD_MODES, aw, dayIST, inr, tdr } from './api.js';
 import { TimelinePanel, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // EMD / Fee (business development, part 08.03, FR-02, BR-02): the EMD or tender fee of a tender is asked of finance (mode, amount, payee, the day it is needed); estimation, the accounts manager and the CFO approve; accounts records the instrument (number, bank, validity) and,
 // after the result, follows the refund (asked for, received, forfeited or adjusted into the security of the contract). The amount is the tender's unless the tender exempts it, with the reason.
@@ -37,8 +38,7 @@ export default function EmdPage() {
     const create = async (submit) => { const r = await run(() => aw.createEmd({ tenderId, kind, mode: v.mode, payee: v.payee.trim() || null, neededBy: v.neededBy || null, ...(v.mode === 'EXEMPT' ? { amount: 0, exemptionReason: v.exemptionReason.trim() } : {}), submit })); if (r?.id) navigateTo(`/bd/emd/record?id=${r.id}`, { force: true }); };
     return (
       <section aria-labelledby="emd-title" data-testid="emd-new">
-        <h1 id="emd-title">{t(kind === 'FEE' ? 'emd.newFee' : 'emd.newEmd')}</h1>
-        <p className="muted"><Link to={`/bd/tender?id=${tn.id}`}>{tn.docNo}</Link> · {tn.nameOfWork} · {t('emd.asked', { amount: inr(amount) })}</p>
+        <PageHeader id="emd-title" title={t(kind === 'FEE' ? 'emd.newFee' : 'emd.newEmd')} subtitle={<><Link to={`/bd/tender?id=${tn.id}`}>{tn.docNo}</Link> · {tn.nameOfWork} · {t('emd.asked', { amount: inr(amount) })}</>} />
         {errBox}
         <form className="mdm-panel mdm-fields" onSubmit={(x) => { x.preventDefault(); create(true); }} data-testid="emd-form" aria-label={t('emd.newEmd')}>
           <Field label={t('emd.mode')} name="mode" error={error}><select value={v.mode} onChange={(x) => setV({ ...v, mode: x.target.value })} data-testid="emd-mode">{EMD_MODES.filter((m) => kind === 'EMD' || m !== 'BG').map((m) => <option key={m} value={m}>{t(`emdmode.${m}`)}</option>)}</select></Field>
@@ -54,8 +54,7 @@ export default function EmdPage() {
   return (
     <section aria-labelledby="emd-title" data-testid="emd" data-status={e.status} data-refund={e.refundStatus}>
       <header>
-        <h1 id="emd-title">{e.kind === 'EMD' ? t('emd.emd') : t('emd.fee')} {e.docNo} <StatusBadge status={TONE[e.status]} label={e.statusLabel} /> <StatusBadge status={RTONE[e.refundStatus]} label={t(`refund.${e.refundStatus}`)} /></h1>
-        <p className="muted"><Link to={`/bd/tender?id=${e.tenderId}`}>{e.tenderNo}</Link> · {e.nameOfWork}</p>
+        <PageHeader id="emd-title" title={<>{e.kind === 'EMD' ? t('emd.emd') : t('emd.fee')} {e.docNo} <StatusBadge status={TONE[e.status]} label={e.statusLabel} /> <StatusBadge status={RTONE[e.refundStatus]} label={t(`refund.${e.refundStatus}`)} /></>} subtitle={<><Link to={`/bd/tender?id=${e.tenderId}`}>{e.tenderNo}</Link> · {e.nameOfWork}</>} />
         <dl className="op-figures" data-testid="emd-figures"><div><dt>{t('emd.amount')}</dt><dd>{inr(e.amount)}</dd></div><div><dt>{t('emd.mode')}</dt><dd>{t(`emdmode.${e.mode}`)}</dd></div><div><dt>{t('emd.instrument')}</dt><dd data-testid="emd-instrument">{e.instrumentNo ?? '—'}{e.bank ? ` · ${e.bank}` : ''}</dd></div><div><dt>{t('cr.validUntil')}</dt><dd className={e.expiring ? 'field-error' : ''}>{e.validUntil ?? '—'}</dd></div>{e.ageDays != null && <div><dt>{t('emd.age')}</dt><dd data-testid="emd-age">{t('emd.ageDays', { n: e.ageDays, b: e.ageBucket })}</dd></div>}</dl>
         {errBox}{note && <p className="mdm-banner" role="status" data-testid="emd-note">{note}</p>}
         <div className="actions-row no-print">

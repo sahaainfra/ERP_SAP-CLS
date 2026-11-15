@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, fmtQty, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // PR Proposals (part 15.02, FR-04, FR-06, BR-01): what the runs propose to buy, oldest order-by date first, with a colour for the ones whose order-by date has passed and for long-lead items. The planner accepts the ones chosen (a DRAFT requisition of
 // 15.01 is made: MRP never makes an approved one), changes a quantity, a date or takes an approved alternate in stock, or rejects with a reason.
@@ -44,7 +45,7 @@ export default function MrpProposalsPage() {
   const reject = async (p) => { const x = window.prompt(t('p.why')); if (!x) return; setError(null); try { await pc.proposalReject(p.id, x); setNote(t('p.rejected')); reload(); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="prop-h" data-testid="proc-proposals">
-      <h1 id="prop-h">{t('p.proposals')}</h1><p className="muted">{t('p.proposalsIntro')}</p>
+      <PageHeader id="prop-h" title={t('p.proposals')} subtitle={t('p.proposalsIntro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('p.params')}>
         <div className="form-grid">
           <Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => { setProjectId(e.target.value); setSel(new Set()); }} style={{ minHeight: 44 }} data-testid="prop-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>

@@ -5,6 +5,7 @@ import { EmptyState } from '../../platform/feedback/states.jsx';
 import { Field, FormDialog, QueryState, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { fmtDateTime } from '../../../shared/dates.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 const PLACEMENT = { sidebar: 'Menu', user_menu: 'Account menu', console: 'Technical Console' };
 const CONTEXT = { '': 'Not needed', project: 'A project', site: 'A site' };
@@ -181,8 +182,7 @@ export default function NavigationRegistryPage({ session }) {
 
   return (
     <section aria-labelledby="page-title">
-      <div className="page-head"><h1 id="page-title">Navigation Registry</h1></div>
-      <p className="muted">What the menu holds, for every role: each page with its group, order, icon, permission key and feature flag. A change is a request that another system administrator approves; it is audited with the old and new values.</p>
+      <PageHeader id="page-title" title={"Navigation Registry"} subtitle={"What the menu holds, for every role: each page with its group, order, icon, permission key and feature flag. A change is a request that another system administrator approves; it is audited with the old and new values."} />
       {notice && <Banner tone="success" onClose={() => setNotice('')} testId="registry-notice">{notice}</Banner>}
       <QueryState query={reg} what="the navigation registry" permission="ui.nav.manage" />
       {reg.data && (

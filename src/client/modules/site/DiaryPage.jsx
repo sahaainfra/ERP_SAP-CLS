@@ -9,6 +9,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { useSession } from '../core/api/index.js';
 import { DIARY_CATEGORIES, fmtDate, st, today } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Site Diary (part 14.03, FR-03): the free-form notes of a site and day with a category and attachments; the construction manager signs them off (never the person who wrote them) and a signed note is locked.
 function Entry({ t, id, onGone }) {
@@ -22,8 +23,7 @@ function Entry({ t, id, onGone }) {
   const d = draft ?? { category: e.category, text: e.text };
   return (
     <div data-testid="diary-object" data-signed={e.signed ? '1' : '0'}>
-      <h1 id="diary-h">{fmtDate(e.date)} · {e.siteCode} · {t(`cnd.diary.c.${e.category}`)} <StatusBadge status={e.signed ? 'APPROVED' : 'DRAFT'} label={e.signed ? t('cnd.diary.signed') : t('cnd.diary.notSigned')} /></h1>
-      <p><Link to="/site/diary">{t('cnd.diary.back')}</Link> · {t('cnd.diary.by')} {e.enteredBy}{e.signed ? ` · ${t('cnd.diary.signedBy')} ${e.signedBy}` : ''}</p>
+      <PageHeader id="diary-h" title={<>{fmtDate(e.date)} · {e.siteCode} · {t(`cnd.diary.c.${e.category}`)} <StatusBadge status={e.signed ? 'APPROVED' : 'DRAFT'} label={e.signed ? t('cnd.diary.signed') : t('cnd.diary.notSigned')} /></>} meta={<><Link to="/site/diary">{t('cnd.diary.back')}</Link> · {t('cnd.diary.by')} {e.enteredBy}{e.signed ? ` · ${t('cnd.diary.signedBy')} ${e.signedBy}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="diary-obj-error">{error.form}</p>}{note && <p className="mdm-banner" role="status">{note}</p>}
       {can.edit ? (
         <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); run(() => st.updateDiary(e.id, { category: d.category, text: d.text.trim(), rowVersion: e.rowVersion }), t('cnd.saved')).then(() => setDraft(null)); }}>
@@ -87,7 +87,7 @@ export default function DiaryPage() {
   const sites = sitesQ.data; const refresh = () => { qc.invalidateQueries({ queryKey: ['site'] }); qc.invalidateQueries({ queryKey: ['list'] }); };
   return (
     <section aria-labelledby="diary-h" data-testid="site-diary">
-      <h1 id="diary-h">{t('cnd.diary.title')}</h1><p className="muted">{t('cnd.diary.intro')}</p>
+      <PageHeader id="diary-h" title={t('cnd.diary.title')} subtitle={t('cnd.diary.intro')} />
       {perms.includes('site.diary.create') && <NewEntry t={t} sites={sites.filter((s) => s.canCreate)} onSaved={refresh} />}
       {perms.includes('site.diary.sign') && <SignDay t={t} sites={sites} onDone={refresh} />}
       <ListReport listCode="site.diary" endpoint="/site/diary" title={t('cnd.diary.title')} session={session.data} rowHref={(r) => `/site/diary?id=${r.id}`} onOpen={(r) => navigateTo(`/site/diary?id=${r.id}`)}

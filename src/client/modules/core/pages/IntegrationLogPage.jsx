@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useConnectorLog, useConnectorLogs, useConnectors } from '../api/index.js';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { Link, Pager, QueryState, downloadCsv, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const STATUS = {
   success: 'chip-pass', failure: 'chip-fail', timeout: 'chip-fail', rejected: 'chip-never', circuit_open: 'chip-fail', rate_limited: 'chip-never', duplicate: 'chip-never',
@@ -45,11 +46,7 @@ export default function IntegrationLogPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Integrations &rsaquo; Integration Log</nav>
-      <div className="page-head">
-        <h1 id="page-title">Integration Log</h1>
-        <button type="button" className="btn" disabled={rows.length === 0} onClick={exportCsv}>Export CSV</button>
-      </div>
-      <p className="muted">Every call to or from an outside service, with the correlation ID that finds the matching server log lines. Rows are removed after each connector&apos;s retention period. <Link to="/admin/integrations">Back to connectors</Link></p>
+      <PageHeader id="page-title" title={"Integration Log"} actions={<><button type="button" className="btn" disabled={rows.length === 0} onClick={exportCsv}>Export CSV</button></>} subtitle={<>Every call to or from an outside service, with the correlation ID that finds the matching server log lines. Rows are removed after each connector&apos;s retention period. <Link to="/admin/integrations">Back to connectors</Link></>} />
 
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Search</span><input type="search" placeholder="Search operation, error or correlation ID" value={filters.q} onChange={set('q')} /></label>

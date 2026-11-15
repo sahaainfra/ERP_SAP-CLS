@@ -7,6 +7,7 @@ import { useSession } from '../core/api/index.js';
 import AvailabilityPanel from './AvailabilityPanel.jsx';
 import { bd, download, inr, lg } from './api.js';
 import { ProjectSelect, ShareBar, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Budget vs Committed vs Actual (part 12.03, FR-06): by WBS, cost code, cost head or vendor, with what is left, a bar of the share used, the documents behind a row, and the availability panel for a WBS node, cost code and amount.
 const BY = ['wbs', 'cost_code', 'cost_head', 'vendor'];
@@ -23,7 +24,7 @@ export default function LedgerPage() {
   const d = q.data;
   return (
     <section aria-labelledby="led-h" data-testid="bud-ledger">
-      <h1 id="led-h">{t('led.title')}</h1>
+      <PageHeader id="led-h" title={t('led.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('cmp.params')}>
         <div className="form-grid">
           <ProjectSelect value={projectId} onChange={(v) => { setProjectId(v ? Number(v) : ''); setOpen(null); }} testId="led-project" />

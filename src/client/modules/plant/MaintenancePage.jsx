@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate, fmtQty, fmtRs, mt } from './api.js';
 import { ExportButton, FilterPanel } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Maintenance dashboard (part 17.05): services due and overdue, open job cards and breakdowns, MTBF and MTTR, the cost of the month and the warranty claims. Every tile opens the records behind it.
 export default function MaintenancePage() {
@@ -13,7 +14,7 @@ export default function MaintenancePage() {
   if (q.error?.status === 403) return <NoPermission what={t('m.dashTitle')} permission="plant.maint.report" />; if (q.isPending) return <Skeleton label={t('m.dashTitle')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const x = d.figures; const tile = (key, value, to, tone) => <Link key={key} to={to}><div className={`mdm-panel${tone ? ` ${tone}` : ''}`} data-testid={`md-tile-${key}`} style={{ minWidth: 140 }}><div className="muted small">{t(`m.tile.${key}`)}</div><strong style={{ fontSize: '1.5rem' }}>{value ?? '—'}</strong></div></Link>;
   return (
-    <section aria-labelledby="md-h" data-testid="plant-maintenance"><h1 id="md-h">{t('m.dashTitle')}</h1><p className="muted">{t('m.dashIntro')}</p>
+    <section aria-labelledby="md-h" data-testid="plant-maintenance"><PageHeader id="md-h" title={t('m.dashTitle')} subtitle={t('m.dashIntro')} />
       <FilterPanel value={f} onChange={setF} />
       <div className="actions-row no-print"><Link to="/plant/pm-schedule">{t('m.scheduleTitle')}</Link><Link to="/plant/job-cards">{t('m.jobsTitle')}</Link><Link to="/plant/job-cards?new=1">{t('m.newJob')}</Link><ExportButton query={{ kind: 'metrics' }} name="maintenance-mtbf-mttr.csv" path="/maintenance/export" testId="md-export" /></div>
       <div className="form-grid" data-testid="md-tiles">{tile('overdue', x.overdue, '/plant/pm-schedule?state=OVERDUE', x.overdue ? 'field-error' : '')}{tile('due', x.due, '/plant/pm-schedule?state=DUE')}{tile('criticalOverdue', x.criticalOverdue, '/plant/pm-schedule?state=OVERDUE')}{tile('openJobs', x.openJobs, '/plant/job-cards')}{tile('openBreakdowns', x.openBreakdowns, '/plant/logs?tab=breakdowns')}{tile('mtbf', x.mtbf == null ? null : `${fmtQty(x.mtbf)} h`, '#mtbf')}{tile('mttr', x.mttr == null ? null : `${fmtQty(x.mttr)} h`, '#mtbf')}{d.canCosts && tile('monthCost', x.monthCost == null ? null : fmtRs(x.monthCost), '/plant/job-cards')}{tile('warranty', x.warrantyOpen, '/plant/job-cards')}</div>

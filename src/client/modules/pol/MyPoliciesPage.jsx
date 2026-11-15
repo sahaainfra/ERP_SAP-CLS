@@ -6,6 +6,7 @@ import { formatDate, formatDateTime } from '../../platform/format.js';
 import { fetchFileUrl } from '../core/api/index.js';
 import { errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { CATEGORIES, pol } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Policies (part 05.05, section 7.3, FR-07): the policies that apply to the person, what is waiting for their acknowledgement (with the due date), the ones they acknowledged, the earlier versions (read-only). Opening
 // a policy records that it was read; a policy with a knowledge check is acknowledged by answering the questions and reaching the pass mark; a failed try can be repeated.
@@ -57,8 +58,7 @@ export default function MyPoliciesPage() {
   const open = (id) => { window.history.pushState(null, '', `/collab/my-policies?v=${id}`); setSel(id); };
   return (
     <section aria-labelledby="mp-title" data-testid="my-policies">
-      <h1 id="mp-title">My Policies</h1>
-      <p className="muted">{d.counts.toAcknowledge} to acknowledge{d.counts.overdue ? `, ${d.counts.overdue} overdue` : ''}, {d.counts.acknowledged} acknowledged.</p>
+      <PageHeader id="mp-title" title={"My Policies"} subtitle={<>{d.counts.toAcknowledge} to acknowledge{d.counts.overdue ? `, ${d.counts.overdue} overdue` : ''}, {d.counts.acknowledged} acknowledged.</>} />
       <div className="msg-filters" role="tablist" aria-label="My policies">
         {[['todo', `To acknowledge (${d.counts.toAcknowledge})`], ['done', `Acknowledged (${d.counts.acknowledged})`], ['library', 'Library'], ['history', `Earlier versions (${d.history.length})`]].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`lr-chip${tab === k ? ' is-on' : ''}`} onClick={() => setTab(k)} data-testid={`mp-tab-${k}`}>{l}</button>)}
       </div>

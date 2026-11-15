@@ -10,6 +10,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { ctr, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './CtrParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // Contract Register and Contract 360 (part 21.01): the client contract made from the signed-off commercial baseline, its terms, key clauses, obligations, milestones, value history, amendments, documents and correspondence.
 const nf = new Intl.NumberFormat('en-IN'); const money = (n) => (n == null ? '—' : `₹ ${nf.format(n)}`); const TYPES = ['ITEM_RATE', 'LUMP_SUM', 'EPC', 'HAM', 'COST_PLUS', 'PERCENTAGE_RATE']; const CATS = ['NOTICE', 'TIME_BAR', 'VARIATION', 'PAYMENT', 'TERMINATION', 'LD', 'PVC', 'DISPUTE', 'INSURANCE', 'SECURITY', 'OTHER'];
@@ -77,9 +79,8 @@ function Contract({ id }) {
   const t = useT('ctr'); const { q, guard } = useRecord('/contracts', id, t('k.title'), 'ctr.contract.view'); const { error, run, busy, note } = useRunner(); const [tab, setTab] = useState('terms'); const [editing, setEditing] = useState(false); usePageTitle(t('k.title')); if (guard) return guard; const x = q.data; const pt = x.paymentTerms;
   const row = (k, val) => <tr><th scope="row">{t(k)}</th><td>{val}</td></tr>;
   return (
-    <div data-testid="ctr-contract-object" data-status={x.status}><h1 id="k-h">{x.contractNo} <Status x={x} /> <StatusBadge status={x.state === 'ACTIVE' ? 'APPROVED' : 'DRAFT'} label={t(`k.st.${x.state}`)} /></h1>
-      <p><Link to="/ctr/contracts">{t('k.register')}</Link> · {x.docNo} · {x.project} · {x.client ?? '—'} · {t('k.version', { n: x.versionNo })}</p><ErrorLine error={error} id="ctr-error" />{note && <p className="mdm-banner" role="status" data-testid="ctr-note">{note}</p>}
-      <div className="form-grid" data-testid="ctr-values">{[['original', x.original], ['amended', x.amended], ['varied', x.varied], ['revised', x.revised], ['pending', x.pendingVariations]].map(([k, val]) => <div className="mdm-panel" key={k} data-testid={`ctr-v-${k}`}><div className="muted">{t(`k.v.${k}`)}</div><strong style={{ fontSize: '1.3rem' }}>{x.valuesMasked ? t('k.hidden') : money(val)}</strong></div>)}</div>
+    <div data-testid="ctr-contract-object" data-status={x.status}><PageHeader id="k-h" title={<>{x.contractNo} <Status x={x} /> <StatusBadge status={x.state === 'ACTIVE' ? 'APPROVED' : 'DRAFT'} label={t(`k.st.${x.state}`)} /></>} meta={<><Link to="/ctr/contracts">{t('k.register')}</Link> · {x.docNo} · {x.project} · {x.client ?? '—'} · {t('k.version', { n: x.versionNo })}</>} /><ErrorLine error={error} id="ctr-error" />{note && <p className="mdm-banner" role="status" data-testid="ctr-note">{note}</p>}
+      <KpiRow data-testid="ctr-values">{[['original', x.original], ['amended', x.amended], ['varied', x.varied], ['revised', x.revised], ['pending', x.pendingVariations]].map(([k, val]) => <KpiTile label={t(`k.v.${k}`)} value={x.valuesMasked ? t('k.hidden') : money(val)} amount={x.valuesMasked ? null : val} kind="money" key={k} data-testid={`ctr-v-${k}`} />)}</KpiRow>
       {x.problems?.length > 0 && <div className="mdm-panel" data-testid="ctr-problems"><h2>{t('k.before')}</h2><ul>{x.problems.map((p, i) => <li key={i}>{p.message}</li>)}</ul></div>}
       <div className="actions-row no-print" role="tablist">{TABS.map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`ctr-tab-${k}-btn`}>{t(`k.tab.${k}`)}</button>)}</div>
       {tab === 'terms' && (x.can.edit && editing ? <ContractForm initial={fromView(x)} isNew={false} busy={busy} error={error} onSave={async (v) => { const r = await run(() => ctr.edit('/contracts', x.id, { ...payload(v), rowVersion: x.version }), t('k.saved')); if (r) setEditing(false); }} /> : (
@@ -97,9 +98,9 @@ function Contract({ id }) {
 export default function ContractsPage() {
   const t = useT('ctr'); usePageTitle(t('k.register')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession(); const { error, run, busy } = useRunner();
   if (id) return <section aria-labelledby="k-h"><Contract id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="kn-h"><h1 id="kn-h">{t('k.new')}</h1><p><Link to="/ctr/contracts">{t('k.register')}</Link></p><ErrorLine error={error} id="ctr-error" /><ContractForm initial={blank} isNew busy={busy} error={error} onSave={async (v) => { const r = await run(() => ctr.make('/contracts', { projectId: Number(v.projectId), importClauses: true, ...payload(v) })); if (r) navigateTo(`/ctr/contracts?id=${r.id}`); }} /></section>;
+  if (sp.get('new')) return <section aria-labelledby="kn-h"><PageHeader id="kn-h" title={t('k.new')} meta={<Link to="/ctr/contracts">{t('k.register')}</Link>} /><ErrorLine error={error} id="ctr-error" /><ContractForm initial={blank} isNew busy={busy} error={error} onSave={async (v) => { const r = await run(() => ctr.make('/contracts', { projectId: Number(v.projectId), importClauses: true, ...payload(v) })); if (r) navigateTo(`/ctr/contracts?id=${r.id}`); }} /></section>;
   return (
-    <section aria-labelledby="ks-h" data-testid="ctr-contracts"><h1 id="ks-h">{t('k.register')}</h1><p className="muted">{t('k.intro')}</p>
+    <section aria-labelledby="ks-h" data-testid="ctr-contracts"><PageHeader id="ks-h" title={t('k.register')} subtitle={t('k.intro')} />
       <div className="actions-row no-print"><Link to="/ctr/contracts?new=1" data-testid="ctr-k-new">{t('k.new')}</Link> · <Link to="/ctr/obligations">{t('ob.title')}</Link> · <Link to="/ctr/amendments">{t('am.title')}</Link></div>
       <ListReport listCode="ctr.contracts" endpoint="/ctr/contracts" title={t('k.register')} session={session.data} rowHref={(r) => `/ctr/contracts?id=${r.id}`} onOpen={(r) => navigateTo(`/ctr/contracts?id=${r.id}`)} cardFields={['contractNo', 'project', 'client', 'status']} statusKey="status" empty={{ title: t('k.emptyTitle'), text: t('k.emptyBody') }} />
     </section>

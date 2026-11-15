@@ -6,6 +6,7 @@ import { formatDate } from '../../platform/format.js';
 import { authHeaders, tasksUrl, useTaskCounts, useTasks } from '../../platform/tasks/api.js';
 import { Link, can, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { BOARD, PRIORITY, STATUS, VIEWS, taskLink } from './tasks-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Tasks (part 04.08, section 7.1): the tasks given to you, the ones you watch or gave, and your team's, as a list, a board by status or a calendar by due date. A task opens as an Object Page;
 // a new one starts from the button. The figures at the top are yours: open, overdue, due today, waiting for your acceptance, waiting for you to verify.
@@ -104,8 +105,7 @@ export default function MyTasksPage({ session }) {
   const c = counts.data;
   return (
     <section aria-labelledby="mt-title" data-testid="my-tasks">
-      <h1 id="mt-title">My Tasks</h1>
-      <p className="muted">What you must do, what you watch and what you gave to others. Open a task to work on it.</p>
+      <PageHeader id="mt-title" title={"My Tasks"} subtitle={"What you must do, what you watch and what you gave to others. Open a task to work on it."} />
       {notice && <p role="status" className="notice">{notice}</p>}
       {c && <ul className="srch-meta" aria-label="Your tasks" data-testid="task-counts">
         <li><strong data-testid="count-open">{c.open}</strong> open</li><li><strong data-testid="count-overdue">{c.overdue}</strong> overdue</li><li><strong>{c.dueToday}</strong> due today</li>

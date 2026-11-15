@@ -3,6 +3,7 @@ import { EmptyState, ErrorState } from '../../platform/feedback/states.jsx';
 import { callApi } from '../../platform/messages/api.js';
 import { follow } from '../../platform/realtime/socket.js';
 import { navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Call (part 05.02, FR-08): a voice or video call between the people of a conversation, set up directly between browsers (WebRTC) with the company's STUN and TURN servers; the server only passes the messages
 // that set a call up and never sees the sound or the picture. Mute, camera and (on a computer) screen sharing. Calls are never recorded. With an external provider the meeting opens at the provider's address.
@@ -112,11 +113,11 @@ export default function CallPage({ session }) {
   const leave = async () => { await hangup.current(); navigateTo(info ? `/collab/messages?c=${info.call.conversationId}` : '/collab/messages', { force: true }); };
 
   if (!id) return <EmptyState title="No call" message="Start a call from a conversation, or answer one that is ringing." action={{ label: 'Open Messages', onClick: () => navigateTo('/collab/messages') }} />;
-  if (error) return <section data-testid="call-error"><h1>Call</h1><ErrorState error={error} onRetry={() => window.location.reload()} /></section>;
+  if (error) return <section data-testid="call-error"><PageHeader title={"Call"} /><ErrorState error={error} onRetry={() => window.location.reload()} /></section>;
   const video = info?.call.type === 'VIDEO';
   return (
     <section aria-labelledby="call-title" className="call-screen" data-testid="call-screen" data-over={over}>
-      <h1 id="call-title">{video ? 'Video call' : 'Voice call'}</h1>
+      <PageHeader id="call-title" title={video ? 'Video call' : 'Voice call'} />
       {!info && <p className="muted" role="status">Connecting...</p>}
       {over && <p role="status" className="notice" data-testid="call-over">The call is over. <button type="button" className="btn" onClick={() => navigateTo(`/collab/messages?c=${info.call.conversationId}`, { force: true })}>Back to the conversation</button></p>}
       {info?.joinUrl && <p><a className="btn btn-primary btn-large" href={info.joinUrl} target="_blank" rel="noopener noreferrer" data-testid="call-external">Open the meeting</a> <span className="muted small">at your company's call provider</span></p>}

@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, deploy } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Deployment Board (HR, part 07.03): per site, the people in force on the chosen day grouped by crew, and the count of each designation against the plan (a gap is a post to fill, a surplus is shown too).
 // A person moves to another crew of the site by drag and drop, or by their "Move to crew" list (keyboard): that is an amendment of the deployment sent for approval at once, and the person stays in the old crew until it is
@@ -37,7 +38,7 @@ export default function DeploymentBoardPage() {
   const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v)).toString();
   return (
     <section aria-labelledby="db-title" data-testid="deployment-board">
-      <h1 id="db-title">Deployment Board</h1>
+      <PageHeader id="db-title" title={"Deployment Board"} />
       <form className="srch-form" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <Field label="As on" name="date" error={null}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} data-testid="db-date" /></Field>
         <LookupField id="db-project" label="Project" lookup="iam/projects" value={projectId} onChange={(x) => { setProjectId(x); setSiteId(''); }} />

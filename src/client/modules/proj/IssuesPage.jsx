@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { PRIORITIES, dayIST, rk, st } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Issue Log (part 10.06, FR-03): the problems that have happened, with a priority, an owner, a due date, the impact and the resolution.
 export default function IssuesPage() {
@@ -24,7 +25,7 @@ export default function IssuesPage() {
   };
   return (
     <section aria-labelledby="iss-list-h" data-testid="issues">
-      <h1 id="iss-list-h" className="sr-only">{t('rk.issuesTitle')}</h1>
+      <PageHeader id="iss-list-h" srOnly title={t('rk.issuesTitle')} />
       <div className="actions-row no-print">
         {perms.includes('proj.issue.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="iss-new">{t('rk.issueNew')}</button>}
         <Link to={fp ? `/proj/risk-dashboard?projectId=${fp}` : '/proj/risk-dashboard'}>{t('rk.dashTitle')}</Link><Link to={fp ? `/proj/risks?filter[projectId]=${fp}` : '/proj/risks'}>{t('rk.registerTitle')}</Link>

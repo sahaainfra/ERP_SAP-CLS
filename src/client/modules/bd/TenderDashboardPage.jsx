@@ -4,6 +4,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { inrShort, tdr } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Tender Dashboard (business development, part 08.02): the live tenders and their value, the submissions this week, the bid / no-bid ratio, the tenders by stage, the deadlines of the next fourteen days, and the person's own approvals, tasks, addenda to read and
 // queries without an answer; what needs attention. Every figure links to the records behind it.
@@ -16,7 +17,7 @@ export default function TenderDashboardPage() {
   const d = q.data;
   return (
     <section aria-labelledby="tdash-title" data-testid="tender-dashboard">
-      <h1 id="tdash-title">{t('tdash.title')}</h1>
+      <PageHeader id="tdash-title" title={t('tdash.title')} />
       {q.isPending ? <Skeleton label={t('tdash.title')} rows={5} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : (
         <>
           <dl className="op-figures" data-testid="tdash-tiles">

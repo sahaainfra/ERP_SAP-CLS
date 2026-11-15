@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { vq, fmtDate, fmtQty } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The vendor's page (part 15.03, FR-03): outside the application shell and before anybody is signed in. The link in the enquiry leads here (/vendor-quote?token=...). It shows the request, takes one quotation and then stops working;
 // it shows no estimate and no other vendor. Plain words, large touch targets, one column on a phone.
@@ -23,13 +24,12 @@ export default function VendorQuotePage() {
   const decline = async () => { const reason = window.prompt('Why are you not quoting? (optional)'); if (reason === null) return; setBusy(true); try { setDone(await vq.decline(token(), reason.trim() || null)); } catch (e) { setError({ message: e.message, status: e.status }); } finally { setBusy(false); } };
   const ask = async () => { if (question.trim().length < 5) return; try { setAsked((await vq.ask(token(), question.trim())).message); setQuestion(''); } catch (e) { setError({ message: e.message, status: e.status }); } };
   const shell = (children) => <main style={{ maxWidth: 1000, margin: '0 auto', padding: '16px' }} data-testid="vendor-quote-page">{children}</main>;
-  if (done) return shell(<><h1>Thank you</h1><p role="status" data-testid="vq-done">{done.message}</p>{done.docNo && <p>Your reference: <strong>{done.docNo}</strong> (version {done.versionNo})</p>}</>);
-  if (!info) return shell(<><h1>Send your quotation</h1>{error ? <p className="field-error" role="alert" data-testid="vq-error">{error.message}</p> : <p>Opening the request…</p>}</>);
+  if (done) return shell(<><PageHeader title={"Thank you"} /><p role="status" data-testid="vq-done">{done.message}</p>{done.docNo && <p>Your reference: <strong>{done.docNo}</strong> (version {done.versionNo})</p>}</>);
+  if (!info) return shell(<><PageHeader title={"Send your quotation"} />{error ? <p className="field-error" role="alert" data-testid="vq-error">{error.message}</p> : <p>Opening the request…</p>}</>);
   const fieldErr = (name) => error?.details?.find?.((d) => d.field === name)?.message;
   return shell(
     <>
-      <h1>{info.rfq.title}</h1>
-      <p className="muted">{info.company} asks {info.vendor} for a quotation, reference <strong>{info.rfq.docNo}</strong>. Please reply by <strong>{fmtDate(info.rfq.dueDate)}</strong>. {info.revising && <strong data-testid="vq-revising">You have quoted before: this replaces your earlier quotation.</strong>}</p>
+      <PageHeader title={info.rfq.title} subtitle={<>{info.company} asks {info.vendor} for a quotation, reference <strong>{info.rfq.docNo}</strong>. Please reply by <strong>{fmtDate(info.rfq.dueDate)}</strong>. {info.revising && <strong data-testid="vq-revising">You have quoted before: this replaces your earlier quotation.</strong>}</>} />
       <dl className="kv"><div><dt>Delivery</dt><dd>{info.rfq.terms?.delivery ?? '—'}</dd></div><div><dt>Payment</dt><dd>{info.rfq.terms?.payment ?? '—'}</dd></div>{info.rfq.terms?.technicalSpecs && <div><dt>Specification</dt><dd>{info.rfq.terms.technicalSpecs}</dd></div>}{info.rfq.terms?.approvedMakes && <div><dt>Approved makes</dt><dd>{info.rfq.terms.approvedMakes}</dd></div>}</dl>
       {info.clarifications.length > 0 && <div data-testid="vq-clarifications"><h2>Questions and answers</h2><ul>{info.clarifications.map((c, i) => <li key={i}><strong>{c.question}</strong><div>{c.answer}</div></li>)}</ul></div>}
       <form onSubmit={send} noValidate data-testid="vq-form">

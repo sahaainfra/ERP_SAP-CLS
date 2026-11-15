@@ -26,13 +26,13 @@ export function abbreviateINR(value) {
   const two = (x) => (Math.round(x * 100 + Number.EPSILON) / 100).toFixed(2);
   if (a >= CRORE) return `${sign}₹ ${two(a / CRORE)} Cr`;
   if (a >= LAKH) return `${sign}₹ ${two(a / LAKH)} L`;
-  return `${sign}₹ ${formatINR(a, { symbol: false })}`;
+  return `${sign}₹ ${formatINR(a.toFixed(2), { symbol: false })}`;
 }
 
 /** The exact amount the Indian way ("₹ 2,43,00,000.00"), for the tooltip and the screen reader. */
 export const exactINR = (value) => {
   const n = toAmount(value);
-  return n === null ? null : `${n < 0 ? '-' : ''}₹ ${formatINR(Math.abs(n), { symbol: false })}`;
+  return n === null ? null : `${n < 0 ? '-' : ''}₹ ${formatINR(Math.abs(n).toFixed(2), { symbol: false })}`;
 };
 
 /**

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { FormDialog, Link, Pager, QueryState, can, downloadCsv, errorInfo, usePageTitle } from '../../core/pages/ui.jsx';
 import { useAdminSessions, useAdminUsers, useLoginEvents, useRevokeAny, useSignOutUser, useUnlockUser } from '../api/index.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const RESULTS = {
   success: 'Signed in', failure: 'Failed', locked: 'Locked', mfa_required: 'Second step asked', mfa_failed: 'Second step failed', suspicious: 'Suspicious', refresh_reuse: 'Token reuse', logout: 'Signed out',
@@ -194,8 +195,7 @@ export default function LoginHistoryPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Security &rsaquo; Login History</nav>
-      <div className="page-head"><h1 id="page-title">Login History</h1></div>
-      <p className="muted">Who signed in, from where, and what was refused. Unknown names that failed to sign in are listed too. <Link to="/admin/security/policy">Authentication policy</Link></p>
+      <PageHeader id="page-title" title={"Login History"} subtitle={<>Who signed in, from where, and what was refused. Unknown names that failed to sign in are listed too. <Link to="/admin/security/policy">Authentication policy</Link></>} />
       <div role="tablist" aria-label="Security views" className="actions">
         {TABS.map(([id, label]) => (
           <button key={id} type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} className={`btn${tab === id ? ' btn-primary' : ''}`} onClick={() => setTab(id)}>{label}</button>

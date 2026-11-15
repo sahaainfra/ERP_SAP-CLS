@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { hse, RISK_TONE } from './api.js';
 import { DocBar, ErrorLine, ProjectSite, Status, big, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // HIRA Register (part 19.01, FR-02): hazards scored on a 5 x 5 matrix before and after the controls; the server scores again and the highest residual risk decides who approves (the project manager; the HSE head also for a high risk).
 const level = (s) => (s <= 4 ? 'LOW' : s <= 9 ? 'MEDIUM' : s <= 16 ? 'HIGH' : 'EXTREME');
@@ -49,8 +50,7 @@ const body = (v) => ({ title: v.title, activityType: v.activityType || null, haz
 function Hira({ id }) {
   const t = useT('hse'); const { q, guard } = useRecord('/hira', id, t('hira.title'), 'hse.hira.view'); const { error, run, busy, note } = useRunner(); const [editing, setEditing] = useState(false); usePageTitle(t('hira.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="hse-hira-object" data-status={x.status}><h1 id="hr-h">{x.docNo} <Status x={x} /> <StatusBadge status={RISK_TONE[x.riskLevel]} label={t(`risk.${x.riskLevel}`)} /></h1>
-      <p><Link to="/hse/hira">{t('hira.title')}</Link> · {x.project} · {t('plan.version', { n: x.versionNo })} · {x.title} · {t('hira.maxResidual')} {x.maxResidual}</p>
+    <div data-testid="hse-hira-object" data-status={x.status}><PageHeader id="hr-h" title={<>{x.docNo} <Status x={x} /> <StatusBadge status={RISK_TONE[x.riskLevel]} label={t(`risk.${x.riskLevel}`)} /></>} meta={<><Link to="/hse/hira">{t('hira.title')}</Link> · {x.project} · {t('plan.version', { n: x.versionNo })} · {x.title} · {t('hira.maxResidual')} {x.maxResidual}</>} />
       <ErrorLine error={error} id="hse-hira-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
       {x.can.edit && <div className="actions-row no-print"><button type="button" className="btn" onClick={() => setEditing(!editing)} data-testid="hse-hira-edit">{t('edit')}</button></div>}
       {editing && x.can.edit ? <HiraForm initial={{ id: x.id, projectId: x.projectId, title: x.title, activityType: x.activityType ?? '', hazards: x.hazards }} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.edit('/hira', x.id, { ...body(v), rowVersion: x.version }), t('saved')); if (r) setEditing(false); }} /> : (
@@ -63,13 +63,13 @@ function Hira({ id }) {
 }
 function HiraNew() {
   const t = useT('hse'); const { error, run, busy } = useRunner(); usePageTitle(t('hira.new'));
-  return <section aria-labelledby="hrn-h"><h1 id="hrn-h">{t('hira.new')}</h1><p><Link to="/hse/hira">{t('hira.title')}</Link></p><ErrorLine error={error} id="hse-hira-error" /><HiraForm initial={{ projectId: '', siteId: '', title: '', activityType: '', hazards: [{ ...blankH }] }} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.make('/hira', { projectId: Number(v.projectId), siteId: v.siteId ? Number(v.siteId) : null, ...body(v) })); if (r) navigateTo(`/hse/hira?id=${r.id}`); }} /></section>;
+  return <section aria-labelledby="hrn-h"><PageHeader id="hrn-h" title={t('hira.new')} meta={<Link to="/hse/hira">{t('hira.title')}</Link>} /><ErrorLine error={error} id="hse-hira-error" /><HiraForm initial={{ projectId: '', siteId: '', title: '', activityType: '', hazards: [{ ...blankH }] }} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.make('/hira', { projectId: Number(v.projectId), siteId: v.siteId ? Number(v.siteId) : null, ...body(v) })); if (r) navigateTo(`/hse/hira?id=${r.id}`); }} /></section>;
 }
 export default function HiraPage() {
   const t = useT('hse'); usePageTitle(t('hira.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession(); const sum = useQuery({ queryKey: ['hse', 'hira-summary'], queryFn: () => hse.get('/hira/summary'), retry: false });
   if (id) return <section aria-labelledby="hr-h"><Hira id={id} /></section>; if (sp.get('new')) return <HiraNew />;
   return (
-    <section aria-labelledby="hrl-h" data-testid="hse-hira"><h1 id="hrl-h">{t('hira.title')}</h1><p className="muted">{t('hira.intro')}</p>
+    <section aria-labelledby="hrl-h" data-testid="hse-hira"><PageHeader id="hrl-h" title={t('hira.title')} subtitle={t('hira.intro')} />
       {sum.data && <p data-testid="hse-hira-summary">{t('hira.summary', { approved: sum.data.approved, pending: sum.data.pending })} {sum.data.byLevel.map((l) => `${t(`risk.${l.level}`)}: ${l.approved}`).join(' · ')}</p>}
       <div className="actions-row no-print"><Link to="/hse/hira?new=1" data-testid="hse-hira-new">{t('hira.new')}</Link><button type="button" className="btn" onClick={() => hse.exportFile('/hira/export', 'hira.csv').catch(() => globalThis.alert?.(t('exportFailed')))}>{t('export')}</button></div>
       <ListReport listCode="hse.hira" endpoint="/hse/hira" title={t('hira.title')} session={session.data} rowHref={(r) => `/hse/hira?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/hira?id=${r.id}`)} cardFields={['docNo', 'title', 'risk', 'status']} statusKey="status" empty={{ title: t('hira.emptyTitle'), text: t('hira.emptyBody') }} />

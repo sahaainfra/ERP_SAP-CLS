@@ -3,6 +3,7 @@ import { useCreateSampleDocument, useSampleDocuments, useSubmitSampleDocument } 
 import { AttachmentList, FileUploader } from '../components/Attachments.jsx';
 import { formatDate } from '../../../platform/format.js';
 import { Field, FormDialog, Pager, QueryState, errorInfo, navigateTo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 /**
  * The reference record page: a numbered sample document with an attachments panel (part 01.05). A real module's record
@@ -47,11 +48,7 @@ export default function SampleDocumentsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Reference &rsaquo; Sample Documents</nav>
-      <div className="page-head">
-        <h1 id="page-title">Sample Documents</h1>
-        <button type="button" className="btn btn-primary" onClick={() => { setError(null); dialog.current?.showModal(); }}>New sample document</button>
-      </div>
-      <p className="muted">A small numbered document that shows how any record takes attachments: drag files in, take a photo on a phone, watch the scan, open a file through a short-lived link, replace it with a new version. Submitting the document locks its files.</p>
+      <PageHeader id="page-title" title={"Sample Documents"} actions={<><button type="button" className="btn btn-primary" onClick={() => { setError(null); dialog.current?.showModal(); }}>New sample document</button></>} subtitle={"A small numbered document that shows how any record takes attachments: drag files in, take a photo on a phone, watch the scan, open a file through a short-lived link, replace it with a new version. Submitting the document locks its files."} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={list} what="sample documents" permission="core.sample.use" />
       {list.data && rows.length === 0 && <div className="state"><h2>No sample documents yet</h2><p>Create one to try the attachment panel.</p><button type="button" className="btn btn-primary" onClick={() => dialog.current?.showModal()}>New sample document</button></div>}

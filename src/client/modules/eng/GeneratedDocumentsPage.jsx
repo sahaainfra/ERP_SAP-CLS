@@ -6,6 +6,7 @@ import { authHeaders, generatedUrl, openGenerated, useBulkJob, useDeliver, useGe
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import SignaturePanel from './SignaturePanel.jsx';
 import { CHANNEL, DELIVERY_STATUS, PURPOSE, generatedLink, showBlob } from './templates-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Generated Documents Log (part 04.11, section 7.3): every official document made from approved data, with its version, its verification code, who made it and where it was sent. A filter panel, the count by
 // document type, the table (drill down to the document, its earlier versions and its deliveries), generating a document or many as a background job, delivery, and the export of what is listed.
@@ -127,8 +128,7 @@ export default function GeneratedDocumentsPage() {
   const max = Math.max(1, ...(d?.summary.byType ?? []).map((x) => x.n));
   return (
     <section aria-labelledby="gl-title" data-testid="generated-log">
-      <h1 id="gl-title">Generated Documents</h1>
-      <p className="muted">Every official document made by the system, with its version, verification code and deliveries. You see the documents of your projects{bulkJob ? `; this list is the documents of background job ${bulkJob}` : ''}.</p>
+      <PageHeader id="gl-title" title={"Generated Documents"} subtitle={<>Every official document made by the system, with its version, verification code and deliveries. You see the documents of your projects{bulkJob ? `; this list is the documents of background job ${bulkJob}` : ''}.</>} />
       {notice && <p role="status" className="notice" data-testid="gl-notice">{notice}</p>}
       <div className="srch-tools">
         <button type="button" className="btn" onClick={() => download('xlsx')}>Export XLSX</button>

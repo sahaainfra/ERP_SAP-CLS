@@ -10,6 +10,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { RESULT_TONE, qa } from './api.js';
 import { DocBar, Status, sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Test requests (part 18.03): the register, the request form for a receipt line, and the test with its results. Each value is judged against the limits by the server; equipment out of calibration is refused;
 // a failed result can only be accepted through a concession reference, which also goes to the quality control manager.
@@ -22,8 +23,7 @@ function Test({ id }) {
   const upload = async (ev) => { const f = ev.target.files?.[0]; ev.target.value = ''; if (!f) return; await run(async () => { const up = await uploadFile(f, { transport, entity: 'qa_test_requests', entityId: x.id }); return qa.edit('/test-requests', x.id, { certificateFileId: up.id, rowVersion: x.version }); }, t('tr.certAdded')); };
   const pc = (code) => x.results.find((r) => r.parameter === code);
   return (
-    <div data-testid="qa-test-object" data-status={x.status} data-result={x.result ?? ''} data-outcome={x.outcome ?? ''}><h1 id="tr-h">{x.docNo} <Status x={x} /> {x.result && <StatusBadge status={RESULT_TONE[x.result]} label={t(`res.${x.result}`)} />}</h1>
-      <p><Link to="/qa/test-requests">{t('tr.title')}</Link> · {x.project} · {x.test ?? t('tr.receivingOnly')}{x.standard ? ` · ${x.standard}` : ''} · {x.material}{x.grnNo ? ` · ${x.grnNo}` : ''} · {x.lotQty} {x.uom ?? ''}{x.outcomeLabel ? ` · ${x.outcomeLabel}` : ''}</p>
+    <div data-testid="qa-test-object" data-status={x.status} data-result={x.result ?? ''} data-outcome={x.outcome ?? ''}><PageHeader id="tr-h" title={<>{x.docNo} <Status x={x} /> {x.result && <StatusBadge status={RESULT_TONE[x.result]} label={t(`res.${x.result}`)} />}</>} meta={<><Link to="/qa/test-requests">{t('tr.title')}</Link> · {x.project} · {x.test ?? t('tr.receivingOnly')}{x.standard ? ` · ${x.standard}` : ''} · {x.material}{x.grnNo ? ` · ${x.grnNo}` : ''} · {x.lotQty} {x.uom ?? ''}{x.outcomeLabel ? ` · ${x.outcomeLabel}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="tr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {x.can.edit && vals && (
         <div className="mdm-panel no-print" data-testid="tr-entry"><h2>{t('tr.enter')}</h2>
@@ -51,7 +51,7 @@ function NewTest() {
   const create = async () => { const d = await run(() => qa.make('/test-requests', { grnLineId: Number(f.grnLineId), catalogueId: f.catalogueId ? Number(f.catalogueId) : null, samplingDecision: f.samplingDecision, lotQty: f.lotQty ? Number(f.lotQty) : null, sampleRef: f.sampleRef || null }), t('saved')); if (d) navigateTo(`/qa/test-requests?id=${d.id}`); };
   const big = { minHeight: 48, fontSize: '1rem' };
   return (
-    <section aria-labelledby="trn-h" data-testid="qa-test-new"><h1 id="trn-h">{t('tr.new')}</h1><p className="muted"><Link to="/qa/receiving">{t('rcv.title')}</Link></p>
+    <section aria-labelledby="trn-h" data-testid="qa-test-new"><PageHeader id="trn-h" title={t('tr.new')} subtitle={<Link to="/qa/receiving">{t('rcv.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="trn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('rcv.item')} name="grnLineId" error={error}><select value={f.grnLineId} onChange={(e) => set('grnLineId', e.target.value)} style={big} data-testid="trn-line"><option value="">—</option>{(rq.data ?? []).map((x) => <option key={x.id} value={x.id}>{x.grnNo} · {x.item} · {x.openQty} {x.uom}</option>)}</select></Field>
@@ -67,7 +67,7 @@ export default function TestRequestsPage() {
   const t = useT('qa'); usePageTitle(t('tr.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (sp.get('new')) return <NewTest />; if (id) return <section aria-labelledby="tr-h"><Test id={id} /></section>;
   return (
-    <section aria-labelledby="trl-h" data-testid="qa-tests"><h1 id="trl-h">{t('tr.title')}</h1><p className="muted">{t('tr.intro')}</p>
+    <section aria-labelledby="trl-h" data-testid="qa-tests"><PageHeader id="trl-h" title={t('tr.title')} subtitle={t('tr.intro')} />
       <div className="actions-row no-print"><Link to="/qa/receiving">{t('rcv.title')}</Link><Link to="/qa/test-compliance">{t('tc.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/test-requests/export', 'test-requests.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="tr-export">{t('export')}</button></div>
       <ListReport listCode="qa.test_requests" endpoint="/qa/test-requests" title={t('tr.title')} session={session.data} rowHref={(r) => `/qa/test-requests?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/test-requests?id=${r.id}`)} cardFields={['docNo', 'test', 'result', 'status']} statusKey="status" dateKey="requested" empty={{ title: t('tr.emptyTitle'), text: t('tr.emptyBody') }} />
     </section>

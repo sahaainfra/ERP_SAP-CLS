@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { CFG_TONE, STAGES, dayIST, download, lg } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Budget Check Settings (part 12.03, FR-01, AC-04): how strictly each stage is checked, per cost head, with a tolerance and a start date; a change is proposed by one person and decided by another, and the list keeps every setting with its history.
 export default function CheckSettingsPage() {
@@ -27,8 +28,7 @@ export default function CheckSettingsPage() {
   const show = async (c) => setHist({ c, h: await lg.configHistory(c.id) });
   return (
     <section aria-labelledby="cfg-h" data-testid="bud-settings">
-      <h1 id="cfg-h">{t('cfg.title')}</h1>
-      <p className="muted">{t('cfg.intro')} <span data-testid="cfg-inforce">{t('cfg.inForce', { n: d.inForce })}</span></p>
+      <PageHeader id="cfg-h" title={t('cfg.title')} subtitle={<>{t('cfg.intro')} <span data-testid="cfg-inforce">{t('cfg.inForce', { n: d.inForce })}</span></>} />
       {note && <p className="mdm-banner" role="status" data-testid="cfg-note">{note}</p>}
       {perms.includes('bud.check.configure') && (
         <form className="mdm-panel" onSubmit={propose} data-testid="cfg-form" aria-label={t('cfg.propose')}>

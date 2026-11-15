@@ -6,6 +6,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, pa } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New allocation (part 17.02, FR-02): a machine of the fleet for a project, site and period, usually against an approved requisition. The machine list shows who is free for the period and whose certificates are in order.
 const blank = { requisitionId: '', equipmentId: '', projectId: '', siteId: '', fromDate: '', toDate: '', internalRate: '', rateBasis: 'DAY' };
@@ -21,7 +22,7 @@ export default function AllocationNewPage() {
   const save = async (submit) => { const d = await run(async () => { let r = id ? await pa.allocUpdate(id, { ...body(), rowVersion: eq.data?.version }) : await pa.allocCreate(body()); if (submit) r = await pa.allocAct(r.id, 'submit'); return r; }, submit ? t('submitted') : t('saved')); if (d) navigateTo(`/plant/allocations?id=${d.id}`); };
   const req = <span aria-hidden="true" className="muted"> *</span>; const ok = f.equipmentId && f.projectId && f.fromDate && f.toDate;
   return (
-    <section aria-labelledby="an-h" data-testid="plant-al-new"><h1 id="an-h">{id ? t('a.allocEdit') : t('a.allocNew')}</h1><p className="muted">{t('a.allocNewIntro')} <Link to="/plant/allocations">{t('a.allocTitle')}</Link>{rq.data ? <> · {t('a.against')} <Link to={`/plant/requisitions?id=${rq.data.id}`}>{rq.data.docNo}</Link></> : null}</p>
+    <section aria-labelledby="an-h" data-testid="plant-al-new"><PageHeader id="an-h" title={id ? t('a.allocEdit') : t('a.allocNew')} subtitle={<>{t('a.allocNewIntro')} <Link to="/plant/allocations">{t('a.allocTitle')}</Link>{rq.data ? <> · {t('a.against')} <Link to={`/plant/requisitions?id=${rq.data.id}`}>{rq.data.docNo}</Link></> : null}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="an-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="mdm-panel"><h2>{t('a.secPlace')}</h2><div className="form-grid">
         <Field label={<>{t('project')}{req}</>} name="projectId" error={error}><select value={f.projectId} onChange={(ev) => setF({ ...f, projectId: ev.target.value, siteId: '' })} style={{ minHeight: 44 }} data-testid="an-project" aria-required="true"><option value="">—</option>{o.projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>

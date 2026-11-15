@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { SOURCES, STAGES, recruit, rupees } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Candidate Pipeline (HR, part 07.02): the board of candidates in a column per stage (Applied, Screened, Interview, Selected, Offered, Accepted, Joined, Rejected), filtered by requisition and name, with the source of each.
 // A card moves one step by drag and drop or by its "Move to" list (keyboard); the server decides whether the move is allowed (an interview must be passed before Selected; Offered, Accepted and Joined come from the offer and
@@ -34,7 +35,7 @@ export default function CandidatePipelinePage() {
   const reject = (c) => { const reason = window.prompt(`Why is ${c.name} rejected? (at least 5 characters)`); if (reason && reason.trim().length >= 5) move(c, 'REJECTED', { reason: reason.trim() }); };
   return (
     <section aria-labelledby="cp-title" data-testid="pipeline">
-      <h1 id="cp-title">Candidate Pipeline</h1>
+      <PageHeader id="cp-title" title={"Candidate Pipeline"} />
       <form className="srch-form" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Requisition" name="requisition" error={null}><select value={reqId} onChange={(e) => setReqId(e.target.value)} data-testid="cp-requisition"><option value="">All requisitions</option>{(b?.requisitions ?? []).map((r) => <option key={r.id} value={r.id}>{r.docNo} · {r.designation} ({r.positions})</option>)}</select></Field>
         <Field label="Candidate" name="q" error={null}><input value={text} onChange={(e) => setText(e.target.value)} placeholder="Name" data-testid="cp-search" /></Field>

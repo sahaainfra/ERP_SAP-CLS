@@ -4,6 +4,7 @@ import { consoleGroup } from '../../platform/shell/nav.js';
 import { QueryState, usePageTitle } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { confirmLeave } from '../../platform/forms/guard.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 const go = (to) => (e) => {
   e.preventDefault();
@@ -20,8 +21,7 @@ export default function ConsolePage() {
   const pages = (consoleGroup(navQuery.data)?.pages ?? []).filter((p) => p.route !== '/admin/console');
   return (
     <section aria-labelledby="page-title">
-      <div className="page-head"><h1 id="page-title">Technical Console</h1></div>
-      <p className="muted">For system and IT administrators: how the application is built and run. Nothing here belongs in a business menu, so it is kept apart.</p>
+      <PageHeader id="page-title" title={"Technical Console"} subtitle={"For system and IT administrators: how the application is built and run. Nothing here belongs in a business menu, so it is kept apart."} />
       <QueryState query={navQuery} what="the console" />
       {about.data && (
         <dl className="facts" aria-label="Build information">

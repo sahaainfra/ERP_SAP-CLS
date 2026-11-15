@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { qa } from './api.js';
 import { sel, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Test Catalogue (part 18.03, FR-02): the tests with their standard, parameters and limits, the frequency rule and the laboratory. A change of limits never alters a result already entered: each result keeps the limits it was judged by.
 const p0 = () => ({ code: '', name: '', unit: '', min: '', max: '' }); const num = (v) => (v === '' || v == null ? null : Number(v));
@@ -20,7 +21,7 @@ function Editor({ id }) {
   const body = () => ({ name: form.name, standard: form.standard || null, parameters: form.parameters.map((p) => ({ code: p.code, name: p.name, unit: p.unit || null, min: num(p.min), max: num(p.max) })), freqBasis: form.freqBasis, freqQty: num(form.freqQty) ?? 0, freqUom: form.freqUom || null, labType: form.labType });
   const save = async () => { const d = await run(() => (id ? qa.edit('/test-catalogue', id, { ...body(), status: form.status, rowVersion: form.rowVersion }) : qa.make('/test-catalogue', { code: form.code, ...body() })), t('saved')); if (d) navigateTo('/qa/test-catalogue'); };
   return (
-    <section aria-labelledby="cat-h" data-testid="qa-catalogue-editor"><h1 id="cat-h">{id ? t('cat.edit') : t('cat.new')}</h1><p className="muted"><Link to="/qa/test-catalogue">{t('cat.title')}</Link> · {t('cat.limitsHint')}</p>
+    <section aria-labelledby="cat-h" data-testid="qa-catalogue-editor"><PageHeader id="cat-h" title={id ? t('cat.edit') : t('cat.new')} subtitle={<><Link to="/qa/test-catalogue">{t('cat.title')}</Link> · {t('cat.limitsHint')}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="cat-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('code')} name="code" error={error}><input value={form.code} disabled={Boolean(id)} onChange={(e) => set('code', e.target.value)} maxLength={40} style={sel} data-testid="cat-code" /></Field>
@@ -41,7 +42,7 @@ export default function TestCataloguePage() {
   const t = useT('qa'); usePageTitle(t('cat.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (sp.get('new')) return <Editor id={null} />; if (id) return <Editor id={id} />;
   return (
-    <section aria-labelledby="catl-h" data-testid="qa-catalogue"><h1 id="catl-h">{t('cat.title')}</h1><p className="muted">{t('cat.intro')}</p>
+    <section aria-labelledby="catl-h" data-testid="qa-catalogue"><PageHeader id="catl-h" title={t('cat.title')} subtitle={t('cat.intro')} />
       <div className="actions-row no-print"><Link to="/qa/test-catalogue?new=1">{t('cat.new')}</Link></div>
       <ListReport listCode="qa.test_catalogue" endpoint="/qa/test-catalogue" title={t('cat.title')} session={session.data} rowHref={(r) => `/qa/test-catalogue?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/test-catalogue?id=${r.id}`)} cardFields={['code', 'name', 'standard', 'status']} statusKey="status" empty={{ title: t('cat.emptyTitle'), text: t('cat.emptyBody') }} />
     </section>

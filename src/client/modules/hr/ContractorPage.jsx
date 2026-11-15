@@ -4,6 +4,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { LICENCE_STATE, lab } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Contractor compliance (HR, part 07.08, FR-01): the CLRA licence number and its validity, the most workers the licence allows, the PF and ESI registrations, the work order, and the documents held in the partner master. Whoever
 // keeps the compliance (HR, the subcontractor coordinator, commercial) edits it; HR is told when the licence is about to end, and no worker of the contractor is deployed once it has.
@@ -14,7 +15,7 @@ export default function ContractorPage() {
   const q = useQuery({ queryKey: ['lab', 'contractor', id], queryFn: () => lab.contractor(id), enabled: Boolean(id), retry: false });
   const [f, setF] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   useEffect(() => { const c = q.data?.compliance; setF({ clraLicenceNo: c?.clraLicenceNo ?? '', licenceValidUntil: c?.licenceValidUntil ?? '', maxWorkers: c?.maxWorkers ?? '', pfCode: c?.pfCode ?? '', esiCode: c?.esiCode ?? '', woReference: c?.woReference ?? '', woValidUntil: c?.woValidUntil ?? '' }); }, [q.data]);
-  if (!id) return <section aria-labelledby="contractor-h" data-testid="contractor-none"><h1 id="contractor-h">Contractor compliance</h1><p className="muted">Open a contractor from the list. <Link to="/labour/contractors">Labour Contractors</Link></p></section>;
+  if (!id) return <section aria-labelledby="contractor-h" data-testid="contractor-none"><PageHeader id="contractor-h" title={"Contractor compliance"} subtitle={<>Open a contractor from the list. <Link to="/labour/contractors">Labour Contractors</Link></>} /></section>;
   if (q.error?.status === 403) return <NoPermission what="contractors" permission="hr.worker.view" />;
   if (q.isPending || !f) return <Skeleton label="Loading the contractor" rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -26,8 +27,7 @@ export default function ContractorPage() {
   return (
     <section aria-labelledby="cp-title" data-testid="contractor">
       <p><Link to="/labour/contractors">← Labour Contractors</Link></p>
-      <h1 id="cp-title">{d.name} <span className="muted small">{d.code}</span></h1>
-      <p><StatusBadge status={LICENCE_STATE[d.state][0]} label={LICENCE_STATE[d.state][1]} data-testid="cp-state" /> <span className="muted small">{d.registered} registered · {d.deployed} deployed today · {d.present} present</span></p>
+      <PageHeader id="cp-title" title={<>{d.name} <span className="muted small">{d.code}</span></>} meta={<><StatusBadge status={LICENCE_STATE[d.state][0]} label={LICENCE_STATE[d.state][1]} data-testid="cp-state" /> <span className="muted small">{d.registered} registered · {d.deployed} deployed today · {d.present} present</span></>} />
       {error?.form && <p className="field-error" role="alert" data-testid="cp-error">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="cp-note">{note}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(); }}>

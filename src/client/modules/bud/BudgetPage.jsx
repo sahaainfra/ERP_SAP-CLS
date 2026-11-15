@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { Tabs } from '../proj/parts.jsx';
 import { DIMENSIONS, KINDS, PROFILES, STATUS_TONE, TYPES, bd, inr, openPrint } from './api.js';
 import { ShareBar, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Budget Workbench (part 12.01): the lines of a budget (generated values beside the adjusted ones, every adjustment with its reason), the views by WBS, cost head, resource, work package and control account, the phasing chart, the margin against the contract value, and the versions and approval.
 const TABS = ['lines', 'views', 'phasing', 'margin', 'versions'];
@@ -37,7 +38,7 @@ export default function BudgetPage() {
   const hq = useQuery({ queryKey: ['bud', 'history', id], queryFn: () => bd.history(id), enabled: Boolean(id) && q.isSuccess && tab === 'versions', retry: false });
   const sq = useQuery({ queryKey: ['bud', 'structure', pid], queryFn: () => bd.wbs(pid), enabled: Boolean(pid) && Boolean(add), retry: false });
   usePageTitle(q.data ? `${q.data.docNo} ${q.data.name}` : t('page.title'));
-  if (!id) return <section aria-labelledby="bd-h" data-testid="bd-none"><h1 id="bd-h">{t('page.title')}</h1><p className="muted"><Link to="/bud/budgets">{t('nav.budgets')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="bd-h" data-testid="bd-none"><PageHeader id="bd-h" title={t('page.title')} subtitle={<Link to="/bud/budgets">{t('nav.budgets')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('nav.budgets')} permission="bud.budget.view" />;
   if (q.isPending) return <Skeleton label={t('page.title')} rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -51,8 +52,7 @@ export default function BudgetPage() {
   return (
     <section aria-labelledby="bd-h" data-testid="budget" data-status={b.status} data-number={b.docNo} data-version={b.versionNo}>
       <header>
-        <h1 id="bd-h">{b.docNo} · {b.name} <StatusBadge status={STATUS_TONE[b.status]} label={t(`st.${b.status}`)} /></h1>
-        <p className="muted">{b.projectCode} {b.projectName} · {t(`vtype.${b.vtype}`)} · {t('f.version')} {b.versionNo}{b.locked ? ` · ${t('page.locked')}` : ''}{b.pack ? ` · ${t('gen.pack')} ${b.pack.docNo}` : ''}{b.boqVersion ? ` · ${t('gen.boq')} ${b.boqVersion.docNo}` : ''}</p>
+        <PageHeader id="bd-h" title={<>{b.docNo} · {b.name} <StatusBadge status={STATUS_TONE[b.status]} label={t(`st.${b.status}`)} /></>} subtitle={<>{b.projectCode} {b.projectName} · {t(`vtype.${b.vtype}`)} · {t('f.version')} {b.versionNo}{b.locked ? ` · ${t('page.locked')}` : ''}{b.pack ? ` · ${t('gen.pack')} ${b.pack.docNo}` : ''}{b.boqVersion ? ` · ${t('gen.boq')} ${b.boqVersion.docNo}` : ''}</>} />
         <dl className="kv" data-testid="bd-totals">
           {[['direct', b.directTotal], ['overhead', b.overheadTotal], ['contingency', b.contingencyTotal], ['reserve', b.reserveTotal], ['total', b.totalAmount], ['contract', b.contractValue]].map(([k, v]) => <div key={k}><dt>{t(`gen.t.${k === 'contract' ? 'contractValue' : k}`)}</dt><dd data-testid={`bd-t-${k}`}>₹ {inr(v)}</dd></div>)}
         </dl>

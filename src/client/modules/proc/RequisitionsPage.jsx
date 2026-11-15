@@ -9,6 +9,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { CHECK_TONE, STATUS_TONE, addDays, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Purchase Requisitions (part 15.01, FR-03 to FR-06): the list; the requisition with its budget panel, stock panel, possible duplicates, lines with the request lines they came from, approvals and the orders to come; a form for a direct
 // requisition (with an emergency path). Approval is by value; nobody approves what they raised; a blocked budget or free stock needs an approved exception of the control engine.
@@ -43,8 +44,7 @@ function Pr({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('p.sayWhy') }); return; } run(() => pc.decide(r.taskId, action, comment.trim() || null), t(`p.done.${action}`)); };
   return (
     <div data-testid="pr-object" data-status={r.status}>
-      <h1 id="pr-h">{r.docNo} <StatusBadge status={STATUS_TONE[r.status]} label={t(`p.s.${r.status}`)} />{r.isEmergency && <> <StatusBadge status="AT_RISK" label={t('p.emergency')} /></>}</h1>
-      <p><Link to="/proc/requisitions">{t('p.back')}</Link></p>
+      <PageHeader id="pr-h" title={<>{r.docNo} <StatusBadge status={STATUS_TONE[r.status]} label={t(`p.s.${r.status}`)} />{r.isEmergency && <> <StatusBadge status="AT_RISK" label={t('p.emergency')} /></>}</>} meta={<Link to="/proc/requisitions">{t('p.back')}</Link>} />
       {r.isEmergency && r.regulariseBy && !r.regularisedAt && <p className="mdm-banner" role="status" data-testid="pr-emergency">{t('p.emergencyBy', { d: String(r.regulariseBy).slice(0, 16).replace('T', ' ') })} {r.emergencyReason}</p>}
       <dl className="kv" data-testid="pr-figures"><div><dt>{t('p.project')}</dt><dd>{r.projectCode}{r.siteCode ? ` · ${r.siteCode}` : ''}</dd></div><div><dt>{t('p.source')}</dt><dd>{t(`p.src.${r.source}`)}{r.directReason ? `: ${r.directReason}` : ''}</dd></div><div><dt>{t('p.requiredBy')}</dt><dd>{fmtDate(r.requiredBy)}</dd></div><div><dt>{t('p.priority')}</dt><dd>{t(`p.pri.${r.priority}`)}</dd></div><div><dt>{t('p.total')}</dt><dd data-testid="pr-total">{r.canSeeCost ? fmtRs(r.totalAmount) : t('p.masked')}</dd></div><div><dt>{t('p.requestedBy')}</dt><dd>{r.requestedBy}</dd></div>{r.approvedBy && <div><dt>{t('p.approvedBy')}</dt><dd>{r.approvedBy}</dd></div>}</dl>
       {error?.form && <p className="field-error" role="alert" data-testid="pr-error">{error.form}{error.code === 'EXCEPTION_REQUIRED' && <> <Link to="/controls/exceptions">{t('p.raiseException')}</Link></>}</p>}{note && <p className="mdm-banner" role="status" data-testid="pr-note">{note}</p>}
@@ -97,7 +97,7 @@ function PrForm({ t, editId }) {
   const save = async (send) => { setError(null); setBusy(true); try { const d = editId ? await pc.prUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await pc.prCreate({ projectId: Number(projectId), ...body() }); if (send) await pc.prAct(d.id, 'submit'); navigateTo(`/proc/requisitions?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
     <section aria-labelledby="prn-h" data-testid="proc-pr-form">
-      <h1 id="prn-h">{editId ? t('p.prEdit') : t('p.prNew')}</h1><p className="muted">{t('p.prNewHelp')}</p>
+      <PageHeader id="prn-h" title={editId ? t('p.prEdit') : t('p.prNew')} subtitle={t('p.prNewHelp')} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">
           <Field label={t('p.project')} name="projectId" error={error}><select value={projectId} disabled={Boolean(editId)} onChange={(ev) => setF({ ...form, projectId: ev.target.value, siteId: '' })} style={{ minHeight: 44 }} data-testid="prn-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}{editId && e && !projects.length && <option value={e.projectId}>{e.projectCode}</option>}</select></Field>
@@ -138,7 +138,7 @@ export default function RequisitionsPage() {
   if (id) return <section aria-labelledby="pr-h" data-testid="proc-prs"><Pr key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="prs-h" data-testid="proc-prs">
-      <h1 id="prs-h">{t('p.prTitle')}</h1><p className="muted">{t('p.prIntro')}</p>
+      <PageHeader id="prs-h" title={t('p.prTitle')} subtitle={t('p.prIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.requisition.create') && <Link to="/proc/requisitions?new=1">{t('p.prNew')}</Link>} {perms.includes('proc.requisition.create') && <Link to="/proc/consolidate">{t('p.consolidate')}</Link>} <Link to="/proc/material-requests">{t('p.mrTitle')}</Link></div>
       <ListReport listCode="proc.requisitions" endpoint="/proc/requisitions" title={t('p.prTitle')} session={session.data} rowHref={(r) => `/proc/requisitions?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/requisitions?id=${r.id}`)}
         cardFields={['docNo', 'project', 'requiredBy', 'amount', 'budget']} statusKey="status" empty={{ title: t('p.prEmptyTitle'), text: t('p.prEmptyBody') }} />

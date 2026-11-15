@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { CAL_TONE, RES_TYPES, download, fmtDate, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Resource Histogram (part 13.02, FR-03): the labour, plant and material the schedule needs by day, week or month, on the early or the late dates, against what is available (approved deployments of the
 // project by crew trade, and availability put in force by a second person); a bucket where a day needs more than is available is over-allocated and shown red. A bar opens the activities behind it.
@@ -92,7 +93,7 @@ export default function HistogramPage() {
   const pid = projectId ?? sq.data?.projectId ?? null;
   return (
     <section aria-labelledby="ph-h" data-testid="plan-histogram">
-      <h1 id="ph-h">{t('h.title')}</h1>
+      <PageHeader id="ph-h" title={t('h.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('h.params')}>
         <SchedulePicker projectId={pid} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); setPick(null); }} onSchedule={(v) => { setScheduleId(v); setPick(null); setKey(null); }} testId="ph" />
         <div className="form-grid">

@@ -10,6 +10,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // Subcontractor measurement and bills (part 22.05).
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -44,7 +46,7 @@ function Measurement({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/sub-measurements', id, t('sm.title'), 'bill.sub_measure.view'); const { error, run, busy, note } = useRunner(); const [sg, setSg] = useState({ signer: '', signedOn: today(), signatureRef: '', method: 'MANUAL' }); usePageTitle(t('sm.title'));
   if (guard) return guard; const x = q.data; const row = (k, val) => <tr><th scope="row">{t(k)}</th><td>{val}</td></tr>;
   return (
-    <div data-testid="bill-sm-object" data-state={x.state}><h1 id="sm-h">{x.docNo} <StatusBadge status={MEAS_TONE[x.state]} label={t(`sm.s.${x.state}`)} /></h1><p><Link to="/bill/sub-measure">{t('sm.title')}</Link> · {x.project} · {x.woNo} · {x.subcontractor} · {x.lineNo}. {x.item}</p>
+    <div data-testid="bill-sm-object" data-state={x.state}><PageHeader id="sm-h" title={<>{x.docNo} <StatusBadge status={MEAS_TONE[x.state]} label={t(`sm.s.${x.state}`)} /></>} meta={<><Link to="/bill/sub-measure">{t('sm.title')}</Link> · {x.project} · {x.woNo} · {x.subcontractor} · {x.lineNo}. {x.item}</>} />
       <div className="mdm-panel"><div className="muted">{t('mb.measured')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-sm-qty-value">{n(x.qty)} {x.uom}</strong> <span className="muted">({t('sm.ordered', { qty: n(x.ordered) })})</span></div>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}
       <div className="table-scroll"><table className="data-table"><tbody>{row('rec.description', x.description)}{row('rec.template', t(`tpl.${x.template}`))}{x.nos != null && row('rec.nos', n(x.nos))}{x.length != null && row('rec.length', n(x.length))}{x.breadth != null && row('rec.breadth', n(x.breadth))}{x.depth != null && row('rec.depth', n(x.depth))}{row('mb.measuredBy', `${x.measuredBy} · ${fmtDate(x.measuredOn)}`)}{x.subSigner && row('sm.signedBy', `${x.subSigner} · ${fmtDate(x.subSignedOn)} · ${x.signMethod}${x.signatureRef ? ` · ${x.signatureRef}` : ''}`)}{x.verifiedBy && row('sm.verifiedBy', `${x.verifiedBy} · ${fmtDate(x.verifiedOn)}`)}</tbody></table></div>
@@ -61,9 +63,9 @@ function Measurement({ id }) {
 export function SubMeasurePage() {
   const t = useT('bill'); usePageTitle(t('sm.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="sm-h"><Measurement id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="smn-h"><h1 id="smn-h">{t('sm.record')}</h1><p><Link to="/bill/sub-measure">{t('sm.title')}</Link></p><MeasureForm /></section>;
+  if (sp.get('new')) return <section aria-labelledby="smn-h"><PageHeader id="smn-h" title={t('sm.record')} meta={<Link to="/bill/sub-measure">{t('sm.title')}</Link>} /><MeasureForm /></section>;
   return (
-    <section aria-labelledby="sms-h" data-testid="bill-sub-measure"><h1 id="sms-h">{t('sm.title')}</h1><p className="muted">{t('sm.intro')}</p>
+    <section aria-labelledby="sms-h" data-testid="bill-sub-measure"><PageHeader id="sms-h" title={t('sm.title')} subtitle={t('sm.intro')} />
       <div className="actions-row no-print"><Link to="/bill/sub-measure?new=1" data-testid="bill-sm-new">{t('sm.record')}</Link> · <Link to="/bill/sub-bills">{t('sb.title')}</Link></div>
       <ListReport listCode="bill.sub_measurements" endpoint="/bill/sub-measurements" title={t('sm.title')} session={session.data} rowHref={(r) => `/bill/sub-measure?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/sub-measure?id=${r.id}`)} cardFields={['docNo', 'wo', 'subcontractor', 'qty', 'state']} statusKey="state" empty={{ title: t('sm.emptyTitle'), text: t('sm.emptyBody') }} />
     </section>
@@ -94,9 +96,8 @@ function SubBill({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/sub-bills', id, t('sb.title'), 'bill.sub_bill.view'); const { error, note } = useRunner(); const [tab, setTab] = useState('items'); usePageTitle(t('sb.title'));
   if (guard) return guard; const x = q.data; const r = (k, v, s) => <tr><th scope="row">{t(`sb.s.${k}`)}</th><td className="num">{s ? <strong>{money(v)}</strong> : money(v)}</td></tr>;
   return (
-    <div data-testid="bill-sb-object" data-status={x.status} data-compliance={x.complianceOk ? 'OK' : 'HOLD'}><h1 id="sb-h">{x.billNo} <Status x={x} /> <StatusBadge status={x.complianceOk ? 'APPROVED' : 'REJECTED'} label={x.complianceOk ? t('sb.complianceOk') : t('sb.complianceHold')} /></h1>
-      <p><Link to="/bill/sub-bills">{t('sb.title')}</Link> · {x.docNo} · {x.project} · {x.woNo} · {x.subcontractor} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('cb.s.gross')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-sb-gross">{money(x.gross)}</strong><div className="muted">{t('cb.cumulative')}: {money(x.cumGross)}</div></div><div className="mdm-panel"><div className="muted">{t('cb.s.net')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-sb-net">{money(x.net)}</strong><div className="muted">{t('ce.due')}: {fmtDate(x.dueDate)}</div></div></div>
+    <div data-testid="bill-sb-object" data-status={x.status} data-compliance={x.complianceOk ? 'OK' : 'HOLD'}><PageHeader id="sb-h" title={<>{x.billNo} <Status x={x} /> <StatusBadge status={x.complianceOk ? 'APPROVED' : 'REJECTED'} label={x.complianceOk ? t('sb.complianceOk') : t('sb.complianceHold')} /></>} meta={<><Link to="/bill/sub-bills">{t('sb.title')}</Link> · {x.docNo} · {x.project} · {x.woNo} · {x.subcontractor} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</>} />
+      <KpiRow><KpiTile label={t('cb.s.gross')} value={money(x.gross)} amount={x.gross} kind="money" valueTestid="bill-sb-gross"><div className="muted">{t('cb.cumulative')}: {money(x.cumGross)}</div></KpiTile><KpiTile label={t('cb.s.net')} value={money(x.net)} amount={x.net} kind="money" valueTestid="bill-sb-net"><div className="muted">{t('ce.due')}: {fmtDate(x.dueDate)}</div></KpiTile></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status">{note}</p>}<Issues issues={x.issues} complianceOk={x.complianceOk} reasons={x.complianceReasons} />
       <div className="actions-row no-print" role="tablist">{['items', 'deductions', 'summary', 'measurements', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-sb-tab-${k}`}>{t(`sb.tab.${k}`)}</button>)}</div>
       {tab === 'items' && <ItemsTable x={x} testid="bill-sb-items" />}{tab === 'deductions' && <Deds x={x} />}
@@ -133,7 +134,7 @@ export function SubBillsPage() {
   const t = useT('bill'); usePageTitle(t('sb.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="sb-h"><SubBill id={id} /></section>;
   return (
-    <section aria-labelledby="sbs-h" data-testid="bill-sub-bills"><h1 id="sbs-h">{t('sb.title')}</h1><p className="muted">{t('sb.intro')}</p>
+    <section aria-labelledby="sbs-h" data-testid="bill-sub-bills"><PageHeader id="sbs-h" title={t('sb.title')} subtitle={t('sb.intro')} />
       <div className="actions-row no-print"><Link to="/bill/sub-bill-new" data-testid="bill-sb-new">{t('sb.prepare')}</Link> · <Link to="/bill/sub-measure">{t('sm.title')}</Link></div>
       <ListReport listCode="bill.sub_bills" endpoint="/bill/sub-bills" title={t('sb.title')} session={session.data} rowHref={(r) => `/bill/sub-bills?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/sub-bills?id=${r.id}`)} cardFields={['billNo', 'subcontractor', 'periodTo', 'gross', 'net', 'status']} statusKey="status" empty={{ title: t('sb.emptyTitle'), text: t('sb.emptyBody') }} />
     </section>
@@ -141,5 +142,5 @@ export function SubBillsPage() {
 }
 export function PrepareSubBillPage() {
   const t = useT('bill'); usePageTitle(t('sb.prepare')); const { error, run, busy } = useRunner();
-  return (<section aria-labelledby="sbn-h" data-testid="bill-sb-prepare"><h1 id="sbn-h">{t('sb.prepare')}</h1><p className="muted">{t('sb.prepareIntro')}</p><p><Link to="/bill/sub-bills">{t('sb.title')}</Link></p><SubBillForm initial={{ woId: '', billType: 'RA', periodFrom: `${today().slice(0, 8)}01`, periodTo: today(), manual: [], notes: '' }} isNew busy={busy} error={error} onSave={async (body) => { const r = await run(() => bill.post('/sub-bills', body)); if (r) navigateTo(`/bill/sub-bills?id=${r.id}`); }} /></section>);
+  return (<section aria-labelledby="sbn-h" data-testid="bill-sb-prepare"><PageHeader id="sbn-h" title={t('sb.prepare')} subtitle={t('sb.prepareIntro')} meta={<Link to="/bill/sub-bills">{t('sb.title')}</Link>} /><SubBillForm initial={{ woId: '', billType: 'RA', periodFrom: `${today().slice(0, 8)}01`, periodTo: today(), manual: [], notes: '' }} isNew busy={busy} error={error} onSave={async (body) => { const r = await run(() => bill.post('/sub-bills', body)); if (r) navigateTo(`/bill/sub-bills?id=${r.id}`); }} /></section>);
 }

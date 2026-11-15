@@ -6,6 +6,7 @@ import { useUnsavedGuard } from '../../platform/forms/guard.js';
 import { useActivateMatrix, useDefinitionOptions, useDeleteMatrix, useMatrix, useMatrixCompare, useMatrixHistory, useSaveMatrix, validateMatrix } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEF_STATUS, useSearch } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Matrix Rule Editor (part 04.02, section 7.2): the decision table of one version. Rules in priority order, each with its conditions on the facts of the document
 // and the steps to take; checks for gaps (a document no rule fits) and for rules that can never be reached; a comparison with another version; the request to
@@ -84,7 +85,7 @@ export default function MatrixEditorPage({ session }) {
   const editable = Boolean(m && can(session, 'eng.matrix.manage') && ['DRAFT', 'REJECTED'].includes(m.status));
   const change = (patch) => { setDirty(true); setChecks(null); setForm((f) => ({ ...f, ...patch })); };
   const setRule = (i, p) => change({ rules: form.rules.map((r, k) => (k === i ? { ...r, ...p } : r)) });
-  if (!id) return <section aria-labelledby="me-title"><h1 id="me-title">Matrix Rule Editor</h1><EmptyState title="No version chosen" message="Open a version from the approval matrix, or make a new version of a document type there." action={{ label: 'Open the approval matrix', onClick: () => navigateTo('/admin/approval-matrix') }} /></section>;
+  if (!id) return <section aria-labelledby="me-title"><PageHeader id="me-title" title={"Matrix Rule Editor"} /><EmptyState title="No version chosen" message="Open a version from the approval matrix, or make a new version of a document type there." action={{ label: 'Open the approval matrix', onClick: () => navigateTo('/admin/approval-matrix') }} /></section>;
   if (query.error?.status === 403) return <NoPermission what="the approval matrix" permission="eng.matrix.view" />;
   const body = () => ({ id, name: form.name, rules: form.rules.map(({ id: _i, version: _v, ...r }) => r), version: m.rowVersion });
   const doSave = () => save.mutateAsync(body()).then(() => { setDirty(false); setNotice('Saved.'); setError(null); return true; }).catch((e) => { setError(errorInfo(e)); return false; });
@@ -98,7 +99,7 @@ export default function MatrixEditorPage({ session }) {
   };
   return (
     <section aria-labelledby="me-title" data-testid="matrix-editor">
-      <h1 id="me-title">Matrix Rule Editor</h1>
+      <PageHeader id="me-title" title={"Matrix Rule Editor"} />
       {query.isPending && <Skeleton label="Loading the matrix" rows={4} />}
       {query.isError && query.error?.status !== 403 && <ErrorState title="The matrix could not be loaded" error={query.error} onRetry={() => query.refetch()} />}
       {m && form && (

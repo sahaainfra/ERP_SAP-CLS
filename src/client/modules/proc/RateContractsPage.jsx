@@ -9,6 +9,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { PO_TONE, RC_TONE, addDays, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Rate contracts (part 15.06): the list with consumption and expiry; the contract with its rates and ceilings, the call-off orders made from it, the price-variation history and the index; a form to make or change one. A call-off is made from the contract
 // (Create purchase order) within its validity and ceilings; a price-variation revision is worked out from the index and applied only when approved.
@@ -29,8 +30,7 @@ function Rc({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('r.sayWhy') }); return; } run(() => pc.decide(r.taskId, action, comment.trim() || null), t(`r.done.${action}`)); };
   return (
     <div data-testid="rc-object" data-status={r.status}>
-      <h1 id="rc-h">{r.docNo} <StatusBadge status={RC_TONE[r.status]} label={t(`r.s.${r.status}`)} />{r.expired && <> <StatusBadge status="AT_RISK" label={t('r.expired')} /></>}</h1>
-      <p><Link to="/proc/rate-contracts">{t('r.back')}</Link> · {r.title}</p>
+      <PageHeader id="rc-h" title={<>{r.docNo} <StatusBadge status={RC_TONE[r.status]} label={t(`r.s.${r.status}`)} />{r.expired && <> <StatusBadge status="AT_RISK" label={t('r.expired')} /></>}</>} meta={<><Link to="/proc/rate-contracts">{t('r.back')}</Link> · {r.title}</>} />
       <dl className="kv" data-testid="rc-figures"><div><dt>{t('r.vendor')}</dt><dd>{r.vendor}</dd></div><div><dt>{t('r.validity')}</dt><dd>{fmtDate(r.validFrom)} – {fmtDate(r.validTo)}{r.status === 'APPROVED' && ` (${r.daysLeft} ${t('r.daysLeft')})`}</dd></div>
         <div><dt>{t('r.ceilingValue')}</dt><dd>{r.ceilingValue ? m(r.ceilingValue) : t('r.none')}</dd></div><div><dt>{t('r.used')}</dt><dd data-testid="rc-used">{m(r.consumedValue)} · {r.usedPct}%</dd></div>
         <div><dt>{t('r.pv')}</dt><dd>{r.pv ? `${r.pv.indexCode} (${r.pv.source}), ${t(`r.freq.${r.pv.frequency}`)}, ${t('r.base')} ${r.pv.baseIndex} ${r.pv.basePeriod}, ${r.pv.linkedPct}% ${t('r.linked')}` : t('r.none')}</dd></div>{r.paymentTerms && <div><dt>{t('r.payment')}</dt><dd>{r.paymentTerms}</dd></div>}</dl>
@@ -86,7 +86,7 @@ function RcForm({ t, editId }) {
     lines: lines.map((l) => ({ itemId: l.itemId ?? null, description: l.itemId ? undefined : l.label.trim(), uom: l.uom, rate: Number(l.rate), taxCode: l.taxCode ?? null, ceilingQty: l.ceilingQty ? Number(l.ceilingQty) : 0, pvLinked: Boolean(l.pvLinked) })) });
   const save = async () => { setError(null); setBusy(true); try { const b = body(); const d = editId ? await pc.rcUpdate(editId, { ...b, vendorId: undefined, rowVersion: e.rowVersion }) : await pc.rcCreate(b); navigateTo(`/proc/rate-contracts?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="rcn-h" data-testid="proc-rc-form"><h1 id="rcn-h">{editId ? t('r.edit') : t('r.new')}</h1><p className="muted">{t('r.newHelp')}</p><p><Link to="/proc/rate-contracts">{t('r.back')}</Link></p>
+    <section aria-labelledby="rcn-h" data-testid="proc-rc-form"><PageHeader id="rcn-h" title={editId ? t('r.edit') : t('r.new')} subtitle={t('r.newHelp')} meta={<Link to="/proc/rate-contracts">{t('r.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
           <Field label={t('r.titleField')} name="title" error={error}><input value={form.title} maxLength={200} onChange={(ev) => set('title', ev.target.value)} style={{ minHeight: 44 }} data-testid="rcn-title" /></Field>
@@ -124,7 +124,7 @@ export default function RateContractsPage() {
   if (sp.get('new') === '1') return <RcForm key={sp.get('edit') ?? 'new'} t={t} editId={Number(sp.get('edit')) || null} />;
   if (id) return <section aria-labelledby="rc-h" data-testid="proc-rcs"><Rc key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="rcs-h" data-testid="proc-rcs"><h1 id="rcs-h">{t('r.title')}</h1><p className="muted">{t('r.intro')}</p>
+    <section aria-labelledby="rcs-h" data-testid="proc-rcs"><PageHeader id="rcs-h" title={t('r.title')} subtitle={t('r.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.rate_contract.create') && <Link to="/proc/rate-contracts?new=1">{t('r.new')}</Link>} <Link to="/proc/purchase-orders">{t('r.orders')}</Link></div>
       <ListReport listCode="proc.rate_contracts" endpoint="/proc/rate-contracts" title={t('r.title')} session={session.data} rowHref={(r) => `/proc/rate-contracts?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/rate-contracts?id=${r.id}`)}
         cardFields={['docNo', 'vendor', 'validTo', 'ceiling', 'used']} statusKey="status" empty={{ title: t('r.emptyTitle'), text: t('r.emptyBody') }} /></section>

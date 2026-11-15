@@ -10,6 +10,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // The GST tax invoice (part 22.04): made on the certification, approved by the accounts manager, numbered without a gap, with the status of its IRN and of the receivable.
 const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); const money = (v) => (v == null ? '—' : `₹ ${mf.format(v)}`); const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -50,9 +52,8 @@ function Invoice({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/tax-invoices', id, t('ti.title'), 'bill.tax_invoice.view'); const { error, run, busy, note } = useRunner(); const [tab, setTab] = useState('invoice'); usePageTitle(t('ti.title'));
   if (guard) return guard; const x = q.data; const row = (k, val) => <tr><th scope="row">{t(k)}</th><td>{val}</td></tr>;
   return (
-    <div data-testid="bill-ti-object" data-status={x.status} data-irn={x.irnState} data-ar={x.arState}><h1 id="ti-h">{x.invoiceNo ?? x.docNo} <Status x={x} /> <StatusBadge status={AR_TONE[x.arState]} label={t(`ar.${x.arState}`)} /></h1>
-      <p><Link to="/bill/tax-invoices">{t('ti.title')}</Link> · {x.project} · <Link to={`/bill/client-bills?id=${x.billId}`}>{x.billNo}</Link>{x.certNo ? <> · <Link to={`/bill/certifications?id=${x.certificationId}`}>{x.certNo}</Link></> : null}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('ti.taxable')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-ti-taxable">{money(x.taxable)}</strong></div><div className="mdm-panel"><div className="muted">{t('ti.total')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-ti-total">{money(x.total)}</strong></div></div>
+    <div data-testid="bill-ti-object" data-status={x.status} data-irn={x.irnState} data-ar={x.arState}><PageHeader id="ti-h" title={<>{x.invoiceNo ?? x.docNo} <Status x={x} /> <StatusBadge status={AR_TONE[x.arState]} label={t(`ar.${x.arState}`)} /></>} meta={<><Link to="/bill/tax-invoices">{t('ti.title')}</Link> · {x.project} · <Link to={`/bill/client-bills?id=${x.billId}`}>{x.billNo}</Link>{x.certNo ? <> · <Link to={`/bill/certifications?id=${x.certificationId}`}>{x.certNo}</Link></> : null}</>} />
+      <KpiRow><KpiTile label={t('ti.taxable')} value={money(x.taxable)} amount={x.taxable} kind="money" valueTestid="bill-ti-taxable" /><KpiTile label={t('ti.total')} value={money(x.total)} amount={x.total} kind="money" valueTestid="bill-ti-total" /></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}<IrnPanel x={x} run={run} busy={busy} />
       <div className="actions-row no-print" role="tablist">{['invoice', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-ti-tab-${k}`}>{t(`ti.tab.${k}`)}</button>)}</div>
       {tab === 'invoice' && <div className="table-scroll" data-testid="bill-ti-details"><table className="data-table"><tbody>{row('ti.number', x.invoiceNo ?? t('ti.notIssued'))}{x.invoiceDate && row('ti.date', fmtDate(x.invoiceDate))}{row('ti.gstinFrom', x.gstinFrom)}{row('ti.gstinTo', x.gstinTo)}{row('ti.place', `${x.placeState} · ${t(x.supply === 'intra' ? 'cb.intra' : 'cb.inter')}`)}{row('ti.sac', x.sacCode)}{row('rc.description', x.description)}{x.supply === 'intra' ? <>{row('cb.s.cgst', money(x.cgst))}{row('cb.s.sgst', money(x.sgst))}</> : row('cb.s.igst', money(x.igst))}{row('ce.due', fmtDate(x.dueDate))}{row('ti.receivable', `${t(`ar.${x.arState}`)}${x.arRef ? ` · ${x.arRef}` : ''}`)}</tbody></table></div>}
@@ -65,9 +66,9 @@ function Invoice({ id }) {
 export function TaxInvoicesPage() {
   const t = useT('bill'); usePageTitle(t('ti.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="ti-h"><Invoice id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="tin-h"><h1 id="tin-h">{t('ti.make')}</h1><p><Link to="/bill/tax-invoices">{t('ti.title')}</Link></p><InvoiceForm certId={sp.get('certId')} /></section>;
+  if (sp.get('new')) return <section aria-labelledby="tin-h"><PageHeader id="tin-h" title={t('ti.make')} meta={<Link to="/bill/tax-invoices">{t('ti.title')}</Link>} /><InvoiceForm certId={sp.get('certId')} /></section>;
   return (
-    <section aria-labelledby="tis-h" data-testid="bill-tax-invoices"><h1 id="tis-h">{t('ti.title')}</h1><p className="muted">{t('ti.intro')}</p>
+    <section aria-labelledby="tis-h" data-testid="bill-tax-invoices"><PageHeader id="tis-h" title={t('ti.title')} subtitle={t('ti.intro')} />
       <div className="actions-row no-print"><Link to="/bill/tax-invoices?new=1" data-testid="bill-ti-new">{t('ti.make')}</Link> · <Link to="/bill/certifications">{t('ce.title')}</Link></div>
       <ListReport listCode="bill.tax_invoices" endpoint="/bill/tax-invoices" title={t('ti.title')} session={session.data} rowHref={(r) => `/bill/tax-invoices?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/tax-invoices?id=${r.id}`)} cardFields={['invoiceNo', 'bill', 'invoiceDate', 'total', 'irn', 'status']} statusKey="status" empty={{ title: t('ti.emptyTitle'), text: t('ti.emptyBody') }} />
     </section>

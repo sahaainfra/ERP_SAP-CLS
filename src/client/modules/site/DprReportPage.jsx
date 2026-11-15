@@ -6,6 +6,8 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { download, fmtDate, fmtQty, st, today } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Daily Site Report, Weekly and Monthly Progress Report (part 14.02, FR-07): the approved daily progress reports of the period and sites chosen, added up: the work by activity, the labour by trade, the materials,
 // the equipment, the weather, the hindrances and the safety and quality notes, with the report of every site and day behind them. Every figure is that of the approved reports.
@@ -21,7 +23,7 @@ export default function DprReportPage() {
   if (q.error?.status === 403) return <NoPermission what={t('dpr.reportTitle')} permission="site.dpr.report" />;
   return (
     <section aria-labelledby="dr-h" data-testid="site-dpr-report">
-      <h1 id="dr-h">{t('dpr.reportTitle')}</h1>
+      <PageHeader id="dr-h" title={t('dpr.reportTitle')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('dpr.params')}>
         <div className="form-grid">
           <Field label={t('dpr.period')} name="period"><select value={p.period} onChange={(e) => setP({ ...p, period: e.target.value })} data-testid="dr-period">{PERIODS.map((k) => <option key={k} value={k}>{t(`dpr.per.${k}`)}</option>)}</select></Field>
@@ -39,10 +41,10 @@ export default function DprReportPage() {
       {r && (
         <>
           <h2 data-testid="dr-label">{t(`dpr.per.${r.period.kind}`)} · {r.period.label}</h2>
-          <div className="tiles" data-testid="dr-tiles">
+          <KpiRow data-testid="dr-tiles">
             <Tile label={t('dpr.tReports')} value={r.counts.dprs} testId="dr-count" /><Tile label={t('dpr.tSiteDays')} value={r.counts.siteDays} /><Tile label={t('dpr.tManDays')} value={fmtQty(r.totals.manDays)} testId="dr-mandays" />
             <Tile label={t('dpr.tLate')} value={r.counts.late} status={r.counts.late ? 'warning' : 'success'} /><Tile label={t('dpr.tPending')} value={r.counts.pendingApproval} status={r.counts.pendingApproval ? 'warning' : 'neutral'} /><Tile label={t('dpr.tHindrances')} value={r.totals.hindrances} status={r.totals.hindrances ? 'warning' : 'success'} />
-          </div>
+          </KpiRow>
           {r.counts.dprs === 0 ? <p className="muted" data-testid="dr-empty">{t('dpr.reportEmpty')} <Link to="/site/dprs">{t('dpr.register')}</Link></p> : (
             <>
               {byDate.length > 1 && <Chart type="bar" data={{ categories: byDate.map(([d]) => d.slice(5)), series: [{ name: t('dpr.tManDays'), values: byDate.map(([, v]) => v) }] }} title={t('dpr.chartManDays')} exportName="dpr-man-days" />}

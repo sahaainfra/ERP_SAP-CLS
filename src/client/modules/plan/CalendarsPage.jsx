@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { CAL_TONE, DAYS, pl } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Work Calendars (part 13.01, FR-05): the working week, the hours of a day, a holiday calendar of 01.03 and site exceptions (a Sunday pour, a stoppage). A calendar is drafted by one person and put in force by another (maker-checker);
 // the days of a month show what the server will count as working.
@@ -41,8 +42,7 @@ export default function CalendarsPage() {
   const save = async (e) => { e.preventDefault(); if (await run(() => pl.createCalendar({ code: f.code.trim(), name: f.name.trim(), workWeek: f.week.map((x) => (x ? '1' : '0')).join(''), hoursPerDay: Number(f.hoursPerDay), holidayCalendarId: f.holidayCalendarId ? Number(f.holidayCalendarId) : null, exceptions: f.exceptions.filter((x) => x.date).map((x) => ({ date: x.date, working: x.working, note: x.note || null })), reason: f.reason.trim() }), t('cal.drafted'))) setF(blank()); };
   return (
     <section aria-labelledby="pcal-h" data-testid="plan-calendars">
-      <h1 id="pcal-h">{t('cal.title')}</h1>
-      <p className="muted">{t('cal.intro')} <span data-testid="pcal-inforce">{t('cal.inForce', { n: d.inForce })}</span></p>
+      <PageHeader id="pcal-h" title={t('cal.title')} subtitle={<>{t('cal.intro')} <span data-testid="pcal-inforce">{t('cal.inForce', { n: d.inForce })}</span></>} />
       {note && <p className="mdm-banner" role="status" data-testid="pcal-note">{note}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="pcal-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 3).join('; ')}` : ''}</p>}
       {perms.includes('plan.calendar.manage') && (

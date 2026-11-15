@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { REV_TONE, STATUS_CODES, TX_TONE, eg, openPrint } from './api.js';
 import { Tabs } from '../proj/parts.jsx';
 import { FileView, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Drawing (part 11.01, FR-01 to FR-05): the drawing with its revisions, the comparison viewer, the transmittals it is on, its links, its controlled copies and its RFIs. A superseded revision is marked and its file is closed to the site.
 const TABS = ['revisions', 'compare', 'transmittals', 'links', 'copies', 'rfis'];
@@ -23,7 +24,7 @@ export default function DrawingPage() {
   const [cmp, setCmp] = useState({ from: '', to: '' }); const [amend, setAmend] = useState({ label: '', statusCode: 'IFC', changeNote: '', cloudSummary: '' }); const [dist, setDist] = useState({ revisionId: '', users: '' });
   usePageTitle(q.data ? `${q.data.drawingNo} ${q.data.title}` : t('dwg.title'));
   const compare = useQuery({ queryKey: ['engg', 'compare', cmp.from, cmp.to], queryFn: () => eg.compare(cmp.from, cmp.to), enabled: Boolean(cmp.from && cmp.to && cmp.from !== cmp.to), retry: false });
-  if (!id && !revisionParam) return <section aria-labelledby="dwg-h" data-testid="dwg-none"><h1 id="dwg-h">{t('dwg.title')}</h1><p className="muted"><Link to="/engg/drawings">{t('nav.drawings')}</Link></p></section>;
+  if (!id && !revisionParam) return <section aria-labelledby="dwg-h" data-testid="dwg-none"><PageHeader id="dwg-h" title={t('dwg.title')} subtitle={<Link to="/engg/drawings">{t('nav.drawings')}</Link>} /></section>;
   if (q.error?.status === 403 || rq.error?.status === 403) return <NoPermission what={t('nav.drawings')} permission="engg.drawing.view" />;
   if (q.isPending || (revisionParam && !id && rq.isPending)) return <Skeleton label={t('dwg.title')} rows={5} />;
   if (q.isError || rq.isError) return <ErrorState error={q.error ?? rq.error} onRetry={q.refetch} />;
@@ -39,8 +40,7 @@ export default function DrawingPage() {
   return (
     <section aria-labelledby="dwg-h" data-testid="drawing" data-status={d.registerStatus} data-usable={d.usable ? '1' : '0'}>
       <header>
-        <h1 id="dwg-h">{d.drawingNo} · {d.title} {d.registerStatus === 'CANCELLED' ? <StatusBadge status="CANCELLED" label={t('dwg.cancelled')} /> : d.usable ? <StatusBadge status="APPROVED" label={t('dwg.currentIfc')} /> : <StatusBadge status="DRAFT" label={t('dwg.noIfc')} />}</h1>
-        <p className="muted">{d.projectCode} · {t(`disc.${d.discipline}`)}{d.packageName ? ` · ${d.packageName}` : ''}{d.scale ? ` · ${d.scale}` : ''}{d.sheetSize ? ` · ${d.sheetSize}` : ''} · {t(`orig.${d.originatorType}`)}{d.originator ? ` (${d.originator})` : ''}</p>
+        <PageHeader id="dwg-h" title={<>{d.drawingNo} · {d.title} {d.registerStatus === 'CANCELLED' ? <StatusBadge status="CANCELLED" label={t('dwg.cancelled')} /> : d.usable ? <StatusBadge status="APPROVED" label={t('dwg.currentIfc')} /> : <StatusBadge status="DRAFT" label={t('dwg.noIfc')} />}</>} subtitle={<>{d.projectCode} · {t(`disc.${d.discipline}`)}{d.packageName ? ` · ${d.packageName}` : ''}{d.scale ? ` · ${d.scale}` : ''}{d.sheetSize ? ` · ${d.sheetSize}` : ''} · {t(`orig.${d.originatorType}`)}{d.originator ? ` (${d.originator})` : ''}</>} />
         <p data-testid="dwg-current">{t('dwg.current')}: <strong>{d.currentRevision ?? '—'}</strong> {d.currentStatusCode ? t(`code.${d.currentStatusCode}`) : ''}{d.responseCode ? ` · ${t('dwg.response')}: ${d.responseLabel}` : ''}{d.overdue ? ` · ${t('dwg.overdue')}` : ''}</p>
         {error?.form && <p className="field-error" role="alert" data-testid="dwg-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="dwg-note">{note}</p>}

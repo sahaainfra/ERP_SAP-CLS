@@ -9,6 +9,7 @@ import { BID_TYPES, PORTALS, REGIONS, bd, inr, tdr } from './api.js';
 import { useFlagOn } from '../../platform/shell/api.js';
 import { Tabs, TimelinePanel } from './parts.jsx';
 import { AddendaTab, DocumentsTab, EligibilityTab, QueriesTab, ReadinessPanel, TasksTab } from './TenderParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Tender (business development, part 08.02): the tender register entry: authority (from the partner master), reference and portal, name of work, place, estimated cost, EMD and fee, bid type, completion period and the key dates; the bid capacity worked out by the
 // calculation engine; the eligibility checklist; the bid or no-bid decision; the documents, the addenda, the pre-bid queries and the team's tasks. A colleague of the estimation team approves the registration; a tender is ready for submission only when the decision is
@@ -69,13 +70,12 @@ export default function TenderPage({ create = false }) {
     </form>
   );
   const errBox = error?.form && <p className="field-error" role="alert" data-testid="td-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>;
-  if (create) return (<section aria-labelledby="td-title-h" data-testid="tender-new"><h1 id="td-title-h">{t('td.new')}</h1>{errBox}{form}<p className="small"><Link to="/bd/tenders">{t('tenders.title')}</Link></p></section>);
+  if (create) return (<section aria-labelledby="td-title-h" data-testid="tender-new"><PageHeader id="td-title-h" title={t('td.new')} />{errBox}{form}<p className="small"><Link to="/bd/tenders">{t('tenders.title')}</Link></p></section>);
   const days = x.daysToSubmission;
   return (
     <section aria-labelledby="td-title-h" data-testid="tender" data-status={x.status} data-stage={x.stage}>
       <header>
-        <h1 id="td-title-h">{x.nameOfWork} <StatusBadge status={STAGE_TONE[x.stage] ?? 'ACTIVE'} label={x.stageLabel} /> <StatusBadge status={TONE[x.status]} label={x.statusLabel} /></h1>
-        <p className="muted">{x.docNo} · {x.referenceNo ?? t('td.noReference')} · <Link to={`/bd/client?id=${x.clientPartnerId}`}>{x.clientName}</Link> · {x.portalLabel}</p>
+        <PageHeader id="td-title-h" title={<>{x.nameOfWork} <StatusBadge status={STAGE_TONE[x.stage] ?? 'ACTIVE'} label={x.stageLabel} /> <StatusBadge status={TONE[x.status]} label={x.statusLabel} /></>} subtitle={<>{x.docNo} · {x.referenceNo ?? t('td.noReference')} · <Link to={`/bd/client?id=${x.clientPartnerId}`}>{x.clientName}</Link> · {x.portalLabel}</>} />
         <dl className="op-figures" data-testid="td-figures">
           <div><dt>{t('td.estCost')}</dt><dd data-testid="td-fig-cost">{inr(x.estCost)}</dd></div><div><dt>{t('td.emd')}</dt><dd>{inr(x.emd)}</dd></div>
           <div><dt>{t('td.bidCapacity')}</dt><dd data-testid="td-fig-capacity" className={x.bidCapacity != null && x.bidCapacity < x.estCost ? 'field-error' : ''}>{inr(x.bidCapacity)}</dd></div>

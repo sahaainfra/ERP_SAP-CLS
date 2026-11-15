@@ -3,6 +3,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { useReasonCodes, useSaveReason } from '../../platform/protocol/api.js';
 import { Field, Link, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Reason Codes (part 04.04, section 7.5): the one list of reasons the ERP offers when someone cancels, rejects, returns, reverses, deviates or overrides. A company adds its
 // own, and may switch a shared one off for itself; the dialogs of every module read this list.
@@ -46,8 +47,7 @@ export default function ReasonCodesPage({ session }) {
   const rows = (list.data ?? []).filter((r) => !action || r.actionType === action);
   return (
     <section aria-labelledby="rc-title" data-testid="reason-codes">
-      <h1 id="rc-title">Reason Codes</h1>
-      <p className="muted">The reasons offered when someone cancels, rejects, returns, reverses, deviates or overrides. Shared reasons are the same for every company; a company adds its own or switches a shared one off for itself.</p>
+      <PageHeader id="rc-title" title={"Reason Codes"} subtitle={"The reasons offered when someone cancels, rejects, returns, reverses, deviates or overrides. Shared reasons are the same for every company; a company adds its own or switches a shared one off for itself."} />
       {notice && <p role="status" className="notice" data-testid="rc-notice">{notice}</p>}
       <div className="srch-tools">{manage && !editing && <button type="button" className="btn btn-primary" onClick={() => setEditing({})}>New reason code</button>}<Link to="/admin/controls">Control Points</Link></div>
       {editing && <Form initial={editing.code ? editing : null} onCancel={() => setEditing(null)} onDone={(r) => { setEditing(null); setNotice(`${r.code} saved.`); }} />}

@@ -3,6 +3,8 @@ import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { Field, FormDialog, Link, Pager, QueryState, can, downloadCsv, errorInfo, usePageTitle } from '../../core/pages/ui.jsx';
 import { useDormant, useResolveViolation, useScanDormant, useScanViolations, useSodViolation, useSodViolations } from '../api/privileged.js';
 import { SeverityChip, StatusChip } from '../components/privilegedCommon.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 /** The remedy for one violation: take a role away (system administrator) or accept the risk with a reason (auditor, director). */
 function ResolveDialog({ dialogRef, violation, session, onDone }) {
@@ -70,12 +72,12 @@ function ViolationsTab({ session }) {
     <>
       <p role="status" className="notice" data-testid="violation-notice">{notice}</p>
       {s && (
-        <div className="tiles" data-testid="violation-summary">
+        <KpiRow data-testid="violation-summary">
           <div className={`tile ${s.open ? 'tile-bad' : 'tile-ok'}`}><span>Open</span><strong>{s.open}</strong></div>
           <div className="tile"><span>Blocked attempts</span><strong>{s.blocked}</strong></div>
           <div className="tile"><span>Resolved</span><strong>{s.resolved}</strong></div>
           <div className="tile"><span>Risk accepted</span><strong>{s.accepted}</strong></div>
-        </div>
+        </KpiRow>
       )}
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Search violations</span><input type="search" placeholder="Search person, rule or document" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label>
@@ -174,7 +176,7 @@ export default function SodViolationsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Segregation of duties &rsaquo; Violations</nav>
-      <div className="page-head"><h1 id="page-title">Violations &amp; Dormant Accounts</h1></div>
+      <PageHeader id="page-title" title={"Violations & Dormant Accounts"} />
       <div role="tablist" aria-label="Report" className="toolbar">
         <button type="button" role="tab" id="tab-violations" aria-selected={tab === 'violations'} aria-controls="panel-violations" className={`btn${tab === 'violations' ? ' btn-primary' : ''}`} onClick={() => setTab('violations')}>Violations</button>
         <button type="button" role="tab" id="tab-dormant" aria-selected={tab === 'dormant'} aria-controls="panel-dormant" className={`btn${tab === 'dormant' ? ' btn-primary' : ''}`} onClick={() => setTab('dormant')}>Dormant accounts</button>

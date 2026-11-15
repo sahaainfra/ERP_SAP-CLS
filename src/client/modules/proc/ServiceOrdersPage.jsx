@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { RC_TONE, addDays, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Service orders (part 15.06, FR-05): the list; the order with its scope, deliverables, lines priced as a lump sum, per unit or per month, what is certified so far and its service entry sheets; a form to make one. Approval is by value as for a purchase order;
 // the commitment is posted on approval and released when the order is closed. Certification is by service entry sheets.
@@ -27,8 +28,7 @@ function So({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('s.sayWhy') }); return; } run(() => pc.decide(r.taskId, action, comment.trim() || null), t(`s.done.${action}`)); };
   return (
     <div data-testid="so-object" data-status={r.status}>
-      <h1 id="so-h">{r.docNo} <StatusBadge status={RC_TONE[r.status]} label={t(`s.s.${r.status}`)} /></h1>
-      <p><Link to="/proc/service-orders">{t('s.back')}</Link> · {r.title}</p>
+      <PageHeader id="so-h" title={<>{r.docNo} <StatusBadge status={RC_TONE[r.status]} label={t(`s.s.${r.status}`)} /></>} meta={<><Link to="/proc/service-orders">{t('s.back')}</Link> · {r.title}</>} />
       <dl className="kv" data-testid="so-figures"><div><dt>{t('s.project')}</dt><dd>{r.projectCode}</dd></div><div><dt>{t('s.vendor')}</dt><dd>{r.vendor}</dd></div><div><dt>{t('s.period')}</dt><dd>{fmtDate(r.startDate)} – {fmtDate(r.endDate)}</dd></div><div><dt>{t('s.value')}</dt><dd data-testid="so-value">{m(r.totalValue)}</dd></div><div><dt>{t('s.certified')}</dt><dd data-testid="so-certified">{m(r.certifiedValue)} · {r.certifiedPct}%</dd></div>{r.paymentTerms && <div><dt>{t('s.payment')}</dt><dd>{r.paymentTerms}</dd></div>}</dl>
       <p><strong>{t('s.scope')}:</strong> {r.scope}</p>{r.deliverables && <p><strong>{t('s.deliverables')}:</strong> {r.deliverables}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="so-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="so-note">{note}</p>}
@@ -70,7 +70,7 @@ function SoForm({ t, editId }) {
   const body = () => ({ siteId: form.siteId ? Number(form.siteId) : null, title: form.title.trim(), scope: form.scope.trim(), deliverables: form.deliverables.trim() || null, startDate: form.startDate, endDate: form.endDate, paymentTerms: form.paymentTerms.trim() || null, lines: lines.map((l) => ({ description: l.description.trim(), pricingKind: l.pricingKind, uom: l.uom || undefined, qty: Number(l.qty), rate: Number(l.rate) })) });
   const save = async () => { setError(null); setBusy(true); try { const d = editId ? await pc.soUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await pc.soCreate({ projectId: Number(projectId), vendorId: Number(form.vendorId), ...body() }); navigateTo(`/proc/service-orders?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="son-h" data-testid="proc-so-form"><h1 id="son-h">{editId ? t('s.edit') : t('s.new')}</h1><p className="muted">{t('s.newHelp')}</p><p><Link to="/proc/service-orders">{t('s.back')}</Link></p>
+    <section aria-labelledby="son-h" data-testid="proc-so-form"><PageHeader id="son-h" title={editId ? t('s.edit') : t('s.new')} subtitle={t('s.newHelp')} meta={<Link to="/proc/service-orders">{t('s.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
           <Field label={t('s.project')} name="projectId" error={error}><select value={projectId} disabled={Boolean(editId)} onChange={(ev) => setF({ ...form, projectId: ev.target.value })} style={{ minHeight: 44 }} data-testid="son-project">{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
@@ -101,7 +101,7 @@ export default function ServiceOrdersPage() {
   if (sp.get('new') === '1') return <SoForm key={sp.get('edit') ?? 'new'} t={t} editId={Number(sp.get('edit')) || null} />;
   if (id) return <section aria-labelledby="so-h" data-testid="proc-sos"><So key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="sos-h" data-testid="proc-sos"><h1 id="sos-h">{t('s.title')}</h1><p className="muted">{t('s.intro')}</p>
+    <section aria-labelledby="sos-h" data-testid="proc-sos"><PageHeader id="sos-h" title={t('s.title')} subtitle={t('s.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.service_order.create') && <Link to="/proc/service-orders?new=1">{t('s.new')}</Link>} <Link to="/proc/service-entries">{t('s.entriesTitle')}</Link></div>
       <ListReport listCode="proc.service_orders" endpoint="/proc/service-orders" title={t('s.title')} session={session.data} rowHref={(r) => `/proc/service-orders?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/service-orders?id=${r.id}`)}
         cardFields={['docNo', 'vendor', 'project', 'value', 'certified']} statusKey="status" empty={{ title: t('s.emptyTitle'), text: t('s.emptyBody') }} /></section>

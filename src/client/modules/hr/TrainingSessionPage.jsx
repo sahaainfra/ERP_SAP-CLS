@@ -8,6 +8,7 @@ import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx'
 import { api } from '../../platform/api/index.js';
 import { trn } from './api.js';
 import { SESSION_TONE, SessionForm } from './TrainingCalendarPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Training Session (HR, part 07.10, FR-01 and FR-05): one session with its nominations and attendance. Managers nominate the people of their team; on the day the trainer shows the QR code and people sign in with their phones (or the trainer marks
 // them), enters the post-test scores and closes the session: those who passed a course that carries a certificate type are given that certificate. A draft is edited, sent, deleted; an open session is cancelled, with a reason.
@@ -31,7 +32,7 @@ export default function TrainingSessionPage() {
   const act = (action, label, doneKey) => async () => { const body = label ? { reason: ask(label) } : {}; if (label && !body.reason) return; await run(() => trn.sessionAct(id, action, body), doneKey ? t(doneKey) : null); };
   return (
     <section aria-labelledby="ts-title" data-testid="training-session" data-status={s.status}>
-      <h1 id="ts-title">{s.course} <StatusBadge status={SESSION_TONE[s.status]} label={t(`status.${s.status}`)} /></h1>
+      <PageHeader id="ts-title" title={<>{s.course} <StatusBadge status={SESSION_TONE[s.status]} label={t(`status.${s.status}`)} /></>} />
       <dl className="op-figures" data-testid="ts-facts">
         <div><dt>{t('s.session')}</dt><dd>{s.docNo}</dd></div><div><dt>{t('s.starts')}</dt><dd>{s.startAt.replace('T', ' ')}</dd></div><div><dt>{t('s.ends')}</dt><dd>{s.endAt.replace('T', ' ')}</dd></div>
         <div><dt>{t('s.venue')}</dt><dd>{s.venue ?? '—'}</dd></div><div><dt>{t('s.trainer')}</dt><dd>{s.trainer ?? '—'}</dd></div><div><dt>{t('s.seats')}</dt><dd data-testid="ts-seats">{s.seatsTaken}/{s.capacity}</dd></div>

@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { XPD_TONE, pc, pv8 } from './api.js';
 import { History, useRunner } from './XpdParts.jsx';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Approved vendor list (part 15.08, FR-02, FR-05, BR-01): the vendors allowed for each category and region with status and validity; a suspension is suggested by a low score or proposed by people and approved by the procurement manager and the direction.
 function Suspension({ t, id }) {
@@ -23,8 +24,7 @@ function Suspension({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('x.sayWhy') }); return; } run(() => pc.decide(r.taskId, action, comment.trim() || null), t(`x.done.${action}`)); };
   return (
     <div data-testid="su-object" data-status={r.status}>
-      <h1 id="su-h">{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.s.${r.status}`)} />{r.autoSuggested && <StatusBadge status="RETURNED" label={t('v.suggested')} />}</h1>
-      <p><Link to="/proc/avl">{t('x.back')}</Link> · <Link to={`/proc/vendor-scorecards?partner=${r.partnerId}`}>{r.vendor}</Link></p>
+      <PageHeader id="su-h" title={<>{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.s.${r.status}`)} />{r.autoSuggested && <StatusBadge status="RETURNED" label={t('v.suggested')} />}</>} meta={<><Link to="/proc/avl">{t('x.back')}</Link> · <Link to={`/proc/vendor-scorecards?partner=${r.partnerId}`}>{r.vendor}</Link></>} />
       <p data-testid="su-reason">{r.reason}</p>
       {error?.form && <p className="field-error" role="alert" data-testid="su-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="su-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="su-entries"><caption>{t('v.entries')}</caption><thead><tr><th>{t('v.category')}</th><th>{t('v.region')}</th><th>{t('x.status')}</th></tr></thead><tbody>{r.entries.map((e) => <tr key={e.id}><td>{e.category}</td><td>{e.region}</td><td>{e.statusLabel}</td></tr>)}</tbody></table></div>
@@ -49,7 +49,7 @@ export default function AvlPage() {
   const t = useT('proc'); usePageTitle(t('v.avlTitle')); const sp = useSearch(); const sid = Number(sp.get('suspension') ?? sp.get('id')) || null; const session = useSession(); const [tab, setTab] = useState('list');
   if (sid) return <section aria-labelledby="su-h" data-testid="proc-avl"><Suspension key={sid} t={t} id={sid} /></section>;
   return (
-    <section aria-labelledby="avl-h" data-testid="proc-avl"><h1 id="avl-h">{t('v.avlTitle')}</h1><p className="muted">{t('v.avlIntro')}</p>
+    <section aria-labelledby="avl-h" data-testid="proc-avl"><PageHeader id="avl-h" title={t('v.avlTitle')} subtitle={t('v.avlIntro')} />
       <div className="actions-row no-print"><button type="button" className={tab === 'list' ? 'btn btn-primary' : 'btn'} aria-pressed={tab === 'list'} onClick={() => setTab('list')} data-testid="avl-tab-list">{t('v.avlTitle')}</button><button type="button" className={tab === 'susp' ? 'btn btn-primary' : 'btn'} aria-pressed={tab === 'susp'} onClick={() => setTab('susp')} data-testid="avl-tab-susp">{t('v.suspTitle')}</button>
         <Link to="/proc/prequalifications">{t('v.preqTitle')}</Link> <Link to="/proc/vendor-scorecards">{t('v.scoreTitle')}</Link></div>
       {tab === 'list'

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CONSTITUTIONS, PARTNER_ROLES, mdm, partners } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Partner Registration (Administration, part 06.04): a wizard. 1 Identity and roles (legal and trade name, constitution, PAN, MSME, CIN), with the partners that look like it found as it is typed (FR-07);
 // 2 GST registrations per state and addresses; 3 contacts (a bank change is later confirmed with them); 4 bank account (IFSC checked, the bank found in the 06.02 list) and TDS; 5 review. "Save as prospect"
@@ -61,7 +62,7 @@ export default function PartnerRegistrationPage() {
   const stateOpts = (states.data?.rows ?? []).map((s) => <option key={s.id} value={s.code}>{s.name} ({s.gstCode})</option>);
   return (
     <section aria-labelledby="pr-title" data-testid="partner-registration">
-      <h1 id="pr-title">{editId ? `Partner Registration: ${existing.data?.code}` : 'Partner Registration'}</h1>
+      <PageHeader id="pr-title" title={editId ? `Partner Registration: ${existing.data?.code}` : 'Partner Registration'} />
       <ol className="wizard-steps" aria-label="Steps">{STEPS.map((s, i) => <li key={s} aria-current={i === step ? 'step' : undefined} className={i === step ? 'is-current' : i < step ? 'is-done' : ''}><button type="button" className="btn btn-small" onClick={() => setStep(i)} disabled={i > step}>{i + 1}. {s}</button></li>)}</ol>
       {dups.length > 0 && <div className="mdm-check" role="status" data-testid="pr-duplicates"><p><strong>{dups.some((d) => d.block) ? 'Already registered:' : 'This looks like:'}</strong></p><ul>{dups.map((d) => <li key={`${d.id}${d.rule}`} className={d.block ? 'field-error' : ''}><a href={`/admin/partners/partner?id=${d.id}`} onClick={(e) => { e.preventDefault(); navigateTo(`/admin/partners/partner?id=${d.id}`); }}>{d.code} {d.name}</a> · {d.rule}</li>)}</ul></div>}
       {error?.form && <p className="field-error" role="alert" data-testid="pr-error">{error.form}{error.fields && Object.values(error.fields).some((x) => x && x !== 'required') ? ` ${Object.entries(error.fields).filter(([, x]) => x && x !== 'required').map(([k, x]) => `${k}: ${x}`).join('; ')}` : ''}</p>}

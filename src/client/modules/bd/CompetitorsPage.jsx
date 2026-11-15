@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { REGIONS, SECTORS, aw, inr } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Competitor Analysis (business development, part 08.03, FR-05): what the openings say about each competitor (bids, times L1, how far from L1 and from us) and about us by sector, region and month.
 const pct = (n) => (n == null ? '—' : `${n > 0 ? '+' : ''}${n}%`);
@@ -23,7 +24,7 @@ export default function CompetitorsPage() {
     </div>);
   return (
     <section aria-labelledby="comp-title" data-testid="competitors">
-      <h1 id="comp-title">{t('comp.title')}</h1>
+      <PageHeader id="comp-title" title={t('comp.title')} />
       <form className="filters" onSubmit={(e) => e.preventDefault()} aria-label={t('comp.filters')}>
         <label>{t('lead.sector')} <select value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })} data-testid="comp-sector"><option value="">{t('comp.all')}</option>{SECTORS.map((k) => <option key={k} value={k}>{t(`sector.${k}`)}</option>)}</select></label>
         <label>{t('td.region')} <select value={f.region} onChange={(e) => setF({ ...f, region: e.target.value })} data-testid="comp-region"><option value="">{t('comp.all')}</option>{REGIONS.map((k) => <option key={k} value={k}>{t(`region.${k}`)}</option>)}</select></label>

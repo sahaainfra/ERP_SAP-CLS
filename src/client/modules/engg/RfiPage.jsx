@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { Tabs } from '../proj/parts.jsx';
 import { PRIORITY_TONE, RESPONSE_TYPES, RFI_PRIORITIES, RFI_TONE, eg, openPrint, rf } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // RFI (part 11.02): the question with its links, the routing timeline, the response and the impact; the ball in court says who has to act next.
 const TABS = ['question', 'routing', 'response', 'files'];
@@ -20,7 +21,7 @@ export default function RfiPage() {
   const [ans, setAns] = useState({ responseType: 'CLARIFICATION', text: '', costImpact: '0', timeImpactDays: 0, drawingRevisionId: '', instructionRef: '', variationRef: '' });
   usePageTitle(q.data ? `${q.data.rfiNo} ${q.data.subject}` : t('rfi.title'));
   const dq = useQuery({ queryKey: ['engg', 'rfi-drawing', q.data?.drawingId], queryFn: () => eg.drawing(q.data.drawingId), enabled: Boolean(q.data?.drawingId), retry: false });
-  if (!id) return <section aria-labelledby="rfi-h" data-testid="rfi-none"><h1 id="rfi-h">{t('rfi.title')}</h1><p className="muted"><Link to="/engg/rfis">{t('nav.rfis')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="rfi-h" data-testid="rfi-none"><PageHeader id="rfi-h" title={t('rfi.title')} subtitle={<Link to="/engg/rfis">{t('nav.rfis')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('nav.rfis')} permission="engg.rfi.view" />;
   if (q.isPending) return <Skeleton label={t('rfi.title')} rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -33,8 +34,7 @@ export default function RfiPage() {
   return (
     <section aria-labelledby="rfi-h" data-testid="rfi" data-status={r.status} data-ball={r.ballInCourt}>
       <header>
-        <h1 id="rfi-h">{r.rfiNo} · {r.subject} <StatusBadge status={RFI_TONE[r.status]} label={t(`rfis.${r.status}`)} /></h1>
-        <p className="muted">{r.projectCode} · {t(`disc.${r.discipline}`)} · <StatusBadge status={PRIORITY_TONE[r.priority]} label={t(`prio.${r.priority}`)} /> · {t('rfi.requiredBy')} {r.requiredBy}{r.overdue ? ` · ${t('dwg.overdue')}` : ''}</p>
+        <PageHeader id="rfi-h" title={<>{r.rfiNo} · {r.subject} <StatusBadge status={RFI_TONE[r.status]} label={t(`rfis.${r.status}`)} /></>} subtitle={<>{r.projectCode} · {t(`disc.${r.discipline}`)} · <StatusBadge status={PRIORITY_TONE[r.priority]} label={t(`prio.${r.priority}`)} /> · {t('rfi.requiredBy')} {r.requiredBy}{r.overdue ? ` · ${t('dwg.overdue')}` : ''}</>} />
         <p data-testid="rfi-ball">{t('rfi.ball')}: <strong>{t(`ball.${r.ballInCourt}`)}</strong> · {t('rfi.age', { days: r.ageDays })}{r.slaDue ? ` · ${t('rfi.sla', { due: r.slaDue })}` : ''}{r.slaBreached ? ` · ${t('rfi.slaBreached')}` : ''}{r.criticalOpen ? ` · ${t('rfi.onCritical')}` : ''}{r.hold ? ` · ${t('rfi.holds')}` : ''}</p>
         {error?.form && <p className="field-error" role="alert" data-testid="rfi-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="rfi-note">{note}</p>}

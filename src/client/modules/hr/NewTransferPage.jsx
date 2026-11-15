@@ -4,6 +4,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { KINDS, dayIST, deploy } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Transfer Request (HR, part 07.03): the employee, transfer or secondment, the receiving project, site and crew, the role there, the last day at the old place (relieving) and the first day at the new one (joining),
 // the return date of a secondment, the reason, and whether travel and accommodation are needed. It goes to the current project manager, the receiving project manager (another project) and the HR manager; when it is
@@ -37,7 +38,7 @@ export default function NewTransferPage() {
   return (
     <section aria-labelledby="nt-title" data-testid="new-transfer">
       <p><Link to="/hr/transfers">← Transfers</Link></p>
-      <h1 id="nt-title">{editId ? `Transfer ${existing.data?.docNo}` : 'Transfer Request'}</h1>
+      <PageHeader id="nt-title" title={editId ? `Transfer ${existing.data?.docNo}` : 'Transfer Request'} />
       {error?.form && <p className="field-error" role="alert" data-testid="nt-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).map(([k, x]) => `${k}: ${x}`).join('; ')}` : ''}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }}>
         <LookupField id="nt-employee" label="Employee" lookup="hr/employees" value={v.employeeId} onChange={(x) => set({ employeeId: x })} error={fe('employeeId')} required disabled={Boolean(editId)} />

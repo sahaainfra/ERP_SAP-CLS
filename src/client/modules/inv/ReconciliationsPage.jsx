@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { COUNT_TONE, download, fmtDate, fmtQty, fmtRs, iv, mc, today } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Monthly Material Reconciliation (part 16.10): the status of every active site for the month (missing highlighted), the key materials, the list, and the workbench of one reconciliation with its auto-computed lines, drill-down and explanations.
 const TONE = { ...COUNT_TONE, MISSING: 'REJECTED' };
@@ -25,7 +26,7 @@ function Workbench({ t, id }) {
   const num = (v, d = 3) => (v == null ? '—' : fmtQty(v, d)); const showDrill = async (l) => { try { setDrill({ line: l, data: await mc.drill(l.id) }); } catch (e) { setError({ form: String(e?.message ?? e) }); } };
   return (
     <div data-testid="mrc-object" data-status={x.status}>
-      <h1 id="mrc-h">{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`mc.s.${x.status}`)} /></h1><p><Link to="/inv/reconciliations">{t('mc.title')}</Link> · {x.project}/{x.site} · {x.period}</p>
+      <PageHeader id="mrc-h" title={<>{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`mc.s.${x.status}`)} /></>} meta={<><Link to="/inv/reconciliations">{t('mc.title')}</Link> · {x.project}/{x.site} · {x.period}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="mrc-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="mrc-note">{note}</p>}
       <dl className="kv"><div><dt>{t('mc.preparedBy')}</dt><dd>{x.preparedBy}</dd></div><div><dt>{t('mc.computed')}</dt><dd>{x.computedAt ? String(x.computedAt).slice(0, 16).replace('T', ' ') : '—'}</dd></div><div><dt>{t('mc.beyond')}</dt><dd data-testid="mrc-over">{x.overCount}</dd></div><div><dt>{t('mc.unexplained')}</dt><dd data-testid="mrc-unexplained">{x.unexplained}</dd></div>{x.approvedBy && <div><dt>{t('approvedBy')}</dt><dd>{x.approvedBy}</dd></div>}</dl>
       {x.status === 'APPROVED' && <p className="mdm-banner" role="status" data-testid="mrc-locked">{t('mc.locked')}</p>}
@@ -83,7 +84,7 @@ export default function ReconciliationsPage() {
   const t = useT('inv'); usePageTitle(t('mc.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const tab = ['list', 'materials'].includes(sp.get('tab')) ? sp.get('tab') : 'status'; const session = useSession(); const perms = session.data?.permissions ?? [];
   if (id) return <section aria-labelledby="mrc-h" data-testid="reconciliations"><Workbench key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="mr-h" data-testid="reconciliations"><h1 id="mr-h">{t('mc.title')}</h1><p className="muted">{t('mc.intro')}</p>
+    <section aria-labelledby="mr-h" data-testid="reconciliations"><PageHeader id="mr-h" title={t('mc.title')} subtitle={t('mc.intro')} />
       <div className="actions-row no-print">{[['status', 'mc.tabStatus'], ['list', 'mc.tabList'], ['materials', 'mc.materials']].map(([k, l]) => <Link key={k} to={`/inv/reconciliations?tab=${k}`} aria-current={tab === k ? 'page' : undefined} data-testid={`mrc-tab-${k}`}>{t(l)}</Link>)} <Link to="/inv/wastage-trend">{t('mc.trendTitle')}</Link></div>
       {tab === 'status' ? <Status t={t} /> : tab === 'materials' ? <Materials t={t} perms={perms} /> : <ListReport listCode="inv.reconciliations" endpoint="/inv/reconciliations" title={t('mc.title')} session={session.data} rowHref={(r) => `/inv/reconciliations?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/reconciliations?id=${r.id}`)} cardFields={['docNo', 'period', 'site', 'status']} statusKey="status" dateKey="period" empty={{ title: t('mc.listEmptyTitle'), text: t('mc.listEmptyBody') }} />}
     </section>

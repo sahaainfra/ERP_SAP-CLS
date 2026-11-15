@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { authHeaders, messagesUrl, useMessage, useMessages, useMessageSummary, useRetryMessage } from '../../platform/comm/api.js';
 import { can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Communication Log (part 04.07, section 7.1): every message the gateway sent, received or refused, with its channel, status, route (which connector was tried) and the reason it did not leave.
 // Numbers and addresses are partly hidden; a one-time code never appears. A conversation shows what was sent and what came back for one record.
@@ -67,8 +68,7 @@ export default function CommunicationLogPage({ session }) {
   const t = sum.data?.totals;
   return (
     <section aria-labelledby="cl-title" data-testid="comm-log">
-      <h1 id="cl-title">Communication Log</h1>
-      <p className="muted">Every e-mail, text message, WhatsApp message and push the system sent, received or refused, and why. Numbers are partly hidden and codes are never shown.</p>
+      <PageHeader id="cl-title" title={"Communication Log"} subtitle={"Every e-mail, text message, WhatsApp message and push the system sent, received or refused, and why. Numbers are partly hidden and codes are never shown."} />
       {notice && <p role="status" className="notice">{notice}</p>}
       <form className="srch-form" role="search" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>Channel</span><select value={filters.channel} onChange={(e) => set({ channel: e.target.value })}><option value="">All channels</option>{Object.entries(CHANNEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>

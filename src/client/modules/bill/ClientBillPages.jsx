@@ -10,6 +10,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // The client RA bill (part 22.03): Prepare RA Bill (pulls the certified measurements of the period), the Client Bills list and the bill with its abstract, deductions, GST, documents and tracking, and the abstract in the format given to the client.
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -92,11 +94,10 @@ function SendPanel({ x, run, busy }) {
 function Bill({ id, edit }) {
   const t = useT('bill'); const { q, guard } = useRecord('/client-bills', id, t('cb.title'), 'bill.client_bill.view'); const { error, run, busy, note } = useRunner(); const [tab, setTab] = useState('abstract'); usePageTitle(t('cb.title'));
   if (guard) return guard; const x = q.data;
-  if (edit && x.can.edit) return (<div><h1 id="cb-h">{x.billNo}</h1><p><Link to={`/bill/client-bills?id=${x.id}`}>{x.billNo}</Link></p><BillForm initial={fromBill(x)} isNew={false} busy={busy} error={error} onSave={async (v) => { const rest = payload(v); delete rest.projectId; delete rest.contractId; if (await run(() => bill.patch(`/client-bills/${x.id}`, { ...rest, rowVersion: x.version }), t('cb.refreshed'))) navigateTo(`/bill/client-bills?id=${x.id}`); }} /></div>);
+  if (edit && x.can.edit) return (<div><PageHeader id="cb-h" title={x.billNo} meta={<Link to={`/bill/client-bills?id=${x.id}`}>{x.billNo}</Link>} /><BillForm initial={fromBill(x)} isNew={false} busy={busy} error={error} onSave={async (v) => { const rest = payload(v); delete rest.projectId; delete rest.contractId; if (await run(() => bill.patch(`/client-bills/${x.id}`, { ...rest, rowVersion: x.version }), t('cb.refreshed'))) navigateTo(`/bill/client-bills?id=${x.id}`); }} /></div>);
   return (
-    <div data-testid="bill-cb-object" data-status={x.status} data-client={x.clientState} data-type={x.billType}><h1 id="cb-h">{x.billNo} <Status x={x} /> <StatusBadge status={CLIENT_TONE[x.clientState]} label={t(`ccs.${x.clientState}`)} /></h1>
-      <p><Link to="/bill/client-bills">{t('cb.title')}</Link> · {x.docNo} · {x.project} · {x.contractNo} · {t(`bt.${x.billType}`)} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('cb.s.gross')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-cb-gross">{money(x.gross)}</strong><div className="muted">{t('cb.cumulative')}: {money(x.cumGross)}</div></div><div className="mdm-panel"><div className="muted">{t('cb.s.net')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-cb-net">{money(x.net)}</strong></div></div>
+    <div data-testid="bill-cb-object" data-status={x.status} data-client={x.clientState} data-type={x.billType}><PageHeader id="cb-h" title={<>{x.billNo} <Status x={x} /> <StatusBadge status={CLIENT_TONE[x.clientState]} label={t(`ccs.${x.clientState}`)} /></>} meta={<><Link to="/bill/client-bills">{t('cb.title')}</Link> · {x.docNo} · {x.project} · {x.contractNo} · {t(`bt.${x.billType}`)} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</>} />
+      <KpiRow><KpiTile label={t('cb.s.gross')} value={money(x.gross)} amount={x.gross} kind="money" valueTestid="bill-cb-gross"><div className="muted">{t('cb.cumulative')}: {money(x.cumGross)}</div></KpiTile><KpiTile label={t('cb.s.net')} value={money(x.net)} amount={x.net} kind="money" valueTestid="bill-cb-net" /></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}<Issues issues={x.issues} />
       <div className="actions-row no-print">{x.can.edit && <Link to={`/bill/client-bills?id=${x.id}&edit=1`} data-testid="bill-cb-edit">{t('cb.refreshEdit')}</Link>}<Link to={`/bill/client-bill-abstract?id=${x.id}`} data-testid="bill-cb-abstract-link">{t('cba.title')}</Link></div>
       <div className="actions-row no-print" role="tablist">{['abstract', 'deductions', 'summary', 'documents', 'tracking'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-cb-tab-${k}`}>{t(`cb.tab.${k}`)}</button>)}</div>
@@ -112,7 +113,7 @@ export function ClientBillsPage() {
   const t = useT('bill'); usePageTitle(t('cb.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="cb-h"><Bill id={id} edit={Boolean(sp.get('edit'))} /></section>;
   return (
-    <section aria-labelledby="cbs-h" data-testid="bill-client-bills"><h1 id="cbs-h">{t('cb.title')}</h1><p className="muted">{t('cb.intro')}</p>
+    <section aria-labelledby="cbs-h" data-testid="bill-client-bills"><PageHeader id="cbs-h" title={t('cb.title')} subtitle={t('cb.intro')} />
       <div className="actions-row no-print"><Link to="/bill/client-bill-new" data-testid="bill-cb-new">{t('cb.prepare')}</Link> · <Link to="/bill/mb-entries">{t('mb.title')}</Link></div>
       <ListReport listCode="bill.client_bills" endpoint="/bill/client-bills" title={t('cb.title')} session={session.data} rowHref={(r) => `/bill/client-bills?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/client-bills?id=${r.id}`)} cardFields={['billNo', 'project', 'periodTo', 'gross', 'net', 'client', 'status']} statusKey="status" empty={{ title: t('cb.emptyTitle'), text: t('cb.emptyBody') }} />
     </section>
@@ -120,14 +121,14 @@ export function ClientBillsPage() {
 }
 export function PrepareBillPage() {
   const t = useT('bill'); usePageTitle(t('cb.prepare')); const { error, run, busy } = useRunner();
-  return (<section aria-labelledby="cbn-h" data-testid="bill-cb-prepare"><h1 id="cbn-h">{t('cb.prepare')}</h1><p className="muted">{t('cb.prepareIntro')}</p><p><Link to="/bill/client-bills">{t('cb.title')}</Link></p><BillForm initial={blank()} isNew busy={busy} error={error} onSave={async (v) => { const r = await run(() => bill.post('/client-bills', payload(v))); if (r) navigateTo(`/bill/client-bills?id=${r.id}`); }} /></section>);
+  return (<section aria-labelledby="cbn-h" data-testid="bill-cb-prepare"><PageHeader id="cbn-h" title={t('cb.prepare')} subtitle={t('cb.prepareIntro')} meta={<Link to="/bill/client-bills">{t('cb.title')}</Link>} /><BillForm initial={blank()} isNew busy={busy} error={error} onSave={async (v) => { const r = await run(() => bill.post('/client-bills', payload(v))); if (r) navigateTo(`/bill/client-bills?id=${r.id}`); }} /></section>);
 }
 export function BillAbstractPage() {
   const t = useT('bill'); usePageTitle(t('cba.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const { error, run } = useRunner(); const { q, guard } = useRecord('/client-bills', id, t('cba.title'), 'bill.client_bill.view');
-  if (!id) return <section aria-labelledby="cba-h"><h1 id="cba-h">{t('cba.title')}</h1><div className="empty-state"><h2>{t('cba.pickTitle')}</h2><p>{t('cba.pickBody')}</p><Link to="/bill/client-bills">{t('cb.title')}</Link></div></section>;
+  if (!id) return <section aria-labelledby="cba-h"><PageHeader id="cba-h" title={t('cba.title')} /><div className="empty-state"><h2>{t('cba.pickTitle')}</h2><p>{t('cba.pickBody')}</p><Link to="/bill/client-bills">{t('cb.title')}</Link></div></section>;
   if (guard) return guard; const x = q.data;
   return (
-    <section aria-labelledby="cba-h" data-testid="bill-cb-abstract"><h1 id="cba-h">{t('cba.title')} · {x.billNo}</h1><p>{x.project} · {x.contractNo} · {t(`bt.${x.billType}`)} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</p><ErrorLine error={error} id="bill-error" />
+    <section aria-labelledby="cba-h" data-testid="bill-cb-abstract"><PageHeader id="cba-h" title={<>{t('cba.title')} · {x.billNo}</>} meta={<>{x.project} · {x.contractNo} · {t(`bt.${x.billType}`)} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</>} /><ErrorLine error={error} id="bill-error" />
       <div className="actions-row no-print"><button type="button" className="btn btn-primary" style={big} onClick={() => run(() => bill.exportFile(`/client-bills/${x.id}/print`, `${x.billNo.replaceAll('/', '-')}.pdf`))} data-testid="bill-cb-pdf">{t('cba.pdf')}</button><button type="button" className="btn" style={big} onClick={() => globalThis.print()} data-testid="bill-cb-print">{t('print')}</button><Link to={`/bill/client-bills?id=${x.id}`}>{x.billNo}</Link></div>
       <AbstractTable x={x} testid="bill-cba-items" /><h2>{t('cb.tab.deductions')}</h2><Deductions x={x} /><h2>{t('cb.tab.summary')}</h2><Summary x={x} testid="bill-cba-summary" />
     </section>

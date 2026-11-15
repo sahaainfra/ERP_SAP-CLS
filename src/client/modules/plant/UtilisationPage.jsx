@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate, fmtQty, fmtRs, lg, pl } from './api.js';
 import { ExportButton } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Utilisation and availability (part 17.03, FR-04, FR-05): by equipment, class or site for a period. Utilisation is the working hours over the hours available (the days on site less breakdown); availability is the hours available over the calendar.
 // Only verified logs count; the hours waiting for verification are shown apart. A row opens its logs; costs are shown to those who may see them.
@@ -18,7 +19,7 @@ export default function UtilisationPage() {
   if (q.error?.status === 403) return <NoPermission what={t('l.utilTitle')} permission="plant.log.report" />; if (q.isPending) return <Skeleton label={t('l.utilTitle')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const o = oq.data; const set = (k, v) => { setF((s) => ({ ...s, [k]: v })); setOpen(null); }; const cell = (v) => fmtQty(v);
   return (
-    <section aria-labelledby="ut-h" data-testid="plant-util"><h1 id="ut-h">{t('l.utilTitle')}</h1><p className="muted">{t('l.utilIntro', { h: d.availableHoursPerDay })}</p>
+    <section aria-labelledby="ut-h" data-testid="plant-util"><PageHeader id="ut-h" title={t('l.utilTitle')} subtitle={t('l.utilIntro', { h: d.availableHoursPerDay })} />
       <div className="mdm-panel no-print" data-testid="ut-params"><div className="form-grid">
         <label>{t('l.groupBy')}<select value={f.groupBy} onChange={(ev) => set('groupBy', ev.target.value)} style={{ minHeight: 44 }} data-testid="ut-group">{['equipment', 'class', 'site'].map((g) => <option key={g} value={g}>{t(`l.gb.${g}`)}</option>)}</select></label>
         <label>{t('project')}<select value={f.projectId} onChange={(ev) => set('projectId', ev.target.value)} style={{ minHeight: 44 }} data-testid="ut-project"><option value="">{t('allProjects')}</option>{(o?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label>

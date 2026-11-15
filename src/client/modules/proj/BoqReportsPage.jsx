@@ -5,6 +5,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { bq, inr } from './api.js';
 import { Tabs, useSearch } from './parts.jsx';
 import { useState } from 'react';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // BOQ Reports (part 10.04, FR-01, BR-01): the abstract of a version (bills and sections with their amounts and shares), the comparison of two versions (items added, removed and changed, and the change of the total) and the unmapped items.
 export default function BoqReportsPage() {
@@ -17,7 +18,7 @@ export default function BoqReportsPage() {
   const all = vq.data ?? []; const cur = all.find((x) => x.id === versionId);
   return (
     <section aria-labelledby="rep-h" data-testid="boq-reports">
-      <h1 id="rep-h">{t('rep.title')}</h1>
+      <PageHeader id="rep-h" title={t('rep.title')} />
       <div className="form-grid">
         <Field label={t('rep.version')} name="versionId"><select value={versionId ?? ''} onChange={(e) => go(e.target.value, other)} data-testid="rep-version"><option value="">{t('rep.choose')}</option>{all.map((v) => <option key={v.id} value={v.id}>{v.docNo} · {v.project} · {v.typeLabel} v{v.versionNo}</option>)}</select></Field>
         {tab === 'compare' && <Field label={t('rep.against')} name="compare"><select value={other ?? ''} onChange={(e) => go(versionId, e.target.value)} data-testid="rep-against"><option value="">{t('rep.choose')}</option>{all.filter((v) => !cur || v.projectId === cur.projectId).map((v) => <option key={v.id} value={v.id}>{v.docNo} · {v.typeLabel} v{v.versionNo}</option>)}</select></Field>}

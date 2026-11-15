@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Field, FormDialog, QueryState, can, errorInfo, usePageTitle } from '../../core/pages/ui.jsx';
 import { useOrgTree, useOrgUpdate } from '../api/org.js';
 import { StatusChip } from '../components/OrgList.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const flatten = (nodes, depth = 0) => nodes.flatMap((n) => [{ ...n, depth }, ...flatten(n.children ?? [], depth + 1)]);
 const descendantIds = (node) => [node.id, ...(node.children ?? []).flatMap(descendantIds)];
@@ -99,11 +100,7 @@ export default function OrgChartPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Organisation &rsaquo; Chart</nav>
-      <div className="page-head">
-        <h1 id="page-title">Organisation Chart</h1>
-        <div className="actions"><button type="button" className="btn" onClick={() => window.print()}>Print or save as PDF</button></div>
-      </div>
-      <p className="muted">{t?.company ? `${t.company.name}. ` : ''}Divisions and departments with their heads. {canMove ? 'Drag a department onto another to move it, or use Move. ' : ''}Person-level reporting lines arrive with the user master.</p>
+      <PageHeader id="page-title" title={"Organisation Chart"} actions={<><div className="actions"><button type="button" className="btn" onClick={() => window.print()}>Print or save as PDF</button></div></>} subtitle={<>{t?.company ? `${t.company.name}. ` : ''}Divisions and departments with their heads. {canMove ? 'Drag a department onto another to move it, or use Move. ' : ''}Person-level reporting lines arrive with the user master.</>} />
       <div role="tablist" aria-label="Chart views" className="actions">
         {[['departments', 'Departments'], ['branches', 'Branches & regions'], ['projects', 'Projects & sites'], ['locations', 'Locations']].map(([id, label]) => (
           <button key={id} type="button" role="tab" id={`ctab-${id}`} aria-selected={view === id} className={`btn${view === id ? ' btn-primary' : ''}`} onClick={() => setView(id)}>{label}</button>

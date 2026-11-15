@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHECK_TONE, WA_TONE, fmtDate, fmtQty, st, today } from './api.js';
 import { CloseForm } from './WasPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Approve WA / Close WA (part 14.01, FR-04) on a phone: large buttons, few words to type. What waits for my approval (with its checks), and the approved WAs of the day I can close
 // with the quantity done (the DPR quantity filled in) and what was used. Approval goes through the workflow engine's own task, so the chain cannot be bypassed.
@@ -37,7 +38,7 @@ export default function MobilePage() {
   if (q.error?.status === 403) return <NoPermission what={t('mb.title')} permission="site.work_authorisation.view" />;
   return (
     <section aria-labelledby="mb-h" data-testid="site-mobile" style={{ maxWidth: 640 }}>
-      <h1 id="mb-h">{t('mb.title')}</h1>
+      <PageHeader id="mb-h" title={t('mb.title')} />
       {!online && <p className="mdm-banner" role="status" data-testid="mb-offline">{t('mb.offline')}</p>}
       <Field label={t('f.date')} name="date"><input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} style={{ minHeight: 44 }} data-testid="mb-date" /></Field>
       {note && <p className="mdm-banner" role="status" data-testid="mb-note">{note}</p>}

@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, downloadCsv, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANGE_STATUS, CONTROLS, NATURE, TYPES, TYPE_LABEL, fin, parseLedgers } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Chart of Accounts (Finance, part 06.05, FR-01, FR-02, FR-06): the group tree of the company (Assets, Liabilities, Equity, Income, Expenses and the groups under them, each with its Schedule III line) with its
 // ledgers (type, normal side, control account, manual posting, blocked), search and filters; the Schedule III view that shows whether every group and account lands on a line (T-02); the import of a ledger list
@@ -48,8 +49,7 @@ export default function ChartOfAccountsPage() {
     </li>));
   return (
     <section aria-labelledby="coa-title" data-testid="chart-of-accounts" className="fin-page">
-      <div className="page-head"><h1 id="coa-title">Chart of Accounts</h1>
-        <div className="actions-row">{d.canEdit && <><button type="button" className="btn btn-primary btn-small" onClick={() => { setError(null); setForm({ kind: 'account', ...blankAccount(d.groups.find((g) => g.parentId)?.id ?? '') }); }} data-testid="coa-new-account">New account</button><button type="button" className="btn btn-small" onClick={() => { setError(null); setForm({ kind: 'group', code: '', name: '', parentId: d.groups.find((g) => !g.parentId)?.id, schedule3: '', reason: '' }); }} data-testid="coa-new-group">New group</button></>}<button type="button" className="btn btn-small" onClick={exportCsv} data-testid="coa-export">Export CSV</button></div></div>
+      <PageHeader id="coa-title" title={"Chart of Accounts"} actions={<><div className="actions-row">{d.canEdit && <><button type="button" className="btn btn-primary btn-small" onClick={() => { setError(null); setForm({ kind: 'account', ...blankAccount(d.groups.find((g) => g.parentId)?.id ?? '') }); }} data-testid="coa-new-account">New account</button><button type="button" className="btn btn-small" onClick={() => { setError(null); setForm({ kind: 'group', code: '', name: '', parentId: d.groups.find((g) => !g.parentId)?.id, schedule3: '', reason: '' }); }} data-testid="coa-new-group">New group</button></>}<button type="button" className="btn btn-small" onClick={exportCsv} data-testid="coa-export">Export CSV</button></div></>} />
       {d.missingControls.length > 0 && <p className="mdm-banner is-warning" role="alert" data-testid="coa-missing">Control accounts missing: {d.missingControls.map((m) => m.label).join(', ')}.</p>}
       {d.pending > 0 && <p className="mdm-banner" data-testid="coa-pending">{d.pending} change{d.pending === 1 ? '' : 's'} waiting for approval. <button type="button" className="btn btn-small" onClick={() => setTab('changes')}>See them</button></p>}
       {note && <p className="mdm-banner" role="status" data-testid="coa-note">{note}</p>}

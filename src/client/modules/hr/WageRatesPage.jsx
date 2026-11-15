@@ -7,6 +7,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { SKILL_LABELS, dayIST, lab } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Wage Rates & Minimum Wages (HR, part 07.08, FR-04): the minimum wage notifications by state and skill, and the rates contracted with each contractor by trade; effective-dated, daily, hourly or by the piece. A new rate is approved
 // (HR manager; the commercial manager too for a contract rate) and replaces the old one from its date; a contract rate below the minimum wage of the state and skill on its date is refused. "What to pay" shows the rate that applies.
@@ -31,7 +32,7 @@ export default function WageRatesPage() {
   };
   return (
     <section aria-labelledby="wr-title" data-testid="wages">
-      <h1 id="wr-title">Wage Rates & Minimum Wages</h1>
+      <PageHeader id="wr-title" title={"Wage Rates & Minimum Wages"} />
       {note && <p className="mdm-banner" role="status" data-testid="wr-note">{note}</p>}
       {canEdit && <div className="actions-row"><button type="button" className="btn btn-primary" onClick={() => setOpen(true)} data-testid="wr-new">New rate</button></div>}
       {open && (

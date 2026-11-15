@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, qa } from './api.js';
 import { DocBar, Status, sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Inspection requests (part 18.02): the register with ageing, the request object where the inspector records findings and decides (the consultant also, when required), and the raise form for a phone.
 const RES_TONE = { APPROVED: 'APPROVED', APPROVED_WITH_COMMENTS: 'RETURNED', REJECTED: 'REJECTED' }; const REASONS = ['WORKMANSHIP', 'MATERIAL', 'DRAWING', 'SAFETY', 'INCOMPLETE', 'DOCUMENTS', 'OTHER'];
@@ -17,8 +18,7 @@ function Request({ id }) {
   const iq = useQuery({ queryKey: ['qa', 'ir-inspections', id], queryFn: () => qa.get('/inspections?pageSize=50'), enabled: Boolean(q.data?.assess), retry: false }); usePageTitle(t('ir.title')); if (guard) return guard; const x = q.data;
   const before = async (action) => { if (action === 'reject' && !reason) throw Object.assign(new Error(t('ir.reasonNeeded')), { status: 400 }); if (reason || text || insId) await qa.post(`/inspection-requests/${x.id}/assess`, { reasonCode: reason || null, assessment: text || null, inspectionId: insId ? Number(insId) : null }); };
   return (
-    <div data-testid="qa-ir-object" data-status={x.status} data-result={x.result ?? ''}><h1 id="ir-h">{x.docNo} <Status x={x} /> {x.result && <StatusBadge status={RES_TONE[x.result]} label={t(`ires.${x.result}`)} />}</h1>
-      <p><Link to="/qa/inspection-requests">{t('ir.title')}</Link> · {x.project} · {x.activity ?? '—'} · {t(`pt.${x.pointType}`)}{x.itpStepCode ? ` ${x.itpStepCode}` : ''} · {t('ir.wantedFor')} {fmtDate(x.requestedFor)}{x.ageDays != null ? ` · ${t('ir.age', { n: x.ageDays })}` : ''}{x.overdue ? ` · ${t('ir.overdue')}` : ''}{x.consultantRequired ? ` · ${t('ir.consultantNeeded')}` : ''}</p>
+    <div data-testid="qa-ir-object" data-status={x.status} data-result={x.result ?? ''}><PageHeader id="ir-h" title={<>{x.docNo} <Status x={x} /> {x.result && <StatusBadge status={RES_TONE[x.result]} label={t(`ires.${x.result}`)} />}</>} meta={<><Link to="/qa/inspection-requests">{t('ir.title')}</Link> · {x.project} · {x.activity ?? '—'} · {t(`pt.${x.pointType}`)}{x.itpStepCode ? ` ${x.itpStepCode}` : ''} · {t('ir.wantedFor')} {fmtDate(x.requestedFor)}{x.ageDays != null ? ` · ${t('ir.age', { n: x.ageDays })}` : ''}{x.overdue ? ` · ${t('ir.overdue')}` : ''}{x.consultantRequired ? ` · ${t('ir.consultantNeeded')}` : ''}</>} />
       <p>{x.description}</p>
       {x.reinspectionOf && <p data-testid="ir-reinspection-of">{t('ir.reinspectionOf')} <Link to={`/qa/inspection-requests?id=${x.reinspectionOf.id}`}>{x.reinspectionOf.docNo}</Link></p>}
       {x.needsReinspection && <div className="mdm-banner" role="status" data-testid="ir-needs-reinspection"><p>{t('ir.needsReinspection')}</p><Link to={`/qa/inspection-requests/new?reinspectionOfId=${x.id}`}>{t('ir.raiseReinspection')}</Link></div>}
@@ -38,7 +38,7 @@ export default function InspectionRequestsPage() {
   const t = useT('qa'); usePageTitle(t('ir.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="ir-h"><Request id={id} /></section>;
   return (
-    <section aria-labelledby="irl-h" data-testid="qa-irs"><h1 id="irl-h">{t('ir.title')}</h1><p className="muted">{t('ir.intro')}</p>
+    <section aria-labelledby="irl-h" data-testid="qa-irs"><PageHeader id="irl-h" title={t('ir.title')} subtitle={t('ir.intro')} />
       <div className="actions-row no-print"><Link to="/qa/inspection-requests/new">{t('ir.raise')}</Link><Link to="/qa/ir-analysis">{t('ira.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/inspection-requests/export', 'inspection-requests.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="ir-export">{t('export')}</button></div>
       <ListReport listCode="qa.inspection_requests" endpoint="/qa/inspection-requests" title={t('ir.title')} session={session.data} rowHref={(r) => `/qa/inspection-requests?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/inspection-requests?id=${r.id}`)} cardFields={['docNo', 'activity', 'requestedFor', 'status']} statusKey="status" dateKey="requestedFor" empty={{ title: t('ir.emptyTitle'), text: t('ir.emptyBody') }} />
     </section>
@@ -51,7 +51,7 @@ export function IrRaisePage() {
   const send = async () => { const body = { projectId: Number(f.projectId), siteId: f.siteId ? Number(f.siteId) : null, plannedPointId: f.plannedPointId ? Number(f.plannedPointId) : null, activityId: f.activityId ? Number(f.activityId) : null, pointType: f.pointType, description: f.description || null, requestedFor: f.requestedFor, consultantRequired: f.consultantRequired, reinspectionOfId: f.reinspectionOfId ? Number(f.reinspectionOfId) : null, submit: true }; const d = await run(() => qa.make('/inspection-requests', body), t('saved')); if (d) navigateTo(`/qa/inspection-requests?id=${d.id}`); };
   const big = { minHeight: 48, fontSize: '1rem' }; const points = (o?.points ?? []).filter((p) => !f.projectId || String(p.projectId) === String(f.projectId));
   return (
-    <section aria-labelledby="irr-h" data-testid="qa-ir-raise"><h1 id="irr-h">{t('ir.raise')}</h1><p className="muted"><Link to="/qa/inspection-requests">{t('ir.title')}</Link></p>
+    <section aria-labelledby="irr-h" data-testid="qa-ir-raise"><PageHeader id="irr-h" title={t('ir.raise')} subtitle={<Link to="/qa/inspection-requests">{t('ir.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="irr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('project')} name="projectId" error={error}><select value={f.projectId} onChange={(e) => set('projectId', e.target.value)} style={big} data-testid="irr-project"><option value="">—</option>{(o?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>

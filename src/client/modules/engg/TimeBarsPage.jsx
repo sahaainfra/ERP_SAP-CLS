@@ -6,6 +6,7 @@ import { useSession } from '../core/api/index.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, lt } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Notices and Time Bars (part 11.05, FR-04): notices the contract requires within a time limit, with the days left, the alerts, and the letter that served them.
 export default function TimeBarsPage() {
@@ -24,7 +25,7 @@ export default function TimeBarsPage() {
   const d = q.data;
   return (
     <section aria-labelledby="tb-h" data-testid="eg-timebars">
-      <h1 id="tb-h">{t('tb.title')}</h1>
+      <PageHeader id="tb-h" title={t('tb.title')} />
       <div className="actions-row no-print">
         {perms.includes('engg.letter.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="tb-new">{t('tb.new')}</button>}
         {perms.includes('engg.letter.approve') && <button type="button" className="btn" onClick={() => run(() => lt.alerts(), (r) => t('tb.alertsRun', { alerts: r.timeBarAlerts.length, lapsed: r.lapsed.length, overdue: r.replyOverdue.length }))} data-testid="tb-run">{t('tb.runAlerts')}</button>}

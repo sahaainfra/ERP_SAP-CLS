@@ -8,6 +8,7 @@ import { CHANNELS, USER_FIELDS, USER_STATUS, USER_TYPES, UserStatusChip, roleLab
 import { checkDuplicates, listParams, useBulkUsers, useCreateUser, useUserRoles, useUsers } from '../api/users.js';
 import { useOrgList } from '../api/org.js';
 import UserPage from './UserPage.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const COLUMNS = [
   { key: 'displayName', label: 'Name', sort: 'displayName' },
@@ -141,8 +142,7 @@ function UserList({ session, onOpen }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Users</nav>
-      <div className="page-head"><h1 id="page-title">Users</h1></div>
-      <p className="muted">Every person has one account and no access until a role is approved. New people are invited, set their own password, and wait in Onboarding until a role is granted.</p>
+      <PageHeader id="page-title" title={"Users"} subtitle={"Every person has one account and no access until a role is approved. New people are invited, set their own password, and wait in Onboarding until a role is granted."} />
       <p role="status" className="notice" data-testid="users-notice">{notice}</p>
       {result?.failed > 0 && (
         <div className="state state-error" role="alert" data-testid="bulk-result">

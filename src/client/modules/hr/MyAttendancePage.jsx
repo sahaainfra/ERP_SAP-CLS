@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, ess } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Attendance (HR, part 07.09, FR-01): my days of a month from the register (in, out, late, hours, paid or not) and the punches of today, with the doors to correct a punch. Only my own days are ever read.
 const TONE = { PRESENT: 'ACTIVE', ON_DUTY: 'ACTIVE', HALF_DAY: 'AT_RISK', ON_LEAVE: 'IN_REVIEW', ABSENT: 'OVERDUE', MISSING_PUNCH: 'OVERDUE', WEEKLY_OFF: 'CLOSED', HOLIDAY: 'CLOSED', COMP_OFF: 'ACTIVE', HOLIDAY_WORKED: 'ACTIVE', WEEKLY_OFF_WORKED: 'ACTIVE' };
@@ -17,7 +18,7 @@ export default function MyAttendancePage() {
   const d = q.data;
   return (
     <section aria-labelledby="ma-title" data-testid="my-attendance">
-      <h1 id="ma-title">{t('att.title')}</h1>
+      <PageHeader id="ma-title" title={t('att.title')} />
       <form className="srch-form" aria-label={t('att.month')} onSubmit={(e) => e.preventDefault()}><Field label={t('att.month')} name="month" error={null}><input type="month" value={month} max={dayIST(0).slice(0, 7)} onChange={(e) => e.target.value && setMonth(e.target.value)} data-testid="ma-month" /></Field></form>
       {q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : q.isPending ? <Skeleton label={t('att.title')} rows={5} /> : (
         <>

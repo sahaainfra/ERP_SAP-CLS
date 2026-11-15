@@ -2,6 +2,7 @@ import { useT } from '../../platform/i18n/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Budget Versions (part 12.01): every budget of the projects the person may see, original and revised, with its status, totals and the margin warning.
 export default function BudgetsPage() {
@@ -11,7 +12,7 @@ export default function BudgetsPage() {
   const fp = Number(/filter\[projectId\]=(\d+)/.exec(window.location.search)?.[1]) || null;
   return (
     <section aria-labelledby="bd-list-h" data-testid="bd-budgets">
-      <h1 id="bd-list-h" className="sr-only">{t('list.title')}</h1>
+      <PageHeader id="bd-list-h" srOnly title={t('list.title')} />
       <div className="actions-row no-print">
         {perms.includes('bud.budget.create') && <button type="button" className="btn btn-primary" onClick={() => navigateTo('/bud/generate')} data-testid="bd-new">{t('list.generate')}</button>}
       </div>

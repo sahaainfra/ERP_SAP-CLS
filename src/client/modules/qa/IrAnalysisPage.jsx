@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { qa } from './api.js';
 import { sel } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // IR Rejection Analysis (part 18.02): how many requests are open and how old, the first-time approval rate, why requests are rejected and which are waiting for a re-inspection. Every figure opens the requests behind it.
 export default function IrAnalysisPage() {
@@ -13,7 +14,7 @@ export default function IrAnalysisPage() {
   if (q.error?.status === 403) return <NoPermission what={t('ira.title')} permission="qa.inspection_request.view" />; if (q.isPending) return <Skeleton label={t('ira.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const a = q.data; const tile = (k, v, to) => <div key={k} className="mdm-panel" data-testid={`ira-${k}`}><div className="muted">{t(`ira.${k}`)}</div><strong style={{ fontSize: '1.6rem' }}>{v}</strong>{to && <div><Link to={to}>{t('ira.open')}</Link></div>}</div>;
   return (
-    <section aria-labelledby="ira-h" data-testid="qa-ir-analysis"><h1 id="ira-h">{t('ira.title')}</h1><p className="muted"><Link to="/qa/inspection-requests">{t('ir.title')}</Link></p>
+    <section aria-labelledby="ira-h" data-testid="qa-ir-analysis"><PageHeader id="ira-h" title={t('ira.title')} subtitle={<Link to="/qa/inspection-requests">{t('ir.title')}</Link>} />
       <div className="mdm-panel no-print"><label>{t('project')}<select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={sel} data-testid="ira-project"><option value="">{t('allProjects')}</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label></div>
       <div className="form-grid">{tile('total', a.total, '/qa/inspection-requests')}{tile('open', a.open, '/qa/inspection-requests?filter[status]=SUBMITTED')}{tile('overdue', a.overdue)}{tile('firstTime', a.firstTimeApprovalPct == null ? '—' : `${a.firstTimeApprovalPct} %`)}{tile('rejected', a.rejected, '/qa/inspection-requests?filter[status]=REJECTED')}{tile('pending', a.pendingReinspection)}</div>
       <div className="table-scroll"><table className="data-table" data-testid="ira-ageing"><caption>{t('ira.ageing')}</caption><thead><tr><th>{t('ira.days')}</th><th className="num">{t('ira.count')}</th></tr></thead><tbody>{a.ageing.map((b) => <tr key={b.label}><td>{b.label}</td><td className="num">{b.count}</td></tr>)}</tbody></table></div>

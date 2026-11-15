@@ -7,6 +7,8 @@ import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate } from './api.js';
 import { mm } from './api.js';
 import { ExportButton, FilterPanel, RecordTable, rs } from './MmdParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Materials management dashboard (part 16.11, FR-01 to FR-04): inventory value, stock turns, items below reorder, receipts waiting for inspection, open material requests, issues today, transfers in transit, non-moving value, wastage against the allowed
 // and the reconciliation status; the work queues; the alerts. Company, project and store views are the same page with different filters. Every tile opens the records it counts; the server works every figure out from the ledgers.
@@ -33,11 +35,11 @@ export default function MaterialsDashboardPage() {
   ];
   const queues = Object.values(d.queues); const fq = { projectId: f.projectId, storeId: f.storeId, from: f.from, to: f.to };
   return (
-    <section aria-labelledby="md-h" data-testid="inv-md"><h1 id="md-h">{t('md.title')} · {d.view === 'store' ? `${t('md.viewStore')} ${d.store.code}` : d.view === 'project' ? `${t('md.viewProject')} ${d.project.code}` : t('md.viewCompany')}</h1><p className="muted">{t('md.intro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</p>
+    <section aria-labelledby="md-h" data-testid="inv-md"><PageHeader id="md-h" title={<>{t('md.title')} · {d.view === 'store' ? `${t('md.viewStore')} ${d.store.code}` : d.view === 'project' ? `${t('md.viewProject')} ${d.project.code}` : t('md.viewCompany')}</>} subtitle={<>{t('md.intro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</>} />
       <FilterPanel value={f} onChange={(v) => { setF(v); setOpen(null); }} />
       <div className="actions-row no-print"><Link to="/approvals">{t('md.myActions')}{tq.data != null ? ` (${tq.data})` : ''}</Link><Link to="/inv/material-funnel">{t('md.funnelTitle')}</Link><Link to="/inv/dashboard">{t('dashTitle')}</Link>{d.procurement && <Link to={d.procurement.route}>{t('md.procurement', { a: d.procurement.openPrs, b: d.procurement.ordersAwaitingApproval, c: d.procurement.overdueDeliveries })}</Link>}{d.canExport && <ExportButton query={{ ...fq, kind: 'kpis' }} name="materials-dashboard.csv" />}</div>
-      <div className="tiles" data-testid="md-tiles">{tiles.map(([id, label, value, status, hint, kind, extra]) => <div key={id} className="tile-wrap"><Tile label={label} value={value} status={status === 'warn' ? 'neutral' : status} hint={hint} testId={`md-${id}`} />{extra && <span className="muted small" data-testid="md-trend"> {extra}</span>}
-        {kind ? <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setOpen(open === kind ? null : kind)} aria-expanded={open === kind} data-testid={`md-open-${id}`}>{t('md.records')}</button> : <Link to="/inv/reconciliations">{t('md.openList')}</Link>}</div>)}</div>
+      <KpiRow data-testid="md-tiles">{tiles.map(([id, label, value, status, hint, kind, extra]) => <div key={id} className="tile-wrap"><Tile label={label} value={value} status={status === 'warn' ? 'neutral' : status} hint={hint} testId={`md-${id}`} />{extra && <span className="muted small" data-testid="md-trend"> {extra}</span>}
+        {kind ? <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setOpen(open === kind ? null : kind)} aria-expanded={open === kind} data-testid={`md-open-${id}`}>{t('md.records')}</button> : <Link to="/inv/reconciliations">{t('md.openList')}</Link>}</div>)}</KpiRow>
       {open && <div className="mdm-panel" data-testid="md-drill"><h2>{dq.data?.title ?? t('md.records')}</h2>{dq.isPending ? <Skeleton label={t('md.records')} rows={3} /> : dq.isError ? <ErrorState error={dq.error} onRetry={dq.refetch} /> : <><p className="muted small">{t('md.shown', { n: dq.data.rows.length, total: dq.data.total })}</p><RecordTable rows={dq.data.rows} />{d.canExport && <ExportButton query={{ ...fq, kind: open }} name={`materials-${open}.csv`} testId="md-export-drill" />}</>}</div>}
       <div className="mdm-panel" data-testid="md-alerts"><h2>{t('md.alerts')}</h2>{d.alerts.length === 0 ? <p className="muted" data-testid="md-alerts-empty">{t('md.noAlerts')}</p> : <ul>{d.alerts.map((a) => <li key={a.code} data-testid="md-alert" className={a.level === 'bad' ? 'field-error' : ''}>{a.drill ? <button type="button" className="link-button" onClick={() => setOpen(a.drill)}>{a.text}</button> : <Link to={a.link}>{a.text}</Link>}</li>)}</ul>}</div>
       <h2>{t('md.queues')}</h2>

@@ -7,6 +7,7 @@ import { todayIst } from '../forms/dates.js';
 import { useContextOptions } from '../shell/api.js';
 import { Banner } from '../feedback/Feedback.jsx';
 import { QueryState, errorInfo, navigateTo } from '../../modules/core/pages/ui.jsx';
+import PageHeader from '../design/PageHeader.jsx';
 
 /** The filters a dashboard opens with: what its layout saved, else this financial year, with the person's working project if they have one. */
 const startFilters = (saved, selected) => ({ projectId: saved.projectId ?? selected?.projectId ?? null, siteId: saved.siteId ?? (saved.projectId ? null : selected?.siteId) ?? null, preset: saved.preset ?? 'this-fy', from: saved.from, to: saved.to });
@@ -31,8 +32,8 @@ export default function DashboardView({ code, heading, crumb, intro }) {
   }, [dash.data, ctx.data, filters]);
 
   const pending = [dash, cat].find((q) => q.isPending || q.isError);
-  if (pending) return <section aria-labelledby="page-title"><h1 id="page-title">{heading}</h1><QueryState query={pending} what={heading} /></section>;
-  if (!filters) return <section aria-labelledby="page-title"><h1 id="page-title">{heading}</h1></section>;
+  if (pending) return <section aria-labelledby="page-title"><PageHeader id="page-title" title={heading} /><QueryState query={pending} what={heading} /></section>;
+  if (!filters) return <section aria-labelledby="page-title"><PageHeader id="page-title" title={heading} /></section>;
 
   const view = dash.data;
   const layout = draft ?? view.layout;
@@ -57,11 +58,7 @@ export default function DashboardView({ code, heading, crumb, intro }) {
   const origin = { system: 'the standard layout', role: `the default of your role ${view.roleCode ?? ''}`.trim(), personal: 'your own layout' }[view.source];
   return (
     <section aria-labelledby="page-title" className="dash" data-testid="dashboard" data-source={view.source}>
-      {crumb && <nav aria-label="Breadcrumb" className="breadcrumb">{crumb}</nav>}
-      <div className="page-head">
-        <h1 id="page-title">{view.name ?? heading}</h1>
-        <span className="spacer" />
-        {draft === null ? (
+      <PageHeader id="page-title" title={view.name ?? heading} crumb={crumb} subtitle={intro} actions={<>{draft === null ? (
           <>
             {view.hasPersonal && <button type="button" className="btn" onClick={doReset} disabled={reset.isPending}>Reset to default</button>}
             <button type="button" className="btn" onClick={() => { setDraft(view.layout); setMessage(null); }} data-testid="customise">Customise</button>
@@ -77,9 +74,7 @@ export default function DashboardView({ code, heading, crumb, intro }) {
             <button type="button" className="btn btn-primary" onClick={doSave} disabled={!dirty || incomplete || save.isPending} data-testid="save-layout">Save my layout</button>
             <button type="button" className="btn" onClick={() => { if (!dirty || window.confirm('Discard your changes to the layout?')) setDraft(null); }}>Cancel</button>
           </>
-        )}
-      </div>
-      {intro && <p className="muted">{intro}</p>}
+        )}</>} />
       {message && <Banner tone={message.tone === 'error' ? 'error' : 'success'} testId="dash-message" onClose={() => setMessage(null)}>{message.text}</Banner>}
       {view.omitted > 0 && <p className="muted small" data-testid="dash-omitted">{view.omitted} widget{view.omitted === 1 ? ' is' : 's are'} not shown because your role does not include what {view.omitted === 1 ? 'it needs' : 'they need'}.</p>}
       <p className="muted small" data-testid="dash-origin">Showing {origin}.{draft !== null ? ' Drag a widget by its title, or use the buttons on it, to arrange.' : ''}</p>

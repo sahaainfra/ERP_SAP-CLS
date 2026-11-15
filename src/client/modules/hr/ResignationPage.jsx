@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, ext } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Resignation (HR, part 07.13, FR-01, self-service): the employee states the reason and the day they would like to leave; the page shows the notice of the policy (shorter on probation) and the last working day it gives, and asks for a waiver or
 // a buyout when the day asked for is earlier. The manager and the HR manager accept it. Afterwards the page tracks the resignation: the last working day, the clearance of each department, the exit interview the employee can fill, and the letters.
@@ -27,7 +28,7 @@ export default function ResignationPage() {
   const run = async (fn, done) => { setError(null); setNote(null); try { await fn(); setNote(done); qc.invalidateQueries({ queryKey: ['ext'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="rs-title" data-testid="resignation" data-status={s?.status ?? 'NONE'}>
-      <h1 id="rs-title">{t('resign.title')}</h1>
+      <PageHeader id="rs-title" title={t('resign.title')} />
       <p className="muted" data-testid="rs-policy">{d.employee.name} · {t('resign.joined', { date: d.employee.doj })} · {d.employee.confirmed ? t('resign.confirmed') : t('resign.probation')} · {t('resign.notice', { n: d.employee.noticeDays })}</p>
       {error?.form && <p className="field-error" role="alert" data-testid="rs-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="rs-note">{note}</p>}

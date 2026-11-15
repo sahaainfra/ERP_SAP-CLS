@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { OPEN_STAGES, REGIONS, SECTORS, bd, inrShort } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Opportunity Pipeline (business development, part 08.01, FR-05): the opportunities in a column for each stage with the value and the weighted value of the column. An opportunity moves by drag and drop or by the "Move to" list (a keyboard can reach it);
 // the server decides: a stage that pursues a tender needs the go-ahead, a win does not come from here. The probability of the new stage applies.
@@ -25,7 +26,7 @@ export default function PipelinePage() {
   const total = open.reduce((a, c) => ({ count: a.count + c.count, value: a.value + c.value, weighted: a.weighted + c.weighted }), { count: 0, value: 0, weighted: 0 });
   return (
     <section aria-labelledby="pp-title" data-testid="pipeline">
-      <h1 id="pp-title">{t('pipe.title')}</h1>
+      <PageHeader id="pp-title" title={t('pipe.title')} />
       <form className="srch-form mdm-fields no-print" aria-label={t('pipe.filters')} onSubmit={(e) => e.preventDefault()}>
         <Field label={t('lead.sector')} name="sector" error={null}><select value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })} data-testid="pp-sector"><option value="">{t('filter.all')}</option>{SECTORS.map((k) => <option key={k} value={k}>{t(`sector.${k}`)}</option>)}</select></Field>
         <Field label={t('lead.region')} name="region" error={null}><select value={f.region} onChange={(e) => setF({ ...f, region: e.target.value })} data-testid="pp-region"><option value="">{t('filter.all')}</option>{REGIONS.map((k) => <option key={k} value={k}>{t(`region.${k}`)}</option>)}</select></Field>

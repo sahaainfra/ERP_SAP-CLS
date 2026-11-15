@@ -4,6 +4,7 @@ import { Field, FormDialog, Link, Pager, QueryState, can, downloadCsv, errorInfo
 import { useCreateRole, useMaskFields, usePermissions, useRequestRoleChange, useRole, useRoleCompare, useRoles } from '../api/access.js';
 import PermissionMatrix from '../components/PermissionMatrix.jsx';
 import RequestCards from '../components/RequestCards.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const ROLE_STATUS = { DRAFT: ['Draft', 'chip-not_applicable'], ACTIVE: ['Active', 'chip-pass'], RETIRED: ['Retired', 'chip-never'] };
 const CATEGORY = { HEAD_OFFICE: 'Head office', SITE_OFFICE: 'Site office', SUPPORTING: 'Supporting', EXTERNAL: 'External', CUSTOM: 'Custom' };
@@ -46,8 +47,7 @@ function RoleList({ session, onOpen }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Roles</nav>
-      <div className="page-head"><h1 id="page-title">Roles</h1></div>
-      <p className="muted">A role is a set of permissions, default field masks and a confidentiality clearance. System roles are templates and cannot be changed; clone one into a custom role to adapt it. Any change to a custom role is a request that the IT administrator (and, for a privileged role, the director) approves.</p>
+      <PageHeader id="page-title" title={"Roles"} subtitle={"A role is a set of permissions, default field masks and a confidentiality clearance. System roles are templates and cannot be changed; clone one into a custom role to adapt it. Any change to a custom role is a request that the IT administrator (and, for a privileged role, the director) approves."} />
       <p role="status" className="notice" data-testid="roles-notice">{notice}</p>
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Search roles</span><input type="search" placeholder="Search code or name" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label>
@@ -199,8 +199,7 @@ function RolePage({ id, session, onBack }) {
         <>
           <div className="page-head">
             <div>
-              <h1 id="page-title">{role.name}</h1>
-              <p className="muted"><code>{role.code}</code> · <KindChip kind={role.kind} /> · <StatusChip status={role.status} />{role.privileged ? <> · <span className="chip chip-fail">Privileged</span></> : null} · clearance {role.clearance}{role.parent ? ` · copy of ${role.parent.code}` : ''}</p>
+              <PageHeader id="page-title" title={role.name} subtitle={<><code>{role.code}</code> · <KindChip kind={role.kind} /> · <StatusChip status={role.status} />{role.privileged ? <> · <span className="chip chip-fail">Privileged</span></> : null} · clearance {role.clearance}{role.parent ? ` · copy of ${role.parent.code}` : ''}</>} />
             </div>
             <div className="actions">
               <button type="button" className="btn" onClick={onBack}>Back to the list</button>

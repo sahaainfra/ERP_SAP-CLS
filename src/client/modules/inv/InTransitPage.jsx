@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { fmtDate, fmtQty, fmtRs, saveCsv, tr } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // In-Transit Stock Ageing (part 16.05, FR-04): what has left a store and is not yet in another, or is held as a discrepancy, with its age and value; every row opens its transfer.
 export default function InTransitPage() {
@@ -13,7 +14,7 @@ export default function InTransitPage() {
   if (rq.error?.status === 403) return <NoPermission what={t('tr.reportTitle')} permission="inv.transfer.view" />;
   const d = rq.data;
   return (
-    <section aria-labelledby="it-h" data-testid="in-transit"><h1 id="it-h">{t('tr.reportTitle')}</h1><p className="muted">{t('tr.reportIntro')}</p><p><Link to="/inv/transfers">{t('tr.title')}</Link></p>
+    <section aria-labelledby="it-h" data-testid="in-transit"><PageHeader id="it-h" title={t('tr.reportTitle')} subtitle={t('tr.reportIntro')} meta={<Link to="/inv/transfers">{t('tr.title')}</Link>} />
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('tr.store')} name="storeId" error={null}><select value={storeId} onChange={(ev) => setStoreId(ev.target.value)} style={{ minHeight: 44 }} data-testid="it-store"><option value="">{t('tr.allStores')}</option>{(oq.data?.stores ?? []).map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field></div>
         {d && perms.includes('inv.transfer.export') && <div className="actions-row"><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => saveCsv('in-transit.csv', [[t('tr.title'), t('item'), t('tr.from'), t('tr.to'), t('tr.dispatched'), t('tr.age'), t('tr.onTheRoad'), t('tr.held'), t('r.value')], ...d.rows.map((x) => [x.docNo, x.item, x.from, x.to, x.dispatchDate, x.ageDays, x.onTheRoadQty, x.heldQty, x.value == null ? '' : x.value / 100])])} data-testid="it-export">{t('i.exportCsv')}</button></div>}</div>
       {rq.isPending ? <Skeleton label={t('tr.reportTitle')} rows={3} /> : rq.isError ? <ErrorState error={rq.error} onRetry={rq.refetch} /> : d.rows.length === 0 ? <div className="mdm-panel" data-testid="it-empty"><h2>{t('tr.itEmptyTitle')}</h2><p>{t('tr.itEmptyBody')}</p></div> : (<>

@@ -6,6 +6,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { authHeaders } from '../../platform/api/index.js';
 import { INSTR_STATUS, PRIORITY, comm } from '../../platform/messages/Comm.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Instruction Register (part 05.04, section 7.3): the instructions a person sent (or all of them, for those who may see all): sender, recipients, acknowledgement percentage, overdue. A parameter panel, KPI tiles and a bar
 // for each instruction, drill-down to the recipients and the message, CSV export that honours the filters, and cancel for the sender.
@@ -26,7 +27,7 @@ export default function InstructionRegisterPage() {
   const cancel = async (r) => { const why = window.prompt('Why is this instruction being cancelled?') ?? ''; if (why.trim().length < 5) return; try { await comm.cancelInstruction(r.id, why.trim()); qc.invalidateQueries({ queryKey: ['comm'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="ir-title" data-testid="instruction-register">
-      <h1 id="ir-title">Instruction Register</h1>
+      <PageHeader id="ir-title" title={"Instruction Register"} />
       <form className="srch-form" role="search" aria-label="Filter the register" onSubmit={(e) => e.preventDefault()}>
         {d.canAll && <Field label="Show" name="view" error={null}><select value={f.view} onChange={(e) => set({ view: e.target.value })} data-testid="ir-view"><option value="sent">Sent by me</option><option value="all">All instructions</option></select></Field>}
         <Field label="Status" name="status" error={null}><select value={f.status} onChange={(e) => set({ status: e.target.value })} data-testid="ir-status"><option value="">Any</option>{Object.entries(INSTR_STATUS).map(([k, [, l]]) => <option key={k} value={k}>{l}</option>)}</select></Field>

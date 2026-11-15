@@ -10,6 +10,7 @@ import { useSearch } from '../site/parts.jsx';
 import { ISSUE_TONE, download, fmtDate, fmtQty, fmtRs, is, iv } from './api.js';
 import { filePhoto } from './GateParts.jsx';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Material Issues (part 16.04): the list, and the issue slip with the lines, the authorisation it was issued against, the receiver acknowledgement (code or signature), the stock postings and the returns.
 function Issue({ t, id }) {
@@ -24,7 +25,7 @@ function Issue({ t, id }) {
   const ackSig = () => run(async () => { const up = await filePhoto(sig.file, 'inv_issue', g.id); return is.act(g.id, 'acknowledge', { method: 'SIGNATURE', receiverName: sig.name, signatureFileId: up.id }); }, t('i.issuedDone'));
   return (
     <div data-testid="issue-object" data-status={g.status}>
-      <h1 id="iss-h">{g.docNo} <StatusBadge status={ISSUE_TONE[g.status]} label={t(`is.${g.status}`)} /></h1><p><Link to="/inv/issues">{t('i.issuesTitle')}</Link> · {g.store} · {t(`i.it.${g.type}`)} · {g.issuedTo}</p>
+      <PageHeader id="iss-h" title={<>{g.docNo} <StatusBadge status={ISSUE_TONE[g.status]} label={t(`is.${g.status}`)} /></>} meta={<><Link to="/inv/issues">{t('i.issuesTitle')}</Link> · {g.store} · {t(`i.it.${g.type}`)} · {g.issuedTo}</>} />
       {g.exceptionNeeded && <p className="mdm-banner" role="status" data-testid="issue-exception">{t('i.exceptionNote')}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="issue-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="issue-note">{note}</p>}
       <dl className="kv"><div><dt>{t('i.wa')}</dt><dd>{g.waNo ?? g.mrNo ?? t('i.noWa')}</dd></div><div><dt>{t('i.date')}</dt><dd>{fmtDate(g.date)}</dd></div>{g.totalValue != null && <div><dt>{t('r.value')}</dt><dd data-testid="issue-value">{fmtRs(g.totalValue)}</dd></div>}{g.recoverableValue > 0 && <div><dt>{t('i.recoverable')}</dt><dd>{fmtRs(g.recoverableValue)}</dd></div>}<div><dt>{t('g.requestedBy')}</dt><dd>{g.requestedBy}</dd></div>{g.acknowledged && <div><dt>{t('i.receivedBy')}</dt><dd data-testid="issue-ack">{g.receiverName} ({t(`i.am.${g.ackMethod}`)}) · {String(g.ackAt).slice(0, 16).replace('T', ' ')}</dd></div>}</dl>
@@ -55,7 +56,7 @@ export default function IssuesPage() {
   if (id) return <section aria-labelledby="iss-h" data-testid="issues"><Issue key={id} t={t} id={id} /></section>;
   const k = sm.data;
   return (
-    <section aria-labelledby="isss-h" data-testid="issues"><h1 id="isss-h">{t('i.issuesTitle')}</h1><p className="muted">{t('i.issuesIntro')}</p>
+    <section aria-labelledby="isss-h" data-testid="issues"><PageHeader id="isss-h" title={t('i.issuesTitle')} subtitle={t('i.issuesIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.issue.create') && <Link to="/inv/issue-new">{t('i.newTitle')}</Link>} <Link to="/inv/site-returns">{t('i.returnsPageTitle')}</Link> {perms.includes('inv.free_issue.view') && <Link to="/inv/free-issue">{t('i.freeTitle')}</Link>}</div>
       {k && <div className="kpi-row" role="list" data-testid="issue-kpis">{['awaitingApproval', 'readyToHandOver', 'issuedToday', 'withoutAuthorisation'].map((key) => <div key={key} role="listitem" className="kpi-tile" data-testid={`issue-kpi-${key}`}><span className="kpi-value">{k[key]}</span><span className="kpi-label">{t(`i.kpi.${key}`)}</span></div>)}</div>}
       <ListReport listCode="inv.issues" endpoint="/inv/issues" title={t('i.issuesTitle')} session={session.data} rowHref={(r) => `/inv/issues?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/issues?id=${r.id}`)} cardFields={['docNo', 'issuedTo', 'store', 'status']} statusKey="status" dateKey="date" empty={{ title: t('i.issuesEmptyTitle'), text: t('i.issuesEmptyBody') }} /></section>

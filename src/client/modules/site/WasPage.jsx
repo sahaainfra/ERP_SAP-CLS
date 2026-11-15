@@ -10,6 +10,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { useSession } from '../core/api/index.js';
 import { CHECK_TONE, WA_TONE, fmtDate, fmtQty, openPrint, st, today } from './api.js';
 import { SiteDay, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Work Authorisations (part 14.01, FR-03 to FR-05): the list, a new WA (or an emergency one) and the WA itself: its plan, resources, the checks panel (drawing, budget, permit, hold points, plan),
 // what was used against it, the closure with the reconciliation, the approval (the construction manager; the project manager too outside the plan or for an emergency) and the revision.
@@ -85,8 +86,7 @@ function Wa({ t, id, onGone }) {
   const why = (fn, done) => { const x = window.prompt(t('act.why')); if (x) run(() => fn(x), done); };
   return (
     <div data-testid="wa-object" data-status={w.status}>
-      <h1 id="wa-h">{w.waNo} · {w.activity} <StatusBadge status={WA_TONE[w.status]} label={t(`wst.${w.status}`)} />{w.overdue && <> <StatusBadge status="OVERDUE" label={t('wa.overdue')} /></>}</h1>
-      <p><Link to="/site/work-authorisations">{t('wa.back')}</Link> · <Link to={`/site/board?siteId=${w.siteId}&date=${w.planDate}`}>{t('bd.title')}</Link></p>
+      <PageHeader id="wa-h" title={<>{w.waNo} · {w.activity} <StatusBadge status={WA_TONE[w.status]} label={t(`wst.${w.status}`)} />{w.overdue && <> <StatusBadge status="OVERDUE" label={t('wa.overdue')} /></>}</>} meta={<><Link to="/site/work-authorisations">{t('wa.back')}</Link> · <Link to={`/site/board?siteId=${w.siteId}&date=${w.planDate}`}>{t('bd.title')}</Link></>} />
       <dl className="kv" data-testid="wa-figures">
         <div><dt>{t('f.site')}</dt><dd>{w.projectCode} · {w.siteCode} {w.siteName}</dd></div><div><dt>{t('wa.front')}</dt><dd>{w.workFront ?? '—'}</dd></div><div><dt>{t('f.date')}</dt><dd>{fmtDate(w.planDate)} · {w.startTime}–{w.endTime}</dd></div>
         <div><dt>{t('wa.qtyShort')}</dt><dd data-testid="wa-planned">{fmtQty(w.plannedQty)} {w.uom ?? ''}</dd></div><div><dt>{t('wa.actual')}</dt><dd data-testid="wa-actual-v">{w.actualQty == null ? '—' : `${fmtQty(w.actualQty)} ${w.uom ?? ''}`}</dd></div><div><dt>{t('wa.remainingShort')}</dt><dd>{w.remainingQty == null ? '—' : fmtQty(w.remainingQty)}</dd></div>
@@ -153,7 +153,7 @@ export default function WasPage() {
   if (id) return <section aria-labelledby="wa-h" data-testid="site-was"><Wa key={id} t={t} id={id} onGone={() => navigateTo('/site/work-authorisations')} /></section>;
   return (
     <section aria-labelledby="wa-h" data-testid="site-was">
-      <h1 id="wa-h" className="sr-only">{t('wa.title')}</h1>
+      <PageHeader id="wa-h" srOnly title={t('wa.title')} />
       <div className="actions-row no-print">
         {perms.includes('site.work_authorisation.create') && <button type="button" className="btn btn-primary" onClick={() => setAdding(!adding)} data-testid="wa-new">{t('wa.new')}</button>}
         <Link to="/site/board">{t('bd.title')}</Link> <Link to="/site/daily-plans">{t('dp.title')}</Link>

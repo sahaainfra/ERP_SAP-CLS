@@ -6,6 +6,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { download, fmtDate, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Critical Path & Float Report (part 13.01, FR-06): the finish the server's pass worked out, the critical chains, the activities by total float (a bar for each band), the near-critical work up to a threshold, and a link from every row to the activities.
 const Bar = ({ n, max, label }) => <span role="img" aria-label={label} style={{ display: 'inline-block', width: '10rem', height: '0.7rem', background: 'var(--erp-color-border-subtle)', borderRadius: '0.3rem', overflow: 'hidden', verticalAlign: 'middle' }}><span style={{ display: 'block', width: `${max ? (n * 100) / max : 0}%`, height: '100%', background: 'var(--erp-color-status-info-solid)' }} /></span>;
@@ -27,7 +28,7 @@ export default function CriticalPage() {
   const r = q.data; const max = r ? Math.max(1, ...r.buckets.map((b) => b.count)) : 1;
   return (
     <section aria-labelledby="pc-h" data-testid="plan-critical">
-      <h1 id="pc-h">{t('crit.title')}</h1>
+      <PageHeader id="pc-h" title={t('crit.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('crit.params')}>
         <SchedulePicker projectId={projectId ?? sq.data?.projectId ?? null} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); }} onSchedule={setScheduleId} testId="pc" />
         <div className="form-grid"><Field label={t('crit.near')} name="near"><input type="number" min="0" max="100" step="1" value={near} onChange={(e) => setNear(Number(e.target.value || 0))} data-testid="pc-near" /></Field></div>

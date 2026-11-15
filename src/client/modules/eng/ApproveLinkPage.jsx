@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { confirmLink, decideLink, peekLink } from '../../platform/workflow/api.js';
 import { formatDateTime, formatINR } from '../../platform/format.js';
 import { Flags } from './Evidence.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The page a secure approval link opens (part 04.03, FR-06, BR-03): outside the application shell and before anybody is signed in. It shows the document at a glance
 // and two buttons. Above the threshold of the document type the person must be signed in as themselves; the page then asks them to do so and to open the link again.
@@ -29,7 +30,7 @@ export default function ApproveLinkPage() {
   };
   return (
     <main id="main" className="link-page" data-testid="approve-link">
-      <h1>Approval</h1>
+      <PageHeader title={"Approval"} />
       {state === 'loading' && <p role="status">Checking the link...</p>}
       {state === 'gone' && <p role="alert" className="error" data-testid="link-gone">{message || 'This link has expired, was already used, or is not valid.'} <a href="/approvals">Open My Approvals</a></p>}
       {state === 'done' && <p role="status" className="notice" data-testid="link-done">{message}</p>}

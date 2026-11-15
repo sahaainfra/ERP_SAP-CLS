@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { gt } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Gate Register (part 16.02, FR-07): every vehicle in and every gate pass out, with the figures of the day and the turnaround time of the delivery vehicles. Each figure opens the records behind it.
 export default function GateRegisterPage() {
@@ -14,7 +15,7 @@ export default function GateRegisterPage() {
   if (dq.error?.status === 403) return <NoPermission what={t('g.registerTitle')} permission="inv.inward.view" />;
   const d = dq.data; const tiles = d ? [['inToday', d.inToday, 'in'], ['inYard', d.inYard, 'in'], ['awaiting', d.awaitingAcceptance, 'in'], ['unexpected', d.unexpected30, 'in'], ['weightFlags', d.weightFlags30, 'in'], ['turnaround', d.turnaround.avgMin == null ? '—' : `${d.turnaround.avgMin} ${t('g.min')}`, 'in'], ...(d.passesAwaitingApproval != null ? [['passesWaiting', d.passesAwaitingApproval, 'out'], ['outToday', d.outToday, 'out'], ['returnablesOut', d.returnablesOut, 'out'], ['overdue', d.returnablesOverdue, 'out']] : [])] : [];
   return (
-    <section aria-labelledby="gr-h" data-testid="gate-register"><h1 id="gr-h">{t('g.registerTitle')}</h1><p className="muted">{t('g.registerIntro')}</p>
+    <section aria-labelledby="gr-h" data-testid="gate-register"><PageHeader id="gr-h" title={t('g.registerTitle')} subtitle={t('g.registerIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.inward.create') && <Link to="/inv/gate-entry">{t('g.entryTitle')}</Link>} {perms.includes('inv.pass.verify') && <Link to="/inv/gate-exit">{t('g.exitTitle')}</Link>} {perms.includes('inv.pass.create') && <Link to="/inv/gate-pass">{t('g.newPass')}</Link>} <Link to="/inv/gate-passes">{t('g.returnables')}</Link></div>
       {dq.isPending ? <Skeleton label={t('g.registerTitle')} rows={2} /> : dq.isError ? <ErrorState error={dq.error} onRetry={dq.refetch} /> : (
         <div className="kpi-row" data-testid="gr-kpis" role="list">{tiles.map(([k, v, to]) => <button key={k} type="button" role="listitem" className="kpi-tile" style={{ minHeight: 64 }} onClick={() => setTab(to)} data-testid={`gr-kpi-${k}`}><span className="kpi-value">{v}</span><span className="kpi-label">{t(`g.kpi.${k}`)}</span></button>)}</div>)}

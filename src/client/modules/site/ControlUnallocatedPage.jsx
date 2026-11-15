@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { ALLOC_TONE, PRIORITY_TONE, fmtDate, fmtRs, st } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Unallocated Costs (part 14.07, FR-06, section 9): the costs that came without a WBS node or a cost code, oldest first. The quantity surveyor or project controls propose where a cost belongs and the project manager approves;
 // the ledger row of the budget part is never changed, the approved allocation is what the control figures apply.
@@ -29,8 +30,7 @@ function Alloc({ t, id }) {
   const submit = (e) => { e.preventDefault(); run(() => st.allocSubmit(a.id, { wbsId: form.wbsId ? Number(form.wbsId) : null, costCodeId: form.costCodeId ? Number(form.costCodeId) : null, note: form.note.trim() || null, rowVersion: a.rowVersion }), t('act.sent')); };
   return (
     <div data-testid="alloc-object" data-status={a.status}>
-      <h1 id="una-h">{a.projectCode} · {a.docRef ?? a.sourceId} <StatusBadge status={ALLOC_TONE[a.status]} label={t(`cnd.una.s.${a.status}`)} /> <StatusBadge status={PRIORITY_TONE[a.priority]} label={t(`cnd.una.p.${a.priority}`)} /></h1>
-      <p><Link to="/site/control-unallocated">{t('cnd.una.back')}</Link></p>
+      <PageHeader id="una-h" title={<>{a.projectCode} · {a.docRef ?? a.sourceId} <StatusBadge status={ALLOC_TONE[a.status]} label={t(`cnd.una.s.${a.status}`)} /> <StatusBadge status={PRIORITY_TONE[a.priority]} label={t(`cnd.una.p.${a.priority}`)} /></>} meta={<Link to="/site/control-unallocated">{t('cnd.una.back')}</Link>} />
       <dl className="kv" data-testid="alloc-figures"><div><dt>{t('cnd.ctl.amount')}</dt><dd data-testid="alloc-amount">{fmtRs(a.amount)}</dd></div><div><dt>{t('cnd.una.source')}</dt><dd>{a.sourceType} {a.sourceId}</dd></div><div><dt>{t('cnd.una.vendor')}</dt><dd>{a.vendor ?? '—'}</dd></div><div><dt>{t('cnd.ctl.date')}</dt><dd>{fmtDate(a.date)} ({t('cnd.una.age', { n: a.ageDays })})</dd></div><div><dt>{t('cnd.una.why')}</dt><dd>{t(`cnd.una.r.${a.reason}`)}</dd></div>{a.allocatedTo && <div><dt>{t('cnd.una.allocTo')}</dt><dd data-testid="alloc-to">{[a.allocatedTo.wbs, a.allocatedTo.costCode].filter(Boolean).join(' · ')}</dd></div>}{a.approvedBy && <div><dt>{t('wa.approvedBy')}</dt><dd>{a.approvedBy}</dd></div>}</dl>
       {a.note && <p>{a.note}</p>}{error?.form && <p className="field-error" role="alert" data-testid="alloc-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="alloc-note">{note}</p>}
       {can.submit && (
@@ -66,7 +66,7 @@ export default function ControlUnallocatedPage() {
   if (id) return <section aria-labelledby="una-h" data-testid="site-control-unallocated"><Alloc key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="una-h" data-testid="site-control-unallocated">
-      <h1 id="una-h">{t('cnd.una.title')}</h1><p className="muted">{t('cnd.una.intro')}</p>
+      <PageHeader id="una-h" title={t('cnd.una.title')} subtitle={t('cnd.una.intro')} />
       <div className="actions-row no-print"><Link to="/site/control">{t('cnd.ctl.title')}</Link> <Link to="/site/control-variance">{t('cnd.cvr.title')}</Link></div>
       <ListReport listCode="site.control_unallocated" endpoint="/site/control/unallocated" title={t('cnd.una.title')} session={session.data} rowHref={(r) => `/site/control-unallocated?id=${r.id}`} onOpen={(r) => navigateTo(`/site/control-unallocated?id=${r.id}`)}
         cardFields={['project', 'doc', 'amount', 'ageDays', 'reason']} statusKey="status" empty={{ title: t('cnd.una.emptyTitle'), text: t('cnd.una.emptyBody') }} />

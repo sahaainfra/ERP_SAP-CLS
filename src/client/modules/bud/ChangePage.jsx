@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANGE_TONE, CHANGE_TYPES, KINDS, REASONS, TYPES, bc, inr, openPrint } from './api.js';
 import { ProjectSelect, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Budget Change Request (part 12.02): a revision, transfer or contingency drawdown with its lines and the impact preview (total, share of the budget, margin, approval band), worked out by the server as it is typed; then its approval and the version it made.
 const blank = () => ({ lineId: '', isNew: false, lineKind: 'DIRECT', wbsId: '', costCodeId: '', resourceType: 'MATERIAL', resourceName: '', uom: '', qtyDelta: '', amountDelta: '' });
@@ -93,7 +94,7 @@ export default function ChangePage() {
   usePageTitle(q.data ? `${q.data.docNo} ${q.data.title}` : t('chg.newTitle'));
   if (!id) return (
     <section aria-labelledby="bc-h" data-testid="bc-new-page">
-      <h1 id="bc-h">{t('chg.newTitle')}</h1>
+      <PageHeader id="bc-h" title={t('chg.newTitle')} />
       <Editor t={t} initial={{ projectId: Number(params.get('projectId')) || '', changeType: 'REVISION', reasonCode: 'RATE_ESCALATION', title: '', justification: '', riskId: '', lines: [blank()] }} onSaved={(r) => { qc.invalidateQueries({ queryKey: ['bud'] }); navigateTo(`/bud/change?id=${r.id}`); }} />
     </section>
   );
@@ -106,9 +107,7 @@ export default function ChangePage() {
   return (
     <section aria-labelledby="bc-h" data-testid="bc-change" data-status={c.status} data-type={c.changeType}>
       <header>
-        <h1 id="bc-h">{c.docNo} · {c.title} <StatusBadge status={CHANGE_TONE[c.status]} label={t(`cst.${c.status}`)} /></h1>
-        <p className="muted">{c.projectCode} {c.projectName} · {t(`ctype.${c.changeType}`)} · {t(`reason.${c.reasonCode}`)}{c.risk ? ` · ${t('chg.risk')} ${c.risk.docNo} ${c.risk.title}` : ''}{c.variationRef ? ` · ${t('chg.variation')} ${c.variationRef}` : ''}</p>
-        <p>{c.justification}</p>
+        <PageHeader id="bc-h" title={<>{c.docNo} · {c.title} <StatusBadge status={CHANGE_TONE[c.status]} label={t(`cst.${c.status}`)} /></>} subtitle={<>{c.projectCode} {c.projectName} · {t(`ctype.${c.changeType}`)} · {t(`reason.${c.reasonCode}`)}{c.risk ? ` · ${t('chg.risk')} ${c.risk.docNo} ${c.risk.title}` : ''}{c.variationRef ? ` · ${t('chg.variation')} ${c.variationRef}` : ''}</>} meta={c.justification} />
         <dl className="kv" data-testid="bc-figures">
           {[['budgetTotalBefore', c.budgetTotalBefore], ['totalDelta', c.totalDelta], ['moved', c.moved], ['marginBefore', c.marginBefore], ['marginAfter', c.marginAfter]].map(([k, v]) => <div key={k}><dt>{t(`chg.${k === 'budgetTotalBefore' ? 'totalBefore' : k}`)}</dt><dd>₹ {inr(v)}</dd></div>)}
           <div><dt>{t('chg.pct')}</dt><dd data-testid="bc-pct">{c.pctOfBudget} %</dd></div>

@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { COUNT_TONE, fmtDate, fmtQty, iv, ro, saveCsv, today } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Reorder Parameters (part 16.07, FR-01): the live parameters per store and item; any change is a change set that another person approves (maker-checker). Nothing in force changes before the approval.
 const blank = () => ({ itemId: '', minQty: '', maxQty: '', reorderLevel: '', reorderQty: '', leadDays: '3', autoCalc: false });
@@ -21,7 +22,7 @@ function Change({ t, id }) {
   const decide = (taskId, action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => iv.decide(taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
     <div data-testid="rchange-object" data-status={x.status}>
-      <h1 id="rc-h">{x.docNo} <StatusBadge status={COUNT_TONE[x.status]} label={t(`ro.cs.${x.status}`)} /></h1><p><Link to="/inv/reorder-params">{t('ro.title')}</Link> · {x.store} · {t('ro.effective')} {fmtDate(x.effectiveFrom)}{x.reason ? ` · ${x.reason}` : ''}</p>
+      <PageHeader id="rc-h" title={<>{x.docNo} <StatusBadge status={COUNT_TONE[x.status]} label={t(`ro.cs.${x.status}`)} /></>} meta={<><Link to="/inv/reorder-params">{t('ro.title')}</Link> · {x.store} · {t('ro.effective')} {fmtDate(x.effectiveFrom)}{x.reason ? ` · ${x.reason}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="rchange-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="rchange-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="rchange-lines"><caption>{t('r.lines')}</caption><thead><tr><th>{t('item')}</th><th className="num">{t('ro.min')}</th><th className="num">{t('ro.level')}</th><th className="num">{t('ro.qty')}</th><th className="num">{t('ro.max')}</th><th className="num">{t('ro.lead')}</th><th>{t('ro.auto')}</th></tr></thead>
         <tbody>{x.lines.map((l) => <tr key={l.itemId} data-testid={`rchange-line-${l.itemId}`}><td data-label={t('item')}>{l.item}</td><td className="num" data-label={t('ro.min')}>{fmtQty(l.minQty)}</td><td className="num" data-label={t('ro.level')}>{fmtQty(l.reorderLevel)}</td><td className="num" data-label={t('ro.qty')}>{fmtQty(l.reorderQty)}</td><td className="num" data-label={t('ro.max')}>{fmtQty(l.maxQty)}</td><td className="num" data-label={t('ro.lead')}>{l.leadDays}</td><td data-label={t('ro.auto')}>{l.autoCalc ? t('cn.yes') : t('cn.no')}</td></tr>)}</tbody></table></div>
@@ -59,7 +60,7 @@ export default function ReorderParamsPage() {
   if (oq.error?.status === 403) return <NoPermission what={t('ro.title')} permission="inv.reorder.view" />; const live = pq.data ?? [];
   const importFile = async (ev) => { const f = ev.target.files?.[0]; if (!f) return; const lines = (await f.text()).split(/\r?\n/).filter(Boolean).slice(1); const rows = lines.map((l) => l.split(',').map((c) => c.replace(/^"|"$/g, '').trim())).map(([storeCode, itemCode, minQty, maxQty, reorderLevel, reorderQty, leadDays, autoCalc]) => ({ storeCode, itemCode, minQty: Number(minQty), maxQty: Number(maxQty), reorderLevel: Number(reorderLevel), reorderQty: Number(reorderQty), leadDays: Number(leadDays) || 0, autoCalc: /^(1|true|y)/i.test(autoCalc ?? '') })); const r = await run(() => ro.importRows(rows), t('ro.imported')); if (r?.created?.length) navigateTo('/inv/reorder-params'); };
   return (
-    <section aria-labelledby="rp-h" data-testid="reorder-params"><h1 id="rp-h">{t('ro.title')}</h1><p className="muted">{t('ro.intro')}</p>
+    <section aria-labelledby="rp-h" data-testid="reorder-params"><PageHeader id="rp-h" title={t('ro.title')} subtitle={t('ro.intro')} />
       {error?.form && <p className="field-error" role="alert" data-testid="rp-page-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="rp-page-note">{note}</p>}
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('tr.store')} name="storeId" error={null}><select value={storeId} onChange={(ev) => { setStoreId(ev.target.value); setEditing(false); }} style={{ minHeight: 44 }} data-testid="rp-store"><option value="">—</option>{(oq.data?.stores ?? []).map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field></div>
         <div className="actions-row">{storeId && perms.includes('inv.reorder.edit') && <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} onClick={() => setEditing(!editing)} data-testid="rp-edit">{t('ro.edit')}</button>}{storeId && perms.includes('inv.reorder.edit') && <button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy} onClick={async () => { const c = await run(() => ro.recalc(Number(storeId)), t('ro.recalced')); if (c) navigateTo(`/inv/reorder-params?id=${c.id}`); }} data-testid="rp-recalc">{t('ro.recalc')}</button>}

@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { EmptyState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { trn } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Training Set-up (HR, part 07.10): the courses (what is taught, internal or external, who must take it and how long it stays valid, the pass mark, the certificate it gives), the types of certificate and licence (validity, the days of warning,
 // the posts that need one before a posting) and the skills of the matrix. HR keeps them; every change is audited.
@@ -23,7 +24,7 @@ export default function TrainingSetupPage() {
   const save = async (fn, done, reset) => { setError(null); setNote(null); try { await fn(); setNote(done); reset(); qc.invalidateQueries({ queryKey: ['trn'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="su-title" data-testid="training-setup">
-      <h1 id="su-title">{t('setup.title')}</h1>
+      <PageHeader id="su-title" title={t('setup.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="su-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="su-note">{note}</p>}
       <h2>{t('setup.courses')}</h2>

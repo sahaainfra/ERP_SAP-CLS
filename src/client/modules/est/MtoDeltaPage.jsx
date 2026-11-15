@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { mto, qty } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Revision Delta Report (part 09.02, FR-05, BR-02, T-02): a revision of a take-off (by BOQ item) or of a bar bending schedule (by bar mark, and the weight by diameter) against the previous released revision: added, removed
 // and changed quantities.
@@ -18,7 +19,7 @@ export default function MtoDeltaPage() {
   const chart = d && kind === 'bbs' && d.byDia.length > 0 && { categories: d.byDia.map((x) => `${x.dia} mm`), series: [{ name: t('delta.change'), values: d.byDia.map((x) => Number(x.delta)) }] };
   return (
     <section aria-labelledby="delta-h" data-testid="mto-delta">
-      <h1 id="delta-h">{t('delta.title')}</h1>
+      <PageHeader id="delta-h" title={t('delta.title')} />
       {!id ? <p className="muted">{t('delta.choose')} <Link to="/est/takeoffs">{t('to.list')}</Link> · <Link to="/est/bbs">{t('bbs.list')}</Link></p> : q.isPending ? <Skeleton label={t('delta.title')} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : (<>
         <p data-testid="delta-head"><Link to={kind === 'bbs' ? `/est/bbs/sheet?id=${d.current.id}` : `/est/takeoff?id=${d.current.id}`}>{d.current.ref}</Link> ({d.current.drawingRev ?? '–'}) {d.base ? <>{t('delta.against')} <Link to={kind === 'bbs' ? `/est/bbs/sheet?id=${d.base.id}` : `/est/takeoff?id=${d.base.id}`}>{d.base.ref}</Link> ({d.base.drawingRev ?? '–'})</> : t('delta.first')}</p>
         <dl className="op-figures" data-testid="delta-counts">{['added', 'removed', 'changed', 'same'].map((k) => <div key={k}><dt>{t(`chg.${k.toUpperCase()}`)}</dt><dd data-testid={`delta-${k}`}>{d.counts[k]}</dd></div>)}</dl>

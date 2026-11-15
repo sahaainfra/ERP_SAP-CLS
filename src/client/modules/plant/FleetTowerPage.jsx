@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate, fmtQty, fmtRs, fl } from './api.js';
 import { FilterPanel } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Fleet control tower (part 17.07): availability, utilisation, MTBF, MTTR, cost an hour, idle cost, the machines by position (telematics), the alerts and the replacement candidates. Every tile opens the records behind it.
 function PositionMap({ rows }) {
@@ -18,7 +19,7 @@ export default function FleetTowerPage() {
   if (q.error?.status === 403) return <NoPermission what={t('t.towerTitle')} permission="plant.fleet.view" />; if (q.isPending) return <Skeleton label={t('t.towerTitle')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const x = d.figures; const pc = (v) => (v == null ? null : `${v}%`); const tile = (key, value, to, tone) => <Link key={key} to={to}><div className={`mdm-panel${tone ? ` ${tone}` : ''}`} data-testid={`ft-tile-${key}`} style={{ minWidth: 140 }}><div className="muted small">{t(`t.tile.${key}`)}</div><strong style={{ fontSize: '1.5rem' }}>{value ?? '—'}</strong></div></Link>;
   return (
-    <section aria-labelledby="ft-h" data-testid="plant-fleet-tower"><h1 id="ft-h">{t('t.towerTitle')}</h1><p className="muted">{t('t.towerIntro', { from: fmtDate(d.from), to: fmtDate(d.to) })}</p>
+    <section aria-labelledby="ft-h" data-testid="plant-fleet-tower"><PageHeader id="ft-h" title={t('t.towerTitle')} subtitle={t('t.towerIntro', { from: fmtDate(d.from), to: fmtDate(d.to) })} />
       <FilterPanel value={f} onChange={setF} />
       <div className="actions-row no-print"><Link to="/plant/owning-cost">{t('t.costTitle')}</Link><Link to="/plant/replacement">{t('t.replacementTitle')}</Link><Link to="/plant/maintenance">{t('m.dashTitle')}</Link><Link to="/plant/utilisation">{t('l.utilTitle')}</Link></div>
       <div className="form-grid" data-testid="ft-tiles">{tile('fleet', x.fleet, '/plant/equipment')}{tile('deployed', x.deployed, '/plant/equipment')}{tile('breakdown', x.breakdown, '/plant/logs?tab=breakdowns', x.breakdown ? 'field-error' : '')}{tile('availability', pc(x.availabilityPct), '/plant/utilisation')}{tile('utilisation', pc(x.utilisationPct), '/plant/utilisation')}{tile('mtbf', x.mtbf == null ? null : `${fmtQty(x.mtbf)} h`, '/plant/maintenance')}{tile('mttr', x.mttr == null ? null : `${fmtQty(x.mttr)} h`, '/plant/maintenance')}{tile('fuelPerHour', x.fuelPerHour == null ? null : `${fmtQty(x.fuelPerHour)} l/h`, '/plant/fuel-reports')}{d.canCosts && tile('costPerHour', x.costPerHour == null ? null : fmtRs(x.costPerHour), '/plant/owning-cost')}{d.canCosts && tile('idleCost', x.idleCost == null ? null : fmtRs(x.idleCost), '/plant/owning-cost')}{tile('candidates', x.candidates, '/plant/replacement')}{tile('alerts', x.alerts, '#alerts', x.alerts ? 'field-error' : '')}</div>

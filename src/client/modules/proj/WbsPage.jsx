@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { downloadWbs, ordered, st } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // WBS Editor (part 10.03, FR-01, FR-02, FR-05 to FR-07): the work breakdown structure of a project as a tree: nodes with codes, weights (the children of a node sum to 100 %), discipline, responsible person and control accounts. Start from a template of the
 // project type or a copy of another project; drag a node onto another to move it (or use "Move to" with the keyboard; the server checks every move; Undo takes the last move or edit back); edit several nodes at once; export to Excel, CSV or PDF.
@@ -22,7 +23,7 @@ export default function WbsPage() {
   const q = useQuery({ queryKey: ['proj', 'wbs', projectId], queryFn: () => st.tree(projectId), enabled: Boolean(projectId), retry: false });
   const [tab, setTab] = useState(changeId ? 'changes' : 'tree'); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   const [sel, setSel] = useState([]); const [edit, setEdit] = useState(null); const [undo, setUndo] = useState([]); const [drag, setDrag] = useState(null); const [panel, setPanel] = useState(null);
-  const head = <><h1 id="wbs-h">{t('wbs.title')}</h1><p className="muted">{t('wbs.intro')}</p><ProjectPicker route="/proj/wbs" projectId={projectId} /></>;
+  const head = <><PageHeader id="wbs-h" title={t('wbs.title')} subtitle={t('wbs.intro')} /><ProjectPicker route="/proj/wbs" projectId={projectId} /></>;
   if (!projectId) return <section aria-labelledby="wbs-h" data-testid="wbs-none">{head}</section>;
   if (q.error?.status === 403) return <NoPermission what={t('wbs.title')} permission="proj.wbs.view" />;
   if (q.isPending) return <Skeleton label={t('wbs.title')} rows={6} />;

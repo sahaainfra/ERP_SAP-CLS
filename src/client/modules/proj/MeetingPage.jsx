@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ACTION_TONE, MEET_TONE, MTYPES, downloadFile, tm } from './api.js';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Meeting (part 10.05, FR-04, FR-05, BR-02): one meeting with its details, attendees (people of the company and external attendees), agenda, minutes, decisions and actions. The minute-taker sends the minutes and the chair approves them: they are then
 // issued and locked, every action becomes a task of its owner, and the minutes can be printed as a PDF. A correction is a revision. Owners update their own actions here, and the task follows.
@@ -18,7 +19,7 @@ export default function MeetingPage() {
   const q = useQuery({ queryKey: ['proj', 'meeting', id], queryFn: () => tm.meeting(id), enabled: Boolean(id), retry: false });
   const [tab, setTab] = useState('minutes'); const [f, setF] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   usePageTitle(q.data ? `${q.data.ref} ${q.data.title}` : t('mtg.title'));
-  if (!id) return <section aria-labelledby="mtg-h" data-testid="mtg-none"><h1 id="mtg-h">{t('mtg.title')}</h1><p className="muted">{t('bq.noId')} <Link to="/proj/meetings">{t('mtg.listTitle')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="mtg-h" data-testid="mtg-none"><PageHeader id="mtg-h" title={t('mtg.title')} subtitle={<>{t('bq.noId')} <Link to="/proj/meetings">{t('mtg.listTitle')}</Link></>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('mtg.listTitle')} permission="proj.meeting.view" />;
   if (q.isPending) return <Skeleton label={t('mtg.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -31,8 +32,7 @@ export default function MeetingPage() {
   return (
     <section aria-labelledby="mtg-h" data-testid="meeting" data-status={m.status} data-rev={m.revNo}>
       <header>
-        <h1 id="mtg-h">{m.ref} · {m.title} <StatusBadge status={MEET_TONE[m.status]} label={m.statusLabel} /></h1>
-        <p className="muted">{m.projectCode} {m.projectName} · {t(`mtg.type.${m.type}`)} · {m.meetingDate}{m.startTime ? ` ${m.startTime}` : ''}{m.location ? ` · ${m.location}` : ''} · {t('mtg.chair')}: {m.chairUser} · {t('mtg.minuteTaker')}: {m.minuteTaker}</p>
+        <PageHeader id="mtg-h" title={<>{m.ref} · {m.title} <StatusBadge status={MEET_TONE[m.status]} label={m.statusLabel} /></>} subtitle={<>{m.projectCode} {m.projectName} · {t(`mtg.type.${m.type}`)} · {m.meetingDate}{m.startTime ? ` ${m.startTime}` : ''}{m.location ? ` · ${m.location}` : ''} · {t('mtg.chair')}: {m.chairUser} · {t('mtg.minuteTaker')}: {m.minuteTaker}</>} />
         {m.revisionReason && <p className="mdm-banner" role="status">{t('mtg.revisionOf')}: {m.revisionReason}</p>}
         {m.status === 'APPROVED' && <p className="mdm-banner" role="status" data-testid="mtg-issued">{t('mtg.issued', { by: m.issuedBy, at: String(m.issuedAt).slice(0, 10) })}</p>}
         {m.openRevisionId && <p className="mdm-banner" role="status"><Link to={`/proj/meeting?id=${m.openRevisionId}`}>{t('mtg.openRevision')}</Link></p>}

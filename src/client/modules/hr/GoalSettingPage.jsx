@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { perf } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Goal Setting (HR, part 07.11, FR-02): the goals of the person for the cycle, each with a measure, a target and a weight (together at most 100%). The person writes them and sends them to the manager, who agrees or returns them with a note;
 // a goal the manager sets is agreed at once. After agreement the person records the progress. A manager can look at the goals of a person who reports to them.
@@ -29,7 +30,7 @@ export default function GoalSettingPage() {
   };
   return (
     <section aria-labelledby="gs-title" data-testid="goals">
-      <h1 id="gs-title">{t('goal.title')}</h1>
+      <PageHeader id="gs-title" title={t('goal.title')} />
       <div className="mdm-fields no-print"><LookupField id="gs-who" label={t('goal.for')} lookup="hr/employees" value={who} onChange={setWho} hint={t('goal.forHint')} /></div>
       {error?.form && <p className="field-error" role="alert" data-testid="gs-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="gs-note">{note}</p>}

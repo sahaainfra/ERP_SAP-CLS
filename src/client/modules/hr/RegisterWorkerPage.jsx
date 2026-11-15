@@ -4,6 +4,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { SKILL_LABELS, dayIST, lab } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Register Worker (HR, part 07.08, FR-02): for the supervisor or the subcontractor coordinator, on a phone or a computer: name, date of birth (nobody under 18 is registered: the page says so as soon as the date is typed), ID number
 // (only its last four digits are kept), mobile, contractor, trade and skill, home state, and the numbers of the statutory registrations. It is sent for approval: supervisor, then the HR manager (KYC). A draft or returned
@@ -37,7 +38,7 @@ export default function RegisterWorkerPage() {
   return (
     <section aria-labelledby="rw-title" data-testid="register-worker">
       <p><Link to="/labour/workers">← Workers Register</Link></p>
-      <h1 id="rw-title">{editId ? `Worker ${existing.data?.workerCode}` : 'Register Worker'}</h1>
+      <PageHeader id="rw-title" title={editId ? `Worker ${existing.data?.workerCode}` : 'Register Worker'} />
       {error?.form && <p className="field-error" role="alert" data-testid="rw-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).map(([k, x]) => `${k}: ${x}`).join('; ')}` : ''}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }}>
         <Field label="Name" name="name" error={error}><input value={v.name} maxLength={100} onChange={(e) => set({ name: e.target.value })} data-testid="rw-name" autoComplete="off" /></Field>

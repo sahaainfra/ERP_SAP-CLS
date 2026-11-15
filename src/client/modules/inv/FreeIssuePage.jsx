@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { fmtQty, fmtRs, is, saveCsv, today } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Subcontractor Free-Issue Reconciliation (part 16.04, FR-06): what each subcontractor was given free, less what came back, against what the norms entitle them to for the work certified; the excess is recovered from the bill. Every row opens the issue slips behind it.
 export default function FreeIssuePage() {
@@ -16,7 +17,7 @@ export default function FreeIssuePage() {
   const go = async () => { setError(null); setNote(null); setBusy(true); try { await is.reconcile({ projectId: Number(projectId), period }); setNote(t('i.reconciled')); qc.invalidateQueries({ queryKey: ['inv', 'free-issue'] }); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   const d = rq.data;
   return (
-    <section aria-labelledby="fi-h" data-testid="free-issue"><h1 id="fi-h">{t('i.freeTitle')}</h1><p className="muted">{t('i.freeIntro')}</p><p><Link to="/inv/issues">{t('i.issuesTitle')}</Link></p>
+    <section aria-labelledby="fi-h" data-testid="free-issue"><PageHeader id="fi-h" title={t('i.freeTitle')} subtitle={t('i.freeIntro')} meta={<Link to="/inv/issues">{t('i.issuesTitle')}</Link>} />
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('i.project')} name="projectId" error={error}><select value={projectId} onChange={(ev) => setProjectId(ev.target.value)} style={{ minHeight: 44 }} data-testid="fi-project"><option value="">{t('i.allProjects')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
         <Field label={t('i.period')} name="period" error={error}><input type="month" value={period} onChange={(ev) => setPeriod(ev.target.value)} style={{ minHeight: 44 }} data-testid="fi-period" /></Field></div>
         <div className="actions-row">{d?.canReconcile && <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={busy || !projectId} onClick={go} data-testid="fi-run">{t('i.reconcile')}</button>}{perms.includes('inv.free_issue.export') && d && <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => saveCsv(`free-issue-${period}.csv`, [[t('i.subcontractor'), t('item'), t('i.issued'), t('i.returned'), t('i.entitled'), t('i.excess'), t('i.recoveryRate'), t('i.recoveryAmount')], ...d.rows.map((x) => [x.subcontractor, x.item, x.issuedQty, x.returnedQty, x.entitledQty, x.excessQty, x.recoveryRate / 100, x.recoveryAmount / 100])])} data-testid="fi-export">{t('i.exportCsv')}</button>}</div></div>

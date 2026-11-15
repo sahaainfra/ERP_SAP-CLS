@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { ext } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Grievance (HR, part 07.13, FR-06): one grievance with its status, the officer, the date to resolve by (red when passed), the notes (the complainant sees those shared with them), the resolution; the officer assigns, writes notes, resolves or
 // closes it as not a grievance; the complainant accepts the resolution or reopens it with a reason, or withdraws it while it is open.
@@ -25,8 +26,7 @@ export default function GrievancePage() {
   const need = (fn) => { if (txt.trim().length < 5) { setError({ form: t('act.why') }); return; } fn(txt.trim()); };
   return (
     <section aria-labelledby="gv-title" data-testid="grievance" data-status={g.status}>
-      <h1 id="gv-title">{g.subject} <StatusBadge status={TONE[g.status]} label={t(`gst.${g.status}`)} /></h1>
-      <p className="muted">{g.docNo} · {t(`gcat.${g.category}`)} · {g.anonymous ? t('grv.anon') : g.complainant ?? ''} · {t('grv.raised', { date: g.raisedOn })} · <span className={g.overdue ? 'field-error' : ''} data-testid="gv-sla">{t('grv.by', { date: g.slaDue ?? '—' })}</span>{g.assignedTo ? ` · ${t('grv.officer')} ${g.assignedTo}` : ''}</p>
+      <PageHeader id="gv-title" title={<>{g.subject} <StatusBadge status={TONE[g.status]} label={t(`gst.${g.status}`)} /></>} subtitle={<>{g.docNo} · {t(`gcat.${g.category}`)} · {g.anonymous ? t('grv.anon') : g.complainant ?? ''} · {t('grv.raised', { date: g.raisedOn })} · <span className={g.overdue ? 'field-error' : ''} data-testid="gv-sla">{t('grv.by', { date: g.slaDue ?? '—' })}</span>{g.assignedTo ? ` · ${t('grv.officer')} ${g.assignedTo}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="gv-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="gv-note">{note}</p>}
       <p>{g.description}</p>

@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { formatDate } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { DAY_TYPES, REQ_STATUS, att, dayIST } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Roster Planner (HR, part 07.04, FR-02): a calendar grid for a site (or one crew): a row for each person deployed there, a column for each day, and in each cell the shift that resolves for the day (the rotating pattern, an approved change,
 // the assignment). A change of one day is asked for with the cell's list (keyboard and phone) or by dragging a shift from the palette onto a cell; dragging one person's cell onto another person's cell on the same day asks for a swap.
@@ -39,7 +40,7 @@ export default function RosterPlannerPage() {
   if (q.error?.status === 403) return <NoPermission what="the roster planner" permission="att.roster.view" />;
   return (
     <section aria-labelledby="rp-title" data-testid="roster-planner">
-      <h1 id="rp-title">Roster Planner</h1>
+      <PageHeader id="rp-title" title={"Roster Planner"} />
       <form className="srch-form" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <LookupField id="rp-site" label="Site" lookup="iam/sites" value={siteId} onChange={(x) => { setSiteId(x); setCrewId(''); }} required />
         <Field label="Crew" name="crew" error={null}><select value={crewId} onChange={(e) => setCrewId(e.target.value)} data-testid="rp-crew"><option value="">All people of the site</option>{(b?.crews ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>

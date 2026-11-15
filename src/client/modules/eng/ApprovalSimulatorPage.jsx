@@ -4,6 +4,7 @@ import { NoPermission } from '../../platform/feedback/states.jsx';
 import { simulate, useMatrixHistory, useMatrixList } from '../../platform/workflow/api.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Approval Simulator (part 04.02, section 7.4): enter the facts of a document that does not exist and see the chain it would get: the rule that fits, the steps after
 // the authority limits, who would be asked. A version that is not yet active can be tried first. The routing of a real document comes from the same function.
@@ -36,8 +37,7 @@ export default function ApprovalSimulatorPage() {
   const set = (i, p) => setRows(rows.map((r, k) => (k === i ? { ...r, ...p } : r)));
   return (
     <section aria-labelledby="as-title" data-testid="approval-simulator">
-      <h1 id="as-title">Approval Simulator</h1>
-      <p className="muted">Describe a document by its facts and see who would have to approve it, in what order, before you change a rule. Nothing is submitted or saved.</p>
+      <PageHeader id="as-title" title={"Approval Simulator"} subtitle={"Describe a document by its facts and see who would have to approve it, in what order, before you change a rule. Nothing is submitted or saved."} />
       <form onSubmit={run} aria-label="Simulate an approval" className="form-grid">
         <Field label="Document type" name="docType" error={error}>
           <select required value={docType} onChange={(e) => { setDocType(e.target.value); setMatrixId(''); setResult(null); }}><option value="">Choose a document type</option>{(types.data?.docTypes ?? []).map((t) => <option key={t.docType} value={t.docType}>{t.label}</option>)}</select>

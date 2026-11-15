@@ -18,6 +18,7 @@ import {
 } from '../../platform/forms/index.js';
 import { formatNumberInput, total as sumOf } from '../../../shared/forms/numbers.js';
 import { SAMPLE_REQUEST_FORM, isShown, sampleRequestSchema } from '../../../shared/forms/sample-request.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The reference form of the data-entry framework (part 03.02, AC-02): a sample material request. It shows context auto-fill, dependent
 // lookups, conditional fields, the line grid with paste from Excel, server drafts, the duplicate warning, "create from" and server
@@ -156,12 +157,7 @@ function RequestForm({ def, id, onDone, initialNotice = '' }) {
   return (
     <section aria-labelledby="form-title" className="ff-form" data-testid="request-form">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Reference &rsaquo; <a href="/admin/sample-requests" onClick={(e) => { e.preventDefault(); onDone(null); }}>Sample Material Requests</a> &rsaquo; {title}</nav>
-      <div className="page-head">
-        <h1 id="form-title">{title}</h1>
-        {rec && <StatusBadge status={rec.status} />}
-        <span className="spacer" />
-        <span className="muted small">Financial year {ctx.financialYear}{rec?.submittedAt ? ` · submitted ${formatDateTime(rec.submittedAt)}` : ''}</span>
-      </div>
+      <PageHeader id="form-title" title={title} actions={<>{rec && <StatusBadge status={rec.status} />}<span className="muted small">Financial year {ctx.financialYear}{rec?.submittedAt ? ` · submitted ${formatDateTime(rec.submittedAt)}` : ''}</span></>} />
       {createdNote && <p className="ff-note" role="status"><Icon name="erp.action.info" size={16} /> {createdNote}</p>}
       {!readOnly && <DraftBanner draft={draft} onResume={() => { const p = draft.resume(); if (p) reset(p, { asSaved: false }); }} onDiscard={() => draft.discard()} />}
       <p role="status" className="notice" data-testid="form-notice">{notice}</p>
@@ -270,8 +266,7 @@ function RequestList({ onOpen, onNew, notice, session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Reference &rsaquo; Sample Material Requests</nav>
-      <div className="page-head"><h1 id="page-title">Sample Material Requests</h1></div>
-      <p className="muted">The reference register of the List Report and of the data-entry framework: filter, save a view, choose columns, select requests to submit or cancel together, and export the current view to Excel, CSV or PDF. A new request fills itself from your working project and site.</p>
+      <PageHeader id="page-title" title={"Sample Material Requests"} subtitle={"The reference register of the List Report and of the data-entry framework: filter, save a view, choose columns, select requests to submit or cancel together, and export the current view to Excel, CSV or PDF. A new request fills itself from your working project and site."} />
       {notice && <p role="status" className="notice">{notice}</p>}
       <ListReport
         listCode="ui.sample_requests" endpoint="/ui/sample-requests" title="Requests" permission="core.sample.use" session={session} contextFilters={contextFilters}

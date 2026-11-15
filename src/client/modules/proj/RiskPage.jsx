@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { LEVEL_TONE, RISK_CATEGORIES, RISK_STRATEGIES, RISK_TONE, dayIST, downloadFile, inr, rk } from './api.js';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Risk (part 10.06, FR-01, FR-04, FR-05, BR-01, BR-02): one risk or opportunity with its assessment (the score, level and EMV are the server's), exposure, response actions (tasks) and early-warning triggers, contingency, and its history. The owner asks to
 // close it with a justification; a high or critical risk waits for the project manager.
@@ -21,7 +22,7 @@ export default function RiskPage() {
   const [tab, setTab] = useState('assessment'); const [f, setF] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   const [reading, setReading] = useState({}); const [cont, setCont] = useState({ kind: 'ALLOCATION', amount: '', reason: '' }); const [closing, setClosing] = useState(null);
   usePageTitle(q.data ? `${q.data.docNo} ${q.data.title}` : t('rk.title'));
-  if (!id) return <section aria-labelledby="rk-h" data-testid="rk-none"><h1 id="rk-h">{t('rk.title')}</h1><p className="muted"><Link to="/proj/risks">{t('rk.registerTitle')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="rk-h" data-testid="rk-none"><PageHeader id="rk-h" title={t('rk.title')} subtitle={<Link to="/proj/risks">{t('rk.registerTitle')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('rk.registerTitle')} permission="proj.risk.view" />;
   if (q.isPending) return <Skeleton label={t('rk.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -43,8 +44,7 @@ export default function RiskPage() {
   return (
     <section aria-labelledby="rk-h" data-testid="risk" data-status={r.status} data-level={r.level}>
       <header>
-        <h1 id="rk-h">{r.docNo} · {r.title} <StatusBadge status={RISK_TONE[r.status]} label={r.statusLabel} /> <StatusBadge status={LEVEL_TONE[r.level]} label={`${r.score} · ${t(`rk.level.${r.level}`)}`} /></h1>
-        <p className="muted">{r.projectCode} {r.projectName} · {r.typeLabel} · {r.categoryLabel} · {t('rk.col.owner')}: {r.ownerUser} · EMV {inr(r.emv)} ({r.probabilityPct}%)</p>
+        <PageHeader id="rk-h" title={<>{r.docNo} · {r.title} <StatusBadge status={RISK_TONE[r.status]} label={r.statusLabel} /> <StatusBadge status={LEVEL_TONE[r.level]} label={`${r.score} · ${t(`rk.level.${r.level}`)}`} /></>} subtitle={<>{r.projectCode} {r.projectName} · {r.typeLabel} · {r.categoryLabel} · {t('rk.col.owner')}: {r.ownerUser} · EMV {inr(r.emv)} ({r.probabilityPct}%)</>} />
         {r.status === 'CLOSE_REQUESTED' && <p className="mdm-banner" role="status" data-testid="rk-closing">{t('rk.closeWaiting', { by: r.requestedBy })}</p>}
         {r.closedAt && <p className="mdm-banner" role="status" data-testid="rk-closed">{t('rk.closedBy', { by: r.closedBy, at: String(r.closedAt).slice(0, 10), why: r.closeReason ?? '' })}</p>}
         {r.occurredIssueId && <p className="mdm-banner" role="status"><Link to={`/proj/issue?id=${r.occurredIssueId}`}>{t('rk.occurredIssue')}</Link></p>}

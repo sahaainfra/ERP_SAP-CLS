@@ -8,6 +8,7 @@ import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx'
 import { useSession } from '../core/api/index.js';
 import { DELIVERY_TONE, PO_TONE, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Purchase orders (part 15.05): the list with the delivery status; the order with its header, terms, lines with the delivery schedule and the GST split, approvals, amendments (compared), dispatches, goods received and advances.
 // Approval is by value; on approval the commitment is posted and the order sent to the vendor with a link to acknowledge it; an approved order changes only by amendment; cancel is refused once goods are received.
@@ -28,8 +29,7 @@ function Po({ t, id }) {
   const m = (n) => (r.canSeeRates ? fmtRs(n) : '—');
   return (
     <div data-testid="po-object" data-status={r.status}>
-      <h1 id="po-h">{r.docNo}{r.amendmentNo > 0 ? ` · ${t('o.amendment')} ${r.amendmentNo}` : ''} <StatusBadge status={PO_TONE[r.status]} label={t(`o.s.${r.status}`)} />{r.deliveryStatus && <> <StatusBadge status={DELIVERY_TONE[r.deliveryStatus]} label={t(`o.d.${r.deliveryStatus}`)} /></>}{r.overdue && <> <StatusBadge status="AT_RISK" label={t('o.overdue')} /></>}</h1>
-      <p><Link to="/proc/purchase-orders">{t('o.back')}</Link>{r.csId && <> · <Link to={`/proc/comparative-statements?id=${r.csId}`}>{r.csNo}</Link></>}</p>
+      <PageHeader id="po-h" title={<>{r.docNo}{r.amendmentNo > 0 ? ` · ${t('o.amendment')} ${r.amendmentNo}` : ''} <StatusBadge status={PO_TONE[r.status]} label={t(`o.s.${r.status}`)} />{r.deliveryStatus && <> <StatusBadge status={DELIVERY_TONE[r.deliveryStatus]} label={t(`o.d.${r.deliveryStatus}`)} /></>}{r.overdue && <> <StatusBadge status="AT_RISK" label={t('o.overdue')} /></>}</>} meta={<><Link to="/proc/purchase-orders">{t('o.back')}</Link>{r.csId && <> · <Link to={`/proc/comparative-statements?id=${r.csId}`}>{r.csNo}</Link></>}</>} />
       <dl className="kv" data-testid="po-figures"><div><dt>{t('o.project')}</dt><dd>{r.projectCode}</dd></div><div><dt>{t('o.vendor')}</dt><dd>{r.vendor}</dd></div><div><dt>{t('o.source')}</dt><dd>{r.source === 'CS' ? t('o.srcCs') : `${t('o.srcDirect')}: ${r.directReason ?? ''}`}</dd></div>
         <div><dt>{t('o.basic')}</dt><dd>{m(r.totalBasic)}</dd></div><div><dt>{tm.supplyType === 'INTRA' ? t('o.cgstSgst') : tm.supplyType === 'INTER' ? t('o.igst') : t('o.gst')}</dt><dd data-testid="po-tax">{m(r.totalTax)}</dd></div>{r.totalFreight > 0 && <div><dt>{t('o.freight')}</dt><dd>{m(r.totalFreight)}</dd></div>}
         <div><dt>{t('o.total')}</dt><dd data-testid="po-total">{m(r.totalAmount)}</dd></div><div><dt>{t('o.sent')}</dt><dd data-testid="po-sent">{r.sentAt ? fmtDate(r.sentAt.slice(0, 10)) : r.sentStatus ? t(`o.send.${r.sentStatus}`) : '—'}</dd></div><div><dt>{t('o.acknowledged')}</dt><dd data-testid="po-ack">{r.acknowledgedAt ? fmtDate(r.acknowledgedAt.slice(0, 10)) : '—'}</dd></div></dl>
@@ -78,7 +78,7 @@ export default function PurchaseOrdersPage() {
   if (id) return <section aria-labelledby="po-h" data-testid="proc-pos"><Po key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="pos-h" data-testid="proc-pos">
-      <h1 id="pos-h">{t('o.title')}</h1><p className="muted">{t('o.intro')}</p>
+      <PageHeader id="pos-h" title={t('o.title')} subtitle={t('o.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.purchase_order.create') && <Link to="/proc/po-new">{t('o.new')}</Link>} <Link to="/proc/po-tracker">{t('o.tracker')}</Link></div>
       <ListReport listCode="proc.purchase_orders" endpoint="/proc/purchase-orders" title={t('o.title')} session={session.data} rowHref={(r) => `/proc/purchase-orders?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/purchase-orders?id=${r.id}`)}
         cardFields={['docNo', 'vendor', 'project', 'amount', 'delivery']} statusKey="status" empty={{ title: t('o.emptyTitle'), text: t('o.emptyBody') }} />

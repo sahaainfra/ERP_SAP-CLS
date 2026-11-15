@@ -8,6 +8,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { OPEN_STAGES, REGIONS, SECTORS, bd, inr } from './api.js';
 import { InteractionsPanel, Tabs, TimelinePanel } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Opportunity (business development, part 08.01, FR-04, FR-06, BR-01, BR-02): the client from the partner master, the project, sector, place, estimated value, probability, expected tender and award dates, stage, competitors and owner. Two things are kept apart:
 // the go-ahead for tendering (an approval: a business development review, and the director above ₹10 crore) and the stage in the pipeline (moved by the owner; a stage that pursues a tender needs the go-ahead). The probability follows the stage unless the person gives a reason.
@@ -63,13 +64,12 @@ export default function OpportunityPage({ create = false }) {
     </form>
   );
   const errBox = error?.form && <p className="field-error" role="alert" data-testid="op-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>;
-  if (create) return (<section aria-labelledby="op-title-h" data-testid="opp-new"><h1 id="op-title-h">{t('opp.new')}</h1>{errBox}{form}<p className="small"><Link to="/bd/opportunities">{t('opp.list')}</Link></p></section>);
+  if (create) return (<section aria-labelledby="op-title-h" data-testid="opp-new"><PageHeader id="op-title-h" title={t('opp.new')} />{errBox}{form}<p className="small"><Link to="/bd/opportunities">{t('opp.list')}</Link></p></section>);
   const canTrack = o.can.track;
   return (
     <section aria-labelledby="op-title-h" data-testid="opportunity" data-status={o.status} data-stage={o.stage}>
       <header>
-        <h1 id="op-title-h">{o.name} <StatusBadge status={STAGE_TONE[o.stage] ?? 'ACTIVE'} label={o.stageLabel} /> <StatusBadge status={TONE[o.status]} label={o.statusLabel} /></h1>
-        <p className="muted">{o.docNo} · <Link to={`/bd/client?id=${o.clientPartnerId}`}>{o.clientName}</Link> · {t(`sector.${o.sector}`)} · {[o.location, o.region && t(`region.${o.region}`)].filter(Boolean).join(', ')}</p>
+        <PageHeader id="op-title-h" title={<>{o.name} <StatusBadge status={STAGE_TONE[o.stage] ?? 'ACTIVE'} label={o.stageLabel} /> <StatusBadge status={TONE[o.status]} label={o.statusLabel} /></>} subtitle={<>{o.docNo} · <Link to={`/bd/client?id=${o.clientPartnerId}`}>{o.clientName}</Link> · {t(`sector.${o.sector}`)} · {[o.location, o.region && t(`region.${o.region}`)].filter(Boolean).join(', ')}</>} />
         <dl className="op-figures" data-testid="op-figures"><div><dt>{t('lead.estValue')}</dt><dd data-testid="op-fig-value">{inr(o.estValue)}</dd></div><div><dt>{t('opp.probability')}</dt><dd data-testid="op-fig-prob">{o.probability}%</dd></div><div><dt>{t('opp.weighted')}</dt><dd data-testid="op-fig-weighted">{inr(o.weighted)}</dd></div><div><dt>{t('opp.expectedAward')}</dt><dd>{o.expectedAwardDate ?? '—'}</dd></div><div><dt>{t('lead.owner')}</dt><dd>{o.owner}</dd></div>{o.wonValue != null && <div><dt>{t('opp.wonValue')}</dt><dd data-testid="op-fig-won">{inr(o.wonValue)}</dd></div>}</dl>
         {o.goAheadPending && <p className="mdm-banner" role="status" data-testid="op-goahead-warning">{t('opp.goAheadPending')}</p>}
         {o.status !== 'APPROVED' && ['DRAFT', 'RETURNED'].includes(o.status) && o.directorNeeded && <p className="muted small">{t('opp.directorNeeded')}</p>}

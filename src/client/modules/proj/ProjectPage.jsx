@@ -8,6 +8,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CONTRACT_TYPES, bl, dayIST, inr, proj } from './api.js';
 import { APPROVAL_TONE, HEALTH_TONE, STATE_TONE, Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Project (part 10.01, FR-01 to FR-06): one project as an object page: details with the contract summary, sites, the key dates and milestones, settings, the lifecycle history and the approvals. The actions follow the state and the rights of the
 // person: send for activation (with its checklist), edit while in setup, amend the contract terms of a live project (approved by the project director and the director), move through the lifecycle with the checklist of each move (the project
@@ -20,7 +21,7 @@ export default function ProjectPage() {
   const x = q.data;
   usePageTitle(x ? `${x.code} ${x.name}` : t('obj.title'));
   const [tab, setTab] = useState('details'); const [panel, setPanel] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null);
-  if (!id) return <section aria-labelledby="proj-h" data-testid="project-none"><h1 id="proj-h">{t('obj.title')}</h1><p className="muted">{t('obj.noId')} <Link to="/proj/projects">{t('list.title')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="proj-h" data-testid="project-none"><PageHeader id="proj-h" title={t('obj.title')} subtitle={<>{t('obj.noId')} <Link to="/proj/projects">{t('list.title')}</Link></>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('list.title')} permission="proj.project.view" />;
   if (q.isPending) return <Skeleton label={t('obj.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -31,8 +32,7 @@ export default function ProjectPage() {
   return (
     <section aria-labelledby="proj-h" data-testid="project" data-status={x.status} data-state={x.state}>
       <header>
-        <h1 id="proj-h">{x.code} · {x.name} <StatusBadge status={STATE_TONE[x.state]} label={x.stateLabel} /> <StatusBadge status={APPROVAL_TONE[x.status]} label={x.statusLabel} /></h1>
-        <p className="muted">{x.client?.name ?? '—'}{x.location ? ` · ${x.location}` : ''} · {t(`ptype.${x.type}`)} · {x.contractTypeLabel}{x.pm ? ` · ${t('f.pm')}: ${x.pm}` : ''}</p>
+        <PageHeader id="proj-h" title={<>{x.code} · {x.name} <StatusBadge status={STATE_TONE[x.state]} label={x.stateLabel} /> <StatusBadge status={APPROVAL_TONE[x.status]} label={x.statusLabel} /></>} subtitle={<>{x.client?.name ?? '—'}{x.location ? ` · ${x.location}` : ''} · {t(`ptype.${x.type}`)} · {x.contractTypeLabel}{x.pm ? ` · ${t('f.pm')}: ${x.pm}` : ''}</>} />
         <dl className="op-figures" data-testid="proj-figures">
           <div><dt>{t('f.contractValue')}</dt><dd data-testid="proj-value">{inr(x.contractValue)}</dd></div>
           <div><dt>{t('wiz.period')}</dt><dd>{x.startDate ?? '–'} → {x.revisedCompletion ?? x.scheduledCompletion ?? '–'}</dd></div>

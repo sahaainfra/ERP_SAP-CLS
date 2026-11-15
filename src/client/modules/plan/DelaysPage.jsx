@@ -10,6 +10,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { useSession } from '../core/api/index.js';
 import { CAUSES, DELAY_TONE, EVIDENCE_KINDS, RESPONSIBILITIES, fmtDate, openPrint, pl } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Delay Register (part 13.05, FR-01, FR-02, FR-04): the delays of the projects; one delay with its cause, responsibility, activities, evidence and time-impact analyses, sent for the approval of its
 // classification (the project manager, then the commercial manager) and locked once approved; a change is a revision.
@@ -87,8 +88,7 @@ function Delay({ t, id, onGone }) {
   const why = (fn, done) => { const x = window.prompt(t('act.why')); if (x) run(() => fn(x), done); };
   return (
     <div data-testid="dl-object" data-status={d.status}>
-      <h1 id="dl-h">{d.docNo} · {d.title} <StatusBadge status={DELAY_TONE[d.status]} label={t(`dst.${d.status}`)} /></h1>
-      <p><Link to="/plan/delays">{t('dl.back')}</Link></p>
+      <PageHeader id="dl-h" title={<>{d.docNo} · {d.title} <StatusBadge status={DELAY_TONE[d.status]} label={t(`dst.${d.status}`)} /></>} meta={<Link to="/plan/delays">{t('dl.back')}</Link>} />
       <dl className="kv" data-testid="dl-figures">
         <div><dt>{t('f.project')}</dt><dd>{d.projectCode} · {d.projectName}</dd></div><div><dt>{t('dl.cause')}</dt><dd data-testid="dl-cause-v">{t(`dc.${d.cause}`)}</dd></div><div><dt>{t('dl.responsibility')}</dt><dd>{t(`dr.${d.responsibility}`)} · {t(`dl.class.${d.responsibility}`)}</dd></div>
         <div><dt>{t('h.from')}</dt><dd>{fmtDate(d.startDate)}</dd></div><div><dt>{t('h.to')}</dt><dd>{fmtDate(d.endDate)}</dd></div><div><dt>{t('dl.delayDays')}</dt><dd data-testid="dl-days-v">{d.delayDays}</dd></div>
@@ -147,7 +147,7 @@ export default function DelaysPage() {
   if (id) return <section aria-labelledby="dl-h" data-testid="plan-delays"><Delay key={id} t={t} id={id} onGone={() => navigateTo('/plan/delays')} /></section>;
   return (
     <section aria-labelledby="dl-h" data-testid="plan-delays">
-      <h1 id="dl-h" className="sr-only">{t('dl.title')}</h1>
+      <PageHeader id="dl-h" srOnly title={t('dl.title')} />
       <div className="actions-row no-print">
         {perms.includes('plan.delay.create') && <button type="button" className="btn btn-primary" onClick={() => setAdding(!adding)} data-testid="dl-new">{t('dl.new')}</button>}
         <Link to="/plan/delay-summary">{t('ds.title')}</Link>

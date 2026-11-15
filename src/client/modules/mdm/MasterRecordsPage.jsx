@@ -6,6 +6,7 @@ import { formatDate, formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { api } from '../../platform/api/index.js';
 import { CHANGE, RECORD_STATUS, REQUEST_STATUS, mdm, scoreTone, todayIST } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 /** A field kept in a common master (06.02, AC-01): the choices come from its lookup; the value stored is the name. */
 function LookupSelect({ lookup, name, value, onChange, onBlur, testId }) {
@@ -40,8 +41,7 @@ function RecordList({ def, masters, setType, onOpen }) {
   const set = (p) => setF((cur) => ({ ...cur, offset: 0, ...p }));
   return (
     <section aria-labelledby="mdr-title" data-testid="mdm-records">
-      <div className="page-head"><h1 id="mdr-title">Master Records</h1><button type="button" className="btn btn-primary" onClick={() => formRef.current?.open()} data-testid="mdm-new">{def.canEdit ? `New ${def.label.toLowerCase()}` : `Request a new ${def.label.toLowerCase()}`}</button></div>
-      <p className="muted">{def.label}: every new record and every change of a sensitive field is approved by the steward{def.financial ? ' and the accounts manager' : ''}. Inactive records stay here but cannot be chosen in new transactions.</p>
+      <PageHeader id="mdr-title" title={"Master Records"} actions={<><button type="button" className="btn btn-primary" onClick={() => formRef.current?.open()} data-testid="mdm-new">{def.canEdit ? `New ${def.label.toLowerCase()}` : `Request a new ${def.label.toLowerCase()}`}</button></>} subtitle={<>{def.label}: every new record and every change of a sensitive field is approved by the steward{def.financial ? ' and the accounts manager' : ''}. Inactive records stay here but cannot be chosen in new transactions.</>} />
       <form className="srch-form" role="search" aria-label="Filter the records" onSubmit={(e) => e.preventDefault()}>
         {masters.length > 1 && <Field label="Master" name="type" error={null}><select value={def.type} onChange={(e) => setType(e.target.value)}>{masters.map((m) => <option key={m.type} value={m.type}>{m.label}</option>)}</select></Field>}
         <Field label="Search" name="q" error={null}><input type="search" value={f.q} onChange={(e) => set({ q: e.target.value })} placeholder="Name or code" data-testid="mdr-q" /></Field>
@@ -148,7 +148,7 @@ function RecordDetail({ def, id, onBack, onOpen }) {
   return (
     <section aria-labelledby="mdd-title" data-testid="mdm-record">
       <p><a href="?" onClick={(e) => { e.preventDefault(); onBack(); }} data-testid="mdd-back">← All records</a></p>
-      <div className="page-head"><h1 id="mdd-title">{r.code} {r.name}</h1><StatusBadge status={RECORD_STATUS[r.status]?.[0] ?? r.status} label={RECORD_STATUS[r.status]?.[1]} /></div>
+      <PageHeader id="mdd-title" title={<>{r.code} {r.name}</>} status={<StatusBadge status={RECORD_STATUS[r.status]?.[0] ?? r.status} label={RECORD_STATUS[r.status]?.[1]} />} />
       {r.survivor && <p className="mdm-banner" role="note" data-testid="mdd-merged">Merged into <a href={`?id=${r.survivor.id}`} onClick={(e) => { e.preventDefault(); onOpen(r.survivor.id); }}>{r.survivor.code} {r.survivor.name}</a>. This record is kept; everything that refers to it now resolves to {r.survivor.code}.</p>}
       {r.merged.length > 0 && <p className="muted small">Records merged into this one: {r.merged.map((m) => `${m.code} ${m.name}`).join(', ')}</p>}
       <div className="actions-row">

@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { RISK_CATEGORIES, RISK_STRATEGIES, dayIST, rk, st } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Risk and Opportunity Register (part 10.06, FR-01, FR-02): the register of every project you may see; a new risk or opportunity starts with its assessment, the score, level and EMV are worked out on the server and shown on its page.
 export const emptyRisk = () => ({ projectId: '', rtype: 'RISK', title: '', category: 'TECHNICAL', ownerUser: '', probability: 3, impactCost: 3, impactTime: 1, impactQuality: 1, impactSafety: 1, strategy: 'MITIGATE', mostLikely: '0', actionText: '', actionOwner: '', actionDue: dayIST(14) });
@@ -33,7 +34,7 @@ export default function RisksPage() {
   const num = (k, label) => <Field label={label} name={k} error={error}><select value={f[k]} onChange={(e) => set(k, e.target.value)} data-testid={`rk-f-${k}`}>{scale.map((n) => <option key={n} value={n}>{n}</option>)}</select></Field>;
   return (
     <section aria-labelledby="rk-list-h" data-testid="risks">
-      <h1 id="rk-list-h" className="sr-only">{t('rk.registerTitle')}</h1>
+      <PageHeader id="rk-list-h" srOnly title={t('rk.registerTitle')} />
       <div className="actions-row no-print">
         {perms.includes('proj.risk.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="rk-new">{t('rk.new')}</button>}
         <Link to={fp ? `/proj/risk-dashboard?projectId=${fp}` : '/proj/risk-dashboard'}>{t('rk.dashTitle')}</Link><Link to={fp ? `/proj/issues?filter[projectId]=${fp}` : '/proj/issues'}>{t('rk.issuesTitle')}</Link>

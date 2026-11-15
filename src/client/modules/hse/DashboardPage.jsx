@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, hse, qs } from './api.js';
 import { ErrorLine, big, today, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // HSE Dashboard (part 19.08, FR-01 to FR-03): the lagging and leading indicators with value, target and colour, the safe man-hours counter, the trend by month, the comparison of sites, the exceptions and the monthly report. Every tile opens the list behind it.
 const TONE = { green: 'APPROVED', amber: 'RETURNED', red: 'REJECTED', neutral: 'DRAFT' }; const nf = new Intl.NumberFormat('en-IN');
@@ -34,7 +35,7 @@ export default function DashboardPage() {
   );
   const report = () => run(() => hse.exportFile(`/dashboard/report${qs({ month, projectId: f.projectId, siteId: f.siteId })}`, `hse-report-${month}.pdf`), null);
   return (
-    <section aria-labelledby="hd-h" data-testid="hse-dashboard"><h1 id="hd-h">{t('kpi.title')}</h1><p className="muted" data-testid="hse-dash-period">{t('kpi.period', { from: fmtDate(d.period.from), to: fmtDate(d.period.to), base: nf.format(d.rateBase) })}</p>
+    <section aria-labelledby="hd-h" data-testid="hse-dashboard"><PageHeader id="hd-h" title={t('kpi.title')} /><p className="muted" data-testid="hse-dash-period">{t('kpi.period', { from: fmtDate(d.period.from), to: fmtDate(d.period.to), base: nf.format(d.rateBase) })}</p>
       <ErrorLine error={error} id="hse-error" />
       <div className="mdm-panel no-print" data-testid="hse-dash-filters"><div className="form-grid">
         <Field label={t('project')} name="projectId" error={null}><select value={f.projectId} onChange={(e) => set('projectId', e.target.value)} style={big} data-testid="hse-dash-project"><option value="">{t('kpi.allProjects')}</option>{d.filters.projects.map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>

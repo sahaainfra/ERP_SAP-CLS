@@ -5,6 +5,9 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { an, fmtDate, fmtRs } from './api.js';
 import { Bars, ParamPanel } from './AnaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
+import { Card, CardGrid } from '../../platform/design/Card.jsx';
 
 // Procurement dashboard (part 15.10, FR-01 to FR-04): the open requisitions, cycle time, orders waiting, overdue deliveries, spend, savings, single-source and emergency shares and open control exceptions; charts of spend and concentration; the four work queues.
 // Every tile opens the records it counts; the figures are worked out by the server from live procurement data inside the data scope of the person.
@@ -33,14 +36,14 @@ export default function ProcDashboardPage() {
   ];
   const shown = tiles.find((x) => x[0] === open);
   return (
-    <section aria-labelledby="pd-h" data-testid="proc-pd"><h1 id="pd-h">{t('n.dashTitle')}{d.project ? ` · ${d.project.code}` : ''}</h1><p className="muted">{t('n.dashIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</p>
+    <section aria-labelledby="pd-h" data-testid="proc-pd"><PageHeader id="pd-h" title={<>{t('n.dashTitle')}{d.project ? ` · ${d.project.code}` : ''}</>} subtitle={<>{t('n.dashIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</>} />
       <ParamPanel t={t} value={f} onChange={setF} />
       <div className="actions-row no-print"><Link to="/approvals">{t('n.myActions')}{tq.data != null ? ` (${tq.data})` : ''}</Link><Link to="/proc/spend-analysis">{t('n.spendTitle')}</Link><Link to="/proc/cycle-time">{t('n.cycleTitle')}</Link><Link to="/proc/procurement-compliance">{t('n.complianceTitle')}</Link></div>
-      <div className="tiles" data-testid="pd-tiles">{tiles.map(([id, label, value, status, hint,, , tr]) => <div key={id} className="tile-wrap"><Tile label={label} value={value} status={status} hint={hint} testId={`pd-${id}`} /><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setOpen(open === id ? null : id)} aria-expanded={open === id} data-testid={`pd-open-${id}`}>{t('n.records')}</button>{tr}</div>)}</div>
+      <KpiRow data-testid="pd-tiles">{tiles.map(([id, label, value, status, hint,, , tr]) => <div key={id} className="tile-wrap"><Tile label={label} value={value} status={status} hint={hint} testId={`pd-${id}`} /><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setOpen(open === id ? null : id)} aria-expanded={open === id} data-testid={`pd-open-${id}`}>{t('n.records')}</button>{tr}</div>)}</KpiRow>
       {shown && <div className="mdm-panel" data-testid="pd-drill"><h2>{shown[1]}</h2>{shown[5]?.length ? <div className="table-scroll"><table className="data-table"><thead><tr><th>{t('n.record')}</th><th>{t('n.detail')}</th><th className="num">{t('n.value')}</th></tr></thead><tbody>{shown[5].map((r) => <tr key={r.id} data-testid="pd-drill-row"><td><Link to={r.link}>{r.docNo}</Link></td><td>{r.label}{r.ageDays != null ? ` · ${r.ageDays} ${t('n.days')}` : ''}{r.daysLate != null ? ` · ${r.daysLate} ${t('n.daysLate')}` : ''}</td><td className="num">{r.value == null ? '' : rs(r.value)}</td></tr>)}</tbody></table></div> : <p className="muted">{t('n.noRecordsHere')}</p>}<Link to={shown[6]}>{t('n.openList')}</Link></div>}
       <h2>{t('n.queues')}</h2>
-      <div className="form-grid" data-testid="pd-queues">{Object.entries(d.queues).map(([id, qu]) => <div key={id} className="mdm-panel" data-testid={`pd-queue-${id}`}><h3>{qu.label}</h3><p><strong data-testid={`pd-queue-${id}-count`}>{qu.count}</strong> · {rs(qu.value)}</p>
-        {qu.records.length === 0 ? <p className="muted">{t('n.queueEmpty')}</p> : <ul>{qu.records.map((r) => <li key={r.id}><Link to={r.link}>{r.docNo}</Link> <span className="muted">{r.label}{r.ageDays != null ? ` · ${r.ageDays} ${t('n.days')}` : ''}</span></li>)}</ul>}<Link to={qu.route}>{t('n.openList')}</Link></div>)}</div>
+      <CardGrid testid="pd-queues">{Object.entries(d.queues).map(([id, qu]) => <Card key={id} level={3} title={qu.label} subtitle={<><strong data-testid={`pd-queue-${id}-count`}>{qu.count}</strong> · {rs(qu.value)}</>} count={qu.count > qu.records.length ? { shown: qu.records.length, total: qu.count } : null} footer={<Link to={qu.route}>{t('n.openList')} ›</Link>} data-testid={`pd-queue-${id}`}>
+        {qu.records.length === 0 ? <p className="muted">{t('n.queueEmpty')}</p> : <ul>{qu.records.map((r) => <li key={r.id}><Link to={r.link}>{r.docNo}</Link> <span className="muted">{r.label}{r.ageDays != null ? ` · ${r.ageDays} ${t('n.days')}` : ''}</span></li>)}</ul>}</Card>)}</CardGrid>
       <h2>{t('n.charts')}</h2>
       {d.charts.byCategory.rows.length === 0 && <div data-testid="pd-empty"><p className="muted">{t('n.emptyBody')}</p></div>}
       <div className="form-grid" data-testid="pd-charts">

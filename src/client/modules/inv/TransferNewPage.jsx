@@ -7,6 +7,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtQty, iv, today, tr } from './api.js';
 import { ScanInput } from './ScanParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Transfer Request (part 16.05, FR-01): from store, to store, items, quantities and the date it is wanted. The request is approved by the construction manager of the source; between projects the project managers of both approve too.
 export default function TransferNewPage() {
@@ -22,7 +23,7 @@ export default function TransferNewPage() {
   const save = async (send) => { setError(null); setBusy(true); try { let d = await tr.create(body()); if (send) d = await tr.act(d.id, 'submit'); navigateTo(`/inv/transfers?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   const bad = !f.fromStoreId || !f.toStoreId || f.fromStoreId === f.toStoreId || !f.lines.some((l) => l.itemId && Number(l.qty) > 0);
   return (
-    <section aria-labelledby="tn-h" data-testid="transfer-new"><h1 id="tn-h">{t('tr.newTitle')}</h1><p className="muted">{t('tr.newHelp')}</p><p><Link to="/inv/transfers">{t('tr.title')}</Link>{pf.data ? ` · ${pf.data.mrNo}` : ''}</p>
+    <section aria-labelledby="tn-h" data-testid="transfer-new"><PageHeader id="tn-h" title={t('tr.newTitle')} subtitle={t('tr.newHelp')} meta={<><Link to="/inv/transfers">{t('tr.title')}</Link>{pf.data ? ` · ${pf.data.mrNo}` : ''}</>} />
       <ScanInput t={t} testId="tn-scan" onResult={(r) => { if (r.itemId) setF((x) => { const i = x.lines.findIndex((l) => !l.itemId); return i >= 0 ? { ...x, lines: x.lines.map((l, j) => (j === i ? { ...l, itemId: String(r.itemId) } : l)) } : { ...x, lines: [...x.lines, { itemId: String(r.itemId), qty: '' }] }; }); }} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('tr.from')} name="fromStoreId" error={error}><select value={f.fromStoreId} onChange={(ev) => set('fromStoreId', ev.target.value)} style={{ minHeight: 48 }} data-testid="tn-from"><option value="">{t('choose')}</option>{stores.map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}{s.project ? ` (${s.project})` : ''}</option>)}</select></Field>

@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { ADJ_TONE, fmtQty, fmtRs, iv } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stock adjustments (part 16.01, FR-05): a count correction or a revaluation (a rate corrected after a GRN price correction) is prepared, approved by the store manager (and the accounts manager for a revaluation or a large value) and only then posted to the ledger.
 function Adj({ t, id }) {
@@ -22,7 +23,7 @@ function Adj({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => iv.decide(a.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
     <div data-testid="ad-object" data-status={a.status}>
-      <h1 id="ad-h">{a.docNo} <StatusBadge status={ADJ_TONE[a.status]} label={t(`as.${a.status}`)} /></h1><p><Link to="/inv/adjustments">{t('back')}</Link> · {a.store} · {t(`at.${a.type}`)}</p>
+      <PageHeader id="ad-h" title={<>{a.docNo} <StatusBadge status={ADJ_TONE[a.status]} label={t(`as.${a.status}`)} /></>} meta={<><Link to="/inv/adjustments">{t('back')}</Link> · {a.store} · {t(`at.${a.type}`)}</>} />
       <dl className="kv"><div><dt>{t('reason')}</dt><dd>{a.reason}</dd></div>{a.valueDelta != null && <div><dt>{t('valueEffect')}</dt><dd data-testid="ad-delta">{fmtRs(a.valueDelta)}</dd></div>}<div><dt>{t('preparedBy')}</dt><dd>{a.requestedBy}</dd></div>{a.approvedBy && <div><dt>{t('approvedBy')}</dt><dd>{a.approvedBy}</dd></div>}</dl>
       {error?.form && <p className="field-error" role="alert" data-testid="ad-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="ad-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="ad-lines"><caption>{t('lines')}</caption><thead><tr><th>{t('item')}</th>{a.type === 'REVALUATION' ? <><th className="num">{t('onHand')}</th><th className="num">{t('oldRate')}</th><th className="num">{t('newRate')}</th></> : <th className="num">{t('qtyChange')}</th>}<th className="num">{t('valueEffect')}</th></tr></thead>
@@ -49,7 +50,7 @@ function AdjForm({ t }) {
   const line = () => (f.type === 'REVALUATION' ? { itemId: Number(f.itemId), newRate: Number(f.newRate) } : { itemId: Number(f.itemId), qtyDelta: Number(f.qtyDelta), ...(f.rate ? { rate: Number(f.rate) } : {}) });
   const save = async (send) => { setError(null); setBusy(true); try { let d = await iv.adjCreate({ storeId: Number(f.storeId), type: f.type, reason: f.reason, lines: [line()] }); if (send) d = await iv.adjAct(d.id, 'submit'); navigateTo(`/inv/adjustments?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="adn-h" data-testid="inv-ad-form"><h1 id="adn-h">{t('newAdj')}</h1><p className="muted">{t('newAdjHelp')}</p><p><Link to="/inv/adjustments">{t('back')}</Link></p>
+    <section aria-labelledby="adn-h" data-testid="inv-ad-form"><PageHeader id="adn-h" title={t('newAdj')} subtitle={t('newAdjHelp')} meta={<Link to="/inv/adjustments">{t('back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('store')} name="storeId" error={error}><select value={f.storeId} onChange={(ev) => set('storeId', ev.target.value)} style={{ minHeight: 44 }} data-testid="adn-store"><option value="">{t('choose')}</option>{(sq.data ?? []).filter((s) => s.status === 'ACTIVE').map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field>
         <Field label={t('type')} name="type" error={error}><select value={f.type} onChange={(ev) => set('type', ev.target.value)} style={{ minHeight: 44 }} data-testid="adn-type"><option value="QUANTITY">{t('at.QUANTITY')}</option><option value="REVALUATION">{t('at.REVALUATION')}</option></select></Field>
@@ -67,7 +68,7 @@ export default function StockAdjustmentsPage() {
   if (sp.get('new') === '1') return <AdjForm t={t} />;
   if (id) return <section aria-labelledby="ad-h" data-testid="inv-ad"><Adj key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="ads-h" data-testid="inv-ad"><h1 id="ads-h">{t('adjTitle')}</h1><p className="muted">{t('adjIntro')}</p>
+    <section aria-labelledby="ads-h" data-testid="inv-ad"><PageHeader id="ads-h" title={t('adjTitle')} subtitle={t('adjIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.adjustment.create') && <Link to="/inv/adjustments?new=1">{t('newAdj')}</Link>} <Link to="/inv/dashboard">{t('dashTitle')}</Link></div>
       <ListReport listCode="inv.adjustments" endpoint="/inv/adjustments" title={t('adjTitle')} session={session.data} rowHref={(r) => `/inv/adjustments?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/adjustments?id=${r.id}`)} cardFields={['docNo', 'store', 'date', 'type']} statusKey="status" empty={{ title: t('adjEmptyTitle'), text: t('adjEmptyBody') }} /></section>
   );

@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { SUB_TYPES, sb } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Submittal Schedule vs Required Dates (part 11.03, FR-06): required-by against submitted and responded, the overdue report and the count by type.
 export default function SubmittalSchedulePage() {
@@ -17,7 +18,7 @@ export default function SubmittalSchedulePage() {
   const d = q.data;
   return (
     <section aria-labelledby="ss-h" data-testid="sub-schedule">
-      <h1 id="ss-h">{t('sub.scheduleTitle')}</h1>
+      <PageHeader id="ss-h" title={t('sub.scheduleTitle')} />
       <ProjectSelect value={projectId} onChange={setProjectId} allowAll testId="ss-project" />
       {q.isPending ? <Skeleton label={t('sub.scheduleTitle')} rows={4} /> : (
         <>

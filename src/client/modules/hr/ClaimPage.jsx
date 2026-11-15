@@ -9,6 +9,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, exp } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Expense Claim (HR, part 07.12, FR-03 to FR-05): the claim of an employee with its lines: category, date, amount, GST invoice details, the photo of the bill (taken with the phone camera), project and cost code; per diem and mileage are
 // computed by the server from the policy of the grade. The page shows the same checks the server makes as the lines are typed: the limit, the receipt rule, a bill that is claimed already, an old bill; a flagged line needs a justification and
@@ -68,7 +69,7 @@ export default function ClaimPage() {
   const advOptions = c?.openAdvances ?? [];
   return (
     <section aria-labelledby="cl-title" data-testid="claim" data-status={c?.status ?? 'NEW'}>
-      <h1 id="cl-title">{c ? <>{c.docNo} <StatusBadge status={TONE[c.status]} label={t(`cst.${c.status}`)} /></> : t('claim.title')}</h1>
+      <PageHeader id="cl-title" title={c ? <>{c.docNo} <StatusBadge status={TONE[c.status]} label={t(`cst.${c.status}`)} /></> : t('claim.title')} />
       {c && <p className="muted">{c.employee} · {c.employeeCode}{c.grade ? ` · ${t('claim.grade')} ${c.grade}` : ''}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="cl-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).map(([k, v]) => `${k}: ${v}`).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="cl-note">{note}</p>}

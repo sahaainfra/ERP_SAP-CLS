@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useDeadLetters, useDiscard, useRedrive } from '../api/index.js';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { FormDialog, Link, Pager, QueryState, can, downloadCsv, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const STATUSES = [['DEAD', 'Dead letters'], ['DISCARDED', 'Discarded'], ['PENDING', 'Still retrying']];
 
@@ -47,8 +48,7 @@ export default function DeadLettersPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Operations &rsaquo; Dead-Letter Queue</nav>
-      <div className="page-head"><h1 id="page-title">Dead-Letter Queue</h1></div>
-      <p className="muted">Events a consumer could not process after every attempt. Fix the cause, then re-drive; or discard with a reason if the event no longer matters. Payloads are masked. <Link to="/admin/operations">Back to the monitor</Link></p>
+      <PageHeader id="page-title" title={"Dead-Letter Queue"} subtitle={<>Events a consumer could not process after every attempt. Fix the cause, then re-drive; or discard with a reason if the event no longer matters. Payloads are masked. <Link to="/admin/operations">Back to the monitor</Link></>} />
       <div className="toolbar">
         <label className="field field-inline"><span>Show</span>
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} data-testid="dlq-status">

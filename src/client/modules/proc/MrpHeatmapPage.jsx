@@ -7,6 +7,8 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { LEVEL_TONE, download, fmtDate, fmtQty, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Shortage Heat-map and Long-Lead Items (part 15.02, FR-05, FR-06): for the latest run of a project (or the one named), every item against every week of the horizon, coloured by how short it is (short; critical when the order-by date has passed or the
 // item is long-lead), and the long-lead materials with their lead time, order-by date, days left to it and the supplier's capacity. Exports to Excel, CSV and PDF.
@@ -24,14 +26,14 @@ export default function MrpHeatmapPage() {
   const perWeek = h ? h.weeks.map((_, i) => h.items.reduce((n, it) => n + it.weeks[i].net, 0)) : [];
   return (
     <section aria-labelledby="hm-h" data-testid="proc-heatmap">
-      <h1 id="hm-h">{t('p.heatmapTitle')}</h1><p className="muted">{t('p.heatmapIntro')}</p>
+      <PageHeader id="hm-h" title={t('p.heatmapTitle')} subtitle={t('p.heatmapIntro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('p.params')}><div className="form-grid"><Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => setProjectId(e.target.value)} disabled={Boolean(named)} style={{ minHeight: 44 }} data-testid="hm-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field></div></form>
       {!runId && !rq.isPending && <div className="mdm-panel" data-testid="hm-empty"><h2>{t('p.noRunYet')}</h2><p className="muted">{t('p.noRunYetBody')}</p><Link to="/proc/mrp">{t('p.mrpTitle')}</Link></div>}
       {hq.isPending && runId && <Skeleton label={t('p.heatmapTitle')} rows={5} />}{hq.isError && hq.error?.status !== 403 && <ErrorState error={hq.error} onRetry={hq.refetch} />}
       {h && (
         <>
           <p data-testid="hm-run">{t('p.ofRun')} <Link to={`/proc/mrp?id=${h.run.id}`}>{h.run.docNo}</Link> · {t('p.runAt')} {h.run.runAt ? fmtDate(h.run.runAt.slice(0, 10)) : '—'}</p>
-          <div className="tiles"><div className="tile" data-testid="hm-items"><span className="tile-value">{h.totals.items}</span><span className="tile-label">{t('p.itemsN')}</span></div><div className="tile" data-testid="hm-short"><span className="tile-value">{h.totals.short}</span><span className="tile-label">{t('p.itemsShort')}</span></div><div className="tile" data-testid="hm-critical"><span className="tile-value">{h.totals.critical}</span><span className="tile-label">{t('p.itemsCritical')}</span></div></div>
+          <KpiRow><div className="tile" data-testid="hm-items"><span className="tile-value">{h.totals.items}</span><span className="tile-label">{t('p.itemsN')}</span></div><div className="tile" data-testid="hm-short"><span className="tile-value">{h.totals.short}</span><span className="tile-label">{t('p.itemsShort')}</span></div><div className="tile" data-testid="hm-critical"><span className="tile-value">{h.totals.critical}</span><span className="tile-label">{t('p.itemsCritical')}</span></div></KpiRow>
           <div className="actions-row no-print">{h.run.can.export && ['xlsx', 'csv', 'pdf'].map((f) => <button key={f} type="button" className="btn" onClick={() => exp('HEATMAP', f)} data-testid={`hm-export-${f}`}>{f.toUpperCase()}</button>)}</div>{error && <p className="field-error" role="alert">{error}</p>}
           <div className="mdm-panel" data-testid="hm-chart"><h2>{t('p.shortByWeek')}</h2><Chart type="bar" data={{ categories: h.weeks.map((w) => w.slice(5)), series: [{ name: t('p.net'), values: perWeek }] }} title={t('p.shortByWeek')} /></div>
           {h.items.length === 0 ? <p className="muted" data-testid="hm-none">{t('p.nothingNeededBody')}</p> : (

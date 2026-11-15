@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { gs } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Project Map (part 10.07, FR-01 to FR-04, FR-07, BR-01): the sites with their geofences, the location breakdown, the custom layers, the plan overlays, the points that other modules offer and the punch aggregates, with layer toggles, the progress heatmap,
 // a legend and click-through to the records. The map library loads on demand; without it, without a base map or on request the same data is shown as a list (degraded list mode).
@@ -59,7 +60,7 @@ export default function ProjectMapPage() {
   }, [d, list, off, heat]);
   const head = (
     <header>
-      <h1 id="gis-h">{t('gis.mapTitle')}</h1>
+      <PageHeader id="gis-h" title={t('gis.mapTitle')} />
       <div className="actions-row no-print"><ProjectPicker route="/proj/map" projectId={projectId} testId="gis-project" /><Link to={projectId ? `/proj/strip-chart?projectId=${projectId}` : '/proj/strip-chart'}>{t('gis.stripTitle')}</Link><Link to={projectId ? `/proj/gis-config?projectId=${projectId}` : '/proj/gis-config'}>{t('gis.configTitle')}</Link></div>
     </header>
   );

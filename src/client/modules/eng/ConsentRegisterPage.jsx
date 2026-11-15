@@ -5,6 +5,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { useConsentHistory, useConsents, useImportConsents, useSetConsent } from '../../platform/comm/api.js';
 import { Field, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANNEL } from './CommunicationLogPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Consent Register (part 04.07, section 7.3): who agreed to receive messages on which channel, who opted out (including by replying STOP), and when and how it changed. Commercial messages go only to
 // people who opted in; a message the person must have (a code, a statutory notice) is not stopped by an opt-out.
@@ -48,8 +49,7 @@ export default function ConsentRegisterPage({ session }) {
   };
   return (
     <section aria-labelledby="cr-title" data-testid="consent-register">
-      <h1 id="cr-title">Consent Register</h1>
-      <p className="muted">Who agreed to receive messages, and who asked to stop. Commercial messages go only to people who opted in.</p>
+      <PageHeader id="cr-title" title={"Consent Register"} subtitle={"Who agreed to receive messages, and who asked to stop. Commercial messages go only to people who opted in."} />
       {notice && <p role="status" className="notice" data-testid="cr-notice">{notice}</p>}
       <form className="srch-form" role="search" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>Channel</span><select value={filters.channel} onChange={(e) => set({ channel: e.target.value })}><option value="">All channels</option>{Object.entries(CHANNEL).filter(([k]) => k !== 'PUSH').map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>

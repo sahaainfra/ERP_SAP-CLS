@@ -4,6 +4,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { aw, inrShort } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // EMD & Fee Register (business development, part 08.03, FR-02, BR-02): every EMD and tender fee with its mode, amount, instrument validity, the approval of the request and the refund, with the days since the result; above the list the refunds due by age.
 export default function EmdRegisterPage() {
@@ -13,7 +14,7 @@ export default function EmdRegisterPage() {
   const q = useQuery({ queryKey: ['bd', 'emd-ageing'], queryFn: aw.ageing, retry: false });
   return (
     <section aria-labelledby="emdr-title" data-testid="emd-register">
-      <h1 id="emdr-title">{t('emd.register')}</h1>
+      <PageHeader id="emdr-title" title={t('emd.register')} />
       {q.data && (
         <dl className="op-figures" data-testid="emd-ageing">
           <div><dt>{t('emd.held')}</dt><dd>{q.data.held.count} · {inrShort(q.data.held.amount)}</dd></div>

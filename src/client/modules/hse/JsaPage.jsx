@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, hse } from './api.js';
 import { ErrorLine, ProjectSite, big, today, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // JSA Builder (part 19.01, FR-03): the task broken into steps with hazard, control and the person responsible; released by someone other than its preparer; the crew acknowledges by badge scan or name; closed after the work.
 const TONE = { DRAFT: 'DRAFT', ISSUED: 'APPROVED', COMPLETED: 'APPROVED', CANCELLED: 'CANCELLED' }; const blankS = { step: '', hazard: '', control: '', responsible: '' };
@@ -39,8 +40,7 @@ function Jsa({ id }) {
   const t = useT('hse'); const { q, guard } = useRecord('/jsa', id, t('jsa.title'), 'hse.jsa.view'); const { error, run, busy, note } = useRunner(); const [editing, setEditing] = useState(false); const [badge, setBadge] = useState(''); const [name, setName] = useState(''); usePageTitle(t('jsa.title')); if (guard) return guard; const x = q.data;
   const act = (a, b, msg) => run(() => hse.act('/jsa', x.id, a, b), msg);
   return (
-    <div data-testid="hse-jsa-object" data-status={x.status}><h1 id="js-h">{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`jsa.st.${x.status}`)} /></h1>
-      <p><Link to="/hse/jsa">{t('jsa.title')}</Link> · {x.project} · {x.task} · {t('jsa.validOn')} {fmtDate(x.validOn)}{x.hira ? ` · ${x.hira.docNo} (${t(`risk.${x.hira.riskLevel}`)})` : ''}</p>
+    <div data-testid="hse-jsa-object" data-status={x.status}><PageHeader id="js-h" title={<>{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`jsa.st.${x.status}`)} /></>} meta={<><Link to="/hse/jsa">{t('jsa.title')}</Link> · {x.project} · {x.task} · {t('jsa.validOn')} {fmtDate(x.validOn)}{x.hira ? ` · ${x.hira.docNo} (${t(`risk.${x.hira.riskLevel}`)})` : ''}</>} />
       <ErrorLine error={error} id="hse-jsa-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-jsa-note">{note}</p>}
       <div className="actions-row no-print">
         {x.can.edit && <button type="button" className="btn" onClick={() => setEditing(!editing)} data-testid="hse-jsa-edit">{t('edit')}</button>}
@@ -59,13 +59,13 @@ function Jsa({ id }) {
 }
 function JsaNew() {
   const t = useT('hse'); const { error, run, busy } = useRunner(); usePageTitle(t('jsa.new'));
-  return <section aria-labelledby="jsn-h"><h1 id="jsn-h">{t('jsa.new')}</h1><p><Link to="/hse/jsa">{t('jsa.title')}</Link></p><ErrorLine error={error} id="hse-jsa-error" /><JsaForm initial={{ projectId: '', siteId: '', task: '', hiraId: '', activityId: '', waId: '', methodStatementRef: '', validOn: today(), steps: [{ ...blankS }] }} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.make('/jsa', { projectId: Number(v.projectId), siteId: idOrNull(v.siteId), ...body(v) })); if (r) navigateTo(`/hse/jsa?id=${r.id}`); }} /></section>;
+  return <section aria-labelledby="jsn-h"><PageHeader id="jsn-h" title={t('jsa.new')} meta={<Link to="/hse/jsa">{t('jsa.title')}</Link>} /><ErrorLine error={error} id="hse-jsa-error" /><JsaForm initial={{ projectId: '', siteId: '', task: '', hiraId: '', activityId: '', waId: '', methodStatementRef: '', validOn: today(), steps: [{ ...blankS }] }} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.make('/jsa', { projectId: Number(v.projectId), siteId: idOrNull(v.siteId), ...body(v) })); if (r) navigateTo(`/hse/jsa?id=${r.id}`); }} /></section>;
 }
 export default function JsaPage() {
   const t = useT('hse'); usePageTitle(t('jsa.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="js-h"><Jsa id={id} /></section>; if (sp.get('new')) return <JsaNew />;
   return (
-    <section aria-labelledby="jsl-h" data-testid="hse-jsa"><h1 id="jsl-h">{t('jsa.title')}</h1><p className="muted">{t('jsa.intro')}</p>
+    <section aria-labelledby="jsl-h" data-testid="hse-jsa"><PageHeader id="jsl-h" title={t('jsa.title')} subtitle={t('jsa.intro')} />
       <div className="actions-row no-print"><Link to="/hse/jsa?new=1" data-testid="hse-jsa-new">{t('jsa.new')}</Link></div>
       <ListReport listCode="hse.jsa" endpoint="/hse/jsa" title={t('jsa.title')} session={session.data} rowHref={(r) => `/hse/jsa?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/jsa?id=${r.id}`)} cardFields={['docNo', 'task', 'validOn', 'status']} statusKey="status" dateKey="validOn" empty={{ title: t('jsa.emptyTitle'), text: t('jsa.emptyBody') }} />
     </section>

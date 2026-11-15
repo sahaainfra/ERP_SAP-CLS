@@ -7,6 +7,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { download, fmtDate, ordOf, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
 import { Buckets } from './BaselinesPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Variance and Quality (part 13.03, FR-03, FR-06): two reports of one programme. Variance: every activity of a baseline against the programme of today (or another baseline): start, finish and duration
 // variance, the critical activities that slipped, the milestones, with the baseline and current bars drawn for the rows shown. Quality: the fourteen checks in the manner of DCMA-14 with their limits
@@ -163,7 +164,7 @@ export default function VariancePage() {
   if (bq.error?.status === 403) return <NoPermission what={t('var.pageTitle')} permission="plan.baseline.view" />;
   return (
     <section aria-labelledby="var-h" data-testid="plan-variance">
-      <h1 id="var-h">{t('var.pageTitle')}</h1>
+      <PageHeader id="var-h" title={t('var.pageTitle')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('pr.params')}>
         <SchedulePicker projectId={pid} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); setBaselineId(null); }} onSchedule={setScheduleId} testId="var" />
         <div className="form-grid">

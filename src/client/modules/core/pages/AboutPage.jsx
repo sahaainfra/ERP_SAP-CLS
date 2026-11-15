@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAbout } from '../api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 export default function AboutPage() {
   const query = useAbout();
@@ -19,8 +20,7 @@ export default function AboutPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; About</nav>
-      <div className="page-head"><h1 id="page-title">About &amp; Build Information</h1></div>
-      <p className="muted">Shown to administrators only. Quote the build ID when you report a problem.</p>
+      <PageHeader id="page-title" title={"About & Build Information"} subtitle={"Shown to administrators only. Quote the build ID when you report a problem."} />
 
       {state.status === 'loading' && (
         <div className="skeleton" aria-busy="true" aria-label="Loading build information">

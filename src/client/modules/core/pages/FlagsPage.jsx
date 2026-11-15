@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { ApiError } from '../../../platform/api/index.js';
 import { fetchAllFlags, useFeatureFlag, useFlagKeys, useFlagList, useSetFlag } from '../api/index.js';
 import { formatDateTime, levelLabel, toCsv } from '../../../platform/format.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const ENVIRONMENTS = ['development', 'test', 'staging', 'production'];
 
@@ -142,13 +143,9 @@ export default function FlagsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; System &rsaquo; Feature Flags</nav>
-      <div className="page-head">
-        <h1 id="page-title">Feature Flags</h1>
-        <span className={`chip ${pageFlag ? 'chip-on' : 'chip-off'}`} data-testid="page-flag-chip">
+      <PageHeader id="page-title" title={"Feature Flags"} actions={<><span className={`chip ${pageFlag ? 'chip-on' : 'chip-off'}`} data-testid="page-flag-chip">
           ff.prog.p0002 is {pageFlag ? 'ON' : 'OFF'} for your company
-        </span>
-      </div>
-      <p className="muted">A flag resolves project override, then company override, then environment default, then the flag default.</p>
+        </span></>} subtitle={"A flag resolves project override, then company override, then environment default, then the flag default."} />
 
       <div className="toolbar">
         <label className="field field-inline">

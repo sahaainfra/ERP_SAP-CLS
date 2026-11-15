@@ -9,6 +9,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { ctr, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './CtrParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // The Obligations Calendar (part 21.01 FR-03) and Contract Amendments (FR-06).
 const nf = new Intl.NumberFormat('en-IN'); const money = (n) => (n == null ? '—' : `₹ ${nf.format(n)}`); const OB_TONE = { OVERDUE: 'REJECTED', DUE_SOON: 'RETURNED', OPEN: 'IN_REVIEW', DONE: 'APPROVED', WAIVED: 'CANCELLED' };
@@ -18,8 +20,8 @@ export function ObligationsPage() {
   if (q.error?.status === 403) return <NoPermission what={t('ob.title')} permission="ctr.obligation.view" />; if (q.isPending) return <Skeleton label={t('ob.title')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />; const d = q.data; const perms = session.data?.permissions ?? []; const canDone = Array.isArray(perms) ? perms.includes('ctr.obligation.complete') : Boolean(perms['ctr.obligation.complete']);
   const max = Math.max(1, ...d.months.map((m) => m.open + m.overdue + m.done)); const w = 480; const h = 100; const bw = w / Math.max(1, d.months.length);
   return (
-    <section aria-labelledby="ob-h" data-testid="ctr-obligations"><h1 id="ob-h">{t('ob.title')}</h1><p className="muted">{t('ob.intro', { from: fmtDate(d.from), to: fmtDate(d.to) })}</p><ErrorLine error={error} id="ctr-error" />{note && <p className="mdm-banner" role="status" data-testid="ctr-note">{note}</p>}
-      <div className="form-grid" data-testid="ctr-ob-counts">{[['overdue', 'REJECTED'], ['dueSoon', 'RETURNED'], ['open', 'IN_REVIEW'], ['done', 'APPROVED']].map(([k, tone]) => <button type="button" key={k} className="mdm-panel" style={{ textAlign: 'left', minHeight: 48 }} onClick={() => setF({ ...f, state: { overdue: 'OVERDUE', dueSoon: 'DUE_SOON', open: 'OPEN', done: 'DONE' }[k] })} data-testid={`ctr-ob-count-${k}`}><div className="muted">{t(`ob.c.${k}`)}</div><strong style={{ fontSize: '1.6rem' }}>{d.counts[k]}</strong> <StatusBadge status={tone} label={t(`ob.c.${k}`)} /></button>)}</div>
+    <section aria-labelledby="ob-h" data-testid="ctr-obligations"><PageHeader id="ob-h" title={t('ob.title')} subtitle={t('ob.intro', { from: fmtDate(d.from), to: fmtDate(d.to) })} /><ErrorLine error={error} id="ctr-error" />{note && <p className="mdm-banner" role="status" data-testid="ctr-note">{note}</p>}
+      <KpiRow data-testid="ctr-ob-counts">{[['overdue', 'REJECTED', 'error'], ['dueSoon', 'RETURNED', 'warning'], ['open', 'IN_REVIEW', 'info'], ['done', 'APPROVED', 'success']].map(([k, status, tone]) => { const state = { overdue: 'OVERDUE', dueSoon: 'DUE_SOON', open: 'OPEN', done: 'DONE' }[k]; return <KpiTile key={k} label={t(`ob.c.${k}`)} value={d.counts[k]} kind="time" tone={tone} onClick={() => setF({ ...f, state })} pressed={f.state === state} data-testid={`ctr-ob-count-${k}`}><StatusBadge status={status} label={t(`ob.c.${k}`)} size="sm" /></KpiTile>; })}</KpiRow>
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('k.state')} name="state" error={null}><select value={f.state} onChange={(e) => setF({ ...f, state: e.target.value })} style={big} data-testid="ctr-ob-state">{['ALL', 'OVERDUE', 'DUE_SOON', 'OPEN', 'DONE'].map((k) => <option key={k} value={k}>{t(`ob.s.${k}`)}</option>)}</select></Field>
         <label style={{ minHeight: 48 }}><input type="checkbox" checked={f.mine} onChange={(e) => setF({ ...f, mine: e.target.checked })} data-testid="ctr-ob-mine" /> {t('ob.mine')}</label></div>
         <div className="actions-row"><button type="button" className="btn" onClick={() => ctr.exportFile(`/obligations/export${query}`, 'obligations.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="ctr-ob-export">{t('ob.export')}</button></div></div>
@@ -48,7 +50,7 @@ function AmendForm({ onSave, busy, error, contractId }) {
 function Amendment({ id }) {
   const t = useT('ctr'); const { q, guard } = useRecord('/amendments', id, t('am.title'), 'ctr.amendment.view'); const { error, run, busy, note } = useRunner(); usePageTitle(t('am.title')); if (guard) return guard; const x = q.data; const c = x.current ?? {};
   return (
-    <div data-testid="ctr-am-object" data-status={x.status}><h1 id="am-h">{x.docNo} <Status x={x} /></h1><p><Link to="/ctr/amendments">{t('am.title')}</Link> · <Link to={`/ctr/contracts?id=${x.contractId}`}>{x.contractNo}</Link> · {t('k.amendNo', { n: x.no })} · {t(`am.k.${x.kind}`)}</p><ErrorLine error={error} id="ctr-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
+    <div data-testid="ctr-am-object" data-status={x.status}><PageHeader id="am-h" title={<>{x.docNo} <Status x={x} /></>} meta={<><Link to="/ctr/amendments">{t('am.title')}</Link> · <Link to={`/ctr/contracts?id=${x.contractId}`}>{x.contractNo}</Link> · {t('k.amendNo', { n: x.no })} · {t(`am.k.${x.kind}`)}</>} /><ErrorLine error={error} id="ctr-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
       <p>{x.description}</p>
       <div className="table-scroll"><table className="data-table" data-testid="ctr-am-compare"><caption>{t('am.compare')}</caption><thead><tr><th /><th>{t('am.now')}</th><th>{t('am.proposed')}</th></tr></thead><tbody>
         <tr><th scope="row">{t('k.v.revised')}</th><td>{money(c.revised)}</td><td data-testid="ctr-am-after">{c.revised == null || x.valueChange == null ? '—' : money(Math.round((c.revised + x.valueChange) * 100) / 100)}</td></tr>
@@ -62,9 +64,9 @@ function Amendment({ id }) {
 export function AmendmentsPage() {
   const t = useT('ctr'); usePageTitle(t('am.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession(); const { error, run, busy } = useRunner();
   if (id) return <section aria-labelledby="am-h"><Amendment id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="amn-h"><h1 id="amn-h">{t('am.new')}</h1><p><Link to="/ctr/amendments">{t('am.title')}</Link></p><ErrorLine error={error} id="ctr-error" /><AmendForm contractId={sp.get('contractId')} busy={busy} error={error} onSave={async (v) => { const r = await run(() => ctr.make('/amendments', v)); if (r) navigateTo(`/ctr/amendments?id=${r.id}`); }} /></section>;
+  if (sp.get('new')) return <section aria-labelledby="amn-h"><PageHeader id="amn-h" title={t('am.new')} meta={<Link to="/ctr/amendments">{t('am.title')}</Link>} /><ErrorLine error={error} id="ctr-error" /><AmendForm contractId={sp.get('contractId')} busy={busy} error={error} onSave={async (v) => { const r = await run(() => ctr.make('/amendments', v)); if (r) navigateTo(`/ctr/amendments?id=${r.id}`); }} /></section>;
   return (
-    <section aria-labelledby="ams-h" data-testid="ctr-amendments"><h1 id="ams-h">{t('am.title')}</h1><p className="muted">{t('am.intro')}</p>
+    <section aria-labelledby="ams-h" data-testid="ctr-amendments"><PageHeader id="ams-h" title={t('am.title')} subtitle={t('am.intro')} />
       <div className="actions-row no-print"><Link to="/ctr/amendments?new=1" data-testid="ctr-am-new">{t('am.new')}</Link> · <Link to="/ctr/contracts">{t('k.register')}</Link></div>
       <ListReport listCode="ctr.amendments" endpoint="/ctr/amendments" title={t('am.title')} session={session.data} rowHref={(r) => `/ctr/amendments?id=${r.id}`} onOpen={(r) => navigateTo(`/ctr/amendments?id=${r.id}`)} cardFields={['docNo', 'contractNo', 'kind', 'status']} statusKey="status" empty={{ title: t('am.emptyTitle'), text: t('am.emptyBody') }} />
     </section>

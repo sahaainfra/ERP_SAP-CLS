@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { qa } from './api.js';
 import { sel } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Concrete Control Charts (part 18.07, FR-02): the X-bar and R charts of the 28-day cube results by grade and supplier, with centre line and limits, the points beyond them, and the trend of the standard deviation.
 const W = 640; const H = 220; const PAD = 36;
@@ -26,7 +27,7 @@ export default function ControlChartsPage() {
   if (q.error?.status === 403) return <NoPermission what={t('cc.title')} permission="qa.dashboard.view" />; if (q.isPending) return <Skeleton label={t('cc.title')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const c = q.data; const set = (k, v) => setF((s) => ({ ...s, [k]: v, ...(k === 'grade' ? { supplierId: '' } : {}) }));
   return (
-    <section aria-labelledby="cc-h" data-testid="qa-control-charts"><h1 id="cc-h">{t('cc.title')}</h1><p className="muted"><Link to="/qa/dashboard">{t('dash.title')}</Link> · {t('cc.intro')}</p>
+    <section aria-labelledby="cc-h" data-testid="qa-control-charts"><PageHeader id="cc-h" title={t('cc.title')} subtitle={<><Link to="/qa/dashboard">{t('dash.title')}</Link> · {t('cc.intro')}</>} />
       <div className="mdm-panel no-print"><div className="form-grid">
         <Field label={t('project')} name="projectId"><select value={f.projectId} onChange={(e) => set('projectId', e.target.value)} style={sel} data-testid="cc-project"><option value="">{t('allProjects')}</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>
         <Field label={t('pc.grade')} name="grade"><select value={f.grade || c.grade || ''} onChange={(e) => set('grade', e.target.value)} style={sel} data-testid="cc-grade">{c.grades.map((g) => <option key={g} value={g}>{g}</option>)}</select></Field>

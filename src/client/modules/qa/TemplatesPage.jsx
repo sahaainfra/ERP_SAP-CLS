@@ -9,6 +9,7 @@ import { useSearch } from '../site/parts.jsx';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { RESULT_TONE, qa } from './api.js';
 import { DocBar, Status, sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Checklist Template Designer (part 18.01, FR-03): sections of questions (yes/no/NA, numeric with tolerance, text, photo, signature), weights, critical and automatic-fail questions, photo-required questions; a preview applies the server's own rules to sample answers.
 // A version in force never changes: it is amended into a new version, approved by the owner of the module and the quality control manager.
@@ -44,7 +45,7 @@ function Designer({ id }) {
   const body = () => ({ name: form.name, module: form.module, sections: toApi(form.sections), scoring: { passPct: Number(form.passPct) || 80, ...(form.consultant ? { consultantSignature: true } : {}) } });
   const save = async () => { const d = await run(() => (id ? qa.edit('/templates', id, { ...body(), rowVersion: form.rowVersion }) : qa.make('/templates', { code: form.code, ...body() })), t('saved')); if (d) navigateTo(`/qa/templates?id=${d.id}`); };
   return (
-    <section aria-labelledby="tpl-h" data-testid="qa-template-designer"><h1 id="tpl-h">{id ? t('tpl.designer') : t('tpl.new')}</h1><p className="muted"><Link to="/qa/templates">{t('tpl.title')}</Link></p>
+    <section aria-labelledby="tpl-h" data-testid="qa-template-designer"><PageHeader id="tpl-h" title={id ? t('tpl.designer') : t('tpl.new')} subtitle={<Link to="/qa/templates">{t('tpl.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="tpl-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('code')} name="code" error={error}><input value={form.code} disabled={Boolean(id)} onChange={(e) => set('code', e.target.value)} maxLength={40} style={sel} data-testid="tpl-code" /></Field>
@@ -75,7 +76,7 @@ function Designer({ id }) {
 function Template({ id }) {
   const t = useT('qa'); const { q, guard } = useRecord('/templates', id, t('tpl.title'), 'qa.template.view'); usePageTitle(t('tpl.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="qa-template-object" data-status={x.status}><h1 id="tpl-h">{x.name} <small>v{x.versionNo}</small> <Status x={x} /></h1><p><Link to="/qa/templates">{t('tpl.title')}</Link> · {x.code} · {t(`mod.${x.module}`)} · {t('tpl.usedBy', { n: x.used })}</p>
+    <div data-testid="qa-template-object" data-status={x.status}><PageHeader id="tpl-h" title={<>{x.name} <small>v{x.versionNo}</small> <Status x={x} /></>} meta={<><Link to="/qa/templates">{t('tpl.title')}</Link> · {x.code} · {t(`mod.${x.module}`)} · {t('tpl.usedBy', { n: x.used })}</>} />
       <DocBar kind="/templates" x={x} printName={`${x.code}-v${x.versionNo}.pdf`} extra={x.can.edit ? <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => navigateTo(`/qa/templates?edit=${x.id}`)} data-testid="tpl-edit">{t('edit')}</button> : null} />
       {x.sections.map((s) => <div className="table-scroll" key={s.code}><table className="data-table" data-testid="tpl-view"><caption>{s.title}</caption><thead><tr><th>{t('code')}</th><th>{t('tpl.question')}</th><th>{t('tpl.type')}</th><th>{t('tpl.weight')}</th><th>{t('tpl.rules')}</th></tr></thead><tbody>{s.questions.map((q) => <tr key={q.code}><td>{q.code}</td><td>{q.text}</td><td>{t(`qt.${q.type}`)}</td><td>{q.weight ?? 1}</td><td>{[q.critical && t('tpl.critical'), q.autoFail && t('tpl.autoFail'), q.photoRequired && t('tpl.photoReq'), q.type === 'NUMERIC' && (q.target != null ? `${q.target} +${q.tolPlus ?? 0}/-${q.tolMinus ?? 0} ${q.unit ?? ''}` : `${q.min ?? ''}…${q.max ?? ''} ${q.unit ?? ''}`)].filter(Boolean).join(' · ')}</td></tr>)}</tbody></table></div>)}
       <Preview sections={fromApi(x.sections)} passPct={x.scoring?.passPct ?? 80} />
@@ -86,7 +87,7 @@ export default function TemplatesPage() {
   const t = useT('qa'); usePageTitle(t('tpl.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const edit = Number(sp.get('edit')) || null; const session = useSession();
   if (sp.get('new')) return <Designer id={null} />; if (edit) return <Designer id={edit} />; if (id) return <section aria-labelledby="tpl-h"><Template id={id} /></section>;
   return (
-    <section aria-labelledby="tl-h" data-testid="qa-templates"><h1 id="tl-h">{t('tpl.title')}</h1><p className="muted">{t('tpl.intro')}</p>
+    <section aria-labelledby="tl-h" data-testid="qa-templates"><PageHeader id="tl-h" title={t('tpl.title')} subtitle={t('tpl.intro')} />
       <div className="actions-row no-print"><Link to="/qa/templates?new=1">{t('tpl.new')}</Link></div>
       <ListReport listCode="qa.templates" endpoint="/qa/templates" title={t('tpl.title')} session={session.data} rowHref={(r) => `/qa/templates?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/templates?id=${r.id}`)} cardFields={['code', 'name', 'status']} statusKey="status" empty={{ title: t('tpl.emptyTitle'), text: t('tpl.emptyBody') }} />
     </section>

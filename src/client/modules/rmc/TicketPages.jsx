@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { qs, rmc } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './RmcParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Delivery tickets, the receipt at site and the consumption report (part 20.02, FR-03 to FR-06): a ticket per truck with a QR code, received by the site engineer (the same screen for an external supplier's truck), and the weights used against the mix designs.
 const nowLocal = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 16); const stamp = (s) => (s ? s.replace('T', ' ').slice(0, 16) : '—'); const LOAD = { DISPATCHED: 'IN_REVIEW', ARRIVED: 'RETURNED', RECEIVED: 'APPROVED', REJECTED: 'REJECTED' };
@@ -18,7 +19,7 @@ function TicketNew() {
   if (o.error?.status === 403) return <NoPermission what={t('tk.title')} permission="rmc.delivery_ticket.create" />; if (o.isPending) return <Skeleton label={t('tk.title')} rows={3} />; const d = o.data; const fe = error?.fields ?? {}; const rq = d.requisitions.find((x) => String(x.id) === String(v.requisitionId));
   const save = async () => { const r = await run(() => rmc.make('/delivery-tickets', { requisitionId: Number(v.requisitionId), plantId: rq?.plantId ?? null, supplierId: rq?.plantId ? null : rq?.supplierId ?? null, batchId: v.batchId ? Number(v.batchId) : null, truckNo: v.truckNo, driver: v.driver || null, driverPhone: v.driverPhone || null, qty: Number(v.qty), outsidePremises: v.outsidePremises, ewayNo: v.ewayNo || null }), t('tk.made')); if (r) navigateTo(`/rmc/delivery-tickets?id=${r.id}`); };
   return (
-    <section aria-labelledby="tkn-h" data-testid="rmc-ticket-form"><h1 id="tkn-h">{t('tk.new')}</h1><p><Link to="/rmc/delivery-tickets">{t('tk.title')}</Link></p><ErrorLine error={error} id="rmc-error" />
+    <section aria-labelledby="tkn-h" data-testid="rmc-ticket-form"><PageHeader id="tkn-h" title={t('tk.new')} meta={<Link to="/rmc/delivery-tickets">{t('tk.title')}</Link>} /><ErrorLine error={error} id="rmc-error" />
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('rq.title')} name="requisitionId" error={fe.requisitionId}><select value={v.requisitionId} onChange={(e) => setV({ ...v, requisitionId: e.target.value, batchId: '' })} style={big} data-testid="rmc-tk-req"><option value="">—</option>{d.requisitions.map((r) => <option key={r.id} value={r.id}>{r.docNo} {r.grade} {r.qty} m3 · {r.plant ?? r.supplier}</option>)}</select></Field>
         <Field label={t('bt.title')} name="batchId" error={fe.batchId}><select value={v.batchId} onChange={(e) => setV({ ...v, batchId: e.target.value })} style={big} data-testid="rmc-tk-batch"><option value="">—</option>{d.batches.filter((b) => rq && String(b.plantId) === String(rq.plantId) && (!b.requisitionId || b.requisitionId === rq.id)).map((b) => <option key={b.id} value={b.id}>{b.docNo} {b.qty} m3</option>)}</select></Field>
@@ -35,8 +36,7 @@ function TicketNew() {
 function Ticket({ id }) {
   const t = useT('rmc'); const { q, guard } = useRecord('/delivery-tickets', id, t('tk.title'), 'rmc.delivery_ticket.view'); const { error, run, busy, note } = useRunner(); usePageTitle(t('tk.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="rmc-ticket-object" data-status={x.status} data-state={x.state}><h1 id="tk-h">{x.ticketNo} <Status x={x} /> <StatusBadge status={LOAD[x.state]} label={x.stateLabel} /></h1>
-      <p><Link to="/rmc/delivery-tickets">{t('tk.title')}</Link> · {x.project} · {x.grade} · <strong data-testid="rmc-tk-qtyv">{x.qty}</strong> m3 · {x.truckNo} · {x.plant ?? x.supplier ?? '—'}</p><ErrorLine error={error} id="rmc-error" />{note && <p className="mdm-banner" role="status" data-testid="rmc-note">{note}</p>}
+    <div data-testid="rmc-ticket-object" data-status={x.status} data-state={x.state}><PageHeader id="tk-h" title={<>{x.ticketNo} <Status x={x} /> <StatusBadge status={LOAD[x.state]} label={x.stateLabel} /></>} meta={<><Link to="/rmc/delivery-tickets">{t('tk.title')}</Link> · {x.project} · {x.grade} · <strong data-testid="rmc-tk-qtyv">{x.qty}</strong> m3 · {x.truckNo} · {x.plant ?? x.supplier ?? '—'}</>} /><ErrorLine error={error} id="rmc-error" />{note && <p className="mdm-banner" role="status" data-testid="rmc-note">{note}</p>}
       <div className="mdm-panel" data-testid="rmc-ticket-view"><p>{t('tk.qr')}: <code data-testid="rmc-tk-qr">{x.qrCode}</code></p><p>{t('tk.driver')}: {x.driver ?? '—'} {x.driverPhone ?? ''} · {t('rq.title')}: <Link to={`/rmc/requisitions?id=${x.requisitionId}`}>{x.requisition}</Link> · {t('bt.title')}: {x.batch ?? '—'} · {t('rq.mix')}: {x.mix ?? '—'}</p>
         <p>{t('tk.times', { b: stamp(x.batchedAt), d: stamp(x.departedAt), a: stamp(x.arrivedAt) })} · {t('tk.unload', { s: stamp(x.unloadStart), e: stamp(x.unloadEnd) })}</p>
         <p>{t('tk.slump')}: {x.slumpMm ?? '—'} {x.slumpFlag ? `⚠ ${t('tk.slumpOut')}` : ''} · {t('tk.temp')}: {x.temperatureC ?? '—'} · {t('tk.returned')}: {x.returned} · {t('tk.wasted')}: {x.wasted} · {t('tk.net')}: <strong data-testid="rmc-tk-net">{x.net}</strong> m3 {x.returnReason ? `(${x.returnReason})` : ''}</p>
@@ -50,7 +50,7 @@ export function TicketsPage() {
   const t = useT('rmc'); usePageTitle(t('tk.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="tk-h"><Ticket id={id} /></section>; if (sp.get('new')) return <TicketNew />;
   return (
-    <section aria-labelledby="tks-h" data-testid="rmc-tickets"><h1 id="tks-h">{t('tk.title')}</h1><p className="muted">{t('tk.intro')}</p>
+    <section aria-labelledby="tks-h" data-testid="rmc-tickets"><PageHeader id="tks-h" title={t('tk.title')} subtitle={t('tk.intro')} />
       <div className="actions-row no-print"><Link to="/rmc/delivery-tickets?new=1" data-testid="rmc-ticket-new">{t('tk.new')}</Link> · <Link to="/rmc/receipt">{t('rc.title')}</Link></div>
       <ListReport listCode="rmc.delivery_tickets" endpoint="/rmc/delivery-tickets" title={t('tk.title')} session={session.data} rowHref={(r) => `/rmc/delivery-tickets?id=${r.id}`} onOpen={(r) => navigateTo(`/rmc/delivery-tickets?id=${r.id}`)} cardFields={['ticketNo', 'grade', 'qty', 'state']} statusKey="status" empty={{ title: t('tk.emptyTitle'), text: t('tk.emptyBody') }} />
     </section>
@@ -84,7 +84,7 @@ export function ReceiptPage() {
   const wait = useQuery({ queryKey: ['rmc', 'on-the-way'], queryFn: async () => { const a = await rmc.get('/delivery-tickets?page=1&pageSize=25&filter[state]=DISPATCHED'); const b = await rmc.get('/delivery-tickets?page=1&pageSize=25&filter[state]=ARRIVED'); return [...(Array.isArray(a) ? a : a?.data ?? []), ...(Array.isArray(b) ? b : b?.data ?? [])]; }, retry: false });
   if (wait.error?.status === 403) return <NoPermission what={t('rc.title')} permission="rmc.delivery_ticket.receive" />;
   return (
-    <section aria-labelledby="rc-h" data-testid="rmc-receipt"><h1 id="rc-h">{t('rc.title')}</h1><p className="muted">{t('rc.intro')}</p>
+    <section aria-labelledby="rc-h" data-testid="rmc-receipt"><PageHeader id="rc-h" title={t('rc.title')} subtitle={t('rc.intro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => { e.preventDefault(); navigateTo(`/rmc/receipt?code=${encodeURIComponent(typed.trim())}`); }}><Field label={t('rc.code')} name="code" error={f.error ? { form: f.error.message } : null}><input value={typed} onChange={(e) => setTyped(e.target.value)} style={big} autoFocus data-testid="rmc-rc-code" /></Field><div className="actions-row"><button className="btn btn-primary" style={big} disabled={!typed.trim()} data-testid="rmc-rc-find">{t('rc.find')}</button></div></form>
       {code && f.isPending && <Skeleton label={t('rc.title')} rows={2} />}{f.isError && <ErrorState error={f.error} onRetry={f.refetch} />}
       {f.data && (<div data-testid="rmc-rc-ticket"><div className="mdm-panel"><h2>{f.data.ticketNo} <StatusBadge status={LOAD[f.data.state]} label={f.data.stateLabel} /></h2><p>{f.data.grade} · {f.data.qty} m3 · {f.data.truckNo} · {f.data.plant ?? f.data.supplier} · {f.data.requisition}</p></div>
@@ -97,7 +97,7 @@ export function ConsumptionPage() {
   const t = useT('rmc'); usePageTitle(t('co.title')); const [f, setF] = useState({ from: '', to: '', grade: '' }); const query = qs(f); const q = useQuery({ queryKey: ['rmc', 'consumption', query], queryFn: () => rmc.get(`/consumption${query}`), retry: false, placeholderData: (p) => p });
   if (q.error?.status === 403) return <NoPermission what={t('co.title')} permission="rmc.consumption.view" />; if (q.isPending) return <Skeleton label={t('co.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />; const d = q.data;
   return (
-    <section aria-labelledby="co-h" data-testid="rmc-consumption"><h1 id="co-h">{t('co.title')}</h1><p className="muted" data-testid="rmc-co-total">{t('co.total', { n: d.totals.batches, q: d.totals.qty, f: d.totals.flagged, tol: d.tolerancePct })}</p>
+    <section aria-labelledby="co-h" data-testid="rmc-consumption"><PageHeader id="co-h" title={t('co.title')} /><p className="muted" data-testid="rmc-co-total">{t('co.total', { n: d.totals.batches, q: d.totals.qty, f: d.totals.flagged, tol: d.tolerancePct })}</p>
       <div className="mdm-panel no-print"><div className="form-grid">
         <Field label={t('cmp.from')} name="from" error={null}><input type="date" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} style={big} data-testid="rmc-co-from" /></Field>
         <Field label={t('cmp.to')} name="to" error={null}><input type="date" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} style={big} /></Field>

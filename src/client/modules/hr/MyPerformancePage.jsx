@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { perf } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Performance (HR, part 07.11, FR-03 and FR-06): the person's KPIs of the open cycle: each with its value, target, score, the last six months as bars, and what it was computed from. A figure opens its evidence (the records behind it, the days
 // left out for leave and transfer, and the same figure computed again from the same query); the person can dispute it, and it is frozen until HR decides. Beside them: goals, the review of the cycle and what waits for the person.
@@ -26,7 +27,7 @@ export default function MyPerformancePage() {
   const name = (k) => (lang === 'hi' && k.nameHi ? k.nameHi : k.name);
   return (
     <section aria-labelledby="mp-title" data-testid="my-performance">
-      <h1 id="mp-title">{t('my.title')}</h1>
+      <PageHeader id="mp-title" title={t('my.title')} />
       <p className="muted" data-testid="mp-cycle">{d.cycle ? `${d.cycle.name} · ${d.cycle.startDate} → ${d.cycle.endDate}` : t('my.noCycle')}</p>
       {error?.form && <p className="field-error" role="alert" data-testid="mp-error">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="mp-note">{note}</p>}

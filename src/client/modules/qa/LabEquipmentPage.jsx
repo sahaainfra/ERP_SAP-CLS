@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, qa } from './api.js';
 import { sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Lab Equipment & Calibration (part 18.03, FR-06): the register with the calibration due date; a calibration with its certificate moves the date; equipment past its date cannot be used for tests.
 const transport = browserTransport(authHeaders); const CAL_TONE = { OK: 'APPROVED', DUE_SOON: 'RETURNED', OVERDUE: 'REJECTED', NONE: 'DRAFT', NOT_IN_USE: 'CANCELLED' };
@@ -17,8 +18,7 @@ function Equipment({ id }) {
   const t = useT('qa'); const { q, guard } = useRecord('/lab-equipment', id, t('le.title'), 'qa.lab_equipment.view'); const { error, run, busy, note } = useRunner(); const [on, setOn] = useState(today()); const [file, setFile] = useState(null); usePageTitle(t('le.title')); if (guard) return guard; const x = q.data;
   const calibrate = () => run(async () => { let fileId = null; if (file) { const up = await uploadFile(file, { transport, entity: 'qa_lab_equipment', entityId: x.id }); fileId = up.id; } return qa.act('/lab-equipment', x.id, 'calibrate', { calibratedOn: on, fileId }); }, t('le.calibrated'));
   return (
-    <div data-testid="qa-equipment-object" data-calibration={x.calibration}><h1 id="le-h">{x.code} {x.name} <StatusBadge status={CAL_TONE[x.calibration]} label={t(`cal.${x.calibration}`)} /></h1>
-      <p><Link to="/qa/lab-equipment">{t('le.title')}</Link> · {x.project ?? t('le.company')} · {x.serialNo ?? '—'} · {t('le.due')} {x.calibrationDue ? fmtDate(x.calibrationDue) : '—'}{x.daysToDue != null ? ` (${x.daysToDue})` : ''}</p>
+    <div data-testid="qa-equipment-object" data-calibration={x.calibration}><PageHeader id="le-h" title={<>{x.code} {x.name} <StatusBadge status={CAL_TONE[x.calibration]} label={t(`cal.${x.calibration}`)} /></>} meta={<><Link to="/qa/lab-equipment">{t('le.title')}</Link> · {x.project ?? t('le.company')} · {x.serialNo ?? '—'} · {t('le.due')} {x.calibrationDue ? fmtDate(x.calibrationDue) : '—'}{x.daysToDue != null ? ` (${x.daysToDue})` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="le-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="le-note">{note}</p>}
       <div className="mdm-panel no-print" data-testid="le-calibrate"><h2>{t('le.calibrate')}</h2><div className="form-grid"><Field label={t('le.calibratedOn')} name="calibratedOn" error={error}><input type="date" max={today()} value={on} onChange={(e) => setOn(e.target.value)} style={sel} data-testid="le-date" /></Field>
         <label className="btn" style={{ minHeight: 44 }}>{t('le.certificate')}<input type="file" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} data-testid="le-file" /></label>{file && <span className="muted">{file.name}</span>}</div>
@@ -30,7 +30,7 @@ function NewEquipment() {
   const t = useT('qa'); usePageTitle(t('le.new')); const { error, run, busy } = useRunner(); const [f, setF] = useState({ code: '', name: '', serialNo: '', lastCalibrated: '', intervalDays: '365' }); const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   const save = async () => { const d = await run(() => qa.make('/lab-equipment', { code: f.code, name: f.name, serialNo: f.serialNo || null, lastCalibrated: f.lastCalibrated || null, intervalDays: Number(f.intervalDays) || 365 }), t('saved')); if (d) navigateTo(`/qa/lab-equipment?id=${d.id}`); };
   return (
-    <section aria-labelledby="len-h" data-testid="qa-equipment-new"><h1 id="len-h">{t('le.new')}</h1><p className="muted"><Link to="/qa/lab-equipment">{t('le.title')}</Link></p>
+    <section aria-labelledby="len-h" data-testid="qa-equipment-new"><PageHeader id="len-h" title={t('le.new')} subtitle={<Link to="/qa/lab-equipment">{t('le.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="len-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('code')} name="code" error={error}><input value={f.code} onChange={(e) => set('code', e.target.value)} maxLength={40} style={sel} data-testid="len-code" /></Field>
@@ -46,7 +46,7 @@ export default function LabEquipmentPage() {
   const t = useT('qa'); usePageTitle(t('le.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (sp.get('new')) return <NewEquipment />; if (id) return <section aria-labelledby="le-h"><Equipment id={id} /></section>;
   return (
-    <section aria-labelledby="lel-h" data-testid="qa-equipment"><h1 id="lel-h">{t('le.title')}</h1><p className="muted">{t('le.intro')}</p>
+    <section aria-labelledby="lel-h" data-testid="qa-equipment"><PageHeader id="lel-h" title={t('le.title')} subtitle={t('le.intro')} />
       <div className="actions-row no-print"><Link to="/qa/lab-equipment?new=1">{t('le.new')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/lab-equipment/export', 'lab-equipment.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="le-export">{t('export')}</button></div>
       <ListReport listCode="qa.lab_equipment" endpoint="/qa/lab-equipment" title={t('le.title')} session={session.data} rowHref={(r) => `/qa/lab-equipment?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/lab-equipment?id=${r.id}`)} cardFields={['code', 'name', 'calibrationDue', 'status']} statusKey="status" dateKey="calibrationDue" empty={{ title: t('le.emptyTitle'), text: t('le.emptyBody') }} />
     </section>

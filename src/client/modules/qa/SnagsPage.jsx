@@ -10,6 +10,7 @@ import { useSearch } from '../site/parts.jsx';
 import { fmtDate, qa } from './api.js';
 import { useRecord, useRunner } from './QaParts.jsx';
 import { PlanPins } from './SnagParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Snag Register and snag object (part 18.06): the snag on its plan, before and after photographs, rectification by the responsible party, verification and closure by someone else (BR-01), reopening with a reason.
 const transport = browserTransport(authHeaders); const SNAG_TONE = { OPEN: 'IN_REVIEW', RECTIFIED: 'RETURNED', CLOSED: 'APPROVED', CANCELLED: 'CANCELLED' };
@@ -19,8 +20,7 @@ function Snag({ id }) {
   const addPhoto = (kind) => async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(async () => { const up = await uploadFile(file, { transport, entity: 'qa_snags', entityId: x.id }); return qa.post(`/snags/${x.id}/photos`, { fileId: up.id, kind }); }, t('snag.photoAdded')); };
   const rectify = () => run(async () => { return qa.act('/snags', x.id, 'rectify', { note: rnote || null }); }, t('snag.rectified'));
   return (
-    <div data-testid="qa-snag-object" data-status={x.status}><h1 id="sn-h">{x.docNo} <StatusBadge status={SNAG_TONE[x.status]} label={t(`snags.${x.status}`)} /> <StatusBadge status={x.punchClass === 'A' ? 'REJECTED' : x.punchClass === 'B' ? 'RETURNED' : 'DRAFT'} label={t(`punch.${x.punchClass}`)} /></h1>
-      <p><Link to="/qa/snags">{t('snag.title')}</Link> · {x.project} · {x.area ?? '—'} · {t(`scat.${x.category}`)} · {t(`prio.${x.priority}`)} · {x.responsible ?? t(`resp.${x.responsibleType}`)}{x.dueDate ? ` · ${t('snag.due')} ${fmtDate(x.dueDate)}` : ''}{x.overdue ? ` · ${t('ir.overdue')}` : ''}{x.reopenCount ? ` · ${t('snag.reopened', { n: x.reopenCount })}` : ''}</p><p>{x.description}</p>
+    <div data-testid="qa-snag-object" data-status={x.status}><PageHeader id="sn-h" title={<>{x.docNo} <StatusBadge status={SNAG_TONE[x.status]} label={t(`snags.${x.status}`)} /> <StatusBadge status={x.punchClass === 'A' ? 'REJECTED' : x.punchClass === 'B' ? 'RETURNED' : 'DRAFT'} label={t(`punch.${x.punchClass}`)} /></>} meta={<><Link to="/qa/snags">{t('snag.title')}</Link> · {x.project} · {x.area ?? '—'} · {t(`scat.${x.category}`)} · {t(`prio.${x.priority}`)} · {x.responsible ?? t(`resp.${x.responsibleType}`)}{x.dueDate ? ` · ${t('snag.due')} ${fmtDate(x.dueDate)}` : ''}{x.overdue ? ` · ${t('ir.overdue')}` : ''}{x.reopenCount ? ` · ${t('snag.reopened', { n: x.reopenCount })}` : ''}</>} /><p>{x.description}</p>
       {error?.form && <p className="field-error" role="alert" data-testid="sn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="sn-note">{note}</p>}
       {x.pin && <PlanPins pins={[{ ...x.pin, label: x.docNo }]} label={t('snag.plan')} />}
       <p data-testid="sn-photos">{t('snag.before')}: {x.beforePhotos.length} · {t('snag.after')}: {x.afterPhotos.length}</p>
@@ -40,7 +40,7 @@ export default function SnagsPage() {
   const t = useT('qa'); usePageTitle(t('snag.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="sn-h"><Snag id={id} /></section>;
   return (
-    <section aria-labelledby="snl-h" data-testid="qa-snags"><h1 id="snl-h">{t('snag.title')}</h1><p className="muted">{t('snag.intro')}</p>
+    <section aria-labelledby="snl-h" data-testid="qa-snags"><PageHeader id="snl-h" title={t('snag.title')} subtitle={t('snag.intro')} />
       <div className="actions-row no-print"><Link to="/qa/snag-walk">{t('walk.title')}</Link><Link to="/qa/snag-status">{t('ss.title')}</Link><Link to="/qa/snag-report">{t('sr.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/snags/export', 'snags.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="snag-export">{t('export')}</button></div>
       <ListReport listCode="qa.snags" endpoint="/qa/snags" title={t('snag.title')} session={session.data} rowHref={(r) => `/qa/snags?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/snags?id=${r.id}`)} cardFields={['docNo', 'area', 'punch', 'status']} statusKey="status" dateKey="due" empty={{ title: t('snag.emptyTitle'), text: t('snag.emptyBody') }} />
     </section>

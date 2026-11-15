@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { useChangeConnector, useConnector, useConnectorCatalog, useCreateConnector, useDisableConnector, useSampleConnector, useTestConnector } from '../api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, Link, QueryState, can, errorInfo, navigateTo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const LIMITS = [
   ['timeoutMs', 'Timeout (ms)', 100, 120000, 10000],
@@ -85,8 +87,7 @@ function CreateConnector() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Integrations &rsaquo; New connector</nav>
-      <div className="page-head"><h1 id="page-title">New connector</h1></div>
-      <p className="muted">The connector is created switched off. It starts working when the System Administrator approves it{typeInfo?.needsCfo ? ', and then the CFO (bank and GST connectors)' : ''}. <Link to="/admin/integrations">Cancel</Link></p>
+      <PageHeader id="page-title" title={"New connector"} subtitle={<>The connector is created switched off. It starts working when the System Administrator approves it{typeInfo?.needsCfo ? ', and then the CFO (bank and GST connectors)' : ''}. <Link to="/admin/integrations">Cancel</Link></>} />
       <QueryState query={catalog} what="the connector catalogue" permission="core.connectors.view" />
       {typeInfo && provider && (
         <form onSubmit={submit} className="form-grid" aria-label="New connector">
@@ -173,18 +174,17 @@ function ViewConnector({ id, session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Integrations &rsaquo; Connector</nav>
-      <div className="page-head"><h1 id="page-title">{c ? c.code : 'Connector'}</h1></div>
-      <p className="muted"><Link to="/admin/integrations">Back to connectors</Link> &middot; <Link to="/admin/integrations/log">Integration log</Link></p>
+      <PageHeader id="page-title" title={c ? c.code : 'Connector'} subtitle={<><Link to="/admin/integrations">Back to connectors</Link> &middot; <Link to="/admin/integrations/log">Integration log</Link></>} />
       <p role="status" className="notice" data-testid="config-notice">{notice}</p>
       <QueryState query={connector} what="the connector" permission="core.connectors.view" />
       {c && (
         <>
-          <div className="tiles" role="group" aria-label="Connector state">
+          <KpiRow role="group" aria-label="Connector state">
             <div className="tile tile-neutral"><span className="tile-value" data-testid="state-status">{{ PENDING: 'Waiting', DISABLED: 'Off', ENABLED: 'On' }[c.status]}</span><span className="tile-label">Status</span></div>
             <div className={`tile ${c.health.status === 'ok' ? 'tile-ok' : c.health.status ? 'tile-error' : 'tile-neutral'}`}><span className="tile-value" data-testid="state-health">{c.health.status === 'ok' ? 'Healthy' : c.health.status ? 'Failing' : 'Not tested'}</span><span className="tile-label">Health</span>{c.health.message && <span className="muted small">{c.health.message}</span>}</div>
             <div className={`tile ${c.breaker?.state === 'open' ? 'tile-error' : 'tile-neutral'}`}><span className="tile-value">{c.breaker ? { closed: 'Closed', open: 'Open', half_open: 'Testing' }[c.breaker.state] : '-'}</span><span className="tile-label">Circuit breaker</span></div>
             <div className="tile tile-neutral"><span className="tile-value">{c.callsLastMinute} / {c.rateLimitPerMinute}</span><span className="tile-label">Calls in the last minute</span></div>
-          </div>
+          </KpiRow>
           <div className="actions">
             <button type="button" className="btn" disabled={!canConfigure || c.status === 'PENDING' || test.isPending} onClick={() => run('Test', async () => { const o = await test.mutateAsync(id); return `Test connection: ${o.status === 'ok' ? 'works' : 'failed'} - ${o.message} (${o.durationMs} ms)`; })}>Test connection</button>
             {c.providerInfo?.canSample && <button type="button" className="btn" disabled={!canConfigure || c.status !== 'ENABLED' || sample.isPending} onClick={() => run('Sample', async () => { const o = await sample.mutateAsync(id); return `Sample message sent through the connector (${o.durationMs} ms, ${o.attempts} attempt). See the integration log.`; })}>Send sample message</button>}
@@ -258,11 +258,11 @@ export default function ConnectorConfigPage({ session }) {
   const id = params.get('id');
   if (params.get('new') === '1') {
     return can(session, 'core.connectors.configure') ? <CreateConnector /> : (
-      <section aria-labelledby="page-title"><div className="page-head"><h1 id="page-title">New connector</h1></div><div className="state" role="alert"><h2>You do not have access to create connectors</h2><p>This needs the core.connectors.configure permission (IT Administrator). <Link to="/admin/integrations">Back to connectors</Link></p></div></section>
+      <section aria-labelledby="page-title"><PageHeader id="page-title" title={"New connector"} /><div className="state" role="alert"><h2>You do not have access to create connectors</h2><p>This needs the core.connectors.configure permission (IT Administrator). <Link to="/admin/integrations">Back to connectors</Link></p></div></section>
     );
   }
   if (!id) {
-    return <section aria-labelledby="page-title"><div className="page-head"><h1 id="page-title">Connector</h1></div><div className="state"><h2>No connector chosen</h2><p><Link to="/admin/integrations">Choose one from the list</Link>.</p></div></section>;
+    return <section aria-labelledby="page-title"><PageHeader id="page-title" title={"Connector"} /><div className="state"><h2>No connector chosen</h2><p><Link to="/admin/integrations">Choose one from the list</Link>.</p></div></section>;
   }
   return <ViewConnector id={id} session={session} />;
 }

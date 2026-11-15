@@ -9,6 +9,7 @@ import { Banner } from '../../platform/feedback/Feedback.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { QueryState, errorInfo, navigateTo } from '../core/pages/ui.jsx';
 import { NoPermission } from '../../platform/feedback/states.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The Dashboard Designer (part 03.07, FR-03, AC-02/05; a Config page): an administrator arranges the default dashboard of a role. A change is a
 // request that another administrator approves (maker-checker); once approved, everyone of that role who has no layout of their own sees it.
@@ -85,7 +86,7 @@ export default function DashboardDesignerPage({ session }) {
   // 166.1 F-03: a person without the right is told so before any of the designer is drawn (the server refuses the data as well)
   if (!session?.permissions?.includes('ui.dashboard.manage')) return <NoPermission what="the Dashboard Designer" permission="ui.dashboard.manage" />;
   const gate = [list, designer].find((q) => q.isPending || q.isError);
-  if (gate) return <section aria-labelledby="page-title"><h1 id="page-title">Dashboard Designer</h1><QueryState query={gate} what="the dashboard designer" permission="ui.dashboard.manage" /></section>;
+  if (gate) return <section aria-labelledby="page-title"><PageHeader id="page-title" title={"Dashboard Designer"} /><QueryState query={gate} what="the dashboard designer" permission="ui.dashboard.manage" /></section>;
 
   const base = current?.layout ?? designer.data.system.layout;
   const layout = draft ?? base;
@@ -120,8 +121,7 @@ export default function DashboardDesignerPage({ session }) {
   return (
     <section aria-labelledby="page-title" className="dash dd" data-testid="designer">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Dashboard Designer</nav>
-      <div className="page-head"><h1 id="page-title">Dashboard Designer</h1></div>
-      <p className="muted">Set the dashboard that people of a role see until they arrange one of their own. A change is a request: another administrator approves it, and it is recorded with your reason.</p>
+      <PageHeader id="page-title" title={"Dashboard Designer"} subtitle={"Set the dashboard that people of a role see until they arrange one of their own. A change is a request: another administrator approves it, and it is recorded with your reason."} />
       {message && <Banner tone={message.tone === 'error' ? 'error' : message.tone === 'info' ? 'info' : 'success'} testId="dd-message" onClose={() => setMessage(null)}>{message.text}</Banner>}
       <div className="dd-pick">
         <label>Dashboard

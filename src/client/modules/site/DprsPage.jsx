@@ -10,6 +10,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { fetchFileUrl, useSession } from '../core/api/index.js';
 import { DPR_TONE, download, fmtDate, fmtQty, openPrint, st } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // DPR Register and the DPR itself (part 14.02, FR-03, FR-05, FR-06): the register with the missing and late days highlighted; one report with its sections, the labour against the attendance, the photos
 // with their position and markups, the approval (the construction manager or the project manager decides from here or from the inbox), the amendment of an approved report and the PDF.
@@ -53,8 +54,7 @@ function Dpr({ t, id, onGone }) {
   const f = d.flags ?? {};
   return (
     <div data-testid="dpr-object" data-status={d.status}>
-      <h1 id="dpr-h">{d.docNo} · {fmtDate(d.dprDate)} <StatusBadge status={DPR_TONE[d.status]} label={t(`dst.${d.status}`)} />{d.late && <> <StatusBadge status="OVERDUE" label={t('dpr.late', { m: d.lateMinutes })} /></>}</h1>
-      <p><Link to="/site/dprs">{t('dpr.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</p>
+      <PageHeader id="dpr-h" title={<>{d.docNo} · {fmtDate(d.dprDate)} <StatusBadge status={DPR_TONE[d.status]} label={t(`dst.${d.status}`)} />{d.late && <> <StatusBadge status="OVERDUE" label={t('dpr.late', { m: d.lateMinutes })} /></>}</>} meta={<><Link to="/site/dprs">{t('dpr.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</>} />
       <dl className="kv" data-testid="dpr-figures">
         <div><dt>{t('f.site')}</dt><dd>{d.projectCode} · {d.siteCode} {d.siteName}</dd></div><div><dt>{t('dpr.scope')}</dt><dd>{t(`dpr.scope.${d.scope}`)} · {d.supervisor}</dd></div><div><dt>{t('dpr.weather')}</dt><dd>{d.weather ? t(`dpr.w.${d.weatherCode}`) : '—'}{d.rainMm != null ? ` · ${d.rainMm} mm` : ''}</dd></div>
         <div><dt>{t('dpr.sentAt')}</dt><dd>{d.submittedAt ? `${String(d.submittedAt).slice(0, 16).replace('T', ' ')} · ${t(`dpr.via.${d.submittedVia}`)}` : '—'}</dd></div><div><dt>{t('dpr.cutoffAt')}</dt><dd>{d.cutoffAt ? String(d.cutoffAt).slice(0, 16).replace('T', ' ') : '—'}</dd></div><div><dt>{t('wa.raisedBy')}</dt><dd>{d.requestedBy}</dd></div>
@@ -124,7 +124,7 @@ export default function DprsPage() {
   const miss = mq.data?.rows ?? [];
   return (
     <section aria-labelledby="dpr-h" data-testid="site-dprs">
-      <h1 id="dpr-h" className="sr-only">{t('dpr.register')}</h1>
+      <PageHeader id="dpr-h" srOnly title={t('dpr.register')} />
       <div className="actions-row no-print">
         {perms.includes('site.dpr.create') && <Link to="/site/dpr-entry">{t('dpr.new')}</Link>}
         {perms.includes('site.dpr.report') && <><Link to="/site/dpr-report">{t('dpr.reports')}</Link> <Link to="/site/dpr-compliance">{t('dpr.compliance')}</Link></>}

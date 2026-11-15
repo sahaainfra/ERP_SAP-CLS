@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, pa } from './api.js';
 import { ExportButton, useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Equipment availability Gantt (part 17.02, FR-06): every machine against the calendar, its allocations as bars and the expiry of its mandatory certificates as markers. A draft or returned allocation is moved by dragging
 // (or with the arrow keys); the server checks the new dates against the other allocations and the certificates, and the move can be undone. Zoom, filters, print and CSV.
@@ -24,7 +25,7 @@ export default function GanttPage() {
   const onKey = (ev, bar) => { if (!bar.editable) return; if (ev.key === 'ArrowLeft') { ev.preventDefault(); move(bar, -1); } if (ev.key === 'ArrowRight') { ev.preventDefault(); move(bar, 1); } if (ev.key === 'Enter') navigateTo(`/plant/allocations?id=${bar.id}`); };
   const ticks = []; for (let i = 0; i < days; i += (zoom === 'week' ? 1 : zoom === 'month' ? 7 : 14)) ticks.push({ i, d: addDays(g.from, i) }); const todayOff = diff(g.from, today());
   return (
-    <section aria-labelledby="gt-h" data-testid="plant-gantt"><h1 id="gt-h">{t('a.ganttTitle')}</h1><p className="muted">{t('a.ganttIntro')}</p>
+    <section aria-labelledby="gt-h" data-testid="plant-gantt"><PageHeader id="gt-h" title={t('a.ganttTitle')} subtitle={t('a.ganttIntro')} />
       <div className="mdm-panel no-print" data-testid="gt-filters"><div className="form-grid">
         <label>{t('project')}<select value={f.projectId} onChange={(ev) => setF({ ...f, projectId: ev.target.value })} style={{ minHeight: 44 }} data-testid="gt-project"><option value="">{t('allProjects')}</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label>
         <label>{t('class')}<select value={f.classItemId} onChange={(ev) => setF({ ...f, classItemId: ev.target.value })} style={{ minHeight: 44 }} data-testid="gt-class"><option value="">{t('a.allClasses')}</option>{g.classes.map((c) => <option key={c.id} value={c.id}>{c.code}</option>)}</select></label>

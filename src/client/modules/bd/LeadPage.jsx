@@ -8,6 +8,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { BANT, REGIONS, SECTORS, SOURCES, bd, inr } from './api.js';
 import { InteractionsPanel, Tabs, TimelinePanel } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Lead (business development, part 08.01, FR-01): where it came from, who the client is (from the partner master, or a prospect not registered yet), the contact, the sector, place and estimated value, and the BANT-like qualification: budget, authority, need
 // and timeline each rated Yes, Partly or No. A colleague reviews the qualification (never the maker); a qualified lead is locked, amended with a reason when it changes, and converted to an opportunity. The page keeps its interactions, files and history.
@@ -68,11 +69,11 @@ export default function LeadPage({ create = false }) {
     </form>
   );
   const errBox = error?.form && <p className="field-error" role="alert" data-testid="ld-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>;
-  if (create) return (<section aria-labelledby="ld-title-h" data-testid="lead-new"><h1 id="ld-title-h">{t('lead.new')}</h1>{errBox}{form}<p className="small"><Link to="/bd/leads">{t('lead.list')}</Link></p></section>);
+  if (create) return (<section aria-labelledby="ld-title-h" data-testid="lead-new"><PageHeader id="ld-title-h" title={t('lead.new')} />{errBox}{form}<p className="small"><Link to="/bd/leads">{t('lead.list')}</Link></p></section>);
   return (
     <section aria-labelledby="ld-title-h" data-testid="lead" data-status={l.status}>
       <header>
-        <h1 id="ld-title-h">{l.title} <StatusBadge status={TONE[l.status]} label={l.statusLabel} /></h1>
+        <PageHeader id="ld-title-h" title={<>{l.title} <StatusBadge status={TONE[l.status]} label={l.statusLabel} /></>} />
         <dl className="op-figures" data-testid="ld-figures"><div><dt>{t('lead.docNo')}</dt><dd>{l.docNo}</dd></div><div><dt>{t('lead.estValue')}</dt><dd data-testid="ld-fig-value">{inr(l.estValue)}</dd></div><div><dt>{t('lead.scoreLabel')}</dt><dd data-testid="ld-fig-score">{l.qualScore}/100</dd></div><div><dt>{t('lead.owner')}</dt><dd>{l.owner}</dd></div>{l.amendmentNo > 0 && <div><dt>{t('lead.amendment')}</dt><dd>{l.amendmentNo}</dd></div>}</dl>
         {errBox}{note && <p className="mdm-banner" role="status" data-testid="ld-note">{note}</p>}
         <div className="actions-row no-print" data-testid="ld-actions">

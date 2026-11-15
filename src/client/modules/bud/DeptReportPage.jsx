@@ -6,6 +6,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dp, download, inr } from './api.js';
 import { ShareBar, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Department Budget vs Actual (part 12.04, FR-03): the approved budget of each cost centre against what the general ledger has posted, by cost centre, account or month, to a month of the year; every row opens the budget lines and ledger documents behind it.
 const BY = ['cost_centre', 'account', 'month'];
@@ -24,7 +25,7 @@ export default function DeptReportPage() {
   const d = q.data; const periods = (fy ?? oq.data?.fys[0])?.periods ?? [];
   return (
     <section aria-labelledby="dr-h" data-testid="dept-report">
-      <h1 id="dr-h">{t('dr.title')}</h1>
+      <PageHeader id="dr-h" title={t('dr.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('cmp.params')}>
         <div className="form-grid">
           <Field label={t('dp.fy')} name="fyId"><select value={effectiveFy} onChange={(e) => { setFyId(Number(e.target.value)); setOpen(null); }} data-testid="dr-fy">{(oq.data?.fys ?? []).map((x) => <option key={x.id} value={x.id}>{x.code}</option>)}</select></Field>

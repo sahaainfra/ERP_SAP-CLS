@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { TRANSFER_TONE, download, fmtDate, fmtQty, fmtRs, iv, tr } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stock Transfers (part 16.05): the list with the in-transit filter, and the transfer with its dispatch, receipt, discrepancies, the gate pass and the stock postings.
 function Transfer({ t, id }) {
@@ -21,7 +22,7 @@ function Transfer({ t, id }) {
   const resolve = (dd, action) => { const n = window.prompt(t('tr.resolveWhy')); if (n) run(() => tr.resolve(x.id, dd.id, { action, note: n }), t('tr.resolved')); };
   return (
     <div data-testid="transfer-object" data-status={x.status}>
-      <h1 id="trf-h">{x.docNo} <StatusBadge status={TRANSFER_TONE[x.status]} label={t(`trs.${x.status}`)} /></h1><p><Link to="/inv/transfers">{t('tr.title')}</Link> · {x.from} → {x.to}{x.interProject ? ` · ${t('tr.betweenProjects')}` : ''}</p>
+      <PageHeader id="trf-h" title={<>{x.docNo} <StatusBadge status={TRANSFER_TONE[x.status]} label={t(`trs.${x.status}`)} /></>} meta={<><Link to="/inv/transfers">{t('tr.title')}</Link> · {x.from} → {x.to}{x.interProject ? ` · ${t('tr.betweenProjects')}` : ''}</>} />
       {x.openDiscrepancies > 0 && <p className="mdm-banner" role="alert" data-testid="transfer-held">{t('tr.heldNote', { n: x.openDiscrepancies })}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="transfer-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="transfer-note">{note}</p>}
       <dl className="kv"><div><dt>{t('tr.requiredBy')}</dt><dd>{x.requiredBy ? fmtDate(x.requiredBy) : '—'}</dd></div><div><dt>{t('tr.document')}</dt><dd>{t(`tr.doc.${x.documentType}`)}</dd></div><div><dt>{t('g.vehicleNo')}</dt><dd>{x.vehicleNo ?? '—'} {x.driverName ?? ''}</dd></div><div><dt>{t('g.eway')}</dt><dd>{x.ewayBillNo ?? '—'}</dd></div>{x.dispatchDate && <div><dt>{t('tr.dispatched')}</dt><dd>{fmtDate(x.dispatchDate)}</dd></div>}{x.receivedDate && <div><dt>{t('tr.received')}</dt><dd>{fmtDate(x.receivedDate)}</dd></div>}{x.totalValue != null && <div><dt>{t('r.value')}</dt><dd data-testid="transfer-value">{fmtRs(x.totalValue)}</dd></div>}{x.gatePass && <div><dt>{t('r.gatePass')}</dt><dd data-testid="transfer-pass"><Link to={`/inv/gate-pass?id=${x.gatePass.id}`}>{x.gatePass.doc_no}</Link></dd></div>}<div><dt>{t('g.requestedBy')}</dt><dd>{x.requestedBy}</dd></div>{x.approvedBy && <div><dt>{t('approvedBy')}</dt><dd>{x.approvedBy}</dd></div>}</dl>
@@ -56,7 +57,7 @@ export default function TransfersPage() {
   if (id) return <section aria-labelledby="trf-h" data-testid="transfers"><Transfer key={id} t={t} id={id} /></section>;
   const k = sm.data;
   return (
-    <section aria-labelledby="trs-h" data-testid="transfers"><h1 id="trs-h">{t('tr.title')}</h1><p className="muted">{t('tr.intro')}</p>
+    <section aria-labelledby="trs-h" data-testid="transfers"><PageHeader id="trs-h" title={t('tr.title')} subtitle={t('tr.intro')} />
       <div className="actions-row no-print">{perms.includes('inv.transfer.create') && <Link to="/inv/transfer-new">{t('tr.newTitle')}</Link>} {perms.includes('inv.transfer.receive') && <Link to="/inv/transfer-receive">{t('tr.receiveTitle')}</Link>} <Link to="/inv/in-transit">{t('tr.reportTitle')}</Link> <Link to={transit ? '/inv/transfers' : '/inv/transfers?transit=1'} data-testid="tr-transit-toggle">{transit ? t('tr.showAll') : t('tr.showTransit')}</Link></div>
       {k && <div className="kpi-row" role="list" data-testid="transfer-kpis">{['awaitingApproval', 'readyToDispatch', 'inTransit', 'openDiscrepancies'].map((key) => <div key={key} role="listitem" className="kpi-tile" data-testid={`transfer-kpi-${key}`}><span className="kpi-value">{k[key]}</span><span className="kpi-label">{t(`tr.kpi.${key}`)}</span></div>)}</div>}
       <ListReport key={transit ? 't' : 'a'} listCode="inv.transfers" endpoint="/inv/transfers" title={t('tr.title')} session={session.data} rowHref={(r) => `/inv/transfers?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/transfers?id=${r.id}`)} cardFields={['docNo', 'from', 'to', 'status']} statusKey="status" dateKey="date" contextFilters={transit ? [{ key: 'inTransit', op: 'eq', value: 'Y' }] : []} empty={{ title: t('tr.emptyTitle'), text: t('tr.emptyBody') }} /></section>

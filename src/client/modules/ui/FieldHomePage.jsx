@@ -10,6 +10,7 @@ import LocationNotice from '../../platform/device/LocationNotice.jsx';
 import { QueryState } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { confirmLeave } from '../../platform/forms/guard.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 const go = (to) => (e) => {
   e.preventDefault();
@@ -38,7 +39,7 @@ export default function FieldHomePage() {
 
   return (
     <section aria-labelledby="page-title" className="field-home">
-      <div className="page-head"><h1 id="page-title">{t('title')}</h1></div>
+      <PageHeader id="page-title" title={t('title')} />
       {(pull.offset > 0 || pull.refreshing) && <p className="pull-indicator" role="status" style={{ height: pull.offset }}>{pull.refreshing ? t('pull.refreshing') : pull.ready ? t('pull.ready') : t('pull.pull')}</p>}
       <ul className="field-status" aria-label={t('status.aria')}>
         <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? t('online') : t('offline')}</li>

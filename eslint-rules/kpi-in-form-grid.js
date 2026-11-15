@@ -32,7 +32,7 @@ const rule = {
   meta: {
     type: 'problem',
     docs: { description: 'Key figures are KpiTile/KpiRow, not <strong> in an mdm-panel inside a form-grid.' },
-    messages: { kpi: 'A key figure is drawn as <strong> in an "mdm-panel" inside a "form-grid": use <KpiRow><KpiTile …/></KpiRow> from platform/design/Kpi.jsx (part 166.2, U-02).' },
+    messages: { tileInGrid: 'A KpiTile/KpiRow is inside a "form-grid": the form grid is for fields; put the tiles in their own <KpiRow> (part 166.2, U-02).', kpi: 'A key figure is drawn as <strong> in an "mdm-panel" inside a "form-grid": use <KpiRow><KpiTile …/></KpiRow> from platform/design/Kpi.jsx (part 166.2, U-02).' },
     schema: [],
   },
   create(context) {
@@ -40,6 +40,8 @@ const rule = {
       JSXElement(node) {
         if (!hasClass(node, 'form-grid')) return;
         for (const el of elementsBelow(node)) {
+          const tag = el.openingElement.name.type === 'JSXIdentifier' ? el.openingElement.name.name : '';
+          if (tag === 'KpiTile' || tag === 'KpiRow') { context.report({ node: el, messageId: 'tileInGrid' }); continue; }
           if (!hasClass(el, 'mdm-panel')) continue;
           const strong = [...elementsBelow(el)].some((x) => x.openingElement.name.type === 'JSXIdentifier' && x.openingElement.name.name === 'strong');
           if (strong) { context.report({ node: el, messageId: 'kpi' }); }

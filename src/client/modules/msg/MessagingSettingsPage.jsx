@@ -6,6 +6,7 @@ import { configApi } from '../../platform/messages/api.js';
 import { authHeaders } from '../../platform/api/index.js';
 import { Field, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Messaging Settings (Administration, part 05.02, section 7.3): the windows for editing and deleting, how long messages are kept, the limits on files, the policy of read receipts and the call provider. A change is a
 // new version that waits for a second person to approve it and is in force from its date; the history of versions stays below. Legal holds on conversations are placed and released here.
@@ -66,8 +67,7 @@ export default function MessagingSettingsPage({ session }) {
   const editable = d.canEdit && !d.pending;
   return (
     <section aria-labelledby="ms-title" data-testid="messaging-settings">
-      <h1 id="ms-title">Messaging Settings</h1>
-      <p className="muted">Version {d.config.version || 'default'} is in force{d.config.effectiveFrom ? ` since ${formatDate(d.config.effectiveFrom)}` : ''}. A change is approved by a second person and applies from the date you choose.</p>
+      <PageHeader id="ms-title" title={"Messaging Settings"} subtitle={<>Version {d.config.version || 'default'} is in force{d.config.effectiveFrom ? ` since ${formatDate(d.config.effectiveFrom)}` : ''}. A change is approved by a second person and applies from the date you choose.</>} />
       {d.pending && <p role="status" className="notice" data-testid="ms-pending">Version {d.pending.version} waits for approval (sent by {d.pending.by}). Only one change can wait at a time.</p>}
       {notice && <p role="status" className="notice" data-testid="ms-notice">{notice}</p>}
       <form className="card form-grid" onSubmit={submit} noValidate aria-label="Messaging settings" data-testid="ms-form">

@@ -9,6 +9,7 @@ import { STATUS_TONE, fmtDate, isoOf, ordOf, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
 import ResourcesPanel from './ResourcesPanel.jsx';
 import { fmtDateTime } from '../../../shared/dates.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Gantt Planner (part 13.02, FR-01, FR-02, FR-05): the schedule as bars grouped by WBS node, with the critical path, progress, links, the data date and today, zoom, collapse, filters and chosen columns.
 // The planner drags a bar to move it, its right edge to stretch it, its end dot onto another bar to link them, or edits the selected activity in the panel; every change is tried on the server first
@@ -106,7 +107,7 @@ export default function GanttPage() {
 
   return (
     <section aria-labelledby="pgt-h" data-testid="plan-gantt">
-      <h1 id="pgt-h">{t('g.title')}</h1>
+      <PageHeader id="pgt-h" title={t('g.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('f.schedule')}>
         <SchedulePicker projectId={projectId ?? sq.data?.projectId ?? null} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); setSelected(null); }} onSchedule={(v) => { setScheduleId(v); setSelected(null); setNote(null); }} testId="pgt" />
       </form>
@@ -144,7 +145,7 @@ export default function GanttPage() {
           <p className="muted" data-testid="pgt-count">{t('g.count', { n: built.shown, of: d.activities.length })} · {t('f.start')} {fmtDate(s.start)} · {t('f.finish')} <strong data-testid="pgt-finish">{fmtDate(s.finish)}</strong>{s.dataDate ? ` · ${t('f.dataDate')} ${fmtDate(s.dataDate)}` : ''}{canEdit ? ` · ${t('g.howTo')}` : ''}</p>
           <Legend t={t} />
           {d.activities.length === 0 ? <p className="muted" data-testid="pgt-empty">{t('act.empty')} {canEdit && <Link to={`/plan/generate?scheduleId=${s.id}`}>{t('gen.title')}</Link>}</p> : (
-            <div ref={scrollRef} className="pgt-scroll" style={{ overflow: 'auto', maxHeight: '70vh', border: '1px solid var(--erp-color-border-subtle)', borderRadius: '0.4rem', background: 'var(--erp-color-bg-surface)', maxWidth: '100%' }} data-testid="pgt-chart" aria-label={t('g.chart')} role="region" tabIndex={-1}>
+            <div ref={scrollRef} className="pgt-scroll" data-no-cards="" style={{ overflow: 'auto', maxHeight: '70vh', border: '1px solid var(--erp-color-border-subtle)', borderRadius: '0.4rem', background: 'var(--erp-color-bg-surface)', maxWidth: '100%' }} data-testid="pgt-chart" aria-label={t('g.chart')} role="region" tabIndex={-1}>
               <div style={{ display: 'grid', gridTemplateColumns: `${leftW}px ${chartW}px`, width: leftW + chartW }}>
                 <div style={{ position: 'sticky', top: 0, left: 0, zIndex: 4, height: HEAD, display: 'flex', alignItems: 'flex-end', background: 'var(--erp-color-bg-surface-sunken)', borderBottom: '1px solid var(--erp-color-border-subtle)' }} role="row">
                   {shownCols.map((c) => <span key={c.key} role="columnheader" style={{ width: c.w, padding: '0 6px 6px', fontWeight: 600, fontSize: '0.8rem', textAlign: c.num ? 'right' : 'left' }}>{t(`g.col.${c.key}`)}</span>)}

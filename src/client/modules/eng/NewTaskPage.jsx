@@ -4,6 +4,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { useCreateTask, useInstruct, useRoutePreview } from '../../platform/tasks/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { PRIORITY, taskLink } from './tasks-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Task / Senior Instruction (part 04.08, section 7.3): a task for yourself or, with the right, for someone else; or an instruction by topic, where the department responsibility matrix
 // names the department, the role and the person, and the form shows that routing before it is sent. The person given an instruction must accept it.
@@ -40,7 +41,7 @@ export default function NewTaskPage({ session }) {
   const pending = create.isPending || instruct.isPending;
   return (
     <section aria-labelledby="nt-title" data-testid="new-task">
-      <h1 id="nt-title">New Task / Senior Instruction</h1>
+      <PageHeader id="nt-title" title={"New Task / Senior Instruction"} />
       {senior && <div role="tablist" aria-label="What to make" className="tabs">
         <button type="button" role="tab" aria-selected={!instruction} className={`btn${!instruction ? ' btn-primary' : ''}`} onClick={() => setMode('task')}>Task</button>
         <button type="button" role="tab" aria-selected={instruction} className={`btn${instruction ? ' btn-primary' : ''}`} onClick={() => setMode('instruction')}>Senior instruction by topic</button></div>}

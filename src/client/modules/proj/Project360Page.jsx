@@ -6,6 +6,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { RAG_TONE, dayIST, downloadFile, inr, p3 } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Project 360 (part 10.08): the header of the project, its health (time, cost, quality, safety, cash, risk), and the widgets of every module on eight tabs. A widget shows the figures of the module that owns them, each opening its list or record;
 // a slot whose module is not live yet says which part will supply it; a widget of a module the person has no right to is not shown. The period selector sets the month of the period figures; the snapshot is exported as PDF, XLSX or CSV.
@@ -40,7 +41,7 @@ export default function Project360Page() {
   usePageTitle(t('p3.title'));
   const d = useQuery({ queryKey: ['proj', 'p360', projectId, period], queryFn: () => p3.get(projectId, period), enabled: Boolean(projectId), retry: false });
   const go = (patch) => { const n = new URLSearchParams({ projectId: String(projectId), period, tab, ...patch }); navigateTo(`/proj/project-360?${n}`); };
-  const head = <header><h1 id="p3-h">{d.data ? `${d.data.code} · ${d.data.name}` : t('p3.title')}</h1><div className="actions-row no-print"><ProjectPicker route="/proj/project-360" projectId={projectId} testId="p3-project" /><Link to="/proj/portfolio">{t('p3.portfolio')}</Link></div></header>;
+  const head = <header><PageHeader id="p3-h" title={d.data ? `${d.data.code} · ${d.data.name}` : t('p3.title')} /><div className="actions-row no-print"><ProjectPicker route="/proj/project-360" projectId={projectId} testId="p3-project" /><Link to="/proj/portfolio">{t('p3.portfolio')}</Link></div></header>;
   if (!projectId) return <section aria-labelledby="p3-h" data-testid="project-360">{head}<p className="muted">{t('p3.choose')}</p></section>;
   if (d.error?.status === 403) return <NoPermission what={t('p3.title')} permission="proj.p360.view" />;
   if (d.isPending) return <Skeleton label={t('p3.title')} rows={8} />;

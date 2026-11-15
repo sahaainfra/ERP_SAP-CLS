@@ -4,6 +4,8 @@ import {
 } from '../api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, QueryState, Tile, can, downloadCsv, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const CATEGORIES = ['image', 'document', 'drawing', 'video'];
 const RETENTION = ['permanent', 'statutory', 'standard', 'short'];
@@ -106,24 +108,19 @@ export default function FileSettingsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Configuration &rsaquo; File Storage Settings</nav>
-      <div className="page-head">
-        <h1 id="page-title">File Storage Settings</h1>
-        <button type="button" className="btn" onClick={exportSettings} disabled={!s}>Export settings</button>
-        <button type="button" className="btn btn-primary" disabled={!canConfigure || !s} title={canConfigure ? '' : 'Needs core.files.configure (System Administrator)'} onClick={() => { setError(null); dialog.current?.showModal(); }}>Request a change</button>
-      </div>
-      <p className="muted">Which files may be attached, how large they can be, how long they are kept, and how files are scanned. Changes are maker-checker: the System Administrator asks, the IT Administrator approves.</p>
+      <PageHeader id="page-title" title={"File Storage Settings"} actions={<><button type="button" className="btn" onClick={exportSettings} disabled={!s}>Export settings</button><button type="button" className="btn btn-primary" disabled={!canConfigure || !s} title={canConfigure ? '' : 'Needs core.files.configure (System Administrator)'} onClick={() => { setError(null); dialog.current?.showModal(); }}>Request a change</button></>} subtitle={"Which files may be attached, how large they can be, how long they are kept, and how files are scanned. Changes are maker-checker: the System Administrator asks, the IT Administrator approves."} />
       <p role="status" className="notice">{notice}</p>
 
       <QueryState query={overview} what="the file overview" permission="core.files.admin" />
       {overview.data && (
         <>
-          <div className="tiles" role="group" aria-label="Scan status">
+          <KpiRow role="group" aria-label="Scan status">
             <Tile label="Clean files" value={overview.data.statuses.CLEAN.files} status="ok" hint={mb(overview.data.statuses.CLEAN.bytes)} testId="tile-clean" />
             <Tile label="Waiting for scan" value={overview.data.statuses.PENDING.files} status={overview.data.statuses.PENDING.files > 0 ? 'warn' : 'ok'} testId="tile-pending" />
             <Tile label="Quarantined" value={overview.data.statuses.INFECTED.files} status={overview.data.statuses.INFECTED.files > 0 ? 'error' : 'ok'} testId="tile-infected" />
             <Tile label="Scan failed" value={overview.data.statuses.ERROR.files} status={overview.data.statuses.ERROR.files > 0 ? 'error' : 'ok'} testId="tile-error" />
             <Tile label="Uploads in progress" value={overview.data.openUploads} />
-          </div>
+          </KpiRow>
           <p className={overview.data.clamAvConnected ? 'muted' : 'state state-warn'} data-testid="scanner-note">
             Storage: <strong>{overview.data.storage}</strong>. Scanners: <strong>{overview.data.scanners.join(', ')}</strong>.{' '}
             {overview.data.clamAvConnected ? 'ClamAV is connected.' : 'Only the built-in test-signature scanner is active: it catches test files, not real malware. Set CLAMAV_HOST to connect a ClamAV daemon before real use.'}

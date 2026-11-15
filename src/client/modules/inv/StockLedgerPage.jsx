@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, fmtQty, fmtRs, iv, saveCsv } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stock ledger / item card (part 16.01, FR-03): every movement of an item with the running balance; an entry is never changed, a wrong one is corrected by a reversing entry.
 export default function StockLedgerPage() {
@@ -15,7 +16,7 @@ export default function StockLedgerPage() {
   if (iq.error?.status === 403) return <NoPermission what={t('ledgerTitle')} permission="inv.stock.view" />;
   const d = q.data; const set = (k, v) => setF({ ...f, [k]: v });
   return (
-    <section aria-labelledby="lg-h" data-testid="inv-lg"><h1 id="lg-h">{t('ledgerTitle')}</h1><p className="muted">{t('ledgerIntro')}</p>
+    <section aria-labelledby="lg-h" data-testid="inv-lg"><PageHeader id="lg-h" title={t('ledgerTitle')} subtitle={t('ledgerIntro')} />
       <div className="mdm-panel no-print" data-testid="lg-params"><div className="form-grid">
         <label>{t('item')}<select value={f.itemId} onChange={(ev) => set('itemId', ev.target.value)} style={{ minHeight: 44 }} data-testid="lg-item"><option value="">{t('choose')}</option>{(iq.data ?? []).map((i) => <option key={i.id} value={i.id}>{i.code} · {i.name}</option>)}</select></label>
         <label>{t('store')}<select value={f.storeId} onChange={(ev) => set('storeId', ev.target.value)} style={{ minHeight: 44 }} data-testid="lg-store"><option value="">{t('allStores')}</option>{(sq.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.code}</option>)}</select></label>

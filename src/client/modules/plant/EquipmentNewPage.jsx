@@ -6,6 +6,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { pl } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Equipment (part 17.01, FR-01): grouped sections, required markers, the rules of the server shown inline, a draft that can be saved at any time, and send for approval. The same form edits a draft or a returned entry.
 const blank = { assetCode: '', classItemId: '', make: '', model: '', year: '', serialNo: '', chassisNo: '', engineNo: '', regNo: '', capacity: '', ownership: 'OWNED', ownerPartnerId: '', purchaseValue: '', purchaseDate: '', meterType: 'HOURS', fuelType: 'DIESEL', tankCapacity: '', fuelNorm: '', gpsDeviceId: '', roadVehicle: false, lifting: false, operatorRequired: false, operatorLicenceClass: '', projectId: '', siteId: '' };
@@ -21,7 +22,7 @@ export default function EquipmentNewPage() {
   const req = <span aria-hidden="true" className="muted"> *</span>; const inp = (k, label, extra = {}, required = false) => <Field label={<>{label}{required && req}</>} name={k} error={error}><input value={f[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 44 }} data-testid={`en-${k}`} aria-required={required} {...extra} /></Field>;
   const chk = (k, label) => <label className="check"><input type="checkbox" checked={f[k]} onChange={(ev) => set(k, ev.target.checked)} data-testid={`en-${k}`} /> {label}</label>;
   return (
-    <section aria-labelledby="en-h" data-testid="plant-new"><h1 id="en-h">{id ? t('editTitle') : t('newTitle')}</h1><p className="muted">{t('newIntro')} <Link to="/plant/equipment">{t('registerTitle')}</Link></p>
+    <section aria-labelledby="en-h" data-testid="plant-new"><PageHeader id="en-h" title={id ? t('editTitle') : t('newTitle')} subtitle={<>{t('newIntro')} <Link to="/plant/equipment">{t('registerTitle')}</Link></>} />
       {error?.form && <p className="field-error" role="alert" data-testid="en-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="mdm-panel"><h2>{t('secIdentity')}</h2><div className="form-grid">
         {inp('assetCode', t('assetCode'), { maxLength: 40, placeholder: t('autoCode') })}

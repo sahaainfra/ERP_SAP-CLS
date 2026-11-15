@@ -5,6 +5,7 @@ import { formatDateTime, formatINR } from '../../platform/format.js';
 import { useInstanceAction, useSubmissions } from '../../platform/workflow/api.js';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { INST_STATUS } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Submissions & Watch List (part 04.03, section 7.4, FR-07): the documents I raised and the ones I follow, with where each stands and who it waits for.
 const PAGE = 25;
@@ -21,8 +22,7 @@ export default function SubmissionsPage() {
   const tab = (k, l) => <button type="button" role="tab" aria-selected={kind === k} className={`btn${kind === k ? ' btn-primary' : ''}`} onClick={() => { setKind(k); setPage(1); }}>{l}</button>;
   return (
     <section aria-labelledby="sb-title" data-testid="submissions">
-      <h1 id="sb-title">My Submissions &amp; Watch List</h1>
-      <p className="muted">The documents you sent for approval, and the ones you follow, with the step each is at and who it is waiting for.</p>
+      <PageHeader id="sb-title" title={"My Submissions & Watch List"} subtitle={"The documents you sent for approval, and the ones you follow, with the step each is at and who it is waiting for."} />
       <div role="tablist" aria-label="Which documents" className="wf-tabs">{tab('submitted', 'I submitted')}{tab('watching', 'I follow')}</div>
       <form className="srch-form" role="search" aria-label="Filter the documents" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>Status</span><select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}><option value="">Any status</option>{Object.entries(INST_STATUS).map(([k, [, l]]) => <option key={k} value={k}>{l}</option>)}</select></label>

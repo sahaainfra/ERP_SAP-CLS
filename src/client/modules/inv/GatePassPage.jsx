@@ -9,6 +9,7 @@ import { useSearch } from '../site/parts.jsx';
 import { GATE_TONE, download, fmtDate, fmtTime, gt, iv, today } from './api.js';
 import { OfflineNotice, useOnline } from './GateParts.jsx';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Gate Pass request (part 16.02, FR-05): what leaves the site, where it goes and why. Returnable material needs a return date. The construction manager (or the store manager) approves; non-returnable material and scrap also need the project manager. The approved pass carries the QR code that the gate scans.
 const TYPES = ['RETURNABLE', 'NON_RETURNABLE', 'SCRAP', 'VENDOR_RETURN'];
@@ -25,7 +26,7 @@ function PassForm({ t, edit }) {
   const save = async (send) => { setError(null); setBusy(true); try { let d = edit ? await gt.passUpdate(edit.id, { ...toBody(f, false), rowVersion: edit.rowVersion }) : await gt.passCreate(toBody(f, true)); if (send) d = await gt.passAct(d.id, 'submit'); navigateTo(`/inv/gate-pass?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   const bad = !f.siteId || f.destination.trim().length < 2 || f.purpose.trim().length < 3 || f.items.some((l) => l.description.trim().length < 2 || !(Number(l.qty) > 0)) || (f.type === 'RETURNABLE' && !f.expectedReturn);
   return (
-    <section aria-labelledby="gp-h" data-testid="gate-pass-form"><h1 id="gp-h">{edit ? edit.docNo : t('g.passTitle')}</h1><p className="muted">{t('g.passHelp')}</p><p><Link to="/inv/gate-passes">{t('g.returnables')}</Link></p>
+    <section aria-labelledby="gp-h" data-testid="gate-pass-form"><PageHeader id="gp-h" title={edit ? edit.docNo : t('g.passTitle')} subtitle={t('g.passHelp')} meta={<Link to="/inv/gate-passes">{t('g.returnables')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('g.site')} name="siteId" error={error}><select value={f.siteId} disabled={Boolean(edit)} onChange={(ev) => set('siteId', ev.target.value)} style={{ minHeight: 48 }} data-testid="gp-site"><option value="">{t('choose')}</option>{opt.data.sites.map((s) => <option key={s.id} value={s.id}>{s.project} · {s.name}</option>)}</select></Field>
         <Field label={t('g.passType')} name="type" error={error}><select value={f.type} onChange={(ev) => set('type', ev.target.value)} style={{ minHeight: 48 }} data-testid="gp-type">{TYPES.map((x) => <option key={x} value={x}>{t(`g.pt.${x}`)}</option>)}</select></Field>
@@ -52,7 +53,7 @@ function Pass({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => iv.decide(p.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
     <div data-testid="gp-object" data-status={p.status}>
-      <h1 id="gp-h">{p.docNo} <StatusBadge status={GATE_TONE[p.status]} label={t(`gps.${p.status}`)} /> {p.overdue && <strong data-testid="gp-overdue">{t('g.overdueDays', { n: p.daysOverdue })}</strong>}</h1><p><Link to="/inv/gate-passes">{t('g.returnables')}</Link> · {p.site} · {t(`g.pt.${p.type}`)}</p>
+      <PageHeader id="gp-h" title={<>{p.docNo} <StatusBadge status={GATE_TONE[p.status]} label={t(`gps.${p.status}`)} /> {p.overdue && <strong data-testid="gp-overdue">{t('g.overdueDays', { n: p.daysOverdue })}</strong>}</>} meta={<><Link to="/inv/gate-passes">{t('g.returnables')}</Link> · {p.site} · {t(`g.pt.${p.type}`)}</>} />
       <OfflineNotice t={t} on={online} />{error?.form && <p className="field-error" role="alert" data-testid="gp-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="gp-note">{note}</p>}
       <dl className="kv"><div><dt>{t('g.destination')}</dt><dd>{p.destination}</dd></div><div><dt>{t('g.purpose')}</dt><dd>{p.purpose}</dd></div>{p.returnable && <div><dt>{t('g.expectedReturn')}</dt><dd>{fmtDate(p.expectedReturn)}</dd></div>}{p.vendor && <div><dt>{t('g.vendor')}</dt><dd>{p.vendor}</dd></div>}<div><dt>{t('g.vehicleNo')}</dt><dd>{p.vehicleNo ?? '—'} {p.driverName ?? ''}</dd></div><div><dt>{t('g.requestedBy')}</dt><dd>{p.requestedBy}</dd></div>{p.approvedBy && <div><dt>{t('approvedBy')}</dt><dd>{p.approvedBy}</dd></div>}{p.timeOut && <div><dt>{t('g.timeOut')}</dt><dd>{fmtTime(p.timeOut)} ({p.verifiedBy})</dd></div>}{p.returnedOn && <div><dt>{t('g.returnedOn')}</dt><dd>{fmtDate(p.returnedOn)}</dd></div>}</dl>
       <div className="table-scroll"><table className="data-table" data-testid="gp-lines"><caption>{t('g.items')}</caption><thead><tr><th>{t('item')}</th><th className="num">{t('qty')}</th><th>{t('uom')}</th></tr></thead><tbody>{p.items.map((l, i) => <tr key={i}><td>{l.description}</td><td className="num">{l.qty}</td><td>{l.uom}</td></tr>)}</tbody></table></div>

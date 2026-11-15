@@ -8,6 +8,7 @@ import ItemSelector from '../../platform/items/ItemSelector.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ADDON_LABELS, ANALYSIS_STATUS, COMPONENTS, SCOPE_LABEL, rates, todayIST } from './api.js';
 import { inr } from './RateAnalysesPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Rate Analysis (object page, part 06.06, FR-03 to FR-06): one version of the analysed unit rate of a work item. The component grid (kind, item or typed description, unit, quantity per basis, wastage %,
 // rate from the library or typed, amount), the add-ons (water and electricity, overhead, profit, contingency, insurance, escalation, GST added or not) and the unit rate, the comparison with its schedule of
@@ -69,7 +70,7 @@ export default function RateAnalysisPage() {
     return (
       <section aria-labelledby="rad-title" data-testid="rate-analysis-edit" className="fin-page">
         <p className="small"><Link to="/admin/rate-analyses">Rate analyses</Link></p>
-        <h1 id="rad-title">{a ? `Change ${a.ref}` : 'New rate analysis'}</h1>
+        <PageHeader id="rad-title" title={a ? `Change ${a.ref}` : 'New rate analysis'} />
         <form onSubmit={save} aria-label="Rate analysis" data-testid="rad-form">
           <div className="mdm-fields">
             <Field label="Work item (required)" name="workItemId" error={error}><button type="button" className="btn btn-small" disabled={Boolean(a && a.versionNo > 1)} onClick={() => setPick('work')} data-testid="rad-work">{draft.workItem ? `${draft.workItem.code} ${draft.workItem.name}` : 'Choose the work item'}</button></Field>
@@ -117,7 +118,7 @@ export default function RateAnalysisPage() {
   return (
     <section aria-labelledby="ra1-title" data-testid="rate-analysis" className="fin-page">
       <p className="small"><Link to="/admin/rate-analyses">Rate analyses</Link></p>
-      <div className="page-head"><h1 id="ra1-title">{a.ref} {a.title}</h1><StatusBadge status={st[0]} label={st[1]} /></div>
+      <PageHeader id="ra1-title" title={<>{a.ref} {a.title}</>} status={<StatusBadge status={st[0]} label={st[1]} />} />
       <dl className="mdm-dl" data-testid="ra-head">
         <dt>Work item</dt><dd>{a.workItem?.code} {a.workItem?.name}</dd><dt>Scope</dt><dd>{a.scopeLabel}{a.project ? `: ${a.project.code} ${a.project.name}` : ''}</dd>
         <dt>State</dt><dd>{a.region ?? 'Every region'}</dd><dt>In force</dt><dd>{formatDate(a.effectiveFrom)}{a.effectiveTo ? ` to ${formatDate(a.effectiveTo)}` : ''}</dd>

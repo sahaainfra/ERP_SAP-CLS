@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { att, hoursText } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Shift editor (HR, part 07.04, FR-01): code, name, start and end (an end at or before the start crosses midnight: a night shift), break, grace, the hours for a half and a full day, when overtime starts and how times are rounded.
 // A shift in use (assigned or in a roster) keeps its times: only its name and status change, and the server says so. The summary under the form is read from the same rule the server applies.
@@ -36,7 +37,7 @@ export default function ShiftEditorPage() {
   return (
     <section aria-labelledby="se-title" data-testid="shift-editor">
       <p><Link to="/hr/attendance/shifts">← Shifts</Link></p>
-      <h1 id="se-title">{id ? `${s.code} · ${s.name}` : 'New Shift'}</h1>
+      <PageHeader id="se-title" title={id ? `${s.code} · ${s.name}` : 'New Shift'} />
       {locked && <p className="mdm-banner" role="status" data-testid="se-locked">This shift is in use: its times and rules stay as they are for the dates already worked. Change its name or status, or make a new shift.</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="se-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).map(([k, x]) => `${k}: ${x}`).join('; ')}` : ''}</p>}
       <form className="mdm-fields" onSubmit={save}>

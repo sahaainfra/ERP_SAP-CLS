@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { NORM_TONE, fmtDate, fmtQty, st, today } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Productivity Norms (part 14.06, FR-01, AC-04): the planned output per man-day and per machine-hour of each activity, from the BOQ resource norms or entered; an entered norm is maker-checker (planning or project
 // controls enter it, the project manager approves it) and every change is audited.
@@ -53,8 +54,7 @@ function Norm({ t, id, onGone }) {
   if (editing) return <NormForm t={t} editing={n} onSaved={() => { setEditing(false); refresh(qc); }} onCancel={() => setEditing(false)} />;
   return (
     <div data-testid="norm-object" data-status={n.status}>
-      <h1 id="norm-h">{n.projectCode} · {n.activityCode} · {t(`cnd.prn.r.${n.resourceType}`)} <StatusBadge status={NORM_TONE[n.status]} label={t(`cnd.prn.s.${n.status}`)} /></h1>
-      <p><Link to="/site/productivity-norms">{t('cnd.prn.back')}</Link></p>
+      <PageHeader id="norm-h" title={<>{n.projectCode} · {n.activityCode} · {t(`cnd.prn.r.${n.resourceType}`)} <StatusBadge status={NORM_TONE[n.status]} label={t(`cnd.prn.s.${n.status}`)} /></>} meta={<Link to="/site/productivity-norms">{t('cnd.prn.back')}</Link>} />
       <dl className="kv" data-testid="norm-figures"><div><dt>{t('cnd.prn.outputShort')}</dt><dd data-testid="norm-value">{fmtQty(n.outputPerUnit)} {n.uom ?? ''} / {n.perLabel}</dd></div><div><dt>{t('cnd.prn.from')}</dt><dd>{fmtDate(n.effectiveFrom)}</dd></div><div><dt>{t('cnd.prn.source')}</dt><dd>{n.source === 'BOQ' ? t('cnd.prn.boq') : t('cnd.prn.entered')}</dd></div><div><dt>{t('cnd.prd.workType')}</dt><dd>{n.workType.replace('UOM:', '')}</dd></div><div><dt>{t('wa.raisedBy')}</dt><dd>{n.requestedBy ?? '—'}</dd></div>{n.approvedAt && <div><dt>{t('wa.approvedBy')}</dt><dd>{n.approvedBy} · {fmtDate(n.approvedAt.slice(0, 10))}</dd></div>}</dl>
       {n.note && <p>{n.note}</p>}{n.status === 'APPROVED' && <p className="muted" data-testid="norm-locked">{t('cnd.prn.locked')}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="norm-obj-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="norm-obj-note">{note}</p>}
@@ -86,11 +86,11 @@ export default function ProductivityNormsPage() {
   const pq = useQuery({ queryKey: ['site', 'prod-projects'], queryFn: st.prodProjects, retry: false, enabled: perms.includes('site.productivity.configure') });
   const [projectId, setProjectId] = useState(''); const [msg, setMsg] = useState(null); const [error, setError] = useState(null);
   if (id) return <section aria-labelledby="norm-h" data-testid="site-productivity-norms"><Norm key={id} t={t} id={id} onGone={() => navigateTo('/site/productivity-norms')} /></section>;
-  if (isNew) return <section data-testid="site-productivity-norms"><h1 className="sr-only">{t('cnd.prn.new')}</h1><NormForm t={t} editing={null} onSaved={(d) => { refresh(qc); navigateTo(`/site/productivity-norms?id=${d.id}`); }} onCancel={() => navigateTo('/site/productivity-norms')} /></section>;
+  if (isNew) return <section data-testid="site-productivity-norms"><PageHeader srOnly title={t('cnd.prn.new')} /><NormForm t={t} editing={null} onSaved={(d) => { refresh(qc); navigateTo(`/site/productivity-norms?id=${d.id}`); }} onCancel={() => navigateTo('/site/productivity-norms')} /></section>;
   const boq = async () => { setError(null); setMsg(null); try { const r = await st.refreshBoq(Number(projectId)); setMsg(t('cnd.prn.boqDone', { m: r.made, k: r.kept })); refresh(qc); } catch (e) { setError(errorInfo(e).form); } };
   return (
     <section aria-labelledby="norm-h" data-testid="site-productivity-norms">
-      <h1 id="norm-h">{t('cnd.prn.title')}</h1><p className="muted">{t('cnd.prn.intro')}</p>
+      <PageHeader id="norm-h" title={t('cnd.prn.title')} subtitle={t('cnd.prn.intro')} />
       <div className="actions-row no-print">{perms.includes('site.productivity.configure') && <Link to="/site/productivity-norms?new=1">{t('cnd.prn.new')}</Link>} <Link to="/site/productivity">{t('cnd.prd.title')}</Link></div>
       {perms.includes('site.productivity.configure') && (
         <div className="mdm-panel no-print" data-testid="norm-boq"><h2>{t('cnd.prn.fromBoq')}</h2><p className="muted">{t('cnd.prn.fromBoqHelp')}</p>

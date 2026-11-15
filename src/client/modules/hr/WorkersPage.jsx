@@ -1,6 +1,7 @@
 import { useSession } from '../core/api/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Workers Register (HR, part 07.08): the List Report of contract workers: search, filters by contractor, trade, skill, induction, medical and status, saved views, totals and the export (masked: the ID shows its last four digits,
 // the mobile number only to those who may see it). Each user sees the workers they registered or those deployed to sites their role reaches; HR and safety see all.
@@ -11,7 +12,7 @@ export default function WorkersPage() {
   const canNew = perms.includes('hr.worker.create');
   return (
     <section aria-labelledby="wk-title" data-testid="workers">
-      <h1 id="wk-title" className="sr-only">Workers Register</h1>
+      <PageHeader id="wk-title" srOnly title={"Workers Register"} />
       <ListReport listCode="hr.workers" endpoint="/hr/workers" title="Workers Register" session={session.data}
         rowHref={(r) => `/labour/workers/worker?id=${r.id}`} onOpen={(r) => navigateTo(`/labour/workers/worker?id=${r.id}`)}
         cardFields={['workerCode', 'name', 'trade', 'contractor', 'status']} statusKey="status"

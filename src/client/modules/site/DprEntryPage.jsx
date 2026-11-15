@@ -8,6 +8,7 @@ import { browserTransport, uploadFile } from '../../platform/files/upload.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { NOTE_TYPES, WEATHER_CODES, fmtQty, st, today } from './api.js';
 import { SiteDay, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // DPR Entry (part 14.02, FR-01 to FR-04, on a phone): a step at a time, with large buttons. The day's work authorisations, attendance, material issues and plant logs are offered; the person confirms
 // them or changes them with a reason; photos come from the camera. The report is sent through the offline engine (04.15): with a signal it goes at once, without one it waits on the phone with its photos
@@ -110,7 +111,7 @@ export default function DprEntryPage() {
   );
   return (
     <section aria-labelledby="dpr-h" data-testid="site-dpr-entry" style={{ maxWidth: 720 }}>
-      <h1 id="dpr-h">{t('dpr.entry')}</h1>
+      <PageHeader id="dpr-h" title={t('dpr.entry')} />
       <p className={`att-net${online ? '' : ' is-off'}`} role="status" data-testid="dpr-net">{online ? t('dpr.online') : t('dpr.offline')}{offline.queue?.length ? ` · ${t('dpr.waiting', { n: offline.queue.length })}` : ''} · <Link to="/field/sync">{t('dpr.syncStatus')}</Link></p>
       <ol className="steps" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', listStyle: 'none', padding: 0 }} aria-label={t('dpr.steps')}>{STEPS.map((k, i) => <li key={k}><button type="button" className={`btn${i === step ? ' btn-primary' : ''}`} style={{ minHeight: 40 }} onClick={() => form && setStep(i)} disabled={!form && i > 0} aria-current={i === step ? 'step' : undefined} data-testid={`dpr-step-${k}`}>{i + 1}. {t(`dpr.s.${k}`)}</button></li>)}</ol>
       {error?.form && <p className="field-error" role="alert" data-testid="dpr-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join('; ')}` : ''}</p>}

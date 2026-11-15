@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { recruit, rupees } from './api.js';
 import PrejoiningForm from './PrejoiningForm.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The offer, opened from the link the candidate received (part 07.02, FR-04, FR-05): no sign-in; the link is the proof. It shows the offer with the CTC breakup, takes the acceptance or the refusal, and after an
 // acceptance the pre-joining details, which become the employee record. A link that has been used for a refusal, has lapsed or was replaced says so.
@@ -15,7 +16,7 @@ export default function OfferResponsePage() {
   const answer = async (action) => { setBusy(true); try { setInfo(await recruit.respond(token, { action, comment: comment || undefined })); setError(null); } catch (e) { setError(e.message); } finally { setBusy(false); } };
   return (
     <main style={{ maxWidth: '44rem', margin: '2rem auto', padding: '0 1rem' }} data-testid="offer-response">
-      <h1>Your offer</h1>
+      <PageHeader title={"Your offer"} />
       {error && <p className="field-error" role="alert" data-testid="or-error">{error}</p>}
       {!info && !error && <p>Loading…</p>}
       {info && (

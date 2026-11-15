@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { WP_TYPES, ordered, st } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Work Package (part 10.03, FR-03): one work package: code, name, type (self, subcontract, procurement), owner and the WBS nodes it groups. A node is in one work package of each type; closed work packages are reopened before they change.
 export default function WorkPackagePage() {
@@ -22,7 +23,7 @@ export default function WorkPackagePage() {
   if (id && wq.error?.status === 403) return <NoPermission what={t('wp.title')} permission="proj.wbs.view" />;
   if (id && wq.isPending) return <Skeleton label={t('wp.title')} rows={4} />;
   if (id && wq.isError) return <ErrorState error={wq.error} onRetry={wq.refetch} />;
-  if (!id && !projectId) return <section aria-labelledby="wp-h" data-testid="wp-pick"><h1 id="wp-h">{t('wp.new')}</h1><ProjectPicker route="/proj/work-package" projectId={null} testId="wp-project" /></section>;
+  if (!id && !projectId) return <section aria-labelledby="wp-h" data-testid="wp-pick"><PageHeader id="wp-h" title={t('wp.new')} /><ProjectPicker route="/proj/work-package" projectId={null} testId="wp-project" /></section>;
   if (tq.isPending && projectId) return <Skeleton label={t('wp.title')} rows={4} />;
   if (tq.isError) return tq.error?.status === 403 ? <NoPermission what={t('wp.title')} permission="proj.wbs.view" /> : <ErrorState error={tq.error} onRetry={tq.refetch} />;
   const tree = tq.data; const can = tree.can.edit; const form = f ?? { code: w?.code ?? '', name: w?.name ?? '', type: w?.type ?? 'SELF', ownerUser: w?.ownerUser ?? '', description: w?.description ?? '', wbsIds: w?.wbsIds ?? [], status: w?.status ?? 'ACTIVE' };
@@ -38,8 +39,7 @@ export default function WorkPackagePage() {
   const leaf = (n) => !tree.nodes.some((c) => c.parentId === n.id);
   return (
     <section aria-labelledby="wp-h" data-testid="work-package" data-status={w?.status}>
-      <h1 id="wp-h">{w ? `${w.code} · ${w.name}` : t('wp.new')} {w && <StatusBadge status={w.status === 'ACTIVE' ? 'ACTIVE' : w.status === 'CLOSED' ? 'COMPLETED' : 'DRAFT'} label={w.statusLabel} />}</h1>
-      <p className="muted">{tree.project.code} · {tree.project.name}{w ? ` · ${w.typeLabel}` : ''}</p>
+      <PageHeader id="wp-h" title={<>{w ? `${w.code} · ${w.name}` : t('wp.new')} {w && <StatusBadge status={w.status === 'ACTIVE' ? 'ACTIVE' : w.status === 'CLOSED' ? 'COMPLETED' : 'DRAFT'} label={w.statusLabel} />}</>} subtitle={<>{tree.project.code} · {tree.project.name}{w ? ` · ${w.typeLabel}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="wp-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 6).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="wp-note">{note}</p>}
       <form className="mdm-panel" onSubmit={submit} aria-label={t('wp.title')} data-testid="wp-form">

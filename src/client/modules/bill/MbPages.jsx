@@ -10,6 +10,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // The measurement book (part 22.01): Record Measurement (a mobile form), the Measurement Book list with the entry and its checks, the MB Abstract and the book in print.
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const day = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -89,11 +91,10 @@ function Entry({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/mb-entries', id, t('mb.entry'), 'bill.mb_entry.view'); const { error, run, busy } = useRunner(); const [tab, setTab] = useState('values'); usePageTitle(t('mb.entry'));
   if (guard) return guard; const x = q.data; const row = (k, val) => <tr><th scope="row">{t(k)}</th><td>{val}</td></tr>;
   return (
-    <div data-testid="bill-mb-object" data-status={x.status} data-check={x.checkStatus}><h1 id="mbe-h">{x.docNo} <Status x={x} /> <StatusBadge status={CHECK_TONE[x.checkStatus]} label={t(`chk.s.${x.checkStatus}`)} /></h1>
-      <p><Link to="/bill/mb-entries">{t('mb.title')}</Link> · {x.project} · {x.item} {x.itemDescription}{x.location ? ` · ${x.location}` : ''}{x.page ? ` · ${t('mb.pageLine', { book: x.book, page: x.page, line: x.line })}` : ''}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('mb.measured')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-mb-qty-value">{nf.format(x.qty)} {x.uom}</strong></div>
-        {x.checkStatus !== 'NOT_CHECKED' && <div className="mdm-panel"><div className="muted">{t('mb.checked')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-mb-checked">{nf.format(x.checkedQty)} {x.uom}</strong>{x.checkDiff !== 0 && <div data-testid="bill-mb-diff">{t('mb.diff', { diff: nf.format(x.checkDiff) })}</div>}</div>}
-        {x.status === 'APPROVED' && <div className="mdm-panel"><div className="muted">{t('mb.certified')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-mb-certified">{nf.format(x.certifiedQty)} {x.uom}</strong><div>{t('mb.locked')}</div></div>}</div>
+    <div data-testid="bill-mb-object" data-status={x.status} data-check={x.checkStatus}><PageHeader id="mbe-h" title={<>{x.docNo} <Status x={x} /> <StatusBadge status={CHECK_TONE[x.checkStatus]} label={t(`chk.s.${x.checkStatus}`)} /></>} meta={<><Link to="/bill/mb-entries">{t('mb.title')}</Link> · {x.project} · {x.item} {x.itemDescription}{x.location ? ` · ${x.location}` : ''}{x.page ? ` · ${t('mb.pageLine', { book: x.book, page: x.page, line: x.line })}` : ''}</>} />
+      <KpiRow><KpiTile label={t('mb.measured')} value={<>{nf.format(x.qty)} {x.uom}</>} kind="quantity" valueTestid="bill-mb-qty-value" />
+        {x.checkStatus !== 'NOT_CHECKED' && <KpiTile label={t('mb.checked')} value={<>{nf.format(x.checkedQty)} {x.uom}</>} kind="quantity" valueTestid="bill-mb-checked">{x.checkDiff !== 0 && <div data-testid="bill-mb-diff">{t('mb.diff', { diff: nf.format(x.checkDiff) })}</div>}</KpiTile>}
+        {x.status === 'APPROVED' && <KpiTile label={t('mb.certified')} value={<>{nf.format(x.certifiedQty)} {x.uom}</>} kind="quantity" valueTestid="bill-mb-certified"><div>{t('mb.locked')}</div></KpiTile>}</KpiRow>
       <ErrorLine error={error} id="bill-error" />
       <Issues issues={x.issues} /><Cumulative c={x.cumulative} uom={x.uom} />
       {x.can.check && <CheckForm x={x} run={run} busy={busy} error={error} />}
@@ -108,13 +109,13 @@ function Entry({ id }) {
 
 export function RecordMeasurementPage() {
   const t = useT('bill'); usePageTitle(t('rec.title'));
-  return (<section aria-labelledby="rec-h" data-testid="bill-record"><h1 id="rec-h">{t('rec.title')}</h1><p className="muted">{t('rec.intro')}</p><p><Link to="/bill/mb-entries">{t('mb.title')}</Link></p><MeasureForm onSaved={(r) => navigateTo(`/bill/mb-entries?id=${r.id}`)} /></section>);
+  return (<section aria-labelledby="rec-h" data-testid="bill-record"><PageHeader id="rec-h" title={t('rec.title')} subtitle={t('rec.intro')} meta={<Link to="/bill/mb-entries">{t('mb.title')}</Link>} /><MeasureForm onSaved={(r) => navigateTo(`/bill/mb-entries?id=${r.id}`)} /></section>);
 }
 export function MbEntriesPage() {
   const t = useT('bill'); usePageTitle(t('mb.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="mbe-h"><Entry id={id} /></section>;
   return (
-    <section aria-labelledby="mbs-h" data-testid="bill-mb-list"><h1 id="mbs-h">{t('mb.title')}</h1><p className="muted">{t('mb.intro')}</p>
+    <section aria-labelledby="mbs-h" data-testid="bill-mb-list"><PageHeader id="mbs-h" title={t('mb.title')} subtitle={t('mb.intro')} />
       <div className="actions-row no-print"><Link to="/bill/mb-record" data-testid="bill-mb-new">{t('rec.title')}</Link> · <Link to="/bill/mb-abstract">{t('abs.title')}</Link></div>
       <ListReport listCode="bill.mb_entries" endpoint="/bill/mb-entries" title={t('mb.title')} session={session.data} rowHref={(r) => `/bill/mb-entries?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/mb-entries?id=${r.id}`)} cardFields={['docNo', 'item', 'location', 'qty', 'check', 'status']} statusKey="status" empty={{ title: t('mb.emptyTitle'), text: t('mb.emptyBody') }} />
     </section>
@@ -127,7 +128,7 @@ export function MbAbstractPage() {
   const q = useQuery({ queryKey: ['bill', 'mb-abstract', pid, f.period], queryFn: () => bill.get(`/mb-abstract${qs({ projectId: pid, period: f.period })}`), enabled: Boolean(pid), retry: false, placeholderData: (p) => p });
   if (o.error?.status === 403) return <NoPermission what={t('abs.title')} permission="bill.mb_entry.create" />; if (o.isPending) return <Skeleton label={t('abs.title')} rows={5} />; const d = q.data;
   return (
-    <section aria-labelledby="abs-h" data-testid="bill-abstract"><h1 id="abs-h">{t('abs.title')}</h1><p className="muted">{t('abs.intro')}</p>
+    <section aria-labelledby="abs-h" data-testid="bill-abstract"><PageHeader id="abs-h" title={t('abs.title')} subtitle={t('abs.intro')} />
       <div className="form-grid no-print"><Field label={t('project')} name="projectId" error={null}><select value={pid} onChange={(e) => setF({ ...f, projectId: e.target.value })} style={big} data-testid="bill-abs-project"><option value="">—</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field>
         <Field label={t('abs.period')} name="period" error={null}><input type="month" value={f.period} onChange={(e) => setF({ ...f, period: e.target.value })} style={big} data-testid="bill-abs-period" /></Field></div>
       <ErrorLine error={error} id="bill-error" />

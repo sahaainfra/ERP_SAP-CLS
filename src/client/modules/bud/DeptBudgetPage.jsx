@@ -10,6 +10,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Tabs } from '../proj/parts.jsx';
 import { DEPT_TONE, SPREADS, dp, inr, openPrint } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Department Budget Workbench (part 12.04, FR-01, FR-02): the budget of a cost centre for a financial year by GL account and month. The twelve months are typed or spread from a yearly amount by the server; totals are worked out by the server when the
 // budget is saved, and an approved budget is locked and changed by a new version that is compared with the one in force.
@@ -113,7 +114,7 @@ export default function DeptBudgetPage() {
   if (!id) {
     return (
       <section aria-labelledby="dp-h" data-testid="dp-new-page">
-        <h1 id="dp-h">{t('dp.newTitle')}</h1>
+        <PageHeader id="dp-h" title={t('dp.newTitle')} />
         <Editor t={t} onSaved={(r) => { qc.invalidateQueries({ queryKey: ['bud'] }); navigateTo(`/bud/dept-budget?id=${r.id}`); }} />
       </section>
     );
@@ -127,8 +128,7 @@ export default function DeptBudgetPage() {
   return (
     <section aria-labelledby="dp-h" data-testid="dept-budget" data-status={b.status} data-number={b.docNo} data-version={b.versionNo}>
       <header>
-        <h1 id="dp-h">{b.docNo} · {b.name} <StatusBadge status={DEPT_TONE[b.status]} label={t(`dst.${b.status}`)} /></h1>
-        <p className="muted">{b.costCentreCode} {b.costCentreName}{b.department ? ` · ${b.department}` : ''} · {t('dp.fy')} {b.fy} · {t('f.version')} {b.versionNo} ({t(`dvt.${b.vtype}`)}){b.lockedAt ? ` · ${t('page.locked')}` : ''}</p>
+        <PageHeader id="dp-h" title={<>{b.docNo} · {b.name} <StatusBadge status={DEPT_TONE[b.status]} label={t(`dst.${b.status}`)} /></>} subtitle={<>{b.costCentreCode} {b.costCentreName}{b.department ? ` · ${b.department}` : ''} · {t('dp.fy')} {b.fy} · {t('f.version')} {b.versionNo} ({t(`dvt.${b.vtype}`)}){b.lockedAt ? ` · ${t('page.locked')}` : ''}</>} />
         <dl className="kv" data-testid="dp-figures">
           <div><dt>{t('f.total')}</dt><dd data-testid="dp-total">₹ {inr(b.total)}</dd></div>
           <div><dt>{t('dp.actualToDate')}</dt><dd data-testid="dp-actual">₹ {inr(b.actualToDate)}</dd></div>

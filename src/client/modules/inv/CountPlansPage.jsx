@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { COUNT_TONE, cn, download, fmtDate, fmtQty, fmtRs, iv, today } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Count Plans (part 16.06, FR-01 to FR-04): the list with the counts that are due, a new plan, and the plan with its start, closing, variance review, the reasons and the adjustment.
 function NewPlan({ t, onDone }) {
@@ -35,7 +36,7 @@ function Plan({ t, id }) {
   const saveReasons = async () => { const list = varLines.map((l) => ({ lineId: l.id, reason: (reasons[l.id] ?? l.reason ?? '').trim() })).filter((r) => r.reason); return run(() => cn.review(x.id, list), t('cn.reasonsSaved')); };
   return (
     <div data-testid="plan-object" data-status={x.status}>
-      <h1 id="plan-h">{x.docNo} <StatusBadge status={COUNT_TONE[x.status]} label={t(`cn.s.${x.status}`)} /></h1><p><Link to="/inv/count-plans">{t('cn.title')}</Link> · {x.store} · {t(`cn.t.${x.type}`)}{x.abcClass ? ` · ${t('cn.classN', { c: x.abcClass })}` : ''}</p>
+      <PageHeader id="plan-h" title={<>{x.docNo} <StatusBadge status={COUNT_TONE[x.status]} label={t(`cn.s.${x.status}`)} /></>} meta={<><Link to="/inv/count-plans">{t('cn.title')}</Link> · {x.store} · {t(`cn.t.${x.type}`)}{x.abcClass ? ` · ${t('cn.classN', { c: x.abcClass })}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="plan-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="plan-note">{note}</p>}
       <dl className="kv"><div><dt>{t('cn.scheduled')}</dt><dd>{fmtDate(x.scheduledDate)}</dd></div><div><dt>{t('cn.freeze')}</dt><dd>{x.freeze ? t('cn.yes') : t('cn.no')}</dd></div><div><dt>{t('cn.tolerance')}</dt><dd>{x.tolerancePct}%</dd></div><div><dt>{t('cn.progress')}</dt><dd data-testid="plan-progress">{x.countedLines}/{x.lineCount} · {t('cn.recountLines', { n: x.recountLines })}</dd></div><div><dt>{t('g.requestedBy')}</dt><dd>{x.requestedBy}</dd></div>{x.adjustment && <div><dt>{t('cn.adjustment')}</dt><dd data-testid="plan-adjustment"><Link to={`/inv/adjustments?id=${x.adjustment.id}`}>{x.adjustment.doc_no}</Link> · {x.adjustment.status}</dd></div>}</dl>
       {x.status === 'COUNTING' && x.freeze && <p className="mdm-banner" role="status" data-testid="plan-frozen">{t('cn.frozenNote')}</p>}
@@ -65,7 +66,7 @@ export default function CountPlansPage() {
   if (id) return <section aria-labelledby="plan-h" data-testid="count-plans"><Plan key={id} t={t} id={id} /></section>;
   const due = dq.data ?? [];
   return (
-    <section aria-labelledby="cp-h" data-testid="count-plans"><h1 id="cp-h">{t('cn.title')}</h1><p className="muted">{t('cn.intro')}</p>
+    <section aria-labelledby="cp-h" data-testid="count-plans"><PageHeader id="cp-h" title={t('cn.title')} subtitle={t('cn.intro')} />
       <div className="actions-row no-print">{perms.includes('inv.count_plan.create') && <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} onClick={() => setAdding(!adding)} data-testid="plan-add">{t('cn.newTitle')}</button>} <Link to="/inv/blind-count">{t('cn.blindTitle')}</Link> <Link to="/inv/count-variance">{t('cn.varianceTitle')}</Link></div>
       {adding && <NewPlan t={t} onDone={(d) => navigateTo(`/inv/count-plans?id=${d.id}`)} />}
       {due.length > 0 && <div className="table-scroll"><table className="data-table" data-testid="counts-due"><caption>{t('cn.dueTitle')}</caption><thead><tr><th>{t('tr.store')}</th><th>{t('cn.class')}</th><th>{t('cn.lastCounted')}</th><th>{t('cn.dueOn')}</th><th className="num">{t('cn.overdue')}</th></tr></thead>

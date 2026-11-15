@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { ep } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Engineering Progress (part 11.04, FR-02): weighted progress against plan, the S-curve, progress by discipline and package, overdue deliverables and open holds.
 function SCurve({ points, label }) {
@@ -34,7 +35,7 @@ export default function ProgressPage() {
   const d = q.data;
   return (
     <section aria-labelledby="prog-h" data-testid="eg-progress">
-      <h1 id="prog-h">{t('prog.title')}</h1>
+      <PageHeader id="prog-h" title={t('prog.title')} />
       <ProjectSelect value={projectId} onChange={setProjectId} allowAll testId="prog-project" />
       {q.isPending ? <Skeleton label={t('prog.title')} rows={4} /> : (
         <>

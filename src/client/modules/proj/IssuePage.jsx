@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { ISSUE_TONE, downloadFile, inr, rk } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Issue (part 10.06, FR-03): one issue with its impact; the owner works it and resolves it with the resolution, and a resolved issue is reopened by an amendment.
 export default function IssuePage() {
@@ -16,7 +17,7 @@ export default function IssuePage() {
   const h = useQuery({ queryKey: ['proj', 'issue-history', id], queryFn: () => rk.issueHistory(id), enabled: Boolean(id) && q.isSuccess, retry: false });
   const [resolution, setResolution] = useState(''); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   usePageTitle(q.data ? `${q.data.docNo} ${q.data.title}` : t('rk.issueTitle'));
-  if (!id) return <section aria-labelledby="iss-h" data-testid="iss-none"><h1 id="iss-h">{t('rk.issueTitle')}</h1><p className="muted"><Link to="/proj/issues">{t('rk.issuesTitle')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="iss-h" data-testid="iss-none"><PageHeader id="iss-h" title={t('rk.issueTitle')} subtitle={<Link to="/proj/issues">{t('rk.issuesTitle')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('rk.issuesTitle')} permission="proj.issue.view" />;
   if (q.isPending) return <Skeleton label={t('rk.issueTitle')} rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -26,8 +27,7 @@ export default function IssuePage() {
   return (
     <section aria-labelledby="iss-h" data-testid="issue" data-status={i.status}>
       <header>
-        <h1 id="iss-h">{i.docNo} · {i.title} <StatusBadge status={ISSUE_TONE[i.status]} label={i.statusLabel} /></h1>
-        <p className="muted">{i.projectCode} · {t('rk.priority')}: {t(`rk.level.${i.priority}`)} · {t('rk.col.owner')}: {i.ownerUser}{i.dueDate ? ` · ${t('rk.due')}: ${i.dueDate}` : ''}{i.overdue ? ` · ${t('rk.overdue')}` : ''}{i.riskId ? <> · <Link to={`/proj/risk?id=${i.riskId}`}>{t('rk.linkedRisk')}</Link></> : null}</p>
+        <PageHeader id="iss-h" title={<>{i.docNo} · {i.title} <StatusBadge status={ISSUE_TONE[i.status]} label={i.statusLabel} /></>} subtitle={<>{i.projectCode} · {t('rk.priority')}: {t(`rk.level.${i.priority}`)} · {t('rk.col.owner')}: {i.ownerUser}{i.dueDate ? ` · ${t('rk.due')}: ${i.dueDate}` : ''}{i.overdue ? ` · ${t('rk.overdue')}` : ''}{i.riskId ? <> · <Link to={`/proj/risk?id=${i.riskId}`}>{t('rk.linkedRisk')}</Link></> : null}</>} />
         {error?.form && <p className="field-error" role="alert" data-testid="iss-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="iss-note">{note}</p>}
         <div className="actions-row no-print">

@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { cn, fmtQty, fmtRs, saveCsv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Count Variance Report (part 16.06, FR-03): book, count, recount, final count and the difference in quantity, value and per cent for every count line. A counter sees nothing here: the book stays hidden from them.
 export default function CountVariancePage() {
@@ -14,7 +15,7 @@ export default function CountVariancePage() {
   if (q.error?.status === 403) return <NoPermission what={t('cn.varianceTitle')} permission="inv.count_plan.view" />;
   const d = q.data; const rows = (d?.rows ?? []).filter((r) => !only || r.varianceQty !== 0);
   return (
-    <section aria-labelledby="cv-h" data-testid="count-variance"><h1 id="cv-h">{t('cn.varianceTitle')}</h1><p className="muted">{t('cn.varianceIntro')}</p><p><Link to="/inv/count-plans">{t('cn.title')}</Link></p>
+    <section aria-labelledby="cv-h" data-testid="count-variance"><PageHeader id="cv-h" title={t('cn.varianceTitle')} subtitle={t('cn.varianceIntro')} meta={<Link to="/inv/count-plans">{t('cn.title')}</Link>} />
       <div className="actions-row no-print"><label className="check"><input type="checkbox" checked={only} onChange={(ev) => setOnly(ev.target.checked)} data-testid="cv-only" /> {t('cn.onlyVariance')}</label>
         {d && perms.includes('inv.count_plan.export') && <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => saveCsv('count-variance.csv', [[t('cn.title'), t('tr.store'), t('item'), t('cn.book'), t('cn.counted'), t('cn.recount'), t('cn.final'), t('cn.variance'), t('r.value'), t('cn.reason')], ...rows.map((r) => [r.plan, r.store, r.item, r.bookQty, r.countedQty, r.recountQty, r.finalQty, r.varianceQty, r.varianceValue == null ? '' : r.varianceValue / 100, r.reason])])} data-testid="cv-export">{t('i.exportCsv')}</button>}</div>
       {q.isPending ? <Skeleton label={t('cn.varianceTitle')} rows={3} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : !d.canReview ? <div className="mdm-panel" data-testid="cv-blind"><h2>{t('cn.blindOnlyTitle')}</h2><p>{t('cn.blindOnlyBody')}</p></div> : rows.length === 0 ? <div className="mdm-panel" data-testid="cv-empty"><h2>{t('cn.varEmptyTitle')}</h2><p>{t('cn.varEmptyBody')}</p></div> : (<>

@@ -2,6 +2,7 @@ import { useT } from '../../platform/i18n/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Department budgets (part 12.04): the budgets of the cost centres of head office for a financial year, with their versions and status; the Workbench opens one.
 export default function DeptBudgetsPage() {
@@ -10,7 +11,7 @@ export default function DeptBudgetsPage() {
   const session = useSession(); const perms = session.data?.permissions ?? [];
   return (
     <section aria-labelledby="dp-list-h" data-testid="dp-budgets">
-      <h1 id="dp-list-h" className="sr-only">{t('dp.listTitle')}</h1>
+      <PageHeader id="dp-list-h" srOnly title={t('dp.listTitle')} />
       <div className="actions-row no-print">
         {perms.includes('bud.dept_budget.create') && <button type="button" className="btn btn-primary" onClick={() => navigateTo('/bud/dept-budget')} data-testid="dp-new">{t('dp.new')}</button>}
         {perms.includes('bud.dept_report.view') && <button type="button" className="btn" onClick={() => navigateTo('/bud/dept-report')} data-testid="dp-to-report">{t('dr.title')}</button>}

@@ -8,6 +8,7 @@ import { useSearch } from '../site/parts.jsx';
 import { at, ro } from './api.js';
 import { useRunner } from './InvParts.jsx';
 import { ScanInput } from './ScanParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Issue or return by QR with the receiver's code (part 16.09, FR-02, mobile): the keeper scans the tag, chooses the person and issues; the person gets a code on their own phone and confirms it here or reads it out. Employees see their tools and confirm what is waiting.
 const CONDS = ['GOOD', 'FAIR', 'REPAIRABLE', 'DAMAGED', 'SCRAP'];
@@ -39,7 +40,7 @@ export default function AssetScanPage() {
   const t = useT('inv'); usePageTitle(t('at.scanTitle')); const sp = useSearch(); const session = useSession(); const perms = session.data?.permissions ?? []; const [tag, setTag] = useState(sp.get('tag') ?? '');
   if (session.isSuccess && !perms.includes('inv.small_asset.view') && !perms.includes('inv.small_asset.acknowledge')) return <NoPermission what={t('at.scanTitle')} permission="inv.small_asset.view" />;
   return (
-    <section aria-labelledby="sc-h" data-testid="asset-scan"><h1 id="sc-h">{t('at.scanTitle')}</h1><p className="muted">{t('at.scanHelp')}</p>
+    <section aria-labelledby="sc-h" data-testid="asset-scan"><PageHeader id="sc-h" title={t('at.scanTitle')} subtitle={t('at.scanHelp')} />
       {perms.includes('inv.small_asset.view') && <ScanInput t={t} testId="asset-scan-input" onResult={(r) => { if (r.type === 'ASSET') setTag(r.tag); }} />}
       {tag && perms.includes('inv.small_asset.view') && <Tool key={tag} t={t} tag={tag} perms={perms} onClear={() => setTag('')} />}
       {perms.includes('inv.small_asset.acknowledge') && <Mine t={t} />}

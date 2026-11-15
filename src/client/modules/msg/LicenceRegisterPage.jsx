@@ -6,6 +6,7 @@ import { formatDate } from '../../platform/format.js';
 import { authHeaders } from '../../platform/api/index.js';
 import { secApi } from '../../platform/secure/engine.js';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Open-Source Licence Register (Administration, part 05.03, FR-01): every component, its licence and its obligations, the decisions of the licence review, and the gate: secure messaging stays off until the review of the
 // end-to-end library is approved by the IT administrator and then the director.
@@ -32,7 +33,7 @@ export default function LicenceRegisterPage() {
   const counts = d.counts;
   return (
     <section aria-labelledby="lr-title" data-testid="licence-register">
-      <h1 id="lr-title">Open-Source Licence Register</h1>
+      <PageHeader id="lr-title" title={"Open-Source Licence Register"} />
       <p className={d.approved ? 'notice' : 'notice is-warning'} role="status" data-testid="licence-gate">{d.approved ? 'The licence review is approved: the end-to-end library may be used.' : 'The licence review is not approved yet. Secure messaging cannot be switched on until the IT administrator and then the director approve it.'}</p>
       <p className="muted small">libsignal and the Signal server are AGPL-3.0 and are not used; the secure conversations use the platform's audited WebCrypto API (see <code>docs/erp/LICENCE_REVIEW_05.03.md</code>).</p>
       {notice && <p role="status" className="notice" data-testid="lr-notice">{notice}</p>}

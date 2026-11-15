@@ -34,10 +34,11 @@ function Trend({ trend, value, amount }) {
  *   it shortened (₹ 2.43 Cr) and keeps `value` (or the exact rupees) in the tooltip and for screen readers.
  * - `kind`: one of KPI_KINDS (picks the icon); `icon`: a registry key instead. `unit`: shown after the value (m³, days, %).
  * - `tone`: neutral, info, success, warning or error (a few older words are understood). `trend`: { previous, better: 'up' | 'down', label }.
- * - `to`: the page behind the figure (keep the filters in it). `testid` is on the tile, `valueTestid` on the value.
+ * - `to`: the page behind the figure (keep the filters in it); `onClick`: the tile is a button instead (a filter of the page it is on), and
+ *   `pressed` says whether that filter is on. `testid` is on the tile, `valueTestid` on the value.
  * - `children`: a second line (a note, a badge).
  */
-export function KpiTile({ label, value, amount, kind, icon, unit, tone = 'neutral', trend, to, testid, valueTestid, children, ...rest }) {
+export function KpiTile({ label, value, amount, kind, icon, unit, tone = 'neutral', trend, to, onClick, pressed, testid, valueTestid, children, ...rest }) {
   const toneKey = TONES.has(tone) ? tone : TONE_OF[tone] ?? 'neutral';
   const n = kind === 'money' ? toAmount(amount ?? value) : null;
   const shortText = n !== null && Math.abs(n) >= 1e5 ? abbreviateINR(n) : null;
@@ -59,8 +60,10 @@ export function KpiTile({ label, value, amount, kind, icon, unit, tone = 'neutra
       {children && <span className="kpi-extra">{children}</span>}
     </>
   );
+  const cls = `tile kpi-tile kpi-tone-${toneKey} tile-${tone}`;
+  if (onClick) return <button type="button" className={`${cls} kpi-button`} aria-pressed={pressed} onClick={onClick} data-testid={testid} data-kind={kind} {...rest}>{body}</button>;
   return (
-    <div className={`tile kpi-tile kpi-tone-${toneKey} tile-${tone}`} data-testid={testid} data-kind={kind} {...rest}>
+    <div className={cls} data-testid={testid} data-kind={kind} {...rest}>
       {to ? <a className="kpi-link" href={to} onClick={(e) => { e.preventDefault(); navigateTo(to); }}>{body}<span className="kpi-chevron" aria-hidden="true">›</span></a> : body}
     </div>
   );

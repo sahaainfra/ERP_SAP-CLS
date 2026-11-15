@@ -5,6 +5,7 @@ import { useRoles } from '../api/access.js';
 import { useUsers } from '../api/users.js';
 import RecordHistory from '../../../platform/audit/RecordHistory.jsx';
 import { SeverityChip } from '../components/privilegedCommon.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const lines = (text) => String(text ?? '').split(/[\n,]+/).map((x) => x.trim()).filter(Boolean);
 
@@ -97,8 +98,7 @@ export default function SodRulesPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Segregation of duties &rsaquo; Rules</nav>
-      <div className="page-head"><h1 id="page-title">Segregation of Duties Rules</h1>{manage && <button type="button" className="btn btn-primary" onClick={() => open(null)}>Propose a rule</button>}</div>
-      <p className="muted">These rules keep one person from holding duties that must stay apart. A rule that blocks stops the action and names the conflict; one that warns lets it through and records it. A change to a rule needs the auditor or the director to approve it.</p>
+      <PageHeader id="page-title" title={"Segregation of Duties Rules"} actions={<>{manage && <button type="button" className="btn btn-primary" onClick={() => open(null)}>Propose a rule</button>}</>} subtitle={"These rules keep one person from holding duties that must stay apart. A rule that blocks stops the action and names the conflict; one that warns lets it through and records it. A change to a rule needs the auditor or the director to approve it."} />
       <p role="status" className="notice" data-testid="rule-notice">{notice}</p>
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Search rules</span><input type="search" placeholder="Search code or name" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label>

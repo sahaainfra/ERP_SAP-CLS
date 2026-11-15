@@ -3,6 +3,7 @@ import { usePeople, useCreateConversation } from '../../platform/messages/api.js
 import { ensureDevice, secApi, useSecureReady } from '../../platform/secure/engine.js';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New conversation / New group (part 05.01, section 7.3): a person, a group, or a channel for a project, a site or a department; a conversation about a record is started from the record (or by its number).
 const KINDS = [['DIRECT', 'A person'], ['GROUP', 'A group'], ['PROJECT', 'A project channel'], ['SITE', 'A site channel'], ['DEPARTMENT', 'A department channel'], ['RECORD', 'About a record']];
@@ -43,7 +44,7 @@ export default function NewConversationPage({ session }) {
   const lookup = { PROJECT: 'iam/projects', DEPARTMENT: 'iam/departments' }[kind];
   return (
     <section aria-labelledby="nc-title" data-testid="new-conversation">
-      <h1 id="nc-title">New conversation</h1>
+      <PageHeader id="nc-title" title={"New conversation"} />
       <form className="card form-grid" onSubmit={go} noValidate aria-label="New conversation">
         <Field label="What for" name="type" error={error}>
           <select value={kind} onChange={(e) => { setKind(e.target.value); setChosen([]); setPlace(''); }} data-testid="nc-kind">{kinds.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>

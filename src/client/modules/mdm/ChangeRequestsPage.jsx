@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate, formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANGE, REQUEST_STATUS, mdm } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Master Change Requests (Administration, part 06.01, FR-05): a worklist of the changes of governed masters. "Mine" are the requests I made (withdraw one that waits, correct and send again one that was returned);
 // "To review" are the requests of the masters I am steward of, oldest first, coloured by how long they have waited; "All" is for the people who govern master data. A request shows what changes, field by field (sensitive
@@ -30,7 +31,7 @@ export default function ChangeRequestsPage() {
   const c = one.data;
   return (
     <section aria-labelledby="mcr-title" data-testid="mdm-requests">
-      <h1 id="mcr-title">Master Change Requests</h1>
+      <PageHeader id="mcr-title" title={"Master Change Requests"} />
       <div className="seg" role="tablist" aria-label="Which requests">{[['mine', 'My requests'], ['review', 'To review'], ['all', 'All']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={f.view === k} className={`btn btn-small ${f.view === k ? 'btn-primary' : ''}`} onClick={() => set({ view: k })} data-testid={`mcr-view-${k}`}>{l}</button>)}</div>
       <form className="srch-form" aria-label="Filter the requests" onSubmit={(e) => e.preventDefault()}>
         <Field label="Status" name="status" error={null}><select value={f.status} onChange={(e) => set({ status: e.target.value })} data-testid="mcr-status"><option value="">All</option>{Object.entries(REQUEST_STATUS).map(([k, [, l]]) => <option key={k} value={k}>{l}</option>)}</select></Field>

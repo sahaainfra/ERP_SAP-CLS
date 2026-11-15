@@ -10,6 +10,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { hse } from './api.js';
 import { DocBar, ErrorLine, ProjectSite, Status, big, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // HSE Plans (part 19.01, FR-01): the project HSE plan with its emergency contacts, assembly points and hospital; the project manager and the HSE head approve; an approved plan is amended into a new version.
 const transport = browserTransport(authHeaders);
@@ -39,8 +40,7 @@ function Plan({ id }) {
   const t = useT('hse'); const { q, guard } = useRecord('/plans', id, t('plan.title'), 'hse.plan.view'); const { error, run, busy, note } = useRunner(); const [editing, setEditing] = useState(false); usePageTitle(t('plan.title')); if (guard) return guard; const x = q.data; const em = x.emergency ?? {};
   const upload = async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(async () => { const up = await uploadFile(file, { transport, entity: 'hse_plans', entityId: x.id }); return hse.post(`/plans/${x.id}/file`, { fileId: up.id }); }, t('plan.uploaded')); };
   return (
-    <div data-testid="hse-plan-object" data-status={x.status}><h1 id="pl-h">{x.docNo} <Status x={x} /></h1>
-      <p><Link to="/hse/plans">{t('plan.title')}</Link> · {x.project} · {t('plan.version', { n: x.versionNo })} · {x.title}</p>
+    <div data-testid="hse-plan-object" data-status={x.status}><PageHeader id="pl-h" title={<>{x.docNo} <Status x={x} /></>} meta={<><Link to="/hse/plans">{t('plan.title')}</Link> · {x.project} · {t('plan.version', { n: x.versionNo })} · {x.title}</>} />
       <ErrorLine error={error} id="hse-plan-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
       {x.can.edit && <div className="actions-row no-print"><button type="button" className="btn" onClick={() => setEditing(!editing)} data-testid="hse-plan-edit">{t('edit')}</button><label className="btn" style={{ minHeight: 44 }}>{t('plan.upload')}<input type="file" hidden onChange={upload} data-testid="hse-plan-file" /></label></div>}
       {editing && x.can.edit ? <PlanForm initial={toInitial(x)} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.edit('/plans', x.id, { title: v.title, emergency: v.emergency, rowVersion: x.version }), t('saved')); if (r) setEditing(false); }} /> : (
@@ -53,13 +53,13 @@ function Plan({ id }) {
 }
 function PlanNew() {
   const t = useT('hse'); const { error, run, busy } = useRunner(); usePageTitle(t('plan.new'));
-  return <section aria-labelledby="pln-h"><h1 id="pln-h">{t('plan.new')}</h1><p><Link to="/hse/plans">{t('plan.title')}</Link></p><ErrorLine error={error} id="hse-plan-error" /><PlanForm initial={blank} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.make('/plans', { projectId: Number(v.projectId), siteId: v.siteId ? Number(v.siteId) : null, title: v.title, emergency: v.emergency })); if (r) navigateTo(`/hse/plans?id=${r.id}`); }} /></section>;
+  return <section aria-labelledby="pln-h"><PageHeader id="pln-h" title={t('plan.new')} meta={<Link to="/hse/plans">{t('plan.title')}</Link>} /><ErrorLine error={error} id="hse-plan-error" /><PlanForm initial={blank} busy={busy} error={error} onSave={async (v) => { const r = await run(() => hse.make('/plans', { projectId: Number(v.projectId), siteId: v.siteId ? Number(v.siteId) : null, title: v.title, emergency: v.emergency })); if (r) navigateTo(`/hse/plans?id=${r.id}`); }} /></section>;
 }
 export default function PlansPage() {
   const t = useT('hse'); usePageTitle(t('plan.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="pl-h"><Plan id={id} /></section>; if (sp.get('new')) return <PlanNew />;
   return (
-    <section aria-labelledby="pll-h" data-testid="hse-plans"><h1 id="pll-h">{t('plan.title')}</h1><p className="muted">{t('plan.intro')}</p>
+    <section aria-labelledby="pll-h" data-testid="hse-plans"><PageHeader id="pll-h" title={t('plan.title')} subtitle={t('plan.intro')} />
       <div className="actions-row no-print"><Link to="/hse/plans?new=1" data-testid="hse-plan-new">{t('plan.new')}</Link></div>
       <ListReport listCode="hse.plans" endpoint="/hse/plans" title={t('plan.title')} session={session.data} rowHref={(r) => `/hse/plans?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/plans?id=${r.id}`)} cardFields={['docNo', 'title', 'version', 'status']} statusKey="status" empty={{ title: t('plan.emptyTitle'), text: t('plan.emptyBody') }} />
     </section>

@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { BASES, RULE_TONE, RUN_TONE, al, bd, dp, download, inr } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Overhead Allocation Rules (part 12.04, FR-04, BR-01): how a pool of head-office cost (the approved budget or the actual cost of chosen cost centres and accounts) is shared over the projects: by revenue, by direct cost or by fixed percentages. One person
 // drafts a rule, another puts it in force; a run shows its shares before it is posted, the shares add up to the pool exactly, and part 23.10 reads the posted runs.
@@ -44,8 +45,7 @@ export default function AllocPage() {
   const show = async (r) => setHist({ r, h: await al.ruleHistory(r.id) });
   return (
     <section aria-labelledby="al-h" data-testid="bud-alloc">
-      <h1 id="al-h">{t('al.title')}</h1>
-      <p className="muted">{t('al.intro')} <span data-testid="al-inforce">{t('al.inForce', { n: rq.data.inForce })}</span></p>
+      <PageHeader id="al-h" title={t('al.title')} subtitle={<>{t('al.intro')} <span data-testid="al-inforce">{t('al.inForce', { n: rq.data.inForce })}</span></>} />
       {note && <p className="mdm-banner" role="status" data-testid="al-note">{note}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="al-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
 

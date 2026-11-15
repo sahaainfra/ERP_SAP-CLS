@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { usePreviewTemplate, useProposeTemplate, useTemplate, useTemplates } from '../../platform/notifications/api.js';
 import { Field, Link, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { CATEGORY } from './NotificationsPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Notification Templates (part 04.06, section 7.3): the words of each notification per channel and language, with the facts a template may carry, a preview in either language, and a new
 // version that is a change the IT administrator approves. The version in force stays until then.
@@ -86,8 +87,7 @@ export default function NotificationTemplatesPage({ session }) {
   const d = q.data;
   return (
     <section aria-labelledby="nt-title" data-testid="notification-templates">
-      <h1 id="nt-title">Notification Templates</h1>
-      <p className="muted">The words of each notification, per channel and language. A change is a new version that the IT administrator approves; every change is in the audit trail.</p>
+      <PageHeader id="nt-title" title={"Notification Templates"} subtitle={"The words of each notification, per channel and language. A change is a new version that the IT administrator approves; every change is in the audit trail."} />
       <form className="srch-form" role="search" aria-label="Filter the templates" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>Kind</span><select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })}><option value="">All kinds</option>{Object.entries(CATEGORY).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
         <label className="field"><span>Code</span><input type="search" value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} /></label>

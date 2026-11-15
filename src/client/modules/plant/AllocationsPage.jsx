@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { CERT_TONE, PHASE_TONE, REQ_TONE, fmtDate, fmtQty, fmtRs, pa, pl } from './api.js';
 import { ExportButton, useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Equipment allocation (part 17.02, FR-02 to FR-05): the allocation with its mobilisation (transport, gate pass, departure meter), arrival (meter and checklist), operators with their certificates, transfer and demobilisation.
 const num = (v) => (v === '' || v == null ? null : Number(v)); const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -59,7 +60,7 @@ function Allocation({ id }) {
   const sites = (o?.sites ?? []).filter((s) => String(s.projectId) === String(tf.toProjectId));
   return (
     <div data-testid="al-object" data-status={x.status} data-phase={x.phase}>
-      <h1 id="al-h">{x.docNo} <StatusBadge status={REQ_TONE[x.status]} label={t(`rs.${x.status}`)} /> {x.status === 'APPROVED' && <StatusBadge status={PHASE_TONE[x.phase]} label={t(`a.ph.${x.phase}`)} />}</h1><p><Link to="/plant/allocations">{t('a.allocTitle')}</Link> · <Link to={`/plant/equipment?id=${x.equipmentId}`}>{x.assetCode}</Link> {x.class} → {x.project}{x.site ? `/${x.site}` : ''}{x.kind === 'TRANSFER' ? ` · ${t('a.transferOf', { d: x.transferFrom ?? '' })}` : ''}</p>
+      <PageHeader id="al-h" title={<>{x.docNo} <StatusBadge status={REQ_TONE[x.status]} label={t(`rs.${x.status}`)} /> {x.status === 'APPROVED' && <StatusBadge status={PHASE_TONE[x.phase]} label={t(`a.ph.${x.phase}`)} />}</>} meta={<><Link to="/plant/allocations">{t('a.allocTitle')}</Link> · <Link to={`/plant/equipment?id=${x.equipmentId}`}>{x.assetCode}</Link> {x.class} → {x.project}{x.site ? `/${x.site}` : ''}{x.kind === 'TRANSFER' ? ` · ${t('a.transferOf', { d: x.transferFrom ?? '' })}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="al-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="al-note">{note}</p>}
       <div className="actions-row no-print">{can.edit && <Link to={`/plant/allocations/new?id=${x.id}`}>{t('edit')}</Link>}{can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => pa.allocAct(x.id, 'submit'), t('submitted'))} data-testid="al-submit">{t('sendForApproval')}</button>}
         {can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('withdrawn'))}>{t('withdraw')}</button>}{can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('cancelled'))} data-testid="al-cancel">{t('cancel')}</button>}{can.amend && <button type="button" className="btn" onClick={() => why('amend', t('amended'))}>{t('amend')}</button>}
@@ -89,7 +90,7 @@ export default function AllocationsPage() {
   const t = useT('plant'); usePageTitle(t('a.allocTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="al-h"><Allocation id={id} /></section>;
   return (
-    <section aria-labelledby="all-h" data-testid="plant-al-list"><h1 id="all-h">{t('a.allocTitle')}</h1><p className="muted">{t('a.allocIntro')}</p>
+    <section aria-labelledby="all-h" data-testid="plant-al-list"><PageHeader id="all-h" title={t('a.allocTitle')} subtitle={t('a.allocIntro')} />
       <div className="actions-row no-print"><Link to="/plant/allocations/new">{t('a.allocNew')}</Link><Link to="/plant/requisitions">{t('a.reqTitle')}</Link><Link to="/plant/gantt">{t('a.ganttTitle')}</Link><ExportButton query={{}} name="allocations.csv" path="/allocations/export" testId="al-export" /></div>
       <ListReport listCode="plant.allocations" endpoint="/plant/allocations" title={t('a.allocTitle')} session={session.data} rowHref={(r) => `/plant/allocations?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/allocations?id=${r.id}`)} cardFields={['docNo', 'assetCode', 'project', 'phase']} statusKey="status" dateKey="created" empty={{ title: t('a.allocEmptyTitle'), text: t('a.allocEmptyBody') }} />
     </section>

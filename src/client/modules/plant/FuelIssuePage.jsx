@@ -6,6 +6,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { OfflineNotice, PhotoButton, filePhoto, useOnline } from '../inv/GateParts.jsx';
 import { fmtQty, fu } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Fuel issue (part 17.04, FR-02, mobile): the fuel attendant picks the tank and the machine, types the meter and the litres, names who received the fuel, and files the photograph of the meter and the pump. The server holds the issue to the capacity of the machine and to a meter that advances.
 // What is typed is kept on the device until it is saved, so a lost signal does not lose it.
@@ -26,7 +27,7 @@ export default function FuelIssuePage() {
   const sel = (k, label, list, extra = {}) => <Field label={label} name={k} error={error}><select value={f[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 48 }} data-testid={`fi-${k}`} {...extra}><option value="">—</option>{list}</select></Field>;
   const inp = (k, label, extra = {}) => <Field label={label} name={k} error={error}><input value={f[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 48 }} data-testid={`fi-${k}`} inputMode={extra.type === 'number' ? 'decimal' : undefined} {...extra} /></Field>;
   return (
-    <section aria-labelledby="fi-h" data-testid="plant-fuel-issue"><h1 id="fi-h">{t('f.issueTitle')}</h1><p className="muted">{t('f.issueIntro')} <Link to="/plant/fuel-issues">{t('f.issuesTitle')}</Link></p>
+    <section aria-labelledby="fi-h" data-testid="plant-fuel-issue"><PageHeader id="fi-h" title={t('f.issueTitle')} subtitle={<>{t('f.issueIntro')} <Link to="/plant/fuel-issues">{t('f.issuesTitle')}</Link></>} />
       <OfflineNotice t={() => t('f.offline')} on={online} />{error?.form && <p className="field-error" role="alert" data-testid="fi-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{ok && <p className="mdm-banner" role="status" data-testid="fi-note">{ok}</p>}
       {o.tanks.length === 0 ? <div className="mdm-panel" data-testid="fi-empty"><h2>{t('f.noTanksTitle')}</h2><p className="muted">{t('f.noTanksBody')}</p></div> : <>
         <div className="mdm-panel"><h2>{t('f.secWhat')}</h2>

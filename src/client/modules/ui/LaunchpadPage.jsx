@@ -5,6 +5,7 @@ import { EmptyState } from '../../platform/feedback/states.jsx';
 import { QueryState } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { confirmLeave } from '../../platform/forms/guard.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 const go = (to) => (e) => {
   e.preventDefault();
@@ -37,8 +38,7 @@ export default function LaunchpadPage({ session }) {
 
   return (
     <section aria-labelledby="page-title" className="launchpad">
-      <div className="page-head"><h1 id="page-title">Home</h1></div>
-      <p className="muted">Welcome{session?.user ? `, ${session.user}` : ''}. Everything below follows what your role may open.</p>
+      <PageHeader id="page-title" title={"Home"} subtitle={<>Welcome{session?.user ? `, ${session.user}` : ''}. Everything below follows what your role may open.</>} />
       <QueryState query={lp} what="your home page" />
       {lp.data && (
         <>

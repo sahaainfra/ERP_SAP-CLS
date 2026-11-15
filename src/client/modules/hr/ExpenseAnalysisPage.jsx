@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, exp } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Expense Analysis (HR, part 07.12, the report): what was claimed on approved, passed and paid claims, by project, by category and by employee for a period, with the GST (input credit), the number of lines and how many were flagged by the
 // policy; each group links to the claims behind it. Anybody with the right sees all; a manager sees their team. Download CSV, print.
@@ -29,7 +30,7 @@ export default function ExpenseAnalysisPage() {
   );
   return (
     <section aria-labelledby="an-title" data-testid="analysis">
-      <h1 id="an-title">{t('ana.title')}</h1>
+      <PageHeader id="an-title" title={t('ana.title')} />
       <form className="srch-form mdm-fields no-print" aria-label={t('ana.period')} onSubmit={(e) => e.preventDefault()}>
         <Field label={t('ana.from')} name="from" error={null}><input type="date" value={f.from} onChange={(e) => e.target.value && setF({ ...f, from: e.target.value })} data-testid="an-from" /></Field>
         <Field label={t('ana.to')} name="to" error={null}><input type="date" value={f.to} onChange={(e) => e.target.value && setF({ ...f, to: e.target.value })} data-testid="an-to" /></Field>

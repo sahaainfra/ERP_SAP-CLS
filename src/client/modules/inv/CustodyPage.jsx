@@ -6,6 +6,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { at, download, fmtDate, fmtRs, saveCsv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Custody statement by person and calibration due (part 16.09, FR-03, FR-05): what a person holds (used at exit clearance), and the instruments and tools whose calibration or inspection is due or overdue.
 function Statement({ t, perms }) {
@@ -37,7 +38,7 @@ export default function CustodyPage() {
   const t = useT('inv'); usePageTitle(t('at.custodyTitle')); const sp = useSearch(); const tab = sp.get('tab') === 'calibration' ? 'calibration' : 'statement'; const session = useSession(); const perms = session.data?.permissions ?? [];
   if (session.isSuccess && !perms.includes('inv.small_asset.view') && !perms.includes('inv.small_asset.statement') && !perms.includes('inv.small_asset.acknowledge')) return <NoPermission what={t('at.custodyTitle')} permission="inv.small_asset.statement" />;
   return (
-    <section aria-labelledby="cu-h" data-testid="custody"><h1 id="cu-h">{t('at.custodyTitle')}</h1><p className="muted">{t('at.custodyIntro')}</p>
+    <section aria-labelledby="cu-h" data-testid="custody"><PageHeader id="cu-h" title={t('at.custodyTitle')} subtitle={t('at.custodyIntro')} />
       <div className="actions-row no-print">{[['statement', 'at.statementTab'], ['calibration', 'at.calTitle']].map(([k, l]) => <Link key={k} to={`/inv/custody?tab=${k}`} aria-current={tab === k ? 'page' : undefined} data-testid={`custody-tab-${k}`}>{t(l)}</Link>)} <Link to="/inv/small-assets">{t('at.title')}</Link></div>
       {tab === 'statement' ? <Statement t={t} perms={perms} /> : <Calibration t={t} />}
     </section>

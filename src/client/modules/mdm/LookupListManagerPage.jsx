@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { mdm } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Lookup List Manager (Administration, part 06.02, FR-08): choose a list (priorities, document categories, disciplines, trades, skills, defect categories, delay causes, weather types, incident types and
 // any list added under Lookup Lists), edit its values with their Hindi labels and order in a grid, add a value, switch one off. Saving sends the whole list with a reason: new values are added, changed ones
@@ -38,8 +39,7 @@ export default function LookupListManagerPage() {
   const list = lists.data.rows.find((l) => l.code === code);
   return (
     <section aria-labelledby="llm-title" data-testid="mdm-lookup-manager">
-      <h1 id="llm-title">Lookup List Manager</h1>
-      <p className="muted">The values every form offers for these lists. A value is never deleted: switch it off and old records keep showing it.</p>
+      <PageHeader id="llm-title" title={"Lookup List Manager"} subtitle={"The values every form offers for these lists. A value is never deleted: switch it off and old records keep showing it."} />
       <Field label="List" name="list" error={null}><select value={code} onChange={(e) => { setCode(e.target.value); setNote(null); setError(null); }} data-testid="llm-list">{lists.data.rows.map((l) => <option key={l.code} value={l.code}>{l.name} ({l.values})</option>)}</select></Field>
       {list && <p className="muted small">Code {list.code}{list.nameHi ? ` · ${list.nameHi}` : ''}{list.system ? ' · system list' : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="llm-note">{note}</p>}

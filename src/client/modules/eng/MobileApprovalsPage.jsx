@@ -6,6 +6,7 @@ import { useAct, useEvidence, useInbox } from '../../platform/workflow/api.js';
 import { errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { Flags, show } from './Evidence.jsx';
 import { SLA } from './InboxPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Approvals on a phone (part 04.03, section 7.3, FR-05): the pending documents as large cards, the most urgent first; a tap opens the document with its flags and the
 // figures that matter; Approve is one tap; Reject asks for a reason (required). Large touch targets, nothing to type to approve, works at 360 px.
@@ -55,7 +56,7 @@ export default function MobileApprovalsPage() {
   useEffect(() => { const on = () => setOnline(true); const off = () => setOnline(false); window.addEventListener('online', on); window.addEventListener('offline', off); return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); }; }, []);
   return (
     <section aria-labelledby="mb-title" data-testid="mobile-approvals">
-      <h1 id="mb-title">Approvals</h1>
+      <PageHeader id="mb-title" title={"Approvals"} />
       {!online && <p className="notice" role="status" data-testid="mob-offline">You are offline. Decisions need a connection; what you see may be out of date.</p>}
       {notice && <p role="status" className="notice" data-testid="mob-notice">{notice}</p>}
       {open ? <Detail key={open} taskId={open} onBack={() => setOpen(null)} onDone={(a) => { setOpen(null); setNotice(`Done: ${a === 'approve' ? 'approved' : a === 'reject' ? 'rejected' : 'returned'}.`); list.refetch(); }} /> : (

@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { useEventMetrics, useEvents, useEventTypes, useReplay } from '../api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, Link, Pager, QueryState, Tile, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const lagStatus = (s) => (s > 300 ? 'error' : s > 60 ? 'warn' : 'ok');
 const seconds = (s) => (s < 120 ? `${s} s` : `${Math.round(s / 60)} min`);
@@ -102,23 +104,19 @@ export default function OperationsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Operations &rsaquo; Events &amp; Jobs Monitor</nav>
-      <div className="page-head">
-        <h1 id="page-title">Events &amp; Jobs Monitor</h1>
-        <button type="button" className="btn" disabled={!canReplay} title={canReplay ? '' : 'Needs core.events.replay (IT Administrator)'} onClick={() => { setError(null); dialog.current?.showModal(); }}>Replay events</button>
-      </div>
-      <p className="muted">Refreshes every few seconds. Events are written with the business change; the relay hands each one to its consumers, which retry with back-off and end up in the dead-letter queue if they keep failing.</p>
+      <PageHeader id="page-title" title={"Events & Jobs Monitor"} actions={<><button type="button" className="btn" disabled={!canReplay} title={canReplay ? '' : 'Needs core.events.replay (IT Administrator)'} onClick={() => { setError(null); dialog.current?.showModal(); }}>Replay events</button></>} subtitle={"Refreshes every few seconds. Events are written with the business change; the relay hands each one to its consumers, which retry with back-off and end up in the dead-letter queue if they keep failing."} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={metrics} what="the monitor" permission="core.events.view" />
       {m && (
         <>
-          <div className="tiles" role="group" aria-label="Key figures">
+          <KpiRow role="group" aria-label="Key figures">
             <Tile label="Events, last hour" value={m.events.lastHour} testId="tile-hour" />
             <Tile label="Events, last 24 hours" value={m.events.lastDay} testId="tile-day" />
             <Tile label="Waiting to be relayed" value={m.events.unpublished} status={m.events.unpublished > 0 ? lagStatus(m.events.relayLagSeconds) : 'ok'} hint={`oldest ${seconds(m.events.relayLagSeconds)}`} testId="tile-unpublished" />
             <Tile label="Deliveries pending" value={m.inbox.pending} status={m.inbox.pending > 0 ? lagStatus(m.inbox.deliveryLagSeconds) : 'ok'} hint={`lag ${seconds(m.inbox.deliveryLagSeconds)}`} testId="tile-pending" />
             <Tile label="Dead letters" value={m.inbox.dead} status={m.inbox.dead > 0 ? 'error' : 'ok'} to="/admin/operations/dead-letters" hint="open the queue" testId="tile-dead" />
             <Tile label="Background jobs" value="Open" to="/admin/operations/jobs" hint="status, progress, logs" />
-          </div>
+          </KpiRow>
 
           {m.events.unregisteredTypes.length > 0 && (
             <p className="state state-warn" role="status">

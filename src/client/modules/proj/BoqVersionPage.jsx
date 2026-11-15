@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { BOQ_TONE, MAP_TONE, bq, downloadBoq, inr } from './api.js';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // BOQ (part 10.04, FR-01, FR-02, FR-06, FR-07): one BOQ version as a hierarchical grid (bill, section, item, sub-item) with quantity, rate, amount, mapping status, norms and the read-only quantity status columns of the other modules; add and edit lines
 // while it is a draft; send a contract or revised version for the freeze (QS, the commercial manager, the project manager); after the freeze nothing changes except mapping and norms by an approved request. Rates are shown to those who may see them.
@@ -17,7 +18,7 @@ export default function BoqVersionPage() {
   const q = useQuery({ queryKey: ['proj', 'boq', id], queryFn: () => bq.lines(id), enabled: Boolean(id), retry: false });
   const [tab, setTab] = useState('items'); const [panel, setPanel] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null); const [unmapped, setUnmapped] = useState(false);
   usePageTitle(q.data ? `${q.data.version.docNo} ${q.data.version.name}` : t('bq.title'));
-  if (!id) return <section aria-labelledby="bq-h" data-testid="boq-none"><h1 id="bq-h">{t('bq.title')}</h1><p className="muted">{t('bq.noId')} <Link to="/proj/versions">{t('bq.listTitle')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="bq-h" data-testid="boq-none"><PageHeader id="bq-h" title={t('bq.title')} subtitle={<>{t('bq.noId')} <Link to="/proj/versions">{t('bq.listTitle')}</Link></>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('bq.listTitle')} permission="proj.version.view" />;
   if (q.isPending) return <Skeleton label={t('bq.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -28,8 +29,7 @@ export default function BoqVersionPage() {
   return (
     <section aria-labelledby="bq-h" data-testid="boq-version" data-status={v.status} data-type={v.type}>
       <header>
-        <h1 id="bq-h">{v.docNo} · {v.projectCode} {v.name} <StatusBadge status={BOQ_TONE[v.status]} label={v.statusLabel} /></h1>
-        <p className="muted">{v.typeLabel} v{v.versionNo} · {v.projectName}{v.sourceRef ? ` · ${v.sourceRef}` : ''}{v.variationRef ? ` · ${t('bq.variation')} ${v.variationRef}` : ''}</p>
+        <PageHeader id="bq-h" title={<>{v.docNo} · {v.projectCode} {v.name} <StatusBadge status={BOQ_TONE[v.status]} label={v.statusLabel} /></>} subtitle={<>{v.typeLabel} v{v.versionNo} · {v.projectName}{v.sourceRef ? ` · ${v.sourceRef}` : ''}{v.variationRef ? ` · ${t('bq.variation')} ${v.variationRef}` : ''}</>} />
         <dl className="op-figures" data-testid="boq-figures">
           <div><dt>{t('bq.items')}</dt><dd data-testid="boq-items">{v.items}</dd></div>
           {v.ratesVisible ? <div><dt>{t('bq.total')}</dt><dd data-testid="boq-total">{inr(v.total)}</dd></div> : <div><dt>{t('bq.total')}</dt><dd className="muted">{t('bq.masked')}</dd></div>}

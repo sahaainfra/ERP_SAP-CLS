@@ -2,6 +2,7 @@ import { useT } from '../../platform/i18n/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Bid / No-Bid decisions (business development, part 08.02): the decisions in the person's scope with the tender, the score, the recommendation, the decision and the approval status. A decision is made from a registered tender.
 export default function BidDecisionsPage() {
@@ -10,7 +11,7 @@ export default function BidDecisionsPage() {
   const session = useSession();
   return (
     <section aria-labelledby="bl-title" data-testid="bid-decisions">
-      <h1 id="bl-title" className="sr-only">{t('bids.title')}</h1>
+      <PageHeader id="bl-title" srOnly title={t('bids.title')} />
       <ListReport listCode="bd.bid_decisions" endpoint="/bd/bid-decisions" title={t('bids.title')} session={session.data} rowHref={(r) => `/bd/bid-decision?id=${r.id}`} onOpen={(r) => navigateTo(`/bd/bid-decision?id=${r.id}`)} cardFields={['tender', 'nameOfWork', 'score', 'decision']} statusKey="status" empty={{ title: t('bids.emptyTitle'), text: t('bids.emptyText') }} />
       <p className="small"><Link to="/bd/tenders">{t('tenders.title')}</Link></p>
     </section>

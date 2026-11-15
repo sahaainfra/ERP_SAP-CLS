@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANGE_STATUS, CONTROLS, NATURE, REQ, TYPES, TYPE_LABEL, fin } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Account (Finance, part 06.05, FR-02, FR-04, BR-01, BR-02): one ledger with its properties (group and nature, type, normal side, currency, control account, manual posting, blocked), its dimension rules
 // (which of project, site, WBS, cost centre ... a posting must carry, may carry or must not carry), what maps to it (cost heads, item categories) and its change history. A change is sent to the CFO; an account
@@ -39,7 +40,7 @@ export default function AccountPage() {
   return (
     <section aria-labelledby="acc-title" data-testid="account-page" className="fin-page">
       <p className="small"><Link to="/finance/chart-of-accounts">Chart of accounts</Link> › {a.group.path.map((p) => p.name).join(' › ')}</p>
-      <div className="page-head"><h1 id="acc-title">{a.code} {a.name}</h1><StatusBadge status={a.status === 'ACTIVE' ? 'ACTIVE' : 'SUSPENDED'} label={a.status === 'ACTIVE' ? 'Active' : 'Blocked'} />{a.isControl && <span className="chip">Control: {a.controlLabel}</span>}</div>
+      <PageHeader id="acc-title" title={<>{a.code} {a.name}</>} status={<StatusBadge status={a.status === 'ACTIVE' ? 'ACTIVE' : 'SUSPENDED'} label={a.status === 'ACTIVE' ? 'Active' : 'Blocked'} />} actions={<>{a.isControl && <span className="chip">Control: {a.controlLabel}</span>}</>} />
       {pending && <p className="mdm-banner" data-testid="acc-pending">A change of this account is waiting for approval (change #{a.pendingChangeId}).</p>}
       {a.status === 'BLOCKED' && <p className="mdm-banner is-warning">Blocked{a.blockReason ? `: ${a.blockReason}` : ''}. It takes no postings.</p>}
       {note && <p className="mdm-banner" role="status" data-testid="acc-note">{note}</p>}

@@ -7,6 +7,8 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, Tile, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, fmtRatio, fmtRs, st } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Project Cost Control (part 14.07, FR-01, FR-04): the budget, what is committed, the actual cost and the earned value of a project by WBS node, cost head or resource, with the cost variance, what waits to be allocated and the
 // last reconciliation against the ledgers. Every figure opens the source documents behind it (the budget lines, the commitments, the postings, the activities); nothing on this page can be typed over.
@@ -42,7 +44,7 @@ export default function ControlDashboardPage() {
   const tl = d?.tiles;
   return (
     <section aria-labelledby="ctl-h" data-testid="site-control">
-      <h1 id="ctl-h">{t('cnd.ctl.title')}</h1><p className="muted">{t('cnd.ctl.intro')}</p>
+      <PageHeader id="ctl-h" title={t('cnd.ctl.title')} subtitle={t('cnd.ctl.intro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('cnd.prd.params')}>
         <div className="form-grid">
           <Field label={t('cnd.prg.project')} name="projectId"><select value={projectId} onChange={(e) => { setF({ ...f, projectId: e.target.value }); setDrill(null); }} data-testid="ctl-project">{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
@@ -55,7 +57,7 @@ export default function ControlDashboardPage() {
       {d && (
         <>
           {!d.budgetDocNo && <div className="mdm-panel" data-testid="ctl-empty"><h2>{t('cnd.ctl.emptyTitle')}</h2><p className="muted">{t('cnd.ctl.emptyBody')}</p><Link to="/bud/budgets">{t('cnd.ctl.toBudget')}</Link></div>}
-          <div className="tiles" data-testid="ctl-tiles">
+          <KpiRow data-testid="ctl-tiles">
             <Tile label={t('cnd.ctl.budget')} value={fmtRs(tl.budget)} hint={d.budgetDocNo ?? ''} testId="ctl-budget" />
             <Tile label={t('cnd.ctl.committed')} value={fmtRs(tl.committed)} status={tl.over ? 'danger' : 'neutral'} testId="ctl-committed" />
             <Tile label={t('cnd.ctl.actual')} value={fmtRs(tl.actual)} testId="ctl-actual" />
@@ -64,7 +66,7 @@ export default function ControlDashboardPage() {
             <Tile label={t('cnd.ctl.cv')} value={fmtRs(tl.costVariance)} status={tl.costVariance < 0 ? 'danger' : 'success'} hint={`CPI ${fmtRatio(tl.cpi)}`} to={`/site/control-variance?projectId=${projectId}`} testId="ctl-cv" />
             <Tile label={t('cnd.ctl.outlook')} value={fmtRs(tl.outlook)} hint={t('cnd.ctl.outlookHelp')} testId="ctl-outlook" />
             <Tile label={t('cnd.ctl.unallocated')} value={d.unallocated.count} status={d.unallocated.count ? 'warning' : 'success'} hint={fmtRs(d.unallocated.amount)} to="/site/control-unallocated" testId="ctl-unalloc" />
-          </div>
+          </KpiRow>
           <div className="mdm-panel" data-testid="ctl-recon"><h2>{t('cnd.ctl.recon')}</h2>
             {d.reconciliation ? <p>{d.reconciliation.status === 'CLEAN' ? <StatusBadge status="APPROVED" label={t('cnd.ctl.clean')} /> : <StatusBadge status="OVERDUE" label={t('cnd.ctl.differs')} />} {t('cnd.ctl.reconLast', { d: fmtDate(d.reconciliation.runAt.slice(0, 10)), n: d.reconciliation.checked, k: d.reconciliation.differences })}</p> : <p className="muted">{t('cnd.ctl.reconNone')}</p>}
             <p className="muted">{t('cnd.ctl.rule', { r: d.materialRule === 'GRN' ? t('cnd.ctl.ruleGrn') : t('cnd.ctl.ruleIssue') })}</p>

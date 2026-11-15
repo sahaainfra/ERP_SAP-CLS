@@ -4,6 +4,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { settle } from '../../platform/offline/engine.js';
 import { useCommands, useOffActions } from '../../platform/offline/api.js';
 import { usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Conflict Resolution (Mobile, part 04.15, FR-06): a change made offline met a record that was changed on the server meanwhile. Side by side, for every field that both sides changed: what it was when you went
 // offline, what you wrote and what the server holds now. Keep mine, keep the server's, or choose field by field. Nothing is overwritten until you decide.
@@ -47,8 +48,7 @@ export default function ConflictPage() {
   if (q.isError && q.error?.status === 403) return <NoPermission what="your conflicts" permission="" />;
   return (
     <section aria-labelledby="cr-title" className="conflicts" data-testid="conflicts">
-      <div className="page-head"><h1 id="cr-title">Conflict Resolution</h1></div>
-      <p className="muted">These changes were made while you were offline and clash with changes made by someone else on the server. Decide for each field; nothing is overwritten until you do.</p>
+      <PageHeader id="cr-title" title={"Conflict Resolution"} subtitle={"These changes were made while you were offline and clash with changes made by someone else on the server. Decide for each field; nothing is overwritten until you do."} />
       {q.isPending && <Skeleton label="Loading the conflicts" />}
       {q.isError && <ErrorState error={q.error} onRetry={q.refetch} />}
       {q.data && q.data.rows.length === 0 && <EmptyState title="No conflicts" message="Everything you sent was saved without a clash." />}

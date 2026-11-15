@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, lv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Team Leave Calendar (HR, part 07.07, FR-07): who is away when, by site or department, for a month or less: a row for each person, a mark for each day of leave (solid for approved, outlined for waiting for approval), a count of the
 // people away for each day and the holidays. A mark opens the application. Print gives the page as it is.
@@ -18,7 +19,7 @@ export default function TeamLeaveCalendarPage() {
   const hol = new Map((d?.holidays ?? []).map((h) => [h.date, h.name]));
   return (
     <section aria-labelledby="tc-title" data-testid="team-calendar">
-      <h1 id="tc-title">Team Leave Calendar</h1>
+      <PageHeader id="tc-title" title={"Team Leave Calendar"} />
       <form className="srch-form" aria-label="Parameters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Month starting" name="from" error={null}><input type="date" value={from} onChange={(e) => setFrom(`${e.target.value.slice(0, 8)}01`)} data-testid="tc-from" /></Field>
         <LookupField id="tc-site" label="Site" lookup="iam/sites" value={siteId} onChange={setSiteId} />

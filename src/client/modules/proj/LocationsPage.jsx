@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { st } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Location Breakdown (part 10.03, FR-04): the places of a project: blocks, buildings, floors, zones or flats and rooms for a building project, chainage segments (from-to) and structures such as culverts and bridges for a linear one, each with an
 // optional map reference. A tree for buildings and a chainage table for roads; drag a location onto another to move it (the server checks what may sit under what and that chainage segments do not overlap); a location in use is deactivated, not deleted.
@@ -23,7 +24,7 @@ export default function LocationsPage() {
   const projectId = Number(useSearch().get('projectId')) || null;
   const q = useQuery({ queryKey: ['proj', 'locations', projectId], queryFn: () => st.locations(projectId), enabled: Boolean(projectId), retry: false });
   const [error, setError] = useState(null); const [note, setNote] = useState(null); const [edit, setEdit] = useState(null); const [drag, setDrag] = useState(null); const [view, setView] = useState('tree');
-  const head = <><h1 id="loc-h">{t('loc.title')}</h1><p className="muted">{t('loc.intro')}</p><ProjectPicker route="/proj/locations" projectId={projectId} testId="loc-project" /></>;
+  const head = <><PageHeader id="loc-h" title={t('loc.title')} subtitle={t('loc.intro')} /><ProjectPicker route="/proj/locations" projectId={projectId} testId="loc-project" /></>;
   if (!projectId) return <section aria-labelledby="loc-h" data-testid="loc-none">{head}</section>;
   if (q.error?.status === 403) return <NoPermission what={t('loc.title')} permission="proj.wbs.view" />;
   if (q.isPending) return <Skeleton label={t('loc.title')} rows={5} />;

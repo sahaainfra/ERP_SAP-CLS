@@ -3,7 +3,7 @@ import Icon from '../design/Icon.jsx';
 import { ErrorState, Skeleton } from '../feedback/states.jsx';
 import WidgetBody from './WidgetBody.jsx';
 import { useWidgetData } from './api.js';
-import { moveBy, moveTo, removeItem, resizeItem, setParams, spanAt, updatedText, widgetQuery } from './layout.js';
+import { moveBy, moveTo, removeItem, resizeItem, setParams, spanAt, updatedText, widgetQuery, withDashFilters } from './layout.js';
 
 // The pieces a dashboard is made of (part 03.07): the global filter bar, a widget in its frame and the grid that lays the frames out.
 // Used by My Work, the Requests Overview and the Dashboard Designer's preview.
@@ -72,18 +72,18 @@ function WidgetFrame({ item, widget, filters, presets, edit, index, count, onCha
       ? <p className="muted wd-masked" role="status"><Icon name="erp.action.lock" size={16} /> {q.error.message}</p>
       : <ErrorState title={`${label} could not be loaded`} error={q.error} onRetry={() => q.refetch()} />;
   } else body = <WidgetBody widget={widget} result={q.data} onDrill={onDrill} setLocal={setLocal} />;
+  const viewAll = widget.drillRoute ? withDashFilters(widget.drillRoute, filters) : null;
   const btn = (text, onClick, disabled = false) => <button type="button" className="btn btn-small" aria-label={`${text}: ${label}`} onClick={onClick} disabled={disabled}>{text}</button>;
   return (
     <article
-      className={`dash-item wd wd-${widget.type}${edit ? ' is-editing' : ''}${drag.over === item.id ? ' is-over' : ''}`} data-widget={item.widget} data-testid={`widget-${item.widget}`} aria-labelledby={`wd-${item.id}`}
+      className={`dash-item wd ui-card wd-${widget.type}${edit ? ' is-editing' : ''}${drag.over === item.id ? ' is-over' : ''}`} data-widget={item.widget} data-testid={`widget-${item.widget}`} aria-labelledby={`wd-${item.id}`}
       draggable={edit} onDragStart={edit ? (e) => drag.start(e, item.id) : undefined} onDragOver={edit ? (e) => drag.over_(e, item.id) : undefined} onDrop={edit ? (e) => drag.drop(e, index) : undefined} onDragEnd={edit ? drag.end : undefined}
     >
-      <header className="wd-head">
+      <header className="wd-head ui-card-head">
         {edit && <span className="wd-grip" aria-hidden="true" title="Drag to move">⠿</span>}
         <h2 id={`wd-${item.id}`} className="wd-title">{label}</h2>
         <span className="wd-meta small muted" data-testid="widget-updated">{q.data ? updatedText(q.data.asOf) : ''}</span>
         <button type="button" className="btn btn-small wd-refresh" aria-label={`Refresh ${label}`} onClick={() => q.refetch()} disabled={q.isFetching}><Icon name="erp.action.refresh" size={14} /></button>
-        {widget.drillRoute && !edit && <a className="btn btn-small" href={widget.drillRoute} onClick={(e) => { e.preventDefault(); onDrill(widget.drillRoute); }} aria-label={`Open ${label}`}>Open</a>}
       </header>
       {edit && (
         <div className="wd-edit" role="group" aria-label={`Arrange ${label}`}>
@@ -98,7 +98,9 @@ function WidgetFrame({ item, widget, filters, presets, edit, index, count, onCha
           {settings && <fieldset className="wd-settings"><legend>Settings</legend>{settings(item.params ?? {}, (p) => onChange(setParams(layout, item.id, p)))}</fieldset>}
         </div>
       )}
-      <div className="wd-body">{body}</div>
+      <div className="wd-body ui-card-body">{body}</div>
+      {/* the Fiori card footer (part 166.2, U-03): "View all" opens the list behind the widget with the dashboard's project and site */}
+      {widget.drillRoute && !edit && <div className="ui-card-foot wd-foot"><a href={viewAll} onClick={(e) => { e.preventDefault(); onDrill(viewAll); }} aria-label={`Open ${label}`} data-testid="widget-view-all">View all <span aria-hidden="true">›</span></a></div>}
     </article>
   );
 }

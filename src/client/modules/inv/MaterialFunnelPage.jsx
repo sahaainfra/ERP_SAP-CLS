@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate, fmtQty, mm } from './api.js';
 import { ExportButton, FilterPanel, RecordTable } from './MmdParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Material lifecycle funnel (part 16.11, FR-02): for each material the quantity required (MRP, or the approved material requests where there is no MRP run), requisitioned, ordered, delivered, accepted, issued and consumed in the period,
 // with the share that reaches each stage; every figure opens the documents behind it.
@@ -19,7 +20,7 @@ export default function MaterialFunnelPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const one = d.rows.length === 1 ? d.rows[0] : (pick ? d.rows.find((r) => r.itemId === pick.itemId) : null);
   return (
-    <section aria-labelledby="mf-h" data-testid="inv-mf"><h1 id="mf-h">{t('md.funnelTitle')}{d.project ? ` · ${d.project.code}` : ''}</h1><p className="muted">{t('md.funnelIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</p>
+    <section aria-labelledby="mf-h" data-testid="inv-mf"><PageHeader id="mf-h" title={<>{t('md.funnelTitle')}{d.project ? ` · ${d.project.code}` : ''}</>} subtitle={<>{t('md.funnelIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</>} />
       <FilterPanel value={f} onChange={(v) => { setF(v); setPick(null); }} testId="mf-filters">
         <label>{t('md.category')}<select value={f.categoryId} onChange={(ev) => { setF({ ...f, categoryId: ev.target.value }); setPick(null); }} style={{ minHeight: 44 }} data-testid="mf-category"><option value="">{t('md.allCategories')}</option>{(cq.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
         <label>{t('md.search')}<input type="search" value={f.q} onChange={(ev) => { setF({ ...f, q: ev.target.value }); setPick(null); }} style={{ minHeight: 44 }} data-testid="mf-search" /></label></FilterPanel>

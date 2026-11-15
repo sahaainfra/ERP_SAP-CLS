@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, qa } from './api.js';
 import { DocBar, Status, sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Pour cards (part 18.05): the clearance to pour with the approved inspection requests and the pre-pour checks (BR-01); after the approval the pour is recorded with its delivery tickets and the cubes are cast.
 const POUR_TONE = { PLANNED: 'DRAFT', IN_PROGRESS: 'IN_REVIEW', COMPLETED: 'APPROVED' }; const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -21,8 +22,7 @@ function Pour({ id }) {
   const act = (action, body, msg) => run(() => qa.act('/pour-cards', x.id, action, body), msg);
   const addTicket = async () => { const d = await act('tickets', { ticketNo: tk.ticketNo, batchRef: tk.batchRef || null, truckNo: tk.truckNo || null, qty: Number(tk.qty), slumpMm: tk.slumpMm ? Number(tk.slumpMm) : null }, t('pc.ticketAdded')); if (d) setTk({ ticketNo: '', batchRef: '', truckNo: '', qty: '', slumpMm: '' }); };
   return (
-    <div data-testid="qa-pour-object" data-status={x.status} data-pour={x.pourStatus}><h1 id="pc-h">{x.docNo} <Status x={x} /> <StatusBadge status={POUR_TONE[x.pourStatus]} label={t(`pour.${x.pourStatus}`)} /></h1>
-      <p><Link to="/qa/pour-cards">{t('pc.title')}</Link> · {x.project} · {x.element} · {x.grade} (fck {x.fck}) · {t('pc.planned')} {x.plannedVolume} m³{x.plannedOn ? ` · ${fmtDate(x.plannedOn)}` : ''} · {t('pc.actual')} {x.actualVolume} m³</p>
+    <div data-testid="qa-pour-object" data-status={x.status} data-pour={x.pourStatus}><PageHeader id="pc-h" title={<>{x.docNo} <Status x={x} /> <StatusBadge status={POUR_TONE[x.pourStatus]} label={t(`pour.${x.pourStatus}`)} /></>} meta={<><Link to="/qa/pour-cards">{t('pc.title')}</Link> · {x.project} · {x.element} · {x.grade} (fck {x.fck}) · {t('pc.planned')} {x.plannedVolume} m³{x.plannedOn ? ` · ${fmtDate(x.plannedOn)}` : ''} · {t('pc.actual')} {x.actualVolume} m³</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="pc-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="pc-note">{note}</p>}
       <DocBar kind="/pour-cards" x={x} printName={`${x.docNo.replaceAll('/', '-')}.pdf`} />
       {x.can.edit && links && o && (
@@ -56,7 +56,7 @@ function NewPour() {
   const [f, setF] = useState({ projectId: '', siteId: '', element: '', grade: 'M25', fck: '25', plannedVolume: '', plannedOn: today() }); const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   const save = async () => { const d = await run(() => qa.make('/pour-cards', { projectId: Number(f.projectId), siteId: f.siteId ? Number(f.siteId) : null, element: f.element, grade: f.grade, fck: Number(f.fck), plannedVolume: Number(f.plannedVolume), plannedOn: f.plannedOn || null }), t('saved')); if (d) navigateTo(`/qa/pour-cards?id=${d.id}`); }; const big = { minHeight: 48, fontSize: '1rem' };
   return (
-    <section aria-labelledby="pcn-h" data-testid="qa-pour-new"><h1 id="pcn-h">{t('pc.new')}</h1><p className="muted"><Link to="/qa/pour-cards">{t('pc.title')}</Link></p>
+    <section aria-labelledby="pcn-h" data-testid="qa-pour-new"><PageHeader id="pcn-h" title={t('pc.new')} subtitle={<Link to="/qa/pour-cards">{t('pc.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="pcn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('project')} name="projectId" error={error}><select value={f.projectId} onChange={(e) => set('projectId', e.target.value)} style={big} data-testid="pcn-project"><option value="">—</option>{(o?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>
@@ -74,7 +74,7 @@ export default function PourCardsPage() {
   const t = useT('qa'); usePageTitle(t('pc.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (sp.get('new')) return <NewPour />; if (id) return <section aria-labelledby="pc-h"><Pour id={id} /></section>;
   return (
-    <section aria-labelledby="pcl-h" data-testid="qa-pours"><h1 id="pcl-h">{t('pc.title')}</h1><p className="muted">{t('pc.intro')}</p>
+    <section aria-labelledby="pcl-h" data-testid="qa-pours"><PageHeader id="pcl-h" title={t('pc.title')} subtitle={t('pc.intro')} />
       <div className="actions-row no-print"><Link to="/qa/pour-cards?new=1">{t('pc.new')}</Link><Link to="/qa/cubes">{t('cube.title')}</Link><Link to="/qa/concrete-acceptance">{t('ca.title')}</Link><Link to="/qa/concrete-traceability">{t('ct.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/pour-cards/export', 'pour-cards.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="pc-export">{t('export')}</button></div>
       <ListReport listCode="qa.pour_cards" endpoint="/qa/pour-cards" title={t('pc.title')} session={session.data} rowHref={(r) => `/qa/pour-cards?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/pour-cards?id=${r.id}`)} cardFields={['docNo', 'element', 'grade', 'status']} statusKey="status" dateKey="planned" empty={{ title: t('pc.emptyTitle'), text: t('pc.emptyBody') }} />
     </section>

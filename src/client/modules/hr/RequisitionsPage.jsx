@@ -1,6 +1,7 @@
 import { useSession } from '../core/api/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Manpower Requisitions (HR, part 07.02): the List Report of requisitions (search, filters, sort, saved views, 25/50/100 a page, export). HR, the director and the auditor see every requisition; a hiring manager their own.
 // The budgeted CTC range is shown to HR and to the person who raised it. "New requisition" opens the form.
@@ -11,7 +12,7 @@ export default function RequisitionsPage() {
   const canNew = perms.includes('hr.requisition.create');
   return (
     <section aria-labelledby="rq-title" data-testid="requisitions">
-      <h1 id="rq-title" className="sr-only">Manpower Requisitions</h1>
+      <PageHeader id="rq-title" srOnly title={"Manpower Requisitions"} />
       <ListReport listCode="hr.requisitions" endpoint="/hr/requisitions" title="Manpower Requisitions" session={session.data}
         rowHref={(r) => `/hr/requisitions/requisition?id=${r.id}`} onOpen={(r) => navigateTo(`/hr/requisitions/requisition?id=${r.id}`)}
         cardFields={['docNo', 'designation', 'department', 'positions', 'status']} statusKey="status" dateKey="updatedAt"

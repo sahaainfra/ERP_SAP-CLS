@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { RP_TONE, fmtDate, fmtQty, cp, pl } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Resource plan scenario (part 17.08, FR-04 to FR-06): actions that move resources between projects or hire them; the effect on the shortages is shown before the plan is sent; the plan is approved by the project controls manager, the project directors involved and the director, and then raises requests for the owning modules.
 const monday = (iso) => { const d = new Date(`${iso}T00:00:00Z`); return new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 86_400_000).toISOString().slice(0, 10); }; const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); const plusDays = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
@@ -21,7 +22,7 @@ function Plan({ id }) {
   if (q.error?.status === 403 || q.error?.status === 404) return <NoPermission what={t('r.planTitle')} permission="plant.resource_plan.view" />; if (q.isPending) return <Skeleton label={t('r.planTitle')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const x = q.data; const can = x.can; const why = (action, msg) => { const r = globalThis.prompt(t('why')); if (r) run(() => cp.act(x.id, action, { reason: r }), msg); }; const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => pl.decide(x.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
-    <div data-testid="rpl-object" data-status={x.status}><h1 id="rpl-h">{x.docNo} <StatusBadge status={RP_TONE[x.status]} label={t(`rs.${x.status}`)} /></h1><p><Link to="/plant/resource-plans">{t('r.plansTitle')}</Link> · {x.name} · {fmtDate(x.planDate)}</p>
+    <div data-testid="rpl-object" data-status={x.status}><PageHeader id="rpl-h" title={<>{x.docNo} <StatusBadge status={RP_TONE[x.status]} label={t(`rs.${x.status}`)} /></>} meta={<><Link to="/plant/resource-plans">{t('r.plansTitle')}</Link> · {x.name} · {fmtDate(x.planDate)}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="rpl-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="rpl-note">{note}</p>}
       <div className="actions-row no-print">{can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => cp.act(x.id, 'submit'), t('submitted'))} data-testid="rpl-submit">{t('sendForApproval')}</button>}{can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('withdrawn'))}>{t('withdraw')}</button>}{can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('r.cancelled'))}>{t('cancel')}</button>}{can.print && <button type="button" className="btn" onClick={() => pl.exportFile({}, `${x.docNo}.pdf`, `/resource-plans/${x.id}/print`).catch(() => setError({ form: t('exportFailed') }))}>{t('print')}</button>}</div>
       {x.approve && x.taskId && <div className="mdm-panel no-print" data-testid="rpl-decide"><h2>{t('decision')}</h2><label>{t('comment')}<textarea value={comment} onChange={(ev) => setComment(ev.target.value)} rows={2} style={{ width: '100%' }} /></label><div className="actions-row"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => decide('approve')} data-testid="rpl-approve">{t('approve')}</button><button type="button" className="btn" disabled={busy} onClick={() => decide('return')}>{t('return')}</button><button type="button" className="btn" disabled={busy} onClick={() => decide('reject')}>{t('reject')}</button></div></div>}
@@ -40,7 +41,7 @@ function NewPlan() {
   const add = () => { setActs((s) => [...s, a]); setEv(null); }; const evaluate = async () => { const d = await run(() => cp.evaluate({ actions: body(acts).actions }), null); if (d) setEv(d); };
   const kindOk = (k) => (a.resourceType === 'LABOUR' ? k !== 'HIRE_IN' : k !== 'HIRE');
   return (
-    <section aria-labelledby="rn-h" data-testid="plant-resource-plan-new"><h1 id="rn-h">{t('r.newPlan')}</h1><p className="muted"><Link to="/plant/resource-plans">{t('r.plansTitle')}</Link> · {t('r.leadNote', { l: o.leadDays.labour, p: o.leadDays.plant })}</p>
+    <section aria-labelledby="rn-h" data-testid="plant-resource-plan-new"><PageHeader id="rn-h" title={t('r.newPlan')} subtitle={<><Link to="/plant/resource-plans">{t('r.plansTitle')}</Link> · {t('r.leadNote', { l: o.leadDays.labour, p: o.leadDays.plant })}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="rn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><Field label={t('r.name')} name="name" error={error}><input value={name} onChange={(ev2) => setName(ev2.target.value)} maxLength={120} style={{ minHeight: 48 }} data-testid="rn-name" /></Field></div>
       <div className="mdm-panel" data-testid="rn-action-form"><h2>{t('r.addAction')}</h2><div className="form-grid">
@@ -63,7 +64,7 @@ export default function ResourcePlansPage() {
   const t = useT('plant'); usePageTitle(t('r.plansTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (sp.get('new')) return <NewPlan />; if (id) return <section aria-labelledby="rpl-h"><Plan id={id} /></section>;
   return (
-    <section aria-labelledby="rl-h" data-testid="plant-resource-plans"><h1 id="rl-h">{t('r.plansTitle')}</h1><p className="muted">{t('r.plansIntro')}</p>
+    <section aria-labelledby="rl-h" data-testid="plant-resource-plans"><PageHeader id="rl-h" title={t('r.plansTitle')} subtitle={t('r.plansIntro')} />
       <div className="actions-row no-print"><Link to="/plant/resource-plans?new=1">{t('r.newPlan')}</Link><Link to="/plant/capacity">{t('r.capacityTitle')}</Link><Link to="/plant/shortage-surplus">{t('r.shortageTitle')}</Link></div>
       <ListReport listCode="plant.resource_plans" endpoint="/plant/resource-plans" title={t('r.plansTitle')} session={session.data} rowHref={(r) => `/plant/resource-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/resource-plans?id=${r.id}`)} cardFields={['docNo', 'name', 'status']} statusKey="status" dateKey="created" empty={{ title: t('r.plansEmptyTitle'), text: t('r.plansEmptyBody') }} />
     </section>

@@ -87,3 +87,13 @@ export function widgetQuery(filters, presets, params = {}) {
   if (params && Object.keys(params).length) q.set('params', JSON.stringify(params));
   return q.toString();
 }
+
+/** The address behind a widget with the dashboard's project and site added, unless the address names them already (part 166.2, U-03). */
+export function withDashFilters(route, filters) {
+  const [path, search = ''] = String(route).split('?');
+  const sp = new URLSearchParams(search);
+  if (filters?.projectId && !sp.has('projectId')) sp.set('projectId', String(filters.projectId));
+  if (filters?.siteId && !sp.has('siteId')) sp.set('siteId', String(filters.siteId));
+  const qs = sp.toString();
+  return qs ? `${path}?${qs}` : path;
+}

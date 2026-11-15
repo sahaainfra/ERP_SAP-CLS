@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { hse, qs } from './api.js';
 import { DocBar, ErrorLine, ProjectSite, Status, big, today, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Part 19.07: camp occupancy and muster, camp set-up (rooms, assets), the room and bed board, welfare inspections, the mess register and the monthly recovery.
 const AL = { ALLOCATED: 'IN_REVIEW', CHECKED_IN: 'APPROVED', CHECKED_OUT: 'DRAFT', CANCELLED: 'CANCELLED' };
@@ -25,7 +26,7 @@ export function CampOccupancyPage() {
   if (muster) return <Muster id={muster} />;
   if (oq.error?.status === 403) return <NoPermission what={t('camp.title')} permission="hse.camp.view" />; if (oq.isPending) return <Skeleton label={t('camp.title')} rows={3} />; if (oq.isError) return <ErrorState error={oq.error} onRetry={oq.refetch} />; const o = oq.data;
   return (
-    <section aria-labelledby="co-h" data-testid="hse-camp-occupancy"><h1 id="co-h">{t('camp.title')}</h1><p className="muted">{t('camp.intro')}</p>
+    <section aria-labelledby="co-h" data-testid="hse-camp-occupancy"><PageHeader id="co-h" title={t('camp.title')} subtitle={t('camp.intro')} />
       <p data-testid="hse-occ-total">{t('camp.total', { beds: o.totals.beds, occ: o.totals.occupied, free: o.totals.free })}</p>
       {o.camps.length === 0 ? <div className="empty-state"><h2>{t('camp.emptyTitle')}</h2><p>{t('camp.emptyBody')}</p></div> : (
         <div className="table-scroll"><table className="data-table" data-testid="hse-occ-table"><thead><tr><th>{t('camp.camp')}</th><th>{t('camp.beds')}</th><th>{t('camp.occupied')}</th><th>{t('camp.free')}</th><th>{t('camp.pct')}</th><th>{t('camp.inCamp')}</th><th>{t('camp.byContractor')}</th><th /></tr></thead>
@@ -39,7 +40,7 @@ export function CampSetupPage() {
   const t = useT('hse'); usePageTitle(t('camp.camps')); const session = useSession(); const sp = useSearch(); const campId = Number(sp.get('camp')) || null;
   if (campId) return <CampSetup id={campId} />; if (sp.get('new')) return <CampNew />;
   return (
-    <section aria-labelledby="cl-h" data-testid="hse-camp-list"><h1 id="cl-h">{t('camp.camps')}</h1>
+    <section aria-labelledby="cl-h" data-testid="hse-camp-list"><PageHeader id="cl-h" title={t('camp.camps')} />
       <div className="actions-row no-print"><Link to="/hse/camp-setup?new=1" data-testid="hse-camp-new">{t('camp.new')}</Link> · <Link to="/hse/camp">{t('camp.title')}</Link></div>
       <ListReport listCode="hse.camps" endpoint="/hse/camps" title={t('camp.camps')} session={session.data} rowHref={(r) => `/hse/camp-setup?camp=${r.id}`} onOpen={(r) => navigateTo(`/hse/camp-setup?camp=${r.id}`)} cardFields={['code', 'name', 'site', 'status']} statusKey="status" empty={{ title: t('camp.emptyTitle'), text: t('camp.emptyBody') }} />
     </section>
@@ -51,7 +52,7 @@ function CampNew() {
   if (oq.error?.status === 403) return <NoPermission what={t('camp.new')} permission="hse.camp.create" />; if (oq.isPending) return <Skeleton label={t('camp.new')} rows={3} />; const o = oq.data; const fe = error?.fields ?? {};
   const save = async (e) => { e.preventDefault(); const r = await run(() => hse.post('/camps', { projectId: Number(v.projectId), siteId: Number(v.siteId), code: f.code, name: f.name, inCharge: f.inCharge || undefined })); if (r) navigateTo(`/hse/camp-setup?camp=${r.id}`); };
   return (
-    <section aria-labelledby="cn-h" data-testid="hse-camp-form"><h1 id="cn-h">{t('camp.new')}</h1><ErrorLine error={error} id="hse-error" />
+    <section aria-labelledby="cn-h" data-testid="hse-camp-form"><PageHeader id="cn-h" title={t('camp.new')} /><ErrorLine error={error} id="hse-error" />
       <form onSubmit={save} className="form-grid"><ProjectSite o={o} v={v} set={setV} error={fe.siteId} />
         <Field label={t('camp.code')} name="code" error={fe.code}><input value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} style={big} data-testid="hse-camp-code" /></Field>
         <Field label={t('camp.name')} name="name" error={fe.name}><input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} style={big} data-testid="hse-camp-name" /></Field>
@@ -65,7 +66,7 @@ function CampSetup({ id }) {
   const t = useT('hse'); const { error, run, busy, note } = useRunner(); const { q, guard } = useRecord('/camps', id, t('camp.setup'), 'hse.camp.view'); const aq = useQuery({ queryKey: ['hse', 'camp-assets', id], queryFn: () => hse.get(`/camps/${id}/assets`), retry: false });
   const [r, setR] = useState({ block: 'A', roomNo: '', beds: '4', roomType: 'DORMITORY' }); const [a, setA] = useState({ assetName: '', category: 'FURNITURE', qty: '1' }); usePageTitle(t('camp.setup')); if (guard) return guard; const x = q.data; const fe = error?.fields ?? {};
   return (
-    <section aria-labelledby="cs-h" data-testid="hse-camp-setup"><h1 id="cs-h">{x.code} {x.name}</h1><p><Link to="/hse/camp">{t('camp.title')}</Link> · {t('camp.total', { beds: x.beds, occ: x.occupied, free: x.free })}</p><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
+    <section aria-labelledby="cs-h" data-testid="hse-camp-setup"><PageHeader id="cs-h" title={<>{x.code} {x.name}</>} meta={<><Link to="/hse/camp">{t('camp.title')}</Link> · {t('camp.total', { beds: x.beds, occ: x.occupied, free: x.free })}</>} /><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="hse-room-table"><thead><tr><th>{t('camp.block')}</th><th>{t('camp.room')}</th><th>{t('camp.beds')}</th><th>{t('camp.occupied')}</th><th>{t('camp.roomType')}</th><th>{t('camp.state')}</th><th /></tr></thead>
         <tbody>{x.rooms.map((m) => <tr key={m.id} data-testid="hse-room-row"><td>{m.block}</td><td>{m.roomNo}</td><td>{m.beds}</td><td>{m.occupied}</td><td>{t(`camp.rt.${m.type}`)}</td><td>{m.status}</td><td>{x.can.edit && <button type="button" className="btn" disabled={busy} onClick={() => run(() => hse.patch(`/camp-rooms/${m.id}`, { status: m.status === 'ACTIVE' ? 'MAINTENANCE' : 'ACTIVE' }), t('camp.saved'))}>{m.status === 'ACTIVE' ? t('camp.close') : t('camp.open')}</button>}</td></tr>)}</tbody></table></div>
       {x.can.edit && <form className="form-grid" data-testid="hse-room-form" onSubmit={async (e) => { e.preventDefault(); if (await run(() => hse.post('/camp-rooms', { campId: id, block: r.block, roomNo: r.roomNo, beds: Number(r.beds), roomType: r.roomType }), t('camp.saved'))) setR({ ...r, roomNo: '' }); }}><h2>{t('camp.addRoom')}</h2>
@@ -89,7 +90,7 @@ function Muster({ id }) {
   const t = useT('hse'); usePageTitle(t('camp.muster')); const mq = useQuery({ queryKey: ['hse', 'muster', id], queryFn: () => hse.get(`/camps/${id}/muster`), retry: false });
   if (mq.error?.status === 403) return <NoPermission what={t('camp.muster')} permission="hse.camp.muster" />; if (mq.isPending) return <Skeleton label={t('camp.muster')} rows={4} />; if (mq.isError) return <ErrorState error={mq.error} onRetry={mq.refetch} />; const m = mq.data;
   return (
-    <section aria-labelledby="mu-h" data-testid="hse-muster"><h1 id="mu-h">{t('camp.muster')}</h1><p><Link to="/hse/camp">{t('camp.title')}</Link> · <span data-testid="hse-muster-count">{t('camp.musterCount', { n: m.residents.length })}</span></p>
+    <section aria-labelledby="mu-h" data-testid="hse-muster"><PageHeader id="mu-h" title={t('camp.muster')} meta={<><Link to="/hse/camp">{t('camp.title')}</Link> · <span data-testid="hse-muster-count">{t('camp.musterCount', { n: m.residents.length })}</span></>} />
       <div className="actions-row no-print"><button type="button" className="btn" onClick={() => hse.exportFile(`/camps/${id}/muster/pdf`, 'muster.pdf').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="hse-muster-pdf">{t('print')}</button></div>
       <div className="table-scroll"><table className="data-table"><thead><tr><th>{t('camp.person')}</th><th>{t('camp.code')}</th><th>{t('camp.room')}</th><th>{t('camp.bed')}</th><th>{t('camp.contractor')}</th></tr></thead><tbody>{m.residents.map((r, i) => <tr key={i}><td>{r.name}</td><td>{r.code}</td><td>{r.room}</td><td>{r.bed}</td><td>{r.contractor ?? '—'}</td></tr>)}</tbody></table></div>
     </section>
@@ -103,7 +104,7 @@ export function AllocationsPage() {
   const give = async (e) => { e.preventDefault(); const r = await run(() => hse.post('/allocations', { campId: Number(campId), roomId: pick.roomId, bedNo: pick.bedNo, badge }), t('al.given')); if (r) { setPick(null); setBadge(''); } };
   const act = (b, what, done) => run(() => hse.post(`/allocations/${b.allocationId}/${what}`), done);
   return (
-    <section aria-labelledby="al-h" data-testid="hse-allocations"><h1 id="al-h">{t('al.title')}</h1><p className="muted">{t('al.intro')}</p><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-note">{note}</p>}
+    <section aria-labelledby="al-h" data-testid="hse-allocations"><PageHeader id="al-h" title={t('al.title')} subtitle={t('al.intro')} /><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-note">{note}</p>}
       <div className="form-grid no-print"><CampPick camps={oq.data?.camps ?? []} value={campId} onChange={(v) => { setCampId(v); setPick(null); }} testid="hse-al-camp" /></div>
       {!campId ? <div className="empty-state"><h2>{t('al.chooseCamp')}</h2></div> : bq.isPending ? <Skeleton label={t('al.title')} rows={3} /> : bq.isError ? <ErrorState error={bq.error} onRetry={bq.refetch} /> : (
         <div data-testid="hse-al-board">{bq.data.rooms.map((m) => (
@@ -127,7 +128,7 @@ export function CampInspectionsPage() {
   if (cq.error?.status === 403) return <NoPermission what={t('ci.title')} permission="hse.camp_inspection.view" />; if (cq.isPending) return <Skeleton label={t('ci.title')} rows={3} />; const fe = error?.fields ?? {};
   const save = async (e) => { e.preventDefault(); const r = await run(() => hse.post('/camp-inspections', { campId: Number(f.campId), area: f.area, result: f.result, findings: f.findings || undefined }), t('ci.saved')); if (r) setF({ ...f, findings: '' }); };
   return (
-    <section aria-labelledby="ci-h" data-testid="hse-camp-inspections"><h1 id="ci-h">{t('ci.title')}</h1><p className="muted">{t('ci.intro')}</p><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-note">{note}</p>}
+    <section aria-labelledby="ci-h" data-testid="hse-camp-inspections"><PageHeader id="ci-h" title={t('ci.title')} subtitle={t('ci.intro')} /><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="hse-ci-compliance"><thead><tr><th>{t('camp.camp')}</th><th>{t('ci.areas')}</th><th>{t('ci.passing')}</th><th>{t('ci.failing')}</th><th>{t('ci.pct')}</th></tr></thead><tbody>{cq.data.camps.map((c) => <tr key={c.campId} data-testid="hse-ci-row"><td>{c.camp}</td><td>{c.areasInspected}/{c.areas}</td><td>{c.passing}</td><td>{c.failing}</td><td>{c.compliancePct ?? '—'}</td></tr>)}</tbody></table></div>
       <form onSubmit={save} className="form-grid no-print" data-testid="hse-ci-form"><h2>{t('ci.record')}</h2><CampPick camps={oq.data?.camps ?? []} value={f.campId} onChange={(v) => setF({ ...f, campId: v })} testid="hse-ci-camp" />
         <Field label={t('ci.area')} name="area" error={fe.area}><select value={f.area} onChange={(e) => setF({ ...f, area: e.target.value })} style={big} data-testid="hse-ci-area">{AREAS.map((k) => <option key={k} value={k}>{t(`ci.a.${k}`)}</option>)}</select></Field>
@@ -149,7 +150,7 @@ export function CampMessPage() {
   const saveMeal = async (e) => { e.preventDefault(); await run(() => hse.post('/camp-meals', { campId: Number(m.campId), contractorId: m.contractorId ? Number(m.contractorId) : undefined, mealDate: m.mealDate, meal: m.meal, plannedCount: Number(m.plannedCount), servedCount: Number(m.servedCount) }), t('mess.saved')); };
   const makeRecovery = async (e) => { e.preventDefault(); const r = await run(() => hse.post('/camp-recoveries', { campId: Number(rc.campId), contractorId: Number(rc.contractorId), period }), t('mess.recoveryMade')); if (r) navigateTo(`/hse/camp-mess?id=${r.id}`); };
   return (
-    <section aria-labelledby="ms-h" data-testid="hse-camp-mess"><h1 id="ms-h">{t('mess.title')}</h1><p className="muted">{t('mess.intro')}</p><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-note">{note}</p>}
+    <section aria-labelledby="ms-h" data-testid="hse-camp-mess"><PageHeader id="ms-h" title={t('mess.title')} subtitle={t('mess.intro')} /><ErrorLine error={error} id="hse-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-note">{note}</p>}
       <div className="form-grid no-print"><Field label={t('mess.period')} name="period" error={null}><input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} style={big} data-testid="hse-mess-period" /></Field></div>
       {rep.rows.length === 0 ? <div className="empty-state"><h2>{t('mess.emptyTitle')}</h2><p>{t('mess.emptyBody')}</p></div> : (
         <div className="table-scroll"><table className="data-table" data-testid="hse-mess-table"><thead><tr><th>{t('camp.camp')}</th><th>{t('camp.contractor')}</th><th>{t('mess.planned')}</th><th>{t('mess.served')}</th><th>{t('mess.amount')}</th><th>{t('mess.pending')}</th></tr></thead><tbody>{rep.rows.map((r, i) => <tr key={i} data-testid="hse-mess-row"><td>{r.camp}</td><td>{r.contractor}</td><td>{r.planned}</td><td>{r.served}</td><td>{r.amount}</td><td>{r.pending}</td></tr>)}</tbody><tfoot><tr><th colSpan={2}>{t('mess.totals')}</th><th>{rep.totals.planned}</th><th>{rep.totals.served}</th><th>{rep.totals.amount}</th><th>{rep.totals.pending}</th></tr></tfoot></table></div>)}
@@ -171,7 +172,7 @@ export function CampMessPage() {
 function Recovery({ id }) {
   const t = useT('hse'); const { q, guard } = useRecord('/camp-recoveries', id, t('mess.recovery'), 'hse.recovery.view'); usePageTitle(t('mess.recovery')); if (guard) return guard; const x = q.data; const p = x.preview;
   return (
-    <div data-testid="hse-recovery-object" data-status={x.status}><h1 id="rc-h">{x.docNo} <Status x={x} /></h1><p><Link to="/hse/camp-mess">{t('mess.title')}</Link> · {x.camp} · {x.contractor} · {x.period}</p>
+    <div data-testid="hse-recovery-object" data-status={x.status}><PageHeader id="rc-h" title={<>{x.docNo} <Status x={x} /></>} meta={<><Link to="/hse/camp-mess">{t('mess.title')}</Link> · {x.camp} · {x.contractor} · {x.period}</>} />
       <div className="table-scroll"><table className="data-table" data-testid="hse-recovery-figures"><tbody>
         <tr><th>{t('mess.mealsServed')}</th><td data-testid="hse-rc-meals">{p ? p.mealsServed : x.mealsServed}</td></tr>
         <tr><th>{t('mess.messAmount')}</th><td>{p ? p.messPaise / 100 : x.mess}</td></tr>

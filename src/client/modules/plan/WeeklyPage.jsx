@@ -9,6 +9,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { VARIANCE_CODES, WEEKLY_TONE, download, fmtDate, mondayOf, openPrint, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Weekly Work Plan (part 13.04, FR-04, FR-05, BR-01): the commitments of a week by activity and crew, sent to the construction manager and the project manager, then what was done and why not, and PPC.
 // The page is the list, one plan (draft, approval, record, daily breakdown) and the report of PPC by week with the reasons for what was not done.
@@ -74,8 +75,7 @@ function Plan({ t, id, onGone }) {
   const done = p.status === 'CLOSED';
   return (
     <div data-testid="wp-object" data-status={p.status}>
-      <h1 id="wp-h">{p.docNo} · {t('wp.weekOf', { d: fmtDate(p.weekStart) })} <StatusBadge status={WEEKLY_TONE[p.status]} label={t(`wp.st.${p.status}`)} /></h1>
-      <p><Link to="/plan/weekly">{t('wp.back')}</Link></p>
+      <PageHeader id="wp-h" title={<>{p.docNo} · {t('wp.weekOf', { d: fmtDate(p.weekStart) })} <StatusBadge status={WEEKLY_TONE[p.status]} label={t(`wp.st.${p.status}`)} /></>} meta={<Link to="/plan/weekly">{t('wp.back')}</Link>} />
       <dl className="kv" data-testid="wp-figures">
         <div><dt>{t('f.project')}</dt><dd>{p.projectCode} · {p.projectName}</dd></div><div><dt>{t('la.site')}</dt><dd>{p.site ?? t('wp.wholeProject')}</dd></div><div><dt>{t('f.schedule')}</dt><dd><Link to={`/plan/lookahead?scheduleId=${p.scheduleId}`}>{p.scheduleDocNo}</Link></dd></div>
         <div><dt>{t('bl.revision')}</dt><dd>{p.revisionNo}</dd></div><div><dt>{t('wp.commitments')}</dt><dd>{p.items}</dd></div><div><dt>{t('wp.completedCount')}</dt><dd data-testid="wp-completed">{p.completedCount}</dd></div>
@@ -194,7 +194,7 @@ export default function WeeklyPage() {
   const initial = { scheduleId: Number(sp.get('scheduleId')) || null, week: sp.get('week'), siteId: sp.get('siteId') ?? '', add: (sp.get('add') ?? '').split(',').map(Number).filter(Boolean) };
   return (
     <section aria-labelledby="wp-h" data-testid="plan-weekly">
-      <h1 id="wp-h" className="sr-only">{t('wp.title')}</h1>
+      <PageHeader id="wp-h" srOnly title={t('wp.title')} />
       <div role="tablist" aria-label={t('wp.title')} className="actions-row no-print">
         {['plans', 'report'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'btn btn-primary' : 'btn'} onClick={() => setTab(k)} data-testid={`wp-tab-${k}`}>{t(k === 'plans' ? 'wp.title' : 'wp.report')}</button>)}
         {tab === 'plans' && perms.includes('plan.weekly_plan.create') && <button type="button" className="btn" onClick={() => setAdding(!adding)} data-testid="wp-new">{t('wp.new')}</button>}

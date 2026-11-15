@@ -4,6 +4,7 @@ import { useBuilder, useDryRun, useRule, useSaveRule } from '../../platform/aler
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from './common.js';
 import { ACTION_LABEL, OP_LABEL, OUTCOME, SEVERITY, TOKENS } from './alerts-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Rule Builder (part 04.09, section 7.2): the trigger (an event of the system, or a schedule over something a module offers), the conditions over its fields, the actions, the window within which
 // the same alert is not repeated, and a try-out that shows what the rule would do on today's data before it is saved. A rule that sends something outside says so and goes for approval.
@@ -40,7 +41,7 @@ export default function RuleBuilderPage() {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => { const r = existing.data?.active ?? existing.data?.pending; if (r && !loaded) { setF(fromRule(r)); setLoaded(true); } }, [existing.data, loaded]);
   if (b.error?.status === 403) return <NoPermission what="the rule builder" permission="alr.rule.view" />;
-  if (b.isPending || (code && existing.isPending)) return <section aria-labelledby="rb-title"><h1 id="rb-title">Rule Builder</h1><Skeleton label="Loading the builder" rows={4} /></section>;
+  if (b.isPending || (code && existing.isPending)) return <section aria-labelledby="rb-title"><PageHeader id="rb-title" title={"Rule Builder"} /><Skeleton label="Loading the builder" rows={4} /></section>;
   if (b.isError) return <ErrorState title="The builder could not be loaded" error={b.error} onRetry={() => b.refetch()} />;
   const d = b.data;
   const ds = d.datasets.find((x) => x.code === f.dataset);
@@ -62,8 +63,7 @@ export default function RuleBuilderPage() {
   const err = (path) => error?.fields?.[path];
   return (
     <section aria-labelledby="rb-title" data-testid="rule-builder">
-      <h1 id="rb-title">Rule Builder</h1>
-      <p className="muted">Say what to watch, when it counts, and what to do. Try it on today&apos;s data before you save.</p>
+      <PageHeader id="rb-title" title={"Rule Builder"} subtitle={"Say what to watch, when it counts, and what to do. Try it on today's data before you save."} />
       {notice && <p role="status" className="notice" data-testid="rb-notice">{notice}</p>}
       {code && existing.data?.pending && <p role="status" className="notice">A change of this rule is waiting for approval; another cannot be sent until it is decided.</p>}
       <form className="form-grid" onSubmit={submit} aria-label="Rule" data-testid="rule-form">

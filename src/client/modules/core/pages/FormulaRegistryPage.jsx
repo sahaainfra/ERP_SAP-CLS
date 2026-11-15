@@ -7,6 +7,7 @@ import { TraceView } from '../components/TraceView.jsx';
 import { toCsv } from '../../../platform/format.js';
 import { todayIST } from '../../../../shared/dates.js';
 import { Field, FormDialog, Link, QueryState, can, downloadCsv, errorInfo, navigateTo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const POLICIES = [['half_up', 'Half up (commercial)'], ['bankers', "Banker's (half even, statutory)"], ['down', 'Down'], ['up', 'Up']];
 const OWNERS = ['boq', 'billing', 'stores', 'tax', 'payroll', 'finance', 'projects', 'core'];
@@ -269,13 +270,7 @@ export default function FormulaRegistryPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Calculations &rsaquo; Formula Registry</nav>
-      <div className="page-head">
-        <h1 id="page-title">Formula Registry</h1>
-        <Link to="/admin/formulas/shadow">Shadow comparison</Link>
-        <button type="button" className="btn" onClick={exportCsv} disabled={formulas.length === 0}>Export CSV</button>
-        <button type="button" className="btn btn-primary" disabled={!canManage} title={canManage ? '' : 'Needs core.calc.manage (System Administrator)'} onClick={() => openForm('formula')}>New formula</button>
-      </div>
-      <p className="muted">Every business calculation is registered here once, with exact decimal arithmetic, a rounding policy and versions. A version that is active can never be edited: a new version is drafted, tested, optionally compared in shadow mode, and activated only after approval.</p>
+      <PageHeader id="page-title" title={"Formula Registry"} actions={<><Link to="/admin/formulas/shadow">Shadow comparison</Link><button type="button" className="btn" onClick={exportCsv} disabled={formulas.length === 0}>Export CSV</button><button type="button" className="btn btn-primary" disabled={!canManage} title={canManage ? '' : 'Needs core.calc.manage (System Administrator)'} onClick={() => openForm('formula')}>New formula</button></>} subtitle={"Every business calculation is registered here once, with exact decimal arithmetic, a rounding policy and versions. A version that is active can never be edited: a new version is drafted, tested, optionally compared in shadow mode, and activated only after approval."} />
       <p role="status" className="notice">{notice}</p>
 
       <div className="toolbar">

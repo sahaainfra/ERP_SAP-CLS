@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { RFI_PRIORITIES, DISCIPLINES, dayIST, eg, rf, uploadToRfi } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Raise RFI with photo markup (part 11.02, FR-01, mobile): big fields, a photo from the camera or the gallery with the problem circled on it with a finger, and the RFI sent to the design coordinator from the same screen.
 function Markup({ onChange }) {
@@ -56,7 +57,7 @@ export default function RfiRaisePage() {
   const chk = (k, label) => <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', minHeight: '2.75rem' }}><input type="checkbox" checked={f[k]} onChange={(e) => set(k, e.target.checked)} data-testid={`raise-${k}`} style={{ width: '1.4rem', height: '1.4rem' }} /> {label}</label>;
   return (
     <section aria-labelledby="raise-h" data-testid="rfi-raise">
-      <h1 id="raise-h">{t('raise.title')}</h1>
+      <PageHeader id="raise-h" title={t('raise.title')} />
       <p className={online ? 'muted' : 'mdm-banner'} role="status" data-testid="raise-online">{online ? t('raise.online') : t('raise.offline')}</p>
       <form className="mdm-panel" onSubmit={(e) => { e.preventDefault(); go(true); }} data-testid="raise-form">
         <div className="form-grid">

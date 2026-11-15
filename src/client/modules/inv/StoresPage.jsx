@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { STORE_TONE, iv } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stores and bins (part 16.01, FR-01, FR-02): the store master (type, project and site, keepers, valuation, negative stock) approved by a store manager, the bins of each store, and change requests for the settings that affect the books.
 function Store({ t, id }) {
@@ -24,7 +25,7 @@ function Store({ t, id }) {
   const change = () => { const b = { reason: chg.reason }; if (chg.valuationMethod) b.valuationMethod = chg.valuationMethod; if (chg.allowNegative) b.allowNegative = chg.allowNegative === 'yes'; run(() => iv.storeAct(s.id, 'change', b), t('changeSent')); };
   return (
     <div data-testid="st-object" data-status={s.status}>
-      <h1 id="st-h">{s.code} {s.name} <StatusBadge status={STORE_TONE[s.status]} label={t(`s.${s.status}`)} /></h1><p><Link to="/inv/stores">{t('back')}</Link></p>
+      <PageHeader id="st-h" title={<>{s.code} {s.name} <StatusBadge status={STORE_TONE[s.status]} label={t(`s.${s.status}`)} /></>} meta={<Link to="/inv/stores">{t('back')}</Link>} />
       <dl className="kv" data-testid="st-figures"><div><dt>{t('type')}</dt><dd>{t(`ty.${s.type}`)}</dd></div><div><dt>{t('project')}</dt><dd>{s.project}</dd></div><div><dt>{t('site')}</dt><dd>{s.site ?? '—'}</dd></div><div><dt>{t('keepers')}</dt><dd>{s.keepers.join(', ') || '—'}</dd></div><div><dt>{t('valuation')}</dt><dd>{t(`va.${s.valuation}`)}</dd></div><div><dt>{t('negative')}</dt><dd>{s.allowNegative ? t('allowed') : t('blocked')}</dd></div>{s.address && <div><dt>{t('address')}</dt><dd>{s.address}</dd></div>}</dl>
       {error?.form && <p className="field-error" role="alert" data-testid="st-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="st-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="st-bins"><caption>{t('bins')}</caption><thead><tr><th>{t('bin')}</th><th>{t('zone')}</th><th>{t('rack')}</th><th>{t('shelf')}</th><th className="num">{t('capacity')}</th><th /></tr></thead>
@@ -64,7 +65,7 @@ function StoreForm({ t, editId }) {
   const body = () => ({ name: form.name, type: form.type, projectId: form.projectId ? Number(form.projectId) : null, siteId: form.siteId ? Number(form.siteId) : null, address: form.address || null, keepers: form.keepers.split(',').map((x) => x.trim()).filter(Boolean), valuation: form.valuation, allowNegative: form.allowNegative });
   const save = async (send) => { setError(null); setBusy(true); try { let d = editId ? await iv.storeUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await iv.storeCreate({ code: form.code, ...body() }); if (send) d = await iv.storeAct(d.id, 'submit'); navigateTo(`/inv/stores?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="stn-h" data-testid="inv-st-form"><h1 id="stn-h">{editId ? t('edit') : t('newStore')}</h1><p className="muted">{t('newStoreHelp')}</p><p><Link to="/inv/stores">{t('back')}</Link></p>
+    <section aria-labelledby="stn-h" data-testid="inv-st-form"><PageHeader id="stn-h" title={editId ? t('edit') : t('newStore')} subtitle={t('newStoreHelp')} meta={<Link to="/inv/stores">{t('back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('code')} name="code" error={error}><input value={form.code} disabled={Boolean(editId)} maxLength={20} onChange={(ev) => set('code', ev.target.value)} style={{ minHeight: 44 }} data-testid="stn-code" /></Field>
         <Field label={t('name')} name="name" error={error}><input value={form.name} maxLength={120} onChange={(ev) => set('name', ev.target.value)} style={{ minHeight: 44 }} data-testid="stn-name" /></Field>
@@ -85,7 +86,7 @@ export default function StoresPage() {
   if (sp.get('new') === '1') return <StoreForm key={sp.get('edit') ?? 'new'} t={t} editId={Number(sp.get('edit')) || null} />;
   if (id) return <section aria-labelledby="st-h" data-testid="inv-st"><Store key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="sts-h" data-testid="inv-st"><h1 id="sts-h">{t('storesTitle')}</h1><p className="muted">{t('storesIntro')}</p>
+    <section aria-labelledby="sts-h" data-testid="inv-st"><PageHeader id="sts-h" title={t('storesTitle')} subtitle={t('storesIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.store.create') && <Link to="/inv/stores?new=1">{t('newStore')}</Link>} <Link to="/inv/dashboard">{t('dashTitle')}</Link></div>
       <ListReport listCode="inv.stores" endpoint="/inv/stores" title={t('storesTitle')} session={session.data} rowHref={(r) => `/inv/stores?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/stores?id=${r.id}`)} cardFields={['code', 'name', 'typeLabel', 'project']} statusKey="status" empty={{ title: t('storesEmptyTitle'), text: t('storesEmptyBody') }} /></section>
   );

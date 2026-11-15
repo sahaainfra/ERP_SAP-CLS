@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, rmc } from './api.js';
 import { DocBar, ErrorLine, ProjectSite, Status, big, useRecord, useRunner } from './RmcParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Batching Plants (part 20.01, FR-01 and FR-02): the plant with capacity, silos and bins, weighing scales with calibration, crew and the project, site and cost centre; approved by the project manager; a move is an amendment approved again.
 const SCALE_TONE = { OK: 'APPROVED', DUE_SOON: 'RETURNED', OVERDUE: 'REJECTED', NO_DATE: 'DRAFT' };
@@ -76,8 +77,7 @@ function Scales({ x, run, busy }) {
 function Plant({ id }) {
   const t = useT('rmc'); const { q, guard } = useRecord('/plants', id, t('pl.title'), 'rmc.plant.view'); const { error, run, busy, note } = useRunner(); const [editing, setEditing] = useState(false); usePageTitle(t('pl.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="rmc-plant-object" data-status={x.status}><h1 id="pl-h">{x.code} {x.name} <Status x={x} /></h1>
-      <p><Link to="/rmc/plants">{t('pl.title')}</Link> · {x.docNo} · {t('pl.version', { n: x.versionNo })} · {x.project} / {x.site}{x.usable ? ` · ${t('pl.usable')}` : ''}</p>
+    <div data-testid="rmc-plant-object" data-status={x.status}><PageHeader id="pl-h" title={<>{x.code} {x.name} <Status x={x} /></>} meta={<><Link to="/rmc/plants">{t('pl.title')}</Link> · {x.docNo} · {t('pl.version', { n: x.versionNo })} · {x.project} / {x.site}{x.usable ? ` · ${t('pl.usable')}` : ''}</>} />
       <ErrorLine error={error} id="rmc-error" />{note && <p className="mdm-banner" role="status" data-testid="rmc-note">{note}</p>}
       {x.can.edit && <div className="actions-row no-print"><button type="button" className="btn" onClick={() => setEditing(!editing)} data-testid="rmc-plant-edit">{t('edit')}</button></div>}
       {editing && x.can.edit ? <PlantForm initial={toInitial(x)} busy={busy} error={error} onSave={async (v) => { const r = await run(() => rmc.edit('/plants', x.id, { ...payload(v), rowVersion: x.version }), t('pl.saved')); if (r) setEditing(false); }} /> : (
@@ -90,13 +90,13 @@ function Plant({ id }) {
 }
 function PlantNew() {
   const t = useT('rmc'); const { error, run, busy } = useRunner(); usePageTitle(t('pl.new'));
-  return <section aria-labelledby="pln-h"><h1 id="pln-h">{t('pl.new')}</h1><p><Link to="/rmc/plants">{t('pl.title')}</Link></p><ErrorLine error={error} id="rmc-error" /><PlantForm initial={blank} busy={busy} error={error} onSave={async (v) => { const r = await run(() => rmc.make('/plants', { ...payload(v), code: v.code })); if (r) navigateTo(`/rmc/plants?id=${r.id}`); }} /></section>;
+  return <section aria-labelledby="pln-h"><PageHeader id="pln-h" title={t('pl.new')} meta={<Link to="/rmc/plants">{t('pl.title')}</Link>} /><ErrorLine error={error} id="rmc-error" /><PlantForm initial={blank} busy={busy} error={error} onSave={async (v) => { const r = await run(() => rmc.make('/plants', { ...payload(v), code: v.code })); if (r) navigateTo(`/rmc/plants?id=${r.id}`); }} /></section>;
 }
 export default function PlantsPage() {
   const t = useT('rmc'); usePageTitle(t('pl.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="pl-h"><Plant id={id} /></section>; if (sp.get('new')) return <PlantNew />;
   return (
-    <section aria-labelledby="pls-h" data-testid="rmc-plants"><h1 id="pls-h">{t('pl.title')}</h1><p className="muted">{t('pl.intro')}</p>
+    <section aria-labelledby="pls-h" data-testid="rmc-plants"><PageHeader id="pls-h" title={t('pl.title')} subtitle={t('pl.intro')} />
       <div className="actions-row no-print"><Link to="/rmc/plants?new=1" data-testid="rmc-plant-new">{t('pl.new')}</Link></div>
       <ListReport listCode="rmc.plants" endpoint="/rmc/plants" title={t('pl.title')} session={session.data} rowHref={(r) => `/rmc/plants?id=${r.id}`} onOpen={(r) => navigateTo(`/rmc/plants?id=${r.id}`)} cardFields={['code', 'name', 'project', 'status']} statusKey="status" empty={{ title: t('pl.emptyTitle'), text: t('pl.emptyBody') }} />
     </section>

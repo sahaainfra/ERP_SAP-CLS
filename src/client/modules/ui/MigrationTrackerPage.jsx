@@ -7,6 +7,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { exportUrl, useAddDefect, useDecideRoute, usePendingRoutes, useProposeRoute, useResolveDefect, useSignoff, useTracker, useTransition } from '../../platform/migration/api.js';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Screen Migration Tracker (part 03.10, FR-06, FR-07, BR-02): a report of how far the pages of the application are onto the design system. A parameter
 // panel (module, status, page type, words, open defects), the progress by module as a chart that drills into the table, the table with totals, the details
@@ -156,8 +157,7 @@ export default function MigrationTrackerPage({ session }) {
   const rows = data?.rows ?? [];
   return (
     <section aria-labelledby="mt-title" data-testid="migration-tracker">
-      <h1 id="mt-title">Screen Migration Tracker</h1>
-      <p className="muted">How far each page of the application is on the design system. A page is Verified only after it passes the page checklist and its owner has checked it with a business user; the person who migrated a page cannot verify it.</p>
+      <PageHeader id="mt-title" title={"Screen Migration Tracker"} subtitle={"How far each page of the application is on the design system. A page is Verified only after it passes the page checklist and its owner has checked it with a business user; the person who migrated a page cannot verify it."} />
       {notice && <p role="status" className="notice" data-testid="mt-notice">{notice}</p>}
       {tracker.isPending && <Skeleton label="Loading the tracker" rows={5} />}
       {tracker.isError && tracker.error?.status !== 403 && <ErrorState title="The tracker could not be loaded" error={tracker.error} onRetry={() => tracker.refetch()} />}

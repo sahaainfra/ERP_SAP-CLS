@@ -10,6 +10,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { useSession } from '../core/api/index.js';
 import { HIN_TONE, HIN_TYPES, PARTIES, download, fmtDate, openPrint, st, today } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Hindrance Register and the hindrance with its evidence (part 14.03, FR-02, BR-01, FR-05): the register with the age of each open hindrance; one hindrance with the activities and locations it touches, the letter that
 // notified it, the evidence files, the delay draft it raised and the reports that mention it; approval by the construction manager and the project manager; closing with an end date and evidence.
@@ -76,8 +77,7 @@ function Hindrance({ t, id, onGone }) {
   if (editing) return <Form t={t} editing={h} onSaved={() => { setEditing(false); refresh(); }} onCancel={() => setEditing(false)} />;
   return (
     <div data-testid="hin-object" data-status={h.status}>
-      <h1 id="hin-h">{h.docNo} · {h.title} <StatusBadge status={HIN_TONE[h.status]} label={t(`cnd.hin.s.${h.status}`)} />{h.overdue && <> <StatusBadge status="OVERDUE" label={t('cnd.hin.overdue', { n: h.escalationLevel })} /></>}</h1>
-      <p><Link to="/site/hindrances">{t('cnd.hin.back')}</Link>{h.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: h.previous?.docNo ?? '' })}</>}</p>
+      <PageHeader id="hin-h" title={<>{h.docNo} · {h.title} <StatusBadge status={HIN_TONE[h.status]} label={t(`cnd.hin.s.${h.status}`)} />{h.overdue && <> <StatusBadge status="OVERDUE" label={t('cnd.hin.overdue', { n: h.escalationLevel })} /></>}</>} meta={<><Link to="/site/hindrances">{t('cnd.hin.back')}</Link>{h.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: h.previous?.docNo ?? '' })}</>}</>} />
       <dl className="kv" data-testid="hin-figures">
         <div><dt>{t('f.site')}</dt><dd>{h.projectCode} · {h.siteCode} {h.siteName}</dd></div><div><dt>{t('cnd.hin.type')}</dt><dd>{t(`cnd.hin.t.${h.type}`)}</dd></div>
         <div><dt>{t('cnd.hin.party')}</dt><dd>{t(`cnd.hin.p.${h.responsibleParty}`)}{h.responsibleName ? ` · ${h.responsibleName}` : ''}</dd></div>
@@ -147,10 +147,10 @@ export default function HindrancesPage() {
   const t = useT('site'); usePageTitle(t('cnd.hin.title'));
   const sp = useSearch(); const id = Number(sp.get('id')) || null; const isNew = sp.get('new') === '1'; const session = useSession(); const perms = session.data?.permissions ?? []; const qc = useQueryClient();
   if (id) return <section aria-labelledby="hin-h" data-testid="site-hindrances"><Hindrance key={id} t={t} id={id} onGone={() => navigateTo('/site/hindrances')} /></section>;
-  if (isNew) return <section data-testid="site-hindrances"><h1 className="sr-only">{t('cnd.hin.new')}</h1><Form t={t} editing={null} onSaved={(h) => { qc.invalidateQueries({ queryKey: ['site'] }); qc.invalidateQueries({ queryKey: ['list'] }); navigateTo(`/site/hindrances?id=${h.id}`); }} onCancel={() => navigateTo('/site/hindrances')} /></section>;
+  if (isNew) return <section data-testid="site-hindrances"><PageHeader srOnly title={t('cnd.hin.new')} /><Form t={t} editing={null} onSaved={(h) => { qc.invalidateQueries({ queryKey: ['site'] }); qc.invalidateQueries({ queryKey: ['list'] }); navigateTo(`/site/hindrances?id=${h.id}`); }} onCancel={() => navigateTo('/site/hindrances')} /></section>;
   return (
     <section aria-labelledby="hin-h" data-testid="site-hindrances">
-      <h1 id="hin-h" className="sr-only">{t('cnd.hin.title')}</h1>
+      <PageHeader id="hin-h" srOnly title={t('cnd.hin.title')} />
       <div className="actions-row no-print">{perms.includes('site.hindrance.create') && <Link to="/site/hindrances?new=1">{t('cnd.hin.new')}</Link>} <Link to="/site/weather">{t('cnd.wx.title')}</Link> <Link to="/site/diary">{t('cnd.diary.title')}</Link></div>
       <ListReport listCode="site.hindrances" endpoint="/site/hindrances" title={t('cnd.hin.title')} session={session.data} rowHref={(r) => `/site/hindrances?id=${r.id}`} onOpen={(r) => navigateTo(`/site/hindrances?id=${r.id}`)}
         cardFields={['docNo', 'title', 'site', 'startDate', 'ageDays']} statusKey="status"

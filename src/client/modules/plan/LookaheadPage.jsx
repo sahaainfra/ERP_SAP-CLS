@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CONSTRAINT_TYPES, fmtDate, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Look-ahead Board (part 13.04, FR-01, FR-03): the activities of the next weeks, a column for each week, each card with its open constraints and whether it is ready. A card is moved to another week by
 // dragging it (or with its "Move to week" choice): the move is the Gantt edit of 13.02, tried on the server first (the changed dates and the conflicts are shown) and undone from the same bar.
@@ -56,8 +57,7 @@ export default function LookaheadPage() {
   const onDrop = (e, weekStart) => { e.preventDefault(); const a = d.activities.find((x) => x.id === (Number(e.dataTransfer.getData('text/plain')) || dragged.current)); dragged.current = null; if (a && a.week !== weekStart && can.move) tryMove(a, weekStart); };
   return (
     <section aria-labelledby="la-h" data-testid="plan-lookahead">
-      <h1 id="la-h">{t('la.title')}</h1>
-      <p className="muted">{t('la.intro')}</p>
+      <PageHeader id="la-h" title={t('la.title')} subtitle={t('la.intro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('act.filters')}>
         <SchedulePicker projectId={pid} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); setPicked([]); }} onSchedule={(v) => { setScheduleId(v); setPicked([]); }} testId="la" />
         {oq.data && !scheduleId && oq.data.scheduleId && <p><button type="button" className="btn" onClick={() => setScheduleId(oq.data.scheduleId)} data-testid="la-use-current">{t('la.useCurrent', { s: oq.data.schedule.docNo })}</button></p>}

@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, qa } from './api.js';
 import { sel } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Concrete Strength Acceptance and Concrete Traceability (part 18.05): the groups of four 28-day results by grade against the IS 456 mean and individual limits; and the chain from a batch, truck, sample or pour to the cubes and their results.
 export function AcceptancePage() {
@@ -14,7 +15,7 @@ export function AcceptancePage() {
   if (q.error?.status === 403) return <NoPermission what={t('ca.title')} permission="qa.pour_card.view" />; if (q.isPending) return <Skeleton label={t('ca.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const a = q.data;
   return (
-    <section aria-labelledby="ca-h" data-testid="qa-acceptance"><h1 id="ca-h">{t('ca.title')}</h1><p className="muted">{t('ca.rule', { m: a.margin, d: a.drop })} · {t('ca.failedGroups', { n: a.failedGroups })}</p>
+    <section aria-labelledby="ca-h" data-testid="qa-acceptance"><PageHeader id="ca-h" title={t('ca.title')} subtitle={<>{t('ca.rule', { m: a.margin, d: a.drop })} · {t('ca.failedGroups', { n: a.failedGroups })}</>} />
       <div className="mdm-panel no-print"><label>{t('project')}<select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={sel} data-testid="ca-project"><option value="">{t('allProjects')}</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => qa.exportFile('/concrete-acceptance/export', 'concrete-acceptance.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="ca-export">{t('export')}</button></div>
       {a.rows.length === 0 ? <EmptyState title={t('ca.emptyTitle')} message={t('ca.emptyBody')} /> : a.rows.map((g) => (
         <div className="table-scroll" key={`${g.projectId}-${g.grade}`}><table className="data-table" data-testid="ca-table"><caption>{g.project} · {g.grade}</caption><thead><tr><th>{t('ca.group')}</th><th>{t('ca.samples')}</th><th className="num">{t('cube.mean')}</th><th className="num">{t('ca.required')}</th><th className="num">{t('ca.lowest')}</th><th>{t('ins.verdict')}</th></tr></thead>
@@ -27,7 +28,7 @@ export function TraceabilityPage() {
   const q = useQuery({ queryKey: ['qa', 'trace', key], queryFn: () => qa.get(`/concrete-traceability?q=${encodeURIComponent(key)}`), enabled: Boolean(key), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('ct.title')} permission="qa.pour_card.view" />;
   return (
-    <section aria-labelledby="ct-h" data-testid="qa-trace"><h1 id="ct-h">{t('ct.title')}</h1><p className="muted">{t('ct.intro')}</p>
+    <section aria-labelledby="ct-h" data-testid="qa-trace"><PageHeader id="ct-h" title={t('ct.title')} subtitle={t('ct.intro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => { e.preventDefault(); setKey(text.trim()); }}><Field label={t('ct.search')} name="q"><input value={text} onChange={(e) => setText(e.target.value)} maxLength={80} style={sel} data-testid="ct-q" /></Field><button type="submit" className="btn btn-primary" style={{ minHeight: 44 }} data-testid="ct-go">{t('ct.go')}</button></form>
       {q.isFetching && <Skeleton label={t('ct.title')} rows={3} />}{q.isError && q.error?.status !== 403 && <ErrorState error={q.error} onRetry={q.refetch} />}
       {q.data && q.data.pours.length === 0 && <EmptyState title={t('ct.emptyTitle')} message={t('ct.emptyBody')} />}

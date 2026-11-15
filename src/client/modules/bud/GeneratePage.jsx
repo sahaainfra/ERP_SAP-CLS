@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { bd, inr } from './api.js';
 import { ProjectSelect, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Generate Budget from Baseline (part 12.01, FR-01): the preview shows what the signed-off baseline pack and the BOQ norms give, what is missing and how the totals compare with the baseline cost; only then is the budget generated.
 export default function GeneratePage() {
@@ -21,8 +22,7 @@ export default function GeneratePage() {
   };
   return (
     <section aria-labelledby="gen-h" data-testid="bd-generate">
-      <h1 id="gen-h">{t('gen.title')}</h1>
-      <p className="muted">{t('gen.intro')}</p>
+      <PageHeader id="gen-h" title={t('gen.title')} subtitle={t('gen.intro')} />
       <form className="mdm-panel" onSubmit={generate} data-testid="gen-form">
         <div className="form-grid">
           <ProjectSelect value={projectId} onChange={(v) => { setProjectId(v ? Number(v) : ''); setApplied([]); setRates({}); }} required testId="gen-project" error={error} />

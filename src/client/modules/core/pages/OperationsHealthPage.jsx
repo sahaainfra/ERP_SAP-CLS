@@ -4,6 +4,8 @@ import {
 } from '../api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, Link, QueryState, Tile, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const SLO_STATUS = { ok: ['chip-pass', 'Within objective'], at_risk: ['chip-never', 'At risk'], breached: ['chip-fail', 'Breached'], no_data: ['chip-not_applicable', 'No data yet'] };
 const tileStatus = (s) => (s === 'breached' ? 'error' : s === 'at_risk' ? 'warn' : s === 'ok' ? 'ok' : 'neutral');
@@ -277,16 +279,12 @@ export default function OperationsHealthPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Operations &rsaquo; Operations Health</nav>
-      <div className="page-head">
-        <h1 id="page-title">Operations Health</h1>
-        <button type="button" className="btn" disabled={!canManage || evaluate.isPending} title={canManage ? '' : 'Needs core.ops.manage (IT Administrator)'} onClick={() => evaluate.mutate()}>Check alerts now</button>
-      </div>
-      <p className="muted">Refreshes every 10 seconds. Request and error rates, latency, queues, database and the objectives of the critical journeys. <Link to="/admin/operations">Events &amp; Jobs Monitor</Link></p>
+      <PageHeader id="page-title" title={"Operations Health"} actions={<><button type="button" className="btn" disabled={!canManage || evaluate.isPending} title={canManage ? '' : 'Needs core.ops.manage (IT Administrator)'} onClick={() => evaluate.mutate()}>Check alerts now</button></>} subtitle={<>Refreshes every 10 seconds. Request and error rates, latency, queues, database and the objectives of the critical journeys. <Link to="/admin/operations">Events &amp; Jobs Monitor</Link></>} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={summary} what="operations health" permission="core.ops.view" />
       {s && (
         <>
-          <div className="tiles" role="group" aria-label="Key figures">
+          <KpiRow role="group" aria-label="Key figures">
             <Tile label="Requests per minute (5 min)" value={s.http.last5m.perMinute} testId="tile-rpm" />
             <Tile label="Server errors (5 min)" value={`${s.http.last5m.errorRatePct}%`} status={s.http.last5m.serverErrors > 0 ? 'error' : 'ok'} hint={`${s.http.last5m.serverErrors} of ${s.http.last5m.requests}`} testId="tile-errors" />
             <Tile label="Latency p95 (5 min)" value={ms(s.http.last5m.p95)} hint={`p50 ${ms(s.http.last5m.p50)}`} testId="tile-p95" />
@@ -297,10 +295,10 @@ export default function OperationsHealthPage({ session }) {
             <Tile label="Database" value={`${s.system.database.sizeMb} MB`} hint={`${s.system.database.queries} queries, ${s.system.database.slowQueries} slow`} testId="tile-db" />
             <Tile label="Disk free" value={s.system.disk ? `${s.system.disk.freePct}%` : '-'} status={s.system.disk && s.system.disk.freePct < 15 ? 'error' : 'ok'} testId="tile-disk" />
             <Tile label="Browser errors (1 h)" value={s.clientReports.lastHour.js_error ?? 0} status={(s.clientReports.lastHour.js_error ?? 0) > 0 ? 'warn' : 'ok'} hint={`${s.clientReports.lastHour.api_failure ?? 0} failed calls`} testId="tile-browser" />
-          </div>
-          <div className="tiles" role="group" aria-label="Objectives at a glance">
+          </KpiRow>
+          <KpiRow role="group" aria-label="Objectives at a glance">
             {s.slos.filter((x) => x.enabled).map((x) => <Tile key={x.journey} label={x.label} value={SLO_STATUS[x.status][1]} status={tileStatus(x.status)} />)}
-          </div>
+          </KpiRow>
 
           <Sloes summary={s} canManage={canManage} onChange={openChange} />
           <Alerts summary={s} canManage={canManage} />

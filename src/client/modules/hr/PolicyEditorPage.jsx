@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { formatDate, formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { MISSING_MODES, REQ_STATUS, att, dayIST, hoursText } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Policy rules editor (HR, part 07.04, FR-04): the rules of one attendance policy version: late marks (3 lates = half a day), early going, missing punch, comp-off and overtime (who is eligible, the multiplier, the limits).
 // The examples under the rules are computed by the server with the rules as they stand in the form, for the shift chosen, so a change is seen before it is sent. A new policy or a new version takes effect from its date only; it goes to
@@ -58,7 +59,7 @@ export default function PolicyEditorPage() {
     <section aria-labelledby="pe-title" data-testid="policy-editor">
       <p><Link to="/hr/attendance/policies">← Attendance Policies</Link></p>
       <header className="op-header">
-        <div className="page-head"><h1 id="pe-title">{id ? `${p.code} · ${p.name}` : 'New Policy'}</h1>{status && <StatusBadge status={status[0]} label={status[1]} />}{id && <span className="muted">version {p.version}</span>}</div>
+        <PageHeader id="pe-title" title={id ? `${p.code} · ${p.name}` : 'New Policy'} actions={<>{status && <StatusBadge status={status[0]} label={status[1]} />}{id && <span className="muted">version {p.version}</span>}</>} />
         {id && <dl className="op-figures"><div><dt>Effective from</dt><dd data-testid="pe-effective">{formatDate(p.effectiveFrom)}</dd></div><div><dt>Touches pay</dt><dd data-testid="pe-band">{p.band === 'PAY_IMPACTING' ? 'Yes: the director also approves' : 'No'}</dd></div></dl>}
         {sp.get('sent') === '1' && <p className="mdm-banner" role="status" data-testid="pe-sent">Sent for approval.</p>}
         {id && <Actions />}

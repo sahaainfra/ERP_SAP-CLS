@@ -6,6 +6,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtQty, fmtRs, fl } from './api.js';
 import { ExportButton, useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Owning and operating cost (part 17.07, FR-01): per machine or class for a period, owning (depreciation or loan instalment, insurance, permits) and operating (fuel, maintenance, hire, operator) cost, the cost an hour, and the entry of cost items; the month is closed into snapshots.
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); const back = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10); const TYPES = ['DEPRECIATION', 'EMI', 'INSURANCE', 'PERMIT', 'OPERATOR', 'OTHER'];
@@ -23,7 +24,7 @@ export default function OwningCostPage() {
   if (q.error?.status === 403) return <NoPermission what={t('t.costTitle')} permission="plant.fleet.costs" />; if (q.isPending) return <Skeleton label={t('t.costTitle')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const rs = (v) => (v == null ? '—' : fmtRs(v));
   return (
-    <section aria-labelledby="oc-h" data-testid="plant-owning-cost"><h1 id="oc-h">{t('t.costTitle')}</h1><p className="muted">{t('t.costIntro')} <Link to="/plant/fleet-tower">{t('t.towerTitle')}</Link></p>
+    <section aria-labelledby="oc-h" data-testid="plant-owning-cost"><PageHeader id="oc-h" title={t('t.costTitle')} subtitle={<>{t('t.costIntro')} <Link to="/plant/fleet-tower">{t('t.towerTitle')}</Link></>} />
       {note && <p className="mdm-banner" role="status" data-testid="oc-snap-note">{note}</p>}{error?.form && <p className="field-error" role="alert">{error.form}</p>}
       <div className="mdm-panel no-print" data-testid="oc-params"><div className="form-grid"><label>{t('h.from')}<input type="date" value={f.from} max={f.to} onChange={(ev) => setF({ ...f, from: ev.target.value })} style={{ minHeight: 44 }} data-testid="oc-from" /></label><label>{t('h.to')}<input type="date" value={f.to} max={today()} onChange={(ev) => setF({ ...f, to: ev.target.value })} style={{ minHeight: 44 }} data-testid="oc-to" /></label><label>{t('f.groupBy')}<select value={f.groupBy} onChange={(ev) => setF({ ...f, groupBy: ev.target.value })} style={{ minHeight: 44 }} data-testid="oc-group">{['equipment', 'class'].map((g) => <option key={g} value={g}>{t(`f.gb.${g}`)}</option>)}</select></label></div>
         <div className="actions-row"><ExportButton query={{ kind: 'costs', from: f.from, to: f.to, groupBy: f.groupBy }} name="owning-operating-cost.csv" path="/fleet/export" testId="oc-export" /><label>{t('t.month')}<input type="month" value={month} onChange={(ev) => setMonth(ev.target.value)} style={{ minHeight: 44 }} data-testid="oc-month" /></label><button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy} onClick={() => run(() => fl.snapshot({ month }), t('t.snapshotDone'))} data-testid="oc-snapshot">{t('t.snapshot')}</button></div></div>

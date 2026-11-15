@@ -7,6 +7,8 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate, qs } from './api.js';
 import { ErrorLine, big, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // Quantity reconciliation (part 22.02): the chain of quantities per item and location with the drill-down to the records behind each figure, the forecast (the only typed quantity), and the items approaching their limit.
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 });
@@ -43,14 +45,14 @@ export function QtyReconPage() {
   const q = useQuery({ queryKey: ['bill', 'recon', query], queryFn: () => bill.get(`/qty-recon${query}`), enabled: Boolean(pid), retry: false, placeholderData: (p) => p });
   if (o.error?.status === 403) return <NoPermission what={t('rc.title')} permission="bill.qty_recon.view" />; if (o.isPending) return <Skeleton label={t('rc.title')} rows={5} />; const d = q.data; const loc = f.by === 'location';
   return (
-    <section aria-labelledby="rc-h" data-testid="bill-recon"><h1 id="rc-h">{t('rc.title')}</h1><p className="muted">{t('rc.intro')}</p>
+    <section aria-labelledby="rc-h" data-testid="bill-recon"><PageHeader id="rc-h" title={t('rc.title')} subtitle={t('rc.intro')} />
       <div className="form-grid no-print"><Field label={t('project')} name="projectId" error={null}><select value={pid} onChange={(e) => { setF({ ...f, projectId: e.target.value }); setCode(''); }} style={big} data-testid="bill-recon-project"><option value="">—</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field>
         <Field label={t('rc.view')} name="by" error={null}><select value={f.by} onChange={(e) => setF({ ...f, by: e.target.value })} style={big} data-testid="bill-recon-by"><option value="item">{t('rc.byItem')}</option><option value="location">{t('rc.byLoc')}</option></select></Field>
         <Field label={t('rc.level')} name="level" error={null}><select value={f.level} onChange={(e) => setF({ ...f, level: e.target.value })} style={big} data-testid="bill-recon-level"><option value="">{t('rc.allLevels')}</option>{['APPROACHING', 'OVER', 'FORECAST_OVER'].map((l) => <option key={l} value={l}>{t(`lv.${l}`)}</option>)}</select></Field>
         <label style={{ minHeight: 48, alignSelf: 'end' }}><input type="checkbox" checked={f.deviatingOnly} onChange={(e) => setF({ ...f, deviatingOnly: e.target.checked })} data-testid="bill-recon-deviating" /> {t('rc.deviatingOnly')}</label></div>
       <div className="actions-row no-print">{d?.can?.export && <button type="button" className="btn" onClick={() => run(() => bill.exportFile(`/qty-recon/export${query}`, `quantity-reconciliation-${d.project}.csv`))} data-testid="bill-recon-export">{t('rc.export')}</button>}{d?.can?.prepare && <Link to={`/bill/deviations?new=1&projectId=${pid}`} data-testid="bill-recon-prepare">{t('rc.prepare')}</Link>} <Link to="/bill/qty-limits">{t('lim.title')}</Link></div>
       {q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : !d ? <p className="muted">{t('rc.pick')}</p> : (<>
-        <div className="form-grid" data-testid="bill-recon-counts">{[['items', d.counts.items], ['over', d.counts.over], ['approaching', d.counts.approaching], ['forecastOver', d.counts.forecastOver]].map(([k, v]) => <div className="mdm-panel" key={k} data-testid={`bill-recon-count-${k}`}><div className="muted">{t(`rc.c.${k}`)}</div><strong style={{ fontSize: '1.3rem' }}>{v}</strong></div>)}</div>
+        <KpiRow data-testid="bill-recon-counts">{[['items', d.counts.items], ['over', d.counts.over], ['approaching', d.counts.approaching], ['forecastOver', d.counts.forecastOver]].map(([k, v, amt, kd]) => <KpiTile label={t(`rc.c.${k}`)} value={v} amount={amt} kind={kd ?? (amt !== undefined ? 'money' : /day/i.test(k) ? 'time' : 'count')} key={k} data-testid={`bill-recon-count-${k}`} />)}</KpiRow>
         {d.rows.length === 0 ? <div className="empty-state"><h2>{t('rc.emptyTitle')}</h2><p>{t('rc.emptyBody')}</p></div> : (
           <div className="table-scroll"><table className="data-table" data-testid="bill-recon-table"><thead><tr><th>{t('rc.item')}</th><th>{t('rc.description')}</th><th>{t('rc.unit')}</th>{loc && <th>{t('rc.location')}</th>}{COLS.filter((c) => !loc || ['executed', 'measured', 'certified', 'billed', 'paid'].includes(c)).map((c) => <th className="num" key={c}>{t(`rc.${c}`)}</th>)}{!loc && <><th className="num">{t('rc.dev')}</th><th>{t('rc.level')}</th></>}</tr></thead>
             <tbody>{d.rows.map((r, i) => <tr key={i} data-testid="bill-recon-row" data-code={r.code} data-level={r.level ?? ''}><td><button type="button" className="btn" onClick={() => setCode(r.code)} data-testid="bill-recon-open">{r.code}</button></td><td>{r.description}</td><td>{r.uom}</td>{loc && <td>{r.location ?? t('rc.noLocation')}</td>}
@@ -67,7 +69,7 @@ export function QtyLimitsPage() {
   const q = useQuery({ queryKey: ['bill', 'limits', pid], queryFn: () => bill.get(`/qty-limits${qs({ projectId: pid })}`), enabled: Boolean(pid), retry: false, placeholderData: (p) => p });
   if (o.error?.status === 403) return <NoPermission what={t('lim.title')} permission="bill.qty_recon.view" />; if (o.isPending) return <Skeleton label={t('lim.title')} rows={4} />; const d = q.data;
   return (
-    <section aria-labelledby="lim-h" data-testid="bill-limits"><h1 id="lim-h">{t('lim.title')}</h1><p className="muted">{t('lim.intro', { pct: d?.alertPct ?? 90 })}</p>
+    <section aria-labelledby="lim-h" data-testid="bill-limits"><PageHeader id="lim-h" title={t('lim.title')} subtitle={t('lim.intro', { pct: d?.alertPct ?? 90 })} />
       <div className="form-grid no-print"><Field label={t('project')} name="projectId" error={null}><select value={pid} onChange={(e) => setPj(e.target.value)} style={big} data-testid="bill-limits-project"><option value="">—</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field></div>
       {q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : !d ? <p className="muted">{t('rc.pick')}</p> : d.rows.length === 0 ? <div className="empty-state"><h2>{t('lim.emptyTitle')}</h2><p>{t('lim.emptyBody')}</p><Link to="/bill/qty-recon">{t('rc.title')}</Link></div> : (<>
         <p data-testid="bill-limits-counts">{t('lim.counts', { over: d.counts.over, approaching: d.counts.approaching, forecast: d.counts.forecastOver })}</p>

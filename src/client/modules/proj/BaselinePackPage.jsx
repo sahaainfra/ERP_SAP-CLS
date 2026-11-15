@@ -9,6 +9,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { PACK_TONE, bl, dayIST, inr, openDocument } from './api.js';
 import { Clauses } from './FromAwardPage.jsx';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Commercial Baseline Pack (part 10.02, FR-02 to FR-04): the frozen commercial baseline of a project as an object page: summary with the sources and the sign-off chain, the priced BOQ, the basis (indirects, priced risks, assumptions,
 // exclusions, escalation, quoted rates, productivity), the key clauses, the handover meetings with their actions, the approvals and the superseding versions. Costs and margins appear only for those who hold the right. A signed-off pack is immutable:
@@ -21,7 +22,7 @@ export default function BaselinePackPage() {
   const x = q.data;
   usePageTitle(x ? `${x.docNo} ${x.projectCode}` : t('bl.title'));
   const [tab, setTab] = useState('summary'); const [panel, setPanel] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(sp.get('created') ? t('bl.created') : null);
-  if (!id) return <section aria-labelledby="bl-h" data-testid="pack-none"><h1 id="bl-h">{t('bl.title')}</h1><p className="muted">{t('bl.noId')} <Link to="/proj/baseline-packs">{t('bl.listTitle')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="bl-h" data-testid="pack-none"><PageHeader id="bl-h" title={t('bl.title')} subtitle={<>{t('bl.noId')} <Link to="/proj/baseline-packs">{t('bl.listTitle')}</Link></>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('bl.listTitle')} permission="proj.baseline_pack.view" />;
   if (q.isPending) return <Skeleton label={t('bl.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -31,8 +32,7 @@ export default function BaselinePackPage() {
   return (
     <section aria-labelledby="bl-h" data-testid="baseline-pack" data-status={x.status} data-pack={x.packNo}>
       <header>
-        <h1 id="bl-h">{x.docNo} · {x.projectCode} {x.projectName} <StatusBadge status={PACK_TONE[x.status]} label={x.statusLabel} /></h1>
-        <p className="muted">{t('bl.packNo', { n: x.packNo })}{x.tender ? ` · ${t('bl.tender')} ${x.tender.docNo}` : ''}{x.estimate ? ` · ${t('bl.estimate')} ${x.estimate.ref}` : ''}{x.frozen ? ` · ${t('bl.frozen')}` : ` · ${t('bl.notFrozen')}`}</p>
+        <PageHeader id="bl-h" title={<>{x.docNo} · {x.projectCode} {x.projectName} <StatusBadge status={PACK_TONE[x.status]} label={x.statusLabel} /></>} subtitle={<>{t('bl.packNo', { n: x.packNo })}{x.tender ? ` · ${t('bl.tender')} ${x.tender.docNo}` : ''}{x.estimate ? ` · ${t('bl.estimate')} ${x.estimate.ref}` : ''}{x.frozen ? ` · ${t('bl.frozen')}` : ` · ${t('bl.notFrozen')}`}</>} />
         <dl className="op-figures" data-testid="pack-figures">
           <div><dt>{t('f.contractValue')}</dt><dd data-testid="pack-value">{inr(x.contractValue)}</dd></div>
           <div><dt>{t('bl.sellingValue')}</dt><dd>{inr(cm.totalSelling)}</dd></div>

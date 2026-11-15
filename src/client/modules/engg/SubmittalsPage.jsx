@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { SUB_TYPES, dayIST, sb } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Submittal Register (part 11.03, FR-01, FR-02): every submittal of the projects you may see; a new one starts as a draft with its required-by date (or the site need date, the lead time and the review days).
 const empty = () => ({ projectId: '', type: 'MAR', title: '', specSection: '', activityRef: '', itemId: '', materialRef: '', make: '', model: '', supplier: '', consultant: '', needDate: dayIST(60), leadTimeDays: 21, reviewDays: 14, hseRef: '' });
@@ -28,7 +29,7 @@ export default function SubmittalsPage() {
   const txt = (k, label, props = {}) => <Field label={label} name={k} error={error}><input value={f[k]} onChange={(e) => set(k, e.target.value)} data-testid={`sub-f-${k}`} {...props} /></Field>;
   return (
     <section aria-labelledby="sub-list-h" data-testid="eg-submittals">
-      <h1 id="sub-list-h" className="sr-only">{t('sub.registerTitle')}</h1>
+      <PageHeader id="sub-list-h" srOnly title={t('sub.registerTitle')} />
       <div className="actions-row no-print">
         {perms.includes('engg.submittal.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="sub-new">{t('sub.new')}</button>}
         <Link to="/engg/submittal-schedule">{t('sub.scheduleTitle')}</Link>

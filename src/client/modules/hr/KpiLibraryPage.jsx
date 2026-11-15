@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, perf } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // KPI Library & Cycles (HR, part 07.11, FR-01 and the Config page): the KPIs (a metric the system computes, a target, a direction, a weight, who it applies to, effective dates) and the review cycles. A KPI that is new or changed is a draft until
 // a second person activates it; the history of each KPI is the audit trail. HR opens and closes cycles and runs the daily computation on demand.
@@ -33,7 +34,7 @@ export default function KpiLibraryPage() {
   };
   return (
     <section aria-labelledby="kl-title" data-testid="kpi-library">
-      <h1 id="kl-title">{t('kpi.title')}</h1>
+      <PageHeader id="kl-title" title={t('kpi.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="kl-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="kl-note">{note}</p>}
       <h2>{t('kpi.library')}</h2>

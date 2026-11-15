@@ -6,6 +6,7 @@ import { NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Consolidate MRs into PR (part 15.01, FR-03, T-03): the approved material requests of a project that still have something to buy; the chosen ones are grouped by item, unit, delivery site, WBS node and cost code into one draft
 // requisition, and every line keeps the request lines it came from. Nothing is created until the preview is accepted.
@@ -22,7 +23,7 @@ export default function ConsolidatePage() {
   const create = async () => { setError(null); setBusy(true); try { const d = await pc.consolidate({ mrIds: [...sel] }); navigateTo(`/proc/requisitions?id=${d.id}`); } catch (e) { setError(errorInfo(e)); } finally { setBusy(false); } };
   return (
     <section aria-labelledby="con-h" data-testid="proc-consolidate">
-      <h1 id="con-h">{t('p.consolidate')}</h1><p className="muted">{t('p.consolidateHelp')}</p>
+      <PageHeader id="con-h" title={t('p.consolidate')} subtitle={t('p.consolidateHelp')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('p.params')}>
         <Field label={t('p.project')} name="projectId"><select value={pid} onChange={(e) => { setProjectId(e.target.value); setSel(new Set()); setPrev(null); }} style={{ minHeight: 44 }} data-testid="con-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>
       </form>

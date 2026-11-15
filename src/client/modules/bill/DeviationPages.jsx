@@ -10,6 +10,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // Deviation statements and the register of extra and substituted items (part 22.02).
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const money = (v) => (v == null ? '—' : `₹ ${new Intl.NumberFormat('en-IN').format(v)}`); const n = (v) => (v == null ? '—' : nf.format(v));
@@ -56,9 +58,8 @@ function Statement({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/deviation-statements', id, t('ds.title'), 'bill.deviation_statement.view'); const { error, run, busy, note } = useRunner(); const [reasons, setReasons] = useState({}); const [tab, setTab] = useState('items'); usePageTitle(t('ds.title'));
   if (guard) return guard; const x = q.data; const edited = Object.keys(reasons).length > 0;
   return (
-    <div data-testid="bill-ds-object" data-status={x.status} data-client={x.clientState}><h1 id="ds-h">{x.dsNo} <Status x={x} /> <StatusBadge status={CLIENT_TONE[x.clientState]} label={t(`cs.${x.clientState}`)} /></h1>
-      <p><Link to="/bill/deviations">{t('ds.title')}</Link> · {x.docNo} · {x.project} · {t('ds.period')} {x.period} · {t('ds.allowed', { pct: x.thresholdPct })}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('ds.items')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-ds-count">{x.itemCount}</strong> <span>{t('ds.split', { over: x.overCount, under: x.underCount })}</span></div><div className="mdm-panel"><div className="muted">{t('ds.effect')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-ds-effect">{money(x.netEffect)}</strong></div></div>
+    <div data-testid="bill-ds-object" data-status={x.status} data-client={x.clientState}><PageHeader id="ds-h" title={<>{x.dsNo} <Status x={x} /> <StatusBadge status={CLIENT_TONE[x.clientState]} label={t(`cs.${x.clientState}`)} /></>} meta={<><Link to="/bill/deviations">{t('ds.title')}</Link> · {x.docNo} · {x.project} · {t('ds.period')} {x.period} · {t('ds.allowed', { pct: x.thresholdPct })}</>} />
+      <KpiRow><KpiTile label={t('ds.items')} value={x.itemCount} kind="count" valueTestid="bill-ds-count"><span>{t('ds.split', { over: x.overCount, under: x.underCount })}</span></KpiTile><KpiTile label={t('ds.effect')} value={money(x.netEffect)} amount={x.netEffect} kind="money" valueTestid="bill-ds-effect" /></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}
       <div className="actions-row no-print" role="tablist">{['items', 'client', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-ds-tab-${k}`}>{t(`ds.tab.${k}`)}</button>)}</div>
       {tab === 'items' && <div className="table-scroll" data-testid="bill-ds-items"><table className="data-table"><thead><tr><th>{t('rc.item')}</th><th className="num">{t('rc.contract')}</th><th className="num">{t('rc.revised')}</th><th className="num">{t('rc.measured')}</th><th className="num">{t('rc.projected')}</th><th className="num">{t('rc.dev')}</th><th className="num">{t('ds.effect')}</th><th>{t('ds.reason')}</th></tr></thead>
@@ -96,7 +97,7 @@ function Extra({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/extra-items', id, t('xi.title'), 'bill.extra_item.view'); const { error, run, busy, note } = useRunner(); const [d, setD] = useState({ decision: 'APPROVED', decidedOn: day(), decisionRef: '', note: '' }); usePageTitle(t('xi.title'));
   if (guard) return guard; const x = q.data; const row = (k, val) => <tr><th scope="row">{t(k)}</th><td>{val}</td></tr>;
   return (
-    <div data-testid="bill-xi-object" data-state={x.state}><h1 id="xi-h">{x.docNo} <StatusBadge status={DEC_TONE[x.state]} label={t(`xi.s.${x.state}`)} /></h1><p><Link to="/bill/deviations?tab=extras">{t('xi.title')}</Link> · {x.project} · {t(`xi.k.${x.kind}`)}</p>
+    <div data-testid="bill-xi-object" data-state={x.state}><PageHeader id="xi-h" title={<>{x.docNo} <StatusBadge status={DEC_TONE[x.state]} label={t(`xi.s.${x.state}`)} /></>} meta={<><Link to="/bill/deviations?tab=extras">{t('xi.title')}</Link> · {x.project} · {t(`xi.k.${x.kind}`)}</>} />
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}
       <div className="table-scroll"><table className="data-table"><tbody>{row('rc.description', x.description)}{x.substitutes && row('xi.substitutes', x.substitutes)}{row('xi.qty', `${n(x.qty)} ${x.uom}`)}{row('xi.rate', money(x.rate))}{row('xi.value', money(x.value))}{row('ds.reason', x.reason)}{x.instructionRef && row('xi.instruction', x.instructionRef)}{x.decidedBy && row('xi.decided', `${x.decidedBy} · ${fmtDate(x.decidedOn)}${x.decisionRef ? ` · ${x.decisionRef}` : ''}`)}{x.crNo && row('xi.cr', <Link to={`/ctr/variations?id=${x.crId}`}>{x.crNo}</Link>)}</tbody></table></div>
       {x.can.decide && <form className="mdm-panel no-print form-grid" data-testid="bill-xi-decide-form" onSubmit={(e) => { e.preventDefault(); run(() => bill.post(`/extra-items/${x.id}/decide`, { decision: d.decision, decidedOn: d.decidedOn, decisionRef: d.decisionRef || null, note: d.note || null }), t('xi.decidedDone')); }}>
@@ -113,10 +114,10 @@ export function DeviationsPage() {
   const t = useT('bill'); usePageTitle(t('ds.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const xid = Number(sp.get('extra')) || null; const session = useSession(); const tab = sp.get('tab') === 'extras' ? 'extras' : 'statements';
   if (id) return <section aria-labelledby="ds-h"><Statement id={id} /></section>;
   if (xid) return <section aria-labelledby="xi-h"><Extra id={xid} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="dsn-h"><h1 id="dsn-h">{t('ds.new')}</h1><p><Link to="/bill/deviations">{t('ds.title')}</Link></p><StatementForm projectId={sp.get('projectId')} /></section>;
-  if (sp.get('xnew')) return <section aria-labelledby="xin-h"><h1 id="xin-h">{t('xi.new')}</h1><p><Link to="/bill/deviations?tab=extras">{t('xi.title')}</Link></p><ExtraForm /></section>;
+  if (sp.get('new')) return <section aria-labelledby="dsn-h"><PageHeader id="dsn-h" title={t('ds.new')} meta={<Link to="/bill/deviations">{t('ds.title')}</Link>} /><StatementForm projectId={sp.get('projectId')} /></section>;
+  if (sp.get('xnew')) return <section aria-labelledby="xin-h"><PageHeader id="xin-h" title={t('xi.new')} meta={<Link to="/bill/deviations?tab=extras">{t('xi.title')}</Link>} /><ExtraForm /></section>;
   return (
-    <section aria-labelledby="dss-h" data-testid="bill-deviations"><h1 id="dss-h">{t('ds.title')}</h1><p className="muted">{t('ds.intro')}</p>
+    <section aria-labelledby="dss-h" data-testid="bill-deviations"><PageHeader id="dss-h" title={t('ds.title')} subtitle={t('ds.intro')} />
       <div className="actions-row no-print" role="tablist">{[['statements', 'ds.tab.statements', '/bill/deviations'], ['extras', 'xi.title', '/bill/deviations?tab=extras']].map(([k, label, to]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => navigateTo(to)} data-testid={`bill-tab-${k}`}>{t(label)}</button>)}
         {tab === 'statements' ? <Link to="/bill/deviations?new=1" data-testid="bill-ds-new">{t('ds.new')}</Link> : <Link to="/bill/deviations?xnew=1" data-testid="bill-xi-new">{t('xi.new')}</Link>} · <Link to="/bill/qty-recon">{t('rc.title')}</Link></div>
       {tab === 'statements'

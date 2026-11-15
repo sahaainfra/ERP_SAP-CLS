@@ -6,6 +6,7 @@ import { NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { addDays, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Create a purchase order (part 15.05, FR-01 to FR-03): from an approved comparative statement (the quoted rates, discount, GST and quantities come with it; the vendor is chosen from those selected) or directly with a reason.
 // The terms follow the vendor and the place of supply decides CGST and SGST or IGST on the server. A draft is saved and sent for approval from the order.
@@ -26,7 +27,7 @@ export default function PoNewPage() {
   const save = async () => { setError(null); setBusy(true); try { const rcLines = () => Object.entries(form.rcQty).filter(([, v]) => Number(v) > 0).map(([id, v]) => ({ rcLineId: Number(id), qty: Number(v), schedule: [{ dueDate: form.deliveryDate, qty: Number(v) }] })); const d = form.source === 'RATE_CONTRACT' && !editId ? await pc.poCreate({ projectId: Number(projectId), source: 'RATE_CONTRACT', rcId: Number(form.rcId), terms: terms(), lines: rcLines() }) : editId ? await pc.poUpdate(editId, { terms: terms(), ...(e.source === 'DIRECT' ? { lines: directLines() } : {}), rowVersion: e.rowVersion }) : await pc.poCreate(form.source === 'CS' ? { projectId: Number(projectId), source: 'CS', csId: Number(form.csId), vendorId: Number(form.vendorId), vendorGstinId: form.vendorGstinId ? Number(form.vendorGstinId) : null, deliveryDate: form.deliveryDate, terms: terms() } : { projectId: Number(projectId), source: 'DIRECT', vendorId: Number(form.vendorId), directReason: form.directReason.trim(), isEmergency: form.isEmergency, terms: terms(), lines: directLines() }); navigateTo(`/proc/purchase-orders?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   const ready = form.source === 'RATE_CONTRACT' ? form.rcId && Object.values(form.rcQty).some((v) => Number(v) > 0) : form.source === 'CS' ? form.csId && form.vendorId : form.vendorId && lines.length > 0;
   return (
-    <section aria-labelledby="pon-h" data-testid="proc-po-form"><h1 id="pon-h">{editId ? t('o.edit') : t('o.new')}</h1><p className="muted">{t('o.newHelp')}</p><p><Link to="/proc/purchase-orders">{t('o.back')}</Link></p>
+    <section aria-labelledby="pon-h" data-testid="proc-po-form"><PageHeader id="pon-h" title={editId ? t('o.edit') : t('o.new')} subtitle={t('o.newHelp')} meta={<Link to="/proc/purchase-orders">{t('o.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
           <Field label={t('o.project')} name="projectId" error={error}><select value={projectId} disabled={Boolean(editId)} onChange={(ev) => setF({ ...form, projectId: ev.target.value, csId: '', vendorId: '' })} style={{ minHeight: 44 }} data-testid="pon-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>

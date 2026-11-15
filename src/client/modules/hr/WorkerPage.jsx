@@ -6,6 +6,7 @@ import { api, authHeaders } from '../../platform/api/index.js';
 import { browserTransport, uploadFile } from '../../platform/files/upload.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { REQ_STATUS, SKILL_LABELS, lab } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Worker (HR, part 07.08): the profile of a contract worker: details (the ID and bank account masked), clearance (induction and medical, the PPE issued), deployments, attendance, the wage that applies, approvals and history, with
 // the actions the person may take: send, withdraw, cancel, amend, add the photo, record clearance and PPE (safety and HR), blacklist and lift it, print the card. Incidents come from the HSE module (19.01) when it is installed.
@@ -27,8 +28,7 @@ export default function WorkerPage() {
     <section aria-labelledby="wp-title" data-testid="worker">
       <p><Link to="/labour/workers">← Workers Register</Link></p>
       <header>
-        <h1 id="wp-title">{w.name} <span className="muted small">{w.workerCode}</span></h1>
-        <p><StatusBadge status={(REQ_STATUS[w.status] ?? [w.status])[0]} label={w.statusLabel} /> {w.workerStatus === 'BLACKLISTED' && <StatusBadge status="OVERDUE" label="Blacklisted" />} {w.cleared ? <StatusBadge status="ACTIVE" label="Cleared for work" /> : <StatusBadge status="AT_RISK" label="Not cleared" />} <span className="muted small" data-testid="wp-contractor">{w.contractor} · {w.tradeCode.replace(/_/g, ' ').toLowerCase()} · {w.skillLabel}</span></p>
+        <PageHeader id="wp-title" title={<>{w.name} <span className="muted small">{w.workerCode}</span></>} meta={<><StatusBadge status={(REQ_STATUS[w.status] ?? [w.status])[0]} label={w.statusLabel} /> {w.workerStatus === 'BLACKLISTED' && <StatusBadge status="OVERDUE" label="Blacklisted" />} {w.cleared ? <StatusBadge status="ACTIVE" label="Cleared for work" /> : <StatusBadge status="AT_RISK" label="Not cleared" />} <span className="muted small" data-testid="wp-contractor">{w.contractor} · {w.tradeCode.replace(/_/g, ' ').toLowerCase()} · {w.skillLabel}</span></>} />
       </header>
       <Actions w={w} refresh={refresh} />
       <div role="tablist" className="tabs" aria-label="Worker">{TABS.map(([k, l]) => <button key={k} role="tab" type="button" aria-selected={tab === k} className={tab === k ? 'tab tab-active' : 'tab'} onClick={() => setTab(k)} data-testid={`wp-tab-${k}`}>{l}</button>)}</div>

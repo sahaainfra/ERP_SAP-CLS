@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useCancelJob, useJobs, useRetryJob } from '../api/index.js';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { FormDialog, Link, Pager, QueryState, can, downloadCsv, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const STATUSES = ['', 'QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED'];
 const LABEL = { QUEUED: 'Queued', RUNNING: 'Running', SUCCEEDED: 'Done', FAILED: 'Failed', CANCELLED: 'Cancelled' };
@@ -48,8 +49,7 @@ export default function JobsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Operations &rsaquo; Background Jobs</nav>
-      <div className="page-head"><h1 id="page-title">Background Jobs</h1></div>
-      <p className="muted">Heavy and scheduled work runs here, with progress and a log. A failing job is retried with back-off before it is marked failed. <Link to="/admin/operations">Back to the monitor</Link></p>
+      <PageHeader id="page-title" title={"Background Jobs"} subtitle={<>Heavy and scheduled work runs here, with progress and a log. A failing job is retried with back-off before it is marked failed. <Link to="/admin/operations">Back to the monitor</Link></>} />
       <div className="toolbar">
         <label className="field field-inline"><span>Status</span>
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} data-testid="job-status">

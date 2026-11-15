@@ -3,6 +3,8 @@ import { toCsv } from '../../../platform/format.js';
 import { Field, QueryState, downloadCsv, usePageTitle } from '../../core/pages/ui.jsx';
 import { useEffective } from '../api/access.js';
 import { useUsers } from '../api/users.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const where = (s) => (s.scopeType === 'COMPANY' ? 'whole company' : s.scopeType === 'OWN' ? 'own records' : `${s.scopeType.toLowerCase()} ${s.scopeIds.join(', ')}`);
 
@@ -26,8 +28,7 @@ export default function EffectivePage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Effective Permissions</nav>
-      <div className="page-head"><h1 id="page-title">Effective Permissions</h1></div>
-      <p className="muted">Why can, or can&apos;t, this person do something? Every permission is shown with the roles that grant or deny it and the part of the company they apply to. Name a record to test the answer against that record.</p>
+      <PageHeader id="page-title" title={"Effective Permissions"} subtitle={"Why can, or can't, this person do something? Every permission is shown with the roles that grant or deny it and the part of the company they apply to. Name a record to test the answer against that record."} />
       <div className="toolbar" role="group" aria-label="Who and what">
         <label className="field field-inline"><span className="sr-only">Person</span>
           <select aria-label="Person" value={userId} onChange={(e) => setUserId(e.target.value)}>
@@ -47,12 +48,12 @@ export default function EffectivePage() {
       {userId && <QueryState query={query} what="the effective permissions" permission="iam.role.view" />}
       {d && (
         <>
-          <div className="tiles">
+          <KpiRow>
             <div className="tile"><span className="tile-value" data-testid="eff-allowed">{allowed}</span><span className="tile-label">Allowed{d.record ? ' on this record' : ''}</span></div>
             <div className="tile"><span className="tile-value">{d.permissions.length - allowed}</span><span className="tile-label">Refused</span></div>
             <div className="tile"><span className="tile-value">{d.holdings.length}</span><span className="tile-label">Roles held</span></div>
             <div className="tile"><span className="tile-value">{d.clearance}</span><span className="tile-label">Highest confidentiality read</span></div>
-          </div>
+          </KpiRow>
           <div className="card">
             <h2>{d.user.displayName} holds</h2>
             {d.holdings.length === 0 ? <p className="muted">No role: this person has no access beyond their own profile.</p> : <ul>{d.holdings.map((h, i) => <li key={i}><strong>{h.role}</strong> {h.roleName} for {where(h)} <span className="muted">({h.via})</span></li>)}</ul>}

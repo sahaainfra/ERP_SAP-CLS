@@ -7,6 +7,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { CRED_TYPES, SECTORS, aw, inr } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Credentials Library (business development, part 08.03, FR-01): the work orders, completion certificates, audited financials, machinery and CVs of key people the company qualifies with, kept once with their files and linked to every tender that uses them.
 // A credential past its validity is not linked until it is renewed.
@@ -25,7 +26,7 @@ export default function CredentialsPage() {
   };
   return (
     <section aria-labelledby="cr-title" data-testid="credentials">
-      <h1 id="cr-title" className="sr-only">{t('cr.title')}</h1>
+      <PageHeader id="cr-title" srOnly title={t('cr.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="cr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="cr-note">{note}</p>}
       <ListReport listCode="bd.credentials" endpoint="/bd/credentials" title={t('cr.title')} session={session.data} onOpen={(r) => setOpen(r.id)} cardFields={['title', 'type', 'client', 'validUntil']}

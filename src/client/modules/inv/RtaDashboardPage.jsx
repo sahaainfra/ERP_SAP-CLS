@@ -7,6 +7,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, fmtQty, fmtRs, ra } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Formwork and Scaffolding dashboard (part 16.08, FR-02, FR-06): quantities by location, idle and overdue, hired-in cost, the reconciliation of what is out against what was issued, and the catalogue with its rates.
 function Catalogue({ t, perms }) {
@@ -38,7 +39,7 @@ export default function RtaDashboardPage() {
   if (dq.error?.status === 403) return <NoPermission what={t('ra.title')} permission="inv.movement.view" />;
   const d = dq.data;
   return (
-    <section aria-labelledby="ra-h" data-testid="rta-dashboard"><h1 id="ra-h">{t('ra.title')}</h1><p className="muted">{t('ra.intro')}</p>
+    <section aria-labelledby="ra-h" data-testid="rta-dashboard"><PageHeader id="ra-h" title={t('ra.title')} subtitle={t('ra.intro')} />
       <div className="actions-row no-print">{[['overview', 'ra.tabOverview'], ['catalogue', 'ra.catalogue']].map(([k, l]) => <Link key={k} to={`/inv/rta?tab=${k}`} aria-current={tab === k ? 'page' : undefined} data-testid={`rta-tab-${k}`}>{t(l)}</Link>)} {perms.includes('inv.movement.create') && <Link to="/inv/rta-issue">{t('ra.issueTitle')}</Link>} <Link to="/inv/rta-movements">{t('ra.movementsTitle')}</Link> {perms.includes('inv.rta_hire.view') && <Link to="/inv/rta-hire">{t('ra.hireTitle')}</Link>}</div>
       {tab === 'catalogue' ? <Catalogue t={t} perms={perms} /> : dq.isPending ? <Skeleton label={t('ra.title')} rows={4} /> : dq.isError ? <ErrorState error={dq.error} onRetry={dq.refetch} /> : (<>
         <div className="kpi-row" role="list" data-testid="rta-kpis">{[['store', d.totals.store], ['field', d.totals.field], ['repair', d.totals.repair], ['idle', d.totals.idle], ['hired', d.totals.hired], ['overdue', d.totals.overdue]].map(([k, v]) => <div key={k} role="listitem" className="kpi-tile" data-testid={`rta-kpi-${k}`}><span className="kpi-value">{fmtQty(v)}</span><span className="kpi-label">{t(`ra.kpi.${k}`)}</span></div>)}

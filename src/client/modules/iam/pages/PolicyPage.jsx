@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, Link, QueryState, can, downloadCsv, errorInfo, usePageTitle } from '../../core/pages/ui.jsx';
 import { usePolicy, useRequestPolicyChange } from '../api/index.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 /** [section, key, label, kind, hint] */
 const FIELDS = [
@@ -103,15 +104,11 @@ export default function PolicyPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Security &rsaquo; Authentication Policy</nav>
-      <div className="page-head">
-        <h1 id="page-title">Authentication Policy</h1>
-        <div className="actions">
+      <PageHeader id="page-title" title={"Authentication Policy"} actions={<><div className="actions">
           <button type="button" className="btn" disabled={!p} onClick={() => downloadCsv('authentication-policy.json', JSON.stringify({ exportedAt: new Date().toISOString(), settings: p.settings }, null, 2), 'application/json')}>Export settings</button>
           <button type="button" className="btn" disabled={!canManage || !p} onClick={() => fileInput.current?.click()}>Import settings</button>
           <input ref={fileInput} type="file" accept="application/json,.json" className="sr-only" aria-label="Import settings file" onChange={(e) => e.target.files[0] && importFile(e.target.files[0])} />
-        </div>
-      </div>
-      <p className="muted">Applies to everyone in the company. A change is a request: the other administrator (System Administrator for the IT Administrator, and the reverse) approves it under <Link to="/admin/approvals">Approvals</Link>, and it is audited. <Link to="/admin/security/login-history">Login history</Link></p>
+        </div></>} subtitle={<>Applies to everyone in the company. A change is a request: the other administrator (System Administrator for the IT Administrator, and the reverse) approves it under <Link to="/admin/approvals">Approvals</Link>, and it is audited. <Link to="/admin/security/login-history">Login history</Link></>} />
       <p role="status" className="notice" data-testid="policy-notice">{notice}</p>
       <QueryState query={policy} what="the authentication policy" permission="iam.security.view" />
       {p && form && (

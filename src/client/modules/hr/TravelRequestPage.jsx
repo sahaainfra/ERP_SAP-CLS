@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, exp } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Travel Request (HR, part 07.12, FR-01): the purpose of a trip, the project, from and to, the dates, the mode, the estimated cost and the advance wanted. The manager approves, then the project manager (the department head when there is no
 // project). An approved request is the basis of a travel advance and of the claim for the trip.
@@ -31,7 +32,7 @@ export default function TravelRequestPage() {
   const save = (submit) => run(async () => { const out = id ? await exp.updateTravel(id, { ...body(), version: r.rowVersion }) : await exp.createTravel({ ...body(), submit }); if (id && submit) await exp.travelAct(id, 'submit'); if (!id) navigateTo(`/expenses/travel?id=${out.id}`, { force: true }); else loaded.current = false; return out; }, submit ? t('travel.sent') : t('travel.saved'));
   return (
     <section aria-labelledby="tr-title" data-testid="travel" data-status={r?.status ?? 'NEW'}>
-      <h1 id="tr-title">{r ? <>{r.docNo} <StatusBadge status={TONE[r.status]} label={t(`tst.${r.status}`)} /></> : t('travel.title')}</h1>
+      <PageHeader id="tr-title" title={r ? <>{r.docNo} <StatusBadge status={TONE[r.status]} label={t(`tst.${r.status}`)} /></> : t('travel.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="tr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="tr-note">{note}</p>}
       <form className="mdm-panel mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }} data-testid="tr-form" aria-label={t('travel.title')}>

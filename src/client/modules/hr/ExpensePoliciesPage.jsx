@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, exp } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Expense Policies (HR, part 07.12, the Config page): the limits by grade, category and city tier (a limit for a line, a per diem, a mileage rate, the amount above which a bill photo is mandatory), each with its effective dates. A new or changed
 // policy is a draft until somebody else activates it (maker-checker); every change is in the history with the old and new figures. The most specific active policy in force on the day of a bill applies.
@@ -27,7 +28,7 @@ export default function ExpensePoliciesPage() {
   const save = (e) => { e.preventDefault(); run(() => exp.savePolicy({ ...(editing ? { id: editing.id, version: editing.rowVersion } : {}), grade: v.grade.trim() || '*', category: v.category, cityTier: v.cityTier, limit: Number(v.limit || 0), perDiem: Number(v.perDiem || 0), mileageRate: Number(v.mileageRate || 0), receiptAbove: v.receiptAbove === '' ? null : Number(v.receiptAbove), effectiveFrom: v.effectiveFrom, effectiveTo: v.effectiveTo || null }), t('pol.saved'), () => { setV(blank); setEditing(null); }); };
   return (
     <section aria-labelledby="po-title" data-testid="policies">
-      <h1 id="po-title">{t('pol.title')}</h1>
+      <PageHeader id="po-title" title={t('pol.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="po-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="po-note">{note}</p>}
       {q.isPending ? <Skeleton label={t('pol.title')} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : q.data.length === 0 ? <EmptyState title={t('pol.none')} message={t('pol.noneHint')} /> : (

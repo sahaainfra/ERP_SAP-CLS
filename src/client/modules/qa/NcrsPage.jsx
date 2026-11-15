@@ -10,6 +10,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, qa } from './api.js';
 import { DocBar, sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // NCR register and NCR object (part 18.04): the report with its root cause, actions (CAPA), rectification, re-inspection, concession and closure by severity; plus the raise form for a phone and the analysis.
 const transport = browserTransport(authHeaders); const NCR_TONE = { DRAFT: 'DRAFT', OPEN: 'IN_REVIEW', RECTIFIED: 'RETURNED', CONCESSION_REVIEW: 'IN_REVIEW', CLOSURE_REVIEW: 'IN_REVIEW', CLOSED: 'APPROVED', CANCELLED: 'CANCELLED' }; const SEV_TONE = { MINOR: 'DRAFT', MAJOR: 'RETURNED', CRITICAL: 'REJECTED' };
@@ -25,8 +26,7 @@ function Ncr({ id }) {
   const upload = (capaId) => async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(async () => { const up = await uploadFile(file, { transport, entity: 'qa_capa_actions', entityId: capaId }); return qa.act('/ncrs', x.id, `capa/${capaId}/complete`, { evidenceFileIds: [up.id] }); }, t('ncr.capaDone')); };
   const photo = async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(() => uploadFile(file, { transport, entity: 'qa_ncrs', entityId: x.id }), t('ncr.photoAdded')); };
   return (
-    <div data-testid="qa-ncr-object" data-status={x.status} data-severity={x.severity}><h1 id="ncr-h">{x.docNo} <StatusBadge status={NCR_TONE[x.status]} label={t(`ncrs.${x.status}`)} /> <StatusBadge status={SEV_TONE[x.severity]} label={t(`sev.${x.severity}`)} /> {x.repeat && <StatusBadge status="REJECTED" label={t('ncr.repeatN', { n: x.repeatCount })} />}</h1>
-      <p><Link to="/qa/ncrs">{t('ncr.title')}</Link> · {x.project} · {t(`nt.${x.type}`)} · {x.responsible ?? t(`resp.${x.responsibleType}`)} · {t('ncr.age', { n: x.ageDays })}{x.origin ? ` · ${x.origin.docNo}` : ''}{x.specRef ? ` · ${x.specRef}` : ''}</p><p>{x.description}</p>
+    <div data-testid="qa-ncr-object" data-status={x.status} data-severity={x.severity}><PageHeader id="ncr-h" title={<>{x.docNo} <StatusBadge status={NCR_TONE[x.status]} label={t(`ncrs.${x.status}`)} /> <StatusBadge status={SEV_TONE[x.severity]} label={t(`sev.${x.severity}`)} /> {x.repeat && <StatusBadge status="REJECTED" label={t('ncr.repeatN', { n: x.repeatCount })} />}</>} meta={<><Link to="/qa/ncrs">{t('ncr.title')}</Link> · {x.project} · {t(`nt.${x.type}`)} · {x.responsible ?? t(`resp.${x.responsibleType}`)} · {t('ncr.age', { n: x.ageDays })}{x.origin ? ` · ${x.origin.docNo}` : ''}{x.specRef ? ` · ${x.specRef}` : ''}</>} /><p>{x.description}</p>
       {error?.form && <p className="field-error" role="alert" data-testid="ncr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="ncr-note">{note}</p>}
       <DocBar kind="/ncrs" x={x} printName={`${x.docNo.replaceAll('/', '-')}.pdf`} extra={<>
         {x.can.raise && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => act('raise', {}, t('ncr.raised'))} data-testid="ncr-raise">{t('ncr.raise')}</button>}
@@ -61,7 +61,7 @@ export default function NcrsPage() {
   const t = useT('qa'); usePageTitle(t('ncr.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="ncr-h"><Ncr id={id} /></section>;
   return (
-    <section aria-labelledby="ncrl-h" data-testid="qa-ncrs"><h1 id="ncrl-h">{t('ncr.title')}</h1><p className="muted">{t('ncr.intro')}</p>
+    <section aria-labelledby="ncrl-h" data-testid="qa-ncrs"><PageHeader id="ncrl-h" title={t('ncr.title')} subtitle={t('ncr.intro')} />
       <div className="actions-row no-print"><Link to="/qa/ncrs/new">{t('ncr.new')}</Link><Link to="/qa/ncr-analysis">{t('nca.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/ncrs/export', 'ncrs.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="ncr-export">{t('export')}</button></div>
       <ListReport listCode="qa.ncrs" endpoint="/qa/ncrs" title={t('ncr.title')} session={session.data} rowHref={(r) => `/qa/ncrs?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/ncrs?id=${r.id}`)} cardFields={['docNo', 'severity', 'responsible', 'status']} statusKey="status" dateKey="raised" empty={{ title: t('ncr.emptyTitle'), text: t('ncr.emptyBody') }} />
     </section>
@@ -75,7 +75,7 @@ export function NcrRaisePage() {
     const d = await run(async () => { const n = await qa.make('/ncrs', body); for (const file of photos) await uploadFile(file, { transport, entity: 'qa_ncrs', entityId: n.id }); return n; }, t('ncr.raised')); if (d) navigateTo(`/qa/ncrs?id=${d.id}`); };
   const big = { minHeight: 48, fontSize: '1rem' };
   return (
-    <section aria-labelledby="ncrn-h" data-testid="qa-ncr-raise"><h1 id="ncrn-h">{t('ncr.new')}</h1><p className="muted"><Link to="/qa/ncrs">{t('ncr.title')}</Link></p>
+    <section aria-labelledby="ncrn-h" data-testid="qa-ncr-raise"><PageHeader id="ncrn-h" title={t('ncr.new')} subtitle={<Link to="/qa/ncrs">{t('ncr.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="ncrn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('ncr.fromInspection')} name="originId" error={error}><select value={f.originKind === 'INSPECTION' ? f.originId : ''} onChange={(e) => fromSource('INSPECTION', e.target.value)} style={big} data-testid="ncrn-from"><option value="">—</option>{(o?.failedInspections ?? []).map((i) => <option key={i.id} value={i.id}>{i.docNo} ({i.defects})</option>)}</select></Field>

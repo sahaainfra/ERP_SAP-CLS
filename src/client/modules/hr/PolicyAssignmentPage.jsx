@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { formatDate } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { DAY_TYPES, WEEKDAYS, att, dayIST } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Policy Assignment (HR, part 07.04, FR-05 and FR-06): the configuration of what governs attendance. The hierarchy is the company default, then a site, a crew and an employee override, each with effective dates; the most specific one
 // that says something about the policy, the shift, the weekly off or the holiday calendar wins, attribute by attribute. A new assignment of the same place ends the one before it the day before. "Who gets what" resolves any person on any day
@@ -21,7 +22,7 @@ export default function PolicyAssignmentPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   return (
     <section aria-labelledby="pa-title" data-testid="policy-assignment">
-      <h1 id="pa-title">Policy Assignment</h1>
+      <PageHeader id="pa-title" title={"Policy Assignment"} />
       <label className="check"><input type="checkbox" checked={ended} onChange={(e) => setEnded(e.target.checked)} data-testid="pa-ended" /> Show assignments that have ended</label>
       {q.isPending ? <Skeleton label="Loading the assignments" rows={4} /> : q.data.length === 0 ? <EmptyState title="Nothing is assigned yet" message="Start with the company default: a policy, a shift and the weekly off." /> : (
         LEVELS.map(([level, label]) => { const rows = q.data.filter((a) => a.scopeType === level); return rows.length ? <Level key={level} label={label} rows={rows} refresh={refresh} /> : null; })

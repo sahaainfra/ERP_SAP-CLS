@@ -8,6 +8,7 @@ import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx
 import { CATEGORIES, STATUS, pol } from './api.js';
 import { Diff } from './PolicyRegisterPage.jsx';
 import RichText from './RichText.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Policy Editor with version compare (part 05.05, section 7.2): title, category, department, the text (rich), attachments, what changed, effective and review dates, who it applies to (with a live count of the people),
 // the knowledge check (questions and pass mark), the requirements tagged for controls, and the comparison with another version. Save as a draft (it is also saved every half minute while it changes), or send for approval.
@@ -143,7 +144,7 @@ export default function PolicyEditorPage({ session }) {
   if (id && q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (!f && id && !working) {
     return (
-      <section aria-labelledby="pe-title" data-testid="policy-editor"><h1 id="pe-title">Policy Editor</h1>
+      <section aria-labelledby="pe-title" data-testid="policy-editor"><PageHeader id="pe-title" title={"Policy Editor"} />
         <p className="notice" role="status" data-testid="pe-nodraft">{q.data.policyNo} has no draft to edit. {q.data.can.revise ? 'Start a new version to change it.' : 'A published policy is never edited.'}</p>
         <div className="actions">{q.data.can.revise && <button type="button" className="btn btn-primary" onClick={async () => { await pol.revise(id); qc.invalidateQueries({ queryKey: ['pol'] }); setF(null); }} data-testid="pe-revise">Start a new version</button>}<button type="button" className="btn" onClick={() => navigateTo(`/collab/policies?id=${id}`)}>Back to the policy</button></div>
         {q.data.current && <Requirements policy={q.data} version={q.data.current} canTag={q.data.can.tag} />}
@@ -154,7 +155,7 @@ export default function PolicyEditorPage({ session }) {
   const versions = q.data?.versions ?? [];
   return (
     <section aria-labelledby="pe-title" data-testid="policy-editor">
-      <div className="page-head"><h1 id="pe-title">Policy Editor{q.data ? ` · ${q.data.policyNo}` : ''}</h1>{working && <StatusBadge status={STATUS[working.status][0]} label={`Version ${working.version}: ${STATUS[working.status][1]}`} />}</div>
+      <PageHeader id="pe-title" title={<>Policy Editor{q.data ? ` · ${q.data.policyNo}` : ''}</>} actions={<>{working && <StatusBadge status={STATUS[working.status][0]} label={`Version ${working.version}: ${STATUS[working.status][1]}`} />}</>} />
       <div className="msg-filters" role="tablist" aria-label="Parts of the policy">
         {[['content', 'The policy'], ['requirements', 'Requirements for controls'], ['compare', 'Compare versions']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`lr-chip${tab === k ? ' is-on' : ''}`} onClick={() => setTab(k)} data-testid={`pe-tab-${k}`} disabled={k !== 'content' && !id}>{l}</button>)}
       </div>

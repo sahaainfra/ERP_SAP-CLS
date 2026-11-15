@@ -6,6 +6,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { fmtDate, fmtQty, fmtRs, ro, saveCsv } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stock Ageing and Non-moving, with Redeployment Opportunities (part 16.07, FR-03): stock by the age of its receipt, items that have not been issued for a long time, and other stores that are short of the same item.
 const BUCKETS = ['0-30', '31-90', '91-180', '181-365', '>365'];
@@ -20,7 +21,7 @@ export default function AgeingPage() {
   const oq = useQuery({ queryKey: ['inv', 'reorder-options'], queryFn: ro.options, retry: false }); const aq = useQuery({ queryKey: ['inv', 'ageing', cls, storeId], queryFn: () => ro.ageing({ class: cls, storeId }), retry: false, enabled: tab === 'ageing' }); const rq = useQuery({ queryKey: ['inv', 'redeploy'], queryFn: ro.redeploy, retry: false, enabled: tab === 'redeploy' });
   const q = tab === 'ageing' ? aq : rq; if (q.error?.status === 403) return <NoPermission what={t('ag.title')} permission="inv.ageing.view" />; const d = aq.data; const rd = rq.data;
   return (
-    <section aria-labelledby="ag-h" data-testid="ageing"><h1 id="ag-h">{t('ag.title')}</h1><p className="muted">{t('ag.intro')}</p>
+    <section aria-labelledby="ag-h" data-testid="ageing"><PageHeader id="ag-h" title={t('ag.title')} subtitle={t('ag.intro')} />
       <div className="actions-row no-print">{[['ageing', 'ag.tabAgeing'], ['redeploy', 'ag.tabRedeploy']].map(([k, l]) => <Link key={k} to={`/inv/ageing?tab=${k}`} aria-current={tab === k ? 'page' : undefined} data-testid={`ageing-tab-${k}`}>{t(l)}</Link>)}</div>
       {tab === 'ageing' && <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('tr.store')} name="storeId" error={null}><select value={storeId} onChange={(ev) => setStoreId(ev.target.value)} style={{ minHeight: 44 }} data-testid="ageing-store"><option value="">{t('tr.allStores')}</option>{(oq.data?.stores ?? []).map((s) => <option key={s.id} value={s.id}>{s.code} · {s.name}</option>)}</select></Field>
         <Field label={t('ag.class')} name="class" error={null}><select value={cls} onChange={(ev) => setCls(ev.target.value)} style={{ minHeight: 44 }} data-testid="ageing-class"><option value="">{t('ag.allClasses')}</option>{['ACTIVE', 'SLOW', 'NON_MOVING'].map((c) => <option key={c} value={c}>{t(`ag.c.${c}`)}</option>)}</select></Field></div>

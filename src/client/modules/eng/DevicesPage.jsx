@@ -5,6 +5,7 @@ import { formatDateTime, toCsv } from '../../platform/format.js';
 import { useDevices, useOffActions } from '../../platform/offline/api.js';
 import { Field, FormDialog, Pager, downloadCsv, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEVICE_STATUS, ago } from './offline-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Devices (Administration, part 04.15): the browsers registered for offline work, with the person, the last sync, the clock difference and the status. Revoking a device makes its next contact remove its offline data
 // (BR-03). The IT administrator sees every device; a person sees their own.
@@ -32,8 +33,7 @@ export default function DevicesPage() {
   };
   return (
     <section aria-labelledby="dv-title" data-testid="devices">
-      <h1 id="dv-title">Devices</h1>
-      <p className="muted">Browsers registered for offline work. Revoking a device removes its offline data the next time it connects.</p>
+      <PageHeader id="dv-title" title={"Devices"} subtitle={"Browsers registered for offline work. Revoking a device removes its offline data the next time it connects."} />
       {notice && <p role="status" className="notice" data-testid="dv-notice">{notice}</p>}
       {d && <p className="muted" data-testid="dv-counts">{d.counts.active} active, {d.counts.revoked} revoked.</p>}
       <form className="srch-form" role="search" aria-label="Filter the devices" onSubmit={(e) => e.preventDefault()}>

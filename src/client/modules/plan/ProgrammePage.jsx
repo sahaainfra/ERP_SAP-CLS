@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { download, fmtDate, pl, programmeSvg, svgToPng } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Printable Programme (part 13.02, FR-04, FR-05): the Gantt on A3 or A1 as a PDF, or as an image (SVG or PNG), drawn by the server from its own dates; the parameters choose the time scale, the filter, a
 // WBS branch and the window. Below, the programme by WBS node with totals, each node a link to the Gantt; the preview is the image itself, so what is shown is what is printed.
@@ -35,7 +36,7 @@ export default function ProgrammePage() {
   const go = async (fn) => { setError(null); setBusy(true); try { await fn(); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
     <section aria-labelledby="pr-h" data-testid="plan-programme">
-      <h1 id="pr-h">{t('pr.title')}</h1>
+      <PageHeader id="pr-h" title={t('pr.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('pr.params')}>
         <SchedulePicker projectId={pid} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); }} onSchedule={setScheduleId} testId="pr" />
         <div className="form-grid">

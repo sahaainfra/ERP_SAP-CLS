@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, perf } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Feedback & One-to-One (HR, part 07.11, FR-04): what colleagues and the manager wrote about the person (recognition, feedback, one-to-one notes they share), and what the person wrote. Anybody can recognise anybody; feedback and one-to-one notes
 // go from a manager to the people who report to them, and a note can be kept private to the manager (HR can read it). The person gets a notification of what is shared.
@@ -23,7 +24,7 @@ export default function FeedbackPage() {
   };
   return (
     <section aria-labelledby="fb-title" data-testid="feedback">
-      <h1 id="fb-title">{t('fb.title')}</h1>
+      <PageHeader id="fb-title" title={t('fb.title')} />
       <form className="mdm-panel mdm-fields" onSubmit={send} data-testid="fb-form" aria-label={t('fb.give')}>
         <h2>{t('fb.give')}</h2>
         <LookupField id="fb-person" label={t('team.person')} lookup="hr/employees" value={v.employeeId} onChange={(x) => setV({ ...v, employeeId: x })} error={error?.fields?.employeeId} required />

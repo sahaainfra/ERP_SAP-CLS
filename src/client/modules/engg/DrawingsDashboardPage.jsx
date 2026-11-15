@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { STATUS_CODES, eg } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Drawings Dashboard (part 11.01): drawings received against planned, the IFC status, the overdue ones and the responses still pending.
 export default function DrawingsDashboardPage() {
@@ -19,7 +20,7 @@ export default function DrawingsDashboardPage() {
   const pct = d && d.planned ? Math.min(100, Math.round((d.received / d.planned) * 100)) : null;
   return (
     <section aria-labelledby="eg-dash-h" data-testid="eg-dash">
-      <h1 id="eg-dash-h">{t('dash.title')}</h1>
+      <PageHeader id="eg-dash-h" title={t('dash.title')} />
       <ProjectSelect value={projectId} onChange={setProjectId} allowAll testId="eg-dash-project" />
       {q.isPending ? <Skeleton label={t('dash.title')} rows={4} /> : (
         <>

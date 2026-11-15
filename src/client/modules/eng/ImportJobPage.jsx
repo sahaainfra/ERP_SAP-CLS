@@ -5,6 +5,8 @@ import { formatDateTime } from '../../platform/format.js';
 import { saveFrom, useCancel, useCommit, useErrors, useImportTypes, useJob, usePreview } from '../../platform/excel/api.js';
 import { Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ACTION, JOB_STATUS, ON_EXISTING } from './excel-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Import Job (part 04.13, section 7.2): where one upload stands. It shows the progress while the file is checked, then the preview (what each row will do), the errors with their sheet, row, column and reason,
 // the error file to correct, and the commit or cancel. After the commit it shows what was created or updated. All of it is read from the job; nothing is kept in the page.
@@ -27,7 +29,7 @@ export default function ImportJobPage({ session }) {
   const preview = usePreview(id, page, tab === 'preview' && ready);
   const errs = useErrors(id, page, tab === 'errors' && Boolean(j));
   if (!can(session, 'xl.import.use')) return <NoPermission what="the Import Center" permission="xl.import.use" />;
-  if (!id) return <section aria-labelledby="ij-title" data-testid="import-job"><h1 id="ij-title">Import Job</h1><EmptyState title="No job chosen" message="Open a job from the history of the Import Center." action={{ label: 'Open the Import Center', onClick: () => navigateTo('/import') }} /></section>;
+  if (!id) return <section aria-labelledby="ij-title" data-testid="import-job"><PageHeader id="ij-title" title={"Import Job"} /><EmptyState title="No job chosen" message="Open a job from the history of the Import Center." action={{ label: 'Open the Import Center', onClick: () => navigateTo('/import') }} /></section>;
   if (q.isPending) return <Skeleton label="Loading the job" rows={4} />;
   if (q.isError) return <ErrorState title="The job could not be loaded" error={q.error} onRetry={() => q.refetch()} />;
   const type = types.data?.types.find((t) => t.code === j.importType);
@@ -41,8 +43,7 @@ export default function ImportJobPage({ session }) {
   return (
     <section aria-labelledby="ij-title" data-testid="import-job" data-status={j.status}>
       <p className="muted small"><Link to="/import">Import Center</Link> › Job #{j.id}</p>
-      <h1 id="ij-title">{j.typeLabel}: {j.fileName}</h1>
-      <p><StatusBadge status={JOB_STATUS[j.status][0]} label={JOB_STATUS[j.status][1]} /> Started by {j.startedBy} on {formatDateTime(j.startedAt)}. Template version {j.templateVersion}.</p>
+      <PageHeader id="ij-title" title={<>{j.typeLabel}: {j.fileName}</>} meta={<><StatusBadge status={JOB_STATUS[j.status][0]} label={JOB_STATUS[j.status][1]} /> Started by {j.startedBy} on {formatDateTime(j.startedAt)}. Template version {j.templateVersion}.</>} />
       {live && <p role="status" aria-busy="true" data-testid="job-progress">{j.status === 'COMMITTING' ? `Saving the records… ${j.progress}%` : 'Checking the file…'} <progress max="100" value={j.progress} aria-label="Progress" /></p>}
       {notice && <p role="status" className="notice" data-testid="ij-notice">{notice}</p>}
       {error?.form && <p role="alert" className="error" data-testid="ij-error">{error.form}{error.correlationId ? ` (reference ${error.correlationId})` : ''}</p>}
@@ -50,10 +51,10 @@ export default function ImportJobPage({ session }) {
       {j.structure.length > 0 && <div role="alert" className="error" data-testid="job-structure"><p>The file cannot be read as this import:</p><ul>{j.structure.map((s) => <li key={s}>{s}</li>)}</ul></div>}
       {j.warnings.length > 0 && <ul className="muted small" data-testid="job-warnings">{j.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
       {j.totalRows > 0 && (
-        <div className="tiles" data-testid="job-counts" aria-label="Counts">
+        <KpiRow data-testid="job-counts" aria-label="Counts">
           <p><strong>{j.totalRows}</strong> row(s) in the file</p><p><strong>{j.validRows}</strong> correct</p><p><strong data-testid="count-errors">{j.errorRows}</strong> with errors</p>
           <p><strong>{j.createRows}</strong> to create</p><p><strong>{j.updateRows}</strong> to update</p><p><strong>{j.skipRows}</strong> left out</p>
-        </div>)}
+        </KpiRow>)}
       {j.status === 'COMMITTED' && <p role="status" className="notice" data-testid="job-result">Imported: {j.result.created} created, {j.result.updated} updated, {j.result.skipped} left out{j.result.left ? `, ${j.result.left} with errors not imported` : ''}.{j.result.refs?.length ? ` First records: ${j.result.refs.slice(0, 5).map((r) => r.ref).join(', ')}.` : ''}</p>}
       <div className="actions">
         {j.canCommit && (<>

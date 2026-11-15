@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANNELS, FREQS, SKINDS, downloadFile, tm } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stakeholders (part 10.05, FR-02, FR-03): the register of the people and organisations around a project (client, consultant, authorities, funders...) with their influence and interest, and the communication matrix: what is reported to whom, how often and
 // by which channel. E-mail and phone are shown to those who hold the right to see contact details.
@@ -22,7 +23,7 @@ export default function StakeholdersPage() {
   const [tab, setTab] = useState('register'); const [open, setOpen] = useState(null); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   const [s, setS] = useState({ skind: 'CLIENT', organisation: '', name: '', roleTitle: '', influence: 'MEDIUM', interest: 'MEDIUM', email: '', phone: '' });
   const [c, setC] = useState({ info: '', stakeholderId: '', audience: '', frequency: 'WEEKLY', channel: 'REPORT', ownerUser: '' });
-  const head = <><h1 id="stk-h">{t('stk.title')}</h1><p className="muted">{t('stk.intro')}</p><ProjectPicker route="/proj/stakeholders" projectId={projectId} testId="stk-project" /></>;
+  const head = <><PageHeader id="stk-h" title={t('stk.title')} subtitle={t('stk.intro')} /><ProjectPicker route="/proj/stakeholders" projectId={projectId} testId="stk-project" /></>;
   if (!projectId) return <section aria-labelledby="stk-h" data-testid="stk-none">{head}</section>;
   if (q.error?.status === 403) return <NoPermission what={t('stk.title')} permission="proj.stakeholder.view" />;
   if (q.isPending || mq.isPending) return <Skeleton label={t('stk.title')} rows={4} />;

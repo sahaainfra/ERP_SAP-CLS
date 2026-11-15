@@ -9,6 +9,7 @@ import { api } from '../../platform/api/index.js';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ITEM_STATUS, items, mdm } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Item (Administration, part 06.03): the object page of one item. The header: code and version, status, type, category, base unit, rates where the person may see them, and the actions their role allows on
 // this status (change, new version, out of use). Tabs: Details · Units · Specification · Bill of resources (work items and composites) · Makes and alternates · Documents · Usage (where used) · Price history
@@ -33,7 +34,7 @@ export default function ItemPage() {
       <p><Link to="/admin/items">← Item Master</Link></p>
       {sent && r.status === 'SUBMITTED' && <p className="mdm-banner" role="status" data-testid="it-sent">Sent: the steward of {r.category?.name} ({r.category?.stewardRole}) approves it. It can be chosen once approved.</p>}
       <header className="op-header">
-        <div className="page-head"><h1 id="it-title">{r.code}{r.versionNo > 1 ? ` v${r.versionNo}` : ''} · {r.name}</h1><StatusBadge status={ITEM_STATUS[r.status][0]} label={ITEM_STATUS[r.status][1]} /></div>
+        <PageHeader id="it-title" title={<>{r.code}{r.versionNo > 1 ? ` v${r.versionNo}` : ''} · {r.name}</>} status={<StatusBadge status={ITEM_STATUS[r.status][0]} label={ITEM_STATUS[r.status][1]} />} />
         <dl className="op-figures">
           <div><dt>Type</dt><dd>{r.typeLabel}</dd></div><div><dt>Category</dt><dd>{r.category?.name}</dd></div><div><dt>Base unit</dt><dd data-testid="it-uom">{r.baseUom}</dd></div><div><dt>HSN/SAC · GST</dt><dd>{r.hsnSac ?? '—'} · {r.gstRate ?? '—'}</dd></div>
           {!r.ratesMasked && <div><dt>Standard rate</dt><dd className="num" data-testid="it-rate">₹{r.standardRate ?? '0'}</dd></div>}

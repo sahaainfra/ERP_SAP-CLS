@@ -6,6 +6,7 @@ import { Field, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { ro } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Print Labels (part 16.07, FR-04): QR labels for items, bins and batches, on a thermal roll (50 x 25 mm) or an A4 sheet; every print is logged. The store screens scan the same code.
 export default function LabelsPage() {
@@ -19,7 +20,7 @@ export default function LabelsPage() {
   const go = async () => { const refs = choices.filter((c) => picked.includes(c.k)).map((c) => c.ref); const r = await run(() => ro.print({ type, format, copies: Number(copies) || 1, ...(storeId ? { storeId: Number(storeId) } : {}), refs })); if (r) setOut(r); };
   const sheetStyle = out?.format === 'A4' ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 } : { display: 'grid', gap: 8 };
   return (
-    <section aria-labelledby="lb-h" data-testid="labels"><h1 id="lb-h" className="no-print">{t('lb.title')}</h1><p className="muted no-print">{t('lb.intro')}</p>
+    <section aria-labelledby="lb-h" data-testid="labels"><PageHeader id="lb-h" className="no-print" title={t('lb.title')} /><p className="muted no-print">{t('lb.intro')}</p>
       <style>{`@media print { .no-print { display: none !important; } ${out?.format === 'THERMAL' ? '@page { size: 50mm 25mm; margin: 1mm; } .label-card { page-break-after: always; }' : '@page { size: A4; margin: 8mm; }'} .label-card { border: 0 !important; } }`}</style>
       <div className="mdm-panel no-print"><div className="form-grid">
         <Field label={t('lb.type')} name="type" error={error}><select value={type} onChange={(ev) => { setType(ev.target.value); setPicked([]); setOut(null); }} style={{ minHeight: 44 }} data-testid="lb-type">{['ITEM', 'BIN', 'BATCH'].map((x) => <option key={x} value={x}>{t(`lb.t.${x}`)}</option>)}</select></Field>

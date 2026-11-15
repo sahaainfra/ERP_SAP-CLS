@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { DP_TONE, WA_TONE, fmtDate, fmtQty, st, today } from './api.js';
 import { SiteDay, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Daily Work Plan builder (part 14.01, FR-02): the plan of a site and a supervisor for a day, started from the approved weekly plans (13.04), copied from the day before or empty; a line grid
 // of activity, front, crew and quantity checked by the server; issued, each line becomes a work authorisation in draft with the time window given.
@@ -29,8 +30,7 @@ function Plan({ t, id }) {
   const total = rows.reduce((s, r) => s + (Number(r.plannedQty) || 0), 0);
   return (
     <div data-testid="dp-object" data-status={p.status}>
-      <h1 id="dp-h">{p.docNo} · {fmtDate(p.planDate)} <StatusBadge status={DP_TONE[p.status]} label={t(`dps.${p.status}`)} /></h1>
-      <p><Link to="/site/daily-plans">{t('dp.back')}</Link> · <Link to={`/site/board?siteId=${p.siteId}&date=${p.planDate}`}>{t('bd.title')}</Link></p>
+      <PageHeader id="dp-h" title={<>{p.docNo} · {fmtDate(p.planDate)} <StatusBadge status={DP_TONE[p.status]} label={t(`dps.${p.status}`)} /></>} meta={<><Link to="/site/daily-plans">{t('dp.back')}</Link> · <Link to={`/site/board?siteId=${p.siteId}&date=${p.planDate}`}>{t('bd.title')}</Link></>} />
       <dl className="kv"><div><dt>{t('f.site')}</dt><dd>{p.projectCode} · {p.siteCode} {p.siteName}</dd></div><div><dt>{t('wa.supervisor')}</dt><dd>{p.supervisor}</dd></div><div><dt>{t('dp.lines')}</dt><dd data-testid="dp-count">{p.lines.length}</dd></div>{p.issuedAt && <div><dt>{t('dp.issued')}</dt><dd>{p.issuedBy} · {String(p.issuedAt).slice(0, 16).replace('T', ' ')}</dd></div>}</dl>
       {error?.form && <p className="field-error" role="alert" data-testid="dp-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).slice(0, 4).map(([k, v]) => `${k.replace(/^lines\.(\d+)\..*/, (_, n) => t('dp.line', { n: Number(n) + 1 }))}: ${v}`).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="dp-note">{note}</p>}
@@ -75,7 +75,7 @@ export default function DailyPage() {
   if (id) return <section aria-labelledby="dp-h" data-testid="site-daily"><Plan key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="dp-h" data-testid="site-daily">
-      <h1 id="dp-h">{t('dp.title')}</h1>
+      <PageHeader id="dp-h" title={t('dp.title')} />
       {perms.includes('site.daily_plan.manage') && (
         <form className="mdm-panel no-print" onSubmit={async (e) => { e.preventDefault(); setError(null); setBusy(true); try { const p = await st.createDaily({ siteId, planDate: date, from }); qc.invalidateQueries({ queryKey: ['site'] }); navigateTo(`/site/daily-plans?id=${p.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } }} aria-label={t('dp.new')} data-testid="dp-new-form">
           <h2>{t('dp.new')}</h2>

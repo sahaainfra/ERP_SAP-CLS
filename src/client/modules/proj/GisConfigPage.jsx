@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { CFG_TONE, GIS_LTYPES, downloadFile, gs } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Layers and Overlays (part 10.07, FR-02, FR-06, AC-04): the custom layers (GeoJSON or KML pasted or typed) and the georeferenced plan overlays of a project. Every new or changed layer and overlay is a proposal: the live map keeps the approved content
 // until the project manager, not the maker, approves the change; each change is audited and has its history.
@@ -24,7 +25,7 @@ export default function GisConfigPage() {
   const [o, setO] = useState({ name: '', imageUrl: '', s: '', w: '', n: '', e: '', opacity: 70 });
   const run = async (fn, done) => { setError(null); setNote(null); try { await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['proj'] }); return true; } catch (e) { setError(errorInfo(e)); return false; } };
   const why = (fn, done) => { const r = window.prompt(t('act.why')); if (r) run(() => fn(r), done); };
-  const head = <header><h1 id="gisc-h">{t('gis.configTitle')}</h1><div className="actions-row no-print"><ProjectPicker route="/proj/gis-config" projectId={projectId} testId="gisc-project" /><Link to={projectId ? `/proj/map?projectId=${projectId}` : '/proj/map'}>{t('gis.mapTitle')}</Link></div></header>;
+  const head = <header><PageHeader id="gisc-h" title={t('gis.configTitle')} /><div className="actions-row no-print"><ProjectPicker route="/proj/gis-config" projectId={projectId} testId="gisc-project" /><Link to={projectId ? `/proj/map?projectId=${projectId}` : '/proj/map'}>{t('gis.mapTitle')}</Link></div></header>;
   if (!projectId) return <section aria-labelledby="gisc-h" data-testid="gis-config">{head}<p className="muted">{t('gis.chooseProject')}</p></section>;
   if (ly.error?.status === 403) return <NoPermission what={t('gis.configTitle')} permission="proj.gis.view" />;
   if (ly.isPending || ov.isPending) return <Skeleton label={t('gis.configTitle')} rows={5} />;

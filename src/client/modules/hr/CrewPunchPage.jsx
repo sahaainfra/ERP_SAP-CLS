@@ -4,6 +4,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { attp, deploy, deviceId, readPosition, smallPhoto } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Crew Punch (HR, part 07.05, FR-03): the supervisor marks the crew members who are on site (tick all, then untick), takes one group photo and sends. The supervisor's own position is read at that moment; every member's punch
 // names the supervisor as the recorder. The same group sent twice is the same punches. Only the supervisor of the crew punches for it.
@@ -34,7 +35,7 @@ export default function CrewPunchPage() {
   };
   return (
     <section aria-labelledby="cp-title" data-testid="crew-punch" className="att-punch">
-      <h1 id="cp-title">Crew Punch</h1>
+      <PageHeader id="cp-title" title={"Crew Punch"} />
       <div className="mdm-fields">
         <LookupField id="cp-crew" label="Crew" lookup="hr/crews" value={crewId} onChange={(x) => { setCrewId(x); setTicked([]); }} required />
         <Field label="In or out" name="punchType" error={error}><select value={type} onChange={(e) => setType(e.target.value)} data-testid="cp-type"><option value="IN">In</option><option value="OUT">Out</option></select></Field>

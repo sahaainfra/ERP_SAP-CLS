@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { usePreferences, useSavePreferences, useSendTest } from '../../platform/notifications/api.js';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { CATEGORY } from './NotificationsPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Notification Preferences (part 04.06, section 7.2): for each kind of notification the channels it may use, the quiet hours in which only urgent ones come through at once, how the
 // rest are gathered (at once, hourly or daily), and the language of the messages. Security and statutory notices always reach the centre and the e-mail.
@@ -34,7 +35,7 @@ export default function NotificationPreferencesPage() {
   if (q.isError) return <ErrorState title="Your preferences could not be loaded" error={q.error} onRetry={() => q.refetch()} />;
   return (
     <section aria-labelledby="np-title" data-testid="notification-preferences">
-      <h1 id="np-title">Notification Preferences</h1>
+      <PageHeader id="np-title" title={"Notification Preferences"} />
       {notice && <p role="status" className="notice" data-testid="np-notice">{notice}</p>}
       <form className="form-grid" onSubmit={submit} aria-label="Notification preferences">
         {cats && (

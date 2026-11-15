@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtRs, iv, saveCsv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stock valuation (part 16.01, FR-05): the value of the stock by store, project (owner) or item category, at the moving weighted average or FIFO value of each store.
 export default function StockValuationPage() {
@@ -14,7 +15,7 @@ export default function StockValuationPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data;
   return (
-    <section aria-labelledby="vl-h" data-testid="inv-vl"><h1 id="vl-h">{t('valuationTitle')}</h1><p className="muted">{t('valuationIntro')}</p>
+    <section aria-labelledby="vl-h" data-testid="inv-vl"><PageHeader id="vl-h" title={t('valuationTitle')} subtitle={t('valuationIntro')} />
       <div className="mdm-panel no-print" data-testid="vl-params"><label>{t('groupBy')}<select value={groupBy} onChange={(ev) => setGroupBy(ev.target.value)} style={{ minHeight: 44 }} data-testid="vl-group">{['store', 'project', 'category'].map((g) => <option key={g} value={g}>{t(`g.${g}`)}</option>)}</select></label></div>
       {d.rows.length === 0 ? <div data-testid="vl-empty"><h2>{t('emptyTitle')}</h2><p className="muted">{t('emptyBody')}</p><Link to="/inv/posting">{t('postingTitle')}</Link></div> : <>
         <Bars rows={d.rows.slice(0, 12)} format={fmtRs} testId="vl-bars" label={t(`g.${groupBy}`)} />

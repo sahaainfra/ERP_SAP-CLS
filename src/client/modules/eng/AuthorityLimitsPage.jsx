@@ -5,6 +5,7 @@ import { useUnsavedGuard } from '../../platform/forms/guard.js';
 import { formatINR } from '../../platform/format.js';
 import { useLimitHistory, useLimits, useProposeLimits } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Authority Limits (part 04.02, section 7.3): what each role may finally approve, by document type, in rupees. A change is asked for as a set, takes effect from a date
 // and only after its approval chain (the system administrator, the chief financial officer, and the director when a limit passes ₹1 Cr) has approved it.
@@ -39,8 +40,7 @@ export default function AuthorityLimitsPage({ session }) {
   const bad = changes.filter((c) => c.maxAmount !== null && !/^\d{1,13}(\.\d{1,2})?$/.test(c.maxAmount));
   return (
     <section aria-labelledby="al-title" data-testid="authority-limits">
-      <h1 id="al-title">Authority Limits</h1>
-      <p className="muted">The most a role may finally approve for each kind of document. When the last step of a chain belongs to a role whose limit is below the amount, the step passes to the next level above that has the authority. An empty box means no limit.</p>
+      <PageHeader id="al-title" title={"Authority Limits"} subtitle={"The most a role may finally approve for each kind of document. When the last step of a chain belongs to a role whose limit is below the amount, the step passes to the next level above that has the authority. An empty box means no limit."} />
       {grid.isPending && <Skeleton label="Loading the limits" rows={5} />}
       {grid.isError && grid.error?.status !== 403 && <ErrorState title="The limits could not be loaded" error={grid.error} onRetry={() => grid.refetch()} />}
       {data && (

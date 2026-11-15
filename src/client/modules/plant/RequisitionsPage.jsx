@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { PHASE_TONE, REQ_TONE, fmtDate, pa, pl } from './api.js';
 import { ExportButton, useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Equipment requisitions and the allocation desk (part 17.02, FR-01, FR-02): the list, the worklist of approved requisitions still to be met, and the requisition with the availability of the fleet for its period, the hire decision and the allocations made against it.
 function Availability({ t, r }) {
@@ -30,7 +31,7 @@ function Requisition({ id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => pl.decide(x.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
     <div data-testid="rq-object" data-status={x.status} data-fulfilment={x.fulfilment ?? ''}>
-      <h1 id="rq-h">{x.docNo} <StatusBadge status={REQ_TONE[x.status]} label={t(`rs.${x.status}`)} />{x.fulfilment && <> <StatusBadge status={x.fulfilment === 'FULFILLED' ? 'APPROVED' : 'IN_REVIEW'} label={t(`a.f.${x.fulfilment}`)} /></>}</h1><p><Link to="/plant/requisitions">{t('a.reqTitle')}</Link> · {x.qty} × {x.class} · {x.project}{x.site ? `/${x.site}` : ''}</p>
+      <PageHeader id="rq-h" title={<>{x.docNo} <StatusBadge status={REQ_TONE[x.status]} label={t(`rs.${x.status}`)} />{x.fulfilment && <> <StatusBadge status={x.fulfilment === 'FULFILLED' ? 'APPROVED' : 'IN_REVIEW'} label={t(`a.f.${x.fulfilment}`)} /></>}</>} meta={<><Link to="/plant/requisitions">{t('a.reqTitle')}</Link> · {x.qty} × {x.class} · {x.project}{x.site ? `/${x.site}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="rq-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="rq-note">{note}</p>}
       <div className="actions-row no-print">{can.edit && <Link to={`/plant/requisitions/new?id=${x.id}`}>{t('edit')}</Link>}{can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => pa.reqAct(x.id, 'submit'), t('submitted'))} data-testid="rq-submit">{t('sendForApproval')}</button>}
         {can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('withdrawn'))}>{t('withdraw')}</button>}{can.cancel && <button type="button" className="btn" onClick={() => why('cancel', t('cancelled'))} data-testid="rq-cancel">{t('cancel')}</button>}{can.amend && <button type="button" className="btn" onClick={() => why('amend', t('amended'))}>{t('amend')}</button>}
@@ -61,7 +62,7 @@ export default function RequisitionsPage() {
   const t = useT('plant'); usePageTitle(t('a.reqTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession(); const [view, setView] = useState('list');
   if (id) return <section aria-labelledby="rq-h"><Requisition id={id} /></section>;
   return (
-    <section aria-labelledby="rql-h" data-testid="plant-rq-list"><h1 id="rql-h">{t('a.reqTitle')}</h1><p className="muted">{t('a.reqIntro')}</p>
+    <section aria-labelledby="rql-h" data-testid="plant-rq-list"><PageHeader id="rql-h" title={t('a.reqTitle')} subtitle={t('a.reqIntro')} />
       <div className="actions-row no-print"><Link to="/plant/requisitions/new">{t('a.reqNew')}</Link><Link to="/plant/gantt">{t('a.ganttTitle')}</Link><Link to="/plant/allocations">{t('a.allocTitle')}</Link><ExportButton query={{}} name="requisitions.csv" path="/requisitions/export" testId="rq-export" /></div>
       <div role="tablist" className="tabs no-print">{['list', 'desk'].map((k) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`btn${view === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setView(k)} data-testid={`rq-view-${k}`}>{t(`a.view.${k}`)}</button>)}</div>
       {view === 'desk' ? <Desk t={t} /> : <ListReport listCode="plant.requisitions" endpoint="/plant/requisitions" title={t('a.reqTitle')} session={session.data} rowHref={(r) => `/plant/requisitions?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/requisitions?id=${r.id}`)} cardFields={['docNo', 'class', 'project', 'status']} statusKey="status" dateKey="created" empty={{ title: t('a.reqEmptyTitle'), text: t('a.reqEmptyBody') }} />}

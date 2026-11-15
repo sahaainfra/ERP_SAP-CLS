@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate } from '../../platform/format.js';
 import { Field, Link, downloadCsv, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { mdm, todayIST } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The register of one common master (part 06.02): units, GST rates, HSN/SAC, TDS sections, states (with districts), currencies (with exchange rates), banks, payment terms, lookup lists. One page component
 // driven by the master's definition from the server: filters, search, "as of" for the dated masters, the rows with their source (system or the company's own) and dates, a form to add or change a row, and the
@@ -35,7 +36,7 @@ export default function CommonMasterPage({ page }) {
   const defs = p.masters.map((m) => cat.data.rows.find((d) => d.code === m));
   return (
     <section aria-labelledby="cm-title" data-testid={`cm-page-${page}`}>
-      <h1 id="cm-title">{p.title}</h1>
+      <PageHeader id="cm-title" title={p.title} />
       {defs[0].approval && <p className="mdm-banner" role="note">A change of {defs[0].label} applies from a date and is approved by an accounts manager and then the CFO. A document dated before the change keeps the rate it had.</p>}
       {defs.map((d, i) => <Register key={d.code} def={d} sub={i > 0} />)}
       {page === 'lookups' && cat.data.rows.find((d) => d.code === 'lookups').canEdit && <p><Link to="/admin/master-data/lookup-manager">Open the Lookup List Manager</Link> to edit a list's values with their Hindi labels.</p>}

@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { LEVEL_TONE, dayIST, inr, rk } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { APPROVAL_TONE, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Risk Dashboard (part 10.06): the heat map of the open risks (probability against the worst impact, each cell opens the register for that cell), the tiles, the top risks, the EMV against the contingency, the exposure trend of the reviewed months,
 // the thresholds and the contingency pool of the project (BR-01) and the monthly review (FR-06).
@@ -25,7 +26,7 @@ export default function RiskDashboardPage() {
   const run = async (fn, done) => { setError(null); setNote(null); try { await fn(); if (done) setNote(done); qc.invalidateQueries({ queryKey: ['proj'] }); } catch (e) { setError(errorInfo(e)); } };
   const head = (
     <header>
-      <h1 id="rk-dash-h">{t('rk.dashTitle')}</h1>
+      <PageHeader id="rk-dash-h" title={t('rk.dashTitle')} />
       <div className="actions-row no-print"><ProjectPicker route="/proj/risk-dashboard" projectId={projectId} testId="rk-project" /><Link to={projectId ? `/proj/risks?filter[projectId]=${projectId}` : '/proj/risks'}>{t('rk.registerTitle')}</Link><Link to={projectId ? `/proj/issues?filter[projectId]=${projectId}` : '/proj/issues'}>{t('rk.issuesTitle')}</Link></div>
     </header>
   );

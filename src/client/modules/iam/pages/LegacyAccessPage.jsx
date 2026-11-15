@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { toCsv } from '../../../platform/format.js';
 import { Pager, QueryState, downloadCsv, usePageTitle } from '../../core/pages/ui.jsx';
 import { useLegacyComparison } from '../api/access.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const RESULT = {
   SAME: ['Same', 'chip-pass', 'Exactly the access they had before'],
@@ -27,15 +29,14 @@ export default function LegacyAccessPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Legacy Access Comparison</nav>
-      <div className="page-head"><h1 id="page-title">Legacy Access Comparison</h1></div>
-      <p className="muted">Before the role engine, access came from a fixed table of nine roles. This compares what each user could do then with what the engine gives them now, so nobody gains or loses access by accident.</p>
+      <PageHeader id="page-title" title={"Legacy Access Comparison"} subtitle={"Before the role engine, access came from a fixed table of nine roles. This compares what each user could do then with what the engine gives them now, so nobody gains or loses access by accident."} />
       <QueryState query={query} what="the comparison" permission="iam.role.view" />
       {d && (
         <>
           <p role="status" className={`notice${d.clean ? '' : ' field-error'}`} data-testid="legacy-verdict">{d.clean ? 'Clean: nobody lost access and nobody gained any that is not new to the role engine.' : `Not clean: ${d.summary.lost} user(s) lost access and ${d.summary.gained} gained access they did not have. Review them below.`}</p>
-          <div className="tiles">
+          <KpiRow>
             {[['Users', d.summary.users], ['Same', d.summary.same], ['New permissions only', d.summary.newOnly], ['Lost access', d.summary.lost], ['Gained access', d.summary.gained], ['Role not mapped', d.summary.unmapped]].map(([l, v]) => <div key={l} className="tile"><span className="tile-value" data-testid={`legacy-${l.toLowerCase().replace(/ /g, '-')}`}>{v}</span><span className="tile-label">{l}</span></div>)}
-          </div>
+          </KpiRow>
           <h2>Where each old role went</h2>
           <div className="table-wrap">
             <table>

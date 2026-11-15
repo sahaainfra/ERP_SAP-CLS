@@ -3,6 +3,7 @@ import { useArchitecture } from '../api/index.js';
 import Markdown from '../../../platform/Markdown.jsx';
 import { headingText, parseMarkdown, slug } from '../../../platform/markdown.js';
 import { toCsv } from '../../../platform/format.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const SKELETON = [0, 1, 2, 3, 4];
 
@@ -146,8 +147,7 @@ export default function ArchitecturePage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Technical Console &rsaquo; Architecture</nav>
-      <div className="page-head"><h1 id="page-title">Architecture &amp; API Conventions Guide</h1></div>
-      <p className="muted">For developers and administrators. Rendered from docs/erp/ARCHITECTURE.md.</p>
+      <PageHeader id="page-title" title={"Architecture & API Conventions Guide"} subtitle={"For developers and administrators. Rendered from docs/erp/ARCHITECTURE.md."} />
       {body}
     </section>
   );

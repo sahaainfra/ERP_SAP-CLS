@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ri, today } from './api.js';
 import { useRunner } from './XpdParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Market survey entry and index upload (part 15.09, FR-01): a market rate for an item, region and date goes into the rate history; external price indices (cement, steel, bitumen, fuel) are entered by month or pasted as lines `group, region, month, value`.
 export default function RateSurveyPage() {
@@ -18,7 +19,7 @@ export default function RateSurveyPage() {
   const index = () => run.run(() => ri.indexSet({ group: x.group, region: x.region || undefined, period: x.period, value: Number(x.value) }), t('i.indexSaved')).then(() => setX({ ...x, value: '' }));
   const paste = () => { const rows = x.paste.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const [group, region, period, value] = l.split(',').map((s) => s.trim()); return { group, region: region || undefined, period, value: Number(value) }; }); run.run(() => ri.indexImport(rows), t('i.indexImported')).then((r) => r && setX({ ...x, paste: '' })); };
   return (
-    <section aria-labelledby="rs-h" data-testid="proc-rs"><h1 id="rs-h">{t('i.surveyTitle')}</h1><p className="muted">{t('i.surveyIntro')}</p><p><Link to="/proc/rate-intelligence">{t('i.title')}</Link></p>
+    <section aria-labelledby="rs-h" data-testid="proc-rs"><PageHeader id="rs-h" title={t('i.surveyTitle')} subtitle={t('i.surveyIntro')} meta={<Link to="/proc/rate-intelligence">{t('i.title')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate data-testid="rs-survey"><h2>{t('i.surveyEntry')}</h2>
         <div className="form-grid">
           <Field label={t('i.findItem')} name="q" error={error}><input value={q} maxLength={60} onChange={(ev) => setQ(ev.target.value)} style={{ minHeight: 44 }} data-testid="rs-find" /></Field>

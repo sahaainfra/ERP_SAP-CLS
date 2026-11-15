@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, rmc, qs } from './api.js';
 import { DocBar, ErrorLine, ProjectSite, Status, big, useRecord, useRunner } from './RmcParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Concrete requisitions, the production schedule board and batch records (part 20.02, FR-01 and FR-02): the site engineer asks, the construction manager approves, the plant in-charge schedules on a plant with an approved mix design in force, the operator records each batch.
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); const stamp = (s) => (s ? s.replace('T', ' ').slice(0, 16) : '—'); const URG = { RED: 'REJECTED', AMBER: 'RETURNED', GREEN: 'APPROVED' };
@@ -46,8 +47,7 @@ function SchedulePanel({ x, run, busy, error }) {
 function Requisition({ id }) {
   const t = useT('rmc'); const { q, guard } = useRecord('/requisitions', id, t('rq.title'), 'rmc.requisition.view'); const { error, run, busy, note } = useRunner(); usePageTitle(t('rq.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="rmc-req-object" data-status={x.status} data-prod={x.prodStatus}><h1 id="rq-h">{x.docNo} <Status x={x} /></h1>
-      <p><Link to="/rmc/requisitions">{t('rq.title')}</Link> · {x.project} · {x.grade} · {x.qty} m3 · {stamp(x.requiredAt)} · {x.pumpRequired ? t('rq.pump') : ''} · <span data-testid="rmc-req-prod">{x.prodLabel}</span></p>
+    <div data-testid="rmc-req-object" data-status={x.status} data-prod={x.prodStatus}><PageHeader id="rq-h" title={<>{x.docNo} <Status x={x} /></>} meta={<><Link to="/rmc/requisitions">{t('rq.title')}</Link> · {x.project} · {x.grade} · {x.qty} m3 · {stamp(x.requiredAt)} · {x.pumpRequired ? t('rq.pump') : ''} · <span data-testid="rmc-req-prod">{x.prodLabel}</span></>} />
       <ErrorLine error={error} id="rmc-error" />{note && <p className="mdm-banner" role="status" data-testid="rmc-note">{note}</p>}
       <div className="mdm-panel"><p>{t('rq.pourCard')}: {x.pourCard ?? '—'} · {t('mx.plant')}: {x.plant ?? x.supplier ?? '—'} · {t('rq.mix')}: {x.mix ? `${x.mix.code} v${x.mix.version_no}` : '—'} · {t('rq.slot')}: {stamp(x.slotFrom)} → {stamp(x.slotTo)}</p>
         <p>{t('rq.progress', { sent: x.dispatched, got: x.delivered, left: x.remaining, max: x.allowed })}</p>
@@ -62,9 +62,9 @@ const blankReq = { projectId: '', siteId: '', pourCardId: '', grade: 'M25', qty:
 export function RequisitionsPage() {
   const t = useT('rmc'); usePageTitle(t('rq.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession(); const { error, run, busy } = useRunner();
   if (id) return <section aria-labelledby="rq-h"><Requisition id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="rqn-h"><h1 id="rqn-h">{t('rq.new')}</h1><p><Link to="/rmc/requisitions">{t('rq.title')}</Link></p><ErrorLine error={error} id="rmc-error" /><ReqForm initial={blankReq} busy={busy} error={error} onSave={async (v) => { const r = await run(() => rmc.make('/requisitions', v)); if (r) navigateTo(`/rmc/requisitions?id=${r.id}`); }} /></section>;
+  if (sp.get('new')) return <section aria-labelledby="rqn-h"><PageHeader id="rqn-h" title={t('rq.new')} meta={<Link to="/rmc/requisitions">{t('rq.title')}</Link>} /><ErrorLine error={error} id="rmc-error" /><ReqForm initial={blankReq} busy={busy} error={error} onSave={async (v) => { const r = await run(() => rmc.make('/requisitions', v)); if (r) navigateTo(`/rmc/requisitions?id=${r.id}`); }} /></section>;
   return (
-    <section aria-labelledby="rqs-h" data-testid="rmc-requisitions"><h1 id="rqs-h">{t('rq.title')}</h1><p className="muted">{t('rq.intro')}</p>
+    <section aria-labelledby="rqs-h" data-testid="rmc-requisitions"><PageHeader id="rqs-h" title={t('rq.title')} subtitle={t('rq.intro')} />
       <div className="actions-row no-print"><Link to="/rmc/requisitions?new=1" data-testid="rmc-req-new">{t('rq.new')}</Link> · <Link to="/rmc/production">{t('pb.title')}</Link></div>
       <ListReport listCode="rmc.requisitions" endpoint="/rmc/requisitions" title={t('rq.title')} session={session.data} rowHref={(r) => `/rmc/requisitions?id=${r.id}`} onOpen={(r) => navigateTo(`/rmc/requisitions?id=${r.id}`)} cardFields={['docNo', 'grade', 'qty', 'status']} statusKey="status" empty={{ title: t('rq.emptyTitle'), text: t('rq.emptyBody') }} />
     </section>
@@ -81,7 +81,7 @@ export function ProductionBoardPage() {
     </div>
   );
   return (
-    <section aria-labelledby="pb-h" data-testid="rmc-board"><h1 id="pb-h">{t('pb.title')}</h1><p className="muted">{t('pb.intro')}</p>
+    <section aria-labelledby="pb-h" data-testid="rmc-board"><PageHeader id="pb-h" title={t('pb.title')} subtitle={t('pb.intro')} />
       <div className="form-grid no-print"><Field label={t('esg.date')} name="date" error={null}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={big} data-testid="rmc-board-date" /></Field></div>
       <div className="table-scroll"><table className="data-table" data-testid="rmc-board-load"><caption>{t('pb.load')}</caption><thead><tr><th>{t('mx.plant')}</th><th className="num">{t('pb.scheduled')}</th><th className="num">{t('pb.capacity')}</th><th className="num">%</th></tr></thead><tbody>{d.load.map((p) => <tr key={p.plantId}><td>{p.plant}</td><td className="num">{p.scheduled}</td><td className="num">{p.capacity}</td><td className="num">{p.pct ?? '—'}</td></tr>)}</tbody></table></div>
       <div className="form-grid">{col('pending', d.pending)}{col('scheduled', d.scheduled)}{col('inProgress', d.inProgress)}{col('fulfilled', d.fulfilled)}</div>
@@ -96,7 +96,7 @@ function BatchNew() {
   const fillTheo = () => setV({ ...v, w: Object.fromEntries(comps.map((c) => [c.component, String(theo(c))])) });
   const save = async () => { const r = await run(() => rmc.make('/batches', { plantId: Number(v.plantId), mixDesignId: Number(v.mixDesignId), requisitionId: v.requisitionId ? Number(v.requisitionId) : null, batchTime: v.batchTime, qty: Number(v.qty), batchRef: v.batchRef || null, weights: comps.map((c) => ({ component: c.component, kg: Number(v.w[c.component] ?? 0) })) }), t('bt.saved')); if (r) navigateTo(`/rmc/batches?id=${r.id}`); };
   return (
-    <section aria-labelledby="btn-h" data-testid="rmc-batch-form"><h1 id="btn-h">{t('bt.new')}</h1><p><Link to="/rmc/batches">{t('bt.title')}</Link></p><ErrorLine error={error} id="rmc-error" />
+    <section aria-labelledby="btn-h" data-testid="rmc-batch-form"><PageHeader id="btn-h" title={t('bt.new')} meta={<Link to="/rmc/batches">{t('bt.title')}</Link>} /><ErrorLine error={error} id="rmc-error" />
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('mx.plant')} name="plantId" error={fe.plantId}><select value={v.plantId} onChange={(e) => setV({ ...v, plantId: e.target.value, mixDesignId: '', requisitionId: '' })} style={big} data-testid="rmc-batch-plant"><option value="">—</option>{d.plants.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field>
         <Field label={t('rq.mix')} name="mixDesignId" error={fe.mixDesignId}><select value={v.mixDesignId} onChange={(e) => setV({ ...v, mixDesignId: e.target.value, w: {} })} style={big} data-testid="rmc-batch-mix"><option value="">—</option>{d.mixes.filter((m) => String(m.plantId) === String(v.plantId)).map((m) => <option key={m.id} value={m.id}>{m.code} v{m.versionNo} {m.grade}</option>)}</select></Field>
@@ -113,8 +113,7 @@ function BatchNew() {
 function Batch({ id }) {
   const t = useT('rmc'); const { q, guard } = useRecord('/batches', id, t('bt.title'), 'rmc.batch.view'); const { error, run, busy, note } = useRunner(); usePageTitle(t('bt.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="rmc-batch-object" data-flagged={x.flagged}><h1 id="bt-h">{x.docNo} {x.status === 'CANCELLED' && <StatusBadge status="CANCELLED" label={t('bt.cancelled')} />}</h1>
-      <p><Link to="/rmc/batches">{t('bt.title')}</Link> · {x.plant} · {x.mix.code} v{x.mix.version_no} · {x.grade} · {x.qty} m3 · {stamp(x.batchTime)} · {x.requisition ?? '—'}</p><ErrorLine error={error} id="rmc-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
+    <div data-testid="rmc-batch-object" data-flagged={x.flagged}><PageHeader id="bt-h" title={<>{x.docNo} {x.status === 'CANCELLED' && <StatusBadge status="CANCELLED" label={t('bt.cancelled')} />}</>} meta={<><Link to="/rmc/batches">{t('bt.title')}</Link> · {x.plant} · {x.mix.code} v{x.mix.version_no} · {x.grade} · {x.qty} m3 · {stamp(x.batchTime)} · {x.requisition ?? '—'}</>} /><ErrorLine error={error} id="rmc-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="rmc-batch-lines"><thead><tr><th>{t('mx.material')}</th><th className="num">{t('bt.theoretical')}</th><th className="num">{t('bt.actual')}</th><th className="num">{t('co.variance')}</th><th className="num">%</th></tr></thead><tbody>{x.lines.map((l) => <tr key={l.component} data-flagged={l.flagged}><td>{t(`mx.c.${l.component}`)}</td><td className="num">{l.theoretical}</td><td className="num">{l.actual}</td><td className="num">{l.variance}</td><td className="num">{l.variancePct} {l.flagged ? '⚠' : ''}</td></tr>)}</tbody></table></div>
       {x.can.cancel && <div className="actions-row no-print"><button type="button" className="btn" disabled={busy} onClick={() => { const r = globalThis.prompt(t('why')); if (r) run(() => rmc.post(`/batches/${x.id}/cancel`, { reason: r }), t('bt.cancelledNote')); }} data-testid="rmc-batch-cancel">{t('cancel')}</button></div>}
     </div>
@@ -124,7 +123,7 @@ export function BatchesPage() {
   const t = useT('rmc'); usePageTitle(t('bt.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="bt-h"><Batch id={id} /></section>; if (sp.get('new')) return <BatchNew />;
   return (
-    <section aria-labelledby="bts-h" data-testid="rmc-batches"><h1 id="bts-h">{t('bt.title')}</h1><p className="muted">{t('bt.intro')}</p>
+    <section aria-labelledby="bts-h" data-testid="rmc-batches"><PageHeader id="bts-h" title={t('bt.title')} subtitle={t('bt.intro')} />
       <div className="actions-row no-print"><Link to="/rmc/batches?new=1" data-testid="rmc-batch-new">{t('bt.new')}</Link> · <Link to="/rmc/consumption">{t('co.title')}</Link></div>
       <ListReport listCode="rmc.batches" endpoint="/rmc/batches" title={t('bt.title')} session={session.data} rowHref={(r) => `/rmc/batches?id=${r.id}`} onOpen={(r) => navigateTo(`/rmc/batches?id=${r.id}`)} cardFields={['docNo', 'plant', 'grade', 'qty']} empty={{ title: t('bt.emptyTitle'), text: t('bt.emptyBody') }} />
     </section>

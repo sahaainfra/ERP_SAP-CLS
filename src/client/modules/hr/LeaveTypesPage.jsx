@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { lv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Leave Types & Rules (HR, part 07.07, FR-01 and FR-02): the types a company grants (casual, sick, earned, maternity, paternity, comp-off, bereavement, leave without pay) and the rules of each: the yearly quota and how it accrues, pro-rata
 // for joiners, carry-forward and encashment limits, the least service, the longest run, a certificate after some days, the sandwich rule, half days, advance leave, the genders and employment categories it is for. HR changes them here
@@ -31,7 +32,7 @@ export default function LeaveTypesPage() {
   };
   return (
     <section aria-labelledby="lt-title" data-testid="leave-types">
-      <h1 id="lt-title">Leave Types & Rules</h1>
+      <PageHeader id="lt-title" title={"Leave Types & Rules"} />
       {note && <p className="mdm-banner" role="status" data-testid="lt-note">{note}</p>}
       <div className="actions-row"><button type="button" className="btn btn-primary" onClick={() => open(null)} data-testid="lt-new">New leave type</button></div>
       {q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : q.isPending ? <Skeleton label="Loading the types" rows={4} /> : (

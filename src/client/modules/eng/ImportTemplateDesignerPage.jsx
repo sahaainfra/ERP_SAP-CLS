@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { useDesigner, useProposeTemplate } from '../../platform/excel/api.js';
 import { Field, Link, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Import Template Designer (part 04.13, section 7.3): the wording of each import template (labels, help, instructions), the columns that are made required, and whether a large file may be saved in chunks.
 // The columns, their types and the rules belong to the module that registered the import and are shown, not edited. A change waits for a second person to approve it (maker-checker); the history lists every version.
@@ -28,7 +29,7 @@ export default function ImportTemplateDesignerPage({ session }) {
   if (!can(session, 'xl.template.view')) return <NoPermission what="the import templates" permission="xl.template.view" />;
   if (q.isPending) return <Skeleton label="Loading the templates" rows={4} />;
   if (q.isError) return <ErrorState title="The templates could not be loaded" error={q.error} onRetry={() => q.refetch()} />;
-  if (!types.length) return <section aria-labelledby="dt-title"><h1 id="dt-title">Import Template Designer</h1><EmptyState title="No import registered" message="Modules register their imports; none is registered yet." /></section>;
+  if (!types.length) return <section aria-labelledby="dt-title"><PageHeader id="dt-title" title={"Import Template Designer"} /><EmptyState title="No import registered" message="Modules register their imports; none is registered yet." /></section>;
   const edit = q.data.canEdit && !t?.pending;
   const set = (key, patch) => setCols((c) => ({ ...c, [key]: { ...c[key], ...patch } }));
   const send = (e) => {
@@ -38,8 +39,7 @@ export default function ImportTemplateDesignerPage({ session }) {
   };
   return (
     <section aria-labelledby="dt-title" data-testid="template-designer">
-      <h1 id="dt-title">Import Template Designer</h1>
-      <p className="muted">Change the wording and the instructions of an import template, make a column required, or allow large files to be saved in chunks. The columns themselves and their rules belong to the module. A change takes effect when a second person approves it.</p>
+      <PageHeader id="dt-title" title={"Import Template Designer"} subtitle={"Change the wording and the instructions of an import template, make a column required, or allow large files to be saved in chunks. The columns themselves and their rules belong to the module. A change takes effect when a second person approves it."} />
       <label className="field"><span>Import</span><select value={code} onChange={(e) => setCode(e.target.value)} data-testid="designer-type">{types.map((x) => <option key={x.code} value={x.code}>{x.label} (version {x.version})</option>)}</select></label>
       {t?.pending && <p role="status" className="notice" data-testid="designer-pending">A change is waiting for approval (proposed by {t.pending.by}: {t.pending.reason}).{t.pending.instanceId ? <> <Link to={`/workflow/instance?id=${t.pending.instanceId}`}>Open the approval</Link></> : ''}</p>}
       {sent && <p role="status" className="notice" data-testid="designer-sent">Sent for approval. The change takes effect when it is approved.</p>}

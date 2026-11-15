@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { RES_TYPES, fmtDate, pl, uploadSchedule } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Import Schedule (part 13.03, FR-04, BR-02): a file of MS Project (XML) or Primavera P6 (XML or XER) in three steps. 1 the file is read and checked for a working schedule: nothing changes yet;
 // 2 the mapping (calendars, WBS nodes, resources, the field of the activity code, replace or merge) with the validation report worked out again by the server for every change;
@@ -86,8 +87,7 @@ export default function ImportPage() {
   const rep = imp?.result?.report; const ap = imp?.result?.applied;
   return (
     <section aria-labelledby="imp-h" data-testid="plan-import">
-      <h1 id="imp-h">{t('imp.title')}</h1>
-      <p className="muted">{t('imp.intro')}</p>
+      <PageHeader id="imp-h" title={t('imp.title')} subtitle={t('imp.intro')} />
       <form className="mdm-panel no-print" onSubmit={read} aria-label={t('imp.step1')} data-testid="imp-step1">
         <h2>{t('imp.step1')}</h2>
         <SchedulePicker projectId={pid} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); setImportId(null); }} onSchedule={(v) => { setScheduleId(v); setImportId(null); }} editableOnly testId="imp" />

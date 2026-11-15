@@ -9,6 +9,7 @@ import { AttachmentPanel, ApprovalPanel, ComparePanel, DiscussionPanel, RelatedP
 import { useRefreshObject } from './api.js';
 import { recordVisit, useFavouriteActions, useFavourites, useFlagOn, useShellMode } from '../shell/api.js';
 import { DiscussionTab, TimelineTab, TraceTab } from '../collab/CollabTabs.jsx';
+import PageHeader from '../design/PageHeader.jsx';
 
 // The Object Page (part 03.04): the same look for every record. A sticky header (number, status chips, key figures, owner and dates, the
 // buttons the server allows right now), then the tabs Details, Lines, Attachments, Approvals, Timeline, Discussion, Related (and
@@ -136,11 +137,8 @@ export default function ObjectPage({ type, id, query, heading, subtitle, chips, 
   return (
     <section className="op" aria-labelledby="op-title" data-testid="object-page">
       <nav aria-label="Breadcrumb" className="breadcrumb breadcrumb-object"><span className="bc-section">{section} &rsaquo; </span><a href={listPath} onClick={(e) => { e.preventDefault(); onBack(); }}>{listLabel}</a> &rsaquo; {heading(rec)}</nav>
-      <header className="op-head" data-testid="op-header">
-        <div className="op-title-row">
-          <h1 id="op-title">{heading(rec)}</h1>
-          <span className="op-chips">{chips(rec).map((c) => <StatusBadge key={c.label} status={c.status} label={c.label} />)}</span>
-        </div>
+      {/* the record's header is the shared page header (part 166.2, U-05): title, status chips, then the key facts, actions and anchor tabs */}
+      <PageHeader className="op-head" testid="op-header" id="op-title" title={heading(rec)} status={<span className="op-chips">{chips(rec).map((c, i) => <StatusBadge key={c.label} status={c.status} label={c.label} variant={i === 0 ? "soft" : "outline"} />)}</span>}>
         {subtitle && <p className="op-subtitle" data-testid="op-subtitle">{subtitle(rec)}</p>}
         <dl className="op-figures" aria-label="Key figures">
           {figures(rec).map((f) => <div key={f.label}><dt>{f.label}</dt><dd data-testid={`fig-${f.label.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '')}`}>{f.value}</dd></div>)}
@@ -169,7 +167,7 @@ export default function ObjectPage({ type, id, query, heading, subtitle, chips, 
             );
           })}
         </div>
-      </header>
+      </PageHeader>
       <div role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`} className="op-panel" tabIndex={0}>
         {active === 'details' && renderDetails(rec)}
         {active === 'lines' && renderLines?.(rec)}

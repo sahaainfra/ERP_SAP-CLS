@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { formatDate, formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { REQ_STATUS, deploy } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Deployment (HR, part 07.03): one deployment. Header: number and revision, status, the person, project and site, the dates, primary or secondary, against the plan; actions for this status and person: send, correct, withdraw,
 // cancel (an approved deployment is closed today and its access ends), amend (a new revision, approved again), print. Tabs: Details · Revisions (comparison) · Approvals · Timeline · Discussion.
@@ -29,7 +30,7 @@ export default function DeploymentPage() {
       <p><Link to="/hr/deployments">← Deployments</Link></p>
       {sp.get('sent') === '1' && <p className="mdm-banner" role="status" data-testid="dp-sent">Sent for approval: the project manager{r.band === 'OUTSIDE_PLAN' ? ', then the project director (outside the plan)' : ''}.</p>}
       <header className="op-header">
-        <div className="page-head"><h1 id="dp-title">{r.docNo} · {r.person}</h1><StatusBadge status={st} label={label} />{r.revision > 1 && <span className="muted">revision {r.revision}</span>}</div>
+        <PageHeader id="dp-title" title={<>{r.docNo} · {r.person}</>} status={<StatusBadge status={st} label={label} />} actions={<>{r.revision > 1 && <span className="muted">revision {r.revision}</span>}</>} />
         <dl className="op-figures">
           <div><dt>Project</dt><dd>{r.project}</dd></div><div><dt>Site</dt><dd>{r.site ?? '—'}</dd></div><div><dt>Crew</dt><dd>{r.crew ?? '—'}</dd></div>
           <div><dt>From – to</dt><dd data-testid="dp-dates">{formatDate(r.fromDate)} – {r.toDate ? formatDate(r.toDate) : 'open'}</dd></div><div><dt>Posting</dt><dd>{r.isPrimary ? 'Primary' : 'Secondary'}</dd></div>

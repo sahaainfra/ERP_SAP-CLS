@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useConnectorCatalog, useConnectors, useDisableConnector, useTestConnector } from '../api/index.js';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { FormDialog, Link, Pager, QueryState, can, downloadCsv, errorInfo, navigateTo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const STATUS = { PENDING: ['chip-never', 'Waiting for approval'], DISABLED: ['chip-off', 'Off'], ENABLED: ['chip-on', 'On'] };
 const BREAKER = { closed: 'Closed', open: 'Open (paused)', half_open: 'Testing' };
@@ -63,11 +64,7 @@ export default function ConnectorsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Integrations &rsaquo; Connectors</nav>
-      <div className="page-head">
-        <h1 id="page-title">Connectors</h1>
-        <button type="button" className="btn btn-primary" disabled={!canConfigure} title={canConfigure ? '' : 'Needs core.connectors.configure (IT Administrator)'} onClick={() => navigateTo('/admin/integrations/connector?new=1')}>New connector</button>
-      </div>
-      <p className="muted">Outside services the ERP talks to: email, SMS, WhatsApp, GST, banks, biometric devices, maps, OCR and AI. Credentials are encrypted and never shown. New connectors and changes need approval. <Link to="/admin/integrations/log">Integration log</Link> &middot; <Link to="/admin/approvals">Approvals</Link></p>
+      <PageHeader id="page-title" title={"Connectors"} actions={<><button type="button" className="btn btn-primary" disabled={!canConfigure} title={canConfigure ? '' : 'Needs core.connectors.configure (IT Administrator)'} onClick={() => navigateTo('/admin/integrations/connector?new=1')}>New connector</button></>} subtitle={<>Outside services the ERP talks to: email, SMS, WhatsApp, GST, banks, biometric devices, maps, OCR and AI. Credentials are encrypted and never shown. New connectors and changes need approval. <Link to="/admin/integrations/log">Integration log</Link> &middot; <Link to="/admin/approvals">Approvals</Link></>} />
       <p role="status" className="notice">{notice}</p>
 
       <div className="toolbar">

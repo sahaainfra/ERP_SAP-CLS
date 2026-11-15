@@ -6,6 +6,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { fmtQty, fmtRs, hr } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Compute hire bill (part 17.06, FR-02, BR-01): choose an approved agreement and a period; the server works out the hours from the verified logs (the hours still waiting are shown, not billed), the minimum guarantee, the breakdown deduction, fuel recovered and GST. A dispute is entered with its reason.
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); const back = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
@@ -16,7 +17,7 @@ export default function HireBillPage() {
   const body = () => ({ agreementId: Number(f.agreementId), periodFrom: f.periodFrom, periodTo: f.periodTo, ...(f.disputeHrs !== '' ? { disputeHrs: Number(f.disputeHrs) } : {}), ...(f.disputeReason ? { disputeReason: f.disputeReason } : {}) });
   const rs = (v) => (v == null ? '—' : fmtRs(v));
   return (
-    <section aria-labelledby="hc-h" data-testid="plant-hire-bill"><h1 id="hc-h">{t('h.computeBill')}</h1><p className="muted">{t('h.computeIntro')} <Link to="/plant/hire-agreements">{t('h.agreementsTitle')}</Link></p>
+    <section aria-labelledby="hc-h" data-testid="plant-hire-bill"><PageHeader id="hc-h" title={t('h.computeBill')} subtitle={<>{t('h.computeIntro')} <Link to="/plant/hire-agreements">{t('h.agreementsTitle')}</Link></>} />
       {error?.form && <p className="field-error" role="alert" data-testid="hc-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid"><Field label={t('h.agreement')} name="agreementId" error={error}><select value={f.agreementId} onChange={(ev) => set('agreementId', ev.target.value)} style={{ minHeight: 48 }} data-testid="hc-agreement"><option value="">—</option>{(aq.data.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.docNo} · {a.assetCode} · {t(`h.dir.${a.direction}`)}</option>)}</select></Field>
         <Field label={t('h.from')} name="periodFrom" error={error}><input type="date" value={f.periodFrom} max={today()} onChange={(ev) => set('periodFrom', ev.target.value)} style={{ minHeight: 48 }} data-testid="hc-from" /></Field><Field label={t('h.to')} name="periodTo" error={error}><input type="date" value={f.periodTo} max={today()} onChange={(ev) => set('periodTo', ev.target.value)} style={{ minHeight: 48 }} data-testid="hc-to" /></Field>

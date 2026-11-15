@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { RESPONSES, VDR_TONE, ep, openPrint } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // VDR item (part 11.04): one document a vendor owes: the receipt, the review code proposed by the reviewer and approved by the engineering manager, and the cycles.
 export default function VdrItemPage() {
@@ -15,7 +16,7 @@ export default function VdrItemPage() {
   const q = useQuery({ queryKey: ['engg', 'vdr-item', id], queryFn: () => ep.vdr(id), enabled: Boolean(id), retry: false });
   const [error, setError] = useState(null); const [note, setNote] = useState(null); const [rv, setRv] = useState({ code: 'A', text: '' });
   usePageTitle(q.data ? `${q.data.vdrNo} ${q.data.title}` : t('vdr.itemTitle'));
-  if (!id) return <section aria-labelledby="vi-h" data-testid="vdr-none"><h1 id="vi-h">{t('vdr.itemTitle')}</h1><p className="muted"><Link to="/engg/vdr">{t('nav.vdr')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="vi-h" data-testid="vdr-none"><PageHeader id="vi-h" title={t('vdr.itemTitle')} subtitle={<Link to="/engg/vdr">{t('nav.vdr')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('nav.vdr')} permission="engg.vdr_item.view" />;
   if (q.isPending) return <Skeleton label={t('vdr.itemTitle')} rows={4} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -25,8 +26,7 @@ export default function VdrItemPage() {
   return (
     <section aria-labelledby="vi-h" data-testid="vdr-item" data-status={v.status} data-cycle={v.cycle}>
       <header>
-        <h1 id="vi-h">{v.vdrNo} · {v.title} <StatusBadge status={VDR_TONE[v.status]} label={t(`vdrs.${v.status}`)} /></h1>
-        <p className="muted">{v.projectCode} · {t('vdr.po')} {v.poRef} · {v.vendor} · {t(`vtype.${v.docType}`)} · {t('vdr.due')} {v.dueDate}{v.overdue ? ` · ${t('dwg.overdue')}` : ''} · {t('vdr.cycle')} {v.cycle}</p>
+        <PageHeader id="vi-h" title={<>{v.vdrNo} · {v.title} <StatusBadge status={VDR_TONE[v.status]} label={t(`vdrs.${v.status}`)} /></>} subtitle={<>{v.projectCode} · {t('vdr.po')} {v.poRef} · {v.vendor} · {t(`vtype.${v.docType}`)} · {t('vdr.due')} {v.dueDate}{v.overdue ? ` · ${t('dwg.overdue')}` : ''} · {t('vdr.cycle')} {v.cycle}</>} />
         <p data-testid="vdr-review">{v.reviewCode ? `${t('vdr.reviewCode')}: ${v.reviewCode} ${t(`sresp.${v.reviewCode}`)}${v.reviewText ? ` — ${v.reviewText}` : ''}` : t('vdr.notReviewed')}{v.submittedOn ? ` · ${t('sub.submittedOn')} ${v.submittedOn}` : ''}</p>
         {error?.form && <p className="field-error" role="alert" data-testid="vdr-act-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="vdr-note">{note}</p>}

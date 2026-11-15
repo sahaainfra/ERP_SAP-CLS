@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { RESULT_TONE, XPD_TONE, download, fmtDate, pc, pct, pv8, today } from './api.js';
 import { History, useRunner } from './XpdParts.jsx';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Vendor prequalification (part 15.08, FR-01, FR-02): the questionnaire is scored per section, a visit report is recorded, and the approval (procurement manager, quality manager, the direction for a strategic category) puts the vendor on the approved vendor list.
 function Preq({ t, id }) {
@@ -23,8 +24,7 @@ function Preq({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('x.sayWhy') }); return; } run(() => pc.decide(r.taskId, action, comment.trim() || null), t(`x.done.${action}`)); };
   return (
     <div data-testid="pq-object" data-status={r.status} data-result={r.result}>
-      <h1 id="pq-h">{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.s.${r.status}`)} /><StatusBadge status={RESULT_TONE[r.result]} label={t(`v.res.${r.result}`)} />{r.strategic && <StatusBadge status="RETURNED" label={t('v.strategic')} />}</h1>
-      <p><Link to="/proc/prequalifications">{t('x.back')}</Link> · <Link to={`/proc/vendor-scorecards?partner=${r.partnerId}`}>{r.vendor}</Link> ({r.vendorCode})</p>
+      <PageHeader id="pq-h" title={<>{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.s.${r.status}`)} /><StatusBadge status={RESULT_TONE[r.result]} label={t(`v.res.${r.result}`)} />{r.strategic && <StatusBadge status="RETURNED" label={t('v.strategic')} />}</>} meta={<><Link to="/proc/prequalifications">{t('x.back')}</Link> · <Link to={`/proc/vendor-scorecards?partner=${r.partnerId}`}>{r.vendor}</Link> ({r.vendorCode})</>} />
       <dl className="kv" data-testid="pq-figures"><div><dt>{t('v.score')}</dt><dd data-testid="pq-score">{pct(r.score)}</dd></div><div><dt>{t('v.categories')}</dt><dd>{r.categories.map((c) => c.name).join(', ')}</dd></div><div><dt>{t('v.regions')}</dt><dd>{r.regions.length ? r.regions.join(', ') : t('v.allRegions')}</dd></div><div><dt>{t('v.validUntil')}</dt><dd>{fmtDate(r.validUntil)}</dd></div>
         <div><dt>{t('v.visit')}</dt><dd>{r.visitDate ? `${fmtDate(r.visitDate)} · ${r.visitNotes ?? ''}` : '—'}</dd></div>{r.conditions && <div><dt>{t('v.conditions')}</dt><dd>{r.conditions}</dd></div>}</dl>
       {error?.form && <p className="field-error" role="alert" data-testid="pq-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="pq-note">{note}</p>}
@@ -60,7 +60,7 @@ function PreqForm({ t, editId }) {
     answers: o.sections.filter((s) => form.scores[s.code] !== '' && form.scores[s.code] != null).map((s) => ({ section: s.code, score: Number(form.scores[s.code]), note: form.notes[s.code] || null })) });
   const save = async (send) => { setError(null); setBusy(true); try { let d = editId ? await pv8.preqUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await pv8.preqCreate({ partnerId: Number(form.partnerId), ...body() }); if (send) d = await pv8.preqAct(d.id, 'submit'); navigateTo(`/proc/prequalifications?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="pqn-h" data-testid="proc-pq-form"><h1 id="pqn-h">{editId ? t('x.edit') : t('v.newPreq')}</h1><p className="muted">{t('v.newPreqHelp', { q: o.thresholds.qualify, c: o.thresholds.conditional })}</p><p><Link to="/proc/prequalifications">{t('x.back')}</Link></p>
+    <section aria-labelledby="pqn-h" data-testid="proc-pq-form"><PageHeader id="pqn-h" title={editId ? t('x.edit') : t('v.newPreq')} subtitle={t('v.newPreqHelp', { q: o.thresholds.qualify, c: o.thresholds.conditional })} meta={<Link to="/proc/prequalifications">{t('x.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">
           {editId ? <p>{e.vendor}</p> : <Field label={t('x.vendor')} name="partnerId" error={error}><select value={form.partnerId} onChange={(ev) => set('partnerId', ev.target.value)} style={{ minHeight: 44 }} data-testid="pqn-vendor"><option value="">{t('x.choose')}</option>{o.vendors.map((v) => <option key={v.id} value={v.id}>{v.code} · {v.name}</option>)}</select></Field>}
@@ -84,7 +84,7 @@ export default function PrequalificationsPage() {
   if (sp.get('new') === '1') return <PreqForm key={sp.get('edit') ?? 'new'} t={t} editId={Number(sp.get('edit')) || null} />;
   if (id) return <section aria-labelledby="pq-h" data-testid="proc-pq"><Preq key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="pqs-h" data-testid="proc-pq"><h1 id="pqs-h">{t('v.preqTitle')}</h1><p className="muted">{t('v.preqIntro')}</p>
+    <section aria-labelledby="pqs-h" data-testid="proc-pq"><PageHeader id="pqs-h" title={t('v.preqTitle')} subtitle={t('v.preqIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.prequalification.create') && <Link to="/proc/prequalifications?new=1">{t('v.newPreq')}</Link>} <Link to="/proc/avl">{t('v.avlTitle')}</Link> <Link to="/proc/vendor-ranking">{t('v.rankTitle')}</Link></div>
       <ListReport listCode="proc.prequalifications" endpoint="/proc/prequalifications" title={t('v.preqTitle')} session={session.data} rowHref={(r) => `/proc/prequalifications?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/prequalifications?id=${r.id}`)}
         cardFields={['docNo', 'vendor', 'score', 'result', 'validUntil']} statusKey="status" empty={{ title: t('v.preqEmptyTitle'), text: t('v.preqEmptyBody') }} /></section>

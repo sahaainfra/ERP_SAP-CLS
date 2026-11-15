@@ -6,6 +6,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { LETTER_CATS, dayIST, lt } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Correspondence Register (part 11.05): inward and outward tabs with the overdue-reply filter; an inward letter is registered on this page, an outward one is drafted on its own page.
 export default function LettersPage() {
@@ -25,7 +26,7 @@ export default function LettersPage() {
   const txt = (k, label, props = {}) => <Field label={label} name={k} error={error}><input value={f[k]} onChange={(e) => set(k, e.target.value)} data-testid={`lt-f-${k}`} {...props} /></Field>;
   return (
     <section aria-labelledby="lt-list-h" data-testid="eg-letters">
-      <h1 id="lt-list-h" className="sr-only">{t('letter.registerTitle')}</h1>
+      <PageHeader id="lt-list-h" srOnly title={t('letter.registerTitle')} />
       <div className="actions-row no-print">
         {perms.includes('engg.letter.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="lt-new-in">{t('letter.registerInward')}</button>}
         {perms.includes('engg.letter.create') && <button type="button" className="btn" onClick={() => navigateTo('/engg/letter-draft')} data-testid="lt-new-out">{t('letter.draftOutward')}</button>}

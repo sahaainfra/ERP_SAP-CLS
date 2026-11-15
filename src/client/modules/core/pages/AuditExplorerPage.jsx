@@ -3,6 +3,8 @@ import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { Changes } from '../../../platform/audit/RecordHistory.jsx';
 import { useAuditEntities, useAuditSegments, useAuditTrail, useAuditVerification, useVerifyAudit } from '../api/audit.js';
 import { Pager, QueryState, can, downloadCsv, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 /** The audit trail: every change anyone made, who, when, from where, with the field changes; and whether the chain is intact. */
 export default function AuditExplorerPage({ session }) {
@@ -28,10 +30,9 @@ export default function AuditExplorerPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Audit</nav>
-      <div className="page-head"><h1 id="page-title">Audit Explorer</h1></div>
-      <p className="muted">Every change to a record is kept here and cannot be edited or deleted. Each entry is chained to the one before it, so a change made behind the application's back is found by the nightly check.</p>
+      <PageHeader id="page-title" title={"Audit Explorer"} subtitle={"Every change to a record is kept here and cannot be edited or deleted. Each entry is chained to the one before it, so a change made behind the application's back is found by the nightly check."} />
       <p role="status" className="notice" data-testid="audit-notice">{notice}</p>
-      <div className="tiles" data-testid="chain-status">
+      <KpiRow data-testid="chain-status">
         <div className={`tile ${v?.healthy === false ? 'tile-bad' : v?.healthy ? 'tile-ok' : ''}`}>
           <span>Audit chain</span>
           <strong>{v?.healthy === false ? 'Broken' : v?.healthy ? 'Intact' : v ? 'Not checked yet' : '...'}</strong>
@@ -40,7 +41,7 @@ export default function AuditExplorerPage({ session }) {
         </div>
         <div className="tile"><span>Sealed months</span><strong>{segments.data?.segments.length ?? 0}</strong><span className="muted small">Kept for {segments.data?.retentionMonths ?? 84} months</span></div>
         {can(session, 'core.audit.verify') && <button type="button" className="btn btn-primary" disabled={verify.isPending} onClick={async () => { setNotice(''); try { const r = await verify.mutateAsync(); setNotice(r.ok ? `The chain is intact: ${r.checked} entries checked.` : `The chain is BROKEN at entry ${r.brokenSeq}: ${r.problem}`); } catch (err) { setNotice(errorInfo(err).form); } }}>{verify.isPending ? 'Checking...' : 'Verify now'}</button>}
-      </div>
+      </KpiRow>
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Search the audit trail</span><input type="search" placeholder="Search person, record, action or reason" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label>
         <label className="field field-inline"><span className="sr-only">Kind of record</span>

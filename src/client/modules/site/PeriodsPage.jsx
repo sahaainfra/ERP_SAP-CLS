@@ -10,6 +10,7 @@ import { useSession } from '../core/api/index.js';
 import { PRD_TONE, fmtDate, fmtPct, fmtRatio, fmtRs, openPrint, st, today } from './api.js';
 import { useProjects } from './progress-parts.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Progress Period Close (part 14.05, FR-02, BR-02): a weekly or monthly period with its manual adjustments (a quantity added or taken off an activity, with a reason) and the actual cost; the server works out the
 // snapshot when it is sent, the project manager closes it, and a closed period never changes (a correction is an amendment of the latest one).
@@ -71,8 +72,7 @@ function Period({ t, id, onGone }) {
   if (editing) return <PeriodForm t={t} editing={d} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} />;
   return (
     <div data-testid="per-object" data-status={d.status}>
-      <h1 id="per-h">{d.docNo} · {fmtDate(d.periodStart)} – {fmtDate(d.periodEnd)} <StatusBadge status={PRD_TONE[d.status]} label={t(`cnd.per.s.${d.status}`)} /></h1>
-      <p><Link to="/site/periods">{t('cnd.per.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</p>
+      <PageHeader id="per-h" title={<>{d.docNo} · {fmtDate(d.periodStart)} – {fmtDate(d.periodEnd)} <StatusBadge status={PRD_TONE[d.status]} label={t(`cnd.per.s.${d.status}`)} /></>} meta={<><Link to="/site/periods">{t('cnd.per.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</>} />
       <dl className="kv" data-testid="per-figures"><div><dt>{t('cnd.prg.project')}</dt><dd>{d.projectCode} · {d.projectName}</dd></div><div><dt>{t('cnd.per.type')}</dt><dd>{t(`cnd.per.t.${d.periodType}`)}</dd></div>
         <div><dt>{t('cnd.prg.planned')}</dt><dd data-testid="per-planned">{fmtPct(d.planned)}</dd></div><div><dt>{t('cnd.prg.actual')}</dt><dd data-testid="per-physical">{fmtPct(d.physical)}</dd></div>
         {s?.project && <div><dt>SPI</dt><dd data-testid="per-spi">{fmtRatio(s.project.spi)}</dd></div>}{s?.project?.cpi != null && <div><dt>CPI</dt><dd>{fmtRatio(s.project.cpi)}</dd></div>}{s?.project?.eac != null && <div><dt>EAC</dt><dd>{fmtRs(s.project.eac)}</dd></div>}
@@ -117,10 +117,10 @@ export default function PeriodsPage() {
   const t = useT('site'); usePageTitle(t('cnd.per.title'));
   const sp = useSearch(); const id = Number(sp.get('id')) || null; const isNew = sp.get('new') === '1'; const session = useSession(); const perms = session.data?.permissions ?? [];
   if (id) return <section aria-labelledby="per-h" data-testid="site-periods"><Period key={id} t={t} id={id} onGone={() => navigateTo('/site/periods')} /></section>;
-  if (isNew) return <section data-testid="site-periods"><h1 className="sr-only">{t('cnd.per.new')}</h1><PeriodForm t={t} editing={null} onSaved={(d) => navigateTo(`/site/periods?id=${d.id}`)} onCancel={() => navigateTo('/site/periods')} /></section>;
+  if (isNew) return <section data-testid="site-periods"><PageHeader srOnly title={t('cnd.per.new')} /><PeriodForm t={t} editing={null} onSaved={(d) => navigateTo(`/site/periods?id=${d.id}`)} onCancel={() => navigateTo('/site/periods')} /></section>;
   return (
     <section aria-labelledby="per-h" data-testid="site-periods">
-      <h1 id="per-h" className="sr-only">{t('cnd.per.title')}</h1>
+      <PageHeader id="per-h" srOnly title={t('cnd.per.title')} />
       <div className="actions-row no-print">{perms.includes('site.period.create') && <Link to="/site/periods?new=1">{t('cnd.per.new')}</Link>} <Link to="/site/progress">{t('cnd.prg.title')}</Link> <Link to="/site/progress-report">{t('cnd.rep.title')}</Link> <Link to="/site/client-progress">{t('cnd.cli.title')}</Link></div>
       <ListReport listCode="site.periods" endpoint="/site/periods" title={t('cnd.per.title')} session={session.data} rowHref={(r) => `/site/periods?id=${r.id}`} onOpen={(r) => navigateTo(`/site/periods?id=${r.id}`)}
         cardFields={['docNo', 'project', 'periodEnd', 'physical', 'planned']} statusKey="status" empty={{ title: t('cnd.per.emptyTitle'), text: t('cnd.per.emptyBody') }} />

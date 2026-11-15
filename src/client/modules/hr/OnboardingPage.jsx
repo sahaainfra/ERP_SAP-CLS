@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { employees, recruit } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Onboarding Checklist (HR, part 07.02): the joining tasks given to the departments (IT access, ID card, PPE, induction, bank details, statutory forms), oldest first with a colour for how late each is. A department sees its
 // own tasks; HR sees all. A task is completed with a note (a late one shows how many days), HR may waive one with a reason; once the employee is approved, "Create user account" makes the account from the employee record.
@@ -22,7 +23,7 @@ export default function OnboardingPage() {
   const d = q.data;
   return (
     <section aria-labelledby="ob2-title" data-testid="onboarding">
-      <h1 id="ob2-title">Onboarding Checklist</h1>
+      <PageHeader id="ob2-title" title={"Onboarding Checklist"} />
       <form className="srch-form" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Tasks" name="status" error={null}><select value={status} onChange={(e) => setStatus(e.target.value)} data-testid="on-status"><option value="OPEN">Open</option><option value="">All</option><option value="DONE">Done</option><option value="WAIVED">Waived</option></select></Field>
       </form>

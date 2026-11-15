@@ -6,6 +6,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { pa } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New equipment requisition (part 17.02, FR-01): the class, capacity, quantity, period, purpose and activity; the availability of the fleet for the period is shown while the form is filled.
 const blank = { projectId: '', siteId: '', classItemId: '', capacity: '', qty: '1', fromDate: '', toDate: '', purpose: '', activityId: '', priority: 'NORMAL' };
@@ -20,7 +21,7 @@ export default function RequisitionNewPage() {
   const save = async (submit) => { const d = await run(async () => { let r = id ? await pa.reqUpdate(id, { ...body(), rowVersion: eq.data?.version }) : await pa.reqCreate(body()); if (submit) r = await pa.reqAct(r.id, 'submit'); return r; }, submit ? t('submitted') : t('saved')); if (d) navigateTo(`/plant/requisitions?id=${d.id}`); };
   const req = <span aria-hidden="true" className="muted"> *</span>; const ok = f.projectId && f.classItemId && f.fromDate && f.toDate && f.purpose;
   return (
-    <section aria-labelledby="rn-h" data-testid="plant-rq-new"><h1 id="rn-h">{id ? t('a.reqEdit') : t('a.reqNew')}</h1><p className="muted">{t('a.reqNewIntro')} <Link to="/plant/requisitions">{t('a.reqTitle')}</Link></p>
+    <section aria-labelledby="rn-h" data-testid="plant-rq-new"><PageHeader id="rn-h" title={id ? t('a.reqEdit') : t('a.reqNew')} subtitle={<>{t('a.reqNewIntro')} <Link to="/plant/requisitions">{t('a.reqTitle')}</Link></>} />
       {error?.form && <p className="field-error" role="alert" data-testid="rn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="mdm-panel"><h2>{t('a.secWhere')}</h2><div className="form-grid">
         <Field label={<>{t('project')}{req}</>} name="projectId" error={error}><select value={f.projectId} onChange={(ev) => setF({ ...f, projectId: ev.target.value, siteId: '', activityId: '' })} style={{ minHeight: 44 }} data-testid="rn-project" aria-required="true"><option value="">—</option>{o.projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>

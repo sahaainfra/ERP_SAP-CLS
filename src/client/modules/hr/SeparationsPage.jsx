@@ -6,6 +6,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, ext } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Separations (HR, part 07.13): the list of resignations and terminations with their last working day and status; HR starts a termination here (the HR manager and the director approve it) and reads the analysis of the exit interviews:
 // how many leavers were interviewed, the average rating, how many would come back, the reasons and the departments.
@@ -25,7 +26,7 @@ export default function SeparationsPage() {
   };
   return (
     <section aria-labelledby="sl-title" data-testid="separations">
-      <h1 id="sl-title" className="sr-only">{t('list.title')}</h1>
+      <PageHeader id="sl-title" srOnly title={t('list.title')} />
       <ListReport listCode="hr.separations" endpoint="/hr/separations" title={t('list.title')} session={session.data} rowHref={(r) => `/exit/separation?id=${r.id}`} onOpen={(r) => navigateTo(`/exit/separation?id=${r.id}`)} cardFields={['employee', 'type', 'lastWorkingDay', 'status']} statusKey="status"
         newAction={perms.includes('hr.separation.terminate') ? { label: t('list.terminate'), onClick: () => setAdding(true) } : undefined} empty={{ title: t('list.emptyTitle'), text: t('list.emptyText') }} />
       {adding && (

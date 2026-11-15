@@ -5,6 +5,7 @@ import { authHeaders } from '../../platform/api/index.js';
 import { formatDateTime } from '../../platform/format.js';
 import { Field, FormDialog, Pager, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Translations (part 03.09, FR-02): the text of the screens and messages in English and Hindi. Find a text, change its wording (a request that another
 // system administrator approves), send the strings to a translator as a workbook and read the translated one back, and see what has no Hindi yet.
@@ -129,8 +130,7 @@ export default function TranslationsPage({ session }) {
   const done = missing.data?.perNamespace?.reduce((n, x) => n + x.translated, 0) ?? 0;
   return (
     <section aria-labelledby="tr-title" data-testid="translations">
-      <h1 id="tr-title">Translations</h1>
-      <p className="muted">The text of the screens and messages in English and Hindi. A change to the wording applies after another system administrator approves it, and is kept with the old and new text.</p>
+      <PageHeader id="tr-title" title={"Translations"} subtitle={"The text of the screens and messages in English and Hindi. A change to the wording applies after another system administrator approves it, and is kept with the old and new text."} />
       {notice && <p role="status" className="notice" data-testid="tr-notice">{notice}</p>}
       {missing.data && (
         <p data-testid="tr-coverage"><strong>{done}</strong> of <strong>{total}</strong> texts have Hindi. {missing.data.missing.length > 0 ? <>{missing.data.missing.length} missing: use "Missing in Hindi" below.</> : 'Nothing is missing.'}{missing.data.placeholders.length > 0 && ` ${missing.data.placeholders.length} Hindi text(s) lack a {placeholder} of the English.`}</p>

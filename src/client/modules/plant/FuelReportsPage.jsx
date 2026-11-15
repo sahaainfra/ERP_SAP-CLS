@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate, fmtQty, fmtRs, fu } from './api.js';
 import { ExportButton } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Fuel reports (part 17.04): the daily tank reconciliation (FR-03: opening + receipts - issues = book, against the dip) and the consumption against the norm of each machine, class or project (FR-04, FR-06) with the cost of the fuel.
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); const back = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
@@ -18,7 +19,7 @@ export default function FuelReportsPage() {
   const q = tab === 'recon' ? rq : cq; if (q.error?.status === 403) return <NoPermission what={t('f.reportsTitle')} permission="plant.fuel.report" />;
   const d = q.data;
   return (
-    <section aria-labelledby="fr-h" data-testid="plant-fuel-reports"><h1 id="fr-h">{t('f.reportsTitle')}</h1><p className="muted">{t('f.reportsIntro')} <Link to="/plant/fuel-anomalies">{t('f.anomaliesTitle')}</Link></p>
+    <section aria-labelledby="fr-h" data-testid="plant-fuel-reports"><PageHeader id="fr-h" title={t('f.reportsTitle')} subtitle={<>{t('f.reportsIntro')} <Link to="/plant/fuel-anomalies">{t('f.anomaliesTitle')}</Link></>} />
       <div role="tablist" className="tabs no-print">{['recon', 'cons'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`fr-tab-${k}`}>{t(`f.tab.${k}`)}</button>)}</div>
       <div className="mdm-panel no-print" data-testid="fr-params"><div className="form-grid"><label>{t('f.from')}<input type="date" value={f.from} max={f.to} onChange={(ev) => set('from', ev.target.value)} style={{ minHeight: 44 }} data-testid="fr-from" /></label><label>{t('f.to')}<input type="date" value={f.to} max={today()} onChange={(ev) => set('to', ev.target.value)} style={{ minHeight: 44 }} data-testid="fr-to" /></label>
         {tab === 'cons' && <label>{t('f.groupBy')}<select value={f.groupBy} onChange={(ev) => set('groupBy', ev.target.value)} style={{ minHeight: 44 }} data-testid="fr-group">{['equipment', 'class', 'project'].map((g) => <option key={g} value={g}>{t(`f.gb.${g}`)}</option>)}</select></label>}</div>

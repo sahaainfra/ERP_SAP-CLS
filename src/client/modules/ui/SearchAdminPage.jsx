@@ -5,6 +5,7 @@ import { useReindex, useSearchAnalytics, useSearchStatus } from '../../platform/
 import { formatDateTime } from '../../platform/format.js';
 import { ApiError } from '../../platform/api/index.js';
 import { can } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Search Administration (part 03.08, BR-02, FR-06): how complete the search index is for each kind of record, the rebuild of one kind or all of them
 // (a background job with progress, for the IT administrator), and the analytics of what people searched for, with the searches that found nothing.
@@ -36,8 +37,7 @@ export default function SearchAdminPage({ session }) {
   const a = analytics.data;
   return (
     <section aria-labelledby="sa-title" data-testid="search-admin">
-      <h1 id="sa-title">Search Administration</h1>
-      <p className="muted">The search index keeps the words of each record so people can find it fast. It follows changes by itself; rebuild a kind only after an import, a restore or when results look wrong. Every rebuild is recorded with its reason.</p>
+      <PageHeader id="sa-title" title={"Search Administration"} subtitle={"The search index keeps the words of each record so people can find it fast. It follows changes by itself; rebuild a kind only after an import, a restore or when results look wrong. Every rebuild is recorded with its reason."} />
       {notice && <p role="status" className="notice">{notice}</p>}
 
       <h2>Index</h2>

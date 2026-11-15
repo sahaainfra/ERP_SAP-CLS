@@ -6,6 +6,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { PROJECT_TYPES, SECTORS, bl, inr } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Create Project from Award (part 10.02, FR-01): choose an awarded tender, see what will be copied (client, place, contract value, period, the BOQ of the approved estimate with its rates, indirects, assumptions) and add only what the
 // award cannot hold (code, type, start date, team, a first site, key clauses). The project, its BOQ and its draft baseline pack are made in one transaction; nothing already held by the tender or the estimate is typed again.
@@ -39,8 +40,7 @@ export default function FromAwardPage() {
   if (cq.isError) return <ErrorState error={cq.error} onRetry={cq.refetch} />;
   return (
     <section aria-labelledby="fa-h" data-testid="from-award">
-      <h1 id="fa-h">{t('fa.title')}</h1>
-      <p className="muted">{t('fa.intro')}</p>
+      <PageHeader id="fa-h" title={t('fa.title')} subtitle={t('fa.intro')} />
       {cq.data.length === 0 ? (
         <div className="mdm-banner" data-testid="fa-empty"><strong>{t('fa.emptyTitle')}</strong> {t('fa.emptyText')} <Link to="/proj/wizard">{t('fa.orWizard')}</Link></div>
       ) : (

@@ -4,6 +4,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { parseSorRows, rates } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Schedule of Rates (Administration, part 06.06, FR-02): the books (CPWD DSR, state PWD and client SORs) in editions, and the items of the chosen edition with search. The estimator creates a book, adds
 // its items (pasted from a spreadsheet, or the Excel import "Schedule of rates items") to the draft edition, puts it in use (the previous edition is superseded) and starts a new edition for the next year.
@@ -30,7 +31,7 @@ export default function SchedulesOfRatesPage() {
   const b = book.data;
   return (
     <section aria-labelledby="sor-title" data-testid="schedules-of-rates" className="fin-page">
-      <div className="page-head"><h1 id="sor-title">Schedule of Rates</h1>{d.canEdit && <div className="actions-row"><button type="button" className="btn btn-primary btn-small" onClick={() => { setError(null); setForm({ code: '', name: '', authority: 'CPWD', year: new Date().getFullYear(), region: '' }); }} data-testid="sor-new">New schedule</button><Link to="/import">Import items from Excel</Link></div>}</div>
+      <PageHeader id="sor-title" title={"Schedule of Rates"} actions={<>{d.canEdit && <div className="actions-row"><button type="button" className="btn btn-primary btn-small" onClick={() => { setError(null); setForm({ code: '', name: '', authority: 'CPWD', year: new Date().getFullYear(), region: '' }); }} data-testid="sor-new">New schedule</button><Link to="/import">Import items from Excel</Link></div>}</>} />
       {note && <p className="mdm-banner" role="status" data-testid="sor-note">{note}</p>}
       {error?.form && !form && <p className="field-error" role="alert" data-testid="sor-error">{error.form}</p>}
       {form && (

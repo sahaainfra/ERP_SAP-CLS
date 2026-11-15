@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states
 import { formatDateTime } from '../../platform/format.js';
 import { PRIORITY, comm, usePending, useRefreshComm } from '../../platform/messages/Comm.jsx';
 import { errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Pending Acknowledgements (part 05.04, section 7.2): a worklist of the instructions the person has to acknowledge, overdue and urgent first, with a colour for how late they are, a quick acknowledge (with an optional
 // answer) and a bulk acknowledge for the ones the policy allows (not high or urgent: those are acknowledged one by one).
@@ -23,8 +24,7 @@ export default function PendingAcknowledgementsPage({ session }) {
   const tone = (r) => (r.overdue ? 'is-overdue' : r.dueSoon ? 'is-soon' : '');
   return (
     <section aria-labelledby="pa-title" data-testid="pending-acks">
-      <h1 id="pa-title">Pending Acknowledgements</h1>
-      <p className="muted">{q.data.counts.pending} waiting, {q.data.counts.overdue} overdue, {q.data.counts.urgent} urgent. Overdue and urgent first.</p>
+      <PageHeader id="pa-title" title={"Pending Acknowledgements"} subtitle={<>{q.data.counts.pending} waiting, {q.data.counts.overdue} overdue, {q.data.counts.urgent} urgent. Overdue and urgent first.</>} />
       {notice && <p role="status" className="notice" data-testid="pa-notice">{notice}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="pa-error">{error.form}{error.correlationId && <> (Correlation ID: <code>{error.correlationId}</code>)</>}</p>}
       {rows.length === 0 ? <EmptyState title="Nothing to acknowledge" message="When someone sends you an instruction that needs your acknowledgement, it appears here." action={<button type="button" className="btn btn-primary" onClick={() => navigateTo('/collab/messages')}>Open Messages</button>} /> : (

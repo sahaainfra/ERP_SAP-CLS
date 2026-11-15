@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { ext } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Clearance Items (HR, part 07.13, FR-02, the worklist): the clearances of leavers that the person's department owns (IT, stores, accounts, admin, the project of their team, HR), oldest last working day first, red when the day has passed,
 // amber within three days. Each item is cleared, marked not applicable or cleared with an amount to recover in the full-and-final; what the system knows is shown (the user account, advances outstanding, open tasks, the exit interview) and
@@ -23,7 +24,7 @@ export default function ClearanceWorklistPage() {
   const setItem = (c, i, patch) => setEdit({ ...edit, [c.id]: { ...(edit[c.id] ?? {}), [i.code]: { ...val(c, i), ...patch } } });
   return (
     <section aria-labelledby="cw-title" data-testid="clearances">
-      <h1 id="cw-title">{t('clr.title')}</h1>
+      <PageHeader id="cw-title" title={t('clr.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="cw-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="cw-note">{note}</p>}
       {q.isPending ? <Skeleton label={t('clr.title')} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : q.data.length === 0 ? <EmptyState title={t('clr.none')} message={t('clr.noneHint')} /> : (

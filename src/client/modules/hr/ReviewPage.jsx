@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { perf } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Appraisal Review (HR, part 07.11, FR-05): one review of one person in one cycle, in its stages: the person writes their self-review (a rating of 1 to 5 and what they did), the manager reviews, HR calibrates (a rating that differs from the
 // manager's carries its reason) and writes the development plan, then the final rating is approved by the manager, the skip-level reviewer and the HR manager (the director too for senior grades). The KPI and goal scores are shown beside the rating,
@@ -29,8 +30,7 @@ export default function ReviewPage() {
   const select = (value, onChange, testid) => <select value={value} onChange={(e) => onChange(e.target.value)} required data-testid={testid}><option value="">{t('s.pick')}</option>{ratings.map((n) => <option key={n} value={n}>{n} · {t(`rating.${n}`)}</option>)}</select>;
   return (
     <section aria-labelledby="rv-title" data-testid="review" data-status={r.status} data-stage={r.stage}>
-      <h1 id="rv-title">{r.employee} <StatusBadge status={TONE[r.status]} label={t(`rv.st.${r.status}`)} /></h1>
-      <p className="muted">{r.docNo} · {r.code}{r.designation ? ` · ${r.designation}` : ''} · {r.cycle}{r.band === 'SENIOR' ? ` · ${t('rv.senior')}` : ''}</p>
+      <PageHeader id="rv-title" title={<>{r.employee} <StatusBadge status={TONE[r.status]} label={t(`rv.st.${r.status}`)} /></>} subtitle={<>{r.docNo} · {r.code}{r.designation ? ` · ${r.designation}` : ''} · {r.cycle}{r.band === 'SENIOR' ? ` · ${t('rv.senior')}` : ''}</>} />
       <ol className="prf-stages" aria-label={t('rv.stages')}>{STAGES.map((s) => <li key={s} aria-current={s === r.stage ? 'step' : undefined} className={STAGES.indexOf(s) < STAGES.indexOf(r.stage) ? 'prf-done' : ''}>{t(`stage.${s}`)}</li>)}</ol>
       {error?.form && <p className="field-error" role="alert" data-testid="rv-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="rv-note">{note}</p>}

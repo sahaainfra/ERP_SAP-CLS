@@ -4,6 +4,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { LICENCE_STATE, dayIST, lab } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Labour Contractors (HR, part 07.08, FR-01, FR-06 and FR-08): the labour contractors of the partner master with the state of the CLRA licence, the most workers allowed, the workers registered, deployed and punched in on the day,
 // and a state that says which need attention (licence ended or ending, more workers than licensed). A row opens the compliance of the contractor.
@@ -15,7 +16,7 @@ export default function ContractorsPage() {
   const rows = q.data ?? [];
   return (
     <section aria-labelledby="lc-title" data-testid="contractors">
-      <h1 id="lc-title">Labour Contractors</h1>
+      <PageHeader id="lc-title" title={"Labour Contractors"} />
       <form className="srch-form" aria-label="Parameters" onSubmit={(e) => e.preventDefault()}><Field label="Strength on" name="date" error={null}><input type="date" value={date} onChange={(e) => setDate(e.target.value)} data-testid="lc-date" /></Field></form>
       {q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : q.isPending ? <Skeleton label="Loading the contractors" rows={4} /> : rows.length === 0 ? <EmptyState title="No labour contractor" message="Add a business partner with the role labour contractor in the partner master (06.04); it appears here." /> : (
         <div className="table-wrap" tabIndex={0} role="region" aria-label="Labour contractors">

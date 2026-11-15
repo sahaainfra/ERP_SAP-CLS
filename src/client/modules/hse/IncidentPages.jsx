@@ -11,6 +11,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, hse, qs } from './api.js';
 import { DocBar, ErrorLine, ProjectSite, Status, big, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Incidents (part 19.03): the two-minute report for the phone, the register with the rates, the incident with its investigation, actions, statutory and insurance records and lessons, and the Lessons Learned bulletin.
 const SEV_TONE = { LOW: 'APPROVED', MEDIUM: 'IN_REVIEW', HIGH: 'RETURNED', CRITICAL: 'REJECTED' }; const stamp = (s) => (s ? s.replace('T', ' ') : '—'); const nowIn = (h = 0) => new Date(Date.now() + 5.5 * 3600_000 + h * 3_600_000).toISOString().slice(0, 16); const transport = browserTransport(authHeaders);
@@ -20,7 +21,7 @@ export function ReportIncidentPage() {
   if (oq.error?.status === 403) return <NoPermission what={t('inc.report')} permission="hse.incident.create" />; if (oq.isPending) return <Skeleton label={t('inc.report')} rows={4} />; const o = oq.data;
   const send = async () => { const persons = f.name.trim().length >= 2 ? [{ kind: 'OTHER', name: f.name.trim(), role: 'INJURED', injury: f.injury || null }] : []; const r = await run(async () => { const c = await hse.make('/incidents', { projectId: Number(v.projectId), siteId: Number(v.siteId), incidentType: f.incidentType, classification: f.classification || undefined, occurredAt: f.occurredAt, locationId: f.locationId ? Number(f.locationId) : null, locationText: f.locationText || null, description: f.description, immediateAction: f.immediateAction || null, lostDays: Number(f.lostDays) || 0, persons }); if (photo) { const up = await uploadFile(photo, { transport, entity: 'hse_incidents', entityId: c.id }); await hse.post(`/incidents/${c.id}/photos`, { fileId: up.id }); } return c; }); if (r) navigateTo(`/hse/incidents?id=${r.id}`); };
   return (
-    <section aria-labelledby="inr-h" data-testid="hse-incident-report"><h1 id="inr-h">{t('inc.report')}</h1><p className="muted"><Link to="/hse/incidents">{t('inc.register')}</Link> · {t('inc.reportHint')}</p><ErrorLine error={error} id="hse-inc-error" />
+    <section aria-labelledby="inr-h" data-testid="hse-incident-report"><PageHeader id="inr-h" title={t('inc.report')} subtitle={<><Link to="/hse/incidents">{t('inc.register')}</Link> · {t('inc.reportHint')}</>} /><ErrorLine error={error} id="hse-inc-error" />
       <div className="mdm-panel"><div className="form-grid"><ProjectSite o={o} v={v} set={setV} error={error} />
         <Field label={t('inc.type')} name="incidentType" error={error}><select value={f.incidentType} onChange={(e) => setF({ ...f, incidentType: e.target.value, classification: '' })} style={big} data-testid="hse-inc-type">{o.types.map((x) => <option key={x.id} value={x.id}>{t(`inct.${x.id}`)}</option>)}</select></Field>
         {f.incidentType === 'INJURY' && <Field label={t('inc.classification')} name="classification" error={error}><select value={f.classification} onChange={(e) => setF({ ...f, classification: e.target.value })} style={big} data-testid="hse-inc-class"><option value="">{t('inc.firstAidDefault')}</option>{['FATALITY', 'LTI', 'MEDICAL_TREATMENT', 'FIRST_AID'].map((c) => <option key={c} value={c}>{t(`incc.${c}`)}</option>)}</select></Field>}
@@ -44,8 +45,7 @@ function Incident({ id }) {
   const form = inv ?? { team: (i0.team ?? []).join(', '), rootCause: i0.rootCause ?? '', contributing: (i0.contributing ?? []).join('\n'), timeline: (i0.timeline ?? []).map((e) => `${e.at} | ${e.event}`).join('\n'), statements: (i0.statements ?? []).map((e) => `${e.by} | ${e.text}`).join('\n') }; const pair = (s, a, b) => s.split('\n').map((l) => l.split('|').map((z) => z.trim())).filter((p) => p[0] && p[1]).map((p) => ({ [a]: p[0], [b]: p[1] }));
   const photo = async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(async () => { const up = await uploadFile(file, { transport, entity: 'hse_incidents', entityId: x.id }); return hse.post(`/incidents/${x.id}/photos`, { fileId: up.id }); }, t('tbt.photoAdded')); };
   return (
-    <div data-testid="hse-incident-object" data-state={x.state} data-status={x.status}><h1 id="ino-h">{x.docNo} <StatusBadge status={SEV_TONE[x.severity]} label={t(`incc.${x.classification}`)} /> <StatusBadge status={x.state === 'CLOSED' ? 'APPROVED' : 'IN_REVIEW'} label={t(`incs.${x.state}`)} /></h1>
-      <p><Link to="/hse/incidents">{t('inc.register')}</Link> · {x.project} · {t(`inct.${x.incidentType}`)} · {stamp(x.occurredAt)} · {x.reportedBy}{x.serious ? ` · ${t('inc.serious')}` : ''}{x.permitsSuspended ? ` · ${t('inc.permitsSuspended', { n: x.permitsSuspended })}` : ''}</p>
+    <div data-testid="hse-incident-object" data-state={x.state} data-status={x.status}><PageHeader id="ino-h" title={<>{x.docNo} <StatusBadge status={SEV_TONE[x.severity]} label={t(`incc.${x.classification}`)} /> <StatusBadge status={x.state === 'CLOSED' ? 'APPROVED' : 'IN_REVIEW'} label={t(`incs.${x.state}`)} /></>} meta={<><Link to="/hse/incidents">{t('inc.register')}</Link> · {x.project} · {t(`inct.${x.incidentType}`)} · {stamp(x.occurredAt)} · {x.reportedBy}{x.serious ? ` · ${t('inc.serious')}` : ''}{x.permitsSuspended ? ` · ${t('inc.permitsSuspended', { n: x.permitsSuspended })}` : ''}</>} />
       <p>{x.description}</p>{x.immediateAction && <p>{t('inc.immediate')}: {x.immediateAction}</p>}<ul>{x.persons.map((p, i) => <li key={i}>{p.name} · {t(`incr.${p.role}`)}{p.injury ? ` · ${p.injury}` : ''}</li>)}</ul>
       <p data-testid="hse-inc-lost-view">{t('inc.lostDays')}: {x.lostDays}{x.returnToWorkOn ? ` · ${t('inc.returnOn')} ${fmtDate(x.returnToWorkOn)}` : ''} · {t('inc.photos', { n: x.photoCount })}</p>
       <ErrorLine error={error} id="hse-inc-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-inc-note">{note}</p>}
@@ -74,7 +74,7 @@ export function IncidentsPage() {
   const t = useT('hse'); usePageTitle(t('inc.register')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="ino-h"><Incident id={id} /></section>;
   return (
-    <section aria-labelledby="inl2-h" data-testid="hse-incidents"><h1 id="inl2-h">{t('inc.register')}</h1><p className="muted">{t('inc.intro')}</p><Stats />
+    <section aria-labelledby="inl2-h" data-testid="hse-incidents"><PageHeader id="inl2-h" title={t('inc.register')} subtitle={t('inc.intro')} /><Stats />
       <div className="actions-row no-print"><Link to="/hse/incident-report" data-testid="hse-incident-new">{t('inc.report')}</Link><Link to="/hse/lessons">{t('les.title')}</Link><button type="button" className="btn" onClick={() => hse.exportFile('/incidents/export', 'incidents.csv').catch(() => globalThis.alert?.(t('exportFailed')))}>{t('export')}</button></div>
       <ListReport listCode="hse.incidents" endpoint="/hse/incidents" title={t('inc.register')} session={session.data} rowHref={(r) => `/hse/incidents?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/incidents?id=${r.id}`)} cardFields={['docNo', 'classification', 'occurredAt', 'state']} statusKey="status" empty={{ title: t('inc.emptyTitle'), text: t('inc.emptyBody') }} />
     </section>
@@ -84,7 +84,7 @@ export function LessonsPage() {
   const t = useT('hse'); usePageTitle(t('les.title')); const q = useQuery({ queryKey: ['hse', 'lessons'], queryFn: () => hse.get('/lessons'), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('les.title')} permission="hse.lesson.view" />; if (q.isPending) return <Skeleton label={t('les.title')} rows={3} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   return (
-    <section aria-labelledby="les-h" data-testid="hse-lessons"><h1 id="les-h">{t('les.title')}</h1><p className="muted">{t('les.intro')}</p>
+    <section aria-labelledby="les-h" data-testid="hse-lessons"><PageHeader id="les-h" title={t('les.title')} subtitle={t('les.intro')} />
       {q.data.length === 0 ? <div className="empty-state" data-testid="hse-les-empty"><h2>{t('les.emptyTitle')}</h2><p>{t('les.emptyBody')}</p></div> : <ul style={{ listStyle: 'none', padding: 0 }}>{q.data.map((l) => <li key={l.id} className="mdm-panel" data-testid="hse-les-card"><h2>{l.title}</h2><p>{l.summary}</p><small>{l.typeLabel} · {l.classLabel} · {l.project} · {fmtDate(l.sharedAt)}</small></li>)}</ul>}
     </section>
   );

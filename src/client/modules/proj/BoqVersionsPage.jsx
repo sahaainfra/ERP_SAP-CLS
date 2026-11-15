@@ -6,6 +6,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { bq } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // BOQ Versions (part 10.04, FR-01): the tender, contract and revised versions of the BOQ of every project with their status, items and totals; a new version starts from the award, another version or nothing; a revised version only comes from an approved variation.
 export default function BoqVersionsPage() {
@@ -24,7 +25,7 @@ export default function BoqVersionsPage() {
   };
   return (
     <section aria-labelledby="bq-list-h" data-testid="boq-versions">
-      <h1 id="bq-list-h" className="sr-only">{t('bq.listTitle')}</h1>
+      <PageHeader id="bq-list-h" srOnly title={t('bq.listTitle')} />
       {changeId && <p className="mdm-banner" role="status">{t('bq.changeOpen')}</p>}
       {perms.includes('proj.version.create') && (
         <div className="actions-row no-print">

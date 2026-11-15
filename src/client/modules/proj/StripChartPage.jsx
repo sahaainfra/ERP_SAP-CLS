@@ -7,6 +7,7 @@ import { useSession } from '../core/api/index.js';
 import { dayIST, downloadFile, gs } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Chainage Progress Strip Chart (part 10.07, FR-04, FR-05): the linear schedule of a linear project: chainage along the axis, one band per activity, each segment filled to its percent complete from the latest reading; a table below carries the same figures,
 // each segment opens the location. Progress is recorded here until the daily progress module (14.05) supplies it.
@@ -22,7 +23,7 @@ export default function StripChartPage() {
   usePageTitle(t('gis.stripTitle'));
   const q = useQuery({ queryKey: ['proj', 'strip', projectId, activity], queryFn: () => gs.strip(projectId, activity), enabled: Boolean(projectId), retry: false });
   const hm = useQuery({ queryKey: ['proj', 'heat', projectId], queryFn: () => gs.heatmap(projectId), enabled: Boolean(projectId) && perms.includes('proj.gis.progress'), retry: false });
-  const head = <header><h1 id="strip-h">{t('gis.stripTitle')}</h1><div className="actions-row no-print"><ProjectPicker route="/proj/strip-chart" projectId={projectId} testId="strip-project" /><Link to={projectId ? `/proj/map?projectId=${projectId}` : '/proj/map'}>{t('gis.mapTitle')}</Link></div></header>;
+  const head = <header><PageHeader id="strip-h" title={t('gis.stripTitle')} /><div className="actions-row no-print"><ProjectPicker route="/proj/strip-chart" projectId={projectId} testId="strip-project" /><Link to={projectId ? `/proj/map?projectId=${projectId}` : '/proj/map'}>{t('gis.mapTitle')}</Link></div></header>;
   if (!projectId) return <section aria-labelledby="strip-h" data-testid="strip-chart">{head}<p className="muted">{t('gis.chooseProject')}</p></section>;
   if (q.error?.status === 403) return <NoPermission what={t('gis.stripTitle')} permission="proj.gis.view" />;
   if (q.isPending) return <Skeleton label={t('gis.stripTitle')} rows={5} />;

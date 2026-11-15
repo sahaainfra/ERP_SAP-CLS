@@ -87,6 +87,7 @@ function absorbAfter(siblings, start, t) {
 const childList = (parent) => (parent && (parent.type === 'JSXElement' || parent.type === 'JSXFragment') ? meaningful(parent.children) : null);
 
 // ---- the KPI shape ----
+/** @type {Array<[RegExp, string]>} */
 const KIND_WORDS = [[/day|late|age|overdue|time|hour|duration|delay/i, 'time'], [/risk|dispute|shortage|exposure|claim|deviation|hold|penalt|\bld\b/i, 'risk'], [/safety|incident|injur|permit/i, 'safety'], [/quality|ncr|inspect|test|reject/i, 'quality'], [/labour|people|staff|head|manpower|worker/i, 'people'], [/capacity|utili/i, 'capacity'], [/pct|percent|margin%|ratio|rate/i, 'percent'], [/qty|quantity|volume|cum|m3/i, 'quantity']];
 function kpiOf(panel, t) {
   if (!isEl(panel, 'div') || !(literalClass(panel) ?? '').split(' ').includes('mdm-panel')) return null;
@@ -99,7 +100,7 @@ function kpiOf(panel, t) {
   const props = [`label={${label}}`, `value={${value}}`];
   const m = /^(?:money|rs|inr|formatINR)\((.+)\)$/s.exec(value);
   const masked = /^(.+?) \? (.+?) : (?:money|rs)\((.+)\)$/s.exec(value);
-  let kind = null;
+  let kind;
   if (m) { kind = 'money'; props.push(`amount={${m[1]}}`); }
   else if (masked) { kind = 'money'; props.push(`amount={${masked[1]} ? null : ${masked[3]}}`); }
   else if (/pct|%/i.test(value)) kind = 'percent';

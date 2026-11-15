@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { fin } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Item Category → GL / Cost Code Mapping (Finance, configuration, part 06.05, FR-05, AC-01): for every item category of the item master, the stock account (for stocked items), the consumption account and the
 // cost code a purchase, issue or consumption of its items is posted to. A category without its own mapping uses its parent's; a category with neither is listed as missing (the mapping must be complete). The
@@ -41,7 +42,7 @@ export default function CategoryMappingPage() {
   const order = Object.keys(edits).map(Number);
   return (
     <section aria-labelledby="cm-title" data-testid="category-mapping" className="fin-page">
-      <h1 id="cm-title">Item Category → GL / Cost Code Mapping</h1>
+      <PageHeader id="cm-title" title={"Item Category → GL / Cost Code Mapping"} />
       <p className={`mdm-banner ${m.complete ? '' : 'is-warning'}`} role="status" data-testid="cm-status">{m.complete ? `Complete: all ${m.total} active categories post to an account and a cost code.` : `${m.missing.length} of ${m.total} active categories have no mapping: ${m.missing.map((x) => x.name).join(', ')}.`}</p>
       {note && <p className="mdm-banner" role="status" data-testid="cm-note">{note}</p>}
       <form onSubmit={send} aria-label="Mapping">

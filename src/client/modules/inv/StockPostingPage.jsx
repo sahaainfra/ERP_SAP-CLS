@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtQty, iv, today } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Stock posting and opening stock (part 16.01, FR-03, FR-08): a receipt, issue, return, scrap or transfer posted by hand with its reason until the receiving and issuing documents of the later parts post them, and the opening stock loaded from lines (all or nothing, once).
 export default function StockPostingPage() {
@@ -18,7 +19,7 @@ export default function StockPostingPage() {
   const load = () => { const rows = paste.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const [storeCode, itemCode, qty, rate, batchNo, binCode, projectCode] = l.split(',').map((x) => x.trim()); return { storeCode, itemCode, qty: Number(qty), rate: Number(rate), batchNo: batchNo || undefined, binCode: binCode || undefined, projectCode: projectCode || undefined }; }); op.run(() => iv.opening(rows), t('openingLoaded')).then((x) => x && setPaste('')); };
   const entries = out ? (out.entries ?? [...(out.out ?? []), ...(out.in ?? [])]) : [];
   return (
-    <section aria-labelledby="po-h" data-testid="inv-po"><h1 id="po-h">{t('postingTitle')}</h1><p className="muted">{t('postingIntro')}</p><p><Link to="/inv/balances">{t('balancesTitle')}</Link> · <Link to="/inv/ledger">{t('ledgerTitle')}</Link></p>
+    <section aria-labelledby="po-h" data-testid="inv-po"><PageHeader id="po-h" title={t('postingTitle')} subtitle={t('postingIntro')} meta={<><Link to="/inv/balances">{t('balancesTitle')}</Link> · <Link to="/inv/ledger">{t('ledgerTitle')}</Link></>} />
       <div className="mdm-panel" data-testid="po-form"><h2>{t('postMovement')}</h2>{mv.error?.form && <p className="field-error" role="alert" data-testid="po-error">{mv.error.form}</p>}{mv.note && <p className="mdm-banner" role="status" data-testid="po-note">{mv.note}</p>}
         <div className="form-grid">
           <Field label={t('movement')} name="type" error={mv.error}><select value={f.kind} onChange={(ev) => set('kind', ev.target.value)} style={{ minHeight: 44 }} data-testid="po-kind">{['RECEIPT', 'ISSUE', 'RETURN', 'SCRAP', 'TRANSFER'].map((k) => <option key={k} value={k}>{t(`tx.${k === 'TRANSFER' ? 'TRANSFER_OUT' : k}`)}</option>)}</select></Field>

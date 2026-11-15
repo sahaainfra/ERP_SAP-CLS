@@ -7,6 +7,7 @@ import { deviceKey, discard, refreshMasters, retry, sync, useOffline } from '../
 import { useConfirmations, useOffActions } from '../../platform/offline/api.js';
 import { Link, can, usePageTitle } from '../core/pages/ui.jsx';
 import { CMD_STATUS, ago } from './offline-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Sync Status (Mobile, part 04.15, FR-07): what is waiting on this phone, what became of what was sent, when it last worked, the errors with a way to retry, and a button to send now. A supervisor also sees the old
 // commands that wait for confirmation (BR-02).
@@ -22,7 +23,7 @@ export default function SyncStatusPage({ session }) {
   const force = async () => { setBusy(true); setMsg(''); try { const r = await sync({ force: true }); await refreshMasters(); setMsg(r?.sent ? `${r.sent} change(s) sent.` : 'Everything is up to date.'); } finally { setBusy(false); } };
   return (
     <section aria-labelledby="ss-title" className="sync-status" data-testid="sync-status">
-      <div className="page-head"><h1 id="ss-title">Sync Status</h1></div>
+      <PageHeader id="ss-title" title={"Sync Status"} />
       <ul className="field-status" aria-label="Connection">
         <li data-testid="ss-online" data-online={off.online}><Icon name={off.online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {off.online ? 'Online' : 'Offline'}</li>
         <li data-testid="ss-count" data-count={off.queue.length}><Icon name="erp.action.inbox" size={18} /> {off.queue.length === 0 ? 'Nothing is waiting' : `${off.queue.length} in the queue`}</li>

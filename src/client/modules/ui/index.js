@@ -18,6 +18,7 @@ import AdvancedSearchPage from './AdvancedSearchPage.jsx';
 import SearchAdminPage from './SearchAdminPage.jsx';
 import TranslationsPage from './TranslationsPage.jsx';
 import MigrationTrackerPage from './MigrationTrackerPage.jsx';
+import PagePatternsPage from './PagePatternsPage.jsx';
 
 // Module "ui" (part 03.01): the design system. The style guide is listed for those with ui.styleguide.view; outside production the
 // server also lets every signed-in person open it by its address. Part 03.07 adds My Work, the Requests Overview and the Dashboard Designer. Part 03.02 adds the form components gallery, each person's drafts
@@ -43,6 +44,7 @@ registerModule({
     { path: '/account/drafts', label: 'My Drafts', icon: 'erp.state.draft', flag: 'ff.ui.p0302', Page: MyDraftsPage },
     { path: '/admin/design-system/lists', label: 'List Report', icon: 'erp.action.filter', permission: 'ui.styleguide.view', flag: 'ff.ui.p0303', Page: ListReportDocsPage },
     { path: '/admin/design-system/object-page', label: 'Object Page', icon: 'erp.action.info', permission: 'ui.styleguide.view', flag: 'ff.ui.p0304', Page: ObjectPageDocsPage },
+    { path: '/admin/design-system/patterns', label: 'Page Patterns', icon: 'erp.insights.metrics', permission: 'ui.styleguide.view', flag: 'ff.ui.p16602', Page: PagePatternsPage },
     { path: '/account/exports', label: 'My Exports', icon: 'erp.action.export', flag: 'ff.ui.p0303', Page: MyExportsPage },
     { path: '/admin/sample-requests', label: 'Sample Material Requests', icon: 'erp.group.supply', permission: 'core.sample.use', flag: 'ff.ui.p0302', Page: SampleRequestsPage },
   ],

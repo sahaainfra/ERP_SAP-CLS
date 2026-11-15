@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate } from '../../platform/format.js';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { pol } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Policy-to-Protocol Drafts (Administration, part 05.05, section 7.4): a worklist of what company policies asked the system to enforce: draft control points, approval rules and alert rules made from tagged requirements.
 // Oldest first, coloured by how long they have waited. Every draft is inactive; it is reviewed and activated on the screen of the engine that owns it (and through that engine's own approval): the button opens it there.
@@ -23,8 +24,7 @@ export default function PolicyDraftsPage() {
   const dismiss = async (r) => { const why = window.prompt('Why is this draft not needed?') ?? ''; if (why.trim().length < 5) return; setError(null); try { await pol.dismiss(r.id, why.trim()); qc.invalidateQueries({ queryKey: ['pol'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="pdr-title" data-testid="policy-drafts">
-      <h1 id="pdr-title">Policy-to-Protocol Drafts</h1>
-      <p className="muted">Nothing here is switched on. Review each draft on the screen of its engine: a control point is put in observe mode there, an approval matrix is submitted for approval there, an alert rule is switched on there.</p>
+      <PageHeader id="pdr-title" title={"Policy-to-Protocol Drafts"} subtitle={"Nothing here is switched on. Review each draft on the screen of its engine: a control point is put in observe mode there, an approval matrix is submitted for approval there, an alert rule is switched on there."} />
       <div className="cc-tiles" role="group" aria-label="Totals">{[['Draft: inactive', d.counts.DRAFT ?? 0], ['Waiting for approval', d.counts.PENDING ?? 0], ['Activated', d.counts.ACTIVE ?? 0], ['Dismissed', d.counts.DISMISSED ?? 0]].map(([l, v]) => <div key={l} className="cc-tile" data-testid={`pdr-sum-${l.split(' ')[0].toLowerCase().replace(/\W/g, '')}`}><span className="cc-value num">{v}</span><span className="cc-label">{l}</span></div>)}</div>
       <form className="srch-form" role="search" aria-label="Filter the drafts" onSubmit={(e) => e.preventDefault()}>
         <Field label="Search" name="q" error={null}><input type="search" value={f.q} onChange={(e) => set({ q: e.target.value })} data-testid="pdr-q" /></Field>

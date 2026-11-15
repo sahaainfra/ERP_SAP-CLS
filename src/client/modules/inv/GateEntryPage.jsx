@@ -9,6 +9,7 @@ import { useSearch } from '../site/parts.jsx';
 import { GATE_TONE, download, fmtQty, fmtTime, gt, iv, today } from './api.js';
 import { Flags, OfflineNotice, PhotoButton, filePhoto, useOnline } from './GateParts.jsx';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Gate Entry (part 16.02, FR-01 to FR-04), a mobile screen for the guard and the storekeeper: the vehicle, the driver, the vendor and the purchase order (checked at once), the photos, then the weighbridge, the unloading store and the handover.
 const PHOTOS = [['VEHICLE', 'g.photoVehicle'], ['CHALLAN', 'g.photoChallan']];
@@ -34,7 +35,7 @@ function NewEntry({ t }) {
   };
   const need = !f.siteId || f.vehicleNo.trim().length < 4 || f.driverName.trim().length < 2 || f.materialDesc.trim().length < 3;
   return (
-    <section aria-labelledby="ge-h" data-testid="gate-entry-new"><h1 id="ge-h">{t('g.entryTitle')}</h1><p className="muted">{t('g.entryHelp')}</p><p><Link to="/inv/gate-register">{t('g.registerTitle')}</Link></p>
+    <section aria-labelledby="ge-h" data-testid="gate-entry-new"><PageHeader id="ge-h" title={t('g.entryTitle')} subtitle={t('g.entryHelp')} meta={<Link to="/inv/gate-register">{t('g.registerTitle')}</Link>} />
       <OfflineNotice t={t} on={online} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('g.site')} name="siteId" error={error}><select value={f.siteId} onChange={(ev) => set('siteId', ev.target.value)} style={{ minHeight: 48 }} data-testid="ge-site"><option value="">{t('choose')}</option>{sites.map((s) => <option key={s.id} value={s.id}>{s.project} · {s.name}</option>)}</select></Field>
@@ -72,7 +73,7 @@ function Entry({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => iv.decide(e.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
     <div data-testid="ge-object" data-status={e.status}>
-      <h1 id="ge-h">{e.docNo} <StatusBadge status={GATE_TONE[e.status]} label={t(`gs.${e.status}`)} /></h1><p><Link to="/inv/gate-register">{t('g.registerTitle')}</Link> · {e.site} · {e.vehicleNo}</p>
+      <PageHeader id="ge-h" title={<>{e.docNo} <StatusBadge status={GATE_TONE[e.status]} label={t(`gs.${e.status}`)} /></>} meta={<><Link to="/inv/gate-register">{t('g.registerTitle')}</Link> · {e.site} · {e.vehicleNo}</>} />
       <OfflineNotice t={t} on={online} /><Flags t={t} flags={e.flags} />
       {error?.form && <p className="field-error" role="alert" data-testid="ge-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="ge-note">{note}</p>}
       <dl className="kv"><div><dt>{t('g.driver')}</dt><dd>{e.driverName} {e.driverPhone ?? ''}</dd></div><div><dt>{t('g.transporter')}</dt><dd>{e.transporter ?? '—'}</dd></div><div><dt>{t('g.vendor')}</dt><dd>{e.vendor ?? '—'}</dd></div><div><dt>{t('g.po')}</dt><dd>{e.poNo ?? t('g.noPo')}</dd></div><div><dt>{t('g.challanNo')}</dt><dd>{e.challanNo ?? '—'} {e.challanKg != null ? `(${fmtQty(e.challanKg)} kg)` : ''}</dd></div><div><dt>{t('g.eway')}</dt><dd>{e.ewayBillNo ?? '—'}</dd></div><div><dt>{t('g.material')}</dt><dd>{e.materialDesc}</dd></div><div><dt>{t('g.timeIn')}</dt><dd>{fmtTime(e.timeIn)}</dd></div><div><dt>{t('g.timeOut')}</dt><dd>{fmtTime(e.timeOut)}</dd></div>{e.turnaroundMin != null && <div><dt>{t('g.turnaround')}</dt><dd data-testid="ge-turnaround">{e.turnaroundMin} {t('g.min')}</dd></div>}{e.unloadingStore && <div><dt>{t('g.store')}</dt><dd>{e.unloadingStore.code} {e.unloadingStore.name}</dd></div>}</dl>
@@ -108,7 +109,7 @@ function EditEntry({ t, id }) {
   const e = q.data; const v = f ?? { vehicleNo: e.vehicleNo, driverName: e.driverName, driverPhone: e.driverPhone ?? '', transporter: e.transporter ?? '', challanNo: e.challanNo ?? '', materialDesc: e.materialDesc }; const set = (k, x) => setF({ ...v, [k]: x });
   const save = async () => { setBusy(true); setError(null); try { await gt.inUpdate(e.id, { vehicleNo: v.vehicleNo, driverName: v.driverName, driverPhone: v.driverPhone || null, transporter: v.transporter || null, challanNo: v.challanNo || null, materialDesc: v.materialDesc, rowVersion: e.rowVersion }); navigateTo(`/inv/gate-entry?id=${e.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="ge-h" data-testid="gate-entry-edit"><h1 id="ge-h">{e.docNo}</h1><p><Link to={`/inv/gate-entry?id=${e.id}`}>{t('back')}</Link></p>
+    <section aria-labelledby="ge-h" data-testid="gate-entry-edit"><PageHeader id="ge-h" title={e.docNo} meta={<Link to={`/inv/gate-entry?id=${e.id}`}>{t('back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate><div className="form-grid">
         {[['vehicleNo', 'g.vehicleNo'], ['driverName', 'g.driver'], ['driverPhone', 'g.driverPhone'], ['transporter', 'g.transporter'], ['challanNo', 'g.challanNo'], ['materialDesc', 'g.material']].map(([k, key]) => <Field key={k} label={t(key)} name={k} error={error}><input value={v[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 48 }} data-testid={`gee-${k}`} /></Field>)}</div>
         {error?.form && <p className="field-error" role="alert" data-testid="gee-error">{error.form}</p>}<div className="actions-row"><button type="submit" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} data-testid="gee-save">{t('save')}</button></div></form></section>

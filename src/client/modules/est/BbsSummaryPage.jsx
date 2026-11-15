@@ -7,6 +7,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { mto, qty } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // BBS Summary by Diameter (part 09.02, FR-02): the reinforcement steel of the released bar bending schedules of a project (or of one schedule) by diameter: bar marks, bars, total length, weight in kg and tonnes, for the
 // procurement of steel; each schedule links back.
@@ -20,7 +21,7 @@ export default function BbsSummaryPage() {
   const chart = r && r.rows.length > 0 && { categories: r.rows.map((x) => `${x.dia} mm`), series: [{ name: t('bbs.weightKg'), values: r.rows.map((x) => Number(x.weightKg)) }] };
   return (
     <section aria-labelledby="bsum-h" data-testid="bbs-summary">
-      <h1 id="bsum-h">{t('bbs.summary')}</h1>
+      <PageHeader id="bsum-h" title={t('bbs.summary')} />
       {!bbsId && <form className="filters" onSubmit={(e) => e.preventDefault()} aria-label={t('cmp.params')}><LookupField id="bsum-project" label={t('new.project')} lookup="iam/projects" value={projectId} onChange={setProjectId} compact /></form>}
       <p className="small muted">{bbsId ? t('bbs.oneSchedule') : t('bbs.releasedOnly')}</p>
       {q.isPending ? <Skeleton label={t('bbs.summary')} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : r.rows.length === 0 ? <p className="muted">{t('bbs.noSummary')}</p> : (<>

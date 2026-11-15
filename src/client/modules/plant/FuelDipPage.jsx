@@ -6,6 +6,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { OfflineNotice, PhotoButton, filePhoto, useOnline } from '../inv/GateParts.jsx';
 import { fmtQty, fu } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Tank dip entry (part 17.04, FR-02, FR-03, mobile): the dip reading of a tank at the end of the day. The server sets it against the book (opening + receipts - issues) and says at once whether the difference is within the tolerance; a dip is also the starting point of the next day.
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -16,7 +17,7 @@ export default function FuelDipPage() {
   const tanks = oq.data.tanks.filter((x) => x.type !== 'CARD'); const save = async () => { const d = await run(() => fu.dip({ tankId: Number(f.tankId), dipDate: f.dipDate, dipLitres: Number(f.dipLitres), note: f.note || null }), t('f.dipSaved')); if (d) setRes(d); };
   const photo = (file) => run(async () => { const up = await filePhoto(file, 'plt_fuel_dips', res.id); return fu.dipFile(res.id, up.id); }, t('f.photoAdded')).then((d) => d && setRes(d));
   return (
-    <section aria-labelledby="fd-h" data-testid="plant-fuel-dip"><h1 id="fd-h">{t('f.dipTitle')}</h1><p className="muted">{t('f.dipIntro')} <Link to="/plant/fuel-reports">{t('f.reportsTitle')}</Link></p>
+    <section aria-labelledby="fd-h" data-testid="plant-fuel-dip"><PageHeader id="fd-h" title={t('f.dipTitle')} subtitle={<>{t('f.dipIntro')} <Link to="/plant/fuel-reports">{t('f.reportsTitle')}</Link></>} />
       <OfflineNotice t={() => t('f.offline')} on={online} />{error?.form && <p className="field-error" role="alert" data-testid="fd-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{ok && <p className="mdm-banner" role="status" data-testid="fd-note">{ok}</p>}
       <div className="mdm-panel"><Field label={t('f.tank')} name="tankId" error={error}><select value={f.tankId} onChange={(ev) => set('tankId', ev.target.value)} style={{ minHeight: 48 }} data-testid="fd-tank"><option value="">—</option>{tanks.map((x) => <option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select></Field>
         <div className="form-grid"><Field label={t('date')} name="dipDate" error={error}><input type="date" max={today()} value={f.dipDate} onChange={(ev) => set('dipDate', ev.target.value)} style={{ minHeight: 48 }} data-testid="fd-date" /></Field>

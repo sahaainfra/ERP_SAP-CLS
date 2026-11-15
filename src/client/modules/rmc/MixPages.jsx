@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, rmc } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './RmcParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Mix Designs (part 20.01, FR-03 and FR-04): the quantities of each material for 1 m3 of a grade, checked live against the same arithmetic the server applies (absolute volumes plus air within the tolerance, water-binder ratio, target mean strength),
 // the trial results, the effective dates and the versions. The plant quality engineer and the quality control manager approve; only an approved mix inside its dates can be produced.
@@ -49,8 +50,7 @@ function Mix({ id }) {
   const t = useT('rmc'); const { q, guard } = useRecord('/mix-designs', id, t('mx.title'), 'rmc.mix_design.view'); const { error, run, busy, note } = useRunner(); const [editing, setEditing] = useState(false); const o = useQuery({ queryKey: ['rmc', 'mix-options'], queryFn: () => rmc.get('/mix-designs/options'), retry: false, enabled: Boolean(q.data?.can?.edit) }); usePageTitle(t('mx.title')); if (guard) return guard; const x = q.data;
   const sg = Object.fromEntries((o.data?.components ?? []).map((c) => [c.id, c.sg]));
   return (
-    <div data-testid="rmc-mix-object" data-status={x.status}><h1 id="mx-h">{x.code} <Status x={x} /></h1>
-      <p><Link to="/rmc/mix-designs">{t('mx.title')}</Link> · {x.docNo} · {t('pl.version', { n: x.versionNo })} · {x.plant} · {x.grade} · {x.usable ? t('mx.usable') : t('mx.notUsable')}</p>
+    <div data-testid="rmc-mix-object" data-status={x.status}><PageHeader id="mx-h" title={<>{x.code} <Status x={x} /></>} meta={<><Link to="/rmc/mix-designs">{t('mx.title')}</Link> · {x.docNo} · {t('pl.version', { n: x.versionNo })} · {x.plant} · {x.grade} · {x.usable ? t('mx.usable') : t('mx.notUsable')}</>} />
       <ErrorLine error={error} id="rmc-error" />{note && <p className="mdm-banner" role="status" data-testid="rmc-note">{note}</p>}
       {x.problems?.length > 0 && <div className="mdm-panel" data-testid="rmc-mix-problems"><h2>{t('mx.before')}</h2><ul>{x.problems.map((p, i) => <li key={i}>{p.message}</li>)}</ul></div>}
       {x.can.edit && <div className="actions-row no-print"><button type="button" className="btn" onClick={() => setEditing(!editing)} data-testid="rmc-mix-edit">{t('edit')}</button></div>}
@@ -67,13 +67,13 @@ function Mix({ id }) {
 function MixNew() {
   const t = useT('rmc'); const { error, run, busy } = useRunner(); usePageTitle(t('mx.new')); const o = useQuery({ queryKey: ['rmc', 'mix-options'], queryFn: () => rmc.get('/mix-designs/options'), retry: false });
   if (o.isPending) return <Skeleton label={t('mx.new')} rows={3} />; const sg = Object.fromEntries((o.data?.components ?? []).map((c) => [c.id, c.sg]));
-  return <section aria-labelledby="mxn-h"><h1 id="mxn-h">{t('mx.new')}</h1><p><Link to="/rmc/mix-designs">{t('mx.title')}</Link></p><ErrorLine error={error} id="rmc-error" /><MixForm initial={blank(sg)} busy={busy} error={error} onSave={async (v) => { const r = await run(() => rmc.make('/mix-designs', v)); if (r) navigateTo(`/rmc/mix-designs?id=${r.id}`); }} /></section>;
+  return <section aria-labelledby="mxn-h"><PageHeader id="mxn-h" title={t('mx.new')} meta={<Link to="/rmc/mix-designs">{t('mx.title')}</Link>} /><ErrorLine error={error} id="rmc-error" /><MixForm initial={blank(sg)} busy={busy} error={error} onSave={async (v) => { const r = await run(() => rmc.make('/mix-designs', v)); if (r) navigateTo(`/rmc/mix-designs?id=${r.id}`); }} /></section>;
 }
 export default function MixDesignsPage() {
   const t = useT('rmc'); usePageTitle(t('mx.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="mx-h"><Mix id={id} /></section>; if (sp.get('new')) return <MixNew />;
   return (
-    <section aria-labelledby="mxs-h" data-testid="rmc-mixes"><h1 id="mxs-h">{t('mx.title')}</h1><p className="muted">{t('mx.intro')}</p>
+    <section aria-labelledby="mxs-h" data-testid="rmc-mixes"><PageHeader id="mxs-h" title={t('mx.title')} subtitle={t('mx.intro')} />
       <div className="actions-row no-print"><Link to="/rmc/mix-designs?new=1" data-testid="rmc-mix-new">{t('mx.new')}</Link></div>
       <ListReport listCode="rmc.mix_designs" endpoint="/rmc/mix-designs" title={t('mx.title')} session={session.data} rowHref={(r) => `/rmc/mix-designs?id=${r.id}`} onOpen={(r) => navigateTo(`/rmc/mix-designs?id=${r.id}`)} cardFields={['code', 'plant', 'grade', 'status']} statusKey="status" empty={{ title: t('mx.emptyTitle'), text: t('mx.emptyBody') }} />
     </section>

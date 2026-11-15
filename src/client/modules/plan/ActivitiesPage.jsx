@@ -7,6 +7,7 @@ import { DiscussionTab } from '../../platform/collab/CollabTabs.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEPS, STATUS_TONE, TYPES, fmtDate, openPrint, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Activities (part 13.01, FR-02, FR-04, FR-06, FR-07): the activities of a schedule grouped by WBS node, with the dates, floats and critical flag the server's CPM pass worked out (BR-01); filters for critical, delayed (negative float)
 // and open work; a selection edited in bulk; links with their type and lag (a loop is refused with its path, BR-02); progress at a data date; and the approval of the schedule.
@@ -49,7 +50,7 @@ export default function ActivitiesPage() {
   const toggle = (id) => setSel((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
   return (
     <section aria-labelledby="pa-h" data-testid="plan-activities" data-status={s?.status}>
-      <h1 id="pa-h">{s ? `${s.docNo} · ${s.name}` : t('act.title')} {s && <StatusBadge status={STATUS_TONE[s.status]} label={t(`st.${s.status}`)} />}</h1>
+      <PageHeader id="pa-h" title={<>{s ? `${s.docNo} · ${s.name}` : t('act.title')} {s && <StatusBadge status={STATUS_TONE[s.status]} label={t(`st.${s.status}`)} />}</>} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('f.schedule')}>
         <SchedulePicker projectId={pid} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); setSel([]); }} onSchedule={(v) => { setScheduleId(v); setSel([]); setPage(1); }} testId="pa" />
       </form>

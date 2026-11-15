@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, fmtQty, lg, pl } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Log verification (part 17.03, FR-02): the logs waiting for the person. The flags of each log are in front of the verifier; logs without flags can be approved together, a flagged one is opened, and anything is returned or rejected with a reason.
 export default function LogVerificationPage() {
@@ -14,7 +15,7 @@ export default function LogVerificationPage() {
   const bulk = async () => { const picked = rows.filter((r) => sel.has(r.id)); await run(async () => { for (const r of picked) await pl.decide(r.taskId, 'approve'); return true; }, t('l.bulkDone', { n: picked.length })); setSel(new Set()); qc.invalidateQueries({ queryKey: ['plant', 'worklist'] }); };
   const act = (r, action) => { const c = globalThis.prompt(t('why')); if (c && c.length >= 5) run(() => pl.decide(r.taskId, action, c), t(`done.${action}`)).then(() => qc.invalidateQueries({ queryKey: ['plant', 'worklist'] })); };
   return (
-    <section aria-labelledby="lv-h" data-testid="plant-verify"><h1 id="lv-h">{t('l.verifyTitle')}</h1><p className="muted">{t('l.verifyIntro')}</p>{note && <p className="mdm-banner" role="status" data-testid="lv-note">{note}</p>}{error?.form && <p className="field-error" role="alert">{error.form}</p>}
+    <section aria-labelledby="lv-h" data-testid="plant-verify"><PageHeader id="lv-h" title={t('l.verifyTitle')} subtitle={t('l.verifyIntro')} />{note && <p className="mdm-banner" role="status" data-testid="lv-note">{note}</p>}{error?.form && <p className="field-error" role="alert">{error.form}</p>}
       {rows.length === 0 ? <div className="mdm-panel" data-testid="lv-empty"><h2>{t('l.verifyEmptyTitle')}</h2><p className="muted">{t('l.verifyEmptyBody')}</p><Link to="/plant/logs">{t('l.logsTitle')}</Link></div> : <>
         <div className="actions-row no-print"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy || sel.size === 0} onClick={bulk} data-testid="lv-bulk">{t('l.approveSelected', { n: sel.size })}</button></div>
         <div className="table-scroll"><table className="data-table" data-testid="lv-table"><thead><tr><th><span className="sr-only">{t('l.select')}</span></th><th>{t('l.log')}</th><th>{t('assetCode')}</th><th>{t('l.date')}</th><th className="num">{t('l.working')}</th><th className="num">{t('l.meterRunLabel')}</th><th>{t('l.flagged')}</th><th /></tr></thead>

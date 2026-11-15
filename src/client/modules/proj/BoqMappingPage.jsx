@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { MAP_TONE, NORM_TYPES, bq, st } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // WBS and Location Mapping (part 10.04, FR-04, FR-05, BR-01): map each BOQ item to WBS nodes and locations with a split of its quantity (the splits sum to the item quantity), assign the whole quantity of many items to one node at once, and keep the
 // resource norms of each item (typed, or taken from its rate analysis). In a frozen version a change is raised as a request approved by QS and the project manager.
@@ -19,7 +20,7 @@ export default function BoqMappingPage() {
   const wq = useQuery({ queryKey: ['proj', 'wbs', pid], queryFn: () => st.tree(pid), enabled: Boolean(pid), retry: false });
   const lq = useQuery({ queryKey: ['proj', 'locations', pid], queryFn: () => st.locations(pid), enabled: Boolean(pid), retry: false });
   const [sel, setSel] = useState([]); const [open, setOpen] = useState(null); const [bulk, setBulk] = useState({ wbsId: '', locationId: '' }); const [only, setOnly] = useState(false); const [error, setError] = useState(null); const [note, setNote] = useState(null);
-  if (!versionId) return <section aria-labelledby="map-h" data-testid="map-none"><h1 id="map-h">{t('map.title')}</h1><p className="muted">{t('bq.noId')} <Link to="/proj/versions">{t('bq.listTitle')}</Link></p></section>;
+  if (!versionId) return <section aria-labelledby="map-h" data-testid="map-none"><PageHeader id="map-h" title={t('map.title')} subtitle={<>{t('bq.noId')} <Link to="/proj/versions">{t('bq.listTitle')}</Link></>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('map.title')} permission="proj.version.view" />;
   if (q.isPending || wq.isPending || lq.isPending) return <Skeleton label={t('map.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -29,8 +30,7 @@ export default function BoqMappingPage() {
   const frozen = v.status === 'APPROVED'; const can = v.can.map || v.can.amend;
   return (
     <section aria-labelledby="map-h" data-testid="boq-mapping">
-      <h1 id="map-h">{t('map.title')}</h1>
-      <p className="muted">{v.docNo} · {v.name} · {v.statusLabel}. {frozen ? t('map.frozenHelp') : t('map.help')}</p>
+      <PageHeader id="map-h" title={t('map.title')} subtitle={<>{v.docNo} · {v.name} · {v.statusLabel}. {frozen ? t('map.frozenHelp') : t('map.help')}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="map-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 6).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="map-note">{note}</p>}
       {wbsLeaf.length === 0 && <div className="mdm-banner" data-testid="map-no-wbs"><strong>{t('map.noWbsTitle')}</strong> {t('map.noWbsText')} <Link to={`/proj/wbs?projectId=${pid}`}>{t('wbs.title')}</Link></div>}

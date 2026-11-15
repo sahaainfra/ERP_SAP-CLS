@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useCompanySettings, useSaveCompanySettings } from '../api/index.js';
 import { GST_STATES } from '../../../../shared/gst.js';
 import { Field, QueryState, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const DATE_FORMATS = ['DD-MMM-YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -53,8 +54,7 @@ export default function CompanySettingsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Configuration &rsaquo; Company Settings</nav>
-      <h1 id="page-title">Company Settings</h1>
-      <p className="muted">Legal identity, tax registrations and display formats for this company. Only the System Administrator can change them; every change needs a reason and is audited.</p>
+      <PageHeader id="page-title" title={"Company Settings"} subtitle={"Legal identity, tax registrations and display formats for this company. Only the System Administrator can change them; every change needs a reason and is audited."} />
       <QueryState query={query} what="company settings" permission="core.settings.view" />
       {form && (
         <form onSubmit={submit} className="form-grid" aria-label="Company settings">

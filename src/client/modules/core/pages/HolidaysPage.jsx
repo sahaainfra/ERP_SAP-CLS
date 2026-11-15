@@ -6,6 +6,7 @@ import {
 import { formatDate } from '../../../platform/format.js';
 import { GST_STATES } from '../../../../shared/gst.js';
 import { Field, FormDialog, QueryState, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const TYPES = ['national', 'state', 'company', 'site', 'optional'];
 const isoDate = (v) => {
@@ -73,11 +74,7 @@ export default function HolidaysPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Configuration &rsaquo; Holiday Calendars</nav>
-      <div className="page-head">
-        <h1 id="page-title">Holiday Calendars</h1>
-        <button type="button" className="btn btn-primary" disabled={!canEdit} onClick={() => open(calDialog)}>Add calendar</button>
-      </div>
-      <p className="muted">A company-wide calendar applies everywhere; a state or site calendar adds holidays for that place. A day is a working day if it is neither a weekly off nor a holiday.</p>
+      <PageHeader id="page-title" title={"Holiday Calendars"} actions={<><button type="button" className="btn btn-primary" disabled={!canEdit} onClick={() => open(calDialog)}>Add calendar</button></>} subtitle={"A company-wide calendar applies everywhere; a state or site calendar adds holidays for that place. A day is a working day if it is neither a weekly off nor a holiday."} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={calendars} what="holiday calendars" permission="authenticated access" />
       {calendars.data?.length === 0 && <div className="state"><h2>No calendar yet</h2><p>Add a calendar, then add holidays one by one or import an Excel file.</p></div>}

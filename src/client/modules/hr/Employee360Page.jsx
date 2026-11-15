@@ -10,6 +10,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANGE_STATUS, DOC_TYPES, EMPLOYMENT_STATUS, EVENT_LABELS, EVENT_TYPES, RECORD_STATUS, dayIST, employees, todayIST } from './api.js';
 import { AddressFields, ContactsEditor, EmploymentFields, addressOrNull, blankAddress, blankContact, contactsOut } from './HrForms.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Employee 360 (HR, part 07.01): one employee. Header: code, name, record status (Draft to Approved) and employment status (Active, Notice, Separated, Absconding), department, designation, grade, type, joining, manager, work
 // location and user account, with the actions allowed for this person and status: send a draft for approval, correct it, withdraw, cancel, amend (personal, employment, statutory, bank, status), create or link the user account,
@@ -41,7 +42,7 @@ export default function Employee360Page() {
       <p><Link to="/hr/employees">← Employee Directory</Link></p>
       {sp.get('sent') === '1' && <p className="mdm-banner" role="status" data-testid="e3-sent">Sent for approval to another HR manager.</p>}
       <header className="op-header">
-        <div className="page-head"><h1 id="e3-title">{e.code} · {e.name}</h1><StatusBadge status={recStatus} label={recLabel} />{e.status === 'APPROVED' && <StatusBadge status={empStatus} label={empLabel} />}</div>
+        <PageHeader id="e3-title" title={<>{e.code} · {e.name}</>} status={<StatusBadge status={recStatus} label={recLabel} />} actions={<>{e.status === 'APPROVED' && <StatusBadge status={empStatus} label={empLabel} />}</>} />
         <dl className="op-figures">
           <div><dt>Department</dt><dd data-testid="e3-department">{e.department ?? '—'}</dd></div><div><dt>Designation</dt><dd data-testid="e3-designation">{e.designation ?? '—'}{e.grade ? ` (${e.grade})` : ''}</dd></div><div><dt>Type</dt><dd>{e.employmentTypeLabel}</dd></div>
           <div><dt>Joined</dt><dd>{formatDate(e.doj)}</dd></div><div><dt>Reports to</dt><dd>{e.manager ? <Link to={`/hr/employees/employee?id=${e.managerId}`}>{e.manager.emp_code} {e.manager.full_name}</Link> : '—'}</dd></div>

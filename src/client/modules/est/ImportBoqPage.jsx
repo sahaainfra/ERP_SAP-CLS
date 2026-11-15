@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { est, parsePasted, qty } from './api.js';
 import { EstimatePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Import Client BOQ (part 09.01, FR-02): the rows of the client's bill of quantities pasted from Excel (section, section name, item number, description, unit, quantity, the client's rate) are checked by the server
 // (missing fields, item numbers twice or already in the estimate) and shown before anything is added; then they become unpriced items of the draft. A workbook can also go through the Import Center (type EST_BOQ).
@@ -26,8 +27,7 @@ export default function ImportBoqPage() {
   const drafts = (lq.data?.data ?? []).filter((r) => ['DRAFT', 'RETURNED'].includes(r.status));
   return (
     <section aria-labelledby="imp-h" data-testid="boq-import">
-      <h1 id="imp-h">{t('imp.title')}</h1>
-      <p className="muted">{t('imp.help')}</p>
+      <PageHeader id="imp-h" title={t('imp.title')} subtitle={t('imp.help')} />
       <div className="mdm-panel mdm-fields">
         <EstimatePicker id="imp-estimate" value={id} onChange={(v) => { setId(v); setRes(null); }} rows={drafts.some((d) => d.id === id) || !id ? drafts : [...drafts, { id, ref: eq.data?.ref ?? `#${id}`, title: eq.data?.title ?? '', statusLabel: eq.data?.statusLabel ?? '' }]} label={t('imp.estimate')} />
         {eq.data && <p className="small">{t('imp.has', { n: eq.data.items.length })} <Link to={`/est/estimate?id=${id}`}>{eq.data.ref}</Link></p>}

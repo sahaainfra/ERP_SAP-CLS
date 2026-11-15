@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { XPD_TONE, download, fmtDate, fmtQty, pc, px, today } from './api.js';
 import { History, ProjectOrder, useRunner } from './XpdParts.jsx';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Vendor inspections (part 15.07, FR-02, FR-03): a stage, final or third-party inspection is called, its result and punch points are recorded, and a passed one goes to the quality engineer and the quality manager for the inspection release note (IRN).
 // Dispatch of a shipment is cleared by that note where inspection is mandatory.
@@ -25,8 +26,7 @@ function Insp({ t, id }) {
   const record = () => run(() => px.inspAct(r.id, 'result', { inspectionDate: rf.inspectionDate, result: rf.result, punchPoints: [...r.punchPoints.map((p) => ({ point: p.point, severity: p.severity, status: p.status })), ...pp.split('\n').map((x) => x.trim()).filter(Boolean).map((point) => ({ point }))] }), t('x.resultSaved')).then(() => setPp(''));
   return (
     <div data-testid="in-object" data-status={r.status} data-result={r.result}>
-      <h1 id="in-h">{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.is.${r.status}`)} />{r.irnNo && <StatusBadge status="APPROVED" label={r.irnNo} />}</h1>
-      <p><Link to="/proc/inspections">{t('x.back')}</Link> · <Link to={`/proc/purchase-orders?id=${r.poId}`}>{r.poNo}</Link> {r.vendor} · {r.projectCode}</p>
+      <PageHeader id="in-h" title={<>{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.is.${r.status}`)} />{r.irnNo && <StatusBadge status="APPROVED" label={r.irnNo} />}</>} meta={<><Link to="/proc/inspections">{t('x.back')}</Link> · <Link to={`/proc/purchase-orders?id=${r.poId}`}>{r.poNo}</Link> {r.vendor} · {r.projectCode}</>} />
       <dl className="kv" data-testid="in-figures"><div><dt>{t('x.type')}</dt><dd>{r.typeLabel}</dd></div><div><dt>{t('x.mandatory')}</dt><dd>{r.mandatory ? t('x.yes') : t('x.no')}</dd></div><div><dt>{t('x.callDate')}</dt><dd>{fmtDate(r.callDate)}</dd></div><div><dt>{t('x.inspectedOn')}</dt><dd>{fmtDate(r.inspectionDate)}</dd></div>
         <div><dt>{t('x.inspector')}</dt><dd>{r.inspector ?? '—'}{r.agency ? ` · ${r.agency}` : ''}</dd></div><div><dt>{t('x.location')}</dt><dd>{r.location ?? '—'}</dd></div><div><dt>{t('x.result')}</dt><dd data-testid="in-result">{t(`x.r.${r.result}`)}</dd></div>{r.irnNo && <div><dt>{t('x.irn')}</dt><dd data-testid="in-irn">{r.irnNo} · {fmtDate(r.irnDate)}</dd></div>}</dl>
       {r.scope && <p>{r.scope}</p>}
@@ -66,7 +66,7 @@ function InspForm({ t, editId, project0, po0 }) {
   const body = () => ({ itype: form.itype, mandatory: form.mandatory, callDate: form.callDate, inspector: form.inspector || null, agency: form.agency || null, location: form.location || null, scope: form.scope || null });
   const save = async () => { setError(null); setBusy(true); try { const d = editId ? await px.inspUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await px.inspCreate({ poId: Number(orderId), ...body() }); navigateTo(`/proc/inspections?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="inn-h" data-testid="proc-in-form"><h1 id="inn-h">{editId ? t('x.edit') : t('x.newInsp')}</h1><p className="muted">{t('x.newInspHelp')}</p><p><Link to="/proc/inspections">{t('x.back')}</Link></p>
+    <section aria-labelledby="inn-h" data-testid="proc-in-form"><PageHeader id="inn-h" title={editId ? t('x.edit') : t('x.newInsp')} subtitle={t('x.newInspHelp')} meta={<Link to="/proc/inspections">{t('x.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
           {editId ? <p>{e.poNo} · {e.vendor}</p> : <ProjectOrder t={t} projectId={projectId} setProjectId={setProjectId} orderId={orderId} setOrderId={setOrderId} error={error} prefix="inn" />}
@@ -87,7 +87,7 @@ export default function InspectionsPage() {
   if (sp.get('new') === '1') return <InspForm key={sp.get('edit') ?? sp.get('po') ?? 'new'} t={t} editId={Number(sp.get('edit')) || null} project0={Number(sp.get('project')) || null} po0={Number(sp.get('po')) || null} />;
   if (id) return <section aria-labelledby="in-h" data-testid="proc-in"><Insp key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="ins-h" data-testid="proc-in"><h1 id="ins-h">{t('x.inspTitle')}</h1><p className="muted">{t('x.inspIntro')}</p>
+    <section aria-labelledby="ins-h" data-testid="proc-in"><PageHeader id="ins-h" title={t('x.inspTitle')} subtitle={t('x.inspIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.inspection.create') && <Link to="/proc/inspections?new=1">{t('x.newInsp')}</Link>} <Link to="/proc/expediting">{t('x.dashboard')}</Link></div>
       <ListReport listCode="proc.inspections" endpoint="/proc/inspections" title={t('x.inspTitle')} session={session.data} rowHref={(r) => `/proc/inspections?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/inspections?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'itype', 'call', 'result']} statusKey="status" empty={{ title: t('x.inspEmptyTitle'), text: t('x.inspEmptyBody') }} /></section>
