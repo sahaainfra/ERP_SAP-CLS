@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useT } from '../../platform/i18n/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
@@ -39,9 +39,10 @@ function Workbench() {
   const assessments = { claims: Object.entries(v.probs).filter(([, p]) => Number(p.pct) > 0).map(([claimId, p]) => ({ claimId: Number(claimId), probabilityPct: Number(p.pct), note: p.note || null })), accruals: v.accruals.filter((x) => Number(x.amount) > 0).map((x) => ({ label: x.label || '—', amount: Number(x.amount), note: x.note || null })), valueProvisions: v.valueProvisions.filter((x) => Number(x.amount) > 0).map((x) => ({ label: x.label || '—', amount: Number(x.amount), note: x.note || null })), costProvisions: v.costProvisions.filter((x) => Number(x.amount) > 0).map((x) => ({ kind: x.kind, amount: Number(x.amount), note: x.note || null })) };
   const body = v.projectId ? { projectId: Number(v.projectId), period: v.period, assessments } : null;
   const pv = useQuery({ queryKey: ['bill', 'cvr-preview', JSON.stringify(body)], queryFn: () => bill.post('/reports/preview', body), enabled: Boolean(body), retry: false, placeholderData: (p) => p });
+  const good = useRef(null); if (pv.data) good.current = pv.data; const shown = pv.data ?? (body ? good.current : null);
   if (o.error?.status === 403) return <NoPermission what={t('cvr.new')} permission="bill.report.create" />; if (o.isPending) return <Skeleton label={t('cvr.new')} rows={4} />; if (o.isError) return <ErrorState error={o.error} onRetry={o.refetch} />;
   const d = o.data; const fe = error?.fields ?? {}; const set = (k) => (e) => setV({ ...v, [k]: e.target.value }); const upd = (key, i, k) => (e) => setV({ ...v, [key]: v[key].map((x, j) => (j === i ? { ...x, [k]: e.target.value } : x)) }); const add = (key, row) => setV({ ...v, [key]: [...v[key], row] }); const del = (key, i) => setV({ ...v, [key]: v[key].filter((_, j) => j !== i) });
-  const Rows = ({ k, kind }) => v[k].map((x, i) => (
+  const rowsOf = (k, kind) => v[k].map((x, i) => (
     <div className="form-grid" key={i} data-testid={`bill-cvr-${k}-row`}>
       {kind === 'cost' ? <select value={x.kind} onChange={upd(k, i, 'kind')} style={big} aria-label={t('cvr.kind')}>{d.provisionKinds.map((p) => <option key={p.id} value={p.id}>{t(`cvr.pk.${p.id}`)}</option>)}</select> : <input value={x.label} onChange={upd(k, i, 'label')} style={big} placeholder={t('cvr.label')} aria-label={t('cvr.label')} />}
       <input type="number" min="0" step="any" value={x.amount} onChange={upd(k, i, 'amount')} style={big} placeholder={t('cb.amount')} aria-label={t('cb.amount')} data-testid={`bill-cvr-${k}-amount`} /><input value={x.note} onChange={upd(k, i, 'note')} style={big} placeholder={t('cvr.note')} aria-label={t('cvr.note')} data-testid={`bill-cvr-${k}-note`} /><button type="button" className="btn" onClick={() => del(k, i)}>{t('cvr.remove')}</button></div>));
@@ -50,16 +51,18 @@ function Workbench() {
       <ErrorLine error={error} id="bill-error" />
       <div className="form-grid"><Field label={t('project')} name="projectId" error={fe.projectId}><select value={v.projectId} onChange={(e) => setV({ ...v, projectId: e.target.value, probs: {} })} style={big} data-testid="bill-cvr-project"><option value="">—</option>{d.projects.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field>
         <Field label={t('cvr.month')} name="period" error={fe.period}><input type="month" value={v.period} onChange={set('period')} style={big} data-testid="bill-cvr-period" /></Field></div>
-      {!body ? <p className="muted">{t('cvr.pick')}</p> : pv.isError ? <p className="field-error" role="alert" data-testid="bill-cvr-preview-error">{pv.error?.message}</p> : pv.isPending ? <Skeleton label={t('cvr.title')} rows={4} /> : (<div data-testid="bill-cvr-preview" data-margin={pv.data.margin}>
-        <Totals x={pv.data} /><h2>{t('cvr.value')}</h2><Lines lines={pv.data.valueLines} side="value" /><h2>{t('cvr.cost')}</h2><Lines lines={pv.data.costLines} side="cost" />
-        <h2>{t('cvr.claimsHead')}</h2>{pv.data.claimsOpen.length === 0 ? <p className="muted">{t('cvr.noClaims')}</p> : pv.data.claimsOpen.map((c) => (
-          <div className="form-grid" key={c.claimId} data-testid="bill-cvr-claim"><div>{c.claimNo} {c.title}<div className="muted">{money(c.claimed)}</div></div>
-            <input type="number" min="0" max="100" step="any" value={v.probs[c.claimId]?.pct ?? ''} onChange={(e) => setV({ ...v, probs: { ...v.probs, [c.claimId]: { ...v.probs[c.claimId], pct: e.target.value } } })} style={big} placeholder={t('cvr.prob')} aria-label={t('cvr.prob')} data-testid="bill-cvr-prob" />
-            <input value={v.probs[c.claimId]?.note ?? ''} onChange={(e) => setV({ ...v, probs: { ...v.probs, [c.claimId]: { ...v.probs[c.claimId], note: e.target.value } } })} style={big} placeholder={t('cvr.note')} aria-label={t('cvr.note')} data-testid="bill-cvr-prob-note" /></div>))}
-      </div>)}
-      <h2>{t('cvr.accruals')}</h2><Rows k="accruals" /><button type="button" className="btn" onClick={() => add('accruals', { label: '', amount: '', note: '' })} data-testid="bill-cvr-add-accrual">{t('cvr.add')}</button>
-      <h2>{t('cvr.valueProv')}</h2><Rows k="valueProvisions" /><button type="button" className="btn" onClick={() => add('valueProvisions', { label: '', amount: '', note: '' })} data-testid="bill-cvr-add-vprov">{t('cvr.add')}</button>
-      <h2>{t('cvr.costProv')}</h2><Rows k="costProvisions" kind="cost" /><button type="button" className="btn" onClick={() => add('costProvisions', { kind: 'RECTIFICATION', amount: '', note: '' })} data-testid="bill-cvr-add-cprov">{t('cvr.add')}</button>
+      {!body ? <p className="muted">{t('cvr.pick')}</p> : (<>
+        {pv.isError && <p className="field-error" role="alert" data-testid="bill-cvr-preview-error">{pv.error?.message}</p>}
+        {!shown ? <Skeleton label={t('cvr.title')} rows={4} /> : (<div data-testid="bill-cvr-preview" data-margin={shown.margin} data-stale={pv.isError ? '1' : '0'}>
+          <Totals x={shown} /><h2>{t('cvr.value')}</h2><Lines lines={shown.valueLines} side="value" /><h2>{t('cvr.cost')}</h2><Lines lines={shown.costLines} side="cost" />
+          <h2>{t('cvr.claimsHead')}</h2>{shown.claimsOpen.length === 0 ? <p className="muted">{t('cvr.noClaims')}</p> : shown.claimsOpen.map((c) => (
+            <div className="form-grid" key={c.claimId} data-testid="bill-cvr-claim"><div>{c.claimNo} {c.title}<div className="muted">{money(c.claimed)}</div></div>
+              <input type="number" min="0" max="100" step="any" value={v.probs[c.claimId]?.pct ?? ''} onChange={(e) => setV({ ...v, probs: { ...v.probs, [c.claimId]: { ...v.probs[c.claimId], pct: e.target.value } } })} style={big} placeholder={t('cvr.prob')} aria-label={t('cvr.prob')} data-testid="bill-cvr-prob" />
+              <input value={v.probs[c.claimId]?.note ?? ''} onChange={(e) => setV({ ...v, probs: { ...v.probs, [c.claimId]: { ...v.probs[c.claimId], note: e.target.value } } })} style={big} placeholder={t('cvr.note')} aria-label={t('cvr.note')} data-testid="bill-cvr-prob-note" /></div>))}
+        </div>)}</>)}
+      <h2>{t('cvr.accruals')}</h2>{rowsOf('accruals')}<button type="button" className="btn" onClick={() => add('accruals', { label: '', amount: '', note: '' })} data-testid="bill-cvr-add-accrual">{t('cvr.add')}</button>
+      <h2>{t('cvr.valueProv')}</h2>{rowsOf('valueProvisions')}<button type="button" className="btn" onClick={() => add('valueProvisions', { label: '', amount: '', note: '' })} data-testid="bill-cvr-add-vprov">{t('cvr.add')}</button>
+      <h2>{t('cvr.costProv')}</h2>{rowsOf('costProvisions', 'cost')}<button type="button" className="btn" onClick={() => add('costProvisions', { kind: 'RECTIFICATION', amount: '', note: '' })} data-testid="bill-cvr-add-cprov">{t('cvr.add')}</button>
       <Field label={t('cvr.commentaryQs')} name="commentaryQs" error={fe.commentaryQs}><textarea value={v.commentaryQs} onChange={set('commentaryQs')} rows={3} style={big} maxLength={2000} data-testid="bill-cvr-commentary" /></Field>
       <div className="actions-row"><button type="submit" className="btn btn-primary" style={big} disabled={busy || !body || pv.isError} data-testid="bill-cvr-save">{t('cb.saveDraft')}</button></div></form>
   );
