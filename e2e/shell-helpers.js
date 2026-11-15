@@ -23,3 +23,22 @@ export async function setTheme(page, theme) {
 export async function signOut(page) {
   await (await userMenu(page)).getByRole('menuitem', { name: 'Sign out' }).click();
 }
+
+// ---- part 166.1 F-02: what a role's menu holds is read from the navigation registry seed and the role templates, never typed into a spec ----
+import { DatabaseSync } from 'node:sqlite';
+import { TEMPLATE_PERMISSIONS } from '../src/server/platform/authz/templates.js';
+
+/**
+ * The groups (by label) and pages (by label) the registry gives to a role: pages of the sidebar whose permission the role holds (or needs none)
+ * and whose feature flag is on in the test environment. A page that also needs a project or another condition may still be hidden, so a spec
+ * uses the page list as "may appear" and the group list as "these and no others are drawn" only for groups it can prove empty.
+ */
+export function registryMenu(role, { env = 'test' } = {}) {
+  const d = new DatabaseSync('data/e2e.sqlite', { readOnly: true });
+  try {
+    const perms = new Set(TEMPLATE_PERMISSIONS[role] ?? []); const flagOn = (key) => { if (!key) return true; const rows = d.prepare('SELECT environment, enabled, default_enabled FROM core_feature_flags WHERE key = ?').all(key); if (!rows.length) return true; const own = rows.find((r) => r.environment === env) ?? rows.find((r) => r.environment == null); return Boolean(own ? (own.environment === env ? own.enabled : own.default_enabled || own.enabled) : false); };
+    const entries = d.prepare("SELECT code, parent_code, kind, label, permission_key, feature_flag FROM ui_navigation_entries WHERE deleted_at IS NULL AND placement = 'sidebar'").all();
+    const byCode = new Map(entries.map((e) => [e.code, e])); const pages = entries.filter((e) => e.kind === 'page' && (!e.permission_key || perms.has(e.permission_key)) && flagOn(e.feature_flag));
+    return { pages: new Set(pages.map((p) => p.label)), groups: new Set(pages.map((p) => byCode.get(p.parent_code)?.label).filter(Boolean)), allPages: new Set(entries.filter((e) => e.kind === 'page').map((p) => p.label)) };
+  } finally { d.close(); }
+}
