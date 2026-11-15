@@ -25,7 +25,7 @@ const dbPath = argOf('--db') ?? process.env.DATABASE_PATH;
 if (dbPath && existsSync(dbPath)) {
   const db = new DatabaseSync(dbPath, { readOnly: true });
   const rows = db.prepare("SELECT r.code AS role, g.perm_key AS permission, g.source_type AS source FROM iam_role_permissions g JOIN iam_roles r ON r.id = g.role_id WHERE g.is_active = 1 AND g.effect = 'allow' AND r.is_active = 1").all();
-  for (const x of rows) { const t = TEMPLATE_PERMISSIONS[String(x.role).toUpperCase()] ?? TEMPLATE_PERMISSIONS[x.role]; if (t && !t.includes(x.permission) && !approved.has(`${x.role}|${x.permission}`)) findings.push({ kind: 'STORED_NOT_IN_TEMPLATE', role: x.role, permission: x.permission, source: x.source }); }
+  for (const x of rows) { const role = String(x.role); const permission = String(x.permission); const t = TEMPLATE_PERMISSIONS[role.toUpperCase()] ?? TEMPLATE_PERMISSIONS[role]; if (t && !t.includes(permission) && !approved.has(`${role}|${permission}`)) findings.push({ kind: 'STORED_NOT_IN_TEMPLATE', role, permission, source: String(x.source) }); }
 }
 if (args.includes('--json')) console.log(JSON.stringify(findings, null, 1));
 else if (findings.length === 0) console.log(`Permission audit OK: ${Object.keys(holders()).length} sensitive permissions, every holder is in the baseline${dbPath ? ' and the stored grants match the templates' : ''}.`);
