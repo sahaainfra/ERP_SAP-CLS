@@ -1577,3 +1577,30 @@ Module `ctr`, flag `ff.ctr.p2106`, tables `ctr_claims`, `ctr_claim_events`, `ctr
 
 ## 162. Price Escalation, PVC & Liquidated Damages Computation (part 21.07)
 Module `ctr`, flag `ff.ctr.p2107`, tables `ctr_pvc_formulas`, `ctr_pvc_index_refs`, `ctr_escalation_calcs`, `ctr_ld_assessments`; service `src/server/modules/ctr/pvc.js`. The escalation and the LD are worked out only by `escalationOf` and `ldOf`; the index values stay in the shared master.
+
+## 163. Measurement Book & Check Measurement (part 22.01)
+Module `bill`, flag `ff.bill.p2201`, table `bill_mb_entries`; service `src/server/modules/bill/mb.js`. The quantity is worked out only by `mbQty`; the eligibility only by `eligibility`; certified quantity is read by billing through `certifiedQtyOf`.
+
+## 164. Quantity Reconciliation, Deviation Statements & Extra Items (part 22.02)
+Module `bill`, flag `ff.bill.p2202`, tables `bill_deviation_statements`, `bill_qty_forecasts`, `bill_extra_items`; services `recon.js` and `deviation.js`. The chain is read only through `recon.rows`; a statement is built only from it.
+
+## 165. Client RA Bill Preparation (part 22.03)
+Module `bill`, flag `ff.bill.p2203`, tables `bill_client_bills`, `bill_client_bill_items`; service `src/server/modules/bill/clientbill.js`. The bill is built only by `build`, on the server, at preview, save and submit; deductions only through the calculation engine.
+
+## 166. Client Certification, Tax Invoice & Receivable Handoff (part 22.04)
+Module `bill`, flag `ff.bill.p2204`, tables `bill_certifications`, `bill_tax_invoices`, `bill_invoice_counters`; services `cert.js` and `invoice.js`. The invoice number is taken only in `invoice.js` `onApproved`, inside the approval transaction.
+
+## 167. Subcontractor Measurement & Bills (part 22.05)
+Module `bill`, flag `ff.bill.p2205`, tables `bill_sub_measurements`, `bill_sub_bills`, `bill_sub_bill_items`, `bill_sub_claims`; service `src/server/modules/bill/sub.js`. A recovery is deducted only through `sources` and `bill_sub_claims`; the bill is built only by `build`.
+
+## 168. Vendor Invoices, Three-Way/Multi-Way Matching & Invoice Hub (part 22.06)
+Module `bill`, flag `ff.bill.p2206`, tables `bill_vendor_invoices`, `bill_vendor_invoice_lines`; services `vinv.js` and `hub.js`. The match is made only by `evaluate`, on the server, at save and at submit.
+
+## 169. Retention, Security Deposit & Advance Recovery Ledgers (part 22.07)
+Module `bill`, flag `ff.bill.p2207`, tables `bill_retention_ledger`, `bill_advances`, `bill_advance_recoveries`, `bill_releases`; service `ledger.js`. The ledger is changed only by the consumers of the certified and approved bill events and by an approved release.
+
+## 170. QS Management Dashboard (part 22.08)
+Module `bill`, flag `ff.bill.p2208`, no table; service `qsdash.js`. Reads only; the Project 360 slot `qs` and the widgets are registered by the module.
+
+## 171. Commercial Control: CVR, Margin Tracking & Contract Control Tower (part 22.09)
+Module `bill`, flag `ff.bill.p2209`, table `bill_cvr_reports`; service `cvr.js`. The CVR is built only by `build` on the server; an approved report is never changed.

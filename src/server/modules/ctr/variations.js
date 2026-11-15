@@ -187,5 +187,14 @@ export function createVariationService({ db, base, flags, contracts, workOrders 
     if (provisional) return { allowed: true, basis: 'PROVISIONAL', voNo: row?.vo_no ?? null };
     return { allowed: false, basis: null, voNo: row?.vo_no ?? null, reason: row ? `${row.vo_no} is not approved yet: an extra item is billed only after its variation order is approved` : 'No variation order covers this item: an extra item is billed only after its variation order is approved' };
   }
-  return { changeRequests: crs, variationOrders: vos, variations: { billingGate } };
+  /** The adapter for the deviation statements (22.02): an accepted deviation, or an approved extra item, becomes a change request of the source "quantity deviation"; the person was authorised by the billing permission, the change request then follows its own approval. */
+  function raiseFromDeviation(actor, b) {
+    return transaction(db, () => {
+      const pj = db.prepare('SELECT id FROM org_projects WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(b.projectId), actor.companyId); if (!pj) fail([{ field: 'projectId', message: 'Not a project of this company' }]);
+      const no = flow.next(actor); const crNo = number(actor.companyId, actor.user, 'CTR_CR_NO', 'ctr_change_requests', 'CR', {});
+      const id = Number(db.prepare("INSERT INTO ctr_change_requests (company_id, doc_no, cr_no, kind, org_project_id, org_site_id, contract_id, origin_type, origin_ref, origin_id, title, description, created_by, source_type, source_id) VALUES (?, ?, ?, 'CLIENT', ?, ?, ?, 'QTY_DEVIATION', ?, ?, ?, ?, ?, ?, ?)").run(actor.companyId, no, crNo, pj.id, b.siteId ?? null, b.contractId ?? null, b.ref, b.sourceId ?? null, String(b.title).slice(0, 200), String(b.description).slice(0, 4000), actor.user, b.sourceType, String(b.sourceId ?? '')).lastInsertRowid);
+      audit(actor, 'ctr_change_requests', id, 'create', actor.companyId, { reason: `raised from ${b.ref}` }); return { id, docNo: no, crNo };
+    });
+  }
+  return { changeRequests: crs, variationOrders: vos, variations: { billingGate, raiseFromDeviation } };
 }
