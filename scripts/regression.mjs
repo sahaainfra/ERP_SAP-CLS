@@ -28,6 +28,7 @@ const all = [
   { id: 'icon-map', title: 'Icon map generated from the icon registry (part 03.01)', cmd: [node, 'scripts/build_icons.mjs', '--check'] },
   { id: 'nav-check', title: 'Navigation registry: every page has an entry, every entry a page (part 03.05)', cmd: [node, 'scripts/nav_check.mjs'] },
   { id: 'route-check', title: 'Route registry: every route declared with its permission (part 02.07)', cmd: [node, 'scripts/route_check.mjs'] },
+  { id: 'permission-audit', title: 'Permission audit: every holder of a sensitive permission is reviewed (part 166.1)', cmd: [node, 'scripts/permission_audit.mjs'] },
   { id: 'db-check', title: 'Data-integrity suite (Critical failures block)', cmd: [node, 'scripts/db_check.mjs', '--fresh'] },
   { id: 'schema-diff', title: 'Schema-diff against locked baseline', cmd: [node, 'scripts/schema_diff.mjs'] },
   { id: 'golden', title: 'Golden-output comparison', cmd: [node, 'scripts/golden.mjs'] },

@@ -22,6 +22,7 @@
     "erp:discover": "python scripts/erp_discover.py",
     "erp:schema-diff": "node scripts/schema_diff.mjs",
     "erp:route-check": "node scripts/route_check.mjs",
+    "erp:permission-audit": "node scripts/permission_audit.mjs",
     "erp:tokens": "node scripts/build_tokens.mjs && node scripts/build_icons.mjs",
     "erp:rotate-vault-key": "node scripts/rotate_vault_key.mjs",
     "erp:golden": "node scripts/golden.mjs",

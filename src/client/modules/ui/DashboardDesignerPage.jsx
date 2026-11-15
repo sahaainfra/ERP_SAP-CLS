@@ -8,6 +8,7 @@ import { useContextOptions } from '../../platform/shell/api.js';
 import { Banner } from '../../platform/feedback/Feedback.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { QueryState, errorInfo, navigateTo } from '../core/pages/ui.jsx';
+import { NoPermission } from '../../platform/feedback/states.jsx';
 
 // The Dashboard Designer (part 03.07, FR-03, AC-02/05; a Config page): an administrator arranges the default dashboard of a role. A change is a
 // request that another administrator approves (maker-checker); once approved, everyone of that role who has no layout of their own sees it.
@@ -81,6 +82,8 @@ export default function DashboardDesignerPage({ session }) {
   useEffect(() => { setDraft(null); setMessage(null); }, [code, role]);
   useEffect(() => { if (!role && designer.data?.roleCodes.length) setRole(designer.data.roleCodes[0].code); }, [designer.data, role]);
 
+  // 166.1 F-03: a person without the right is told so before any of the designer is drawn (the server refuses the data as well)
+  if (!session?.permissions?.includes('ui.dashboard.manage')) return <NoPermission what="the Dashboard Designer" permission="ui.dashboard.manage" />;
   const gate = [list, designer].find((q) => q.isPending || q.isError);
   if (gate) return <section aria-labelledby="page-title"><h1 id="page-title">Dashboard Designer</h1><QueryState query={gate} what="the dashboard designer" permission="ui.dashboard.manage" /></section>;
 

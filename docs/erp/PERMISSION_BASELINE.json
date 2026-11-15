@@ -1,0 +1,343 @@
+{
+ "alr.alert.manage": [
+  "CFO",
+  "COMMGR",
+  "DIR",
+  "HRMGR",
+  "PD",
+  "PM",
+  "PROCMGR",
+  "SUPADM",
+  "SYSADM"
+ ],
+ "att.period.manage": [
+  "HRMGR"
+ ],
+ "bd.contact.manage": [
+  "BD",
+  "DIR"
+ ],
+ "bd.credential.manage": [
+  "DIR",
+  "EST"
+ ],
+ "bd.result.manage": [
+  "DIR",
+  "EST"
+ ],
+ "bd.submission.manage": [
+  "DIR",
+  "EST"
+ ],
+ "bd.tender.manage": [
+  "DIR",
+  "EST"
+ ],
+ "bud.alloc.configure": [
+  "ACCMGR"
+ ],
+ "bud.check.configure": [
+  "PCMGR",
+  "PM"
+ ],
+ "core.calc.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.connectors.configure": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.events.redrive": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.events.replay": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.files.configure": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.flag.configure": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.fy.configure": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.holiday.configure": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.jobs.manage": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.numbering.configure": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.numbering.issue": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.ops.manage": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.param.configure": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "core.param.configure_system": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.period.manage": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "core.period.post_soft_closed": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "core.schedule.manage": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.security.configure": [
+  "ITADM",
+  "SUPADM"
+ ],
+ "core.settings.configure": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "ctr.bank_limit.manage": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "ctr.clause.manage": [
+  "COMMGR"
+ ],
+ "ctr.milestone.manage": [
+  "COMMGR"
+ ],
+ "ctr.obligation.manage": [
+  "COMMGR",
+  "PD",
+  "PM"
+ ],
+ "ctr.sub_manpower.manage": [
+  "COMMGR",
+  "SUBCO"
+ ],
+ "doc.document.manage": [
+  "DOC",
+  "SUPADM"
+ ],
+ "eng.matrix.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "eng.pcs.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "engg.letter.issue": [
+  "COMMGR",
+  "DOC",
+  "PM"
+ ],
+ "hr.disciplinary.manage": [
+  "HRMGR"
+ ],
+ "hr.ess.issue": [
+  "HRMGR"
+ ],
+ "hr.expense.configure": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "hr.grievance.manage": [
+  "HRMGR"
+ ],
+ "hr.perf.configure": [
+  "HRMGR"
+ ],
+ "hr.training.configure": [
+  "HRMGR"
+ ],
+ "hr.worker.configure": [
+  "COMMGR",
+  "HRMGR"
+ ],
+ "iam.assignment.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "iam.review.manage": [
+  "AUD",
+  "DIR",
+  "SUPADM",
+  "SYSADM"
+ ],
+ "iam.role.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "iam.security.manage": [
+  "ITADM",
+  "SUPADM",
+  "SYSADM"
+ ],
+ "iam.sod.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "iam.user.manage": [
+  "HRMGR",
+  "SUPADM",
+  "SYSADM"
+ ],
+ "inv.bin.manage": [
+  "STOREMGR"
+ ],
+ "inv.reconciliation.configure": [
+  "QS"
+ ],
+ "msg.channel.manage": [
+  "DIR",
+  "HRMGR",
+  "PD",
+  "PM",
+  "SYSADM"
+ ],
+ "msg.legal_hold.manage": [
+  "AUD",
+  "DIR"
+ ],
+ "off.device.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "org.company.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "org.costcentre.manage": [
+  "ACCMGR"
+ ],
+ "org.hr.manage": [
+  "HRMGR",
+  "SUPADM",
+  "SYSADM"
+ ],
+ "org.project.manage": [
+  "PCMGR",
+  "PD",
+  "PM"
+ ],
+ "org.site.manage": [
+  "PCMGR",
+  "PD",
+  "PM"
+ ],
+ "plan.calendar.manage": [
+  "PLAN"
+ ],
+ "plan.capacity.manage": [
+  "PLAN"
+ ],
+ "plan.constraint.manage": [
+  "CM",
+  "PLAN",
+  "PM",
+  "SE",
+  "WSUP"
+ ],
+ "plan.template.manage": [
+  "PLAN"
+ ],
+ "plant.document.manage": [
+  "PLANTMGR",
+  "PMSUP"
+ ],
+ "plant.fuel.configure": [
+  "PLANTMGR"
+ ],
+ "plant.pm.manage": [
+  "PLANTMGR"
+ ],
+ "pol.requirement.manage": [
+  "ACCMGR",
+  "CFO",
+  "COMMGR",
+  "HRMGR",
+  "HSEE",
+  "PCMGR",
+  "PROCMGR",
+  "QCMGR"
+ ],
+ "proc.rfq.issue": [
+  "PROCIC",
+  "PROCMGR"
+ ],
+ "proj.handover.manage": [
+  "COMMGR",
+  "EST",
+  "PCMGR",
+  "PD",
+  "PM"
+ ],
+ "proj.milestone.manage": [
+  "PCMGR",
+  "PD",
+  "PM"
+ ],
+ "proj.stakeholder.manage": [
+  "PCMGR",
+  "PM"
+ ],
+ "proj.team.manage": [
+  "PCMGR",
+  "PM"
+ ],
+ "proj.wbs.manage": [
+  "PCMGR",
+  "PLAN"
+ ],
+ "sec.device.manage": [
+  "ITADM",
+  "SYSADM"
+ ],
+ "site.daily_plan.manage": [
+  "CM",
+  "SE"
+ ],
+ "site.productivity.configure": [
+  "PCMGR",
+  "PLAN"
+ ],
+ "site.work_front.manage": [
+  "CM",
+  "PLAN",
+  "SE"
+ ],
+ "ui.dashboard.manage": [
+  "PCMGR",
+  "SUPADM",
+  "SYSADM"
+ ],
+ "ui.nav.manage": [
+  "SUPADM",
+  "SYSADM"
+ ],
+ "ui.translation.manage": [
+  "SUPADM",
+  "SYSADM"
+ ]
+}
