@@ -107,7 +107,7 @@ test('AC-01 setting proposed and approved, PO committed, GRN consumed, ledger re
   const line = (amount) => [{ lineId: '1', wbsId: w2, costCodeId: mat, resourceType: 'MATERIAL', qty: 300, amount, description: 'Cement 53 grade' }];
   await api(request, c, 'SYSADM', sysUser, 'post', '/bud/ingest/commitment', { action: 'UPSERT', projectId: s.project, stage: 'PO', sourceType: 'proc_po', sourceId: 'PO-001', docRef: 'PO/2026/001', vendorRef: 'V-77', vendorName: 'Shree Cement Traders', lines: line(100000) });
   await api(request, c, 'SYSADM', sysUser, 'post', '/bud/ingest/actual', { action: 'POST', projectId: s.project, sourceType: 'inv_grn', sourceId: 'GRN-1', docRef: 'GRN-1', vendorRef: 'V-77', vendorName: 'Shree Cement Traders', date: '2026-03-10', lines: [{ lineId: '1', wbsId: w2, costCodeId: mat, resourceType: 'MATERIAL', qty: 100, amount: 40000, commitment: { sourceType: 'proc_po', sourceId: 'PO-001', lineId: '1' } }] });
-  await r.page.goto(`/bud/ledger?projectId=${s.project}`);
+  await r.page.goto(`/bud/ledger?view=detail&projectId=${s.project}`);
   await expect(r.page.getByRole('heading', { name: 'Budget vs Committed vs Actual', level: 1 })).toBeVisible();
   const row = r.page.locator('[data-testid="led-row"]', { hasText: 'W2' });
   await expect(row).toContainText('1,81,680.00');

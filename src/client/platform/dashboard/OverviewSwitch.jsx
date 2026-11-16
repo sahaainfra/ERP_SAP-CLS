@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import DashboardView from './DashboardView.jsx';
 import { useFlag } from '../shell/api.js';
 import { Skeleton } from '../feedback/states.jsx';
@@ -10,7 +11,6 @@ const withView = (detail) => {
   const s = p.toString();
   return `${globalThis.location?.pathname ?? '/'}${s ? `?${s}` : ''}`;
 };
-const go = (to) => (e) => { e.preventDefault(); navigateTo(to); };
 
 /**
  * A module dashboard as an overview page of cards (part 166.5, FR-02) when ff.ui.p16605 is ON, else the page as it was. The cards read the same
@@ -19,22 +19,26 @@ const go = (to) => (e) => { e.preventDefault(); navigateTo(to); };
  */
 export default function OverviewSwitch({ code, heading, crumb, intro, Classic }) {
   const flag = useFlag('ff.ui.p16605');
+  // the view follows the address: a change of its query alone does not draw the page again, so the switch keeps it too (and Back / Forward)
+  const [detail, setDetail] = useState(detailWanted);
+  useEffect(() => { const on = () => setDetail(detailWanted()); globalThis.addEventListener('popstate', on); return () => globalThis.removeEventListener('popstate', on); }, []);
+  const go = (to, d) => (e) => { e.preventDefault(); navigateTo(to); setDetail(d); };
   if (!flag.known) return <Skeleton label={heading} rows={4} />;
   if (!flag.on) return <Classic />;
-  if (detailWanted()) {
+  if (detail) {
     const back = withView(false);
     return (
       <>
-        <p className="ov-switch small" data-testid="overview-back"><a href={back} onClick={go(back)}>‹ Back to the overview</a></p>
+        <p className="ov-switch small" data-testid="overview-back"><a href={back} onClick={go(back, false)}>‹ Back to the overview</a></p>
         <Classic />
       </>
     );
   }
-  const detail = withView(true);
+  const detailUrl = withView(true);
   return (
     <div data-testid={`overview-${code}`}>
       <DashboardView code={code} heading={heading} crumb={crumb} intro={intro} />
-      <p className="ov-switch small"><a href={detail} onClick={go(detail)} data-testid="overview-detail">Open the detailed page ›</a> <span className="muted">its tables, exports and own filters</span></p>
+      <p className="ov-switch small"><a href={detailUrl} onClick={go(detailUrl, true)} data-testid="overview-detail">Open the detailed page ›</a> <span className="muted">its tables, exports and own filters</span></p>
     </div>
   );
 }

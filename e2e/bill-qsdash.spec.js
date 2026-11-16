@@ -25,6 +25,6 @@ test('QS dashboard: tiles, drill-down, queues, margin right', async ({ browser, 
   await p.getByTestId('bill-qd-open-overdueSubmission').click(); await expect(p.getByTestId('bill-qd-drill')).toHaveAttribute('data-kind', 'overdueSubmission'); await expect(p.getByTestId('bill-qd-drill-row')).toHaveCount(1); await expect(p.getByTestId('bill-qd-drill-row')).toContainText(`RA-${t}-9`); await shot(p, '2-drill', info);
   await expect(p.getByTestId('bill-qd-queue-certAwaited')).toHaveAttribute('data-count', '0'); await expect(p.getByTestId('bill-qd-queue-mbPending')).toHaveAttribute('data-count', '1');
   await expect(p.getByTestId('bill-qd-margin')).not.toContainText('30,000'); await expect(p.getByTestId('bill-qd-leakage')).toContainText('10,000.00');
-  const cm = await open(browser, info, c, 'COMMGR', s.u('cm'), `/bill/qs-dashboard?projectId=${s.A}`); const q = cm.page; await expect(q.getByTestId('bill-qd-margin')).toContainText('₹ 30,000.00'); await noOverflow(q); await shot(q, '3-commercial-manager', info);
+  const cm = await open(browser, info, c, 'COMMGR', s.u('cm'), `/bill/qs-dashboard?view=detail&projectId=${s.A}`); const q = cm.page; await expect(q.getByTestId('bill-qd-margin')).toContainText('₹ 30,000.00'); await noOverflow(q); await shot(q, '3-commercial-manager', info);
   expect(errors, errors.join('\n')).toEqual([]);
 });
