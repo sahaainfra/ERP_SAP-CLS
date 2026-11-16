@@ -343,6 +343,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/ui/forms/:code', g: 'self', k: null, s: 'parseFormCode', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/ui/launchpad', g: 'self', k: null, s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/ui/lists/:code', g: 'record', k: null, s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/ui/field/today', g: 'self', k: null, s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/ui/navigation', g: 'self', k: null, s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/ui/navigation/changes', g: 'permission', k: 'ui.nav.manage', s: 'parseNavChange', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/ui/navigation/registry', g: 'permission', k: 'ui.nav.manage', s: null, scope: 'company', rate: 'read', audit: false },
