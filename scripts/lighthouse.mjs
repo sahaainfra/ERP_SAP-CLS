@@ -6,7 +6,7 @@
 // and runs Lighthouse with npx (pinned, not a dependency of the application). The person is set the way the development identity bar sets it, in a
 // fresh browser profile seeded from a JSON address of the same site, so no script of the application is cached before the measured visit.
 //
-// Usage: node scripts/lighthouse.mjs --base http://127.0.0.1:4791 [--out reports] [--runs 1]
+// Usage: node scripts/lighthouse.mjs --base http://127.0.0.1:4791 [--out reports] [--runs 1] [--only <part of a path>]
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -62,11 +62,12 @@ async function main() {
   const chrome = process.env.CHROME_PATH ?? (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : (await import('playwright')).chromium.executablePath());
   mkdirSync(out, { recursive: true });
   const results = [];
-  for (const page of PAGES) {
+  const only = arg('--only', ''); // a part of the path, e.g. --only field
+  for (const page of PAGES.filter((pg) => !only || pg.path.includes(only))) {
     const scores = [];
     for (let i = 0; i < runs; i += 1) {
       const profile = await seedProfile(base, page, chrome);
-      const file = join(out, `lighthouse-${page.path.replace(/\W+/g, '-').replace(/^-|-$/g, '') || 'root'}.json`);
+      const file = join(out, `lighthouse-${page.path.replace(/\W+/g, '-').replace(/^-|-$/g, '') || 'root'}${runs > 1 ? `-run${i + 1}` : ''}.json`); // each run kept, to see what a slow one did
       const r = spawnSync('npx', ['--yes', LIGHTHOUSE, `${base}${page.path}`, '--only-categories=performance', '--form-factor=mobile', '--throttling-method=simulate',
         '--disable-storage-reset', '--output=json', `--output-path=${file}`, '--quiet', `--chrome-flags=--headless=new --no-sandbox --user-data-dir=${profile}`],
       { encoding: 'utf8', env: { ...process.env, CHROME_PATH: chrome }, timeout: 240_000 });

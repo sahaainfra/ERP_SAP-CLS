@@ -169,7 +169,13 @@ function FavouriteToggle({ nav, path }) {
   const { add, remove } = useFavouriteActions();
   const toast = useToast();
   const entry = entryFor(nav, path);
-  if (!entry || entry.code === 'home' || !favs.data) return null;
+  const keepRoom = useFlagOn('ff.perf.p16604'); // part 166.4 (CLS): the button's room is kept while the favourites load, so the page does not move
+  if (!entry || entry.code === 'home') return null;
+  if (!favs.data) {
+    return keepRoom && favs.isPending && favs.fetchStatus === 'fetching'
+      ? <span className="btn btn-small sh-fav" aria-hidden="true" style={{ visibility: 'hidden' }}><Icon name="erp.action.pin" size={14} /> {t('fav.add')}</span>
+      : null;
+  }
   const mine = favs.data.find((f) => f.kind === 'page' && f.navCode === entry.code);
   const busy = add.isPending || remove.isPending;
   const toggle = () => {

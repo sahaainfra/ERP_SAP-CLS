@@ -51,6 +51,8 @@ export default function FieldHomePage({ session }) {
   const v3 = useFlagOn('ff.field.p16603');
   const today = useFieldToday(v3);
   const off = useOffline();
+  // part 166.4 (CLS): the tiles and the location notice are drawn once today's cards have arrived (or failed), so the cards do not push them down
+  const holdTiles = useFlagOn('ff.perf.p16604') && v3 && today.isPending && today.fetchStatus === 'fetching'; // never while offline (a paused query)
   const pull = usePullToRefresh(async () => { await Promise.all([nav.refetch(), lp.refetch(), v3 ? today.refetch() : null]); });
   const tiles = flatPages(nav.data).filter((p) => p.field).sort((a, b) => a.field.order - b.field.order);
   const text = (tile) => labelIn(tile.field, language);
@@ -104,7 +106,7 @@ export default function FieldHomePage({ session }) {
 
       <QueryState query={nav} what={t('tiles.what')} />
       {nav.data && tiles.length === 0 && <EmptyState title={t('empty.title')} message={t('empty.body')} />}
-      {tiles.length > 0 && (
+      {tiles.length > 0 && !holdTiles && (
         <>
           {v3 && <h2>{t('actions.title')}</h2>}
           <ul className="field-tiles" aria-label={t('tiles.aria')}>
@@ -119,7 +121,7 @@ export default function FieldHomePage({ session }) {
       {!v3 && pending && (pending.approvals > 0 || pending.drafts > 0) && (
         <p className="muted" data-testid="field-pending">{t('pending.line', { items: [pending.approvals > 0 && t('pending.approvals', { count: pending.approvals }), pending.drafts > 0 && t('pending.drafts', { count: pending.drafts })].filter(Boolean).join(', ') })}</p>
       )}
-      <LocationNotice purpose={t('location.purpose')} />
+      {!holdTiles && <LocationNotice purpose={t('location.purpose')} />}
     </section>
   );
 }
