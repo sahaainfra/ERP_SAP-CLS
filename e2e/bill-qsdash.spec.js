@@ -18,7 +18,7 @@ test('QS dashboard: tiles, drill-down, queues, margin right', async ({ browser, 
   const sent = fill(d, 'bill_client_bills', { company_id: c, org_project_id: s.A, contract_id: k, bill_no: `RA-${t}-8`, seq_no: 1, period_from: day(-90), period_to: day(-70), net_paise: 4_000_000, gross_paise: 5_000_000, status: 'APPROVED', client_state: 'SENT', sent_on: day(-50) });
   fill(d, 'bill_certifications', { company_id: c, org_project_id: s.A, contract_id: k, bill_id: sent, cert_no: `CE-${t}`, cert_date: day(-10), submitted_gross_paise: 10_000_000, certified_gross_paise: 9_000_000, disputed_paise: 300_000, status: 'APPROVED' });
   fill(d, 'bill_sub_bills', { company_id: c, org_project_id: s.A, bill_no: `SB-${t}`, seq_no: Date.now() % 1_000_000_000, gross_paise: 6_000_000, net_paise: 5_500_000, status: 'APPROVED' });
-  const qs = await open(browser, info, c, 'QS', s.u('qs'), '/bill/qs-dashboard'); const p = qs.page; const errors = watch(p);
+  const qs = await open(browser, info, c, 'QS', s.u('qs'), '/bill/qs-dashboard?view=detail'); const p = qs.page; const errors = watch(p);
   await expect(p.getByTestId('bill-qs-dashboard')).toBeVisible(); await p.getByTestId('bill-qd-project').selectOption(String(s.A));
   await expect(p.getByTestId('bill-qd-kpi-measuredNotCertified-value')).toContainText('48,000.00'); await expect(p.getByTestId('bill-qd-kpi-variationPipeline-value')).toContainText('50,000.00'); await expect(p.getByTestId('bill-qd-kpi-claimsPending-value')).toContainText('20,000.00');
   await expect(p.getByTestId('bill-qd-kpi-overdueSubmission')).toHaveAttribute('data-status', 'red'); await noOverflow(p); await shot(p, '1-dashboard', info);

@@ -133,7 +133,7 @@ test('AC-01 setting proposed and approved, PO committed, GRN consumed, ledger re
   await shot(r.page, 'availability-block', info);
   await noOverflow(r.page);
   expect(errors, errors.join('\n')).toEqual([]);
-  const n = await open(browser, info, c, 'SE', s.u('se'), '/bud/ledger');
+  const n = await open(browser, info, c, 'SE', s.u('se'), '/bud/ledger?view=detail');
   await expect(n.page.getByText(/permission|not allowed|may not/i).first()).toBeVisible();
   await shot(n.page, 'no-permission', info);
 });

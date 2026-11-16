@@ -78,7 +78,7 @@ test('screenshots of the HR pages', async ({ browser, request }, info) => {
   const pending = await api(request, c, 'HRMGR', g.u('hr'), 'post', '/hr/employees', { ...body(g, { firstName: 'Neha', lastName: 'Joshi', gender: 'FEMALE', mobile: '9811100003', dob: '1994-04-04', statutory: { pan: 'DDDPJ4444D', aadhaar: '444455556666', pfApplicable: true, esiApplicable: false, ptState: 'MH' }, bank: { accountNo: '800800800800', ifsc: 'SBIN0001234', accountName: 'Neha Joshi' } }), submit: true });
   void pending;
   const shot = async (page, name) => { await page.waitForTimeout(500); await page.screenshot({ path: `${OUT}/${name}${sfx}.png`, fullPage: true }); };
-  const hr = await open(browser, info, c, 'HRMGR', g.u('hr'), '/hr');
+  const hr = await open(browser, info, c, 'HRMGR', g.u('hr'), '/hr?view=detail');
   const errors = watch(hr.page);
   await expect(hr.page.getByTestId('hro-headcount')).toHaveText('3');
   await shot(hr.page, '01-hr-overview');

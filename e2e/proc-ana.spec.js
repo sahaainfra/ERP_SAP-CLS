@@ -45,7 +45,7 @@ async function seed(c, t) {
 test('Procurement dashboard: tiles, drill-down to records, work queues and charts; spend, cycle time and compliance reports', async ({ browser, request }, info) => {
   test.setTimeout(300_000);
   const t = `a${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}`; const c = await company(request, t.toUpperCase()); const s = await seed(c, t);
-  const m = await open(browser, info, c, 'PROCMGR', s.u('mgr'), '/proc/dashboard'); const p = m.page; const errors = watch(p);
+  const m = await open(browser, info, c, 'PROCMGR', s.u('mgr'), '/proc/dashboard?view=detail'); const p = m.page; const errors = watch(p);
   await expect(p.getByTestId('proc-pd')).toBeVisible(); await expect(p.getByTestId('pd-openPrs')).toHaveText('2'); await expect(p.getByTestId('pd-pending')).toHaveText('1'); await expect(p.getByTestId('pd-overdue')).toHaveText('1'); await expect(p.getByTestId('pd-spendFy')).toContainText('55,000'); await expect(p.getByTestId('pd-single')).toHaveText('100%');
   await expect(p.getByTestId('pd-cycle')).toContainText('8'); await expect(p.getByTestId('pd-queue-posAwaitingRelease-count')).toHaveText('1'); await expect(p.getByTestId('pd-cat-row').first()).toContainText('Cement'); await expect(p.getByTestId('pd-concentration')).toBeVisible(); await noOverflow(p); await shot(p, '1-dashboard', info);
   // drill-down: a tile opens the records behind it
@@ -64,6 +64,6 @@ test('Procurement dashboard: tiles, drill-down to records, work queues and chart
 
 test('Procurement dashboard: a project manager reads it; a storekeeper has no access', async ({ browser, request }, info) => {
   const t = `a${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}z`; const c = await company(request, t.toUpperCase()); const s = await seed(c, t);
-  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/proc/dashboard'); await expect(pm.page.getByTestId('proc-pd')).toBeVisible(); await noOverflow(pm.page);
-  const sk = await open(browser, info, c, 'SK', s.u('sk'), '/proc/dashboard'); await expect(sk.page.getByTestId('proc-pd')).toHaveCount(0);
+  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/proc/dashboard?view=detail'); await expect(pm.page.getByTestId('proc-pd')).toBeVisible(); await noOverflow(pm.page);
+  const sk = await open(browser, info, c, 'SK', s.u('sk'), '/proc/dashboard?view=detail'); await expect(sk.page.getByTestId('proc-pd')).toHaveCount(0);
 });

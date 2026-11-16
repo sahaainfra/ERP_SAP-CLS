@@ -187,7 +187,7 @@ test('FR-02 FR-07 BR-02 an employment change asked for on Employee 360 is approv
   await p.page.getByTestId('e3-tab-changes').click();
   await expect(p.page.getByTestId('e3-change').first()).toContainText('Applied');
   // the overview: headcount and the bars; the tile opens the directory
-  const o = await open(browser, info, s.c, 'HRMGR', s.g.u('hr'), '/hr');
+  const o = await open(browser, info, s.c, 'HRMGR', s.g.u('hr'), '/hr?view=detail');
   await expect(o.page.getByTestId('hro-headcount')).toHaveText('2');
   await expect(o.page.getByTestId('hr-overview')).toContainText('Engineering');
   await expect(o.page.getByTestId('hr-overview')).toContainText('Ring Road Site 1');

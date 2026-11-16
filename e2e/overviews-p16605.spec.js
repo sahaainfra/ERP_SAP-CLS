@@ -44,6 +44,12 @@ test('FR-02 the QS dashboard is an overview page: cards with a subtitle, the fig
     const widths = await page.evaluate(() => { const g = document.querySelector('[data-testid="dashboard-grid"]').getBoundingClientRect().width; return [...document.querySelectorAll('.dash-cell')].map((c) => Math.round(c.getBoundingClientRect().width / g * 100)); });
     expect(widths.every((w) => w >= 98), widths.join(',')).toBe(true);
   }
+  // the page as it was stays one click away, with its tables and exports; and back
+  await page.getByTestId('overview-detail').click();
+  await expect(page.getByTestId('bill-qs-dashboard')).toBeVisible();
+  await expect(page).toHaveURL(/view=detail/);
+  await page.getByTestId('overview-back').getByRole('link').click();
+  await expect(page.getByTestId('overview-ov-qs')).toBeVisible();
   await card.getByTestId('widget-view-all').click();
   await expect(page).toHaveURL(/\/bill\/qty-recon/);
   expect(errors).toEqual([]);
