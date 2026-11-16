@@ -109,7 +109,7 @@ test('AC-01 deployment, board with a move, crew, transfer with handover, in the 
   // crews: made on the page, then filled
   const crews = await open(browser, info, c, 'HRMGR', g.u('hr'), '/hr/crews');
   await expect(crews.page.getByTestId('crews')).toBeVisible();
-  await crews.page.getByRole('button', { name: 'New crew' }).click();
+  await crews.page.getByRole('search').getByRole('button', { name: 'New crew' }).click(); // the toolbar's (an empty list offers it again)
   await crews.page.locator('#cw-project').click(); await crews.page.getByRole('option', { name: /Ring Road/ }).click();
   await crews.page.locator('#cw-site').click(); await crews.page.getByRole('option', { name: /Ring Road North/ }).click();
   await crews.page.getByTestId('cw-code').fill('FIT-1');
