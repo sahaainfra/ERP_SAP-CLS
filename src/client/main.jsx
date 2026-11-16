@@ -38,12 +38,13 @@ import './modules/rmc/index.js';
 import './modules/ctr/index.js';
 import './modules/bill/index.js';
 import './modules/fin/index.js';
-import { initAuth } from './platform/api/index.js';
+import { initAuth, signedInUser } from './platform/api/index.js';
 import { loadLanguage } from './platform/i18n/index.js';
 import { findRoute } from './platform/shell/registry.js';
 import { storedAppearance } from './platform/design/appearance.js';
 import { installPrintLogging } from './platform/audit/index.js';
 import { createQueryClient } from './platform/query/client.js';
+import { primeShellFlags } from './platform/shell/api.js';
 import App from './App.jsx';
 
 // Find out how people sign in, and resume a session from the cookie, before the first screen is drawn.
@@ -55,10 +56,12 @@ for (const path of window.location.pathname === '/' ? ['/home', '/field'] : [win
 // the saved language's text arrives with the sign-in check (Hindi and Telugu are fetched only for those who use them, part 166.4)
 const [{ mode }] = await Promise.all([initAuth(), loadLanguage(storedAppearance().language)]);
 installPrintLogging();
+const queryClient = createQueryClient();
+if (mode !== 'iam' || signedInUser()) primeShellFlags(queryClient); // the shell's flags in one request, once someone is signed in (part 166.4)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <QueryClientProvider client={createQueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <App authMode={mode} />
     </QueryClientProvider>
   </StrictMode>,

@@ -42,8 +42,11 @@ test.describe('the network of a page', () => {
 test('FR-01 T-03 the first screen fetches the shell and its own page only; another page\'s code comes when it is opened', async ({ page }) => {
   const seen = scripts(page);
   const errors = errorsOf(page);
+  const flagCalls = [];
+  page.on('request', (r) => { if (r.url().includes('/core/feature-flags/evaluate')) flagCalls.push(r.url()); });
   await open(page, { user: 'e2e-perf-admin', roles: 'SYSADM', path: '/home' });
   await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
+  expect(flagCalls, 'the shell\'s flags in one request').toHaveLength(1);
   expect(seen.some((f) => /^LaunchpadPage-/.test(f)), 'the home page\'s own code').toBe(true);
   for (const other of ['ProjectsPage-', 'GanttPage-', 'DprEntryPage-', 'PagePatternsPage-']) expect(seen.some((f) => f.startsWith(other)), `${other} is not fetched for Home`).toBe(false);
   expect(seen.some((f) => /^hi-|^te-/.test(f)), 'an English screen fetches no Hindi or Telugu text').toBe(false);

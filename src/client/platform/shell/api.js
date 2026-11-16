@@ -75,3 +75,19 @@ export function useShellMode(enabled = true) {
   if (q.isSuccess) return q.data?.['ff.ui.p0305'] === true ? 'on' : 'off';
   return q.isError ? 'off' : 'loading';
 }
+
+// Part 166.4 (first screen): the shell asks for about a dozen flags one by one, in three rounds before the menu. primeShellFlags asks for them in
+// one request with the sign-in check, and each flag's query (the same key as useFlag) shares it. With ff.perf.p16604 OFF, or when the batch fails,
+// every flag is asked for on its own as before.
+const SHELL_FLAGS = ['ff.iam.p0202', 'ff.ui.p0305', 'ff.ui.p0301', 'ff.ui.p0306', 'ff.ui.p0308', 'ff.ui.p0309', 'ff.ui.p0310', 'ff.ui.p16602', 'ff.eng.p0415', 'ff.msg.p0501', 'ff.field.p16603', 'ff.perf.p16604'];
+const evaluateOne = async (key) => (await api.get(`/core/feature-flags/evaluate?keys=${encodeURIComponent(key)}`)).data;
+export function primeShellFlags(qc) {
+  const batch = api.get(`/core/feature-flags/evaluate?keys=${SHELL_FLAGS.map(encodeURIComponent).join(',')}`).then((r) => r.data);
+  batch.catch(() => null); // a failure is handled per flag below
+  for (const key of SHELL_FLAGS) {
+    qc.prefetchQuery({
+      queryKey: queryKeys.core.flags.evaluate([key]),
+      queryFn: () => batch.then((all) => (all?.['ff.perf.p16604'] === true && key in all ? { [key]: all[key] } : evaluateOne(key)), () => evaluateOne(key)),
+    });
+  }
+}
