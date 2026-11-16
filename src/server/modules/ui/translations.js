@@ -89,10 +89,12 @@ export function createTranslationService({ db, approvals }) {
   }
 
   /** The strings a screen needs, in one language: one namespace or all of them (any signed-in person). */
-  function strings(actor, { lang: l, namespace }) {
+  /** The text of a language. `only: 'overrides'` (part 166.4) leaves out what equals the text built into the application, which the browser has already: the screens need only the rest. */
+  function strings(actor, { lang: l, namespace }, { only = null } = {}) {
     const eff = loc.catalogue(actor.companyId);
     if (namespace !== 'all' && !NAMESPACES.includes(namespace)) throw badRequest('Some fields are invalid.', [{ field: 'namespace', message: `There is no text area called ${namespace}.` }]);
-    const pick = (name) => ({ ...(eff.en[name] ?? {}), ...(l === 'en' ? {} : eff[l]?.[name] ?? {}) });
+    const full = (name) => ({ ...(eff.en[name] ?? {}), ...(l === 'en' ? {} : eff[l]?.[name] ?? {}) });
+    const pick = only === 'overrides' ? (name) => Object.fromEntries(Object.entries(full(name)).filter(([k, v]) => CATALOGUE[l]?.[name]?.[k] !== v)) : full;
     const body = namespace === 'all' ? { namespaces: Object.fromEntries(NAMESPACES.map((name) => [name, pick(name)])) } : { namespace, strings: pick(namespace) };
     const stamp = db.prepare('SELECT COUNT(*) AS n, MAX(COALESCE(updated_at, created_at)) AS at FROM ui_translations WHERE company_id = ? AND deleted_at IS NULL').get(actor.companyId);
     return { lang: l, ...body, etag: `${stamp.n}-${stamp.at ?? ''}` };

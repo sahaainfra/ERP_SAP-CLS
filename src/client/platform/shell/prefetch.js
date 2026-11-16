@@ -17,10 +17,15 @@ export function bottomBarPaths(nav) {
 }
 
 const saveData = () => Boolean(globalThis.navigator?.connection?.saveData);
+// a few seconds after the home page is drawn, so its own data and pictures are not slowed by the prefetch, then when the browser is idle
+const SETTLE_MS = 4000;
 const whenIdle = (fn) => {
-  if (typeof globalThis.requestIdleCallback === 'function') { const id = globalThis.requestIdleCallback(fn, { timeout: 3000 }); return () => globalThis.cancelIdleCallback?.(id); }
-  const id = setTimeout(fn, 1500);
-  return () => clearTimeout(id);
+  let idle = null;
+  const timer = setTimeout(() => {
+    if (typeof globalThis.requestIdleCallback === 'function') idle = globalThis.requestIdleCallback(fn, { timeout: 3000 });
+    else fn();
+  }, SETTLE_MS);
+  return () => { clearTimeout(timer); if (idle !== null) globalThis.cancelIdleCallback?.(idle); };
 };
 
 /** usePrefetchBottomBar(nav, path, on): preloads once per page view of a home page. */

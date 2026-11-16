@@ -30,6 +30,18 @@ const ChatDock = lazyPage(() => import('./modules/msg/ChatDock.jsx'));
 const OfferResponsePage = lazyPage(() => import('./modules/hr/OfferResponsePage.jsx'));
 const AcceptInvitePage = lazyPage(() => import('./modules/iam/pages/AcceptInvitePage.jsx'));
 
+/** Draws its children once the browser is idle after the first screen (part 166.4: the chat dock and its real-time client are not part of the first screen). */
+function WhenIdle({ on, children }) {
+  const [ready, setReady] = useState(!on);
+  useEffect(() => {
+    if (!on || ready) return undefined;
+    if (typeof window.requestIdleCallback === 'function') { const id = window.requestIdleCallback(() => setReady(true), { timeout: 2000 }); return () => window.cancelIdleCallback?.(id); }
+    const id = setTimeout(() => setReady(true), 1000);
+    return () => clearTimeout(id);
+  }, [on, ready]);
+  return ready ? children : null;
+}
+
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
 // An address that is no page of the application is '/': the old top bar sends it to its first page, the shell (part 03.05) to Home.
@@ -108,6 +120,7 @@ function Shell({ iam, user }) {
   // the offline field engine (part 04.15) starts for the signed-in person when its flag is on
   const offlineFlag = useFlag('ff.eng.p0415', Boolean(s));
   const msgFlag = useFlag('ff.msg.p0501', Boolean(s));
+  const perfFlag = useFlag('ff.perf.p16604', Boolean(s));
   const offlineUser = s ? (iam && user ? user.username ?? user.id ?? null : identity.user) : null;
   useEffect(() => { if (offlineFlag.on && offlineUser) startOffline(String(offlineUser)).catch(() => {}); }, [offlineFlag.on, offlineUser]);
   const toNewAddress = useCallback((to) => { window.history.replaceState(null, '', to); setPath(to); }, []);
@@ -157,7 +170,7 @@ function Shell({ iam, user }) {
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
           onSignOut={iam && user ? () => { if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve(); pwa.clearApiCache(); return signOut().then(() => wipeOnSignOut()).then(() => qc.clear()); } : null} identityBar={identityBar}
-          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <Suspense fallback={null}><ChatDock session={s} /></Suspense>}</>}
+          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <WhenIdle on={perfFlag.on}><Suspense fallback={null}><ChatDock session={s} /></Suspense></WhenIdle>}</>}
         />
       </FeedbackProvider>
     );

@@ -8,7 +8,7 @@
 //
 // Usage: node scripts/lighthouse.mjs --base http://127.0.0.1:4791 [--out reports] [--runs 1]
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -58,7 +58,8 @@ async function main() {
   const base = arg('--base', 'http://127.0.0.1:4791');
   const out = arg('--out', 'reports');
   const runs = Number(arg('--runs', '1'));
-  const chrome = process.env.CHROME_PATH ?? (await import('playwright')).chromium.executablePath();
+  // CHROME_PATH, else the Chromium installed for the browser tests (/opt/pw-browsers/chromium), else Playwright's own
+  const chrome = process.env.CHROME_PATH ?? (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : (await import('playwright')).chromium.executablePath());
   mkdirSync(out, { recursive: true });
   const results = [];
   for (const page of PAGES) {

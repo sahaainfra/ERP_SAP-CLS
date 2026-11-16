@@ -70,10 +70,12 @@ function Section({ group, path, go, language, name, closedGroups, setClosedGroup
 }
 
 /** The sidebar: the registry's groups the person may see, then the account pages and the technical console (FR-01, FR-02, FR-09). */
-export function Sidebar({ groups, account, consoleGroup, path, go, language, open, onClose, collapsed }) {
+export function Sidebar({ groups, account, consoleGroup, path, go, language, open, onClose, collapsed, drawOnOpen = false }) {
   const t = useT('shell');
   const [closedGroups, setClosedGroups] = useStored('erp.shell.closed-groups', []);
   const wrapped = (to) => (e) => { go(to)(e); onClose(); };
+  // part 166.4 (with ff.perf.p16604, on a phone): the menu is a closed drawer; its hundreds of entries are drawn when it is opened, not at start
+  if (drawOnOpen && !open) return <nav id="sh-nav" className="sh-nav" aria-label={t('nav.main')} data-open={open} data-collapsed={collapsed} />;
   return (
     <nav id="sh-nav" className="sh-nav" aria-label={t('nav.main')} data-open={open} data-collapsed={collapsed}>
       {groups.map((g) => <Section key={g.code} group={g} path={path} go={wrapped} language={language} closedGroups={closedGroups} setClosedGroups={setClosedGroups} />)}

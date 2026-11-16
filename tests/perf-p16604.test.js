@@ -241,3 +241,38 @@ test('P-01 FR-02 the server sends the Brotli or gzip copy of a built script, and
     server.close();
   }
 });
+
+test('P-05 JSON answers of the API are compressed for a browser that accepts it; the text needs only the company\'s own wording', async () => {
+  const { startApi } = await import('./helpers.js');
+  const { brotliDecompressSync, gunzipSync } = await import('node:zlib');
+  const http = await import('node:http');
+  const api = await startApi();
+  try {
+    const port = Number(new URL(api.base).port);
+    const raw = (path, enc) => new Promise((resolve, reject) => {
+      http.get({ host: '127.0.0.1', port, path, headers: { 'x-erp-user': 'perf-admin', 'x-erp-roles': 'SYSADM', 'x-erp-company': '1', ...(enc ? { 'accept-encoding': enc } : {}) } }, (res) => {
+        const parts = []; res.on('data', (d) => parts.push(d)); res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(parts) }));
+      }).on('error', reject);
+    });
+    const plain = await raw('/api/v1/ui/translations/en/all', null);
+    assert.equal(plain.status, 200);
+    assert.equal(plain.headers['content-encoding'], undefined);
+    const full = JSON.parse(plain.body.toString());
+    const br = await raw('/api/v1/ui/translations/en/all', 'gzip, deflate, br');
+    assert.equal(br.headers['content-encoding'], 'br');
+    assert.match(br.headers['content-type'], /application\/json/);
+    assert.deepEqual(JSON.parse(brotliDecompressSync(br.body).toString()), full);
+    assert.ok(br.body.length < plain.body.length / 3, `${br.body.length} bytes for ${plain.body.length}`);
+    const gz = await raw('/api/v1/ui/translations/en/all', 'gzip');
+    assert.deepEqual(JSON.parse(gunzipSync(gz.body).toString()), full);
+    // a small answer is sent as it is
+    const small = await raw('/api/health', 'br');
+    assert.equal(small.headers['content-encoding'], undefined);
+    // the company's own wording only: nothing when it has changed nothing, and the same keys the browser kept before
+    const only = JSON.parse((await raw('/api/v1/ui/translations/en/all?only=overrides', null)).body.toString()).data;
+    assert.equal(Object.values(only.namespaces).reduce((n, o) => n + Object.keys(o).length, 0), 0);
+    assert.ok(Object.keys(full.data.namespaces.shell).length > 50);
+  } finally {
+    await api.close();
+  }
+});

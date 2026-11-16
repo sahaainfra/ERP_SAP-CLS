@@ -172,7 +172,7 @@ export default function AppShell({ path, go, route, session, onboarding, display
       {device && <PwaBanners />}
       {identityBar}
       <div className="sh-body">
-        <Sidebar groups={groups} account={accountGroup(nav)} consoleGroup={consoleGroup(nav)} path={path.split('?')[0]} go={goTo} language={language} open={menuOpen} onClose={() => setMenuOpen(false)} collapsed={collapsed && !phone} />
+        <Sidebar groups={groups} account={accountGroup(nav)} consoleGroup={consoleGroup(nav)} path={path.split('?')[0]} go={goTo} language={language} open={menuOpen} onClose={() => setMenuOpen(false)} collapsed={collapsed && !phone} drawOnOpen={perf && phone} />
         <main id="main" tabIndex={-1} ref={mainRef}>
           <Breadcrumbs nav={nav} path={path} go={goTo} language={language} />
           {verdict.ok && route ? <RoutePage route={route} session={session} path={path} /> : <GuardState verdict={verdict.ok ? { reason: 'unknown' } : verdict} path={path} go={goTo} />}
