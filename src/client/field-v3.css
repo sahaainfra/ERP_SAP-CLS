@@ -1,0 +1,58 @@
+/* Part 166.3: the mobile site app. The field home of a site person (greeting band, today's task cards, coloured quick actions), the voice note,
+   and the rules for low-end phones. Only design tokens, so the three themes follow; nothing here applies unless the page carries the class that
+   ff.field.p16603 puts on it (.field-home-v3) or the shell marks the document (data-field-v3). */
+
+/* ---- greeting band: navy, the person's name, the date and the state of the phone ---- */
+:root .field-home-v3 .fh-band.ph {
+  background: var(--erp-color-bg-shell);
+  color: var(--erp-color-text-on-shell);
+  border: 0;
+  border-radius: var(--erp-radius-lg, 12px);
+  padding: var(--erp-space-4);
+  margin-bottom: var(--erp-space-4);
+}
+:root .field-home-v3 .fh-band.ph h1 { color: var(--erp-color-text-on-shell); font-size: 1.35rem; overflow-wrap: anywhere; }
+:root .field-home-v3 .fh-band.ph .ph-subtitle, :root .field-home-v3 .fh-band.ph .ph-meta { color: var(--erp-color-text-on-shell-muted); margin: var(--erp-space-1) 0 0; }
+.field-home-v3 .fh-status { list-style: none; margin: var(--erp-space-3) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--erp-space-2) var(--erp-space-4); font-size: 0.95rem; }
+.field-home-v3 .fh-status li { display: inline-flex; align-items: center; gap: var(--erp-space-2); min-height: 32px; }
+.field-home-v3 .fh-status a { color: var(--erp-color-text-on-shell); text-decoration: underline; }
+.field-home-v3 .fh-status [data-online='false'] { color: var(--erp-color-text-on-shell); font-weight: 700; }
+
+/* ---- today's tasks: white rounded cards, label, count, chevron; each is one tap to its list ---- */
+.field-home-v3 .fh-today h2, .field-home-v3 > h2 { font-size: 1.05rem; margin: var(--erp-space-4) 0 var(--erp-space-2); }
+.fh-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) { .fh-cards { grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr)); } }
+.fh-card {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: var(--erp-space-3);
+  min-height: 56px; padding: var(--erp-space-3) var(--erp-space-4);
+  background: var(--erp-color-bg-surface); color: var(--erp-color-text-primary); text-decoration: none;
+  border: 1px solid var(--erp-color-border-subtle); border-radius: var(--erp-radius-lg, 12px);
+}
+.fh-card:hover, .fh-card:focus-visible { border-color: var(--erp-color-brand-primary); }
+.fh-card-label { overflow-wrap: anywhere; }
+.fh-card-count { font-size: 1.4rem; font-variant-numeric: tabular-nums; color: var(--erp-color-brand-primary); }
+
+/* ---- quick actions: large tiles, the tone of the task as the tile's colour ---- */
+.field-home-v3 .field-tiles a { min-height: 96px; border-radius: var(--erp-radius-lg, 12px); border-width: 2px; }
+.field-home-v3 .field-tiles a strong { overflow-wrap: anywhere; text-align: center; }
+.field-home-v3 .field-tiles a[data-tone='amber'] { background: var(--erp-color-status-warning-bg); border-color: var(--erp-color-status-warning-solid); }
+.field-home-v3 .field-tiles a[data-tone='amber'] svg { color: var(--erp-color-status-warning-fg); }
+.field-home-v3 .field-tiles a[data-tone='green'] { background: var(--erp-color-status-success-bg); border-color: var(--erp-color-status-success-solid); }
+.field-home-v3 .field-tiles a[data-tone='green'] svg { color: var(--erp-color-status-success-fg); }
+.field-home-v3 .field-tiles a[data-tone='blue'], .field-home-v3 .field-tiles a[data-tone='teal'] { background: var(--erp-color-status-info-bg); border-color: var(--erp-color-status-info-solid); }
+.field-home-v3 .field-tiles a[data-tone='blue'] svg, .field-home-v3 .field-tiles a[data-tone='teal'] svg { color: var(--erp-color-status-info-fg); }
+.field-home-v3 .field-tiles a[data-tone='red'] { background: var(--erp-color-status-error-bg); border-color: var(--erp-color-status-error-solid); }
+.field-home-v3 .field-tiles a[data-tone='red'] svg { color: var(--erp-color-status-error-fg); }
+.field-home-v3 .field-tiles a[data-tone='navy'] { background: var(--erp-color-brand-primary-tint); border-color: var(--erp-color-brand-primary); }
+.field-home-v3 .field-tiles a[data-tone='navy'] svg { color: var(--erp-color-brand-primary); }
+
+/* ---- the voice note of a field form ---- */
+.voice-note { margin: var(--erp-space-3) 0; }
+.voice-note .btn-large { min-height: 48px; }
+.voice-note-done { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-2); }
+.voice-note-done audio { max-width: 100%; }
+
+/* ---- low-end phones (FR-08): on a phone the field pages move only by opacity and transform, and keep no shadows ---- */
+@media (max-width: 640px) {
+  .field-home-v3 *, .field-home-v3 *::before, .field-home-v3 *::after { transition-property: opacity, transform !important; box-shadow: none !important; }
+}

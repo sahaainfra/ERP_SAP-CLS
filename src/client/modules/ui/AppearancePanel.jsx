@@ -3,10 +3,11 @@ import { allRoutes } from '../../platform/shell/registry.js';
 import { announceAppearance, applyAppearance, storedAppearance } from '../../platform/design/appearance.js';
 import { Field, QueryState, errorInfo } from '../core/pages/ui.jsx';
 import { usePreferences, useSavePreferences } from './api.js';
+import { useFlagOn } from '../../platform/shell/api.js';
 
 const THEMES = [['light', 'Light'], ['dark', 'Dark'], ['high-contrast', 'High contrast']];
 const DENSITIES = [['comfortable', 'Comfortable: larger rows and controls, for touch screens'], ['compact', 'Compact: more rows on the screen, for a mouse and keyboard']];
-const LANGUAGES = [['en', 'English'], ['hi', 'हिन्दी (Hindi)']];
+const LANGUAGES = [['en', 'English'], ['hi', 'हिन्दी (Hindi)'], ['te', 'తెలుగు (Telugu)']];
 
 /**
  * Appearance (part 03.01): theme, density, the language of the screens and the page to open after signing in. A choice shows at
@@ -14,6 +15,7 @@ const LANGUAGES = [['en', 'English'], ['hi', 'हिन्दी (Hindi)']];
  */
 export default function AppearancePanel({ session }) {
   const prefs = usePreferences();
+  const teluguOn = useFlagOn('ff.field.p16603');
   const save = useSavePreferences();
   const [form, setForm] = useState(null);
   const [baseline] = useState(() => ({ ...storedAppearance(), startPage: '' })); // the look before any preview
@@ -57,8 +59,8 @@ export default function AppearancePanel({ session }) {
               <legend>Density</legend>
               {DENSITIES.map(([v, l]) => <label key={v}><input type="radio" name="appearance-density" value={v} checked={form.density === v} onChange={() => preview({ ...form, density: v })} /> {l}</label>)}
             </fieldset>
-            <Field label="Language of the screens" name="language" error={error} hint="Pages in Hindi use the Devanagari typeface; pages not yet translated stay in English.">
-              <select name="appearance-language" value={form.language} onChange={(e) => preview({ ...form, language: e.target.value })}>{LANGUAGES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+            <Field label="Language of the screens" name="language" error={error} hint="Pages in Hindi use the Devanagari typeface and pages in Telugu the Telugu one; text not yet translated stays in English.">
+              <select name="appearance-language" value={form.language} onChange={(e) => preview({ ...form, language: e.target.value })}>{LANGUAGES.filter(([v]) => v !== 'te' || teluguOn || form.language === 'te').map(([v, l]) => <option key={v} value={v} lang={v}>{l}</option>)}</select>
             </Field>
             <Field label="Open after signing in" name="startPage" error={error}>
               <select name="appearance-start" value={form.startPage} onChange={(e) => setForm({ ...form, startPage: e.target.value })}>

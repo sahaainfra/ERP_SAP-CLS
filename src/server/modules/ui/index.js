@@ -11,6 +11,7 @@ import { pageMigrationRoutes, translationRoutes } from './routes.js';
 import { createPageMigrationService, pageRouteHandlers } from './page-migration.js';
 import { createTranslationService, translationHandlers } from './translations.js';
 import { dashboardRoutes, deviceRoutes, formRoutes, listRoutes, objectRoutes, searchRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { createFieldToday } from './field-today.js';
 import { createWidgetService, dashboardHandlers } from './widgets.js';
 import { registerWidgetProviders } from './widget-providers.js';
 import { createDeviceService } from './device.js';
@@ -155,6 +156,12 @@ export const ui = {
     const shell = createShellService({ db, flags, approvals });
     shellRouter.use(shellRoutes(shell, { idempotent: idempotency(db) }));
     router.use(shellRouter);
+    // Part 166.3: what waits for a site person today (the Field Home's task cards).
+    const fieldRouter = Router();
+    const fieldToday = createFieldToday({ db, approvals });
+    fieldRouter.use('/field', gate('ff.field.p16603', 'The mobile site app is'));
+    fieldRouter.get('/field/today', (req, res) => res.json({ data: fieldToday.today(req.actor) }));
+    router.use(fieldRouter);
     // Part 03.07: widgets and dashboards.
     const dashboardRouter = Router();
     dashboardRouter.use(['/widgets', '/dashboards'], gate('ff.ui.p0307', 'Dashboards and widgets are'));

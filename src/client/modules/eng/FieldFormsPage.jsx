@@ -3,7 +3,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { EmptyState } from '../../platform/feedback/states.jsx';
 import { formatDateTime } from '../../platform/format.js';
-import { useLang } from '../../platform/i18n/index.js';
+import { useLang, labelIn } from '../../platform/i18n/index.js';
 import { enqueue, sync, useOffline } from '../../platform/offline/engine.js';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CMD_STATUS } from './offline-common.js';
@@ -21,7 +21,7 @@ function Capture({ form, off }) {
   const [busy, setBusy] = useState(false);
   const language = useLang();
   const projects = off.masters.projects ?? [];
-  const label = (f) => (language === 'hi' && f.labelHi) || f.label;
+  const label = (f) => labelIn(f, language);
   const set = (k, v) => setValues((cur) => ({ ...cur, [k]: v }));
   const err = (k) => errors.find((e) => e.field === k)?.message;
   const submit = async (e) => {
@@ -33,7 +33,7 @@ function Capture({ form, off }) {
   };
   return (
     <form onSubmit={submit} className="card form-grid field-form" noValidate aria-label={form.label} data-testid="field-form">
-      <h2>{(language === 'hi' && form.labelHi) || form.label}</h2>
+      <h2>{labelIn(form, language)}</h2>
       {off.locked && <p role="alert" className="error">The offline copy has expired. Connect once to refresh it.</p>}
       {form.fields.map((f) => (
         <label className="field" key={f.key}><span>{label(f)}{f.required ? ' *' : ''}</span>

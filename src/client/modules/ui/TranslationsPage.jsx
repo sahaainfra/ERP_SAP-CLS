@@ -7,10 +7,11 @@ import { Field, FormDialog, Pager, errorInfo, usePageTitle } from '../core/pages
 import Icon from '../../platform/design/Icon.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 
-// Translations (part 03.09, FR-02): the text of the screens and messages in English and Hindi. Find a text, change its wording (a request that another
+// Translations (part 03.09, FR-02; Telugu from 166.3): the text of the screens and messages in English, Hindi and Telugu. Find a text, change its wording (a request that another
 // system administrator approves), send the strings to a translator as a workbook and read the translated one back, and see what has no Hindi yet.
 
-const SHOW = [['all', 'All texts'], ['missing', 'Missing in Hindi'], ['overridden', 'Changed by the company']];
+const SHOW = [['all', 'All texts'], ['missing', 'Missing in Hindi'], ['missing-te', 'Missing in Telugu'], ['overridden', 'Changed by the company']];
+const LANG_NAME = { en: 'English', hi: 'Hindi', te: 'Telugu' };
 const SIZES = [25, 50, 100];
 
 function EditDialog({ row, dialogRef, onDone }) {
@@ -20,7 +21,7 @@ function EditDialog({ row, dialogRef, onDone }) {
   if (!row) return <dialog ref={dialogRef} className="dialog" aria-label="Change wording" />;
   const submit = (data) => {
     const changes = [];
-    for (const lang of ['en', 'hi']) {
+    for (const lang of ['en', 'hi', 'te']) {
       const text = String(data.get(lang) ?? '');
       if (text !== (row[lang] ?? '') && text.trim() !== '') changes.push({ namespace: row.namespace, key: row.key, lang, text });
     }
@@ -32,7 +33,7 @@ function EditDialog({ row, dialogRef, onDone }) {
     });
   };
   const revert = (lang) => propose.mutate({ changes: [{ namespace: row.namespace, key: row.key, lang, text: null }], reason: 'Back to the standard wording' }, {
-    onSuccess: (req) => { dialogRef.current?.close(); onDone(`Return to the standard ${lang === 'hi' ? 'Hindi' : 'English'} wording of ${row.namespace}.${row.key} requested (request ${req.id}).`); },
+    onSuccess: (req) => { dialogRef.current?.close(); onDone(`Return to the standard ${LANG_NAME[lang]} wording of ${row.namespace}.${row.key} requested (request ${req.id}).`); },
     onError: (e) => setError(errorInfo(e)),
   });
   return (
@@ -40,12 +41,13 @@ function EditDialog({ row, dialogRef, onDone }) {
       <p className="muted small">Keep every <code>{'{placeholder}'}</code> exactly as in the English: the program fills them in. The change applies after another system administrator approves it.</p>
       <Field label="English" name="en" error={error}><textarea name="en" rows={3} defaultValue={row.en} maxLength={2000} lang="en" /></Field>
       <Field label="हिन्दी (Hindi)" name="hi" error={error}><textarea name="hi" rows={3} defaultValue={row.hi ?? ''} maxLength={2000} lang="hi" /></Field>
-      {(row.enOverridden || row.hiOverridden) && (
-        <p className="small">Changed by the company: {row.enOverridden && <button type="button" className="btn btn-small" onClick={() => revert('en')}>Back to standard English</button>} {row.hiOverridden && <button type="button" className="btn btn-small" onClick={() => revert('hi')}>Back to standard Hindi</button>}</p>
+      <Field label="తెలుగు (Telugu)" name="te" error={error}><textarea name="te" rows={3} defaultValue={row.te ?? ''} maxLength={2000} lang="te" /></Field>
+      {(row.enOverridden || row.hiOverridden || row.teOverridden) && (
+        <p className="small">Changed by the company: {row.enOverridden && <button type="button" className="btn btn-small" onClick={() => revert('en')}>Back to standard English</button>} {row.hiOverridden && <button type="button" className="btn btn-small" onClick={() => revert('hi')}>Back to standard Hindi</button>} {row.teOverridden && <button type="button" className="btn btn-small" onClick={() => revert('te')}>Back to standard Telugu</button>}</p>
       )}
       {history.data?.length > 0 && (
         <details><summary>History of this text</summary>
-          <ol className="history">{history.data.map((a) => <li key={a.id}><strong>{a.actor}</strong> <span className="muted">{formatDateTime(a.at)}</span> {a.reason && <em>{a.reason}</em>}{a.hi[1] !== undefined && <div lang="hi">{a.hi[0] ?? '-'} → {a.hi[1]}</div>}{a.en[1] !== undefined && <div>{a.en[0] ?? '-'} → {a.en[1]}</div>}</li>)}</ol>
+          <ol className="history">{history.data.map((a) => <li key={a.id}><strong>{a.actor}</strong> <span className="muted">{formatDateTime(a.at)}</span> {a.reason && <em>{a.reason}</em>}{a.hi[1] !== undefined && <div lang="hi">{a.hi[0] ?? '-'} → {a.hi[1]}</div>}{a.te?.[1] !== undefined && <div lang="te">{a.te[0] ?? '-'} → {a.te[1]}</div>}{a.en[1] !== undefined && <div>{a.en[0] ?? '-'} → {a.en[1]}</div>}</li>)}</ol>
         </details>
       )}
     </FormDialog>
@@ -101,7 +103,7 @@ export default function TranslationsPage({ session }) {
   const file = useRef(null);
   const [needle, setNeedle] = useState('');
   useEffect(() => { const t = setTimeout(() => { setNeedle(q); setPage(1); }, 250); return () => clearTimeout(t); }, [q]);
-  const list = useTranslationList({ q: needle, namespace, show, page, pageSize });
+  const list = useTranslationList({ q: needle, namespace, show: show === 'missing-te' ? 'missing' : show, ...(show === 'missing-te' ? { lang: 'te' } : {}), page, pageSize });
   const missing = useMissingKeys();
   const forbidden = list.error?.status === 403;
 
@@ -130,10 +132,13 @@ export default function TranslationsPage({ session }) {
   const done = missing.data?.perNamespace?.reduce((n, x) => n + x.translated, 0) ?? 0;
   return (
     <section aria-labelledby="tr-title" data-testid="translations">
-      <PageHeader id="tr-title" title={"Translations"} subtitle={"The text of the screens and messages in English and Hindi. A change to the wording applies after another system administrator approves it, and is kept with the old and new text."} />
+      <PageHeader id="tr-title" title={"Translations"} subtitle={"The text of the screens and messages in English, Hindi and Telugu. A change to the wording applies after another system administrator approves it, and is kept with the old and new text."} />
       {notice && <p role="status" className="notice" data-testid="tr-notice">{notice}</p>}
       {missing.data && (
         <p data-testid="tr-coverage"><strong>{done}</strong> of <strong>{total}</strong> texts have Hindi. {missing.data.missing.length > 0 ? <>{missing.data.missing.length} missing: use "Missing in Hindi" below.</> : 'Nothing is missing.'}{missing.data.placeholders.length > 0 && ` ${missing.data.placeholders.length} Hindi text(s) lack a {placeholder} of the English.`}</p>
+      )}
+      {missing.data?.telugu && (
+        <p data-testid="tr-coverage-te"><strong>{total - missing.data.telugu.missing}</strong> of <strong>{total}</strong> texts have Telugu. The shell, the shared messages, the field pages and the daily progress report are complete; other areas show English until they are translated (use "Missing in Telugu").</p>
       )}
       <Pending me={session?.user} />
       <div className="srch-tools">
@@ -163,18 +168,19 @@ export default function TranslationsPage({ session }) {
       )}
       {list.isPending && <Skeleton label="Loading the texts" rows={5} />}
       {list.isError && !forbidden && <ErrorState title="The texts could not be loaded" error={list.error} onRetry={() => list.refetch()} />}
-      {list.data && list.data.rows.length === 0 && <EmptyState title="No text matches" message={show === 'missing' ? 'Every text has Hindi.' : 'Change the search or the filters.'} action={show !== 'all' || needle || namespace ? { label: 'Clear filters', onClick: () => { setQ(''); setNamespace(''); setShow('all'); } } : null} />}
+      {list.data && list.data.rows.length === 0 && <EmptyState title="No text matches" message={show === 'missing' ? 'Every text has Hindi.' : show === 'missing-te' ? 'Every text has Telugu.' : 'Change the search or the filters.'} action={show !== 'all' || needle || namespace ? { label: 'Clear filters', onClick: () => { setQ(''); setNamespace(''); setShow('all'); } } : null} />}
       {list.data && list.data.rows.length > 0 && (
         <>
           <div className="table-wrap" tabIndex={0} role="region" aria-label="Texts">
             <table className="grid">
-              <thead><tr><th>Key</th><th>English</th><th>हिन्दी</th><th><span className="sr-only">Actions</span></th></tr></thead>
+              <thead><tr><th>Key</th><th>English</th><th>हिन्दी</th><th>తెలుగు</th><th><span className="sr-only">Actions</span></th></tr></thead>
               <tbody>
                 {list.data.rows.map((r) => (
                   <tr key={`${r.namespace}.${r.key}`}>
                     <th scope="row" data-label="Key"><code>{r.namespace}.{r.key}</code></th>
                     <td data-label="English" lang="en">{r.en}{r.enOverridden && <span className="muted small"> (changed)</span>}</td>
                     <td data-label="Hindi" lang="hi">{r.hi || <em className="muted" lang="en">missing</em>}{r.hiOverridden && <span className="muted small" lang="en"> (changed)</span>}</td>
+                    <td data-label="Telugu" lang="te">{r.te || <em className="muted" lang="en">missing</em>}{r.teOverridden && <span className="muted small" lang="en"> (changed)</span>}</td>
                     <td><button type="button" className="btn btn-small" onClick={() => { setEditing(r); setTimeout(() => dialog.current?.showModal(), 0); }} aria-label={`Change ${r.namespace}.${r.key}`}>Change</button></td>
                   </tr>
                 ))}

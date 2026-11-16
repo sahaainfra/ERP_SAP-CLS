@@ -16,7 +16,7 @@ export const parsePreferences = (b) =>
     z.object({
       theme: z.enum(['light', 'dark', 'high-contrast']).optional(),
       density: z.enum(['comfortable', 'compact']).optional(),
-      language: z.enum(['en', 'hi']).optional(),
+      language: z.enum(['en', 'hi', 'te']).optional(),
       startPage: z.string().max(100).regex(/^\/[a-z0-9/_-]*$/, 'Use a page address such as /admin/users').nullable().optional(),
       tableSettings: tableSettings.optional(),
       version: z.number().int().min(0).optional(),

@@ -7,10 +7,13 @@ import '@fontsource/ibm-plex-sans/500.css';
 import '@fontsource/ibm-plex-sans/600.css';
 import '@fontsource/ibm-plex-sans-devanagari/400.css';
 import '@fontsource/ibm-plex-sans-devanagari/600.css';
+import '@fontsource/noto-sans-telugu/telugu-400.css'; // Telugu (part 166.3): the Telugu letters only, fetched when a Telugu letter is drawn
+import '@fontsource/noto-sans-telugu/telugu-600.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './design-tokens.css';
 import './styles.css';
 import './ui-v3.css'; // the UI v3 page patterns (part 166.2)
+import './field-v3.css'; // the mobile site app (part 166.3)
 import './modules/core/index.js'; // each module registers its pages with the shell
 import './modules/iam/index.js';
 import './modules/ui/index.js';

@@ -5,11 +5,12 @@ import { dec } from '../decimal.js';
 import { groupDigits, SCALE } from '../money.js';
 import { formatBusinessDate, formatDate as formatStamp } from '../dates.js';
 
-/** @typedef {{ grouping?: 'indian' | 'international', hour12?: boolean, lang?: 'en' | 'hi' }} LocalePrefs */
+/** @typedef {{ grouping?: 'indian' | 'international', hour12?: boolean, lang?: 'en' | 'hi' | 'te' }} LocalePrefs */
 export const DEFAULT_PREFS = Object.freeze({ grouping: 'indian', hour12: false, lang: 'en' });
 const prefsOf = (p) => ({ ...DEFAULT_PREFS, ...(p ?? {}) });
 
 const HI_MONTHS = ['जन॰', 'फ़र॰', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुल॰', 'अग॰', 'सित॰', 'अक्तू॰', 'नव॰', 'दिस॰'];
+const TE_MONTHS = ['జన', 'ఫిబ్ర', 'మార్చి', 'ఏప్రి', 'మే', 'జూన్', 'జులై', 'ఆగ', 'సెప్టెం', 'అక్టో', 'నవం', 'డిసెం']; // part 166.3
 const EN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 const pad = (n) => String(n).padStart(2, '0');
@@ -43,10 +44,10 @@ export function formatCompact(value, prefs) {
   const negative = d.cmp(dec(0)) < 0;
   const abs = negative ? dec(0).sub(d) : d;
   const steps = grouping === 'international'
-    ? [[dec('1000000000'), 'B', 'अरब'], [dec('1000000'), 'M', 'मिलियन'], [dec('1000'), 'K', 'हज़ार']]
-    : [[dec('10000000'), 'Cr', 'करोड़'], [dec('100000'), 'L', 'लाख']];
-  for (const [size, en, hi] of steps) {
-    if (abs.cmp(size) >= 0) return `${negative ? '-' : ''}₹ ${abs.div(size, 6).round(2).toFixed(2)} ${lang === 'hi' ? hi : en}`;
+    ? [[dec('1000000000'), 'B', 'अरब', 'బిలియన్'], [dec('1000000'), 'M', 'मिलियन', 'మిలియన్'], [dec('1000'), 'K', 'हज़ार', 'వేలు']]
+    : [[dec('10000000'), 'Cr', 'करोड़', 'కోట్లు'], [dec('100000'), 'L', 'लाख', 'లక్షలు']];
+  for (const [size, en, hi, te] of steps) {
+    if (abs.cmp(size) >= 0) return `${negative ? '-' : ''}₹ ${abs.div(size, 6).round(2).toFixed(2)} ${lang === 'hi' ? hi : lang === 'te' ? te : en}`;
   }
   return formatMoney(value, prefs, { decimals: 0 });
 }
@@ -65,9 +66,9 @@ export function formatDate(value, prefs) {
   if (!value) return '-';
   const { lang } = prefsOf(prefs);
   const text = /^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? formatBusinessDate(value) : formatStamp(value);
-  if (lang !== 'hi' || text === '-') return text;
+  if ((lang !== 'hi' && lang !== 'te') || text === '-') return text;
   const [d, m, y] = text.split('-');
-  return `${d}-${HI_MONTHS[EN_MONTHS.indexOf(m)]}-${y}`;
+  return `${d}-${(lang === 'te' ? TE_MONTHS : HI_MONTHS)[EN_MONTHS.indexOf(m)]}-${y}`;
 }
 
 /** The time of a timestamp in Asia/Kolkata, 24-hour (14:05) or 12-hour (2:05 PM) by preference. */
@@ -85,4 +86,4 @@ export function formatTime(iso, prefs) {
 /** 05-Nov-2026 14:05 (or 2:05 PM). */
 export const formatDateTime = (iso, prefs) => (iso ? `${formatDate(iso, prefs)} ${formatTime(iso, prefs)}` : '-');
 
-export const MONTHS = Object.freeze({ en: EN_MONTHS, hi: HI_MONTHS });
+export const MONTHS = Object.freeze({ en: EN_MONTHS, hi: HI_MONTHS, te: TE_MONTHS });

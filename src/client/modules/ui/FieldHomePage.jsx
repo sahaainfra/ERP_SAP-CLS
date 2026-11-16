@@ -1,10 +1,11 @@
-import { useNavigation, useLaunchpad } from '../../platform/shell/api.js';
+import { useNavigation, useLaunchpad, useFieldToday, useFlagOn } from '../../platform/shell/api.js';
 import { flatPages } from '../../platform/shell/nav.js';
-import { useLang, useT } from '../../platform/i18n/index.js';
+import { useFormat, useLang, useT, labelIn } from '../../platform/i18n/index.js';
 import { useOnline } from '../../platform/device/layout.js';
 import { useSyncQueue } from '../../platform/device/syncQueue.js';
 import { useLowBandwidth } from '../../platform/device/lowBandwidth.js';
 import { usePullToRefresh } from '../../platform/device/gestures.js';
+import { useOffline } from '../../platform/offline/engine.js';
 import { EmptyState } from '../../platform/feedback/states.jsx';
 import LocationNotice from '../../platform/device/LocationNotice.jsx';
 import { QueryState } from '../core/pages/ui.jsx';
@@ -19,12 +20,18 @@ const go = (to) => (e) => {
   window.dispatchEvent(new PopStateEvent('popstate'));
 };
 
+// the icon of each of today's task cards (part 166.3)
+const TASK_ICON = { approvals: 'erp.action.inbox', dpr: 'erp.group.projects', dprDraft: 'erp.action.edit', inspections: 'erp.kpi.quality', ncrs: 'erp.kpi.risk', observations: 'erp.kpi.safety', permits: 'erp.kpi.safety', gate: 'erp.group.supply' };
+/** The greeting of the hour in India: morning to noon, afternoon to five, then evening. */
+const greetingKey = (now = new Date()) => { const h = (now.getUTCHours() + 5 + Math.floor((now.getUTCMinutes() + 30) / 60)) % 24; return h < 12 ? 'greet.morning' : h < 17 ? 'greet.afternoon' : 'greet.evening'; };
+
 /**
- * Field Home (Mobile, part 03.06 FR-07): the quick actions of a site person, large enough for a thumb, with whether the device is online and
- * how many things are waiting to be sent. A tile is there when its page exists and the person may open it; Punch, DPR, Inspections and
- * Messages appear as their parts register a page for them.
+ * Field Home (Mobile, part 03.06 FR-07; part 166.3 FR-01): a site person's home on the phone. With ff.field.p16603 ON it opens with a greeting
+ * band, today's tasks as cards with counts from the records (each opens its list, so the daily task is one tap away), the quick actions of the
+ * person's role as large coloured tiles, and whether the phone is online, how many things are not sent yet and when it last sent. A tile is
+ * there when its page exists and the person may open it.
  */
-export default function FieldHomePage() {
+export default function FieldHomePage({ session }) {
   const nav = useNavigation();
   const lp = useLaunchpad();
   const online = useOnline();
@@ -32,32 +39,76 @@ export default function FieldHomePage() {
   const low = useLowBandwidth();
   const language = useLang();
   const t = useT('field');
-  const pull = usePullToRefresh(async () => { await Promise.all([nav.refetch(), lp.refetch()]); });
+  const f = useFormat();
+  const v3 = useFlagOn('ff.field.p16603');
+  const today = useFieldToday(v3);
+  const off = useOffline();
+  const pull = usePullToRefresh(async () => { await Promise.all([nav.refetch(), lp.refetch(), v3 ? today.refetch() : null]); });
   const tiles = flatPages(nav.data).filter((p) => p.field).sort((a, b) => a.field.order - b.field.order);
-  const text = (tile) => (language === 'hi' && tile.field.labelHi) || tile.field.label;
+  const text = (tile) => labelIn(tile.field, language);
   const pending = lp.data?.pending;
+  const name = session?.displayName ?? session?.name ?? session?.user ?? '';
 
   return (
-    <section aria-labelledby="page-title" className="field-home">
-      <PageHeader id="page-title" title={t('title')} />
+    <section aria-labelledby="page-title" className={`field-home${v3 ? ' field-home-v3' : ''}`}>
+      {v3 ? (
+        <PageHeader className="fh-band" testid="field-band" id="page-title" title={t(greetingKey(), { name })} meta={<span className="fh-eyebrow" data-testid="field-title">{t('title')}</span>} subtitle={t('greet.date', { date: f.date(today.data?.date ?? new Date().toISOString().slice(0, 10)) })}>
+          <ul className="fh-status" aria-label={t('status.aria')}>
+            <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? t('online') : t('offline')}</li>
+            <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> <a href="/field/sync" onClick={go('/field/sync')}>{queue.length === 0 ? t('sync.none') : t('sync.notSent', { count: queue.length })}</a></li>
+            <li data-testid="last-sync"><Icon name="erp.action.history" size={18} /> {off.lastSync ? t('sync.last', { time: f.dateTime(off.lastSync) }) : t('sync.never')}</li>
+            {low.low && <li data-testid="field-lowbw"><Icon name="erp.action.info" size={18} /> {t('lowbw')}</li>}
+          </ul>
+        </PageHeader>
+      ) : (
+        <>
+          <PageHeader id="page-title" title={t('title')} />
+          <ul className="field-status" aria-label={t('status.aria')}>
+            <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? t('online') : t('offline')}</li>
+            <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> {queue.length === 0 ? t('sync.none') : t('sync.some', { count: queue.length })}</li>
+            {low.low && <li data-testid="field-lowbw"><Icon name="erp.action.info" size={18} /> {t('lowbw')}</li>}
+          </ul>
+        </>
+      )}
       {(pull.offset > 0 || pull.refreshing) && <p className="pull-indicator" role="status" style={{ height: pull.offset }}>{pull.refreshing ? t('pull.refreshing') : pull.ready ? t('pull.ready') : t('pull.pull')}</p>}
-      <ul className="field-status" aria-label={t('status.aria')}>
-        <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? t('online') : t('offline')}</li>
-        <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> {queue.length === 0 ? t('sync.none') : t('sync.some', { count: queue.length })}</li>
-        {low.low && <li data-testid="field-lowbw"><Icon name="erp.action.info" size={18} /> {t('lowbw')}</li>}
-      </ul>
+
+      {v3 && (
+        <section aria-labelledby="fh-today" className="fh-today">
+          <h2 id="fh-today">{t('today.title')}</h2>
+          <QueryState query={today} what={t('today.what')} />
+          {today.data && today.data.cards.every((c) => c.count === 0) && <p className="muted" data-testid="field-today-none">{t('today.none')}</p>}
+          {today.data && (
+            <ul className="fh-cards" aria-label={t('today.aria')}>
+              {today.data.cards.filter((c) => c.count > 0).map((c) => (
+                <li key={c.code}>
+                  <a href={c.route} onClick={go(c.route)} className="fh-card" data-testid={`field-today-${c.code}`} data-count={c.count}>
+                    <Icon name={TASK_ICON[c.code] ?? 'erp.action.info'} size={24} />
+                    <span className="fh-card-label">{t(`today.${c.code}`)}</span>
+                    <strong className="fh-card-count">{f.number(c.count, { decimals: 0 })}</strong>
+                    <Icon name="erp.action.next" size={18} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       <QueryState query={nav} what={t('tiles.what')} />
       {nav.data && tiles.length === 0 && <EmptyState title={t('empty.title')} message={t('empty.body')} />}
       {tiles.length > 0 && (
-        <ul className="field-tiles" aria-label={t('tiles.aria')}>
-          {tiles.map((t) => (
-            <li key={t.field.code}>
-              <a href={t.route} onClick={go(t.route)} data-testid={`field-tile-${t.field.code}`}><Icon name={t.icon ?? 'erp.action.info'} size={32} /><strong>{text(t)}</strong></a>
-            </li>
-          ))}
-        </ul>
+        <>
+          {v3 && <h2>{t('actions.title')}</h2>}
+          <ul className="field-tiles" aria-label={t('tiles.aria')}>
+            {tiles.map((tile) => (
+              <li key={tile.field.code}>
+                <a href={tile.route} onClick={go(tile.route)} data-testid={`field-tile-${tile.field.code}`} data-tone={v3 ? tile.field.tone ?? 'navy' : undefined}><Icon name={tile.icon ?? 'erp.action.info'} size={32} /><strong>{text(tile)}</strong></a>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-      {pending && (pending.approvals > 0 || pending.drafts > 0) && (
+      {!v3 && pending && (pending.approvals > 0 || pending.drafts > 0) && (
         <p className="muted" data-testid="field-pending">{t('pending.line', { items: [pending.approvals > 0 && t('pending.approvals', { count: pending.approvals }), pending.drafts > 0 && t('pending.drafts', { count: pending.drafts })].filter(Boolean).join(', ') })}</p>
       )}
       <LocationNotice purpose={t('location.purpose')} />

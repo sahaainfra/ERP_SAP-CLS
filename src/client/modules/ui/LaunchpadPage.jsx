@@ -6,6 +6,7 @@ import { QueryState } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { confirmLeave } from '../../platform/forms/guard.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { labelIn } from '../../platform/i18n/index.js';
 
 const go = (to) => (e) => {
   e.preventDefault();
@@ -20,7 +21,7 @@ export default function LaunchpadPage({ session }) {
   const navQuery = useNavigation();
   const { remove, order } = useFavouriteActions();
   const language = storedAppearance().language;
-  const text = (t) => (language === 'hi' && t.labelHi) || t.label;
+  const text = (t) => labelIn(t, language);
   const nav = navQuery.data;
   const pending = lp.data?.pending;
   const cards = pending ? [

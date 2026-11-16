@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { LANGUAGES, THEMES } from '../design/appearance.js';
 import { breadcrumbs, entryFor, groupHolds } from './nav.js';
-import { useFavouriteActions, useFavourites } from './api.js';
+import { useFavouriteActions, useFavourites, useFlagOn } from './api.js';
 import { useToast } from '../feedback/Feedback.jsx';
-import { useT } from '../i18n/index.js';
+import { useT, labelIn } from '../i18n/index.js';
 
-const LANGUAGE_LABEL = { en: 'English', hi: 'हिन्दी' };
-const labelOf = (item, language) => (language === 'hi' && item.labelHi) || item.label;
+const LANGUAGE_LABEL = { en: 'English', hi: 'हिन्दी', te: 'తెలుగు' };
+// Telugu is offered while part 166.3 is switched on (ff.field.p16603); a person who chose it keeps it
+const offered = (l, teluguOn, current) => l !== 'te' || teluguOn || current === 'te';
+const labelOf = (item, language) => labelIn(item, language);
 
 /** Open a popover; it closes on Escape, on a click outside it, and returns focus to its button. */
 export function usePopover() {
@@ -112,6 +114,7 @@ export function Bell({ count, to, go }) {
 }
 
 export function UserMenu({ name, theme, setTheme, language, setLanguage, profileRoute, go, onSignOut, deviceMenu = null }) {
+  const teluguOn = useFlagOn('ff.field.p16603');
   const t = useT('shell');
   const tc = useT('common');
   const { open, setOpen, box, button } = usePopover();
@@ -124,7 +127,7 @@ export function UserMenu({ name, theme, setTheme, language, setLanguage, profile
         <div className="sh-pop sh-user-pop" role="menu" aria-label={t('account.menu')}>
           {profileRoute && <a role="menuitem" href={profileRoute} onClick={(e) => { setOpen(false); go(profileRoute)(e); }}>{t('account.profile')}</a>}
           <label className="shell-field"><span>{t('account.language')}</span>
-            <select value={language} onChange={(e) => setLanguage(e.target.value)}>{LANGUAGES.map((l) => <option key={l} value={l}>{LANGUAGE_LABEL[l] ?? l}</option>)}</select>
+            <select value={language} onChange={(e) => setLanguage(e.target.value)}>{LANGUAGES.filter((l) => offered(l, teluguOn, language)).map((l) => <option key={l} value={l} lang={l}>{LANGUAGE_LABEL[l] ?? l}</option>)}</select>
           </label>
           <label className="shell-field"><span>{t('account.theme')}</span>
             <select value={theme} onChange={(e) => setTheme(e.target.value)}>{THEMES.map((th) => <option key={th} value={th}>{tc(`theme.${th}`)}</option>)}</select>
@@ -179,9 +182,17 @@ function FavouriteToggle({ nav, path }) {
 }
 
 /** Home › group › page, from the registry (FR-05), and the favourite toggle of the page. */
-export function Breadcrumbs({ nav, path, go }) {
+export function Breadcrumbs({ nav, path, go, language = 'en' }) {
   const t = useT('shell');
-  const crumbs = breadcrumbs(nav, path);
+  const inLanguage = useFlagOn('ff.field.p16603') && language !== 'en'; // part 166.3: the trail in the language of the screens
+  const entry = entryFor(nav, path);
+  const group = nav?.groups?.find((g) => g.code === entry?.group);
+  const crumbs = breadcrumbs(nav, path).map((c, i, all) => {
+    if (!inLanguage) return c;
+    if (i === all.length - 1 && entry) return { ...c, label: labelIn(entry, language) };
+    if (c.to === '/home') return { ...c, label: t('bottom.home') };
+    return group ? { ...c, label: labelIn(group, language) } : c;
+  });
   if (crumbs.length === 0) return null;
   return (
     <div className="sh-crumbs">

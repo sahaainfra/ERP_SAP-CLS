@@ -1,6 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { CATALOGUE } from '../../../shared/i18n/locales/index.js';
-import { createTranslator } from '../../../shared/i18n/catalogue.js';
+import { LANGS, cleanLang, createTranslator } from '../../../shared/i18n/catalogue.js';
 import { amountInWords } from '../../../shared/i18n/words.js';
 import { DEFAULT_PREFS, formatCompact, formatDate, formatDateTime, formatMoney, formatNumber, formatPercent, formatQuantity, formatTime } from '../../../shared/i18n/format.js';
 
@@ -8,8 +8,8 @@ import { DEFAULT_PREFS, formatCompact, formatDate, formatDateTime, formatMoney, 
 // and hour format arrive from the server (I18nSync) and replace what is bundled without a reload. Components use useT('area') and useFormat();
 // no component carries its own text.
 
-const clean = (l) => (l === 'hi' ? 'hi' : 'en');
-const state = { lang: typeof document === 'undefined' ? 'en' : clean(document.documentElement.lang), overrides: { en: {}, hi: {} }, prefs: { grouping: 'indian', hour12: false }, version: 0, merged: null };
+const clean = cleanLang;
+const state = { lang: typeof document === 'undefined' ? 'en' : clean(document.documentElement.lang), overrides: { en: {}, hi: {}, te: {} }, prefs: { grouping: 'indian', hour12: false }, version: 0, merged: null };
 const listeners = new Set();
 const emit = () => { state.version += 1; state.merged = null; listeners.forEach((l) => l()); };
 const subscribe = (cb) => { listeners.add(cb); return () => listeners.delete(cb); };
@@ -27,7 +27,7 @@ if (typeof window !== 'undefined') window.__erpMissingKeys = missingKeys; // rea
 const catalogue = () => {
   if (state.merged) return state.merged;
   const merged = {};
-  for (const lang of ['en', 'hi']) {
+  for (const lang of LANGS) {
     merged[lang] = {};
     for (const ns of new Set([...Object.keys(CATALOGUE[lang]), ...Object.keys(state.overrides[lang])])) merged[lang][ns] = { ...(CATALOGUE[lang][ns] ?? {}), ...(state.overrides[lang][ns] ?? {}) };
   }
@@ -55,7 +55,10 @@ export const currentPrefs = () => ({ ...DEFAULT_PREFS, ...state.prefs, lang: sta
 /** Translate outside a component (a toast raised in a handler): same text and fallbacks as useT. */
 export const translate = (ns, key, params) => createTranslator({ catalogue: catalogue(), lang: state.lang, onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) })(ns, key, params);
 
-/** The current language, 'en' or 'hi'; the component draws again when it changes. */
+/** The label of a registry entry (navigation, field tile, form) in the language of the screens: labelHi / labelTe when there is one, else English. */
+export const labelIn = (item, lang) => (item ? (lang === 'hi' && item.labelHi) || (lang === 'te' && item.labelTe) || item.label : '');
+
+/** The current language, 'en', 'hi' or 'te'; the component draws again when it changes. */
 export function useLang() {
   useSyncExternalStore(subscribe, snapshot);
   return state.lang;
