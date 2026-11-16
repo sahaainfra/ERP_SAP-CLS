@@ -1,15 +1,32 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import QsDashboardPage from './QsDashboardPage.jsx';
-import CvrPage, { ControlTowerPage } from './CvrPages.jsx';
-import { AdvancesPage, ReleasesPage, RetentionPage } from './LedgerPages.jsx';
-import { InvoiceHubPage, RegisterVendorInvoicePage, VendorInvoicesPage } from './VinvPages.jsx';
-import { PrepareSubBillPage, SubBillsPage, SubMeasurePage } from './SubPages.jsx';
-import { CertAnalysisPage, CertificationsPage, RecordCertificationPage } from './CertPages.jsx';
-import { TaxInvoicesPage } from './InvoicePages.jsx';
-import { BillAbstractPage, ClientBillsPage, PrepareBillPage } from './ClientBillPages.jsx';
-import { DeviationsPage } from './DeviationPages.jsx';
-import { MbAbstractPage, MbEntriesPage, RecordMeasurementPage } from './MbPages.jsx';
-import { QtyLimitsPage, QtyReconPage } from './ReconPages.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const QsDashboardPage = lazyPage(() => import('./QsDashboardPage.jsx'));
+const CvrPage = lazyPage(() => import('./CvrPages.jsx'));
+const ControlTowerPage = lazyPage(() => import('./CvrPages.jsx'), 'ControlTowerPage');
+const AdvancesPage = lazyPage(() => import('./LedgerPages.jsx'), 'AdvancesPage');
+const ReleasesPage = lazyPage(() => import('./LedgerPages.jsx'), 'ReleasesPage');
+const RetentionPage = lazyPage(() => import('./LedgerPages.jsx'), 'RetentionPage');
+const InvoiceHubPage = lazyPage(() => import('./VinvPages.jsx'), 'InvoiceHubPage');
+const RegisterVendorInvoicePage = lazyPage(() => import('./VinvPages.jsx'), 'RegisterVendorInvoicePage');
+const VendorInvoicesPage = lazyPage(() => import('./VinvPages.jsx'), 'VendorInvoicesPage');
+const PrepareSubBillPage = lazyPage(() => import('./SubPages.jsx'), 'PrepareSubBillPage');
+const SubBillsPage = lazyPage(() => import('./SubPages.jsx'), 'SubBillsPage');
+const SubMeasurePage = lazyPage(() => import('./SubPages.jsx'), 'SubMeasurePage');
+const CertAnalysisPage = lazyPage(() => import('./CertPages.jsx'), 'CertAnalysisPage');
+const CertificationsPage = lazyPage(() => import('./CertPages.jsx'), 'CertificationsPage');
+const RecordCertificationPage = lazyPage(() => import('./CertPages.jsx'), 'RecordCertificationPage');
+const TaxInvoicesPage = lazyPage(() => import('./InvoicePages.jsx'), 'TaxInvoicesPage');
+const BillAbstractPage = lazyPage(() => import('./ClientBillPages.jsx'), 'BillAbstractPage');
+const ClientBillsPage = lazyPage(() => import('./ClientBillPages.jsx'), 'ClientBillsPage');
+const PrepareBillPage = lazyPage(() => import('./ClientBillPages.jsx'), 'PrepareBillPage');
+const DeviationsPage = lazyPage(() => import('./DeviationPages.jsx'), 'DeviationsPage');
+const MbAbstractPage = lazyPage(() => import('./MbPages.jsx'), 'MbAbstractPage');
+const MbEntriesPage = lazyPage(() => import('./MbPages.jsx'), 'MbEntriesPage');
+const RecordMeasurementPage = lazyPage(() => import('./MbPages.jsx'), 'RecordMeasurementPage');
+const QtyLimitsPage = lazyPage(() => import('./ReconPages.jsx'), 'QtyLimitsPage');
+const QtyReconPage = lazyPage(() => import('./ReconPages.jsx'), 'QtyReconPage');
 
 registerModule({
   code: 'bill',

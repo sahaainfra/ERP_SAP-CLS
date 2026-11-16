@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { io } from 'socket.io-client';
 import { authHeaders } from '../api/index.js';
 
 // The real-time connection of the browser (part 04.06, FR-01, FR-07): one socket per tab, rooms joined by the screens that need them, and, after a lost connection, a join that asks for
@@ -24,23 +23,33 @@ function join(room) {
   });
 }
 
+// The socket.io client is fetched with the first room a screen follows, not with the first download (part 166.4).
+let ioLoad = null;
+const loadIo = () => { ioLoad ??= import('socket.io-client').then((m) => m.io).catch((err) => { ioLoad = null; throw err; }); return ioLoad; };
+
+function open(key) {
+  loadIo().then((io) => {
+    if (identityKey !== key || socket) return; // signed out or switched while the client was on its way
+    socket = io({ transports: ['polling', 'websocket'], extraHeaders: authHeaders(), reconnectionAttempts: 8, reconnectionDelay: 1000, reconnectionDelayMax: 10_000 });
+    socket.on('connect', () => { setState('online'); for (const room of rooms.keys()) join(room); });
+    socket.on('disconnect', () => setState('offline'));
+    socket.on('connect_error', () => setState('offline'));
+    socket.on('event', (ev) => {
+      const r = rooms.get(ev.room);
+      if (r && (r.since == null || ev.id > r.since)) r.since = ev.id;
+      for (const h of handlers) h(ev);
+    });
+  }, () => { if (identityKey === key) { identityKey = ''; setState('offline'); } });
+}
+
 /** Connect once the person is known; a different identity (a switch of the development user, a sign-out) makes a new connection. */
 export function ensureSocket() {
   const key = JSON.stringify(authHeaders());
-  if (socket && key === identityKey) return socket;
+  if (key === identityKey) return;
   if (socket) { socket.close(); socket = null; }
   identityKey = key;
   setState('connecting');
-  socket = io({ transports: ['polling', 'websocket'], extraHeaders: authHeaders(), reconnectionAttempts: 8, reconnectionDelay: 1000, reconnectionDelayMax: 10_000 });
-  socket.on('connect', () => { setState('online'); for (const room of rooms.keys()) join(room); });
-  socket.on('disconnect', () => setState('offline'));
-  socket.on('connect_error', () => setState('offline'));
-  socket.on('event', (ev) => {
-    const r = rooms.get(ev.room);
-    if (r && (r.since == null || ev.id > r.since)) r.since = ev.id;
-    for (const h of handlers) h(ev);
-  });
-  return socket;
+  open(key);
 }
 
 export function closeSocket() { socket?.close(); socket = null; identityKey = ''; rooms.clear(); setState('idle'); }

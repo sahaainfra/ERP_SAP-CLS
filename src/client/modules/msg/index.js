@@ -1,17 +1,20 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import MessagesPage from './MessagesPage.jsx';
-import NewConversationPage from './NewConversationPage.jsx';
-import CallPage from './CallPage.jsx';
-import MessagingSettingsPage from './MessagingSettingsPage.jsx';
-import SafetyNumberPage from './SafetyNumberPage.jsx';
-import LicenceRegisterPage from './LicenceRegisterPage.jsx';
-import SecurePolicyPage from './SecurePolicyPage.jsx';
-import CommunicationCenterPage from './CommunicationCenterPage.jsx';
-import PendingAcknowledgementsPage from './PendingAcknowledgementsPage.jsx';
-import InstructionRegisterPage from './InstructionRegisterPage.jsx';
-import AnnouncementsPage from './AnnouncementsPage.jsx';
-import NewAnnouncementPage from './NewAnnouncementPage.jsx';
-import AutoGroupsPage from './AutoGroupsPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const MessagesPage = lazyPage(() => import('./MessagesPage.jsx'));
+const NewConversationPage = lazyPage(() => import('./NewConversationPage.jsx'));
+const CallPage = lazyPage(() => import('./CallPage.jsx'));
+const MessagingSettingsPage = lazyPage(() => import('./MessagingSettingsPage.jsx'));
+const SafetyNumberPage = lazyPage(() => import('./SafetyNumberPage.jsx'));
+const LicenceRegisterPage = lazyPage(() => import('./LicenceRegisterPage.jsx'));
+const SecurePolicyPage = lazyPage(() => import('./SecurePolicyPage.jsx'));
+const CommunicationCenterPage = lazyPage(() => import('./CommunicationCenterPage.jsx'));
+const PendingAcknowledgementsPage = lazyPage(() => import('./PendingAcknowledgementsPage.jsx'));
+const InstructionRegisterPage = lazyPage(() => import('./InstructionRegisterPage.jsx'));
+const AnnouncementsPage = lazyPage(() => import('./AnnouncementsPage.jsx'));
+const NewAnnouncementPage = lazyPage(() => import('./NewAnnouncementPage.jsx'));
+const AutoGroupsPage = lazyPage(() => import('./AutoGroupsPage.jsx'));
 
 // Module "msg" (part 05.01): the unified Messages app. One entry in the navigation; the old chat and channel screens do not exist as separate pages.
 registerModule({

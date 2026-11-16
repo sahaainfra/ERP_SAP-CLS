@@ -3,6 +3,7 @@ import { arcPath, areaPath, bands, chartTable, dayFraction, formatCount, heatFil
 import { downloadCsv } from '../../modules/core/pages/ui.jsx';
 import { isEmptyChart } from './theme.js';
 import { EmptyState } from '../feedback/states.jsx';
+import { useLowBandwidthSaves } from '../device/lowBandwidth.js';
 
 // The chart library (part 03.07, FR-08). Every chart is drawn in SVG from the design tokens (--erp-chart-1..8 and the status colours, so
 // light and dark themes both work), has a tooltip on hover and focus, a legend, the same data as a table (the accessible alternative),
@@ -226,6 +227,8 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   const id = useId();
   const svgRef = useRef(null);
   const [tip, setTip] = useState(null);
+  const saves = useLowBandwidthSaves(); // low-bandwidth mode with ff.perf.p16604 (part 166.4, FR-03): the table first, the chart on request
+  const [drawAnyway, setDrawAnyway] = useState(false);
   // nothing to draw: the empty state of the chart theme, not an empty frame with axes (part 166.2, U-08)
   if (isEmptyChart(type, data)) return <figure className="ch ch-empty" data-chart={type} data-testid="chart-empty"><EmptyState compact title={title ? `No data for ${title}` : 'No data to chart'} message="Change the filters or the period to see figures here." /></figure>;
   const table = chartTable(type, data);
@@ -235,6 +238,27 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
       : type === 'heatmap' ? <Heatmap data={data} onDrill={onDrill} setTip={setTip} />
         : type === 'gantt' ? <Gantt data={data} onDrill={onDrill} setTip={setTip} />
           : <Cartesian kind={type} data={data} onDrill={onDrill} setTip={setTip} />;
+  const rowsTable = (
+    <table>
+      <caption className="sr-only">{title}</caption>
+      <thead><tr>{table.columns.map((c, i) => <th key={`${c}-${i}`} scope="col">{c}</th>)}</tr></thead>
+      <tbody>{table.rows.map((r, ri) => <tr key={ri}>{r.map((c, ci) => (ci === 0 ? <th key={ci} scope="row">{String(c)}</th> : <td key={ci}>{typeof c === 'number' ? formatCount(c) : String(c ?? '')}</td>))}</tr>)}</tbody>
+    </table>
+  );
+  if (saves && !drawAnyway) {
+    return (
+      <figure className="ch ch-as-table" data-chart={type} data-testid="chart-as-table">
+        <div className="table-scroll">{rowsTable}</div>
+        <figcaption className="ch-foot">
+          <span className="muted">Shown as a table to save data.</span>
+          <span className="ch-export">
+            <button type="button" className="btn btn-small" onClick={() => setDrawAnyway(true)}>Draw the chart</button>
+            <button type="button" className="btn btn-small" onClick={() => downloadCsv(`${exportName}.csv`, `\uFEFF${toCsv(table)}`)}>CSV</button>
+          </span>
+        </figcaption>
+      </figure>
+    );
+  }
   const box = type === 'donut' ? '0 0 240 240' : type === 'gauge' ? '0 0 240 150' : `0 0 ${W} ${H}`;
   return (
     <figure className="ch" data-chart={type}>
@@ -247,13 +271,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
       <figcaption className="ch-foot">
         <details className="ch-table">
           <summary>View as table</summary>
-          <div className="table-scroll">
-            <table>
-              <caption className="sr-only">{title}</caption>
-              <thead><tr>{table.columns.map((c, i) => <th key={`${c}-${i}`} scope="col">{c}</th>)}</tr></thead>
-              <tbody>{table.rows.map((r, ri) => <tr key={ri}>{r.map((c, ci) => (ci === 0 ? <th key={ci} scope="row">{String(c)}</th> : <td key={ci}>{typeof c === 'number' ? formatCount(c) : String(c ?? '')}</td>))}</tr>)}</tbody>
-            </table>
-          </div>
+          <div className="table-scroll">{rowsTable}</div>
         </details>
         <span className="ch-export">
           <button type="button" className="btn btn-small" onClick={() => downloadCsv(`${exportName}.csv`, `\uFEFF${toCsv(table)}`)}>CSV</button>

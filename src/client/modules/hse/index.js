@@ -1,19 +1,48 @@
-import DashboardPage from './DashboardPage.jsx';
-import { CampOccupancyPage, CampSetupPage, AllocationsPage, CampInspectionsPage, CampMessPage } from './CampPages.jsx';
 import { registerModule } from '../../platform/shell/registry.js';
-import PlansPage from './PlansPage.jsx';
-import HiraPage from './HiraPage.jsx';
-import JsaPage from './JsaPage.jsx';
-import InductionPage from './InductionPage.jsx';
-import ToolboxPage from './ToolboxPage.jsx';
-import LibraryPage from './LibraryPage.jsx';
-import CompliancePage from './CompliancePage.jsx';
-import PermitsPage, { RequestPermit } from './PermitsPage.jsx';
-import { IncidentsPage, LessonsPage, ReportIncidentPage } from './IncidentPages.jsx';
-import { ContractorScoresPage, EquipmentPage, ObservationCardPage, ObservationsPage, PpeIssuePage, PpeRegisterPage, SchedulesPage } from './SafetyPages.jsx';
-import { CarbonPage, ConsentsPage, EsgDashboardPage, EsgEntryPage, FactorsPage, WastePage } from './EsgPages.jsx';
-import { PatrolCompliancePage, PatrolScanPage, RosterBoardPage, SecurityIncidentsPage, SecurityPostsPage, VisitorGatePage, VisitorsPage } from './SecurityPages.jsx';
-import { PermitApprovalsPage, PermitBoardPage, PermitTypesPage } from './PermitMisc.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const DashboardPage = lazyPage(() => import('./DashboardPage.jsx'));
+const CampOccupancyPage = lazyPage(() => import('./CampPages.jsx'), 'CampOccupancyPage');
+const CampSetupPage = lazyPage(() => import('./CampPages.jsx'), 'CampSetupPage');
+const AllocationsPage = lazyPage(() => import('./CampPages.jsx'), 'AllocationsPage');
+const CampInspectionsPage = lazyPage(() => import('./CampPages.jsx'), 'CampInspectionsPage');
+const CampMessPage = lazyPage(() => import('./CampPages.jsx'), 'CampMessPage');
+const PlansPage = lazyPage(() => import('./PlansPage.jsx'));
+const HiraPage = lazyPage(() => import('./HiraPage.jsx'));
+const JsaPage = lazyPage(() => import('./JsaPage.jsx'));
+const InductionPage = lazyPage(() => import('./InductionPage.jsx'));
+const ToolboxPage = lazyPage(() => import('./ToolboxPage.jsx'));
+const LibraryPage = lazyPage(() => import('./LibraryPage.jsx'));
+const CompliancePage = lazyPage(() => import('./CompliancePage.jsx'));
+const PermitsPage = lazyPage(() => import('./PermitsPage.jsx'));
+const RequestPermit = lazyPage(() => import('./PermitsPage.jsx'), 'RequestPermit');
+const IncidentsPage = lazyPage(() => import('./IncidentPages.jsx'), 'IncidentsPage');
+const LessonsPage = lazyPage(() => import('./IncidentPages.jsx'), 'LessonsPage');
+const ReportIncidentPage = lazyPage(() => import('./IncidentPages.jsx'), 'ReportIncidentPage');
+const ContractorScoresPage = lazyPage(() => import('./SafetyPages.jsx'), 'ContractorScoresPage');
+const EquipmentPage = lazyPage(() => import('./SafetyPages.jsx'), 'EquipmentPage');
+const ObservationCardPage = lazyPage(() => import('./SafetyPages.jsx'), 'ObservationCardPage');
+const ObservationsPage = lazyPage(() => import('./SafetyPages.jsx'), 'ObservationsPage');
+const PpeIssuePage = lazyPage(() => import('./SafetyPages.jsx'), 'PpeIssuePage');
+const PpeRegisterPage = lazyPage(() => import('./SafetyPages.jsx'), 'PpeRegisterPage');
+const SchedulesPage = lazyPage(() => import('./SafetyPages.jsx'), 'SchedulesPage');
+const CarbonPage = lazyPage(() => import('./EsgPages.jsx'), 'CarbonPage');
+const ConsentsPage = lazyPage(() => import('./EsgPages.jsx'), 'ConsentsPage');
+const EsgDashboardPage = lazyPage(() => import('./EsgPages.jsx'), 'EsgDashboardPage');
+const EsgEntryPage = lazyPage(() => import('./EsgPages.jsx'), 'EsgEntryPage');
+const FactorsPage = lazyPage(() => import('./EsgPages.jsx'), 'FactorsPage');
+const WastePage = lazyPage(() => import('./EsgPages.jsx'), 'WastePage');
+const PatrolCompliancePage = lazyPage(() => import('./SecurityPages.jsx'), 'PatrolCompliancePage');
+const PatrolScanPage = lazyPage(() => import('./SecurityPages.jsx'), 'PatrolScanPage');
+const RosterBoardPage = lazyPage(() => import('./SecurityPages.jsx'), 'RosterBoardPage');
+const SecurityIncidentsPage = lazyPage(() => import('./SecurityPages.jsx'), 'SecurityIncidentsPage');
+const SecurityPostsPage = lazyPage(() => import('./SecurityPages.jsx'), 'SecurityPostsPage');
+const VisitorGatePage = lazyPage(() => import('./SecurityPages.jsx'), 'VisitorGatePage');
+const VisitorsPage = lazyPage(() => import('./SecurityPages.jsx'), 'VisitorsPage');
+const PermitApprovalsPage = lazyPage(() => import('./PermitMisc.jsx'), 'PermitApprovalsPage');
+const PermitBoardPage = lazyPage(() => import('./PermitMisc.jsx'), 'PermitBoardPage');
+const PermitTypesPage = lazyPage(() => import('./PermitMisc.jsx'), 'PermitTypesPage');
 
 registerModule({
   code: 'hse',

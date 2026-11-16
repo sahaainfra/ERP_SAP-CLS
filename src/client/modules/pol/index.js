@@ -1,8 +1,11 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import MyPoliciesPage from './MyPoliciesPage.jsx';
-import PolicyDraftsPage from './PolicyDraftsPage.jsx';
-import PolicyEditorPage from './PolicyEditorPage.jsx';
-import PolicyRegisterPage from './PolicyRegisterPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const MyPoliciesPage = lazyPage(() => import('./MyPoliciesPage.jsx'));
+const PolicyDraftsPage = lazyPage(() => import('./PolicyDraftsPage.jsx'));
+const PolicyEditorPage = lazyPage(() => import('./PolicyEditorPage.jsx'));
+const PolicyRegisterPage = lazyPage(() => import('./PolicyRegisterPage.jsx'));
 
 // Module "pol" (part 05.05): company policies. The register and the editor for the owners of policies, My Policies for every employee, and the drafts made from policy requirements for the administrators.
 registerModule({

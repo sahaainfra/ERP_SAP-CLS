@@ -1,10 +1,5 @@
-import ApproveLinkPage from './modules/eng/ApproveLinkPage.jsx';
-import VerifyPage from './modules/eng/VerifyPage.jsx';
-import VendorQuotePage from './modules/proc/VendorQuotePage.jsx';
-import VendorPoPage from './modules/proc/VendorPoPage.jsx';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import ChatDock from './modules/msg/ChatDock.jsx';
 import { startOffline, unsentCount, wipeOnSignOut } from './platform/offline/engine.js';
 import { loadIdentity, onAuthChange, saveIdentity, signOut, signedInUser } from './platform/api/index.js';
 import { allRoutes, findRoute, routesFor } from './platform/shell/registry.js';
@@ -14,8 +9,6 @@ import ContextSwitcher from './modules/iam/components/ContextSwitcher.jsx';
 import AppearanceSync from './modules/ui/AppearanceSync.jsx';
 import Icon from './platform/design/Icon.jsx';
 import { APPEARANCE_EVENT, THEMES, announceAppearance, applyAppearance, storedAppearance } from './platform/design/appearance.js';
-import OfferResponsePage from './modules/hr/OfferResponsePage.jsx';
-import AcceptInvitePage from './modules/iam/pages/AcceptInvitePage.jsx';
 import { confirmLeave } from './platform/forms/guard.js';
 import { FeedbackProvider } from './platform/feedback/Feedback.jsx';
 import AppShell from './platform/shell/AppShell.jsx';
@@ -24,6 +17,18 @@ import { landsOnField } from '../shared/device/breakpoints.js';
 import { pwa } from './platform/device/pwa.js';
 import { Skeleton } from './platform/feedback/states.jsx';
 import { useLegacyRedirect } from './platform/migration/redirect.js';
+import RoutePage from './platform/shell/RoutePage.jsx';
+import { lazyPage } from './platform/shell/lazyPage.js';
+import { Suspense } from 'react';
+
+// The pages reached by a link without signing in, and the chat dock, are fetched when they are used (part 166.4).
+const ApproveLinkPage = lazyPage(() => import('./modules/eng/ApproveLinkPage.jsx'));
+const VerifyPage = lazyPage(() => import('./modules/eng/VerifyPage.jsx'));
+const VendorQuotePage = lazyPage(() => import('./modules/proc/VendorQuotePage.jsx'));
+const VendorPoPage = lazyPage(() => import('./modules/proc/VendorPoPage.jsx'));
+const ChatDock = lazyPage(() => import('./modules/msg/ChatDock.jsx'));
+const OfferResponsePage = lazyPage(() => import('./modules/hr/OfferResponsePage.jsx'));
+const AcceptInvitePage = lazyPage(() => import('./modules/iam/pages/AcceptInvitePage.jsx'));
 
 const ROLES = ['SYSADM', 'ITADM', 'PM', 'ACCMGR', 'CFO', 'PCMGR', 'HRMGR', 'PD'];
 
@@ -152,7 +157,7 @@ function Shell({ iam, user }) {
           path={shown} go={go} route={route} session={s} onboarding={onboarding} displayName={iam && user ? user.displayName : identity.user}
           theme={theme} setTheme={setTheme} language={look.language} setLanguage={(language) => { applyAppearance({ language }); announceAppearance({ language }); }}
           onSignOut={iam && user ? () => { if (unsentCount() > 0 && !window.confirm(`${unsentCount()} change(s) on this device have not been sent yet and will be deleted if you sign out. Sign out anyway?`)) return Promise.resolve(); pwa.clearApiCache(); return signOut().then(() => wipeOnSignOut()).then(() => qc.clear()); } : null} identityBar={identityBar}
-          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <ChatDock session={s} />}</>}
+          extras={<><FlagGate flag="ff.ui.p0301"><AppearanceSync /></FlagGate>{msgFlag.on && !onboarding && <Suspense fallback={null}><ChatDock session={s} /></Suspense>}</>}
         />
       </FeedbackProvider>
     );
@@ -191,8 +196,8 @@ function Shell({ iam, user }) {
       </header>
       {identityBar}
       <main id="main">
-        {s && route && <route.Page session={s} />}
-        {s && msgFlag.on && !onboarding && <ChatDock session={s} />}
+        {s && route && <RoutePage route={route} session={s} path={route.path} />}
+        {s && msgFlag.on && !onboarding && <Suspense fallback={null}><ChatDock session={s} /></Suspense>}
         {unreachable}
       </main>
     </FeedbackProvider>
@@ -205,16 +210,16 @@ export default function App({ authMode = 'dev-headers' }) {
   const wasSignedIn = useRef(false);
 
   // An invitation link is opened before anybody is signed in, in either mode.
-  if (window.location.pathname === '/accept-invite') return <AcceptInvitePage />;
+  if (window.location.pathname === '/accept-invite') return <Suspense fallback={<Skeleton rows={6} />}><AcceptInvitePage /></Suspense>;
   // the offer a candidate opens from the link they were given (part 07.02)
-  if (window.location.pathname === '/offer-response') return <OfferResponsePage />;
+  if (window.location.pathname === '/offer-response') return <Suspense fallback={<Skeleton rows={6} />}><OfferResponsePage /></Suspense>;
   // a secure approval link is opened before anybody is signed in (part 04.03)
-  if (window.location.pathname === '/approve-link') return <ApproveLinkPage />;
+  if (window.location.pathname === '/approve-link') return <Suspense fallback={<Skeleton rows={6} />}><ApproveLinkPage /></Suspense>;
   // the page a QR code on a document leads to is public (part 04.12)
-  if (window.location.pathname === '/verify' || window.location.pathname.startsWith('/verify/')) return <VerifyPage />;
+  if (window.location.pathname === '/verify' || window.location.pathname.startsWith('/verify/')) return <Suspense fallback={<Skeleton rows={6} />}><VerifyPage /></Suspense>;
   // the page a vendor opens from the enquiry it was sent (part 15.03): the link is the proof
-  if (window.location.pathname === '/vendor-quote') return <VendorQuotePage />;
-  if (window.location.pathname === '/vendor-po') return <VendorPoPage />;
+  if (window.location.pathname === '/vendor-quote') return <Suspense fallback={<Skeleton rows={6} />}><VendorQuotePage /></Suspense>;
+  if (window.location.pathname === '/vendor-po') return <Suspense fallback={<Skeleton rows={6} />}><VendorPoPage /></Suspense>;
   if (authMode !== 'iam') return <Shell iam={false} user={null} />;
   if (!user) {
     const notice = wasSignedIn.current ? 'signed-out' : '';

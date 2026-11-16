@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/index.js';
 import { queryKeys } from '../query/keys.js';
+import { lowBandwidthSaves } from '../device/lowBandwidth.js';
 
 // Data hooks of the application shell (part 03.05). Components use these, never the API client directly.
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
@@ -14,7 +15,7 @@ export const useRecent = (enabled = true) => useQuery({ queryKey: shellKeys.rece
 export const useLaunchpad = (enabled = true) => useQuery({ queryKey: shellKeys.launchpad, queryFn: () => unwrap(api.get('/ui/launchpad')), enabled, retry: false });
 /** The bell: how many requests wait for this person (refreshed every minute until the notification service of 04.06 exists). */
 /** Part 166.3: what waits for a site person today, for the Field Home's task cards (refreshed every two minutes while the page is open). */
-export const useFieldToday = (enabled = true) => useQuery({ queryKey: ['shell', 'field-today'], queryFn: () => unwrap(api.get('/ui/field/today')), enabled, retry: false, refetchInterval: 120_000 });
+export const useFieldToday = (enabled = true) => useQuery({ queryKey: ['shell', 'field-today'], queryFn: () => unwrap(api.get('/ui/field/today')), enabled, retry: false, refetchInterval: () => (lowBandwidthSaves() ? false : 120_000) }); // none in low-bandwidth mode (166.4)
 export const useBell = (enabled = true) => useQuery({ queryKey: shellKeys.bell, queryFn: () => unwrap(api.get('/ui/bell')), enabled, retry: false, refetchInterval: 60_000 });
 
 export function useSetContext() {

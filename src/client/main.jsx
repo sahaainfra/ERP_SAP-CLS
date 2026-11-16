@@ -39,6 +39,8 @@ import './modules/ctr/index.js';
 import './modules/bill/index.js';
 import './modules/fin/index.js';
 import { initAuth } from './platform/api/index.js';
+import { loadLanguage } from './platform/i18n/index.js';
+import { storedAppearance } from './platform/design/appearance.js';
 import { installPrintLogging } from './platform/audit/index.js';
 import { createQueryClient } from './platform/query/client.js';
 import App from './App.jsx';
@@ -46,7 +48,8 @@ import App from './App.jsx';
 // Find out how people sign in, and resume a session from the cookie, before the first screen is drawn.
 // the address the person opened, before the shell replaces '/' with its first page: a saved start page applies only then
 window.__erpOpenedAt = window.location.pathname;
-const { mode } = await initAuth();
+// the saved language's text arrives with the sign-in check (Hindi and Telugu are fetched only for those who use them, part 166.4)
+const [{ mode }] = await Promise.all([initAuth(), loadLanguage(storedAppearance().language)]);
 installPrintLogging();
 
 createRoot(document.getElementById('root')).render(

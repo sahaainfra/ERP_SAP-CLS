@@ -1,23 +1,28 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import CostCentresPage from './pages/CostCentresPage.jsx';
-import LoginHistoryPage from './pages/LoginHistoryPage.jsx';
-import OrgChartPage from './pages/OrgChartPage.jsx';
-import OrganisationPage from './pages/OrganisationPage.jsx';
-import PolicyPage from './pages/PolicyPage.jsx';
-import ProjectsPage from './pages/ProjectsPage.jsx';
-import SecurityPage from './pages/SecurityPage.jsx';
-import SessionsPage from './pages/SessionsPage.jsx';
-import AssignmentsPage from './pages/AssignmentsPage.jsx';
-import EffectivePage from './pages/EffectivePage.jsx';
-import LegacyAccessPage from './pages/LegacyAccessPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
-import RolesPage from './pages/RolesPage.jsx';
-import UsersPage from './pages/UsersPage.jsx';
-import WelcomePage from './pages/WelcomePage.jsx';
-import AccessReviewsPage, { MyAccessReviewPage } from './pages/AccessReviewsPage.jsx';
-import ElevationPage, { ElevationApprovalsPage } from './pages/ElevationPage.jsx';
-import SodRulesPage from './pages/SodRulesPage.jsx';
-import SodViolationsPage from './pages/SodViolationsPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const CostCentresPage = lazyPage(() => import('./pages/CostCentresPage.jsx'));
+const LoginHistoryPage = lazyPage(() => import('./pages/LoginHistoryPage.jsx'));
+const OrgChartPage = lazyPage(() => import('./pages/OrgChartPage.jsx'));
+const OrganisationPage = lazyPage(() => import('./pages/OrganisationPage.jsx'));
+const PolicyPage = lazyPage(() => import('./pages/PolicyPage.jsx'));
+const ProjectsPage = lazyPage(() => import('./pages/ProjectsPage.jsx'));
+const SecurityPage = lazyPage(() => import('./pages/SecurityPage.jsx'));
+const SessionsPage = lazyPage(() => import('./pages/SessionsPage.jsx'));
+const AssignmentsPage = lazyPage(() => import('./pages/AssignmentsPage.jsx'));
+const EffectivePage = lazyPage(() => import('./pages/EffectivePage.jsx'));
+const LegacyAccessPage = lazyPage(() => import('./pages/LegacyAccessPage.jsx'));
+const ProfilePage = lazyPage(() => import('./pages/ProfilePage.jsx'));
+const RolesPage = lazyPage(() => import('./pages/RolesPage.jsx'));
+const UsersPage = lazyPage(() => import('./pages/UsersPage.jsx'));
+const WelcomePage = lazyPage(() => import('./pages/WelcomePage.jsx'));
+const AccessReviewsPage = lazyPage(() => import('./pages/AccessReviewsPage.jsx'));
+const MyAccessReviewPage = lazyPage(() => import('./pages/AccessReviewsPage.jsx'), 'MyAccessReviewPage');
+const ElevationPage = lazyPage(() => import('./pages/ElevationPage.jsx'));
+const ElevationApprovalsPage = lazyPage(() => import('./pages/ElevationPage.jsx'), 'ElevationApprovalsPage');
+const SodRulesPage = lazyPage(() => import('./pages/SodRulesPage.jsx'));
+const SodViolationsPage = lazyPage(() => import('./pages/SodViolationsPage.jsx'));
 
 // Module "iam" registers its pages once (part 02.01). The sign-in screen is not a route: the shell shows it before anything else.
 registerModule({

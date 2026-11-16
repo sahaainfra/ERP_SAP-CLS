@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react';
-import { CATALOGUE } from '../../../shared/i18n/locales/index.js';
+import en from '../../../shared/i18n/locales/en.js';
 import { LANGS, cleanLang, createTranslator } from '../../../shared/i18n/catalogue.js';
 import { amountInWords } from '../../../shared/i18n/words.js';
 import { DEFAULT_PREFS, formatCompact, formatDate, formatDateTime, formatMoney, formatNumber, formatPercent, formatQuantity, formatTime } from '../../../shared/i18n/format.js';
@@ -9,6 +9,21 @@ import { DEFAULT_PREFS, formatCompact, formatDate, formatDateTime, formatMoney, 
 // no component carries its own text.
 
 const clean = cleanLang;
+
+// Part 166.4: English is in the first download; Hindi and Telugu are fetched the first time a screen is in that language (the Hindi text alone is
+// about as large as the rest of the shell). Until the language has arrived the screen stays in English, then draws again in it.
+const BUILT_IN = { en, hi: null, te: null };
+const LOADERS = { hi: () => import('../../../shared/i18n/locales/hi.js'), te: () => import('../../../shared/i18n/locales/te.js') };
+const loading = {};
+/** The built-in text of a language: resolves once it is here (at once for English). */
+export function loadLanguage(lang) {
+  const l = clean(lang);
+  if (BUILT_IN[l]) return Promise.resolve(true);
+  loading[l] ??= LOADERS[l]().then((m) => { BUILT_IN[l] = m.default; emit(); return true; }).catch(() => { loading[l] = null; return false; });
+  return loading[l];
+}
+/** The language the screens are drawn in now: the chosen one once its text is here, English until then. */
+const active = () => (BUILT_IN[state.lang] ? state.lang : 'en');
 const state = { lang: typeof document === 'undefined' ? 'en' : clean(document.documentElement.lang), overrides: { en: {}, hi: {}, te: {} }, prefs: { grouping: 'indian', hour12: false }, version: 0, merged: null };
 const listeners = new Set();
 const emit = () => { state.version += 1; state.merged = null; listeners.forEach((l) => l()); };
@@ -17,7 +32,7 @@ const snapshot = () => state.version;
 
 // the page's language is the attribute of <html> (set by the appearance code from the saved preference); follow it
 if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined') {
-  new MutationObserver(() => { const l = clean(document.documentElement.lang); if (l !== state.lang) { state.lang = l; emit(); } }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+  new MutationObserver(() => { const l = clean(document.documentElement.lang); if (l !== state.lang) { state.lang = l; loadLanguage(l); emit(); } }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
 }
 
 /** The keys a screen asked for that had no text in its language (for the missing-key checks of the tests). */
@@ -29,7 +44,8 @@ const catalogue = () => {
   const merged = {};
   for (const lang of LANGS) {
     merged[lang] = {};
-    for (const ns of new Set([...Object.keys(CATALOGUE[lang]), ...Object.keys(state.overrides[lang])])) merged[lang][ns] = { ...(CATALOGUE[lang][ns] ?? {}), ...(state.overrides[lang][ns] ?? {}) };
+    const builtIn = BUILT_IN[lang] ?? {};
+    for (const ns of new Set([...Object.keys(builtIn), ...Object.keys(state.overrides[lang])])) merged[lang][ns] = { ...(builtIn[ns] ?? {}), ...(state.overrides[lang][ns] ?? {}) };
   }
   state.merged = merged;
   return merged;
@@ -37,7 +53,7 @@ const catalogue = () => {
 
 /** Text of the company's own wording, as the server returns it (all areas of one language). */
 export function setOverrides(lang, namespaces) {
-  const builtIn = CATALOGUE[clean(lang)];
+  const builtIn = BUILT_IN[clean(lang)] ?? {};
   const next = {};
   for (const [ns, strings] of Object.entries(namespaces ?? {})) next[ns] = Object.fromEntries(Object.entries(strings).filter(([k, v]) => builtIn[ns]?.[k] !== v));
   if (JSON.stringify(state.overrides[clean(lang)]) !== JSON.stringify(next)) { state.overrides[clean(lang)] = next; emit(); }
@@ -47,13 +63,13 @@ export function setFormatPrefs(prefs) {
   if (next.grouping !== state.prefs.grouping || next.hour12 !== state.prefs.hour12) { state.prefs = next; emit(); }
 }
 /** Switch the language without waiting for the attribute (the appearance code sets both). */
-export function setLang(lang) { if (clean(lang) !== state.lang) { state.lang = clean(lang); emit(); } }
+export function setLang(lang) { if (clean(lang) !== state.lang) { state.lang = clean(lang); loadLanguage(state.lang); emit(); } }
 
 export const getLang = () => state.lang;
 /** The language and number and hour preference in force, for code outside a component (the date and money helpers of platform/format.js). */
 export const currentPrefs = () => ({ ...DEFAULT_PREFS, ...state.prefs, lang: state.lang });
 /** Translate outside a component (a toast raised in a handler): same text and fallbacks as useT. */
-export const translate = (ns, key, params) => createTranslator({ catalogue: catalogue(), lang: state.lang, onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) })(ns, key, params);
+export const translate = (ns, key, params) => createTranslator({ catalogue: catalogue(), lang: active(), onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) })(ns, key, params);
 
 /** The label of a registry entry (navigation, field tile, form) in the language of the screens: labelHi / labelTe when there is one, else English. */
 export const labelIn = (item, lang) => (item ? (lang === 'hi' && item.labelHi) || (lang === 'te' && item.labelTe) || item.label : '');
@@ -67,7 +83,7 @@ export function useLang() {
 /** t(key, params) for one area of text: `const t = useT('shell'); t('menu.open')`. Plural forms: t('bell.waiting', { count }). */
 export function useT(ns) {
   useSyncExternalStore(subscribe, snapshot);
-  const lang = state.lang;
+  const lang = active();
   return useMemo(() => {
     const tr = createTranslator({ catalogue: catalogue(), lang, onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) });
     return (key, params) => tr(ns, key, params);
@@ -91,3 +107,6 @@ export function useFormat() {
     words: (v, lang) => amountInWords(v, lang ?? prefs.lang),
   }), [prefs.grouping, prefs.hour12, prefs.lang]);
 }
+
+// a screen opened in Hindi or Telugu fetches its text at once (part 166.4)
+if (state.lang !== 'en') loadLanguage(state.lang);

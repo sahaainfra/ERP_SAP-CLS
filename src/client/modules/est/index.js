@@ -1,19 +1,22 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import ComparePage from './ComparePage.jsx';
-import EstimatePage from './EstimatePage.jsx';
-import EstimatesPage from './EstimatesPage.jsx';
-import ImportBoqPage from './ImportBoqPage.jsx';
-import NewEstimatePage from './NewEstimatePage.jsx';
-import ResourcesPage from './ResourcesPage.jsx';
-import BbsListPage from './BbsListPage.jsx';
-import BbsSheetPage from './BbsSheetPage.jsx';
-import BbsSummaryPage from './BbsSummaryPage.jsx';
-import MtoDeltaPage from './MtoDeltaPage.jsx';
-import MtoExplosionPage from './MtoExplosionPage.jsx';
-import TakeoffPage from './TakeoffPage.jsx';
-import TakeoffsPage from './TakeoffsPage.jsx';
-import BidPricePage from './BidPricePage.jsx';
-import ReviewPage from './ReviewPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const ComparePage = lazyPage(() => import('./ComparePage.jsx'));
+const EstimatePage = lazyPage(() => import('./EstimatePage.jsx'));
+const EstimatesPage = lazyPage(() => import('./EstimatesPage.jsx'));
+const ImportBoqPage = lazyPage(() => import('./ImportBoqPage.jsx'));
+const NewEstimatePage = lazyPage(() => import('./NewEstimatePage.jsx'));
+const ResourcesPage = lazyPage(() => import('./ResourcesPage.jsx'));
+const BbsListPage = lazyPage(() => import('./BbsListPage.jsx'));
+const BbsSheetPage = lazyPage(() => import('./BbsSheetPage.jsx'));
+const BbsSummaryPage = lazyPage(() => import('./BbsSummaryPage.jsx'));
+const MtoDeltaPage = lazyPage(() => import('./MtoDeltaPage.jsx'));
+const MtoExplosionPage = lazyPage(() => import('./MtoExplosionPage.jsx'));
+const TakeoffPage = lazyPage(() => import('./TakeoffPage.jsx'));
+const TakeoffsPage = lazyPage(() => import('./TakeoffsPage.jsx'));
+const BidPricePage = lazyPage(() => import('./BidPricePage.jsx'));
+const ReviewPage = lazyPage(() => import('./ReviewPage.jsx'));
 
 registerModule({
   code: 'est',

@@ -1,8 +1,11 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import AccountPage from './AccountPage.jsx';
-import CategoryMappingPage from './CategoryMappingPage.jsx';
-import ChartOfAccountsPage from './ChartOfAccountsPage.jsx';
-import CostCodesPage from './CostCodesPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const AccountPage = lazyPage(() => import('./AccountPage.jsx'));
+const CategoryMappingPage = lazyPage(() => import('./CategoryMappingPage.jsx'));
+const ChartOfAccountsPage = lazyPage(() => import('./ChartOfAccountsPage.jsx'));
+const CostCodesPage = lazyPage(() => import('./CostCodesPage.jsx'));
 
 // Module "fin" (part 06.05): the finance masters. The chart of accounts (tree, Schedule III, import from Tally, changes), the account object page (properties, dimension rules, mapping), the cost heads and cost
 // codes, and the item category mapping. Every change is approved by the CFO before it applies.

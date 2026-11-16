@@ -1,21 +1,24 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import SchedulesPage from './SchedulesPage.jsx';
-import ActivitiesPage from './ActivitiesPage.jsx';
-import GeneratePage from './GeneratePage.jsx';
-import CriticalPage from './CriticalPage.jsx';
-import CalendarsPage from './CalendarsPage.jsx';
-import GanttPage from './GanttPage.jsx';
-import HistogramPage from './HistogramPage.jsx';
-import ProgrammePage from './ProgrammePage.jsx';
-import BaselinesPage from './BaselinesPage.jsx';
-import ImportPage from './ImportPage.jsx';
-import VariancePage from './VariancePage.jsx';
-import LookaheadPage from './LookaheadPage.jsx';
-import ConstraintsPage from './ConstraintsPage.jsx';
-import WeeklyPage from './WeeklyPage.jsx';
-import DelaysPage from './DelaysPage.jsx';
-import TiaPage from './TiaPage.jsx';
-import DelaySummaryPage from './DelaySummaryPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const SchedulesPage = lazyPage(() => import('./SchedulesPage.jsx'));
+const ActivitiesPage = lazyPage(() => import('./ActivitiesPage.jsx'));
+const GeneratePage = lazyPage(() => import('./GeneratePage.jsx'));
+const CriticalPage = lazyPage(() => import('./CriticalPage.jsx'));
+const CalendarsPage = lazyPage(() => import('./CalendarsPage.jsx'));
+const GanttPage = lazyPage(() => import('./GanttPage.jsx'));
+const HistogramPage = lazyPage(() => import('./HistogramPage.jsx'));
+const ProgrammePage = lazyPage(() => import('./ProgrammePage.jsx'));
+const BaselinesPage = lazyPage(() => import('./BaselinesPage.jsx'));
+const ImportPage = lazyPage(() => import('./ImportPage.jsx'));
+const VariancePage = lazyPage(() => import('./VariancePage.jsx'));
+const LookaheadPage = lazyPage(() => import('./LookaheadPage.jsx'));
+const ConstraintsPage = lazyPage(() => import('./ConstraintsPage.jsx'));
+const WeeklyPage = lazyPage(() => import('./WeeklyPage.jsx'));
+const DelaysPage = lazyPage(() => import('./DelaysPage.jsx'));
+const TiaPage = lazyPage(() => import('./TiaPage.jsx'));
+const DelaySummaryPage = lazyPage(() => import('./DelaySummaryPage.jsx'));
 
 registerModule({
   code: 'plan',

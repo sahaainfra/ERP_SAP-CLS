@@ -7,7 +7,7 @@ export { LineGrid } from './LineGrid.jsx';
 export { columnParser, computeCell, newRow, pasteInto } from './grid.js';
 export { ActionBar, DraftBanner, DuplicateWarning, ErrorSummary, FormSection, draftStatus } from './layout.jsx';
 export { fieldId, getPath, setPath, serverErrors, useForm, zodErrors } from './useForm.js';
-export { useDraft, AUTOSAVE_MS } from './useDraft.js';
+export { useDraft, AUTOSAVE_MS, flushDrafts } from './useDraft.js';
 export { confirmLeave, hasUnsavedChanges, useUnsavedGuard } from './guard.js';
 export { financialYearOf, useFormContext } from './context.js';
 export { formatBusinessDate, parseTypedDate, todayIst } from './dates.js';

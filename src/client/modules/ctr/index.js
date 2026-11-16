@@ -1,12 +1,26 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import ContractsPage from './ContractsPage.jsx';
-import { EscalationsPage, LdExposurePage, PvcPage } from './PvcPages.jsx';
-import { ClaimWatchlistPage, ClaimsPage, DisputesPage } from './ClaimPages.jsx';
-import { VariationSummaryPage, VariationsPage } from './VariationPages.jsx';
-import { SubCompliancePage, SubStrengthPage, SubcontractorsPage } from './SubcontractorPages.jsx';
-import { WoMarginPage, WorkOrdersPage } from './WorkOrderPages.jsx';
-import { BankGuaranteesPage, InsurancesPage, SecuritiesPage } from './SecurityPages.jsx';
-import { AmendmentsPage, ObligationsPage } from './OtherPages.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const ContractsPage = lazyPage(() => import('./ContractsPage.jsx'));
+const EscalationsPage = lazyPage(() => import('./PvcPages.jsx'), 'EscalationsPage');
+const LdExposurePage = lazyPage(() => import('./PvcPages.jsx'), 'LdExposurePage');
+const PvcPage = lazyPage(() => import('./PvcPages.jsx'), 'PvcPage');
+const ClaimWatchlistPage = lazyPage(() => import('./ClaimPages.jsx'), 'ClaimWatchlistPage');
+const ClaimsPage = lazyPage(() => import('./ClaimPages.jsx'), 'ClaimsPage');
+const DisputesPage = lazyPage(() => import('./ClaimPages.jsx'), 'DisputesPage');
+const VariationSummaryPage = lazyPage(() => import('./VariationPages.jsx'), 'VariationSummaryPage');
+const VariationsPage = lazyPage(() => import('./VariationPages.jsx'), 'VariationsPage');
+const SubCompliancePage = lazyPage(() => import('./SubcontractorPages.jsx'), 'SubCompliancePage');
+const SubStrengthPage = lazyPage(() => import('./SubcontractorPages.jsx'), 'SubStrengthPage');
+const SubcontractorsPage = lazyPage(() => import('./SubcontractorPages.jsx'), 'SubcontractorsPage');
+const WoMarginPage = lazyPage(() => import('./WorkOrderPages.jsx'), 'WoMarginPage');
+const WorkOrdersPage = lazyPage(() => import('./WorkOrderPages.jsx'), 'WorkOrdersPage');
+const BankGuaranteesPage = lazyPage(() => import('./SecurityPages.jsx'), 'BankGuaranteesPage');
+const InsurancesPage = lazyPage(() => import('./SecurityPages.jsx'), 'InsurancesPage');
+const SecuritiesPage = lazyPage(() => import('./SecurityPages.jsx'), 'SecuritiesPage');
+const AmendmentsPage = lazyPage(() => import('./OtherPages.jsx'), 'AmendmentsPage');
+const ObligationsPage = lazyPage(() => import('./OtherPages.jsx'), 'ObligationsPage');
 
 registerModule({
   code: 'ctr',

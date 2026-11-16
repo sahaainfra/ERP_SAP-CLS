@@ -7,6 +7,16 @@ import { api } from '../api/index.js';
 export const AUTOSAVE_MS = 30_000;
 const BLUR_DEBOUNCE_MS = 1_500;
 
+// The open forms with unsaved changes (part 166.4, FR-04): reloading into a new version of the application saves each of them first.
+const openDrafts = new Set();
+
+/** Save every open draft that has changes; resolves with how many were saved, after at most `timeoutMs`. */
+export async function flushDrafts({ timeoutMs = 5000 } = {}) {
+  const saves = [...openDrafts].map((f) => f().then((r) => (r ? 1 : 0), () => 0));
+  const all = Promise.all(saves).then((n) => n.reduce((a, b) => a + b, 0));
+  return Promise.race([all, new Promise((resolve) => { setTimeout(() => resolve(0), timeoutMs); })]);
+}
+
 const path = (formCode, entityKey) => `/ui/drafts/${formCode}${entityKey ? `/${encodeURIComponent(entityKey)}` : ''}`;
 
 /**
@@ -69,6 +79,13 @@ export function useDraft({ formCode, entityKey = '', values, dirty, enabled = tr
     return () => clearInterval(t);
   }, [enabled, save, found]);
   useEffect(() => () => clearTimeout(blurTimer.current), []);
+  // a reload into a new version saves the changes first (FR-04 of 166.4); a draft waiting to be resumed is not overwritten
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const flush = () => (latest.current.dirty && !found ? save('autosave') : Promise.resolve(null));
+    openDrafts.add(flush);
+    return () => { openDrafts.delete(flush); };
+  }, [enabled, save, found]);
 
   /** Leaving a field saves soon after (debounced, so tabbing through a row saves once). */
   const onBlur = useCallback(() => {

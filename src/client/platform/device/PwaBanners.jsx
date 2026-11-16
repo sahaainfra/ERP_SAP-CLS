@@ -15,8 +15,8 @@ export default function PwaBanners() {
   return (
     <div className="pwa-banners">
       {s.updateReady && (
-        <Banner tone="info" title={t('pwa.updateTitle')} testId="pwa-update" action={{ label: t('pwa.reload'), onClick: () => pwa.applyUpdate() }}>
-          {t('pwa.updateBody')}
+        <Banner tone="info" title={t('pwa.updateTitle')} testId="pwa-update" action={s.applying ? null : { label: t('pwa.reload'), onClick: () => pwa.applyUpdate() }}>
+          {s.applying ? t('pwa.applying') : s.saveDraftsFirst ? t('pwa.updateBodySaved') : t('pwa.updateBody')}
         </Banner>
       )}
       {showInstall && (

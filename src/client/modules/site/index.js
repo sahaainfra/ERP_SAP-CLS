@@ -1,29 +1,32 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import BoardPage from './BoardPage.jsx';
-import WasPage from './WasPage.jsx';
-import DailyPage from './DailyPage.jsx';
-import MobilePage from './MobilePage.jsx';
-import DprEntryPage from './DprEntryPage.jsx';
-import DprsPage from './DprsPage.jsx';
-import DprReportPage from './DprReportPage.jsx';
-import DprCompliancePage from './DprCompliancePage.jsx';
-import WeatherPage from './WeatherPage.jsx';
-import HindrancesPage from './HindrancesPage.jsx';
-import DiaryPage from './DiaryPage.jsx';
-import VisitorsPage from './VisitorsPage.jsx';
-import InstructionsPage from './InstructionsPage.jsx';
-import InstructionIssuePage from './InstructionIssuePage.jsx';
-import ProgressDashboardPage from './ProgressDashboardPage.jsx';
-import ProgressReportPage from './ProgressReportPage.jsx';
-import PeriodsPage from './PeriodsPage.jsx';
-import ClientProgressPage from './ClientProgressPage.jsx';
-import ProductivityDashboardPage from './ProductivityDashboardPage.jsx';
-import ProductivityReportPage from './ProductivityReportPage.jsx';
-import ProductivityNormsPage from './ProductivityNormsPage.jsx';
-import ControlDashboardPage from './ControlDashboardPage.jsx';
-import ControlVariancePage from './ControlVariancePage.jsx';
-import ControlUnallocatedPage from './ControlUnallocatedPage.jsx';
-import ProductivityRecordsPage from './ProductivityRecordsPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const BoardPage = lazyPage(() => import('./BoardPage.jsx'));
+const WasPage = lazyPage(() => import('./WasPage.jsx'));
+const DailyPage = lazyPage(() => import('./DailyPage.jsx'));
+const MobilePage = lazyPage(() => import('./MobilePage.jsx'));
+const DprEntryPage = lazyPage(() => import('./DprEntryPage.jsx'));
+const DprsPage = lazyPage(() => import('./DprsPage.jsx'));
+const DprReportPage = lazyPage(() => import('./DprReportPage.jsx'));
+const DprCompliancePage = lazyPage(() => import('./DprCompliancePage.jsx'));
+const WeatherPage = lazyPage(() => import('./WeatherPage.jsx'));
+const HindrancesPage = lazyPage(() => import('./HindrancesPage.jsx'));
+const DiaryPage = lazyPage(() => import('./DiaryPage.jsx'));
+const VisitorsPage = lazyPage(() => import('./VisitorsPage.jsx'));
+const InstructionsPage = lazyPage(() => import('./InstructionsPage.jsx'));
+const InstructionIssuePage = lazyPage(() => import('./InstructionIssuePage.jsx'));
+const ProgressDashboardPage = lazyPage(() => import('./ProgressDashboardPage.jsx'));
+const ProgressReportPage = lazyPage(() => import('./ProgressReportPage.jsx'));
+const PeriodsPage = lazyPage(() => import('./PeriodsPage.jsx'));
+const ClientProgressPage = lazyPage(() => import('./ClientProgressPage.jsx'));
+const ProductivityDashboardPage = lazyPage(() => import('./ProductivityDashboardPage.jsx'));
+const ProductivityReportPage = lazyPage(() => import('./ProductivityReportPage.jsx'));
+const ProductivityNormsPage = lazyPage(() => import('./ProductivityNormsPage.jsx'));
+const ControlDashboardPage = lazyPage(() => import('./ControlDashboardPage.jsx'));
+const ControlVariancePage = lazyPage(() => import('./ControlVariancePage.jsx'));
+const ControlUnallocatedPage = lazyPage(() => import('./ControlUnallocatedPage.jsx'));
+const ProductivityRecordsPage = lazyPage(() => import('./ProductivityRecordsPage.jsx'));
 
 registerModule({
   code: 'site',
