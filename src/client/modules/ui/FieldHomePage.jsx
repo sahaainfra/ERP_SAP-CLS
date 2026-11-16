@@ -23,7 +23,15 @@ const go = (to) => (e) => {
 // the icon of each of today's task cards (part 166.3)
 const TASK_ICON = { approvals: 'erp.action.inbox', dpr: 'erp.group.projects', dprDraft: 'erp.action.edit', inspections: 'erp.kpi.quality', ncrs: 'erp.kpi.risk', observations: 'erp.kpi.safety', permits: 'erp.kpi.safety', gate: 'erp.group.supply' };
 /** The greeting of the hour in India: morning to noon, afternoon to five, then evening. */
-const greetingKey = (now = new Date()) => { const h = (now.getUTCHours() + 5 + Math.floor((now.getUTCMinutes() + 30) / 60)) % 24; return h < 12 ? 'greet.morning' : h < 17 ? 'greet.afternoon' : 'greet.evening'; };
+const greeting = (t, name, now = new Date()) => {
+  const h = (now.getUTCHours() + 5 + Math.floor((now.getUTCMinutes() + 30) / 60)) % 24;
+  return h < 12 ? t('greet.morning', { name }) : h < 17 ? t('greet.afternoon', { name }) : t('greet.evening', { name });
+};
+/** The label of each of today's task cards, written out so that the catalogue check sees every key. */
+const taskLabel = (t, code) => ({
+  approvals: t('today.approvals'), dpr: t('today.dpr'), dprDraft: t('today.dprDraft'), attendance: t('today.attendance'), inspections: t('today.inspections'),
+  ncrs: t('today.ncrs'), observations: t('today.observations'), permits: t('today.permits'), gate: t('today.gate'), equipment: t('today.equipment'),
+})[code] ?? code;
 
 /**
  * Field Home (Mobile, part 03.06 FR-07; part 166.3 FR-01): a site person's home on the phone. With ff.field.p16603 ON it opens with a greeting
@@ -52,10 +60,10 @@ export default function FieldHomePage({ session }) {
   return (
     <section aria-labelledby="page-title" className={`field-home${v3 ? ' field-home-v3' : ''}`}>
       {v3 ? (
-        <PageHeader className="fh-band" testid="field-band" id="page-title" title={t(greetingKey(), { name })} meta={<span className="fh-eyebrow" data-testid="field-title">{t('title')}</span>} subtitle={t('greet.date', { date: f.date(today.data?.date ?? new Date().toISOString().slice(0, 10)) })}>
+        <PageHeader className="fh-band" testid="field-band" id="page-title" title={greeting(t, name)} meta={<span className="fh-eyebrow" data-testid="field-title">{t('title')}</span>} subtitle={t('greet.date', { date: f.date(today.data?.date ?? new Date().toISOString().slice(0, 10)) })}>
           <ul className="fh-status" aria-label={t('status.aria')}>
             <li data-testid="field-online" data-online={online}><Icon name={online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {online ? t('online') : t('offline')}</li>
-            <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> <a href="/field/sync" onClick={go('/field/sync')}>{queue.length === 0 ? t('sync.none') : t('sync.notSent', { count: queue.length })}</a></li>
+            <li data-testid="sync-count" data-count={queue.length}><Icon name="erp.action.inbox" size={18} /> <a href="/field/sync" title={t('sync.open')} onClick={go('/field/sync')}>{queue.length === 0 ? t('sync.none') : t('sync.notSent', { count: queue.length })}</a></li>
             <li data-testid="last-sync"><Icon name="erp.action.history" size={18} /> {off.lastSync ? t('sync.last', { time: f.dateTime(off.lastSync) }) : t('sync.never')}</li>
             {low.low && <li data-testid="field-lowbw"><Icon name="erp.action.info" size={18} /> {t('lowbw')}</li>}
           </ul>
@@ -83,7 +91,7 @@ export default function FieldHomePage({ session }) {
                 <li key={c.code}>
                   <a href={c.route} onClick={go(c.route)} className="fh-card" data-testid={`field-today-${c.code}`} data-count={c.count}>
                     <Icon name={TASK_ICON[c.code] ?? 'erp.action.info'} size={24} />
-                    <span className="fh-card-label">{t(`today.${c.code}`)}</span>
+                    <span className="fh-card-label">{taskLabel(t, c.code)}</span>
                     <strong className="fh-card-count">{f.number(c.count, { decimals: 0 })}</strong>
                     <Icon name="erp.action.next" size={18} />
                   </a>

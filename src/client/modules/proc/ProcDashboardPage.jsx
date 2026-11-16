@@ -46,7 +46,7 @@ export default function ProcDashboardPage() {
         {qu.records.length === 0 ? <p className="muted">{t('n.queueEmpty')}</p> : <ul>{qu.records.map((r) => <li key={r.id}><Link to={r.link}>{r.docNo}</Link> <span className="muted">{r.label}{r.ageDays != null ? ` · ${r.ageDays} ${t('n.days')}` : ''}</span></li>)}</ul>}</Card>)}</CardGrid>
       <h2>{t('n.charts')}</h2>
       {d.charts.byCategory.rows.length === 0 && <div data-testid="pd-empty"><p className="muted">{t('n.emptyBody')}</p></div>}
-      <div className="form-grid" data-testid="pd-charts">
+      <div className="ui-card-grid" data-testid="pd-charts">
         <div className="mdm-panel"><h3>{t('n.byCategory')}</h3><Bars rows={d.charts.byCategory.rows.slice(0, 8)} format={rs} testId="pd-cat" label={t('n.byCategory')} /></div>
         <div className="mdm-panel"><h3>{t('n.byVendor')}</h3><Bars rows={d.charts.byVendor.rows} format={rs} testId="pd-vendor" label={t('n.byVendor')} /><p className="muted" data-testid="pd-concentration">{t('n.concentration', { hhi: d.charts.concentration.hhi, top5: d.charts.concentration.top5Pct })}</p></div>
         <div className="mdm-panel"><h3>{t('n.byProject')}</h3><Bars rows={d.charts.byProject.rows.slice(0, 8)} format={rs} testId="pd-project" label={t('n.byProject')} /></div>

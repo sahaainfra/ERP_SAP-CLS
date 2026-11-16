@@ -137,7 +137,12 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
   :root[data-ui-v3] .ch-legend { justify-content: flex-start; }
   /* the record's actions stay in reach: a bar stuck to the bottom of the screen (object page) */
   :root[data-ui-v3] .op-actions { position: sticky; bottom: 0; z-index: 2; background: var(--erp-color-bg-surface); padding: var(--erp-space-2) 0; border-top: 1px solid var(--erp-color-border-subtle); }
+  /* a toolbar's controls never widen the page: a list as long as its longest choice, a labelled month field, wrap to the screen's width */
+  :root[data-ui-v3] main :is(.actions-row, .ph-actions) > *, :root[data-ui-v3] main .actions-row :is(label, select, input) { min-width: 0; max-width: 100%; }
 }
+/* a file picker drawn as a button keeps its hidden input inside the button's box, so the label is never measured wider than it is */
+:root[data-ui-v3] label.btn { position: relative; }
+:root[data-ui-v3] label.btn > input.sr-only { top: 0; left: 0; }
 
 @media print {
   .ph { box-shadow: none !important; border: 0 !important; padding: 0 !important; }

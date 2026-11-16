@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS ui_navigation_labels (
   remarks       TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_ui_navigation_labels ON ui_navigation_labels (COALESCE(company_id, 0), nav_code, lang) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_ui_navigation_labels_nav_code ON ui_navigation_labels (nav_code);
+CREATE INDEX IF NOT EXISTS ix_ui_navigation_labels_company_id ON ui_navigation_labels (company_id);
 INSERT OR IGNORE INTO ui_navigation_labels (nav_code, lang, label, created_by, source_type)
 SELECT e.code, 'te', v.label, 'migration', 'reference_seed' FROM (
   SELECT 'g-home' AS code, 'హోమ్' AS label UNION ALL SELECT 'g-mywork', 'నా పని' UNION ALL SELECT 'g-projects', 'ప్రాజెక్టులు' UNION ALL SELECT 'g-engineering', 'ఇంజనీరింగ్'
@@ -76,6 +78,7 @@ CREATE TABLE IF NOT EXISTS ui_field_tile_rules (
   remarks       TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_ui_field_tile_rules ON ui_field_tile_rules (COALESCE(company_id, 0), tile_code) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_ui_field_tile_rules_company_id ON ui_field_tile_rules (company_id);
 -- the new tiles (a tile shows when its page is in the person's menu, by permission and flag, and its rule lets the person's role have it)
 INSERT INTO ui_field_tiles (code, nav_code, label, label_hi, sort_order, created_by, source_type)
 SELECT v.code, v.nav, v.label, v.hi, v.sort, 'migration', 'reference_seed' FROM (
@@ -160,6 +163,8 @@ CREATE TABLE IF NOT EXISTS ui_bottom_bar (
   CHECK (item <> 'page' OR nav_code IS NOT NULL)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_ui_bottom_bar_slot ON ui_bottom_bar (COALESCE(company_id, 0), COALESCE(role_code, ''), slot) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_ui_bottom_bar_nav_code ON ui_bottom_bar (nav_code);
+CREATE INDEX IF NOT EXISTS ix_ui_bottom_bar_company_id ON ui_bottom_bar (company_id);
 INSERT OR IGNORE INTO ui_bottom_bar (company_id, role_code, slot, item, nav_code, label, label_hi, label_te, icon, created_by, source_type) VALUES
   (NULL, NULL, 1, 'home', NULL, NULL, NULL, NULL, NULL, 'migration', 'reference_seed'),
   (NULL, NULL, 2, 'work', NULL, NULL, NULL, NULL, NULL, 'migration', 'reference_seed'),

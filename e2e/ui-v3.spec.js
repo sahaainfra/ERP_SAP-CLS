@@ -34,7 +34,8 @@ const facts = () => {
   const cut = [...(main?.querySelectorAll('[data-page-header] h1, .kpi-label, .kpi-value, .btn, .ph-actions button') ?? [])].filter((e) => e.getClientRects().length && getComputedStyle(e).overflow !== 'visible' && e.scrollWidth > e.clientWidth + 1).map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} "${e.textContent.trim().slice(0, 30)}"`);
   return {
     uiV3: document.documentElement.dataset.uiV3 === 'on',
-    denied: Boolean(main?.querySelector('[data-testid="no-permission"]')),
+    // a no-access state shown as an example inside a figure (the design-system pages) is content, not the page's own state
+    denied: [...(main?.querySelectorAll('[data-testid="no-permission"]') ?? [])].some((e) => !e.closest('figure')),
     h1: h1s.length,
     headers: main?.querySelectorAll('[data-page-header]').length ?? 0,
     loose: h1s.filter((h) => !inHeader(h) && !inState(h)).length,

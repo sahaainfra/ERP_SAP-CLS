@@ -204,6 +204,7 @@
   "family": {
    "sans": "'IBM Plex Sans', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
    "indic": "'IBM Plex Sans Devanagari', 'Noto Sans Devanagari', 'Noto Sans', sans-serif",
+   "telugu": "'IBM Plex Sans', 'Noto Sans Telugu', 'Noto Sans', sans-serif",
    "mono": "'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace"
   },
   "scale": {

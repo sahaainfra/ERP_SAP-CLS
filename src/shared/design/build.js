@@ -58,6 +58,7 @@ export function cssFromTokens(t) {
     block(':root', densityLines(t.density.comfortable)),
     ...Object.entries(t.density).map(([name, d]) => block(`[data-density="${name}"]`, densityLines(d))),
     block(':lang(hi)', ['--erp-font-sans: var(--erp-font-indic);']),
+    block(':lang(te)', ['--erp-font-sans: var(--erp-font-telugu);', 'line-height: 1.6;']), // part 166.3: Telugu marks sit above and below the line
     '@media (prefers-reduced-motion: reduce) { :root { --erp-motion-duration-fast: 0ms; --erp-motion-duration-base: 0ms; --erp-motion-duration-slow: 0ms; } }',
   ];
   return `${parts.join('\n')}\n`;

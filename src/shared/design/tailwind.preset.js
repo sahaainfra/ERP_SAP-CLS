@@ -120,6 +120,7 @@ export default {
     "fontFamily": {
       "sans": "var(--erp-font-sans)",
       "indic": "var(--erp-font-indic)",
+      "telugu": "var(--erp-font-telugu)",
       "mono": "var(--erp-font-mono)"
     },
     "fontSize": {

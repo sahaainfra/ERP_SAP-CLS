@@ -58,7 +58,7 @@
   --erp-chart-8: #e34948;
   --erp-font-sans: 'IBM Plex Sans', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --erp-font-indic: 'IBM Plex Sans Devanagari', 'Noto Sans Devanagari', 'Noto Sans', sans-serif;
-  --erp-font-telugu: 'IBM Plex Sans', 'Noto Sans Telugu', 'Noto Sans', sans-serif; /* part 166.3: Latin letters and digits from Plex, Telugu from Noto */
+  --erp-font-telugu: 'IBM Plex Sans', 'Noto Sans Telugu', 'Noto Sans', sans-serif;
   --erp-font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
   --erp-type-caption: 400 12px/16px var(--erp-font-sans);
   --erp-font-size-caption: 12px;
@@ -420,6 +420,6 @@
 }
 :lang(te) {
   --erp-font-sans: var(--erp-font-telugu);
-  line-height: 1.6; /* Telugu letters carry marks above and below the line */
+  line-height: 1.6;
 }
 @media (prefers-reduced-motion: reduce) { :root { --erp-motion-duration-fast: 0ms; --erp-motion-duration-base: 0ms; --erp-motion-duration-slow: 0ms; } }

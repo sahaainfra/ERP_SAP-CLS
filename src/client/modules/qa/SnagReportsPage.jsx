@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { qa } from './api.js';
 import { sel } from './QaParts.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Snag Status by Area and Party, and the Unit Snag Report (part 18.06, FR-04, FR-05): the share closed by area and party, the punch classes still open (class A blocks handover), and the snags of one unit with a PDF.
@@ -14,11 +15,11 @@ export function SnagStatusPage() {
   const t = useT('qa'); usePageTitle(t('ss.title')); const [projectId, setProjectId] = useState(''); const oq = useQuery({ queryKey: ['qa', 'snag-options'], queryFn: () => qa.get('/snags/options'), retry: false });
   const q = useQuery({ queryKey: ['qa', 'snag-status', projectId], queryFn: () => qa.get(`/snag-status${projectId ? `?projectId=${projectId}` : ''}`), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('ss.title')} permission="qa.snag.view" />; if (q.isPending) return <Skeleton label={t('ss.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
-  const s = q.data; const tile = (k, v) => <div key={k} className="mdm-panel" data-testid={`ss-${k}`}><div className="muted">{t(`ss.${k}`)}</div><strong style={{ fontSize: '1.6rem' }}>{v}</strong></div>;
+  const s = q.data; const tile = (k, v) => <KpiTile key={k} label={t(`ss.${k}`)} value={v} testid={`ss-${k}`} />;
   return (
     <section aria-labelledby="ss-h" data-testid="qa-snag-status"><PageHeader id="ss-h" title={t('ss.title')} subtitle={<><Link to="/qa/snags">{t('snag.title')}</Link> · {s.handoverBlocked ? <StatusBadge status="REJECTED" label={t('ss.blocked', { n: s.openByClass.A })} /> : <StatusBadge status="APPROVED" label={t('ss.clear')} />}</>} />
       <div className="mdm-panel no-print"><label>{t('project')}<select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={sel} data-testid="ss-project"><option value="">{t('allProjects')}</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label></div>
-      <div className="form-grid">{tile('total', s.total)}{tile('open', s.open)}{tile('rectified', s.rectified)}{tile('closed', s.closed)}{tile('overdue', s.overdue)}{tile('closedPct', s.closedPct == null ? '—' : `${s.closedPct} %`)}</div>
+      <KpiRow>{tile('total', s.total)}{tile('open', s.open)}{tile('rectified', s.rectified)}{tile('closed', s.closed)}{tile('overdue', s.overdue)}{tile('closedPct', s.closedPct == null ? '—' : `${s.closedPct} %`)}</KpiRow>
       <p data-testid="ss-classes">{t('ss.openByClass', { a: s.openByClass.A, b: s.openByClass.B, c: s.openByClass.C })}</p>
       {s.total === 0 ? <EmptyState title={t('snag.emptyTitle')} message={t('snag.emptyBody')} /> : <><Group rows={s.byArea} label={t('ss.byArea')} testId="ss-area" t={t} /><Group rows={s.byParty} label={t('ss.byParty')} testId="ss-party" t={t} /><Group rows={s.byCategory} label={t('ss.byCategory')} testId="ss-category" t={t} /></>}
     </section>
