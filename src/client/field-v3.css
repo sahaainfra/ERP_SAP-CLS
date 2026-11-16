@@ -15,7 +15,7 @@
 :root .field-home-v3 .fh-band.ph .ph-subtitle, :root .field-home-v3 .fh-band.ph .ph-meta { color: var(--erp-color-text-on-shell-muted); margin: var(--erp-space-1) 0 0; }
 .field-home-v3 .fh-status { list-style: none; margin: var(--erp-space-3) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--erp-space-2) var(--erp-space-4); font-size: 0.95rem; }
 .field-home-v3 .fh-status li { display: inline-flex; align-items: center; gap: var(--erp-space-2); min-height: 32px; }
-.field-home-v3 .fh-status a { color: var(--erp-color-text-on-shell); text-decoration: underline; }
+.field-home-v3 .fh-status a { color: var(--erp-color-text-on-shell); text-decoration: underline; display: inline-flex; align-items: center; min-height: 48px; } /* a thumb-sized target */
 .field-home-v3 .fh-status [data-online='false'] { color: var(--erp-color-text-on-shell); font-weight: 700; }
 
 /* ---- today's tasks: white rounded cards, label, count, chevron; each is one tap to its list ---- */
