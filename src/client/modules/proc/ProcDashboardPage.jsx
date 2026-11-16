@@ -8,13 +8,14 @@ import { Bars, ParamPanel } from './AnaParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow } from '../../platform/design/Kpi.jsx';
 import { Card, CardGrid } from '../../platform/design/Card.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // Procurement dashboard (part 15.10, FR-01 to FR-04): the open requisitions, cycle time, orders waiting, overdue deliveries, spend, savings, single-source and emergency shares and open control exceptions; charts of spend and concentration; the four work queues.
 // Every tile opens the records it counts; the figures are worked out by the server from live procurement data inside the data scope of the person.
 const rs = (paise) => fmtRs((paise ?? 0) / 100);
 const trend = (t, p) => (p == null ? null : <span className="muted small" data-testid="an-trend"> {p > 0 ? '▲' : p < 0 ? '▼' : '■'} {Math.abs(p)}% {t('n.vsPrevious')}</span>);
 
-export default function ProcDashboardPage() {
+function ProcDashboardPageClassic() {
   const t = useT('proc'); usePageTitle(t('n.dashTitle')); const [f, setF] = useState({ projectId: '', from: '', to: '' }); const [open, setOpen] = useState(null);
   const q = useQuery({ queryKey: ['proc', 'an-dash', f], queryFn: () => an.dashboard(f), retry: false }); const tq = useQuery({ queryKey: ['proc', 'an-tasks'], queryFn: an.myTasks, retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('n.dashTitle')} permission="proc.analytics.view" />;
@@ -55,4 +56,9 @@ export default function ProcDashboardPage() {
       </div>
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function ProcDashboardPage() {
+  return <OverviewSwitch code="ov-proc" heading="Procurement Dashboard" intro="Spend, open requisitions, late deliveries, savings and the work queues, from the procurement analytics service." Classic={ProcDashboardPageClassic} />;
 }

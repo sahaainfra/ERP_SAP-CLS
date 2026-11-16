@@ -17,5 +17,6 @@ export function isEmptyChart(type, d) {
   if (type === 'donut') return !d.slices?.length || d.slices.every((s) => !s.value);
   if (type === 'heatmap') return !d.rows?.length || !d.cols?.length;
   if (type === 'gantt') return !d.rows?.length;
+  if (type === 'scatter') return !d.points?.length;
   return !d.categories?.length || !d.series?.length || d.series.every((s) => s.values.every((v) => v === null || v === undefined || v === 0));
 }

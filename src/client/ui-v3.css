@@ -175,3 +175,31 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 :root[data-ui-v3] .wd.ui-card .wd-head { padding: var(--erp-space-3) var(--erp-space-4); border-bottom: 1px solid var(--erp-color-border-subtle); }
 :root[data-ui-v3] .wd.ui-card .wd-title { font: var(--erp-type-title-sm); margin: 0; flex: 1; min-width: 0; }
 :root[data-ui-v3] .wd.ui-card .wd-edit { padding: var(--erp-space-2) var(--erp-space-4); }
+
+/* Part 166.5: overview cards (Top-N, to-do, KPI subtitle, the source of a card, sizes) and charts on a phone */
+.wd-kpi-sub { display: block; margin-bottom: var(--erp-space-1); }
+.wd-source { margin: 0; padding: 0 var(--erp-space-4) var(--erp-space-2); }
+.wd-sizes { display: inline-flex; gap: var(--erp-space-1); }
+.wd-topn { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.wd-topn-row { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--erp-space-3); align-items: baseline; color: inherit; text-decoration: none; }
+.wd-topn-row:hover .wd-topn-label, .wd-topn-row:focus-visible .wd-topn-label { text-decoration: underline; }
+.wd-topn-label { min-width: 0; overflow-wrap: anywhere; }
+.wd-topn-value { font-variant-numeric: tabular-nums; }
+.wd-topn-bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--erp-color-bg-surface-sunken); overflow: hidden; }
+.wd-topn-bar > span { display: block; height: 100%; background: var(--erp-chart-1); border-radius: 3px; }
+.wd-topn-bar > span.is-neg { background: var(--erp-color-status-error, #b42318); }
+.wd-todo { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-3); }
+.wd-todo > li { display: grid; gap: var(--erp-space-1); padding-bottom: var(--erp-space-2); border-bottom: 1px solid var(--erp-color-border-subtle); }
+.wd-todo-actions, .wd-todo-return { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: end; }
+.wd-todo-return label { display: grid; gap: 2px; flex: 1 1 12rem; }
+.wd-done { margin: 0 0 var(--erp-space-2); }
+.ch-v5 .ch-legend { flex-wrap: wrap; }
+@media (max-width: 599px) {
+  .ch .ch-svg { min-height: 220px; width: 100%; }
+  .ch-legend { flex-wrap: wrap; font-size: 1rem; }
+  .wd-sizes { display: none; }
+}
+.dash-embedded { margin-top: var(--erp-space-6); }
+.dash-embedded-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--erp-space-3); margin-bottom: var(--erp-space-3); }
+.dash-embedded-head h2 { margin: 0; }
+.dash-embedded-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }

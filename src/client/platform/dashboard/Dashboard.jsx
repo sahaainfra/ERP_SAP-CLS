@@ -3,6 +3,7 @@ import Icon from '../design/Icon.jsx';
 import { ErrorState, Skeleton } from '../feedback/states.jsx';
 import WidgetBody from './WidgetBody.jsx';
 import { useWidgetData } from './api.js';
+import { useFlagOn } from '../shell/api.js';
 import { moveBy, moveTo, removeItem, resizeItem, setParams, spanAt, updatedText, widgetQuery, withDashFilters } from './layout.js';
 
 // The pieces a dashboard is made of (part 03.07): the global filter bar, a widget in its frame and the grid that lays the frames out.
@@ -55,6 +56,9 @@ const SETTINGS = {
   ),
 };
 
+/** Card sizes on the 12-column grid (part 166.5, FR-01): S a quarter, M a half, L two thirds, XL the whole width. */
+export const CARD_SIZES = [['S', 3], ['M', 6], ['L', 8], ['XL', 12]];
+
 /** One widget: title, when it was last read, refresh and open, and its body in the standard states. In edit mode it also carries the move, size and remove controls. */
 function WidgetFrame({ item, widget, filters, presets, edit, index, count, onChange, layout, onDrill, drag }) {
   const [local, setLocal] = useState({});
@@ -63,6 +67,7 @@ function WidgetFrame({ item, widget, filters, presets, edit, index, count, onCha
   const query = widgetQuery(filters, presets, params);
   const q = useWidgetData(item.widget, query, { refreshSec: widget.refreshSec });
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 30_000); return () => clearInterval(t); }, []);
+  const v5 = useFlagOn('ff.ui.p16605'); // part 166.5: card sizes S/M/L/XL and the source of each card
   const settings = widget.paramsKey && SETTINGS[widget.paramsKey];
   const label = widget.title;
   let body;
@@ -89,6 +94,11 @@ function WidgetFrame({ item, widget, filters, presets, edit, index, count, onCha
         <div className="wd-edit" role="group" aria-label={`Arrange ${label}`}>
           {btn('Move earlier', () => onChange(moveBy(layout, item.id, -1)), index === 0)}
           {btn('Move later', () => onChange(moveBy(layout, item.id, 1)), index === count - 1)}
+          {v5 && (
+            <span className="wd-sizes" role="group" aria-label={`Size of ${label}`}>
+              {CARD_SIZES.map(([name, w]) => <button key={name} type="button" className="btn btn-small" aria-pressed={item.w === w} aria-label={`Size ${name}: ${label}`} onClick={() => onChange(resizeItem(layout, item.id, { w }))}>{name}</button>)}
+            </span>
+          )}
           {btn('Narrower', () => onChange(resizeItem(layout, item.id, { w: item.w - 1 })), item.w <= 1)}
           {btn('Wider', () => onChange(resizeItem(layout, item.id, { w: item.w + 1 })), item.w >= 12)}
           {btn('Shorter', () => onChange(resizeItem(layout, item.id, { h: item.h - 1 })), item.h <= 1)}
@@ -100,6 +110,7 @@ function WidgetFrame({ item, widget, filters, presets, edit, index, count, onCha
       )}
       <div className="wd-body ui-card-body">{body}</div>
       {/* the Fiori card footer (part 166.2, U-03): "View all" opens the list behind the widget with the dashboard's project and site */}
+      {v5 && q.data?.data?.source && <p className="wd-source small muted" data-testid="widget-source">Source: {q.data.data.source}</p>}
       {widget.drillRoute && !edit && <div className="ui-card-foot wd-foot"><a href={viewAll} onClick={(e) => { e.preventDefault(); onDrill(viewAll); }} aria-label={`Open ${label}`} data-testid="widget-view-all">View all <span aria-hidden="true">›</span></a></div>}
     </article>
   );

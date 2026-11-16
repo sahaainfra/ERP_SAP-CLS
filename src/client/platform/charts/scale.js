@@ -79,6 +79,7 @@ export function chartTable(type, d) {
   if (type === 'gauge') return { columns: ['Measure', 'Value', 'Target'], rows: d.value === null ? [] : [[d.title ?? 'Value', d.value, d.target ?? '']] };
   if (type === 'heatmap') return { columns: ['', ...d.cols], rows: d.rows.map((r, ri) => [r, ...d.cols.map((_, ci) => d.cells.find((c) => c.row === ri && c.col === ci)?.value ?? 0)]) };
   if (type === 'gantt') return { columns: ['Item', 'Start', 'End', 'Status'], rows: d.rows.map((r) => [r.label, r.start, r.end, r.status ?? '']) };
+  if (type === 'scatter') return { columns: ['', d.xLabel ?? 'x', d.yLabel ?? 'y'], rows: d.points.map((pt) => [pt.label, pt.x, pt.y]) };
   return { columns: ['', ...d.series.map((s) => s.name)], rows: d.categories.map((c, i) => [c, ...d.series.map((s) => s.values[i] ?? '')]) };
 }
 

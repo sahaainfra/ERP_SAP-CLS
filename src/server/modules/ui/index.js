@@ -14,6 +14,7 @@ import { dashboardRoutes, deviceRoutes, formRoutes, listRoutes, objectRoutes, se
 import { createFieldToday } from './field-today.js';
 import { createWidgetService, dashboardHandlers } from './widgets.js';
 import { registerWidgetProviders } from './widget-providers.js';
+import { registerOverviewProviders } from './overviews.js';
 import { createDeviceService } from './device.js';
 import { loadVapid, sendPush } from '../../platform/push/index.js';
 import { createShellService, navHandlers } from './shell.js';
@@ -61,6 +62,7 @@ const navSchema = { type: 'object', properties: { code: { type: 'string' }, fiel
 eventTypes.define({ type: 'ui.navigation.changed', version: 1, schema: navSchema, owner: 'ui', description: 'A navigation registry entry was changed after another administrator approved the request.' });
 // Part 03.07: the providers of the widgets of this module, the target of the timeliness gauge and the dashboard event.
 registerWidgetProviders();
+registerOverviewProviders(); // the cards of the overview pages (part 166.5)
 /** @type {any} */
 const dashboardSchema = { type: 'object', properties: { code: { type: 'string' }, role: { type: 'string' }, removed: { type: 'boolean' } }, required: ['code'] };
 eventTypes.define({ type: 'ui.dashboard.changed', version: 1, schema: dashboardSchema, owner: 'ui', description: 'The default dashboard of a role was set, changed or removed after another administrator approved the request.' });

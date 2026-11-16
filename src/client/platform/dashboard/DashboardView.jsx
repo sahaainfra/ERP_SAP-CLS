@@ -16,7 +16,7 @@ const startFilters = (saved, selected) => ({ projectId: saved.projectId ?? selec
  * A dashboard of widgets for the signed-in person (part 03.07, FR-03/04/06): the filter bar, the grid, and "Customise" to arrange their own copy.
  * The copy is kept on the server, so it follows the person to any device (T-03); "Reset" gives it up for the default of their role.
  */
-export default function DashboardView({ code, heading, crumb, intro }) {
+export default function DashboardView({ code, heading, crumb, intro, embedded = false }) {
   const dash = useDashboard(code);
   const cat = useCatalogue();
   const ctx = useContextOptions(true);
@@ -32,8 +32,10 @@ export default function DashboardView({ code, heading, crumb, intro }) {
   }, [dash.data, ctx.data, filters]);
 
   const pending = [dash, cat].find((q) => q.isPending || q.isError);
-  if (pending) return <section aria-labelledby="page-title"><PageHeader id="page-title" title={heading} /><QueryState query={pending} what={heading} /></section>;
-  if (!filters) return <section aria-labelledby="page-title"><PageHeader id="page-title" title={heading} /></section>;
+  const headId = embedded ? `dash-${code}-h` : 'page-title';
+  const plainHead = embedded ? <h2 id={headId}>{heading}</h2> : <PageHeader id={headId} title={heading} />;
+  if (pending) return <section aria-labelledby={headId}>{plainHead}<QueryState query={pending} what={heading} /></section>;
+  if (!filters) return <section aria-labelledby={headId}>{plainHead}</section>;
 
   const view = dash.data;
   const layout = draft ?? view.layout;
@@ -57,8 +59,8 @@ export default function DashboardView({ code, heading, crumb, intro }) {
   };
   const origin = { system: 'the standard layout', role: `the default of your role ${view.roleCode ?? ''}`.trim(), personal: 'your own layout' }[view.source];
   return (
-    <section aria-labelledby="page-title" className="dash" data-testid="dashboard" data-source={view.source}>
-      <PageHeader id="page-title" title={view.name ?? heading} crumb={crumb} subtitle={intro} actions={<>{draft === null ? (
+    <section aria-labelledby={headId} className={`dash${embedded ? ' dash-embedded' : ''}`} data-testid="dashboard" data-source={view.source}>
+      {(() => { const actions = (<>{draft === null ? (
           <>
             {view.hasPersonal && <button type="button" className="btn" onClick={doReset} disabled={reset.isPending}>Reset to default</button>}
             <button type="button" className="btn" onClick={() => { setDraft(view.layout); setMessage(null); }} data-testid="customise">Customise</button>
@@ -74,11 +76,15 @@ export default function DashboardView({ code, heading, crumb, intro }) {
             <button type="button" className="btn btn-primary" onClick={doSave} disabled={!dirty || incomplete || save.isPending} data-testid="save-layout">Save my layout</button>
             <button type="button" className="btn" onClick={() => { if (!dirty || window.confirm('Discard your changes to the layout?')) setDraft(null); }}>Cancel</button>
           </>
-        )}</>} />
+        )}</>);
+        // on Home (part 166.5) the insight cards are a section of the page: a heading of their own, no filter bar (the person's working project, this year)
+        return embedded
+          ? <div className="dash-embedded-head"><h2 id={headId}>{heading}</h2><span className="dash-embedded-actions">{actions}</span></div>
+          : <PageHeader id={headId} title={view.name ?? heading} crumb={crumb} subtitle={intro} actions={actions} />; })()}
       {message && <Banner tone={message.tone === 'error' ? 'error' : 'success'} testId="dash-message" onClose={() => setMessage(null)}>{message.text}</Banner>}
       {view.omitted > 0 && <p className="muted small" data-testid="dash-omitted">{view.omitted} widget{view.omitted === 1 ? ' is' : 's are'} not shown because your role does not include what {view.omitted === 1 ? 'it needs' : 'they need'}.</p>}
-      <p className="muted small" data-testid="dash-origin">Showing {origin}.{draft !== null ? ' Drag a widget by its title, or use the buttons on it, to arrange.' : ''}</p>
-      <FilterBar filters={filters} onChange={setFilters} options={ctx.data} presets={presets} />
+      {(!embedded || draft !== null) && <p className="muted small" data-testid="dash-origin">Showing {origin}.{draft !== null ? ' Drag a widget by its title, or use the buttons on it, to arrange.' : ''}</p>}
+      {!embedded && <FilterBar filters={filters} onChange={setFilters} options={ctx.data} presets={presets} />}
       {layout.length === 0
         ? <p className="muted" data-testid="dash-empty">This dashboard has no widgets. Choose Customise, then Add a widget.</p>
         : <DashboardGrid layout={layout} catalogue={cat.data} filters={filters} presets={presets} edit={draft !== null} onChange={setDraft} onDrill={drill} />}

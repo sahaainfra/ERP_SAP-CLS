@@ -1,4 +1,5 @@
-import { useFavouriteActions, useLaunchpad, useNavigation } from '../../platform/shell/api.js';
+import { useFavouriteActions, useFlagOn, useLaunchpad, useNavigation } from '../../platform/shell/api.js';
+import DashboardView from '../../platform/dashboard/DashboardView.jsx';
 import { entryFor } from '../../platform/shell/nav.js';
 import { storedAppearance } from '../../platform/design/appearance.js';
 import { EmptyState } from '../../platform/feedback/states.jsx';
@@ -18,6 +19,7 @@ const go = (to) => (e) => {
 /** Home: the launchpad (FR-06): what is waiting for the person, tiles for the pages their role opens, favourites and recent records. */
 export default function LaunchpadPage({ session }) {
   const lp = useLaunchpad();
+  const insights = useFlagOn('ff.ui.p16605'); // part 166.5, FR-03: the insight cards of the person's role
   const navQuery = useNavigation();
   const { remove, order } = useFavouriteActions();
   const language = storedAppearance().language;
@@ -41,6 +43,7 @@ export default function LaunchpadPage({ session }) {
     <section aria-labelledby="page-title" className="launchpad">
       <PageHeader id="page-title" title={"Home"} subtitle={<>Welcome{session?.user ? `, ${session.user}` : ''}. Everything below follows what your role may open.</>} />
       <QueryState query={lp} what="your home page" />
+      {insights && <div data-testid="home-insights"><DashboardView code="home-insights" heading="Insights for your role" embedded /></div>}
       {lp.data && (
         <>
           {cards.length > 0 && (

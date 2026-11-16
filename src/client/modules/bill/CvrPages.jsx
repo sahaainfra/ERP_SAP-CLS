@@ -12,6 +12,7 @@ import { bill, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // CVR Workbench (part 22.09): the monthly cost-value reconciliation of a project. The lines come from the owners; the claims, accruals and provisions are assessed here and each needs a note.
 const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); const money = (v) => (v == null ? '—' : `₹ ${mf.format(v)}`); const pctf = (v) => (v == null ? '—' : `${v} %`);
@@ -98,7 +99,7 @@ export default function CvrPage() {
 }
 
 const FLAG_TONE = { LOSS: 'REJECTED', MARGIN_FALLING: 'RETURNED', NO_CVR: 'RETURNED', HIGH_RISK: 'RETURNED' };
-export function ControlTowerPage() {
+function ControlTowerClassic() {
   const t = useT('bill'); usePageTitle(t('ct.title')); const sp = useSearch(); const [projectId, setProjectId] = useState(sp.get('projectId') ?? '');
   const o = useQuery({ queryKey: ['bill', 'tower-options'], queryFn: () => bill.get('/control-tower/options'), retry: false });
   const q = useQuery({ queryKey: ['bill', 'tower', projectId], queryFn: () => bill.get(`/control-tower${qs({ projectId })}`), retry: false, placeholderData: (p) => p });
@@ -118,4 +119,9 @@ export function ControlTowerPage() {
               <td>{r.flags.map((f) => <StatusBadge key={f} status={FLAG_TONE[f]} label={t(`ct.f.${f}`)} />)}</td></tr>))}</tbody></table></div></>)}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export function ControlTowerPage() {
+  return <OverviewSwitch code="ov-tower" heading="Contract Control Tower" intro="Contract value, billing and collection, margin and the contracts that need attention, from the contract control tower service." Classic={ControlTowerClassic} />;
 }

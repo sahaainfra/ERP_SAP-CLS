@@ -49,3 +49,12 @@ export function useDecideDashboardChange(code) {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['dashboard'] }); qc.invalidateQueries({ queryKey: dashKey(code) }); },
   });
 }
+
+/** The to-do card (part 166.5): approve or return a workflow task from the card. The server checks that the person may decide it, as on the inbox. */
+export function useDecideTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, action, comment }) => unwrap(api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboard', 'widget'] }),
+  });
+}

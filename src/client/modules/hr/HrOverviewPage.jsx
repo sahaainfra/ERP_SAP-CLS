@@ -6,12 +6,13 @@ import { Field, Link, Tile, navigateTo, usePageTitle } from '../core/pages/ui.js
 import { dayIST, employees } from './api.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // HR Overview (HR, part 07.01): the headcount (active and on notice), joiners and leavers in the chosen period, people on notice, what waits for approval and the changes scheduled, from the live records. Headcount by department, by
 // site and by type as bars that open the directory behind them; what needs attention (expired and expiring documents, a separated person whose access could not be removed, people with no user account); the recent joiners and
 // leavers and "My pending actions". Filters: period and work location. Every tile and bar opens the filtered list.
 const KIND = { ERROR: 'is-overdue', WARNING: 'is-soon', INFO: '' };
-export default function HrOverviewPage() {
+function HrOverviewPageClassic() {
   usePageTitle('HR Overview');
   const [f, setF] = useState({ from: dayIST(-30), to: dayIST(0), locationType: '' });
   const q = useQuery({ queryKey: ['hr', 'overview', f], queryFn: () => employees.overview(f), retry: false });
@@ -60,4 +61,9 @@ export default function HrOverviewPage() {
       )}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function HrOverviewPage() {
+  return <OverviewSwitch code="ov-hr" heading="HR Overview" intro="Headcount, joiners and leavers, what waits for approval and where people work, from the employee overview service." Classic={HrOverviewPageClassic} />;
 }

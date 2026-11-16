@@ -8,10 +8,11 @@ import { fmtDate, pl } from './api.js';
 import { ExportButton, FilterPanel, RecordTable } from './PlantParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // Plant dashboard (part 17.01): the fleet by status, utilisation, breakdowns, certificates that have expired or expire soon, the machines that cannot be put to work, and what waits for approval.
 // Every tile and chart opens the machines or certificates behind it; the server works every figure out from the register inside the data scope of the person.
-export default function PlantDashboardPage() {
+function PlantDashboardPageClassic() {
   const t = useT('plant'); usePageTitle(t('dashTitle')); const [f, setF] = useState({ projectId: '', siteId: '' }); const [open, setOpen] = useState(null);
   const q = useQuery({ queryKey: ['plant', 'dash', f], queryFn: () => pl.dashboard(f), retry: false }); const tq = useQuery({ queryKey: ['plant', 'tasks'], queryFn: pl.myTasks, retry: false });
   const dq = useQuery({ queryKey: ['plant', 'drill', f, open], queryFn: () => pl.drill({ ...f, kind: open }), enabled: Boolean(open), retry: false });
@@ -45,4 +46,9 @@ export default function PlantDashboardPage() {
           <div className="mdm-panel"><h2>{t('expiryByMonth')}</h2><Bars rows={d.charts.expiryByMonth} format={(n) => String(n)} testId="pd-bars-expiry" label={t('expiryByMonth')} /></div></div>}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function PlantDashboardPage() {
+  return <OverviewSwitch code="ov-plant" heading="Plant Dashboard" intro="The fleet, its utilisation, breakdowns and documents about to expire, from the plant dashboard service." Classic={PlantDashboardPageClassic} />;
 }

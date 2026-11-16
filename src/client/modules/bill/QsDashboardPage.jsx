@@ -10,6 +10,7 @@ import { big } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 import { Card, CardGrid } from '../../platform/design/Card.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // QS Management Dashboard (part 22.08): the chain from work done to money collected, the variations and claims in progress, the queues of work to do, the margin of the subcontract bills against the client's certification and the indicators of value leaking away. Every tile and queue opens the records behind it.
 const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); const money = (v) => (v == null ? '—' : `₹ ${mf.format(v)}`);
@@ -27,7 +28,7 @@ function DrillPanel({ kind, projectId, onClose }) {
   );
 }
 
-export default function QsDashboardPage() {
+function QsDashboardPageClassic() {
   const t = useT('bill'); usePageTitle(t('qd.title')); const sp = useSearch(); const [projectId, setProjectId] = useState(sp.get('projectId') ?? ''); const [drill, setDrill] = useState(null);
   const o = useQuery({ queryKey: ['bill', 'qs-options'], queryFn: () => bill.get('/qs-dashboard/options'), retry: false });
   const q = useQuery({ queryKey: ['bill', 'qs-dashboard', projectId], queryFn: () => bill.get(`/qs-dashboard${qs({ projectId })}`), retry: false, placeholderData: (p) => p });
@@ -57,4 +58,9 @@ export default function QsDashboardPage() {
       </>)}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function QsDashboardPage() {
+  return <OverviewSwitch code="ov-qs" heading="QS Management Dashboard" intro="Unbilled work, certification and billing, margin and the queues of the QS. Each card reads the QS dashboard service; the View all link opens the list behind it with the same project." Classic={QsDashboardPageClassic} />;
 }

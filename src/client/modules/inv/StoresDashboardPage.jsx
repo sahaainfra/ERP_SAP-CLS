@@ -7,9 +7,10 @@ import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate, fmtQty, fmtRs, iv } from './api.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // Stores dashboard (part 16.01): stock value by store, items below their reorder level, the age of the stock, what waits for approval, the latest movements and the state of the books (balances against the ledger).
-export default function StoresDashboardPage() {
+function StoresDashboardPageClassic() {
   const t = useT('inv'); usePageTitle(t('dashTitle')); const [projectId, setProjectId] = useState('');
   const pq = useQuery({ queryKey: ['inv', 'projects'], queryFn: iv.projects, retry: false }); const q = useQuery({ queryKey: ['inv', 'dash', projectId], queryFn: () => iv.dashboard({ projectId }), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('dashTitle')} permission="inv.stock.view" />;
@@ -32,4 +33,9 @@ export default function StoresDashboardPage() {
       {d.integrity?.length > 0 && <p className="field-error" role="alert" data-testid="sd-integrity">{t('booksProblem', { n: d.integrity.length })}</p>}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function StoresDashboardPage() {
+  return <OverviewSwitch code="ov-stores" heading="Stores Dashboard" intro="Stock value, items below their reorder level, the age of the stock and what waits for approval, from the stores dashboard service." Classic={StoresDashboardPageClassic} />;
 }

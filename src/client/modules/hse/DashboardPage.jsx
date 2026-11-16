@@ -8,6 +8,7 @@ import { fmtDate, hse, qs } from './api.js';
 import { ErrorLine, big, today, useRunner } from './HseParts.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // HSE Dashboard (part 19.08, FR-01 to FR-03): the lagging and leading indicators with value, target and colour, the safe man-hours counter, the trend by month, the comparison of sites, the exceptions and the monthly report. Every tile opens the list behind it.
 const TONE = { green: 'APPROVED', amber: 'RETURNED', red: 'REJECTED', neutral: 'DRAFT' }; const nf = new Intl.NumberFormat('en-IN');
@@ -22,7 +23,7 @@ function Trend({ rows, field, label }) {
     </figure>
   );
 }
-export default function DashboardPage() {
+function DashboardPageClassic() {
   const t = useT('hse'); usePageTitle(t('kpi.title')); const { error, run, busy } = useRunner(); const [f, setF] = useState({ projectId: '', siteId: '', from: '', to: '' }); const [month, setMonth] = useState(today().slice(0, 7));
   const query = qs(f); const q = useQuery({ queryKey: ['hse', 'dashboard', query], queryFn: () => hse.get(`/dashboard${query}`), retry: false, placeholderData: (p) => p });
   if (q.error?.status === 403) return <NoPermission what={t('kpi.title')} permission="hse.dashboard.view" />; if (q.isPending) return <Skeleton label={t('kpi.title')} rows={6} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -58,4 +59,9 @@ export default function DashboardPage() {
         <tbody>{d.sites.map((s) => <tr key={s.siteId} data-testid="hse-dash-site-row"><td><Link to={s.drill}>{s.site} {s.siteName}</Link></td><td>{s.project}</td><td className="num">{fmt(s.manHours)}</td><td className="num">{s.lti}</td><td className="num">{fmt(s.ltifr)}</td><td className="num">{fmt(s.trir)}</td><td className="num">{s.openObservations}</td><td className="num">{s.activePermits}</td></tr>)}</tbody></table></div>
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function DashboardPage() {
+  return <OverviewSwitch code="ov-hse" heading="HSE Dashboard" intro="Lagging and leading safety indicators for the project, site and period you choose, from the HSE KPI service." Classic={DashboardPageClassic} />;
 }

@@ -4,6 +4,9 @@ import Chart from '../charts/Chart.jsx';
 import Icon from '../design/Icon.jsx';
 import { EmptyState } from '../feedback/states.jsx';
 import { formatCount } from '../charts/scale.js';
+import { useState } from 'react';
+import { useFlagOn } from '../shell/api.js';
+import { useDecideTask } from './api.js';
 
 // What each kind of widget draws from the data its endpoint returned (part 03.07, FR-01). Nothing here holds a value of its own: a result
 // with nothing in it is an empty state that says what is missing (BR-02).
@@ -25,17 +28,26 @@ const Open = ({ to, onDrill, children, className = '' }) => (
 const money = ({ value }) => (Math.abs(Number(value)) >= 100000 ? formatCompact(String(value), currentPrefs()) : formatMoney(String(value), currentPrefs()));
 const moneyFull = ({ value }) => formatMoney(String(value), currentPrefs());
 
+// the deviation from the target (part 166.5): the difference and its share of the target, with its sign
+const deviation = (d) => {
+  if (typeof d.value !== 'number' || typeof d.target !== 'number') return '';
+  const diff = Math.round((d.value - d.target) * 100) / 100;
+  const pct = d.target !== 0 ? ` (${diff >= 0 ? '+' : '−'}${Math.abs(Math.round((diff * 1000) / d.target) / 10)}%)` : '';
+  return ` · deviation ${diff >= 0 ? '+' : '−'}${d.kind === 'money' ? money({ value: Math.abs(diff) }) : formatCount(Math.abs(diff))}${pct}`;
+};
+
 function Kpi({ data, onDrill }) {
   if (data.masked) return <p className="muted wd-masked"><Icon name="erp.action.lock" size={16} /> Hidden for your role.</p>;
   const up = data.trendPct !== null && data.trendPct !== undefined && data.trendPct >= 0;
   return (
     <Open to={data.drill} onDrill={onDrill} className="wd-kpi">
+      {data.subtitle && <span className="wd-kpi-sub muted small" data-testid="kpi-subtitle">{data.subtitle}</span>}
       <span className="wd-kpi-value" data-testid="kpi-value" title={data.kind === 'money' ? moneyFull(data) : undefined}>{data.kind === 'money' ? <><span aria-hidden="true">{money(data)}</span><span className="sr-only">{moneyFull(data)}</span></> : formatCount(data.value)}</span>
       {data.kind !== 'money' && data.unit && <span className="wd-kpi-unit">{data.unit}</span>}
       {data.trendPct !== null && data.trendPct !== undefined && (
         <span className={`wd-trend ${up ? 'is-up' : 'is-down'}`}>{up ? '▲' : '▼'} {Math.abs(data.trendPct)}% <span className="muted">vs the period before ({data.kind === 'money' ? money({ ...data, value: data.previous }) : formatCount(data.previous)})</span></span>
       )}
-      {data.target !== null && data.target !== undefined && <span className="muted small">Target {formatCount(data.target)}</span>}
+      {data.target !== null && data.target !== undefined && <span className="muted small" data-testid="kpi-target">Target {data.kind === 'money' ? money({ value: data.target }) : formatCount(data.target)}{deviation(data)}</span>}
       {STATUS_WORD[data.status] && <span className={`wd-rag is-${data.status}`}><Icon name={STATUS_ICON[data.status]} size={14} /> {STATUS_WORD[data.status]}</span>}
       {data.note && <span className="muted small">{data.note}</span>}
     </Open>
@@ -147,25 +159,86 @@ function Actions({ data, onDrill }) {
   return <div className="wd-actions">{data.actions.map((a) => <a key={a.route} className="btn" href={a.route} onClick={(e) => { e.preventDefault(); onDrill(a.route); }}>{a.icon && <Icon name={a.icon} size={16} />}{a.label}</a>)}</div>;
 }
 
+/** Top-N (part 166.5): rows with a name, a value and a bar against the largest; each row opens its record or list. */
+function TopN({ data, onDrill }) {
+  if (data.rows.length === 0) return <EmptyState compact title={data.emptyTitle ?? 'Nothing to rank'} message={data.emptyText ?? 'Rows appear here once there are figures in the period.'} />;
+  const max = Math.max(...data.rows.map((r) => Math.abs(Number(r.value) || 0)), 1);
+  const show = (v) => (data.kind === 'money' ? money({ value: v }) : data.kind === 'pct' ? `${formatCount(v)}%` : formatCount(v));
+  return (
+    <ol className="wd-topn" data-testid="topn">
+      {data.rows.map((r, i) => (
+        <li key={r.id ?? `${r.label}-${i}`}>
+          <Open to={r.drill} onDrill={onDrill} className="wd-topn-row">
+            <span className="wd-topn-label">{r.label}{r.sub && <span className="muted small"> {r.sub}</span>}</span>
+            <strong className="wd-topn-value" title={data.kind === 'money' ? moneyFull({ value: r.value }) : undefined}>{show(Number(r.value) || 0)}</strong>
+            <span className="wd-topn-bar" aria-hidden="true"><span className={Number(r.value) < 0 ? 'is-neg' : ''} style={{ width: `${Math.round((Math.abs(Number(r.value) || 0) / max) * 100)}%` }} /></span>
+          </Open>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** To-do and approvals (part 166.5): what waits for the person's decision, with its key facts; Approve, or Return with a reason. */
+function Todo({ data, onDrill }) {
+  const decide = useDecideTask();
+  const [returning, setReturning] = useState(null);
+  const [reason, setReason] = useState('');
+  const [done, setDone] = useState(null);
+  if (data.rows.length === 0) return <EmptyState compact title="Nothing is waiting for you" message="Approvals that need your decision appear here." />;
+  const act = (row, action, comment) => decide.mutate({ taskId: row.taskId, action, comment }, { onSuccess: () => { setDone(`${row.title}: ${action === 'approve' ? 'approved' : 'returned'}.`); setReturning(null); setReason(''); } });
+  return (
+    <>
+      {done && <p className="wd-done small" role="status">{done}</p>}
+      {decide.isError && <p className="field-error small" role="alert">{decide.error?.message}</p>}
+      <ul className="wd-todo" data-testid="todo">
+        {data.rows.map((r) => (
+          <li key={r.taskId}>
+            <Open to={r.drill} onDrill={onDrill} className="wd-row"><span className="wd-row-title">{r.title}</span></Open>
+            {r.facts?.length > 0 && <span className="wd-todo-facts muted small">{r.facts.join(' · ')}</span>}
+            {returning === r.taskId ? (
+              <form className="wd-todo-return" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) act(r, 'return', reason.trim()); }}>
+                <label className="small">Reason for returning<input value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-invalid={!reason.trim()} /></label>
+                <button type="submit" className="btn btn-small" disabled={!reason.trim() || decide.isPending}>Return</button>
+                <button type="button" className="btn btn-small" onClick={() => { setReturning(null); setReason(''); }}>Cancel</button>
+              </form>
+            ) : (
+              <span className="wd-todo-actions">
+                <button type="button" className="btn btn-small btn-primary" disabled={decide.isPending} onClick={() => act(r, 'approve')} aria-label={`Approve ${r.title}`}>Approve</button>
+                <button type="button" className="btn btn-small" disabled={decide.isPending} onClick={() => setReturning(r.taskId)} aria-label={`Return ${r.title}`}>Return</button>
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {data.total > data.rows.length && data.drill && <Open to={data.drill} onDrill={onDrill} className="small">See all {data.total}</Open>}
+    </>
+  );
+}
+
 const isEmptyChart = (type, d) => (type === 'donut' ? d.slices.length === 0 || d.slices.every((s) => s.value === 0)
   : type === 'gauge' ? d.value === null
     : type === 'heatmap' ? d.rows.length === 0
       : type === 'gantt' ? d.rows.length === 0
-        : d.categories.length === 0);
-const CHART_TYPES = new Set(['bar', 'stacked', 'line', 'area', 'donut', 'gauge', 'heatmap', 'gantt']);
+        : type === 'scatter' ? d.points.length === 0
+          : d.categories.length === 0);
+const CHART_TYPES = new Set(['bar', 'stacked', 'line', 'area', 'donut', 'gauge', 'heatmap', 'gantt', 'scatter']);
 
 /** The body of a widget by its type. `setLocal` merges settings of the widget's own into its request (the calendar's month). */
 export default function WidgetBody({ widget, result, onDrill, setLocal }) {
+  const v5 = useFlagOn('ff.ui.p16605'); // part 166.5: "Show as table" on every chart
   const d = result.data;
   const { type, code, title } = widget;
   if (d?.masked && type !== 'kpi') return <p className="muted wd-masked"><Icon name="erp.action.lock" size={16} /> Hidden for your role.</p>;
   if (type === 'kpi') return <Kpi data={d} onDrill={onDrill} />;
   if (CHART_TYPES.has(type)) {
     if (isEmptyChart(type, d)) return <EmptyState compact title={type === 'gauge' ? 'Nothing decided yet' : 'Nothing in this period'} message={type === 'gauge' ? 'The gauge appears once approvals are decided in the period.' : 'Change the period or project above to see more.'} />;
-    return <Chart type={type} data={d} title={title} onDrill={onDrill} exportName={code.replace(/\./g, '-')} />;
+    return <Chart type={type} data={d} title={title} onDrill={onDrill} exportName={code.replace(/\./g, '-')} tableSwitch={v5} />;
   }
   if (type === 'list' || type === 'alerts') return <Rows code={code} data={d} onDrill={onDrill} />;
   if (type === 'table') return <Table data={d} onDrill={onDrill} />;
+  if (type === 'topn') return <TopN data={d} onDrill={onDrill} />;
+  if (type === 'todo') return <Todo data={d} onDrill={onDrill} />;
   if (type === 'map') return <SiteMap data={d} onDrill={onDrill} />;
   if (type === 'calendar') return <Calendar data={d} onDrill={onDrill} setLocal={setLocal} />;
   if (type === 'actions') return <Actions data={d} onDrill={onDrill} />;

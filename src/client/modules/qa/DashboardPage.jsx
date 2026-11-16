@@ -8,10 +8,11 @@ import { fmtDate, qa } from './api.js';
 import { sel } from './QaParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // Quality Dashboard (part 18.07, FR-01): the KPI tiles with value, change since the period before, target and colour; the ageing of open requests and NCRs; the exceptions; the person's pending approvals. Every tile opens the list behind it.
 const TONE = { green: 'APPROVED', amber: 'RETURNED', red: 'REJECTED', neutral: 'DRAFT' }; const money = (n) => new Intl.NumberFormat('en-IN').format(n);
-export default function DashboardPage() {
+function DashboardPageClassic() {
   const t = useT('qa'); usePageTitle(t('dash.title')); const [f, setF] = useState({ projectId: '', from: '', to: '' }); const oq = useQuery({ queryKey: ['qa', 'projects'], queryFn: () => qa.get('/projects').then((p) => ({ projects: p })), retry: false });
   const qs = new URLSearchParams(Object.entries(f).filter(([, v]) => v)).toString(); const q = useQuery({ queryKey: ['qa', 'dashboard', qs], queryFn: () => qa.get(`/dashboard${qs ? `?${qs}` : ''}`), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('dash.title')} permission="qa.dashboard.view" />; if (q.isPending) return <Skeleton label={t('dash.title')} rows={6} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -31,4 +32,9 @@ export default function DashboardPage() {
         <table className="data-table"><thead><tr><th>{t('ira.days')}</th><th className="num">{t('dash.ncrs')}</th></tr></thead><tbody>{d.ageing.ncr.map((b) => <tr key={b.label}><td>{b.label}</td><td className="num">{b.count}</td></tr>)}</tbody></table></div>
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function DashboardPage() {
+  return <OverviewSwitch code="ov-qa" heading="Quality Dashboard" intro="Inspection, NCR and test measures against their targets, from the quality dashboard service." Classic={DashboardPageClassic} />;
 }
