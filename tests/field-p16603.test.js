@@ -62,12 +62,13 @@ test('T-04 the photo limit is 300 KB and the stamp carries India time and the po
 
 test('migration 20261209000328 goes down and up again: Telugu preferences fall back to English, the columns and the bottom bar come and go', () => {
   const db = memoryDb();
-  const last = db.prepare('SELECT id FROM core_schema_migrations ORDER BY id DESC LIMIT 1').get().id;
-  assert.equal(last, '20261209000328_field_p16603', 'this part is the newest migration');
+  // this part and every later one are taken down (a later part may have added its own migration after it)
+  const steps = db.prepare("SELECT COUNT(*) AS n FROM core_schema_migrations WHERE id >= '20261209000328_field_p16603'").get().n;
+  assert.ok(db.prepare("SELECT 1 FROM core_schema_migrations WHERE id = '20261209000328_field_p16603'").get(), 'this part\'s migration is applied');
   db.prepare("INSERT INTO org_companies (code, legal_name, short_name) VALUES ('TE1', 'Te One Pvt Ltd', 'TE1')").run();
   const company = db.prepare("SELECT id FROM org_companies WHERE code = 'TE1'").get().id;
   db.prepare("INSERT INTO ui_user_preferences (company_id, user_ref, language) VALUES (?, 'u1', 'te')").run(company);
-  migrateDown(db, 1);
+  migrateDown(db, steps);
   assert.equal(db.prepare("SELECT language FROM ui_user_preferences WHERE user_ref = 'u1'").get().language, 'en');
   assert.ok(!db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'ui_bottom_bar'").get());
   assert.ok(!db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'ui_navigation_labels'").get(), 'the Telugu labels go with the part');

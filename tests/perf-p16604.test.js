@@ -276,3 +276,40 @@ test('P-05 JSON answers of the API are compressed for a browser that accepts it;
     await api.close();
   }
 });
+
+test('P-05 a compressed JSON answer is kept by the idempotency layer: a replay with the same key gives the same answer and does not run twice', async () => {
+  const { default: express } = await import('express');
+  const { memoryDb } = await import('./helpers.js');
+  const { compressJson } = await import('../src/server/platform/http/compressJson.js');
+  const { idempotency } = await import('../src/server/platform/http/idempotency.js');
+  const { brotliDecompressSync } = await import('node:zlib');
+  const http = await import('node:http');
+  const db = memoryDb();
+  let runs = 0;
+  const app = express();
+  app.use(express.json());
+  app.use((req, _res, next) => { req.actor = { user: 'perf-idem', companyId: 1 }; next(); });
+  app.use(compressJson());
+  app.post('/act', idempotency(db), (_req, res) => { runs += 1; res.json({ data: { run: runs, lines: Array.from({ length: 200 }, (_, i) => ({ i, text: `line ${i} of the answer` })) } }); });
+  const server = app.listen(0);
+  const port = server.address().port;
+  const post = (enc) => new Promise((resolve, reject) => {
+    const r = http.request({ host: '127.0.0.1', port, path: '/act', method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': 'perf-key-0001', ...(enc ? { 'accept-encoding': enc } : {}) } }, (res) => {
+      const parts = []; res.on('data', (d) => parts.push(d)); res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(parts) }));
+    });
+    r.on('error', reject); r.end('{"x":1}');
+  });
+  try {
+    const first = await post('br');
+    assert.equal(first.status, 200);
+    assert.equal(first.headers['content-encoding'], 'br', 'the first answer is compressed');
+    const firstJson = JSON.parse(brotliDecompressSync(first.body).toString());
+    const again = await post('br');
+    assert.equal(again.headers['idempotency-replayed'], 'true');
+    const againJson = JSON.parse(again.headers['content-encoding'] === 'br' ? brotliDecompressSync(again.body).toString() : again.body.toString());
+    assert.deepEqual(againJson, firstJson);
+    assert.equal(runs, 1, 'the action ran once');
+  } finally {
+    server.close();
+  }
+});

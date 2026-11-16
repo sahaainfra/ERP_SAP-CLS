@@ -19,6 +19,7 @@ export function compressJson({ threshold = THRESHOLD } = {}) {
       res.vary('Accept-Encoding');
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader('Content-Encoding', enc);
+      res.locals.jsonText = text; // the JSON as written, for a layer that keeps the answer (idempotency): the bytes sent are compressed
       return res.send(packed);
     };
     return next();
