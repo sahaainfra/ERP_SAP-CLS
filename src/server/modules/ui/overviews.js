@@ -45,7 +45,8 @@ const withQuery = (route, q) => {
  * @param {any} value
  * @param {KpiOptions} [options]
  */
-const kpi = (value, { unit = '', kind = undefined, subtitle = undefined, target = null, status = 'neutral', note = null, drill = null, previous = null, trendPct = null, source = undefined, masked = false } = {}) => ({ value: num(value) ?? 0, unit, kind, subtitle, target: num(target), status, note, drill, previous, trendPct, source, masked });
+// a value the service could not measure (a rate without man-hours) stays null: the card shows —, never a 0 that is not a figure
+const kpi = (value, { unit = '', kind = undefined, subtitle = undefined, target = null, status = 'neutral', note = null, drill = null, previous = null, trendPct = null, source = undefined, masked = false } = {}) => ({ value: num(value), unit, kind, subtitle, target: num(target), status, note, drill, previous, trendPct, source, masked });
 const TONE = { good: 'green', ok: 'green', green: 'green', bad: 'red', red: 'red', warn: 'amber', amber: 'amber', attention: 'amber', neutral: 'neutral' };
 const tone = (s) => TONE[String(s ?? '').toLowerCase()] ?? 'neutral';
 
