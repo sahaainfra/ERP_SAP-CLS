@@ -62,8 +62,16 @@ const nowIso = () => new Date().toISOString();
 const flagList = (rows) => [...new Set(rows.map((r) => r.feature_flag).filter(Boolean))];
 
 /** The columns of a registry entry that a change may set, with the database column of each. */
-const COLUMNS = { label: 'label', labelHi: 'label_hi', labelTe: 'label_te', icon: 'icon', sortOrder: 'sort_order', parentCode: 'parent_code', permissionKey: 'permission_key', featureFlag: 'feature_flag', keywords: 'keywords', mobileVisible: 'mobile_visible', requiresContext: 'requires_context', shortcut: 'shortcut', tile: 'tile', isActive: 'is_active' };
+const COLUMNS = { label: 'label', labelHi: 'label_hi', icon: 'icon', sortOrder: 'sort_order', parentCode: 'parent_code', permissionKey: 'permission_key', featureFlag: 'feature_flag', keywords: 'keywords', mobileVisible: 'mobile_visible', requiresContext: 'requires_context', shortcut: 'shortcut', tile: 'tile', isActive: 'is_active' };
 const BOOLEANS = new Set(['mobileVisible', 'tile', 'isActive']);
+
+/** The Telugu labels of the registry (part 166.3): a company's own over the built-in one. */
+function teLabelsOf(db, companyId) {
+  const out = new Map();
+  for (const r of db.prepare("SELECT nav_code, label FROM ui_navigation_labels WHERE lang = 'te' AND is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY company_id IS NOT NULL").all(companyId ?? null)) out.set(r.nav_code, r.label);
+  return out;
+}
+const withTe = (db, companyId, rows) => { const te = teLabelsOf(db, companyId); return rows.map((r) => ({ ...r, label_te: te.get(r.code) ?? null })); };
 
 const presentEntry = (r) => ({
   code: r.code, parentCode: r.parent_code, kind: r.kind, placement: r.placement, label: r.label, labelHi: r.label_hi, labelTe: r.label_te ?? null, route: r.route, icon: r.icon,
@@ -86,13 +94,21 @@ export const navHandlers = {
       const before = {};
       const after = {};
       const entry = presentEntry(row);
+      const te = teLabelsOf(db, request.companyId);
       for (const [k, v] of Object.entries(changes)) {
+        if (k === 'labelTe') { // part 166.3: the Telugu label is kept beside the entry (ui_navigation_labels)
+          db.prepare('UPDATE ui_navigation_labels SET deleted_at = ?, deleted_by = ? WHERE nav_code = ? AND lang = \'te\' AND COALESCE(company_id, 0) = COALESCE(?, 0) AND deleted_at IS NULL').run(nowIso(), actor.user, code, row.company_id);
+          if (v) db.prepare("INSERT INTO ui_navigation_labels (company_id, nav_code, lang, label, created_by, source_type) VALUES (?, ?, 'te', ?, ?, 'ui_nav_change')").run(row.company_id, code, v, actor.user);
+          before[k] = te.get(code) ?? null;
+          after[k] = v;
+          continue;
+        }
         sets.push(`${COLUMNS[k]} = ?`);
         params.push(valueOf(k, v));
         before[k] = entry[k];
         after[k] = v;
       }
-      db.prepare(`UPDATE ui_navigation_entries SET ${sets.join(', ')}, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...params, actor.user, nowIso(), row.id);
+      db.prepare(`UPDATE ui_navigation_entries SET ${sets.map((x) => `${x}, `).join('')}updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...params, actor.user, nowIso(), row.id);
       writeAudit(db, { entity: 'ui_navigation_entries', entityId: row.id, action: 'update', oldValues: before, newValues: after, reason: request.reason, actor: actor.user, companyId: request.companyId });
       publishEvent(db, { type: 'ui.navigation.changed', entity: 'navigation_entry', entityId: row.id, actorId: actor.user, companyId: request.companyId, data: { code, fields: Object.keys(changes), request: request.id } });
     },
@@ -108,7 +124,7 @@ export function createShellService({ db, flags, approvals }) {
   const user = (actor) => actor.user;
 
   // ---- navigation ----
-  const rowsFor = (actor) => db.prepare('SELECT * FROM ui_navigation_entries WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY sort_order, id').all(actor.companyId);
+  const rowsFor = (actor) => withTe(db, actor.companyId, db.prepare('SELECT * FROM ui_navigation_entries WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY sort_order, id').all(actor.companyId));
   // a right held for some projects or sites only still opens the page: the page and its API apply the data scope
   const allowedBy = (actor, key) => (key === null || key === SELF ? true : hasPermissionAnywhere(actor, key));
 
@@ -120,7 +136,9 @@ export function createShellService({ db, flags, approvals }) {
     const byParent = new Map(groups.map((g) => [g.code, { code: g.code, label: g.label, labelHi: g.label_hi, labelTe: g.label_te ?? null, icon: g.icon, placement: g.placement, shortcut: g.shortcut, pages: [] }]));
     // the field tiles (03.06); from part 166.3 a tile may name the roles it is for, and the part's tiles replace the sample ones while its flag is ON
     const mine = new Set(actor.roles ?? []);
-    const fieldTiles = new Map(db.prepare('SELECT code, nav_code, label, label_hi, label_te, sort_order, role_codes, feature_flag, retired_flag, tone FROM ui_field_tiles WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').all(actor.companyId)
+    const rules = new Map(db.prepare('SELECT tile_code, role_codes, feature_flag, retired_flag, tone, label_te FROM ui_field_tile_rules WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY company_id IS NOT NULL').all(actor.companyId).map((r) => [r.tile_code, r]));
+    const fieldTiles = new Map(db.prepare('SELECT code, nav_code, label, label_hi, sort_order FROM ui_field_tiles WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').all(actor.companyId)
+      .map((t) => ({ ...t, role_codes: null, feature_flag: null, retired_flag: null, tone: null, label_te: null, ...(rules.get(t.code) ?? {}) }))
       .filter((t) => (!t.feature_flag || on[t.feature_flag] === true) && !(t.retired_flag && on[t.retired_flag] === true) && (!field || !t.role_codes || t.role_codes.split(',').some((c) => mine.has(c.trim()))))
       .map((t) => [t.nav_code, { code: t.code, label: t.label, labelHi: t.label_hi, labelTe: t.label_te, order: t.sort_order, tone: t.tone ?? null }]));
     const denied = [];
@@ -168,7 +186,8 @@ export function createShellService({ db, flags, approvals }) {
     if (!hasPermission(actor, 'ui.nav.manage')) throw forbidden('Your role does not include ui.nav.manage. Ask a system administrator.');
   };
   const entryRow = (actor, code) => {
-    const r = db.prepare('SELECT * FROM ui_navigation_entries WHERE code = ? AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').get(code, actor.companyId);
+    const found = db.prepare('SELECT * FROM ui_navigation_entries WHERE code = ? AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').get(code, actor.companyId);
+    const r = found ? withTe(db, actor.companyId, [found])[0] : found;
     if (!r) throw notFound(`There is no navigation entry called ${code}.`);
     return r;
   };
@@ -226,7 +245,7 @@ export function createShellService({ db, flags, approvals }) {
   /** A peer-readable shape of the whole registry for the Config page and for export. */
   function registry(actor) {
     mustManage(actor);
-    const rows = db.prepare('SELECT * FROM ui_navigation_entries WHERE deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY placement, sort_order, id').all(actor.companyId);
+    const rows = withTe(db, actor.companyId, db.prepare('SELECT * FROM ui_navigation_entries WHERE deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY placement, sort_order, id').all(actor.companyId));
     const groups = new Map(rows.filter((r) => r.kind === 'group').map((g) => [g.code, g.label]));
     const known = [...flagKeys()].sort();
     return {

@@ -1,5 +1,5 @@
 -- Part 166.3 down: the language checks back to English and Hindi (a Telugu preference becomes English, a Telugu wording of the company is
--- removed), the bottom bar by role and the Telugu and role columns removed, the 03.06 field tiles as they were, the flag removed.
+-- removed), the bottom bar by role, the Telugu labels and the tile rules removed, the 03.06 field tiles as they were, the flag removed.
 CREATE TABLE ui_translations_p16603 (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   company_id  INTEGER NOT NULL REFERENCES org_companies (id),
@@ -60,12 +60,9 @@ CREATE INDEX ix_ui_user_preferences_user ON ui_user_preferences (user_id);
 
 DROP TABLE IF EXISTS ui_bottom_bar;
 
-DELETE FROM ui_field_tiles WHERE feature_flag = 'ff.field.p16603' AND source_type = 'reference_seed';
-ALTER TABLE ui_field_tiles DROP COLUMN tone;
-ALTER TABLE ui_field_tiles DROP COLUMN retired_flag;
-ALTER TABLE ui_field_tiles DROP COLUMN feature_flag;
-ALTER TABLE ui_field_tiles DROP COLUMN role_codes;
-ALTER TABLE ui_field_tiles DROP COLUMN label_te;
-ALTER TABLE ui_navigation_entries DROP COLUMN label_te;
+DELETE FROM ui_field_tiles WHERE source_type = 'reference_seed' AND company_id IS NULL AND code IN ('dpr', 'phone-approvals', 'dpr-register', 'crew-attendance', 'equipment-log', 'gate-entry', 'grn',
+  'inspection', 'observation', 'mr-new', 'ir-new', 'toolbox', 'fuel-issue', 'issue-slip', 'stock-count', 'transfer', 'cubes', 'ncr', 'permit', 'incident', 'my-punch');
+DROP TABLE IF EXISTS ui_field_tile_rules;
+DROP TABLE IF EXISTS ui_navigation_labels;
 
 DELETE FROM core_feature_flags WHERE key = 'ff.field.p16603';

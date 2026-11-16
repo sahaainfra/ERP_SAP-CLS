@@ -70,7 +70,7 @@ test('migration 20261209000328 goes down and up again: Telugu preferences fall b
   migrateDown(db, 1);
   assert.equal(db.prepare("SELECT language FROM ui_user_preferences WHERE user_ref = 'u1'").get().language, 'en');
   assert.ok(!db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'ui_bottom_bar'").get());
-  assert.ok(!db.prepare("SELECT name FROM pragma_table_info('ui_navigation_entries')").all().some((c) => c.name === 'label_te'));
+  assert.ok(!db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'ui_navigation_labels'").get(), 'the Telugu labels go with the part');
   assert.throws(() => db.prepare("UPDATE ui_user_preferences SET language = 'te'").run(), /CHECK/);
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM ui_field_tiles').get().n, 4, 'the 03.06 tiles as they were');
   migrateUp(db);
@@ -112,6 +112,11 @@ test('FR-01 FR-02 the field tiles and the bottom bar follow the role; Telugu lab
     // the registry change carries a Telugu label (maker-checker as before)
     const ch = await api.call('POST', `${U}/navigation/changes`, { ...as('SYSADM', 'sys1'), headers: key('chg'), body: { code: 'field-scan', changes: { labelTe: 'స్కాన్ చేయండి' }, reason: 'Telugu wording for site teams' } });
     assert.equal(ch.status, 201, JSON.stringify(ch.json));
+    const act = await api.call('POST', `/api/v1/core/change-requests/${ch.json.data.id}/act`, { ...as('SYSADM', 'sys2'), headers: key('act'), body: { action: 'approve', comment: 'checked and fine' } });
+    assert.equal(act.status, 200, JSON.stringify(act.json));
+    const after = (await nav(as('SE', 'se1'))).groups.flatMap((g) => g.pages).find((p) => p.code === 'field-scan');
+    assert.equal(after.labelTe, 'స్కాన్ చేయండి', 'the approved Telugu label is in force');
+    assert.equal(after.label, 'Scan', 'the English label is untouched');
   } finally { await api.close(); }
 });
 

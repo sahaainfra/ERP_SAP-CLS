@@ -1,8 +1,10 @@
 -- Part 166.3: the mobile site app for site teams, and Telugu.
 --  1. the feature flag ff.field.p16603 (OFF by default; ON in development and test);
---  2. Telugu labels: label_te on the navigation registry and on the field tiles (FR-07);
---  3. the field tiles by role (FR-01): role_codes (comma list; NULL = every role), and feature_flag / retired_flag so the new tiles show and the
---     old sample tiles hide only while ff.field.p16603 is ON;
+--  2. Telugu labels of the navigation registry (FR-07's label_te): the table ui_navigation_labels, one row per entry and language. Every migration
+--     here must run twice without failing (scripts/lib/migration_check.mjs) and SQLite cannot add a column only when it is missing, so the Telugu
+--     label lives beside the entry instead of in a new column; the API gives it as labelTe, like labelHi;
+--  3. the field tiles by role (FR-01): ui_field_tile_rules gives a tile its roles (comma list; NULL = every role), its colour, its Telugu label,
+--     and feature_flag / retired_flag so the new tiles show and the old sample tiles hide only while ff.field.p16603 is ON;
 --  4. ui_bottom_bar: the bottom bar of a phone per role (FR-02);
 --  5. ui_user_preferences and ui_translations rebuilt so that their language may be 'te' (no table references either; rows, ids and indexes kept).
 
@@ -11,66 +13,127 @@ INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, env
 INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, environment, enabled, created_by, source_type) SELECT 'ff.field.p16603', 'Mobile site app: role field home, bottom bar by role, one-hand forms, photo stamp, voice notes and Telugu (part 166.3)', 0, env.name, 1, 'migration', 'reference_seed' FROM (SELECT 'development' AS name UNION ALL SELECT 'test') AS env;
 
 -- 2 ------------------------------------------------------------------------------------------------------------------------------------------
-ALTER TABLE ui_navigation_entries ADD COLUMN label_te TEXT; -- no column check, so that the down migration can drop it
-ALTER TABLE ui_field_tiles ADD COLUMN label_te TEXT;
-ALTER TABLE ui_field_tiles ADD COLUMN role_codes TEXT;
-ALTER TABLE ui_field_tiles ADD COLUMN feature_flag TEXT;
-ALTER TABLE ui_field_tiles ADD COLUMN retired_flag TEXT;
-ALTER TABLE ui_field_tiles ADD COLUMN tone TEXT; -- navy, amber, green, blue, red or teal
-
-UPDATE ui_navigation_entries SET label_te = CASE code
-  WHEN 'g-home' THEN 'హోమ్' WHEN 'g-mywork' THEN 'నా పని' WHEN 'g-projects' THEN 'ప్రాజెక్టులు' WHEN 'g-engineering' THEN 'ఇంజనీరింగ్' WHEN 'g-planning' THEN 'ప్రణాళిక'
-  WHEN 'g-site' THEN 'సైట్' WHEN 'g-procurement' THEN 'కొనుగోలు' WHEN 'g-stores' THEN 'స్టోర్స్' WHEN 'g-plant' THEN 'యంత్రాలు' WHEN 'g-rmc' THEN 'బ్యాచింగ్ ప్లాంట్'
-  WHEN 'g-quality' THEN 'నాణ్యత' WHEN 'g-hse' THEN 'భద్రత (HSE)' WHEN 'g-contracts' THEN 'కాంట్రాక్టులు మరియు బిల్లింగ్' WHEN 'g-hr' THEN 'HR మరియు జీతాలు' WHEN 'g-reports' THEN 'నివేదికలు'
-  WHEN 'g-messages' THEN 'సందేశాలు' WHEN 'g-account' THEN 'ఖాతా'
-  WHEN 'home' THEN 'హోమ్' WHEN 'work' THEN 'నా పని' WHEN 'profile' THEN 'నా ప్రొఫైల్' WHEN 'messages' THEN 'సందేశాలు' WHEN 'notifications' THEN 'నోటిఫికేషన్లు'
-  WHEN 'approvals-inbox' THEN 'నా ఆమోదాలు' WHEN 'tasks-my' THEN 'నా పనులు' WHEN 'account-drafts' THEN 'నా డ్రాఫ్ట్‌లు'
-  WHEN 'field-home' THEN 'ఫీల్డ్ హోమ్' WHEN 'field-scan' THEN 'స్కాన్' WHEN 'field-approvals' THEN 'ఆమోదాలు (ఫోన్)' WHEN 'field-forms' THEN 'ఫీల్డ్ ఫారాలు' WHEN 'field-sync' THEN 'సింక్ స్థితి' WHEN 'field-conflicts' THEN 'విభేదాల పరిష్కారం'
-  WHEN 'site-dpr-entry' THEN 'రోజువారీ ప్రగతి నివేదిక (DPR)' WHEN 'site-dprs' THEN 'DPR రిజిస్టర్' WHEN 'proc-mr-new' THEN 'కొత్త మెటీరియల్ అభ్యర్థన' WHEN 'qa-ir-raise' THEN 'తనిఖీ అభ్యర్థన'
-  WHEN 'att-crew-punch' THEN 'గ్యాంగ్ హాజరు' WHEN 'att-today' THEN 'ఈ రోజు హాజరు' WHEN 'att-punch' THEN 'పంచ్ ఇన్/అవుట్' WHEN 'hse-toolbox' THEN 'టూల్‌బాక్స్ టాక్'
-  WHEN 'plant-log-entry' THEN 'యంత్రాల రోజువారీ లాగ్' WHEN 'plant-fuel-issue' THEN 'ఇంధనం ఇవ్వడం' WHEN 'inv-gate-entry' THEN 'గేట్ ఎంట్రీ' WHEN 'inv-grn-new' THEN 'GRN సృష్టించండి'
-  WHEN 'inv-issue-new' THEN 'మెటీరియల్ ఇవ్వడం' WHEN 'inv-blind-count' THEN 'స్టాక్ లెక్కింపు' WHEN 'inv-transfer-new' THEN 'బదిలీ అభ్యర్థన' WHEN 'qa-perform' THEN 'తనిఖీ చేయండి'
-  WHEN 'qa-cubes' THEN 'క్యూబ్ రిజిస్టర్' WHEN 'qa-ncr-raise' THEN 'NCR నమోదు' WHEN 'hse-observation' THEN 'భద్రతా పరిశీలన' WHEN 'hse-permit-request' THEN 'వర్క్ పర్మిట్ అభ్యర్థన'
-  WHEN 'hse-incident-report' THEN 'ప్రమాదం నివేదించండి'
-  END
-WHERE code IN ('g-home', 'g-mywork', 'g-projects', 'g-engineering', 'g-planning', 'g-site', 'g-procurement', 'g-stores', 'g-plant', 'g-rmc', 'g-quality', 'g-hse', 'g-contracts', 'g-hr', 'g-reports', 'g-messages', 'g-account',
-  'home', 'work', 'profile', 'messages', 'notifications', 'approvals-inbox', 'tasks-my', 'account-drafts', 'field-home', 'field-scan', 'field-approvals', 'field-forms', 'field-sync', 'field-conflicts',
-  'site-dpr-entry', 'site-dprs', 'proc-mr-new', 'qa-ir-raise', 'att-crew-punch', 'att-today', 'att-punch', 'hse-toolbox', 'plant-log-entry', 'plant-fuel-issue', 'inv-gate-entry', 'inv-grn-new',
-  'inv-issue-new', 'inv-blind-count', 'inv-transfer-new', 'qa-perform', 'qa-cubes', 'qa-ncr-raise', 'hse-observation', 'hse-permit-request', 'hse-incident-report');
+CREATE TABLE IF NOT EXISTS ui_navigation_labels (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_id    INTEGER REFERENCES org_companies (id),
+  nav_code      TEXT    NOT NULL REFERENCES ui_navigation_entries (code),
+  lang          TEXT    NOT NULL CHECK (lang IN ('te')),
+  label         TEXT    NOT NULL CHECK (length(label) BETWEEN 1 AND 60),
+  project_id    INTEGER,
+  site_id       INTEGER,
+  created_by    TEXT,
+  created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_by    TEXT,
+  updated_at    TEXT,
+  version       INTEGER NOT NULL DEFAULT 1,
+  is_active     INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+  deleted_at    TEXT,
+  deleted_by    TEXT,
+  source_type   TEXT,
+  source_id     TEXT,
+  remarks       TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_ui_navigation_labels ON ui_navigation_labels (COALESCE(company_id, 0), nav_code, lang) WHERE deleted_at IS NULL;
+INSERT OR IGNORE INTO ui_navigation_labels (nav_code, lang, label, created_by, source_type)
+SELECT e.code, 'te', v.label, 'migration', 'reference_seed' FROM (
+  SELECT 'g-home' AS code, 'హోమ్' AS label UNION ALL SELECT 'g-mywork', 'నా పని' UNION ALL SELECT 'g-projects', 'ప్రాజెక్టులు' UNION ALL SELECT 'g-engineering', 'ఇంజనీరింగ్'
+  UNION ALL SELECT 'g-planning', 'ప్రణాళిక' UNION ALL SELECT 'g-site', 'సైట్' UNION ALL SELECT 'g-procurement', 'కొనుగోలు' UNION ALL SELECT 'g-stores', 'స్టోర్స్'
+  UNION ALL SELECT 'g-plant', 'యంత్రాలు' UNION ALL SELECT 'g-rmc', 'బ్యాచింగ్ ప్లాంట్' UNION ALL SELECT 'g-quality', 'నాణ్యత' UNION ALL SELECT 'g-hse', 'భద్రత (HSE)'
+  UNION ALL SELECT 'g-contracts', 'కాంట్రాక్టులు మరియు బిల్లింగ్' UNION ALL SELECT 'g-hr', 'HR మరియు జీతాలు' UNION ALL SELECT 'g-reports', 'నివేదికలు' UNION ALL SELECT 'g-messages', 'సందేశాలు'
+  UNION ALL SELECT 'g-account', 'ఖాతా' UNION ALL SELECT 'home', 'హోమ్' UNION ALL SELECT 'work', 'నా పని' UNION ALL SELECT 'profile', 'నా ప్రొఫైల్' UNION ALL SELECT 'messages', 'సందేశాలు'
+  UNION ALL SELECT 'notifications', 'నోటిఫికేషన్లు' UNION ALL SELECT 'approvals-inbox', 'నా ఆమోదాలు' UNION ALL SELECT 'tasks-my', 'నా పనులు' UNION ALL SELECT 'account-drafts', 'నా డ్రాఫ్ట్‌లు'
+  UNION ALL SELECT 'field-home', 'ఫీల్డ్ హోమ్' UNION ALL SELECT 'field-scan', 'స్కాన్' UNION ALL SELECT 'field-approvals', 'ఆమోదాలు (ఫోన్)' UNION ALL SELECT 'field-forms', 'ఫీల్డ్ ఫారాలు'
+  UNION ALL SELECT 'field-sync', 'సింక్ స్థితి' UNION ALL SELECT 'field-conflicts', 'విభేదాల పరిష్కారం' UNION ALL SELECT 'site-dpr-entry', 'రోజువారీ ప్రగతి నివేదిక (DPR)'
+  UNION ALL SELECT 'site-dprs', 'DPR రిజిస్టర్' UNION ALL SELECT 'proc-mr-new', 'కొత్త మెటీరియల్ అభ్యర్థన' UNION ALL SELECT 'qa-ir-raise', 'తనిఖీ అభ్యర్థన' UNION ALL SELECT 'att-crew-punch', 'గ్యాంగ్ హాజరు'
+  UNION ALL SELECT 'att-today', 'ఈ రోజు హాజరు' UNION ALL SELECT 'att-punch', 'పంచ్ ఇన్/అవుట్' UNION ALL SELECT 'hse-toolbox', 'టూల్‌బాక్స్ టాక్' UNION ALL SELECT 'plant-log-entry', 'యంత్రాల రోజువారీ లాగ్'
+  UNION ALL SELECT 'plant-fuel-issue', 'ఇంధనం ఇవ్వడం' UNION ALL SELECT 'inv-gate-entry', 'గేట్ ఎంట్రీ' UNION ALL SELECT 'inv-grn-new', 'GRN సృష్టించండి' UNION ALL SELECT 'inv-issue-new', 'మెటీరియల్ ఇవ్వడం'
+  UNION ALL SELECT 'inv-blind-count', 'స్టాక్ లెక్కింపు' UNION ALL SELECT 'inv-transfer-new', 'బదిలీ అభ్యర్థన' UNION ALL SELECT 'qa-perform', 'తనిఖీ చేయండి' UNION ALL SELECT 'qa-cubes', 'క్యూబ్ రిజిస్టర్'
+  UNION ALL SELECT 'qa-ncr-raise', 'NCR నమోదు' UNION ALL SELECT 'hse-observation', 'భద్రతా పరిశీలన' UNION ALL SELECT 'hse-permit-request', 'వర్క్ పర్మిట్ అభ్యర్థన' UNION ALL SELECT 'hse-incident-report', 'ప్రమాదం నివేదించండి'
+) AS v JOIN ui_navigation_entries e ON e.code = v.code;
 
 -- 3 ------------------------------------------------------------------------------------------------------------------------------------------
--- the 03.06 tiles: the sample "Material Request" and the administrators' approvals give way to the real daily tasks while the part is ON
-UPDATE ui_field_tiles SET retired_flag = 'ff.field.p16603' WHERE code IN ('material-request', 'approvals') AND source_type = 'reference_seed';
-UPDATE ui_field_tiles SET label_te = 'స్కాన్' WHERE code = 'scan' AND source_type = 'reference_seed';
-UPDATE ui_field_tiles SET label_te = 'నా డ్రాఫ్ట్‌లు' WHERE code = 'drafts' AND source_type = 'reference_seed';
--- a tile shows when its page is in the person's menu (permission and flag) and, if it names roles, the person holds one of them
-INSERT OR IGNORE INTO ui_field_tiles (code, nav_code, label, label_hi, label_te, sort_order, role_codes, feature_flag, tone, created_by, source_type) VALUES
-  ('dpr', 'site-dpr-entry', 'Daily progress report', 'दैनिक प्रगति रिपोर्ट', 'రోజువారీ ప్రగతి నివేదిక', 1, 'SE,CSUP,WSUP,CM,PM', 'ff.field.p16603', 'amber', 'migration', 'reference_seed'),
-  ('phone-approvals', 'field-approvals', 'Approvals', 'स्वीकृतियाँ', 'ఆమోదాలు', 2, NULL, 'ff.field.p16603', 'navy', 'migration', 'reference_seed'),
-  ('dpr-register', 'site-dprs', 'DPRs to approve', 'स्वीकृति हेतु DPR', 'ఆమోదించవలసిన DPR లు', 3, 'CM,PM,PD', 'ff.field.p16603', 'blue', 'migration', 'reference_seed'),
-  ('crew-attendance', 'att-crew-punch', 'Gang attendance', 'गैंग हाज़िरी', 'గ్యాంగ్ హాజరు', 4, 'CSUP,WSUP,SE', 'ff.field.p16603', 'green', 'migration', 'reference_seed'),
-  ('my-punch', 'att-punch', 'My punch', 'मेरा पंच', 'నా పంచ్', 30, NULL, 'ff.field.p16603', 'teal', 'migration', 'reference_seed'),
-  ('mr-new', 'proc-mr-new', 'Material request', 'सामग्री अनुरोध', 'మెటీరియల్ అభ్యర్థన', 10, 'SE,SK,STOREMGR', 'ff.field.p16603', 'blue', 'migration', 'reference_seed'),
-  ('ir-new', 'qa-ir-raise', 'Inspection request', 'निरीक्षण अनुरोध', 'తనిఖీ అభ్యర్థన', 11, 'SE', 'ff.field.p16603', 'blue', 'migration', 'reference_seed'),
-  ('toolbox', 'hse-toolbox', 'Toolbox talk', 'टूलबॉक्स टॉक', 'టూల్‌బాక్స్ టాక్', 12, 'CSUP,WSUP,HSEE,HSEO', 'ff.field.p16603', 'green', 'migration', 'reference_seed'),
-  ('equipment-log', 'plant-log-entry', 'Equipment log', 'उपकरण लॉग', 'యంత్రాల లాగ్', 5, 'PMSUP,PLANTMGR', 'ff.field.p16603', 'amber', 'migration', 'reference_seed'),
-  ('fuel-issue', 'plant-fuel-issue', 'Fuel issue', 'ईंधन निकासी', 'ఇంధనం ఇవ్వడం', 13, 'PMSUP,SK', 'ff.field.p16603', 'teal', 'migration', 'reference_seed'),
-  ('gate-entry', 'inv-gate-entry', 'Gate entry', 'गेट प्रवेश', 'గేట్ ఎంట్రీ', 6, 'SK,STOREMGR', 'ff.field.p16603', 'navy', 'migration', 'reference_seed'),
-  ('grn', 'inv-grn-new', 'GRN', 'GRN', 'GRN', 7, 'SK,STOREMGR', 'ff.field.p16603', 'amber', 'migration', 'reference_seed'),
-  ('issue-slip', 'inv-issue-new', 'Issue slip', 'निकासी पर्ची', 'ఇష్యూ స్లిప్', 14, 'SK,STOREMGR', 'ff.field.p16603', 'blue', 'migration', 'reference_seed'),
-  ('stock-count', 'inv-blind-count', 'Stock count', 'स्टॉक गिनती', 'స్టాక్ లెక్కింపు', 15, 'SK,STOREMGR', 'ff.field.p16603', 'green', 'migration', 'reference_seed'),
-  ('transfer', 'inv-transfer-new', 'Transfer', 'स्थानांतरण', 'బదిలీ', 16, 'SK,STOREMGR', 'ff.field.p16603', 'teal', 'migration', 'reference_seed'),
-  ('inspection', 'qa-perform', 'Checklist inspection', 'चेकलिस्ट निरीक्षण', 'చెక్‌లిస్ట్ తనిఖీ', 8, 'QCE,QCMGR', 'ff.field.p16603', 'amber', 'migration', 'reference_seed'),
-  ('cubes', 'qa-cubes', 'Cube register', 'क्यूब रजिस्टर', 'క్యూబ్ రిజిస్టర్', 17, 'QCE', 'ff.field.p16603', 'blue', 'migration', 'reference_seed'),
-  ('ncr', 'qa-ncr-raise', 'NCR with photos', 'फ़ोटो सहित NCR', 'ఫోటోలతో NCR', 18, 'QCE,QCMGR', 'ff.field.p16603', 'red', 'migration', 'reference_seed'),
-  ('observation', 'hse-observation', 'Safety observation', 'सुरक्षा अवलोकन', 'భద్రతా పరిశీలన', 9, 'HSEE,HSEO,SE,CSUP,WSUP', 'ff.field.p16603', 'amber', 'migration', 'reference_seed'),
-  ('permit', 'hse-permit-request', 'Permit to work', 'कार्य परमिट', 'వర్క్ పర్మిట్', 19, 'HSEE,HSEO,SE', 'ff.field.p16603', 'navy', 'migration', 'reference_seed'),
-  ('incident', 'hse-incident-report', 'Incident', 'घटना', 'ప్రమాదం', 20, 'HSEE,HSEO', 'ff.field.p16603', 'red', 'migration', 'reference_seed');
+CREATE TABLE IF NOT EXISTS ui_field_tile_rules (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_id    INTEGER REFERENCES org_companies (id),
+  tile_code     TEXT    NOT NULL,
+  role_codes    TEXT,
+  feature_flag  TEXT,
+  retired_flag  TEXT,
+  tone          TEXT    CHECK (tone IS NULL OR tone IN ('navy', 'amber', 'green', 'blue', 'red', 'teal')),
+  label_te      TEXT    CHECK (label_te IS NULL OR length(label_te) <= 60),
+  project_id    INTEGER,
+  site_id       INTEGER,
+  created_by    TEXT,
+  created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_by    TEXT,
+  updated_at    TEXT,
+  version       INTEGER NOT NULL DEFAULT 1,
+  is_active     INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+  deleted_at    TEXT,
+  deleted_by    TEXT,
+  source_type   TEXT,
+  source_id     TEXT,
+  remarks       TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_ui_field_tile_rules ON ui_field_tile_rules (COALESCE(company_id, 0), tile_code) WHERE deleted_at IS NULL;
+-- the new tiles (a tile shows when its page is in the person's menu, by permission and flag, and its rule lets the person's role have it)
+INSERT INTO ui_field_tiles (code, nav_code, label, label_hi, sort_order, created_by, source_type)
+SELECT v.code, v.nav, v.label, v.hi, v.sort, 'migration', 'reference_seed' FROM (
+  SELECT 'dpr' AS code, 'site-dpr-entry' AS nav, 'Daily progress report' AS label, 'दैनिक प्रगति रिपोर्ट' AS hi, 1 AS sort
+  UNION ALL SELECT 'phone-approvals', 'field-approvals', 'Approvals', 'स्वीकृतियाँ', 2
+  UNION ALL SELECT 'dpr-register', 'site-dprs', 'DPRs to approve', 'स्वीकृति हेतु DPR', 3
+  UNION ALL SELECT 'crew-attendance', 'att-crew-punch', 'Gang attendance', 'गैंग हाज़िरी', 4
+  UNION ALL SELECT 'equipment-log', 'plant-log-entry', 'Equipment log', 'उपकरण लॉग', 5
+  UNION ALL SELECT 'gate-entry', 'inv-gate-entry', 'Gate entry', 'गेट प्रवेश', 6
+  UNION ALL SELECT 'grn', 'inv-grn-new', 'GRN', 'GRN', 7
+  UNION ALL SELECT 'inspection', 'qa-perform', 'Checklist inspection', 'चेकलिस्ट निरीक्षण', 8
+  UNION ALL SELECT 'observation', 'hse-observation', 'Safety observation', 'सुरक्षा अवलोकन', 9
+  UNION ALL SELECT 'mr-new', 'proc-mr-new', 'Material request', 'सामग्री अनुरोध', 10
+  UNION ALL SELECT 'ir-new', 'qa-ir-raise', 'Inspection request', 'निरीक्षण अनुरोध', 11
+  UNION ALL SELECT 'toolbox', 'hse-toolbox', 'Toolbox talk', 'टूलबॉक्स टॉक', 12
+  UNION ALL SELECT 'fuel-issue', 'plant-fuel-issue', 'Fuel issue', 'ईंधन निकासी', 13
+  UNION ALL SELECT 'issue-slip', 'inv-issue-new', 'Issue slip', 'निकासी पर्ची', 14
+  UNION ALL SELECT 'stock-count', 'inv-blind-count', 'Stock count', 'स्टॉक गिनती', 15
+  UNION ALL SELECT 'transfer', 'inv-transfer-new', 'Transfer', 'स्थानांतरण', 16
+  UNION ALL SELECT 'cubes', 'qa-cubes', 'Cube register', 'क्यूब रजिस्टर', 17
+  UNION ALL SELECT 'ncr', 'qa-ncr-raise', 'NCR with photos', 'फ़ोटो सहित NCR', 18
+  UNION ALL SELECT 'permit', 'hse-permit-request', 'Permit to work', 'कार्य परमिट', 19
+  UNION ALL SELECT 'incident', 'hse-incident-report', 'Incident', 'घटना', 20
+  UNION ALL SELECT 'my-punch', 'att-punch', 'My punch', 'मेरा पंच', 30
+) AS v JOIN ui_navigation_entries e ON e.code = v.nav
+WHERE NOT EXISTS (SELECT 1 FROM ui_field_tiles t WHERE t.code = v.code AND t.company_id IS NULL AND t.deleted_at IS NULL);
+INSERT OR IGNORE INTO ui_field_tile_rules (tile_code, role_codes, feature_flag, retired_flag, tone, label_te, created_by, source_type) VALUES
+  ('dpr', 'SE,CSUP,WSUP,CM,PM', 'ff.field.p16603', NULL, 'amber', 'రోజువారీ ప్రగతి నివేదిక', 'migration', 'reference_seed'),
+  ('phone-approvals', NULL, 'ff.field.p16603', NULL, 'navy', 'ఆమోదాలు', 'migration', 'reference_seed'),
+  ('dpr-register', 'CM,PM,PD', 'ff.field.p16603', NULL, 'blue', 'ఆమోదించవలసిన DPR లు', 'migration', 'reference_seed'),
+  ('crew-attendance', 'CSUP,WSUP,SE', 'ff.field.p16603', NULL, 'green', 'గ్యాంగ్ హాజరు', 'migration', 'reference_seed'),
+  ('equipment-log', 'PMSUP,PLANTMGR', 'ff.field.p16603', NULL, 'amber', 'యంత్రాల లాగ్', 'migration', 'reference_seed'),
+  ('gate-entry', 'SK,STOREMGR', 'ff.field.p16603', NULL, 'navy', 'గేట్ ఎంట్రీ', 'migration', 'reference_seed'),
+  ('grn', 'SK,STOREMGR', 'ff.field.p16603', NULL, 'amber', 'GRN', 'migration', 'reference_seed'),
+  ('inspection', 'QCE,QCMGR', 'ff.field.p16603', NULL, 'amber', 'చెక్‌లిస్ట్ తనిఖీ', 'migration', 'reference_seed'),
+  ('observation', 'HSEE,HSEO,SE,CSUP,WSUP', 'ff.field.p16603', NULL, 'amber', 'భద్రతా పరిశీలన', 'migration', 'reference_seed'),
+  ('mr-new', 'SE,SK,STOREMGR', 'ff.field.p16603', NULL, 'blue', 'మెటీరియల్ అభ్యర్థన', 'migration', 'reference_seed'),
+  ('ir-new', 'SE', 'ff.field.p16603', NULL, 'blue', 'తనిఖీ అభ్యర్థన', 'migration', 'reference_seed'),
+  ('toolbox', 'CSUP,WSUP,HSEE,HSEO', 'ff.field.p16603', NULL, 'green', 'టూల్‌బాక్స్ టాక్', 'migration', 'reference_seed'),
+  ('fuel-issue', 'PMSUP,SK', 'ff.field.p16603', NULL, 'teal', 'ఇంధనం ఇవ్వడం', 'migration', 'reference_seed'),
+  ('issue-slip', 'SK,STOREMGR', 'ff.field.p16603', NULL, 'blue', 'ఇష్యూ స్లిప్', 'migration', 'reference_seed'),
+  ('stock-count', 'SK,STOREMGR', 'ff.field.p16603', NULL, 'green', 'స్టాక్ లెక్కింపు', 'migration', 'reference_seed'),
+  ('transfer', 'SK,STOREMGR', 'ff.field.p16603', NULL, 'teal', 'బదిలీ', 'migration', 'reference_seed'),
+  ('cubes', 'QCE', 'ff.field.p16603', NULL, 'blue', 'క్యూబ్ రిజిస్టర్', 'migration', 'reference_seed'),
+  ('ncr', 'QCE,QCMGR', 'ff.field.p16603', NULL, 'red', 'ఫోటోలతో NCR', 'migration', 'reference_seed'),
+  ('permit', 'HSEE,HSEO,SE', 'ff.field.p16603', NULL, 'navy', 'వర్క్ పర్మిట్', 'migration', 'reference_seed'),
+  ('incident', 'HSEE,HSEO', 'ff.field.p16603', NULL, 'red', 'ప్రమాదం', 'migration', 'reference_seed'),
+  ('my-punch', NULL, 'ff.field.p16603', NULL, 'teal', 'నా పంచ్', 'migration', 'reference_seed'),
+  -- the 03.06 tiles: the sample "Material Request" and the administrators' approvals give way to the daily tasks while the part is ON
+  ('material-request', NULL, NULL, 'ff.field.p16603', NULL, 'మెటీరియల్ అభ్యర్థన', 'migration', 'reference_seed'),
+  ('approvals', NULL, NULL, 'ff.field.p16603', NULL, 'ఆమోదాలు', 'migration', 'reference_seed'),
+  ('scan', NULL, NULL, NULL, 'navy', 'స్కాన్', 'migration', 'reference_seed'),
+  ('drafts', NULL, NULL, NULL, 'navy', 'నా డ్రాఫ్ట్‌లు', 'migration', 'reference_seed');
 
 -- 4 ------------------------------------------------------------------------------------------------------------------------------------------
 -- slot 1-4 of the phone's bottom bar (More is always the fifth). item: 'home' (the person's home), 'work' (My Work), 'scan', 'messages', or 'page'
 -- with nav_code. A role's own rows replace the default (role_code NULL) whole; a company's rows replace the built-in ones.
-CREATE TABLE ui_bottom_bar (
+CREATE TABLE IF NOT EXISTS ui_bottom_bar (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   company_id    INTEGER REFERENCES org_companies (id),
   role_code     TEXT    CHECK (role_code IS NULL OR length(role_code) BETWEEN 1 AND 20),
@@ -96,8 +159,8 @@ CREATE TABLE ui_bottom_bar (
   remarks       TEXT,
   CHECK (item <> 'page' OR nav_code IS NOT NULL)
 );
-CREATE UNIQUE INDEX ux_ui_bottom_bar_slot ON ui_bottom_bar (COALESCE(company_id, 0), COALESCE(role_code, ''), slot) WHERE deleted_at IS NULL;
-INSERT INTO ui_bottom_bar (company_id, role_code, slot, item, nav_code, label, label_hi, label_te, icon, created_by, source_type) VALUES
+CREATE UNIQUE INDEX IF NOT EXISTS ux_ui_bottom_bar_slot ON ui_bottom_bar (COALESCE(company_id, 0), COALESCE(role_code, ''), slot) WHERE deleted_at IS NULL;
+INSERT OR IGNORE INTO ui_bottom_bar (company_id, role_code, slot, item, nav_code, label, label_hi, label_te, icon, created_by, source_type) VALUES
   (NULL, NULL, 1, 'home', NULL, NULL, NULL, NULL, NULL, 'migration', 'reference_seed'),
   (NULL, NULL, 2, 'work', NULL, NULL, NULL, NULL, NULL, 'migration', 'reference_seed'),
   (NULL, NULL, 3, 'scan', NULL, NULL, NULL, NULL, NULL, 'migration', 'reference_seed'),
