@@ -189,3 +189,55 @@ test('FR-02 the precache keeps the shell and the field pages, not every page (vi
     assert.ok(MODULES.some((m) => { try { return readFileSync(join('src/client/modules', m, `${p}.jsx`)) && pages.includes(`${m}\\/`); } catch { return false; } }), `${p} exists where the pattern looks`);
   }
 });
+
+test('P-01 FR-02 the server sends the Brotli or gzip copy of a built script, and keeps hashed files for a year; other paths are untouched', async () => {
+  const { pickEncoding, staticAssets, IMMUTABLE } = await import('../src/server/platform/http/staticAssets.js');
+  assert.equal(pickEncoding('gzip, deflate, br, zstd'), 'br');
+  assert.equal(pickEncoding('gzip, deflate'), 'gzip');
+  assert.equal(pickEncoding('br;q=0, gzip;q=0.5'), 'gzip');
+  assert.equal(pickEncoding('identity'), null);
+  assert.equal(pickEncoding(undefined), null);
+  assert.equal(pickEncoding('*'), 'br');
+  const { mkdtempSync, writeFileSync: write, mkdirSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { brotliCompressSync, gzipSync, brotliDecompressSync } = await import('node:zlib');
+  const express = (await import('express')).default;
+  const dist = mkdtempSync(join(tmpdir(), 'erp-dist-'));
+  mkdirSync(join(dist, 'assets'));
+  const body = Buffer.from(`console.log(${JSON.stringify('x'.repeat(5000))});`);
+  write(join(dist, 'assets', 'index-abc.js'), body);
+  write(join(dist, 'assets', 'index-abc.js.br'), brotliCompressSync(body));
+  write(join(dist, 'assets', 'index-abc.js.gz'), gzipSync(body));
+  write(join(dist, 'assets', 'font-x.woff2'), Buffer.from('wOF2'));
+  const app = express();
+  app.use(staticAssets(dist));
+  app.use(express.static(dist));
+  const server = await new Promise((r) => { const s = app.listen(0, () => r(s)); });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const http = await import('node:http');
+  const get = (path, enc) => new Promise((resolve, reject) => {
+    http.get(`${base}${path}`, { headers: enc ? { 'accept-encoding': enc } : {} }, (res) => { const parts = []; res.on('data', (d) => parts.push(d)); res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(parts) })); }).on('error', reject);
+  });
+  try {
+    const br = await get('/assets/index-abc.js', 'gzip, br');
+    assert.equal(br.status, 200);
+    assert.equal(br.headers['content-encoding'], 'br');
+    assert.match(br.headers['content-type'], /^text\/javascript/);
+    assert.equal(br.headers['cache-control'], IMMUTABLE);
+    assert.match(br.headers.vary, /Accept-Encoding/);
+    assert.ok(br.body.length < body.length / 10, `${br.body.length} bytes sent for ${body.length}`);
+    assert.deepEqual(brotliDecompressSync(br.body), body);
+    const gz = await get('/assets/index-abc.js', 'gzip');
+    assert.equal(gz.headers['content-encoding'], 'gzip');
+    const plain = await get('/assets/index-abc.js', null);
+    assert.equal(plain.headers['content-encoding'], undefined);
+    assert.deepEqual(plain.body, body);
+    assert.equal(plain.headers['cache-control'], IMMUTABLE, 'the hashed file is kept a year also without compression');
+    const font = await get('/assets/font-x.woff2', 'br');
+    assert.equal(font.headers['content-encoding'], undefined, 'a font has no copy');
+    assert.equal(font.headers['cache-control'], IMMUTABLE);
+    assert.equal((await get('/assets/../../etc/passwd', 'br')).status, 404);
+  } finally {
+    server.close();
+  }
+});

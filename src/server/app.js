@@ -25,6 +25,7 @@ import { mountModules } from './modules/registry.js';
 import { createFlagService } from './modules/core/api.js';
 import { attachSocketServer } from './platform/realtime/socket.js';
 import { assertDeclared, buildRegistry, cors, csrfGuard, enforcePolicy, persistRegistry, securityHeaders, securityOf } from './platform/security/index.js';
+import { staticAssets } from './platform/http/staticAssets.js';
 
 const sameToken = (a, b) => {
   const x = Buffer.from(a);
@@ -146,6 +147,7 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   const dist = join(ROOT, 'dist');
   if (existsSync(dist)) {
     // the service worker and the manifest are always asked for again, so a new version of the app is noticed (part 03.06)
+    app.use(staticAssets(dist)); // part 166.4: the compressed copy of a script or style, and a year's cache for the hashed files
     app.use(express.static(dist, { setHeaders: (res, file) => { if (['sw.js', 'manifest.webmanifest'].includes(basename(file))) res.setHeader('Cache-Control', 'no-cache'); } }));
     app.get(/^\/(?!api\/|health\/).*/, (_req, res) => res.sendFile(join(dist, 'index.html')));
   }

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { brotliCompressSync, constants as zlib, gzipSync } from 'node:zlib';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { defineConfig } from 'vite';
@@ -48,8 +49,29 @@ function serviceWorker() {
   };
 }
 
+/**
+ * Part 166.4: a Brotli (.br) and a gzip (.gz) copy of each script, style and text file of the build, made once here so the server sends the
+ * smaller copy without compressing on every request (src/server/platform/http/staticAssets.js). Files under 1 KB are left as they are.
+ */
+function precompress() {
+  return {
+    name: 'erp-precompress',
+    apply: 'build',
+    writeBundle(options, bundle) {
+      const dir = options.dir ?? 'dist';
+      for (const f of Object.keys(bundle)) {
+        if (!/\.(js|css|html|json|svg|webmanifest)$/.test(f) || !existsSync(join(dir, f))) continue;
+        const raw = readFileSync(join(dir, f));
+        if (raw.length < 1024) continue;
+        writeFileSync(join(dir, `${f}.br`), brotliCompressSync(raw, { params: { [zlib.BROTLI_PARAM_QUALITY]: 11, [zlib.BROTLI_PARAM_SIZE_HINT]: raw.length } }));
+        writeFileSync(join(dir, `${f}.gz`), gzipSync(raw, { level: 9 }));
+      }
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), serviceWorker()],
+  plugins: [react(), serviceWorker(), precompress()],
   server: { port: 5173, proxy: { '/api': 'http://localhost:3000' } },
   // fonts stay files (never inlined as data: URLs), so the content security policy can keep font-src to 'self' (part 03.01)
   build: {
