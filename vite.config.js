@@ -1,12 +1,31 @@
 import { createHash } from 'node:crypto';
 import { brotliCompressSync, constants as zlib, gzipSync } from 'node:zlib';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Files from public/ that the service worker keeps with the app shell (part 03.06).
-const PUBLIC_SHELL = ['/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/maskable-512.png', '/icons/apple-touch-icon.png'];
+const PUBLIC_SHELL = ['/index.html', '/boot-guard.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/maskable-512.png', '/icons/apple-touch-icon.png'];
+
+// Part 166.4: everything the entry imports statically (the shell) goes in one chunk, apart from the libraries' own chunks. Left to itself the
+// bundler cut the shell into about thirty small shared chunks; each first load then asked for some sixty scripts, which is slower on a phone and,
+// with the service worker in control, now and then left a full page load waiting for a script that never came (found by the page crawlers).
+const VENDOR = /[\\/]node_modules[\\/](react|react-dom|scheduler|@tanstack|lucide-react)[\\/]/;
+let shellModules = null;
+function inShell(id, ctx) {
+  if (!shellModules) {
+    shellModules = new Set();
+    const stack = [resolve('src/client/main.jsx')];
+    while (stack.length) {
+      const m = stack.pop();
+      if (shellModules.has(m)) continue;
+      shellModules.add(m);
+      for (const dep of ctx.getModuleInfo(m)?.importedIds ?? []) stack.push(dep);
+    }
+  }
+  return shellModules.has(id) && !VENDOR.test(id);
+}
 
 // The pages kept at install, so that they open with no connection from the first visit on: the homes and the field pages (part 166.4, FR-02).
 const OFFLINE_PAGES = /\/src\/client\/modules\/(ui\/(LaunchpadPage|FieldHomePage|ScannerPage)|eng\/(MobileApprovalsPage|FieldFormsPage|SyncStatusPage|ConflictPage)|site\/DprEntryPage)\.jsx$/;
@@ -84,6 +103,7 @@ export default defineConfig({
       output: {
         codeSplitting: {
           groups: [
+            { name: (id, ctx) => (inShell(id, ctx) ? 'shell' : null), priority: 10 },
             { name: 'vendor-react', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 30 },
             { name: 'vendor-query', test: /[\\/]node_modules[\\/]@tanstack[\\/]/, priority: 30 },
             { name: 'vendor-icons', test: /[\\/]node_modules[\\/]lucide-react[\\/]/, priority: 30 },

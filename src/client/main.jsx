@@ -48,6 +48,7 @@ import App from './App.jsx';
 
 // Find out how people sign in, and resume a session from the cookie, before the first screen is drawn.
 // the address the person opened, before the shell replaces '/' with its first page: a saved start page applies only then
+window.__erpBooted = true; // every script of the shell arrived: public/boot-guard.js leaves the page alone (part 166.4)
 window.__erpOpenedAt = window.location.pathname;
 // the code of the page being opened is fetched with the sign-in check, not after the menu has arrived (part 166.4); '/' lands on Home or the field home
 for (const path of window.location.pathname === '/' ? ['/home', '/field'] : [window.location.pathname]) findRoute(path)?.Page?.preload?.().catch(() => null);

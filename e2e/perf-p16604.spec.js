@@ -83,6 +83,22 @@ test('FR-01 on a phone the field home fetches the code of the bottom bar\'s page
   expect(seen.slice(before).filter((f) => f.startsWith('ScannerPage-'))).toEqual([]); // already here: the tap fetches nothing for the page
 });
 
+test('the first script of the application fails once (aborted, dropped): the page reloads by itself instead of staying blank', async ({ page }) => {
+  let aborted = 0;
+  await page.route(/\/assets\/index-[^/]+\.js$/, (route) => { if (aborted === 0) { aborted += 1; return route.abort('aborted'); } return route.continue(); });
+  await open(page, { user: 'e2e-perf-boot', roles: 'PM', path: '/home' });
+  await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible({ timeout: 15_000 });
+  expect(aborted).toBe(1);
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('erp.boot.retries'))).toBeNull(); // cleared once the application has started
+});
+
+test('the first script never arrives: after two reloads the page says so instead of staying blank', async ({ page }) => {
+  await page.route(/\/assets\/index-[^/]+\.js$/, (route) => route.abort('aborted'));
+  await open(page, { user: 'e2e-perf-boot2', roles: 'PM', path: '/home' });
+  await expect(page.getByRole('heading', { name: 'The application could not be loaded', level: 1 })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('alert')).toContainText('Check the connection, then reload the page.');
+});
+
 test('FR-03 in low-bandwidth mode a chart is drawn as its table, and the chart only on request', async ({ page }, info) => {
   await open(page, { user: 'e2e-perf-lb', roles: 'SYSADM', path: '/admin/design-system/patterns', lowbw: true });
   await expect(page.getByRole('heading', { name: 'Page Patterns', level: 1 })).toBeVisible();

@@ -20,6 +20,12 @@ export default [
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  // part 166.4: the boot guard is a classic browser script served as it is from public/ (it must run where modules failed)
+  {
+    files: ['public/**/*.js'],
+    languageOptions: { sourceType: 'script', globals: { ...globals.browser } },
+    rules: { 'no-unused-vars': ['error', { caughtErrors: 'none' }] },
+  },
   // part 03.01, BR-01: colours in component code come from the design tokens
   {
     files: ['src/client/**/*.{js,jsx}'],
