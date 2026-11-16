@@ -58,13 +58,13 @@
 .ui-section { margin-block: var(--erp-space-4); min-width: 0; }
 .ui-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--erp-space-3); justify-content: space-between; }
 
-.badge-solid.tone-neutral { background: var(--erp-color-status-neutral-solid); }
-.badge-solid.tone-info { background: var(--erp-color-status-info-solid); }
-.badge-solid.tone-success { background: var(--erp-color-status-success-solid); }
-.badge-solid.tone-warning { background: var(--erp-color-status-warning-solid); }
-.badge-solid.tone-error { background: var(--erp-color-status-error-solid); }
-.badge-solid.tone-muted { background: var(--erp-color-status-muted-solid); }
-.badge-solid { color: var(--erp-color-text-on-primary); }
+.badge-solid.tone-neutral { background: var(--erp-color-status-neutral-fg); color: var(--erp-color-status-neutral-bg); border-color: var(--erp-color-status-neutral-fg); }
+.badge-solid.tone-info { background: var(--erp-color-status-info-fg); color: var(--erp-color-status-info-bg); border-color: var(--erp-color-status-info-fg); }
+.badge-solid.tone-success { background: var(--erp-color-status-success-fg); color: var(--erp-color-status-success-bg); border-color: var(--erp-color-status-success-fg); }
+.badge-solid.tone-warning { background: var(--erp-color-status-warning-fg); color: var(--erp-color-status-warning-bg); border-color: var(--erp-color-status-warning-fg); }
+.badge-solid.tone-error { background: var(--erp-color-status-error-fg); color: var(--erp-color-status-error-bg); border-color: var(--erp-color-status-error-fg); }
+.badge-solid.tone-muted { background: var(--erp-color-status-muted-fg); color: var(--erp-color-status-muted-bg); border-color: var(--erp-color-status-muted-fg); }
+/* solid: the soft badge's pair turned round (text colour as the fill), so it keeps the contrast checked in all three themes */
 .badge-outline { background: transparent; }
 .badge-dot { background: transparent; border-color: transparent; padding-inline: 0; color: var(--erp-color-text-primary); }
 .badge-dot .badge-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; padding: 0; }
