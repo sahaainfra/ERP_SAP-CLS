@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { registeredPages } from './pages.js';
+import { TEMPLATE_PERMISSIONS } from '../src/server/platform/authz/templates.js';
 
-// Part 166.2, T-01 to T-04: every registered page, opened by a super administrator in a company of its own, on the viewport of the project
+// Part 166.2, T-01 to T-04: every registered page, opened in a company of its own by a user holding every internal role (the super administrator
+// alone sees only the platform pages: the others would show their no-access state, not their content), on the viewport of the project
 // (desktop 1280, mobile 360):
 //  T-01 the page names itself with the shared PageHeader (or, when it only shows a state, with the state's own heading);
 //  T-02 no key figure is laid out in the form grid;
@@ -9,6 +11,8 @@ import { registeredPages } from './pages.js';
 //  T-04 with the text 25 % larger, no header, key-figure tile or button cuts its words off.
 const H = (roles, company, user) => ({ 'x-erp-user': user, 'x-erp-roles': roles, 'x-erp-company': String(company), 'content-type': 'application/json', 'idempotency-key': `e2e-${Date.now()}-${Math.random().toString(36).slice(2)}` });
 const pages = registeredPages().filter((p) => !p.onboardingOnly);
+// every internal role: the external portal roles (X-*), the guard, the employee and the subcontractor have shells of their own
+const ROLES = Object.keys(TEMPLATE_PERMISSIONS).filter((c) => !/^(X-.*|GUARD|EMP|SUBCO)$/.test(c)).join(',');
 
 async function company(request, code) {
   const res = await request.post('/api/v1/iam/org/companies', { headers: H('SYSADM', 1, 'e2e-setup'), data: { code, legalName: `${code} Infra Pvt Ltd`, shortName: code } });
@@ -30,6 +34,7 @@ const facts = () => {
   const cut = [...(main?.querySelectorAll('[data-page-header] h1, .kpi-label, .kpi-value, .btn, .ph-actions button') ?? [])].filter((e) => e.getClientRects().length && getComputedStyle(e).overflow !== 'visible' && e.scrollWidth > e.clientWidth + 1).map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} "${e.textContent.trim().slice(0, 30)}"`);
   return {
     uiV3: document.documentElement.dataset.uiV3 === 'on',
+    denied: Boolean(main?.querySelector('[data-testid="no-permission"]')),
     h1: h1s.length,
     headers: main?.querySelectorAll('[data-page-header]').length ?? 0,
     loose: h1s.filter((h) => !inHeader(h) && !inState(h)).length,
@@ -41,10 +46,10 @@ const facts = () => {
 };
 
 test('T-01 T-02 T-03 T-04 every registered page has the page header, no key figure in a form grid, and fits the screen', async ({ browser, request }, info) => {
-  test.setTimeout(3_600_000); // every registered page (366 at part 166.2), about 3 s each
+  test.setTimeout(5_400_000); // every registered page (632 at part 166.2), about 1 to 3 s each
   const c = await company(request, info.project.name === 'mobile' ? 'UV3M' : 'UV3D');
   const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: info.project.use.viewport, hasTouch: info.project.use.hasTouch });
-  await context.addInitScript((v) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: 'light', density: 'comfortable', language: 'en' })); }, { user: 'e2e-super', roles: 'SUPADM', company: String(c) });
+  await context.addInitScript((v) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: 'light', density: 'comfortable', language: 'en' })); }, { user: 'e2e-allroles', roles: ROLES, company: String(c) });
   const page = await context.newPage();
   const phone = info.project.name === 'mobile';
   const problems = [];
@@ -56,6 +61,7 @@ test('T-01 T-02 T-03 T-04 every registered page has the page header, no key figu
     await page.waitForTimeout(150);
     const f = await page.evaluate(facts);
     const at = `${p.route} @${phone ? 360 : 1280}`;
+    if (f.denied) problems.push(`${at}: shows the no-access state, so its content was not checked`);
     if (!f.uiV3) problems.push(`${at}: the UI v3 flag is not applied`);
     if (f.h1 !== 1) problems.push(`${at}: ${f.h1} level-1 headings`);
     if (f.loose > 0) problems.push(`${at}: a level-1 heading outside the PageHeader`);
