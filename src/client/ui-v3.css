@@ -76,6 +76,14 @@
 .tone-muted .badge-dot { background: var(--erp-color-status-muted-solid); }
 .badge-sm { padding: 0 8px; font: var(--erp-type-caption); }
 
+/* long words (a permission key such as proc.comparative_statement.view, an address, a code) break instead of widening the page (T-03/T-04) */
+.state h1, .state h2, .state p, .ph-subtitle, .ph-meta, main li > a, main p > a, main p > code, main td > code, main :is(h2, h3, h4), .prose :is(li, p) { overflow-wrap: anywhere; }
+main pre { max-width: 100%; overflow-x: auto; }
+/* a field never gets wider than its column, and a column of a grid may shrink below its content (large text on a phone) */
+main input, main select, main textarea { max-width: 100%; }
+main .cc-grid { grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); }
+main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .facts) > * { min-width: 0; }
+
 .ch-empty .state { padding: var(--erp-space-5); }
 
 /* ---------- the UI v3 look (ff.ui.p16602 ON) ---------- */

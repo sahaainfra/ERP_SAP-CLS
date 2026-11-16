@@ -121,7 +121,7 @@ export function LineGrid({ id, label, columns, rows, onChange, errors = {}, maxR
       )}
       <p className="visually-hidden" aria-live="polite" data-testid="grid-notice">{notice}</p>
       {errors[id] && <p className="ff-error" role="alert" id={`${fieldId(id)}-err`}>{errors[id]}</p>}
-      <div className="ff-gridwrap" tabIndex={-1}>
+      <div className="ff-gridwrap" tabIndex={-1} data-no-cards="">
         <table className="ff-table" ref={table} aria-label={label}>
           <thead>
             <tr>
