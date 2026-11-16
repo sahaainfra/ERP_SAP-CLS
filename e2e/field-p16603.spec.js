@@ -109,6 +109,19 @@ test('FR-01 the field home: greeting band, today\'s tasks from the records, quic
   expect(errors).toEqual([]);
 });
 
+test('FR-01 the field home on a desktop: the same band, cards and tiles, laid out wide', async ({ browser, request }, info) => {
+  test.skip(info.project.name !== 'desktop', 'the desktop');
+  const w = await world(request, 'FT5');
+  const { page } = await open(browser, info, w.c, 'SE', 'e2e-se-ft5', '/field');
+  const errors = watch(page);
+  await expect(page.getByTestId('field-band').getByRole('heading', { level: 1 })).toContainText(/Good (morning|afternoon|evening), e2e-se-ft5/);
+  await expect(page.getByTestId('field-today-dpr')).toHaveAttribute('data-count', '1');
+  await expect(page.getByTestId('field-tile-dpr')).toBeVisible();
+  expect(await overflow(page)).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: `${OUT}/after-field-home-desktop.png`, fullPage: true });
+  expect(errors).toEqual([]);
+});
+
 test('T-03 FR-07 the field pages in Telugu: Telugu text, no missing key, the Telugu typeface, nothing scrolls sideways at 360 px', async ({ browser, request }, info) => {
   test.skip(info.project.name !== 'mobile', 'the phone');
   test.setTimeout(120_000);
