@@ -8,7 +8,7 @@ export default {
     'pager.summary': '{total} {noun}, page {page} of {pages}',
   },
   shell: {
-    'page.loading': 'Opening the page', 'page.loadFailedTitle': 'This page could not be opened', 'page.loadFailedBody': 'Its part of the application could not be fetched. A newer version may have been released: reload to use it.', 'page.loadFailedOffline': 'You are offline and this page was not kept on this device. Try again when you have a connection.', 'page.retry': 'Try again', 'page.reload': 'Reload',
+    'page.loading': 'Opening the page', 'page.loadFailedTitle': 'This page could not be opened', 'page.loadFailedBody': 'Its part of the application could not be fetched. A newer version may have been released: reload to use it.', 'page.loadFailedOffline': 'You are offline and this page was not kept on this device. Try again when you have a connection.', 'page.reload': 'Reload',
     skip: 'Skip to content', 'menu.open': 'Open menu', 'menu.close': 'Close menu', 'menu.expand': 'Expand menu', 'menu.collapse': 'Collapse menu', 'menu.loading': 'Loading the menu', 'menu.error': 'The menu could not be loaded',
     'brand.aria': 'ERP home', 'search.button': 'Search or go to…', 'search.aria': 'Search or go to', 'quickCreate.label': 'Quick create', 'quickCreate.title': 'Create', 'quickCreate.menu': 'Create',
     'bell.waiting_one': '{count} approval waiting for you', 'bell.waiting_other': '{count} approvals waiting for you', 'bell.none': 'No approvals waiting for you', 'bell.title': 'Approvals waiting for you',

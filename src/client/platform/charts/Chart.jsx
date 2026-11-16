@@ -248,7 +248,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
   if (saves && !drawAnyway) {
     return (
       <figure className="ch ch-as-table" data-chart={type} data-testid="chart-as-table">
-        <div className="table-scroll">{rowsTable}</div>
+        <div className="table-scroll" data-no-cards="">{rowsTable}</div>
         <figcaption className="ch-foot">
           <span className="muted">Shown as a table to save data.</span>
           <span className="ch-export">
@@ -271,7 +271,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
       <figcaption className="ch-foot">
         <details className="ch-table">
           <summary>View as table</summary>
-          <div className="table-scroll">{rowsTable}</div>
+          <div className="table-scroll" data-no-cards="">{rowsTable}</div>
         </details>
         <span className="ch-export">
           <button type="button" className="btn btn-small" onClick={() => downloadCsv(`${exportName}.csv`, `\uFEFF${toCsv(table)}`)}>CSV</button>

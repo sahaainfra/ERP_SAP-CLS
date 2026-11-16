@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// Development-header mode (port 3100). Part 166.4 in the browser (ff.perf.p16604 is ON in test):
+// Development-header mode (port 3100). The design-system pages are the system administrator's. Part 166.4 in the browser (ff.perf.p16604 is ON in test):
 //  FR-01 a page's code is fetched when the page is opened, not with the first download; the field home fetches the bottom bar's pages once idle;
 //        a page whose code cannot be fetched says so and offers to try again;
 //  FR-03 low-bandwidth mode draws charts as their tables;
@@ -35,10 +35,14 @@ function errorsOf(page) {
   return errors;
 }
 
+// a page's request answered by the service worker is not seen (nor routed) by the page: these tests watch the network, so no worker
+test.describe('the network of a page', () => {
+  test.use({ serviceWorkers: 'block' });
+
 test('FR-01 T-03 the first screen fetches the shell and its own page only; another page\'s code comes when it is opened', async ({ page }) => {
   const seen = scripts(page);
   const errors = errorsOf(page);
-  await open(page, { user: 'e2e-perf-pm', roles: 'PM', path: '/home' });
+  await open(page, { user: 'e2e-perf-admin', roles: 'SYSADM', path: '/home' });
   await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
   expect(seen.some((f) => /^LaunchpadPage-/.test(f)), 'the home page\'s own code').toBe(true);
   for (const other of ['ProjectsPage-', 'GanttPage-', 'DprEntryPage-', 'PagePatternsPage-']) expect(seen.some((f) => f.startsWith(other)), `${other} is not fetched for Home`).toBe(false);
@@ -49,9 +53,9 @@ test('FR-01 T-03 the first screen fetches the shell and its own page only; anoth
   expect(errors).toEqual([]);
 });
 
-test('FR-01 a page whose code cannot be fetched says so; trying again opens it', async ({ page }, info) => {
+test('FR-01 a page whose code cannot be fetched says so; a reload opens it', async ({ page }, info) => {
   const errors = errorsOf(page);
-  await open(page, { user: 'e2e-perf-pm2', roles: 'PM', path: '/home' });
+  await open(page, { user: 'e2e-perf-admin2', roles: 'SYSADM', path: '/home' });
   await expect(page.getByRole('heading', { name: 'Home', level: 1 })).toBeVisible();
   await page.route(/\/assets\/PagePatternsPage-[^/]+\.js$/, (route) => route.abort('internetdisconnected'));
   await goInApp(page, '/admin/design-system/patterns');
@@ -61,7 +65,7 @@ test('FR-01 a page whose code cannot be fetched says so; trying again opens it',
   await expect(failed).toContainText('A newer version may have been released');
   await shot(page, info, 'page-load-failed');
   await page.unroute(/\/assets\/PagePatternsPage-[^/]+\.js$/);
-  await failed.getByRole('button', { name: 'Try again' }).click();
+  await failed.getByRole('button', { name: 'Reload' }).click();
   await expect(page.getByRole('heading', { name: 'Page Patterns', level: 1 })).toBeVisible();
   await expect(page.getByTestId('page-load-failed')).toHaveCount(0);
   expect(errors.filter((e) => !/PagePatternsPage|dynamically imported module|Importing a module script/.test(e))).toEqual([]);
@@ -80,7 +84,7 @@ test('FR-01 on a phone the field home fetches the code of the bottom bar\'s page
 });
 
 test('FR-03 in low-bandwidth mode a chart is drawn as its table, and the chart only on request', async ({ page }, info) => {
-  await open(page, { user: 'e2e-perf-lb', roles: 'PM', path: '/admin/design-system/patterns', lowbw: true });
+  await open(page, { user: 'e2e-perf-lb', roles: 'SYSADM', path: '/admin/design-system/patterns', lowbw: true });
   await expect(page.getByRole('heading', { name: 'Page Patterns', level: 1 })).toBeVisible();
   const tables = page.getByTestId('chart-as-table');
   await expect(tables.first()).toBeVisible();
@@ -98,6 +102,8 @@ test('FR-03 in low-bandwidth mode a chart is drawn as its table, and the chart o
   await expect(page.getByRole('heading', { name: 'Page Patterns', level: 1 })).toBeVisible();
   await expect(page.getByTestId('chart-as-table')).toHaveCount(0);
   expect(await page.locator('figure.ch svg.ch-svg').count()).toBeGreaterThanOrEqual(2);
+});
+
 });
 
 test('FR-04 "A new version is ready — Reload": the half-filled form is saved as a draft first and offered back after the reload', async ({ page, request }, info) => {

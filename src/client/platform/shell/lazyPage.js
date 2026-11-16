@@ -20,6 +20,7 @@ export function lazyPage(load, name = 'default') {
     }).catch((err) => { pending = null; throw err; });
     return pending;
   };
+  // (a failed fetch is not retried in place: the browser remembers the failed script, React the failed lazy(); RoutePage offers a reload)
   const Page = lazy(preload);
   Object.assign(Page, { preload, lazyPage: true, displayName: `Lazy(${name})` });
   return Page;
@@ -27,5 +28,6 @@ export function lazyPage(load, name = 'default') {
 
 /** Fetch the code of these routes' pages in the background; a failure is ignored (the page fetches again when it is opened). */
 export function preloadRoutes(routes) {
+  if (globalThis.navigator?.onLine === false) return; // a fetch that fails is remembered by the browser for this page view: not while offline
   for (const r of routes) if (typeof r?.Page?.preload === 'function') r.Page.preload().catch(() => null);
 }

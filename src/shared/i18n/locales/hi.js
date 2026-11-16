@@ -8,7 +8,7 @@ export default {
     'pager.summary': '{total} {noun}, पृष्ठ {page} / {pages}',
   },
   shell: {
-    'page.loading': 'पेज खुल रहा है', 'page.loadFailedTitle': 'यह पेज नहीं खुल सका', 'page.loadFailedBody': 'एप्लिकेशन का यह भाग लाया नहीं जा सका। शायद नया संस्करण आ गया है: इस्तेमाल करने के लिए रीलोड करें।', 'page.loadFailedOffline': 'आप ऑफ़लाइन हैं और यह पेज इस डिवाइस पर रखा नहीं गया था। कनेक्शन मिलने पर फिर कोशिश करें।', 'page.retry': 'फिर कोशिश करें', 'page.reload': 'रीलोड करें',
+    'page.loading': 'पेज खुल रहा है', 'page.loadFailedTitle': 'यह पेज नहीं खुल सका', 'page.loadFailedBody': 'एप्लिकेशन का यह भाग लाया नहीं जा सका। शायद नया संस्करण आ गया है: इस्तेमाल करने के लिए रीलोड करें।', 'page.loadFailedOffline': 'आप ऑफ़लाइन हैं और यह पेज इस डिवाइस पर रखा नहीं गया था। कनेक्शन मिलने पर फिर कोशिश करें।', 'page.reload': 'रीलोड करें',
     skip: 'सीधे मुख्य सामग्री पर जाएँ', 'menu.open': 'मेनू खोलें', 'menu.close': 'मेनू बंद करें', 'menu.expand': 'मेनू फैलाएँ', 'menu.collapse': 'मेनू समेटें', 'menu.loading': 'मेनू लोड हो रहा है', 'menu.error': 'मेनू लोड नहीं हो सका',
     'brand.aria': 'ERP होम', 'search.button': 'खोजें या कहीं जाएँ…', 'search.aria': 'खोजें या कहीं जाएँ', 'quickCreate.label': 'त्वरित निर्माण', 'quickCreate.title': 'बनाएँ', 'quickCreate.menu': 'बनाएँ',
     'bell.waiting_one': '{count} स्वीकृति आपकी प्रतीक्षा में है', 'bell.waiting_other': '{count} स्वीकृतियाँ आपकी प्रतीक्षा में हैं', 'bell.none': 'कोई स्वीकृति आपकी प्रतीक्षा में नहीं है', 'bell.title': 'आपकी प्रतीक्षा में स्वीकृतियाँ',

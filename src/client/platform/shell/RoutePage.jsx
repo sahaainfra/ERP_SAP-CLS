@@ -7,8 +7,9 @@ import { pwa } from '../device/pwa.js';
 import { isChunkError } from './lazyPage.js';
 
 // Draws the page of a route (part 166.4, FR-01). A page's code arrives with its first opening: until then a skeleton holds the page's place (one
-// status region, no layout jump), and a fetch that fails, offline or after a release removed the old file, says so and offers to try again or to
-// reload into the current version; open drafts are saved first (FR-04). Any other error of the page is not caught here.
+// status region, no layout jump), and a fetch that fails, offline or after a release removed the old file, says so and offers to reload: the
+// browser remembers a failed script for the life of the page, so only a reload fetches it again (into the current version, open drafts saved
+// first with the flag, FR-04). Any other error of the page is not caught here.
 
 function PageLoadFailed({ offline, onRetry }) {
   const t = useT('shell');
@@ -18,8 +19,7 @@ function PageLoadFailed({ offline, onRetry }) {
       <div className="state state-error fb-error" role="alert">
         <p><Icon name="erp.state.exception" size={20} /> {offline ? t('page.loadFailedOffline') : t('page.loadFailedBody')}</p>
         <div className="actions-row">
-          <button type="button" className="btn" onClick={onRetry}>{t('page.retry')}</button>
-          <button type="button" className="btn btn-primary" onClick={() => pwa.applyUpdate()}>{t('page.reload')}</button>
+          <button type="button" className="btn btn-primary" onClick={onRetry}>{t('page.reload')}</button>
         </div>
       </div>
     </div>
@@ -32,7 +32,7 @@ class ChunkBoundary extends Component {
   componentDidUpdate(prev) { if (prev.path !== this.props.path && (this.state.failed || this.state.other)) this.setState({ failed: false, other: null }); }
   render() {
     if (this.state.other) throw this.state.other; // not a missing script: handled as before, above this boundary
-    if (this.state.failed) return <PageLoadFailed offline={typeof navigator !== 'undefined' && navigator.onLine === false} onRetry={() => this.setState({ failed: false })} />;
+    if (this.state.failed) return <PageLoadFailed offline={typeof navigator !== 'undefined' && navigator.onLine === false} onRetry={() => pwa.applyUpdate()} />;
     return this.props.children;
   }
 }

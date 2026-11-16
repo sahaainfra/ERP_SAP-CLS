@@ -11,11 +11,13 @@ export const IMMUTABLE = 'public, max-age=31536000, immutable';
 
 /** Which pre-compressed copy to send for an Accept-Encoding header: 'br', 'gzip' or null (q=0 refuses one). */
 export function pickEncoding(acceptEncoding) {
-  const offered = new Map(String(acceptEncoding ?? '').split(',').map((p) => {
-    const [name, ...params] = p.trim().toLowerCase().split(';');
+  /** @type {Map<string, number>} */
+  const offered = new Map();
+  for (const part of String(acceptEncoding ?? '').split(',')) {
+    const [name, ...params] = part.trim().toLowerCase().split(';');
     const q = params.map((x) => x.trim()).find((x) => x.startsWith('q='));
-    return [name, q ? Number(q.slice(2)) : 1];
-  }).filter(([n]) => n));
+    if (name) offered.set(name, q ? Number(q.slice(2)) : 1);
+  }
   const ok = (n) => (offered.get(n) ?? (offered.has('*') ? offered.get('*') : 0)) > 0;
   if (ok('br')) return 'br';
   if (ok('gzip')) return 'gzip';
