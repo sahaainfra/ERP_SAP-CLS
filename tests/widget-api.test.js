@@ -223,8 +223,12 @@ test('FR-03 T-03 a person\'s own copy of a dashboard is kept on the server, foll
   assert.ok(!system.layout.some((i) => i.widget === 'approvals.timeliness'), 'a widget the role may not use is left out');
   assert.ok(system.omitted >= 1);
   // the list of dashboards: the register's overview needs the register's right
-  assert.deepEqual((await api.call('GET', `${U}/dashboards`, pm)).json.data.map((d) => d.code), ['my-work', 'requests-overview']);
-  assert.deepEqual((await api.call('GET', `${U}/dashboards`, emp)).json.data.map((d) => d.code), ['my-work']);
+  // the overview pages of part 166.5 (ov-*) and Home insights are listed too, each for those who may open its page
+  const own = (rows) => rows.map((d) => d.code).filter((c) => !c.startsWith('ov-') && c !== 'home-insights');
+  const pmList = (await api.call('GET', `${U}/dashboards`, pm)).json.data.map((d) => d.code);
+  assert.deepEqual(own((await api.call('GET', `${U}/dashboards`, pm)).json.data), ['my-work', 'requests-overview']);
+  assert.ok(pmList.includes('home-insights') && pmList.includes('ov-qs') && !pmList.includes('ov-hr'), pmList.join(','));
+  assert.deepEqual(own((await api.call('GET', `${U}/dashboards`, emp)).json.data), ['my-work']);
   assert.equal((await api.call('GET', `${U}/dashboards/requests-overview`, emp)).status, 403);
   assert.equal((await api.call('GET', `${U}/dashboards/nothing-here`, pm)).status, 404);
   // the person changes their layout on one device

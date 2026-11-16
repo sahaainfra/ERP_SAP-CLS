@@ -8,6 +8,7 @@ import { procOf } from '../proc/index.js';
 import { plantOf } from '../plant/index.js';
 import { employeesOf } from '../hr/employees.js';
 import { budOf } from '../bud/budgets.js';
+import { notificationCentreOf } from '../eng/notifications.js';
 
 // Part 166.5: the overview pages. Each module dashboard of parts 01–166 is drawn as cards on the dashboard framework of 03.07 (a dashboard code,
 // widgets in `ui_widgets`, a provider here per widget). A card never computes a figure of its own: its provider calls the service the old page
@@ -24,7 +25,9 @@ function once(key, fn) {
   if (hit) { if (hit.error) throw hit.error; return hit.value; }
   try { const value = fn(); memo.set(key, { at: now, value }); return value; } catch (error) { memo.set(key, { at: now, error }); throw error; }
 }
-const keyOf = (dash, ctx) => `${dash}|${ctx.actor.companyId}|${ctx.actor.user}|${(ctx.actor.roles ?? []).join(',')}|${JSON.stringify(ctx.filters ?? {})}`;
+// total_changes() moves with every write on the database: a card read after an approval (from the to-do card) never gets the figures from before it
+const writes = (db) => db.prepare('SELECT total_changes() AS n').get().n;
+const keyOf = (dash, ctx) => `${dash}|${writes(ctx.db)}|${ctx.actor.companyId}|${ctx.actor.user}|${(ctx.actor.roles ?? []).join(',')}|${JSON.stringify(ctx.filters ?? {})}`;
 const pid = (ctx) => ctx.filters?.projectId ?? undefined;
 const period = (ctx) => (ctx.filters?.from && ctx.filters?.to ? { from: ctx.filters.from, to: ctx.filters.to } : {});
 const num = (v) => (v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v));
@@ -36,8 +39,13 @@ const withQuery = (route, q) => {
   const s = p.toString();
   return `${path}${s ? `?${s}` : ''}`;
 };
-/** A KPI card's data in the framework's shape. */
-const kpi = (value, { unit = '', kind, subtitle, target = null, status = 'neutral', note = null, drill = null, previous = null, trendPct = null, source, masked = false } = {}) => ({ value: num(value) ?? 0, unit, kind, subtitle, target: num(target), status, note, drill, previous, trendPct, source, masked });
+/**
+ * A KPI card's data in the framework's shape.
+ * @typedef {{ unit?: string, kind?: string, subtitle?: string, target?: any, status?: string, note?: any, drill?: any, previous?: any, trendPct?: any, source?: string, masked?: boolean }} KpiOptions
+ * @param {any} value
+ * @param {KpiOptions} [options]
+ */
+const kpi = (value, { unit = '', kind = undefined, subtitle = undefined, target = null, status = 'neutral', note = null, drill = null, previous = null, trendPct = null, source = undefined, masked = false } = {}) => ({ value: num(value) ?? 0, unit, kind, subtitle, target: num(target), status, note, drill, previous, trendPct, source, masked });
 const TONE = { good: 'green', ok: 'green', green: 'green', bad: 'red', red: 'red', warn: 'amber', amber: 'amber', attention: 'amber', neutral: 'neutral' };
 const tone = (s) => TONE[String(s ?? '').toLowerCase()] ?? 'neutral';
 
@@ -53,6 +61,15 @@ function todo(ctx) {
     })),
     total: list.total, drill: '/workflow/inbox', source: 'Workflow engine (04.01): my open tasks',
   };
+}
+
+/** The latest notifications of the person with their time (the feed card), from the notification centre (04.06). */
+function feed(ctx) {
+  const centre = notificationCentreOf(ctx.db)?.centre;
+  if (!centre) return { rows: [], total: 0, drill: '/notifications', source: 'Notification centre (04.06)' };
+  const list = centre.list(ctx.actor, { state: 'inbox', limit: 8 });
+  const when = (iso) => new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
+  return { rows: list.rows.map((n) => ({ id: n.id, title: n.title, subtitle: `${when(n.at)}${n.read ? '' : ' · new'}`, drill: n.link ?? '/notifications' })), total: list.total, drill: '/notifications', source: 'Notification centre (04.06)' };
 }
 
 /**
@@ -172,9 +189,9 @@ export const OVERVIEWS = [
     source: 'Budget, ledger report service (12.03)',
     read: (ctx) => (pid(ctx) ? once(keyOf('ov-budget', ctx), () => budOf(ctx.db).ledger.report(ctx.actor, { projectId: pid(ctx), by: 'wbs' })) : null),
     cards: [
-      { code: 'ov.budget.totals', title: 'Budget, committed and actual', type: 'bar', w: 8, h: 2, drill: '/bud/ledger', map: (d) => (d ? budTotals(d) : { categories: [], series: [], note: 'Choose a project in the filters above.' }) },
-      { code: 'ov.budget.available', title: 'Budget still available', type: 'kpi', w: 4, h: 1, drill: '/bud/ledger', map: (d, ctx) => (d ? budAvailable(d, ctx) : kpi(0, { subtitle: 'Choose a project in the filters above', status: 'neutral' })) },
-      { code: 'ov.budget.top_overrun', title: 'Lines committed beyond their budget', type: 'topn', w: 4, h: 2, drill: '/bud/ledger', map: (d, ctx) => (d ? budOverruns(d, ctx) : { kind: 'money', rows: [], emptyTitle: 'Choose a project', emptyText: 'The ledger is read for one project at a time.' }) },
+      { code: 'ov.budget.totals', title: 'Budget, committed and actual', type: 'bar', w: 8, h: 2, drill: '/bud/ledger', map: (d) => (d ? budTotals(d) : { categories: [], series: [] }) },
+      { code: 'ov.budget.available', title: 'Budget still available', type: 'kpi', w: 4, h: 1, drill: '/bud/ledger', map: (d, ctx) => (d ? budAvailable(d, ctx) : NO_PROJECT) },
+      { code: 'ov.budget.top_overrun', title: 'Lines committed beyond their budget', type: 'topn', w: 4, h: 2, drill: '/bud/ledger', map: (d, ctx) => (d ? budOverruns(d, ctx) : { kind: 'money', rows: [], emptyTitle: 'No project chosen', emptyText: 'The ledger is read for one project: choose your working project, or a project in the filters.' }) },
     ],
   },
 ];
@@ -183,21 +200,24 @@ export const OVERVIEWS = [
 export const HOME = {
   code: 'home-insights', name: 'Home insights',
   roles: {
-    PM: ['ov.todo.mine', 'ov.qs.unbilled_wip', 'ov.budget.available', 'ov.qa.open_ir', 'ov.hse.safe_hours', 'ov.hse.ltifr'],
-    CM: ['ov.todo.mine', 'ov.qa.open_ir', 'ov.hse.safe_hours', 'ov.hse.ltifr', 'ov.budget.available'],
-    QS: ['ov.todo.mine', 'ov.qs.certified_not_billed', 'ov.qs.unbilled_wip', 'ov.qs.queues'],
-    COMMGR: ['ov.todo.mine', 'ov.qs.certified_not_billed', 'ov.qs.margin', 'ov.tower.outstanding'],
-    SK: ['ov.todo.mine', 'ov.stores.below_reorder', 'ov.stores.pending', 'ov.stores.reorder_list'],
-    STOREMGR: ['ov.todo.mine', 'ov.stores.below_reorder', 'ov.stores.value', 'ov.stores.reorder_list'],
-    HRMGR: ['ov.todo.mine', 'ov.hr.headcount', 'ov.hr.joiners', 'ov.hr.pending'],
-    HSEE: ['ov.todo.mine', 'ov.hse.safe_hours', 'ov.hse.ltifr', 'ov.hse.observations'],
-    QCMGR: ['ov.todo.mine', 'ov.qa.open_ir', 'ov.qa.exceptions'],
-    PROCMGR: ['ov.todo.mine', 'ov.proc.open_prs', 'ov.proc.overdue', 'ov.proc.queues'],
-    PLANTMGR: ['ov.todo.mine', 'ov.plant.utilisation', 'ov.plant.breakdown', 'ov.plant.expiring'],
-    DIR: ['ov.todo.mine', 'ov.tower.outstanding', 'ov.tower.margin', 'ov.qs.unbilled_wip', 'ov.hse.ltifr', 'ov.proc.spend_fy'],
+    PM: ['ov.todo.mine', 'ov.qs.unbilled_wip', 'ov.budget.available', 'ov.qa.open_ir', 'ov.hse.safe_hours', 'ov.hse.ltifr', 'ov.feed.notifications', 'calendar.month', 'actions.quick'],
+    CM: ['ov.todo.mine', 'ov.qa.open_ir', 'ov.hse.safe_hours', 'ov.hse.ltifr', 'ov.budget.available', 'ov.feed.notifications', 'calendar.month'],
+    QS: ['ov.todo.mine', 'ov.qs.certified_not_billed', 'ov.qs.unbilled_wip', 'ov.qs.queues', 'ov.feed.notifications', 'actions.quick'],
+    COMMGR: ['ov.todo.mine', 'ov.qs.certified_not_billed', 'ov.qs.margin', 'ov.tower.outstanding', 'ov.feed.notifications'],
+    SK: ['ov.todo.mine', 'ov.stores.below_reorder', 'ov.stores.pending', 'ov.stores.reorder_list', 'ov.feed.notifications', 'actions.quick'],
+    STOREMGR: ['ov.todo.mine', 'ov.stores.below_reorder', 'ov.stores.value', 'ov.stores.reorder_list', 'ov.feed.notifications'],
+    HRMGR: ['ov.todo.mine', 'ov.hr.headcount', 'ov.hr.joiners', 'ov.hr.pending', 'ov.feed.notifications'],
+    HSEE: ['ov.todo.mine', 'ov.hse.safe_hours', 'ov.hse.ltifr', 'ov.hse.observations', 'ov.feed.notifications', 'calendar.month'],
+    QCMGR: ['ov.todo.mine', 'ov.qa.open_ir', 'ov.qa.exceptions', 'ov.feed.notifications', 'calendar.month'],
+    PROCMGR: ['ov.todo.mine', 'ov.proc.open_prs', 'ov.proc.overdue', 'ov.proc.queues', 'ov.feed.notifications'],
+    PLANTMGR: ['ov.todo.mine', 'ov.plant.utilisation', 'ov.plant.breakdown', 'ov.plant.expiring', 'ov.feed.notifications'],
+    DIR: ['ov.todo.mine', 'ov.tower.outstanding', 'ov.tower.margin', 'ov.qs.unbilled_wip', 'ov.hse.ltifr', 'ov.proc.spend_fy', 'ov.feed.notifications'],
   },
 };
-export const TODO_CARD = { code: 'ov.todo.mine', title: 'Waiting for my decision', type: 'todo', w: 6, h: 2, drill: '/workflow/inbox', permission: 'self', module: 'eng' };
+export const TODO_CARD = { code: 'ov.todo.mine', title: 'Waiting for my decision', type: 'todo', w: 6, h: 2, drill: '/workflow/inbox', permission: 'self', module: 'eng', description: 'The approvals and tasks waiting for your decision, with Approve and Return (workflow engine, 04.01).' };
+export const FEED_CARD = { code: 'ov.feed.notifications', title: 'Latest notifications', type: 'alerts', w: 6, h: 2, drill: '/notifications', permission: 'self', module: 'eng', description: 'Your latest notifications with their time (notification centre, 04.06).' };
+/** Cards of no overview page: the to-do card and the notification feed. */
+export const STANDALONE = [TODO_CARD, FEED_CARD];
 
 // ---- helpers of the maps ----
 function qsKpi(d, key) {
@@ -220,6 +240,8 @@ function hrTile(d, key) {
   return kpi(t.value, { subtitle: `people · ${d.period.from} to ${d.period.to}`, note: t.hint ?? null, status: tone(t.tone), drill: t.to });
 }
 const paise = (v) => (v === null || v === undefined || v === '' ? 0 : Number(String(v).replace(/,/g, '')) || 0); // the ledger's money is text in rupees
+/** A KPI with nothing to read (no project chosen): an empty state on the card, never a 0 that is not a figure. */
+const NO_PROJECT = { empty: true, emptyTitle: 'No project chosen', emptyText: 'The budget is read for one project: choose your working project, or a project in the filters.', value: null };
 const TOWER_FLAG = { LOSS: 'At a loss', MARGIN_FALLING: 'Margin falling', NO_CVR: 'No cost-value reconciliation', HIGH_RISK: 'High risk' };
 function budTotals(d) {
   const t = d.totals ?? {};
@@ -237,7 +259,7 @@ function budOverruns(d, ctx) {
 }
 
 /** Every card's code, with its overview (for the seed, the tests and the providers). */
-export const allCards = () => [...OVERVIEWS.flatMap((o) => o.cards.map((c) => ({ ...c, overview: o }))), { ...TODO_CARD, overview: null }];
+export const allCards = () => [...OVERVIEWS.flatMap((o) => o.cards.map((c) => ({ ...c, overview: o }))), ...STANDALONE.map((c) => ({ ...c, overview: null }))];
 
 let registered = false;
 /** Register a provider per card. A card reads its overview's service; with the flag OFF the overview pages are not shown, so no card is asked. */
@@ -258,6 +280,7 @@ export function registerOverviewProviders() {
     }
   }
   widgetRegistry.register({ code: TODO_CARD.code, provider: (ctx) => todo(ctx) });
+  widgetRegistry.register({ code: FEED_CARD.code, provider: (ctx) => feed(ctx) });
   roleLayouts.register(HOME.code, Object.fromEntries(Object.entries(HOME.roles).map(([role, codes]) => [role, homeLayout(codes)])));
 }
 
@@ -265,5 +288,7 @@ const byCode = () => new Map(allCards().map((c) => [c.code, c]));
 /** A Home layout of cards: KPIs in a row of four, lists and charts two to a row (S 3 / M 6 on the 12-column grid). */
 export function homeLayout(codes) {
   const cards = byCode();
-  return codes.map((code, i) => { const c = cards.get(code); return { id: `h${i + 1}`, widget: code, w: c.type === 'kpi' ? 3 : 6, h: c.type === 'kpi' ? 1 : 2 }; });
+  // cards of 03.07 used on Home as they are: the calendar of the month (deadlines and inspections) and the quick actions
+  const framework = { 'calendar.month': { type: 'calendar', w: 6, h: 3 }, 'actions.quick': { type: 'actions', w: 6, h: 1 } };
+  return codes.map((code, i) => { const c = cards.get(code) ?? framework[code]; return { id: `h${i + 1}`, widget: code, w: c.w && !cards.has(code) ? c.w : c.type === 'kpi' ? 3 : 6, h: c.h && !cards.has(code) ? c.h : c.type === 'kpi' ? 1 : 2 }; });
 }

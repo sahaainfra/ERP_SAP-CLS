@@ -37,6 +37,7 @@ const deviation = (d) => {
 };
 
 function Kpi({ data, onDrill }) {
+  if (data.empty) return <EmptyState compact title={data.emptyTitle ?? 'Nothing to show'} message={data.emptyText ?? ''} />;
   if (data.masked) return <p className="muted wd-masked"><Icon name="erp.action.lock" size={16} /> Hidden for your role.</p>;
   const up = data.trendPct !== null && data.trendPct !== undefined && data.trendPct >= 0;
   return (

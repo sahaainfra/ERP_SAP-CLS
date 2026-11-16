@@ -2,7 +2,7 @@
 // `ui_widgets` and `ui_dashboards` and the providers in code cannot drift apart (tests/overviews-p16605.test.js checks both ways).
 //   node scripts/overview_seed.mjs            writes migrations/20261211000330_ui_p16605.{up,down}.sql
 import { writeFileSync } from 'node:fs';
-import { OVERVIEWS, TODO_CARD, allCards } from '../src/server/modules/ui/overviews.js';
+import { OVERVIEWS, STANDALONE, allCards } from '../src/server/modules/ui/overviews.js';
 
 const NAME = 'migrations/20261211000330_ui_p16605';
 const q = (v) => (v === null || v === undefined ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`);
@@ -52,15 +52,15 @@ const rebuild = (types) => [
 const cards = allCards();
 const widgetRows = cards.map((c, i) => {
   const o = c.overview;
-  const permission = o ? o.permission : TODO_CARD.permission;
-  const module = o ? o.module : TODO_CARD.module;
-  const description = o ? `${c.title}, read from ${o.source}. Opens ${c.drill}.` : 'The approvals and tasks waiting for your decision, with Approve and Return (workflow engine, 04.01).';
-  return `INSERT OR IGNORE INTO ui_widgets (code, module, title, description, type, data_endpoint, permission_key, default_w, default_h, refresh_sec, drill_route, sort_order, created_by, source_type) VALUES (${q(c.code)}, ${q(module)}, ${q(c.title)}, ${q(description)}, ${q(c.type)}, ${q(`/api/v1/ui/widgets/${c.code}/data`)}, ${q(permission)}, ${c.w}, ${c.h}, ${c.type === 'todo' ? 60 : 300}, ${q(c.drill)}, ${600 + i}, 'migration', 'reference_seed');`;
+  const permission = o ? o.permission : c.permission;
+  const module = o ? o.module : c.module;
+  const description = o ? `${c.title}, read from ${o.source}. Opens ${c.drill}.` : c.description;
+  return `INSERT OR IGNORE INTO ui_widgets (code, module, title, description, type, data_endpoint, permission_key, default_w, default_h, refresh_sec, drill_route, sort_order, created_by, source_type) VALUES (${q(c.code)}, ${q(module)}, ${q(c.title)}, ${q(description)}, ${q(c.type)}, ${q(`/api/v1/ui/widgets/${c.code}/data`)}, ${q(permission)}, ${c.w}, ${c.h}, ${c.type === 'todo' || c.type === 'alerts' ? 60 : 300}, ${q(c.drill)}, ${600 + i}, 'migration', 'reference_seed');`;
 });
 const layout = (cs) => JSON.stringify(cs.map((c, i) => ({ id: `c${i + 1}`, widget: c.code, w: c.w, h: c.h })));
 const dashRows = [
   ...OVERVIEWS.map((o) => `INSERT OR IGNORE INTO ui_dashboards (company_id, code, name, owner_type, owner_ref, permission_key, layout_json, filters_json, is_default, created_by, source_type) VALUES (NULL, ${q(o.code)}, ${q(o.name)}, 'system', 'system', ${q(o.permission)}, ${q(layout(o.cards))}, '{}', 1, 'migration', 'reference_seed');`),
-  `INSERT OR IGNORE INTO ui_dashboards (company_id, code, name, owner_type, owner_ref, permission_key, layout_json, filters_json, is_default, created_by, source_type) VALUES (NULL, 'home-insights', 'Home insights', 'system', 'system', 'self', ${q(layout([TODO_CARD]))}, '{}', 1, 'migration', 'reference_seed');`,
+  `INSERT OR IGNORE INTO ui_dashboards (company_id, code, name, owner_type, owner_ref, permission_key, layout_json, filters_json, is_default, created_by, source_type) VALUES (NULL, 'home-insights', 'Home insights', 'system', 'system', 'self', ${q(layout(STANDALONE))}, '{}', 1, 'migration', 'reference_seed');`,
 ];
 const codes = cards.map((c) => q(c.code)).join(', ');
 const dashCodes = [...OVERVIEWS.map((o) => q(o.code)), "'home-insights'"].join(', ');
