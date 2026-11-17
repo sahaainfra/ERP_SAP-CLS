@@ -130,7 +130,11 @@ test('T-04 cards at phone width without horizontal page scroll; My Exports and t
     await expect(page.getByTestId('list-cards')).toBeVisible();
     await expect(page.locator('.lr-card')).toHaveCount(12);
     await expect(page.getByTestId('list-totals')).toContainText('Total of 12 rows');
+    // with the filter sheet of a phone (ff.ui.p16607) the quick filters are in the sheet
+    const sheetOpen = page.getByTestId('filter-sheet-open');
+    if (await sheetOpen.count()) await sheetOpen.click();
     await page.getByRole('button', { name: 'My records' }).click();
+    if (await sheetOpen.count() && await page.getByTestId('filter-sheet').isVisible()) await page.getByTestId('filter-sheet-close').click();
     await expect(page.getByText('8 requests, page 1 of 1')).toBeVisible();
   } else {
     await expect(page.getByTestId('list-cards')).toHaveCount(0);
