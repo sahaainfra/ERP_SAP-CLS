@@ -9244,3 +9244,55 @@ paths:
     get: { summary: 'Read inv/reconciliations/{id}/print (part 16.10)', tags: [inv], responses: { '200': { description: OK } } }
   /api/v1/inv/in-transit:
     get: { summary: 'Read inv/in-transit (part 16.05)', tags: [inv], responses: { '200': { description: OK } } }
+  /api/v1/ui/field/today:
+    get:
+      summary: The site person's work for today on the phone home (part 166.3)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/ui/doc-flow:
+    get:
+      summary: The document flow of a document (query type, id), each node with kind, number, status, amount and date; a node the person may not open is hidden (part 166.7)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/hr/gates:
+    get:
+      summary: The gates G1–G4 with their state (part 07.14, built in 166.6)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/hr/gates/evidence:
+    get:
+      summary: The evidence a gate criterion can link to (part 07.14)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/hr/gates/{code}:
+    get:
+      summary: One gate with its criteria, evidence and sign-offs (part 07.14)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/hr/gates/{code}/report:
+    get:
+      summary: The gate closure report as a PDF (hr.gate.export; audited) (part 07.14)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/hr/gates/{code}/criteria/{criterion}:
+    post:
+      summary: Review a criterion of a gate (hr.gate.review; audited) (part 07.14)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/hr/gates/{code}/submit:
+    post:
+      summary: Send a gate for sign-off (hr.gate.review; audited) (part 07.14)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/mdm/statutory/lookup:
+    get:
+      summary: The GST rate, TDS section (with Act, legal reference, payment code) and certificate form in force on a date (query date, hsn, nature, purpose) (part 166.8, ff.mdm.p16608)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/mdm/statutory/calendar:
+    get:
+      summary: The statutory due dates of a period with the form of each (part 166.8)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/mdm/statutory/migration-report:
+    get:
+      summary: Draft documents whose tax differs from the master on their own date; approved documents are never listed or changed (part 166.8)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/mdm/statutory/employees/{id}/wages:
+    get:
+      summary: An employee's pay and wages under the Code on Wages for a month (hr.employee.sensitive.view; audited) (part 166.8)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours } }
+  /api/v1/mdm/statutory/employees/{id}/pay:
+    put:
+      summary: Set an employee's pay components from a date (hr.employee.edit; audited) (part 166.8)
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
