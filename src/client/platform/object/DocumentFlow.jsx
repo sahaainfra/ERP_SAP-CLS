@@ -52,6 +52,11 @@ export default function DocumentFlow({ type, id }) {
               ))}
             </ol>
             {q.data.truncated && <p className="muted small">Only the nearest documents are shown.</p>}
+            {q.data.related?.length > 1 && (
+              <nav className="doc-flow-related small" aria-label="Related lists" data-testid="doc-flow-related">
+                <span className="muted">Related lists:</span> {q.data.related.map((r, i) => <span key={r.type}>{i > 0 && ' · '}<a href={r.route} onClick={(e) => { e.preventDefault(); navigateTo(r.route); }}>{r.label}s</a></span>)}
+              </nav>
+            )}
           </>
         )}
       </div>

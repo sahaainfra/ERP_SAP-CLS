@@ -48,6 +48,7 @@ test('T-02 the flow of a purchase order: MR, PR, RFQ, CS, PO, gate entry, GRN an
   assert.equal(Number(String(own.json.data.totalAmount).replace(/,/g, '')), po.amount);
   assert.equal(po.route, `/proc/purchase-orders?id=${w.po}`);
   assert.deepEqual(f.later.map((l) => [l.after, l.label]), [['VINV', 'Payment to the vendor']]);
+  assert.ok(f.related.some((r) => r.type === 'GRN' && r.route === '/inv/grns'), 'related lists');
   assert.match(f.later[0].note, /Not yet available/);
   // links run both ways: the same flow from the material request and from the vendor invoice
   for (const [type, id, role] of [['MR', w.mr, 'PROCMGR'], ['VINV', w.vi, 'ACCMGR']]) {

@@ -109,7 +109,9 @@ export function createDocFlowService({ db }) {
       }).sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type) || String(a.date ?? '').localeCompare(String(b.date ?? '')));
       const keys = new Set(nodes.map((n) => n.key));
       const later = [...new Set(nodes.map((n) => n.type))].flatMap((t) => (LATER[t] ?? []).map((s) => ({ after: t, label: s.label, note: `Not yet available: part ${s.part} adds it` })));
-      return { start: `${type}:${id}`, nodes, edges: edges.filter((e) => keys.has(e.from) && keys.has(e.to)), later, truncated: seen.size >= MAX };
+      // FR-02 "Related apps": the list of each kind of document in the flow the person may open
+      const related = [...new Set(nodes.filter((n) => n.visible).map((n) => n.type))].map((t) => ({ type: t, label: TYPES[t].label, route: TYPES[t].route(0).replace(/\?id=0$/, '') }));
+      return { start: `${type}:${id}`, nodes, edges: edges.filter((e) => keys.has(e.from) && keys.has(e.to)), later, related, truncated: seen.size >= MAX };
     },
   };
 }
