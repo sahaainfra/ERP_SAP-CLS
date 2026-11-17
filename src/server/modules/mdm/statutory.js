@@ -102,7 +102,7 @@ export function createStatutoryService({ db, flags }) {
       const quarter = [6, 9, 12, 3].indexOf(m) + 1; // the financial year's quarters end in June, September, December and March
       const candidates = rows.filter((r) => (r.period_kind === 'MONTH' && (r.period_no === 0 || r.period_no === m)) || (r.period_kind === 'QUARTER' && quarter > 0 && (r.period_no === 0 || r.period_no === quarter)) || (r.period_kind === 'YEAR' && m === 3));
       // a row for a particular period (March) replaces the row for every period of the same purpose and kind; a company's own row replaces the system row of its code
-      candidates.sort((a, b) => (b.period_no > 0) - (a.period_no > 0));
+      candidates.sort((a, b) => Number(b.period_no > 0) - Number(a.period_no > 0));
       for (const r of candidates) {
         const k = `${r.purpose ?? r.code}/${r.period_kind}`; if (seen.has(k) || seen.has(r.code)) continue; seen.add(k); seen.add(r.code);
         let dy = y; let dm = m + r.due_months_after; while (dm > 12) { dm -= 12; dy += 1; }
