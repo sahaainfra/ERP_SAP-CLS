@@ -203,3 +203,6 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .dash-embedded-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--erp-space-3); margin-bottom: var(--erp-space-3); }
 .dash-embedded-head h2 { margin: 0; }
 .dash-embedded-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }
+/* the widget list grew with the overview cards (part 166.5): its select never wider than the screen */
+.dash-add { max-width: 100%; min-width: 0; }
+.dash-add select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }

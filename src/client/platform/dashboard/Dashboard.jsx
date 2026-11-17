@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Component, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { ErrorState, Skeleton } from '../feedback/states.jsx';
 import WidgetBody from './WidgetBody.jsx';
@@ -56,6 +56,13 @@ const SETTINGS = {
   ),
 };
 
+/** A card that fails to draw says so in its own frame; the rest of the page stays (part 166.5). */
+class CardBoundary extends Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? <p className="muted small" role="status" data-testid="card-failed">This card could not be drawn. Refresh it, or open the list behind it.</p> : this.props.children; }
+}
+
 /** Card sizes on the 12-column grid (part 166.5, FR-01): S a quarter, M a half, L two thirds, XL the whole width. */
 export const CARD_SIZES = [['S', 3], ['M', 6], ['L', 8], ['XL', 12]];
 
@@ -76,7 +83,7 @@ function WidgetFrame({ item, widget, filters, presets, edit, index, count, onCha
     body = q.error?.status === 403
       ? <p className="muted wd-masked" role="status"><Icon name="erp.action.lock" size={16} /> {q.error.message}</p>
       : <ErrorState title={`${label} could not be loaded`} error={q.error} onRetry={() => q.refetch()} />;
-  } else body = <WidgetBody widget={widget} result={q.data} onDrill={onDrill} setLocal={setLocal} />;
+  } else body = <CardBoundary key={q.dataUpdatedAt}><WidgetBody widget={widget} result={q.data} onDrill={onDrill} setLocal={setLocal} /></CardBoundary>;
   const viewAll = widget.drillRoute ? withDashFilters(widget.drillRoute, filters) : null;
   const btn = (text, onClick, disabled = false) => <button type="button" className="btn btn-small" aria-label={`${text}: ${label}`} onClick={onClick} disabled={disabled}>{text}</button>;
   return (
