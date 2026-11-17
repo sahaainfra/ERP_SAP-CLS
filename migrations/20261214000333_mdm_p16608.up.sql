@@ -11,15 +11,50 @@ UPDATE mdm_hsn_sac SET effective_to = '2025-09-21', updated_by = 'migration', up
 INSERT OR IGNORE INTO mdm_hsn_sac (code, code_type, description, default_gst_code, reverse_charge, effective_from, created_by, source_type, remarks) VALUES ('2523', 'HSN', 'Portland cement and other hydraulic cements', 'GST18', 0, '2025-09-22', 'migration', 'reference_seed_p16608', 'Notification 9/2025-CT(Rate): 28% to 18% from 22-09-2025 (ADR-624)');
 
 -- S-02 / S-03: the nature of the payment, the Act, the legal reference and the TRACES payment codes on each TDS row; the key becomes section + nature.
-ALTER TABLE mdm_tds_sections ADD COLUMN nature_code TEXT NOT NULL DEFAULT 'OTHER';
-ALTER TABLE mdm_tds_sections ADD COLUMN act_code TEXT NOT NULL DEFAULT 'IT1961' CHECK (act_code IN ('IT1961', 'IT2025'));
-ALTER TABLE mdm_tds_sections ADD COLUMN legal_ref TEXT;
-ALTER TABLE mdm_tds_sections ADD COLUMN payment_code TEXT;
-ALTER TABLE mdm_tds_sections ADD COLUMN payment_code_other TEXT;
+-- (SQLite: the table is rebuilt with the new columns at the end; the 1961 rows are copied and get their nature from their section, the rows of the 2025
+-- Act are inserted below; so a second run gives the same table)
+CREATE TABLE mdm_tds_sections_p16608 (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  company_id INTEGER REFERENCES org_companies (id),
+  section         TEXT    NOT NULL,
+  tax_kind        TEXT    NOT NULL DEFAULT 'TDS' CHECK (tax_kind IN ('TDS', 'TCS')),
+  description     TEXT    NOT NULL,
+  rate_individual INTEGER NOT NULL CHECK (rate_individual >= 0),
+  rate_company    INTEGER NOT NULL CHECK (rate_company >= 0),
+  threshold_single INTEGER NOT NULL DEFAULT 0 CHECK (threshold_single >= 0),
+  threshold_annual INTEGER NOT NULL DEFAULT 0 CHECK (threshold_annual >= 0),
+  effective_from  TEXT    NOT NULL DEFAULT '2000-01-01',
+  effective_to    TEXT,
+  row_status      TEXT    NOT NULL DEFAULT 'ACTIVE' CHECK (row_status IN ('PENDING', 'ACTIVE', 'REJECTED', 'RETIRED')),
+  change_request_id INTEGER REFERENCES mdm_change_requests (id),
+  project_id  INTEGER,
+  site_id     INTEGER,
+  created_by  TEXT,
+  created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_by  TEXT,
+  updated_at  TEXT,
+  version     INTEGER NOT NULL DEFAULT 1,
+  is_active   INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+  deleted_at  TEXT,
+  deleted_by  TEXT,
+  source_type TEXT,
+  source_id   TEXT,
+  remarks     TEXT,
+  nature_code     TEXT    NOT NULL DEFAULT 'OTHER',
+  act_code        TEXT    NOT NULL DEFAULT 'IT1961' CHECK (act_code IN ('IT1961', 'IT2025')),
+  legal_ref       TEXT,
+  payment_code    TEXT,
+  payment_code_other TEXT
+);
+INSERT INTO mdm_tds_sections_p16608 (id, company_id, section, tax_kind, description, rate_individual, rate_company, threshold_single, threshold_annual, effective_from, effective_to, row_status, change_request_id, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks) SELECT id, company_id, section, tax_kind, description, rate_individual, rate_company, threshold_single, threshold_annual, effective_from, effective_to, row_status, change_request_id, project_id, site_id, created_by, created_at, updated_by, updated_at, version, is_active, deleted_at, deleted_by, source_type, source_id, remarks FROM mdm_tds_sections WHERE section NOT LIKE '393%';
+DROP TABLE mdm_tds_sections;
+ALTER TABLE mdm_tds_sections_p16608 RENAME TO mdm_tds_sections;
+CREATE INDEX IF NOT EXISTS ix_mdm_tds_sections_company ON mdm_tds_sections (company_id, row_status);
+CREATE INDEX IF NOT EXISTS ix_mdm_tds_sections_cr ON mdm_tds_sections (change_request_id);
+CREATE INDEX IF NOT EXISTS ix_mdm_tds_sections_tax_kind ON mdm_tds_sections (tax_kind);
 UPDATE mdm_tds_sections SET nature_code = CASE section WHEN '194C' THEN 'CONTRACTOR' WHEN '194J' THEN 'PROFESSIONAL' WHEN '194Q' THEN 'PURCHASE_GOODS' WHEN '194I(a)' THEN 'RENT_PLANT' WHEN '194I(b)' THEN 'RENT_LAND' WHEN '194H' THEN 'COMMISSION' WHEN '206C(1H)' THEN 'SALE_GOODS' ELSE 'OTHER' END;
 UPDATE mdm_tds_sections SET legal_ref = 'Section ' || section || ', Income-tax Act, 1961' WHERE legal_ref IS NULL;
 UPDATE mdm_tds_sections SET payment_code = '94C', payment_code_other = '94C' WHERE section = '194C' AND company_id IS NULL;
-DROP INDEX IF EXISTS ux_mdm_tds_sections_key;
 CREATE UNIQUE INDEX IF NOT EXISTS ux_mdm_tds_sections_key ON mdm_tds_sections (COALESCE(company_id, 0), section, nature_code, effective_from) WHERE row_status IN ('PENDING', 'ACTIVE') AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS ix_mdm_tds_sections_nature ON mdm_tds_sections (nature_code, effective_from);
 -- the 2025 Act (from 01-04-2026): section 393(1) for residents; the rates and thresholds carry over unchanged (ADR-624)
@@ -225,8 +260,8 @@ INSERT OR IGNORE INTO ui_navigation_entries (code, parent_code, kind, placement,
 INSERT OR IGNORE INTO ui_navigation_entries (code, parent_code, kind, placement, label, label_hi, route, icon, permission_key, feature_flag, sort_order, keywords, mobile_visible, onboarding, shortcut, tile, quick_create_label, quick_create_route, created_by, source_type) VALUES ('mdm-common-statutory-calendar', 'g-administration', 'page', 'sidebar', 'Statutory Calendar', 'वैधानिक कैलेंडर', '/admin/master-data/common/statutory-calendar', 'erp.action.settings', 'mdm.record.view', 'ff.mdm.p16608', 414, 'due dates tds return deposit', 0, 0, NULL, 0, NULL, NULL, 'migration', 'reference_seed');
 INSERT OR IGNORE INTO ui_navigation_entries (code, parent_code, kind, placement, label, label_hi, route, icon, permission_key, feature_flag, sort_order, keywords, mobile_visible, onboarding, shortcut, tile, quick_create_label, quick_create_route, created_by, source_type) VALUES ('mdm-common-labour-rules', 'g-administration', 'page', 'sidebar', 'Labour Code Rules', 'श्रम संहिता नियम', '/admin/master-data/common/labour-rules', 'erp.action.settings', 'mdm.record.view', 'ff.mdm.p16608', 415, 'labour codes state rules osh wages', 0, 0, NULL, 0, NULL, NULL, 'migration', 'reference_seed');
 INSERT OR IGNORE INTO ui_navigation_entries (code, parent_code, kind, placement, label, label_hi, route, icon, permission_key, feature_flag, sort_order, keywords, mobile_visible, onboarding, shortcut, tile, quick_create_label, quick_create_route, created_by, source_type) VALUES ('mdm-common-pay-components', 'g-administration', 'page', 'sidebar', 'Pay Components', 'वेतन घटक', '/admin/master-data/common/pay-components', 'erp.action.settings', 'mdm.record.view', 'ff.mdm.p16608', 416, 'wages basic hra allowance code on wages 50%', 0, 0, NULL, 0, NULL, NULL, 'migration', 'reference_seed');
-INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('mdm.statutory', 'mdm', 'Statutory Changes', '/admin/master-data/statutory', '/admin/master-data/statutory', 'REPORT', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the GST rates, TDS sections and forms on a date, the statutory calendar and the documents to review.', 'migration', 'reference_seed');
-INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('mdm.common.tds-forms', 'mdm', 'TDS Forms', '/admin/master-data/common/tds-forms', '/admin/master-data/common/tds-forms', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the certificate and return forms by date.', 'migration', 'reference_seed');
-INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('mdm.common.statutory-calendar', 'mdm', 'Statutory Calendar', '/admin/master-data/common/statutory-calendar', '/admin/master-data/common/statutory-calendar', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the due dates of returns and deposits by period.', 'migration', 'reference_seed');
-INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('mdm.common.labour-rules', 'mdm', 'Labour Code Rules', '/admin/master-data/common/labour-rules', '/admin/master-data/common/labour-rules', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the rules under the four Labour Codes, central and by state, from their dates.', 'migration', 'reference_seed');
-INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('mdm.common.pay-components', 'mdm', 'Pay Components', '/admin/master-data/common/pay-components', '/admin/master-data/common/pay-components', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the pay components and their class under the Code on Wages.', 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('admin.master-data.statutory', 'ui', 'Statutory Changes', '/admin/master-data/statutory', '/admin/master-data/statutory', 'REPORT', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the GST rates, TDS sections and forms on a date, the statutory calendar and the documents to review.', 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('admin.master-data.common.tds-forms', 'ui', 'TDS Forms', '/admin/master-data/common/tds-forms', '/admin/master-data/common/tds-forms', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the certificate and return forms by date.', 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('admin.master-data.common.statutory-calendar', 'ui', 'Statutory Calendar', '/admin/master-data/common/statutory-calendar', '/admin/master-data/common/statutory-calendar', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the due dates of returns and deposits by period.', 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('admin.master-data.common.labour-rules', 'ui', 'Labour Code Rules', '/admin/master-data/common/labour-rules', '/admin/master-data/common/labour-rules', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the rules under the four Labour Codes, central and by state, from their dates.', 'migration', 'reference_seed');
+INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES ('admin.master-data.common.pay-components', 'ui', 'Pay Components', '/admin/master-data/common/pay-components', '/admin/master-data/common/pay-components', 'LIST', 'MIGRATED', 'ACCMGR', '166.8', 'system', '2026-11-17T00:00:00.000Z', '[]', 'Built in part 166.8: the pay components and their class under the Code on Wages.', 'migration', 'reference_seed');
