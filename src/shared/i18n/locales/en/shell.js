@@ -1,0 +1,15 @@
+// English text of the area `shell` (part 03.09; one file per area since part 166.4, D-682).
+export default {
+  'page.loading': 'Opening the page', 'page.loadFailedTitle': 'This page could not be opened', 'page.loadFailedBody': 'Its part of the application could not be fetched. A newer version may have been released: reload to use it.', 'page.loadFailedOffline': 'You are offline and this page was not kept on this device. Try again when you have a connection.', 'page.reload': 'Reload',
+  skip: 'Skip to content', 'menu.open': 'Open menu', 'menu.close': 'Close menu', 'menu.expand': 'Expand menu', 'menu.collapse': 'Collapse menu', 'menu.loading': 'Loading the menu', 'menu.error': 'The menu could not be loaded',
+  'brand.aria': 'ERP home', 'search.button': 'Search or go to…', 'search.aria': 'Search or go to', 'quickCreate.label': 'Quick create', 'quickCreate.title': 'Create', 'quickCreate.menu': 'Create',
+  'bell.waiting_one': '{count} approval waiting for you', 'bell.waiting_other': '{count} approvals waiting for you', 'bell.none': 'No approvals waiting for you', 'bell.title': 'Approvals waiting for you',
+  'bell.unread_one': '{count} unread notification', 'bell.unread_other': '{count} unread notifications', 'bell.none2': 'No unread notifications', 'bell.notifications': 'Notifications', 'bell.readAll': 'Mark all read', 'bell.loading': 'Loading notifications...', 'bell.error': 'Notifications could not be loaded.', 'bell.empty': 'You have no notifications.', 'bell.all': 'See all notifications', 'bell.prefs': 'Preferences',
+  'account.menuFor': 'Account menu for {name}', 'account.menu': 'Account', 'account.profile': 'My profile and preferences', 'account.language': 'Language', 'account.theme': 'Theme', 'account.signOut': 'Sign out',
+  'nav.main': 'Main', 'nav.account': 'Account', 'nav.console': 'Technical Console', 'bottom.aria': 'Quick destinations', 'bottom.home': 'Home', 'bottom.work': 'My Work', 'bottom.tasks': 'Tasks', 'bottom.scan': 'Scan', 'bottom.messages': 'Messages', 'bottom.more': 'More',
+  'fav.add': 'Add to favourites', 'fav.remove': 'Remove from favourites', 'fav.added': '{page} added to your favourites.', 'fav.removed': '{page} removed from your favourites.', 'crumbs.aria': 'You are here',
+  'guard.page': 'This page', 'guard.flagTitle': '{page} is not switched on yet', 'guard.flagBody': 'It is released step by step and is not available for your company yet (feature flag {flag} is OFF). Ask a system administrator when it will be.',
+  'guard.home': 'Go to Home', 'guard.contextTitle': 'Choose a {need} first', 'guard.contextBody': '{page} works on one {need} at a time. Pick one in the working context at the top of the page.', 'guard.contextAction': 'Choose a {need}',
+  'need.project': 'project', 'need.site': 'site', 'guard.missingTitle': 'That page does not exist', 'guard.missingBody': 'There is nothing at {path}. It may have been renamed.',
+  'shortcuts.title': 'Keyboard shortcuts', 'shortcuts.search': 'Search or go to a page', 'shortcuts.list': 'This list', 'shortcuts.then': 'then',
+};

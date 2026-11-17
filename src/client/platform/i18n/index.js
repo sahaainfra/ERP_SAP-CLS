@@ -1,5 +1,11 @@
-import { useMemo, useSyncExternalStore } from 'react';
-import en from '../../../shared/i18n/locales/en.js';
+import { use, useMemo, useSyncExternalStore } from 'react';
+import common from '../../../shared/i18n/locales/en/common.js';
+import ess from '../../../shared/i18n/locales/en/ess.js';
+import field from '../../../shared/i18n/locales/en/field.js';
+import format from '../../../shared/i18n/locales/en/format.js';
+import notify from '../../../shared/i18n/locales/en/notify.js';
+import palette from '../../../shared/i18n/locales/en/palette.js';
+import shell from '../../../shared/i18n/locales/en/shell.js';
 import { LANGS, cleanLang, createTranslator } from '../../../shared/i18n/catalogue.js';
 import { amountInWords } from '../../../shared/i18n/words.js';
 import { DEFAULT_PREFS, formatCompact, formatDate, formatDateTime, formatMoney, formatNumber, formatPercent, formatQuantity, formatTime } from '../../../shared/i18n/format.js';
@@ -12,7 +18,20 @@ const clean = cleanLang;
 
 // Part 166.4: English is in the first download; Hindi and Telugu are fetched the first time a screen is in that language (the Hindi text alone is
 // about as large as the rest of the shell). Until the language has arrived the screen stays in English, then draws again in it.
-const BUILT_IN = { en, hi: null, te: null };
+// D-682: of the English text only the areas of the shell and the field home are in the first download (about 22 KB of 570 KB); the area of a module
+// is fetched the first time a screen asks for it (useT suspends the page meanwhile, inside the page's own skeleton), and the remaining areas once the
+// first screen is drawn, so text asked for outside a screen (a toast in a handler) is there too.
+const BUILT_IN = { en: { common, ess, field, format, notify, palette, shell }, hi: null, te: null };
+const AREA_LOADERS = Object.fromEntries(Object.entries(import.meta.glob('../../../shared/i18n/locales/en/*.js')).map(([path, load]) => [path.replace(/^.*\/|\.js$/g, ''), load]));
+const areaLoading = {};
+/** The English text of one area: resolves once it is here (at once for an area of the first download or one without a file). */
+export function loadArea(ns) {
+  if (BUILT_IN.en[ns] || !AREA_LOADERS[ns]) return Promise.resolve(true);
+  areaLoading[ns] ??= AREA_LOADERS[ns]().then((m) => { BUILT_IN.en = { ...BUILT_IN.en, [ns]: m.default }; emit(); return true; }).catch(() => { areaLoading[ns] = null; return false; });
+  return areaLoading[ns];
+}
+/** Fetch every English area not yet here (after the first screen; a failure is fetched again when a screen asks). */
+export const loadAllAreas = () => Promise.all(Object.keys(AREA_LOADERS).map(loadArea));
 const LOADERS = { hi: () => import('../../../shared/i18n/locales/hi.js'), te: () => import('../../../shared/i18n/locales/te.js') };
 const loading = {};
 /** The built-in text of a language: resolves once it is here (at once for English). */
@@ -69,7 +88,7 @@ export const getLang = () => state.lang;
 /** The language and number and hour preference in force, for code outside a component (the date and money helpers of platform/format.js). */
 export const currentPrefs = () => ({ ...DEFAULT_PREFS, ...state.prefs, lang: state.lang });
 /** Translate outside a component (a toast raised in a handler): same text and fallbacks as useT. */
-export const translate = (ns, key, params) => createTranslator({ catalogue: catalogue(), lang: active(), onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) })(ns, key, params);
+export const translate = (ns, key, params) => (loadArea(ns), createTranslator({ catalogue: catalogue(), lang: active(), onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) })(ns, key, params));
 
 /** The label of a registry entry (navigation, field tile, form) in the language of the screens: labelHi / labelTe when there is one, else English. */
 export const labelIn = (item, lang) => (item ? (lang === 'hi' && item.labelHi) || (lang === 'te' && item.labelTe) || item.label : '');
@@ -83,6 +102,7 @@ export function useLang() {
 /** t(key, params) for one area of text: `const t = useT('shell'); t('menu.open')`. Plural forms: t('bell.waiting', { count }). */
 export function useT(ns) {
   useSyncExternalStore(subscribe, snapshot);
+  if (!BUILT_IN.en[ns] && AREA_LOADERS[ns]) use(loadArea(ns)); // the area's English text is fetched once; the page shows its skeleton meanwhile
   const lang = active();
   return useMemo(() => {
     const tr = createTranslator({ catalogue: catalogue(), lang, onMissing: (l, n, k) => missingKeys.add(`${l}.${n}.${k}`) });
@@ -110,3 +130,8 @@ export function useFormat() {
 
 // a screen opened in Hindi or Telugu fetches its text at once (part 166.4)
 if (state.lang !== 'en') loadLanguage(state.lang);
+// the other English areas once the first screen is drawn and the browser is idle (D-682)
+if (typeof window !== 'undefined') {
+  const later = () => (window.requestIdleCallback ?? ((f) => setTimeout(f, 1)))(() => loadAllAreas(), { timeout: 10_000 });
+  if (document.readyState === 'complete') setTimeout(later, 3_000); else window.addEventListener('load', () => setTimeout(later, 3_000), { once: true });
+}

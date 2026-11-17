@@ -17,7 +17,7 @@
     }
     try { sessionStorage.removeItem(KEY); } catch (e) { /* nothing kept */ }
     var root = document.getElementById('root');
-    if (root && !root.firstChild) {
+    if (root && (!root.firstChild || root.querySelector('[data-boot-shell]'))) { // empty, or still the shell drawn by the HTML
       root.innerHTML = '<main id="main" class="state state-error" role="alert"><h1>The application could not be loaded</h1>'
         + '<p>Check the connection, then reload the page.</p></main>';
     }
