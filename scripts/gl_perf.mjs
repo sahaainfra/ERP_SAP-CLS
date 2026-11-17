@@ -1,5 +1,5 @@
 // npm run erp:gl-perf -- [--queries 50] [--journals 100000]
-// Parts 23.01 and 23.02 §14: fills 100 000 posted journals (two lines each: 200 000 lines) over 50 projects and the twelve months of a financial year, then times what the screens ask:
+// Parts 23.01, 23.02 and 23.03 §14: fills 100 000 posted journals (two lines each: 200 000 lines) over 50 projects and the twelve months of a financial year, then times what the screens ask:
 // the journal list (first page, a type and status filter, a deep page), one journal with its lines, the ledger of a busy account (first page, a deep page), the trial
 // balance of the year (whole company, one project), and a save (a draft journal of two lines, checked against the account rules). Prints the query plans.
 // The standard (05_GLOBAL_STANDARDS section 11) is p95 <= 500 ms for a list, <= 300 ms for one record, <= 800 ms for a save.
@@ -10,6 +10,7 @@ import { createBase } from '../src/server/modules/proc/base.js';
 import { bindFin, createFinService } from '../src/server/modules/fin/service.js';
 import { createGlService } from '../src/server/modules/fin/gl.js';
 import { createPostingService } from '../src/server/modules/fin/posting.js';
+import { createApService } from '../src/server/modules/fin/ap.js';
 
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
@@ -83,6 +84,21 @@ time('postings, all, page 200', 500, () => peSvc.postings.list(acc, { pageSize: 
 time('postings summary (counts, reasons)', 500, () => peSvc.postings.summary(acc));
 time('one posting with its preview', 300, (i) => peSvc.postings.get(acc, 1 + ((i * 7919) % 100_000)));
 time('sub-ledger vs GL reconciliation', 500, () => peSvc.reconcile(acc, { asOf: '2027-03-31' }));
+
+// part 23.03 §14: 100 000 AP bills over 500 vendors (a tenth of them MSME), then the list, the TDS of a new bill (the year's prior bills of the vendor), the vendor ledger, the ageing and the MSME report
+console.log('\nFilling 100 000 AP bills...');
+db.exec('BEGIN');
+const vendors = []; for (let v = 1; v <= 500; v += 1) vendors.push(Number(db.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, constitution, pan, msme_category, partner_status, steward_role, created_by) VALUES (1, ?, ?, ?, 'PRIVATE_LIMITED', 'AABCD1234E', ?, 'ACTIVE', 'PROCMGR', 'perf')").run(`V${v}`, `Vendor ${v}`, `V${v}`, v % 10 === 0 ? 'MICRO' : null).lastInsertRowid));
+const insB = db.prepare("INSERT INTO ap_bills (company_id, doc_no, bill_source, source_ref, partner_id, payee_name, bill_date, due_date, msme, msme_due_date, gross_paise, total_paise, tds_nature, tds_base_paise, tds_paise, net_payable_paise, status, created_by) VALUES (1, ?, 'VENDOR_INVOICE', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONTRACTOR', ?, ?, ?, 'APPROVED', 'perf')");
+for (let i = 0; i < 100_000; i += 1) { const v = vendors[i % 500]; const m = 4 + (i % 9); const date = `2026-${String(m).padStart(2, '0')}-${String(1 + (i % 27)).padStart(2, '0')}`; const amt = 100_000 + (i % 5_000_000); const msme = (i % 500) % 10 === 9 ? 1 : 0; insB.run(`APB/${i + 1}`, String(i + 1), v, `Vendor ${(i % 500) + 1}`, date, date, msme, msme ? date : null, amt, amt, amt, Math.round(amt / 50), amt - Math.round(amt / 50)); }
+db.exec('COMMIT'); db.exec('ANALYZE');
+const apSvc = createApService({ db, base: createBase({ db }), gl, flags: { isOn: () => true } });
+time('AP bills list, first page (25)', 500, () => apSvc.bills.list(acc, { pageSize: '25' }));
+time('AP bills, page 300', 500, () => apSvc.bills.list(acc, { pageSize: '25', page: '300' }));
+time('TDS of a new bill (the vendor year counted)', 300, (i) => apSvc.tdsFor(1, { partnerId: vendors[i % 500], nature: 'CONTRACTOR', date: '2026-11-15', basePaise: 5_000_000 }));
+time('vendor ledger (200 bills)', 500, (i) => apSvc.vendorLedger(acc, { partnerId: vendors[i % 500] }));
+time('payables ageing (100 000 bills)', 800, () => apSvc.ageing(acc, { asOf: '2027-01-31' }), 10);
+time('MSME due report', 500, () => apSvc.msmeReport(acc, { asOf: '2026-12-31' }));
 
 console.log('\nQuery plans:');
 const plan = (label, sql, ...p) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(...p)) console.log(`    ${r.detail}`); };

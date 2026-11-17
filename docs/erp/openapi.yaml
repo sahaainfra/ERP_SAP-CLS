@@ -9500,3 +9500,125 @@ paths:
     get:
       summary: "each sub-ledger against its control accounts on a date (part 23.02; fin.posting.view)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/tds-preview:
+    get:
+      summary: "accounts payable /bills/tds-preview (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/payable:
+    get:
+      summary: "accounts payable /bills/payable (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/export:
+    get:
+      summary: "accounts payable /bills/export (part 23.03; fin.bill.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills:
+    get:
+      summary: "accounts payable /bills (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "accounts payable /bills (part 23.03; fin.bill.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}:
+    get:
+      summary: "accounts payable /bills/{id} (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "accounts payable /bills/{id} (part 23.03; fin.bill.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "accounts payable /bills/{id} (part 23.03; fin.bill.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}/submit:
+    post:
+      summary: "accounts payable /bills/{id}/submit (part 23.03; fin.bill.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}/withdraw:
+    post:
+      summary: "accounts payable /bills/{id}/withdraw (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}/cancel:
+    post:
+      summary: "accounts payable /bills/{id}/cancel (part 23.03; fin.bill.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}/hold:
+    post:
+      summary: "accounts payable /bills/{id}/hold (part 23.03; fin.bill.hold)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}/adjust-advance:
+    post:
+      summary: "accounts payable /bills/{id}/adjust-advance (part 23.03; fin.bill.approve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}/history:
+    get:
+      summary: "accounts payable /bills/{id}/history (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/bills/{id}/print:
+    get:
+      summary: "accounts payable /bills/{id}/print (part 23.03; fin.bill.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/debit-notes:
+    get:
+      summary: "accounts payable /debit-notes (part 23.03; fin.debit_note.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "accounts payable /debit-notes (part 23.03; fin.debit_note.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/debit-notes/{id}:
+    get:
+      summary: "accounts payable /debit-notes/{id} (part 23.03; fin.debit_note.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "accounts payable /debit-notes/{id} (part 23.03; fin.debit_note.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "accounts payable /debit-notes/{id} (part 23.03; fin.debit_note.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/debit-notes/{id}/submit:
+    post:
+      summary: "accounts payable /debit-notes/{id}/submit (part 23.03; fin.debit_note.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/debit-notes/{id}/withdraw:
+    post:
+      summary: "accounts payable /debit-notes/{id}/withdraw (part 23.03; fin.debit_note.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/debit-notes/{id}/cancel:
+    post:
+      summary: "accounts payable /debit-notes/{id}/cancel (part 23.03; fin.debit_note.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/debit-notes/{id}/history:
+    get:
+      summary: "accounts payable /debit-notes/{id}/history (part 23.03; fin.debit_note.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/partners:
+    get:
+      summary: "accounts payable /payables/partners (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/vendor-ledger:
+    get:
+      summary: "accounts payable /payables/vendor-ledger (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/statement:
+    get:
+      summary: "accounts payable /payables/statement (part 23.03; fin.bill.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/confirmation:
+    get:
+      summary: "accounts payable /payables/confirmation (part 23.03; fin.bill.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/ageing:
+    get:
+      summary: "accounts payable /payables/ageing (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/msme:
+    get:
+      summary: "accounts payable /payables/msme (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/tds:
+    get:
+      summary: "accounts payable /payables/tds (part 23.03; fin.bill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/payables/{kind}/export:
+    get:
+      summary: "accounts payable /payables/{kind}/export (part 23.03; fin.bill.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

@@ -232,6 +232,8 @@ export function createApService({ db, base, gl, flags }) {
     if (!ea) problems.push({ field: 'expenseAccountId', message: 'Choose the expense account (not a control account).' });
     if (b.projectId && !db.prepare('SELECT 1 FROM org_projects WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(b.projectId), actor.companyId)) problems.push({ field: 'projectId', message: 'The project does not exist.' });
     if (problems.length) throw badRequest('Correct the highlighted fields', problems);
+    // the expense line must satisfy its account's dimension rules (06.05) at save, not only when the last approver posts it
+    if (gl) { const chk = gl.checkLines(actor.companyId, [{ accountId: ea.id, debit: '1', ...(b.projectId ? { projectId: Number(b.projectId) } : {}), ...(b.siteId ? { siteId: Number(b.siteId) } : {}) }, { accountId: apAccount(actor.companyId, p), credit: '1', partnerId: p.id }], { source: 'ENGINE' }); const bad = chk.problems.filter((x) => x.field.startsWith('lines.0.')); if (bad.length) throw badRequest('Correct the highlighted fields', bad.map((x) => ({ field: x.field.endsWith('.accountId') ? 'expenseAccountId' : x.field.replace('lines.0.', ''), message: x.message }))); }
     const gross = paise(b.amount); const gst = paise(b.gst ?? 0); const due = b.dueDate ?? addDays(b.billDate, Number(param(actor.companyId, 'fin.ap.default_credit_days') ?? 30));
     if (due < b.billDate) throw badRequest('Correct the highlighted fields', [{ field: 'dueDate', message: 'The due date is on or after the bill date.' }]);
     const tds = b.tdsNature ? tdsFor(actor.companyId, { partnerId: p.id, nature: b.tdsNature, date: b.billDate, basePaise: gross }) : null;
@@ -367,14 +369,15 @@ export function createApService({ db, base, gl, flags }) {
   }
   function ageing(actor, { asOf }) {
     need(actor, 'fin.bill.view', 'see the ageing'); const on2 = asOf ?? todayIST();
-    const by = new Map(); const tot = { b0: 0, b31: 0, b61: 0, b91: 0, total: 0 };
-    for (const b of db.prepare("SELECT * FROM ap_bills WHERE company_id = ? AND status = 'APPROVED' AND deleted_at IS NULL AND bill_date <= ? AND net_payable_paise - adjusted_paise - paid_paise > 0").all(actor.companyId, on2)) {
-      const o = outstanding(b); const days = daysBetween(b.bill_date, on2); const k = days <= 30 ? 'b0' : days <= 60 ? 'b31' : days <= 90 ? 'b61' : 'b91';
-      const key = b.partner_id ? `p${b.partner_id}` : `e${b.employee_id}`; const r = by.get(key) ?? { partnerId: b.partner_id, payee: b.payee_name, b0: 0, b31: 0, b61: 0, b91: 0, total: 0, bills: 0, overdue: 0 };
-      r[k] += o; r.total += o; r.bills += 1; if (b.due_date < on2) r.overdue += o; by.set(key, r); tot[k] += o; tot.total += o;
-    }
-    const rows = [...by.values()].sort((a, b) => b.total - a.total).map((r) => ({ ...r, b0: rs(r.b0), b31: rs(r.b31), b61: rs(r.b61), b91: rs(r.b91), total: rs(r.total), overdue: rs(r.overdue) }));
-    return { asOf: on2, rows, totals: Object.fromEntries(Object.entries(tot).map(([k, v]) => [k, rs(v)])) };
+    // one pass in SQL: the outstanding of each bill put in its bucket by its age on the date, summed per payee
+    const rows = db.prepare(`SELECT partner_id, employee_id, MAX(payee_name) AS payee, COUNT(*) AS bills,
+        SUM(CASE WHEN age <= 30 THEN o ELSE 0 END) AS b0, SUM(CASE WHEN age BETWEEN 31 AND 60 THEN o ELSE 0 END) AS b31,
+        SUM(CASE WHEN age BETWEEN 61 AND 90 THEN o ELSE 0 END) AS b61, SUM(CASE WHEN age > 90 THEN o ELSE 0 END) AS b91, SUM(o) AS total, SUM(CASE WHEN due_date < :d THEN o ELSE 0 END) AS overdue
+      FROM (SELECT partner_id, employee_id, payee_name, due_date, net_payable_paise - adjusted_paise - paid_paise AS o, CAST(julianday(:d) - julianday(bill_date) AS INTEGER) AS age
+            FROM ap_bills WHERE company_id = :c AND status = 'APPROVED' AND deleted_at IS NULL AND bill_date <= :d AND net_payable_paise - adjusted_paise - paid_paise > 0)
+      GROUP BY partner_id, employee_id ORDER BY total DESC`).all({ c: actor.companyId, d: on2 });
+    const tot = { b0: 0, b31: 0, b61: 0, b91: 0, total: 0 }; for (const r of rows) for (const k of Object.keys(tot)) tot[k] += r[k];
+    return { asOf: on2, rows: rows.map((r) => ({ partnerId: r.partner_id, payee: r.payee, bills: r.bills, b0: rs(r.b0), b31: rs(r.b31), b61: rs(r.b61), b91: rs(r.b91), total: rs(r.total), overdue: rs(r.overdue) })), totals: Object.fromEntries(Object.entries(tot).map(([k, v]) => [k, rs(v)])) };
   }
   function msmeReport(actor, { asOf }) {
     need(actor, 'fin.bill.view', 'see the MSME report'); const on2 = asOf ?? todayIST();

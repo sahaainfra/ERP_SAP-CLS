@@ -15,6 +15,9 @@ const PostingRulesPage = lazyPage(() => import('./PostingPages.jsx'), 'PostingRu
 const FailedPostingsPage = lazyPage(() => import('./PostingPages.jsx'), 'FailedPostingsPage');
 const ReplayPage = lazyPage(() => import('./PostingPages.jsx'), 'ReplayPage');
 const ReconciliationPage = lazyPage(() => import('./PostingPages.jsx'), 'ReconciliationPage');
+const ApBillsPage = lazyPage(() => import('./ApPages.jsx'), 'ApBillsPage');
+const DebitNotesPage = lazyPage(() => import('./ApPages.jsx'), 'DebitNotesPage');
+const PayablesPage = lazyPage(() => import('./ApPages.jsx'), 'PayablesPage');
 
 // Module "fin" (part 06.05): the finance masters. The chart of accounts (tree, Schedule III, import from Tally, changes), the account object page (properties, dimension rules, mapping), the cost heads and cost
 // codes, and the item category mapping. Every change is approved by the CFO before it applies.
@@ -36,6 +39,10 @@ registerModule({
     { path: '/finance/failed-postings', label: 'Failed Postings', labelHi: 'विफल पोस्टिंग', icon: 'erp.action.settings', permission: 'fin.posting.view', flag: 'ff.fin.p2302', Page: FailedPostingsPage },
     { path: '/finance/posting-replay', label: 'Replay Events', labelHi: 'इवेंट पुनः चलाएँ', icon: 'erp.action.settings', permission: 'fin.replay.view', flag: 'ff.fin.p2302', Page: ReplayPage },
     { path: '/finance/reconciliation', label: 'Sub-ledger vs GL', labelHi: 'उप-खाता बनाम जीएल', icon: 'erp.action.settings', permission: 'fin.posting.view', flag: 'ff.fin.p2302', Page: ReconciliationPage },
+    // part 23.03: accounts payable
+    { path: '/finance/ap-bills', label: 'AP Bills', labelHi: 'देय बिल', icon: 'erp.action.history', permission: 'fin.bill.view', flag: 'ff.fin.p2303', Page: ApBillsPage },
+    { path: '/finance/debit-notes', label: 'Debit Notes', labelHi: 'डेबिट नोट', icon: 'erp.action.history', permission: 'fin.debit_note.view', flag: 'ff.fin.p2303', Page: DebitNotesPage },
+    { path: '/finance/payables', label: 'Vendor Ledger & Payables Reports', labelHi: 'विक्रेता खाता', icon: 'erp.action.history', permission: 'fin.bill.view', flag: 'ff.fin.p2303', Page: PayablesPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });

@@ -102,3 +102,22 @@ export const pe = {
   replayAct: async (id, action, b) => (await api.post(`/fin/replays/${id}/${action}`, b ?? {}, idem())).data,
   recon: (asOf) => glget(`/reconciliation${asOf ? `?asOf=${asOf}` : ''}`),
 };
+
+// ---- part 23.03: accounts payable ----
+export const ap = {
+  bill: (id) => glget(`/bills/${id}`),
+  tdsPreview: (f) => glget(`/bills/tds-preview?${q(f)}`),
+  createBill: async (b) => (await api.post('/fin/bills', b, idem())).data,
+  updateBill: async (id, b) => (await api.patch(`/fin/bills/${id}`, b, idem())).data,
+  billAct: async (id, action, b) => (await api.post(`/fin/bills/${id}/${action}`, b ?? {}, idem())).data,
+  removeBill: async (id) => (await api.delete(`/fin/bills/${id}`, idem())).data,
+  note: (id) => glget(`/debit-notes/${id}`),
+  createNote: async (b) => (await api.post('/fin/debit-notes', b, idem())).data,
+  noteAct: async (id, action, b) => (await api.post(`/fin/debit-notes/${id}/${action}`, b ?? {}, idem())).data,
+  partners: () => glget('/payables/partners'),
+  ledger: (f) => glget(`/payables/vendor-ledger?${q(f)}`),
+  ageing: (asOf) => glget(`/payables/ageing${asOf ? `?asOf=${asOf}` : ''}`),
+  msme: (asOf) => glget(`/payables/msme${asOf ? `?asOf=${asOf}` : ''}`),
+  tds: (f) => glget(`/payables/tds?${q(f)}`),
+};
+export const NATURES = ['CONTRACTOR', 'PROFESSIONAL', 'PURCHASE_GOODS', 'RENT_PLANT', 'RENT_LAND', 'COMMISSION'];
