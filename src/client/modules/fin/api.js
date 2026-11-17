@@ -49,3 +49,34 @@ export function parseLedgers(text) {
   const ci = hasHead ? col(['code', 'alias', 'account code']) : -1;
   return lines.slice(hasHead ? 1 : 0).map(cells).filter((c) => c[ni]).map((c) => ({ name: c[ni], parent: pi >= 0 ? c[pi] ?? '' : '', ...(ci >= 0 && c[ci] ? { code: c[ci] } : {}) })).slice(0, 2000);
 }
+
+// ---- part 23.01: the general ledger ----
+const glget = async (p) => (await api.get(`/fin${p}`)).data;
+export const gl = {
+  options: () => glget('/journals/options'),
+  journal: (id) => glget(`/journals/${id}`),
+  check: async (b) => (await api.post('/fin/journals/check', b)).data,
+  create: async (b) => (await api.post('/fin/journals', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/journals/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/journals/${id}`, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/journals/${id}/${action}`, b ?? {}, idem())).data,
+  history: (id) => glget(`/journals/${id}/history`),
+  decide: async (taskId, action, comment) => (await api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())).data,
+  ledger: (f) => glget(`/ledger?${q(f)}`),
+  trialBalance: (f) => glget(`/trial-balance?${q(f)}`),
+  carryForward: async (fyId) => (await api.post('/fin/gl/carry-forward', { fyId }, idem())).data,
+  recurring: (id) => glget(`/recurring-journals/${id}`),
+  saveRecurring: async (id, b) => (id ? (await api.put(`/fin/recurring-journals/${id}`, b, idem())).data : (await api.post('/fin/recurring-journals', b, idem())).data),
+  recurringStatus: async (id, b) => (await api.post(`/fin/recurring-journals/${id}/status`, b, idem())).data,
+  /** A file of the general ledger (print, export) saved under its name. */
+  file: async (path, name) => { const res = await fetch(`/api/v1/fin${path}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url); },
+  q,
+};
+export const DIM_KEYS = ['branchId', 'projectId', 'siteId', 'wbsId', 'costCentreId', 'profitCentreId', 'departmentId', 'costCodeId', 'partnerId', 'employeeId', 'equipmentId'];
+/** The account rule of each dimension field (06.05); cost code and partner have no rule and are always open. */
+export const DIM_RULE = { branchId: 'BRANCH', projectId: 'PROJECT', siteId: 'SITE', wbsId: 'WBS', costCentreId: 'COST_CENTRE', profitCentreId: 'PROFIT_CENTRE', departmentId: 'DEPARTMENT', employeeId: 'EMPLOYEE', equipmentId: 'EQUIPMENT' };
+/** The option list of the journal options for each dimension field. */
+export const DIM_LIST = { branchId: 'branches', projectId: 'projects', siteId: 'sites', wbsId: 'wbs', costCentreId: 'costCentres', profitCentreId: 'profitCentres', departmentId: 'departments', costCodeId: 'costCodes', partnerId: 'partners', employeeId: 'employees', equipmentId: 'equipment' };
+export const JN_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
+const inr = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const money = (v) => (v == null || v === '' ? '—' : `₹ ${inr.format(Number(v))}`);

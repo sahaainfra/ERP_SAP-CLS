@@ -42,8 +42,9 @@ export default function LaunchpadPage({ session }) {
   return (
     <section aria-labelledby="page-title" className="launchpad">
       <PageHeader id="page-title" title={"Home"} subtitle={<>Welcome{session?.user ? `, ${session.user}` : ''}. Everything below follows what your role may open.</>} />
-      <QueryState query={lp} what="your home page" />
       {insights && <div data-testid="home-insights"><DashboardView code="home-insights" heading="Insights for your role" embedded /></div>}
+      {/* below the insight cards, where the home page's own content is drawn: its skeleton going away moves nothing above it (166.4, layout shift) */}
+      <QueryState query={lp} what="your home page" />
       {lp.data && (
         <>
           {cards.length > 0 && (

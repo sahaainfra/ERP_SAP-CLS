@@ -51,7 +51,7 @@ export const jnList = defineList({
     kind: { sql: 'x.kind', type: 'enum', label: 'Kind', options: Object.entries(KINDS) },
     source: { sql: "COALESCE(x.source_type, '')", type: 'text', label: 'Source' },
     period: { sql: "(SELECT name FROM core_periods WHERE id = x.period_id)", type: 'text', label: 'Period' },
-    total: { sql: '(x.total_paise / 100.0)', type: 'number', label: 'Amount' },
+    total: { sql: '(x.total_paise / 100.0)', type: 'money', label: 'Amount' },
     reversed: { sql: "(CASE WHEN x.reversed_by_id IS NOT NULL THEN 'Reversed' WHEN x.reversal_of_id IS NOT NULL THEN 'Reversal' ELSE '' END)", type: 'text', label: 'Reversal' },
     status: { sql: 'x.status', type: 'enum', label: 'Status', options: Object.entries({ ...STATUS, APPROVED: 'Posted' }) },
   },
@@ -62,7 +62,7 @@ export const rcList = defineList({
   columns: {
     docNo: { sql: 'x.doc_no', type: 'text', label: 'Template' }, name: { sql: 'x.name', type: 'text', label: 'Name' },
     frequency: { sql: 'x.frequency', type: 'enum', label: 'Frequency', options: Object.entries(FREQUENCIES) }, nextRunOn: { sql: 'x.next_run_on', type: 'date', label: 'Next journal' },
-    total: { sql: '(x.total_paise / 100.0)', type: 'number', label: 'Amount' }, runs: { sql: 'x.runs', type: 'number', label: 'Journals made' },
+    total: { sql: '(x.total_paise / 100.0)', type: 'money', label: 'Amount' }, runs: { sql: 'x.runs', type: 'number', label: 'Journals made' },
     status: { sql: 'x.rec_status', type: 'enum', label: 'Status', options: Object.entries({ ACTIVE: 'Active', PAUSED: 'Paused', ENDED: 'Ended' }) },
   },
 });
@@ -390,7 +390,7 @@ export function createGlService({ db, base }) {
     list(actor, query) { company(actor, 'fin.journal.view', 'see recurring journals'); return runList(db, rcList, parseListRequest(rcList, query), { select: 'x.*', scopeSql: '1 = 1', params: { c: actor.companyId }, tieBreaker: 'x.id', map: (r) => recurring.view(actor, r) }); },
     view(actor, r, detail = false) {
       const o = { id: r.id, docNo: r.doc_no, name: r.name, voucherType: r.voucher_type, frequency: r.frequency, frequencyLabel: FREQUENCIES[r.frequency], dayOfMonth: r.day_of_month, nextRunOn: r.next_run_on, endOn: r.end_on, narration: r.narration, total: rs(r.total_paise), status: r.rec_status, runs: r.runs, lastRunOn: r.last_run_on, owner: r.owner_user, version: r.version, can: { edit: may(actor, 'fin.recurring.manage') && r.rec_status !== 'ENDED' } };
-      if (detail) Object.assign(o, { lines: JSON.parse(r.lines_json), journals: db.prepare('SELECT id, voucher_no, doc_no, voucher_date, status, total_paise FROM fin_journals WHERE recurring_id = ? ORDER BY id DESC LIMIT 24').all(r.id).map((j) => ({ id: j.id, docNo: j.voucher_no ?? j.doc_no, date: j.voucher_date, status: j.status, total: rs(j.total_paise) })) });
+      if (detail) Object.assign(o, { lines: JSON.parse(r.lines_json).map((l) => { const a = nameOf.account(Number(l.accountId)); return { ...l, account: a ? `${a.code} ${a.name}` : null }; }), journals: db.prepare('SELECT id, voucher_no, doc_no, voucher_date, status, total_paise FROM fin_journals WHERE recurring_id = ? ORDER BY id DESC LIMIT 24').all(r.id).map((j) => ({ id: j.id, docNo: j.voucher_no ?? j.doc_no, date: j.voucher_date, status: j.status, total: rs(j.total_paise) })) });
       return o;
     },
     get(actor, id) { company(actor, 'fin.journal.view', 'see recurring journals'); const r = db.prepare('SELECT * FROM fin_recurring_journals WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); if (!r) throw notFound('That recurring journal does not exist.'); return recurring.view(actor, r, true); },
