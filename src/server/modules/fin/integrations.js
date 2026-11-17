@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { glOf } from './index.js';
+import { glOf, postingOf } from './index.js';
 
 // The finance masters (part 06.05) for the rest of the ERP: the approval of a change (FIN_MASTER_CHANGE: the accounts manager checks what the project controls manager proposes, then the CFO approves),
 // what the approver sees, the object page of an account (search, audit), the form lookups (accounts, accounts open to manual postings, cost codes) and the events consumers listen to.
@@ -135,4 +135,23 @@ objectTypes.register({
   summary(db, actor, id) { const r = db.prepare('SELECT * FROM fin_journals WHERE id = ? AND company_id = ?').get(Number(id), actor.companyId); return r ? { label: `${r.voucher_no ?? r.doc_no} ${r.narration}`.slice(0, 200), status: r.status } : null; },
   related: () => [],
   search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'fin.journal.view').allowed) return []; return db.prepare('SELECT id FROM fin_journals WHERE company_id = ? AND deleted_at IS NULL AND (voucher_no LIKE ? OR doc_no LIKE ? OR narration LIKE ?) ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, `%${q}%`, `%${q}%`, limit).map((x) => x.id); },
+});
+
+// ---- part 23.02: the posting engine's approvals and its event ----
+eventTypes.define({ type: 'fin.document.posted', version: 1, schema, owner: 'fin', description: 'The posting engine posted a document of another module (part 23.02): data { eventType, docType, docId, docRef, journalId, voucherNo, date, amount, rule }. The source module and its trace show the journal.' });
+const peDecide = (outcome, kind) => (db, { instance, actor, comment }) => postingOf(db)?.[kind].decide(instance, actor, outcome, comment);
+const peHooks = (kind) => ({ onApproved: peDecide('APPROVED', kind), onRejected: peDecide('REJECTED', kind), onReturned: peDecide('RETURNED', kind), onCancelled: peDecide('CANCELLED', kind) });
+workflowTypes.register({
+  docType: 'FIN_POSTING_RULE', label: 'Posting rule change', processOwner: 'CFO', route: (id) => `/finance/posting-rules?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM fin_posting_rules WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.rule_code} v${r.rule_version} ${r.name} from ${r.effective_from}`.slice(0, 300), originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM fin_posting_rules WHERE id = ?').get(Number(id)); if (!r) return null; const lines = JSON.parse(r.lines_json || '[]'); return { fields: [{ label: 'Rule', value: `${r.rule_code} version ${r.rule_version}` }, { label: 'Event', value: r.event_type }, { label: 'In force from', value: r.effective_from }, { label: 'Why', value: r.change_reason ?? '' }, ...lines.slice(0, 10).map((l, i) => ({ label: `${i + 1}. ${l.side} ${l.account}`, value: l.amount }))] }; },
+  defaultDefinition: { name: 'Posting rule change: the accounts manager proposes, the CFO approves', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: peHooks('rules'),
+});
+workflowTypes.register({
+  docType: 'FIN_REPLAY', label: 'Replay of historical events', processOwner: 'CFO', route: (id) => `/finance/posting-replay?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM fin_replay_runs WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Replay ${r.from_date} to ${r.to_date}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM fin_replay_runs WHERE id = ?').get(Number(id)); if (!r) return null; const s = JSON.parse(r.dry_run_json || '{}'); return { fields: [{ label: 'Events', value: JSON.parse(r.event_types_json || '[]').join(', ') }, { label: 'Dates', value: `${r.from_date} to ${r.to_date}` }, { label: 'Dry run', value: `${s.events ?? 0} events, ${s.wouldPost ?? 0} would post ₹${s.total ?? 0}` }, { label: 'Would fail', value: Object.entries(s.failures ?? {}).map(([k, v]) => `${k} ${v}`).join(', ') || 'none' }] }; },
+  defaultDefinition: { name: 'Replay commit: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: peHooks('replays'),
 });

@@ -154,7 +154,7 @@ export function DashboardGrid({ layout, catalogue, filters, presets, edit = fals
         const widget = byCode.get(item.widget);
         if (!widget) return null;
         return (
-          <div key={item.id} className="dash-cell" style={{ gridColumn: `span ${spanAt(item, width)}`, gridRow: width < 600 ? 'auto' : `span ${item.h}` }}>
+          <div key={item.id} className="dash-cell" style={{ gridColumn: `span ${spanAt(item, width)}`, gridRow: width < 600 ? 'auto' : `span ${item.h}`, ...(width < 600 ? { minHeight: `${item.h * 150 + (item.h - 1) * 16}px` } : {}) }}>
             <WidgetFrame item={item} widget={widget} filters={filters} presets={presets} edit={edit} index={i} count={layout.length} layout={layout} onChange={onChange} onDrill={onDrill} drag={drag} />
           </div>
         );

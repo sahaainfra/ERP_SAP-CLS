@@ -9982,6 +9982,106 @@ Indexes:
 - ix_fin_master_changes_entity: entity, entity_id
 - ix_fin_master_changes_list: company_id, request_status, entity
 
+## fin_posting_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| event_id | TEXT | yes |  |  |
+| outbox_id | INTEGER |  |  |  |
+| event_type | TEXT | yes |  |  |
+| event_date | TEXT |  |  |  |
+| doc_type | TEXT |  |  |  |
+| doc_id | TEXT |  |  |  |
+| doc_ref | TEXT |  |  |  |
+| rule_id | INTEGER |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| log_status | TEXT | yes |  |  |
+| error_code | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| attempts | INTEGER | yes |  | 1 |
+| amount_paise | INTEGER | yes |  | 0 |
+| payload_json | TEXT | yes |  | '{}' |
+| posted_at | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| resolution_note | TEXT |  |  |  |
+| replay_run_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: replay_run_id -> fin_replay_runs(id), journal_id -> fin_journals(id), rule_id -> fin_posting_rules(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_posting_log_replay: replay_run_id
+- ix_fin_posting_log_journal: journal_id
+- ix_fin_posting_log_rule: rule_id
+- ix_fin_posting_log_doc: company_id, doc_type, doc_id
+- ix_fin_posting_log_queue: company_id, log_status, event_date
+- ux_fin_posting_log_event (unique): company_id, event_id
+
+## fin_posting_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| doc_no | TEXT | yes |  |  |
+| rule_code | TEXT | yes |  |  |
+| event_type | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| action | TEXT | yes |  | 'POST' |
+| reverses_event | TEXT |  |  |  |
+| priority | INTEGER | yes |  | 100 |
+| condition_json | TEXT | yes |  | '[]' |
+| lines_json | TEXT | yes |  | '[]' |
+| narration_template | TEXT | yes |  | '' |
+| voucher_type | TEXT | yes |  | 'JV' |
+| rule_version | INTEGER | yes |  | 1 |
+| effective_from | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| change_reason | TEXT |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_posting_rules_wf: workflow_instance_id
+- ix_fin_posting_rules_event: event_type, status, effective_from
+- ix_fin_posting_rules_company: company_id, status
+- ux_fin_posting_rules_version (unique): , rule_code, rule_version
+- ux_fin_posting_rules_company_doc (unique): company_id, doc_no
+- ux_fin_posting_rules_doc (unique): , doc_no
+
 ## fin_recurring_journals
 
 | Column | Type | Not null | Key | Default |
@@ -10021,6 +10121,47 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_fin_recurring_due: rec_status, next_run_on
 - ux_fin_recurring_doc (unique): company_id, doc_no
+
+## fin_replay_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| event_types_json | TEXT | yes |  | '[]' |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| dry_run_json | TEXT | yes |  | '{}' |
+| dry_run_hash | TEXT |  |  |  |
+| result_json | TEXT |  |  |  |
+| committed_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_replay_runs_wf: workflow_instance_id
+- ix_fin_replay_runs_list: company_id, status
+- ux_fin_replay_runs_doc (unique): company_id, doc_no
 
 ## gis_layers
 
