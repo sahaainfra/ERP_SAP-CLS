@@ -10,6 +10,7 @@ import { procOf } from '../proc/index.js';
 import { qaHelpers } from '../qa/common.js';
 import { STATUS, createFlow } from '../qa/flow.js';
 import { fyOf } from './invoice.js';
+import { statutoryResolver } from '../mdm/statutory.js';
 
 // Vendor invoices and the match (part 22.06): an invoice is registered against a purchase order (three-way: order, goods received, invoice), a service entry of a service order or a hire bill (two-way); a duplicate (vendor, invoice number, financial year) is refused; the quantity (invoice <= accepted by the stores less returned less already invoiced), the rate (invoice <= order rate within the tolerance), the tax (expected against invoiced) and the total are checked on the server at save and at submit; an exception blocks payment until it is resolved (debit note, order amendment, rejection) or overridden through the approval chain.
 // Quantities x1000, rates and money in paise, percentages x10000.
@@ -22,7 +23,7 @@ for (const [key, type, def, description, min, max] of [
 }
 export const MATCH = { NOT_MATCHED: 'Not matched', MATCHED: 'Matched', EXCEPTION: 'Exception', RESOLVED: 'Exception resolved', OVERRIDDEN: 'Approved over an exception' };
 export const KIND = { PO: 'Purchase order invoice', SERVICE: 'Service invoice', HIRE: 'Hire invoice' };
-export const EXCEPTION = { NO_GRN: 'No goods received', QTY_OVER: 'Quantity beyond the goods received', RATE_OVER: 'Rate beyond the order', TAX_MISMATCH: 'Tax differs', TOTAL_MISMATCH: 'Total differs', AMOUNT_OVER: 'Amount beyond the service entry or hire bill', GSTIN_MISMATCH: 'GSTIN differs' };
+export const EXCEPTION = { NO_GRN: 'No goods received', GST_RATE_OF_DATE: 'GST rate not in force on the invoice date', QTY_OVER: 'Quantity beyond the goods received', RATE_OVER: 'Rate beyond the order', TAX_MISMATCH: 'Tax differs', TOTAL_MISMATCH: 'Total differs', AMOUNT_OVER: 'Amount beyond the service entry or hire bill', GSTIN_MISMATCH: 'GSTIN differs' };
 const rs = (p) => (p == null ? null : p / 100); const paise = (r) => Math.round(Number(r) * 100); const d3 = (t) => (t == null ? null : t / 1000); const q3 = (x) => Math.round(Number(x) * 1000);
 const lineAmounts = (qtyTh, rate, bp) => { const taxable = Math.round((qtyTh * rate) / 1000); const tax = Math.round((taxable * bp) / 10000); return { taxable, tax, amount: taxable + tax }; };
 const addDays = (d, n) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -31,7 +32,7 @@ const ACTIVE = "('SUBMITTED', 'APPROVED')";
 export const viList = defineList({ code: 'bill.vendor_invoices', label: 'Vendor invoices', permission: 'bill.vendor_invoice.view', from: 'bill_vendor_invoices x JOIN org_projects p ON p.id = x.org_project_id JOIN mdm_partners v ON v.id = x.vendor_id', where: "x.deleted_at IS NULL AND x.status <> 'CANCELLED'", searchable: ['x.doc_no', 'x.invoice_no', 'v.legal_name', 'p.code', 'x.vendor_gstin'], defaultSort: '-created',
   columns: { created: { sql: 'x.id', type: 'number', label: 'Entered' }, docNo: { sql: 'x.doc_no', type: 'text', label: 'Document' }, invoiceNo: { sql: 'x.invoice_no', type: 'text', label: 'Invoice' }, vendor: { sql: 'v.legal_name', type: 'text', label: 'Vendor' }, project: { sql: 'p.code', type: 'text', label: 'Project' }, kind: { sql: 'x.invoice_kind', type: 'enum', label: 'Kind', options: Object.entries(KIND) }, invoiceDate: { sql: 'x.invoice_date', type: 'date', label: 'Date' }, total: { sql: '(x.total_paise / 100.0)', type: 'number', label: 'Total' }, match: { sql: 'x.match_status', type: 'enum', label: 'Match', options: Object.entries(MATCH) }, blocked: { sql: 'x.blocked', type: 'number', label: 'Blocked' }, status: { sql: 'x.status', type: 'enum', label: 'Approval', options: Object.entries(STATUS) } } });
 
-export function createVinvService({ db, base }) {
+export function createVinvService({ db, base, flags = null }) {
   const { audit, fail, may, param } = base; const { evt, gate, scopeOf, pcode, projectOk } = qaHelpers({ db, base }); const today = () => todayIST(); const num = (c, k) => Number(param(c, k) ?? 0); const po = () => procOf(db)?.poSvc;
   const vendorName = (id) => db.prepare('SELECT legal_name FROM mdm_partners WHERE id = ?').get(id)?.legal_name ?? null;
   /** The source document of the invoice, checked to be of this vendor and company. */
@@ -55,6 +56,11 @@ export function createVinvService({ db, base }) {
         else if (r.qty_th > allowed + Math.floor((allowed * qtyTol) / 100)) { const over = r.qty_th - allowed; add('QTY_OVER', `Line ${pl.line_no}: invoiced ${d3(r.qty_th)} but only ${d3(allowed)} is accepted and not yet invoiced`, r.line_no); r.notes.push('QTY_OVER'); variance += Math.round((over * Math.min(r.rate_paise, pl.rate)) / 1000); }
         if (r.rate_paise > pl.rate + Math.floor((pl.rate * rateTol) / 100)) { add('RATE_OVER', `Line ${pl.line_no}: rate ${rs(r.rate_paise)} is beyond the order rate ${rs(pl.rate)}`, r.line_no); r.notes.push('RATE_OVER'); price = true; variance += Math.round(((r.rate_paise - pl.rate) * Math.min(r.qty_th, Math.max(allowed, 0))) / 1000); }
         const expected = Math.round((a.taxable * pl.gst_pct) / 1_000_000); if (Math.abs(a.tax - expected) > abs) { add('TAX_MISMATCH', `Line ${pl.line_no}: tax ${rs(a.tax)} against the expected ${rs(expected)} (${pl.gst_pct / 10000}%)`, r.line_no); r.notes.push('TAX_MISMATCH'); price = true; variance += Math.abs(a.tax - expected); }
+      }
+      if (flags?.isOn({ companyId }, 'ff.mdm.p16608')) { // part 166.8 (T-01): the GST rate of the line's HSN/SAC on the invoice date (time of supply), from the master
+        const hsn = r.hsn ?? (r.item_id ? db.prepare('SELECT hsn_sac_code FROM mdm_items WHERE id = ?').get(r.item_id)?.hsn_sac_code : null);
+        const g = hsn ? statutoryResolver(db).gst(companyId, { hsn, date: header.invoiceDate }) : null;
+        if (g && Math.round(g.pct * 100) !== r.gst_pct_bp) { add('GST_RATE_OF_DATE', `Line ${r.line_no}: GST ${r.gst_pct_bp / 100}% but HSN ${hsn} is at ${g.pct}% on ${header.invoiceDate} (${g.rateCode} from ${g.hsnFrom})`, r.line_no); r.notes.push('GST_RATE_OF_DATE'); price = true; }
       }
       if (r.notes.length) r.match_result = 'EXCEPTION'; out.push(r);
     }

@@ -11,6 +11,7 @@ import './masters.js';
 import './integrations.js';
 import './common-integrations.js';
 import { bindCommon, createCommonService, syncCoreUom } from './common.js';
+import { createStatutoryService } from './statutory.js';
 import { setCommonFlag } from './common-integrations.js';
 import { bindItems, createItemService } from './items.js';
 import { bindPartners, createPartnerService } from './partners.js';
@@ -78,14 +79,14 @@ export const mdm = {
     router.use(mdmRoutes({ service }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
     api.use('/mdm', router);
     if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_uoms'").get()) {
-      const common = createCommonService({ db });
+      const common = createCommonService({ db, flags });
       bindCommon(db, common);
       setCommonFlag((actor) => flags.isOn(actor, 'ff.mdm.p0602'));
       // the calculation engine's unit tables follow the master (D-042): the system units are written into them once, idempotently
       for (const u of db.prepare("SELECT * FROM mdm_uoms WHERE company_id IS NULL AND row_status = 'ACTIVE' AND deleted_at IS NULL").all()) syncCoreUom(db, u);
       const c = Router();
       c.use(gate('ff.mdm.p0602', 'The common masters are'));
-      c.use(commonRoutes({ common }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
+      c.use(commonRoutes({ common, statutory: createStatutoryService({ db, flags }) }, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }) }));
       api.use('/mdm', c);
       if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'mdm_items'").get()) {
         const items = createItemService({ db });

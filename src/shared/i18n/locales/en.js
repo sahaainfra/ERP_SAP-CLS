@@ -12840,6 +12840,7 @@ export default {
     "vx.QTY_OVER": "Quantity beyond the goods received",
     "vx.RATE_OVER": "Rate beyond the order",
     "vx.TAX_MISMATCH": "Tax differs",
+    "vx.GST_RATE_OF_DATE": "GST rate not in force on the invoice date",
     "vx.TOTAL_MISMATCH": "Total differs",
     "vx.AMOUNT_OVER": "Amount beyond the service entry or hire bill",
     "vx.GSTIN_MISMATCH": "GSTIN differs",

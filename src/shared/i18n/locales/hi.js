@@ -12840,6 +12840,7 @@ export default {
     "vx.QTY_OVER": "प्राप्त माल से अधिक मात्रा",
     "vx.RATE_OVER": "आदेश से अधिक दर",
     "vx.TAX_MISMATCH": "कर में अंतर",
+    "vx.GST_RATE_OF_DATE": "चालान की तारीख पर लागू जीएसटी दर नहीं",
     "vx.TOTAL_MISMATCH": "कुल में अंतर",
     "vx.AMOUNT_OVER": "सेवा प्रविष्टि या किराया बिल से अधिक राशि",
     "vx.GSTIN_MISMATCH": "जीएसटीआईएन में अंतर",

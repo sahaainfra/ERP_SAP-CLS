@@ -3,7 +3,7 @@ import { toCsv } from '../../platform/export/index.js';
 import { parseBankConfirm, parseBankRequest, parseBankVerify, parseBlacklist, parseDocumentAdd, parseGstinAdd, parseGstinVerify, parsePartnerCheck, parsePartnerCreate, parsePartnerDetails, parsePartnerStatus, parsePartnerSubmit, parsePartnerUpdate, parseQueue, parseSelectable, parseTdsSet } from './validators.js';
 import { parseAmend, parseAnalysisCreate, parseAnalysisList, parseAnalysisStart, parseAnalysisSubmit, parseAnalysisUpdate, parseBookCreate, parseBookQuery, parseCompare, parseEdition, parseImpact, parseRateCreate, parseRateList, parseRateLookup, parseRateUpdate, parseReason, parseSorItems, parseSorSearch } from './validators.js';
 import { parseAlternate, parseCategory, parseItemCheck, parseItemConvert, parseItemCreate, parseItemList, parseItemMark, parseItemResources, parseItemResubmit, parseItemSearch, parseItemStatus, parseItemUoms, parseItemUpdate, parseItemVersion, parseLegacyMap, parseMakeAdd, parseMakeDecide } from './validators.js';
-import { parseCommonCreate, parseCommonList, parseCommonRetire, parseCommonUpdate, parseConvert, parseFxQuery, parseGstQuery, parseListCode, parseListSave, parseListValues, parseMaster, parseTdsQuery } from './validators.js';
+import { parseEmployeePay, parseStatutoryCalendar, parseStatutoryLookup, parseWagesQuery, parseCommonCreate, parseCommonList, parseCommonRetire, parseCommonUpdate, parseConvert, parseFxQuery, parseGstQuery, parseListCode, parseListSave, parseListValues, parseMaster, parseTdsQuery } from './validators.js';
 import { parseAsOf, parseCancel, parseCheck, parseConfig, parseCreate, parseDismiss, parseDuplicateList, parseId, parseLookup, parseMerge, parseQuality, parseRecordList, parseRequestList, parseResubmit, parseScan, parseStatus, parseType, parseUpdate } from './validators.js';
 
 /** Part 06.01: the master data governance API. Every route needs a signed-in person; the rights (view, edit, sensitive, steward of a master, configure) are checked in the service. */
@@ -44,9 +44,16 @@ export function mdmRoutes({ service }, { idempotent, idempotentRequired }) {
 }
 
 /** Part 06.02: the common masters. Reading needs mdm.record.view; changing needs the steward permission of the master (checked in the service); a statutory change returns 202 with its change request. */
-export function commonRoutes({ common }, { idempotent, idempotentRequired }) {
+export function commonRoutes({ common, statutory }, { idempotent, idempotentRequired }) {
   const r = Router();
   const ok = (res, data, status = 200) => res.status(status).json({ data });
+  if (statutory) { // part 166.8 (ff.mdm.p16608, checked by the service)
+    r.get('/statutory/lookup', (req, res) => ok(res, statutory.lookup(req.actor, parseStatutoryLookup(req.query))));
+    r.get('/statutory/calendar', (req, res) => ok(res, statutory.calendar(req.actor, parseStatutoryCalendar(req.query))));
+    r.get('/statutory/migration-report', (req, res) => ok(res, statutory.migrationReport(req.actor)));
+    r.get('/statutory/employees/:id/wages', (req, res) => ok(res, statutory.wages(req.actor, parseId(req.params.id), parseWagesQuery(req.query).month)));
+    r.put('/statutory/employees/:id/pay', idempotentRequired, (req, res) => ok(res, statutory.setPay(req.actor, parseId(req.params.id), parseEmployeePay(req.body))));
+  }
   r.get('/common', (req, res) => ok(res, common.catalogue(req.actor)));
   r.get('/tax/gst', (req, res) => ok(res, common.tax.gst(req.actor, parseGstQuery(req.query))));
   r.get('/tax/tds', (req, res) => ok(res, common.tax.tds(req.actor, parseTdsQuery(req.query))));

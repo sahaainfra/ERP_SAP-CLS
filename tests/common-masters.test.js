@@ -86,8 +86,8 @@ test('T-01 BR-01 a GST change from a date is approved by an accounts manager and
 
 test('statutory changes: IGST must be CGST plus SGST; return, resubmit and reject; a TDS section from a date', async () => {
   const t = await setup();
-  assert.equal((await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST40', description: '40% (sin goods)', igstPct: '40', cgstPct: '20', sgstPct: '10' }, effectiveFrom: day(1), justification: 'New 40% slab announced' })).status, 400);
-  const n = await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST40', description: '40% (sin goods)', igstPct: '40', cgstPct: '20', sgstPct: '20' }, effectiveFrom: day(1), justification: 'New 40% slab announced by the Council' });
+  assert.equal((await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST45', description: '45% (a test slab)', igstPct: '45', cgstPct: '22.5', sgstPct: '10' }, effectiveFrom: day(1), justification: 'New 40% slab announced' })).status, 400);
+  const n = await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST45', description: '45% (a test slab)', igstPct: '45', cgstPct: '22.5', sgstPct: '22.5' }, effectiveFrom: day(1), justification: 'New 40% slab announced by the Council' });
   assert.equal(n.status, 202, JSON.stringify(n.json));
   await act(t.api, acc2, n.json.data.workflow.id, 'return', 'Give the notification number');
   assert.equal((await t.call(acc, 'GET', `/change-requests/${n.json.data.changeRequestId}`)).json.data.status, 'RETURNED');
@@ -96,7 +96,7 @@ test('statutory changes: IGST must be CGST plus SGST; return, resubmit and rejec
   await act(t.api, acc2, n.json.data.workflow.id);
   await act(t.api, cfo, n.json.data.workflow.id, 'reject', 'Not yet notified');
   assert.equal((await t.call(acc, 'GET', `/change-requests/${n.json.data.changeRequestId}`)).json.data.status, 'REJECTED');
-  assert.equal((await t.call(acc, 'GET', `/tax/gst?code=GST40&date=${day(2)}`)).status, 404, 'a rejected rate never applies');
+  assert.equal((await t.call(acc, 'GET', `/tax/gst?code=GST45&date=${day(2)}`)).status, 404, 'a rejected rate never applies');
   const c = await t.find(acc, 'tds-sections', '194C');
   const p = await t.call(acc, 'PUT', `/common/tds-sections/${c.id}`, { data: { thresholdSingle: '50000' }, effectiveFrom: day(3), justification: 'Finance Act: single payment threshold raised' });
   assert.equal(p.status, 400, 'the row version is required');
