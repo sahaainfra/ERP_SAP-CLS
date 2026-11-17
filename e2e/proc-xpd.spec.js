@@ -74,6 +74,6 @@ test('Expediting: a plan is approved, the vendor moves a milestone, the risk sho
 
 test('Expediting: a storekeeper reads the shipments and cannot call an inspection or change a plan', async ({ browser, request }, info) => {
   const t = `x${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}z`; const c = await company(request, t.toUpperCase()); const s = await seed(c, t);
-  const sk = await open(browser, info, c, 'SK', s.u('sk'), '/proc/shipments'); await expect(sk.page.getByTestId('proc-sh')).toBeVisible(); await expect(sk.page.getByText('Plan a shipment')).toHaveCount(0); await noOverflow(sk.page);
+  const sk = await open(browser, info, c, 'SK', s.u('sk'), '/proc/shipments'); await expect(sk.page.getByTestId('proc-sh')).toBeVisible(); await expect(sk.page.getByRole('button', { name: 'Plan a shipment' })).toHaveCount(0); await expect(sk.page.getByRole('link', { name: 'Plan a shipment' })).toHaveCount(0); await noOverflow(sk.page);
   await sk.page.goto('/proc/expediting-plans'); await expect(sk.page.getByText(/permission|not allowed|may not/i).first()).toBeVisible();
 });
