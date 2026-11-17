@@ -36,3 +36,22 @@ export const parsePosting = (b) => parse(z.object({ accountId: id.optional(), ac
 const importRows = z.array(z.object({ name: z.string().trim().max(160), parent: z.string().trim().max(120).default(''), code: z.string().trim().toUpperCase().max(20).optional() }).strip()).min(1).max(2000);
 export const parseImportPreview = (b) => parse(z.object({ format: z.enum(['TALLY', 'GENERIC']).default('TALLY'), rows: importRows }).strict(), b);
 export const parseImportSubmit = (b) => parse(z.object({ format: z.enum(['TALLY', 'GENERIC']).default('TALLY'), rows: importRows, reason: why }).strict(), b);
+
+// ---- part 23.01: journals, recurring journals, the ledger and the trial balance ----
+const amount = z.union([z.number(), z.string().trim().regex(/^\d+(\.\d{1,2})?$/, 'An amount such as 1500.50')]).nullable().optional();
+const ref = z.coerce.number().int().min(1).nullable().optional();
+const jLine = z.object({ accountId: id, debit: amount, credit: amount, narration: z.string().trim().max(300).nullable().optional(), branchId: ref, projectId: ref, siteId: ref, wbsId: ref, costCentreId: ref, profitCentreId: ref, departmentId: ref, costCodeId: ref, partnerId: ref, employeeId: ref, equipmentId: ref }).strict();
+const vType = z.enum(['JV', 'PV', 'RV', 'CV', 'PJ', 'SJ', 'DN', 'CN', 'OB']);
+const narration = z.string().trim().min(3, 'Say what the journal is for').max(500);
+export const parseJournalCreate = (b) => parse(z.object({ voucherType: vType.default('JV'), voucherDate: date, kind: z.enum(['MANUAL', 'ACCRUAL', 'OPENING']).default('MANUAL'), narration, autoReverseOn: date.nullable().optional(), lines: z.array(jLine).min(1).max(500), total: amount }).strict(), b);
+export const parseJournalUpdate = (b) => parse(z.object({ voucherType: vType.optional(), voucherDate: date.optional(), narration: narration.optional(), autoReverseOn: date.nullable().optional(), lines: z.array(jLine).min(1).max(500).optional(), total: amount, version }).strict(), b);
+export const parseJournalCheck = (b) => parse(z.object({ kind: z.enum(['MANUAL', 'ACCRUAL', 'OPENING']).default('MANUAL'), lines: z.array(jLine).max(500) }).strict(), b);
+export const parseJournalReason = (b) => parse(z.object({ reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(500) }).strict(), b);
+export const parseJournalReverse = (b) => parse(z.object({ date: date.optional(), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);
+export const parseJournalImport = (b) => parse(z.object({ rows: z.array(z.object({ ref: z.union([z.string(), z.number()]), voucherType: vType.optional(), voucherDate: date, narration: z.string().trim().max(500).optional(), accountCode: z.union([z.string(), z.number()]), debit: amount, credit: amount, projectId: ref, siteId: ref, costCentreId: ref, branchId: ref }).strict()).min(1).max(5000) }).strict(), b);
+export const parseRecurring = (b) => parse(z.object({ name: z.string().trim().min(3).max(120), voucherType: z.enum(['JV', 'PV', 'RV', 'CV', 'PJ', 'SJ', 'DN', 'CN']).default('JV'), frequency: z.enum(['MONTHLY', 'QUARTERLY', 'YEARLY']), nextRunOn: date, endOn: date.nullable().optional(), narration, lines: z.array(jLine).min(2).max(200), version: version.optional() }).strict(), b);
+export const parseRecurringStatus = (b) => parse(z.object({ status: z.enum(['ACTIVE', 'PAUSED', 'ENDED']), reason: z.string().trim().min(5).max(300) }).strict(), b);
+const dimQ = { branchId: ref, projectId: ref, siteId: ref, wbsId: ref, costCentreId: ref, profitCentreId: ref, departmentId: ref, costCodeId: ref, partnerId: ref, employeeId: ref, equipmentId: ref };
+export const parseLedger = (q) => parse(z.object({ accountId: id, from: date.optional(), to: date.optional(), page: z.coerce.number().int().min(1).optional(), pageSize: z.coerce.number().int().min(1).max(500).optional(), ...dimQ }).strict(), q);
+export const parseTrialBalance = (q) => parse(z.object({ asOf: date.optional(), from: date.optional(), ...dimQ }).strict(), q);
+export const parseCarryForward = (b) => parse(z.object({ fyId: id }).strict(), b);

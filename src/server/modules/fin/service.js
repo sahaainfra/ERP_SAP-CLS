@@ -195,9 +195,11 @@ export function createFinService({ db }) {
     COST_CENTRE: (c, v) => db.prepare("SELECT 1 FROM org_cost_centres WHERE id = ? AND company_id = ? AND type = 'COST' AND status = 'ACTIVE' AND deleted_at IS NULL").get(v, c),
     PROFIT_CENTRE: (c, v) => db.prepare("SELECT 1 FROM org_cost_centres WHERE id = ? AND company_id = ? AND type = 'PROFIT' AND status = 'ACTIVE' AND deleted_at IS NULL").get(v, c),
     DEPARTMENT: (c, v) => db.prepare("SELECT 1 FROM org_departments WHERE id = ? AND company_id = ? AND deleted_at IS NULL").get(v, c),
-    EMPLOYEE: (_c, v) => db.prepare("SELECT 1 FROM iam_users WHERE id = ? AND deleted_at IS NULL").get(v),
-    WBS: (_c, v) => /^[A-Za-z0-9][A-Za-z0-9.\-/]{0,39}$/.test(String(v)), // D-307: no WBS master yet (planning, part 08); the code is checked for form only
-    EQUIPMENT: (_c, v) => /^[A-Za-z0-9][A-Za-z0-9.\-/]{0,39}$/.test(String(v)), // D-307: no equipment register yet (plant, part 11)
+    // part 23.01 (D-307): a number is the id of the employee (hr_employees, or a user as before), the WBS element (proj_wbs) or the equipment (plt_equipment) of the company,
+    // checked against its master; a code (WBS element or asset code) is still accepted, checked for its form, as the callers of 06.05 send it
+    EMPLOYEE: (c, v) => db.prepare('SELECT 1 FROM hr_employees WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(v, c) ?? db.prepare('SELECT 1 FROM iam_users WHERE id = ? AND deleted_at IS NULL').get(v),
+    WBS: (c, v) => (/^\d+$/.test(String(v)) ? db.prepare('SELECT project_id AS p FROM proj_wbs WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(v), c) : /^[A-Za-z0-9][A-Za-z0-9.\-/]{0,39}$/.test(String(v))),
+    EQUIPMENT: (c, v) => (/^\d+$/.test(String(v)) ? db.prepare('SELECT 1 FROM plt_equipment WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(v), c) : /^[A-Za-z0-9][A-Za-z0-9.\-/]{0,39}$/.test(String(v))),
   };
   /**
    * Whether a posting line may go to an account: { ok, errors: [{ dimension?, code, message }] }. A posting line is { accountId | accountCode, dimensions: { PROJECT: id, SITE: id, WBS: 'code', ... }, source: MANUAL | ENGINE }.
@@ -225,6 +227,7 @@ export function createFinService({ db }) {
       const found = DIM_CHECK[d](companyId, v);
       if (!found) errors.push({ dimension: d, code: 'DIMENSION_VALUE', message: `The ${DIMENSION_LABELS[d].toLowerCase()} ${v} does not exist in this company.` });
       else if (d === 'SITE' && dims.PROJECT && found.p !== Number(dims.PROJECT)) errors.push({ dimension: 'SITE', code: 'SITE_NOT_IN_PROJECT', message: 'The site does not belong to the project of the posting.' });
+      else if (d === 'WBS' && dims.PROJECT && typeof found === 'object' && found.p !== Number(dims.PROJECT)) errors.push({ dimension: 'WBS', code: 'WBS_NOT_IN_PROJECT', message: 'The WBS element does not belong to the project of the posting.' });
     }
     return { ok: errors.length === 0, account: { id: a.id, code: a.code, name: a.name, normalBalance: a.normal_side, currency: a.currency_code }, errors };
   }

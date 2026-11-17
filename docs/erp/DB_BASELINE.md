@@ -9667,6 +9667,40 @@ Indexes:
 - ix_fin_accounts_group: group_id
 - ux_fin_accounts_code (unique): , code
 
+## fin_balances
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| account_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| dimension_hash | TEXT | yes |  |  |
+| branch_id | INTEGER |  |  |  |
+| cost_centre_id | INTEGER |  |  |  |
+| debit_paise | INTEGER | yes |  | 0 |
+| credit_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: period_id -> core_periods(id), account_id -> fin_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_balances_account: account_id
+- ix_fin_balances_period: period_id
+- ux_fin_balances_key (unique): company_id, account_id, period_id, dimension_hash
+
 ## fin_category_mappings
 
 | Column | Type | Not null | Key | Default |
@@ -9799,6 +9833,116 @@ Indexes:
 - ix_fin_dimension_rules_company: company_id
 - ux_fin_dimension_rules (unique): account_id, dimension
 
+## fin_journal_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| journal_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| account_id | INTEGER | yes |  |  |
+| debit_paise | INTEGER | yes |  | 0 |
+| credit_paise | INTEGER | yes |  | 0 |
+| branch_id | INTEGER |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_centre_id | INTEGER |  |  |  |
+| profit_centre_id | INTEGER |  |  |  |
+| department_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| partner_id | INTEGER |  |  |  |
+| employee_id | INTEGER |  |  |  |
+| equipment_id | INTEGER |  |  |  |
+| narration | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: site_id -> org_sites(id), project_id -> org_projects(id), equipment_id -> plt_equipment(id), employee_id -> hr_employees(id), partner_id -> mdm_partners(id), cost_code_id -> fin_cost_codes(id), department_id -> org_departments(id), profit_centre_id -> org_cost_centres(id), cost_centre_id -> org_cost_centres(id), wbs_id -> proj_wbs(id), branch_id -> org_branches(id), account_id -> fin_accounts(id), journal_id -> fin_journals(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_journal_lines_equipment: equipment_id
+- ix_fin_journal_lines_employee: employee_id
+- ix_fin_journal_lines_partner: partner_id
+- ix_fin_journal_lines_dept: department_id
+- ix_fin_journal_lines_pc: profit_centre_id
+- ix_fin_journal_lines_code: cost_code_id
+- ix_fin_journal_lines_cc: cost_centre_id
+- ix_fin_journal_lines_wbs: wbs_id
+- ix_fin_journal_lines_branch: branch_id
+- ix_fin_journal_lines_site: site_id
+- ix_fin_journal_lines_project: project_id
+- ix_fin_journal_lines_company: company_id, account_id
+- ix_fin_journal_lines_account: account_id, company_id, journal_id
+- ux_fin_journal_lines_no (unique): journal_id, line_no
+
+## fin_journals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| voucher_type | TEXT | yes |  |  |
+| voucher_no | TEXT |  |  |  |
+| voucher_date | TEXT | yes |  |  |
+| fy_id | INTEGER |  |  |  |
+| period_id | INTEGER |  |  |  |
+| kind | TEXT | yes |  | 'MANUAL' |
+| narration | TEXT | yes |  |  |
+| total_paise | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| auto_reverse_on | TEXT |  |  |  |
+| reversal_of_id | INTEGER |  |  |  |
+| reversed_by_id | INTEGER |  |  |  |
+| recurring_id | INTEGER |  |  |  |
+| posted_at | TEXT |  |  |  |
+| posted_by | TEXT |  |  |  |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: reversed_by_id -> fin_journals(id), reversal_of_id -> fin_journals(id), period_id -> core_periods(id), fy_id -> core_financial_years(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_journals_wf: workflow_instance_id
+- ix_fin_journals_auto: company_id, auto_reverse_on
+- ix_fin_journals_recurring: recurring_id
+- ix_fin_journals_reversed: reversed_by_id
+- ix_fin_journals_reversal: reversal_of_id
+- ix_fin_journals_fy: fy_id
+- ix_fin_journals_period: period_id
+- ix_fin_journals_type: company_id, voucher_type, voucher_date
+- ix_fin_journals_list: company_id, status, voucher_date
+- ux_fin_journals_source (unique): company_id, source_type, source_id
+- ux_fin_journals_voucher (unique): company_id, voucher_no
+- ux_fin_journals_doc (unique): company_id, doc_no
+
 ## fin_master_changes
 
 | Column | Type | Not null | Key | Default |
@@ -9837,6 +9981,46 @@ Foreign keys: company_id -> org_companies(id)
 Indexes:
 - ix_fin_master_changes_entity: entity, entity_id
 - ix_fin_master_changes_list: company_id, request_status, entity
+
+## fin_recurring_journals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| voucher_type | TEXT | yes |  | 'JV' |
+| frequency | TEXT | yes |  |  |
+| day_of_month | INTEGER | yes |  | 1 |
+| next_run_on | TEXT | yes |  |  |
+| end_on | TEXT |  |  |  |
+| narration | TEXT | yes |  |  |
+| lines_json | TEXT | yes |  | '[]' |
+| total_paise | INTEGER | yes |  | 0 |
+| rec_status | TEXT | yes |  | 'ACTIVE' |
+| runs | INTEGER | yes |  | 0 |
+| last_run_on | TEXT |  |  |  |
+| owner_user | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_recurring_due: rec_status, next_run_on
+- ux_fin_recurring_doc (unique): company_id, doc_no
 
 ## gis_layers
 
