@@ -26,6 +26,12 @@ const nav = [
 ];
 const navSql = nav.map(([code, parent, placement, label, hi, route, icon, perm, sort, kw, mobile]) => `INSERT OR IGNORE INTO ui_navigation_entries (code, parent_code, kind, placement, label, label_hi, route, icon, permission_key, feature_flag, sort_order, keywords, mobile_visible, onboarding, shortcut, tile, quick_create_label, quick_create_route, created_by, source_type) VALUES (${q(code)}, ${q(parent)}, 'page', ${q(placement)}, ${q(label)}, ${q(hi)}, ${q(route)}, ${q(icon)}, ${q(perm)}, 'ff.hr.p0714', ${sort}, ${q(kw)}, ${mobile}, 'none', NULL, 0, NULL, NULL, 'migration', 'reference_seed');`);
 
+const tracker = [
+  ['hr.workforce', 'Workforce Dashboard', '/hr/workforce', 'DASHBOARD', 'HRMGR', 'Built in part 07.14 (166.6): the workforce dashboard on the overview framework.'],
+  ['admin.gates', 'Programme Gates', '/admin/gates', 'LIST', 'ITADM', 'Built in part 07.14 (166.6): the gates G1–G4 and their status.'],
+  ['admin.gate', 'Gate', '/admin/gate', 'OBJECT', 'ITADM', 'Built in part 07.14 (166.6): a gate, its criteria, evidence and sign-off.'],
+];
+const trackerSql = tracker.map(([code, label, route, type, owner, notes]) => `INSERT OR IGNORE INTO ui_page_migration (page_code, module, label, old_route, new_route, page_type, status, owner_role, migrated_in_part, migrated_by, migrated_at, defects_json, notes, created_by, source_type) VALUES (${q(code)}, 'ui', ${q(label)}, ${q(route)}, ${q(route)}, ${q(type)}, 'MIGRATED', ${q(owner)}, '07.14', 'system', '2026-11-17T00:00:00.000Z', '[]', ${q(notes)}, 'migration', 'reference_seed');`);
 const up = `-- Part 07.14 (HR & workforce dashboards and the Workforce-First Gate), built in 166.6. Written by scripts/p0714_seed.mjs.
 -- The flag; the gates G1–G4 of each company (hr_gates) and their criteria (hr_gate_criteria: status, note, reviewer, date; the evidence links come
 -- from the catalogue in code); the menu entries; the ${cards.length} cards of the workforce dashboard as widgets and its system layout.
@@ -64,6 +70,7 @@ CREATE TABLE IF NOT EXISTS hr_gate_criteria (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_hr_gate_criteria_gate_code ON hr_gate_criteria (gate_id, code);
 CREATE INDEX IF NOT EXISTS ix_hr_gate_criteria_company ON hr_gate_criteria (company_id, status);
 ${navSql.join('\n')}
+${trackerSql.join('\n')}
 ${widgetSql(cards, 700).join('\n')}
 ${dashboardSql(wf)}
 `;
@@ -71,6 +78,7 @@ const down = `-- Part 07.14 down: the dashboard, its widgets, the menu entries, 
 DELETE FROM ui_dashboards WHERE code = ${q(wf.code)};
 DELETE FROM ui_widgets WHERE code IN (${cards.map((c) => q(c.code)).join(', ')});
 DELETE FROM ui_navigation_entries WHERE code IN ('hr-workforce', 'admin-gates');
+DELETE FROM ui_page_migration WHERE page_code IN ('hr.workforce', 'admin.gates', 'admin.gate');
 DROP TABLE IF EXISTS hr_gate_criteria;
 DROP TABLE IF EXISTS hr_gates;
 DELETE FROM core_feature_flags WHERE key = 'ff.hr.p0714';

@@ -10613,6 +10613,72 @@ Indexes:
 - ix_hr_exit_interviews_company_id: company_id
 - ux_hr_exit_interviews_sep (unique): separation_id
 
+## hr_gate_criteria
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| gate_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| part_id | TEXT |  |  |  |
+| kind | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| note | TEXT |  |  |  |
+| reviewed_by | TEXT |  |  |  |
+| reviewed_at | TEXT |  |  |  |
+| extra_evidence_json | TEXT | yes |  | '[]' |
+| sort_order | INTEGER | yes |  | 100 |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: gate_id -> hr_gates(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_gate_criteria_company: company_id, status
+- ux_hr_gate_criteria_gate_code (unique): gate_id, code
+
+## hr_gates
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'OPEN' |
+| catalogue_version | TEXT | yes |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| submitted_by | TEXT |  |  |  |
+| submitted_at | TEXT |  |  |  |
+| passed_at | TEXT |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_hr_gates_company_code (unique): company_id, code
+
 ## hr_grievances
 
 | Column | Type | Not null | Key | Default |

@@ -63,7 +63,7 @@ console.log(gates.map((g) => `${g.code}: ${g.criteria.length} criteria`).join(',
 // ---- docs/erp/GATES/<gate>.md: the evidence of each gate, written from the same catalogue (the review and the sign-off are in the application) ----
 const statusOf = new Map(rows.map((r) => [r.part_id, r.status]));
 const defects = readFileSync('docs/erp/DEFECTS.md', 'utf8').split('\n').filter((l) => l.startsWith('| D-')).map((l) => l.slice(1, -1).split('|').map((x) => x.trim()))
-  .filter((c) => c.length >= 9).map(([id, area, description, severity, cause, owner, status]) => ({ id, area, description, severity, owner, status }));
+  .filter((c) => c.length >= 9).map(([id, area, description, severity, _cause, owner, status]) => ({ id, area, description, severity, owner, status }));
 mkdirSync('docs/erp/GATES', { recursive: true });
 for (const g of gates) {
   const parts = new Set(g.criteria.filter((c) => c.partId).map((c) => c.partId));
