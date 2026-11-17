@@ -234,7 +234,8 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 
 /* Part 166.7: the list's title with its count, group-by, the filter sheet on a phone */
 .lr-title { margin: 0 0 var(--erp-space-2); }
-.lr-group { display: inline-flex; align-items: center; gap: var(--erp-space-2); }
+.lr-group { display: inline-flex; align-items: center; gap: var(--erp-space-2); min-width: 0; max-width: 100%; }
+.lr-group select { min-width: 0; max-width: min(16rem, calc(100vw - 8rem)); text-overflow: ellipsis; }
 .lr-group-row td { background: var(--erp-color-bg-surface-sunken); border-top: 1px solid var(--erp-color-border-strong); }
 .lr-card-group { list-style: none; padding: var(--erp-space-2) var(--erp-space-1) 0; }
 .lr-sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: calc(var(--erp-z-modal) + 1); max-height: 80vh; overflow: auto; background: var(--erp-color-bg-surface); border-top-left-radius: 16px; border-top-right-radius: 16px; box-shadow: var(--erp-elevation-3); padding: var(--erp-space-4); padding-bottom: calc(var(--erp-space-4) + env(safe-area-inset-bottom, 0px)); }
