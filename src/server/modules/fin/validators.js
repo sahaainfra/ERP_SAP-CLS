@@ -69,3 +69,20 @@ export const parseRepostAll = (b) => parse(z.object({ errorCode: z.string().trim
 export const parseReplayCreate = (b) => parse(z.object({ eventTypes: z.array(z.string().trim().max(60)).min(1).max(20), from: date, to: date }).strict(), b);
 export const parseRecon = (q) => parse(z.object({ asOf: date.optional() }).strict(), q);
 
+
+// ---- part 23.03: accounts payable ----
+const money = z.union([z.number().nonnegative(), z.string().trim().regex(/^\d+(\.\d{1,2})?$/, 'An amount such as 1500.50')]);
+const natures = z.enum(['CONTRACTOR', 'PROFESSIONAL', 'PURCHASE_GOODS', 'RENT_PLANT', 'RENT_LAND', 'COMMISSION']);
+const directBody = { partnerId: id, projectId: id.nullable().optional(), siteId: id.nullable().optional(), billNo: z.string().trim().max(60).nullable().optional(), billDate: date, dueDate: date.nullable().optional(), creditDays: z.coerce.number().int().min(0).max(365).nullable().optional(), description: z.string().trim().min(3, 'Say what the bill is for').max(300), expenseAccountId: id, amount: money, gst: money.optional(), tdsNature: natures.nullable().optional(), total: money.optional() };
+export const parseDirectCreate = (b) => parse(z.object(directBody).strict(), b);
+export const parseDirectUpdate = (b) => parse(z.object({ ...directBody, version }).strict(), b);
+export const parseHold = (b) => parse(z.object({ hold: z.boolean(), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);
+export const parseAdjust = (b) => parse(z.object({ advanceId: id, amount: money }).strict(), b);
+export const parseTdsPreview = (q) => parse(z.object({ partnerId: id, nature: natures, date: date.optional(), amount: money }).strict(), q);
+export const parsePayable = (q) => parse(z.object({ dueBy: date.optional() }).strict(), q);
+const dnBody = { kind: z.enum(['DEBIT', 'VENDOR_CREDIT']).default('DEBIT'), partnerId: id, projectId: id.nullable().optional(), billId: id.nullable().optional(), referenceType: z.enum(['AP_BILL', 'INV_RTV', 'VENDOR_INVOICE', 'OTHER']).nullable().optional(), referenceId: z.string().trim().max(60).nullable().optional(), reason: z.enum(['RTV', 'RATE_DIFFERENCE', 'BACK_CHARGE', 'PENALTY', 'SHORT_SUPPLY', 'OTHER']), noteDate: date, vendorNoteNo: z.string().trim().max(60).nullable().optional(), description: z.string().trim().min(3).max(300), amount: money, gst: money.optional(), creditAccountId: id.nullable().optional() };
+export const parseDnCreate = (b) => parse(z.object(dnBody).strict(), b);
+export const parseDnUpdate = (b) => parse(z.object({ ...dnBody, kind: z.enum(['DEBIT', 'VENDOR_CREDIT']).optional(), version }).strict(), b);
+export const parseVendorLedger = (q) => parse(z.object({ partnerId: id, from: date.optional(), to: date.optional() }).strict(), q);
+export const parseAsOf = (q) => parse(z.object({ asOf: date.optional() }).strict(), q);
+export const parseRange = (q) => parse(z.object({ from: date.optional(), to: date.optional() }).strict(), q);

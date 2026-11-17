@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { glOf, postingOf } from './index.js';
+import { apOf, glOf, postingOf } from './index.js';
 
 // The finance masters (part 06.05) for the rest of the ERP: the approval of a change (FIN_MASTER_CHANGE: the accounts manager checks what the project controls manager proposes, then the CFO approves),
 // what the approver sees, the object page of an account (search, audit), the form lookups (accounts, accounts open to manual postings, cost codes) and the events consumers listen to.
@@ -154,4 +154,36 @@ workflowTypes.register({
   summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM fin_replay_runs WHERE id = ?').get(Number(id)); if (!r) return null; const s = JSON.parse(r.dry_run_json || '{}'); return { fields: [{ label: 'Events', value: JSON.parse(r.event_types_json || '[]').join(', ') }, { label: 'Dates', value: `${r.from_date} to ${r.to_date}` }, { label: 'Dry run', value: `${s.events ?? 0} events, ${s.wouldPost ?? 0} would post ₹${s.total ?? 0}` }, { label: 'Would fail', value: Object.entries(s.failures ?? {}).map(([k, v]) => `${k} ${v}`).join(', ') || 'none' }] }; },
   defaultDefinition: { name: 'Replay commit: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer', 'CFO')] },
   hooks: peHooks('replays'),
+});
+
+// ---- part 23.03: accounts payable ----
+for (const [type, description] of [
+  ['fin.ap_bill.created', 'An AP bill was made (part 23.03): from a matched vendor invoice, an approved subcontractor bill, a passed expense claim, or an approved direct expense bill: data { billId, docNo, source, partnerId, netPayable, dueDate, tds, tdsSection }. Payment proposals (23.04) read it.'],
+  ['fin.ap_bill.hold_changed', 'An AP bill was held or released (part 23.03 FR-05): data { billId, docNo, hold, reason }. A held bill is not offered for payment.'],
+  ['fin.advance.adjusted', 'An advance given was set against an AP bill (part 23.03 FR-04): data { advanceId, advanceNo, billId, billNo, partnerId, amount, on }. The advance ledger (22.07) reads it.'],
+  ['fin.debit_note.approved', 'A debit note, or a credit note received from a vendor, was approved and posted (part 23.03 FR-03): data { noteId, docNo, kind, partnerId, reason, referenceType, referenceId, billId, amount, gst, total }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const apDecide = (outcome, kind) => (db, { instance, actor, comment }) => apOf(db)?.[kind].decide(instance, actor, outcome, comment);
+const apHooks = (kind) => ({ onApproved: apDecide('APPROVED', kind), onRejected: apDecide('REJECTED', kind), onReturned: apDecide('RETURNED', kind), onCancelled: apDecide('CANCELLED', kind) });
+workflowTypes.register({
+  docType: 'FIN_AP_DIRECT', label: 'Direct expense bill', processOwner: 'CFO', route: (id) => `/finance/ap-bills?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM ap_bills WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.payee_name} ₹${(r.total_paise / 100).toFixed(2)} ${r.description ?? ''}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM ap_bills WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Payee', value: r.payee_name }, { label: 'Their bill', value: `${r.bill_no ?? ''} of ${r.bill_date}` }, { label: 'For', value: r.description ?? '' }, { label: 'Amount and GST', value: `₹${(r.gross_paise / 100).toFixed(2)} + ₹${(r.gst_input_paise / 100).toFixed(2)}` }, { label: 'TDS', value: r.tds_paise ? `₹${(r.tds_paise / 100).toFixed(2)} under ${r.tds_section}` : 'none' }, { label: 'Net payable', value: `₹${(r.net_payable_paise / 100).toFixed(2)}` }] } : null; },
+  defaultDefinition: { name: 'Direct expense bill: the head of the department, the accounts manager, then the CFO above ₹1 lakh', settings: { resubmit: 'first', distinctApprovers: true }, steps: [{ code: 'HEAD', name: 'Head of the department', type: 'approval', mode: 'single', approvers: [{ kind: 'manager' }], slaHours: 48, requireAttachment: false, checklist: [], when: null, notify: [], action: null }, glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above the limit)', 'CFO', { field: 'overCfo', op: 'eq', value: 1 })] },
+  hooks: apHooks('bills'),
+});
+workflowTypes.register({
+  docType: 'FIN_DEBIT_NOTE', label: 'Debit note', processOwner: 'ACCMGR', route: (id) => `/finance/debit-notes?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM ap_debit_notes WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.reason} ₹${(r.total_paise / 100).toFixed(2)} ${r.description}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT n.*, p.legal_name FROM ap_debit_notes n JOIN mdm_partners p ON p.id = n.partner_id WHERE n.id = ?').get(Number(id)); return r ? { fields: [{ label: 'Vendor', value: r.legal_name }, { label: 'Reason', value: r.reason }, { label: 'For', value: r.description }, { label: 'Amount and GST', value: `₹${(r.amount_paise / 100).toFixed(2)} + ₹${(r.gst_paise / 100).toFixed(2)}` }] } : null; },
+  defaultDefinition: { name: 'Debit note: the accounts manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR')] },
+  hooks: apHooks('notes'),
+});
+for (const [type, label, perm, route] of [['ap_bills', 'AP bill', 'fin.bill.view', '/finance/ap-bills?id='], ['ap_debit_notes', 'Debit note', 'fin.debit_note.view', '/finance/debit-notes?id=']]) objectTypes.register({
+  type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,
+  access(db, actor, id) { if (!authzOf(db).check(actor, perm).allowed) return null; const r = db.prepare(`SELECT company_id, org_project_id FROM ${type} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); return r ? { companyId: r.company_id, projectId: r.org_project_id ?? undefined } : null; },
+  auditEntities: (id) => [{ entity: type, id }],
+  summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
+  related: () => [],
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, limit).map((x) => x.id); },
 });

@@ -269,6 +269,170 @@ Indexes:
 - ix_alr_rules_company: company_id, status, enabled
 - ux_alr_rules_version (unique): , code, rule_version
 
+## ap_bill_adjustments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bill_id | INTEGER | yes |  |  |
+| adj_kind | TEXT | yes |  |  |
+| ref_id | INTEGER | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| adjusted_on | TEXT | yes |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), bill_id -> ap_bills(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ap_bill_adjustments_journal: journal_id
+- ix_ap_bill_adjustments_company: company_id, adj_kind, ref_id
+- ix_ap_bill_adjustments_bill: bill_id
+
+## ap_bills
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| bill_source | TEXT | yes |  |  |
+| source_ref | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| partner_id | INTEGER |  |  |  |
+| employee_id | INTEGER |  |  |  |
+| payee_name | TEXT | yes |  |  |
+| bill_no | TEXT |  |  |  |
+| bill_date | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| msme | INTEGER | yes |  | 0 |
+| msme_due_date | TEXT |  |  |  |
+| description | TEXT |  |  |  |
+| expense_account_id | INTEGER |  |  |  |
+| gross_paise | INTEGER | yes |  | 0 |
+| gst_input_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| tds_nature | TEXT |  |  |  |
+| tds_section | TEXT |  |  |  |
+| tds_act | TEXT |  |  |  |
+| tds_rate | INTEGER | yes |  | 0 |
+| tds_base_paise | INTEGER | yes |  | 0 |
+| tds_paise | INTEGER | yes |  | 0 |
+| tds_payment_code | TEXT |  |  |  |
+| tds_certificate | TEXT |  |  |  |
+| tds_basis | TEXT |  |  |  |
+| ldc_no | TEXT |  |  |  |
+| net_payable_paise | INTEGER | yes |  | 0 |
+| adjusted_paise | INTEGER | yes |  | 0 |
+| paid_paise | INTEGER | yes |  | 0 |
+| hold_reason | TEXT |  |  |  |
+| hold_by | TEXT |  |  |  |
+| hold_at | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), expense_account_id -> fin_accounts(id), employee_id -> hr_employees(id), partner_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ap_bills_wf: workflow_instance_id
+- ix_ap_bills_journal: journal_id
+- ix_ap_bills_account: expense_account_id
+- ix_ap_bills_employee: employee_id
+- ix_ap_bills_site: org_site_id
+- ix_ap_bills_project: org_project_id
+- ix_ap_bills_msme: company_id, msme, msme_due_date
+- ix_ap_bills_tds: company_id, partner_id, tds_nature, bill_date
+- ix_ap_bills_partner: partner_id, bill_date
+- ix_ap_bills_list: company_id, status, due_date
+- ux_ap_bills_source (unique): company_id, bill_source, source_ref
+- ux_ap_bills_doc (unique): company_id, doc_no
+
+## ap_debit_notes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| note_kind | TEXT | yes |  | 'DEBIT' |
+| partner_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| reference_type | TEXT |  |  |  |
+| reference_id | TEXT |  |  |  |
+| bill_id | INTEGER |  |  |  |
+| reason | TEXT | yes |  |  |
+| note_date | TEXT | yes |  |  |
+| vendor_note_no | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| gst_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  |  |
+| credit_account_id | INTEGER |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), credit_account_id -> fin_accounts(id), bill_id -> ap_bills(id), org_project_id -> org_projects(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ap_debit_notes_wf: workflow_instance_id
+- ix_ap_debit_notes_journal: journal_id
+- ix_ap_debit_notes_account: credit_account_id
+- ix_ap_debit_notes_bill: bill_id
+- ix_ap_debit_notes_project: org_project_id
+- ix_ap_debit_notes_partner: partner_id
+- ix_ap_debit_notes_list: company_id, status, note_date
+- ux_ap_debit_notes_doc (unique): company_id, doc_no
+
 ## ast_custody_log
 
 | Column | Type | Not null | Key | Default |

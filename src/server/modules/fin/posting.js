@@ -390,7 +390,12 @@ export function createPostingService({ db, base, gl, flags }) {
     const rows = [];
     const add = (code, label, sub, glP, accounts, drill) => rows.push({ code, label, subledger: rs(sub), gl: rs(glP), difference: rs(sub - glP), accounts, drill });
     // AP: vendor invoices matched (payable) and subcontractor bills approved (net), less what was paid (payments come with 23.04): credit balance of the AP control accounts
-    if (tableHas('bill_vendor_invoices')) {
+    if (tableHas('ap_bills') && db.prepare("SELECT 1 FROM ap_bills WHERE company_id = ? LIMIT 1").get(c)) {
+      // 23.03: the AP sub-ledger is the AP bills (net of TDS, of what was set against them and paid); employee claims are not on the AP control accounts
+      const ap = db.prepare("SELECT COALESCE(SUM(net_payable_paise - adjusted_paise - paid_paise), 0) AS s FROM ap_bills WHERE company_id = ? AND status = 'APPROVED' AND bill_source != 'EXPENSE_CLAIM' AND bill_date <= ? AND deleted_at IS NULL").get(c, on2).s;
+      const dnOpen = db.prepare("SELECT COALESCE(SUM(n.total_paise), 0) - COALESCE((SELECT SUM(a.amount_paise) FROM ap_bill_adjustments a WHERE a.company_id = ? AND a.adj_kind = 'DEBIT_NOTE' AND a.deleted_at IS NULL), 0) AS s FROM ap_debit_notes n WHERE n.company_id = ? AND n.status = 'APPROVED' AND n.note_date <= ? AND n.deleted_at IS NULL").get(c, c, on2).s;
+      add('AP', 'Accounts payable (AP bills outstanding, less debit notes not yet set against a bill)', ap - dnOpen, -glBalance(c, "a.control_kind = 'AP'", [], on2), 'AP control accounts', '/finance/ap-bills');
+    } else if (tableHas('bill_vendor_invoices')) {
       const vi = db.prepare("SELECT COALESCE(SUM(total_paise), 0) AS s FROM bill_vendor_invoices WHERE company_id = ? AND status = 'APPROVED' AND invoice_date <= ? AND deleted_at IS NULL").get(c, on2).s;
       const sb = db.prepare("SELECT COALESCE(SUM(net_paise), 0) AS s FROM bill_sub_bills WHERE company_id = ? AND status = 'APPROVED' AND period_to <= ? AND deleted_at IS NULL").get(c, on2).s;
       add('AP', 'Accounts payable (vendor invoices and subcontractor bills)', vi + sb, -glBalance(c, "a.control_kind = 'AP'", [], on2), 'AP control accounts', '/bill/invoice-hub');
