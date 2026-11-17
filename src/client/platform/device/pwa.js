@@ -1,11 +1,13 @@
 import { useSyncExternalStore } from 'react';
+import { flushDrafts } from '../forms/useDraft.js';
 
 // The installable app (part 03.06, FR-03): registering the service worker, noticing that a newer version of the app is waiting, offering the
 // browser's install prompt (Chrome and Edge), and telling iPhone users how to add the app to the Home Screen (Safari has no prompt).
 const DISMISSED_KEY = 'erp.pwa.install-dismissed';
+export const API_UPDATED_EVENT = 'erp:api-updated';
 const DISMISS_DAYS = 14;
 
-let state = { installEvent: null, updateReady: false, registered: false, standalone: false, ios: false, dismissed: false };
+let state = { installEvent: null, updateReady: false, applying: false, saveDraftsFirst: false, registered: false, standalone: false, ios: false, dismissed: false };
 const listeners = new Set();
 const set = (patch) => { state = { ...state, ...patch }; listeners.forEach((l) => l()); };
 let registration = null;
@@ -36,12 +38,14 @@ export const pwa = {
     window.addEventListener('appinstalled', () => set({ installEvent: null, standalone: true }));
     // a notification that was touched while the app is open asks the page to go where the notification points
     navigator.serviceWorker.addEventListener('message', (e) => {
+      // part 166.4: a call answered from the kept copy has a fresher answer now (the menu); the shell fetches it again
+      if (e.data?.type === 'API_UPDATED' && typeof e.data.path === 'string') window.dispatchEvent(new CustomEvent(API_UPDATED_EVENT, { detail: { path: e.data.path } }));
       if (e.data?.type === 'NAVIGATE' && typeof e.data.url === 'string' && e.data.url.startsWith('/') && !e.data.url.startsWith('//')) {
         window.history.pushState(null, '', e.data.url);
         window.dispatchEvent(new PopStateEvent('popstate'));
       }
     });
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloading && state.updateReady) { reloading = true; window.location.reload(); } });
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloading && (state.updateReady || state.applying)) { reloading = true; window.location.reload(); } });
     try {
       registration = await navigator.serviceWorker.register(url);
     } catch {
@@ -66,8 +70,14 @@ export const pwa = {
   /** Check for a newer version now. */
   update: () => registration?.update().catch(() => null),
 
-  /** Switch to the waiting version; the page reloads by itself once it has taken over. */
-  applyUpdate() {
+  /** ff.perf.p16604 (part 166.4, FR-04): save the open drafts before reloading into a new version. The shell sets it from the flag. */
+  configure({ saveDraftsFirst }) { if (Boolean(saveDraftsFirst) !== state.saveDraftsFirst) set({ saveDraftsFirst: Boolean(saveDraftsFirst) }); },
+
+  /** Switch to the waiting version; the page reloads by itself once it has taken over. With the flag, the open drafts are saved first. */
+  async applyUpdate() {
+    if (state.applying) return;
+    set({ applying: true });
+    if (state.saveDraftsFirst) await flushDrafts();
     const waiting = registration?.waiting;
     if (waiting) waiting.postMessage({ type: 'SKIP_WAITING' });
     else window.location.reload();

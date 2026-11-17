@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { mdm, scoreTone } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Data Quality Rules & Stewards (Administration, part 06.01, FR-04, FR-07): the score of each master and the rules that fail most, the rules in force (required, format of PAN, GSTIN, IFSC, PIN and others, not reviewed for N
 // days) with their severity, and the stewards of each master. The system administrator changes them as one proposal with a reason; nothing changes before the IT administrator or the director approves it (maker-checker).
@@ -32,7 +33,7 @@ export default function QualityRulesPage() {
   const S = draft ? draft.stewards : c.stewards;
   return (
     <section aria-labelledby="mdq-title" data-testid="mdm-quality">
-      <div className="page-head"><h1 id="mdq-title">Data Quality Rules &amp; Stewards</h1>{c.canEdit && !draft && !c.pending && <button type="button" className="btn btn-primary" onClick={edit} data-testid="mdq-edit">Propose a change</button>}</div>
+      <PageHeader id="mdq-title" title={"Data Quality Rules & Stewards"} actions={<>{c.canEdit && !draft && !c.pending && <button type="button" className="btn btn-primary" onClick={edit} data-testid="mdq-edit">Propose a change</button>}</>} />
       {c.pending && <p className="mdm-banner" role="status" data-testid="mdq-pending">Version {c.pending.version} by {c.pending.by} waits for approval: {c.pending.reason}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="mdq-note">{note}</p>}
       <h2>Quality by master</h2>

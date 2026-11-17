@@ -2,6 +2,7 @@ import { useT } from '../../platform/i18n/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Budget Change Requests (part 12.02): revisions, transfers, contingency drawdowns and the drafts from approved variations, with their effect on the budget and their status.
 export default function ChangesPage() {
@@ -11,7 +12,7 @@ export default function ChangesPage() {
   const fp = Number(/filter\[projectId\]=(\d+)/.exec(window.location.search)?.[1]) || null;
   return (
     <section aria-labelledby="bc-list-h" data-testid="bc-changes">
-      <h1 id="bc-list-h" className="sr-only">{t('chg.listTitle')}</h1>
+      <PageHeader id="bc-list-h" srOnly title={t('chg.listTitle')} />
       <div className="actions-row no-print">
         {perms.includes('bud.change.create') && <button type="button" className="btn btn-primary" onClick={() => navigateTo('/bud/change')} data-testid="bc-new">{t('chg.new')}</button>}
         {perms.includes('bud.budget.view') && <button type="button" className="btn" onClick={() => navigateTo('/bud/compare')} data-testid="bc-compare">{t('cmp.title')}</button>}

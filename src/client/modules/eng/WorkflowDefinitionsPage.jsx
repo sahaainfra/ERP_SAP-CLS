@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { useDefinitionOptions, useDefinitions, useDraftFrom } from '../../platform/workflow/api.js';
 import { Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEF_STATUS } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Workflow Definitions (part 04.01, section 7.1): the definitions of every document type, their versions and status. A new version starts as a copy of the
 // active one and becomes active only after its approval chain (the system administrator, the owner of the process, the IT administrator) has approved it.
@@ -26,8 +27,7 @@ export default function WorkflowDefinitionsPage({ session }) {
   const clear = Object.values(filters).some(Boolean);
   return (
     <section aria-labelledby="wd-title" data-testid="workflow-definitions">
-      <h1 id="wd-title">Workflow Definitions</h1>
-      <p className="muted">How each kind of document is approved: its steps, who decides, how long they have. A document keeps the version it was submitted under; a new version needs its own approval before it is used.</p>
+      <PageHeader id="wd-title" title={"Workflow Definitions"} subtitle={"How each kind of document is approved: its steps, who decides, how long they have. A document keeps the version it was submitted under; a new version needs its own approval before it is used."} />
       {error && <p role="alert" className="error">{error.form}{error.correlationId && <> (<code>{error.correlationId}</code>)</>}</p>}
       {list.isPending && <Skeleton label="Loading the definitions" rows={4} />}
       {list.isError && list.error?.status !== 403 && <ErrorState title="The definitions could not be loaded" error={list.error} onRetry={() => list.refetch()} />}

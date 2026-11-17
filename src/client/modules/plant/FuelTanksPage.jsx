@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, fmtQty, fmtRs, fu, pl } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Fuel stores (part 17.04, FR-01): tanks, bowsers and fuel cards with their book stock; fuel is received into a tank against an approved goods receipt (16.03) or bought at a pump on petty cash, and a wrong receipt is cancelled with a reason.
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -19,7 +20,7 @@ export default function FuelTanksPage() {
   const receive = async () => { const d = await run(() => fu.receive(rcv.id, { source: r.source, litres: Number(r.litres), rate: r.rate === '' ? null : Number(r.rate), billNo: r.billNo || null, pettyRef: r.pettyRef || null, grnNo: r.grnNo || null, receiptDate: r.receiptDate }), t('f.received')); if (d) setRcv(null); };
   const cancelReceipt = (x) => { const why = globalThis.prompt(t('why')); if (why && why.length >= 5) run(() => fu.cancelReceipt(x.id, why), t('f.receiptCancelled')); };
   return (
-    <section aria-labelledby="ft-h" data-testid="plant-fuel-tanks"><h1 id="ft-h">{t('f.tanksTitle')}</h1><p className="muted">{t('f.tanksIntro')} <Link to="/plant/fuel-issues">{t('f.issuesTitle')}</Link></p>
+    <section aria-labelledby="ft-h" data-testid="plant-fuel-tanks"><PageHeader id="ft-h" title={t('f.tanksTitle')} subtitle={<>{t('f.tanksIntro')} <Link to="/plant/fuel-issues">{t('f.issuesTitle')}</Link></>} />
       {note && <p className="mdm-banner" role="status" data-testid="ft-note">{note}</p>}{error?.form && <p className="field-error" role="alert" data-testid="ft-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="actions-row no-print"><button type="button" className="btn btn-primary" style={{ minHeight: 48 }} onClick={() => setOpen(!open)} aria-expanded={open} data-testid="ft-new">{t('f.newTank')}</button></div>
       {open && <div className="mdm-panel" data-testid="ft-form"><div className="form-grid">

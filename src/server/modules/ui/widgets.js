@@ -5,7 +5,7 @@ import { writeAudit } from '../../platform/audit/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { createParameterStore } from '../../platform/parameters/index.js';
-import { widgetRegistry } from '../../platform/widgets/index.js';
+import { widgetRegistry, roleLayouts } from '../../platform/widgets/index.js';
 import { parse } from '../../platform/validation/index.js';
 import { financialYear, todayIST } from '../../../shared/dates.js';
 
@@ -146,6 +146,9 @@ export function createWidgetService({ db, approvals, shell }) {
     const personal = ownRow(actor, dash, 'user', actor.user);
     let role = null;
     if (!personal) for (const r of actor.roles ?? []) { role = ownRow(actor, dash, 'role', r); if (role) break; }
+    // a role layout written in code (part 166.5, Home insights) when nothing is saved for the person or the role
+    const coded = !personal && !role ? roleLayouts.for(dash, actor.roles ?? []) : null;
+    if (coded) role = { owner_ref: coded[0], name: sys.name, layout_json: JSON.stringify(coded[1]), filters_json: sys.filters_json };
     const chosen = personal ?? role ?? sys;
     const all = withMeta(jsonOf(chosen.layout_json, []));
     const allowed = new Set(catalogue(actor).map((w) => w.code));

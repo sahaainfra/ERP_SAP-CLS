@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { deviceInfo, publicApi, rememberDevice, rememberedDevice, setSession } from '../../../platform/api/index.js';
 import { errorInfo } from '../../core/pages/ui.jsx';
 import { STRINGS } from '../strings.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const LANG_KEY = 'erp.lang';
 const loadLang = () => {
@@ -174,7 +175,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'credentials' && (
           <form onSubmit={signIn} aria-labelledby="login-title" className="form-grid">
-            <h1 id="login-title">{t.title}</h1>
+            <PageHeader id="login-title" title={t.title} />
             <label className="field"><span>{t.username}</span><input name="username" autoComplete="username" defaultValue={username} required autoFocus /></label>
             <label className="field"><span>{t.password}</span><input name="password" type="password" autoComplete="current-password" required /></label>
             {captcha && <label className="field"><span>{captcha.question} ({t.captcha})</span><input name="captcha" inputMode="numeric" required /></label>}
@@ -187,8 +188,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'mfa' && challenge && (
           <form onSubmit={verify} aria-labelledby="login-title" className="form-grid">
-            <h1 id="login-title">{t.mfaTitle}</h1>
-            <p className="muted">{method === 'backup' ? t.backupCode : t.mfaHelp}</p>
+            <PageHeader id="login-title" title={t.mfaTitle} subtitle={method === 'backup' ? t.backupCode : t.mfaHelp} />
             <label className="field"><span>{method === 'backup' ? t.backupCode : t.code}</span><input name="code" inputMode={method === 'backup' ? 'text' : 'numeric'} autoComplete="one-time-code" required autoFocus /></label>
             <label className="check"><input name="remember" type="checkbox" /> {t.remember}</label>
             <Problem error={error} />
@@ -205,8 +205,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'enrol' && enrol && (
           <form onSubmit={confirmEnrol} aria-labelledby="login-title" className="form-grid">
-            <h1 id="login-title">{t.enrolTitle}</h1>
-            <p className="muted">{t.enrolHelp}</p>
+            <PageHeader id="login-title" title={t.enrolTitle} subtitle={t.enrolHelp} />
             <img src={enrol.qr} alt="QR code for the authenticator app" width="200" height="200" className="qr" />
             <p>{t.manualKey}: <code data-testid="totp-secret">{enrol.secret}</code></p>
             <label className="field"><span>{t.code}</span><input name="code" inputMode="numeric" autoComplete="one-time-code" required autoFocus /></label>
@@ -218,8 +217,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'backup' && done && (
           <div className="form-grid" aria-labelledby="login-title">
-            <h1 id="login-title">{t.backupTitle}</h1>
-            <p className="muted">{t.backupHelp}</p>
+            <PageHeader id="login-title" title={t.backupTitle} subtitle={t.backupHelp} />
             <ul className="plain codes" data-testid="backup-codes">{done.backupCodes.map((c) => <li key={c}><code>{c}</code></li>)}</ul>
             <div className="actions"><button type="button" className="btn btn-primary" onClick={() => start(done)}>{t.savedCodes}</button></div>
           </div>
@@ -227,7 +225,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'password' && challenge && (
           <form onSubmit={newPassword} aria-labelledby="login-title" className="form-grid">
-            <h1 id="login-title">{t.passwordTitle}</h1>
+            <PageHeader id="login-title" title={t.passwordTitle} />
             <label className="field"><span>{t.newPassword}</span><input name="newPassword" type="password" autoComplete="new-password" required minLength={10} autoFocus /></label>
             <Problem error={error} />
             <div className="actions">{backBtn()}{submit(t.setPassword)}</div>
@@ -236,7 +234,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'forgot' && (
           <form onSubmit={forgot} aria-labelledby="login-title" className="form-grid">
-            <h1 id="login-title">{t.resetTitle}</h1>
+            <PageHeader id="login-title" title={t.resetTitle} />
             <label className="field"><span>{t.username}</span><input name="identifier" required autoFocus /></label>
             <Problem error={error} />
             <div className="actions">{backBtn()}{submit(t.sendReset)}</div>
@@ -245,7 +243,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'reset' && (
           <form onSubmit={reset} aria-labelledby="login-title" className="form-grid">
-            <h1 id="login-title">{t.resetTitle}</h1>
+            <PageHeader id="login-title" title={t.resetTitle} />
             <label className="field"><span>{t.resetCode}</span><input name="code" autoComplete="one-time-code" required autoFocus /></label>
             <label className="field"><span>{t.newPassword}</span><input name="newPassword" type="password" autoComplete="new-password" required minLength={10} /></label>
             <Problem error={error} />
@@ -255,8 +253,7 @@ export default function LoginPage({ notice = '' }) {
 
         {step === 'pin' && (
           <form onSubmit={unlock} aria-labelledby="login-title" className="form-grid">
-            <h1 id="login-title">{t.pinTitle}</h1>
-            <p className="muted">{remembered.user}</p>
+            <PageHeader id="login-title" title={t.pinTitle} subtitle={remembered.user} />
             <label className="field"><span>{t.pin}</span><input name="pin" type="password" inputMode="numeric" pattern="\d{4,8}" autoComplete="off" required autoFocus /></label>
             <Problem error={error} />
             <div className="actions">{submit(t.unlock)}</div>

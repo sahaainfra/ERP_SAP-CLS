@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { SHIP_TONE, addDays, download, fmtDate, fmtQty, px, today } from './api.js';
 import { ProjectOrder, useRunner } from './XpdParts.jsx';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Shipments tracker (part 15.07, FR-03, FR-04): a consignment against an order with the transporter, LR or bill of lading, e-way bill, packing list and (for over-dimensional cargo) the permit; dispatch is cleared by the inspection release note where inspection is
 // mandatory (CP-PROC-07); tracking events move the ETA and the plan is worked out again; the dispatch and delivery go to the gate entry.
@@ -23,8 +24,7 @@ function Ship({ t, id }) {
   const why = (action, msg) => { const x = window.prompt(t('x.why')); if (x) run(() => px.shipAct(r.id, action, { reason: x }), msg); };
   return (
     <div data-testid="sh-object" data-status={r.status} data-clearance={r.clearance}>
-      <h1 id="sh-h">{r.docNo} <StatusBadge status={SHIP_TONE[r.status]} label={t(`x.sh.${r.status}`)} />{r.isOdc && <StatusBadge status="RETURNED" label={t('x.odc')} />}</h1>
-      <p><Link to="/proc/shipments">{t('x.back')}</Link> · <Link to={`/proc/purchase-orders?id=${r.poId}`}>{r.poNo}</Link> {r.vendor} · {r.projectCode}</p>
+      <PageHeader id="sh-h" title={<>{r.docNo} <StatusBadge status={SHIP_TONE[r.status]} label={t(`x.sh.${r.status}`)} />{r.isOdc && <StatusBadge status="RETURNED" label={t('x.odc')} />}</>} meta={<><Link to="/proc/shipments">{t('x.back')}</Link> · <Link to={`/proc/purchase-orders?id=${r.poId}`}>{r.poNo}</Link> {r.vendor} · {r.projectCode}</>} />
       <dl className="kv" data-testid="sh-figures"><div><dt>{t('x.transporter')}</dt><dd>{r.transporter ?? '—'}</dd></div><div><dt>{t('x.vehicle')}</dt><dd>{r.vehicleNo ?? '—'}</dd></div><div><dt>{t('x.lr')}</dt><dd>{r.lrNo ?? r.blNo ?? '—'}</dd></div><div><dt>{t('x.eway')}</dt><dd>{r.ewayBillNo ?? '—'}</dd></div><div><dt>{t('x.packages')}</dt><dd>{r.packages}</dd></div>
         <div><dt>{t('x.dispatchedOn')}</dt><dd>{fmtDate(r.dispatchedOn)}</dd></div><div><dt>{t('x.eta')}</dt><dd data-testid="sh-eta">{fmtDate(r.eta)}</dd></div><div><dt>{t('x.requiredOnSite')}</dt><dd>{fmtDate(r.requiredOnSite)}{r.lateBy > 0 && <span className="field-error"> {t('x.lateBy', { n: r.lateBy })}</span>}</dd></div>
         <div><dt>{t('x.clearance')}</dt><dd data-testid="sh-clearance">{t(`x.c.${r.clearance}`)}{r.irnNo ? ` · ${r.irnNo}` : ''}</dd></div>{r.isOdc && <div><dt>{t('x.odcPermit')}</dt><dd>{r.odcPermitNo} · {t('x.validTo')} {fmtDate(r.odcValidTo)}{r.odcDimensions ? ` · ${r.odcDimensions}` : ''}</dd></div>}</dl>
@@ -61,7 +61,7 @@ function ShipForm({ t, editId, project0, po0 }) {
   const save = async () => { setError(null); setBusy(true); try { const d = editId ? await px.shipUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await px.shipCreate({ poId: Number(orderId), ...body() }); navigateTo(`/proc/shipments?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   const text = (k, label, max = 60, tid) => <Field label={label} name={k} error={error}><input value={form[k]} maxLength={max} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 44 }} data-testid={tid} /></Field>;
   return (
-    <section aria-labelledby="shn-h" data-testid="proc-sh-form"><h1 id="shn-h">{editId ? t('x.edit') : t('x.newShip')}</h1><p className="muted">{t('x.newShipHelp')}</p><p><Link to="/proc/shipments">{t('x.back')}</Link></p>
+    <section aria-labelledby="shn-h" data-testid="proc-sh-form"><PageHeader id="shn-h" title={editId ? t('x.edit') : t('x.newShip')} subtitle={t('x.newShipHelp')} meta={<Link to="/proc/shipments">{t('x.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
           {editId ? <p>{e.poNo} · {e.vendor}</p> : <ProjectOrder t={t} projectId={projectId} setProjectId={setProjectId} orderId={orderId} setOrderId={setOrderId} error={error} prefix="shn">{(order) => order && <div className="table-scroll" style={{ gridColumn: '1 / -1' }}><table className="data-table" data-testid="shn-lines"><caption>{t('x.lines')}</caption><thead><tr><th>#</th><th>{t('x.item')}</th><th className="num">{t('x.balance')}</th><th>{t('x.qty')}</th></tr></thead>
@@ -82,7 +82,7 @@ export default function ShipmentsPage() {
   if (sp.get('new') === '1') return <ShipForm key={sp.get('edit') ?? sp.get('po') ?? 'new'} t={t} editId={Number(sp.get('edit')) || null} project0={Number(sp.get('project')) || null} po0={Number(sp.get('po')) || null} />;
   if (id) return <section aria-labelledby="sh-h" data-testid="proc-sh"><Ship key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="shs-h" data-testid="proc-sh"><h1 id="shs-h">{t('x.shipTitle')}</h1><p className="muted">{t('x.shipIntro')}</p>
+    <section aria-labelledby="shs-h" data-testid="proc-sh"><PageHeader id="shs-h" title={t('x.shipTitle')} subtitle={t('x.shipIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.shipment.create') && <Link to="/proc/shipments?new=1">{t('x.newShip')}</Link>} <Link to="/proc/expediting">{t('x.dashboard')}</Link></div>
       <ListReport listCode="proc.shipments" endpoint="/proc/shipments" title={t('x.shipTitle')} session={session.data} rowHref={(r) => `/proc/shipments?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/shipments?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'transporter', 'eta']} statusKey="status" empty={{ title: t('x.shipEmptyTitle'), text: t('x.shipEmptyBody') }} /></section>

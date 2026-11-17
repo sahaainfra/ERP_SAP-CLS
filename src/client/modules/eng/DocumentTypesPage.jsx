@@ -3,6 +3,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { useDocConfig, useProposeDocConfig } from '../../platform/documents/api.js';
 import { Field, Link, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { LEVELS, RETENTION } from './documents-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Document Types & Folder Templates (part 04.10, section 7.4): the types with their approval chain, retention and default confidentiality, and the folder templates a project starts from.
 // A change goes through approval (maker-checker) before it takes effect; only one change can wait at a time.
@@ -52,7 +53,7 @@ export default function DocumentTypesPage({ session }) {
   };
   return (
     <section aria-labelledby="dt-title" data-testid="document-types">
-      <h1 id="dt-title">Document Types &amp; Folder Templates</h1>
+      <PageHeader id="dt-title" title={"Document Types & Folder Templates"} />
       {c.pendingBatch && <p role="status" className="notice" data-testid="doc-config-pending">A change is waiting for approval (proposed by {c.pendingBatch.by}: {c.pendingBatch.reason}).{c.pendingBatch.instanceId ? <> <Link to={`/workflow/instance?id=${c.pendingBatch.instanceId}`}>Open the approval</Link></> : null}</p>}
       {sent && <p role="status" className="notice">Sent for approval. The change takes effect when it is approved.</p>}
       <form className="form-grid" onSubmit={send} aria-label="Change the document configuration">

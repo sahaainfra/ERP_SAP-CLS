@@ -1,6 +1,7 @@
 import { useSession } from '../core/api/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Attendance Policies (HR, part 07.04): the List Report of policy versions with their effective date and whether they touch pay. A change is a new version; it goes to the HR manager and, when it touches pay, the director.
 export default function PoliciesPage() {
@@ -10,7 +11,7 @@ export default function PoliciesPage() {
   const canNew = perms.includes('att.policy.create');
   return (
     <section aria-labelledby="po-title" data-testid="policies">
-      <h1 id="po-title" className="sr-only">Attendance Policies</h1>
+      <PageHeader id="po-title" srOnly title={"Attendance Policies"} />
       <ListReport listCode="att.policies" endpoint="/hr/att/policies" title="Attendance Policies" session={session.data}
         rowHref={(r) => `/hr/attendance/policies/policy?id=${r.id}`} onOpen={(r) => navigateTo(`/hr/attendance/policies/policy?id=${r.id}`)}
         cardFields={['code', 'name', 'version', 'effectiveFrom', 'status']} statusKey="status" dateKey="updatedAt"

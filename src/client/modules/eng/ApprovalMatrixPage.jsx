@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { useCreateMatrix, useMatrixList } from '../../platform/workflow/api.js';
 import { Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEF_STATUS } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Approval Matrix (part 04.02, section 7.1): the routing of each kind of document, its versions and the dates they take effect. A version is a draft until its
 // approval chain (the system administrator, then the chief financial officer or the process owner) has approved it; running approvals keep the chain they started with.
@@ -25,8 +26,7 @@ export default function ApprovalMatrixPage({ session }) {
   const draft = (docType) => create.mutate({ docType }, { onSuccess: (m) => navigateTo(`/admin/approval-matrix/editor?id=${m.id}`, { force: true }), onError: (e) => setError(errorInfo(e)) });
   return (
     <section aria-labelledby="am-title" data-testid="approval-matrix">
-      <h1 id="am-title">Approval Matrix</h1>
-      <p className="muted">Who approves each kind of document, by amount and by the facts of the document. The first rule that fits decides. A new version needs approval and takes effect from a date; documents already in approval keep their chain.</p>
+      <PageHeader id="am-title" title={"Approval Matrix"} subtitle={"Who approves each kind of document, by amount and by the facts of the document. The first rule that fits decides. A new version needs approval and takes effect from a date; documents already in approval keep their chain."} />
       {error && <p role="alert" className="error">{error.form}{error.correlationId && <> (<code>{error.correlationId}</code>)</>}</p>}
       {list.isPending && <Skeleton label="Loading the matrix" rows={4} />}
       {list.isError && list.error?.status !== 403 && <ErrorState title="The matrix could not be loaded" error={list.error} onRetry={() => list.refetch()} />}

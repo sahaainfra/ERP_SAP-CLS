@@ -6,6 +6,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { REQ_STATUS, ess } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Letter Request (HR, part 07.09, FR-03): an employee asks for an employment, salary or no-objection certificate and says what it is for; the HR manager approves and HR issues it from the template library, with a number and a QR
 // to verify it; the employee downloads it here. HR sees the approved requests that wait to be issued (a salary certificate states the gross salary HR gives).
@@ -42,8 +43,7 @@ export default function LetterRequestPage() {
   const head = <thead><tr><th>No</th><th>{t('letter.type')}</th><th>{t('letter.purpose')}</th><th>Status</th><th><span className="sr-only">Actions</span></th></tr></thead>;
   return (
     <section aria-labelledby="lr-title" data-testid="letters">
-      <h1 id="lr-title">{t('letter.title')}</h1>
-      <p className="muted">{t('letter.intro')}</p>
+      <PageHeader id="lr-title" title={t('letter.title')} subtitle={t('letter.intro')} />
       {error?.form && <p className="field-error" role="alert" data-testid="lr-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="lr-note">{note}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }}>

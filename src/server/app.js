@@ -25,6 +25,8 @@ import { mountModules } from './modules/registry.js';
 import { createFlagService } from './modules/core/api.js';
 import { attachSocketServer } from './platform/realtime/socket.js';
 import { assertDeclared, buildRegistry, cors, csrfGuard, enforcePolicy, persistRegistry, securityHeaders, securityOf } from './platform/security/index.js';
+import { staticAssets } from './platform/http/staticAssets.js';
+import { compressJson } from './platform/http/compressJson.js';
 
 const sameToken = (a, b) => {
   const x = Buffer.from(a);
@@ -51,6 +53,8 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
     headers: securityHeaders({ settings: sec.settings, config }),
     before: [cors({ settings: sec.settings, config }), csrfGuard(), (req, _res, next) => { try { if (req.originalUrl.startsWith('/api/')) sec.limiter.check(req, rateClass(req), 'ip'); next(); } catch (err) { next(err); } }],
   });
+
+  app.use('/api', compressJson()); // part 166.4: JSON answers compressed for a browser that accepts it (the error answers too)
 
   // Legacy liveness path: kept as is (contract snapshot). New code uses /health/live.
   app.get('/api/health', (_req, res) => res.json({ status: 'ok', environment: config.environment }));
@@ -146,6 +150,7 @@ export function createApp({ config, db, logger = createLogger(), buildInfo = loa
   const dist = join(ROOT, 'dist');
   if (existsSync(dist)) {
     // the service worker and the manifest are always asked for again, so a new version of the app is noticed (part 03.06)
+    app.use(staticAssets(dist)); // part 166.4: the compressed copy of a script or style, and a year's cache for the hashed files
     app.use(express.static(dist, { setHeaders: (res, file) => { if (['sw.js', 'manifest.webmanifest'].includes(basename(file))) res.setHeader('Cache-Control', 'no-cache'); } }));
     app.get(/^\/(?!api\/|health\/).*/, (_req, res) => res.sendFile(join(dist, 'index.html')));
   }

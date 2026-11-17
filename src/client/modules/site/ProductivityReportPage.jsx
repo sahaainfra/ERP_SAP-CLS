@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { LOSS_CODES, download, fmtDate, fmtPct, fmtQty, st, today } from './api.js';
 import { ProdFilters, qsOf, useFilters } from './ProductivityDashboardPage.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Productivity Variance and Loss Reasons (part 14.06, FR-03, FR-04): output per man-day and machine-hour against the norm by activity, work type, crew, contractor, site or week; the man-days lost by reason with the losses the
 // site records; the benchmarks of a work type across the sites; the records behind every figure; exports to Excel, CSV and PDF.
@@ -44,7 +45,7 @@ export default function ProductivityReportPage() {
   const exp = (format) => download(`/productivity/report/export?${qs}&format=${format}`, `productivity.${format}`).catch(() => setError(t('bl.fileFailed')));
   return (
     <section aria-labelledby="pr-h" data-testid="site-productivity-report">
-      <h1 id="pr-h">{t('cnd.prr.title')}</h1>
+      <PageHeader id="pr-h" title={t('cnd.prr.title')} />
       <ProdFilters t={t} f={f} set={set} projects={meta.data?.projects ?? []} sites={meta.data?.sites ?? []} testId="pr" />
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('cnd.prr.groupBy')} name="groupBy"><select value={by} onChange={(e) => setBy(e.target.value)} data-testid="pr-groupby">{GROUPS.map((g) => <option key={g} value={g}>{t(`cnd.prr.g.${g}`)}</option>)}</select></Field></div>
         {r && <div className="actions-row">{['xlsx', 'csv', 'pdf'].map((x) => <button key={x} type="button" className="btn" onClick={() => exp(x)} data-testid={`pr-export-${x}`}>{x.toUpperCase()}</button>)}<Link to={`/site/productivity?${qsOf(f)}`}>{t('cnd.prd.title')}</Link></div>}{error && <p className="field-error" role="alert">{error}</p>}</div>

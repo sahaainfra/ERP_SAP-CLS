@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, lv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Year-End Processing (HR, part 07.07, FR-08): choose the leave year that has ended, see for each person and type what year-end will do (encash up to the limit, carry forward up to the limit, lapse the rest), and run it once.
 // It does not run while applications of the year wait for a decision. The carried days open the next year; the encashment goes to payroll (24.02) as inputs.
@@ -23,7 +24,7 @@ export default function YearEndPage() {
   };
   return (
     <section aria-labelledby="ye-title" data-testid="year-end">
-      <h1 id="ye-title">Year-End Processing</h1>
+      <PageHeader id="ye-title" title={"Year-End Processing"} />
       <form className="srch-form" aria-label="Parameters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Leave year" name="year" error={null}><input type="number" min="2000" max="2100" value={year} onChange={(e) => setYear(Number(e.target.value))} data-testid="ye-year" /></Field>
       </form>

@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { an, fmtDate, fmtRs, saveCsv } from './api.js';
 import { Bars, ParamPanel } from './AnaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Spend analysis (part 15.10, FR-02, FR-04): the value of approved purchase orders by category, vendor, project or month in a period, with the share of each row, the orders behind it and a CSV export.
 const rs = (paise) => fmtRs((paise ?? 0) / 100);
@@ -17,7 +18,7 @@ export default function SpendAnalysisPage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data;
   return (
-    <section aria-labelledby="sp-h" data-testid="proc-sp"><h1 id="sp-h">{t('n.spendTitle')}</h1><p className="muted">{t('n.spendIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</p>
+    <section aria-labelledby="sp-h" data-testid="proc-sp"><PageHeader id="sp-h" title={t('n.spendTitle')} subtitle={<>{t('n.spendIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</>} />
       <ParamPanel t={t} value={f} onChange={(v) => { setF(v); setPick(null); }}>
         <label>{t('n.groupBy')}<select value={groupBy} onChange={(ev) => { setGroupBy(ev.target.value); setPick(null); }} style={{ minHeight: 44 }} data-testid="sp-group">{['category', 'vendor', 'project', 'month'].map((g) => <option key={g} value={g}>{t(`n.g.${g}`)}</option>)}</select></label></ParamPanel>
       {d.rows.length === 0 ? <div data-testid="sp-empty"><h2>{t('n.emptyTitle')}</h2><p className="muted">{t('n.emptyBody')}</p><Link to="/proc/purchase-orders">{t('n.openList')}</Link></div>

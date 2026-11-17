@@ -6,6 +6,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { fmtQty, ra, today } from './api.js';
 import { ScanInput } from './ScanParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Issue or return assets (part 16.08, FR-03, mobile): one form for the issue to a work front or subcontractor, the return by condition, a receipt, a transfer, a hire-in or hire-out and a repair.
 const TYPES = ['ISSUE', 'RETURN', 'RECEIPT', 'TRANSFER', 'HIRE_IN', 'HIRE_OUT', 'REPAIR_OUT', 'REPAIR_IN'];
@@ -28,7 +29,7 @@ export default function RtaIssuePage() {
   const sel = (k, list, label, testid, empty = '—') => <select value={f[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 48 }} data-testid={testid}><option value="">{empty}</option>{list.map((x) => <option key={x.id} value={x.id}>{label(x)}</option>)}</select>;
   const qtyIn = (k, label, testid) => <Field label={label} name={k} error={error}><input type="number" inputMode="decimal" min="0" step="any" value={f[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 48, fontSize: 18 }} data-testid={testid} /></Field>;
   return (
-    <section aria-labelledby="ri-h" data-testid="rta-issue"><h1 id="ri-h">{t('ra.issueTitle')}</h1><p className="muted">{t('ra.issueHelp')}</p><p><Link to="/inv/rta-movements">{t('ra.movementsTitle')}</Link></p>
+    <section aria-labelledby="ri-h" data-testid="rta-issue"><PageHeader id="ri-h" title={t('ra.issueTitle')} subtitle={t('ra.issueHelp')} meta={<Link to="/inv/rta-movements">{t('ra.movementsTitle')}</Link>} />
       <ScanInput t={t} testId="ri-scan" onResult={(r) => { if (r.itemId && items.some((i) => i.id === r.itemId)) set('itemId', String(r.itemId)); }} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
         {error?.form && <p className="field-error" role="alert" data-testid="ri-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}

@@ -8,6 +8,7 @@ import { formatDateTime, formatINR } from '../../platform/format.js';
 import { useBulkAct, useInbox } from '../../platform/workflow/api.js';
 import { useLiveRefresh } from '../../platform/realtime/socket.js';
 import { Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Approvals (part 04.03, section 7.1): every task waiting for my decision, from every module, most urgent first, with the time left shown in words and colour.
 // Filters with saved variants, free text, sort, pages, counts; approve several documents at once where the policy allows, each checked on its own.
@@ -70,7 +71,7 @@ export default function InboxPage() {
   };
   return (
     <section aria-labelledby="ib-title" data-testid="inbox">
-      <h1 id="ib-title">My Approvals</h1>
+      <PageHeader id="ib-title" title={"My Approvals"} />
       {error && <p role="alert" className="error">{error.form}</p>}
       {query.isPending && <Skeleton label="Loading your approvals" rows={5} />}
       {query.isError && <ErrorState title="Your approvals could not be loaded" error={query.error} onRetry={() => query.refetch()} />}

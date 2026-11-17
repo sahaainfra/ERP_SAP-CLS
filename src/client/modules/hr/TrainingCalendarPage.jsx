@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, trn } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Training Calendar (HR, part 07.10, FR-01): the board of training sessions of a month. A session still being planned (a draft or returned) is dragged to another day, or moved with the date field of the list below it for those who do not drag;
 // the server checks the move like a save and refuses the sessions that are open or approved (they are locked). A move can be undone. "Plan session" makes a draft; an internal session opens for nomination when it is sent, an external
@@ -39,7 +40,7 @@ export default function TrainingCalendarPage() {
   const doUndo = async () => { if (!undo) return; try { await trn.sessionAct(undo.id, 'reschedule', { startAt: undo.startAt, endAt: undo.endAt }); setUndo(null); setNote(t('cal.undone')); qc.invalidateQueries({ queryKey: ['trn'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="tc-title" data-testid="training-calendar">
-      <h1 id="tc-title">{t('cal.title')}</h1>
+      <PageHeader id="tc-title" title={t('cal.title')} />
       <div className="actions-row no-print">
         <button type="button" className="btn" onClick={() => setMonth(shiftMonth(month, -1))} data-testid="tcal-prev" aria-label={t('cal.prev')}>‹</button>
         <input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} aria-label={t('cal.month')} data-testid="tcal-month" />

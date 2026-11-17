@@ -7,6 +7,7 @@ import { enqueue, useOffline } from '../../platform/offline/engine.js';
 import { browserTransport, uploadFile } from '../../platform/files/upload.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { qa } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Perform Inspection (part 18.01, FR-04, on a phone): choose the checklist in force, answer large controls, take the photographs, sign, and send. Numbers show their tolerance but only the server judges the result.
 // With the offline engine (04.15) the whole inspection is one command and its photographs, named by question, follow it; without a signal it waits on the phone.
@@ -34,9 +35,9 @@ export default function PerformPage() {
       if (submit) await qa.act('/inspections', d.id, 'submit'); navigateTo(`/qa/inspections?id=${d.id}`);
     } catch (e) { setError(e?.errors?.length ? { form: e.message } : errorInfo(e)); } finally { setBusy(false); }
   };
-  if (cmd) return <section aria-labelledby="pf-h" data-testid="qa-perform-sent"><h1 id="pf-h">{t('perf.title')}</h1><p className="mdm-banner" role="status" data-testid="perf-queued">{queued ? t('perf.waiting') : t('perf.sent')}</p><div className="actions-row"><Link to="/qa/inspections">{t('ins.title')}</Link><button type="button" className="btn" onClick={() => { setCmd(null); setAns({}); setSubject(''); }} data-testid="perf-another">{t('perf.another')}</button></div></section>;
+  if (cmd) return <section aria-labelledby="pf-h" data-testid="qa-perform-sent"><PageHeader id="pf-h" title={t('perf.title')} /><p className="mdm-banner" role="status" data-testid="perf-queued">{queued ? t('perf.waiting') : t('perf.sent')}</p><div className="actions-row"><Link to="/qa/inspections">{t('ins.title')}</Link><button type="button" className="btn" onClick={() => { setCmd(null); setAns({}); setSubject(''); }} data-testid="perf-another">{t('perf.another')}</button></div></section>;
   return (
-    <section aria-labelledby="pf-h" data-testid="qa-perform"><h1 id="pf-h">{t('perf.title')}</h1><p className="muted">{online ? t('perf.online') : t('perf.offline')}</p>
+    <section aria-labelledby="pf-h" data-testid="qa-perform"><PageHeader id="pf-h" title={t('perf.title')} subtitle={online ? t('perf.online') : t('perf.offline')} />
       {error?.form && <p className="field-error" role="alert" data-testid="perf-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('perf.checklist')} name="templateId" error={error}><select value={tid} onChange={(e) => { setTid(e.target.value); setAns({}); setPhotos({}); }} style={big} data-testid="perf-template"><option value="">—</option>{templates.map((x) => <option key={x.id} value={x.id}>{x.name} v{x.versionNo}</option>)}</select></Field>

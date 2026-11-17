@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { LETTER_CATS, dayIST, lt } from './api.js';
 import { ProjectSelect, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Draft Outward Letter from template (part 11.05, FR-02): a standard text fills the subject and the body from the letter it answers; the letter is saved as a draft and sent for approval from its page.
 export default function LetterDraftPage() {
@@ -27,7 +28,7 @@ export default function LetterDraftPage() {
   };
   return (
     <section aria-labelledby="draft-h" data-testid="letter-draft">
-      <h1 id="draft-h">{t('draft.title')}</h1>
+      <PageHeader id="draft-h" title={t('draft.title')} />
       <form className="mdm-panel" onSubmit={save} data-testid="draft-form">
         <div className="form-grid">
           <ProjectSelect value={f.projectId} onChange={(v) => set('projectId', v)} required testId="draft-project" error={error} />

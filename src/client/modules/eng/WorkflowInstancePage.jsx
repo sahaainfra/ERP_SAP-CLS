@@ -9,6 +9,7 @@ import { findDocument, useAct, useAssign, useDocTypes, useInstance, useInstanceA
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { EVENT, INST_STATUS, TASK_STATUS, useSearch } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Workflow Instance (part 04.01, section 7.3): one document's approval as an Object Page. Header with the document, status and the actions this person may
 // take; tabs for the steps and tasks (where the decisions are taken), the timeline, attachments, related documents and details. Every document's
@@ -118,14 +119,14 @@ export default function WorkflowInstancePage() {
   const [dialog, setDialog] = useState(null);
   const wf = query.data;
   const done = (message) => { setNotice(message); setError(null); };
-  if (!id) return <section aria-labelledby="wi-title" data-testid="workflow-instance"><h1 id="wi-title">Workflow Instance</h1><Lookup /></section>;
-  if (query.error?.status === 404) return <section aria-labelledby="wi-title"><h1 id="wi-title">Workflow Instance</h1><EmptyState title="This approval was not found" message="It does not exist, or you take no part in it." action={{ label: 'Back to my approvals', onClick: () => navigateTo('/workflow/instance') }} /></section>;
+  if (!id) return <section aria-labelledby="wi-title" data-testid="workflow-instance"><PageHeader id="wi-title" title={"Workflow Instance"} /><Lookup /></section>;
+  if (query.error?.status === 404) return <section aria-labelledby="wi-title"><PageHeader id="wi-title" title={"Workflow Instance"} /><EmptyState title="This approval was not found" message="It does not exist, or you take no part in it." action={{ label: 'Back to my approvals', onClick: () => navigateTo('/workflow/instance') }} /></section>;
   if (query.error?.status === 403) return <NoPermission what="this approval" permission="eng.workflow.view" />;
   const run = (name, body = {}) => action.mutateAsync({ id, action: name, ...body }).then(() => done({ withdraw: 'The document was withdrawn.', cancel: 'The approval was cancelled.', resubmit: 'The document is back in approval.', watch: 'You are watching this document.', unwatch: 'You no longer watch this document.' }[name])).catch((e) => { setError(errorInfo(e)); throw e; });
   const attachments = wf?.tasks.filter((t) => !t.superseded) ?? [];
   return (
     <section aria-labelledby="wi-title" data-testid="workflow-instance">
-      <h1 id="wi-title">Workflow Instance</h1>
+      <PageHeader id="wi-title" title={"Workflow Instance"} />
       {query.isPending && <Skeleton label="Loading the approval" rows={4} />}
       {query.isError && ![403, 404].includes(query.error?.status) && <ErrorState title="The approval could not be loaded" error={query.error} onRetry={() => query.refetch()} />}
       {wf && (

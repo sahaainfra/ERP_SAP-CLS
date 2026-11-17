@@ -8,6 +8,7 @@ import { useSearch } from '../site/parts.jsx';
 import { cn } from './api.js';
 import { useRunner } from './InvParts.jsx';
 import { ScanInput } from './ScanParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Blind Count (part 16.06, FR-02), made for the phone in the yard: the counter sees the item and the bin, never the book quantity; scanning or typing the item code finds the line; a difference beyond the tolerance comes back as a recount for another person.
 function Sheet({ t, id }) {
@@ -18,7 +19,7 @@ function Sheet({ t, id }) {
   const send = async () => { const list = lines.filter((l) => vals[l.id] !== undefined && vals[l.id] !== '').map((l) => ({ lineId: l.id, qty: Number(vals[l.id]) })); if (!list.length) return; const r = await run(() => cn.counts(id, { lines: list, ...(recount ? { recount: true } : {}) }), t('cn.saved')); if (r) setVals({}); };
   const left = s.lines.filter((l) => !l.counted).length; const need = s.lines.filter((l) => l.needsRecount && !l.recounted).length;
   return (
-    <section aria-labelledby="bc-h" data-testid="blind-sheet"><h1 id="bc-h">{s.docNo} · {s.store}</h1><p className="muted">{t('cn.blindIntro')}</p><p><Link to={`/inv/count-plans?id=${id}`}>{t('cn.title')}</Link> · <span data-testid="sheet-left">{t('cn.leftToCount', { n: left })}</span> · <span data-testid="sheet-recount">{t('cn.recountLines', { n: need })}</span></p>
+    <section aria-labelledby="bc-h" data-testid="blind-sheet"><PageHeader id="bc-h" title={<>{s.docNo} · {s.store}</>} subtitle={t('cn.blindIntro')} meta={<><Link to={`/inv/count-plans?id=${id}`}>{t('cn.title')}</Link> · <span data-testid="sheet-left">{t('cn.leftToCount', { n: left })}</span> · <span data-testid="sheet-recount">{t('cn.recountLines', { n: need })}</span></>} />
       {error?.form && <p className="field-error" role="alert" data-testid="sheet-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="sheet-note">{note}</p>}
       <div className="actions-row"><button type="button" className={`btn${recount ? '' : ' btn-primary'}`} style={{ minHeight: 48 }} onClick={() => setMode('count')} data-testid="mode-count">{t('cn.count')}</button><button type="button" className={`btn${recount ? ' btn-primary' : ''}`} style={{ minHeight: 48 }} onClick={() => setMode('recount')} data-testid="mode-recount">{t('cn.recount')}</button></div>
       <label>{t('cn.scanItem')}<input value={scan} onChange={(ev) => setScan(ev.target.value)} inputMode="search" autoComplete="off" style={{ minHeight: 48 }} data-testid="sheet-scan" /></label>
@@ -37,7 +38,7 @@ export default function BlindCountPage() {
   if (id) return <Sheet key={id} t={t} id={id} />;
   if (qq.isPending) return <Skeleton label={t('cn.blindTitle')} rows={3} />; if (qq.isError) return <ErrorState error={qq.error} onRetry={qq.refetch} />;
   return (
-    <section aria-labelledby="bq-h" data-testid="blind-queue"><h1 id="bq-h">{t('cn.blindTitle')}</h1><p className="muted">{t('cn.blindIntro')}</p>
+    <section aria-labelledby="bq-h" data-testid="blind-queue"><PageHeader id="bq-h" title={t('cn.blindTitle')} subtitle={t('cn.blindIntro')} />
       {qq.data.length === 0 ? <div className="mdm-panel" data-testid="blind-empty"><h2>{t('cn.queueEmptyTitle')}</h2><p>{t('cn.queueEmptyBody')}</p></div> : (
         <ul className="card-list">{qq.data.map((p) => <li key={p.id} className="mdm-panel" data-testid={`queue-${p.id}`}><strong>{p.docNo}</strong> · {p.store}<div className="muted">{t('cn.progressOf', { d: p.done, n: p.total })}</div><button type="button" className="btn btn-primary" style={{ minHeight: 56 }} onClick={() => navigateTo(`/inv/blind-count?id=${p.id}`)} data-testid={`queue-open-${p.id}`}>{t('cn.countNow')}</button></li>)}</ul>)}
     </section>

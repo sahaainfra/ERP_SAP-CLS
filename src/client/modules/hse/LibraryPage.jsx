@@ -5,6 +5,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { hse } from './api.js';
 import { ErrorLine, big, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Induction Content and Talk Topics (part 19.01): the library the inductions and toolbox talks draw on. Content carries the quiz (pass mark) and the days an induction stays valid; a used item is made inactive, not deleted.
 const blankQ = { q: '', options: '', correct: 1 };
@@ -35,7 +36,7 @@ function TopicForm() {
 export default function LibraryPage() {
   const t = useT('hse'); usePageTitle(t('lib.title')); const session = useSession();
   return (
-    <section aria-labelledby="lib-h" data-testid="hse-library"><h1 id="lib-h">{t('lib.title')}</h1><p className="muted">{t('lib.intro')} <Link to="/hse/induction">{t('ind.title')}</Link> · <Link to="/hse/toolbox">{t('tbt.title')}</Link></p>
+    <section aria-labelledby="lib-h" data-testid="hse-library"><PageHeader id="lib-h" title={t('lib.title')} subtitle={<>{t('lib.intro')} <Link to="/hse/induction">{t('ind.title')}</Link> · <Link to="/hse/toolbox">{t('tbt.title')}</Link></>} />
       <h2>{t('lib.contentHeading')}</h2><ContentForm />
       <ListReport listCode="hse.induction_content" endpoint="/hse/induction-content" title={t('lib.contentHeading')} session={session.data} cardFields={['code', 'title', 'passPct', 'status']} statusKey="status" empty={{ title: t('lib.emptyContentTitle'), text: t('lib.emptyContentBody') }} />
       <h2>{t('lib.topicHeading')}</h2><TopicForm />

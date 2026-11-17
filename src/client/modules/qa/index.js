@@ -1,26 +1,33 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import ItpPage from './ItpPage.jsx';
-import TemplatesPage from './TemplatesPage.jsx';
-import PerformPage from './PerformPage.jsx';
-import InspectionsPage from './InspectionsPage.jsx';
-import InspectionRequestsPage, { IrRaisePage } from './InspectionRequestsPage.jsx';
-import IrAnalysisPage from './IrAnalysisPage.jsx';
-import ReceivingPage from './ReceivingPage.jsx';
-import TestRequestsPage from './TestRequestsPage.jsx';
-import ComplianceReportPage from './ComplianceReportPage.jsx';
-import LabEquipmentPage from './LabEquipmentPage.jsx';
-import TestCataloguePage from './TestCataloguePage.jsx';
-import NcrsPage, { NcrRaisePage } from './NcrsPage.jsx';
-import NcrAnalysisPage from './NcrAnalysisPage.jsx';
-import PourCardsPage from './PourCardsPage.jsx';
-import CubeRegisterPage from './CubeRegisterPage.jsx';
-import { AcceptancePage, TraceabilityPage } from './ConcretePages.jsx';
-import SnagWalkPage from './SnagWalkPage.jsx';
-import SnagsPage from './SnagsPage.jsx';
-import { SnagStatusPage, SnagReportPage } from './SnagReportsPage.jsx';
-import DashboardPage from './DashboardPage.jsx';
-import ControlChartsPage from './ControlChartsPage.jsx';
-import RatingsPage from './RatingsPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const ItpPage = lazyPage(() => import('./ItpPage.jsx'));
+const TemplatesPage = lazyPage(() => import('./TemplatesPage.jsx'));
+const PerformPage = lazyPage(() => import('./PerformPage.jsx'));
+const InspectionsPage = lazyPage(() => import('./InspectionsPage.jsx'));
+const InspectionRequestsPage = lazyPage(() => import('./InspectionRequestsPage.jsx'));
+const IrRaisePage = lazyPage(() => import('./InspectionRequestsPage.jsx'), 'IrRaisePage');
+const IrAnalysisPage = lazyPage(() => import('./IrAnalysisPage.jsx'));
+const ReceivingPage = lazyPage(() => import('./ReceivingPage.jsx'));
+const TestRequestsPage = lazyPage(() => import('./TestRequestsPage.jsx'));
+const ComplianceReportPage = lazyPage(() => import('./ComplianceReportPage.jsx'));
+const LabEquipmentPage = lazyPage(() => import('./LabEquipmentPage.jsx'));
+const TestCataloguePage = lazyPage(() => import('./TestCataloguePage.jsx'));
+const NcrsPage = lazyPage(() => import('./NcrsPage.jsx'));
+const NcrRaisePage = lazyPage(() => import('./NcrsPage.jsx'), 'NcrRaisePage');
+const NcrAnalysisPage = lazyPage(() => import('./NcrAnalysisPage.jsx'));
+const PourCardsPage = lazyPage(() => import('./PourCardsPage.jsx'));
+const CubeRegisterPage = lazyPage(() => import('./CubeRegisterPage.jsx'));
+const AcceptancePage = lazyPage(() => import('./ConcretePages.jsx'), 'AcceptancePage');
+const TraceabilityPage = lazyPage(() => import('./ConcretePages.jsx'), 'TraceabilityPage');
+const SnagWalkPage = lazyPage(() => import('./SnagWalkPage.jsx'));
+const SnagsPage = lazyPage(() => import('./SnagsPage.jsx'));
+const SnagStatusPage = lazyPage(() => import('./SnagReportsPage.jsx'), 'SnagStatusPage');
+const SnagReportPage = lazyPage(() => import('./SnagReportsPage.jsx'), 'SnagReportPage');
+const DashboardPage = lazyPage(() => import('./DashboardPage.jsx'));
+const ControlChartsPage = lazyPage(() => import('./ControlChartsPage.jsx'));
+const RatingsPage = lazyPage(() => import('./RatingsPage.jsx'));
 
 registerModule({
   code: 'qa',

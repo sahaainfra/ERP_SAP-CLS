@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { MTYPES, dayIST, st, tm } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Meetings (part 10.05, FR-04): the meetings of every project with their type, date, chair and the status of their minutes; a new meeting starts with its details, the agenda is added on the meeting page.
 export default function MeetingsPage() {
@@ -23,7 +24,7 @@ export default function MeetingsPage() {
   };
   return (
     <section aria-labelledby="mtg-list-h" data-testid="meetings">
-      <h1 id="mtg-list-h" className="sr-only">{t('mtg.listTitle')}</h1>
+      <PageHeader id="mtg-list-h" srOnly title={t('mtg.listTitle')} />
       <div className="actions-row no-print">
         {perms.includes('proj.meeting.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="mtg-new">{t('mtg.new')}</button>}
         <Link to="/proj/action-tracker">{t('trk.title')}</Link>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { vpo, fmtDate, fmtQty } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The milestones panel (part 15.07, FR-01): the vendor tells the forecast date, the actual date and a note of each milestone of the expediting plan; the planned dates stay as the buyer approved them.
 function Milestones({ tk }) {
@@ -38,11 +39,10 @@ export default function VendorPoPage() {
     catch (e) { setError({ message: e.message, details: e.details }); } finally { setBusy(false); }
   };
   const shell = (c) => <main style={{ maxWidth: 1000, margin: '0 auto', padding: 16 }} data-testid="vendor-po-page">{c}</main>;
-  if (!info) return shell(<><h1>Your purchase order</h1>{error ? <p className="field-error" role="alert" data-testid="vp-error">{error.message}</p> : <p>Opening the order…</p>}</>);
+  if (!info) return shell(<><PageHeader title={"Your purchase order"} />{error ? <p className="field-error" role="alert" data-testid="vp-error">{error.message}</p> : <p>Opening the order…</p>}</>);
   return shell(
     <>
-      <h1>{info.docNo}{info.amendmentNo ? ` (amendment ${info.amendmentNo})` : ''}</h1>
-      <p className="muted">{info.company} has placed this order with {info.vendor}, dated {fmtDate(info.date)}. {info.acknowledgedAt ? <strong data-testid="vp-acked">You acknowledged it on {fmtDate(info.acknowledgedAt.slice(0, 10))}.</strong> : <strong data-testid="vp-not-acked">Please acknowledge it.</strong>}</p>
+      <PageHeader title={<>{info.docNo}{info.amendmentNo ? ` (amendment ${info.amendmentNo})` : ''}</>} subtitle={<>{info.company} has placed this order with {info.vendor}, dated {fmtDate(info.date)}. {info.acknowledgedAt ? <strong data-testid="vp-acked">You acknowledged it on {fmtDate(info.acknowledgedAt.slice(0, 10))}.</strong> : <strong data-testid="vp-not-acked">Please acknowledge it.</strong>}</>} />
       <dl className="kv"><div><dt>Deliver to</dt><dd>{info.terms.deliveryAddress ?? '—'}</dd></div><div><dt>Payment</dt><dd>{info.terms.paymentTerms ?? '—'}{info.terms.advancePct ? `, advance ${info.terms.advancePct}%` : ''}</dd></div><div><dt>Value with GST</dt><dd>₹ {Number(info.totalAmount).toLocaleString('en-IN')}</dd></div>{info.terms.ldTerms && <div><dt>Late delivery</dt><dd>{info.terms.ldTerms}</dd></div>}{info.terms.documentsRequired && <div><dt>Documents with the goods</dt><dd>{info.terms.documentsRequired}</dd></div>}</dl>
       <div className="table-scroll"><table className="data-table" data-testid="vp-lines"><thead><tr><th>#</th><th>Item</th><th>Quantity</th><th>Rate</th><th>GST</th><th>Delivery</th><th>Sent so far</th></tr></thead><tbody>{info.lines.map((l) => <tr key={l.id} data-testid="vp-line"><td>{l.lineNo}</td><td>{l.description}</td><td>{fmtQty(l.qty)} {l.uom}</td><td>₹ {l.rate}</td><td>{l.gstPct}%</td><td>{l.schedule.map((s, i) => <div key={i}>{fmtDate(s.dueDate)}: {fmtQty(s.qty)}</div>)}</td><td>{fmtQty(l.receivedQty)} (left {fmtQty(l.balanceQty)})</td></tr>)}</tbody></table></div>
       {done && <p role="status" className="mdm-banner" data-testid="vp-done">{done}</p>}{error && <p className="field-error" role="alert" data-testid="vp-error">{error.message}{(error.details ?? []).map((d, i) => <span key={i}> {d.message}</span>)}</p>}

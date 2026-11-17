@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { items, mdm } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Item (Administration, part 06.03): a wizard. 1 Category and type; 2 the attributes of the category's template (required ones marked, choices offered); 3 name, units (base and item conversions), tax
 // codes (the category's HSN/SAC by default, its GST rate on the date) and tracking; 4 review, with the near-identical items of the category found by the server (FR-07) before anything is sent. Sending makes a
@@ -57,7 +58,7 @@ export default function NewItemPage() {
   const fe = (k) => error?.fields?.[k];
   return (
     <section aria-labelledby="ni-title" data-testid="new-item">
-      <h1 id="ni-title">New Item</h1>
+      <PageHeader id="ni-title" title={"New Item"} />
       {legacy && <p className="mdm-banner" role="note" data-testid="ni-legacy">Replaces the old material “{legacy.key.replace('|', ', unit ')}”{legacy.source === 'conversion' ? `; the item keeps the code ${legacy.key} and its conversions` : ''}. Once approved, the old records are linked to it.</p>}
       <ol className="wizard-steps" aria-label="Steps">{STEPS.map((s, i) => <li key={s} aria-current={i === step ? 'step' : undefined} className={i === step ? 'is-current' : i < step ? 'is-done' : ''}>{i + 1}. {s}</li>)}</ol>
       {error?.form && <p className="field-error" role="alert" data-testid="ni-error">{error.form}</p>}

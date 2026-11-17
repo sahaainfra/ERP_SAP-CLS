@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtQty, gr, gt, iv, today } from './api.js';
 import { OfflineNotice, PhotoButton, filePhoto, useOnline } from './GateParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Create GRN (part 16.03, FR-01, FR-07), a mobile screen for the storekeeper: pick the vehicle that was unloaded at the gate (or an order), count what came, say what is accepted, take the batch or heat number and the photos, and send for approval.
 const blankLine = (l) => ({ poLineId: l.poLineId, itemId: l.itemId, item: l.item, uom: l.uom, balanceQty: l.balanceQty, batchTracked: l.batchTracked, stockTracked: l.stockTracked, receivedQty: '', acceptedQty: '', challanQty: '', batchNo: '', heatNo: '', mfgDate: '', inspectionRequired: l.inspectionRequired, wbsId: l.wbsId ?? null, costCodeId: l.costCodeId ?? null });
@@ -24,7 +25,7 @@ export default function GrnNewPage() {
   const save = async (send) => { setError(null); setBusy(true); try { let d = await gr.create(body()); for (const [kind, file] of Object.entries(photos)) { const up = await filePhoto(file, 'inv_grn', d.id); d = await gr.act(d.id, 'photos', { fileId: up.id, kind }); } if (send) d = await gr.act(d.id, 'submit'); navigateTo(`/inv/grns?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   const bad = !f || !f.storeId || !f.lines.some((l) => Number(l.receivedQty) > 0);
   return (
-    <section aria-labelledby="gn-h" data-testid="grn-new"><h1 id="gn-h">{t('r.newTitle')}</h1><p className="muted">{t('r.newHelp')}</p><p><Link to="/inv/grns">{t('r.grnTitle')}</Link></p><OfflineNotice t={t} on={online} />
+    <section aria-labelledby="gn-h" data-testid="grn-new"><PageHeader id="gn-h" title={t('r.newTitle')} subtitle={t('r.newHelp')} meta={<Link to="/inv/grns">{t('r.grnTitle')}</Link>} /><OfflineNotice t={t} on={online} />
       {!f && <div className="mdm-panel" data-testid="gn-source"><h2>{t('r.pickSource')}</h2>
         {rd.isPending ? <Skeleton label={t('r.pickSource')} rows={2} /> : rd.isError ? <ErrorState error={rd.error} onRetry={rd.refetch} /> : (rd.data ?? []).length === 0 ? <p className="muted" data-testid="gn-none">{t('r.noGate')}</p>
           : <ul className="plain-list">{rd.data.map((e) => <li key={e.id} className="mdm-panel"><strong>{e.vehicleNo}</strong> · {e.docNo} · {e.material} · {e.poNo ?? t('g.noPo')} · {e.store} <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} onClick={() => setSrc({ gateInwardId: e.id, poId: null })} data-testid={`gn-pick-${e.id}`}>{t('r.makeGrn')}</button></li>)}</ul>}

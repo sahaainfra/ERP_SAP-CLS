@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { COUNT_TONE, download, fmtDate, fmtQty, iv, ra } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Returnable asset movements (part 16.08): the list and the movement with its approval, posting and the recoveries it led to.
 function Movement({ t, id }) {
@@ -20,7 +21,7 @@ function Movement({ t, id }) {
   const decide = (taskId, action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => iv.decide(taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
     <div data-testid="rtam-object" data-status={x.status}>
-      <h1 id="rtam-h">{x.docNo} <StatusBadge status={COUNT_TONE[x.status]} label={t(`ra.ms.${x.status}`)} /></h1><p><Link to="/inv/rta-movements">{t('ra.movementsTitle')}</Link> · {t(`ra.mt.${x.type}`)} · {x.item}</p>
+      <PageHeader id="rtam-h" title={<>{x.docNo} <StatusBadge status={COUNT_TONE[x.status]} label={t(`ra.ms.${x.status}`)} /></>} meta={<><Link to="/inv/rta-movements">{t('ra.movementsTitle')}</Link> · {t(`ra.mt.${x.type}`)} · {x.item}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="rtam-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="rtam-note">{note}</p>}
       <dl className="kv"><div><dt>{t('i.qty')}</dt><dd data-testid="rtam-qty">{fmtQty(x.qty)} {x.uom}</dd></div><div><dt>{t('ra.movement')}</dt><dd>{x.where || '—'}</dd></div><div><dt>{t('r.date')}</dt><dd>{fmtDate(x.date)}</dd></div>{x.expectedReturn && <div><dt>{t('ra.expected')}</dt><dd>{fmtDate(x.expectedReturn)}</dd></div>}{x.type === 'RETURN' && <div><dt>{t('ra.condition')}</dt><dd data-testid="rtam-split">{t('ra.split', { g: fmtQty(x.qtyGood), r: fmtQty(x.qtyRepairable), s: fmtQty(x.qtyScrap), l: fmtQty(x.qtyLost) })}</dd></div>}{x.vendor && <div><dt>{t('ra.vendor')}</dt><dd>{x.vendor}{x.hireRate != null ? ` · ${t(`ra.b.${x.hireBasis}`)}` : ''}</dd></div>}<div><dt>{t('g.requestedBy')}</dt><dd>{x.requestedBy}</dd></div>{x.reason && <div><dt>{t('cn.reason')}</dt><dd>{x.reason}</dd></div>}</dl>
       <div className="actions-row no-print">
@@ -39,7 +40,7 @@ export default function RtaMovementsPage() {
   const t = useT('inv'); usePageTitle(t('ra.movementsTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession(); const perms = session.data?.permissions ?? [];
   if (id) return <section aria-labelledby="rtam-h" data-testid="rta-movements"><Movement key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="rtl-h" data-testid="rta-movements"><h1 id="rtl-h">{t('ra.movementsTitle')}</h1><p className="muted">{t('ra.movementsIntro')}</p>
+    <section aria-labelledby="rtl-h" data-testid="rta-movements"><PageHeader id="rtl-h" title={t('ra.movementsTitle')} subtitle={t('ra.movementsIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.movement.create') && <Link to="/inv/rta-issue">{t('ra.issueTitle')}</Link>} <Link to="/inv/rta">{t('ra.title')}</Link></div>
       <ListReport listCode="inv.rta_movements" endpoint="/inv/rta/movements" title={t('ra.movementsTitle')} session={session.data} rowHref={(r) => `/inv/rta-movements?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/rta-movements?id=${r.id}`)} cardFields={['docNo', 'type', 'item', 'status']} statusKey="status" dateKey="date" empty={{ title: t('ra.mEmptyTitle'), text: t('ra.mEmptyBody') }} /></section>
   );

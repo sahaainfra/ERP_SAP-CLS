@@ -26,6 +26,12 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // field types: text, upper (capitals), int, percent (stored x10000), money (paise), rate (x10000), decimal (exact text), bool, enum, date, ref (a code of another master), json
 const f = (key, col, label, type, extra = {}) => ({ key, col, label, type, ...extra });
+export const P16608 = 'ff.mdm.p16608';
+export const NATURES = [['CONTRACTOR', 'Payment to a contractor'], ['PROFESSIONAL', 'Professional or technical fees'], ['PURCHASE_GOODS', 'Purchase of goods'], ['RENT_PLANT', 'Rent of plant or machinery'], ['RENT_LAND', 'Rent of land or building'], ['COMMISSION', 'Commission or brokerage'], ['SALE_GOODS', 'Sale of goods (TCS)'], ['OTHER', 'Other']];
+const ACTS = [['IT1961', 'Income-tax Act, 1961'], ['IT2025', 'Income-tax Act, 2025']];
+export const FORM_PURPOSES = [['SALARY_CERT', 'Certificate, salary'], ['NON_SALARY_CERT', 'Certificate, other payments'], ['SALARY_RETURN', 'Quarterly statement, salary'], ['NON_SALARY_RETURN', 'Quarterly statement, other payments']];
+const LABOUR_CODES = [['WAGES', 'Code on Wages, 2019'], ['SOCIAL_SECURITY', 'Code on Social Security, 2020'], ['INDUSTRIAL_RELATIONS', 'Industrial Relations Code, 2020'], ['OSH', 'Occupational Safety, Health and Working Conditions Code, 2020']];
+export const WAGE_CLASSES = [['WAGES', 'Wages'], ['EXCLUDED', 'Excluded (counted for the 50 % rule)'], ['NOT_REMUNERATION', 'Not remuneration']];
 /** @type {Record<string, any>} */
 export const COMMON = {
   uom: {
@@ -48,11 +54,45 @@ export const COMMON = {
     filters: ['codeType'],
   },
   'tds-sections': {
-    table: 'mdm_tds_sections', label: 'TDS/TCS sections', labelHi: 'टीडीएस/टीसीएस धाराएँ', masterType: 'TDS_SECTION', edit: 'mdm.tax.edit', key: ['section'], dated: true, approval: true, order: 'tax_kind DESC, section, effective_from',
+    table: 'mdm_tds_sections', label: 'TDS/TCS sections', labelHi: 'टीडीएस/टीसीएस धाराएँ', masterType: 'TDS_SECTION', edit: 'mdm.tax.edit', key: ['natureCode', 'section'], dated: true, approval: true, order: 'tax_kind DESC, section, effective_from',
     fields: [f('section', 'section', 'Section', 'text', { required: true, max: 12, pattern: /^[0-9]{3}[A-Z0-9()]{0,8}$/ }), f('taxKind', 'tax_kind', 'Kind', 'enum', { required: true, options: [['TDS', 'TDS'], ['TCS', 'TCS']] }),
       f('description', 'description', 'Description', 'text', { required: true, max: 200 }), f('rateIndividual', 'rate_individual', 'Rate, individual or HUF %', 'percent', { required: true, max100: true }), f('rateCompany', 'rate_company', 'Rate, others %', 'percent', { required: true, max100: true }),
-      f('thresholdSingle', 'threshold_single', 'Threshold, one payment (₹)', 'money'), f('thresholdAnnual', 'threshold_annual', 'Threshold, in a year (₹)', 'money')],
+      f('thresholdSingle', 'threshold_single', 'Threshold, one payment (₹)', 'money'), f('thresholdAnnual', 'threshold_annual', 'Threshold, in a year (₹)', 'money'),
+      // part 166.8 (S-02, S-03): the nature of the payment (the key with the section, so 393(1) of the 2025 Act has a row per nature), the Act, the legal reference and the TRACES payment codes
+      f('natureCode', 'nature_code', 'Nature of payment', 'enum', { options: NATURES, flag: P16608, hint: 'Without it, the nature of the system row of the same section' }), f('actCode', 'act_code', 'Act', 'enum', { options: ACTS, flag: P16608 }),
+      f('legalRef', 'legal_ref', 'Legal reference', 'text', { max: 120, flag: P16608 }), f('paymentCode', 'payment_code', 'Payment code, individual or HUF', 'upper', { max: 8, flag: P16608 }), f('paymentCodeOther', 'payment_code_other', 'Payment code, others', 'upper', { max: 8, flag: P16608 })],
     filters: ['taxKind'],
+  },
+  // part 166.8: the certificate and return forms by date (16 → 130, 16A → 131, 24Q → 138, 26Q → 140 from 01-04-2026)
+  'tds-forms': {
+    table: 'mdm_tds_forms', label: 'TDS forms', labelHi: 'टीडीएस फ़ॉर्म', masterType: 'TDS_FORM', edit: 'mdm.tax.edit', key: ['purpose'], dated: true, approval: true, flag: P16608, order: 'purpose, effective_from',
+    fields: [f('purpose', 'purpose', 'Purpose', 'enum', { required: true, options: FORM_PURPOSES }), f('formCode', 'form_code', 'Form', 'upper', { required: true, max: 8, pattern: /^[0-9]{2,3}[A-Z]?$/ }),
+      f('actCode', 'act_code', 'Act', 'enum', { required: true, options: ACTS }), f('replaces', 'replaces', 'Replaces form', 'upper', { max: 8 }), f('legalRef', 'legal_ref', 'Legal reference', 'text', { max: 120 }), f('description', 'description', 'Description', 'text', { required: true, max: 160 })],
+    filters: ['purpose'],
+  },
+  // part 166.8 (FR-03): when each statutory return or deposit is due, by period; the daily job raises an alert ahead of each due date
+  'statutory-calendar': {
+    table: 'mdm_statutory_calendar', label: 'Statutory calendar', labelHi: 'वैधानिक कैलेंडर', masterType: 'STATUTORY_DUE', edit: 'mdm.tax.edit', key: ['code'], dated: true, approval: true, flag: P16608, order: 'period_kind, code, effective_from',
+    fields: [f('code', 'code', 'Code', 'upper', { required: true, max: 20, pattern: /^[A-Z][A-Z0-9_]{1,19}$/ }), f('obligation', 'obligation', 'Obligation', 'text', { required: true, max: 160 }),
+      f('purpose', 'purpose', 'Form', 'enum', { options: [...FORM_PURPOSES, ['TDS_DEPOSIT', 'Deposit of tax deducted']] }), f('periodKind', 'period_kind', 'Period', 'enum', { required: true, options: [['MONTH', 'Month'], ['QUARTER', 'Quarter of the financial year'], ['YEAR', 'Financial year']] }),
+      f('periodNo', 'period_no', 'Which period (0 = every)', 'int', { min: 0, max: 12, hint: 'A month (1-12), a quarter (1-4), or 0 for every period' }), f('dueMonthsAfter', 'due_months_after', 'Due, months after the period', 'int', { required: true, min: 0, max: 12 }),
+      f('dueDay', 'due_day', 'Due on day', 'int', { required: true, min: 1, max: 31, hint: 'The last day of the month when the month is shorter' }), f('alertDays', 'alert_days', 'Alert, days before', 'int', { min: 0, max: 60 }),
+      f('ownerRole', 'owner_role', 'Told', 'upper', { required: true, max: 12, pattern: /^[A-Z][A-Z0-9_]{1,11}$/ }), f('legalRef', 'legal_ref', 'Legal reference', 'text', { max: 120 })],
+    filters: ['periodKind'],
+  },
+  // part 166.8 (S-05): the rules under the four Labour Codes, central or by state, from the date each applies (states notify on different dates)
+  'labour-rules': {
+    table: 'mdm_labour_rules', label: 'Labour Code rules', labelHi: 'श्रम संहिता नियम', masterType: 'LABOUR_RULE', edit: 'mdm.tax.edit', key: ['stateCode', 'codeKind'], dated: true, approval: true, flag: P16608, order: "CASE state_code WHEN 'CENTRAL' THEN 0 ELSE 1 END, state_code, code_kind, effective_from",
+    fields: [f('stateCode', 'state_code', 'State (or CENTRAL)', 'upper', { required: true, max: 10, hint: 'CENTRAL, or the code of a state in the states master' }), f('codeKind', 'code_kind', 'Code', 'enum', { required: true, options: LABOUR_CODES }),
+      f('ruleRef', 'rule_ref', 'Rules and notification', 'text', { required: true, max: 200 }), f('notifiedOn', 'notified_on', 'Notified on', 'date')],
+    filters: ['codeKind'],
+  },
+  // part 166.8 (S-04): pay components and their class under the Code on Wages, s.2(y): wages, an exclusion (counted for the 50 % rule) or not remuneration
+  'pay-components': {
+    table: 'mdm_pay_components', label: 'Pay components', labelHi: 'वेतन घटक', masterType: 'PAY_COMPONENT', edit: 'hr.employee.edit', key: ['code'], dated: true, flag: P16608, order: "CASE wage_class WHEN 'WAGES' THEN 0 WHEN 'EXCLUDED' THEN 1 ELSE 2 END, code, effective_from",
+    fields: [f('code', 'code', 'Code', 'upper', { required: true, max: 20, pattern: /^[A-Z][A-Z0-9_]{1,19}$/ }), f('name', 'name', 'Name', 'text', { required: true, max: 80 }),
+      f('wageClass', 'wage_class', 'Under the Code on Wages', 'enum', { required: true, options: WAGE_CLASSES }), f('legalRef', 'legal_ref', 'Legal reference', 'text', { max: 120 })],
+    filters: ['wageClass'],
   },
   states: {
     table: 'mdm_states', label: 'States and union territories', labelHi: 'राज्य और केंद्र शासित प्रदेश', masterType: 'STATE', edit: 'mdm.finance.edit', key: ['code'], order: 'gst_code',
@@ -111,7 +151,11 @@ function view(d, r) {
   return out;
 }
 
-export function createCommonService({ db }) {
+export function createCommonService({ db, flags = null }) {
+  // part 166.8: a master or a field with a flag is there only while its flag is ON for the company (without a flag service, as in a bare test: ON)
+  const flagOn = (actor, key) => (flags ? flags.isOn(actor, key) : true);
+  const defFor = (actor, code) => { const d = defOf(code); if (d.flag && !flagOn(actor, d.flag)) throw notFound(`There is no common master called ${code}.`); return d; };
+  const fieldsFor = (actor, d) => d.fields.filter((x) => !x.flag || flagOn(actor, x.flag));
   const authz = authzOf(db);
   const notif = notificationsOf(db);
   const may = (actor, key) => authz.check(actor, key).allowed;
@@ -141,7 +185,7 @@ export function createCommonService({ db }) {
   }
   function list(actor, code, fl = {}) {
     needView(actor);
-    const d = defOf(code);
+    const d = defFor(actor, code);
     const asOf = fl.asOf ?? (d.dated && (fl.status ?? 'current') === 'current' ? todayIST() : null);
     const { where, args } = scope(d, actor.companyId, { asOf, status: fl.status ?? 'current' });
     if (fl.q) { const cols = d.search ?? d.fields.filter((x) => ['text', 'upper'].includes(x.type)).map((x) => x.col); where.push(`(${cols.map((c) => `t.${c} LIKE ?`).join(' OR ')})`); args.push(...cols.map(() => `%${fl.q}%`)); }
@@ -159,7 +203,7 @@ export function createCommonService({ db }) {
   };
   function get(actor, code, id) {
     needView(actor);
-    const d = defOf(code);
+    const d = defFor(actor, code);
     const r = rowOf(d, actor, id);
     const kc = keyCols(d).filter((c) => c !== 'effective_from');
     const history = db.prepare(`SELECT * FROM ${d.table} WHERE ${kc.map((c) => `${c} = ?`).join(' AND ')} AND (company_id IS NULL OR company_id = ?) AND deleted_at IS NULL ORDER BY effective_from DESC, id DESC`).all(...kc.map((c) => r[c]), actor.companyId).map((x) => view(d, x));
@@ -177,10 +221,10 @@ export function createCommonService({ db }) {
   /** The input as stored (column values), checked field by field and by the rules of the master. `partial` keeps fields not given. */
   function clean(actor, d, input, base = null) {
     const problems = []; const cols = {};
-    const known = new Set(d.fields.map((x) => x.key));
+    const known = new Set(fieldsFor(actor, d).map((x) => x.key));
     for (const k of Object.keys(input ?? {})) if (!known.has(k)) problems.push({ field: k, message: 'is not a field of this master' });
     for (const x of d.fields) {
-      const has = input && x.key in input;
+      const has = input && x.key in input && known.has(x.key);
       let v = has ? input[x.key] : base ? base[x.col] : undefined;
       if (has) {
         if (v === '' || v === undefined) v = null;
@@ -205,6 +249,10 @@ export function createCommonService({ db }) {
       if (d.code === 'lookups' && x.key === 'active' && !has && !base) cols.active = 1;
       if (d.code === 'exchange-rates' && x.key === 'rateSource' && cols.fx_source == null) cols.fx_source = 'MANUAL';
     }
+    if (d.code === 'tds-sections') { // part 166.8: a row without a nature takes the nature of the system row of its section (so a company's own 194C still replaces the system 194C)
+      if (cols.nature_code == null) cols.nature_code = db.prepare('SELECT nature_code FROM mdm_tds_sections WHERE company_id IS NULL AND section = ? AND deleted_at IS NULL ORDER BY effective_from DESC LIMIT 1').get(cols.section)?.nature_code ?? 'OTHER';
+      if (cols.act_code == null) cols.act_code = 'IT1961';
+    }
     if (!problems.length) problems.push(...rules(actor, d, cols));
     if (problems.length) throw badRequest('Some fields are not valid.', problems);
     return cols;
@@ -212,6 +260,9 @@ export function createCommonService({ db }) {
   /** The rules of each master beyond the field checks. */
   function rules(actor, d, c) {
     const p = [];
+    if (d.code === 'labour-rules' && c.state_code !== 'CENTRAL' && !refExists(actor.companyId, 'states', c.state_code)) p.push({ field: 'stateCode', message: `${c.state_code} is neither CENTRAL nor a state in the states master` });
+    if (d.code === 'statutory-calendar' && c.period_kind === 'QUARTER' && c.period_no > 4) p.push({ field: 'periodNo', message: 'A financial year has four quarters' });
+    if (d.code === 'statutory-calendar' && c.period_kind === 'YEAR' && c.period_no !== 0) p.push({ field: 'periodNo', message: 'A yearly obligation has no period number: use 0' });
     if (d.code === 'gst-rates') {
       if (c.cgst_pct + c.sgst_pct !== c.igst_pct) p.push({ field: 'igstPct', message: 'IGST must equal CGST plus SGST/UTGST' });
       if (c.cgst_pct !== c.sgst_pct) p.push({ field: 'sgstPct', message: 'CGST and SGST/UTGST are equal halves' });
@@ -249,7 +300,7 @@ export function createCommonService({ db }) {
   // ---- writing ----
   /** A new row. A statutory master: a change request (ACCMGR then CFO); the others: saved now, audited. */
   function create(actor, code, b) {
-    const d = defOf(code);
+    const d = defFor(actor, code);
     needEdit(actor, d);
     const cols = clean(actor, d, b.data);
     if (d.approval) return propose(actor, d, { cols, before: {}, changeType: 'CREATE', from: b.effectiveFrom ?? todayIST(), justification: b.justification });
@@ -267,7 +318,7 @@ export function createCommonService({ db }) {
    * every company, the company gets its own row with the change, which replaces the system row for it.
    */
   function update(actor, code, id, b) {
-    const d = defOf(code);
+    const d = defFor(actor, code);
     needEdit(actor, d);
     const r = rowOf(d, actor, id);
     if (r.version !== b.version) throw conflict('This row was changed by someone else. Reload it and try again.');
@@ -298,7 +349,7 @@ export function createCommonService({ db }) {
   }
   /** A row no longer used from a date (not for the statutory masters: a newer rate replaces an old one). It stays for the records that used it. */
   function retire(actor, code, id, b) {
-    const d = defOf(code);
+    const d = defFor(actor, code);
     needEdit(actor, d);
     if (d.approval) throw unprocessable(`A ${d.label.toLowerCase()} row is not ended by hand: propose a new one from the date it changes.`);
     const r = rowOf(d, actor, id);
@@ -458,8 +509,8 @@ export function createCommonService({ db }) {
 
   function catalogue(actor) {
     needView(actor);
-    return { rows: Object.values(COMMON).map((d) => ({ code: d.code, label: d.label, labelHi: d.labelHi, dated: Boolean(d.dated), approval: Boolean(d.approval), key: d.key, filters: d.filters ?? [], canEdit: may(actor, d.edit), permission: d.edit,
-      fields: d.fields.map((x) => ({ key: x.key, label: x.label, type: x.type, required: Boolean(x.required), options: x.options ?? null, ref: x.ref ?? null, hint: x.hint ?? (x.format ? FORMATS[x.format].hint : null), max: x.max ?? null })) })) };
+    return { rows: Object.values(COMMON).filter((d) => !d.flag || flagOn(actor, d.flag)).map((d) => ({ code: d.code, label: d.label, labelHi: d.labelHi, dated: Boolean(d.dated), approval: Boolean(d.approval), key: d.key, filters: d.filters ?? [], canEdit: may(actor, d.edit), permission: d.edit,
+      fields: fieldsFor(actor, d).map((x) => ({ key: x.key, label: x.label, type: x.type, required: Boolean(x.required), options: x.options ?? null, ref: x.ref ?? null, hint: x.hint ?? (x.format ? FORMATS[x.format].hint : null), max: x.max ?? null })) })) };
   }
 
   return { catalogue, list, get, create, update, retire, decisions, tax, lookups, scope, view };

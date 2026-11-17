@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useActOnRequest, useChangeRequests, useCronPreview, useRequestScheduleChange, useSchedules } from '../api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, Link, QueryState, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 function Pending({ session }) {
   const requests = useChangeRequests({ status: 'SUBMITTED' });
@@ -89,8 +90,7 @@ export default function SchedulesPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Operations &rsaquo; Scheduled Jobs</nav>
-      <div className="page-head"><h1 id="page-title">Scheduled Jobs</h1></div>
-      <p className="muted">Times are Indian Standard Time. Only one application instance runs each scheduled slot. Changes are maker-checker: the IT Administrator asks, the System Administrator approves. <Link to="/admin/operations/jobs">See the jobs they started</Link></p>
+      <PageHeader id="page-title" title={"Scheduled Jobs"} subtitle={<>Times are Indian Standard Time. Only one application instance runs each scheduled slot. Changes are maker-checker: the IT Administrator asks, the System Administrator approves. <Link to="/admin/operations/jobs">See the jobs they started</Link></>} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={schedules} what="schedules" permission="core.schedule.view" />
       {schedules.data?.length === 0 && <div className="state"><h2>No schedules</h2><p>No module has registered a scheduled job yet.</p></div>}

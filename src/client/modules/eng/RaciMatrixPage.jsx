@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { useApplyTemplate, useGaps, useProposeRaci, useRaci, useRaciScopes } from '../../platform/accountability/api.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // RACI Matrix (part 04.05, section 7.1): the processes of the company against the people and roles who are Responsible, Accountable, Consulted or Informed in one scope (the company,
 // a department, a project or a site). Exactly one person is Accountable for a process in a scope; many may be Responsible. A change of a live project is approved by its project
@@ -114,8 +115,7 @@ export default function RaciMatrixPage() {
   };
   return (
     <section aria-labelledby="rc-title" data-testid="raci-matrix">
-      <h1 id="rc-title">RACI Matrix</h1>
-      <p className="muted">Who is Responsible, Accountable, Consulted and Informed for each process. Exactly one person is Accountable for a process in a scope; any number may be Responsible. A change of a live project is approved by its project manager and then its project director.</p>
+      <PageHeader id="rc-title" title={"RACI Matrix"} subtitle={"Who is Responsible, Accountable, Consulted and Informed for each process. Exactly one person is Accountable for a process in a scope; any number may be Responsible. A change of a live project is approved by its project manager and then its project director."} />
       {notice && <p role="status" className="notice" data-testid="raci-notice">{notice}</p>}
       <form className="srch-form" role="search" aria-label="Choose the scope" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>Scope</span><select value={scope.scopeType} onChange={(e) => setScope({ scopeType: e.target.value, scopeId: '' })}><option value="PROJECT">Project</option><option value="SITE">Site</option><option value="DEPARTMENT">Department</option><option value="COMPANY">The whole company</option></select></label>

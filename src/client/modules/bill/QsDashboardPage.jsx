@@ -7,6 +7,10 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { bill, qs } from './api.js';
 import { big } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import { Card, CardGrid } from '../../platform/design/Card.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // QS Management Dashboard (part 22.08): the chain from work done to money collected, the variations and claims in progress, the queues of work to do, the margin of the subcontract bills against the client's certification and the indicators of value leaking away. Every tile and queue opens the records behind it.
 const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); const money = (v) => (v == null ? '—' : `₹ ${mf.format(v)}`);
@@ -24,29 +28,23 @@ function DrillPanel({ kind, projectId, onClose }) {
   );
 }
 
-export default function QsDashboardPage() {
+function QsDashboardPageClassic() {
   const t = useT('bill'); usePageTitle(t('qd.title')); const sp = useSearch(); const [projectId, setProjectId] = useState(sp.get('projectId') ?? ''); const [drill, setDrill] = useState(null);
   const o = useQuery({ queryKey: ['bill', 'qs-options'], queryFn: () => bill.get('/qs-dashboard/options'), retry: false });
   const q = useQuery({ queryKey: ['bill', 'qs-dashboard', projectId], queryFn: () => bill.get(`/qs-dashboard${qs({ projectId })}`), retry: false, placeholderData: (p) => p });
   if (q.error?.status === 403) return <NoPermission what={t('qd.title')} permission="bill.qs_dashboard.view" />; if (q.isPending) return <Skeleton label={t('qd.title')} rows={6} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const b = d.backToBack;
   return (
-    <section aria-labelledby="qd-h" data-testid="bill-qs-dashboard"><h1 id="qd-h">{t('qd.title')}</h1><p className="muted">{t('qd.intro', { date: d.asOf })}</p>
+    <section aria-labelledby="qd-h" data-testid="bill-qs-dashboard"><PageHeader id="qd-h" title={t('qd.title')} subtitle={t('qd.intro', { date: d.asOf })} />
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('project')} name="projectId" error={null}><select value={projectId} onChange={(e) => { setProjectId(e.target.value); setDrill(null); }} style={big} data-testid="bill-qd-project"><option value="">{t('qd.portfolio')}</option>{(o.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field></div>
         <div className="actions-row"><button type="button" className="btn" onClick={() => bill.exportFile(`/qs-dashboard/export${qs({ projectId })}`, 'qs-dashboard.csv')} data-testid="bill-qd-export">{t('rc.export')}</button> · <Link to="/bill/qty-recon">{t('qd.recon')}</Link> · <Link to="/bill/invoice-hub">{t('hub.title')}</Link> · <Link to="/bill/retention">{t('rt.title')}</Link></div></div>
       {d.empty ? <div className="empty-state"><h2>{t('qd.emptyTitle')}</h2><p>{t('qd.emptyBody')}</p></div> : (<>
-        <div className="form-grid" data-testid="bill-qd-tiles">{d.kpis.map((k) => (
-          <div className="mdm-panel" key={k.key} data-testid={`bill-qd-kpi-${k.key}`} data-status={k.status}><div className="muted">{t(`qd.k.${k.key}`)}</div>
-            <strong style={{ fontSize: '1.5rem' }} data-testid={`bill-qd-kpi-${k.key}-value`}>{k.unit === 'Rs' ? money(k.value) : k.value}</strong>
-            <div><StatusBadge status={TONE[k.status]} label={t(`qd.s.${k.status}`)} /></div>
-            {k.note && <div className="muted">{k.note}</div>}
-            <div className="actions-row no-print"><button type="button" className="btn" onClick={() => setDrill(k.key)} data-testid={`bill-qd-open-${k.key}`}>{t('qd.records')}</button> <button type="button" className="btn" onClick={() => navigateTo(k.drill)}>{t('qd.list')}</button></div></div>))}</div>
+        <KpiRow data-testid="bill-qd-tiles">{d.kpis.map((k) => (
+          <KpiTile label={t(`qd.k.${k.key}`)} value={k.unit === 'Rs' ? money(k.value) : k.value} amount={k.unit === 'Rs' ? k.value : undefined} kind={k.unit === 'Rs' ? 'money' : 'count'} tone={k.status} valueTestid={`bill-qd-kpi-${k.key}-value`} key={k.key} data-testid={`bill-qd-kpi-${k.key}`} data-status={k.status}><div><StatusBadge status={TONE[k.status]} label={t(`qd.s.${k.status}`)} /></div>{k.note && <div className="muted">{k.note}</div>}<div className="actions-row no-print"><button type="button" className="btn" onClick={() => setDrill(k.key)} data-testid={`bill-qd-open-${k.key}`}>{t('qd.records')}</button> <button type="button" className="btn" onClick={() => navigateTo(k.drill)}>{t('qd.list')}</button></div></KpiTile>))}</KpiRow>
         {drill && <DrillPanel kind={drill} projectId={projectId} onClose={() => setDrill(null)} />}
         <h2>{t('qd.queues')}</h2>
-        <div className="form-grid" data-testid="bill-qd-queues">{QUEUES.map((k) => { const x = d.queues[k]; return (
-          <div className="mdm-panel" key={k} data-testid={`bill-qd-queue-${k}`} data-count={x.count}><div className="muted">{t(`qd.k.${k}`)}</div><strong style={{ fontSize: '1.5rem' }}>{x.count}</strong>{x.late > 0 && <div><StatusBadge status="REJECTED" label={t('qd.late', { n: x.late })} /></div>}
-            {x.rows.length === 0 ? <p className="muted">{t('qd.queueEmpty')}</p> : <ul>{x.rows.slice(0, 5).map((r, i) => <li key={`${r.ref}-${i}`}><button type="button" className="btn" onClick={() => navigateTo(r.link)} data-testid={`bill-qd-queue-${k}-row`}>{r.ref}</button> {r.project}{r.amount != null ? ` · ${money(r.amount)}` : ''}{r.ageDays != null ? ` · ${t('qd.days', { n: r.ageDays })}` : ''}</li>)}</ul>}
-            <div className="no-print"><button type="button" className="btn" onClick={() => setDrill(k)} data-testid={`bill-qd-open-${k}`}>{t('qd.records')}</button></div></div>); })}</div>
+        <CardGrid testid="bill-qd-queues">{QUEUES.map((k) => { const x = d.queues[k]; return (
+          <Card title={<>{t(`qd.k.${k}`)} <span className="muted">({x.count})</span></>} count={x.count > 5 ? { shown: 5, total: x.count } : null} key={k} data-testid={`bill-qd-queue-${k}`} data-count={x.count}>{x.late > 0 && <div><StatusBadge status="REJECTED" label={t('qd.late', { n: x.late })} /></div>}{x.rows.length === 0 ? <p className="muted">{t('qd.queueEmpty')}</p> : <ul>{x.rows.slice(0, 5).map((r, i) => <li key={`${r.ref}-${i}`}><button type="button" className="btn" onClick={() => navigateTo(r.link)} data-testid={`bill-qd-queue-${k}-row`}>{r.ref}</button> {r.project}{r.amount != null ? ` · ${money(r.amount)}` : ''}{r.ageDays != null ? ` · ${t('qd.days', { n: r.ageDays })}` : ''}</li>)}</ul>}<div className="no-print"><button type="button" className="btn" onClick={() => setDrill(k)} data-testid={`bill-qd-open-${k}`}>{t('qd.records')}</button></div></Card>); })}</CardGrid>
         <h2>{t('qd.b2b')}</h2>
         <div className="table-scroll"><table className="data-table" data-testid="bill-qd-b2b"><thead><tr><th>{t('project')}</th><th className="num">{t('qd.certified')}</th><th className="num">{t('qd.subBilled')}</th><th className="num">{t('qd.margin')}</th></tr></thead>
           <tbody>{b.rows.length === 0 ? <tr><td colSpan={4} className="muted">{t('qd.noB2b')}</td></tr> : b.rows.map((r) => <tr key={r.projectId}><td>{r.project}</td><td className="num">{money(r.certified)}</td><td className="num">{money(r.subBilled)}</td><td className="num">{b.masked ? t('qd.masked') : money(r.margin)}</td></tr>)}
@@ -60,4 +58,9 @@ export default function QsDashboardPage() {
       </>)}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function QsDashboardPage() {
+  return <OverviewSwitch code="ov-qs" heading="QS Management Dashboard" intro="Unbilled work, certification and billing, margin and the queues of the QS. Each card reads the QS dashboard service; the View all link opens the list behind it with the same project." Classic={QsDashboardPageClassic} />;
 }

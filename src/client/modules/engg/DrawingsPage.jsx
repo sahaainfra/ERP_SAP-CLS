@@ -6,6 +6,7 @@ import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx
 import { useSession } from '../core/api/index.js';
 import { DISCIPLINES, ORIGINATORS, SIZES, STATUS_CODES, dayIST, eg } from './api.js';
 import { ProjectSelect, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Drawing Register (part 11.01, FR-01): every drawing with its current revision and status code; a new drawing starts with its first revision as a draft.
 const empty = () => ({ projectId: '', drawingNo: '', title: '', discipline: 'STRUCTURAL', packageName: '', scale: '', sheetSize: 'A1', originatorType: 'CONSULTANT', originator: '', plannedReceipt: '', wbsId: '', locationId: '', activity: '', label: 'A', statusCode: 'IFC', changeNote: '' });
@@ -31,7 +32,7 @@ export default function DrawingsPage() {
   const sel = (k, label, opts, tk) => <Field label={label} name={k} error={error}><select value={f[k]} onChange={(e) => set(k, e.target.value)} data-testid={`eg-f-${k}`}>{opts.map((o) => <option key={o} value={o}>{t(`${tk}.${o}`)}</option>)}</select></Field>;
   return (
     <section aria-labelledby="eg-list-h" data-testid="eg-drawings">
-      <h1 id="eg-list-h" className="sr-only">{t('reg.title')}</h1>
+      <PageHeader id="eg-list-h" srOnly title={t('reg.title')} />
       <div className="actions-row no-print">
         {perms.includes('engg.drawing.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="eg-new">{t('reg.new')}</button>}
       </div>

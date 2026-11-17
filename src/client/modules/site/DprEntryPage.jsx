@@ -8,6 +8,26 @@ import { browserTransport, uploadFile } from '../../platform/files/upload.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { NOTE_TYPES, WEATHER_CODES, fmtQty, st, today } from './api.js';
 import { SiteDay, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
+import { compressImage } from '../../platform/device/camera.js';
+import { readPosition } from '../../platform/device/location.js';
+import VoiceNote from '../../platform/device/VoiceNote.jsx';
+
+/** The business day before a YYYY-MM-DD date. */
+const dayBefore = (iso) => new Date(Date.parse(`${iso}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+
+/** Part 166.3: a photo made at most 300 KB with the time and position burnt in, at the moment it is taken (the position is read once). */
+async function stampedPhotos(files) {
+  const gps = await readPosition({ timeoutMs: 5000 }).then((r) => ({ lat: r.lat, lng: r.lng, accuracy: r.accuracy })).catch(() => null);
+  const at = new Date().toISOString();
+  return Promise.all(files.map(async (file) => {
+    try {
+      const p = await compressImage(file, { stamp: { at, gps } });
+      return { file: new File([p.blob], p.name, { type: 'image/jpeg', lastModified: Date.parse(at) }), caption: '', info: { before: file.size, after: p.bytes, stamp: p.stampText } };
+    } catch { return { file, caption: '' }; }
+  }));
+}
 
 // DPR Entry (part 14.02, FR-01 to FR-04, on a phone): a step at a time, with large buttons. The day's work authorisations, attendance, material issues and plant logs are offered; the person confirms
 // them or changes them with a reason; photos come from the camera. The report is sent through the offline engine (04.15): with a signal it goes at once, without one it waits on the phone with its photos
@@ -56,6 +76,7 @@ export default function DprEntryPage() {
   const [step, setStep] = useState(0); const [siteId, setSiteId] = useState(Number(sp.get('siteId')) || null); const [date, setDate] = useState(sp.get('date') ?? today()); const [scope, setScope] = useState('SITE');
   const [form, setForm] = useState(null); const [meta, setMeta] = useState(null); const [existing, setExisting] = useState(null); const [error, setError] = useState(null); const [busy, setBusy] = useState(false); const [note, setNote] = useState(null);
   const [photos, setPhotos] = useState([]); const [cmd, setCmd] = useState(null);
+  const fieldOn = useFlagOn('ff.field.p16603'); const tf = useT('field'); const [voice, setVoice] = useState(null); const [sameNote, setSameNote] = useState(null);
   const sitesQ = useQuery({ queryKey: ['site', 'dpr-sites'], queryFn: st.dprSites, retry: false, enabled: online });
   const optQ = useQuery({ queryKey: ['site', 'dpr-options', siteId], queryFn: () => st.dprOptions(siteId), enabled: Boolean(siteId) && online, retry: false });
   const eq = useQuery({ queryKey: ['site', 'dpr-edit', editId], queryFn: () => st.dpr(editId), enabled: Boolean(editId), retry: false });
@@ -82,6 +103,17 @@ export default function DprEntryPage() {
   const add = (sec, line) => setForm((f) => ({ ...f, [sec]: [...f[sec], line] }));
   const need = useMemo(() => (form && meta ? missingReasons(form, meta.tolerance) : []), [form, meta]);
 
+  // Part 166.3: "Same as yesterday" takes the labour and equipment lines of yesterday's report of this site; the person checks them before sending
+  const sameAsYesterday = async () => {
+    setSameNote(null);
+    try {
+      const y = await st.dprPrefill(siteId, dayBefore(date), scope);
+      if (!y?.existing?.id) { setSameNote(tf('sameAsYesterday.none')); return; }
+      const d = fromDpr(await st.dpr(y.existing.id));
+      setForm((f) => ({ ...f, labour: d.labour, equipment: d.equipment }));
+      setSameNote(tf('sameAsYesterday.done'));
+    } catch (e) { setError(errorInfo(e)); }
+  };
   const send = async (submit) => {
     setError(null); setNote(null);
     if (submit && need.length) { setError({ form: t('dpr.needReasons', { n: need.length }) }); setStep(1); return; }
@@ -90,11 +122,12 @@ export default function DprEntryPage() {
       const b = body(form); const gps = await new Promise((res) => (navigator.geolocation ? navigator.geolocation.getCurrentPosition((p) => res({ lat: Number(p.coords.latitude.toFixed(6)), lng: Number(p.coords.longitude.toFixed(6)) }), () => res(null), { timeout: 4000, maximumAge: 60_000 }) : res(null)));
       if (editId) {
         await st.updateDpr(editId, { ...b, rowVersion: eq.data.rowVersion });
+        if (voice) await uploadFile(voice, { transport, entity: 'site_dpr', entityId: editId }); // the voice note is an attachment of the report, not a photo
         for (const p of photos) { const f = await uploadFile(p.file, { transport, entity: 'site_dpr', entityId: editId }); await st.dprPhoto(editId, f.id, { caption: p.caption || null, takenAt: new Date(p.file.lastModified || Date.now()).toISOString(), ...(gps ?? {}) }).catch(() => null); }
         if (submit) await st.dprAct(editId, 'submit'); navigateTo(`/site/dprs?id=${editId}`); return;
       }
       if (offline.ready && offline.forms?.some((f) => f.code === 'dpr' && f.available !== false)) {
-        const c = await enqueue({ type: 'dpr', values: { siteId, dprDate: date, scope, ...b, ...(submit ? { submit: true } : {}) }, label: `DPR ${meta.site} ${date}`, photos: photos.map((p) => p.file) }); setCmd(c); setPhotos([]); return;
+        const c = await enqueue({ type: 'dpr', values: { siteId, dprDate: date, scope, ...b, ...(submit ? { submit: true } : {}) }, label: `DPR ${meta.site} ${date}`, photos: [...photos.map((p) => p.file), ...(voice ? [voice] : [])] }); setCmd(c); setPhotos([]); setVoice(null); return;
       }
       const d = await st.createDpr({ siteId, dprDate: date, scope, ...b }); if (submit) await st.dprAct(d.id, 'submit'); navigateTo(`/site/dprs?id=${d.id}`);
     } catch (e) { setError(e?.errors?.length ? { form: e.message } : errorInfo(e)); } finally { setBusy(false); }
@@ -110,7 +143,7 @@ export default function DprEntryPage() {
   );
   return (
     <section aria-labelledby="dpr-h" data-testid="site-dpr-entry" style={{ maxWidth: 720 }}>
-      <h1 id="dpr-h">{t('dpr.entry')}</h1>
+      <PageHeader id="dpr-h" title={t('dpr.entry')} />
       <p className={`att-net${online ? '' : ' is-off'}`} role="status" data-testid="dpr-net">{online ? t('dpr.online') : t('dpr.offline')}{offline.queue?.length ? ` · ${t('dpr.waiting', { n: offline.queue.length })}` : ''} · <Link to="/field/sync">{t('dpr.syncStatus')}</Link></p>
       <ol className="steps" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', listStyle: 'none', padding: 0 }} aria-label={t('dpr.steps')}>{STEPS.map((k, i) => <li key={k}><button type="button" className={`btn${i === step ? ' btn-primary' : ''}`} style={{ minHeight: 40 }} onClick={() => form && setStep(i)} disabled={!form && i > 0} aria-current={i === step ? 'step' : undefined} data-testid={`dpr-step-${k}`}>{i + 1}. {t(`dpr.s.${k}`)}</button></li>)}</ol>
       {error?.form && <p className="field-error" role="alert" data-testid="dpr-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).slice(0, 4).map(([k, v]) => `${k}: ${v}`).join('; ')}` : ''}</p>}
@@ -144,6 +177,7 @@ export default function DprEntryPage() {
 
       {form && step === 2 && (
         <div data-testid="dpr-labour"><h2>{t('dpr.s.labour')}</h2><p className="muted">{t('dpr.labourHelp', { p: meta.tolerance.labourPct })}</p>
+          {fieldOn && online && <p><button type="button" className="btn" style={big} onClick={sameAsYesterday} data-testid="dpr-same-as-yesterday">{tf('sameAsYesterday')}</button>{sameNote && <span role="status" className="muted" data-testid="dpr-same-note"> {sameNote}</span>}</p>}
           {form.labour.map((l, i) => (
             <fieldset key={`${l.category}-${l.contractorId}-${l.trade}-${i}`} className="mdm-panel" data-testid="dpr-labour-line"><legend>{t(`dpr.cat.${l.category}`)} · {l.trade}{l.contractor ? ` · ${l.contractor}` : ''}</legend>
               <p className="muted">{t('dpr.attendance')}: {l.offerManDays == null ? '—' : `${fmtQty(l.offerHeadcount)} / ${fmtQty(l.offerManDays)}`}</p>
@@ -200,8 +234,9 @@ export default function DprEntryPage() {
 
       {form && step === 5 && (
         <div data-testid="dpr-photos"><h2>{t('dpr.s.photos')}</h2><p className="muted">{t('dpr.photosHelp')}</p>
-          <label className="btn btn-primary" style={{ ...big, display: 'inline-flex', alignItems: 'center' }}>{t('dpr.takePhoto')}<input type="file" accept="image/*" capture="environment" multiple onChange={(e) => { const files = [...e.target.files]; setPhotos((p) => [...p, ...files.map((file) => ({ file, caption: '' }))]); e.target.value = ''; }} style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} data-testid="dpr-photo-input" /></label>
-          <ul style={{ listStyle: 'none', padding: 0 }}>{photos.map((p, i) => <li key={i} className="mdm-panel" data-testid="dpr-photo-line"><strong>{p.file.name}</strong> · {Math.round(p.file.size / 1024)} KB <input aria-label={t('dpr.caption')} placeholder={t('dpr.caption')} value={p.caption} onChange={(e) => setPhotos((l) => l.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)))} style={big} maxLength={300} /> <button type="button" className="btn" onClick={() => setPhotos((l) => l.filter((_, j) => j !== i))}>{t('act.remove')}</button></li>)}</ul>
+          <label className="btn btn-primary" style={{ ...big, display: 'inline-flex', alignItems: 'center' }}>{t('dpr.takePhoto')}<input type="file" accept="image/*" capture="environment" multiple onChange={async (e) => { const files = [...e.target.files]; e.target.value = ''; const lines = fieldOn ? await stampedPhotos(files) : files.map((file) => ({ file, caption: '' })); setPhotos((p) => [...p, ...lines]); }} style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} data-testid="dpr-photo-input" /></label>
+          <ul style={{ listStyle: 'none', padding: 0 }}>{photos.map((p, i) => <li key={i} className="mdm-panel" data-testid="dpr-photo-line"><strong>{p.file.name}</strong> · {p.info ? tf('photo.made', { before: `${Math.round(p.info.before / 1024)} KB`, after: `${Math.round(p.info.after / 1024)} KB` }) : `${Math.round(p.file.size / 1024)} KB`}{p.info?.stamp && <span className="muted small" data-testid="dpr-photo-stamp"> · {p.info.stamp}</span>} <input aria-label={t('dpr.caption')} placeholder={t('dpr.caption')} value={p.caption} onChange={(e) => setPhotos((l) => l.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)))} style={big} maxLength={300} /> <button type="button" className="btn" onClick={() => setPhotos((l) => l.filter((_, j) => j !== i))}>{t('act.remove')}</button></li>)}</ul>
+          {fieldOn && <VoiceNote value={voice} onChange={setVoice} testid="dpr-voice" />}
           <Nav />
         </div>
       )}

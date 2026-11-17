@@ -6,6 +6,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtQty, fmtRs, hr } from './api.js';
 import { ExportButton } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Hire cost against owned cost (part 17.06, FR-05): per equipment class, what hired machines cost an hour (certified hire-in bills) against what owned machines cost an hour (purchase value over a working life, plus fuel and maintenance).
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10); const back = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
@@ -14,7 +15,7 @@ export default function HireComparisonPage() {
   if (q.error?.status === 403) return <NoPermission what={t('h.comparisonTitle')} permission="plant.hire.report" />; if (q.isPending) return <Skeleton label={t('h.comparisonTitle')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const rs = (v) => (v == null ? '—' : fmtRs(v));
   return (
-    <section aria-labelledby="hp-h" data-testid="plant-hire-comparison"><h1 id="hp-h">{t('h.comparisonTitle')}</h1><p className="muted">{t('h.comparisonIntro', { n: fmtQty(d.lifeHours) })} <Link to="/plant/hire-agreements">{t('h.agreementsTitle')}</Link></p>
+    <section aria-labelledby="hp-h" data-testid="plant-hire-comparison"><PageHeader id="hp-h" title={t('h.comparisonTitle')} subtitle={<>{t('h.comparisonIntro', { n: fmtQty(d.lifeHours) })} <Link to="/plant/hire-agreements">{t('h.agreementsTitle')}</Link></>} />
       <div className="mdm-panel no-print" data-testid="hp-params"><div className="form-grid"><label>{t('h.from')}<input type="date" value={f.from} max={f.to} onChange={(ev) => setF({ ...f, from: ev.target.value })} style={{ minHeight: 44 }} data-testid="hp-from" /></label><label>{t('h.to')}<input type="date" value={f.to} max={today()} onChange={(ev) => setF({ ...f, to: ev.target.value })} style={{ minHeight: 44 }} data-testid="hp-to" /></label></div><ExportButton query={{ kind: 'comparison', from: f.from, to: f.to }} name="hire-vs-owned.csv" path="/hire/export" testId="hp-export" /></div>
       {d.rows.length === 0 ? <div className="mdm-panel" data-testid="hp-empty"><h2>{t('h.cmpEmptyTitle')}</h2><p className="muted">{t('h.cmpEmptyBody')}</p></div> : <>
         {d.chart.length > 0 && <div className="mdm-panel"><h2>{t('h.hirePerHour')}</h2><Bars rows={d.chart} format={(n) => fmtRs(n)} testId="hp-bars" label={t('h.hirePerHour')} /></div>}

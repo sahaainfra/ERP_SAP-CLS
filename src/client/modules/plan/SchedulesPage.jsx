@@ -5,6 +5,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { pl } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Schedules (part 13.01, FR-01): the schedule versions of the projects; a new schedule starts on a calendar in force. A row opens the activities.
 function NewSchedule({ t, onDone }) {
@@ -34,7 +35,7 @@ export default function SchedulesPage() {
   const qc = useQueryClient(); const session = useSession(); const perms = session.data?.permissions ?? []; const [adding, setAdding] = useState(false);
   return (
     <section aria-labelledby="ps-h" data-testid="plan-schedules">
-      <h1 id="ps-h" className="sr-only">{t('sch.title')}</h1>
+      <PageHeader id="ps-h" srOnly title={t('sch.title')} />
       <div className="actions-row no-print">
         {perms.includes('plan.schedule.create') && <button type="button" className="btn btn-primary" onClick={() => setAdding(!adding)} data-testid="ps-new">{t('sch.new')}</button>}
         <button type="button" className="btn" onClick={() => navigateTo('/plan/calendars')} data-testid="ps-calendars">{t('cal.title')}</button>

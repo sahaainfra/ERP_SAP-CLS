@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, employees, lv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Apply Leave (HR, part 07.07, FR-03): the type, the dates, half a day, the reason, a certificate where the type asks for one, and who covers the approvals when an approver is away. Before it is saved the page shows what the server works out:
 // the days (holidays and weekly offs left out unless the type counts them between leave days), the balance after, the people of the team away on the same days, and what is wrong. It goes to the reporting manager; beyond 10 days or for
@@ -37,7 +38,7 @@ export default function ApplyLeavePage() {
   const d = pv.data;
   return (
     <section aria-labelledby="al-title" data-testid="apply-leave">
-      <h1 id="al-title">Apply Leave</h1>
+      <PageHeader id="al-title" title={"Apply Leave"} />
       {error?.form && <p className="field-error" role="alert" data-testid="al-error">{error.form}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }}>
         {others && <LookupField id="al-employee" label="Employee (leave empty for yourself)" lookup="hr/employees" value={v.employeeId} onChange={(x) => set({ employeeId: x, leaveTypeId: '' })} error={fe('employeeId')} />}

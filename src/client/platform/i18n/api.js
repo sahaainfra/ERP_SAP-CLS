@@ -5,7 +5,8 @@ import { api } from '../api/index.js';
 const unwrap = async (p) => (await p).data;
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
 
-export const useCatalogue = (lang, enabled = true) => useQuery({ queryKey: ['i18n', 'catalogue', lang], queryFn: () => unwrap(api.get(`/ui/translations/${lang}/all`)), enabled, retry: false, staleTime: 5 * 60_000 });
+// the company's own wording only: the built-in text is in the bundle (part 166.4)
+export const useCatalogue = (lang, enabled = true) => useQuery({ queryKey: ['i18n', 'catalogue', lang], queryFn: () => unwrap(api.get(`/ui/translations/${lang}/all?only=overrides`)), enabled, retry: false, staleTime: 5 * 60_000 });
 export const useLocalePrefs = (enabled = true) => useQuery({ queryKey: ['i18n', 'locale-prefs'], queryFn: () => unwrap(api.get('/ui/locale-preferences')), enabled, retry: false, staleTime: 5 * 60_000 });
 export function useSaveLocalePrefs() {
   const qc = useQueryClient();

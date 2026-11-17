@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { aw, dayIST, inr, tdr } from './api.js';
 import { TimelinePanel, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Award / Loss (business development, part 08.03, FR-06, FR-07): the negotiation rounds with the client, then the outcome of a submitted tender. A win records the letter of acceptance and the contract value and the director accepts it;
 // a loss records who won and why. Once approved the tender is closed as awarded or lost, the EMD refund falls due, the opportunity follows and the award is announced for the project set-up (part 10.02, not built yet).
@@ -48,8 +49,7 @@ export default function AwardPage() {
   return (
     <section aria-labelledby="aw-title" data-testid="award" data-status={a?.status ?? 'NEW'}>
       <header>
-        <h1 id="aw-title">{a ? <>{t(a.outcome === 'WON' ? 'aw.won' : 'aw.lost')} {a.docNo} <StatusBadge status={TONE[a.status]} label={a.statusLabel} /></> : t('aw.record')}</h1>
-        <p className="muted"><Link to={`/bd/tender?id=${tn.id}`}>{tn.docNo}</Link> · {tn.nameOfWork} · {t(`tstage.${tn.stage}`)}</p>
+        <PageHeader id="aw-title" title={a ? <>{t(a.outcome === 'WON' ? 'aw.won' : 'aw.lost')} {a.docNo} <StatusBadge status={TONE[a.status]} label={a.statusLabel} /></> : t('aw.record')} subtitle={<><Link to={`/bd/tender?id=${tn.id}`}>{tn.docNo}</Link> · {tn.nameOfWork} · {t(`tstage.${tn.stage}`)}</>} />
         {error?.form && <p className="field-error" role="alert" data-testid="aw-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="aw-note">{note}</p>}
         {a && <div className="actions-row no-print">

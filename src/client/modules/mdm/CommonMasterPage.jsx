@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate } from '../../platform/format.js';
 import { Field, Link, downloadCsv, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { mdm, todayIST } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The register of one common master (part 06.02): units, GST rates, HSN/SAC, TDS sections, states (with districts), currencies (with exchange rates), banks, payment terms, lookup lists. One page component
 // driven by the master's definition from the server: filters, search, "as of" for the dated masters, the rows with their source (system or the company's own) and dates, a form to add or change a row, and the
@@ -20,6 +21,10 @@ const PAGES = {
   banks: { title: 'Banks & IFSC', masters: ['banks'] },
   'payment-terms': { title: 'Payment & Delivery Terms', masters: ['payment-terms'] },
   lookups: { title: 'Lookup Lists', masters: ['lookup-lists', 'lookups'] },
+  'tds-forms': { title: 'TDS Forms', masters: ['tds-forms'] },
+  'statutory-calendar': { title: 'Statutory Calendar', masters: ['statutory-calendar'] },
+  'labour-rules': { title: 'Labour Code Rules', masters: ['labour-rules'] },
+  'pay-components': { title: 'Pay Components', masters: ['pay-components'] },
 };
 const IMPORT = { uom: 'MDM_UOM', 'gst-rates': 'MDM_GST_RATE', 'hsn-sac': 'MDM_HSN_SAC', 'tds-sections': 'MDM_TDS_SECTION', states: 'MDM_STATE', districts: 'MDM_DISTRICT', currencies: 'MDM_CURRENCY', 'exchange-rates': 'MDM_EXCHANGE_RATE', banks: 'MDM_BANK', 'payment-terms': 'MDM_PAYMENT_TERM', lookups: 'MDM_LOOKUP' };
 const show = (fd, v) => (v == null || v === '' ? '—' : fd.type === 'bool' ? (v ? 'Yes' : 'No') : fd.type === 'percent' ? `${v}%` : fd.type === 'money' ? `₹${Number(v).toLocaleString('en-IN')}` : fd.type === 'json' ? (v.length ? v.map((m) => `${m.label} ${m.pct}% (${m.days} d)`).join('; ') : '—') : fd.type === 'enum' ? (fd.options.find(([k]) => k === v)?.[1] ?? v) : String(v));
@@ -33,9 +38,10 @@ export default function CommonMasterPage({ page }) {
   if (cat.isError) return <ErrorState error={cat.error} onRetry={cat.refetch} />;
   if (cat.isPending) return <Skeleton label={`Loading ${p.title}`} rows={4} />;
   const defs = p.masters.map((m) => cat.data.rows.find((d) => d.code === m));
+  if (defs.some((d) => !d)) return <EmptyState title={`${p.title} is not enabled for your company`} message="The master is switched on with its feature flag." />;
   return (
     <section aria-labelledby="cm-title" data-testid={`cm-page-${page}`}>
-      <h1 id="cm-title">{p.title}</h1>
+      <PageHeader id="cm-title" title={p.title} />
       {defs[0].approval && <p className="mdm-banner" role="note">A change of {defs[0].label} applies from a date and is approved by an accounts manager and then the CFO. A document dated before the change keeps the rate it had.</p>}
       {defs.map((d, i) => <Register key={d.code} def={d} sub={i > 0} />)}
       {page === 'lookups' && cat.data.rows.find((d) => d.code === 'lookups').canEdit && <p><Link to="/admin/master-data/lookup-manager">Open the Lookup List Manager</Link> to edit a list's values with their Hindi labels.</p>}

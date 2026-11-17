@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { useControl, useControlOptions, useControls, useCreateControl, useRemoveControl, useUpdateControl } from '../../platform/protocol/api.js';
 import { Field, Link, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Control Points Registry (part 04.04, section 7.1; Administration > Controls): every control point of the company with its stage, how hard it acts (enforcement), the mode
 // it is in (OFF, OBSERVE, WARN, ENFORCE), its thresholds and its owner, and for the ones being observed what they would have stopped. A control that is in ENFORCE, or is going
@@ -124,8 +125,7 @@ export default function ControlPointsPage({ session }) {
   const data = list.data;
   return (
     <section aria-labelledby="cp-title" data-testid="control-points">
-      <h1 id="cp-title">Control Points</h1>
-      <p className="muted">What the company checks, and how hard. A control starts in OBSERVE: it writes down what it would have stopped and affects nobody. After the days of observation the company set it may be enforced, with the approval of its owner and then the auditor or director.</p>
+      <PageHeader id="cp-title" title={"Control Points"} subtitle={"What the company checks, and how hard. A control starts in OBSERVE: it writes down what it would have stopped and affects nobody. After the days of observation the company set it may be enforced, with the approval of its owner and then the auditor or director."} />
       {notice && <p role="status" className="notice" data-testid="cp-notice">{notice}</p>}
       {error && <p role="alert" className="error">{error.form}</p>}
       <div className="srch-tools">{canManage && !creating && <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>New control point</button>}<Link to="/admin/reason-codes">Reason Codes</Link><Link to="/controls/exceptions">Exceptions Register</Link></div>

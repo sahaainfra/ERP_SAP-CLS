@@ -22,7 +22,7 @@ export const CHAIN = ['SYSADM'];
 const MAX_TEXT = 2000;
 const MAX_CHANGES = 1000;
 
-const lang = z.enum(['en', 'hi']);
+const lang = z.enum(['en', 'hi', 'te']);
 const ns = z.string().regex(/^[a-z][a-z0-9]*$/).max(40);
 const key = z.string().min(1).max(120).regex(/^[A-Za-z0-9_.-]+$/, 'Use letters, digits, dots, dashes and underscores');
 const change = z.object({ namespace: ns, key, lang, text: z.string().max(MAX_TEXT).nullable() }).strict();
@@ -74,24 +74,27 @@ export function createTranslationService({ db, approvals }) {
   const loc = localisationOf(db);
   const must = (actor) => assertPermission(actor, 'ui.translation.manage');
 
-  /** The effective text of every string: { ns, key, en, hi, enBase, hiBase, enOverridden, hiOverridden }. */
+  /** The effective text of every string: { ns, key, en, hi, te, enBase, hiBase, teBase, enOverridden, hiOverridden, teOverridden } (Telugu from part 166.3). */
   function rows(actor) {
     const eff = loc.catalogue(actor.companyId);
     const own = new Set(db.prepare('SELECT namespace, msg_key, lang FROM ui_translations WHERE company_id = ? AND deleted_at IS NULL AND is_active = 1').all(actor.companyId).map((o) => `${o.namespace}|${o.msg_key}|${o.lang}`));
     const out = [];
     for (const [n, keys] of Object.entries(CATALOGUE.en)) {
       for (const k of Object.keys(keys)) {
-        out.push({ namespace: n, key: k, en: eff.en[n][k], hi: eff.hi?.[n]?.[k] ?? null, enBase: keys[k], hiBase: CATALOGUE.hi?.[n]?.[k] ?? null, enOverridden: own.has(`${n}|${k}|en`), hiOverridden: own.has(`${n}|${k}|hi`) });
+        out.push({ namespace: n, key: k, en: eff.en[n][k], hi: eff.hi?.[n]?.[k] ?? null, enBase: keys[k], hiBase: CATALOGUE.hi?.[n]?.[k] ?? null, enOverridden: own.has(`${n}|${k}|en`), hiOverridden: own.has(`${n}|${k}|hi`),
+          te: eff.te?.[n]?.[k] ?? null, teBase: CATALOGUE.te?.[n]?.[k] ?? null, teOverridden: own.has(`${n}|${k}|te`) });
       }
     }
     return out;
   }
 
   /** The strings a screen needs, in one language: one namespace or all of them (any signed-in person). */
-  function strings(actor, { lang: l, namespace }) {
+  /** The text of a language. `only: 'overrides'` (part 166.4) leaves out what equals the text built into the application, which the browser has already: the screens need only the rest. */
+  function strings(actor, { lang: l, namespace }, { only = null } = {}) {
     const eff = loc.catalogue(actor.companyId);
     if (namespace !== 'all' && !NAMESPACES.includes(namespace)) throw badRequest('Some fields are invalid.', [{ field: 'namespace', message: `There is no text area called ${namespace}.` }]);
-    const pick = (name) => ({ ...(eff.en[name] ?? {}), ...(l === 'en' ? {} : eff[l]?.[name] ?? {}) });
+    const full = (name) => ({ ...(eff.en[name] ?? {}), ...(l === 'en' ? {} : eff[l]?.[name] ?? {}) });
+    const pick = only === 'overrides' ? (name) => Object.fromEntries(Object.entries(full(name)).filter(([k, v]) => CATALOGUE[l]?.[name]?.[k] !== v)) : full;
     const body = namespace === 'all' ? { namespaces: Object.fromEntries(NAMESPACES.map((name) => [name, pick(name)])) } : { namespace, strings: pick(namespace) };
     const stamp = db.prepare('SELECT COUNT(*) AS n, MAX(COALESCE(updated_at, created_at)) AS at FROM ui_translations WHERE company_id = ? AND deleted_at IS NULL').get(actor.companyId);
     return { lang: l, ...body, etag: `${stamp.n}-${stamp.at ?? ''}` };
@@ -100,9 +103,10 @@ export function createTranslationService({ db, approvals }) {
   function list(actor, q) {
     must(actor);
     const needle = q.q.trim().toLowerCase();
+    const l = q.lang === 'te' ? 'te' : 'hi'; // "missing" is of the language asked for, Hindi unless Telugu is named
     const all = rows(actor).filter((r) => (!q.namespace || r.namespace === q.namespace)
-      && (q.show === 'all' || (q.show === 'missing' ? !r.hi || String(r.hi).trim() === '' : r.enOverridden || r.hiOverridden))
-      && (!needle || `${r.namespace}.${r.key} ${r.en} ${r.hi ?? ''}`.toLowerCase().includes(needle)));
+      && (q.show === 'all' || (q.show === 'missing' ? !r[l] || String(r[l]).trim() === '' : r.enOverridden || r.hiOverridden || r.teOverridden))
+      && (!needle || `${r.namespace}.${r.key} ${r.en} ${r.hi ?? ''} ${r.te ?? ''}`.toLowerCase().includes(needle)));
     const start = (q.page - 1) * q.pageSize;
     return { rows: all.slice(start, start + q.pageSize), meta: { total: all.length, page: q.page, pageSize: q.pageSize, totalPages: Math.max(1, Math.ceil(all.length / q.pageSize)) }, namespaces: NAMESPACES };
   }
@@ -118,7 +122,15 @@ export function createTranslationService({ db, approvals }) {
       const gone = cmp.missing.filter((m) => m.ns === name).length;
       return { namespace: name, total, translated: total - gone, missing: gone };
     });
-    return { languages: LANGS, perNamespace, missing: cmp.missing.map((m) => ({ ...m, en: eff.en[m.ns][m.key] })), placeholders: cmp.placeholders, orphaned: stale };
+    // Telugu (part 166.3): the same report; areas a field team does not use are filled module by module (D-676)
+    const te = compareLanguages(eff, 'te');
+    const teluguPerNamespace = NAMESPACES.map((name) => {
+      const total = Object.keys(CATALOGUE.en[name]).length;
+      const gone = te.missing.filter((m) => m.ns === name).length;
+      return { namespace: name, total, translated: total - gone, missing: gone };
+    });
+    return { languages: LANGS, perNamespace, missing: cmp.missing.map((m) => ({ ...m, en: eff.en[m.ns][m.key] })), placeholders: cmp.placeholders, orphaned: stale,
+      telugu: { perNamespace: teluguPerNamespace, missing: te.missing.length, placeholders: te.placeholders } };
   }
 
   /** Check and reduce a list of changes to the ones that differ from the text in force. */
@@ -160,17 +172,17 @@ export function createTranslationService({ db, approvals }) {
     must(actor);
     return db.prepare("SELECT id, action, old_values, new_values, reason, actor, created_at FROM core_audit_log WHERE entity = 'ui_translations' ORDER BY id DESC LIMIT 200").all()
       .map((a) => ({ id: a.id, reason: a.reason, actor: a.actor, at: a.created_at, old: a.old_values ? JSON.parse(a.old_values) : {}, next: a.new_values ? JSON.parse(a.new_values) : {} }))
-      .map((a) => ({ ...a, hi: [a.old[`${namespace}.${k}.hi`], a.next[`${namespace}.${k}.hi`]], en: [a.old[`${namespace}.${k}.en`], a.next[`${namespace}.${k}.en`]] }))
-      .filter((a) => a.hi[1] !== undefined || a.en[1] !== undefined)
+      .map((a) => ({ ...a, hi: [a.old[`${namespace}.${k}.hi`], a.next[`${namespace}.${k}.hi`]], en: [a.old[`${namespace}.${k}.en`], a.next[`${namespace}.${k}.en`]], te: [a.old[`${namespace}.${k}.te`], a.next[`${namespace}.${k}.te`]] }))
+      .filter((a) => a.hi[1] !== undefined || a.en[1] !== undefined || a.te[1] !== undefined)
       .map(({ old, next, ...rest }) => ({ ...rest, oldValues: old, newValues: next }));
   }
 
   /** The strings for translators: namespace, key, English, Hindi (the text now in force) and whether it is the company's own wording. */
   function exportXlsx(actor) {
     must(actor);
-    const data = rows(actor).map((r) => ({ namespace: r.namespace, key: r.key, en: r.en, hi: r.hi ?? '', note: [r.enOverridden && 'English changed by the company', r.hiOverridden && 'Hindi changed by the company', !r.hi && 'Hindi missing'].filter(Boolean).join('; ') }));
+    const data = rows(actor).map((r) => ({ namespace: r.namespace, key: r.key, en: r.en, hi: r.hi ?? '', te: r.te ?? '', note: [r.enOverridden && 'English changed by the company', r.hiOverridden && 'Hindi changed by the company', r.teOverridden && 'Telugu changed by the company', !r.hi && 'Hindi missing', !r.te && 'Telugu missing'].filter(Boolean).join('; ') }));
     writeAudit(db, { entity: 'ui_translations', entityId: 'export', action: 'export', newValues: { strings: data.length }, actor: actor.user, companyId: actor.companyId });
-    return { buffer: toXlsx({ sheetName: 'Translations', columns: [{ key: 'namespace', label: 'Namespace', type: 'text' }, { key: 'key', label: 'Key', type: 'text' }, { key: 'en', label: 'English', type: 'text' }, { key: 'hi', label: 'Hindi', type: 'text' }, { key: 'note', label: 'Note', type: 'text' }], rows: data, footer: ['Change only the English and Hindi columns. Keep every {placeholder} exactly as in the English text. Import the file on the Translations page.'] }), fileName: `translations-${todayIST()}.xlsx` };
+    return { buffer: toXlsx({ sheetName: 'Translations', columns: [{ key: 'namespace', label: 'Namespace', type: 'text' }, { key: 'key', label: 'Key', type: 'text' }, { key: 'en', label: 'English', type: 'text' }, { key: 'hi', label: 'Hindi', type: 'text' }, { key: 'te', label: 'Telugu', type: 'text' }, { key: 'note', label: 'Note', type: 'text' }], rows: data, footer: ['Change only the English and Hindi columns. Keep every {placeholder} exactly as in the English text. Import the file on the Translations page.'] }), fileName: `translations-${todayIST()}.xlsx` };
   }
 
   /** Read a translator's file: a preview of what would change and what is wrong; with `commit`, the change request (one for the whole file). */
@@ -181,7 +193,7 @@ export function createTranslationService({ db, approvals }) {
     const table = sheets[0]?.data ?? [];
     const header = (table[0] ?? []).map((h) => String(h ?? '').trim().toLowerCase());
     const col = (name) => header.indexOf(name);
-    const [cNs, cKey, cEn, cHi] = ['namespace', 'key', 'english', 'hindi'].map(col);
+    const [cNs, cKey, cEn, cHi, cTe] = ['namespace', 'key', 'english', 'hindi', 'telugu'].map(col); // Telugu (166.3) is optional: an older file has none
     if ([cNs, cKey, cEn, cHi].some((c) => c < 0)) throw badRequest('The first row must name the columns Namespace, Key, English and Hindi.', [{ field: 'file', message: 'is missing one of the columns Namespace, Key, English, Hindi' }]);
     if (table.length - 1 > 20000) throw badRequest('The file has too many rows.', [{ field: 'file', message: 'has more than 20,000 rows' }]);
     const wanted = [];
@@ -191,7 +203,7 @@ export function createTranslationService({ db, approvals }) {
       const n = String(r[cNs] ?? '').trim();
       const k = String(r[cKey] ?? '').trim();
       if (!n && !k) return;
-      for (const [l, c] of [['en', cEn], ['hi', cHi]]) {
+      for (const [l, c] of [['en', cEn], ['hi', cHi], ...(cTe >= 0 ? [['te', cTe]] : [])]) {
         const text = unquote(r[c] === null || r[c] === undefined ? '' : String(r[c]));
         if (text.trim() === '') continue; // a blank cell leaves the text as it is
         wanted.push({ namespace: n, key: k, lang: l, text, line });

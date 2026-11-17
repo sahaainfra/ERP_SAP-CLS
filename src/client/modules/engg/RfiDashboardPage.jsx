@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { rf } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // RFI Dashboard (part 11.02): open RFIs by ball in court, ageing, the ones on the critical path, the impact totals and what waits for me.
 export default function RfiDashboardPage() {
@@ -17,7 +18,7 @@ export default function RfiDashboardPage() {
   const d = q.data;
   return (
     <section aria-labelledby="rfid-h" data-testid="rfi-dash">
-      <h1 id="rfid-h">{t('rfid.title')}</h1>
+      <PageHeader id="rfid-h" title={t('rfid.title')} />
       <ProjectSelect value={projectId} onChange={setProjectId} allowAll testId="rfid-project" />
       {q.isPending ? <Skeleton label={t('rfid.title')} rows={4} /> : (
         <>

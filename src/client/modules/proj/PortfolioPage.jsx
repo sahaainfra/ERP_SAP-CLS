@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { RAG_TONE, p3 } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Portfolio Overview (part 10.08, FR-05): every project the person may see with its health, the overdue milestones, the critical risks and the open issues; the counters filter by health and every card opens Project 360.
 export default function PortfolioPage() {
@@ -19,7 +20,7 @@ export default function PortfolioPage() {
   const tile = (k, n) => <li key={k}><button type="button" className={`btn${health === k ? ' btn-primary' : ''}`} aria-pressed={health === k} onClick={() => setHealth(health === k ? '' : k)} data-testid={`pf-tile-${k}`}><strong style={{ fontSize: '1.4em' }}>{n}</strong> {t(k ? `p3.health.${k}` : 'p3.all')}</button></li>;
   return (
     <section aria-labelledby="pf-h" data-testid="portfolio">
-      <header><h1 id="pf-h">{t('p3.portfolioTitle')}</h1></header>
+      <header><PageHeader id="pf-h" title={t('p3.portfolioTitle')} /></header>
       <ul className="p3-tiles" aria-label={t('p3.healthTitle')} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, listStyle: 'none', padding: 0 }}>{[['RED', summary.red], ['AMBER', summary.amber], ['GREEN', summary.green], ['NONE', summary.none]].map(([k, n]) => tile(k, n))}</ul>
       <div className="actions-row no-print"><Field label={t('p3.search')} name="q"><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} data-testid="pf-search" /></Field>{health && <button type="button" className="btn" onClick={() => setHealth('')}>{t('p3.clear')}</button>}</div>
       {projects.length === 0 ? <EmptyState title={t('p3.noProjects')} message={t('p3.noProjectsText')} /> : (

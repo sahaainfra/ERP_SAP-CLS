@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../../platform/api/index.js';
 import { queryKeys } from '../../../platform/query/keys.js';
+import { lowBandwidthSaves } from '../../../platform/device/lowBandwidth.js';
 
 // Data hooks of the core module. Components never call fetch or the API client directly for screen data:
 // they use these hooks, so caching, loading and error states behave the same everywhere.
@@ -221,6 +222,11 @@ export const useFiles = ({ entity, entityId }) =>
   });
 /** A short-lived link to a file or its thumbnail. Called when the user opens a file, never cached. */
 export const fetchFileUrl = async (id, { variant = 'file', download = false } = {}) => (await api.get(`/core/files/${id}/url?variant=${variant}&download=${download}`)).data;
+/** A photo shown in a list: its thumbnail in low-bandwidth mode with ff.perf.p16604 (part 166.4, FR-03), the photo itself when it has none. */
+export const fetchPhotoUrl = async (id) => {
+  if (lowBandwidthSaves()) { try { return await fetchFileUrl(id, { variant: 'thumbnail' }); } catch { /* no thumbnail: the photo */ } }
+  return fetchFileUrl(id);
+};
 export const useDeleteFile = () => useWrite(({ id, reason }) => unwrap(api.delete(`/core/files/${id}`, idem(), { reason })), [queryKeys.core.files.all]);
 export const useFileSettings = () =>
   useQuery({ queryKey: queryKeys.core.files.settings(), queryFn: () => unwrap(api.get('/core/files/settings')), retry: false });

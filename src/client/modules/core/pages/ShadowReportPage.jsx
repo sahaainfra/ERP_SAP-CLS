@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useCompareVersions, useFormula, useFormulas, useShadowSummary } from '../api/index.js';
 import { toCsv } from '../../../platform/format.js';
 import { Field, Link, QueryState, Tile, downloadCsv, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 /**
  * Differences between two versions of a formula on sample data (FR-05): the cases you paste plus the inputs of recent real
@@ -54,8 +56,7 @@ export default function ShadowReportPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Calculations &rsaquo; Shadow Comparison</nav>
-      <div className="page-head"><h1 id="page-title">Shadow Comparison Report</h1><Link to="/admin/formulas">Back to the registry</Link></div>
-      <p className="muted">Run two versions of a formula on the same inputs and see exactly where they disagree, before the new one is switched on.</p>
+      <PageHeader id="page-title" title={"Shadow Comparison Report"} actions={<><Link to="/admin/formulas">Back to the registry</Link></>} subtitle={"Run two versions of a formula on the same inputs and see exactly where they disagree, before the new one is switched on."} />
 
       <form onSubmit={run} className="form-grid" aria-label="Comparison parameters">
         <div className="row">
@@ -74,13 +75,13 @@ export default function ShadowReportPage() {
       {r && (
         <section aria-labelledby="result-title" data-testid="cmp-result">
           <h2 id="result-title">v{r.baselineVersion} against v{r.candidateVersion}</h2>
-          <div className="tiles" role="group" aria-label="Summary">
+          <KpiRow role="group" aria-label="Summary">
             <Tile label="Cases" value={r.summary.cases} testId="cmp-cases-count" />
             <Tile label="Identical" value={r.summary.identical} status="ok" testId="cmp-identical" />
             <Tile label="Different" value={r.summary.differing} status={r.summary.differing ? 'warn' : 'ok'} testId="cmp-differing" />
             <Tile label="Errors" value={r.summary.errors} status={r.summary.errors ? 'error' : 'ok'} />
             <Tile label="Largest difference" value={r.summary.maxDifference} />
-          </div>
+          </KpiRow>
           <div className="actions"><button type="button" className="btn" onClick={exportCsv}>Export CSV</button></div>
           <div className="table-wrap">
             <table>

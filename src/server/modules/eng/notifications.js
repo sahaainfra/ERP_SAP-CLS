@@ -108,6 +108,10 @@ workflowTypes.register({
   },
 });
 
+const centres = new WeakMap();
+/** The notification service of a database, once the module is mounted (part 166.5). */
+export const notificationCentreOf = (db) => centres.get(db) ?? null;
+
 export function createNotificationService({ db, engine }) {
   const authz = authzOf(db);
   const n = notificationsOf(db);
@@ -292,5 +296,7 @@ export function createNotificationService({ db, engine }) {
       });
     },
   };
-  return { centre, preferences, templates, deliveries, realtime: { status: (actor) => ({ attached: hub.attached(), rooms: ['user', 'project', 'site', 'dept', 'record'], company: actor.companyId }) } };
+  const out = { centre, preferences, templates, deliveries, realtime: { status: (actor) => ({ attached: hub.attached(), rooms: ['user', 'project', 'site', 'dept', 'record'], company: actor.companyId }) } };
+  centres.set(db, out); // the notification feed card of the overview pages (part 166.5) reads the centre
+  return out;
 }

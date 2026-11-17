@@ -4,7 +4,7 @@ import { searchEntries, shortcutMap } from './nav.js';
 import Icon from '../design/Icon.jsx';
 import { clickResult, useCommands, useSearch } from '../search/api.js';
 import { OPEN_CONTEXT_EVENT } from './ContextSwitcher.jsx';
-import { useT } from '../i18n/index.js';
+import { useT, labelIn } from '../i18n/index.js';
 
 /**
  * The command palette behind Ctrl/Cmd+K (part 03.08, FR-03): type to search the records the person may see (grouped by kind, from the search
@@ -61,7 +61,7 @@ export default function CommandPalette({ open, onClose, nav, favourites = [], re
   const here = path.split('?')[0];
   const cmds = useCommands(here, open && searchOn);
   const search = useSearch({ q: debounced, source: 'palette' }, { enabled: open && searchOn && !commandMode && debounced.length > 0 });
-  const label = (x) => (language === 'hi' && x.labelHi ? x.labelHi : x.label);
+  const label = (x) => labelIn(x, language);
 
   const { items, sections } = useMemo(() => {
     const out = [];

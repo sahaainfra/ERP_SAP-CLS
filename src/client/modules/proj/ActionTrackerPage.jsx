@@ -4,6 +4,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { tm } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Action Item Tracker (part 10.05, FR-05): the actions of all issued minutes with the live status of their tasks, overdue ones marked; the figures above are the same data.
 export default function ActionTrackerPage() {
@@ -14,7 +15,7 @@ export default function ActionTrackerPage() {
   const s = sq.data;
   return (
     <section aria-labelledby="trk-h" data-testid="action-tracker">
-      <h1 id="trk-h" className="sr-only">{t('trk.title')}</h1>
+      <PageHeader id="trk-h" srOnly title={t('trk.title')} />
       {s && (
         <dl className="op-figures" data-testid="trk-figures">
           <div><dt>{t('trk.total')}</dt><dd data-testid="trk-total">{s.total}</dd></div><div><dt>{t('trk.open')}</dt><dd data-testid="trk-open">{s.open}</dd></div><div><dt>{t('trk.inProgress')}</dt><dd>{s.inProgress}</dd></div>

@@ -63,14 +63,22 @@ export function rememberDevice(token, username) {
 }
 
 export async function loadAuthConfig() {
-  try {
-    const res = await fetch('/api/v1/iam/auth/config');
-    const body = await res.json();
-    store.mode = body.data?.mode ?? 'dev-headers';
-    return body.data;
-  } catch {
-    return { mode: 'dev-headers' };
+  // a busy server (429) or a passing failure is asked again a few times before the default is taken; an answer without data is never returned
+  // as the configuration (it stopped the first screen, part 166.4)
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const res = await fetch('/api/v1/iam/auth/config');
+      const body = await res.json().catch(() => null);
+      if (res.ok && body?.data?.mode) {
+        store.mode = body.data.mode;
+        return body.data;
+      }
+      if (res.status !== 429 && res.status < 500) break;
+    } catch { /* dropped: try again, unless the device is offline (the worker's kept copy answers when there is one) */ }
+    if (globalThis.navigator?.onLine === false) break;
+    await new Promise((resolve) => { setTimeout(resolve, 300 * 2 ** attempt); });
   }
+  return { mode: store.mode ?? 'dev-headers' };
 }
 
 let inflight = null;

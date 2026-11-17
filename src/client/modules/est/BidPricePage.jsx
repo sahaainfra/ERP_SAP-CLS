@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { bidPreview, est, fetchFile, inr, rv } from './api.js';
 import { EstimatePicker, useSearch } from './parts.jsx';
 import { SummaryTable } from './ReviewPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Bid Price Finalisation (part 09.03, FR-02, FR-05, BR-01, BR-02): the discount or rebate on the selling amount with its reason (the bid price follows at once; above the threshold the director approves it before the estimate
 // is sent), the summary of the bid price, and the priced BOQ in the client's format: Excel, PDF or print, with the rates in figures and in words. A BOQ of an estimate not yet approved is marked as a draft, not for submission.
@@ -23,7 +24,7 @@ export default function BidPricePage() {
   usePageTitle(x ? `${t('bid.title')} ${x.estimate.ref}` : t('bid.title'));
   const [v, setV] = useState({ discountPct: '0', discountReason: '' }); const [words, setWords] = useState(true); const [error, setError] = useState(null); const [note, setNote] = useState(null);
   useEffect(() => { if (x) setV({ discountPct: x.summary.discountPct, discountReason: x.summary.discountReason ?? '' }); }, [x?.summary.rowVersion, x?.estimate.id]);
-  if (!id && !sid) return (<section aria-labelledby="bid-h" data-testid="bid-none"><h1 id="bid-h">{t('bid.title')}</h1><p className="muted">{t('rev.choose')}</p>{lq.data && <EstimatePicker id="bid-pick" value={null} onChange={(n) => n && navigateTo(`/est/bid-price?id=${n}`)} rows={lq.data.data ?? []} label={t('imp.estimate')} />}</section>);
+  if (!id && !sid) return (<section aria-labelledby="bid-h" data-testid="bid-none"><PageHeader id="bid-h" title={t('bid.title')} subtitle={t('rev.choose')} />{lq.data && <EstimatePicker id="bid-pick" value={null} onChange={(n) => n && navigateTo(`/est/bid-price?id=${n}`)} rows={lq.data.data ?? []} label={t('imp.estimate')} />}</section>);
   if (q.error?.status === 403 || sq.error?.status === 403) return <NoPermission what={t('bid.title')} permission="est.review.view" />;
   if (sq.isError) return <ErrorState error={sq.error} onRetry={sq.refetch} />;
   if (!id || q.isPending) return <Skeleton label={t('bid.title')} rows={5} />;
@@ -35,8 +36,7 @@ export default function BidPricePage() {
   return (
     <section aria-labelledby="bid-h" data-testid="bid-price" data-status={s.discountStatus}>
       <header>
-        <h1 id="bid-h">{t('bid.title')} {e.ref} <StatusBadge status={DTONE[s.discountStatus]} label={t(`dstatus.${s.discountStatus}`)} /></h1>
-        <p className="muted"><Link to={`/est/review?id=${e.id}`}>{e.title}</Link> · {e.statusLabel}{e.status !== 'APPROVED' ? ` · ${t('bid.notForBid')}` : ''}</p>
+        <PageHeader id="bid-h" title={<>{t('bid.title')} {e.ref} <StatusBadge status={DTONE[s.discountStatus]} label={t(`dstatus.${s.discountStatus}`)} /></>} subtitle={<><Link to={`/est/review?id=${e.id}`}>{e.title}</Link> · {e.statusLabel}{e.status !== 'APPROVED' ? ` · ${t('bid.notForBid')}` : ''}</>} />
         {error?.form && <p className="field-error" role="alert" data-testid="bid-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="bid-note">{note}</p>}
       </header>

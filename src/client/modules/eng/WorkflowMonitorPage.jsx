@@ -6,6 +6,7 @@ import { authHeaders } from '../../platform/api/index.js';
 import { formatDateTime } from '../../platform/format.js';
 import { monitorUrl, useDefinitionOptions, useMonitor } from '../../platform/workflow/api.js';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Workflow Monitor (part 04.01, section 7.4): the documents running through the workflows by type, the ones that are stuck or overdue and how long an
 // approval takes. Every figure leads to the instances behind it; the table can be exported.
@@ -33,8 +34,7 @@ export default function WorkflowMonitorPage() {
   const t = data?.totals;
   return (
     <section aria-labelledby="wm-title" data-testid="workflow-monitor">
-      <h1 id="wm-title">Workflow Monitor</h1>
-      <p className="muted">Documents in approval, by type; the ones that are stuck (no approver could be found) or overdue; and the average time an approval takes.</p>
+      <PageHeader id="wm-title" title={"Workflow Monitor"} subtitle={"Documents in approval, by type; the ones that are stuck (no approver could be found) or overdue; and the average time an approval takes."} />
       {notice && <p role="status" className="notice">{notice}</p>}
       <form className="srch-form" role="search" aria-label="Report parameters" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>Document type</span><select value={filters.docType} onChange={(e) => setFilters({ ...filters, docType: e.target.value })}><option value="">All document types</option>{(options.data?.docTypes ?? []).map((d) => <option key={d.docType} value={d.docType}>{d.label}</option>)}</select></label>

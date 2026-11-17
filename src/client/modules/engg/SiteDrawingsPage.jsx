@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { DISCIPLINES, eg } from './api.js';
 import { FileView, ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Current Drawings for my site (part 11.01, FR-04, BR-01): only the current issued-for-construction revision of each drawing, with my controlled copy to acknowledge. The last list is kept on the phone so it can be read with no connection;
 // the drawing files themselves are opened while there is a connection.
@@ -27,8 +28,7 @@ export default function SiteDrawingsPage() {
   const ack = async (copyId) => { setError(null); try { await eg.ack(copyId); qc.invalidateQueries({ queryKey: ['engg'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="site-h" data-testid="eg-site">
-      <h1 id="site-h">{t('site.title')}</h1>
-      <p className="muted">{t('site.rule')}</p>
+      <PageHeader id="site-h" title={t('site.title')} subtitle={t('site.rule')} />
       {cached && <p className="mdm-banner" role="status" data-testid="site-cached">{t('site.cached', { at: String(cached.at).slice(0, 16).replace('T', ' ') })}</p>}
       <div className="form-grid no-print">
         <ProjectSelect value={projectId} onChange={setProjectId} allowAll testId="site-project" />

@@ -11,6 +11,7 @@ import { exceptionFromError } from '../../platform/protocol/api.js';
 import { useLiveRefresh } from '../../platform/realtime/socket.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { INST_STATUS, useSearch } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Sample Documents (part 04.01): the reference document type of the workflow engine. A small request for money: drafted, submitted into approval, locked when
 // approved, amended by a linked new document. It shows how a module uses the engine; its status is set only by the engine's callbacks.
@@ -100,8 +101,7 @@ export default function SampleDocsPage({ session }) {
   if (list.error?.status === 403) return <NoPermission what="the sample documents" permission="eng.sample.use" />;
   return (
     <section aria-labelledby="sd-title" data-testid="sample-docs">
-      <h1 id="sd-title">Sample Documents</h1>
-      <p className="muted">The reference document type of the workflow engine: a request for money that goes through approval, is locked when approved and is amended by a linked new document.</p>
+      <PageHeader id="sd-title" title={"Sample Documents"} subtitle={"The reference document type of the workflow engine: a request for money that goes through approval, is locked when approved and is amended by a linked new document."} />
       {notice && <p role="status" className="notice" data-testid="sd-notice">{notice}</p>}
       {open && <Detail key={open} id={open} session={session} setNotice={setNotice} onClose={() => navigateTo('/engine/sample-docs', { force: true })} />}
       <div className="srch-tools">{!creating && <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>New sample document</button>}</div>

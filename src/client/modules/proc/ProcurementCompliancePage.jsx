@@ -5,6 +5,8 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { an, fmtDate, fmtRs, saveCsv } from './api.js';
 import { ParamPanel } from './AnaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Procurement compliance (part 15.10, FR-01): orders without competition (direct or a single quote), emergency requisitions, awards that were not the lowest quote (non-L1) and the open control exceptions of the procurement controls.
 const rs = (paise) => (paise == null ? '' : fmtRs(paise / 100));
@@ -23,10 +25,10 @@ export default function ProcurementCompliancePage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const none = d.singleSource.total + d.emergency.total + d.nonL1.total === 0;
   return (
-    <section aria-labelledby="co-h" data-testid="proc-co"><h1 id="co-h">{t('n.complianceTitle')}</h1><p className="muted">{t('n.complianceIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</p>
+    <section aria-labelledby="co-h" data-testid="proc-co"><PageHeader id="co-h" title={t('n.complianceTitle')} subtitle={<>{t('n.complianceIntro')} {fmtDate(d.period.from)} – {fmtDate(d.period.to)}</>} />
       <ParamPanel t={t} value={f} onChange={setF} />
       {none ? <div data-testid="co-empty"><h2>{t('n.emptyTitle')}</h2><p className="muted">{t('n.emptyBody')}</p></div> : <>
-        <div className="tiles" data-testid="co-tiles"><Tile label={t('n.singleSource')} value={`${d.singleSource.pct ?? 0}%`} hint={`${d.singleSource.count}/${d.singleSource.total}`} testId="co-single" /><Tile label={t('n.emergency')} value={`${d.emergency.pct ?? 0}%`} hint={`${d.emergency.count}/${d.emergency.total}`} testId="co-emergency" /><Tile label={t('n.nonL1')} value={`${d.nonL1.pct ?? 0}%`} hint={`${d.nonL1.count}/${d.nonL1.total}`} testId="co-nonl1" /><Tile label={t('n.exceptions')} value={d.exceptions.visible ? d.exceptions.open : '—'} testId="co-exceptions-count" /></div>
+        <KpiRow data-testid="co-tiles"><Tile label={t('n.singleSource')} value={`${d.singleSource.pct ?? 0}%`} hint={`${d.singleSource.count}/${d.singleSource.total}`} testId="co-single" /><Tile label={t('n.emergency')} value={`${d.emergency.pct ?? 0}%`} hint={`${d.emergency.count}/${d.emergency.total}`} testId="co-emergency" /><Tile label={t('n.nonL1')} value={`${d.nonL1.pct ?? 0}%`} hint={`${d.nonL1.count}/${d.nonL1.total}`} testId="co-nonl1" /><Tile label={t('n.exceptions')} value={d.exceptions.visible ? d.exceptions.open : '—'} testId="co-exceptions-count" /></KpiRow>
         <Section t={t} id="single" title={t('n.singleSource')} data={d.singleSource} cols={[['kind', t('n.kind'), (r) => t(`n.k.${r.kind}`)], ['reason', t('n.reason'), (r) => r.reason ?? '']]} />
         <Section t={t} id="emergency" title={t('n.emergency')} data={d.emergency} cols={[['reason', t('n.reason'), (r) => r.reason ?? ''], ['reg', t('n.regularised'), (r) => (r.regularised ? t('x.yes') : t('x.no'))]]} />
         <Section t={t} id="nonl1" title={t('n.nonL1')} data={d.nonL1} cols={[['reason', t('n.reason'), (r) => r.reason ?? '']]} /></>}

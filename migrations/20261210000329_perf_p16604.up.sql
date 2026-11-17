@@ -1,0 +1,6 @@
+-- Part 166.4: phone performance. Only the feature flag ff.perf.p16604 (OFF by default; ON in development and test). It switches on, in the browser:
+-- the prefetch of the bottom bar's pages once the home page is idle, the service worker's 3 s timeout and stale-while-revalidate menu, the
+-- low-bandwidth extras (no automatic refresh of dashboards, thumbnails in photo lists, charts as tables) and the drafts saved before a reload into a
+-- new version. The code splitting itself is in the build and needs no data. No table changes.
+INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, environment, enabled, created_by, source_type) VALUES ('ff.perf.p16604', 'Phone performance: bottom-bar prefetch, service-worker timeouts and menu cache, low-bandwidth extras, drafts kept on update (part 166.4)', 0, NULL, 0, 'migration', 'reference_seed');
+INSERT OR IGNORE INTO core_feature_flags (key, description, default_enabled, environment, enabled, created_by, source_type) SELECT 'ff.perf.p16604', 'Phone performance: bottom-bar prefetch, service-worker timeouts and menu cache, low-bandwidth extras, drafts kept on update (part 166.4)', 0, env.name, 1, 'migration', 'reference_seed' FROM (SELECT 'development' AS name UNION ALL SELECT 'test') AS env;

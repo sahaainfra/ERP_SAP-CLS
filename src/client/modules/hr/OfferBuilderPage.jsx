@@ -7,6 +7,7 @@ import { formatDate, formatDateTime } from '../../platform/format.js';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { EMPLOYMENT_TYPES, REQ_STATUS, dayIST, recruit, rupees } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Offer Builder (HR, part 07.02): the offer to a selected candidate. Designation (the grade follows it), employment type, CTC a year, date of joining, how long the offer stays open. As the CTC is typed the breakup is
 // computed on the server (basic, HRA, special allowance, employer PF, gratuity, the parts adding up to the CTC) with the requisition's range and what the candidate expects, and it says who will approve: the HR manager, and the
@@ -25,7 +26,7 @@ export default function OfferBuilderPage() {
   return (
     <section aria-labelledby="ob-title" data-testid="offer-builder">
       <p><Link to="/hr/offers">← Offers</Link>{(o?.candidateId ?? candidateId) ? <> · <Link to={`/hr/recruitment/candidate?id=${o?.candidateId ?? candidateId}`}>Candidate</Link></> : null}</p>
-      <h1 id="ob-title">{o ? `Offer ${o.docNo}${o.revision > 1 ? ` (revision ${o.revision})` : ''}: ${o.candidate}` : 'Offer Builder'}</h1>
+      <PageHeader id="ob-title" title={o ? `Offer ${o.docNo}${o.revision > 1 ? ` (revision ${o.revision})` : ''}: ${o.candidate}` : 'Offer Builder'} />
       {o && <p><StatusBadge status={REQ_STATUS[o.status][0]} label={REQ_STATUS[o.status][1]} />{o.response !== 'NONE' && <> · the candidate {o.response.toLowerCase()}</>}{o.band === 'DIR' && <> · <span data-testid="ob-band">needs the director: {o.bandReason}</span></>}</p>}
       {editable ? <Form o={o} candidateId={candidateId} /> : <Facts o={o} />}
       {o && <Actions o={o} />}

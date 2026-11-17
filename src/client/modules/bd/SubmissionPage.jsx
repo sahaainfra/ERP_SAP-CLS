@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { aw, inr, tdr } from './api.js';
 import { TimelinePanel } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Bid Submission (business development, part 08.03, FR-01, FR-03, BR-01): the checklist of the bid (technical and financial envelopes, signed documents, the digital signature, the proof of the EMD, the prequalification documents), the credentials package,
 // the price of the approved estimate and the final bid. A bid that differs from the estimate says why and the director approves it; once approved and ready, the submission on the portal is recorded with its acknowledgement.
@@ -41,7 +42,7 @@ export default function SubmissionPage() {
   if (!s) {
     return (
       <section aria-labelledby="sub-title" data-testid="submission-new">
-        <h1 id="sub-title">{t('sub.title')}</h1>{head}{errBox}
+        <PageHeader id="sub-title" title={t('sub.title')} />{head}{errBox}
         <p>{t('sub.none')}</p>
         {(session.data?.permissions ?? []).includes('bd.submission.manage') && ['BID', 'READY'].includes(tn.stage) && <button type="button" className="btn btn-primary" onClick={() => run(() => aw.createSubmission({ tenderId }), t('sub.started'))} data-testid="sub-start">{t('sub.start')}</button>}
       </section>
@@ -54,7 +55,7 @@ export default function SubmissionPage() {
   return (
     <section aria-labelledby="sub-title" data-testid="submission" data-status={s.status}>
       <header>
-        <h1 id="sub-title">{t('sub.title')} {s.docNo} <StatusBadge status={TONE[s.status]} label={s.statusLabel} /></h1>
+        <PageHeader id="sub-title" title={<>{t('sub.title')} {s.docNo} <StatusBadge status={TONE[s.status]} label={s.statusLabel} /></>} />
         {head}
         <dl className="op-figures" data-testid="sub-figures">
           <div><dt>{t('sub.checklist')}</dt><dd data-testid="sub-progress">{s.done}/{items.length}</dd></div>

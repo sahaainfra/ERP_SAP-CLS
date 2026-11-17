@@ -8,6 +8,8 @@ import { Field, usePageTitle } from '../core/pages/ui.jsx';
 import { download, fmtDate, fmtPct, st } from './api.js';
 import { ProjectDay } from './progress-parts.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Client Progress Report (part 14.05, FR-06): the report the client receives, in percentages and dates, with no cost: the overall progress, the WBS table, the milestones and the S-curve. From a closed period it is
 // that period's snapshot and never changes; with no period chosen it is the picture as at the latest closed one, or today. It exports to PDF and Excel and prints.
@@ -21,7 +23,7 @@ export default function ClientProgressPage() {
   const r = q.data; const exp = (f) => download(`/progress/client-report/export?${qs}&format=${f}`, `client-progress.${f}`).catch(() => setError(t('bl.fileFailed')));
   return (
     <section aria-labelledby="cli-h" data-testid="site-client-progress">
-      <h1 id="cli-h">{t('cnd.cli.title')}</h1>
+      <PageHeader id="cli-h" title={t('cnd.cli.title')} />
       <ProjectDay projectId={projectId} onProject={(v) => { setProjectId(v); setPeriodId(''); }} testId="cli" />
       {projectId && <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('cnd.cli.period')} name="periodId"><select value={periodId} onChange={(e) => setPeriodId(e.target.value)} data-testid="cli-period"><option value="">{t('cnd.cli.latest')}</option>{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.docNo} · {fmtDate(p.periodStart)} – {fmtDate(p.periodEnd)}</option>)}</select></Field></div>
         {r && <div className="actions-row"><button type="button" className="btn" onClick={() => exp('pdf')} data-testid="cli-pdf">PDF</button><button type="button" className="btn" onClick={() => exp('xlsx')} data-testid="cli-xlsx">XLSX</button><button type="button" className="btn" onClick={() => window.print()} data-testid="cli-print">{t('act.print')}</button></div>}{error && <p className="field-error" role="alert">{error}</p>}</div>}
@@ -30,7 +32,7 @@ export default function ClientProgressPage() {
       {r && (
         <article className="mdm-panel" data-testid="cli-report" data-live={r.live ? '1' : '0'}>
           <h2>{r.company}</h2><p><strong>{r.project.code} · {r.project.name}</strong> · {r.period ? t('cnd.cli.forPeriod', { n: r.period.docNo, a: fmtDate(r.period.start), b: fmtDate(r.period.end) }) : t('cnd.cli.asAt', { d: fmtDate(r.asOf) })}</p>
-          <div className="tiles"><div className="tile" data-testid="cli-planned"><div className="tile-label">{t('cnd.prg.planned')}</div><div className="tile-value">{fmtPct(r.summary.planned)}</div></div><div className="tile" data-testid="cli-actual"><div className="tile-label">{t('cnd.prg.actual')}</div><div className="tile-value">{fmtPct(r.summary.physical)}</div></div><div className="tile"><div className="tile-label">{t('cnd.prg.forecast')}</div><div className="tile-value">{fmtPct(r.summary.forecast)}</div></div></div>
+          <KpiRow><div className="tile" data-testid="cli-planned"><div className="tile-label">{t('cnd.prg.planned')}</div><div className="tile-value">{fmtPct(r.summary.planned)}</div></div><div className="tile" data-testid="cli-actual"><div className="tile-label">{t('cnd.prg.actual')}</div><div className="tile-value">{fmtPct(r.summary.physical)}</div></div><div className="tile"><div className="tile-label">{t('cnd.prg.forecast')}</div><div className="tile-value">{fmtPct(r.summary.forecast)}</div></div></KpiRow>
           <p>{t('cnd.cli.finish', { b: r.summary.baselineFinish ? fmtDate(r.summary.baselineFinish) : '—', f: r.summary.forecastFinish ? fmtDate(r.summary.forecastFinish) : '—' })}</p>
           <Chart type="line" data={{ categories: r.curve.dates.map((x) => x.slice(2)), series: [{ name: t('cnd.prg.planned'), values: r.curve.planned }, { name: t('cnd.prg.actual'), values: r.curve.actual }, { name: t('cnd.prg.forecast'), values: r.curve.forecast }] }} title={`${t('cnd.prg.scurve')} (%)`} />
           <div className="table-scroll"><table className="data-table" data-testid="cli-wbs"><caption>{t('cnd.prg.byWbs')}</caption><thead><tr><th>{t('cnd.prg.wbs')}</th><th className="num">{t('cnd.prg.planned')}</th><th className="num">{t('cnd.prg.actual')}</th><th className="num">{t('cnd.prg.forecast')}</th><th className="num">{t('cnd.prg.variance')}</th></tr></thead>

@@ -3,6 +3,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { useSession } from '../core/api/index.js';
 import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { EMPLOYMENT_STATUS, EMPLOYMENT_TYPES } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Employee Directory (HR, part 07.01): the List Report of employees (search, filters by department, site, designation, status and type, sort, saved views, column chooser, 25/50/100 a page, export XLSX/CSV/PDF with the PAN
 // masked for people who may not see it). HR and payroll see the company; a manager sees the people in the reporting line and the staff deployed to their projects and sites (basic data). "New employee" opens the wizard.
@@ -18,7 +19,7 @@ export default function EmployeeDirectoryPage() {
   const canNew = perms.includes('hr.employee.create');
   return (
     <section aria-labelledby="ed-title" data-testid="employee-directory">
-      <h1 id="ed-title" className="sr-only">Employee Directory</h1>
+      <PageHeader id="ed-title" srOnly title={"Employee Directory"} />
       <form className="srch-form" aria-label="Quick filters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Status" name="status" error={null}><select value={status} onChange={(e) => setStatus(e.target.value)} data-testid="ed-status"><option value="">All</option>{Object.entries(EMPLOYMENT_STATUS).map(([k, [, l]]) => <option key={k} value={k}>{l}</option>)}</select></Field>
         <Field label="Type" name="type" error={null}><select value={type} onChange={(e) => setType(e.target.value)} data-testid="ed-type"><option value="">All</option>{EMPLOYMENT_TYPES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>

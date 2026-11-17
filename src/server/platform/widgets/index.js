@@ -32,3 +32,20 @@ export const workSources = {
   list: (db, actor, kind) => [...sources.values()].filter((s) => s.kind === kind).flatMap((s) => s.list(db, actor).map((i) => ({ ...i, source: s.label }))),
   kinds: () => [...new Set([...sources.values()].map((s) => s.kind))],
 };
+
+/**
+ * Role layouts defined in code (part 166.5): a dashboard can name, per role, the layout a person of that role starts from when there is no
+ * personal copy and no default saved for the role in `ui_dashboards` (a saved role default, approved in the Dashboard Designer, wins).
+ *   register(dash, { ROLE: [{ id, widget, w, h }] })
+ */
+const roleLayoutMap = new Map();
+export const roleLayouts = {
+  register(dash, byRole) { roleLayoutMap.set(dash, byRole); },
+  /** The first of the person's roles that has a layout, as [role, layout], else null. */
+  for(dash, roles = []) {
+    const byRole = roleLayoutMap.get(dash);
+    if (!byRole) return null;
+    for (const r of roles) if (byRole[r]) return [r, byRole[r]];
+    return null;
+  },
+};

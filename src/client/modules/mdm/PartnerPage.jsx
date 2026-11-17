@@ -8,6 +8,7 @@ import { api } from '../../platform/api/index.js';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CONSTITUTIONS, DOC_TYPES, PARTNER_ROLES, PARTNER_STATUS, partners } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Partner 360 (Administration, part 06.04): one business partner. The header: code, status, roles, steward, payments (held or free, and why) and the actions the person may take on this status: send a prospect for
 // approval or edit it, put on hold or release, make inactive, ask to blacklist or lift it, ask for a bank change. Tabs: Details · GST registrations (verify) · Bank accounts (masked; finance may show the full number,
@@ -34,7 +35,7 @@ export default function PartnerPage() {
       {sp.get('sent') && <p className="mdm-banner" role="status" data-testid="pp-sent">Sent for approval: the {p.stewardRole === 'PROCMGR' ? 'procurement' : 'commercial'} manager, then the accounts manager.</p>}
       {sp.get('saved') && p.status === 'PROSPECT' && <p className="mdm-banner" role="status">Saved as a prospect. Send it for approval when it is complete.</p>}
       <header className="op-header">
-        <div className="page-head"><h1 id="pp-title">{p.code} · {p.legalName}</h1><StatusBadge status={PARTNER_STATUS[p.status][0]} label={PARTNER_STATUS[p.status][1]} /></div>
+        <PageHeader id="pp-title" title={<>{p.code} · {p.legalName}</>} status={<StatusBadge status={PARTNER_STATUS[p.status][0]} label={PARTNER_STATUS[p.status][1]} />} />
         <dl className="op-figures">
           <div><dt>Roles</dt><dd data-testid="pp-roles">{p.roles.map(roleLabel).join(', ')}</dd></div><div><dt>Constitution</dt><dd>{CONSTITUTIONS.find(([k]) => k === p.constitution)?.[1]}</dd></div><div><dt>PAN</dt><dd data-testid="pp-pan">{p.pan ?? '—'}</dd></div>
           <div><dt>Steward</dt><dd>{p.stewardRole === 'PROCMGR' ? 'Procurement' : 'Commercial'}</dd></div><div><dt>Payments</dt><dd data-testid="pp-payment">{p.payment.held ? <StatusBadge status="ON_HOLD" label={`On hold${p.payment.until ? ` until ${formatDate(p.payment.until)}` : ''}`} /> : 'Free'}{p.payment.held && <div className="muted small">{p.payment.reason}</div>}</dd></div>

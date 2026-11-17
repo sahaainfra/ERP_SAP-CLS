@@ -6,10 +6,13 @@ import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { Bars } from '../proc/AnaParts.jsx';
 import { fmtDate, pl } from './api.js';
 import { ExportButton, FilterPanel, RecordTable } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // Plant dashboard (part 17.01): the fleet by status, utilisation, breakdowns, certificates that have expired or expire soon, the machines that cannot be put to work, and what waits for approval.
 // Every tile and chart opens the machines or certificates behind it; the server works every figure out from the register inside the data scope of the person.
-export default function PlantDashboardPage() {
+function PlantDashboardPageClassic() {
   const t = useT('plant'); usePageTitle(t('dashTitle')); const [f, setF] = useState({ projectId: '', siteId: '' }); const [open, setOpen] = useState(null);
   const q = useQuery({ queryKey: ['plant', 'dash', f], queryFn: () => pl.dashboard(f), retry: false }); const tq = useQuery({ queryKey: ['plant', 'tasks'], queryFn: pl.myTasks, retry: false });
   const dq = useQuery({ queryKey: ['plant', 'drill', f, open], queryFn: () => pl.drill({ ...f, kind: open }), enabled: Boolean(open), retry: false });
@@ -25,10 +28,10 @@ export default function PlantDashboardPage() {
   ];
   const queues = Object.values(d.queues);
   return (
-    <section aria-labelledby="pd-h" data-testid="plant-pd"><h1 id="pd-h">{t('dashTitle')}{d.project ? ` · ${d.project.code}` : ''}</h1><p className="muted">{t('dashIntro')} {fmtDate(d.today)}</p>
+    <section aria-labelledby="pd-h" data-testid="plant-pd"><PageHeader id="pd-h" title={<>{t('dashTitle')}{d.project ? ` · ${d.project.code}` : ''}</>} subtitle={<>{t('dashIntro')} {fmtDate(d.today)}</>} />
       <FilterPanel value={f} onChange={(v) => { setF(v); setOpen(null); }} />
       <div className="actions-row no-print"><Link to="/approvals">{t('myActions')}{tq.data != null ? ` (${tq.data})` : ''}</Link><Link to="/plant/equipment">{t('registerTitle')}</Link><Link to="/plant/equipment/new">{t('newTitle')}</Link>{d.canExport && <ExportButton query={{ ...f, kind: 'register' }} name="equipment-register.csv" />}</div>
-      <div className="tiles" data-testid="pd-tiles">{tiles.map(([id, label, value, status, hint, kind]) => <div key={id} className="tile-wrap"><Tile label={label} value={value} status={status} hint={hint} testId={`pd-${id}`} /><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setOpen(open === kind ? null : kind)} aria-expanded={open === kind} data-testid={`pd-open-${id}`}>{t('records')}</button></div>)}</div>
+      <KpiRow data-testid="pd-tiles">{tiles.map(([id, label, value, status, hint, kind]) => <div key={id} className="tile-wrap"><Tile label={label} value={value} status={status} hint={hint} testId={`pd-${id}`} /><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setOpen(open === kind ? null : kind)} aria-expanded={open === kind} data-testid={`pd-open-${id}`}>{t('records')}</button></div>)}</KpiRow>
       {open && <div className="mdm-panel" data-testid="pd-drill"><h2>{dq.data?.title ?? t('records')}</h2>{dq.isPending ? <Skeleton label={t('records')} rows={3} /> : dq.isError ? <ErrorState error={dq.error} onRetry={dq.refetch} /> : <><p className="muted small">{t('shown', { n: dq.data.rows.length, total: dq.data.total })}</p><RecordTable rows={dq.data.rows} />{d.canExport && <ExportButton query={{ ...f, kind: open }} name={`plant-${open}.csv`} testId="pd-export-drill" />}</>}</div>}
       <div className="mdm-panel" data-testid="pd-alerts"><h2>{t('alerts')}</h2>{d.alerts.length === 0 ? <p className="muted" data-testid="pd-alerts-empty">{t('noAlerts')}</p> : <ul>{d.alerts.map((a) => <li key={a.code} data-testid="pd-alert" className={a.level === 'bad' ? 'field-error' : ''}><button type="button" className="link-button" onClick={() => setOpen(a.drill)}>{a.text}</button></li>)}</ul>}</div>
       <h2>{t('queues')}</h2>
@@ -43,4 +46,9 @@ export default function PlantDashboardPage() {
           <div className="mdm-panel"><h2>{t('expiryByMonth')}</h2><Bars rows={d.charts.expiryByMonth} format={(n) => String(n)} testId="pd-bars-expiry" label={t('expiryByMonth')} /></div></div>}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function PlantDashboardPage() {
+  return <OverviewSwitch code="ov-plant" heading="Plant Dashboard" intro="The fleet, its utilisation, breakdowns and documents about to expire, from the plant dashboard service." Classic={PlantDashboardPageClassic} />;
 }

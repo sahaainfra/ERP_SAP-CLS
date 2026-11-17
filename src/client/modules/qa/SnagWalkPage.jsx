@@ -7,6 +7,7 @@ import { browserTransport, uploadFile } from '../../platform/files/upload.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { qa } from './api.js';
 import { PlanPins } from './SnagParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Snag Walk (part 18.06, FR-01, FR-02, on a phone): choose the room and the plan, tap the plan to pin the defect, describe it, take the photograph, and go to the next one; what is shared by the room stays filled in.
 const transport = browserTransport(authHeaders); const big = { minHeight: 48, fontSize: '1rem' };
@@ -26,7 +27,7 @@ export default function SnagWalkPage() {
     } catch (e) { setError(e?.errors?.length ? { form: e.message } : errorInfo(e)); } finally { setBusy(false); }
   };
   return (
-    <section aria-labelledby="walk-h" data-testid="qa-snag-walk"><h1 id="walk-h">{t('walk.title')}</h1><p className="muted"><Link to="/qa/snags">{t('snag.title')}</Link> · {t('walk.hint')}</p>
+    <section aria-labelledby="walk-h" data-testid="qa-snag-walk"><PageHeader id="walk-h" title={t('walk.title')} subtitle={<><Link to="/qa/snags">{t('snag.title')}</Link> · {t('walk.hint')}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="walk-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('project')} name="projectId" error={error}><select value={projectId} onChange={(e) => { setProjectId(e.target.value); setC('locationId', ''); setC('drawingId', ''); }} style={big} data-testid="walk-project"><option value="">—</option>{(o?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>

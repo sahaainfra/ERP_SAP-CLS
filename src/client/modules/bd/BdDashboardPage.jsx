@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { REGIONS, SECTORS, bd, inr, inrShort } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Business Development Dashboard (part 08.01, FR-05, FR-06): the open pipeline and its weighted forecast (value times probability), the win rate, the pipeline by stage and the forecast by month, the top opportunities, the person's follow-ups and approvals and what needs
 // attention. Every figure links to the records behind it. Filters: sector, region, owner and the period of the expected award date.
@@ -20,7 +21,7 @@ export default function BdDashboardPage() {
   const max = d ? Math.max(1, ...d.byStage.map((s) => s.value)) : 1; const maxM = d ? Math.max(1, ...d.byMonth.map((s) => s.weighted)) : 1;
   return (
     <section aria-labelledby="bd-title" data-testid="bd-dashboard">
-      <h1 id="bd-title">{t('dash.title')}</h1>
+      <PageHeader id="bd-title" title={t('dash.title')} />
       <form className="srch-form mdm-fields no-print" aria-label={t('pipe.filters')} onSubmit={(e) => e.preventDefault()}>
         <Field label={t('lead.sector')} name="sector" error={null}><select value={f.sector} onChange={(e) => setF({ ...f, sector: e.target.value })} data-testid="bd-sector"><option value="">{t('filter.all')}</option>{SECTORS.map((k) => <option key={k} value={k}>{t(`sector.${k}`)}</option>)}</select></Field>
         <Field label={t('lead.region')} name="region" error={null}><select value={f.region} onChange={(e) => setF({ ...f, region: e.target.value })} data-testid="bd-region"><option value="">{t('filter.all')}</option>{REGIONS.map((k) => <option key={k} value={k}>{t(`region.${k}`)}</option>)}</select></Field>

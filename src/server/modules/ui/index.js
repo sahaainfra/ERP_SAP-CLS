@@ -11,8 +11,12 @@ import { pageMigrationRoutes, translationRoutes } from './routes.js';
 import { createPageMigrationService, pageRouteHandlers } from './page-migration.js';
 import { createTranslationService, translationHandlers } from './translations.js';
 import { dashboardRoutes, deviceRoutes, formRoutes, listRoutes, objectRoutes, searchRoutes, shellRoutes, uiRoutes } from './routes.js';
+import { createFieldToday } from './field-today.js';
 import { createWidgetService, dashboardHandlers } from './widgets.js';
 import { registerWidgetProviders } from './widget-providers.js';
+import { registerOverviewProviders } from './overviews.js';
+import { createDocFlowService } from './docflow.js';
+import { parseDocFlow } from './validators.js';
 import { createDeviceService } from './device.js';
 import { loadVapid, sendPush } from '../../platform/push/index.js';
 import { createShellService, navHandlers } from './shell.js';
@@ -60,6 +64,7 @@ const navSchema = { type: 'object', properties: { code: { type: 'string' }, fiel
 eventTypes.define({ type: 'ui.navigation.changed', version: 1, schema: navSchema, owner: 'ui', description: 'A navigation registry entry was changed after another administrator approved the request.' });
 // Part 03.07: the providers of the widgets of this module, the target of the timeliness gauge and the dashboard event.
 registerWidgetProviders();
+registerOverviewProviders(); // the cards of the overview pages (part 166.5)
 /** @type {any} */
 const dashboardSchema = { type: 'object', properties: { code: { type: 'string' }, role: { type: 'string' }, removed: { type: 'boolean' } }, required: ['code'] };
 eventTypes.define({ type: 'ui.dashboard.changed', version: 1, schema: dashboardSchema, owner: 'ui', description: 'The default dashboard of a role was set, changed or removed after another administrator approved the request.' });
@@ -102,7 +107,7 @@ integrityRegistry.register({ statuses: { ui_export_jobs: ['QUEUED', 'RUNNING', '
 // Part 03.08: the full-text indexes are the engine's own tables (and their shadow tables), not business records.
 integrityRegistry.register({ technicalTables: ['core_search_fts', 'core_search_fts_data', 'core_search_fts_idx', 'core_search_fts_docsize', 'core_search_fts_config', 'core_search_secret', 'core_search_secret_data', 'core_search_secret_idx', 'core_search_secret_docsize', 'core_search_secret_config', 'core_search_secret_content'] });
 integrityRegistry.register({
-  companyOptional: ['ui_page_migration', 'ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_translations', 'ui_locale_preferences', 'ui_page_migration'], // the shared definitions, reasons and requirements have no company; a company's own would
+  companyOptional: ['ui_page_migration', 'ui_form_metadata', 'ui_reason_codes', 'ui_required_documents', 'ui_navigation_entries', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_translations', 'ui_locale_preferences', 'ui_page_migration', 'ui_navigation_labels', 'ui_field_tile_rules', 'ui_bottom_bar'], // the shared definitions, reasons and requirements have no company; a company's own would
   statuses: { ui_page_migration: ['NOT_STARTED', 'MIGRATED', 'VERIFIED', 'SCHEDULED'], ui_form_metadata: ['ACTIVE', 'RETIRED'], ui_sample_requests: ['DRAFT', 'SUBMITTED', 'CANCELLED'] },
   headerLines: [{ header: 'ui_sample_requests', line: 'ui_sample_request_lines', lineKey: 'request_id', headerTotal: 'total_amount', lineAmount: 'line_amount' }],
 });
@@ -114,7 +119,7 @@ export const ui = {
   routePrefix: '/api/v1/ui',
   ownerPart: '03.x',
   status: 'Design tokens, themes, typography and iconography (03.01); form components and data-entry framework (03.02); data table and List Report (03.03)',
-  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries'],
+  tables: ['ui_user_preferences', 'ui_drafts', 'ui_form_metadata', 'ui_sample_requests', 'ui_sample_request_lines', 'ui_saved_views', 'ui_export_jobs', 'ui_record_comments', 'ui_record_versions', 'ui_reason_codes', 'ui_required_documents', 'ui_record_documents', 'ui_navigation_entries', 'ui_favourites', 'ui_recent_records', 'ui_user_context', 'ui_push_subscriptions', 'ui_field_tiles', 'ui_widgets', 'ui_dashboards', 'core_search_index', 'core_search_queries', 'ui_navigation_labels', 'ui_field_tile_rules', 'ui_bottom_bar'],
   resources: ['preferences', 'style-guide', 'drafts', 'forms', 'form-registry', 'duplicate-check', 'create-from', 'sample-requests', 'lists', 'saved-views', 'exports', 'objects', 'reason-codes', 'navigation', 'favourites', 'recent', 'context-options', 'context', 'launchpad', 'bell', 'device-settings', 'push-subscriptions', 'qr', 'widgets', 'dashboards', 'search', 'translations', 'locale-preferences', 'page-migration'],
 
   mount(api, { db, config, storagePath }) {
@@ -155,6 +160,18 @@ export const ui = {
     const shell = createShellService({ db, flags, approvals });
     shellRouter.use(shellRoutes(shell, { idempotent: idempotency(db) }));
     router.use(shellRouter);
+    // Part 166.3: what waits for a site person today (the Field Home's task cards).
+    const fieldRouter = Router();
+    const fieldToday = createFieldToday({ db, approvals });
+    fieldRouter.use('/field', gate('ff.field.p16603', 'The mobile site app is'));
+    fieldRouter.get('/field/today', (req, res) => res.json({ data: fieldToday.today(req.actor) }));
+    router.use(fieldRouter);
+    // Part 166.7, FR-03: the document flow of a document (rights checked in the service, node by node)
+    const flowRouter = Router();
+    const docflow = createDocFlowService({ db });
+    flowRouter.use('/doc-flow', gate('ff.ui.p16607', 'The document flow is'));
+    flowRouter.get('/doc-flow', (req, res) => res.json({ data: docflow.flow(req.actor, parseDocFlow(req.query)) }));
+    router.use(flowRouter);
     // Part 03.07: widgets and dashboards.
     const dashboardRouter = Router();
     dashboardRouter.use(['/widgets', '/dashboards'], gate('ff.ui.p0307', 'Dashboards and widgets are'));

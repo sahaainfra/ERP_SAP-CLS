@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtQty, qa } from './api.js';
 import { sel } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Test Frequency Compliance (part 18.03, FR-05): for every test with a frequency rule, what was received, how many tests that needs, how many were requested; a shortfall is overdue and opens the tests behind it.
 export default function ComplianceReportPage() {
@@ -14,7 +15,7 @@ export default function ComplianceReportPage() {
   if (q.error?.status === 403) return <NoPermission what={t('tc.title')} permission="qa.test_request.view" />; if (q.isPending) return <Skeleton label={t('tc.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data;
   return (
-    <section aria-labelledby="tc-h" data-testid="qa-compliance"><h1 id="tc-h">{t('tc.title')}</h1><p className="muted"><Link to="/qa/test-requests">{t('tr.title')}</Link> · {t('tc.overdueCount', { n: d.overdue })}</p>
+    <section aria-labelledby="tc-h" data-testid="qa-compliance"><PageHeader id="tc-h" title={t('tc.title')} subtitle={<><Link to="/qa/test-requests">{t('tr.title')}</Link> · {t('tc.overdueCount', { n: d.overdue })}</>} />
       <div className="mdm-panel no-print"><label>{t('project')}<select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={sel} data-testid="tc-project"><option value="">{t('allProjects')}</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label>
         <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => qa.exportFile(`/test-compliance/export${projectId ? `?projectId=${projectId}` : ''}`, 'test-compliance.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="tc-export">{t('export')}</button></div>
       {d.rows.length === 0 ? <EmptyState title={t('tc.emptyTitle')} message={t('tc.emptyBody')} /> : (

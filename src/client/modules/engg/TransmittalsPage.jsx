@@ -6,6 +6,7 @@ import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx
 import { useSession } from '../core/api/index.js';
 import { PURPOSES, dayIST, eg } from './api.js';
 import { ProjectSelect, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Transmittals (part 11.01, FR-03): outgoing and incoming; a new one picks its drawings from the register (the current revision of each).
 export default function TransmittalsPage() {
@@ -30,7 +31,7 @@ export default function TransmittalsPage() {
   };
   return (
     <section aria-labelledby="tx-list-h" data-testid="eg-transmittals">
-      <h1 id="tx-list-h" className="sr-only">{t('tx.listTitle')}</h1>
+      <PageHeader id="tx-list-h" srOnly title={t('tx.listTitle')} />
       <div className="actions-row no-print">
         {perms.includes('engg.transmittal.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="tx-new">{t('tx.new')}</button>}
       </div>

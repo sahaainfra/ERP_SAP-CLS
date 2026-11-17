@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, hse, qs } from './api.js';
 import { ErrorLine, big, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Site Induction (part 19.01, FR-02, on a phone): choose the site and the content, scan the badge of the worker (or search a person), answer the quiz; the server scores it, records the induction and clears the worker for deployment; a gate check says whether a badge is valid.
 const TONE = { APPROVED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
@@ -54,8 +55,7 @@ function Check() {
 function Induction({ id }) {
   const t = useT('hse'); const { q, guard } = useRecord('/inductions', id, t('ind.title'), 'hse.induction.view'); const { error, run, busy, note } = useRunner(); usePageTitle(t('ind.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="hse-induction-object" data-status={x.status}><h1 id="in-h">{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`ind.st.${x.status}`)} /></h1>
-      <p><Link to="/hse/induction">{t('ind.title')}</Link> · {x.project} · {x.site} · {x.personName} ({x.personCode}, {t(`ind.${x.personType}`)}) · {x.content}</p>
+    <div data-testid="hse-induction-object" data-status={x.status}><PageHeader id="in-h" title={<>{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`ind.st.${x.status}`)} /></>} meta={<><Link to="/hse/induction">{t('ind.title')}</Link> · {x.project} · {x.site} · {x.personName} ({x.personCode}, {t(`ind.${x.personType}`)}) · {x.content}</>} />
       <ErrorLine error={error} id="hse-ind-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
       <p>{t('ind.date')}: {fmtDate(x.inductionDate)} · {t('ind.score')}: {x.scorePct ?? '—'}% ({t('ind.passMark', { n: x.passMark })}) · {t('ind.via')}: {x.via} · {t('ind.validUntil')}: {x.validUntil ? fmtDate(x.validUntil) : '—'}{x.cancelReason ? ` · ${x.cancelReason}` : ''}</p>
       {x.can.cancel && <div className="actions-row no-print"><button type="button" className="btn" disabled={busy} onClick={() => { const r = globalThis.prompt(t('why')); if (r) run(() => hse.act('/inductions', x.id, 'cancel', { reason: r }), t('cancelled')); }} data-testid="hse-ind-cancel">{t('cancel')}</button></div>}
@@ -66,7 +66,7 @@ export default function InductionPage() {
   const t = useT('hse'); usePageTitle(t('ind.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="in-h"><Induction id={id} /></section>;
   return (
-    <section aria-labelledby="inl-h" data-testid="hse-induction"><h1 id="inl-h">{t('ind.title')}</h1><p className="muted">{t('ind.intro')}</p>
+    <section aria-labelledby="inl-h" data-testid="hse-induction"><PageHeader id="inl-h" title={t('ind.title')} subtitle={t('ind.intro')} />
       <Induct /><Check />
       <ListReport listCode="hse.inductions" endpoint="/hse/inductions" title={t('ind.recent')} session={session.data} rowHref={(r) => `/hse/induction?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/induction?id=${r.id}`)} cardFields={['docNo', 'person', 'validUntil', 'status']} statusKey="status" dateKey="date" empty={{ title: t('ind.emptyTitle'), text: t('ind.emptyBody') }} />
     </section>

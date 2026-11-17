@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import ItemSelector from '../../platform/items/ItemSelector.jsx';
 import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { items } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Item Migration (Administration, part 06.03, FR-08): the materials the system held before the item master, as free text: item codes of the calculation engine's conversions and the lines of sample requests
 // (description and unit). Each one is mapped to an existing item (chosen with the selector, a likely match suggested) or becomes a new item that keeps its old code; the old records are not rewritten,
@@ -21,8 +22,7 @@ export default function ItemMigrationPage() {
   const create = (row) => navigateTo(`/admin/items/new?legacySource=${encodeURIComponent(row.source)}&legacyKey=${encodeURIComponent(row.key)}`);
   return (
     <section aria-labelledby="mig-title" data-testid="item-migration">
-      <h1 id="mig-title">Item Migration</h1>
-      <p className="muted">{q.data.open} material(s) still to map. Mapping links the old records to an item; nothing in them is rewritten.</p>
+      <PageHeader id="mig-title" title={"Item Migration"} subtitle={<>{q.data.open} material(s) still to map. Mapping links the old records to an item; nothing in them is rewritten.</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="mig-error">{error.form}</p>}
       {q.data.rows.length === 0 ? <EmptyState title="Nothing to migrate" message="No free-text material was found in the conversions or the sample requests." /> : (
         <div className="table-wrap" tabIndex={0} role="region" aria-label="Old materials"><table className="grid"><thead><tr><th>Old material</th><th>Found in</th><th className="num">Uses</th><th>Mapped to</th><th><span className="sr-only">Actions</span></th></tr></thead>

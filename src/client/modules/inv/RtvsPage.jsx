@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { GRN_TONE, download, fmtDate, fmtQty, fmtRs, gr, iv } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Returns to Vendor (part 16.03, FR-05): material rejected at the store or failed by quality control goes back. The procurement manager approves; the approval takes the failed stock out, prepares the vendor-return gate pass and triggers the debit note.
 function RtvForm({ t, grnId }) {
@@ -18,7 +19,7 @@ function RtvForm({ t, grnId }) {
   const g = q.data; const rows = g.lines.filter((l) => l.returnableQty > 0); const chosen = rows.filter((l) => Number(qty[l.id]) > 0);
   const save = async (send) => { setError(null); setBusy(true); try { let d = await gr.rtvCreate({ grnId: g.id, reason, lines: chosen.map((l) => ({ grnLineId: l.id, qty: Number(qty[l.id]) })) }); if (send) d = await gr.rtvAct(d.id, 'submit'); navigateTo(`/inv/rtvs?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="rn-h" data-testid="rtv-form"><h1 id="rn-h">{t('r.newRtv')}</h1><p className="muted">{t('r.rtvHelp')}</p><p><Link to={`/inv/grns?id=${g.id}`}>{g.docNo}</Link> · {g.vendor}</p>
+    <section aria-labelledby="rn-h" data-testid="rtv-form"><PageHeader id="rn-h" title={t('r.newRtv')} subtitle={t('r.rtvHelp')} meta={<><Link to={`/inv/grns?id=${g.id}`}>{g.docNo}</Link> · {g.vendor}</>} />
       {rows.length === 0 ? <p className="muted" data-testid="rn-none">{t('r.nothingToReturn')}</p> : (
         <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
           <div className="table-scroll"><table className="data-table"><caption>{t('r.lines')}</caption><thead><tr><th>{t('item')}</th><th className="num">{t('r.returnable')}</th><th className="num">{t('r.returnQty')}</th></tr></thead><tbody>{rows.map((l) => <tr key={l.id}><td data-label={t('item')}>{l.item}</td><td className="num" data-label={t('r.returnable')}>{fmtQty(l.returnableQty)}</td><td data-label={t('r.returnQty')}><input aria-label={t('r.returnQty')} type="number" min="0" step="0.001" max={l.returnableQty} value={qty[l.id] ?? ''} onChange={(ev) => setQty({ ...qty, [l.id]: ev.target.value })} style={{ minHeight: 44, width: 110 }} data-testid={`rn-qty-${l.lineNo}`} /></td></tr>)}</tbody></table></div>
@@ -37,7 +38,7 @@ function Rtv({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => iv.decide(r.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
     <div data-testid="rtv-object" data-status={r.status}>
-      <h1 id="rv-h">{r.docNo} <StatusBadge status={GRN_TONE[r.status]} label={t(`rs.${r.status}`)} /></h1><p><Link to="/inv/rtvs">{t('r.rtvTitle')}</Link> · <Link to={`/inv/grns?id=${r.grnId}`}>{r.grnNo}</Link> · {r.vendor}</p>
+      <PageHeader id="rv-h" title={<>{r.docNo} <StatusBadge status={GRN_TONE[r.status]} label={t(`rs.${r.status}`)} /></>} meta={<><Link to="/inv/rtvs">{t('r.rtvTitle')}</Link> · <Link to={`/inv/grns?id=${r.grnId}`}>{r.grnNo}</Link> · {r.vendor}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="rtv-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="rtv-note">{note}</p>}
       <dl className="kv"><div><dt>{t('reason')}</dt><dd>{r.reason}</dd></div>{r.totalValue != null && <div><dt>{t('r.value')}</dt><dd data-testid="rtv-value">{fmtRs(r.totalValue)}</dd></div>}<div><dt>{t('g.requestedBy')}</dt><dd>{r.requestedBy}</dd></div>{r.approvedBy && <div><dt>{t('approvedBy')}</dt><dd>{r.approvedBy}</dd></div>}{r.gatePassNo && <div><dt>{t('r.gatePass')}</dt><dd data-testid="rtv-pass"><Link to={`/inv/gate-pass?id=${r.gatePassId}`}>{r.gatePassNo}</Link> ({t(`gps.${r.gatePassStatus}`)})</dd></div>}{r.debitNote && <div><dt>{t('r.debitNote')}</dt><dd data-testid="rtv-debit">{t('r.debitTriggered')}</dd></div>}<div><dt>{t('r.date')}</dt><dd>{fmtDate(r.date)}</dd></div></dl>
       <div className="table-scroll"><table className="data-table" data-testid="rtv-lines"><caption>{t('r.lines')}</caption><thead><tr><th>{t('item')}</th><th className="num">{t('qty')}</th><th>{t('uom')}</th><th className="num">{t('r.fromStock')}</th></tr></thead><tbody>{r.lines.map((l) => <tr key={l.grnLineId}><td data-label={t('item')}>{l.item}</td><td className="num" data-label={t('qty')}>{fmtQty(l.qty)}</td><td data-label={t('uom')}>{l.uom}</td><td className="num" data-label={t('r.fromStock')}>{fmtQty(l.fromStock)}</td></tr>)}</tbody></table></div>
@@ -56,7 +57,7 @@ export default function RtvsPage() {
   if (sp.get('new') === '1' && grn) return <RtvForm key={grn} t={t} grnId={grn} />;
   if (id) return <section aria-labelledby="rv-h" data-testid="rtvs"><Rtv key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="rvs-h" data-testid="rtvs"><h1 id="rvs-h">{t('r.rtvTitle')}</h1><p className="muted">{t('r.rtvIntro')}</p><div className="actions-row no-print"><Link to="/inv/grns">{t('r.grnTitle')}</Link></div>
+    <section aria-labelledby="rvs-h" data-testid="rtvs"><PageHeader id="rvs-h" title={t('r.rtvTitle')} subtitle={t('r.rtvIntro')} /><div className="actions-row no-print"><Link to="/inv/grns">{t('r.grnTitle')}</Link></div>
       <ListReport listCode="inv.rtvs" endpoint="/inv/rtvs" title={t('r.rtvTitle')} session={session.data} rowHref={(r) => `/inv/rtvs?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/rtvs?id=${r.id}`)} cardFields={['docNo', 'grn', 'vendor', 'status']} statusKey="status" dateKey="date" empty={{ title: t('r.rtvEmptyTitle'), text: t('r.rtvEmptyBody') }} /></section>
   );
 }

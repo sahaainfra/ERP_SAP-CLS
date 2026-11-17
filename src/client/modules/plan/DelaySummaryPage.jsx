@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { CAUSES, RESPONSIBILITIES, download, fmtDate, pl } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Delay Summary (part 13.05, FR-05): the delays by cause and responsibility, in delay days and in impact on completion (the shift found by each delay's time-impact analysis), with the excusable and
 // compensable totals the claims (21.06) start from. A cell opens the delays behind it. Every figure comes from the server.
@@ -22,7 +23,7 @@ export default function DelaySummaryPage() {
   const max = Math.max(1, ...(s?.byResponsibility ?? []).map((x) => x.impactDays));
   return (
     <section aria-labelledby="ds-h" data-testid="plan-delay-summary">
-      <h1 id="ds-h">{t('ds.title')}</h1>
+      <PageHeader id="ds-h" title={t('ds.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('pr.params')}>
         <div className="form-grid">
           <Field label={t('f.project')} name="projectId"><select value={p.projectId} onChange={(e) => { setP({ ...p, projectId: e.target.value }); setDrill(null); }} data-testid="ds-project"><option value="">{t('ds.allProjects')}</option>{(pq.data ?? []).map((x) => <option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}</select></Field>

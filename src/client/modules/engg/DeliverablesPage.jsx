@@ -6,6 +6,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { DELIV_DISCIPLINES, DELIV_TYPES, ep } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Deliverable Register (part 11.04, FR-01): every drawing, calculation, specification, data sheet and MTO with its weight, planned dates and progress.
 const empty = () => ({ projectId: '', deliverableNo: '', title: '', discipline: 'STRUCTURAL', type: 'DRAWING', packageName: '', weight: 100, planIfr: '', planIfa: '', planIfc: '', planAsbuilt: '' });
@@ -27,7 +28,7 @@ export default function DeliverablesPage() {
   const txt = (k, label, props = {}) => <Field label={label} name={k} error={error}><input value={f[k]} onChange={(e) => set(k, e.target.value)} data-testid={`del-f-${k}`} {...props} /></Field>;
   return (
     <section aria-labelledby="del-list-h" data-testid="eg-deliverables">
-      <h1 id="del-list-h" className="sr-only">{t('del.registerTitle')}</h1>
+      <PageHeader id="del-list-h" srOnly title={t('del.registerTitle')} />
       <div className="actions-row no-print">
         {perms.includes('engg.deliverable.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="del-new">{t('del.new')}</button>}
         <Link to="/engg/progress">{t('prog.title')}</Link>

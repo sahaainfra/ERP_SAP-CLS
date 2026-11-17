@@ -72,7 +72,7 @@ test('FR-06 the key pages have no serious or critical findings', async ({ browse
   const pages = [
     ['PM', pm, '/home', 'Home'], ['PM', pm, '/work', 'My Work'], ['PM', pm, '/search?q=pier', 'Advanced Search'], ['PM', pm, '/admin/sample-requests', 'Sample Material Requests'],
     ['PM', pm, `/admin/sample-requests?open=${w.request.id}`, null], ['PM', pm, '/admin/sample-requests/overview', 'Requests Overview'], ['PM', pm, '/account/profile', 'My Profile'],
-    ['SE', 'e2e-se', '/field', 'Field Home'], ['SE', 'e2e-se', '/field/scan', 'Scan'],
+    ['SE', 'e2e-se', '/field', 'Good'] /* 166.3: the greeting band's heading */, ['SE', 'e2e-se', '/field/scan', 'Scan'],
     ['SYSADM', 'e2e-sys', '/admin/translations', 'Translations'], ['SYSADM', 'e2e-sys', '/admin/search', 'Search Administration'], ['SYSADM', 'e2e-sys', '/admin/users', 'Users'], ['SYSADM', 'e2e-sys', '/admin/navigation', 'Navigation Registry'],
   ];
   const problems = [];

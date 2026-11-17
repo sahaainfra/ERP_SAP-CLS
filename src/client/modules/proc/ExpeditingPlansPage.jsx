@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { MS_TONE, XPD_TONE, download, fmtDate, pc, px, today } from './api.js';
 import { History, ProjectOrder, useRunner } from './XpdParts.jsx';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Expediting plan of an order (part 15.07, FR-01, FR-05): the milestones from drawing approval to dispatch with planned, forecast and actual dates, the date the item is expected at site, and the activities of the approved schedule that wait for it.
 // The buyer and the vendor (on its order link) record progress; the server works out the risk, the arrival date and the alert.
@@ -26,8 +27,7 @@ function Plan({ t, id }) {
   const setE = (m, k, v) => setEdit({ ...edit, [m.id]: { ...(edit[m.id] ?? {}), [k]: v || null } });
   return (
     <div data-testid="xp-object" data-status={r.status} data-risk={r.atRisk ? 'yes' : 'no'}>
-      <h1 id="xp-h">{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.s.${r.status}`)} />{r.atRisk && <StatusBadge status="REJECTED" label={t('x.atRisk')} />}</h1>
-      <p><Link to="/proc/expediting-plans">{t('x.back')}</Link> · <Link to={`/proc/purchase-orders?id=${r.poId}`}>{r.poNo}</Link> {r.vendor} · {r.projectCode}</p>
+      <PageHeader id="xp-h" title={<>{r.docNo} <StatusBadge status={XPD_TONE[r.status]} label={t(`x.s.${r.status}`)} />{r.atRisk && <StatusBadge status="REJECTED" label={t('x.atRisk')} />}</>} meta={<><Link to="/proc/expediting-plans">{t('x.back')}</Link> · <Link to={`/proc/purchase-orders?id=${r.poId}`}>{r.poNo}</Link> {r.vendor} · {r.projectCode}</>} />
       <dl className="kv" data-testid="xp-figures"><div><dt>{t('x.requiredOnSite')}</dt><dd data-testid="xp-required">{fmtDate(r.requiredOnSite)}</dd></div><div><dt>{t('x.eta')}</dt><dd data-testid="xp-eta">{fmtDate(r.eta)}</dd></div><div><dt>{t('x.daysLate')}</dt><dd data-testid="xp-late">{r.daysLate > 0 ? r.daysLate : 0}</dd></div><div><dt>{t('x.transitDays')}</dt><dd>{r.transitDays}</dd></div>
         <div><dt>{t('x.longLead')}</dt><dd>{r.longLead ? t('x.yes') : t('x.no')}</dd></div><div><dt>{t('x.inspRequired')}</dt><dd>{r.inspectionRequired ? t('x.yes') : t('x.no')}</dd></div><div><dt>{t('x.expediter')}</dt><dd>{r.expediter ?? '—'}</dd></div></dl>
       {(r.warnings ?? []).map((w) => <p key={w.code} className="mdm-banner" role="status" data-testid={`xp-warn-${w.code}`}>{w.message}</p>)}
@@ -75,7 +75,7 @@ function PlanForm({ t, editId, project0, po0 }) {
   const body = () => ({ requiredOnSite: form.requiredOnSite || undefined, transitDays: Number(form.transitDays) || 0, longLead: form.longLead, inspectionRequired: form.inspectionRequired, expediter: form.expediter || null });
   const save = async (send) => { setError(null); setBusy(true); try { let d = editId ? await px.planUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await px.planCreate({ poId: Number(orderId), ...body() }); if (send) d = await px.planAct(d.id, 'submit'); navigateTo(`/proc/expediting-plans?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="xpn-h" data-testid="proc-xp-form"><h1 id="xpn-h">{editId ? t('x.edit') : t('x.newPlan')}</h1><p className="muted">{t('x.newPlanHelp')}</p><p><Link to="/proc/expediting-plans">{t('x.back')}</Link></p>
+    <section aria-labelledby="xpn-h" data-testid="proc-xp-form"><PageHeader id="xpn-h" title={editId ? t('x.edit') : t('x.newPlan')} subtitle={t('x.newPlanHelp')} meta={<Link to="/proc/expediting-plans">{t('x.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">
           {editId ? <p>{e.poNo} · {e.vendor}</p> : <ProjectOrder t={t} projectId={projectId} setProjectId={setProjectId} orderId={orderId} setOrderId={setOrderId} error={error} prefix="xpn" />}
@@ -95,7 +95,7 @@ export default function ExpeditingPlansPage() {
   if (sp.get('new') === '1') return <PlanForm key={sp.get('edit') ?? sp.get('po') ?? 'new'} t={t} editId={Number(sp.get('edit')) || null} project0={Number(sp.get('project')) || null} po0={Number(sp.get('po')) || null} />;
   if (id) return <section aria-labelledby="xp-h" data-testid="proc-xp"><Plan key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="xps-h" data-testid="proc-xp"><h1 id="xps-h">{t('x.plansTitle')}</h1><p className="muted">{t('x.plansIntro')}</p>
+    <section aria-labelledby="xps-h" data-testid="proc-xp"><PageHeader id="xps-h" title={t('x.plansTitle')} subtitle={t('x.plansIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.expediting_plan.create') && <Link to="/proc/expediting-plans?new=1">{t('x.newPlan')}</Link>} <Link to="/proc/expediting">{t('x.dashboard')}</Link></div>
       <ListReport listCode="proc.expediting_plans" endpoint="/proc/expediting-plans" title={t('x.plansTitle')} session={session.data} rowHref={(r) => `/proc/expediting-plans?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/expediting-plans?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'required', 'eta']} statusKey="status" empty={{ title: t('x.plansEmptyTitle'), text: t('x.plansEmptyBody') }} /></section>

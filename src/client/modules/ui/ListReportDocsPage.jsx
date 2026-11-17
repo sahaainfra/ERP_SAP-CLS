@@ -2,6 +2,7 @@ import { usePageTitle, navigateTo } from '../core/pages/ui.jsx';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../platform/api/index.js';
 import { OPERATOR_LABELS } from '../../platform/list/state.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The List Report's documentation (part 03.03, section 7): how a register uses the component and the server contract, with the live
 // description of the reference register's columns. The working example is Sample Material Requests.
@@ -40,8 +41,7 @@ export default function ListReportDocsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Design System &rsaquo; List Report</nav>
-      <div className="page-head"><h1 id="page-title">List Report</h1><span className="spacer" /><button type="button" className="btn btn-primary" onClick={() => navigateTo('/admin/sample-requests')}>Open the reference register</button></div>
-      <p className="muted">One component for every register: the server searches, filters, sorts, pages and totals (nothing is filtered in the browser); the component adds the filter bar, saved views, the column chooser, bulk actions, exports and a card layout on phones. Sample Material Requests uses it.</p>
+      <PageHeader id="page-title" title={"List Report"} actions={<><button type="button" className="btn btn-primary" onClick={() => navigateTo('/admin/sample-requests')}>Open the reference register</button></>} subtitle={"One component for every register: the server searches, filters, sorts, pages and totals (nothing is filtered in the browser); the component adds the filter bar, saved views, the column chooser, bulk actions, exports and a card layout on phones. Sample Material Requests uses it."} />
       <h2>Using it in a page</h2>
       <pre className="doc-code" tabIndex={0}><code>{`import ListReport from '../../platform/list/ListReport.jsx';
 

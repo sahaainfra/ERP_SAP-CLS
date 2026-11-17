@@ -4,6 +4,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { DUP_STATUS, mdm } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Duplicate Candidates (Administration, part 06.01, FR-02): the pairs of records that look alike (same PAN, GSTIN or mobile, or a similar name), highest score first. Compare shows the two side by side, field by field, with the
 // differences marked; the person chooses which record survives and asks for the merge (approved by the steward, and the accounts manager for vendors and clients), or says they are different. A merge never deletes: the merged
@@ -36,8 +37,7 @@ export default function DuplicatesPage() {
   const different = async () => { const why = window.prompt('Why are these two different?') ?? ''; if (why.trim().length < 5) return; setError(null); try { await mdm.dismiss(pair.id, why.trim()); dlg.current?.close(); refresh(); } catch (err) { setError(errorInfo(err)); } };
   return (
     <section aria-labelledby="mdu-title" data-testid="mdm-duplicates">
-      <div className="page-head"><h1 id="mdu-title">Duplicate Candidates</h1>{d.canMerge && <button type="button" className="btn" onClick={scan} data-testid="mdu-scan">Scan now</button>}</div>
-      <p className="muted">An identical PAN or GSTIN is refused when a record is saved; these pairs are the ones that only look alike, or that were already there. A merge keeps both records; the merged one points to the survivor.</p>
+      <PageHeader id="mdu-title" title={"Duplicate Candidates"} actions={<>{d.canMerge && <button type="button" className="btn" onClick={scan} data-testid="mdu-scan">Scan now</button>}</>} subtitle={"An identical PAN or GSTIN is refused when a record is saved; these pairs are the ones that only look alike, or that were already there. A merge keeps both records; the merged one points to the survivor."} />
       <form className="srch-form" aria-label="Filter the candidates" onSubmit={(e) => e.preventDefault()}>
         <Field label="Status" name="status" error={null}><select value={f.status} onChange={(e) => set({ status: e.target.value })} data-testid="mdu-status"><option value="">All</option>{Object.entries(DUP_STATUS).map(([k, [, l]]) => <option key={k} value={k}>{l}</option>)}</select></Field>
         <Field label="Score at least" name="minScore" error={null}><input type="number" min="0" max="100" value={f.minScore} onChange={(e) => set({ minScore: e.target.value })} /></Field>

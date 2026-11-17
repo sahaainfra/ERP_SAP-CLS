@@ -9,6 +9,7 @@ import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/p
 import { useSearch } from './common.js';
 import DocumentViewer from './DocumentViewer.jsx';
 import { LEVELS, RETENTION, STATUS, VERSION_STATUS } from './documents-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Document (part 04.10, section 7.2): one controlled document as an Object Page. The header says where it stands (issued revision, who holds it) and offers what this person may do; the tabs
 // hold the details, the revisions with a comparison and downloads (an old revision carries a watermark), the viewer with markups, the approvals, who it was sent to and who acknowledged it,
@@ -104,8 +105,8 @@ export default function DocumentPage({ session }) {
   const [dist, setDist] = useState({ users: [], role: '', email: '', message: '', dueDays: '7' });
   const [viewer, setViewer] = useState(null);
   const history = useRecordHistory('doc_documents', id);
-  if (!id && !versionParam) return <section aria-labelledby="dp-title"><h1 id="dp-title">Document</h1><EmptyState title="No document chosen" message="Open a document from the register." action={{ label: 'Open the register', onClick: () => navigateTo('/documents') }} /></section>;
-  if (q.error?.status === 404 || loc.error?.status === 404) return <section aria-labelledby="dp-title"><h1 id="dp-title">Document</h1><EmptyState title="This document was not found" message="It does not exist, or you may not see it." action={{ label: 'Open the register', onClick: () => navigateTo('/documents') }} /></section>;
+  if (!id && !versionParam) return <section aria-labelledby="dp-title"><PageHeader id="dp-title" title={"Document"} /><EmptyState title="No document chosen" message="Open a document from the register." action={{ label: 'Open the register', onClick: () => navigateTo('/documents') }} /></section>;
+  if (q.error?.status === 404 || loc.error?.status === 404) return <section aria-labelledby="dp-title"><PageHeader id="dp-title" title={"Document"} /><EmptyState title="This document was not found" message="It does not exist, or you may not see it." action={{ label: 'Open the register', onClick: () => navigateTo('/documents') }} /></section>;
   const d = q.data;
   const run = (action, body = {}, after) => { setError(null); setNotice(''); act.mutate({ id, action, ...body }, { onSuccess: (r) => { setAsking(null); setText(''); setNotice(after?.(r) ?? 'Done.'); }, onError: (e) => setError(errorInfo(e)) }); };
   const asks = { checkin: 'Why do you force the check-in?', archive: 'Why is it archived?', cancel: 'Why is it cancelled?', revisions: 'What changes in the new revision?' };
@@ -114,7 +115,7 @@ export default function DocumentPage({ session }) {
   const canMark = Boolean(d) && d.status !== 'ARCHIVED' && d.status !== 'CANCELLED';
   return (
     <section aria-labelledby="dp-title" data-testid="document-page">
-      <h1 id="dp-title">Document</h1>
+      <PageHeader id="dp-title" title={"Document"} />
       {q.isPending && id && <Skeleton label="Loading the document" rows={4} />}
       {q.isError && q.error?.status !== 404 && <ErrorState title="The document could not be loaded" error={q.error} onRetry={() => q.refetch()} />}
       {d && <>

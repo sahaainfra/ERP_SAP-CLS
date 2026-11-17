@@ -9,6 +9,7 @@ import Evidence, { Flags, show } from './Evidence.jsx';
 import { SLA } from './InboxPage.jsx';
 import { EVENT, INST_STATUS, useSearch } from './common.js';
 import { TaskCard } from './WorkflowInstancePage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Approval Task (part 04.03, section 7.2): one task as an Object Page. The document at a glance, the risk flags, the evidence panel (computed when opened), what has
 // happened so far, the attachments, and the decision: approve, reject, return, ask, delegate, with a comment and files. Nothing is decided for the approver.
@@ -25,13 +26,13 @@ export default function ApprovalTaskPage() {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState(null);
   const [made, setMade] = useState(null);
-  if (!taskId) return <section aria-labelledby="at-title"><h1 id="at-title">Approval Task</h1><EmptyState title="No task chosen" message="Open a task from your approvals." action={{ label: 'Open My Approvals', onClick: () => navigateTo('/approvals') }} /></section>;
-  if (ev.error?.status === 404) return <section aria-labelledby="at-title"><h1 id="at-title">Approval Task</h1><EmptyState title="This task was not found" message="It does not exist, or you take no part in it." action={{ label: 'Open My Approvals', onClick: () => navigateTo('/approvals') }} /></section>;
+  if (!taskId) return <section aria-labelledby="at-title"><PageHeader id="at-title" title={"Approval Task"} /><EmptyState title="No task chosen" message="Open a task from your approvals." action={{ label: 'Open My Approvals', onClick: () => navigateTo('/approvals') }} /></section>;
+  if (ev.error?.status === 404) return <section aria-labelledby="at-title"><PageHeader id="at-title" title={"Approval Task"} /><EmptyState title="This task was not found" message="It does not exist, or you take no part in it." action={{ label: 'Open My Approvals', onClick: () => navigateTo('/approvals') }} /></section>;
   const d = ev.data;
   const decided = d && !d.canAct;
   return (
     <section aria-labelledby="at-title" data-testid="approval-task">
-      <h1 id="at-title">Approval Task</h1>
+      <PageHeader id="at-title" title={"Approval Task"} />
       {ev.isPending && <Skeleton label="Loading the task" rows={4} />}
       {ev.isError && ev.error?.status !== 404 && <ErrorState title="The task could not be loaded" error={ev.error} onRetry={() => ev.refetch()} />}
       {d && (

@@ -166,6 +166,9 @@ test('FR-07 the field home\'s quick actions come from the registry: only pages t
   const api = await startApi();
   await world(api);
   const tiles = async (who) => (await api.call('GET', `${U}/navigation`, who)).json.data.groups.flatMap((g) => g.pages).filter((p) => p.field).sort((a, b) => a.field.order - b.field.order).map((p) => [p.field.code, p.field.label]);
+  // With ff.field.p16603 ON (166.3, ON in test) the sample tiles are retired and the role tiles take their place; this part's tiles come back with it OFF.
+  assert.deepEqual((await tiles(pm)).map(([c]) => c).slice(0, 2), ['phone-approvals', 'dpr-register'], '166.3: a project manager gets the approvals first');
+  api.db.prepare("UPDATE core_feature_flags SET enabled = 0 WHERE key = 'ff.field.p16603'").run();
   const all = [['material-request', 'Material Request'], ['scan', 'Scan'], ['approvals', 'Approvals'], ['drafts', 'My Drafts']];
   assert.deepEqual(await tiles(pm), all.filter(([c]) => c !== 'approvals'), 'a project manager raises requests but decides none');
   assert.deepEqual(await tiles(acc), all, 'the accounts manager has them all');

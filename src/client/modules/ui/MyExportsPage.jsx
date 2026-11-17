@@ -5,6 +5,7 @@ import { authHeaders } from '../../platform/api/index.js';
 import Icon from '../../platform/design/Icon.jsx';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { formatDateTime } from '../../platform/format.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 const STATUS_LABEL = { QUEUED: 'Waiting', RUNNING: 'Being prepared', DONE: 'Ready', FAILED: 'Failed', EXPIRED: 'Expired' };
 const STATUS_TONE = { QUEUED: 'SUBMITTED', RUNNING: 'IN_REVIEW', DONE: 'COMPLETED', FAILED: 'REJECTED', EXPIRED: 'CANCELLED' };
@@ -29,8 +30,7 @@ export default function MyExportsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">My account &rsaquo; My Exports</nav>
-      <div className="page-head"><h1 id="page-title">My Exports</h1></div>
-      <p className="muted">Exports with more rows than a direct download allows are prepared in the background. They use the filters, sort and masks you had when you asked, and are kept for 7 days.</p>
+      <PageHeader id="page-title" title={"My Exports"} subtitle={"Exports with more rows than a direct download allows are prepared in the background. They use the filters, sort and masks you had when you asked, and are kept for 7 days."} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={exports} what="your exports" permission="a signed-in account" />
       {exports.data && rows.length === 0 && <div className="state"><h2>No background exports</h2><p>Large exports from any list appear here when they are ready. Smaller ones download at once.</p></div>}

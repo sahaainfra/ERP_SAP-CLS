@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { items } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Item Categories & Attribute Templates (Administration, part 06.03, FR-02): the category tree of the company (copied from the system tree the first time) and, for the chosen category, its code, code prefix
 // (the series of its item codes), item types, steward role (who approves its new items), default HSN/SAC, GL mapping and the attribute template its items fill in (key, label, text/number/choice, unit,
@@ -39,7 +40,7 @@ export default function ItemCategoriesPage() {
       {rows.some((x) => x.parentId === c.id) && <ul className="item-tree">{tree(c.id, depth + 1)}</ul>}</li>));
   return (
     <section aria-labelledby="ic-title" data-testid="item-categories">
-      <h1 id="ic-title">Item Categories &amp; Attribute Templates</h1>
+      <PageHeader id="ic-title" title={"Item Categories & Attribute Templates"} />
       <div className="item-master">
         <nav aria-label="Categories" className="item-tree-pane"><ul className="item-tree">{tree(null, 0)}</ul>{canEdit && <button type="button" className="btn btn-small" onClick={() => open(fresh(null))} data-testid="ic-new">New top category</button>}</nav>
         <div className="item-list-pane">

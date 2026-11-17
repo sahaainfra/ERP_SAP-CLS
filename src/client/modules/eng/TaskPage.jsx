@@ -8,6 +8,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from './common.js';
 import { ACTION_LABEL, NEEDS_REASON, ORIGIN, PRIORITY, STATUS, taskLink } from './tasks-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Task (part 04.08, section 7.2): one task as an Object Page. The header says where it stands and offers what this person may do next; the tabs hold the details (and how an instruction was routed),
 // the checklist, the evidence, what it depends on, the discussion and the history with its escalations. A task that needs evidence does not close without a file; one that needs
@@ -99,8 +100,8 @@ export default function TaskPage() {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState('');
   const [uploaded, setUploaded] = useState(0);
-  if (!id) return <section aria-labelledby="tk-title"><h1 id="tk-title">Task</h1><EmptyState title="No task chosen" message="Open a task from My Tasks." action={{ label: 'Open My Tasks', onClick: () => navigateTo('/tasks') }} /></section>;
-  if (q.error?.status === 404) return <section aria-labelledby="tk-title"><h1 id="tk-title">Task</h1><EmptyState title="This task was not found" message="It does not exist, or you take no part in it." action={{ label: 'Open My Tasks', onClick: () => navigateTo('/tasks') }} /></section>;
+  if (!id) return <section aria-labelledby="tk-title"><PageHeader id="tk-title" title={"Task"} /><EmptyState title="No task chosen" message="Open a task from My Tasks." action={{ label: 'Open My Tasks', onClick: () => navigateTo('/tasks') }} /></section>;
+  if (q.error?.status === 404) return <section aria-labelledby="tk-title"><PageHeader id="tk-title" title={"Task"} /><EmptyState title="This task was not found" message="It does not exist, or you take no part in it." action={{ label: 'Open My Tasks', onClick: () => navigateTo('/tasks') }} /></section>;
   const t = q.data;
   const run = (action, why) => {
     setError(null);
@@ -109,7 +110,7 @@ export default function TaskPage() {
   const wrap = (mut, vars, ok) => { setError(null); mut.mutate(vars, { onSuccess: ok, onError: (e) => setError(errorInfo(e)) }); };
   return (
     <section aria-labelledby="tk-title" data-testid="task-page">
-      <h1 id="tk-title">Task</h1>
+      <PageHeader id="tk-title" title={"Task"} />
       {q.isPending && <Skeleton label="Loading the task" rows={4} />}
       {q.isError && q.error?.status !== 404 && <ErrorState title="The task could not be loaded" error={q.error} onRetry={() => q.refetch()} />}
       {t && <>

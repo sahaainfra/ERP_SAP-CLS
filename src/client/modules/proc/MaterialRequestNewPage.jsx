@@ -6,6 +6,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { addDays, fmtQty, pc } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Material Request (part 15.01, FR-01), a phone screen: the site, the day it is needed, the work authorisation, and the items with their quantity; under each line the free stock at the site, in nearby stores and in the central warehouse.
 // It is saved as a draft or sent for approval to the construction manager.
@@ -41,7 +42,7 @@ export default function MaterialRequestNewPage() {
   const was = (o?.was ?? []).filter((w) => !siteId || String(w.siteId) === String(siteId));
   return (
     <section aria-labelledby="mrn-h" data-testid="proc-mr-new">
-      <h1 id="mrn-h">{t('p.mrNew')}</h1><p className="muted">{t('p.mrNewHelp')}</p>
+      <PageHeader id="mrn-h" title={t('p.mrNew')} subtitle={t('p.mrNewHelp')} />
       {projects.length === 0 && <div className="mdm-panel" data-testid="mrn-none"><h2>{t('p.noProject')}</h2><p className="muted">{t('p.noProjectBody')}</p></div>}
       <form className="mdm-panel" onSubmit={(e) => { e.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">

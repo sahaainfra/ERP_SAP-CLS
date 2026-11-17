@@ -154,9 +154,12 @@ test('FR-08 the Requests Overview: charts have a tooltip, a legend and the same 
   const bars = widget(page, 'requests.by_project');
   await expect(bars.locator('svg.ch-svg')).toBeVisible();
   // the table fallback has the figures the chart draws
-  await bars.getByText('View as table').click();
+  // with ff.ui.p16605 the chart switches to a table ("Show as table") and back; before it, the table was under "View as table"
+  const toTable = bars.getByTestId('chart-show-table');
+  if (await toTable.count()) await toTable.click(); else await bars.getByText('View as table').click();
   await expect(bars.getByRole('table')).toContainText(`${w.project.code}`);
   await expect(bars.getByRole('table')).toContainText('2');
+  if (await toTable.count()) { await bars.getByRole('button', { name: 'Show as chart' }).click(); await expect(bars.locator('svg.ch-svg')).toBeVisible(); }
   // a tooltip on hover (desktop) names the value
   if (info.project.name === 'desktop') {
     await bars.locator('g.ch-mark').first().hover();

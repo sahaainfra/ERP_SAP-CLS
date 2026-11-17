@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { IMPORT_FIELDS, bq, guessField, inr, parseTable } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Import BOQ (part 10.04, FR-03, T-01): a wizard for the client's bill of quantities: paste the sheet from Excel with its header row, map each column to a field (the mapping is guessed from the headers and kept so the BOQ can be exported in the same columns),
 // check it (every wrong row is listed with its row number in the sheet; nothing is made while any row is wrong) and import it as a new draft version, or into an empty draft. Large sheets are sent in chunks. A workbook can also go through the Import Center (type PROJ_BOQ_LINE).
@@ -35,8 +36,7 @@ export default function BoqImportPage() {
   const next = () => setStep((s) => s + 1);
   return (
     <section aria-labelledby="imp2-h" data-testid="boq-import-wizard" data-step={step}>
-      <h1 id="imp2-h">{t('imp2.title')}</h1>
-      <p className="muted">{t('imp2.intro')}</p>
+      <PageHeader id="imp2-h" title={t('imp2.title')} subtitle={t('imp2.intro')} />
       <ol className="mdm-list" aria-label={t('imp2.steps')}>{['paste', 'map', 'check'].map((k, i) => <li key={k} aria-current={step === i + 1 ? 'step' : undefined}>{step === i + 1 ? <strong>{t(`imp2.step.${k}`)}</strong> : t(`imp2.step.${k}`)}</li>)}</ol>
       {step === 1 && (
         <div className="mdm-panel" data-testid="imp2-step1">

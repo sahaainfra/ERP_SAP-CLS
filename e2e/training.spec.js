@@ -161,7 +161,7 @@ test('AC-01 course set-up, a session with QR sign-in, attendance, completion, ca
   await api(request, c, 'HRMGR', g.u('hr'), 'post', '/hr/training/certs', { personType: 'EMPLOYEE', personId: bhanu, certType: 'OPLIC', number: 'LIC-77', issuer: 'RTO', validFrom: '2020-01-01', validUntil: '2024-01-01' });
   await hr.page.goto('/training/certifications');
   await expect(hr.page.getByText('Bhanu Rao').first()).toBeVisible();
-  await expect(hr.page.getByText('Expired').first()).toBeVisible();
+  await expect(hr.page.getByText('Expired').filter({ visible: true }).first()).toBeVisible(); // a phone's quick filter of the same name is in the closed filter sheet
   if (phone) await noOverflow(hr.page);
   await shot(hr.page, '08-certifications');
   // skill matrix: the manager assesses Asha

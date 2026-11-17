@@ -6,6 +6,7 @@ import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { OfflineNotice, PhotoButton, filePhoto, useOnline } from '../inv/GateParts.jsx';
 import { fmtQty, lg } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Daily equipment log (part 17.03, FR-01, mobile): pick the machine, the readings and the hours; the server checks them and flags what looks wrong; the photograph of the meter (and, for hired equipment, the vendor's signature) is filed with the log, and it is sent for verification.
 // What is typed is kept on the device until it is saved, so a lost signal does not lose it.
@@ -26,7 +27,7 @@ export default function LogEntryPage() {
   const req = <span aria-hidden="true" className="muted"> *</span>; const sel = (k, label, list, extra = {}) => <Field label={label} name={k} error={error}><select value={f[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 48 }} data-testid={`le-${k}`} {...extra}><option value="">—</option>{list}</select></Field>;
   const inp = (k, label, extra = {}) => <Field label={label} name={k} error={error}><input value={f[k]} onChange={(ev) => set(k, ev.target.value)} style={{ minHeight: 48 }} data-testid={`le-${k}`} inputMode={extra.type === 'number' ? 'decimal' : undefined} {...extra} /></Field>;
   return (
-    <section aria-labelledby="le-h" data-testid="plant-log-entry"><h1 id="le-h">{t('l.entryTitle')}</h1><p className="muted">{t('l.entryIntro')} <Link to="/plant/logs">{t('l.logsTitle')}</Link></p>
+    <section aria-labelledby="le-h" data-testid="plant-log-entry"><PageHeader id="le-h" title={t('l.entryTitle')} subtitle={<>{t('l.entryIntro')} <Link to="/plant/logs">{t('l.logsTitle')}</Link></>} />
       <OfflineNotice t={() => t('l.offline')} on={online} />{error?.form && <p className="field-error" role="alert" data-testid="le-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{ok && <p className="mdm-banner" role="status" data-testid="le-note">{ok}</p>}
       {o.machines.length === 0 ? <div className="mdm-panel" data-testid="le-empty"><h2>{t('l.noMachinesTitle')}</h2><p className="muted">{t('l.noMachinesBody')}</p><Link to="/plant/allocations">{t('a.allocTitle')}</Link></div> : <>
         <div className="mdm-panel"><h2>{t('l.secWhat')}</h2>

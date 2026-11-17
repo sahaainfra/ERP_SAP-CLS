@@ -6,6 +6,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { authHeaders, jobsExportUrl, saveFrom, uploadFile, useImportTypes, useJobs } from '../../platform/excel/api.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { JOB_STATUS, ON_EXISTING, jobLink } from './excel-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Import Center (part 04.13, section 7.1): the imports the person may run (download the template, fill it, upload it), and the history of the jobs. Nothing is saved by an upload: the file is checked and
 // the job page shows the preview, the errors and the commit. Templates and history come from the engine; the person sees only what their rights allow.
@@ -67,8 +68,7 @@ export default function ImportCenterPage() {
   };
   return (
     <section aria-labelledby="ic-title" data-testid="import-center">
-      <h1 id="ic-title">Import Center</h1>
-      <p className="muted">Bring many records in from Excel without bypassing a rule: download the template, fill it, upload it, review the preview and the errors, then commit. Every record is created through the module that owns it, so it meets the same checks, rights and approvals as one typed by hand.</p>
+      <PageHeader id="ic-title" title={"Import Center"} subtitle={"Bring many records in from Excel without bypassing a rule: download the template, fill it, upload it, review the preview and the errors, then commit. Every record is created through the module that owns it, so it meets the same checks, rights and approvals as one typed by hand."} />
       {notice && <p role="status" className="notice" data-testid="ic-notice">{notice}</p>}
       {error?.form && <p role="alert" className="error" data-testid="ic-error">{error.form}{error.correlationId ? ` (reference ${error.correlationId})` : ''}</p>}
       <h2>Templates</h2>

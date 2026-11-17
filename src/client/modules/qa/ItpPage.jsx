@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { qa } from './api.js';
 import { DocBar, Status, sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // ITP Library and Editor (part 18.01, FR-02, FR-05): the plans with their steps and hold, witness, review and surveillance points; an approved plan is applied to the activities of a project to plan the inspection points.
 const ACTS = ['EXCAVATION', 'PCC', 'RCC', 'MASONRY', 'PLASTER', 'WATERPROOFING', 'MEP', 'ROAD', 'OTHER']; const POINTS = ['HOLD', 'WITNESS', 'REVIEW', 'SURVEILLANCE'];
@@ -20,7 +21,7 @@ function Editor({ id }) {
   const set = (k, v) => setF({ ...form, [k]: v }); const setStep = (i, k, v) => set('steps', form.steps.map((s, j) => (j === i ? { ...s, [k]: v } : s)));
   const save = async () => { const body = { title: form.title, activityType: form.activityType, standardRef: form.standardRef || null, steps: form.steps.map((s, i) => ({ ...s, seq: i + 1 })) }; const d = await run(() => (id ? qa.edit('/itps', id, { ...body, rowVersion: form.rowVersion }) : qa.make('/itps', { code: form.code, ...body })), t('saved')); if (d) navigateTo(`/qa/itps?id=${d.id}`); };
   return (
-    <section aria-labelledby="itp-h" data-testid="qa-itp-editor"><h1 id="itp-h">{id ? t('itp.edit') : t('itp.new')}</h1><p className="muted"><Link to="/qa/itps">{t('itp.title')}</Link></p>
+    <section aria-labelledby="itp-h" data-testid="qa-itp-editor"><PageHeader id="itp-h" title={id ? t('itp.edit') : t('itp.new')} subtitle={<Link to="/qa/itps">{t('itp.title')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="itp-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('code')} name="code" error={error}><input value={form.code} disabled={Boolean(id)} onChange={(e) => set('code', e.target.value)} maxLength={40} style={sel} data-testid="itp-code" /></Field>
@@ -56,7 +57,7 @@ function Apply({ x }) {
 function Itp({ id }) {
   const t = useT('qa'); const { q, guard } = useRecord('/itps', id, t('itp.title'), 'qa.itp.view'); usePageTitle(t('itp.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="qa-itp-object" data-status={x.status}><h1 id="itp-h">{x.code} <small>v{x.versionNo}</small> <Status x={x} /></h1><p><Link to="/qa/itps">{t('itp.title')}</Link> · {x.title} · {t(`act.${x.activityType}`)}{x.standardRef ? ` · ${x.standardRef}` : ''}</p>
+    <div data-testid="qa-itp-object" data-status={x.status}><PageHeader id="itp-h" title={<>{x.code} <small>v{x.versionNo}</small> <Status x={x} /></>} meta={<><Link to="/qa/itps">{t('itp.title')}</Link> · {x.title} · {t(`act.${x.activityType}`)}{x.standardRef ? ` · ${x.standardRef}` : ''}</>} />
       <DocBar kind="/itps" x={x} printName={`${x.code}-v${x.versionNo}.pdf`} extra={x.can.edit ? <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => navigateTo(`/qa/itps?edit=${x.id}`)} data-testid="itp-edit">{t('edit')}</button> : null} />
       <div className="table-scroll"><table className="data-table" data-testid="itp-steps-view"><caption>{t('itp.steps')}</caption><thead><tr><th>#</th><th>{t('code')}</th><th>{t('itp.check')}</th><th>{t('itp.point')}</th><th>{t('itp.criteria')}</th><th>{t('itp.standard')}</th><th>{t('itp.frequency')}</th><th>{t('itp.responsibility')}</th></tr></thead>
         <tbody>{x.steps.map((s) => <tr key={s.code}><td>{s.seq}</td><td>{s.code}</td><td>{s.description}</td><td>{t(`pt.${s.pointType}`)}</td><td>{s.criteria}</td><td>{s.standardRef}</td><td>{s.frequency}</td><td>{s.responsibility}</td></tr>)}</tbody></table></div>
@@ -68,7 +69,7 @@ export default function ItpPage() {
   const t = useT('qa'); usePageTitle(t('itp.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const edit = Number(sp.get('edit')) || null; const session = useSession();
   if (sp.get('new')) return <Editor id={null} />; if (edit) return <Editor id={edit} />; if (id) return <section aria-labelledby="itp-h"><Itp id={id} /></section>;
   return (
-    <section aria-labelledby="il-h" data-testid="qa-itps"><h1 id="il-h">{t('itp.title')}</h1><p className="muted">{t('itp.intro')}</p>
+    <section aria-labelledby="il-h" data-testid="qa-itps"><PageHeader id="il-h" title={t('itp.title')} subtitle={t('itp.intro')} />
       <div className="actions-row no-print"><Link to="/qa/itps?new=1">{t('itp.new')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/export?kind=itps', 'itps.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="itp-export">{t('export')}</button></div>
       <ListReport listCode="qa.itps" endpoint="/qa/itps" title={t('itp.title')} session={session.data} rowHref={(r) => `/qa/itps?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/itps?id=${r.id}`)} cardFields={['code', 'title', 'status']} statusKey="status" empty={{ title: t('itp.emptyTitle'), text: t('itp.emptyBody') }} />
     </section>

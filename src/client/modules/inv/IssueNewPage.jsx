@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { fmtQty, is, iv } from './api.js';
 import { OfflineNotice, useOnline, useQrScan } from './GateParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Issue Material (part 16.04, FR-01, FR-02), a mobile screen for the storekeeper: pick the work authorisation (the authorised quantities are filled in), who receives the material, and the lines (an item QR can be scanned); then the receiver acknowledges with a code or a signature on the slip.
 const TYPES = ['OWN_CREW', 'SUBCO_FREE', 'SUBCO_CHARGEABLE', 'EQUIPMENT'];
@@ -26,7 +27,7 @@ export default function IssueNewPage() {
   const kind = f.type.startsWith('SUBCO') ? 'SUBCONTRACTOR' : f.type === 'EQUIPMENT' ? 'EQUIPMENT' : null; const toKind = kind ?? (f.toKind === 'CREW' ? 'CREW' : 'PERSON');
   const bad = !f.storeId || !f.waId || !f.lines.some((l) => Number(l.qty) > 0) || (toKind === 'SUBCONTRACTOR' && !f.toId) || (toKind !== 'SUBCONTRACTOR' && !(f.toKind === 'CREW' && f.toId) && !f.toName.trim());
   return (
-    <section aria-labelledby="in-h" data-testid="issue-new"><h1 id="in-h">{t('i.newTitle')}</h1><p className="muted">{t('i.newHelp')}</p><p><Link to="/inv/issues">{t('i.issuesTitle')}</Link></p><OfflineNotice t={t} on={online} />
+    <section aria-labelledby="in-h" data-testid="issue-new"><PageHeader id="in-h" title={t('i.newTitle')} subtitle={t('i.newHelp')} meta={<Link to="/inv/issues">{t('i.issuesTitle')}</Link>} /><OfflineNotice t={t} on={online} />
       <ScanInput t={t} testId="is-scan" onResult={(r) => { const i = f.lines.findIndex((l) => l.itemId === r.itemId || String(l.item).startsWith(`${r.code} `)); if (i >= 0) setTimeout(() => document.querySelector(`[data-testid="is-qty-${i}"]`)?.focus(), 0); }} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate><div className="form-grid">
         <Field label={t('i.wa')} name="waId" error={error}><select value={f.waId} onChange={(ev) => set('waId', ev.target.value)} style={{ minHeight: 48 }} data-testid="is-wa"><option value="">{t('choose')}</option>{wq.data.map((w) => <option key={w.id} value={w.id}>{w.waNo} · {w.activity ?? ''} · {w.date}</option>)}</select></Field>

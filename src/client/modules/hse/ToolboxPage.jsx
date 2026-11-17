@@ -11,6 +11,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, hse, qs } from './api.js';
 import { ErrorLine, ProjectSite, big, today, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Toolbox Talks (part 19.01, FR-03, on a phone): choose the topic, take the attendance by badge scan, from a search or by name, add photographs, record the talk. BR-01: a person without a valid induction is flagged or refused, as the company configures.
 const TONE = { DRAFT: 'IN_REVIEW', APPROVED: 'APPROVED', CANCELLED: 'CANCELLED' }; const transport = browserTransport(authHeaders);
@@ -20,8 +21,7 @@ function Talk({ id }) {
   const attend = (b, clear) => run(async () => { const r = await hse.post(`/toolbox-talks/${x.id}/attend`, b); clear?.(); return r; }, t('tbt.added'));
   const photo = async (ev) => { const file = ev.target.files?.[0]; ev.target.value = ''; if (!file) return; await run(async () => { const up = await uploadFile(file, { transport, entity: 'hse_toolbox_talks', entityId: x.id }); return hse.post(`/toolbox-talks/${x.id}/photos`, { fileId: up.id }); }, t('tbt.photoAdded')); };
   return (
-    <div data-testid="hse-talk-object" data-status={x.status}><h1 id="tb-h">{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`tbt.st.${x.status}`)} /></h1>
-      <p><Link to="/hse/toolbox">{t('tbt.title')}</Link> · {x.project} · {x.site} · {fmtDate(x.talkDate)} · {x.topic} · {x.conductedBy}</p>
+    <div data-testid="hse-talk-object" data-status={x.status}><PageHeader id="tb-h" title={<>{x.docNo} <StatusBadge status={TONE[x.status]} label={t(`tbt.st.${x.status}`)} /></>} meta={<><Link to="/hse/toolbox">{t('tbt.title')}</Link> · {x.project} · {x.site} · {fmtDate(x.talkDate)} · {x.topic} · {x.conductedBy}</>} />
       <ErrorLine error={error} id="hse-tbt-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-tbt-note">{note}</p>}
       <p data-testid="hse-tbt-count">{t('tbt.attendees', { n: x.attendeeCount })} · {t('tbt.withoutInduction', { n: x.withoutInduction })} · {t('tbt.photos', { n: x.photoCount })} · {t('tbt.mode', { mode: x.mode })}</p>
       {x.can.attend && (
@@ -44,7 +44,7 @@ function TalkNew() {
   if (oq.error?.status === 403) return <NoPermission what={t('tbt.title')} permission="hse.toolbox_talk.create" />; if (oq.isPending) return <Skeleton label={t('tbt.title')} rows={3} />; const o = oq.data;
   const topic = o.topics.find((x) => String(x.id) === String(topicId));
   return (
-    <section aria-labelledby="tbn-h"><h1 id="tbn-h">{t('tbt.new')}</h1><p><Link to="/hse/toolbox">{t('tbt.title')}</Link></p><ErrorLine error={error} id="hse-tbt-error" />
+    <section aria-labelledby="tbn-h"><PageHeader id="tbn-h" title={t('tbt.new')} meta={<Link to="/hse/toolbox">{t('tbt.title')}</Link>} /><ErrorLine error={error} id="hse-tbt-error" />
       <div className="mdm-panel" data-testid="hse-talk-form"><div className="form-grid"><ProjectSite o={o} v={v} set={setV} error={error} />
         <Field label={t('tbt.topic')} name="topicId" error={error}><select value={topicId} onChange={(e) => setTopicId(e.target.value)} style={big} data-testid="hse-tbt-topic"><option value="">—</option>{o.topics.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}</select></Field>
         <Field label={t('tbt.topicText')} name="topicText" error={error}><input value={topicText} onChange={(e) => setTopicText(e.target.value)} maxLength={300} style={big} data-testid="hse-tbt-topic-text" /></Field>
@@ -58,7 +58,7 @@ export default function ToolboxPage() {
   const t = useT('hse'); usePageTitle(t('tbt.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="tb-h"><Talk id={id} /></section>; if (sp.get('new')) return <TalkNew />;
   return (
-    <section aria-labelledby="tbl-h" data-testid="hse-toolbox"><h1 id="tbl-h">{t('tbt.title')}</h1><p className="muted">{t('tbt.intro')}</p>
+    <section aria-labelledby="tbl-h" data-testid="hse-toolbox"><PageHeader id="tbl-h" title={t('tbt.title')} subtitle={t('tbt.intro')} />
       <div className="actions-row no-print"><Link to="/hse/toolbox?new=1" data-testid="hse-tbt-new">{t('tbt.new')}</Link></div>
       <ListReport listCode="hse.toolbox_talks" endpoint="/hse/toolbox-talks" title={t('tbt.title')} session={session.data} rowHref={(r) => `/hse/toolbox?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/toolbox?id=${r.id}`)} cardFields={['docNo', 'topic', 'date', 'attendees']} statusKey="status" dateKey="date" empty={{ title: t('tbt.emptyTitle'), text: t('tbt.emptyBody') }} />
     </section>

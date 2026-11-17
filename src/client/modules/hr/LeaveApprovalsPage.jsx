@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { lv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Leave Approvals (HR, part 07.07, FR-04): the leave applications waiting for the person (the reporting manager, and the HR manager for more than 10 days or a special type), each with the people of the team away on the same days. Tick
 // several and approve them together, or return or reject with a reason; each is decided on its own. A person never decides their own leave.
@@ -24,7 +25,7 @@ export default function LeaveApprovalsPage() {
   };
   return (
     <section aria-labelledby="la-title" data-testid="leave-approvals">
-      <h1 id="la-title">Leave Approvals</h1>
+      <PageHeader id="la-title" title={"Leave Approvals"} />
       <Field label="Note for the decision (needed to reject or return)" name="comment" error={null}><input value={comment} onChange={(e) => setComment(e.target.value)} data-testid="la-comment" /></Field>
       {error?.form && <p className="field-error" role="alert" data-testid="la-error">{error.form}</p>}
       {done && <p className="mdm-banner" role="status" data-testid="la-done">{done}</p>}

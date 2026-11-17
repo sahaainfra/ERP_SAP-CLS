@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { RUN_TONE, download, fmtDate, fmtQty, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Run MRP (part 15.02, FR-01 to FR-03): the parameters of a run (project, weeks ahead, buffer before the start of an activity, whether released take-offs count), the earlier runs of the project, and the result of a run: for each item and week the gross
 // requirement, free stock, orders, in transit, requisitions, safety stock, net requirement, the quantity proposed and its dates; a row opens the activities behind it. Proposals wait for the planner (BR-01).
@@ -24,8 +25,7 @@ function Run({ t, id }) {
   const weeks = [...new Set((r.lines ?? []).map((l) => l.weekStart))].sort(); const short = weeks.map((w) => (r.lines ?? []).filter((l) => l.weekStart === w).reduce((n, l) => n + l.netReq, 0));
   return (
     <div data-testid="run-object" data-status={r.status}>
-      <h1 id="mrp-h">{r.docNo} <StatusBadge status={RUN_TONE[r.status]} label={t(`p.run.${r.status}`)} /></h1>
-      <p><Link to="/proc/mrp">{t('p.back')}</Link> · <Link to={`/proc/mrp-proposals?runId=${r.id}`}>{t('p.proposals')}</Link> · <Link to={`/proc/mrp-heatmap?runId=${r.id}`}>{t('p.heatmap')}</Link></p>
+      <PageHeader id="mrp-h" title={<>{r.docNo} <StatusBadge status={RUN_TONE[r.status]} label={t(`p.run.${r.status}`)} /></>} meta={<><Link to="/proc/mrp">{t('p.back')}</Link> · <Link to={`/proc/mrp-proposals?runId=${r.id}`}>{t('p.proposals')}</Link> · <Link to={`/proc/mrp-heatmap?runId=${r.id}`}>{t('p.heatmap')}</Link></>} />
       <dl className="kv" data-testid="run-figures"><div><dt>{t('p.project')}</dt><dd>{r.projectCode}</dd></div><div><dt>{t('p.horizon')}</dt><dd>{t('p.weeksN', { n: r.horizonWeeks })}</dd></div><div><dt>{t('p.buffer')}</dt><dd>{t('p.daysN', { n: r.bufferDays })}</dd></div><div><dt>{t('p.runAt')}</dt><dd>{r.runAt ? `${fmtDate(r.runAt.slice(0, 10))} · ${r.runBy}` : '—'}</dd></div><div><dt>{t('p.itemsN')}</dt><dd data-testid="run-items">{r.itemCount}</dd></div><div><dt>{t('p.shortWeeks')}</dt><dd data-testid="run-short">{r.shortageCount}</dd></div><div><dt>{t('p.proposals')}</dt><dd data-testid="run-proposals">{r.proposalCount} ({t('p.openN', { n: r.openProposals })})</dd></div></dl>
       {r.warnings.length > 0 && <ul className="mdm-banner" role="status" data-testid="run-warnings">{r.warnings.map((w) => <li key={w}>{w}</li>)}</ul>}
       {error?.form && <p className="field-error" role="alert" data-testid="run-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="run-note">{note}</p>}
@@ -68,7 +68,7 @@ export default function MrpPage() {
   const go = async () => { setError(null); setBusy(true); try { const c = await pc.runCreate({ projectId: Number(projectId), horizonWeeks: Number(f.horizonWeeks), bufferDays: Number(f.bufferDays), includeMto: f.includeMto }); await pc.runMake(c.id); qc.invalidateQueries({ queryKey: ['proc'] }); navigateTo(`/proc/mrp?id=${c.id}`); } catch (e) { setError(errorInfo(e)); } finally { setBusy(false); } };
   return (
     <section aria-labelledby="mrp-h" data-testid="proc-mrp">
-      <h1 id="mrp-h">{t('p.mrpTitle')}</h1><p className="muted">{t('p.mrpIntro')}</p>
+      <PageHeader id="mrp-h" title={t('p.mrpTitle')} subtitle={t('p.mrpIntro')} />
       {projects.length === 0 ? <div className="mdm-panel" data-testid="mrp-none"><h2>{t('p.noProject')}</h2><p className="muted">{t('p.noProjectBody')}</p></div> : (
         <form className="mdm-panel" onSubmit={(e) => { e.preventDefault(); go(); }} noValidate aria-label={t('p.params')}>
           <div className="form-grid">

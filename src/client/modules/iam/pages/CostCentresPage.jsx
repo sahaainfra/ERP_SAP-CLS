@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { QueryState, can, usePageTitle } from '../../core/pages/ui.jsx';
 import { useOrgTree } from '../api/org.js';
 import OrgList, { StatusChip, labelOf } from '../components/OrgList.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const TYPES = [['COST', 'Cost centre'], ['PROFIT', 'Profit centre']];
 const LINKS = [['DEPARTMENT', 'Department'], ['PROJECT', 'Project'], ['SITE', 'Site']];
@@ -45,7 +46,7 @@ export default function CostCentresPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Organisation &rsaquo; Cost &amp; Profit Centres</nav>
-      <div className="page-head"><h1 id="page-title">Cost &amp; Profit Centres</h1></div>
+      <PageHeader id="page-title" title={"Cost & Profit Centres"} />
       <div role="tablist" aria-label="Views" className="actions">
         {[['list', 'List'], ['hierarchy', 'Hierarchy']].map(([id, label]) => (
           <button key={id} type="button" role="tab" id={`cctab-${id}`} aria-selected={view === id} className={`btn${view === id ? ' btn-primary' : ''}`} onClick={() => setView(id)}>{label}</button>

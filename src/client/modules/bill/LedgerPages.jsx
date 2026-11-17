@@ -10,6 +10,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
 
 // Retention, security deposit and advance ledgers (part 22.07).
 const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -22,11 +24,11 @@ export function RetentionPage() {
   const en = useQuery({ queryKey: ['bill', 'retention-entries', open?.partyType, open?.kind, open?.scopeId], queryFn: () => bill.get(`/retention/entries${qs({ partyType: f.partyType, kind: open.kind, scopeId: open.scopeId })}`), enabled: Boolean(open), retry: false });
   if (q.error?.status === 403) return <NoPermission what={t('rt.title')} permission="bill.retention.view" />; if (q.isPending) return <Skeleton label={t('rt.title')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />; const d = q.data; const client = f.partyType === 'CLIENT';
   return (
-    <section aria-labelledby="rt-h" data-testid="bill-retention"><h1 id="rt-h">{t('rt.title')}</h1><p className="muted">{t('rt.intro')}</p>
+    <section aria-labelledby="rt-h" data-testid="bill-retention"><PageHeader id="rt-h" title={t('rt.title')} subtitle={t('rt.intro')} />
       <div className="form-grid no-print"><Field label={t('rt.side')} name="partyType" error={null}><select value={f.partyType} onChange={(e) => { setF({ ...f, partyType: e.target.value }); setOpen(null); }} style={big} data-testid="bill-rt-side"><option value="CLIENT">{t('rt.client')}</option><option value="SUBCONTRACTOR">{t('rt.sub')}</option></select></Field>
         <Field label={t('project')} name="projectId" error={null}><select value={f.projectId} onChange={(e) => setF({ ...f, projectId: e.target.value })} style={big} data-testid="bill-rt-project"><option value="">{t('rc.allLevels')}</option>{(o.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field></div>
       <div className="actions-row no-print"><button type="button" className="btn" onClick={() => run(() => bill.exportFile(`/retention/export${qs({ partyType: f.partyType, projectId: f.projectId })}`, `retention-${f.partyType.toLowerCase()}.csv`))} data-testid="bill-rt-export">{t('rc.export')}</button> · <Link to="/bill/advances">{t('adv.title')}</Link> · <Link to="/bill/releases">{t('rel.title')}</Link></div>
-      <div className="form-grid" data-testid="bill-rt-totals">{[['deducted', d.totals.deducted], ['released', d.totals.released], ['balance', d.totals.balance]].map(([k, v]) => <div className="mdm-panel" key={k} data-testid={`bill-rt-t-${k}`}><div className="muted">{t(`rt.t.${k}`)}</div><strong style={{ fontSize: '1.3rem' }}>{money(v)}</strong></div>)}</div>
+      <KpiRow data-testid="bill-rt-totals">{[['deducted', d.totals.deducted], ['released', d.totals.released], ['balance', d.totals.balance]].map(([k, v]) => <KpiTile label={t(`rt.t.${k}`)} value={money(v)} amount={v} kind="money" key={k} data-testid={`bill-rt-t-${k}`} />)}</KpiRow>
       <h2>{t('rt.ageing')}</h2><div className="table-scroll"><table className="data-table" data-testid="bill-rt-ageing"><thead><tr><th>{t('rt.when')}</th><th className="num">{t('rt.count')}</th><th className="num">{t('rt.t.balance')}</th></tr></thead><tbody>{d.ageing.map((a) => <tr key={a.bucket} data-bucket={a.bucket}><td><StatusBadge status={BUCKET_TONE[a.bucket]} label={t(`rt.b.${a.bucket}`)} /></td><td className="num">{a.count}</td><td className="num">{money(a.balance)}</td></tr>)}</tbody></table></div>
       {d.rows.length === 0 ? <div className="empty-state"><h2>{t('rt.emptyTitle')}</h2><p>{t('rt.emptyBody')}</p></div> : (
         <div className="table-scroll"><table className="data-table" data-testid="bill-rt-table"><thead><tr><th>{client ? t('rt.contract') : t('rt.wo')}</th><th>{t('rt.party')}</th><th>{t('rt.kind')}</th><th className="num">{t('rt.t.deducted')}</th><th className="num">{t('rt.t.released')}</th><th className="num">{t('rt.t.balance')}</th><th className="num">{t('rt.guarantee')}</th><th>{t('rt.expected')}</th><th>{t('rt.when')}</th></tr></thead>
@@ -63,9 +65,8 @@ function Advance({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/advances', id, t('adv.one'), 'bill.advance.view'); const [tab, setTab] = useState('recovery'); usePageTitle(t('adv.one')); const sched = useQuery({ queryKey: ['bill', 'adv-sched', id], queryFn: () => bill.get(`/advances/${id}/recovery-preview?bills=200000,250000,300000&asOf=${today()}`), enabled: Boolean(q.data) && q.data.state === 'ACTIVE', retry: false });
   if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="bill-adv-object" data-status={x.status} data-state={x.state}><h1 id="adv-h">{x.refNo} <Status x={x} /> <StatusBadge status={x.state === 'RECOVERED' ? 'APPROVED' : x.state === 'ACTIVE' ? 'IN_REVIEW' : 'DRAFT'} label={t(`adv.s.${x.state}`)} /></h1>
-      <p><Link to="/bill/advances">{t('adv.title')}</Link> · {x.docNo} · {x.project} · {x.party} · {t(`adv.d.${x.direction}`)} · {t(`adv.t.${x.type}`)}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('cb.amount')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-adv-amount-value">{money(x.amount)}</strong></div><div className="mdm-panel"><div className="muted">{t('adv.recovered')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-adv-recovered">{money(x.recovered)}</strong> <span className="muted">({x.recoveredPct}%)</span></div><div className="mdm-panel"><div className="muted">{t('adv.outstanding')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-adv-outstanding">{money(x.outstanding)}</strong>{x.interestPct > 0 && <div className="muted">{t('adv.interestDue', { pct: x.interestPct, amount: money(x.interestAccrued) })}</div>}</div></div>
+    <div data-testid="bill-adv-object" data-status={x.status} data-state={x.state}><PageHeader id="adv-h" title={<>{x.refNo} <Status x={x} /> <StatusBadge status={x.state === 'RECOVERED' ? 'APPROVED' : x.state === 'ACTIVE' ? 'IN_REVIEW' : 'DRAFT'} label={t(`adv.s.${x.state}`)} /></>} meta={<><Link to="/bill/advances">{t('adv.title')}</Link> · {x.docNo} · {x.project} · {x.party} · {t(`adv.d.${x.direction}`)} · {t(`adv.t.${x.type}`)}</>} />
+      <KpiRow><KpiTile label={t('cb.amount')} value={money(x.amount)} amount={x.amount} kind="money" valueTestid="bill-adv-amount-value" /><KpiTile label={t('adv.recovered')} value={money(x.recovered)} amount={x.recovered} kind="money" valueTestid="bill-adv-recovered"><span className="muted">({x.recoveredPct}%)</span></KpiTile><KpiTile label={t('adv.outstanding')} value={money(x.outstanding)} amount={x.outstanding} kind="money" valueTestid="bill-adv-outstanding">{x.interestPct > 0 && <div className="muted">{t('adv.interestDue', { pct: x.interestPct, amount: money(x.interestAccrued) })}</div>}</KpiTile></KpiRow>
       <p className="muted">{x.rule.mode === 'FIXED' ? t('adv.ruleFixed', { amount: money(x.rule.fixed) }) : t('adv.rulePct', { pct: x.rule.pct })}{x.bg ? ` · ${t('adv.bg')} ${x.bg.bg_no}` : ''}</p>
       <div className="actions-row no-print" role="tablist">{['recovery', 'schedule', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-adv-tab-${k}`}>{t(`adv.tab.${k}`)}</button>)}</div>
       {tab === 'recovery' && <div className="table-scroll" data-testid="bill-adv-recoveries">{x.recoveries.length === 0 ? <p className="muted">{t('adv.noRecoveries')}</p> : <table className="data-table"><thead><tr><th>{t('when')}</th><th>{t('rt.ref')}</th><th className="num">{t('adv.principal')}</th><th className="num">{t('adv.interestCol')}</th><th className="num">{t('adv.outstanding')}</th></tr></thead><tbody>{x.recoveries.map((r) => <tr key={r.id}><td>{fmtDate(r.date)}</td><td>{r.billRef ?? r.source}</td><td className="num">{money(r.principal)}</td><td className="num">{money(r.interest)}</td><td className="num">{money(r.outstanding)}</td></tr>)}</tbody></table>}</div>}
@@ -78,9 +79,9 @@ function Advance({ id }) {
 export function AdvancesPage() {
   const t = useT('bill'); usePageTitle(t('adv.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="adv-h"><Advance id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="advn-h"><h1 id="advn-h">{t('adv.new')}</h1><p><Link to="/bill/advances">{t('adv.title')}</Link></p><AdvanceForm /></section>;
+  if (sp.get('new')) return <section aria-labelledby="advn-h"><PageHeader id="advn-h" title={t('adv.new')} meta={<Link to="/bill/advances">{t('adv.title')}</Link>} /><AdvanceForm /></section>;
   return (
-    <section aria-labelledby="advs-h" data-testid="bill-advances"><h1 id="advs-h">{t('adv.title')}</h1><p className="muted">{t('adv.intro')}</p>
+    <section aria-labelledby="advs-h" data-testid="bill-advances"><PageHeader id="advs-h" title={t('adv.title')} subtitle={t('adv.intro')} />
       <div className="actions-row no-print"><Link to="/bill/advances?new=1" data-testid="bill-adv-new">{t('adv.new')}</Link> · <Link to="/bill/retention">{t('rt.title')}</Link></div>
       <ListReport listCode="bill.advances" endpoint="/bill/advances" title={t('adv.title')} session={session.data} rowHref={(r) => `/bill/advances?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/advances?id=${r.id}`)} cardFields={['refNo', 'party', 'amount', 'recovered', 'outstanding', 'state']} statusKey="status" empty={{ title: t('adv.emptyTitle'), text: t('adv.emptyBody') }} />
     </section>
@@ -116,8 +117,8 @@ function Checklist({ items }) {
 function Release({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/releases', id, t('rel.one'), 'bill.release.view'); usePageTitle(t('rel.one')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="bill-rel-object" data-status={x.status}><h1 id="rel-h">{x.docNo} <Status x={x} /></h1><p><Link to="/bill/releases">{t('rel.title')}</Link> · {x.project} · {t(`rt.k.${x.releaseType}`)} · {t(`rt.${x.partyType === 'CLIENT' ? 'client' : 'sub'}`)} {x.party ?? ''} · {t(`rel.b.${x.basis}`)}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('cb.amount')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-rel-amount-value">{money(x.amount)}</strong></div><div className="mdm-panel"><div className="muted">{t('rel.balanceBefore')}</div><strong style={{ fontSize: '1.3rem' }}>{money(x.balanceBefore)}</strong>{x.releasedOn && <div className="muted">{t('rel.releasedOn', { date: fmtDate(x.releasedOn) })}</div>}</div></div>
+    <div data-testid="bill-rel-object" data-status={x.status}><PageHeader id="rel-h" title={<>{x.docNo} <Status x={x} /></>} meta={<><Link to="/bill/releases">{t('rel.title')}</Link> · {x.project} · {t(`rt.k.${x.releaseType}`)} · {t(`rt.${x.partyType === 'CLIENT' ? 'client' : 'sub'}`)} {x.party ?? ''} · {t(`rel.b.${x.basis}`)}</>} />
+      <KpiRow><KpiTile label={t('cb.amount')} value={money(x.amount)} amount={x.amount} kind="money" valueTestid="bill-rel-amount-value" /><KpiTile label={t('rel.balanceBefore')} value={money(x.balanceBefore)} amount={x.balanceBefore} kind="money">{x.releasedOn && <div className="muted">{t('rel.releasedOn', { date: fmtDate(x.releasedOn) })}</div>}</KpiTile></KpiRow>
       <h2>{t('rel.checklist')}</h2><Checklist items={x.checklist} />{x.waiverReason && <p data-testid="bill-rel-waived">{t('rel.waived')}: {x.waiverReason}</p>}
       <AttachmentPanel type="bill_releases" id={x.id} entity="bill_releases" canEdit={x.can.edit} />
       <DocBar kind="/releases" x={x} printName={`${x.docNo.replaceAll('/', '-')}.pdf`} />
@@ -127,9 +128,9 @@ function Release({ id }) {
 export function ReleasesPage() {
   const t = useT('bill'); usePageTitle(t('rel.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="rel-h"><Release id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="reln-h"><h1 id="reln-h">{t('rel.new')}</h1><p><Link to="/bill/releases">{t('rel.title')}</Link></p><ReleaseForm defaults={{ partyType: sp.get('partyType'), scopeId: sp.get('scopeId'), kind: sp.get('kind') }} /></section>;
+  if (sp.get('new')) return <section aria-labelledby="reln-h"><PageHeader id="reln-h" title={t('rel.new')} meta={<Link to="/bill/releases">{t('rel.title')}</Link>} /><ReleaseForm defaults={{ partyType: sp.get('partyType'), scopeId: sp.get('scopeId'), kind: sp.get('kind') }} /></section>;
   return (
-    <section aria-labelledby="rels-h" data-testid="bill-releases"><h1 id="rels-h">{t('rel.title')}</h1><p className="muted">{t('rel.intro')}</p>
+    <section aria-labelledby="rels-h" data-testid="bill-releases"><PageHeader id="rels-h" title={t('rel.title')} subtitle={t('rel.intro')} />
       <div className="actions-row no-print"><Link to="/bill/releases?new=1" data-testid="bill-rel-new">{t('rel.new')}</Link> · <Link to="/bill/retention">{t('rt.title')}</Link></div>
       <ListReport listCode="bill.releases" endpoint="/bill/releases" title={t('rel.title')} session={session.data} rowHref={(r) => `/bill/releases?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/releases?id=${r.id}`)} cardFields={['docNo', 'project', 'kind', 'party', 'amount', 'status']} statusKey="status" empty={{ title: t('rel.emptyTitle'), text: t('rel.emptyBody') }} />
     </section>

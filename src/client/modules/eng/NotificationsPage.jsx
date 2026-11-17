@@ -6,6 +6,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { NTF, useMark, useNotifications, useReadAll } from '../../platform/notifications/api.js';
 import { useLiveRefresh } from '../../platform/realtime/socket.js';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Notification Centre (part 04.06, section 7.1): everything the person was told, newest first and grouped by day, with filters by kind, unread and archived views, a link to the work each
 // one is about, and marks to read, unread and archive. It follows the person's own room, so a new notification appears as it is made.
@@ -37,7 +38,7 @@ export default function NotificationsPage({ session }) {
   const open = (n) => { if (!n.read) mark.mutate({ id: n.id, action: 'read' }); if (n.link) navigateTo(n.link); };
   return (
     <section aria-labelledby="nc-title" data-testid="notifications">
-      <h1 id="nc-title">Notifications</h1>
+      <PageHeader id="nc-title" title={"Notifications"} />
       {collab && <MentionsInbox navigate={navigateTo} />}
       <p className="muted">What the system told you. <Link to="/notifications/preferences">Preferences</Link> decide the channels, the quiet hours and the digest.</p>
       <div role="tablist" aria-label="Show" className="wf-inline">

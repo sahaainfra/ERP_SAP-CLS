@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { RC_TONE, download, fmtDate, fmtQty, fmtRs, pc, today } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Service entry sheet (part 15.06, FR-05): the site certification of the services performed in a period against the lines of a service order. A site engineer certifies it and the project manager approves it; only then does it count as certified
 // (and become what invoice matching pays against). A certified sheet is amended by a copy that replaces it; a cancelled one is reversed.
@@ -26,8 +27,7 @@ function Se({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('e.sayWhy') }); return; } run(() => pc.decide(r.taskId, action, comment.trim() || null), t(`e.done.${action}`)); };
   return (
     <div data-testid="se-object" data-status={r.status}>
-      <h1 id="se-h">{r.docNo} <StatusBadge status={RC_TONE[r.status]} label={t(`e.s.${r.status}`)} /></h1>
-      <p><Link to="/proc/service-entries">{t('e.back')}</Link> · <Link to={`/proc/service-orders?id=${r.soId}`}>{r.soNo}</Link> {r.soTitle}</p>
+      <PageHeader id="se-h" title={<>{r.docNo} <StatusBadge status={RC_TONE[r.status]} label={t(`e.s.${r.status}`)} /></>} meta={<><Link to="/proc/service-entries">{t('e.back')}</Link> · <Link to={`/proc/service-orders?id=${r.soId}`}>{r.soNo}</Link> {r.soTitle}</>} />
       <dl className="kv" data-testid="se-figures"><div><dt>{t('e.vendor')}</dt><dd>{r.vendor}</dd></div><div><dt>{t('e.period')}</dt><dd>{fmtDate(r.periodFrom)} – {fmtDate(r.periodTo)}</dd></div>{r.canSeeRates && <div><dt>{t('e.amount')}</dt><dd data-testid="se-amount">{fmtRs(r.amount)}</dd></div>}<div><dt>{t('e.preparedBy')}</dt><dd>{r.requestedBy}</dd></div>{r.certifiedBy && <div><dt>{t('e.certifiedBy')}</dt><dd>{r.certifiedBy}</dd></div>}</dl>
       {error?.form && <p className="field-error" role="alert" data-testid="se-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="se-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="se-lines"><caption>{t('e.lines')}</caption><thead><tr><th>#</th><th>{t('e.service')}</th><th className="num">{t('e.thisPeriod')}</th><th className="num">{t('e.ordered')}</th><th className="num">{t('e.certifiedSoFar')}</th>{r.canSeeRates && <th className="num">{t('e.amount')}</th>}<th>{t('e.note')}</th></tr></thead>
@@ -64,7 +64,7 @@ function SeForm({ t, soId0, editId }) {
   const body = () => ({ periodFrom: form.periodFrom, periodTo: form.periodTo, lines: Object.entries(q).filter(([, v]) => Number(v.qty) > 0).map(([k, v]) => ({ soLineId: Number(k), qty: Number(v.qty), note: v.note || null })) });
   const save = async (send) => { setError(null); setBusy(true); try { let d = editId ? await pc.seUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await pc.seCreate({ soId: sid, ...body() }); if (send) d = await pc.seAct(d.id, 'submit'); navigateTo(`/proc/service-entries?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="sen-h" data-testid="proc-se-form"><h1 id="sen-h">{editId ? t('e.edit') : t('e.new')}</h1><p className="muted">{t('e.newHelp')}</p><p><Link to="/proc/service-entries">{t('e.back')}</Link></p>
+    <section aria-labelledby="sen-h" data-testid="proc-se-form"><PageHeader id="sen-h" title={editId ? t('e.edit') : t('e.new')} subtitle={t('e.newHelp')} meta={<Link to="/proc/service-entries">{t('e.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">
           <Field label={t('e.order')} name="soId" error={error}><select value={soId} disabled={Boolean(editId)} onChange={(ev) => { setSoId(ev.target.value); setQty({}); }} style={{ minHeight: 44 }} data-testid="sen-order"><option value="">{t('e.choose')}</option>{(oq.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.docNo} · {o.title} ({o.project})</option>)}</select></Field>
@@ -84,7 +84,7 @@ export default function ServiceEntriesPage() {
   if (sp.get('new') === '1') return <SeForm key={sp.get('edit') ?? sp.get('so') ?? 'new'} t={t} soId0={Number(sp.get('so')) || null} editId={Number(sp.get('edit')) || null} />;
   if (id) return <section aria-labelledby="se-h" data-testid="proc-ses"><Se key={id} t={t} id={id} /></section>;
   return (
-    <section aria-labelledby="ses-h" data-testid="proc-ses"><h1 id="ses-h">{t('e.title')}</h1><p className="muted">{t('e.intro')}</p>
+    <section aria-labelledby="ses-h" data-testid="proc-ses"><PageHeader id="ses-h" title={t('e.title')} subtitle={t('e.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.service_entry.create') && <Link to="/proc/service-entries?new=1">{t('e.new')}</Link>} <Link to="/proc/service-orders">{t('e.orders')}</Link></div>
       <ListReport listCode="proc.service_entries" endpoint="/proc/service-entries" title={t('e.title')} session={session.data} rowHref={(r) => `/proc/service-entries?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/service-entries?id=${r.id}`)}
         cardFields={['docNo', 'order', 'vendor', 'periodTo', 'amount']} statusKey="status" empty={{ title: t('e.emptyTitle'), text: t('e.emptyBody') }} /></section>

@@ -5,6 +5,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { perf } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Appraisal Reviews (HR, part 07.11): the List Report of reviews for the person (their own), the manager (their team) and HR (everybody): stage, status, KPI score. HR opens a cycle's reviews with "Make the reviews" once the cycle is open.
 export default function ReviewsPage() {
@@ -19,7 +20,7 @@ export default function ReviewsPage() {
   const launch = async (c) => { setError(null); setNote(null); try { const r = await perf.launch(c.id); setNote(t('rvl.made', { n: r.made, name: c.name })); qc.invalidateQueries({ queryKey: ['ui', 'list'] }); qc.invalidateQueries({ queryKey: ['perf'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="rl-title" data-testid="reviews">
-      <h1 id="rl-title" className="sr-only">{t('rvl.title')}</h1>
+      <PageHeader id="rl-title" srOnly title={t('rvl.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="rl-error">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="rl-note">{note}</p>}
       {perms.includes('hr.review.create') && open.length > 0 && <div className="actions-row no-print">{open.map((c) => <button key={c.id} type="button" className="btn btn-primary" onClick={() => launch(c)} data-testid="rl-launch">{t('rvl.launch', { name: c.name })}</button>)}</div>}

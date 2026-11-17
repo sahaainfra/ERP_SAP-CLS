@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { acceptKeys, ensureDevice, localDevice, numberFor, secApi } from '../../platform/secure/engine.js';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Safety Number Verification (part 05.03, section 7.2, FR-04): the 60 digits two people compare to be sure nobody sits between them, whether this device trusts the keys it has seen, a warning when they changed,
 // and the person's own devices (a lost one is revoked here, BR-02). The number changes when either person adds or revokes a device.
@@ -71,7 +72,7 @@ export default function SafetyNumberPage({ session }) {
   useEffect(() => { if (one) setUsers([one]); else if (d.data) setUsers(d.data.members.map((m) => m.user).filter((u) => u.toLowerCase() !== session.user.toLowerCase())); }, [one, d.data, session.user]);
   return (
     <section aria-labelledby="sv-title" data-testid="safety-page">
-      <h1 id="sv-title">Safety Number Verification</h1>
+      <PageHeader id="sv-title" title={"Safety Number Verification"} />
       {!conv && !one && <p className="muted">Open a secure conversation and choose <strong>Safety number</strong> to compare the number with the people in it. Your own devices are below.</p>}
       {d.isError && <ErrorState error={d.error} onRetry={d.refetch} />}
       {d.isPending && conv && <Skeleton label="Loading the conversation" rows={2} />}

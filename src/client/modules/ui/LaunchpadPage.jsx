@@ -1,10 +1,13 @@
-import { useFavouriteActions, useLaunchpad, useNavigation } from '../../platform/shell/api.js';
+import { useFavouriteActions, useFlagOn, useLaunchpad, useNavigation } from '../../platform/shell/api.js';
+import DashboardView from '../../platform/dashboard/DashboardView.jsx';
 import { entryFor } from '../../platform/shell/nav.js';
 import { storedAppearance } from '../../platform/design/appearance.js';
 import { EmptyState } from '../../platform/feedback/states.jsx';
 import { QueryState } from '../core/pages/ui.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { confirmLeave } from '../../platform/forms/guard.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { labelIn } from '../../platform/i18n/index.js';
 
 const go = (to) => (e) => {
   e.preventDefault();
@@ -16,10 +19,11 @@ const go = (to) => (e) => {
 /** Home: the launchpad (FR-06): what is waiting for the person, tiles for the pages their role opens, favourites and recent records. */
 export default function LaunchpadPage({ session }) {
   const lp = useLaunchpad();
+  const insights = useFlagOn('ff.ui.p16605'); // part 166.5, FR-03: the insight cards of the person's role
   const navQuery = useNavigation();
   const { remove, order } = useFavouriteActions();
   const language = storedAppearance().language;
-  const text = (t) => (language === 'hi' && t.labelHi) || t.label;
+  const text = (t) => labelIn(t, language);
   const nav = navQuery.data;
   const pending = lp.data?.pending;
   const cards = pending ? [
@@ -37,9 +41,9 @@ export default function LaunchpadPage({ session }) {
 
   return (
     <section aria-labelledby="page-title" className="launchpad">
-      <div className="page-head"><h1 id="page-title">Home</h1></div>
-      <p className="muted">Welcome{session?.user ? `, ${session.user}` : ''}. Everything below follows what your role may open.</p>
+      <PageHeader id="page-title" title={"Home"} subtitle={<>Welcome{session?.user ? `, ${session.user}` : ''}. Everything below follows what your role may open.</>} />
       <QueryState query={lp} what="your home page" />
+      {insights && <div data-testid="home-insights"><DashboardView code="home-insights" heading="Insights for your role" embedded /></div>}
       {lp.data && (
         <>
           {cards.length > 0 && (

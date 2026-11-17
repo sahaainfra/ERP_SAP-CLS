@@ -17,6 +17,7 @@ import { parse } from '../../platform/validation/index.js';
 // another administrator approves in the approval engine (maker-checker), audited with old and new values.
 
 export const APPROVAL_TYPE = 'ui_nav_change';
+export const FIELD_FLAG = 'ff.field.p16603';
 export const NAV_CHAIN = ['SYSADM'];
 export const SELF = 'self'; // the explicit key for "any signed-in person" (BR-01: an entry without a key is not allowed, except Home and Profile)
 const NO_KEY_OK = new Set(['home', 'profile']);
@@ -31,6 +32,7 @@ const route = z.string().trim().max(300).regex(/^\/(?!\/)[A-Za-z0-9/_\-?=&%.]*$/
 const changeShape = z.object({
   label: text(60).optional(),
   labelHi: z.string().trim().max(60).nullable().optional(),
+  labelTe: z.string().trim().max(60).nullable().optional(), // part 166.3
   icon: z.string().trim().max(60).nullable().optional(),
   sortOrder: z.number().int().min(0).max(100000).optional(),
   parentCode: z.string().trim().max(60).optional(),
@@ -63,8 +65,16 @@ const flagList = (rows) => [...new Set(rows.map((r) => r.feature_flag).filter(Bo
 const COLUMNS = { label: 'label', labelHi: 'label_hi', icon: 'icon', sortOrder: 'sort_order', parentCode: 'parent_code', permissionKey: 'permission_key', featureFlag: 'feature_flag', keywords: 'keywords', mobileVisible: 'mobile_visible', requiresContext: 'requires_context', shortcut: 'shortcut', tile: 'tile', isActive: 'is_active' };
 const BOOLEANS = new Set(['mobileVisible', 'tile', 'isActive']);
 
+/** The Telugu labels of the registry (part 166.3): a company's own over the built-in one. */
+function teLabelsOf(db, companyId) {
+  const out = new Map();
+  for (const r of db.prepare("SELECT nav_code, label FROM ui_navigation_labels WHERE lang = 'te' AND is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY company_id IS NOT NULL").all(companyId ?? null)) out.set(r.nav_code, r.label);
+  return out;
+}
+const withTe = (db, companyId, rows) => { const te = teLabelsOf(db, companyId); return rows.map((r) => ({ ...r, label_te: te.get(r.code) ?? null })); };
+
 const presentEntry = (r) => ({
-  code: r.code, parentCode: r.parent_code, kind: r.kind, placement: r.placement, label: r.label, labelHi: r.label_hi, route: r.route, icon: r.icon,
+  code: r.code, parentCode: r.parent_code, kind: r.kind, placement: r.placement, label: r.label, labelHi: r.label_hi, labelTe: r.label_te ?? null, route: r.route, icon: r.icon,
   permissionKey: r.permission_key, featureFlag: r.feature_flag, sortOrder: r.sort_order, keywords: r.keywords, mobileVisible: r.mobile_visible === 1,
   requiresContext: r.requires_context, shortcut: r.shortcut, tile: r.tile === 1, isActive: r.is_active === 1, version: r.version,
   quickCreate: r.quick_create_label ? { label: r.quick_create_label, route: r.quick_create_route } : null,
@@ -84,13 +94,21 @@ export const navHandlers = {
       const before = {};
       const after = {};
       const entry = presentEntry(row);
+      const te = teLabelsOf(db, request.companyId);
       for (const [k, v] of Object.entries(changes)) {
+        if (k === 'labelTe') { // part 166.3: the Telugu label is kept beside the entry (ui_navigation_labels)
+          db.prepare('UPDATE ui_navigation_labels SET deleted_at = ?, deleted_by = ? WHERE nav_code = ? AND lang = \'te\' AND COALESCE(company_id, 0) = COALESCE(?, 0) AND deleted_at IS NULL').run(nowIso(), actor.user, code, row.company_id);
+          if (v) db.prepare("INSERT INTO ui_navigation_labels (company_id, nav_code, lang, label, created_by, source_type) VALUES (?, ?, 'te', ?, ?, 'ui_nav_change')").run(row.company_id, code, v, actor.user);
+          before[k] = te.get(code) ?? null;
+          after[k] = v;
+          continue;
+        }
         sets.push(`${COLUMNS[k]} = ?`);
         params.push(valueOf(k, v));
         before[k] = entry[k];
         after[k] = v;
       }
-      db.prepare(`UPDATE ui_navigation_entries SET ${sets.join(', ')}, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...params, actor.user, nowIso(), row.id);
+      db.prepare(`UPDATE ui_navigation_entries SET ${sets.map((x) => `${x}, `).join('')}updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?`).run(...params, actor.user, nowIso(), row.id);
       writeAudit(db, { entity: 'ui_navigation_entries', entityId: row.id, action: 'update', oldValues: before, newValues: after, reason: request.reason, actor: actor.user, companyId: request.companyId });
       publishEvent(db, { type: 'ui.navigation.changed', entity: 'navigation_entry', entityId: row.id, actorId: actor.user, companyId: request.companyId, data: { code, fields: Object.keys(changes), request: request.id } });
     },
@@ -106,16 +124,23 @@ export function createShellService({ db, flags, approvals }) {
   const user = (actor) => actor.user;
 
   // ---- navigation ----
-  const rowsFor = (actor) => db.prepare('SELECT * FROM ui_navigation_entries WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY sort_order, id').all(actor.companyId);
+  const rowsFor = (actor) => withTe(db, actor.companyId, db.prepare('SELECT * FROM ui_navigation_entries WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY sort_order, id').all(actor.companyId));
   // a right held for some projects or sites only still opens the page: the page and its API apply the data scope
   const allowedBy = (actor, key) => (key === null || key === SELF ? true : hasPermissionAnywhere(actor, key));
 
   function navigation(actor) {
     const rows = rowsFor(actor);
-    const on = flags.evaluate(actor, { keys: flagList(rows) });
+    const on = flags.evaluate(actor, { keys: [...flagList(rows), FIELD_FLAG] });
+    const field = on[FIELD_FLAG] === true; // part 166.3
     const groups = rows.filter((r) => r.kind === 'group');
-    const byParent = new Map(groups.map((g) => [g.code, { code: g.code, label: g.label, labelHi: g.label_hi, icon: g.icon, placement: g.placement, shortcut: g.shortcut, pages: [] }]));
-    const fieldTiles = new Map(db.prepare('SELECT code, nav_code, label, label_hi, sort_order FROM ui_field_tiles WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').all(actor.companyId).map((t) => [t.nav_code, { code: t.code, label: t.label, labelHi: t.label_hi, order: t.sort_order }]));
+    const byParent = new Map(groups.map((g) => [g.code, { code: g.code, label: g.label, labelHi: g.label_hi, labelTe: g.label_te ?? null, icon: g.icon, placement: g.placement, shortcut: g.shortcut, pages: [] }]));
+    // the field tiles (03.06); from part 166.3 a tile may name the roles it is for, and the part's tiles replace the sample ones while its flag is ON
+    const mine = new Set(actor.roles ?? []);
+    const rules = new Map(db.prepare('SELECT tile_code, role_codes, feature_flag, retired_flag, tone, label_te FROM ui_field_tile_rules WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY company_id IS NOT NULL').all(actor.companyId).map((r) => [r.tile_code, r]));
+    const fieldTiles = new Map(db.prepare('SELECT code, nav_code, label, label_hi, sort_order FROM ui_field_tiles WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').all(actor.companyId)
+      .map((t) => ({ ...t, role_codes: null, feature_flag: null, retired_flag: null, tone: null, label_te: null, ...(rules.get(t.code) ?? {}) }))
+      .filter((t) => (!t.feature_flag || on[t.feature_flag] === true) && !(t.retired_flag && on[t.retired_flag] === true) && (!field || !t.role_codes || t.role_codes.split(',').some((c) => mine.has(c.trim()))))
+      .map((t) => [t.nav_code, { code: t.code, label: t.label, labelHi: t.label_hi, labelTe: t.label_te, order: t.sort_order, tone: t.tone ?? null }]));
     const denied = [];
     const quickCreate = [];
     for (const r of rows.filter((x) => x.kind === 'page')) {
@@ -128,10 +153,29 @@ export function createShellService({ db, flags, approvals }) {
         continue;
       }
       const page = presentEntry(r);
-      group.pages.push({ code: page.code, label: page.label, labelHi: page.labelHi, route: page.route, icon: page.icon, keywords: page.keywords ?? '', mobileVisible: page.mobileVisible, requiresContext: page.requiresContext, onboarding: r.onboarding, shortcut: page.shortcut, tile: page.tile, quickCreate: page.quickCreate, field: fieldTiles.get(page.code) ?? null });
+      group.pages.push({ code: page.code, label: page.label, labelHi: page.labelHi, labelTe: page.labelTe, route: page.route, icon: page.icon, keywords: page.keywords ?? '', mobileVisible: page.mobileVisible, requiresContext: page.requiresContext, onboarding: r.onboarding, shortcut: page.shortcut, tile: page.tile, quickCreate: page.quickCreate, field: fieldTiles.get(page.code) ?? null });
       if (page.quickCreate) quickCreate.push({ code: page.code, label: page.quickCreate.label, route: page.quickCreate.route, icon: 'erp.action.create' });
     }
-    return { groups: [...byParent.values()].filter((g) => g.pages.length > 0), quickCreate, denied, etag: `${rows.length}-${rows.reduce((m, r) => (r.updated_at && r.updated_at > m ? r.updated_at : m), '')}` };
+    const groupsOut = [...byParent.values()].filter((g) => g.pages.length > 0);
+    return { groups: groupsOut, quickCreate, denied, bottomBar: field ? bottomBar(actor, groupsOut) : null, etag: `${rows.length}-${rows.reduce((m, r) => (r.updated_at && r.updated_at > m ? r.updated_at : m), '')}` };
+  }
+
+  /**
+   * The phone's bottom bar for the person (part 166.3, FR-02): the rows of the first of their roles that has its own, else the default; a company's
+   * rows replace the built-in ones. A 'page' slot is kept only when the person may open the page. More is always added by the shell.
+   */
+  function bottomBar(actor, groups) {
+    const all = db.prepare('SELECT company_id, role_code, slot, item, nav_code, label, label_hi, label_te, icon FROM ui_bottom_bar WHERE is_active = 1 AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY slot').all(actor.companyId);
+    const pick = (role) => { const own = all.filter((r) => r.role_code === role && r.company_id === actor.companyId); return own.length ? own : all.filter((r) => r.role_code === role && r.company_id === null); };
+    let rows = [];
+    for (const role of actor.roles ?? []) { rows = pick(role); if (rows.length) break; }
+    if (!rows.length) rows = pick(null);
+    const pages = new Map(groups.flatMap((g) => g.pages).map((p) => [p.code, p]));
+    return rows.flatMap((r) => {
+      if (r.item !== 'page') return [{ slot: r.slot, item: r.item }];
+      const p = pages.get(r.nav_code);
+      return p ? [{ slot: r.slot, item: 'page', code: p.code, route: p.route, icon: r.icon ?? p.icon, label: r.label ?? p.label, labelHi: r.label_hi ?? p.labelHi, labelTe: r.label_te ?? p.labelTe }] : [];
+    });
   }
 
   /** The page entries the person may open, flat (favourites, recent records and the launchpad are checked against it). */
@@ -142,7 +186,8 @@ export function createShellService({ db, flags, approvals }) {
     if (!hasPermission(actor, 'ui.nav.manage')) throw forbidden('Your role does not include ui.nav.manage. Ask a system administrator.');
   };
   const entryRow = (actor, code) => {
-    const r = db.prepare('SELECT * FROM ui_navigation_entries WHERE code = ? AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').get(code, actor.companyId);
+    const found = db.prepare('SELECT * FROM ui_navigation_entries WHERE code = ? AND deleted_at IS NULL AND (company_id IS NULL OR company_id = ?)').get(code, actor.companyId);
+    const r = found ? withTe(db, actor.companyId, [found])[0] : found;
     if (!r) throw notFound(`There is no navigation entry called ${code}.`);
     return r;
   };
@@ -200,7 +245,7 @@ export function createShellService({ db, flags, approvals }) {
   /** A peer-readable shape of the whole registry for the Config page and for export. */
   function registry(actor) {
     mustManage(actor);
-    const rows = db.prepare('SELECT * FROM ui_navigation_entries WHERE deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY placement, sort_order, id').all(actor.companyId);
+    const rows = withTe(db, actor.companyId, db.prepare('SELECT * FROM ui_navigation_entries WHERE deleted_at IS NULL AND (company_id IS NULL OR company_id = ?) ORDER BY placement, sort_order, id').all(actor.companyId));
     const groups = new Map(rows.filter((r) => r.kind === 'group').map((g) => [g.code, g.label]));
     const known = [...flagKeys()].sort();
     return {
@@ -355,7 +400,7 @@ export function createShellService({ db, flags, approvals }) {
   // ---- launchpad ----
   function launchpad(actor) {
     const nav = navigation(actor);
-    const tiles = nav.groups.filter((g) => g.placement === 'sidebar').flatMap((g) => g.pages.filter((p) => p.tile && p.route !== '/home').map((p) => ({ code: p.code, label: p.label, labelHi: p.labelHi, route: p.route, icon: p.icon, group: g.label })));
+    const tiles = nav.groups.filter((g) => g.placement === 'sidebar').flatMap((g) => g.pages.filter((p) => p.tile && p.route !== '/home').map((p) => ({ code: p.code, label: p.label, labelHi: p.labelHi, labelTe: p.labelTe, route: p.route, icon: p.icon, group: g.label })));
     const drafts = db.prepare('SELECT COUNT(*) AS n FROM ui_drafts WHERE company_id = ? AND user_ref = ? AND deleted_at IS NULL AND is_active = 1').get(actor.companyId, user(actor)).n;
     const exportsRunning = db.prepare("SELECT COUNT(*) AS n FROM ui_export_jobs WHERE company_id = ? AND user_ref = ? AND status IN ('QUEUED', 'RUNNING')").get(actor.companyId, user(actor)).n;
     return {

@@ -3,6 +3,7 @@ import { clearSession } from '../../../platform/api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, Link, QueryState, errorInfo, usePageTitle } from '../../core/pages/ui.jsx';
 import { useForgetDevice, useMyDevices, useMyEvents, useMySessions, useRevokeMine, useSetPin, useSignOutOthers } from '../api/index.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const RESULT = { success: 'Signed in', failure: 'Wrong details', locked: 'Locked', suspicious: 'Unusual sign-in', mfa_failed: 'Wrong second-step code', refresh_reuse: 'Session ended (token reuse)', password_changed: 'Password changed', password_reset: 'Password reset' };
 
@@ -33,11 +34,7 @@ export default function SessionsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Account &rsaquo; My Sessions &amp; Devices</nav>
-      <div className="page-head">
-        <h1 id="page-title">My Sessions &amp; Devices</h1>
-        <button type="button" className="btn" disabled={rows.length < 2 || others.isPending} onClick={() => act(() => others.mutateAsync(), (o) => `${o.ended} other session(s) signed out.`)}>Sign out all other sessions</button>
-      </div>
-      <p className="muted">Every place you are signed in. If you do not recognise one, sign it out and change your password. <Link to="/account/security">Security &amp; MFA</Link></p>
+      <PageHeader id="page-title" title={"My Sessions & Devices"} actions={<><button type="button" className="btn" disabled={rows.length < 2 || others.isPending} onClick={() => act(() => others.mutateAsync(), (o) => `${o.ended} other session(s) signed out.`)}>Sign out all other sessions</button></>} subtitle={<>Every place you are signed in. If you do not recognise one, sign it out and change your password. <Link to="/account/security">Security &amp; MFA</Link></>} />
       <p role="status" className="notice" data-testid="sessions-notice">{notice}</p>
 
       <h2>Active sessions</h2>

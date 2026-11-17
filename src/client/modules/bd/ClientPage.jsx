@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { INFLUENCE_ROLES, STANCES, bd, inr, inrShort } from './api.js';
 import { InteractionsPanel, Tabs } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Client 360 (business development, part 08.01, FR-02): the client from the partner master with its opportunities and leads (those the person may see), the contacts with the influence map (who decides, who is for and against us, who reports to whom),
 // the interactions of every lead and opportunity of the client, and the places where tenders, projects and receivables will appear when those parts exist.
@@ -27,8 +28,7 @@ export default function ClientPage() {
   return (
     <section aria-labelledby="c360-title" data-testid="client360">
       <header>
-        <h1 id="c360-title">{c.legalName} <StatusBadge status={c.status === 'ACTIVE' ? 'ACTIVE' : 'IN_REVIEW'} label={c.statusLabel} /></h1>
-        <p className="muted">{c.code}{c.tradeName ? ` · ${c.tradeName}` : ''} · <Link to={c.partnerRoute}>{t('client.partnerRecord')}</Link></p>
+        <PageHeader id="c360-title" title={<>{c.legalName} <StatusBadge status={c.status === 'ACTIVE' ? 'ACTIVE' : 'IN_REVIEW'} label={c.statusLabel} /></>} subtitle={<>{c.code}{c.tradeName ? ` · ${c.tradeName}` : ''} · <Link to={c.partnerRoute}>{t('client.partnerRecord')}</Link></>} />
         <dl className="op-figures" data-testid="c360-figures"><div><dt>{t('dash.open')}</dt><dd data-testid="c360-open">{c.stats.open}</dd></div><div><dt>{t('dash.pipeline')}</dt><dd>{inrShort(c.stats.pipeline)}</dd></div><div><dt>{t('dash.weighted')}</dt><dd>{inrShort(c.stats.weighted)}</dd></div><div><dt>{t('client.won')}</dt><dd>{c.stats.won} · {inrShort(c.stats.wonValue)}</dd></div><div><dt>{t('client.lost')}</dt><dd>{c.stats.lost}</dd></div></dl>
         {error?.form && <p className="field-error" role="alert" data-testid="c360-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="c360-note">{note}</p>}

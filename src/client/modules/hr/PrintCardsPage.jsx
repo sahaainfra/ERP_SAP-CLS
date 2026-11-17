@@ -5,6 +5,7 @@ import { api } from '../../platform/api/index.js';
 import { Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { lab } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Print Labour ID Cards (HR, part 07.08, FR-05): choose the workers (by contractor, or those named in the address), see them, and print a sheet of cards, each with the photo, name, code, trade, contractor and a QR code that
 // holds the token of the card. The QR is read at the site kiosk, the gate and the PPE store. A lost card is reissued: the old token stops working. Cards are issued to approved, working workers only.
@@ -22,7 +23,7 @@ export default function PrintCardsPage() {
   const make = async () => { setBusy(true); setError(null); try { setCards((await lab.workers.cards(picked, reissue)).cards); } catch (e) { setError(errorInfo(e)); } finally { setBusy(false); } };
   return (
     <section aria-labelledby="pc-title" data-testid="cards">
-      <h1 id="pc-title" className="no-print">Print Labour ID Cards</h1>
+      <PageHeader id="pc-title" className="no-print" title={"Print Labour ID Cards"} />
       <div className="no-print">
         <LookupField id="pc-contractor" label="Contractor" lookup="mdm/labour-contractors" value={contractorId} onChange={setContractorId} />
         {error?.form && <p className="field-error" role="alert" data-testid="pc-error">{error.form}</p>}

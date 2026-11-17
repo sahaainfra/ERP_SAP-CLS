@@ -4,6 +4,8 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { DAY_STATUS, dayIST, hoursText, regs } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { fmtDate } from '../../../shared/dates.js';
 
 // Monthly Attendance Register (HR, part 07.06, FR-02 and FR-09): the people in the rows, the days of the attendance period in the columns, a code and a colour for each day (the colour is never the only sign: the code is written), and the totals
 // at the right: present days, paid days, days of loss of pay and overtime hours. A day opens to show the punches and what made it. The register can be exported (XLSX, CSV, PDF) and printed; HR recomputes a site and locks the period from here.
@@ -27,7 +29,7 @@ export default function MonthlyRegisterPage() {
   };
   return (
     <section aria-labelledby="rgs-title" data-testid="register">
-      <h1 id="rgs-title">Monthly Attendance Register</h1>
+      <PageHeader id="rgs-title" title={"Monthly Attendance Register"} />
       <form className="srch-form" aria-label="Parameters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Any day of the period" name="period" error={null}><input type="date" value={period} onChange={(e) => { setPeriod(e.target.value); setOpen(null); }} data-testid="rgs-period" /></Field>
         <LookupField id="rgs-site" label="Site" lookup="iam/sites" value={siteId} onChange={(x) => { setSiteId(x); setOpen(null); }} />
@@ -44,7 +46,18 @@ export default function MonthlyRegisterPage() {
           <p data-testid="rgs-head"><strong>{d.period.label}</strong> ({d.period.start} to {d.period.end}) · {d.lock ? <span data-testid="rgs-locked">Locked by {d.lock.lockedBy}{d.lock.status === 'REOPEN_PENDING' ? ' (reopening is waiting for approval)' : ''}</span> : <span data-testid="rgs-open">Not locked</span>}</p>
           <dl className="op-figures" data-testid="rgs-totals"><div><dt>People</dt><dd>{d.totals.employees}</dd></div><div><dt>Present days</dt><dd>{d.totals.presentDays}</dd></div><div><dt>Paid days</dt><dd data-testid="rgs-paid">{d.totals.paidDays}</dd></div><div><dt>Loss of pay days</dt><dd>{d.totals.lopDays}</dd></div><div><dt>Overtime hours</dt><dd>{d.totals.otHours}</dd></div><div><dt>Missing punches</dt><dd>{d.totals.missingPunch}</dd></div></dl>
           {d.rows.length === 0 ? <EmptyState title="No attendance in this period" message="Days appear here once people punch or are marked by the register." /> : (
-            <div className="table-wrap att-register" tabIndex={0} role="region" aria-label="Attendance register">
+            <>
+            {/* part 166.2, U-06: 31 day columns cannot be read at 360 px, so a phone first shows one card per person with the totals and the days */}
+            <ul className="ui-phone-only att-phone-list" data-testid="rgs-phone-list" aria-label="People in the register">
+              {d.rows.map((p) => (
+                <li key={p.employeeId} className="mdm-panel" data-testid="rgs-phone-person">
+                  <strong>{p.name}</strong> <span className="muted small">{p.code}</span>
+                  <div className="small">Present {p.totals.presentDays} · Paid {p.totals.paidDays} · LOP {p.totals.lopDays} · OT {p.totals.otHours} h</div>
+                  <details><summary>Days</summary><ul className="att-phone-days">{d.days.filter((x) => p.cells[x]).map((x) => <li key={x}><span>{fmtDate(x)}</span> <strong className={`att-${CELL[p.cells[x].code] ?? 'muted'}`}>{p.cells[x].code}</strong></li>)}</ul></details>
+                </li>
+              ))}
+            </ul>
+            <div className="table-wrap att-register" tabIndex={0} role="region" aria-label="Attendance register" data-no-cards="">
               <table className="grid" data-testid="rgs-table">
                 <thead><tr><th scope="col">Person</th>{d.days.map((x, i) => <th key={x} scope="col" className={d.weekdays[i] === 0 ? 'att-sun' : ''}>{x.slice(8)}</th>)}<th>Present</th><th>Paid</th><th>LOP</th><th>OT h</th></tr></thead>
                 <tbody>{d.rows.map((p) => (
@@ -55,6 +68,7 @@ export default function MonthlyRegisterPage() {
                   </tr>))}</tbody>
               </table>
             </div>
+            </>
           )}
           <p className="muted small" data-testid="rgs-legend">{d.legend.map((l) => `${l.code} ${l.label}`).join(' · ')} · * late</p>
           {open && <DayPanel open={open} close={() => setOpen(null)} />}

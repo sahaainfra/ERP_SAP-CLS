@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { download, fmtQty, fmtRs, st } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Quantity & Rate Variance Analysis (part 14.07, FR-05): the budget against the actual cost with the variance split into a quantity variance ((earned qty - actual qty) x budget rate) and a rate variance ((budget rate - actual rate) x
 // actual qty), which together are the cost variance; planned against earned; committed against budget. Exports to Excel, CSV and PDF; every group opens the cost control dashboard for its drill-down.
@@ -24,7 +25,7 @@ export default function ControlVariancePage() {
   const r = q.data; const exp = (format) => download(`/control/variance/export?${qs}&format=${format}`, `control-variance.${format}`).catch(() => setError(t('bl.fileFailed')));
   return (
     <section aria-labelledby="cvr-h" data-testid="site-control-variance">
-      <h1 id="cvr-h">{t('cnd.cvr.title')}</h1><p className="muted">{t('cnd.cvr.intro')}</p>
+      <PageHeader id="cvr-h" title={t('cnd.cvr.title')} subtitle={t('cnd.cvr.intro')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('cnd.prd.params')}>
         <div className="form-grid">
           <Field label={t('cnd.prg.project')} name="projectId"><select value={projectId} onChange={(e) => setF({ ...f, projectId: e.target.value })} data-testid="cvr-project">{(pq.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>

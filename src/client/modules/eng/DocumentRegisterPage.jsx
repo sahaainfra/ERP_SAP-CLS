@@ -7,6 +7,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { authHeaders, bulkSheet, documentsUrl, downloadTemplate, downloadZip, useApplyTemplate, useCreateFolder, useDocTypes, useDocuments, useFolders } from '../../platform/documents/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { LEVELS, STATUS, docLink } from './documents-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Document Register (part 04.10, section 7.1): the folders of a project on the left, the documents in them on the right, with filters, saved-looking choices in the address of the page, bulk
 // download as a zip, an Excel sheet that registers many at once, and the export of what is listed. Only what the person may see is listed (a confidential document is not even counted).
@@ -76,8 +77,7 @@ export default function DocumentRegisterPage({ session }) {
   const folders = tree.data ?? [];
   return (
     <section aria-labelledby="dr-title" data-testid="doc-register">
-      <h1 id="dr-title">Document Register</h1>
-      <p className="muted">Every controlled document, with its current revision, its status and who holds it. You see the documents of your projects, up to the level of confidentiality you are trusted with.</p>
+      <PageHeader id="dr-title" title={"Document Register"} subtitle={"Every controlled document, with its current revision, its status and who holds it. You see the documents of your projects, up to the level of confidentiality you are trusted with."} />
       {notice && <p role="status" className="notice" data-testid="dr-notice">{notice}</p>}
       {error?.form && <p role="alert" className="error" data-testid="dr-error">{error.form}</p>}
       <div className="srch-tools">

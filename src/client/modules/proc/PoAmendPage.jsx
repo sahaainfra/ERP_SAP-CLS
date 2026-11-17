@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Purchase order amendment (part 15.05, FR-07): change quantity, rate, discount, delivery dates or terms; the server works the new version out and keeps the before and after; the comparison is shown; the amendment is sent for approval by the size
 // of the change (a rate increase always with the project manager) and applied only when approved. The commitment follows.
@@ -17,8 +18,7 @@ function Compare({ t, a, po }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('o.sayWhy') }); return; } run(() => pc.decide(a.taskId, action, comment.trim() || null), t(`o.done.${action}`)); };
   return (
     <div data-testid="amend-compare" data-status={a.status}>
-      <h1 id="am-h">{a.poNo} · {t('o.amendment')} {a.amendmentNo} <StatusBadge status={a.status === 'APPROVED' ? 'APPROVED' : a.status === 'SUBMITTED' ? 'IN_REVIEW' : 'DRAFT'} label={t(`o.as.${a.status}`)} /></h1>
-      <p><Link to={`/proc/purchase-orders?id=${a.poId}`}>{a.poNo}</Link> · {a.reason}</p>
+      <PageHeader id="am-h" title={<>{a.poNo} · {t('o.amendment')} {a.amendmentNo} <StatusBadge status={a.status === 'APPROVED' ? 'APPROVED' : a.status === 'SUBMITTED' ? 'IN_REVIEW' : 'DRAFT'} label={t(`o.as.${a.status}`)} /></>} meta={<><Link to={`/proc/purchase-orders?id=${a.poId}`}>{a.poNo}</Link> · {a.reason}</>} />
       <dl className="kv"><div><dt>{t('o.delta')}</dt><dd data-testid="amend-delta">{fmtRs(a.deltaAmount)}</dd></div><div><dt>{t('o.newTotal')}</dt><dd>{fmtRs(a.newTotal)}</dd></div><div><dt>{t('o.rateIncrease')}</dt><dd>{a.rateIncrease ? t('o.yes') : t('o.no')}</dd></div></dl>
       {error?.form && <p className="field-error" role="alert" data-testid="amend-error">{error.form}{error.code === 'EXCEPTION_REQUIRED' && <> <Link to="/controls/exceptions">{t('o.raiseException')}</Link></>}</p>}{note && <p className="mdm-banner" role="status" data-testid="amend-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="amend-changes"><caption>{t('o.changes')}</caption><thead><tr><th>{t('o.line')}</th><th>{t('o.field')}</th><th>{t('o.before')}</th><th>{t('o.after')}</th></tr></thead><tbody>{a.changes.map((c, i) => <tr key={i} data-testid="amend-change"><td>{c.lineNo ?? t('o.header')}</td><td>{c.field}</td><td>{String(c.before ?? '—')}</td><td><strong>{String(c.after ?? '—')}</strong></td></tr>)}</tbody></table></div>
@@ -65,9 +65,9 @@ export default function PoAmendPage() {
   const t = useT('proc'); usePageTitle(t('o.amendTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const aid = Number(sp.get('aid')) || null;
   const pq = useQuery({ queryKey: ['proc', 'po', id], queryFn: () => pc.po(id), enabled: Boolean(id), retry: false });
   const aq = useQuery({ queryKey: ['proc', 'po-amend', id, aid], queryFn: () => pc.amend(id, aid), enabled: Boolean(id && aid), retry: false });
-  if (!id) return <section data-testid="proc-po-amend"><h1>{t('o.amendTitle')}</h1><p className="muted">{t('o.pickOrder')}</p><Link to="/proc/purchase-orders">{t('o.title')}</Link></section>;
+  if (!id) return <section data-testid="proc-po-amend"><PageHeader title={t('o.amendTitle')} subtitle={t('o.pickOrder')} /><Link to="/proc/purchase-orders">{t('o.title')}</Link></section>;
   if (pq.error?.status === 403 || aq.error?.status === 403) return <NoPermission what={t('o.amendTitle')} permission="proc.purchase_order.amend" />;
   if (pq.isPending || (aid && aq.isPending)) return <Skeleton label={t('o.amendTitle')} rows={4} />;
   if (pq.isError) return <ErrorState error={pq.error} onRetry={pq.refetch} />; if (aq.isError) return <ErrorState error={aq.error} onRetry={aq.refetch} />;
-  return <section aria-labelledby="am-h" data-testid="proc-po-amend">{aid ? <Compare t={t} a={aq.data} po={pq.data} /> : <><h1 id="am-h">{t('o.amendTitle')}: {pq.data.docNo}</h1><p><Link to={`/proc/purchase-orders?id=${id}`}>{t('o.back')}</Link> · {fmtDate(pq.data.date)}</p>{pq.data.can.amend ? <Form t={t} po={pq.data} /> : <p className="mdm-banner" role="status">{t('o.noAmend')}</p>}</>}</section>;
+  return <section aria-labelledby="am-h" data-testid="proc-po-amend">{aid ? <Compare t={t} a={aq.data} po={pq.data} /> : <><PageHeader id="am-h" title={<>{t('o.amendTitle')}: {pq.data.docNo}</>} meta={<><Link to={`/proc/purchase-orders?id=${id}`}>{t('o.back')}</Link> · {fmtDate(pq.data.date)}</>} />{pq.data.can.amend ? <Form t={t} po={pq.data} /> : <p className="mdm-banner" role="status">{t('o.noAmend')}</p>}</>}</section>;
 }

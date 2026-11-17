@@ -30,7 +30,7 @@ const steward = z.object({ masterType: type, username: z.string().trim().min(1).
 export const parseConfig = (b) => parse(z.object({ rules: z.array(rule).max(300), stewards: z.array(steward).min(1, 'Name at least one steward').max(100), reason: why }).strict(), b);
 
 // ---- part 06.02: the common masters ----
-const master = z.enum(['uom', 'gst-rates', 'hsn-sac', 'tds-sections', 'states', 'districts', 'currencies', 'exchange-rates', 'banks', 'payment-terms', 'lookup-lists', 'lookups']);
+const master = z.enum(['uom', 'gst-rates', 'hsn-sac', 'tds-sections', 'states', 'districts', 'currencies', 'exchange-rates', 'banks', 'payment-terms', 'lookup-lists', 'lookups', 'tds-forms', 'statutory-calendar', 'labour-rules', 'pay-components']);
 const value = z.union([z.string().max(2000), z.number(), z.boolean(), z.null(), z.array(z.object({ label: z.string().max(80), pct: z.union([z.number(), z.string().max(12)]), days: z.union([z.number(), z.string().max(6)]) })).max(20)]);
 const cdata = z.record(z.string().max(40), value).refine((d) => Object.keys(d).length <= 20, 'Too many fields');
 export const parseMaster = (v) => parse(master, v);
@@ -143,3 +143,10 @@ export const parseAnalysisSubmit = (b) => parse(z.object({ comment: z.string().t
 export const parseAmend = (b) => parse(z.object({ reason, effectiveFrom: day.optional() }).strict(), b);
 export const parseCompare = (q) => parse(z.object({ with: id }).strict(), q);
 export const parseImpact = (q) => parse(z.object({ itemId: id, newRate: decimal(4, 'New rate').optional(), region: stateCode.optional(), projectId: id.optional() }).strict(), q);
+
+// part 166.8: the statutory changes page and an employee's pay for the Code on Wages
+const ym = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'use a month such as 2026-04');
+export const parseStatutoryLookup = (q) => parse(z.object({ hsn: z.string().trim().regex(/^[0-9]{4,8}$/, 'an HSN/SAC code of 4 to 8 digits').optional(), nature: z.enum(['CONTRACTOR', 'PROFESSIONAL', 'PURCHASE_GOODS', 'RENT_PLANT', 'RENT_LAND', 'COMMISSION', 'OTHER']).optional(), date: date.optional(), constitution: z.string().trim().toUpperCase().max(30).optional() }).strict(), q);
+export const parseStatutoryCalendar = (q) => parse(z.object({ from: ym.optional(), to: ym.optional() }).strict(), q);
+export const parseWagesQuery = (q) => parse(z.object({ month: ym.optional() }).strict(), q);
+export const parseEmployeePay = (b) => parse(z.object({ effectiveFrom: date, reason: z.string().trim().min(3).max(300), lines: z.array(z.object({ code: z.string().trim().toUpperCase().regex(/^[A-Z][A-Z0-9_]{1,19}$/), amount: z.number().min(0).max(1e9) }).strict()).min(1).max(30) }).strict(), b);

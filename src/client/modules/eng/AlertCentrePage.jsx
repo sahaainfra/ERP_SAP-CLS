@@ -6,6 +6,8 @@ import { formatDateTime } from '../../platform/format.js';
 import { alertsUrl, authHeaders, useAlertAct, useAlertBulk, useAlertSummary, useAlerts } from '../../platform/alerts/api.js';
 import { Field, Link, Tile, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { ALERT_STATUS, SEVERITY } from './alerts-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Alert Centre (part 04.09, section 7.3): the alerts that concern you, and the alerts of the projects you manage, with the most serious and the oldest first. An alert is acknowledged ("I have seen it")
 // and then resolved with a note saying what was done; several can be acknowledged together. A rule that raises the same alert again within its window does not make a second one.
@@ -45,15 +47,14 @@ export default function AlertCentrePage() {
   const actable = rows.filter((a) => a.canAct && a.status === 'OPEN');
   return (
     <section aria-labelledby="ac-title" data-testid="alert-centre">
-      <h1 id="ac-title">Alert Centre</h1>
-      <p className="muted">What needs your attention: expiries, overdue items, thresholds and anything else the rules watch. Acknowledge what you have seen; resolve it when it is dealt with.</p>
+      <PageHeader id="ac-title" title={"Alert Centre"} subtitle={"What needs your attention: expiries, overdue items, thresholds and anything else the rules watch. Acknowledge what you have seen; resolve it when it is dealt with."} />
       {notice && <p role="status" className="notice" data-testid="ac-notice">{notice}</p>}
       {error?.form && <p role="alert" className="error" data-testid="ac-error">{error.form}</p>}
-      {s && <div className="tiles" data-testid="alert-tiles">
+      {s && <KpiRow data-testid="alert-tiles">
         <Tile label="Open for me" value={s.mine} status={s.mine ? 'warning' : 'success'} testId="tile-mine" />
         <Tile label="Critical for me" value={s.mineCritical} status={s.mineCritical ? 'danger' : 'success'} testId="tile-critical" />
         <Tile label="Not yet seen" value={s.mineNew} testId="tile-new" />
-      </div>}
+      </KpiRow>}
       <div className="srch-tools">
         <div role="tablist" aria-label="Whose alerts">
           <button type="button" role="tab" aria-selected={view === 'mine'} className={`btn${view === 'mine' ? ' btn-primary' : ''}`} onClick={() => { setView('mine'); setPage(1); setPicked([]); }}>My alerts</button>

@@ -1,34 +1,37 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import PlantDashboardPage from './PlantDashboardPage.jsx';
-import EquipmentPage from './EquipmentPage.jsx';
-import EquipmentNewPage from './EquipmentNewPage.jsx';
-import RequisitionsPage from './RequisitionsPage.jsx';
-import RequisitionNewPage from './RequisitionNewPage.jsx';
-import AllocationsPage from './AllocationsPage.jsx';
-import AllocationNewPage from './AllocationNewPage.jsx';
-import GanttPage from './GanttPage.jsx';
-import LogEntryPage from './LogEntryPage.jsx';
-import LogsPage from './LogsPage.jsx';
-import LogVerificationPage from './LogVerificationPage.jsx';
-import UtilisationPage from './UtilisationPage.jsx';
-import FuelIssuePage from './FuelIssuePage.jsx';
-import FuelDipPage from './FuelDipPage.jsx';
-import FuelIssuesPage from './FuelIssuesPage.jsx';
-import FuelTanksPage from './FuelTanksPage.jsx';
-import FuelReportsPage from './FuelReportsPage.jsx';
-import FuelAnomaliesPage from './FuelAnomaliesPage.jsx';
-import MaintenancePage from './MaintenancePage.jsx';
-import PmSchedulePage from './PmSchedulePage.jsx';
-import JobCardsPage from './JobCardsPage.jsx';
-import HireAgreementsPage from './HireAgreementsPage.jsx';
-import HireBillPage from './HireBillPage.jsx';
-import HireComparisonPage from './HireComparisonPage.jsx';
-import FleetTowerPage from './FleetTowerPage.jsx';
-import OwningCostPage from './OwningCostPage.jsx';
-import ReplacementPage from './ReplacementPage.jsx';
-import CapacityPage from './CapacityPage.jsx';
-import ShortagePage from './ShortagePage.jsx';
-import ResourcePlansPage from './ResourcePlansPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const PlantDashboardPage = lazyPage(() => import('./PlantDashboardPage.jsx'));
+const EquipmentPage = lazyPage(() => import('./EquipmentPage.jsx'));
+const EquipmentNewPage = lazyPage(() => import('./EquipmentNewPage.jsx'));
+const RequisitionsPage = lazyPage(() => import('./RequisitionsPage.jsx'));
+const RequisitionNewPage = lazyPage(() => import('./RequisitionNewPage.jsx'));
+const AllocationsPage = lazyPage(() => import('./AllocationsPage.jsx'));
+const AllocationNewPage = lazyPage(() => import('./AllocationNewPage.jsx'));
+const GanttPage = lazyPage(() => import('./GanttPage.jsx'));
+const LogEntryPage = lazyPage(() => import('./LogEntryPage.jsx'));
+const LogsPage = lazyPage(() => import('./LogsPage.jsx'));
+const LogVerificationPage = lazyPage(() => import('./LogVerificationPage.jsx'));
+const UtilisationPage = lazyPage(() => import('./UtilisationPage.jsx'));
+const FuelIssuePage = lazyPage(() => import('./FuelIssuePage.jsx'));
+const FuelDipPage = lazyPage(() => import('./FuelDipPage.jsx'));
+const FuelIssuesPage = lazyPage(() => import('./FuelIssuesPage.jsx'));
+const FuelTanksPage = lazyPage(() => import('./FuelTanksPage.jsx'));
+const FuelReportsPage = lazyPage(() => import('./FuelReportsPage.jsx'));
+const FuelAnomaliesPage = lazyPage(() => import('./FuelAnomaliesPage.jsx'));
+const MaintenancePage = lazyPage(() => import('./MaintenancePage.jsx'));
+const PmSchedulePage = lazyPage(() => import('./PmSchedulePage.jsx'));
+const JobCardsPage = lazyPage(() => import('./JobCardsPage.jsx'));
+const HireAgreementsPage = lazyPage(() => import('./HireAgreementsPage.jsx'));
+const HireBillPage = lazyPage(() => import('./HireBillPage.jsx'));
+const HireComparisonPage = lazyPage(() => import('./HireComparisonPage.jsx'));
+const FleetTowerPage = lazyPage(() => import('./FleetTowerPage.jsx'));
+const OwningCostPage = lazyPage(() => import('./OwningCostPage.jsx'));
+const ReplacementPage = lazyPage(() => import('./ReplacementPage.jsx'));
+const CapacityPage = lazyPage(() => import('./CapacityPage.jsx'));
+const ShortagePage = lazyPage(() => import('./ShortagePage.jsx'));
+const ResourcePlansPage = lazyPage(() => import('./ResourcePlansPage.jsx'));
 
 registerModule({
   code: 'plant',

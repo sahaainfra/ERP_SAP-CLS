@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate } from '../../platform/format.js';
 import { Link, Pager, downloadCsv, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ANALYSIS_STATUS, SCOPE_LABEL, rates } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Rate Analyses (Administration, part 06.06): the register of analysed unit rates, one row per version, with search and filters (status, scope, latest version only), New (from a template such as M25
 // concrete or brickwork, from a work item's bill of resources, or blank) and the CSV export. Each row opens the analysis with its components, add-ons, SOR comparison and versions.
@@ -25,13 +26,12 @@ export default function RateAnalysesPage() {
   const exportCsv = async () => { setError(null); try { downloadCsv('rate-analyses.csv', await rates.fetchText(`/mdm/analyses/export?${new URLSearchParams(Object.entries(f).filter(([, v]) => v))}`)); } catch (err) { setError(errorInfo(err)); } };
   return (
     <section aria-labelledby="ra-title" data-testid="rate-analyses" className="fin-page">
-      <div className="page-head"><h1 id="ra-title">Rate Analyses</h1>
-        <div className="actions-row">
+      <PageHeader id="ra-title" title={"Rate Analyses"} actions={<><div className="actions-row">
           {d.canCreate && <><label className="sr-only" htmlFor="ra-tpl">Start from</label><select id="ra-tpl" value={tpl} onChange={(e) => setTpl(e.target.value)} data-testid="ra-template"><option value="">Blank or from a work item</option>{d.templates.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}</select>
             <button type="button" className="btn btn-primary btn-small" onClick={() => navigateTo(`/admin/rate-analyses/analysis?new=1${tpl ? `&template=${tpl}` : ''}`)} data-testid="ra-new">New analysis</button></>}
           {d.canExport && <button type="button" className="btn btn-small" onClick={exportCsv} data-testid="ra-export">Export CSV</button>}
           <Link to="/admin/rate-analyses/impact">Rate change impact</Link>
-        </div></div>
+        </div></>} />
       {error?.form && <p className="field-error" role="alert">{error.form}</p>}
       <div className="filters" role="search">
         <label>Search <input type="search" value={f.q} onChange={(e) => set({ q: e.target.value })} placeholder="Number, title or work item" data-testid="ra-q" /></label>

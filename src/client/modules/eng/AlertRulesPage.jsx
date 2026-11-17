@@ -5,6 +5,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { useAdoptRule, useDryRun, useEnableRule, useRules, useRuns, useRunRule } from '../../platform/alerts/api.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { OUTCOME, SEVERITY, scheduleText } from './alerts-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Alert Rules (part 04.09, section 7.1): the rules of the company with their state, the switch on and off, a dry-run that shows what a rule would do now, a run by hand, and the log of the runs;
 // below them the standard library, from which a company takes a rule when its module is live. A rule that sends something outside waits for approval before it is in force.
@@ -40,7 +41,7 @@ export default function AlertRulesPage() {
   const [reason, setReason] = useState('');
   const [filter, setFilter] = useState('');
   if (q.error?.status === 403) return <NoPermission what="the alert rules" permission="alr.rule.view" />;
-  if (q.isPending) return <section aria-labelledby="ar-title"><h1 id="ar-title">Alert Rules</h1><Skeleton label="Loading the rules" rows={4} /></section>;
+  if (q.isPending) return <section aria-labelledby="ar-title"><PageHeader id="ar-title" title={"Alert Rules"} /><Skeleton label="Loading the rules" rows={4} /></section>;
   if (q.isError) return <ErrorState title="The rules could not be loaded" error={q.error} onRetry={() => q.refetch()} />;
   const d = q.data;
   const match = (r) => !filter || `${r.code} ${r.name} ${r.ownerModule}`.toLowerCase().includes(filter.toLowerCase());
@@ -50,8 +51,7 @@ export default function AlertRulesPage() {
   const doAdopt = (e) => { e.preventDefault(); setError(null); adopt.mutate({ code: adopting, reason }, { onSuccess: (o) => { setNotice(o.status === 'PENDING' ? 'Sent for approval.' : `${adopting} is now one of your rules.`); setAdopting(null); setReason(''); }, onError: (er) => setError(errorInfo(er)) }); };
   return (
     <section aria-labelledby="ar-title" data-testid="alert-rules">
-      <h1 id="ar-title">Alert Rules</h1>
-      <p className="muted">Rules watch events and records and raise alerts, tell people, make tasks or escalate. A rule that sends messages outside needs the approval of the process owner and the system administrator.</p>
+      <PageHeader id="ar-title" title={"Alert Rules"} subtitle={"Rules watch events and records and raise alerts, tell people, make tasks or escalate. A rule that sends messages outside needs the approval of the process owner and the system administrator."} />
       {notice && <p role="status" className="notice" data-testid="ar-notice">{notice}</p>}
       {error?.form && <p role="alert" className="error" data-testid="ar-error">{error.form}</p>}
       <div className="srch-tools">

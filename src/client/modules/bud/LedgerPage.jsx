@@ -7,10 +7,12 @@ import { useSession } from '../core/api/index.js';
 import AvailabilityPanel from './AvailabilityPanel.jsx';
 import { bd, download, inr, lg } from './api.js';
 import { ProjectSelect, ShareBar, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // Budget vs Committed vs Actual (part 12.03, FR-06): by WBS, cost code, cost head or vendor, with what is left, a bar of the share used, the documents behind a row, and the availability panel for a WBS node, cost code and amount.
 const BY = ['wbs', 'cost_code', 'cost_head', 'vendor'];
-export default function LedgerPage() {
+function LedgerPageClassic() {
   const t = useT('bud');
   usePageTitle(t('led.title'));
   const session = useSession(); const perms = session.data?.permissions ?? [];
@@ -23,7 +25,7 @@ export default function LedgerPage() {
   const d = q.data;
   return (
     <section aria-labelledby="led-h" data-testid="bud-ledger">
-      <h1 id="led-h">{t('led.title')}</h1>
+      <PageHeader id="led-h" title={t('led.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('cmp.params')}>
         <div className="form-grid">
           <ProjectSelect value={projectId} onChange={(v) => { setProjectId(v ? Number(v) : ''); setOpen(null); }} testId="led-project" />
@@ -74,4 +76,9 @@ export default function LedgerPage() {
       )}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function LedgerPage() {
+  return <OverviewSwitch code="ov-budget" heading="Budget vs Committed vs Actual" intro="Budget, commitments and actual cost of a project, from the budget ledger service. Choose a project in the filters." Classic={LedgerPageClassic} />;
 }

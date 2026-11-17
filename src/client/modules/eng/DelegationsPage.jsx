@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatINR } from '../../platform/format.js';
 import { useCreateDelegation, useDelegations, useMatrixList, useRevokeDelegation } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Delegations (part 04.02, section 7.5): My delegations, and for administrators everyone's. A person hands their approvals to another for a period, all kinds of
 // document or selected ones, up to an amount no higher than their own authority. The delegate decides on their behalf and it shows on the record. A delegation of
@@ -55,8 +56,7 @@ export default function DelegationsPage({ session }) {
   if (list.error?.status === 403 && scope === 'mine') return <NoPermission what="delegations" permission="eng.delegation.use" />;
   return (
     <section aria-labelledby="dl-title" data-testid="delegations">
-      <h1 id="dl-title">Delegations</h1>
-      <p className="muted">Hand your approvals to someone else while you are away. They decide in your name, within your authority, for the dates you give, and it shows on every record.</p>
+      <PageHeader id="dl-title" title={"Delegations"} subtitle={"Hand your approvals to someone else while you are away. They decide in your name, within your authority, for the dates you give, and it shows on every record."} />
       {notice && <p role="status" className="notice" data-testid="dl-notice">{notice}</p>}
       <div className="srch-tools">
         <div role="tablist" aria-label="Whose delegations" className="wf-tabs">

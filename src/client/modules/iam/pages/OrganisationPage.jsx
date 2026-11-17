@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GST_STATES } from '../../../../shared/gst.js';
 import { can, usePageTitle } from '../../core/pages/ui.jsx';
 import OrgList, { labelOf } from '../components/OrgList.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const STATES = GST_STATES.map((s) => [s.code, `${s.code} ${s.name}`]);
 const BRANCH_KINDS = [['BRANCH', 'Branch'], ['REGION', 'Region']];
@@ -82,7 +83,7 @@ export default function OrganisationPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Organisation</nav>
-      <div className="page-head"><h1 id="page-title">Organisation</h1></div>
+      <PageHeader id="page-title" title={"Organisation"} />
       <div role="tablist" aria-label="Organisation lists" className="actions">
         {Object.entries(TABS).map(([id, x]) => (
           <button key={id} type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} className={`btn${tab === id ? ' btn-primary' : ''}`} onClick={() => setTab(id)}>{x.label}</button>

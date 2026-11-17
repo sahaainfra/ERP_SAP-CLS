@@ -10,6 +10,7 @@ import { useSearch } from '../site/parts.jsx';
 import { filePhoto } from '../inv/GateParts.jsx';
 import { CERT_TONE, EQUIP_TONE, STATE_TONE, fmtDate, fmtQty, fmtRs, pl } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Equipment register and Equipment 360 (part 17.01, FR-01 to FR-04): the list, and the machine with its particulars, documents and certificates, history, status and tag. Deployment, logs, fuel, maintenance and costs come from the parts that record them.
 const TABS = ['details', 'documents', 'history', 'deployment', 'logs', 'fuel', 'maintenance', 'costs']; const LATER = { deployment: '17.02', logs: '17.03', fuel: '17.04', maintenance: '17.05', costs: '17.07' };
@@ -55,7 +56,7 @@ function Equipment({ id }) {
   const sites = (o?.sites ?? []).filter((s) => String(s.projectId) === String(sv.projectId));
   return (
     <div data-testid="eq-object" data-status={x.status} data-state={x.state}>
-      <h1 id="eq-h">{x.assetCode} <StatusBadge status={EQUIP_TONE[x.status]} label={t(`es.${x.status}`)} /> <StatusBadge status={STATE_TONE[x.state]} label={t(`st.${x.state}`)} /></h1><p><Link to="/plant/equipment">{t('registerTitle')}</Link> · {x.class} · {x.make} {x.model}</p>
+      <PageHeader id="eq-h" title={<>{x.assetCode} <StatusBadge status={EQUIP_TONE[x.status]} label={t(`es.${x.status}`)} /> <StatusBadge status={STATE_TONE[x.state]} label={t(`st.${x.state}`)} /></>} meta={<><Link to="/plant/equipment">{t('registerTitle')}</Link> · {x.class} · {x.make} {x.model}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="eq-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="eq-note">{note}</p>}
       {x.compliance.blocking.length > 0 && x.approvedAt && <p className="mdm-banner" role="alert" data-testid="eq-blocked">{x.compliance.blocks ? t('blockedNote') : t('warnNote')} {x.compliance.blocking.join('; ')}</p>}
       <div className="actions-row no-print">
@@ -90,7 +91,7 @@ export default function EquipmentPage() {
   const t = useT('plant'); usePageTitle(t('registerTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="eq-h"><Equipment id={id} /></section>;
   return (
-    <section aria-labelledby="eql-h" data-testid="plant-eq-list"><h1 id="eql-h">{t('registerTitle')}</h1><p className="muted">{t('registerIntro')}</p>
+    <section aria-labelledby="eql-h" data-testid="plant-eq-list"><PageHeader id="eql-h" title={t('registerTitle')} subtitle={t('registerIntro')} />
       <div className="actions-row no-print"><Link to="/plant/equipment/new">{t('newTitle')}</Link><Link to="/plant/dashboard">{t('dashTitle')}</Link></div>
       <ListReport listCode="plant.equipment" endpoint="/plant/equipment" title={t('registerTitle')} session={session.data} rowHref={(r) => `/plant/equipment?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/equipment?id=${r.id}`)} cardFields={['assetCode', 'class', 'regNo', 'state']} statusKey="status" dateKey="created" empty={{ title: t('emptyTitle'), text: t('emptyBody') }} />
     </section>

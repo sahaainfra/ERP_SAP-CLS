@@ -59,7 +59,7 @@ test('T-01 FR-01 FR-03 BR-03 a new item is approved by the steward of its catego
   assert.equal(r.status, 202, 'anyone who sees the catalogue may ask for an item');
   assert.equal(r.json.data.item.code, 'CEM-00001');
   assert.equal(r.json.data.item.hsnSac, '2523', 'the category default HSN');
-  assert.equal(r.json.data.item.gstRate, 'GST28', 'the GST rate of the HSN on the date (06.02)');
+  assert.equal(r.json.data.item.gstRate, 'GST18', 'the GST rate of the HSN on the date (06.02): cement is 18 % from 22-09-2025 (part 166.8)');
   assert.equal(r.json.data.item.standardRate, null, 'a site engineer does not see rates');
   assert.equal((await t.call(se, 'GET', '/items/search?q=opc')).json.data.rows.length, 0, 'not in the selector before approval');
   assert.equal((await t.api.call('GET', `${W}/tasks?mine=assigned`, est)).json.data.rows.filter((x) => x.instance.id === r.json.data.workflow.id).length, 0, 'an estimator is not the steward of cement');

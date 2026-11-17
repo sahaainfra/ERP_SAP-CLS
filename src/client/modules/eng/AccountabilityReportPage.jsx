@@ -6,6 +6,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { authHeaders, scoresUrl, useLedger, useScores } from '../../platform/accountability/api.js';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { ACTION } from './MyAccountabilityPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Accountability Report (part 04.05, section 7.3): by person, role or project, how many actions were taken, how many on time, what was returned or rejected, the exceptions raised and the
 // items past their time, with a figure that is an input to a review. A row opens the actions behind it. Exports honour the filters; the figure is never an automatic penalty.
@@ -35,8 +36,7 @@ export default function AccountabilityReportPage() {
   const t = d?.totals;
   return (
     <section aria-labelledby="ar-title" data-testid="accountability-report">
-      <h1 id="ar-title">Accountability Report</h1>
-      <p className="muted">{d?.note ?? 'How actions were taken: on time or late, returned or rejected, exceptions raised, and items past their time. An input to a review, read by a person.'}</p>
+      <PageHeader id="ar-title" title={"Accountability Report"} subtitle={d?.note ?? 'How actions were taken: on time or late, returned or rejected, exceptions raised, and items past their time. An input to a review, read by a person.'} />
       {notice && <p role="status" className="notice">{notice}</p>}
       <form className="srch-form" role="search" aria-label="Report parameters" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>By</span><select value={filters.by} onChange={(e) => set({ by: e.target.value })}><option value="person">Person</option><option value="role">Role</option><option value="project">Project</option></select></label>

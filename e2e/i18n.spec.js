@@ -36,11 +36,13 @@ test('T-01 AC-01 the field screens, the shell and the palette in Hindi: every te
   const c = await company(request, pick(info, 'I18D', 'I18M'));
   const page = await as(browser, info, c, 'SE', pick(info, 'e2e-se-d', 'e2e-se-m'), '/field');
   const errors = watch(page);
-  await expect(page.getByRole('heading', { name: 'Field Home', level: 1 })).toBeVisible();
+  // part 166.3 (ff.field.p16603 ON in test): the field home's heading is the greeting; "Field Home" is the line in the band
+  await expect(page.getByTestId('field-title')).toHaveText('Field Home');
   await expect(page.getByTestId('field-online')).toContainText('Online');
   await (await userMenu(page)).getByLabel('Language').selectOption('hi');
   await expect(page.locator('html')).toHaveAttribute('lang', 'hi');
-  await expect(page.getByRole('heading', { name: 'फ़ील्ड होम', level: 1 })).toBeVisible();
+  await expect(page.getByTestId('field-title')).toHaveText('फ़ील्ड होम');
+  await expect(page.getByTestId('field-band').getByRole('heading', { level: 1 })).toContainText(/सुप्रभात|नमस्कार|शुभ संध्या/);
   await expect(page.getByTestId('field-online')).toContainText('ऑनलाइन');
   await expect(page.getByTestId('sync-count')).toContainText('भेजने के लिए कुछ भी बाकी नहीं है');
   await expect(page.getByTestId('location-notice')).toContainText('आपकी स्थिति बटन दबाने पर एक बार पढ़ी जाती है');
@@ -95,7 +97,7 @@ test('AC-05 FR-02 the Translations page: a change of wording is a request anothe
   await expect(page.getByRole('table', { name: 'Changes waiting for approval' })).toContainText('Waiting for another administrator');
   // not in force yet
   const probe = await as(browser, info, c, 'SE', pick(info, 'e2e-se-td', 'e2e-se-tm'), '/field', { language: 'hi' });
-  await expect(probe.getByRole('heading', { name: 'फ़ील्ड होम', level: 1 })).toBeVisible();
+  await expect(probe.getByTestId('field-title')).toHaveText('फ़ील्ड होम');
   // a second administrator approves it
   const other = await as(browser, info, c, 'SYSADM', second, '/admin/translations');
   const pending = other.getByRole('table', { name: 'Changes waiting for approval' });
@@ -104,7 +106,7 @@ test('AC-05 FR-02 the Translations page: a change of wording is a request anothe
   await expect(pending).toHaveCount(0);
   // in force for the people of the company, without a new build
   await probe.reload();
-  await expect(probe.getByRole('heading', { name: 'साइट होम', level: 1 })).toBeVisible();
+  await expect(probe.getByTestId('field-title')).toHaveText('साइट होम');
   // the first administrator sees it marked as changed, with its history, and can ask for the standard wording back
   await page.reload();
   await page.getByRole('searchbox', { name: 'Search' }).fill('field.title');

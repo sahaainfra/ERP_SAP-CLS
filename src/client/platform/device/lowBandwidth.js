@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 // Low-bandwidth mode (part 03.06, FR-06): smaller photos, images that load when seen, panels that wait until they are opened. It follows the
 // browser's data-saver switch or a slow connection by itself ("auto"), and the person can switch it on or off for this device.
@@ -44,4 +44,22 @@ export function useLowBandwidth() {
     return () => { window.removeEventListener(LOW_BANDWIDTH_EVENT, read); connection()?.removeEventListener?.('change', read); };
   }, []);
   return { ...state, set: setLowBandwidth };
+}
+
+// Part 166.4 (FR-03), while ff.perf.p16604 is ON (the shell sets it): low-bandwidth mode also stops the dashboards refreshing by themselves, shows
+// thumbnails where a list shows photos (the full photo when it is opened), and draws charts as their tables.
+let extras = false;
+const extraListeners = new Set();
+export function setLowBandwidthExtras(on) {
+  if (Boolean(on) === extras) return;
+  extras = Boolean(on);
+  extraListeners.forEach((l) => l());
+}
+/** True when the extras of part 166.4 apply now: the flag is ON and the mode is on. For code outside a component. */
+export const lowBandwidthSaves = () => extras && typeof window !== 'undefined' && isLowBandwidth();
+/** The same for a component; it draws again when the mode or the flag changes. */
+export function useLowBandwidthSaves() {
+  const { low } = useLowBandwidth();
+  const on = useSyncExternalStore((fn) => { extraListeners.add(fn); return () => extraListeners.delete(fn); }, () => extras, () => false);
+  return on && low;
 }

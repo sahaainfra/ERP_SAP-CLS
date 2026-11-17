@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { useSecurityEvents } from '../api/audit.js';
 import { Pager, QueryState, downloadCsv, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const SEVERITY = { CRITICAL: ['chip-bad', 'Critical'], HIGH: ['chip-fail', 'High'], WARNING: ['chip-not_applicable', 'Warning'], INFO: ['chip-never', 'Info'] };
 const detailText = (d) => Object.entries(d ?? {}).filter(([k]) => !['event', 'entity', 'entityId'].includes(k)).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join(', ');
@@ -21,15 +23,14 @@ export default function SecurityEventsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Security events</nav>
-      <div className="page-head"><h1 id="page-title">Security Events</h1></div>
-      <p className="muted">What happened that matters to security. Entries cannot be edited or deleted. A critical entry means the audit trail itself was tampered with, or a token was reused: look at it now.</p>
+      <PageHeader id="page-title" title={"Security Events"} subtitle={"What happened that matters to security. Entries cannot be edited or deleted. A critical entry means the audit trail itself was tampered with, or a token was reused: look at it now."} />
       {s && (
-        <div className="tiles" data-testid="security-summary" role="status">
+        <KpiRow data-testid="security-summary" role="status">
           <div className={`tile ${s.critical ? 'tile-bad' : 'tile-ok'}`}><span>Critical, last 24 hours</span><strong>{s.critical}</strong></div>
           <div className={`tile ${s.high ? 'tile-bad' : ''}`}><span>High</span><strong>{s.high}</strong></div>
           <div className="tile"><span>Warnings</span><strong>{s.warning}</strong></div>
           <div className="tile"><span>All events</span><strong>{s.last24h}</strong></div>
-        </div>
+        </KpiRow>
       )}
       {s?.critical > 0 && <p className="field-error" role="alert">There {s.critical === 1 ? 'is 1 critical event' : `are ${s.critical} critical events`} in the last 24 hours.</p>}
       <div className="toolbar">

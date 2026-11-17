@@ -47,47 +47,48 @@ test('BR-02 units convert through their base as exact fractions: a conversion an
   assert.equal(convertExact('1', '1000', '1', 3), '1000');
 });
 
+// part 166.8: cement's own change (28 % → 18 % from 22-09-2025) is now a seed row; the workflow is shown on another code
 test('T-01 BR-01 a GST change from a date is approved by an accounts manager and the CFO; a transaction dated before it keeps the old rate', async () => {
   const t = await setup();
-  const cement = await t.find(acc, 'hsn-sac', '2523');
-  assert.equal(cement.defaultGstRate, 'GST28');
-  const before = await t.call(acc, 'GET', `/tax/gst?hsn=2523&date=${day(0)}`);
-  assert.equal(before.json.data.rate.igstPct, '28');
+  const bricks = await t.find(acc, 'hsn-sac', '6904');
+  assert.equal(bricks.defaultGstRate, 'GST12');
+  const before = await t.call(acc, 'GET', `/tax/gst?hsn=6904&date=${day(0)}`);
+  assert.equal(before.json.data.rate.igstPct, '12');
   // only the steward of taxes proposes; a reason is required
-  assert.equal((await t.call(proc, 'PUT', `/common/hsn-sac/${cement.id}`, { data: { defaultGstRate: 'GST18' }, effectiveFrom: day(5), justification: 'Notification 9/2025', version: cement.rowVersion })).status, 403);
-  assert.equal((await t.call(acc, 'PUT', `/common/hsn-sac/${cement.id}`, { data: { defaultGstRate: 'GST18' }, effectiveFrom: day(5), version: cement.rowVersion })).status, 400);
-  const p = await t.call(acc, 'PUT', `/common/hsn-sac/${cement.id}`, { data: { defaultGstRate: 'GST18' }, effectiveFrom: day(5), justification: 'GST Council notification 9/2025: cement from 28% to 18%', version: cement.rowVersion });
+  assert.equal((await t.call(proc, 'PUT', `/common/hsn-sac/${bricks.id}`, { data: { defaultGstRate: 'GST5' }, effectiveFrom: day(5), justification: 'A test change of a rate', version: bricks.rowVersion })).status, 403);
+  assert.equal((await t.call(acc, 'PUT', `/common/hsn-sac/${bricks.id}`, { data: { defaultGstRate: 'GST5' }, effectiveFrom: day(5), version: bricks.rowVersion })).status, 400);
+  const p = await t.call(acc, 'PUT', `/common/hsn-sac/${bricks.id}`, { data: { defaultGstRate: 'GST5' }, effectiveFrom: day(5), justification: 'A test change of a rate: ceramic bricks from 12% to 5%', version: bricks.rowVersion });
   assert.equal(p.status, 202, JSON.stringify(p.json));
-  assert.equal((await t.call(acc, 'GET', `/tax/gst?hsn=2523&date=${day(6)}`)).json.data.rate.igstPct, '28', 'nothing changes before approval');
-  assert.equal((await t.call(acc, 'PUT', `/common/hsn-sac/${cement.id}`, { data: { defaultGstRate: 'GST12' }, effectiveFrom: day(7), justification: 'Another change of cement', version: cement.rowVersion })).status, 409, 'one change of a code at a time');
+  assert.equal((await t.call(acc, 'GET', `/tax/gst?hsn=6904&date=${day(6)}`)).json.data.rate.igstPct, '12', 'nothing changes before approval');
+  assert.equal((await t.call(acc, 'PUT', `/common/hsn-sac/${bricks.id}`, { data: { defaultGstRate: 'GST5' }, effectiveFrom: day(7), justification: 'Another change of bricks', version: bricks.rowVersion })).status, 409, 'one change of a code at a time');
   // the proposer cannot approve; another accounts manager and the CFO do
   const mine = (await t.api.call('GET', `${W}/tasks?mine=assigned`, acc)).json.data.rows.filter((x) => x.instance.id === p.json.data.workflow.id);
   assert.equal(mine.length, 0, 'the proposer has no task');
   await act(t.api, acc2, p.json.data.workflow.id);
   await act(t.api, cfo, p.json.data.workflow.id);
-  const on = (d) => t.call(acc, 'GET', `/tax/gst?hsn=2523&date=${d}`);
-  assert.equal((await on(day(4))).json.data.rate.igstPct, '28', 'a transaction dated before the change keeps the old rate');
-  assert.equal((await on(day(5))).json.data.rate.igstPct, '18', 'from the date, the new rate');
-  assert.equal((await on('2024-01-15')).json.data.rate.igstPct, '28');
-  const hist = (await t.call(acc, 'GET', `/common/hsn-sac/${cement.id}`)).json.data.history;
+  const on = (d) => t.call(acc, 'GET', `/tax/gst?hsn=6904&date=${d}`);
+  assert.equal((await on(day(4))).json.data.rate.igstPct, '12', 'a transaction dated before the change keeps the old rate');
+  assert.equal((await on(day(5))).json.data.rate.igstPct, '5', 'from the date, the new rate');
+  assert.equal((await on('2024-01-15')).json.data.rate.igstPct, '12');
+  const hist = (await t.call(acc, 'GET', `/common/hsn-sac/${bricks.id}`)).json.data.history;
   assert.equal(hist.length, 2);
   assert.deepEqual(hist.map((h) => [h.effectiveFrom, h.effectiveTo, h.system]), [[day(5), null, false], ['2017-07-01', null, true]], 'the company row applies from its date; the system row stays for earlier dates');
-  assert.equal((await t.call(acc, 'GET', `/common/hsn-sac?asOf=${day(5)}&q=2523`)).json.data.rows[0].defaultGstRate, 'GST18');
+  assert.equal((await t.call(acc, 'GET', `/common/hsn-sac?asOf=${day(5)}&q=6904`)).json.data.rows[0].defaultGstRate, 'GST5');
   // another company is not affected
-  const other = await t.api.call('GET', `${M}/tax/gst?hsn=2523&date=${day(6)}`, as('ACCMGR', 'acc9', '2'));
-  if (other.status === 200) assert.equal(other.json.data.rate.igstPct, '28');
+  const other = await t.api.call('GET', `${M}/tax/gst?hsn=6904&date=${day(6)}`, as('ACCMGR', 'acc9', '2'));
+  if (other.status === 200) assert.equal(other.json.data.rate.igstPct, '12');
   assert.equal(t.api.db.prepare("SELECT COUNT(*) AS n FROM ntf_notifications WHERE template_code = 'mdm.common.decided' AND user_ref = 'acc1'").get().n, 1, 'the proposer is told');
   // the change is in the 06.01 worklist with what changed
   const cr = (await t.call(acc, 'GET', `/change-requests/${p.json.data.changeRequestId}`)).json.data;
   assert.equal(cr.masterLabel, 'HSN/SAC codes');
-  assert.equal(cr.fields[0].before, 'GST28');
-  assert.equal(cr.fields[0].after, 'GST18');
+  assert.equal(cr.fields[0].before, 'GST12');
+  assert.equal(cr.fields[0].after, 'GST5');
 });
 
 test('statutory changes: IGST must be CGST plus SGST; return, resubmit and reject; a TDS section from a date', async () => {
   const t = await setup();
-  assert.equal((await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST40', description: '40% (sin goods)', igstPct: '40', cgstPct: '20', sgstPct: '10' }, effectiveFrom: day(1), justification: 'New 40% slab announced' })).status, 400);
-  const n = await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST40', description: '40% (sin goods)', igstPct: '40', cgstPct: '20', sgstPct: '20' }, effectiveFrom: day(1), justification: 'New 40% slab announced by the Council' });
+  assert.equal((await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST45', description: '45% (a test slab)', igstPct: '45', cgstPct: '22.5', sgstPct: '10' }, effectiveFrom: day(1), justification: 'New 40% slab announced' })).status, 400);
+  const n = await t.call(acc, 'POST', '/common/gst-rates', { data: { code: 'GST45', description: '45% (a test slab)', igstPct: '45', cgstPct: '22.5', sgstPct: '22.5' }, effectiveFrom: day(1), justification: 'New 40% slab announced by the Council' });
   assert.equal(n.status, 202, JSON.stringify(n.json));
   await act(t.api, acc2, n.json.data.workflow.id, 'return', 'Give the notification number');
   assert.equal((await t.call(acc, 'GET', `/change-requests/${n.json.data.changeRequestId}`)).json.data.status, 'RETURNED');
@@ -96,7 +97,7 @@ test('statutory changes: IGST must be CGST plus SGST; return, resubmit and rejec
   await act(t.api, acc2, n.json.data.workflow.id);
   await act(t.api, cfo, n.json.data.workflow.id, 'reject', 'Not yet notified');
   assert.equal((await t.call(acc, 'GET', `/change-requests/${n.json.data.changeRequestId}`)).json.data.status, 'REJECTED');
-  assert.equal((await t.call(acc, 'GET', `/tax/gst?code=GST40&date=${day(2)}`)).status, 404, 'a rejected rate never applies');
+  assert.equal((await t.call(acc, 'GET', `/tax/gst?code=GST45&date=${day(2)}`)).status, 404, 'a rejected rate never applies');
   const c = await t.find(acc, 'tds-sections', '194C');
   const p = await t.call(acc, 'PUT', `/common/tds-sections/${c.id}`, { data: { thresholdSingle: '50000' }, effectiveFrom: day(3), justification: 'Finance Act: single payment threshold raised' });
   assert.equal(p.status, 400, 'the row version is required');

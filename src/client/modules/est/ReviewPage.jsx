@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ASSUMPTION_KINDS, REVIEW_CODES, est, fetchFile, inr, rv } from './api.js';
 import { EstimatePicker, Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Estimate Review (part 09.03, FR-01 to FR-04, FR-06): one estimate version as the commercial manager and the director review it. The header shows the selling, the cost, the margin and the bid price; the tabs hold the review
 // checklist (ticking every item approves the review step of the approval, or a return says what to correct), the bid price summary, the sensitivity of the bid price to +/- x % on the key resources, the unbalanced items,
@@ -21,7 +22,7 @@ export default function ReviewPage() {
   const x = q.data;
   usePageTitle(x ? `${t('rev.title')} ${x.estimate.ref}` : t('rev.title'));
   const [tab, setTab] = useState('checklist'); const [error, setError] = useState(null); const [note, setNote] = useState(null);
-  if (!id) return (<section aria-labelledby="rev-h" data-testid="review-none"><h1 id="rev-h">{t('rev.title')}</h1><p className="muted">{t('rev.choose')}</p>{lq.data && <EstimatePicker id="rev-pick" value={null} onChange={(v) => v && navigateTo(`/est/review?id=${v}`)} rows={lq.data.data ?? []} label={t('imp.estimate')} />}</section>);
+  if (!id) return (<section aria-labelledby="rev-h" data-testid="review-none"><PageHeader id="rev-h" title={t('rev.title')} subtitle={t('rev.choose')} />{lq.data && <EstimatePicker id="rev-pick" value={null} onChange={(v) => v && navigateTo(`/est/review?id=${v}`)} rows={lq.data.data ?? []} label={t('imp.estimate')} />}</section>);
   if (q.error?.status === 403) return <NoPermission what={t('rev.title')} permission="est.review.view" />;
   if (q.isPending) return <Skeleton label={t('rev.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -31,8 +32,7 @@ export default function ReviewPage() {
   return (
     <section aria-labelledby="rev-h" data-testid="review" data-status={e.status}>
       <header>
-        <h1 id="rev-h">{t('rev.title')} {e.ref} <StatusBadge status={TONE[e.status]} label={e.statusLabel} /></h1>
-        <p className="muted"><Link to={`/est/estimate?id=${e.id}`}>{e.title}</Link> · {e.tender ? e.tender.docNo : e.project?.name} · {t('obj.basis', { date: e.basisDate })} · {t('rev.items', { n: e.items })}</p>
+        <PageHeader id="rev-h" title={<>{t('rev.title')} {e.ref} <StatusBadge status={TONE[e.status]} label={e.statusLabel} /></>} subtitle={<><Link to={`/est/estimate?id=${e.id}`}>{e.title}</Link> · {e.tender ? e.tender.docNo : e.project?.name} · {t('obj.basis', { date: e.basisDate })} · {t('rev.items', { n: e.items })}</>} />
         <dl className="op-figures" data-testid="rev-figures">
           <div><dt>{t('fig.selling')}</dt><dd>{inr(s.selling)}</dd></div>
           {c && <div><dt>{t('fig.cost')}</dt><dd>{inr(s.totalCost)}</dd></div>}

@@ -9,6 +9,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from './common.js';
 import Variants from './Variants.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Exceptions Register (part 04.04, section 7.3): every request to go ahead although a control point said no, with its reason, justification, evidence, value at risk and
 // where it is in approval. A person sees what they raised; those who watch the business (permission eng.pcs.view) see the company's, inside their project scope. An
@@ -79,8 +80,7 @@ export default function ExceptionsPage({ session }) {
   const filtered = JSON.stringify(filters) !== JSON.stringify(EMPTY);
   return (
     <section aria-labelledby="ex-title" data-testid="exceptions">
-      <h1 id="ex-title">Exceptions Register</h1>
-      <p className="muted">Requests to go ahead although a control said no. Each has a reason, a justification and evidence, and is approved by the level the control names. Raise one from the action a control stopped.</p>
+      <PageHeader id="ex-title" title={"Exceptions Register"} subtitle={"Requests to go ahead although a control said no. Each has a reason, a justification and evidence, and is approved by the level the control names. Raise one from the action a control stopped."} />
       {notice && <p role="status" className="notice" data-testid="ex-notice">{notice}</p>}
       {open && <Detail key={open} id={open} session={session} setNotice={setNotice} onClose={() => navigateTo('/controls/exceptions', { force: true })} />}
       {data && <ul className="srch-meta" aria-label="Totals" data-testid="ex-totals"><li><strong>{data.total}</strong> exception(s)</li><li>Value at risk <strong>₹{Number(data.valueAtRisk).toLocaleString('en-IN')}</strong></li></ul>}

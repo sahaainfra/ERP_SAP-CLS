@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { qa } from './api.js';
 import { sel } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Quality Ratings (part 18.07, FR-03): sites, subcontractors and suppliers scored out of 100, worst first, with the points taken off and the counts behind the score; each row opens its records.
 const BAND = { A: 'APPROVED', B: 'APPROVED', C: 'RETURNED', D: 'REJECTED' };
@@ -15,7 +16,7 @@ export default function RatingsPage() {
   if (q.error?.status === 403) return <NoPermission what={t('rt.title')} permission="qa.dashboard.view" />; if (q.isPending) return <Skeleton label={t('rt.title')} rows={5} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data;
   return (
-    <section aria-labelledby="rt-h" data-testid="qa-ratings"><h1 id="rt-h">{t('rt.title')}</h1><p className="muted"><Link to="/qa/dashboard">{t('dash.title')}</Link> · {t('rt.intro')}</p>
+    <section aria-labelledby="rt-h" data-testid="qa-ratings"><PageHeader id="rt-h" title={t('rt.title')} subtitle={<><Link to="/qa/dashboard">{t('dash.title')}</Link> · {t('rt.intro')}</>} />
       <div className="mdm-panel no-print"><div className="actions-row" role="group" aria-label={t('rt.by')}>{['subcontractor', 'supplier', 'site'].map((k) => <button key={k} type="button" className={by === k ? 'btn btn-primary' : 'btn'} style={{ minHeight: 44 }} aria-pressed={by === k} onClick={() => setBy(k)} data-testid={`rt-by-${k}`}>{t(`rt.${k}`)}</button>)}</div>
         <label>{t('project')}<select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={sel} data-testid="rt-project"><option value="">{t('allProjects')}</option>{(oq.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></label>
         <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => qa.exportFile(`/dashboard/export?kind=ratings&${qs}`, `ratings-${by}.csv`).catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="rt-export">{t('export')}</button></div>

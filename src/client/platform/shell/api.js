@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/index.js';
 import { queryKeys } from '../query/keys.js';
+import { lowBandwidthSaves } from '../device/lowBandwidth.js';
 
 // Data hooks of the application shell (part 03.05). Components use these, never the API client directly.
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
@@ -13,6 +14,8 @@ export const useFavourites = (enabled = true) => useQuery({ queryKey: shellKeys.
 export const useRecent = (enabled = true) => useQuery({ queryKey: shellKeys.recent, queryFn: () => unwrap(api.get('/ui/recent')), enabled, retry: false });
 export const useLaunchpad = (enabled = true) => useQuery({ queryKey: shellKeys.launchpad, queryFn: () => unwrap(api.get('/ui/launchpad')), enabled, retry: false });
 /** The bell: how many requests wait for this person (refreshed every minute until the notification service of 04.06 exists). */
+/** Part 166.3: what waits for a site person today, for the Field Home's task cards (refreshed every two minutes while the page is open). */
+export const useFieldToday = (enabled = true) => useQuery({ queryKey: ['shell', 'field-today'], queryFn: () => unwrap(api.get('/ui/field/today')), enabled, retry: false, refetchInterval: () => (lowBandwidthSaves() ? false : 120_000) }); // none in low-bandwidth mode (166.4)
 export const useBell = (enabled = true) => useQuery({ queryKey: shellKeys.bell, queryFn: () => unwrap(api.get('/ui/bell')), enabled, retry: false, refetchInterval: 60_000 });
 
 export function useSetContext() {
@@ -71,4 +74,21 @@ export function useShellMode(enabled = true) {
   const q = useQuery({ queryKey: queryKeys.core.flags.evaluate(['ff.ui.p0305']), queryFn: async () => (await api.get('/core/feature-flags/evaluate?keys=ff.ui.p0305')).data, enabled, retry: false });
   if (q.isSuccess) return q.data?.['ff.ui.p0305'] === true ? 'on' : 'off';
   return q.isError ? 'off' : 'loading';
+}
+
+// Part 166.4 (first screen): the shell asks for about a dozen flags one by one, in three rounds before the menu. primeShellFlags asks for them in
+// one request with the sign-in check, and each flag's query (the same key as useFlag) shares it. With ff.perf.p16604 OFF, or when the batch fails,
+// every flag is asked for on its own as before. Home's insight cards (166.5) and the List Report and document flow (166.7) read their flags on
+// the first screen too, so they are in the batch.
+const SHELL_FLAGS = ['ff.iam.p0202', 'ff.ui.p0305', 'ff.ui.p0301', 'ff.ui.p0306', 'ff.ui.p0308', 'ff.ui.p0309', 'ff.ui.p0310', 'ff.ui.p16602', 'ff.eng.p0415', 'ff.msg.p0501', 'ff.field.p16603', 'ff.perf.p16604', 'ff.ui.p16605', 'ff.ui.p16607'];
+const evaluateOne = async (key) => (await api.get(`/core/feature-flags/evaluate?keys=${encodeURIComponent(key)}`)).data;
+export function primeShellFlags(qc) {
+  const batch = api.get(`/core/feature-flags/evaluate?keys=${SHELL_FLAGS.map(encodeURIComponent).join(',')}`).then((r) => r.data);
+  batch.catch(() => null); // a failure is handled per flag below
+  for (const key of SHELL_FLAGS) {
+    qc.prefetchQuery({
+      queryKey: queryKeys.core.flags.evaluate([key]),
+      queryFn: () => batch.then((all) => (all?.['ff.perf.p16604'] === true && key in all ? { [key]: all[key] } : evaluateOne(key)), () => evaluateOne(key)),
+    });
+  }
 }

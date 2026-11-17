@@ -56,7 +56,7 @@ test('Stores: a store is approved, stock is received and issued at the weighted 
   await approve(browser, info, c, 'STOREMGR', s.u('mgr2'), adj, 'ad'); await p.goto('/inv/ledger'); await p.getByTestId('lg-item').selectOption({ index: 1 }); await expect(p.getByTestId('lg-row')).toHaveCount(4); await expect(p.getByTestId('lg-balance').last()).toHaveText('147');
   await p.goto('/inv/valuation'); await expect(p.getByTestId('vl-total')).toContainText('6,615');
   // the dashboard
-  await p.goto('/inv/dashboard'); await expect(p.getByTestId('sd-stores')).toHaveText('1'); await expect(p.getByTestId('sd-value')).toContainText('6,615'); await expect(p.getByTestId('sd-reorder')).toHaveText('1'); await expect(p.getByTestId('sd-books')).toContainText(/Balanced|संतुलित|मिलान/); await noOverflow(p); await shot(p, '6-dashboard', info);
+  await p.goto('/inv/dashboard?view=detail'); await expect(p.getByTestId('sd-stores')).toHaveText('1'); await expect(p.getByTestId('sd-value')).toContainText('6,615'); await expect(p.getByTestId('sd-reorder')).toHaveText('1'); await expect(p.getByTestId('sd-books')).toContainText(/Balanced|संतुलित|मिलान/); await noOverflow(p); await shot(p, '6-dashboard', info);
   // the keeper works the store but sees no values
   const k = await open(browser, info, c, 'SK', s.u('sk'), '/inv/ledger'); await k.page.getByTestId('lg-item').selectOption({ index: 1 }); await expect(k.page.getByTestId('lg-row').first()).toBeVisible(); await expect(k.page.getByTestId('lg-table')).not.toContainText('₹'); await k.page.goto('/inv/valuation'); await expect(k.page.getByTestId('inv-vl')).toHaveCount(0); await noOverflow(k.page); await k.context.close();
   expect(errors, errors.join('\n')).toEqual([]); await m.context.close();
@@ -64,6 +64,6 @@ test('Stores: a store is approved, stock is received and issued at the weighted 
 
 test('Stores: a project manager reads the stores and the dashboard; a storekeeper of another store sees none', async ({ browser, request }, info) => {
   const t = `i${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}z`; const c = await company(request, t.toUpperCase()); const s = await seed(c, t);
-  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/inv/dashboard'); await expect(pm.page.getByTestId('inv-sd')).toBeVisible(); await noOverflow(pm.page);
+  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/inv/dashboard?view=detail'); await expect(pm.page.getByTestId('inv-sd')).toBeVisible(); await noOverflow(pm.page);
   const sk = await open(browser, info, c, 'SK', s.u('sk'), '/inv/stores'); await expect(sk.page.getByTestId('inv-st')).toBeVisible(); await expect(sk.page.getByText('SS-01')).toHaveCount(0);
 });

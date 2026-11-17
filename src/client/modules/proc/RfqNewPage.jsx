@@ -6,6 +6,7 @@ import { NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { addDays, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Create an RFQ from approved purchase requisition lines (part 15.03, FR-01, FR-02): choose the project, the lines (from one or many requisitions) and how much of each, the terms and the due date, then the vendors from the active ones of the
 // partner master (the list shows which match the category of the lines; a vendor on hold or blacklisted cannot be chosen). Fewer vendors than the minimum on a value above the threshold needs a written reason.
@@ -32,7 +33,7 @@ export default function RfqNewPage() {
   const save = async () => { setError(null); setBusy(true); try { const d = editId ? await pc.rfqUpdate(editId, { ...body(), rowVersion: e.rowVersion }) : await pc.rfqCreate({ projectId: Number(projectId), ...body() }); navigateTo(`/proc/rfqs?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
     <section aria-labelledby="rfn-h" data-testid="proc-rfq-form">
-      <h1 id="rfn-h">{editId ? t('q.edit') : t('q.new')}</h1><p className="muted">{t('q.newHelp')}</p><p><Link to="/proc/rfqs">{t('q.back')}</Link></p>
+      <PageHeader id="rfn-h" title={editId ? t('q.edit') : t('q.new')} subtitle={t('q.newHelp')} meta={<Link to="/proc/rfqs">{t('q.back')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(); }} noValidate>
         <div className="form-grid">
           <Field label={t('q.project')} name="projectId" error={error}><select value={projectId} disabled={Boolean(editId)} onChange={(ev) => { setF({ ...form, projectId: ev.target.value }); setPick({}); setVend({}); }} style={{ minHeight: 44 }} data-testid="rfn-project">{projects.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</select></Field>

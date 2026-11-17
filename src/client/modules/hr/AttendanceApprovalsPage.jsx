@@ -5,6 +5,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { BAND_TEXT, regs } from './api.js';
 import RequestForm from './RequestForm.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Attendance Approvals (HR, part 07.06, FR-03 to FR-05): the regularisations, overtime requests and manual entries waiting for the person, in one worklist. Tick several and approve them together, or reject or return them with a reason; each is decided
 // on its own, so one that cannot be decided does not stop the others. A person never decides what they raised. HR also enters attendance by hand here (a second person approves it).
@@ -34,7 +35,7 @@ export default function AttendanceApprovalsPage() {
   };
   return (
     <section aria-labelledby="ap-title" data-testid="approvals">
-      <h1 id="ap-title">Attendance Approvals</h1>
+      <PageHeader id="ap-title" title={"Attendance Approvals"} />
       <Field label="Note for the decision (needed to reject or return)" name="comment" error={null}><input value={comment} onChange={(e) => setComment(e.target.value)} data-testid="ap-comment" /></Field>
       {error?.form && <p className="field-error" role="alert" data-testid="ap-error">{error.form}</p>}
       {done && <p className="mdm-banner" role="status" data-testid="ap-done">{done}</p>}

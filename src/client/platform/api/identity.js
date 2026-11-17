@@ -22,8 +22,14 @@ export function saveIdentity(identity) {
 
 // `x-erp-cache-scope` names whose data a response holds: the service worker (part 03.06) keeps a copy of a few responses for offline use and keys
 // it by this, so one person's copy is never shown to another on a shared device.
+// `x-erp-sw: p16604` asks the service worker for the caching of part 166.4 (FR-02: a 3 s timeout before an offline copy, the menu stale-while-revalidate);
+// the shell sets it while ff.perf.p16604 is ON. The worker keeps no state of its own, so the flag decides request by request.
+let swStrategy = false;
+export const setSwStrategy = (on) => { swStrategy = Boolean(on); };
+
 export function authHeaders() {
-  if (authMode() === 'iam') return accessToken() ? { authorization: `Bearer ${accessToken()}`, 'x-erp-cache-scope': encodeURIComponent(signedInUser() ?? '') } : {};
+  const sw = swStrategy ? { 'x-erp-sw': 'p16604' } : {};
+  if (authMode() === 'iam') return accessToken() ? { authorization: `Bearer ${accessToken()}`, 'x-erp-cache-scope': encodeURIComponent(signedInUser() ?? ''), ...sw } : {};
   const id = loadIdentity();
-  return { 'x-erp-user': id.user, 'x-erp-roles': id.roles, 'x-erp-company': id.company, 'x-erp-cache-scope': encodeURIComponent(`${id.user}|${id.roles}|${id.company}`) };
+  return { 'x-erp-user': id.user, 'x-erp-roles': id.roles, 'x-erp-company': id.company, 'x-erp-cache-scope': encodeURIComponent(`${id.user}|${id.roles}|${id.company}`), ...sw };
 }

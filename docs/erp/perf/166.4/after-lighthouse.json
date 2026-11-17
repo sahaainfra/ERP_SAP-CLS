@@ -1,0 +1,261 @@
+{
+  "lighthouse": "lighthouse@13.5.0",
+  "targets": {
+    "performance": 80,
+    "lcpMs": 3000,
+    "cls": 0.1
+  },
+  "settings": "mobile, simulated Slow 4G (150 ms, 1.6 Mbps), 4x CPU slowdown, cold cache",
+  "results": [
+    {
+      "name": "Home",
+      "path": "/home",
+      "user": "lh-pm",
+      "roles": "PM",
+      "performance": 77,
+      "lcpMs": 4304,
+      "cls": 0.001,
+      "fcpMs": 2748,
+      "tbtMs": 230,
+      "ttiMs": 4367,
+      "bytes": 500044,
+      "ok": false,
+      "finalUrl": "http://127.0.0.1:4791/home",
+      "runs": [
+        {
+          "performance": 77,
+          "lcpMs": 4304,
+          "cls": 0.001,
+          "fcpMs": 2748,
+          "tbtMs": 230,
+          "ttiMs": 4367,
+          "bytes": 500044,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/home"
+        },
+        {
+          "performance": 78,
+          "lcpMs": 4141,
+          "cls": 0.001,
+          "fcpMs": 3192,
+          "tbtMs": 178,
+          "ttiMs": 4141,
+          "bytes": 499855,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/home"
+        },
+        {
+          "performance": 74,
+          "lcpMs": 4119,
+          "cls": 0.001,
+          "fcpMs": 3175,
+          "tbtMs": 281,
+          "ttiMs": 4119,
+          "bytes": 499856,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/home"
+        }
+      ]
+    },
+    {
+      "name": "Field Home",
+      "path": "/field",
+      "user": "lh-se",
+      "roles": "SE",
+      "performance": 81,
+      "lcpMs": 3985,
+      "cls": 0,
+      "fcpMs": 2880,
+      "tbtMs": 128,
+      "ttiMs": 4376,
+      "bytes": 496913,
+      "ok": false,
+      "finalUrl": "http://127.0.0.1:4791/field",
+      "runs": [
+        {
+          "performance": 81,
+          "lcpMs": 3985,
+          "cls": 0,
+          "fcpMs": 2880,
+          "tbtMs": 128,
+          "ttiMs": 4376,
+          "bytes": 496913,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/field"
+        },
+        {
+          "performance": 90,
+          "lcpMs": 2970,
+          "cls": 0,
+          "fcpMs": 2711,
+          "tbtMs": 98,
+          "ttiMs": 3514,
+          "bytes": 489018,
+          "ok": true,
+          "finalUrl": "http://127.0.0.1:4791/field"
+        },
+        {
+          "performance": 78,
+          "lcpMs": 4017,
+          "cls": 0,
+          "fcpMs": 2749,
+          "tbtMs": 234,
+          "ttiMs": 4387,
+          "bytes": 493154,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/field"
+        }
+      ]
+    },
+    {
+      "name": "DPR entry",
+      "path": "/site/dpr-entry",
+      "user": "lh-se",
+      "roles": "SE",
+      "performance": 78,
+      "lcpMs": 4103,
+      "cls": 0,
+      "fcpMs": 2850,
+      "tbtMs": 233,
+      "ttiMs": 4103,
+      "bytes": 505096,
+      "ok": false,
+      "finalUrl": "http://127.0.0.1:4791/site/dpr-entry",
+      "runs": [
+        {
+          "performance": 75,
+          "lcpMs": 4115,
+          "cls": 0,
+          "fcpMs": 2847,
+          "tbtMs": 299,
+          "ttiMs": 4828,
+          "bytes": 501146,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/site/dpr-entry"
+        },
+        {
+          "performance": 81,
+          "lcpMs": 3201,
+          "cls": 0,
+          "fcpMs": 2850,
+          "tbtMs": 332,
+          "ttiMs": 4692,
+          "bytes": 500656,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/site/dpr-entry"
+        },
+        {
+          "performance": 78,
+          "lcpMs": 4103,
+          "cls": 0,
+          "fcpMs": 2850,
+          "tbtMs": 233,
+          "ttiMs": 4103,
+          "bytes": 505096,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/site/dpr-entry"
+        }
+      ]
+    },
+    {
+      "name": "GRN",
+      "path": "/inv/grns",
+      "user": "lh-sk",
+      "roles": "SK",
+      "performance": 73,
+      "lcpMs": 4313,
+      "cls": 0,
+      "fcpMs": 2915,
+      "tbtMs": 304,
+      "ttiMs": 4588,
+      "bytes": 522152,
+      "ok": false,
+      "finalUrl": "http://127.0.0.1:4791/inv/grns",
+      "runs": [
+        {
+          "performance": 76,
+          "lcpMs": 4328,
+          "cls": 0.089,
+          "fcpMs": 2934,
+          "tbtMs": 172,
+          "ttiMs": 4328,
+          "bytes": 520984,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/inv/grns"
+        },
+        {
+          "performance": 71,
+          "lcpMs": 4308,
+          "cls": 0.089,
+          "fcpMs": 2925,
+          "tbtMs": 318,
+          "ttiMs": 4308,
+          "bytes": 524193,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/inv/grns"
+        },
+        {
+          "performance": 73,
+          "lcpMs": 4313,
+          "cls": 0,
+          "fcpMs": 2915,
+          "tbtMs": 304,
+          "ttiMs": 4588,
+          "bytes": 522152,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/inv/grns"
+        }
+      ]
+    },
+    {
+      "name": "Approvals",
+      "path": "/field/approvals",
+      "user": "lh-pm",
+      "roles": "PM",
+      "performance": 75,
+      "lcpMs": 4663,
+      "cls": 0.001,
+      "fcpMs": 2820,
+      "tbtMs": 192,
+      "ttiMs": 4663,
+      "bytes": 509376,
+      "ok": false,
+      "finalUrl": "http://127.0.0.1:4791/field/approvals",
+      "runs": [
+        {
+          "performance": 70,
+          "lcpMs": 4617,
+          "cls": 0.001,
+          "fcpMs": 3317,
+          "tbtMs": 295,
+          "ttiMs": 4617,
+          "bytes": 510732,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/field/approvals"
+        },
+        {
+          "performance": 75,
+          "lcpMs": 4663,
+          "cls": 0.001,
+          "fcpMs": 2820,
+          "tbtMs": 192,
+          "ttiMs": 4663,
+          "bytes": 509376,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/field/approvals"
+        },
+        {
+          "performance": 76,
+          "lcpMs": 4516,
+          "cls": 0.001,
+          "fcpMs": 2835,
+          "tbtMs": 195,
+          "ttiMs": 4516,
+          "bytes": 511418,
+          "ok": false,
+          "finalUrl": "http://127.0.0.1:4791/field/approvals"
+        }
+      ]
+    }
+  ]
+}

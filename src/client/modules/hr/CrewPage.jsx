@@ -7,6 +7,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { formatDate } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, deploy } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Crew (HR, part 07.03): one crew or gang of a site: its supervisor and trade, and its members with the dates they joined and left. The supervisor keeps the members of their own crew; a member must be deployed at the site
 // (the server says so when not). A member is ended with a date, never deleted, so the history of who worked in the crew stays. Tabs: Members · Timeline · Discussion.
@@ -27,7 +28,7 @@ export default function CrewPage() {
     <section aria-labelledby="cr-title" data-testid="crew-page">
       <p><Link to="/hr/crews">← Crews &amp; Gangs</Link></p>
       <header className="op-header">
-        <div className="page-head"><h1 id="cr-title">{c.code} · {c.name}</h1><StatusBadge status={c.active ? 'ACTIVE' : 'CLOSED'} label={c.active ? 'Active' : 'Closed'} /></div>
+        <PageHeader id="cr-title" title={<>{c.code} · {c.name}</>} status={<StatusBadge status={c.active ? 'ACTIVE' : 'CLOSED'} label={c.active ? 'Active' : 'Closed'} />} />
         <dl className="op-figures"><div><dt>Site</dt><dd>{c.site}</dd></div><div><dt>Project</dt><dd>{c.project}</dd></div><div><dt>Trade</dt><dd>{c.trade ?? '—'}</dd></div><div><dt>Supervisor</dt><dd data-testid="cr-supervisor">{c.supervisor ?? '—'}</dd></div><div><dt>Members now</dt><dd data-testid="cr-count">{current.length}</dd></div></dl>
       </header>
       <div role="tablist" aria-label="Crew sections" className="op-tabs">{TABS.map(([k, l]) => <button key={k} type="button" role="tab" id={`cr-tab-${k}`} aria-selected={tab === k} aria-controls={`cr-panel-${k}`} tabIndex={tab === k ? 0 : -1} className={`op-tab${tab === k ? ' is-active' : ''}`} onClick={() => setTab(k)}>{l}</button>)}</div>

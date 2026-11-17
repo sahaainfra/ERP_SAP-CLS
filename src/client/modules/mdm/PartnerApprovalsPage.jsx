@@ -4,6 +4,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { partners } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Partner Approvals & Bank Change Requests (Administration, part 06.04): one worklist of what waits on partners: registrations to approve, bank changes (waiting for the partner's confirmation or for approval),
 // blacklisting requests, and compliance documents that expire within 30 days or have expired. What waits for me comes first, then the oldest; the colour shows the age against a 48-hour SLA (amber after 48 hours,
@@ -20,7 +21,7 @@ export default function PartnerApprovalsPage() {
   const d = q.data;
   return (
     <section aria-labelledby="pa-title" data-testid="partner-approvals">
-      <h1 id="pa-title">Partner Approvals &amp; Bank Changes</h1>
+      <PageHeader id="pa-title" title={"Partner Approvals & Bank Changes"} />
       <div className="seg" role="tablist" aria-label="What to show">{KINDS.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={`btn btn-small ${kind === k ? 'btn-primary' : ''}`} onClick={() => setKind(k)} data-testid={`pa-kind-${k || 'all'}`}>{l}{k && d.counts[k] ? ` (${d.counts[k]})` : ''}</button>)}</div>
       {d.rows.length === 0 ? <EmptyState title="Nothing waits" message="Registrations, bank changes, blacklisting requests and expiring documents of partners appear here." /> : (
         <div className="table-wrap" tabIndex={0} role="region" aria-label="Worklist"><table className="grid"><thead><tr><th>Partner</th><th>What</th><th>Kind</th><th>From</th><th>Waiting</th><th><span className="sr-only">Actions</span></th></tr></thead>

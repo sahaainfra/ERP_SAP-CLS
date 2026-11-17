@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { RESULT_TONE, fmtDate, qa } from './api.js';
 import { DocBar, Status, sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Inspections register and inspection object (part 18.01, FR-04): the answers with the tolerance verdicts, photographs and signatures, the failed items that become defects, and the approval by the owner of the module.
 const transport = browserTransport(authHeaders);
@@ -17,8 +18,7 @@ function Inspection({ id }) {
   const addPhoto = (code) => async (ev) => { const f = ev.target.files?.[0]; ev.target.value = ''; if (!f) return; await run(async () => { const up = await uploadFile(f, { transport, entity: 'qa_inspections', entityId: x.id }); return qa.photo(x.id, { questionCode: code, fileId: up.id }); }, t('ins.photoAdded')); };
   const qtext = Object.fromEntries(x.sections.flatMap((s) => s.questions.map((y) => [y.code, y])));
   return (
-    <div data-testid="qa-inspection-object" data-status={x.status} data-result={x.result ?? ''}><h1 id="ins-h">{x.docNo} <Status x={x} /> {x.result && <StatusBadge status={RESULT_TONE[x.result]} label={t(`res.${x.result}`)} />}</h1>
-      <p><Link to="/qa/inspections">{t('ins.title')}</Link> · {x.template} v{x.templateVersion} · {x.project} · {fmtDate(String(x.inspectedAt).slice(0, 10))} · {x.inspectedBy}{x.scorePct != null ? ` · ${x.scorePct} %` : ''}{x.subject ? ` · ${x.subject}` : ''}</p>
+    <div data-testid="qa-inspection-object" data-status={x.status} data-result={x.result ?? ''}><PageHeader id="ins-h" title={<>{x.docNo} <Status x={x} /> {x.result && <StatusBadge status={RESULT_TONE[x.result]} label={t(`res.${x.result}`)} />}</>} meta={<><Link to="/qa/inspections">{t('ins.title')}</Link> · {x.template} v{x.templateVersion} · {x.project} · {fmtDate(String(x.inspectedAt).slice(0, 10))} · {x.inspectedBy}{x.scorePct != null ? ` · ${x.scorePct} %` : ''}{x.subject ? ` · ${x.subject}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="ins-error">{error.form}</p>}
       <DocBar kind="/inspections" x={x} printName={`${x.docNo.replaceAll('/', '-')}.pdf`} />
       {x.defects.length > 0 && <div className="mdm-panel" data-testid="ins-defects"><h2>{t('ins.defects')}</h2><ul>{x.defects.map((d) => <li key={d.questionCode}>{d.questionCode} {d.text}{d.value != null ? ` (${d.value}${d.unit ? ` ${d.unit}` : ''})` : ''}{d.critical ? ` · ${t('tpl.critical')}` : ''}</li>)}</ul></div>}
@@ -34,7 +34,7 @@ export default function InspectionsPage() {
   const t = useT('qa'); usePageTitle(t('ins.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="ins-h"><Inspection id={id} /></section>;
   return (
-    <section aria-labelledby="in-h" data-testid="qa-inspections"><h1 id="in-h">{t('ins.title')}</h1><p className="muted">{t('ins.intro')}</p>
+    <section aria-labelledby="in-h" data-testid="qa-inspections"><PageHeader id="in-h" title={t('ins.title')} subtitle={t('ins.intro')} />
       <div className="actions-row no-print"><Link to="/qa/perform">{t('perf.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/export?kind=inspections', 'inspections.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="ins-export">{t('export')}</button></div>
       <ListReport listCode="qa.inspections" endpoint="/qa/inspections" title={t('ins.title')} session={session.data} rowHref={(r) => `/qa/inspections?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/inspections?id=${r.id}`)} cardFields={['docNo', 'template', 'result', 'status']} statusKey="status" dateKey="inspected" empty={{ title: t('ins.emptyTitle'), text: t('ins.emptyBody') }} />
     </section>

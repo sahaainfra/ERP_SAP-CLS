@@ -1,4 +1,4 @@
-import { createTranslator } from '../../../shared/i18n/catalogue.js';
+import { cleanLang, createTranslator } from '../../../shared/i18n/catalogue.js';
 import { CATALOGUE } from '../../../shared/i18n/locales/index.js';
 import { createParameterStore } from '../parameters/index.js';
 import { todayIST } from '../../../shared/dates.js';
@@ -29,14 +29,15 @@ export function localisationOf(db) {
     if (hit && hit.stamp === stamp) return hit.catalogue;
     const merged = Object.fromEntries(Object.entries(CATALOGUE).map(([lang, namespaces]) => [lang, Object.fromEntries(Object.entries(namespaces).map(([ns, keys]) => [ns, { ...keys }]))]));
     for (const o of db.prepare('SELECT namespace, msg_key, lang, text FROM ui_translations WHERE company_id = ? AND deleted_at IS NULL AND is_active = 1').all(companyId)) {
-      if (merged[o.lang]?.[o.namespace]) merged[o.lang][o.namespace][o.msg_key] = o.text;
+      // a Telugu wording may be the first text of an area that has no Telugu file text yet (part 166.3)
+      if (merged[o.lang] && CATALOGUE.en[o.namespace]) (merged[o.lang][o.namespace] ??= {})[o.msg_key] = o.text;
     }
     cache.set(companyId, { stamp, catalogue: merged });
     return merged;
   }
 
   /** @returns {(ns: string, key: string, params?: Record<string, any>) => string} */
-  const translator = (companyId, lang) => createTranslator({ catalogue: catalogue(companyId), lang: lang === 'hi' ? 'hi' : 'en' });
+  const translator = (companyId, lang) => createTranslator({ catalogue: catalogue(companyId), lang: cleanLang(lang) });
 
   /** The language of a person's screens and messages: their saved preference, else the language of their profile, else English. */
   function languageOf({ companyId, userId = null, username = null }) {
@@ -46,7 +47,7 @@ export function localisationOf(db) {
     }
     if (userId) {
       const p = db.prepare('SELECT language FROM iam_user_profiles WHERE user_id = ? AND deleted_at IS NULL').get(userId);
-      if (p?.language === 'hi') return 'hi';
+      if (p?.language === 'hi' || p?.language === 'te') return p.language;
     }
     return 'en';
   }
@@ -58,7 +59,7 @@ export function localisationOf(db) {
     const own = userRef && has() ? db.prepare('SELECT number_style, time_format FROM ui_locale_preferences WHERE company_id = ? AND user_ref = ? AND deleted_at IS NULL').get(companyId, userRef) : null;
     const grouping = own?.number_style ?? String(store.get('ui.locale.number_style', { companyId, date }));
     const time = own?.time_format ?? String(store.get('ui.locale.time_format', { companyId, date }));
-    return { grouping: grouping === 'international' ? 'international' : 'indian', hour12: time === '12', lang: lang === 'hi' ? 'hi' : 'en' };
+    return { grouping: grouping === 'international' ? 'international' : 'indian', hour12: time === '12', lang: cleanLang(lang) };
   }
 
   inst = { catalogue, translator, languageOf, formatPrefs, invalidate: (companyId) => cache.delete(companyId) };

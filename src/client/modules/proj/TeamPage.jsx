@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { TEAM_TONE, dayIST, tm } from './api.js';
 import ProjectPicker from './ProjectPicker.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Project Team (part 10.05, FR-01, BR-01): the members of a project with their project role and dates. Adding a person is a request approved by the project manager and the project director; the approved membership asks the role engine for the
 // scoped role (it has its own approval), and the person then holds the role on this project. Ending a membership ends the role for the project.
@@ -18,7 +19,7 @@ export default function TeamPage() {
   const projectId = Number(useSearch().get('projectId')) || null;
   const q = useQuery({ queryKey: ['proj', 'team', projectId], queryFn: () => tm.team(projectId), enabled: Boolean(projectId), retry: false });
   const [open, setOpen] = useState(false); const [f, setF] = useState({ username: '', projectRole: '', fromDate: dayIST(), toDate: '', reason: '' }); const [error, setError] = useState(null); const [note, setNote] = useState(null);
-  const head = <><h1 id="team-h">{t('team.title')}</h1><p className="muted">{t('team.intro')}</p><ProjectPicker route="/proj/team" projectId={projectId} testId="team-project" /></>;
+  const head = <><PageHeader id="team-h" title={t('team.title')} subtitle={t('team.intro')} /><ProjectPicker route="/proj/team" projectId={projectId} testId="team-project" /></>;
   if (!projectId) return <section aria-labelledby="team-h" data-testid="team-none">{head}</section>;
   if (q.error?.status === 403) return <NoPermission what={t('team.title')} permission="proj.team.view" />;
   if (q.isPending) return <Skeleton label={t('team.title')} rows={4} />;

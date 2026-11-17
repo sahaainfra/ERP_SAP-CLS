@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { pageCode, registeredPages } from './pages.js';
 
 // Development-header mode (port 3100). Part 03.10, FR-05, T-01: the visual regression baseline. Every page of the application, as a super administrator
@@ -12,7 +13,9 @@ const SIZES = [{ width: 360, height: 740 }, { width: 768, height: 1024 }, { widt
 // pages whose content is the state of the whole system or of the clock: only their frame is compared
 const VOLATILE = new Set(['/admin/navigation', '/admin/audit', '/admin/security-events', '/admin/operations', '/admin/operations/health', '/admin/operations/jobs', '/admin/operations/schedules', '/admin/operations/dead-letters', '/admin/integrations/log', '/admin/data-health', '/admin/about', '/admin/architecture', '/admin/security/routes',
   '/admin/migration', '/account/sessions', '/admin/security/login-history', '/work', '/home', '/admin/console', '/admin/feature-flags', '/admin/formulas/shadow', '/admin/sample-requests/overview', '/field']);
-const pages = registeredPages().filter((p) => !p.onboardingOnly);
+// VISUAL_ROUTES_FILE (one route a line) limits the run to the pages a part changed: the whole baseline takes longer than one run may last
+const only = process.env.VISUAL_ROUTES_FILE ? new Set(readFileSync(process.env.VISUAL_ROUTES_FILE, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)) : null;
+const pages = registeredPages().filter((p) => !p.onboardingOnly && (!only || only.has(p.route)));
 
 async function company(request, code) {
   const res = await request.post('/api/v1/iam/org/companies', { headers: H('SYSADM', 1, 'e2e-setup'), data: { code, legalName: `${code} Infra Pvt Ltd`, shortName: code } });
@@ -23,7 +26,7 @@ async function company(request, code) {
 for (const theme of THEMES) {
   test(`T-01 FR-05 visual baseline of every page, ${theme} theme, at 360, 768 and 1280 px`, async ({ browser, request }, info) => {
     test.skip(info.project.name === 'mobile', 'the three widths are set here');
-    test.setTimeout(3_000_000); // 361 pages x 3 widths: about 1 100 screenshots a theme
+    test.setTimeout(7_200_000); // 633 pages x 3 widths at part 166.2: about 1 900 screenshots a theme
     const c = await company(request, `VIS${theme.slice(0, 2).toUpperCase()}`);
     const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: SIZES[2], reducedMotion: 'reduce' });
     await context.addInitScript(([v, th]) => { localStorage.setItem('erp.dev.identity', JSON.stringify(v)); localStorage.setItem('erp.appearance', JSON.stringify({ theme: th, density: 'comfortable', language: 'en' })); localStorage.setItem('erp.shell.closed-groups', JSON.stringify([])); }, [{ user: 'e2e-visual', roles: 'SUPADM', company: String(c) }, theme]);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { publicApi } from '../../../platform/api/index.js';
 import { errorInfo } from '../../core/pages/ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 /** The page an invitation link opens (no sign-in yet): confirm the link, choose a password, then go to the sign-in screen. */
 export default function AcceptInvitePage() {
@@ -37,7 +38,7 @@ export default function AcceptInvitePage() {
   return (
     <main className="login-page" id="main">
       <div className="login-card">
-        <h1>Welcome to the ERP</h1>
+        <PageHeader title={"Welcome to the ERP"} />
         {!info && !gone && <p role="status">Checking your invitation...</p>}
         {gone && !done && <p className="field-error" role="alert" data-testid="invite-gone">{gone}</p>}
         {done && (

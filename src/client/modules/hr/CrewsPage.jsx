@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { deploy } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Crews & Gangs (HR, part 07.03): the List Report of crews with their site, trade, supervisor and the members in force today. "New crew" opens a short form: the site, a code, a name, the trade and the supervisor (an employee).
 // A crew belongs to one site; its members are staff deployed at that site (contract labour joins with the labour register, part 07.08).
@@ -16,7 +17,7 @@ export default function CrewsPage() {
   const [adding, setAdding] = useState(false);
   return (
     <section aria-labelledby="cw-title" data-testid="crews">
-      <h1 id="cw-title" className="sr-only">Crews &amp; Gangs</h1>
+      <PageHeader id="cw-title" srOnly title={"Crews & Gangs"} />
       <ListReport listCode="hr.crews" endpoint="/hr/crews" title="Crews & Gangs" session={session.data}
         rowHref={(r) => `/hr/crews/crew?id=${r.id}`} onOpen={(r) => navigateTo(`/hr/crews/crew?id=${r.id}`)}
         cardFields={['code', 'name', 'site', 'members', 'active']} statusKey="active"

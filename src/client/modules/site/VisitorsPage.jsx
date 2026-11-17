@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { VISITOR_TYPES, st, today } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Visitor Log (part 14.03, FR-04): the visits of officials, the client and the consultant with the purpose, the instructions given and the letter that announced or followed the visit.
 const blank = (siteId) => ({ siteId, date: today(), timeIn: '', timeOut: '', visitorName: '', organisation: '', visitorType: 'OFFICIAL', purpose: '', instructions: '', linkedLetterId: '' });
@@ -54,7 +55,7 @@ export default function VisitorsPage() {
   const sites = sitesQ.data; const done = () => { qc.invalidateQueries({ queryKey: ['site'] }); qc.invalidateQueries({ queryKey: ['list'] }); if (id) navigateTo('/site/visitors'); };
   return (
     <section aria-labelledby="vis-h" data-testid="site-visitors">
-      <h1 id="vis-h">{t('cnd.vis.title')}</h1><p className="muted">{t('cnd.vis.intro')}</p>
+      <PageHeader id="vis-h" title={t('cnd.vis.title')} subtitle={t('cnd.vis.intro')} />
       {id && rq.isPending && <Skeleton label={t('cnd.vis.edit')} rows={3} />}
       {id && rq.isError && <ErrorState error={rq.error} onRetry={rq.refetch} />}
       {id && rq.data && <Form key={`${rq.data.id}-${rq.data.rowVersion}`} t={t} sites={sites} editing={rq.data} onDone={done} />}

@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DISCIPLINES, est, measurePreview, mto, qty } from './api.js';
 import { DrawingViewer, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Take-off Sheet (part 09.02, FR-01, FR-03, FR-05, FR-06): the measurement lines of a drawing revision, each by a formula template (concrete volume, plaster area, excavation and so on: number x length x breadth x height
 // less deductions), beside the drawing; an engineering MTO lists line items with specs and quantities as given (typed or pasted from the design tool). The checker releases a revision; a new drawing revision is a new revision
@@ -38,7 +39,7 @@ export default function TakeoffPage() {
   if (!id) {
     return (
       <section aria-labelledby="to-new-h" data-testid="takeoff-new">
-        <h1 id="to-new-h">{t('to.new')}</h1>{errBox}
+        <PageHeader id="to-new-h" title={t('to.new')} />{errBox}
         <form className="mdm-panel mdm-fields" onSubmit={async (e) => { e.preventDefault(); go(await run(() => mto.createTakeoff({ ...h, title: h.title.trim(), drawingRef: h.drawingRef.trim(), drawingRev: h.drawingRev.trim() || null }))); }} aria-label={t('to.new')}>
           <Field label={t('to.kind')} name="kind" error={error}><select value={h.kind} onChange={(e) => setH({ ...h, kind: e.target.value })} data-testid="to-kind"><option value="TAKEOFF">{t('kind.TAKEOFF')}</option><option value="ENGINEERING">{t('kind.ENGINEERING')}</option></select></Field>
           <Field label={t('to.discipline')} name="discipline" error={error}><select value={h.discipline} onChange={(e) => setH({ ...h, discipline: e.target.value })} data-testid="to-discipline">{DISCIPLINES.map((d) => <option key={d} value={d}>{t(`disc.${d}`)}</option>)}</select></Field>
@@ -60,8 +61,7 @@ export default function TakeoffPage() {
   return (
     <section aria-labelledby="to-h" data-testid="takeoff" data-status={x.status}>
       <header>
-        <h1 id="to-h">{t(`kind.${x.kind}`)} {x.ref} <StatusBadge status={TONE[x.status]} label={x.statusLabel} /></h1>
-        <p className="muted">{x.title} · {x.project?.name ?? x.tender?.docNo} · {t('to.drawingIs', { ref: x.drawingRef, rev: x.drawingRev ?? '–' })} · {x.disciplineLabel}</p>
+        <PageHeader id="to-h" title={<>{t(`kind.${x.kind}`)} {x.ref} <StatusBadge status={TONE[x.status]} label={x.statusLabel} /></>} subtitle={<>{x.title} · {x.project?.name ?? x.tender?.docNo} · {t('to.drawingIs', { ref: x.drawingRef, rev: x.drawingRev ?? '–' })} · {x.disciplineLabel}</>} />
         {errBox}{note && <p className="mdm-banner" role="status" data-testid="to-note">{note}</p>}
         <div className="actions-row no-print" data-testid="to-actions">
           {x.can.submit && <button type="button" className="btn btn-primary" onClick={() => run(() => mto.takeoffAct(id, 'submit'), t('to.sent'))} data-testid="to-submit">{t('to.send')}</button>}

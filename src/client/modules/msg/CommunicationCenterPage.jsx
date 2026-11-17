@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states
 import { formatDateTime } from '../../platform/format.js';
 import { PRIORITY, comm, useCenter, useRefreshComm } from '../../platform/messages/Comm.jsx';
 import { errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Communication Center (part 05.04, section 7.1): inside Messages. Tiles for the views (my chats, teams, projects, sites, departments, ERP-linked conversations, unread, pending acknowledgements, important instructions,
 // escalations), the person's pending actions, and the exceptions. Every tile opens the filtered list or the page behind it.
@@ -45,14 +46,12 @@ export default function CommunicationCenterPage({ session }) {
   const ack = async (r) => { setError(null); try { await comm.ack(r.id); refresh(); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="cc-title" data-testid="comm-center">
-      <div className="page-head"><h1 id="cc-title">Communication Center</h1>
-        <div className="actions">
+      <PageHeader id="cc-title" title={"Communication Center"} actions={<><div className="actions">
           <button type="button" className="btn" onClick={() => open('/collab/messages')} data-testid="cc-messages">Open Messages</button>
           {can.announce && <button type="button" className="btn btn-primary" onClick={() => open('/collab/announcements/new')} data-testid="cc-new-announcement">New announcement</button>}
           {can.instruct && <button type="button" className="btn" onClick={() => open('/collab/instructions')} data-testid="cc-register">Instruction register</button>}
           {can.autogroups && <button type="button" className="btn" onClick={() => open('/admin/auto-groups')}>Auto groups</button>}
-        </div>
-      </div>
+        </div></>} />
       <div className="cc-tiles" role="group" aria-label="Views">
         <Tile testid="tile-chats" label="My chats" value={t.myChats.total} sub={`${t.myChats.unread} unread`} to="/collab/messages" />
         <Tile testid="tile-teams" label="Teams" value={t.teams.total} sub={`${t.teams.unread} unread`} to="/collab/messages?view=TEAM" />

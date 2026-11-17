@@ -9,6 +9,7 @@ import { LANGUAGES, UserStatusChip, typeLabel } from '../components/userCommon.j
 import AppearancePanel from '../../ui/AppearancePanel.jsx';
 import FormatPanel from '../../ui/FormatPanel.jsx';
 import { useFeatureFlag } from '../../core/api/index.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const CHANNELS = [['email', 'Email'], ['sms', 'Text message'], ['whatsapp', 'WhatsApp'], ['inApp', 'In the application']];
 const transport = browserTransport(authHeaders);
@@ -85,7 +86,7 @@ export default function ProfilePage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Account &rsaquo; My Profile</nav>
-      <div className="page-head"><h1 id="page-title">My Profile</h1></div>
+      <PageHeader id="page-title" title={"My Profile"} />
       <QueryState query={me} what="your profile" permission="a signed-in account" />
       {u && (
         <>

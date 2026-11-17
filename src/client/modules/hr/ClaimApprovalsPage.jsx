@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { exp } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Claim Approvals (HR, part 07.12, the worklist): what waits for the person's decision (claims, advances, travel requests), with the policy flags of each claim and the reasons the claimant gave, so that the approver sees the deviations; approve, return
 // or reject one or many. For the accounts manager also: the approved claims to pass for payment, the passed ones to mark paid, and the approved advances to record as paid out.
@@ -25,7 +26,7 @@ export default function ClaimApprovalsPage() {
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   return (
     <section aria-labelledby="ca-title" data-testid="approvals">
-      <h1 id="ca-title">{t('appr.title')}</h1>
+      <PageHeader id="ca-title" title={t('appr.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="ca-error">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="ca-note">{note}</p>}
       {q.isPending ? <Skeleton label={t('appr.title')} rows={4} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : (

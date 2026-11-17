@@ -8,6 +8,8 @@ import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx'
 import { useSession } from '../core/api/index.js';
 import { STATUS_TONE, download, fmtDate, fmtQty, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Material Requests (part 15.01, FR-01, FR-02): the site view with the fulfilment status of each request; the request itself with its lines, the free stock of the site, nearby stores and the central warehouse, the way each line is met (issue,
 // transfer, purchase) and the requisitions it ended in. The construction manager decides it here; the procurement officer meets it.
@@ -46,8 +48,8 @@ function Mr({ t, id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('p.sayWhy') }); return; } run(() => pc.decide(m.taskId, action, comment.trim() || null), t(`p.done.${action}`)); };
   return (
     <div data-testid="mr-object" data-status={m.status}>
-      <h1 id="mr-h">{m.docNo} <StatusBadge status={STATUS_TONE[m.status]} label={t(`p.s.${m.status}`)} />{m.fulfilment && <> <StatusBadge status={m.fulfilment === 'COVERED' ? 'COMPLETED' : m.fulfilment === 'PARTIAL' ? 'IN_REVIEW' : 'DRAFT'} label={t(`p.f.${m.fulfilment}`)} /></>}</h1>
-      <p><Link to="/proc/material-requests">{t('p.back')}</Link></p>
+      <PageHeader id="mr-h" title={<>{m.docNo} <StatusBadge status={STATUS_TONE[m.status]} label={t(`p.s.${m.status}`)} />{m.fulfilment && <> <StatusBadge status={m.fulfilment === 'COVERED' ? 'COMPLETED' : m.fulfilment === 'PARTIAL' ? 'IN_REVIEW' : 'DRAFT'} label={t(`p.f.${m.fulfilment}`)} /></>}</>} meta={<Link to="/proc/material-requests">{t('p.back')}</Link>} />
+      <DocumentFlow type="MR" id={m.id} />
       <dl className="kv" data-testid="mr-figures"><div><dt>{t('p.project')}</dt><dd>{m.projectCode} · {m.siteCode}</dd></div><div><dt>{t('p.requiredBy')}</dt><dd>{fmtDate(m.requiredBy)}</dd></div><div><dt>{t('p.priority')}</dt><dd>{t(`p.pri.${m.priority}`)}</dd></div><div><dt>{t('p.requestedBy')}</dt><dd>{m.requestedBy}</dd></div>{m.waNo && <div><dt>{t('p.wa')}</dt><dd data-testid="mr-wa"><Link to={`/site/work-authorisations?id=${m.waId}`}>{m.waNo}</Link>{m.activity ? ` · ${m.activity}` : ''}</dd></div>}{m.approvedBy && <div><dt>{t('p.approvedBy')}</dt><dd>{m.approvedBy}</dd></div>}</dl>
       {m.purpose && <p>{m.purpose}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="mr-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="mr-note">{note}</p>}
@@ -85,7 +87,7 @@ export default function MaterialRequestsPage() {
   if (id) return <section aria-labelledby="mr-h" data-testid="proc-mrs"><Mr key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="mrs-h" data-testid="proc-mrs">
-      <h1 id="mrs-h">{t('p.mrTitle')}</h1><p className="muted">{t('p.mrIntro')}</p>
+      <PageHeader id="mrs-h" title={t('p.mrTitle')} subtitle={t('p.mrIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.material_request.create') && <Link to="/proc/material-requests/new">{t('p.mrNew')}</Link>} {perms.includes('proc.requisition.create') && <Link to="/proc/consolidate">{t('p.consolidate')}</Link>} <Link to="/proc/requisitions">{t('p.prTitle')}</Link></div>
       <ListReport listCode="proc.material_requests" endpoint="/proc/material-requests" title={t('p.mrTitle')} session={session.data} rowHref={(r) => `/proc/material-requests?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/material-requests?id=${r.id}`)}
         cardFields={['docNo', 'site', 'requiredBy', 'priority', 'fulfilment']} statusKey="status" empty={{ title: t('p.mrEmptyTitle'), text: t('p.mrEmptyBody') }} />

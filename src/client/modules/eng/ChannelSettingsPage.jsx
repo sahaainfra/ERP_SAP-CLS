@@ -4,6 +4,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { useChannels, useProposeChannels, useSendSample, useSyncWhatsapp } from '../../platform/comm/api.js';
 import { Field, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { CHANNEL } from './CommunicationLogPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Channel Settings (part 04.07, section 7.2): which connector sends each channel first and which takes over when it fails, the registered sender, the pace, the DLT templates that text messages
 // must match, and the WhatsApp templates the provider has approved. A change is sent for approval by the system administrator; what is in force stays until then.
@@ -49,8 +50,7 @@ export default function ChannelSettingsPage() {
   };
   return (
     <section aria-labelledby="cs-title" data-testid="channel-settings">
-      <h1 id="cs-title">Channel Settings</h1>
-      <p className="muted">Choose which connector sends each channel first and which takes over if it fails. Text messages must match a registered DLT template; WhatsApp messages need an approved template.</p>
+      <PageHeader id="cs-title" title={"Channel Settings"} subtitle={"Choose which connector sends each channel first and which takes over if it fails. Text messages must match a registered DLT template; WhatsApp messages need an approved template."} />
       {notice && <p role="status" className="notice" data-testid="cs-notice">{notice}</p>}
       {waiting && <p role="status" className="notice" data-testid="cs-pending">A change of the channel settings is waiting for approval (proposed by {d.pendingBatch.by}: {d.pendingBatch.reason}). Nothing else can be changed until it is decided.</p>}
       <form className="form-grid" onSubmit={submit} aria-label="Channel settings">

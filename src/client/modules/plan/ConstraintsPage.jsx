@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { CONSTRAINT_TYPES, fmtDate, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Constraint Log (part 13.04, FR-02, BR-02): what stops an activity, with its owner and due date. Those found by the system (an open RFI, a drawing with no IFC revision, a late predecessor, labour no crew
 // covers) clear by themselves when their source is resolved, or are waived with a reason; the others are logged here and cleared by their owner.
@@ -69,7 +70,7 @@ export default function ConstraintsPage() {
   const [adding, setAdding] = useState(false); const [openId, setOpenId] = useState(Number(sp.get('id')) || null);
   return (
     <section aria-labelledby="con-h" data-testid="plan-constraints">
-      <h1 id="con-h" className="sr-only">{t('con.title')}</h1>
+      <PageHeader id="con-h" srOnly title={t('con.title')} />
       <div className="actions-row no-print">
         {perms.includes('plan.constraint.manage') && <button type="button" className="btn btn-primary" onClick={() => setAdding(!adding)} data-testid="con-new">{t('con.new')}</button>}
         <Link to="/plan/lookahead">{t('la.title')}</Link>

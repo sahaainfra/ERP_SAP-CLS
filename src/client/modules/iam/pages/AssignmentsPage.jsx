@@ -4,6 +4,7 @@ import { Field, FormDialog, Link, Pager, QueryState, can, errorInfo, usePageTitl
 import { useAssignments, useEndAssignment, useRequestAssignment, useRoles } from '../api/access.js';
 import { useOrgTree } from '../api/org.js';
 import { useUsers } from '../api/users.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const SCOPES = [['COMPANY', 'The whole company'], ['BRANCH', 'Branches'], ['DEPARTMENT', 'Departments'], ['PROJECT', 'Projects'], ['SITE', 'Sites'], ['OWN', "The person's own records"]];
 const scopeLabel = (t) => SCOPES.find(([v]) => v === t)?.[1] ?? t;
@@ -57,8 +58,7 @@ export default function AssignmentsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Assignments</nav>
-      <div className="page-head"><h1 id="page-title">Assignments</h1></div>
-      <p className="muted">A person can hold different roles for different projects. An assignment is a request: it exists once the approvers have decided it. Ending one takes effect at once.</p>
+      <PageHeader id="page-title" title={"Assignments"} subtitle={"A person can hold different roles for different projects. An assignment is a request: it exists once the approvers have decided it. Ending one takes effect at once."} />
       <p role="status" className="notice" data-testid="assign-notice">{notice}</p>
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Search assignments</span><input type="search" placeholder="Search person or role" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label>

@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtTime, gt } from './api.js';
 import { OfflineNotice, useOnline, useQrScan } from './GateParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Gate Exit verification (part 16.02, FR-05, BR-01), a mobile screen for the guard: scan (or type) the QR code of a gate pass; only an approved pass that has not been used opens the gate. Delivery vehicles that are handed over to stores leave from the same screen.
 export default function GateExitPage() {
@@ -16,7 +17,7 @@ export default function GateExitPage() {
   const leave = async (id) => { setBusy(true); setError(null); try { await gt.inAct(id, 'exit'); qc.invalidateQueries({ queryKey: ['inv'] }); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   if (wq.error?.status === 403) return <NoPermission what={t('g.exitTitle')} permission="inv.inward.view" />;
   return (
-    <section aria-labelledby="gx-h" data-testid="gate-exit"><h1 id="gx-h">{t('g.exitTitle')}</h1><p className="muted">{t('g.exitHelp')}</p><p><Link to="/inv/gate-register">{t('g.registerTitle')}</Link></p>
+    <section aria-labelledby="gx-h" data-testid="gate-exit"><PageHeader id="gx-h" title={t('g.exitTitle')} subtitle={t('g.exitHelp')} meta={<Link to="/inv/gate-register">{t('g.registerTitle')}</Link>} />
       <OfflineNotice t={t} on={online} />
       <div className="mdm-panel"><div className="form-grid">
         <Field label={t('g.passCode')} name="code" error={error}><input value={code} onChange={(ev) => setCode(ev.target.value.trim())} autoCapitalize="characters" autoComplete="off" placeholder="GP:…" style={{ minHeight: 52, fontSize: 18 }} data-testid="gx-code" /></Field>

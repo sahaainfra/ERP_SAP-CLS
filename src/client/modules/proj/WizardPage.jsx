@@ -6,6 +6,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CONTRACT_TYPES, PROJECT_TYPES, SECTORS, SITE_TYPES, inr, proj } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Project Setup Wizard (part 10.01, FR-01, T-01): seven steps with validation at each: basics (code, name, type, sector, place, client, consultant, funding agency), the contract summary, sites and their geofences, the team, the numbering series
 // and document folders from templates, the settings and key dates, and the review with the activation checklist. The server makes the project, its sites, series, folders and key dates in one transaction (nothing is made when any part is refused);
@@ -65,7 +66,7 @@ export default function WizardPage() {
   const tickAll = f.ticked.length === checklist.length;
   return (
     <section aria-labelledby="wiz-h" data-testid="wizard">
-      <h1 id="wiz-h">{t('wiz.title')}</h1>
+      <PageHeader id="wiz-h" title={t('wiz.title')} />
       {tenderId && pq.data && <p className="mdm-banner" data-testid="wiz-prefill">{t('wiz.prefilled', { tender: pq.data.tenderNo })}</p>}
       <ol className="steps" aria-label={t('wiz.steps')} data-testid="wiz-steps" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, listStyle: 'none', padding: 0 }}>
         {STEPS.map((k, i) => <li key={k}><button type="button" className={`btn btn-small${i === step ? ' btn-primary' : ''}`} aria-current={i === step ? 'step' : undefined} onClick={() => { if (i <= step || STEPS.slice(0, i).every((x) => !problems(x).length)) setStep(i); }} data-testid={`wiz-step-${k}`}>{i + 1}. {t(`step.${k}`)}</button></li>)}

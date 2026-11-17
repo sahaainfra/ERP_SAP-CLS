@@ -25,7 +25,7 @@ test('CVR: workbench, approval and lock, control tower', async ({ browser, reque
   await p.getByTestId('bill-submit').click(); await expect(p.getByTestId('bill-cvr-object')).toHaveAttribute('data-status', 'SUBMITTED');
   for (const [r, u] of [['PM', 'pm'], ['COMMGR', 'cm'], ['PD', 'pd']]) await decide(request, c, r, s.u(u));
   await p.reload(); await expect(p.getByTestId('bill-cvr-object')).toHaveAttribute('data-status', 'APPROVED'); await expect(p.getByText(/Locked|बंद/).first()).toBeVisible(); await noOverflow(p); await shot(p, '2-approved', info);
-  const dir = await open(browser, info, c, 'DIR', s.u('dir'), '/bill/control-tower'); const q = dir.page; await expect(q.getByTestId('bill-tower')).toBeVisible(); await expect(q.getByTestId('bill-ct-row')).toHaveCount(1); await expect(q.getByTestId('bill-ct-margin')).toContainText('₹'); await expect(q.getByTestId('bill-ct-exceptions')).toContainText('1'); await noOverflow(q); await shot(q, '3-tower-director', info);
-  const qs2 = await open(browser, info, c, 'QS', s.u('qs'), '/bill/control-tower'); await expect(qs2.page.getByTestId('bill-ct-margin')).not.toContainText('₹'); await shot(qs2.page, '4-tower-surveyor', info);
+  const dir = await open(browser, info, c, 'DIR', s.u('dir'), '/bill/control-tower?view=detail'); const q = dir.page; await expect(q.getByTestId('bill-tower')).toBeVisible(); await expect(q.getByTestId('bill-ct-row')).toHaveCount(1); await expect(q.getByTestId('bill-ct-margin')).toContainText('₹'); await expect(q.getByTestId('bill-ct-exceptions')).toContainText('1'); await noOverflow(q); await shot(q, '3-tower-director', info);
+  const qs2 = await open(browser, info, c, 'QS', s.u('qs'), '/bill/control-tower?view=detail'); await expect(qs2.page.getByTestId('bill-ct-margin')).not.toContainText('₹'); await shot(qs2.page, '4-tower-surveyor', info);
   expect(errors, errors.join('\n')).toEqual([]);
 });

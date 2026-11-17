@@ -8,6 +8,8 @@ import { Field, Link, Tile, errorInfo, navigateTo, usePageTitle } from '../core/
 import { useSession } from '../core/api/index.js';
 import { fmtQty, st, today } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Weather Log (part 14.03, FR-01): one record a site and day, typed or fetched through the integration hub, with the hours lost, the shutdown and the concrete-pour restriction (worked out by the server),
 // the delay draft a shutdown raised, and the rainfall by month. A record opens from the list for change; the chart and its table follow the site and the year.
@@ -70,8 +72,7 @@ export default function WeatherPage() {
   const sites = sitesQ.data; const m = mq.data; const canCreate = perms.includes('site.weather.create');
   return (
     <section aria-labelledby="wx-h" data-testid="site-weather">
-      <h1 id="wx-h">{t('cnd.wx.title')}</h1>
-      <p className="muted">{t('cnd.wx.intro')}</p>
+      <PageHeader id="wx-h" title={t('cnd.wx.title')} subtitle={t('cnd.wx.intro')} />
       {id && rq.isPending && <Skeleton label={t('cnd.wx.edit')} rows={3} />}
       {id && rq.isError && <ErrorState error={rq.error} onRetry={rq.refetch} />}
       {(canCreate || rq.data) && (!id || rq.data) && <Form key={rq.data ? `e${rq.data.id}-${rq.data.rowVersion}` : 'new'} t={t} sites={sites} editing={rq.data ?? null} onDone={(w) => { refresh(); if (!w || rq.data) navigateTo('/site/weather'); }} />}
@@ -85,10 +86,10 @@ export default function WeatherPage() {
         {mq.isError && mq.error?.status !== 403 && <ErrorState error={mq.error} onRetry={mq.refetch} />}
         {m && (
           <>
-            <div className="tiles" data-testid="wx-tiles">
+            <KpiRow data-testid="wx-tiles">
               <Tile label={t('cnd.totalRain')} value={`${fmtQty(m.totals.rainfallMm)} mm`} testId="wx-total-rain" /><Tile label={t('cnd.daysRecorded')} value={m.totals.days} testId="wx-total-days" />
               <Tile label={t('cnd.shutdownDays')} value={m.totals.shutdownDays} status={m.totals.shutdownDays ? 'warning' : 'success'} testId="wx-total-shut" /><Tile label={t('cnd.totalHoursLost')} value={fmtQty(m.totals.hoursLost)} status={m.totals.hoursLost ? 'warning' : 'success'} testId="wx-total-lost" />
-            </div>
+            </KpiRow>
             {m.totals.days === 0 ? <p className="muted" data-testid="wx-chart-empty">{t('cnd.wx.noData', { y: year })}</p> : (
               <Chart type="bar" data={{ categories: m.months.map((x) => x.month.slice(5)), series: [{ name: t('cnd.rain'), values: m.months.map((x) => x.rainfallMm) }] }} title={t('cnd.wx.byMonth')} />
             )}

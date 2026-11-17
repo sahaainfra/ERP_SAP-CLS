@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { est, inr, qty } from './api.js';
 import { EstimatePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Version Comparison (part 09.01, FR-07, T-01): two versions of one estimate, item by item (matched by the BOQ item number): what was added, removed or changed in quantity, cost rate, markup and selling rate, and the totals.
 const sign = (v) => (v == null ? '—' : Number(v) > 0 ? `+${v}` : String(v));
@@ -19,7 +20,7 @@ export default function ComparePage() {
   const c = cq.data;
   return (
     <section aria-labelledby="cmp-h" data-testid="compare">
-      <h1 id="cmp-h">{t('cmp.title')}</h1>
+      <PageHeader id="cmp-h" title={t('cmp.title')} />
       <form className="filters" onSubmit={(e) => e.preventDefault()} aria-label={t('cmp.params')}>
         <EstimatePicker id="cmp-from" value={from} onChange={setFrom} rows={all} label={t('cmp.from')} />
         <EstimatePicker id="cmp-to" value={to} onChange={setTo} rows={doc ? all.filter((r) => r.docNo === doc && r.id !== from) : all} label={t('cmp.to')} />

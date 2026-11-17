@@ -6,6 +6,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from './common.js';
 import { LEVELS, RETENTION, docLink } from './documents-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Upload / New Revision (part 04.10, section 7.3): a new controlled document, or the file of the open revision of an existing one. The file goes to the file service (it is scanned for
 // viruses first); then the revision is sent for approval along the chain of the document type.
@@ -22,8 +23,7 @@ function Attach({ id }) {
   const send = () => { setError(null); act.mutate({ id, action: 'submit' }, { onSuccess: () => navigateTo(docLink(id)), onError: (er) => setError(errorInfo(er)) }); };
   return (
     <section aria-labelledby="nd-title" data-testid="attach-revision">
-      <h1 id="nd-title">Revision {v.revision} of {d.docNo}</h1>
-      <p className="muted">{d.title}. Attach the file of this revision, then send it for approval.</p>
+      <PageHeader id="nd-title" title={<>Revision {v.revision} of {d.docNo}</>} subtitle={<>{d.title}. Attach the file of this revision, then send it for approval.</>} />
       <FileUploader entity="doc_version" entityId={v.id} onDone={() => { setN((x) => x + 1); q.refetch(); }} />
       <AttachmentList key={n} entity="doc_version" entityId={v.id} canEdit onReplace={() => {}} />
       {error?.form && <p role="alert" className="error">{error.form}</p>}
@@ -55,8 +55,7 @@ export default function NewDocumentPage() {
   };
   return (
     <section aria-labelledby="nd-title" data-testid="new-document">
-      <h1 id="nd-title">New Document</h1>
-      <p className="muted">Give the details first; the next step attaches the file and sends it for approval. The document gets its number from the numbering service.</p>
+      <PageHeader id="nd-title" title={"New Document"} subtitle={"Give the details first; the next step attaches the file and sends it for approval. The document gets its number from the numbering service."} />
       <form className="form-grid" onSubmit={submit} aria-label="Register a document" data-testid="document-form">
         <Field label="Title" name="title" error={error}><input value={f.title} maxLength={200} required onChange={(e) => set({ title: e.target.value })} /></Field>
         <Field label="Document type" name="docType" error={error}>

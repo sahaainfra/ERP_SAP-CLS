@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { ess } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Profile Change Request (HR, part 07.09, FR-01): an employee asks for a change of their own contact details; it is the change document of part 07.01 (approved by HR, the bank and statutory details by the HR manager) and takes effect
 // only when approved. The list shows my requests and where each stands.
@@ -23,8 +24,7 @@ export default function ProfileChangePage() {
   };
   return (
     <section aria-labelledby="pc-title" data-testid="profile-change">
-      <h1 id="pc-title">{t('profile.title')}</h1>
-      <p className="muted">{t('profile.intro')}</p>
+      <PageHeader id="pc-title" title={t('profile.title')} subtitle={t('profile.intro')} />
       {error?.form && <p className="field-error" role="alert" data-testid="pc-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="pc-note">{note}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); send(); }}>

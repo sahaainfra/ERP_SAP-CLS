@@ -1,16 +1,19 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import BudgetPage from './BudgetPage.jsx';
-import BudgetsPage from './BudgetsPage.jsx';
-import GeneratePage from './GeneratePage.jsx';
-import ChangePage from './ChangePage.jsx';
-import ChangesPage from './ChangesPage.jsx';
-import ComparePage from './ComparePage.jsx';
-import CheckSettingsPage from './CheckSettingsPage.jsx';
-import LedgerPage from './LedgerPage.jsx';
-import DeptBudgetsPage from './DeptBudgetsPage.jsx';
-import DeptBudgetPage from './DeptBudgetPage.jsx';
-import DeptReportPage from './DeptReportPage.jsx';
-import AllocPage from './AllocPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const BudgetPage = lazyPage(() => import('./BudgetPage.jsx'));
+const BudgetsPage = lazyPage(() => import('./BudgetsPage.jsx'));
+const GeneratePage = lazyPage(() => import('./GeneratePage.jsx'));
+const ChangePage = lazyPage(() => import('./ChangePage.jsx'));
+const ChangesPage = lazyPage(() => import('./ChangesPage.jsx'));
+const ComparePage = lazyPage(() => import('./ComparePage.jsx'));
+const CheckSettingsPage = lazyPage(() => import('./CheckSettingsPage.jsx'));
+const LedgerPage = lazyPage(() => import('./LedgerPage.jsx'));
+const DeptBudgetsPage = lazyPage(() => import('./DeptBudgetsPage.jsx'));
+const DeptBudgetPage = lazyPage(() => import('./DeptBudgetPage.jsx'));
+const DeptReportPage = lazyPage(() => import('./DeptReportPage.jsx'));
+const AllocPage = lazyPage(() => import('./AllocPage.jsx'));
 
 registerModule({
   code: 'bud',

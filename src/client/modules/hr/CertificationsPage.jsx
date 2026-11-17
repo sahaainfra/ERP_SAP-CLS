@@ -6,6 +6,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { dayIST, trn } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Certifications & Licences (HR, part 07.10, FR-03): the register of the certificates and licences of employees and workers (operator licences, safety tickets, welding certificates) with the filters for what has expired, what ends soon
 // and what nobody has verified. Recording a certificate is open to HR and to each person for their own; a certificate counts for a check (permits, operator assignment, deployment) only when somebody else has verified it.
@@ -19,7 +20,7 @@ export default function CertificationsPage() {
   const run = async (fn, done) => { setError(null); setNote(null); try { await fn(); setNote(done); qc.invalidateQueries({ queryKey: ['ui', 'list'] }); qc.invalidateQueries({ queryKey: ['trn'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="cr-title" data-testid="certifications">
-      <h1 id="cr-title" className="sr-only">{t('cert.title')}</h1>
+      <PageHeader id="cr-title" srOnly title={t('cert.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="cr-error">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="cr-note">{note}</p>}
       <ListReport listCode="hr.certifications" endpoint="/hr/training/certs" title={t('cert.title')} session={session.data}

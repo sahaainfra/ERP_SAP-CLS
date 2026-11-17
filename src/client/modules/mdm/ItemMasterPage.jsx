@@ -4,6 +4,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { useSession } from '../core/api/index.js';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { items } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Item Master (Administration, part 06.03): the category tree beside the List Report of items (search, filters by type, category and status, sort, saved views, column chooser, 25/50/100 a page, export
 // XLSX/CSV/PDF with the rate hidden from people who may not see it). A category narrows the list to itself and its sub-categories. "New item" opens the wizard; bulk entry goes through the Import Center.
@@ -22,7 +23,7 @@ export default function ItemMasterPage() {
   ));
   return (
     <section aria-labelledby="im-title" data-testid="item-master">
-      <h1 id="im-title" className="sr-only">Item Master</h1>
+      <PageHeader id="im-title" srOnly title={"Item Master"} />
       <div className="item-master">
         <nav aria-label="Categories" className="item-tree-pane">
           <h2 className="small">Categories</h2>

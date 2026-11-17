@@ -8,6 +8,8 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { CS_TONE, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Comparative statements (part 15.04): the statement generated from the quotations of an RFQ: every line against every vendor with the landed rate, the rank, the technical compliance and the benchmarks; the recommendation (overall L1,
 // the L1 of each line with a split award, or a choice by hand); a vendor who is not the L1 needs a reason and goes one level higher; negotiation rounds; approval by value. An approved statement is what the order is made from.
@@ -31,8 +33,8 @@ function Cs({ t, id }) {
   const saveJust = () => run(() => pc.csUpdate(r.id, { reasonCode: form.reasonCode || null, justification: form.justification.trim() || null }), t('c.saved')).then(() => setJust(null));
   return (
     <div data-testid="cs-object" data-status={r.status}>
-      <h1 id="cs-h">{r.docNo} <StatusBadge status={CS_TONE[r.status]} label={t(`c.s.${r.status}`)} />{r.nonL1 && <> <StatusBadge status="AT_RISK" label={t('c.nonL1')} /></>}</h1>
-      <p><Link to="/proc/comparative-statements">{t('c.back')}</Link> · <Link to={`/proc/rfqs?id=${r.rfqId}`}>{r.rfqNo}</Link> {r.rfqTitle}</p>
+      <PageHeader id="cs-h" title={<>{r.docNo} <StatusBadge status={CS_TONE[r.status]} label={t(`c.s.${r.status}`)} />{r.nonL1 && <> <StatusBadge status="AT_RISK" label={t('c.nonL1')} /></>}</>} meta={<><Link to="/proc/comparative-statements">{t('c.back')}</Link> · <Link to={`/proc/rfqs?id=${r.rfqId}`}>{r.rfqNo}</Link> {r.rfqTitle}</>} />
+      <DocumentFlow type="CS" id={r.id} />
       <dl className="kv" data-testid="cs-figures"><div><dt>{t('c.project')}</dt><dd>{r.projectCode}</dd></div><div><dt>{t('c.recommendation')}</dt><dd data-testid="cs-type">{t(`c.type.${r.recommendationType}`)}</dd></div><div><dt>{t('c.value')}</dt><dd data-testid="cs-value">{fmtRs(r.totalValue)}</dd></div>
         <div><dt>{t('c.vsEstimate')}</dt><dd data-testid="cs-savings">{fmtRs(r.savingsVsBudget)}</dd></div><div><dt>{t('c.rounds')}</dt><dd>{r.roundNo}</dd></div><div><dt>{t('c.level')}</dt><dd data-testid="cs-level">{t(`c.lvl.${r.approvalLevel}`)}</dd></div></dl>
       {r.warnings.map((w, i) => <p key={i} className="mdm-banner" role="status" data-testid="cs-warning">{w.message}</p>)}
@@ -90,7 +92,7 @@ function NewCs({ t, rfqId }) {
   if (q.isPending) return <Skeleton label={t('c.make')} rows={3} />;
   const go = async (ev) => { ev.preventDefault(); setBusy(true); setError(null); try { const d = await pc.csCreate({ rfqId: Number(f.rfqId), recommendationType: f.type }); navigateTo(`/proc/comparative-statements?id=${d.id}`); } catch (x) { setError(errorInfo(x)); } finally { setBusy(false); } };
   return (
-    <section aria-labelledby="csn-h" data-testid="proc-cs-new"><h1 id="csn-h">{t('c.make')}</h1><p className="muted">{t('c.makeHelp')}</p><p><Link to="/proc/comparative-statements">{t('c.back')}</Link></p>
+    <section aria-labelledby="csn-h" data-testid="proc-cs-new"><PageHeader id="csn-h" title={t('c.make')} subtitle={t('c.makeHelp')} meta={<Link to="/proc/comparative-statements">{t('c.back')}</Link>} />
       <form className="mdm-panel" onSubmit={go} noValidate><div className="form-grid">
         <Field label={t('c.rfq')} name="rfqId" error={error}><select value={f.rfqId} onChange={(ev) => setF({ ...f, rfqId: ev.target.value })} style={{ minHeight: 44 }} data-testid="csn-rfq"><option value="">{t('c.choose')}</option>{q.data.map((x) => <option key={x.id} value={x.id}>{x.docNo} · {x.title} ({x.quotations})</option>)}</select></Field>
         <Field label={t('c.recommendation')} name="recommendationType" error={error}><select value={f.type} onChange={(ev) => setF({ ...f, type: ev.target.value })} style={{ minHeight: 44 }} data-testid="csn-type"><option value="OVERALL_L1">{t('c.type.OVERALL_L1')}</option><option value="SPLIT_L1">{t('c.type.SPLIT_L1')}</option></select></Field></div>
@@ -105,7 +107,7 @@ export default function ComparativeStatementsPage() {
   if (id) return <section aria-labelledby="cs-h" data-testid="proc-cs"><Cs key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="css-h" data-testid="proc-cs">
-      <h1 id="css-h">{t('c.title')}</h1><p className="muted">{t('c.intro')}</p>
+      <PageHeader id="css-h" title={t('c.title')} subtitle={t('c.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.comparative_statement.create') && <Link to="/proc/comparative-statements?new=1">{t('c.make')}</Link>} <Link to="/proc/rfqs">{t('q.title')}</Link></div>
       <ListReport listCode="proc.comparative_statements" endpoint="/proc/comparative-statements" title={t('c.title')} session={session.data} rowHref={(r) => `/proc/comparative-statements?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/comparative-statements?id=${r.id}`)}
         cardFields={['docNo', 'rfq', 'project', 'value', 'nonL1']} statusKey="status" empty={{ title: t('c.emptyTitle'), text: t('c.emptyBody') }} />

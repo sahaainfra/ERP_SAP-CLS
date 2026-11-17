@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { DIAS, bendPreview, mto, qty } from './api.js';
 import { DrawingViewer, useSearch } from './parts.jsx';
 import { TONE } from './TakeoffPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // BBS Editor (part 09.02, FR-02, BR-01): the bar marks of a member: diameter, IS 2502 shape code from the library, the lengths of its legs, the members and bars, and at once the cut length (hooks added, bends deducted, both
 // configurable), the total length and the weight (d x d / 162 kg/m); the summary by diameter below. The server works every figure out again on save; the checker releases a revision; a new drawing revision is a new revision.
@@ -31,7 +32,7 @@ export default function BbsSheetPage() {
   if (!id) {
     return (
       <section aria-labelledby="bbs-new-h" data-testid="bbs-new">
-        <h1 id="bbs-new-h">{t('bbs.new')}</h1>{errBox}
+        <PageHeader id="bbs-new-h" title={t('bbs.new')} />{errBox}
         <form className="mdm-panel mdm-fields" onSubmit={async (e) => { e.preventDefault(); go(await run(() => mto.createBbs({ title: h.title.trim(), projectId: h.projectId, drawingRef: h.drawingRef.trim(), drawingRev: h.drawingRev.trim() || null, member: h.member.trim() }))); }} aria-label={t('bbs.new')}>
           <Field label={t('head.title')} name="title" error={error}><input value={h.title} onChange={(e) => setH({ ...h, title: e.target.value })} required data-testid="bbs-title" /></Field>
           <LookupField id="bbs-project" label={t('new.project')} lookup="iam/projects" value={h.projectId} onChange={(v) => setH({ ...h, projectId: v })} required error={error?.fields?.projectId} />
@@ -54,8 +55,7 @@ export default function BbsSheetPage() {
   return (
     <section aria-labelledby="bbs-h" data-testid="bbs" data-status={x.status}>
       <header>
-        <h1 id="bbs-h">{t('bbs.title')} {x.ref} <StatusBadge status={TONE[x.status]} label={x.statusLabel} /></h1>
-        <p className="muted">{x.title} · {x.member} · {x.project?.name} · {t('to.drawingIs', { ref: x.drawingRef, rev: x.drawingRev ?? '–' })}</p>
+        <PageHeader id="bbs-h" title={<>{t('bbs.title')} {x.ref} <StatusBadge status={TONE[x.status]} label={x.statusLabel} /></>} subtitle={<>{x.title} · {x.member} · {x.project?.name} · {t('to.drawingIs', { ref: x.drawingRef, rev: x.drawingRev ?? '–' })}</>} />
         <dl className="op-figures"><div><dt>{t('bbs.weight')}</dt><dd data-testid="bbs-weight">{qty(x.weightKg)} kg</dd></div><div><dt>{t('bbs.marks')}</dt><dd>{x.lines.length}</dd></div></dl>
         {errBox}{note && <p className="mdm-banner" role="status" data-testid="bbs-note">{note}</p>}
         <div className="actions-row no-print" data-testid="bbs-actions">

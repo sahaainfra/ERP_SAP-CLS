@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useParameterDefinitions, useParameters, useSetParameter } from '../api/index.js';
 import { formatDate } from '../../../platform/format.js';
 import { Field, FormDialog, QueryState, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const todayIso = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
 
@@ -51,8 +52,7 @@ export default function ParametersPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Configuration &rsaquo; System Parameters</nav>
-      <h1 id="page-title">System Parameters</h1>
-      <p className="muted">Each parameter has a default. A value can be set for the whole system, a company, a project or a site; the most specific one in force on the date wins. A new value starts on its effective date and the old one stays as history.</p>
+      <PageHeader id="page-title" title={"System Parameters"} subtitle={"Each parameter has a default. A value can be set for the whole system, a company, a project or a site; the most specific one in force on the date wins. A new value starts on its effective date and the old one stays as history."} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={defs} what="parameters" permission="core.param.view" />
       {defs.data && (

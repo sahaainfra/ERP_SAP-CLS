@@ -5,6 +5,7 @@ import {
 } from '../api/index.js';
 import { formatDate } from '../../../platform/format.js';
 import { Field, FormDialog, QueryState, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const MODULES = ['finance', 'payroll', 'procurement', 'inventory', 'plant', 'projects'];
 const STATUSES = ['Open', 'Soft-closed', 'Closed'];
@@ -96,11 +97,7 @@ export default function FinancialYearsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Configuration &rsaquo; Financial Years &amp; Periods</nav>
-      <div className="page-head">
-        <h1 id="page-title">Financial Years &amp; Periods</h1>
-        <button type="button" className="btn btn-primary" disabled={!canConfigure} title={canConfigure ? '' : 'Needs core.fy.configure'} onClick={() => open(createDialog)}>Create financial year</button>
-      </div>
-      <p className="muted">Each month has a status per module: Open, Soft-closed (only privileged users may post) or Closed. A closed period can only be reopened through an approved request.</p>
+      <PageHeader id="page-title" title={"Financial Years & Periods"} actions={<><button type="button" className="btn btn-primary" disabled={!canConfigure} title={canConfigure ? '' : 'Needs core.fy.configure'} onClick={() => open(createDialog)}>Create financial year</button></>} subtitle={"Each month has a status per module: Open, Soft-closed (only privileged users may post) or Closed. A closed period can only be reopened through an approved request."} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={list} what="financial years" permission="core.fy.view" />
 

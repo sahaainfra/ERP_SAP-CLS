@@ -5,6 +5,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Generate Activities from Template (part 13.01, FR-03): a template in force repeated per WBS node or per location (a floor cycle: shuttering, reinforcement, concreting, curing, deshuttering), with its links and the chain from one floor to the next,
 // or one activity per WBS node that carries BOQ quantities, with its BOQ lines; the server shows what it will make before it makes it, and an activity already there is skipped.
@@ -27,7 +28,7 @@ export default function GeneratePage() {
   const editable = sq.data && sq.data.can.edit;
   return (
     <section aria-labelledby="pg-h" data-testid="plan-generate">
-      <h1 id="pg-h">{t('gen.title')}</h1>
+      <PageHeader id="pg-h" title={t('gen.title')} />
       <form className="mdm-panel" onSubmit={(e) => e.preventDefault()} aria-label={t('f.schedule')}>
         <SchedulePicker projectId={pid} scheduleId={scheduleId} onProject={(v) => { setProjectId(v); setScheduleId(null); setPreview(null); }} onSchedule={(v) => { setScheduleId(v); setPreview(null); }} editableOnly testId="pg" />
       </form>

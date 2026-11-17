@@ -9,6 +9,9 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // The client certification and the submitted-against-certified analysis (part 22.04).
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -79,8 +82,9 @@ function Certification({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/certifications', id, t('ce.title'), 'bill.certification.view'); const { error, run, busy, note } = useRunner(); const [tab, setTab] = useState('items'); usePageTitle(t('ce.title'));
   if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="bill-ce-object" data-status={x.status} data-big={x.bigDiff ? '1' : '0'}><h1 id="ce-h">{x.certNo} <Status x={x} /></h1><p><Link to="/bill/certifications">{t('ce.title')}</Link> · {x.docNo} · {x.project} · <Link to={`/bill/client-bills?id=${x.billId}`}>{x.billNo}</Link> · {t('ce.certDate')} {fmtDate(x.certDate)}</p>
-      <div className="form-grid"><div className="mdm-panel"><div className="muted">{t('ce.submitted')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-ce-submitted">{money(x.submittedGross)}</strong></div><div className="mdm-panel"><div className="muted">{t('ce.certified')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-ce-certified">{money(x.certifiedGross)}</strong><div data-testid="bill-ce-diffpct">{pctText(-x.diffPct)}</div></div><div className="mdm-panel"><div className="muted">{t('ce.s.net')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-ce-net">{money(x.certifiedNet)}</strong><div className="muted">{t('ce.due')}: {fmtDate(x.dueDate)}</div></div></div>
+    <div data-testid="bill-ce-object" data-status={x.status} data-big={x.bigDiff ? '1' : '0'}><PageHeader id="ce-h" title={<>{x.certNo} <Status x={x} /></>} meta={<><Link to="/bill/certifications">{t('ce.title')}</Link> · {x.docNo} · {x.project} · <Link to={`/bill/client-bills?id=${x.billId}`}>{x.billNo}</Link> · {t('ce.certDate')} {fmtDate(x.certDate)}</>} />
+      <DocumentFlow type="CERT" id={x.id} />
+      <KpiRow><KpiTile label={t('ce.submitted')} value={money(x.submittedGross)} amount={x.submittedGross} kind="money" valueTestid="bill-ce-submitted" /><KpiTile label={t('ce.certified')} value={money(x.certifiedGross)} amount={x.certifiedGross} kind="money" valueTestid="bill-ce-certified"><div data-testid="bill-ce-diffpct">{pctText(-x.diffPct)}</div></KpiTile><KpiTile label={t('ce.s.net')} value={money(x.certifiedNet)} amount={x.certifiedNet} kind="money" valueTestid="bill-ce-net"><div className="muted">{t('ce.due')}: {fmtDate(x.dueDate)}</div></KpiTile></KpiRow>
       {x.bigDiff && <p className="mdm-banner" role="status" data-testid="bill-ce-bigdiff">{t('ce.bigNote')}</p>}{x.disputed > 0 && <p data-testid="bill-ce-disputed">{t('ce.disputed', { amount: money(x.disputed) })}</p>}
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="actions-row no-print">{x.can.invoice && <button type="button" className="btn btn-primary" onClick={() => navigateTo(`/bill/tax-invoices?new=1&certId=${x.id}`)} data-testid="bill-ce-invoice">{t('ti.make')}</button>}{x.invoiceId && <Link to={`/bill/tax-invoices?id=${x.invoiceId}`} data-testid="bill-ce-invoice-link">{x.invoiceNo ?? t('ti.title')}</Link>}</div>
@@ -93,13 +97,13 @@ function Certification({ id }) {
 
 export function RecordCertificationPage() {
   const t = useT('bill'); usePageTitle(t('ce.record')); const sp = useSearch();
-  return (<section aria-labelledby="cen-h" data-testid="bill-ce-record"><h1 id="cen-h">{t('ce.record')}</h1><p className="muted">{t('ce.intro')}</p><p><Link to="/bill/certifications">{t('ce.title')}</Link></p><CertForm initialBill={sp.get('billId')} /></section>);
+  return (<section aria-labelledby="cen-h" data-testid="bill-ce-record"><PageHeader id="cen-h" title={t('ce.record')} subtitle={t('ce.intro')} meta={<Link to="/bill/certifications">{t('ce.title')}</Link>} /><CertForm initialBill={sp.get('billId')} /></section>);
 }
 export function CertificationsPage() {
   const t = useT('bill'); usePageTitle(t('ce.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="ce-h"><Certification id={id} /></section>;
   return (
-    <section aria-labelledby="ces-h" data-testid="bill-certifications"><h1 id="ces-h">{t('ce.title')}</h1><p className="muted">{t('ce.listIntro')}</p>
+    <section aria-labelledby="ces-h" data-testid="bill-certifications"><PageHeader id="ces-h" title={t('ce.title')} subtitle={t('ce.listIntro')} />
       <div className="actions-row no-print"><Link to="/bill/certification-new" data-testid="bill-ce-new">{t('ce.record')}</Link> · <Link to="/bill/cert-analysis">{t('ca.title')}</Link> · <Link to="/bill/tax-invoices">{t('ti.title')}</Link></div>
       <ListReport listCode="bill.certifications" endpoint="/bill/certifications" title={t('ce.title')} session={session.data} rowHref={(r) => `/bill/certifications?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/certifications?id=${r.id}`)} cardFields={['certNo', 'bill', 'certDate', 'certified', 'diff', 'status']} statusKey="status" empty={{ title: t('ce.emptyTitle'), text: t('ce.emptyBody') }} />
     </section>
@@ -111,10 +115,10 @@ export function CertAnalysisPage() {
   const q = useQuery({ queryKey: ['bill', 'cert-analysis', pid, only], queryFn: () => bill.get(`/cert-analysis${qs({ projectId: pid, differencesOnly: only ? 'true' : '' })}`), enabled: Boolean(pid), retry: false, placeholderData: (p) => p });
   if (o.error?.status === 403) return <NoPermission what={t('ca.title')} permission="bill.certification.view" />; if (o.isPending) return <Skeleton label={t('ca.title')} rows={4} />; const d = q.data; const maxPct = Math.max(1, ...(d?.rows ?? []).map((r) => Math.abs(r.diffPct ?? 0)));
   return (
-    <section aria-labelledby="ca-h" data-testid="bill-cert-analysis"><h1 id="ca-h">{t('ca.title')}</h1><p className="muted">{t('ca.intro')}</p>
+    <section aria-labelledby="ca-h" data-testid="bill-cert-analysis"><PageHeader id="ca-h" title={t('ca.title')} subtitle={t('ca.intro')} />
       <div className="form-grid no-print"><Field label={t('project')} name="projectId" error={null}><select value={pid} onChange={(e) => setPj(e.target.value)} style={big} data-testid="bill-ca-project"><option value="">—</option>{projects.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field><label style={{ minHeight: 48, alignSelf: 'end' }}><input type="checkbox" checked={only} onChange={(e) => setOnly(e.target.checked)} data-testid="bill-ca-only" /> {t('ca.only')}</label></div>
       {q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : !d ? <p className="muted">{t('rc.pick')}</p> : d.rows.length === 0 ? <div className="empty-state"><h2>{t('ca.emptyTitle')}</h2><p>{t('ca.emptyBody')}</p><Link to="/bill/client-bills">{t('cb.title')}</Link></div> : (<>
-        <div className="form-grid" data-testid="bill-ca-totals">{[['bills', d.totals.bills], ['certified', d.totals.certified], ['waiting', d.totals.waiting], ['submittedGross', money(d.totals.submittedGross)], ['certifiedGross', money(d.totals.certifiedGross)], ['diffGross', money(d.totals.diffGross)], ['disputed', money(d.totals.disputed)], ['avgDays', d.totals.avgDays ?? '—']].map(([k, v]) => <div className="mdm-panel" key={k} data-testid={`bill-ca-t-${k}`}><div className="muted">{t(`ca.t.${k}`)}</div><strong style={{ fontSize: '1.2rem' }}>{v}</strong></div>)}</div>
+        <KpiRow data-testid="bill-ca-totals">{[['bills', d.totals.bills], ['certified', d.totals.certified], ['waiting', d.totals.waiting], ['submittedGross', money(d.totals.submittedGross), d.totals.submittedGross], ['certifiedGross', money(d.totals.certifiedGross), d.totals.certifiedGross], ['diffGross', money(d.totals.diffGross), d.totals.diffGross], ['disputed', money(d.totals.disputed), d.totals.disputed], ['avgDays', d.totals.avgDays ?? '—']].map(([k, v, amt, kd]) => <KpiTile label={t(`ca.t.${k}`)} value={v} amount={amt} kind={kd ?? (amt !== undefined ? 'money' : /day/i.test(k) ? 'time' : 'count')} key={k} data-testid={`bill-ca-t-${k}`} />)}</KpiRow>
         <div className="table-scroll"><table className="data-table" data-testid="bill-ca-table"><thead><tr><th>{t('ce.bill')}</th><th>{t('ca.sentOn')}</th><th className="num">{t('ce.submitted')}</th><th className="num">{t('ce.certified')}</th><th className="num">{t('ce.s.diff')}</th><th>%</th><th>{t('ca.days')}</th><th>{t('ce.certNo')}</th></tr></thead>
           <tbody>{d.rows.map((r) => <tr key={r.billId} data-testid="bill-ca-row" data-state={r.certId ? 'CERTIFIED' : 'WAITING'} data-big={r.bigDiff ? '1' : '0'}><td><Link to={`/bill/client-bills?id=${r.billId}`}>{r.billNo}</Link></td><td>{fmtDate(r.sentOn)}</td><td className="num">{money(r.submittedGross)}</td><td className="num">{r.certId ? money(r.certifiedGross) : t('ca.waiting')}</td><td className="num">{r.certId ? money(r.diffGross) : '—'}</td>
             <td><div style={{ minWidth: 90 }} aria-label={pctText(r.diffPct)}><div style={{ height: 8, width: `${Math.round((Math.abs(r.diffPct ?? 0) / maxPct) * 100)}%`, background: r.bigDiff ? 'var(--erp-color-status-error-fg)' : 'var(--erp-color-text-primary)' }} />{pctText(r.diffPct)}</div></td><td>{r.daysToCertify ?? '—'}</td><td>{r.certId ? <Link to={`/bill/certifications?id=${r.certId}`}>{r.certNo}</Link> : '—'}</td></tr>)}</tbody></table></div></>)}

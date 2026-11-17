@@ -6,6 +6,8 @@ import Chart from '../../platform/charts/Chart.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, st, today } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // DPR Compliance (part 14.02, section 7.4): the share of the site days for which the report was sent by the cut-off, the late ones and the missing ones by site; every tile and row opens the reports behind it.
 const ago = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10);
@@ -20,7 +22,7 @@ export default function DprCompliancePage() {
   const c = q.data; const tot = c?.totals;
   return (
     <section aria-labelledby="dc-h" data-testid="site-dpr-compliance">
-      <h1 id="dc-h">{t('dpr.complianceTitle')}</h1>
+      <PageHeader id="dc-h" title={t('dpr.complianceTitle')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('dpr.params')}>
         <div className="form-grid">
           <Field label={t('h.from')} name="from"><input type="date" value={p.from} max={p.to} onChange={(e) => e.target.value && setP({ ...p, from: e.target.value })} data-testid="dc-from" /></Field>
@@ -33,13 +35,13 @@ export default function DprCompliancePage() {
       {c && (
         <>
           <p className="muted">{t('dpr.cutoffIs', { c: c.cutoff })}</p>
-          <div className="tiles" data-testid="dc-tiles">
+          <KpiRow data-testid="dc-tiles">
             <Tile label={t('dpr.tOnTime')} value={tot.onTimePct == null ? '—' : `${tot.onTimePct} %`} status={tot.onTimePct == null ? 'neutral' : tot.onTimePct >= 90 ? 'success' : tot.onTimePct >= 70 ? 'warning' : 'danger'} to="/site/dprs" testId="dc-ontime" hint={t('dpr.ofSiteDays', { n: tot.expected })} />
             <Tile label={t('dpr.tSubmitted')} value={tot.submittedPct == null ? '—' : `${tot.submittedPct} %`} testId="dc-submitted" />
             <Tile label={t('dpr.tLate')} value={tot.late} status={tot.late ? 'warning' : 'success'} testId="dc-late" />
             <Tile label={t('dpr.tMissing')} value={tot.missing} status={tot.missing ? 'danger' : 'success'} to="/site/dprs" testId="dc-missing" />
             <Tile label={t('dpr.tSameDay')} value={tot.approvedSameDayPct == null ? '—' : `${tot.approvedSameDayPct} %`} testId="dc-sameday" />
-          </div>
+          </KpiRow>
           {tot.expected === 0 ? <p className="muted" data-testid="dc-empty">{t('dpr.complianceEmpty')}</p> : (
             <>
               <Chart type="stacked" data={{ categories: c.byDay.map((d) => d.date.slice(5)), series: [{ name: t('dpr.tOnTime'), values: c.byDay.map((d) => d.onTime) }, { name: t('dpr.tLate'), values: c.byDay.map((d) => d.late) }, { name: t('dpr.tMissing'), values: c.byDay.map((d) => d.missing) }] }} title={t('dpr.chartDays')} exportName="dpr-compliance" />

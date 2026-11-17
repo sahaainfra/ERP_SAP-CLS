@@ -8,6 +8,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { RESULT, attp, deviceId, readPosition, smallPhoto } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Punch In/Out (HR, part 07.05, FR-01): the phone screen of a person's own attendance. It shows the sites the person is deployed at, reads the location only when asked (a visible notice says so; nothing is tracked in the
 // background), tells whether the position is inside the fence of the site (an advisory: the server decides, BR-01), draws a small map of the fence and the position, takes a selfie where the site asks for one, and punches with one
@@ -86,7 +87,7 @@ export default function PunchPage() {
   };
   return (
     <section aria-labelledby="pu-title" data-testid="punch-page" className="att-punch">
-      <h1 id="pu-title">Punch In/Out</h1>
+      <PageHeader id="pu-title" title={"Punch In/Out"} />
       <p className="mdm-banner" role="note" data-testid="pu-notice">{c.notice}</p>
       <p className={`att-net${offline.online === false || !navigator.onLine ? ' is-off' : ''}`} role="status" data-testid="pu-net">{navigator.onLine ? 'Online' : 'Offline'}{offline.queue?.length ? ` · ${offline.queue.length} waiting to be sent` : ''}</p>
       {c.sites.length === 0 && !visit && <p className="mdm-banner is-warning" data-testid="pu-nosite">You are not deployed at a site today. Ask your manager, or punch at another site as a visit.</p>}

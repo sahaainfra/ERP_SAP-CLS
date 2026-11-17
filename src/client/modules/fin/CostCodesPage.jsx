@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { fin } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Cost Heads & Cost Codes (Finance, part 06.05, FR-03): the cost structure of the company (1 Material › 1.1 Cement, 2 Labour, 3 Plant and machinery, 4 Subcontract, 5 Site overheads, 6 Head office overheads ...),
 // each top head posted to an account, and the cost codes under the heads (with a unit) that estimates, budgets, purchase orders, work orders and site costs are coded to. The project controls manager (or the
@@ -38,7 +39,7 @@ export default function CostCodesPage() {
   const headCodes = head ? codes.filter((c) => c.costHeadId === head.id) : [];
   return (
     <section aria-labelledby="cc-title" data-testid="cost-codes" className="fin-page">
-      <h1 id="cc-title">Cost Heads &amp; Cost Codes</h1>
+      <PageHeader id="cc-title" title={"Cost Heads & Cost Codes"} />
       {note && <p className="mdm-banner" role="status" data-testid="cc-note">{note}</p>}
       <div className="item-master">
         <nav aria-label="Cost heads" className="item-tree-pane"><ul className="item-tree">{tree(null, 0)}</ul>{canEdit && <button type="button" className="btn btn-small" onClick={() => { setError(null); setForm({ kind: 'head', code: nextCode(null), name: '', parentId: null, accountId: '', status: 'ACTIVE', reason: '' }); }} data-testid="cc-new-top">New top cost head</button>}</nav>

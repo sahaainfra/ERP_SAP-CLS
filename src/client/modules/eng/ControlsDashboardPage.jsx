@@ -5,6 +5,8 @@ import { formatINR } from '../../platform/format.js';
 import { useControlsDashboard } from '../../platform/protocol/api.js';
 import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { MODE } from './ControlPointsPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Controls Dashboard (part 04.04, section 7.4): exceptions over time, the controls that fail most, the value at risk, how long open exceptions have waited, and how far
 // the company has taken its controls from OFF to ENFORCE. Every figure leads to the list of records behind it.
@@ -18,7 +20,7 @@ export default function ControlsDashboardPage() {
   if (q.error?.status === 403) return <NoPermission what="the controls dashboard" permission="eng.pcs.view" />;
   return (
     <section aria-labelledby="cd-title" data-testid="controls-dashboard">
-      <h1 id="cd-title">Controls Dashboard</h1>
+      <PageHeader id="cd-title" title={"Controls Dashboard"} />
       <form className="srch-form" role="search" aria-label="Filter the dashboard" onSubmit={(e) => e.preventDefault()}>
         <label className="field"><span>Project</span><select value={filters.projectId} onChange={(e) => setFilters({ ...filters, projectId: e.target.value })}><option value="">All projects</option>{(d?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></label>
         <label className="field"><span>Period</span><select value={filters.days} onChange={(e) => setFilters({ ...filters, days: Number(e.target.value) })}><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="180">Last 180 days</option><option value="365">Last year</option></select></label>
@@ -27,13 +29,13 @@ export default function ControlsDashboardPage() {
       {q.isError && q.error?.status !== 403 && <ErrorState title="The dashboard could not be loaded" error={q.error} onRetry={() => q.refetch()} />}
       {d && (
         <>
-          <div className="tiles" data-testid="cd-tiles">
+          <KpiRow data-testid="cd-tiles">
             <Tile label="Open exceptions" value={d.tiles.open} status={d.tiles.open ? 'warn' : 'ok'} to="/controls/exceptions?status=OPEN" testId="cd-open" />
             <Tile label="Value at risk" value={formatINR(d.tiles.valueAtRisk)} status={Number(d.tiles.valueAtRisk) > 0 ? 'warn' : 'ok'} to="/controls/exceptions?status=OPEN" testId="cd-value" />
             <Tile label="Waiting for approval" value={d.tiles.awaitingApproval} to="/controls/exceptions?status=PENDING" testId="cd-pending" />
             <Tile label="Emergency, past the time to regularise" value={d.tiles.emergencyOverdue} status={d.tiles.emergencyOverdue ? 'bad' : 'ok'} to="/controls/exceptions?emergency=true&status=PENDING" testId="cd-emergency" />
             <Tile label="Oldest open (days)" value={d.tiles.oldestDays} testId="cd-oldest" />
-          </div>
+          </KpiRow>
           <h2>How far the controls have been taken</h2>
           <ul className="srch-meta" aria-label="Rollout" data-testid="cd-rollout">{Object.entries(d.rollout).map(([m, n]) => <li key={m}>{MODE[m][1]} <strong>{n}</strong></li>)}<li><Link to="/admin/controls">Control Points</Link></li></ul>
           <h2>Exceptions over time</h2>

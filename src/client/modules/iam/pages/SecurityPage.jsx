@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatDateTime } from '../../../platform/format.js';
 import { Field, QueryState, errorInfo, usePageTitle } from '../../core/pages/ui.jsx';
 import { useChangePassword, useMe, usePhoneBegin, usePhoneConfirm, useRegenerateBackup, useRemoveFactor, useTotpBegin, useTotpConfirm } from '../api/index.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 function BackupCodes({ codes }) {
   return (
@@ -184,7 +185,7 @@ export default function SecurityPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Account &rsaquo; Security &amp; MFA</nav>
-      <div className="page-head"><h1 id="page-title">Security &amp; MFA</h1></div>
+      <PageHeader id="page-title" title={"Security & MFA"} />
       <QueryState query={me} what="your security settings" permission="a signed-in account" />
       {me.data && (
         <>

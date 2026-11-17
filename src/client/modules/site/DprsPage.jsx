@@ -7,15 +7,19 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { DiscussionTab } from '../../platform/collab/CollabTabs.jsx';
 import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx';
-import { fetchFileUrl, useSession } from '../core/api/index.js';
+import { fetchFileUrl, fetchPhotoUrl, useSession } from '../core/api/index.js';
+import { useLowBandwidthSaves } from '../../platform/device/lowBandwidth.js';
 import { DPR_TONE, download, fmtDate, fmtQty, openPrint, st } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // DPR Register and the DPR itself (part 14.02, FR-03, FR-05, FR-06): the register with the missing and late days highlighted; one report with its sections, the labour against the attendance, the photos
 // with their position and markups, the approval (the construction manager or the project manager decides from here or from the inbox), the amendment of an approved report and the PDF.
 function Photo({ t, dprId, p, canEdit, onSaved }) {
-  const q = useQuery({ queryKey: ['site', 'dpr-photo', p.fileId], queryFn: () => fetchFileUrl(p.fileId), staleTime: 240_000, retry: false });
-  const [open, setOpen] = useState(false); const [caption, setCaption] = useState(p.caption ?? ''); const [marks, setMarks] = useState(p.markup ?? []); const [error, setError] = useState(null);
+  const saves = useLowBandwidthSaves(); // part 166.4, FR-03: the thumbnail in the list, the photo when it is opened
+  const q = useQuery({ queryKey: ['site', 'dpr-photo', p.fileId, saves], queryFn: () => (saves ? fetchPhotoUrl(p.fileId) : fetchFileUrl(p.fileId)), staleTime: 240_000, retry: false });
+  const [open, setOpen] = useState(false);
+  const full = useQuery({ queryKey: ['site', 'dpr-photo', p.fileId, false], queryFn: () => fetchFileUrl(p.fileId), staleTime: 240_000, retry: false, enabled: open }); const [caption, setCaption] = useState(p.caption ?? ''); const [marks, setMarks] = useState(p.markup ?? []); const [error, setError] = useState(null);
   const save = async () => { setError(null); try { await st.dprPhoto(dprId, p.fileId, { caption: caption.trim() || null, markup: marks }); onSaved(); } catch (e) { setError(errorInfo(e)); } };
   const addMark = (e) => { if (!canEdit) return; const r = e.currentTarget.getBoundingClientRect(); const text = window.prompt(t('dpr.markText')); if (text && text.trim()) setMarks((m) => [...m, { x: Math.round(((e.clientX - r.left) / r.width) * 100), y: Math.round(((e.clientY - r.top) / r.height) * 100), text: text.trim() }]); };
   return (
@@ -25,7 +29,7 @@ function Photo({ t, dprId, p, canEdit, onSaved }) {
       {open && (
         <div data-testid="dpr-photo-open">
           <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }} onClick={addMark} role="presentation">
-            {q.data?.url && <img src={q.data.url} alt={p.caption ?? p.name} style={{ maxWidth: '100%', display: 'block' }} />}
+            {full.data?.url && <img src={full.data.url} alt={p.caption ?? p.name} style={{ maxWidth: '100%', display: 'block' }} />}
             {marks.map((m, i) => <span key={i} data-testid="dpr-mark" style={{ position: 'absolute', left: `${m.x}%`, top: `${m.y}%`, background: 'var(--erp-color-status-warning-bg)', color: 'var(--erp-color-status-warning-fg)', padding: '0 4px', borderRadius: 4, fontSize: 12 }}>{m.text}</span>)}
           </div>
           {canEdit && <><p className="muted">{t('dpr.markHelp')}</p><input aria-label={t('dpr.caption')} value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={300} placeholder={t('dpr.caption')} /> <button type="button" className="btn" onClick={() => setMarks([])}>{t('dpr.clearMarks')}</button> <button type="button" className="btn btn-primary" onClick={save} data-testid="dpr-photo-save">{t('act.save')}</button>{error?.form && <p className="field-error" role="alert">{error.form}</p>}</>}
@@ -53,8 +57,7 @@ function Dpr({ t, id, onGone }) {
   const f = d.flags ?? {};
   return (
     <div data-testid="dpr-object" data-status={d.status}>
-      <h1 id="dpr-h">{d.docNo} · {fmtDate(d.dprDate)} <StatusBadge status={DPR_TONE[d.status]} label={t(`dst.${d.status}`)} />{d.late && <> <StatusBadge status="OVERDUE" label={t('dpr.late', { m: d.lateMinutes })} /></>}</h1>
-      <p><Link to="/site/dprs">{t('dpr.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</p>
+      <PageHeader id="dpr-h" title={<>{d.docNo} · {fmtDate(d.dprDate)} <StatusBadge status={DPR_TONE[d.status]} label={t(`dst.${d.status}`)} />{d.late && <> <StatusBadge status="OVERDUE" label={t('dpr.late', { m: d.lateMinutes })} /></>}</>} meta={<><Link to="/site/dprs">{t('dpr.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</>} />
       <dl className="kv" data-testid="dpr-figures">
         <div><dt>{t('f.site')}</dt><dd>{d.projectCode} · {d.siteCode} {d.siteName}</dd></div><div><dt>{t('dpr.scope')}</dt><dd>{t(`dpr.scope.${d.scope}`)} · {d.supervisor}</dd></div><div><dt>{t('dpr.weather')}</dt><dd>{d.weather ? t(`dpr.w.${d.weatherCode}`) : '—'}{d.rainMm != null ? ` · ${d.rainMm} mm` : ''}</dd></div>
         <div><dt>{t('dpr.sentAt')}</dt><dd>{d.submittedAt ? `${String(d.submittedAt).slice(0, 16).replace('T', ' ')} · ${t(`dpr.via.${d.submittedVia}`)}` : '—'}</dd></div><div><dt>{t('dpr.cutoffAt')}</dt><dd>{d.cutoffAt ? String(d.cutoffAt).slice(0, 16).replace('T', ' ') : '—'}</dd></div><div><dt>{t('wa.raisedBy')}</dt><dd>{d.requestedBy}</dd></div>
@@ -124,7 +127,7 @@ export default function DprsPage() {
   const miss = mq.data?.rows ?? [];
   return (
     <section aria-labelledby="dpr-h" data-testid="site-dprs">
-      <h1 id="dpr-h" className="sr-only">{t('dpr.register')}</h1>
+      <PageHeader id="dpr-h" srOnly title={t('dpr.register')} />
       <div className="actions-row no-print">
         {perms.includes('site.dpr.create') && <Link to="/site/dpr-entry">{t('dpr.new')}</Link>}
         {perms.includes('site.dpr.report') && <><Link to="/site/dpr-report">{t('dpr.reports')}</Link> <Link to="/site/dpr-compliance">{t('dpr.compliance')}</Link></>}

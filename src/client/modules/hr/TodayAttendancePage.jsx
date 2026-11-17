@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { attp, dayIST } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Today's Attendance by Site (HR, part 07.05): for each site the people deployed, those expected today (not on a weekly off or a holiday by their shift and calendar, 07.04), present, absent, late, punches outside the fence,
 // rejected, waiting for a visit approval, with a bar of present against absent. A count opens the punches behind it. Export gives the table as CSV. HR sets, per site, whether a selfie is asked and the accuracy and fence
@@ -22,7 +23,7 @@ export default function TodayAttendancePage() {
   const qs = new URLSearchParams(Object.entries({ date, projectId }).filter(([, v]) => v)).toString();
   return (
     <section aria-labelledby="td-title" data-testid="today">
-      <h1 id="td-title">Today's Attendance</h1>
+      <PageHeader id="td-title" title={"Today's Attendance"} />
       <form className="srch-form" aria-label="Parameters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Day" name="date" error={null}><input type="date" value={date} onChange={(e) => { setDate(e.target.value); setDrill(null); }} data-testid="td-date" /></Field>
         <LookupField id="td-project" label="Project" lookup="iam/projects" value={projectId} onChange={(x) => { setProjectId(x); setDrill(null); }} />

@@ -3,6 +3,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { useSession } from '../core/api/index.js';
 import { Field, Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { PARTNER_ROLES } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Business Partners (Administration, part 06.04): the List Report of partners (search, filters by status and the other columns, sort, saved views, column chooser, 25/50/100 a page, export XLSX/CSV/PDF with the PAN
 // hidden from roles outside finance) with quick filters for a role, a category and the compliance documents that expire within 30 days. "New partner" opens the registration wizard.
@@ -17,7 +18,7 @@ export default function BusinessPartnersPage() {
   const canNew = session.data?.permissions?.includes('mdm.partner.edit');
   return (
     <section aria-labelledby="bp-title" data-testid="business-partners">
-      <h1 id="bp-title" className="sr-only">Business Partners</h1>
+      <PageHeader id="bp-title" srOnly title={"Business Partners"} />
       <form className="srch-form" aria-label="Quick filters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Role" name="role" error={null}><select value={role} onChange={(e) => setRole(e.target.value)} data-testid="bp-role"><option value="">All roles</option>{PARTNER_ROLES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>
         <Field label="Category" name="category" error={null}><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="For example STEEL" data-testid="bp-category" /></Field>

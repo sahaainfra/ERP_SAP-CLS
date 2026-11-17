@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { formatDate, formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { REQ_STATUS, deploy } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Transfer (HR, part 07.03): one transfer or secondment. Header: number and revision, status, the employee, from and to, the relieving and joining dates, travel and accommodation; actions for this status and person: send, correct,
 // withdraw, cancel (undoes an approved transfer that has not taken effect), amend, print. Tabs: Details · Handover (the checklist the relieving manager ticks) · Revisions · Approvals · Timeline · Discussion.
@@ -29,7 +30,7 @@ export default function TransferPage() {
       <p><Link to="/hr/transfers">← Transfers</Link></p>
       {sp.get('sent') === '1' && <p className="mdm-banner" role="status" data-testid="tp-sent">Sent for approval: the current project manager{t.scope === 'CROSS_PROJECT' ? ', the receiving project manager' : ''} and the HR manager.</p>}
       <header className="op-header">
-        <div className="page-head"><h1 id="tp-title">{t.docNo} · {t.employee}</h1><StatusBadge status={st} label={label} /><span className="muted">{t.kindLabel}</span>{t.revision > 1 && <span className="muted">revision {t.revision}</span>}</div>
+        <PageHeader id="tp-title" title={<>{t.docNo} · {t.employee}</>} status={<StatusBadge status={st} label={label} />} actions={<><span className="muted">{t.kindLabel}</span>{t.revision > 1 && <span className="muted">revision {t.revision}</span>}</>} />
         <dl className="op-figures">
           <div><dt>From</dt><dd>{place(t.fromProject, t.fromSite)}</dd></div><div><dt>To</dt><dd data-testid="tp-to">{place(t.toProject, t.toSite)}</dd></div>
           <div><dt>Relieving – joining</dt><dd data-testid="tp-dates">{formatDate(t.relieveDate)} – {formatDate(t.joinDate)}</dd></div>

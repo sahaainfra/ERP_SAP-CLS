@@ -6,6 +6,7 @@ import { formatDate, formatDateTime } from '../../platform/format.js';
 import { authHeaders } from '../../platform/api/index.js';
 import { secApi } from '../../platform/secure/engine.js';
 import { Field, can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Secure Messaging Policy (Administration, part 05.03, FR-07): which roles may start secure conversations, the limits, the disappearing times, how long delivery facts are kept, and the compliance stance: the content of a
 // secure conversation is not available to administrators or to AI, only metadata is kept. A change is a new version approved by a second person and in force from its date. The IT administrator can also revoke a lost device.
@@ -56,8 +57,7 @@ export default function SecurePolicyPage({ session }) {
   const editable = d.canEdit && !d.pending;
   return (
     <section aria-labelledby="sp-title" data-testid="secure-policy">
-      <h1 id="sp-title">Secure Messaging Policy</h1>
-      <p className="muted">Version {d.policy.version || 'default'} is in force{d.policy.effectiveFrom ? ` since ${formatDate(d.policy.effectiveFrom)}` : ''}. Secure messaging is <strong>{d.policy.enabled && d.licenceApproved ? 'on' : 'off'}</strong>.</p>
+      <PageHeader id="sp-title" title={"Secure Messaging Policy"} subtitle={<>Version {d.policy.version || 'default'} is in force{d.policy.effectiveFrom ? ` since ${formatDate(d.policy.effectiveFrom)}` : ''}. Secure messaging is <strong>{d.policy.enabled && d.licenceApproved ? 'on' : 'off'}</strong>.</>} />
       {!d.licenceApproved && <p className="notice is-warning" role="status" data-testid="sp-licence">It cannot be switched on until the open-source licence review is approved (Administration, Open-Source Licence Register).</p>}
       <p className="notice small" data-testid="sp-stance">Compliance stance: the content of secure conversations is encrypted on the devices of the people in them. Administrators, the company and AI features cannot read it, and no export of it exists. Only metadata (who, when, how big) is kept, for the days below. A lost device cannot be recovered.</p>
       {d.pending && <p role="status" className="notice" data-testid="sp-pending">Version {d.pending.version} waits for approval (sent by {d.pending.by}). Only one change can wait at a time.</p>}

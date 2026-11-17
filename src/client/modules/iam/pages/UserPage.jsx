@@ -9,6 +9,8 @@ import {
   useUserTimeline, useUsers,
 } from '../api/users.js';
 import { useQueryClient } from '@tanstack/react-query';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const TABS = [['details', 'Details'], ['assignments', 'Assignments'], ['sessions', 'Sessions'], ['history', 'Login history'], ['approvals', 'Approvals'], ['timeline', 'Timeline']];
 const REQUEST_STATUS = { SUBMITTED: 'Waiting', APPROVED: 'Approved', REJECTED: 'Rejected', RETURNED: 'Returned', CANCELLED: 'Withdrawn' };
@@ -69,8 +71,7 @@ export default function UserPage({ id, session, onBack }) {
         <>
           <div className="page-head">
             <div>
-              <h1 id="page-title">{u.displayName}</h1>
-              <p className="muted">{u.username} · <UserStatusChip status={u.status} /> · {typeLabel(u.userType)}{u.statusReason ? ` · ${u.statusReason}` : ''}</p>
+              <PageHeader id="page-title" title={u.displayName} subtitle={<>{u.username} · <UserStatusChip status={u.status} /> · {typeLabel(u.userType)}{u.statusReason ? ` · ${u.statusReason}` : ''}</>} />
             </div>
             <div className="actions">
               <button type="button" className="btn" onClick={onBack}>Back to the list</button>
@@ -85,12 +86,12 @@ export default function UserPage({ id, session, onBack }) {
             </div>
           </div>
           <p role="status" className="notice" data-testid="user-notice">{notice}</p>
-          <div className="tiles">
+          <KpiRow>
             <div className="tile"><span className="tile-value">{u.roles.length}</span><span className="tile-label">Roles</span></div>
             <div className="tile"><span className="tile-value">{u.liveSessions}</span><span className="tile-label">Live sessions</span></div>
             <div className="tile"><span className="tile-value">{u.mfaEnrolled ? 'Yes' : 'No'}</span><span className="tile-label">Second step set up</span></div>
             <div className="tile"><span className="tile-value">{u.requests.filter((r) => r.status === 'SUBMITTED').length}</span><span className="tile-label">Requests waiting</span></div>
-          </div>
+          </KpiRow>
           {lifecycle === 'ONBOARDING' && <p className="notice" role="note" data-testid="onboarding-note">This person has joined but holds no approved role, so they see only a welcome page and their profile. Request a role to give them access.</p>}
 
           <div role="tablist" aria-label="User sections" className="actions">

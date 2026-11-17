@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, hse, qs } from './api.js';
 import { big } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Induction and Toolbox Compliance (part 19.01, FR-04): per site, the workers deployed with and without a valid induction, those expiring, and the toolbox talks held; the sites with no talk this week stand out.
 export default function CompliancePage() {
@@ -15,7 +16,7 @@ export default function CompliancePage() {
   if (q.error?.status === 403) return <NoPermission what={t('cmp.title')} permission="hse.induction.view" />; if (q.isPending) return <Skeleton label={t('cmp.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data;
   return (
-    <section aria-labelledby="cmp-h" data-testid="hse-compliance"><h1 id="cmp-h">{t('cmp.title')}</h1><p className="muted">{t('cmp.intro')} <Link to="/hse/induction">{t('ind.title')}</Link> · <Link to="/hse/toolbox">{t('tbt.title')}</Link></p>
+    <section aria-labelledby="cmp-h" data-testid="hse-compliance"><PageHeader id="cmp-h" title={t('cmp.title')} subtitle={<>{t('cmp.intro')} <Link to="/hse/induction">{t('ind.title')}</Link> · <Link to="/hse/toolbox">{t('tbt.title')}</Link></>} />
       <div className="form-grid no-print"><Field label={t('project')} name="projectId" error={null}><select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={big} data-testid="hse-cmp-project"><option value="">{t('cmp.all')}</option>{(po.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</select></Field>
         <Field label={t('cmp.from')} name="from" error={null}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={big} /></Field><Field label={t('cmp.to')} name="to" error={null}><input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={big} /></Field>
         <button type="button" className="btn" style={big} onClick={() => hse.exportFile(`/compliance/export${qs({ projectId, from, to })}`, 'induction-toolbox-compliance.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="hse-cmp-export">{t('export')}</button></div>

@@ -5,6 +5,7 @@ import { vibrate } from '../../platform/device/haptics.js';
 import { confirmLeave } from '../../platform/forms/guard.js';
 import Icon from '../../platform/design/Icon.jsx';
 import { useT } from '../../platform/i18n/index.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 const RECENT_KEY = 'erp.scan.recent';
 const readRecent = () => {
@@ -50,8 +51,7 @@ export default function ScannerPage() {
   const { busy, result, error, code } = state;
   return (
     <section aria-labelledby="page-title" className="scanner">
-      <div className="page-head"><h1 id="page-title">{t('scan.title')}</h1></div>
-      <p className="muted">{t('scan.intro')}</p>
+      <PageHeader id="page-title" title={t('scan.title')} subtitle={t('scan.intro')} />
       <CodeScanner onCode={onCode} busy={busy} />
       {busy && <p role="status" data-testid="scan-busy">{t('scan.busy', { code })}</p>}
       {error && (

@@ -3,6 +3,7 @@ import { formatDateTime } from '../../../platform/format.js';
 import { Field, FormDialog, Link, Pager, QueryState, can, errorInfo, usePageTitle } from '../../core/pages/ui.jsx';
 import { useCancelElevation, useDecideElevation, useElevation, useElevationRoles, useElevations, useRequestElevation, useRevokeElevation } from '../api/privileged.js';
 import { StatusChip, remaining } from '../components/privilegedCommon.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 /** One elevation: its approval, and every request made while it was in force. */
 function ElevationDetail({ id, onClose }) {
@@ -54,8 +55,7 @@ export default function ElevationPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">My account &rsaquo; Elevated access</nav>
-      <div className="page-head"><h1 id="page-title">Request Elevated Access</h1></div>
-      <p className="muted">Use this when a task needs more than your usual role (a fix during an incident, covering for someone). Your manager and the IT administrator approve it; financial roles also need the chief financial officer. The access starts when approved, ends by itself at the time shown, and everything you do while it is in force is logged.</p>
+      <PageHeader id="page-title" title={"Request Elevated Access"} subtitle={"Use this when a task needs more than your usual role (a fix during an incident, covering for someone). Your manager and the IT administrator approve it; financial roles also need the chief financial officer. The access starts when approved, ends by itself at the time shown, and everything you do while it is in force is logged."} />
       <p role="status" className="notice" data-testid="elevation-notice">{notice}</p>
       {can2 ? (
         <form
@@ -147,8 +147,7 @@ export function ElevationApprovalsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Elevation approvals</nav>
-      <div className="page-head"><h1 id="page-title">Elevation Approvals</h1></div>
-      <p className="muted">You see the requests that wait for you at their current step{viewAll ? ', and every elevation in the company' : ''}. Nobody approves their own request.</p>
+      <PageHeader id="page-title" title={"Elevation Approvals"} subtitle={<>You see the requests that wait for you at their current step{viewAll ? ', and every elevation in the company' : ''}. Nobody approves their own request.</>} />
       <p role="status" className="notice" data-testid="approvals-notice">{notice}</p>
       <div role="tablist" aria-label="Elevations" className="toolbar">
         {tabs.map(([v, l]) => <button key={v} type="button" role="tab" aria-selected={tab === v} className={`btn${tab === v ? ' btn-primary' : ''}`} onClick={() => { setTab(v); setPage(1); }}>{l}</button>)}

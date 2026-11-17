@@ -1,6 +1,9 @@
 import { useId, useRef, useState } from 'react';
 import { arcPath, areaPath, bands, chartTable, dayFraction, formatCount, heatFill, linePath, niceTicks, seriesColour, sliceAngles, toCsv } from './scale.js';
 import { downloadCsv } from '../../modules/core/pages/ui.jsx';
+import { isEmptyChart } from './theme.js';
+import { EmptyState } from '../feedback/states.jsx';
+import { useLowBandwidthSaves } from '../device/lowBandwidth.js';
 
 // The chart library (part 03.07, FR-08). Every chart is drawn in SVG from the design tokens (--erp-chart-1..8 and the status colours, so
 // light and dark themes both work), has a tooltip on hover and focus, a legend, the same data as a table (the accessible alternative),
@@ -175,10 +178,42 @@ function Gantt({ data, onDrill, setTip }) {
   );
 }
 
+/** Points on two measures (part 166.5): x across, y up; each point is a mark with its label, a link when it has an address. */
+function Scatter({ data, onDrill, setTip }) {
+  const plotW = W - PAD.l - PAD.r;
+  const plotH = H - PAD.t - PAD.b;
+  const xs = data.points.map((p) => Number(p.x) || 0);
+  const ys = data.points.map((p) => Number(p.y) || 0);
+  // the axes start at 0, or at the lowest point when one is below 0 (a negative margin)
+  const axis = (vs) => { const n = niceTicks(Math.max(...vs, 1)); const lo = Math.min(0, ...vs); return { ticks: lo < 0 ? [lo, ...n.ticks] : n.ticks, lo, hi: n.max }; };
+  const ax = axis(xs);
+  const ay = axis(ys);
+  const xt = ax.ticks;
+  const yt = ay.ticks;
+  const [x0, x1] = [ax.lo, ax.hi];
+  const [y0, y1] = [ay.lo, ay.hi];
+  const x = (v) => PAD.l + ((v - x0) / (x1 - x0 || 1)) * plotW;
+  const y = (v) => PAD.t + plotH - ((v - y0) / (y1 - y0 || 1)) * plotH;
+  return (
+    <g>
+      <Axes ticks={yt} plotW={plotW} plotH={plotH} y={y} />
+      <g aria-hidden="true">
+        {xt.map((t) => <text key={t} x={x(t)} y={PAD.t + plotH + 16} textAnchor="middle" fontSize="11" fill={TEXT}>{formatCount(t)}</text>)}
+        {data.xLabel && <text x={PAD.l + plotW} y={H - 4} textAnchor="end" fontSize="11" fill={TEXT}>{data.xLabel}</text>}
+      </g>
+      {data.points.map((p, i) => (
+        <Mark key={`${p.label}-${i}`} label={`${p.label}: ${data.xLabel ?? 'x'} ${formatCount(Number(p.x) || 0)}, ${data.yLabel ?? 'y'} ${formatCount(Number(p.y) || 0)}`} drill={p.drill} onDrill={onDrill} setTip={setTip}>
+          <circle cx={x(Number(p.x) || 0)} cy={y(Number(p.y) || 0)} r="6" fill={seriesColour(p.series ?? 0)} fillOpacity="0.85" stroke="var(--erp-color-bg-surface)" strokeWidth="1.5" />
+        </Mark>
+      ))}
+    </g>
+  );
+}
+
 /** The legend: what each colour means, with the value where the chart has one per colour. */
 function Legend({ type, data }) {
   const items = type === 'donut' ? data.slices.map((s, i) => ({ label: s.label, value: s.value, i }))
-    : type === 'heatmap' || type === 'gauge' ? []
+    : type === 'heatmap' || type === 'gauge' || type === 'scatter' ? []
       : type === 'gantt' ? [...new Set(data.rows.map((r) => r.status ?? 'Open'))].map((label) => ({ label, i: GANTT_STATUS[label] ?? 1 }))
         : data.series.length > 1 ? data.series.map((s, i) => ({ label: s.name, i })) : [];
   if (type === 'gauge') return <p className="ch-legend muted small"><span className="ch-rag" style={{ background: RAG[data.status] }} aria-hidden="true" />{RAG_WORD[data.status] ?? ''}{data.decided ? `, from ${data.decided} decided approval${data.decided === 1 ? '' : 's'}` : ''}</p>;
@@ -220,18 +255,73 @@ export async function exportPng(svg, filename) {
  * One chart. `type` is bar, stacked, line, area, donut, gauge, heatmap or gantt; `data` is what the widget's endpoint returned.
  * `onDrill(address)` is called for a mark that has one.
  */
-export default function Chart({ type, data, title, onDrill, exportName = 'chart' }) {
+export default function Chart({ type, data, title, onDrill, exportName = 'chart', tableSwitch = false }) {
   const id = useId();
   const svgRef = useRef(null);
   const [tip, setTip] = useState(null);
+  const saves = useLowBandwidthSaves(); // low-bandwidth mode with ff.perf.p16604 (part 166.4, FR-03): the table first, the chart on request
+  const [drawAnyway, setDrawAnyway] = useState(false);
+  const [asTable, setAsTable] = useState(false); // "Show as table" (part 166.5, FR-04): the same figures as a table in place of the drawing
+  // nothing to draw: the empty state of the chart theme, not an empty frame with axes (part 166.2, U-08)
+  if (isEmptyChart(type, data)) return <figure className="ch ch-empty" data-chart={type} data-testid="chart-empty"><EmptyState compact title={title ? `No data for ${title}` : 'No data to chart'} message="Change the filters or the period to see figures here." /></figure>;
   const table = chartTable(type, data);
   const pointCount = table.rows.length;
   const body = type === 'donut' ? <Donut data={data} onDrill={onDrill} setTip={setTip} />
     : type === 'gauge' ? <Gauge data={data} />
       : type === 'heatmap' ? <Heatmap data={data} onDrill={onDrill} setTip={setTip} />
         : type === 'gantt' ? <Gantt data={data} onDrill={onDrill} setTip={setTip} />
-          : <Cartesian kind={type} data={data} onDrill={onDrill} setTip={setTip} />;
+          : type === 'scatter' ? <Scatter data={data} onDrill={onDrill} setTip={setTip} />
+            : <Cartesian kind={type} data={data} onDrill={onDrill} setTip={setTip} />;
+  const rowsTable = (
+    <table>
+      <caption className="sr-only">{title}</caption>
+      <thead><tr>{table.columns.map((c, i) => <th key={`${c}-${i}`} scope="col">{c}</th>)}</tr></thead>
+      <tbody>{table.rows.map((r, ri) => <tr key={ri}>{r.map((c, ci) => (ci === 0 ? <th key={ci} scope="row">{String(c)}</th> : <td key={ci}>{typeof c === 'number' ? formatCount(c) : String(c ?? '')}</td>))}</tr>)}</tbody>
+    </table>
+  );
+  if (saves && !drawAnyway) {
+    return (
+      <figure className="ch ch-as-table" data-chart={type} data-testid="chart-as-table">
+        <div className="table-scroll" data-no-cards="">{rowsTable}</div>
+        <figcaption className="ch-foot">
+          <span className="muted">Shown as a table to save data.</span>
+          <span className="ch-export">
+            <button type="button" className="btn btn-small" onClick={() => setDrawAnyway(true)}>Draw the chart</button>
+            <button type="button" className="btn btn-small" onClick={() => downloadCsv(`${exportName}.csv`, `\uFEFF${toCsv(table)}`)}>CSV</button>
+          </span>
+        </figcaption>
+      </figure>
+    );
+  }
   const box = type === 'donut' ? '0 0 240 240' : type === 'gauge' ? '0 0 240 150' : `0 0 ${W} ${H}`;
+  const exports = (
+    <span className="ch-export">
+      <button type="button" className="btn btn-small" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)} data-testid="chart-show-table">{asTable ? 'Show as chart' : 'Show as table'}</button>
+      <button type="button" className="btn btn-small" onClick={() => downloadCsv(`${exportName}.csv`, `\uFEFF${toCsv(table)}`)}>CSV</button>
+      {!asTable && <button type="button" className="btn btn-small" onClick={() => exportPng(svgRef.current, `${exportName}.png`)}>PNG</button>}
+    </span>
+  );
+  if (tableSwitch && asTable) {
+    return (
+      <figure className="ch ch-as-table" data-chart={type} data-testid="chart-table-view">
+        <div className="table-scroll" data-no-cards="">{rowsTable}</div>
+        <figcaption className="ch-foot">{exports}</figcaption>
+      </figure>
+    );
+  }
+  if (tableSwitch) {
+    return (
+      <figure className="ch ch-v5" data-chart={type}>
+        <svg ref={svgRef} viewBox={box} role="group" aria-roledescription="chart" aria-labelledby={`${id}-t`} focusable="false" className="ch-svg">
+          <title id={`${id}-t`}>{`${title}. ${pointCount} ${pointCount === 1 ? 'row' : 'rows'}; "Show as table" gives the same figures as a table.`}</title>
+          {body}
+        </svg>
+        {tip && <div className="ch-tip" role="status" style={{ left: tip.x + 12, top: tip.y + 12 }}>{tip.label}</div>}
+        <Legend type={type} data={data} />
+        <figcaption className="ch-foot">{exports}</figcaption>
+      </figure>
+    );
+  }
   return (
     <figure className="ch" data-chart={type}>
       <svg ref={svgRef} viewBox={box} role="group" aria-roledescription="chart" aria-labelledby={`${id}-t`} focusable="false" className="ch-svg">
@@ -243,13 +333,7 @@ export default function Chart({ type, data, title, onDrill, exportName = 'chart'
       <figcaption className="ch-foot">
         <details className="ch-table">
           <summary>View as table</summary>
-          <div className="table-scroll">
-            <table>
-              <caption className="sr-only">{title}</caption>
-              <thead><tr>{table.columns.map((c, i) => <th key={`${c}-${i}`} scope="col">{c}</th>)}</tr></thead>
-              <tbody>{table.rows.map((r, ri) => <tr key={ri}>{r.map((c, ci) => (ci === 0 ? <th key={ci} scope="row">{String(c)}</th> : <td key={ci}>{typeof c === 'number' ? formatCount(c) : String(c ?? '')}</td>))}</tr>)}</tbody>
-            </table>
-          </div>
+          <div className="table-scroll" data-no-cards="">{rowsTable}</div>
         </details>
         <span className="ch-export">
           <button type="button" className="btn btn-small" onClick={() => downloadCsv(`${exportName}.csv`, `\uFEFF${toCsv(table)}`)}>CSV</button>

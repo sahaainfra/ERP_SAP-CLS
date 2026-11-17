@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { FRONT_TONE, WA_STATUSES, WA_TONE, fmtDate, fmtQty, st, today } from './api.js';
 import { SiteDay, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Site Work Board (part 14.01, FR-06): the work authorised on a site for a day, by work front, for a tablet on site. A WA in draft is dragged to another front (the server checks the move;
 // Undo moves it back). Filters by status, a compact zoom, a legend and printing.
@@ -74,7 +75,7 @@ export default function BoardPage() {
   );
   return (
     <section aria-labelledby="bd-h" data-testid="site-board" style={compact ? { fontSize: '0.9em' } : undefined}>
-      <h1 id="bd-h">{t('bd.title')}</h1>
+      <PageHeader id="bd-h" title={t('bd.title')} />
       <div className="no-print"><SiteDay siteId={siteId} date={date} onSite={onSite} onDate={setDate} testId="bd" /></div>
       <div className="actions-row no-print">
         <Field label={t('f.status')} name="status"><select value={status} onChange={(e) => setStatus(e.target.value)} data-testid="bd-status"><option value="">{t('f.all')}</option>{WA_STATUSES.map((k) => <option key={k} value={k}>{t(`wst.${k}`)}</option>)}</select></Field>

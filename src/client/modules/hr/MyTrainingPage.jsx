@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { ess, trn } from './api.js';
 import { CertForm } from './CertificationsPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Training (HR, part 07.10, FR-01 and FR-05): for the employee, the sessions they are nominated to (with sign-in by the QR code of the session, which opens this page with the code in the address), the sessions they went to with
 // their scores and a way to rate them, their certificates with their validity, and the certificates their post needs. A phone is enough; English or Hindi.
@@ -26,7 +27,7 @@ export default function MyTrainingPage() {
   void meId; void session;
   return (
     <section aria-labelledby="mt-title" data-testid="my-training">
-      <h1 id="mt-title">{t('mine.title')}</h1>
+      <PageHeader id="mt-title" title={t('mine.title')} />
       <form className="mdm-panel mdm-fields" aria-label={t('mine.signIn')} onSubmit={(e) => { e.preventDefault(); if (token.trim()) run(() => trn.signIn(token.trim()), (r) => t('mine.signedIn', { course: r.course })); }} data-testid="mt-signin">
         <Field label={t('mine.code')} name="token" error={error} hint={t('mine.codeHint')}><input value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" data-testid="mt-token" /></Field>
         <div className="actions"><button type="submit" className="btn btn-primary" disabled={!token.trim()} data-testid="mt-signin-go">{t('mine.signIn')}</button></div>

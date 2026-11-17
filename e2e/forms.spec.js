@@ -185,7 +185,7 @@ test('T-04 a request completed with the keyboard alone', async ({ page, request 
   await page.keyboard.press('Tab'); // request date (today)
   await page.keyboard.press('Tab'); // calendar button
   await page.keyboard.press('Tab'); // required by
-  await page.keyboard.type('15-11-2026');
+  await page.keyboard.type(inDays(5)); // a date in the future, worked out from today (part 166.2: 15-11-2026 had passed)
   await tabTo(page, (el) => el.id === 'f-lines-0-description');
   await page.keyboard.type('Binding wire 18 g');
   await page.keyboard.press('Tab');

@@ -74,7 +74,7 @@ export function nextSort(current, key) {
 }
 
 /** What a saved view stores (FR-03): columns (order and hidden), widths, filters, sort, page size, search. */
-export const viewConfig = (state) => ({ columns: state.columns, hidden: state.hidden, widths: state.widths, filters: state.filters, sort: state.sort, pageSize: state.pageSize, q: state.q });
+export const viewConfig = (state) => ({ columns: state.columns, hidden: state.hidden, widths: state.widths, filters: state.filters, sort: state.sort, pageSize: state.pageSize, q: state.q, ...(state.groupBy ? { groupBy: state.groupBy } : {}) }); // part 166.7: a view keeps its group-by
 
 /** The visible columns in order: saved order first (unknown keys dropped), new columns appended, hidden ones left out. */
 export function visibleColumns(all, { columns = [], hidden = [] } = {}) {

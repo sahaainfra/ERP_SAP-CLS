@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { BASES, COMPONENT_TYPES, INDIRECTS, MODES, est, inr, preview, qty } from './api.js';
 import { useFlagOn } from '../../platform/shell/api.js';
 import { Tabs, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Estimate (part 09.01): one version of an estimate as an object page. Items in BOQ sections, each priced from a released rate analysis, a manual build-up or a typed cost rate, with its markup (FR-02, FR-03);
 // the indirect costs sheet (FR-04); the risks, contingency, escalation, HO overhead and GST (FR-05); cost against selling by section (FR-08); the resources (FR-06); the versions and their comparison (FR-07); approvals.
@@ -28,7 +29,7 @@ export default function EstimatePage() {
   usePageTitle(e ? e.ref : t('obj.title'));
   const reviewOn = useFlagOn('ff.est.p0903');
   const [tab, setTab] = useState('items'); const [error, setError] = useState(null); const [note, setNote] = useState(null);
-  if (!id) return <section aria-labelledby="est-h" data-testid="estimate-none"><h1 id="est-h">{t('obj.title')}</h1><p className="muted">{t('obj.noId')} <Link to="/est/estimates">{t('list.title')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="est-h" data-testid="estimate-none"><PageHeader id="est-h" title={t('obj.title')} subtitle={<>{t('obj.noId')} <Link to="/est/estimates">{t('list.title')}</Link></>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('list.title')} permission="est.estimate.view" />;
   if (q.isPending) return <Skeleton label={t('obj.title')} rows={6} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -40,8 +41,7 @@ export default function EstimatePage() {
   return (
     <section aria-labelledby="est-h" data-testid="estimate" data-status={e.status}>
       <header>
-        <h1 id="est-h">{e.ref} <StatusBadge status={TONE[e.status]} label={e.statusLabel} /></h1>
-        <p className="muted">{e.title} · {e.tender ? <Link to={`/bd/tender?id=${e.tender.id}`}>{e.tender.docNo}</Link> : e.project?.name} · {t('obj.basis', { date: e.basisDate })}{e.region ? ` · ${e.region}` : ''} · {e.currency}</p>
+        <PageHeader id="est-h" title={<>{e.ref} <StatusBadge status={TONE[e.status]} label={e.statusLabel} /></>} subtitle={<>{e.title} · {e.tender ? <Link to={`/bd/tender?id=${e.tender.id}`}>{e.tender.docNo}</Link> : e.project?.name} · {t('obj.basis', { date: e.basisDate })}{e.region ? ` · ${e.region}` : ''} · {e.currency}</>} />
         <dl className="op-figures" data-testid="est-figures">
           <div><dt>{t('fig.selling')}</dt><dd data-testid="est-selling">{inr(tt.selling)}</dd></div>
           {c && <div><dt>{t('fig.cost')}</dt><dd data-testid="est-cost">{inr(tt.totalCost)}</dd></div>}

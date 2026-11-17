@@ -11,6 +11,8 @@ import { useSession } from '../core/api/index.js';
 import { INS_TONE, download, fmtDate, openPrint, st } from './api.js';
 import { useSearch } from './parts.jsx';
 import { InstructionForm } from './InstructionIssuePage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Site Instructions (part 14.04): the register with the received and issued tabs and the compliance tracker; one instruction with its notice prompt, the variation decision, the back-charge, the recipients with
 // their acknowledgement and compliance evidence, closing (not before the variation decision or compliance), amendment and approval.
@@ -48,8 +50,7 @@ function Instruction({ t, id, onGone }) {
   const noticeLate = d.noticeDueDate && !d.letter && d.noticeDueDate <= new Date(Date.now() + 19_800_000).toISOString().slice(0, 10);
   return (
     <div data-testid="ins-object" data-status={d.status}>
-      <h1 id="ins-h">{d.docNo} · {d.subject} <StatusBadge status={INS_TONE[d.status]} label={t(`cnd.ins.s.${d.status}`)} />{d.overdue && <> <StatusBadge status="OVERDUE" label={t('cnd.ins.overdue')} /></>}</h1>
-      <p><Link to="/site/instructions">{t('cnd.ins.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</p>
+      <PageHeader id="ins-h" title={<>{d.docNo} · {d.subject} <StatusBadge status={INS_TONE[d.status]} label={t(`cnd.ins.s.${d.status}`)} />{d.overdue && <> <StatusBadge status="OVERDUE" label={t('cnd.ins.overdue')} /></>}</>} meta={<><Link to="/site/instructions">{t('cnd.ins.back')}</Link>{d.revisionNo > 1 && <> · {t('dpr.amendmentOf', { n: d.previous?.docNo ?? '' })}</>}</>} />
       <dl className="kv" data-testid="ins-figures">
         <div><dt>{t('cnd.ins.type')}</dt><dd>{t(`cnd.ins.t.${d.type}`)}</dd></div><div><dt>{t('f.site')}</dt><dd>{d.projectCode} · {d.siteCode} {d.siteName}</dd></div><div><dt>{t('f.date')}</dt><dd>{fmtDate(d.date)}{d.theirRef ? ` · ${d.theirRef}` : ''}</dd></div>
         <div><dt>{t('cnd.ins.from')}</dt><dd>{d.fromParty}</dd></div><div><dt>{t('cnd.ins.to')}</dt><dd>{d.toParty ?? '—'}</dd></div><div><dt>{t('cnd.ins.due')}</dt><dd>{d.dueDate ? fmtDate(d.dueDate) : '—'}</dd></div>
@@ -131,8 +132,8 @@ function Tracker({ t }) {
   const c = q.data.counts;
   return (
     <div className="mdm-panel" data-testid="ins-tracker"><h2>{t('cnd.ins.tracker')}</h2>
-      <div className="tiles"><Tile label={t('cnd.ins.tOpen')} value={c.open} testId="ins-t-open" /><Tile label={t('cnd.ins.tAck')} value={c.awaitingAck} status={c.awaitingAck ? 'warning' : 'success'} testId="ins-t-ack" /><Tile label={t('cnd.ins.tComply')} value={c.awaitingCompliance} status={c.awaitingCompliance ? 'warning' : 'success'} testId="ins-t-comply" />
-        <Tile label={t('cnd.ins.tVariation')} value={c.variationPending} status={c.variationPending ? 'warning' : 'success'} testId="ins-t-variation" /><Tile label={t('cnd.ins.tNotice')} value={c.noticeDue} status={c.noticeDue ? 'danger' : 'success'} testId="ins-t-notice" /><Tile label={t('cnd.ins.tOverdue')} value={c.overdue} status={c.overdue ? 'danger' : 'success'} testId="ins-t-overdue" /></div>
+      <KpiRow><Tile label={t('cnd.ins.tOpen')} value={c.open} testId="ins-t-open" /><Tile label={t('cnd.ins.tAck')} value={c.awaitingAck} status={c.awaitingAck ? 'warning' : 'success'} testId="ins-t-ack" /><Tile label={t('cnd.ins.tComply')} value={c.awaitingCompliance} status={c.awaitingCompliance ? 'warning' : 'success'} testId="ins-t-comply" />
+        <Tile label={t('cnd.ins.tVariation')} value={c.variationPending} status={c.variationPending ? 'warning' : 'success'} testId="ins-t-variation" /><Tile label={t('cnd.ins.tNotice')} value={c.noticeDue} status={c.noticeDue ? 'danger' : 'success'} testId="ins-t-notice" /><Tile label={t('cnd.ins.tOverdue')} value={c.overdue} status={c.overdue ? 'danger' : 'success'} testId="ins-t-overdue" /></KpiRow>
       {q.data.items.length > 0 && <ul data-testid="ins-tracker-items">{q.data.items.slice(0, 8).map((i) => <li key={i.id}><Link to={`/site/instructions?id=${i.id}`}>{i.docNo}</Link> · {i.subject} · {t(`cnd.ins.cs.${i.state}`)}{i.overdue ? ` · ${t('cnd.ins.overdue')}` : ''}{i.noticeDue ? ` · ${t('cnd.ins.tNotice')}` : ''}</li>)}</ul>}
     </div>
   );
@@ -145,7 +146,7 @@ export default function InstructionsPage() {
   const tab = (value, label) => <Link to={value ? `/site/instructions?filter[direction]=${value}` : '/site/instructions'}><span aria-current={dir === value ? 'page' : undefined} style={{ fontWeight: dir === value ? 700 : 400 }} data-testid={`ins-tab-${value || 'all'}`}>{label}</span></Link>;
   return (
     <section aria-labelledby="ins-h" data-testid="site-instructions">
-      <h1 id="ins-h">{t('cnd.ins.title')}</h1>
+      <PageHeader id="ins-h" title={t('cnd.ins.title')} />
       <div className="actions-row no-print" role="navigation" aria-label={t('cnd.ins.tabs')}>{tab('', t('cnd.ins.tabAll'))} {tab('RECEIVED', t('cnd.ins.tabReceived'))} {tab('ISSUED', t('cnd.ins.tabIssued'))}{perms.includes('site.instruction.create') && <> · <Link to="/site/instruction-issue">{t('cnd.ins.new')}</Link></>}</div>
       <Tracker t={t} />
       <ListReport key={dir} listCode="site.instructions" endpoint="/site/instructions" title={t('cnd.ins.title')} session={session.data} rowHref={(r) => `/site/instructions?id=${r.id}`} onOpen={(r) => navigateTo(`/site/instructions?id=${r.id}`)}

@@ -7,6 +7,7 @@ import { Field, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { CHANGE_TONE, STATUS_TONE, bc, inr } from './api.js';
 import { ProjectSelect, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Budget Version Comparison and History (part 12.02, FR-05): two approved versions of a budget compared by line, cost head or WBS with the change of each and a bar of the largest moves; the versions in order with the change that made each, and every change request of the project.
 export default function ComparePage() {
@@ -22,7 +23,7 @@ export default function ComparePage() {
   const download = async () => { const { authHeaders } = await import('../../platform/api/index.js'); const res = await fetch(`/api/v1/bud/compare/export?${qs}`, { headers: authHeaders() }); const url = URL.createObjectURL(await res.blob()); const a = document.createElement('a'); a.href = url; a.download = `budget-compare-${d?.projectCode ?? ''}.csv`; a.click(); };
   return (
     <section aria-labelledby="cmp-h" data-testid="bc-compare-page">
-      <h1 id="cmp-h">{t('cmp.title')}</h1>
+      <PageHeader id="cmp-h" title={t('cmp.title')} />
       <form className="mdm-panel no-print" onSubmit={(e) => e.preventDefault()} aria-label={t('cmp.params')}>
         <div className="form-grid">
           <ProjectSelect value={projectId} onChange={(v) => { setProjectId(v ? Number(v) : ''); setFrom(''); setTo(''); }} testId="cmp-project" />

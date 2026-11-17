@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchLookup } from '../../platform/forms/LookupField.jsx';
 import { comm } from '../../platform/messages/Comm.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Announcement (part 05.04, section 7.4): title, text, the audience (everyone, roles, projects, sites, departments: places narrow it, roles narrow it further), a live count of who will receive it, confirmation and an
 // optional quiz, publish and expiry times. Save as a draft, or publish (now, or at the chosen time).
@@ -32,7 +33,7 @@ export default function NewAnnouncementPage() {
   const valid = f.title.trim().length >= 3 && f.body.trim().length >= 3 && has;
   return (
     <section aria-labelledby="na-title" data-testid="new-announcement">
-      <h1 id="na-title">New Announcement</h1>
+      <PageHeader id="na-title" title={"New Announcement"} />
       <form className="card form-grid" onSubmit={(e) => { e.preventDefault(); save(true); }} noValidate aria-label="New announcement">
         <fieldset><legend>The announcement</legend>
           <Field label="Title *" name="title" error={error}><input value={f.title} maxLength={120} onChange={(e) => set({ title: e.target.value })} data-testid="na-title-input" /></Field>

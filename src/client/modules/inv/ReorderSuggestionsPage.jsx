@@ -7,6 +7,7 @@ import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { fmtDate, fmtQty, ro, saveCsv } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Reorder Suggestions (part 16.07, FR-02, BR-01): a worklist, urgent first. A person turns suggestions into DRAFT material requests (one per store) and sends them; nothing is ordered automatically.
 const tone = { OPEN: 'IN_REVIEW', CONVERTED: 'APPROVED', DISMISSED: 'CANCELLED', SUPERSEDED: 'CANCELLED' };
@@ -18,7 +19,7 @@ export default function ReorderSuggestionsPage() {
   const toggle = (id) => setPicked((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
   const dismiss = (s) => { const r = window.prompt(t('why')); if (r) run(() => ro.dismiss(s.id, r), t('rs.dismissed')); };
   return (
-    <section aria-labelledby="rs-h" data-testid="reorder-suggestions"><h1 id="rs-h">{t('rs.title')}</h1><p className="muted">{t('rs.intro')}</p>
+    <section aria-labelledby="rs-h" data-testid="reorder-suggestions"><PageHeader id="rs-h" title={t('rs.title')} subtitle={t('rs.intro')} />
       {error?.form && <p className="field-error" role="alert" data-testid="rs-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="rs-note">{note}</p>}
       {k && <div className="kpi-row" role="list" data-testid="rs-kpis">{['open', 'urgent', 'converted'].map((key) => <div key={key} role="listitem" className="kpi-tile" data-testid={`rs-kpi-${key}`}><span className="kpi-value">{k[key]}</span><span className="kpi-label">{t(`rs.kpi.${key}`)}</span></div>)}</div>}
       <div className="actions-row no-print"><label>{t('tr.status')} <select value={status} onChange={(ev) => { setStatus(ev.target.value); setPicked([]); }} style={{ minHeight: 44 }} data-testid="rs-status"><option value="OPEN">{t('rs.s.OPEN')}</option><option value="">{t('rs.all')}</option></select></label>

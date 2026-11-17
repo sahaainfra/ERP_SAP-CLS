@@ -7,6 +7,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { download, fmtDate, fmtPct, fmtQty, fmtRs, st, today } from './api.js';
 import { ProjectDay } from './progress-parts.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Progress by WBS and Activity (part 14.05, FR-06): planned against actual against forecast for each WBS node and activity as at a day, with the variance, the forecast finish and (for those who may see it)
 // the budget, PV and EV; the table is the report, and it exports to Excel, CSV and PDF with the same parameters.
@@ -21,7 +22,7 @@ export default function ProgressReportPage() {
   const exp = (format) => download(`/progress/report/export?projectId=${projectId}&asOf=${asOf}&format=${format}`, `progress-${asOf}.${format}`).catch(() => setError(t('bl.fileFailed')));
   return (
     <section aria-labelledby="rep-h" data-testid="site-progress-report">
-      <h1 id="rep-h">{t('cnd.rep.title')}</h1>
+      <PageHeader id="rep-h" title={t('cnd.rep.title')} />
       <ProjectDay projectId={projectId} asOf={asOf} onProject={(v) => { setProjectId(v); setWbsId(null); }} onAsOf={setAsOf} max={today()} testId="rep" />
       {projectId && <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('cnd.prg.wbs')} name="wbsId"><select value={wbsId ?? ''} onChange={(e) => setWbsId(e.target.value ? Number(e.target.value) : null)} data-testid="rep-wbs"><option value="">{t('cnd.rep.allWbs')}</option>{wbsList.map((n) => <option key={n.id} value={n.id}>{'— '.repeat(n.level)}{n.code} {n.name}</option>)}</select></Field></div>
         {r && <div className="actions-row">{['xlsx', 'csv', 'pdf'].map((f) => <button key={f} type="button" className="btn" onClick={() => exp(f)} data-testid={`rep-export-${f}`}>{f.toUpperCase()}</button>)}<Link to={`/site/progress?projectId=${projectId}`}>{t('cnd.prg.title')}</Link></div>}

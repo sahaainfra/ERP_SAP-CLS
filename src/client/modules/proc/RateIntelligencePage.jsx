@@ -9,6 +9,8 @@ import { useSession } from '../core/api/index.js';
 import { fmtDate, fmtRs, ri } from './api.js';
 import { useRunner } from './XpdParts.jsx';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Rate intelligence (part 15.09, FR-03, FR-04): the benchmark of each material (the median landed rate per base unit of the recent observations, outliers left out), its change against last month, volatility, the monthly trend and the external price indices.
 // An observation is never edited: a wrong one is corrected by a new one that replaces it.
@@ -42,8 +44,7 @@ function Observation({ t, id }) {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const o = q.data;
   return (
-    <section aria-labelledby="ro-h" data-testid="ri-obs"><h1 id="ro-h">{o.itemCode} {o.item} <StatusBadge status={o.outlier ? 'REJECTED' : 'APPROVED'} label={o.outlier ? t('i.outlier') : t('i.counted')} />{o.replacedBy && <StatusBadge status="CANCELLED" label={t('i.replaced')} />}</h1>
-      <p><Link to="/proc/rate-intelligence">{t('x.back')}</Link></p>
+    <section aria-labelledby="ro-h" data-testid="ri-obs"><PageHeader id="ro-h" title={<>{o.itemCode} {o.item} <StatusBadge status={o.outlier ? 'REJECTED' : 'APPROVED'} label={o.outlier ? t('i.outlier') : t('i.counted')} />{o.replacedBy && <StatusBadge status="CANCELLED" label={t('i.replaced')} />}</>} meta={<Link to="/proc/rate-intelligence">{t('x.back')}</Link>} />
       <dl className="kv"><div><dt>{t('i.date')}</dt><dd>{fmtDate(o.date)}</dd></div><div><dt>{t('i.source')}</dt><dd>{o.sourceLabel}</dd></div><div><dt>{t('i.region')}</dt><dd>{o.region}</dd></div><div><dt>{t('x.vendor')}</dt><dd>{o.vendor ?? '—'}</dd></div><div><dt>{t('i.recorded')}</dt><dd>{rs(o.rate)} / {o.uom}</dd></div><div><dt>{t('i.landed')}</dt><dd data-testid="ri-obs-landed">{rs(o.baseLandedRate)} / {o.baseUom}</dd></div><div><dt>{t('i.basis')}</dt><dd>{t(`i.b.${o.basis}`)}</dd></div></dl>
       {o.outlierReason && <p className="field-error" data-testid="ri-obs-outlier">{o.outlierReason}</p>}{o.correctionReason && <p>{t('i.correctionOf')} #{o.supersedesId}: {o.correctionReason}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="ri-obs-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="ri-obs-note">{note}</p>}
@@ -65,10 +66,10 @@ export default function RateIntelligencePage() {
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const chosen = pick ?? d.items[0]?.itemId ?? null;
   return (
-    <section aria-labelledby="ri-h" data-testid="proc-ri"><h1 id="ri-h">{t('i.title')}</h1><p className="muted">{t('i.intro')}</p>
+    <section aria-labelledby="ri-h" data-testid="proc-ri"><PageHeader id="ri-h" title={t('i.title')} subtitle={t('i.intro')} />
       <div className="actions-row no-print"><label>{t('i.region')} <select value={region} onChange={(ev) => { setRegion(ev.target.value); setPick(null); }} style={{ minHeight: 44 }} data-testid="ri-region"><option value="">{t('i.allRegions')}</option>{d.regions.filter((r) => r !== 'ALL').map((r) => <option key={r} value={r}>{r}</option>)}</select></label>
         {d.canSurvey && <Link to="/proc/rate-survey">{t('i.surveyTitle')}</Link>} <Link to="/proc/rate-exposure">{t('i.exposureTitle')}</Link></div>
-      <div className="tiles" data-testid="ri-tiles"><Tile label={t('i.tileItems')} value={d.items.length} testId="ri-items" /><Tile label={t('i.tileObs')} value={d.totals.observations} testId="ri-obs-count" /><Tile label={t('i.tileOutliers')} value={d.totals.outliers} status={d.totals.outliers ? 'bad' : 'ok'} testId="ri-outliers" /></div>
+      <KpiRow data-testid="ri-tiles"><Tile label={t('i.tileItems')} value={d.items.length} testId="ri-items" /><Tile label={t('i.tileObs')} value={d.totals.observations} testId="ri-obs-count" /><Tile label={t('i.tileOutliers')} value={d.totals.outliers} status={d.totals.outliers ? 'bad' : 'ok'} testId="ri-outliers" /></KpiRow>
       {d.items.length === 0 ? <div data-testid="ri-empty"><h2>{t('i.emptyTitle')}</h2><p className="muted">{t('i.emptyBody')}</p>{d.canSurvey && <Link to="/proc/rate-survey">{t('i.surveyTitle')}</Link>}</div>
         : <div className="table-scroll"><table className="data-table" data-testid="ri-items-table"><caption>{t('i.benchmarks')}</caption><thead><tr><th>{t('i.item')}</th><th className="num">{t('i.benchmark')}</th><th className="num">{t('i.min')}</th><th className="num">{t('i.max')}</th><th className="num">{t('i.change')}</th><th className="num">{t('i.volatility')}</th><th className="num">{t('i.count')}</th></tr></thead>
           <tbody>{d.items.map((x) => <tr key={x.itemId} data-testid="ri-item" aria-selected={x.itemId === chosen}><td><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => setPick(x.itemId)} data-testid="ri-pick">{x.code} {x.name}</button></td><td className="num" data-testid="ri-benchmark">{rs(x.benchmark)} / {x.uom}{!x.enough && <span className="muted"> ({t('i.fewObs')})</span>}</td><td className="num">{rs(x.min)}</td><td className="num">{rs(x.max)}</td><td className="num">{x.changePct == null ? '—' : `${x.changePct}%`}</td><td className="num">{x.volatilityPct ?? '—'}%</td><td className="num">{x.count}</td></tr>)}</tbody></table></div>}

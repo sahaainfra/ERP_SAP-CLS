@@ -4,6 +4,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { ACCESS_ROLES, dayIST, deploy } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Deployment / Bulk Deploy (HR, part 07.03): the person, project, site, crew, role on site, the dates, primary or secondary posting, the role the deployment gives at the site (access follows it and ends with it) and the default cost
 // code. As it is typed the plan is read: planned posts of the designation at the site, people deployed, and whether this is within the plan or outside it (then the project director approves too). A person has one primary
@@ -45,7 +46,7 @@ export default function NewDeploymentPage() {
   return (
     <section aria-labelledby="nd-title" data-testid="new-deployment">
       <p><Link to="/hr/deployments">← Deployments</Link></p>
-      <h1 id="nd-title">{editId ? `Deployment ${existing.data?.docNo}` : 'New Deployment'}</h1>
+      <PageHeader id="nd-title" title={editId ? `Deployment ${existing.data?.docNo}` : 'New Deployment'} />
       {!editId && <div role="tablist" aria-label="Single or bulk" className="op-tabs">{[['single', 'One person'], ['bulk', 'Bulk deploy (Excel)']].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={mode === k} className={`op-tab${mode === k ? ' is-active' : ''}`} onClick={() => setMode(k)} data-testid={`nd-mode-${k}`}>{l}</button>)}</div>}
       {mode === 'bulk' && !editId ? (
         <div className="mdm-panel" data-testid="nd-bulk">

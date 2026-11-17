@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { ext } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Separation (HR, part 07.13): one resignation or termination with its clearance tracker: the notice, the last working day, the clearance of each department (HR waives one that cannot be done, with the reason), the exit interview, the
 // full-and-final inputs (leave encashment, notice recovery or pay, gratuity, claims to pay, recoveries) and what still blocks their release (BR-01), the relieving and experience letters, and the history.
@@ -31,8 +32,7 @@ export default function SeparationPage() {
   const x = f.data;
   return (
     <section aria-labelledby="sp-title" data-testid="separation" data-status={s.status}>
-      <h1 id="sp-title">{s.employee} <StatusBadge status={TONE[s.status]} label={t(`st.${s.status}`)} /></h1>
-      <p className="muted">{s.docNo} · {t(`type.${s.type}`)} · {s.employeeCode}{s.designation ? ` · ${s.designation}` : ''} · {t(`reason.${s.reasonCode}`)}</p>
+      <PageHeader id="sp-title" title={<>{s.employee} <StatusBadge status={TONE[s.status]} label={t(`st.${s.status}`)} /></>} subtitle={<>{s.docNo} · {t(`type.${s.type}`)} · {s.employeeCode}{s.designation ? ` · ${s.designation}` : ''} · {t(`reason.${s.reasonCode}`)}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="sp-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="sp-note">{note}</p>}
       <dl className="op-figures" data-testid="sp-facts">

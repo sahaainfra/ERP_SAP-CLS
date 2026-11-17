@@ -1,26 +1,29 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import DrawingPage from './DrawingPage.jsx';
-import DrawingsDashboardPage from './DrawingsDashboardPage.jsx';
-import DrawingsPage from './DrawingsPage.jsx';
-import DeliverablePage from './DeliverablePage.jsx';
-import DeliverablesPage from './DeliverablesPage.jsx';
-import ProgressPage from './ProgressPage.jsx';
-import VdrItemPage from './VdrItemPage.jsx';
-import VdrPage from './VdrPage.jsx';
-import LetterDraftPage from './LetterDraftPage.jsx';
-import LetterPage from './LetterPage.jsx';
-import LettersPage from './LettersPage.jsx';
-import TimeBarsPage from './TimeBarsPage.jsx';
-import RfiDashboardPage from './RfiDashboardPage.jsx';
-import RfiPage from './RfiPage.jsx';
-import RfiRaisePage from './RfiRaisePage.jsx';
-import RfisPage from './RfisPage.jsx';
-import SubmittalPage from './SubmittalPage.jsx';
-import SubmittalSchedulePage from './SubmittalSchedulePage.jsx';
-import SubmittalsPage from './SubmittalsPage.jsx';
-import SiteDrawingsPage from './SiteDrawingsPage.jsx';
-import TransmittalPage from './TransmittalPage.jsx';
-import TransmittalsPage from './TransmittalsPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const DrawingPage = lazyPage(() => import('./DrawingPage.jsx'));
+const DrawingsDashboardPage = lazyPage(() => import('./DrawingsDashboardPage.jsx'));
+const DrawingsPage = lazyPage(() => import('./DrawingsPage.jsx'));
+const DeliverablePage = lazyPage(() => import('./DeliverablePage.jsx'));
+const DeliverablesPage = lazyPage(() => import('./DeliverablesPage.jsx'));
+const ProgressPage = lazyPage(() => import('./ProgressPage.jsx'));
+const VdrItemPage = lazyPage(() => import('./VdrItemPage.jsx'));
+const VdrPage = lazyPage(() => import('./VdrPage.jsx'));
+const LetterDraftPage = lazyPage(() => import('./LetterDraftPage.jsx'));
+const LetterPage = lazyPage(() => import('./LetterPage.jsx'));
+const LettersPage = lazyPage(() => import('./LettersPage.jsx'));
+const TimeBarsPage = lazyPage(() => import('./TimeBarsPage.jsx'));
+const RfiDashboardPage = lazyPage(() => import('./RfiDashboardPage.jsx'));
+const RfiPage = lazyPage(() => import('./RfiPage.jsx'));
+const RfiRaisePage = lazyPage(() => import('./RfiRaisePage.jsx'));
+const RfisPage = lazyPage(() => import('./RfisPage.jsx'));
+const SubmittalPage = lazyPage(() => import('./SubmittalPage.jsx'));
+const SubmittalSchedulePage = lazyPage(() => import('./SubmittalSchedulePage.jsx'));
+const SubmittalsPage = lazyPage(() => import('./SubmittalsPage.jsx'));
+const SiteDrawingsPage = lazyPage(() => import('./SiteDrawingsPage.jsx'));
+const TransmittalPage = lazyPage(() => import('./TransmittalPage.jsx'));
+const TransmittalsPage = lazyPage(() => import('./TransmittalsPage.jsx'));
 
 registerModule({
   code: 'engg',

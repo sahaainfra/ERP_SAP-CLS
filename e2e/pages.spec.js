@@ -34,7 +34,7 @@ test('every registered page is a page of the tracker, and no page is registered 
 
 test('FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completion Checklist that a machine can make', async ({ browser, request }, info) => {
   test.skip(info.project.name === 'mobile', 'the pages are visited at all three widths in one run');
-  test.setTimeout(3_600_000); // every page at three widths (361 pages in 12.04, 28 min alone): the sweep grows with every part
+  test.setTimeout(5_400_000); // every page at three widths (361 pages in 12.04, 28 min alone; about 50 min in 166.5 with lazy pages): the sweep grows with every part
   const c = await company(request, 'PGS');
   const { baseURL } = info.project.use;
   const context = await browser.newContext({ baseURL, viewport: SIZES[2] });
@@ -55,7 +55,10 @@ test('FR-01 FR-02 FR-03 BR-02 every page passes the checks of the Page Completio
       const facts = await page.evaluate(() => ({
         h1: document.querySelectorAll('main h1, #main h1').length, title: document.title, overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         text: document.querySelector('main')?.innerText ?? '', skeleton: document.querySelectorAll('main [aria-busy="true"]').length, shell: Boolean(document.querySelector('.app-shell')), where: location.pathname,
+        // part 166.7, T-01: a List Report has its title with the count, its filter bar and its export
+        lists: [...document.querySelectorAll('main .lr')].map((l) => ({ title: Boolean(l.querySelector('[data-testid="list-title"]')), count: Boolean(l.querySelector('[data-testid="list-count"]')) || Boolean(l.querySelector('.lr-cards, .lr-table, .state')), bar: Boolean(l.querySelector('.lr-bar[role="search"]')), exp: Boolean(l.querySelector('[data-testid="export-menu"]')) })),
       }));
+      for (const [i, l] of facts.lists.entries()) for (const [k, ok] of Object.entries(l)) if (!ok) problems.push(`${at}: list ${i + 1} has no ${{ title: 'title', count: 'count', bar: 'filter bar', exp: 'export' }[k]}`);
       if (!facts.shell) problems.push(`${at}: drawn outside the shell`);
       if (facts.where !== p.route) problems.push(`${at}: ended at ${facts.where}`);
       if (facts.h1 !== 1) problems.push(`${at}: ${facts.h1} level-1 headings`);

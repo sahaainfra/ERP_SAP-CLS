@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, hse, HSE_TONE, qs } from './api.js';
 import { DocBar, ErrorLine, ProjectSite, Status, big, useRecord, useRunner } from './HseParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Permit to work (part 19.02): the register and the permit itself (checks, gas tests, isolation, extension, suspension, closure with handback), and the request form for the phone.
 export const PERMIT_TONE = { PENDING: 'DRAFT', ON_HOLD: 'RETURNED', ACTIVE: 'APPROVED', SUSPENDED: 'REJECTED', EXPIRED: 'CANCELLED', CLOSED: 'CANCELLED' };
@@ -48,8 +49,7 @@ function Actions({ x }) {
 function Permit({ id }) {
   const t = useT('hse'); const { q, guard } = useRecord('/permits', id, t('pm.title'), 'hse.permit.view'); usePageTitle(t('pm.title')); if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="hse-permit-object" data-status={x.status} data-permit={x.permitStatus}><h1 id="pmo-h">{x.docNo} <PermitState x={x} /> <Status x={x} /> {x.riskClass === 'HIGH' && <StatusBadge status="REJECTED" label={t('pm.high')} />}</h1>
-      <p><Link to="/hse/permits">{t('pm.register')}</Link> · {x.project} · {x.type} · {x.location ?? '—'} · {x.title}</p>
+    <div data-testid="hse-permit-object" data-status={x.status} data-permit={x.permitStatus}><PageHeader id="pmo-h" title={<>{x.docNo} <PermitState x={x} /> <Status x={x} /> {x.riskClass === 'HIGH' && <StatusBadge status="REJECTED" label={t('pm.high')} />}</>} meta={<><Link to="/hse/permits">{t('pm.register')}</Link> · {x.project} · {x.type} · {x.location ?? '—'} · {x.title}</>} />
       <p data-testid="hse-permit-window">{t('pm.valid')}: {stamp(x.validFrom)} → {stamp(x.validTo)}{x.minutesLeft != null ? ` · ${t('pm.left', { n: x.minutesLeft })}` : ''} · {t('pm.supervisor')}: {x.supervisor} · {t('pm.extensions', { n: x.extensionCount })}</p>
       {x.holdReason && <p className="field-error" role="status">{x.holdReason}</p>}{x.suspendedReason && x.permitStatus === 'SUSPENDED' && <p className="field-error" role="status" data-testid="hse-permit-suspended">{x.suspendedReason}</p>}
       {x.problems.length > 0 && <div className="mdm-panel" data-testid="hse-permit-problems"><h2>{t('pm.before')}</h2><ul>{x.problems.map((p, i) => <li key={i}>{p.message}</li>)}</ul></div>}
@@ -69,7 +69,7 @@ export function RequestPermit() {
   if (oq.error?.status === 403) return <NoPermission what={t('pm.request')} permission="hse.permit.create" />; if (oq.isPending) return <Skeleton label={t('pm.request')} rows={4} />; const o = oq.data; const type = o.types.find((x) => String(x.id) === String(f.typeId));
   const body = () => ({ projectId: Number(v.projectId), siteId: Number(v.siteId), typeId: Number(f.typeId), locationId: f.locationId ? Number(f.locationId) : null, title: f.title, supervisor: f.supervisor, validFrom: f.validFrom, validTo: f.validTo, workers: f.workers.map((w) => ({ kind: w.type, id: w.id })) });
   return (
-    <section aria-labelledby="pmr-h" data-testid="hse-permit-request"><h1 id="pmr-h">{t('pm.request')}</h1><p className="muted"><Link to="/hse/permits">{t('pm.register')}</Link> · {t('pm.requestHint')}</p><ErrorLine error={error} id="hse-permit-error" />
+    <section aria-labelledby="pmr-h" data-testid="hse-permit-request"><PageHeader id="pmr-h" title={t('pm.request')} subtitle={<><Link to="/hse/permits">{t('pm.register')}</Link> · {t('pm.requestHint')}</>} /><ErrorLine error={error} id="hse-permit-error" />
       <div className="mdm-panel"><div className="form-grid"><ProjectSite o={o} v={v} set={setV} error={error} />
         <Field label={t('pm.type')} name="typeId" error={error}><select value={f.typeId} onChange={(e) => setF({ ...f, typeId: e.target.value })} style={big} data-testid="hse-pm-type"><option value="">—</option>{o.types.map((x) => <option key={x.id} value={x.id}>{x.name}{x.riskClass === 'HIGH' ? ` (${t('pm.high')})` : ''}</option>)}</select></Field>
         <Field label={t('pm.location')} name="locationId" error={error}><select value={f.locationId} onChange={(e) => setF({ ...f, locationId: e.target.value })} style={big} data-testid="hse-pm-location"><option value="">—</option>{o.locations.map((l) => <option key={l.id} value={l.id}>{l.code} {l.name}</option>)}</select></Field>
@@ -90,7 +90,7 @@ export default function PermitsPage() {
   const t = useT('hse'); usePageTitle(t('pm.register')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="pmo-h"><Permit id={id} /></section>;
   return (
-    <section aria-labelledby="pml-h" data-testid="hse-permits"><h1 id="pml-h">{t('pm.register')}</h1><p className="muted">{t('pm.intro')}</p>
+    <section aria-labelledby="pml-h" data-testid="hse-permits"><PageHeader id="pml-h" title={t('pm.register')} subtitle={t('pm.intro')} />
       <div className="actions-row no-print"><Link to="/hse/permit-request" data-testid="hse-permit-new">{t('pm.request')}</Link><Link to="/hse/permit-board">{t('pb.title')}</Link><button type="button" className="btn" onClick={() => hse.exportFile('/permits/export', 'permits.csv').catch(() => globalThis.alert?.(t('exportFailed')))}>{t('export')}</button></div>
       <ListReport listCode="hse.permits" endpoint="/hse/permits" title={t('pm.register')} session={session.data} rowHref={(r) => `/hse/permits?id=${r.id}`} onOpen={(r) => navigateTo(`/hse/permits?id=${r.id}`)} cardFields={['docNo', 'type', 'location', 'permitStatus']} statusKey="status" empty={{ title: t('pm.emptyTitle'), text: t('pm.emptyBody') }} />
     </section>

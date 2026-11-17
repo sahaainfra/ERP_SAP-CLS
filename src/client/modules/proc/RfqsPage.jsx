@@ -8,6 +8,8 @@ import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx'
 import { useSession } from '../core/api/index.js';
 import { QUOTE_TONE, RESPONSE_TONE, RFQ_TONE, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Requests for quotation (part 15.03): the list; the RFQ with its lines, vendors and how each has answered, the quotations and the comparison (to those who may see rates), the clarification log and the actions of the buyer.
 // Fewer vendors than the minimum on a value above the threshold needs the single-source justification, approved by the procurement manager and the project director. The links the vendors are sent are shown once, here.
@@ -42,8 +44,8 @@ function Rfq({ t, id }) {
   const terms = r.terms ?? {};
   return (
     <div data-testid="rfq-object" data-status={r.status}>
-      <h1 id="rfq-h">{r.docNo} <StatusBadge status={RFQ_TONE[r.status]} label={t(`q.s.${r.status}`)} />{r.overdue && <> <StatusBadge status="AT_RISK" label={t('q.overdue')} /></>}</h1>
-      <p><Link to="/proc/rfqs">{t('q.back')}</Link></p>
+      <PageHeader id="rfq-h" title={<>{r.docNo} <StatusBadge status={RFQ_TONE[r.status]} label={t(`q.s.${r.status}`)} />{r.overdue && <> <StatusBadge status="AT_RISK" label={t('q.overdue')} /></>}</>} meta={<Link to="/proc/rfqs">{t('q.back')}</Link>} />
+      <DocumentFlow type="RFQ" id={r.id} />
       <dl className="kv" data-testid="rfq-figures"><div><dt>{t('q.rfqTitle')}</dt><dd>{r.title}</dd></div><div><dt>{t('q.project')}</dt><dd>{r.projectCode}</dd></div><div><dt>{t('q.dueDate')}</dt><dd>{fmtDate(r.dueDate)}</dd></div>
         <div><dt>{t('q.vendorsAnswered')}</dt><dd data-testid="rfq-counts">{r.respondedCount} / {r.vendorCount}</dd></div>{r.canSeeRates && <div><dt>{t('q.estTotal')}</dt><dd>{fmtRs(r.estTotal)}</dd></div>}
         {terms.delivery && <div><dt>{t('q.delivery')}</dt><dd>{terms.delivery}</dd></div>}{terms.payment && <div><dt>{t('q.payment')}</dt><dd>{terms.payment}</dd></div>}{terms.validityDays && <div><dt>{t('q.validity')}</dt><dd>{terms.validityDays}</dd></div>}
@@ -103,7 +105,7 @@ export default function RfqsPage() {
   if (id) return <section aria-labelledby="rfq-h" data-testid="proc-rfqs"><Rfq key={id} t={t} id={id} /></section>;
   return (
     <section aria-labelledby="rfqs-h" data-testid="proc-rfqs">
-      <h1 id="rfqs-h">{t('q.title')}</h1><p className="muted">{t('q.intro')}</p>
+      <PageHeader id="rfqs-h" title={t('q.title')} subtitle={t('q.intro')} />
       <div className="actions-row no-print">{perms.includes('proc.rfq.create') && <Link to="/proc/rfq-new">{t('q.new')}</Link>} {perms.includes('proc.quotation.create') && <Link to="/proc/quotation-entry">{t('q.entry')}</Link>}</div>
       <ListReport listCode="proc.rfqs" endpoint="/proc/rfqs" title={t('q.title')} session={session.data} rowHref={(r) => `/proc/rfqs?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/rfqs?id=${r.id}`)}
         cardFields={['docNo', 'project', 'title', 'dueDate', 'vendors']} statusKey="status" empty={{ title: t('q.emptyTitle'), text: t('q.emptyBody') }} />

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/index.js';
 import { refreshMs } from './layout.js';
+import { lowBandwidthSaves } from '../device/lowBandwidth.js';
 
 // Data hooks of the dashboard framework (part 03.07). Components use these, never the API client directly.
 const idem = () => ({ headers: { 'idempotency-key': globalThis.crypto.randomUUID() } });
@@ -18,8 +19,9 @@ export function useWidgetData(code, query, { refreshSec = 0 } = {}) {
     queryFn: () => unwrap(api.get(`/ui/widgets/${code}/data${query ? `?${query}` : ''}`)),
     retry: false,
     placeholderData: (prev, prevQuery) => (prevQuery?.queryKey?.[2] === code ? prev : undefined), // keep the last figures while a filter reloads, never another widget's
-    refetchInterval: () => refreshMs(refreshSec, typeof document !== 'undefined' && document.hidden),
-    refetchOnWindowFocus: true,
+    // low-bandwidth mode with ff.perf.p16604 (part 166.4, FR-03): no refresh by itself; the widget's refresh button still reads it again
+    refetchInterval: () => (lowBandwidthSaves() ? false : refreshMs(refreshSec, typeof document !== 'undefined' && document.hidden)),
+    refetchOnWindowFocus: () => !lowBandwidthSaves(),
   });
 }
 
@@ -45,5 +47,14 @@ export function useDecideDashboardChange(code) {
   return useMutation({
     mutationFn: ({ id, action, comment }) => unwrap(api.post(`/core/change-requests/${id}/act`, { action, comment }, idem())),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['dashboard'] }); qc.invalidateQueries({ queryKey: dashKey(code) }); },
+  });
+}
+
+/** The to-do card (part 166.5): approve or return a workflow task from the card. The server checks that the person may decide it, as on the inbox. */
+export function useDecideTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, action, comment }) => unwrap(api.post(`/workflow/tasks/${taskId}/act`, comment ? { action, comment } : { action }, idem())),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboard', 'widget'] }),
   });
 }

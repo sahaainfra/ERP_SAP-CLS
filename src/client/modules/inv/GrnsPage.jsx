@@ -9,6 +9,8 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { GRN_TONE, download, fmtDate, fmtQty, fmtRs, gr, iv } from './api.js';
 import { History, useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Goods Receipts (part 16.03): the list with the inspection status, and the receipt with its lines, the inspection by quality control, the documents and the postings it made (the trace to the stock ledger).
 function Grn({ t, id }) {
@@ -22,7 +24,8 @@ function Grn({ t, id }) {
   const inspect = () => run(() => gr.act(g.id, 'inspection', { results: Object.entries(res).map(([lineId, v]) => ({ lineId: Number(lineId), passedQty: Number(v.p || 0), failedQty: Number(v.f || 0) })).filter((x) => x.passedQty > 0 || x.failedQty > 0) }), t('r.inspected')).then((x) => { if (x) setRes({}); });
   return (
     <div data-testid="grn-object" data-status={g.status}>
-      <h1 id="gr-h">{g.docNo} <StatusBadge status={GRN_TONE[g.status]} label={t(`rs.${g.status}`)} /></h1><p><Link to="/inv/grns">{t('r.grnTitle')}</Link> · {g.store} · {g.vendor}{g.poNo ? ` · ${g.poNo}` : ` · ${t('r.emergency')}`}</p>
+      <PageHeader id="gr-h" title={<>{g.docNo} <StatusBadge status={GRN_TONE[g.status]} label={t(`rs.${g.status}`)} /></>} meta={<><Link to="/inv/grns">{t('r.grnTitle')}</Link> · {g.store} · {g.vendor}{g.poNo ? ` · ${g.poNo}` : ` · ${t('r.emergency')}`}</>} />
+      <DocumentFlow type="GRN" id={g.id} />
       {g.excess && <p className="mdm-banner" role="status" data-testid="grn-excess">{t('r.excessNote')}</p>}{g.emergency && <p className="mdm-banner" role="status">{t('r.emergencyWhy')}: {g.emergencyWhy}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="grn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="grn-note">{note}</p>}
       <dl className="kv"><div><dt>{t('r.receivedOn')}</dt><dd>{fmtDate(g.date)}</dd></div>{g.gateNo && <div><dt>{t('r.gateEntry')}</dt><dd><Link to={`/inv/gate-entry?id=${g.gateInwardId}`}>{g.gateNo}</Link></dd></div>}<div><dt>{t('g.challanNo')}</dt><dd>{g.challanNo ?? '—'} {g.challanDate ? fmtDate(g.challanDate) : ''}</dd></div><div><dt>{t('r.invoiceNo')}</dt><dd>{g.invoiceNo ?? '—'}</dd></div>{g.totalValue != null && <div><dt>{t('r.value')}</dt><dd data-testid="grn-value">{fmtRs(g.totalValue)}</dd></div>}<div><dt>{t('g.requestedBy')}</dt><dd>{g.requestedBy}</dd></div>{g.approvedBy && <div><dt>{t('approvedBy')}</dt><dd>{g.approvedBy}</dd></div>}</dl>
@@ -56,7 +59,7 @@ export default function GrnsPage() {
   if (id) return <section aria-labelledby="gr-h" data-testid="grns"><Grn key={id} t={t} id={id} /></section>;
   const k = sm.data;
   return (
-    <section aria-labelledby="grs-h" data-testid="grns"><h1 id="grs-h">{t('r.grnTitle')}</h1><p className="muted">{t('r.grnIntro')}</p>
+    <section aria-labelledby="grs-h" data-testid="grns"><PageHeader id="grs-h" title={t('r.grnTitle')} subtitle={t('r.grnIntro')} />
       <div className="actions-row no-print">{perms.includes('inv.grn.create') && <Link to="/inv/grn-new">{t('r.newTitle')}</Link>} <Link to="/inv/rtvs">{t('r.rtvTitle')}</Link> <Link to="/inv/gate-register">{t('g.registerTitle')}</Link></div>
       {k && <div className="kpi-row" role="list" data-testid="grn-kpis">{[['awaitingGrn', k.awaitingGrn], ['awaitingApproval', k.awaitingApproval], ['inspectionPending', k.inspectionPending], ['openReturns', k.openReturns]].map(([key, v]) => <div key={key} role="listitem" className="kpi-tile" data-testid={`grn-kpi-${key}`}><span className="kpi-value">{v}</span><span className="kpi-label">{t(`r.kpi.${key}`)}</span></div>)}</div>}
       <ListReport listCode="inv.grns" endpoint="/inv/grns" title={t('r.grnTitle')} session={session.data} rowHref={(r) => `/inv/grns?id=${r.id}`} onOpen={(r) => navigateTo(`/inv/grns?id=${r.id}`)} cardFields={['docNo', 'vendor', 'store', 'status']} statusKey="status" dateKey="date" empty={{ title: t('r.grnEmptyTitle'), text: t('r.grnEmptyBody') }} /></section>

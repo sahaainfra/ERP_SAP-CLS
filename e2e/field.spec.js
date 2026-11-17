@@ -59,7 +59,8 @@ test('FR-07 BR-01 a site person lands on the field home: quick actions for the r
   const page = await as(browser, info, w.company, 'SE', pick(info, 'e2e-se-d', 'e2e-se-m'), '/');
   const errors = watch(page);
   await expect(page).toHaveURL(/\/field$/);
-  await expect(page.getByRole('heading', { name: 'Field Home', level: 1 })).toBeVisible();
+  // part 166.3 (ff.field.p16603 ON in test): the field home opens with a greeting band; the heading is the greeting
+  await expect(page.getByTestId('field-band').getByRole('heading', { level: 1 })).toContainText(/Good (morning|afternoon|evening), e2e-se/);
   await expect(page.getByTestId('field-tile-scan')).toBeVisible();
   await expect(page.getByTestId('field-tile-drafts')).toBeVisible();
   await expect(page.getByTestId('field-tile-material-request')).toHaveCount(0); // a site engineer does not raise these here
@@ -69,29 +70,31 @@ test('FR-07 BR-01 a site person lands on the field home: quick actions for the r
   // something waiting to be sent (the offline engine of 04.15 will fill this; here another tab's change is simulated)
   await page.evaluate(() => { localStorage.setItem('erp.sync.queue', JSON.stringify([{ id: 'p1', label: 'Punch', at: '2026-11-02T04:00:00Z' }])); window.dispatchEvent(new StorageEvent('storage', { key: 'erp.sync.queue' })); });
   await expect(page.getByTestId('sync-count')).toHaveAttribute('data-count', '1');
-  await expect(page.getByTestId('sync-count')).toContainText('1 waiting to be sent');
+  await expect(page.getByTestId('sync-count')).toContainText('Not sent yet (1)'); // the wording of part 166.3
   await page.context().setOffline(true);
   await expect(page.getByTestId('field-online')).toHaveAttribute('data-online', 'false');
   await expect(page.getByTestId('field-online')).toContainText('Offline');
   await page.context().setOffline(false);
   await expect(page.getByTestId('field-online')).toHaveAttribute('data-online', 'true');
-  // a person with an office role has the launchpad, with the material request among the field tiles
+  // a person with an office role has the launchpad; on the field home the project manager's tiles are their own (part 166.3: the 03.06 sample
+  // material request gives way to the daily progress report and the approvals on the phone)
   const pm = await as(browser, info, w.company, 'PM', pick(info, 'e2e-pm-d', 'e2e-pm-m'), '/');
   await expect(pm).toHaveURL(/\/home$/);
   await pm.goto('/field');
-  await expect(pm.getByTestId('field-tile-material-request')).toContainText('Material Request');
+  await expect(pm.getByTestId('field-tile-phone-approvals')).toContainText('Approvals');
+  await expect(pm.getByTestId('field-tile-material-request')).toHaveCount(0);
   if (info.project.name === 'mobile') await noOverflow(page);
   expect(errors).toEqual([]);
 });
 
-test('FR-01 on a phone the bottom navigation has Home, My Work, Scan and More; More opens the whole menu; every target is thumb-sized', async ({ browser, request }, info) => {
+test('FR-01 on a phone the bottom navigation has Home, Tasks (My Work), Scan and More; More opens the whole menu; every target is thumb-sized', async ({ browser, request }, info) => {
   test.skip(info.project.name !== 'mobile', 'the phone layout');
   const w = await world(request, 'FLDB');
   const page = await as(browser, info, w.company, 'SE', 'e2e-se-bottom', '/');
   const errors = watch(page);
   const bottom = page.getByTestId('bottom-nav');
   await expect(bottom).toBeVisible();
-  await expect(bottom.getByRole('link')).toHaveText(['Home', 'My Work', 'Scan', 'Messages']); // Messages is there since its part (05.01) registered its page
+  await expect(bottom.getByRole('link')).toHaveText(['Home', 'Tasks', 'Scan', 'Messages']); // Messages since 05.01; My Work is called Tasks from 166.3
   await expect(bottom.getByRole('button', { name: 'Open menu' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open menu' })).toHaveCount(1); // the header has no second menu button
   await expect(page.getByTestId('bottom-home')).toHaveAttribute('aria-current', 'page');
@@ -106,7 +109,7 @@ test('FR-01 on a phone the bottom navigation has Home, My Work, Scan and More; M
   const nav = await menu(page);
   await expect(nav.getByRole('link', { name: 'Field Home' })).toBeVisible();
   await nav.getByRole('link', { name: 'Field Home' }).click();
-  await expect(page.getByRole('heading', { name: 'Field Home', level: 1 })).toBeVisible();
+  await expect(page.getByTestId('field-band')).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden(); // the menu closes once a page is chosen
   await noOverflow(page);
   expect(errors).toEqual([]);

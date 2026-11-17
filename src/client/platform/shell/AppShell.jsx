@@ -2,13 +2,18 @@ import NotificationBell from '../notifications/NotificationBell.jsx';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../design/Icon.jsx';
 import { NoPermission, EmptyState, Skeleton, ErrorState } from '../feedback/states.jsx';
-import { useBell, useFavourites, useFlagOn, useNavigation, useRecent } from './api.js';
-import { useT } from '../i18n/index.js';
+import { shellKeys, useBell, useFavourites, useFlagOn, useNavigation, useRecent } from './api.js';
+import { labelIn, useT } from '../i18n/index.js';
 import I18nSync from '../i18n/I18nSync.jsx';
 import { landsOnField } from '../../../shared/device/breakpoints.js';
 import { useLayout } from '../device/layout.js';
-import { useLowBandwidth } from '../device/lowBandwidth.js';
+import { setLowBandwidthExtras, useLowBandwidth } from '../device/lowBandwidth.js';
 import PwaBanners from '../device/PwaBanners.jsx';
+import RoutePage from './RoutePage.jsx';
+import { usePrefetchBottomBar } from './prefetch.js';
+import { setSwStrategy } from '../api/identity.js';
+import { API_UPDATED_EVENT, pwa } from '../device/pwa.js';
+import { useQueryClient } from '@tanstack/react-query';
 import DeviceMenu from '../device/DeviceMenu.jsx';
 import ContextSwitcher, { OPEN_CONTEXT_EVENT, readContext } from './ContextSwitcher.jsx';
 import CommandPalette, { ShortcutHelp } from './CommandPalette.jsx';
@@ -65,6 +70,22 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const [menuOpen, setMenuOpen] = useState(false);
   const searchOn = useFlagOn('ff.ui.p0308'); // global search and the command palette (part 03.08)
   const device = useFlagOn('ff.ui.p0306'); // layouts, install and device capabilities (part 03.06)
+  const uiV3 = useFlagOn('ff.ui.p16602'); // the UI v3 page patterns (part 166.2): src/client/ui-v3.css styles them under :root[data-ui-v3]
+  useEffect(() => {
+    const root = document.documentElement;
+    if (uiV3) root.dataset.uiV3 = 'on'; else delete root.dataset.uiV3;
+    return () => { delete root.dataset.uiV3; };
+  }, [uiV3]);
+  // Part 166.4: prefetch of the bottom bar's pages (FR-01), the service worker's caching of this part (FR-02), drafts saved before a reload (FR-04)
+  const perf = useFlagOn('ff.perf.p16604');
+  useEffect(() => { setSwStrategy(perf); pwa.configure({ saveDraftsFirst: perf }); setLowBandwidthExtras(perf); }, [perf]);
+  usePrefetchBottomBar(nav, path, perf);
+  const qc = useQueryClient();
+  useEffect(() => {
+    const onUpdated = (e) => { if (e.detail?.path === '/api/v1/ui/navigation') qc.invalidateQueries({ queryKey: shellKeys.nav }); };
+    window.addEventListener(API_UPDATED_EVENT, onUpdated);
+    return () => window.removeEventListener(API_UPDATED_EVENT, onUpdated);
+  }, [qc]);
   const layout = useLayout();
   useLowBandwidth(); // keeps the page's low-bandwidth mark (the data saver, a slow connection, or the person's choice) in step
   // the menu is a rail on a tablet unless the person chose otherwise
@@ -121,7 +142,9 @@ export default function AppShell({ path, go, route, session, onboarding, display
   const work = nav.groups.find((g) => g.code === 'g-mywork')?.pages[0];
   const scan = entryFor(nav, '/field/scan');
   const messages = nav.groups.find((g) => g.code === 'g-messages')?.pages[0];
-  const bottom = [home && { key: 'home', label: t('bottom.home'), icon: 'erp.group.home', route: home.route }, work && { key: 'work', label: t('bottom.work'), icon: 'erp.action.inbox', route: work.route }, scan && { key: 'scan', label: t('bottom.scan'), icon: 'erp.action.scan', route: scan.route }, messages && { key: 'messages', label: t('bottom.messages'), icon: 'erp.group.collab', route: messages.route }].filter(Boolean);
+  const builtIn = { home: home && { key: 'home', label: t('bottom.home'), icon: 'erp.group.home', route: home.route }, work: work && { key: 'work', label: t('bottom.work'), icon: 'erp.action.inbox', route: work.route }, scan: scan && { key: 'scan', label: t('bottom.scan'), icon: 'erp.action.scan', route: scan.route }, messages: messages && { key: 'messages', label: t('bottom.messages'), icon: 'erp.group.collab', route: messages.route } };
+  // Part 166.3, FR-02: with ff.field.p16603 ON the four slots come from the navigation registry for the person's role (ui_bottom_bar); My Work is "Tasks"
+  const bottom = (nav.bottomBar?.length ? nav.bottomBar.map((b) => (b.item === 'page' ? { key: b.code, label: labelIn(b, language), icon: b.icon ?? 'erp.action.info', route: b.route } : b.item === 'work' && builtIn.work ? { ...builtIn.work, label: t('bottom.tasks') } : builtIn[b.item])) : [builtIn.home, builtIn.work, builtIn.scan, builtIn.messages]).filter(Boolean);
   const openMenu = () => { if (!menuOpen) window.scrollTo(0, 0); setMenuOpen((o) => !o); };
 
   return (
@@ -149,10 +172,10 @@ export default function AppShell({ path, go, route, session, onboarding, display
       {device && <PwaBanners />}
       {identityBar}
       <div className="sh-body">
-        <Sidebar groups={groups} account={accountGroup(nav)} consoleGroup={consoleGroup(nav)} path={path.split('?')[0]} go={goTo} language={language} open={menuOpen} onClose={() => setMenuOpen(false)} collapsed={collapsed && !phone} />
+        <Sidebar groups={groups} account={accountGroup(nav)} consoleGroup={consoleGroup(nav)} path={path.split('?')[0]} go={goTo} language={language} open={menuOpen} onClose={() => setMenuOpen(false)} collapsed={collapsed && !phone} drawOnOpen={perf && phone} />
         <main id="main" tabIndex={-1} ref={mainRef}>
-          <Breadcrumbs nav={nav} path={path} go={goTo} />
-          {verdict.ok && route ? <route.Page session={session} /> : <GuardState verdict={verdict.ok ? { reason: 'unknown' } : verdict} path={path} go={goTo} />}
+          <Breadcrumbs nav={nav} path={path} go={goTo} language={language} />
+          {verdict.ok && route ? <RoutePage route={route} session={session} path={path} /> : <GuardState verdict={verdict.ok ? { reason: 'unknown' } : verdict} path={path} go={goTo} />}
         </main>
       </div>
       {device && phone && <BottomNav items={bottom} path={path.split('?')[0]} go={goTo} moreOpen={menuOpen} onMore={openMenu} />}

@@ -4,6 +4,7 @@ import { ErrorState, Skeleton } from '../../platform/feedback/states.jsx';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { EMPLOYMENT_TYPES, dayIST, recruit } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Requisition (HR, part 07.02): department, designation, project, positions, new or replacement (naming who is replaced), employment type, work location, the reporting manager, the budgeted CTC range a year,
 // the date it is required and why. As it is typed the headcount plan is read: planned positions, people in post, open positions, and whether this requisition is within the plan or beyond it (then the director also approves).
@@ -42,7 +43,7 @@ export default function NewRequisitionPage() {
   const fe = (k) => error?.fields?.[k];
   return (
     <section aria-labelledby="nr-title" data-testid="new-requisition">
-      <h1 id="nr-title">{editId ? `Requisition ${existing.data?.docNo}` : 'New Requisition'}</h1>
+      <PageHeader id="nr-title" title={editId ? `Requisition ${existing.data?.docNo}` : 'New Requisition'} />
       {error?.form && <p className="field-error" role="alert" data-testid="nr-error">{error.form}{error.fields ? ` ${Object.entries(error.fields).map(([k, x]) => `${k}: ${x}`).join('; ')}` : ''}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(false); }}>
         <LookupField id="nr-department" label="Department" lookup="iam/departments" value={v.departmentId} onChange={(x) => set({ departmentId: x })} error={fe('departmentId')} required />

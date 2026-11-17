@@ -6,6 +6,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, trn } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Mandatory Training Compliance (HR, part 07.10, FR-02 and FR-06): for every mandatory course, who has done it, whose is due within 30 days, whose has lapsed and who has never done it, for a site and a course, with the sessions that
 // will close each gap; and the cost of training by project and department for a period. A figure opens the people behind it; the tables export to CSV; the page prints.
@@ -29,7 +30,7 @@ export default function ComplianceReportPage() {
   const tile = (k, v) => <div key={k}><dt>{t(`comp.${k}`)}</dt><dd data-testid={`cp-${k}`}>{v}</dd></div>;
   return (
     <section aria-labelledby="cp-title" data-testid="compliance">
-      <h1 id="cp-title">{t('comp.title')}</h1>
+      <PageHeader id="cp-title" title={t('comp.title')} />
       <div className="actions-row no-print" role="tablist" aria-label={t('comp.title')}>
         <button type="button" role="tab" aria-selected={tab === 'compliance'} className={`btn${tab === 'compliance' ? ' btn-primary' : ''}`} onClick={() => setTab('compliance')} data-testid="cp-tab-compliance">{t('comp.tabCompliance')}</button>
         <button type="button" role="tab" aria-selected={tab === 'cost'} className={`btn${tab === 'cost' ? ' btn-primary' : ''}`} onClick={() => setTab('cost')} data-testid="cp-tab-cost">{t('comp.tabCost')}</button>

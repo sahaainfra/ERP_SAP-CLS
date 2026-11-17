@@ -5,7 +5,7 @@
 
 export const THEMES = ['light', 'dark', 'high-contrast'];
 export const DENSITIES = ['comfortable', 'compact'];
-export const LANGUAGES = ['en', 'hi'];
+export const LANGUAGES = ['en', 'hi', 'te']; // Telugu from part 166.3
 const KEY = 'erp.appearance';
 const OLD_THEME_KEY = 'erp.theme';
 export const APPEARANCE_EVENT = 'erp-appearance';

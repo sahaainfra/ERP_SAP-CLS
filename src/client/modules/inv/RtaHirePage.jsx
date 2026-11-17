@@ -8,6 +8,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { COUNT_TONE, fmtDate, fmtQty, fmtRs, iv, ra, saveCsv } from './api.js';
 import { useRunner } from './InvParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Hire charges (hired in and internal) and damage and loss recoveries (part 16.08, FR-03, FR-04, FR-05): charges by quantity-days, the vendor's bill checked against them, and the recoveries sent for approval.
 function Hire({ t, perms }) {
@@ -49,7 +50,7 @@ export default function RtaHirePage() {
   const t = useT('inv'); usePageTitle(t('ra.hireTitle')); const sp = useSearch(); const tab = sp.get('tab') === 'recoveries' ? 'recoveries' : 'hire'; const session = useSession(); const perms = session.data?.permissions ?? [];
   if (session.isSuccess && !perms.includes('inv.rta_hire.view') && !perms.includes('inv.rta_recovery.view')) return <NoPermission what={t('ra.hireTitle')} permission="inv.rta_hire.view" />;
   return (
-    <section aria-labelledby="rh-h" data-testid="rta-hire-page"><h1 id="rh-h">{t('ra.hireTitle')}</h1><p className="muted">{t('ra.hireIntro')}</p>
+    <section aria-labelledby="rh-h" data-testid="rta-hire-page"><PageHeader id="rh-h" title={t('ra.hireTitle')} subtitle={t('ra.hireIntro')} />
       <div className="actions-row no-print">{[['hire', 'ra.tabHire'], ['recoveries', 'ra.recoveriesTitle']].map(([k, l]) => <Link key={k} to={`/inv/rta-hire?tab=${k}`} aria-current={tab === k ? 'page' : undefined} data-testid={`rta-hire-tab-${k}`}>{t(l)}</Link>)} <Link to="/inv/rta">{t('ra.title')}</Link></div>
       {tab === 'hire' ? <Hire t={t} perms={perms} /> : <Recoveries t={t} />}
     </section>

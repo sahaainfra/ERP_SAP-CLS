@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { AVL_TONE, RATING_TONE, fmtDate, pct, pv8, today } from './api.js';
 import { useRunner } from './XpdParts.jsx';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Vendor scorecard (part 15.08, FR-03, FR-04): the score per period with the trend, the six measures and their weights, and the evidence behind each (receipts, CS ranks, RFQ answers, inputs); quality and safety people enter their inputs; procurement records reviews,
 // corrective action requests and development notes, and proposes a suspension.
@@ -47,7 +48,7 @@ function Partner({ t, id }) {
   const why = (fn, msg) => { const x = window.prompt(t('x.why')); if (x) run(() => fn(x), msg); };
   return (
     <div data-testid="vs-object">
-      <h1 id="vs-h">{d.partner.name} <span className="muted">({d.partner.code})</span></h1><p><Link to="/proc/vendor-scorecards">{t('x.back')}</Link> · <Link to="/proc/avl">{t('v.avlTitle')}</Link></p>
+      <PageHeader id="vs-h" title={<>{d.partner.name} <span className="muted">({d.partner.code})</span></>} meta={<><Link to="/proc/vendor-scorecards">{t('x.back')}</Link> · <Link to="/proc/avl">{t('v.avlTitle')}</Link></>} />
       {error?.form && <p className="field-error" role="alert" data-testid="vs-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="vs-note">{note}</p>}
       <div className="table-scroll"><table className="data-table" data-testid="vs-avl"><caption>{t('v.avlTitle')}</caption><thead><tr><th>{t('v.category')}</th><th>{t('v.region')}</th><th>{t('x.status')}</th><th>{t('v.validUntil')}</th></tr></thead>
         <tbody>{d.avl.length === 0 ? <tr><td colSpan={4} className="muted">{t('v.notOnList')}</td></tr> : d.avl.map((e) => <tr key={e.id}><td>{e.category}</td><td>{e.region}</td><td><StatusBadge status={AVL_TONE[e.expired && e.status !== 'SUSPENDED' ? 'EXPIRED' : e.status]} label={e.expired && e.status !== 'SUSPENDED' ? t('v.expired') : e.statusLabel} /></td><td>{fmtDate(e.validUntil)}</td></tr>)}</tbody></table></div>
@@ -90,7 +91,7 @@ export default function VendorScorecardsPage() {
   const t = useT('proc'); usePageTitle(t('v.scoreTitle')); const sp = useSearch(); const partner = Number(sp.get('partner')) || null; const session = useSession();
   if (partner) return <section aria-labelledby="vs-h" data-testid="proc-vs"><Partner key={partner} t={t} id={partner} /></section>;
   return (
-    <section aria-labelledby="vss-h" data-testid="proc-vs"><h1 id="vss-h">{t('v.scoreTitle')}</h1><p className="muted">{t('v.scoreIntro')}</p>
+    <section aria-labelledby="vss-h" data-testid="proc-vs"><PageHeader id="vss-h" title={t('v.scoreTitle')} subtitle={t('v.scoreIntro')} />
       <div className="actions-row no-print"><Link to="/proc/vendor-ranking">{t('v.rankTitle')}</Link> <Link to="/proc/avl">{t('v.avlTitle')}</Link> <Link to="/proc/prequalifications">{t('v.preqTitle')}</Link></div>
       <ListReport listCode="proc.vendor_scorecards" endpoint="/proc/vendor-scorecards" title={t('v.scoreTitle')} session={session.data} rowHref={(r) => `/proc/vendor-scorecards?partner=${r.partnerId}`} onOpen={(r) => navigateTo(`/proc/vendor-scorecards?partner=${r.partnerId}`)}
         cardFields={['vendor', 'period', 'total', 'rating']} statusKey="rating" empty={{ title: t('v.scoreEmptyTitle'), text: t('v.scoreEmptyBody') }} /></section>

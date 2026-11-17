@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { JOB_TONE, WORK_TONE, fmtDate, fmtQty, fmtRs, mt, pl } from './api.js';
 import { ExportButton, useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Job cards (part 17.05, FR-03, FR-04, mobile friendly): the list, the card (complaint, diagnosis, mechanic, labour, external repair, downtime, spares from stores, cost, warranty, history) and the form that raises one for a due service or a breakdown.
 // The store keeper reserves and issues spares; the plant supervisor starts and closes the work; another plant supervisor (and the plant manager for a costly external repair) approves.
@@ -20,7 +21,7 @@ function NewJob({ sp }) {
   const o = oq.data; const m = o.equipment.find((x) => String(x.id) === String(f.equipmentId)); const req = <span aria-hidden="true" className="muted"> *</span>;
   const save = async () => { const d = await run(() => mt.create({ equipmentId: Number(f.equipmentId), type: f.type, pmStatusIds: f.type === 'PREVENTIVE' ? f.pm : [], breakdownId: f.type === 'BREAKDOWN' && f.breakdownId ? Number(f.breakdownId) : null, complaint: f.complaint || undefined, diagnosis: f.diagnosis || null, mechanic: f.mechanic || null, vendorId: f.vendorId ? Number(f.vendorId) : null, externalRef: f.externalRef || null, externalCost: Number(f.externalCost || 0), labourHrs: Number(f.labourHrs || 0) }), t('m.saved')); if (d) navigateTo(`/plant/job-cards?id=${d.id}`); };
   return (
-    <section aria-labelledby="jn-h" data-testid="plant-job-new"><h1 id="jn-h">{t('m.newJob')}</h1><p className="muted"><Link to="/plant/job-cards">{t('m.jobsTitle')}</Link></p>
+    <section aria-labelledby="jn-h" data-testid="plant-job-new"><PageHeader id="jn-h" title={t('m.newJob')} subtitle={<Link to="/plant/job-cards">{t('m.jobsTitle')}</Link>} />
       {error?.form && <p className="field-error" role="alert" data-testid="jn-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div className="mdm-panel"><div className="form-grid">
         <Field label={<>{t('assetCode')}{req}</>} name="equipmentId" error={error}><select value={f.equipmentId} onChange={(ev) => { set('equipmentId', ev.target.value); set('pm', []); }} style={{ minHeight: 48 }} data-testid="jn-equipment"><option value="">—</option>{o.equipment.map((x) => <option key={x.id} value={x.id}>{x.assetCode} · {x.project}</option>)}</select></Field>
@@ -46,7 +47,7 @@ function Job({ id }) {
   const kv = (k, v) => <div><dt>{t(k)}</dt><dd>{v ?? '—'}</dd></div>; const sact = (s, action, body, msg) => run(() => mt.spareAct(x.id, s.id, action, body), msg);
   const ret = (s) => { const n = globalThis.prompt(t('m.returnQty', { max: fmtQty(s.issuedQty - s.returnedQty) })); if (!n) return; const r = globalThis.prompt(t('why')); if (r) sact(s, 'return', { qty: Number(n), reason: r }, t('m.returned')); };
   return (
-    <div data-testid="jc-object" data-status={x.status} data-work={x.jobStatus}><h1 id="jc-h">{x.docNo} <StatusBadge status={JOB_TONE[x.status]} label={t(`rs.${x.status}`)} /> <StatusBadge status={WORK_TONE[x.jobStatus]} label={t(`m.js.${x.jobStatus}`)} /></h1><p><Link to="/plant/job-cards">{t('m.jobsTitle')}</Link> · <Link to={`/plant/equipment?id=${x.equipmentId}`}>{x.assetCode}</Link> · {t(`m.jt.${x.type}`)} · {x.project}{x.site ? `/${x.site}` : ''}{x.breakdown ? ` · ${x.breakdown}` : ''}</p>
+    <div data-testid="jc-object" data-status={x.status} data-work={x.jobStatus}><PageHeader id="jc-h" title={<>{x.docNo} <StatusBadge status={JOB_TONE[x.status]} label={t(`rs.${x.status}`)} /> <StatusBadge status={WORK_TONE[x.jobStatus]} label={t(`m.js.${x.jobStatus}`)} /></>} meta={<><Link to="/plant/job-cards">{t('m.jobsTitle')}</Link> · <Link to={`/plant/equipment?id=${x.equipmentId}`}>{x.assetCode}</Link> · {t(`m.jt.${x.type}`)} · {x.project}{x.site ? `/${x.site}` : ''}{x.breakdown ? ` · ${x.breakdown}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="jc-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="jc-note">{note}</p>}
       {x.needsPlantManager && <p className="muted" data-testid="jc-limit">{t('m.needsPlant')}</p>}
       <div className="actions-row no-print">{can.submit && <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={busy} onClick={() => run(() => mt.act(x.id, 'submit'), t('submitted'))} data-testid="jc-submit">{t('sendForApproval')}</button>}{can.withdraw && <button type="button" className="btn" onClick={() => why('withdraw', t('withdrawn'))}>{t('withdraw')}</button>}
@@ -75,7 +76,7 @@ export default function JobCardsPage() {
   const t = useT('plant'); usePageTitle(t('m.jobsTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (sp.get('new')) return <NewJob sp={sp} />; if (id) return <section aria-labelledby="jc-h"><Job id={id} /></section>;
   return (
-    <section aria-labelledby="jl-h" data-testid="plant-job-cards"><h1 id="jl-h">{t('m.jobsTitle')}</h1><p className="muted">{t('m.jobsIntro')}</p>
+    <section aria-labelledby="jl-h" data-testid="plant-job-cards"><PageHeader id="jl-h" title={t('m.jobsTitle')} subtitle={t('m.jobsIntro')} />
       <div className="actions-row no-print"><Link to="/plant/job-cards?new=1">{t('m.newJob')}</Link><Link to="/plant/pm-schedule">{t('m.scheduleTitle')}</Link><Link to="/plant/maintenance">{t('m.dashTitle')}</Link><ExportButton query={{}} name="job-cards.csv" path="/job-cards/export" testId="jl-export" /></div>
       <ListReport listCode="plant.job_cards" endpoint="/plant/job-cards" title={t('m.jobsTitle')} session={session.data} rowHref={(r) => `/plant/job-cards?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/job-cards?id=${r.id}`)} cardFields={['docNo', 'assetCode', 'type', 'status']} statusKey="status" dateKey="opened" empty={{ title: t('m.jobsEmptyTitle'), text: t('m.jobsEmptyBody') }} />
     </section>

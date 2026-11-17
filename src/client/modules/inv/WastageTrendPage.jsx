@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { fmtQty, fmtRs, mc, saveCsv, today } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Wastage Trend by material and site (part 16.10, FR-05): the wastage per cent against the allowed, month by month, and the biggest variances, each opening its reconciliation.
 export default function WastageTrendPage() {
@@ -13,7 +14,7 @@ export default function WastageTrendPage() {
   if (q.error?.status === 403) return <NoPermission what={t('mc.trendTitle')} permission="inv.reconciliation.view" />;
   const d = q.data; const max = Math.max(1, ...(d?.points ?? []).map((p) => Math.abs(p.wastagePct ?? 0)), ...(d?.points ?? []).map((p) => p.allowedPct ?? 0));
   return (
-    <section aria-labelledby="wt-h" data-testid="wastage-trend"><h1 id="wt-h">{t('mc.trendTitle')}</h1><p className="muted">{t('mc.trendIntro')}</p><p><Link to="/inv/reconciliations">{t('mc.title')}</Link></p>
+    <section aria-labelledby="wt-h" data-testid="wastage-trend"><PageHeader id="wt-h" title={t('mc.trendTitle')} subtitle={t('mc.trendIntro')} meta={<Link to="/inv/reconciliations">{t('mc.title')}</Link>} />
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('item')} name="itemId" error={null}><select value={itemId} onChange={(ev) => setItemId(ev.target.value)} style={{ minHeight: 44 }} data-testid="wt-item"><option value="">{t('mc.allMaterials')}</option>{(mq.data ?? []).map((k) => <option key={k.id} value={k.itemId}>{k.item}</option>)}</select></Field>
         <Field label={t('mc.site')} name="siteId" error={null}><select value={siteId} onChange={(ev) => setSiteId(ev.target.value)} style={{ minHeight: 44 }} data-testid="wt-site"><option value="">{t('mc.allSites')}</option>{(sq.data?.rows ?? []).map((r) => <option key={r.siteId} value={r.siteId}>{r.project}/{r.site}</option>)}</select></Field></div>
         {d && perms.includes('inv.reconciliation.export') && <div className="actions-row"><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => saveCsv('wastage-trend.csv', [[t('mc.month'), t('mc.site'), t('item'), t('mc.wastage'), t('mc.allowed'), t('mc.theoretical'), t('mc.actual'), t('mc.variance')], ...d.points.map((p) => [p.period, p.site, p.item, p.wastagePct ?? '', p.allowedPct, p.theoretical, p.actual, p.variance])])} data-testid="wt-export">{t('i.exportCsv')}</button></div>}</div>

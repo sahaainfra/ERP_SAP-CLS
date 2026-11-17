@@ -50,7 +50,7 @@ async function seed(c, t) {
 test('Quality: dashboard KPIs and exceptions, control charts with limits and a flagged sample, ratings', async ({ browser, request }, info) => {
   test.setTimeout(240_000);
   const t = `q${info.project.name === 'mobile' ? 'm' : 'd'}${Date.now().toString(36).slice(-4)}`; const c = await company(request, t.toUpperCase()); const s = await seed(c, t);
-  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/qa/dashboard'); const p = pm.page; const errors = watch(p);
+  const pm = await open(browser, info, c, 'PM', s.u('pm'), '/qa/dashboard?view=detail'); const p = pm.page; const errors = watch(p);
   await expect(p.getByTestId('qa-dashboard')).toBeVisible(); await expect(p.getByTestId('kpi-firstTimeIr-value')).toHaveText('66.7%'); await expect(p.getByTestId('kpi-firstTimeIr')).toHaveAttribute('data-status', 'red'); await expect(p.getByTestId('kpi-openNcr-value')).toHaveText('1'); await expect(p.getByTestId('kpi-cubeFail-value')).toHaveText('16.7%'); await expect(p.getByTestId('kpi-snagClosure-value')).toHaveText('50%');
   await expect(p.getByTestId('dash-exception').first()).toBeVisible(); await noOverflow(p); await shot(p, '1-dashboard', info); const dl = p.waitForEvent('download'); await p.getByTestId('dash-export').click(); expect((await dl).suggestedFilename()).toMatch(/quality-kpis/);
   await p.getByTestId('dash-project').selectOption(String(s.A)); await expect(p.getByTestId('kpi-openNcr-value')).toHaveText('1');

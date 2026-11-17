@@ -1,5 +1,6 @@
 import { Link, usePageTitle } from '../../core/pages/ui.jsx';
 import { useMe } from '../api/index.js';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 /** What a person sees until a role is approved for them (the restricted onboarding state): a welcome, what is happening, and their profile. */
 export default function WelcomePage() {
@@ -8,7 +9,7 @@ export default function WelcomePage() {
   const u = me.data;
   return (
     <section aria-labelledby="page-title">
-      <div className="page-head"><h1 id="page-title">Welcome{u ? `, ${u.displayName}` : ''}</h1></div>
+      <PageHeader id="page-title" title={<>Welcome{u ? `, ${u.displayName}` : ''}</>} />
       <div className="card" data-testid="welcome-card">
         <h2>Your account is ready, but has no access yet</h2>
         <p>Nobody gets access to the ERP until an administrator has asked for a role for them and the request has been approved. That has not happened yet for your account, so only this page and your profile are open.</p>

@@ -4,12 +4,15 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDate } from '../../platform/format.js';
 import { Field, Link, Tile, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, employees } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // HR Overview (HR, part 07.01): the headcount (active and on notice), joiners and leavers in the chosen period, people on notice, what waits for approval and the changes scheduled, from the live records. Headcount by department, by
 // site and by type as bars that open the directory behind them; what needs attention (expired and expiring documents, a separated person whose access could not be removed, people with no user account); the recent joiners and
 // leavers and "My pending actions". Filters: period and work location. Every tile and bar opens the filtered list.
 const KIND = { ERROR: 'is-overdue', WARNING: 'is-soon', INFO: '' };
-export default function HrOverviewPage() {
+function HrOverviewPageClassic() {
   usePageTitle('HR Overview');
   const [f, setF] = useState({ from: dayIST(-30), to: dayIST(0), locationType: '' });
   const q = useQuery({ queryKey: ['hr', 'overview', f], queryFn: () => employees.overview(f), retry: false });
@@ -25,7 +28,7 @@ export default function HrOverviewPage() {
   );
   return (
     <section aria-labelledby="hro-title" data-testid="hr-overview">
-      <h1 id="hro-title">HR Overview</h1>
+      <PageHeader id="hro-title" title={"HR Overview"} />
       <form className="srch-form" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Joiners and leavers from" name="from" error={null}><input type="date" value={f.from} max={f.to} onChange={(e) => setF({ ...f, from: e.target.value })} data-testid="hro-from" /></Field>
         <Field label="to" name="to" error={null}><input type="date" value={f.to} min={f.from} onChange={(e) => setF({ ...f, to: e.target.value })} data-testid="hro-to" /></Field>
@@ -33,7 +36,7 @@ export default function HrOverviewPage() {
       </form>
       {q.isPending ? <Skeleton label="Loading the HR overview" rows={4} /> : (
         <>
-          <div className="tiles" data-testid="hro-tiles">{d.tiles.map((t) => <Tile key={t.key} label={t.label} value={t.value} status={t.tone} hint={t.hint} to={t.to} testId={`hro-${t.key}`} />)}</div>
+          <KpiRow data-testid="hro-tiles">{d.tiles.map((t) => <Tile key={t.key} label={t.label} value={t.value} status={t.tone} hint={t.hint} to={t.to} testId={`hro-${t.key}`} />)}</KpiRow>
           <div className="mdm-two">
             <section aria-labelledby="hro-attention"><h2 id="hro-attention">Needs attention</h2>
               {d.attention.length === 0 ? <EmptyState compact title="Nothing needs attention" message="No expired document, no access left open." /> : <ul className="mdm-list" data-testid="hro-attention">{d.attention.map((x) => <li key={x.text} className={KIND[x.kind]}><Link to={x.link}>{x.text}</Link></li>)}</ul>}
@@ -58,4 +61,9 @@ export default function HrOverviewPage() {
       )}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export default function HrOverviewPage() {
+  return <OverviewSwitch code="ov-hr" heading="HR Overview" intro="Headcount, joiners and leavers, what waits for approval and where people work, from the employee overview service." Classic={HrOverviewPageClassic} />;
 }

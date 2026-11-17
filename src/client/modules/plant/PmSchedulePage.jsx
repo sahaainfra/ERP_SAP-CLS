@@ -6,6 +6,7 @@ import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, fmtQty, mt, pl } from './api.js';
 import { ExportButton, useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // PM schedule (part 17.05, FR-01): the services due from the meter and the date, and the plans (by equipment class or one machine; hours, kilometres or days). A plan of a class reaches every machine of it; a critical plan that is overdue blocks putting the machine to work.
 export default function PmSchedulePage() {
@@ -18,7 +19,7 @@ export default function PmSchedulePage() {
   const rows = dq.data.data ?? []; const create = async () => { const d = await run(() => mt.planCreate({ code: f.code, task: f.task, classItemId: f.target === 'class' ? Number(f.classItemId) : null, equipmentId: f.target === 'machine' ? Number(f.equipmentId) : null, intervalType: f.intervalType, interval: Number(f.interval), warnBefore: Number(f.warnBefore || 0), critical: f.critical }), t('m.planCreated')); if (d) setOpen(false); };
   const toggle = (p) => run(() => mt.planUpdate(p.id, { status: p.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE', rowVersion: p.version }), t('m.planChanged'));
   return (
-    <section aria-labelledby="ps-h" data-testid="plant-pm-schedule"><h1 id="ps-h">{t('m.scheduleTitle')}</h1><p className="muted">{t('m.scheduleIntro')} <Link to="/plant/maintenance">{t('m.dashTitle')}</Link></p>
+    <section aria-labelledby="ps-h" data-testid="plant-pm-schedule"><PageHeader id="ps-h" title={t('m.scheduleTitle')} subtitle={<>{t('m.scheduleIntro')} <Link to="/plant/maintenance">{t('m.dashTitle')}</Link></>} />
       {note && <p className="mdm-banner" role="status" data-testid="ps-note">{note}</p>}{error?.form && <p className="field-error" role="alert" data-testid="ps-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <div role="tablist" className="tabs no-print">{['due', 'plans'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`ps-tab-${k}`}>{t(`m.tab.${k}`)}</button>)}</div>
       {tab === 'due' ? <>

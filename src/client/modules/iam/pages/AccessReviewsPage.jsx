@@ -5,6 +5,7 @@ import { useCampaign, useCampaignItems, useCampaigns, useCancelCampaign, useClos
 import { useOrgTree } from '../api/org.js';
 import { useUsers } from '../api/users.js';
 import { StatusChip } from '../components/privilegedCommon.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const SCOPES = [['PRIVILEGED', 'Privileged roles only'], ['ALL', 'Every role of everyone'], ['DEPARTMENT', 'One department']];
 const flatten = (nodes) => nodes.flatMap((n) => [n, ...flatten(n.children ?? [])]);
@@ -129,8 +130,7 @@ export default function AccessReviewsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Access reviews</nav>
-      <div className="page-head"><h1 id="page-title">Access Reviews</h1>{manage && <button type="button" className="btn btn-primary" onClick={() => { setError(null); dialog.current?.showModal(); }}>Start a campaign</button>}</div>
-      <p className="muted">Each quarter, every reviewer confirms or removes the access of the people in their care. A campaign cannot close until every line is decided; closing applies the removals. Reviewers work on <Link to="/account/access-review">My Access Review</Link>.</p>
+      <PageHeader id="page-title" title={"Access Reviews"} actions={<>{manage && <button type="button" className="btn btn-primary" onClick={() => { setError(null); dialog.current?.showModal(); }}>Start a campaign</button>}</>} subtitle={<>Each quarter, every reviewer confirms or removes the access of the people in their care. A campaign cannot close until every line is decided; closing applies the removals. Reviewers work on <Link to="/account/access-review">My Access Review</Link>.</>} />
       <p role="status" className="notice" data-testid="review-notice">{notice}</p>
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Status</span>
@@ -217,7 +217,7 @@ export function MyAccessReviewPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">My account &rsaquo; Access review</nav>
-      <div className="page-head"><h1 id="page-title">My Access Review</h1></div>
+      <PageHeader id="page-title" title={"My Access Review"} />
       {list.data?.campaigns?.length > 0 && <p className="muted">Open: {list.data.campaigns.map((c) => `${c.code} (due ${formatDate(c.due_date)})`).join(', ')}. Certify what is still needed; revoke what is not. Revokes take effect when the campaign is closed.</p>}
       <p role="status" className="notice" data-testid="myreview-notice">{notice}</p>
       <div className="toolbar">

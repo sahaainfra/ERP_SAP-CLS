@@ -1,6 +1,7 @@
 import { useSession } from '../core/api/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Transfers (HR, part 07.03): the List Report of transfers and secondments (search, filters, sort, saved views, export). Each user sees the transfers that leave or join the projects and sites their role reaches.
 export default function TransfersPage() {
@@ -10,7 +11,7 @@ export default function TransfersPage() {
   const canNew = perms.includes('hr.transfer.create');
   return (
     <section aria-labelledby="tl-title" data-testid="transfers">
-      <h1 id="tl-title" className="sr-only">Transfers</h1>
+      <PageHeader id="tl-title" srOnly title={"Transfers"} />
       <ListReport listCode="hr.transfers" endpoint="/hr/transfers" title="Transfers" session={session.data}
         rowHref={(r) => `/hr/transfers/transfer?id=${r.id}`} onOpen={(r) => navigateTo(`/hr/transfers/transfer?id=${r.id}`)}
         cardFields={['docNo', 'employee', 'toSite', 'joinDate', 'status']} statusKey="status" dateKey="updatedAt"

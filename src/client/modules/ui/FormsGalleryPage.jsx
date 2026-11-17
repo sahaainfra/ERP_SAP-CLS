@@ -5,6 +5,7 @@ import {
   CheckboxField, DateField, DateRangeField, FileField, GpsField, LineGrid, LookupField, MultiSelectField, NumberField, PhotoField, QrScanField, RadioGroupField, RichTextField,
   SelectField, SignaturePad, SwitchField, TextareaField, TextField, TimeField, newRow, todayIst,
 } from '../../platform/forms/index.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The Form Components Gallery (part 03.02, AC-01): every field type of the data-entry framework in each state (default, focus, error,
 // disabled, read-only), working, in the current theme and density; a line grid to try keyboard entry and paste from Excel; and what
@@ -87,8 +88,7 @@ export default function FormsGalleryPage() {
   return (
     <section aria-labelledby="page-title" className="gallery">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Design System &rsaquo; Form Components</nav>
-      <div className="page-head"><h1 id="page-title">Form Components</h1></div>
-      <p className="muted">Every field of the data-entry framework in each state, working: type, pick, paste and tab through them. They follow the theme and the density you chose under Appearance. Read-only values are shown as text, not as greyed-out boxes.</p>
+      <PageHeader id="page-title" title={"Form Components"} subtitle={"Every field of the data-entry framework in each state, working: type, pick, paste and tab through them. They follow the theme and the density you chose under Appearance. Read-only values are shown as text, not as greyed-out boxes."} />
 
       <h2 id="states-title">Fields in every state</h2>
       <div className="toolbar">

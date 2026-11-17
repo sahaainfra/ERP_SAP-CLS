@@ -7,6 +7,8 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { daysAgo, fmtDate, fmtPct, fmtQty, st, today } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Productivity Dashboard (part 14.06, FR-02, FR-04, FR-05): the labour efficiency (the man-days the norm asks for over the man-days used), the man-days lost, by work type, crew and contractor, the weekly trend, the
 // worst performers, the alerts and the records to check; every tile and row opens the report behind it.
@@ -42,21 +44,21 @@ export default function ProductivityDashboardPage() {
   const d = q.data; const rep = `/site/productivity-report?${qsOf(f)}`;
   return (
     <section aria-labelledby="pd-h" data-testid="site-productivity">
-      <h1 id="pd-h">{t('cnd.prd.title')}</h1>
+      <PageHeader id="pd-h" title={t('cnd.prd.title')} />
       <ProdFilters t={t} f={f} set={set} projects={d?.projects ?? []} sites={d?.sites ?? []} />
       {q.isPending && <Skeleton label={t('cnd.prd.title')} rows={6} />}
       {q.isError && q.error?.status !== 403 && <ErrorState error={q.error} onRetry={q.refetch} />}
       {d && (
         <>
           {d.records === 0 && d.outlierCount === 0 ? <div className="mdm-panel" data-testid="pd-empty"><h2>{t('cnd.prd.emptyTitle')}</h2><p className="muted">{t('cnd.prd.emptyBody')}</p><Link to="/site/dprs">{t('dpr.register')}</Link> · <Link to="/site/productivity-norms">{t('cnd.prd.norms')}</Link></div> : null}
-          <div className="tiles" data-testid="pd-tiles">
+          <KpiRow data-testid="pd-tiles">
             <Tile label={t('cnd.prd.efficiency')} value={fmtPct(d.efficiency)} status={tone(d.efficiency, d.limit)} hint={t('cnd.prd.limit', { n: d.limit })} to={rep} testId="pd-efficiency" />
             <Tile label={t('cnd.prd.machineEfficiency')} value={fmtPct(d.machineEfficiency)} status={tone(d.machineEfficiency, d.limit)} to={rep} testId="pd-machine" />
             <Tile label={t('cnd.prd.lost')} value={fmtQty(d.lostManDays)} status={d.lostManDays ? 'warning' : 'success'} to={rep} testId="pd-lost" />
             <Tile label={t('cnd.prd.belowNorm')} value={`${d.belowNorm} / ${d.records}`} to={rep} testId="pd-below" />
             <Tile label={t('cnd.prd.alerts')} value={d.alerts.length} status={d.alerts.length ? 'danger' : 'success'} testId="pd-alerts-count" />
             <Tile label={t('cnd.prd.toCheck')} value={d.outlierCount} status={d.outlierCount ? 'warning' : 'success'} testId="pd-outliers-count" />
-          </div>
+          </KpiRow>
           <div className="mdm-panel" data-testid="pd-trend"><h2>{t('cnd.prd.trend')}</h2>
             {d.trend.length === 0 ? <p className="muted">{t('cnd.prd.noData')}</p> : <Chart type="line" data={{ categories: d.trend.map((w) => w.week.slice(5)), series: [{ name: t('cnd.prd.efficiency'), values: d.trend.map((w) => w.efficiency) }] }} title={`${t('cnd.prd.trend')} (%)`} />}
           </div>

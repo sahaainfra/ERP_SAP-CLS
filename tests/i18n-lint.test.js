@@ -22,10 +22,10 @@ test('BR-01 the rule refuses text in JSX, in the attributes people read and in a
 });
 
 const FILES = {
-  'src/client/platform/shell/AppShell.jsx': ['shell'], 'src/client/platform/shell/ShellParts.jsx': ['shell', 'common'], 'src/client/platform/shell/CommandPalette.jsx': ['palette', 'shell', 'common'],
+  'src/client/platform/shell/AppShell.jsx': ['shell'], 'src/client/platform/shell/RoutePage.jsx': ['shell'], 'src/client/platform/shell/ShellParts.jsx': ['shell', 'common'], 'src/client/platform/shell/CommandPalette.jsx': ['palette', 'shell', 'common'],
   'src/client/platform/feedback/states.jsx': ['common'], 'src/client/modules/ui/FieldHomePage.jsx': ['field'], 'src/client/modules/ui/ScannerPage.jsx': ['field'], 'src/client/modules/ui/FormatPanel.jsx': ['format'],
   'src/client/platform/device/CodeScanner.jsx': ['field'], 'src/client/platform/device/LocationNotice.jsx': ['field'], 'src/client/platform/device/PwaBanners.jsx': ['field'], 'src/client/platform/device/DeviceMenu.jsx': ['field'],
-  'src/client/modules/core/pages/ui.jsx': ['common'],
+  'src/client/modules/core/pages/ui.jsx': ['common'], 'src/client/modules/site/DprEntryPage.jsx': ['site', 'field'], 'src/client/platform/device/VoiceNote.jsx': ['field'],
 };
 
 test('T-01 FR-01 every text key the field, shell and common screens ask for exists in English and Hindi, and every key of the field area is used', () => {

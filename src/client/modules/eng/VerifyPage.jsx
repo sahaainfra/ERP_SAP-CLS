@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { verifyCode, verifyFile } from '../../platform/signatures/api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The public verification page (part 04.12, section 7.1): outside the application shell and before anybody is signed in. The QR code of a document leads here (/verify/<code>). It shows only what the company
 // chose to make public; the person can also drop the file they hold to see whether it is exactly what was issued.
@@ -30,7 +31,7 @@ export default function VerifyPage() {
   const tone = r ? TONE[r.status] ?? TONE.UNKNOWN : null;
   return (
     <main id="main" className="verify-page" data-testid="verify-page">
-      <h1>Verify a document</h1>
+      <PageHeader title={"Verify a document"} />
       <p lang="hi" className="muted">दस्तावेज़ की जाँच करें</p>
       <p className="muted">Scan the QR code on the document, or type the code printed under it. Nothing here needs a sign-in.</p>
       <form className="srch-form" onSubmit={(e) => { e.preventDefault(); run(code); }} aria-label="Check a code">

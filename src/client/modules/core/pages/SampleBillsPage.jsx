@@ -3,6 +3,7 @@ import { useCalcTraces, useCreateBill, useRecalculateBill, useSampleBills, useSu
 import { TraceView } from '../components/TraceView.jsx';
 import { formatINR } from '../../../platform/format.js';
 import { Field, FormDialog, Pager, QueryState, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const FIELDS = [['taxableAmount', 'Taxable'], ['cgstAmount', 'CGST'], ['sgstAmount', 'SGST'], ['igstAmount', 'IGST'], ['totalAmount', 'Total']];
 
@@ -75,11 +76,7 @@ export default function SampleBillsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Reference &rsaquo; Sample Bills</nav>
-      <div className="page-head">
-        <h1 id="page-title">Sample Bills</h1>
-        <button type="button" className="btn btn-primary" onClick={() => openForm(null)}>New sample bill</button>
-      </div>
-      <p className="muted">Quantity x rate gives the taxable amount (<code>boq.line_amount</code>); GST is split by <code>tax.gst_split</code>. The amounts are never typed in: they come from the engine, and Show calculation opens the steps. A submitted bill keeps the formula versions it was calculated with.</p>
+      <PageHeader id="page-title" title={"Sample Bills"} actions={<><button type="button" className="btn btn-primary" onClick={() => openForm(null)}>New sample bill</button></>} subtitle={<>Quantity x rate gives the taxable amount (<code>boq.line_amount</code>); GST is split by <code>tax.gst_split</code>. The amounts are never typed in: they come from the engine, and Show calculation opens the steps. A submitted bill keeps the formula versions it was calculated with.</>} />
       <p role="status" className="notice">{notice}</p>
       <QueryState query={list} what="sample bills" permission="core.sample.use" />
       {list.data && rows.length === 0 && <div className="state"><h2>No sample bills yet</h2><p>Create one to see the calculation and its trace.</p><button type="button" className="btn btn-primary" onClick={() => openForm(null)}>New sample bill</button></div>}

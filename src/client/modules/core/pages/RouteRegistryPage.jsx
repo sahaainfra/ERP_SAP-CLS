@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { formatDateTime, toCsv } from '../../../platform/format.js';
 import { useRoutes, useSelfTest } from '../api/security.js';
 import { Pager, QueryState, can, downloadCsv, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../../platform/design/Kpi.jsx';
 
 const GUARD = { permission: ['chip-pass', 'Permission'], self: ['chip-not_applicable', 'Own account'], record: ['chip-not_applicable', 'Record rules'], public: ['chip-bad', 'Public'], infra: ['chip-never', 'Infrastructure'] };
 const RESULT = { pass: ['chip-pass', 'Passed'], fail: ['chip-bad', 'Failed'], skipped: ['chip-never', 'Not applicable'] };
@@ -23,17 +25,16 @@ export default function RouteRegistryPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Security &rsaquo; Route registry</nav>
-      <div className="page-head"><h1 id="page-title">Route Registry</h1></div>
-      <p className="muted">Every route of the application, with the permission it needs, what it is scoped by, its rate-limit class and the result of its last test. A route that is not declared here stops the application from starting in staging and production.</p>
+      <PageHeader id="page-title" title={"Route Registry"} subtitle={"Every route of the application, with the permission it needs, what it is scoped by, its rate-limit class and the result of its last test. A route that is not declared here stops the application from starting in staging and production."} />
       <p role="status" className="notice" data-testid="route-notice">{notice}</p>
       {s && (
-        <div className="tiles" data-testid="route-summary">
+        <KpiRow data-testid="route-summary">
           <div className={`tile ${s.undeclared ? 'tile-bad' : 'tile-ok'}`}><span>Routes declared</span><strong>{s.declaredPct}%</strong><span className="muted small">{s.total} routes{s.undeclared ? `, ${s.undeclared} missing` : ''}</span></div>
           <div className="tile"><span>With a permission</span><strong>{s.permission}</strong></div>
           <div className="tile"><span>Own account or record rules</span><strong>{s.self + s.record}</strong></div>
           <div className="tile"><span>Public</span><strong>{s.public}</strong></div>
           <div className={`tile ${s.failed ? 'tile-bad' : s.passed ? 'tile-ok' : ''}`}><span>Last self-test</span><strong>{s.passed + s.failed ? `${s.passed} passed, ${s.failed} failed` : 'Not run'}</strong><span className="muted small">{s.testedAt ? formatDateTime(s.testedAt) : ''}</span></div>
-        </div>
+        </KpiRow>
       )}
       <div className="toolbar">
         <label className="field field-inline"><span className="sr-only">Search routes</span><input type="search" placeholder="Search path or permission" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></label>

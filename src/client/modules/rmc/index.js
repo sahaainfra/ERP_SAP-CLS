@@ -1,9 +1,18 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import PlantsPage from './PlantsPage.jsx';
-import MixDesignsPage from './MixPages.jsx';
-import { BatchesPage, ProductionBoardPage, RequisitionsPage } from './ProductionPages.jsx';
-import { CostReportPage, CostingDashboardPage, TransferRatesPage } from './CostingPages.jsx';
-import { ConsumptionPage, ReceiptPage, TicketsPage } from './TicketPages.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const PlantsPage = lazyPage(() => import('./PlantsPage.jsx'));
+const MixDesignsPage = lazyPage(() => import('./MixPages.jsx'));
+const BatchesPage = lazyPage(() => import('./ProductionPages.jsx'), 'BatchesPage');
+const ProductionBoardPage = lazyPage(() => import('./ProductionPages.jsx'), 'ProductionBoardPage');
+const RequisitionsPage = lazyPage(() => import('./ProductionPages.jsx'), 'RequisitionsPage');
+const CostReportPage = lazyPage(() => import('./CostingPages.jsx'), 'CostReportPage');
+const CostingDashboardPage = lazyPage(() => import('./CostingPages.jsx'), 'CostingDashboardPage');
+const TransferRatesPage = lazyPage(() => import('./CostingPages.jsx'), 'TransferRatesPage');
+const ConsumptionPage = lazyPage(() => import('./TicketPages.jsx'), 'ConsumptionPage');
+const ReceiptPage = lazyPage(() => import('./TicketPages.jsx'), 'ReceiptPage');
+const TicketsPage = lazyPage(() => import('./TicketPages.jsx'), 'TicketsPage');
 
 registerModule({
   code: 'rmc',

@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, Skeleton } from '../../platform/feedback/states
 import { formatDateTime } from '../../platform/format.js';
 import { comm } from '../../platform/messages/Comm.jsx';
 import { can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Announcements (part 05.04, FR-04): what was announced to the person (read when opened, confirmed with an optional quiz) and what they announced (recipients, read and confirmed percentages, who has not read it).
 const STATUS = { DRAFT: ['DRAFT', 'Draft'], SCHEDULED: ['IN_REVIEW', 'Scheduled'], PUBLISHED: ['COMPLETED', 'Published'], EXPIRED: ['DRAFT', 'Expired'], CANCELLED: ['REJECTED', 'Cancelled'] };
@@ -65,8 +66,7 @@ export default function AnnouncementsPage({ session }) {
   const choose = (id) => { window.history.pushState(null, '', `/collab/announcements?a=${id}`); setSel(id); };
   return (
     <section aria-labelledby="ann-title" data-testid="announcements">
-      <div className="page-head"><h1 id="ann-title">Announcements</h1>
-        {can(session, 'msg.announcement.send') && <button type="button" className="btn btn-primary" onClick={() => navigateTo('/collab/announcements/new')} data-testid="an-new">New announcement</button>}</div>
+      <PageHeader id="ann-title" title={"Announcements"} actions={<>{can(session, 'msg.announcement.send') && <button type="button" className="btn btn-primary" onClick={() => navigateTo('/collab/announcements/new')} data-testid="an-new">New announcement</button>}</>} />
       <div className="msg-filters" role="tablist" aria-label="Which announcements">
         {[['received', 'For me'], ...(can(session, 'msg.announcement.send') ? [['sent', 'Sent by me']] : []), ...(can(session, 'msg.comm.view_all') ? [['all', 'All']] : [])].map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={view === k} className={`lr-chip${view === k ? ' is-on' : ''}`} onClick={() => { setView(k); setSel(null); }} data-testid={`an-tab-${k}`}>{l}{k === 'received' && q.data?.unread ? ` (${q.data.unread} unread)` : ''}</button>)}
       </div>

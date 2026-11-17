@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { LOG_TONE, fmtDate, fmtQty, fmtRs, lg, pl } from './api.js';
 import { ExportButton, useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Equipment log books (part 17.03): the list of logs and of breakdowns, the log with its readings, flags, cost and history, and the report of a breakdown.
 const CATS = ['MECHANICAL', 'HYDRAULIC', 'ELECTRICAL', 'TYRE', 'ACCIDENT', 'OTHER'];
@@ -20,7 +21,7 @@ function Log({ id }) {
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('sayWhy') }); return; } run(() => pl.decide(x.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   const kv = (k, v) => <div><dt>{t(k)}</dt><dd>{v ?? '—'}</dd></div>;
   return (
-    <div data-testid="lg-object" data-status={x.status}><h1 id="lg-h">{x.docNo} <StatusBadge status={LOG_TONE[x.status]} label={t(`rs.${x.status}`)} /></h1><p><Link to="/plant/logs">{t('l.logsTitle')}</Link> · <Link to={`/plant/equipment?id=${x.equipmentId}`}>{x.assetCode}</Link> · {fmtDate(x.date)} · {x.shiftLabel} · {x.project}{x.site ? `/${x.site}` : ''}</p>
+    <div data-testid="lg-object" data-status={x.status}><PageHeader id="lg-h" title={<>{x.docNo} <StatusBadge status={LOG_TONE[x.status]} label={t(`rs.${x.status}`)} /></>} meta={<><Link to="/plant/logs">{t('l.logsTitle')}</Link> · <Link to={`/plant/equipment?id=${x.equipmentId}`}>{x.assetCode}</Link> · {fmtDate(x.date)} · {x.shiftLabel} · {x.project}{x.site ? `/${x.site}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="lg-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="lg-note">{note}</p>}
       {x.anomalies.length > 0 && <div className="mdm-banner" role="alert" data-testid="lg-flags"><strong>{t('l.flagged')}</strong><ul>{x.anomalies.map((a) => <li key={a.code}>{a.message}</li>)}</ul>{x.anomalyNote && <p data-testid="lg-explanation">{t('l.explanation')}: {x.anomalyNote}</p>}</div>}
       {x.status === 'APPROVED' && !x.useRecorded && x.useNote && <p className="mdm-banner" role="alert" data-testid="lg-usenote">{t('l.useNote', { n: x.useNote })}</p>}
@@ -49,7 +50,7 @@ export default function LogsPage() {
   const t = useT('plant'); usePageTitle(t('l.logsTitle')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession(); const [tab, setTab] = useState(sp.get('tab') === 'breakdowns' ? 'breakdowns' : 'logs');
   if (id) return <section aria-labelledby="lg-h"><Log id={id} /></section>;
   return (
-    <section aria-labelledby="lgl-h" data-testid="plant-logs"><h1 id="lgl-h">{t('l.logsTitle')}</h1><p className="muted">{t('l.logsIntro')}</p>
+    <section aria-labelledby="lgl-h" data-testid="plant-logs"><PageHeader id="lgl-h" title={t('l.logsTitle')} subtitle={t('l.logsIntro')} />
       <div className="actions-row no-print"><Link to="/plant/log-entry">{t('l.entryTitle')}</Link><Link to="/plant/log-verification">{t('l.verifyTitle')}</Link><Link to="/plant/utilisation">{t('l.utilTitle')}</Link><ExportButton query={{}} name="equipment-logs.csv" path="/logs/export" testId="lg-export" /></div>
       <div role="tablist" className="tabs no-print">{['logs', 'breakdowns'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`lg-tab-${k}`}>{t(`l.tab.${k}`)}</button>)}</div>
       {tab === 'breakdowns' ? <Breakdowns t={t} session={session.data} /> : <ListReport listCode="plant.logs" endpoint="/plant/logs" title={t('l.logsTitle')} session={session.data} rowHref={(r) => `/plant/logs?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/logs?id=${r.id}`)} cardFields={['docNo', 'assetCode', 'date', 'status']} statusKey="status" dateKey="date" empty={{ title: t('l.logsEmptyTitle'), text: t('l.logsEmptyBody') }} />}

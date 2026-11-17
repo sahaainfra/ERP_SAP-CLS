@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { QUOTE_TONE, addDays, download, fmtDate, fmtQty, fmtRs, pc, today } from './api.js';
 import { useSearch } from '../site/parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Quotation entry (part 15.03, FR-04 to FR-06): procurement keys in what a vendor quoted, line by line: rate, discount, GST rate, freight, loading, other charges, make and deviation. The landed rate of each line is worked out by the server
 // when the draft is saved (GST left out when recoverable); recording it as received makes it the vendor's current quotation. A revision is a new version that replaces the earlier one. Rates are seen only by those with the right (BR-02).
@@ -28,8 +29,7 @@ function Quote({ t, id }) {
   const why = (action, msg) => { const x = window.prompt(t('q.why')); if (x) run(() => pc.quoteAct(r.id, action, { reason: x }), msg).then((d) => { if (d && action === 'amend') navigateTo(`/proc/quotation-entry?id=${d.id}&edit=1`); }); };
   return (
     <div data-testid="quote-object" data-status={r.status}>
-      <h1 id="quote-h">{r.docNo} <StatusBadge status={QUOTE_TONE[r.status]} label={t(`q.qs.${r.status}`)} /> {r.expired && <StatusBadge status="AT_RISK" label={t('q.expired')} />}</h1>
-      <p><Link to={`/proc/rfqs?id=${r.rfqId}`}>{r.rfqNo}</Link> · <Link to="/proc/quotation-entry">{t('q.backQuotes')}</Link></p>
+      <PageHeader id="quote-h" title={<>{r.docNo} <StatusBadge status={QUOTE_TONE[r.status]} label={t(`q.qs.${r.status}`)} /> {r.expired && <StatusBadge status="AT_RISK" label={t('q.expired')} />}</>} meta={<><Link to={`/proc/rfqs?id=${r.rfqId}`}>{r.rfqNo}</Link> · <Link to="/proc/quotation-entry">{t('q.backQuotes')}</Link></>} />
       <dl className="kv" data-testid="quote-figures"><div><dt>{t('q.vendor')}</dt><dd>{r.vendor}</dd></div><div><dt>{t('q.version')}</dt><dd>{r.versionNo}{r.enteredVia === 'PORTAL' ? ` · ${t('q.byVendor')}` : ''}</dd></div><div><dt>{t('q.quoteRef')}</dt><dd>{r.quoteRef ?? '—'}</dd></div><div><dt>{t('q.validUntil')}</dt><dd>{fmtDate(r.validUntil)}</dd></div>
         <div><dt>{t('q.deliveryDays')}</dt><dd>{r.deliveryDays}</dd></div><div><dt>{t('q.payment')}</dt><dd>{r.paymentTerms ?? '—'}</dd></div><div><dt>{t('q.gst')}</dt><dd>{r.gstInclusive ? t('q.gstIncl') : t('q.gstExcl')}</dd></div>{r.canSeeRates && <div><dt>{t('q.totalLanded')}</dt><dd data-testid="quote-total">{fmtRs(r.totalLanded)}</dd></div>}
         {r.deviations && <div><dt>{t('q.deviations')}</dt><dd>{r.deviations}</dd></div>}</dl>
@@ -77,7 +77,7 @@ function Entry({ t, rfqId, vendorId, editId }) {
   };
   return (
     <section aria-labelledby="qe-h" data-testid="proc-quote-entry">
-      <h1 id="qe-h">{t('q.entryTitle')}</h1><p className="muted">{t('q.entryHelp')}</p><p><Link to="/proc/quotation-entry">{t('q.backQuotes')}</Link></p>
+      <PageHeader id="qe-h" title={t('q.entryTitle')} subtitle={t('q.entryHelp')} meta={<Link to="/proc/quotation-entry">{t('q.backQuotes')}</Link>} />
       <form className="mdm-panel" onSubmit={(ev) => { ev.preventDefault(); save(false); }} noValidate>
         <div className="form-grid">
           <Field label={t('q.rfq')} name="rfqId" error={error}><select value={rid ?? ''} disabled={Boolean(editId)} onChange={(ev) => navigateTo(`/proc/quotation-entry?rfq=${ev.target.value}`)} style={{ minHeight: 44 }} data-testid="qe-rfq"><option value="">{t('q.choose')}</option>{issued.map((x) => <option key={x.id} value={x.id}>{x.docNo} · {x.title}</option>)}</select></Field>
@@ -111,7 +111,7 @@ export default function QuotationEntryPage() {
   if (sp.get('rfq')) return <Entry key={`r${sp.get('rfq')}${sp.get('vendor')}`} t={t} rfqId={Number(sp.get('rfq'))} vendorId={Number(sp.get('vendor')) || null} />;
   return (
     <section aria-labelledby="quotes-h" data-testid="proc-quotes">
-      <h1 id="quotes-h">{t('q.entryTitle')}</h1><p className="muted">{t('q.quotesIntro')}</p>
+      <PageHeader id="quotes-h" title={t('q.entryTitle')} subtitle={t('q.quotesIntro')} />
       <div className="actions-row no-print">{perms.includes('proc.quotation.create') && <Link to="/proc/quotation-entry?rfq=0">{t('q.newQuote')}</Link>} <Link to="/proc/rfqs">{t('q.title')}</Link></div>
       <ListReport listCode="proc.quotations" endpoint="/proc/quotations" title={t('q.quotesTitle')} session={session.data} rowHref={(r) => `/proc/quotation-entry?id=${r.id}`} onOpen={(r) => navigateTo(`/proc/quotation-entry?id=${r.id}`)}
         cardFields={['docNo', 'rfq', 'vendor', 'validUntil', 'total']} statusKey="status" empty={{ title: t('q.quotesEmptyTitle'), text: t('q.quotesEmptyBody') }} />

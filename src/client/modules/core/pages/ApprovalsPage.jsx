@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useActOnRequest, usePendingRequests } from '../api/index.js';
 import { formatDateTime } from '../../../platform/format.js';
 import { QueryState, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const KIND = {
   period_reopen: 'Reopen a closed period',
@@ -52,8 +53,7 @@ export default function ApprovalsPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Approvals</nav>
-      <h1 id="page-title">Approvals</h1>
-      <p className="muted">Changes that need a second person's agreement before they take effect. You can decide a request when it is your role's turn and you did not raise it.</p>
+      <PageHeader id="page-title" title={"Approvals"} subtitle={"Changes that need a second person's agreement before they take effect. You can decide a request when it is your role's turn and you did not raise it."} />
       <p role="status" className="notice">{message}</p>
       <QueryState query={pending} what="the approvals" permission="core.requests.view" />
       {pending.data && rows.length === 0 && <div className="state"><h2>Nothing is waiting</h2><p>Requests for approval appear here as soon as someone raises one.</p></div>}

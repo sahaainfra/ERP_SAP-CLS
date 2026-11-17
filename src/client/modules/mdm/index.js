@@ -1,29 +1,34 @@
 import { createElement } from 'react';
 import { registerModule } from '../../platform/shell/registry.js';
-import BusinessPartnersPage from './BusinessPartnersPage.jsx';
-import ChangeRequestsPage from './ChangeRequestsPage.jsx';
-import PartnerApprovalsPage from './PartnerApprovalsPage.jsx';
-import PartnerPage from './PartnerPage.jsx';
-import PartnerRegistrationPage from './PartnerRegistrationPage.jsx';
-import CommonMasterPage from './CommonMasterPage.jsx';
-import ItemCategoriesPage from './ItemCategoriesPage.jsx';
-import ItemMasterPage from './ItemMasterPage.jsx';
-import ItemMigrationPage from './ItemMigrationPage.jsx';
-import ItemPage from './ItemPage.jsx';
-import NewItemPage from './NewItemPage.jsx';
-import LookupListManagerPage from './LookupListManagerPage.jsx';
-import DuplicatesPage from './DuplicatesPage.jsx';
-import MasterDataGovernancePage from './MasterDataGovernancePage.jsx';
-import MasterRecordsPage from './MasterRecordsPage.jsx';
-import QualityRulesPage from './QualityRulesPage.jsx';
-import RateAnalysesPage from './RateAnalysesPage.jsx';
-import RateAnalysisPage from './RateAnalysisPage.jsx';
-import RateImpactPage from './RateImpactPage.jsx';
-import RateLibraryPage from './RateLibraryPage.jsx';
-import SchedulesOfRatesPage from './SchedulesOfRatesPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const BusinessPartnersPage = lazyPage(() => import('./BusinessPartnersPage.jsx'));
+const ChangeRequestsPage = lazyPage(() => import('./ChangeRequestsPage.jsx'));
+const PartnerApprovalsPage = lazyPage(() => import('./PartnerApprovalsPage.jsx'));
+const PartnerPage = lazyPage(() => import('./PartnerPage.jsx'));
+const PartnerRegistrationPage = lazyPage(() => import('./PartnerRegistrationPage.jsx'));
+const CommonMasterPage = lazyPage(() => import('./CommonMasterPage.jsx'));
+const ItemCategoriesPage = lazyPage(() => import('./ItemCategoriesPage.jsx'));
+const ItemMasterPage = lazyPage(() => import('./ItemMasterPage.jsx'));
+const ItemMigrationPage = lazyPage(() => import('./ItemMigrationPage.jsx'));
+const ItemPage = lazyPage(() => import('./ItemPage.jsx'));
+const NewItemPage = lazyPage(() => import('./NewItemPage.jsx'));
+const LookupListManagerPage = lazyPage(() => import('./LookupListManagerPage.jsx'));
+const DuplicatesPage = lazyPage(() => import('./DuplicatesPage.jsx'));
+const MasterDataGovernancePage = lazyPage(() => import('./MasterDataGovernancePage.jsx'));
+const MasterRecordsPage = lazyPage(() => import('./MasterRecordsPage.jsx'));
+const QualityRulesPage = lazyPage(() => import('./QualityRulesPage.jsx'));
+const RateAnalysesPage = lazyPage(() => import('./RateAnalysesPage.jsx'));
+const RateAnalysisPage = lazyPage(() => import('./RateAnalysisPage.jsx'));
+const RateImpactPage = lazyPage(() => import('./RateImpactPage.jsx'));
+const RateLibraryPage = lazyPage(() => import('./RateLibraryPage.jsx'));
+const SchedulesOfRatesPage = lazyPage(() => import('./SchedulesOfRatesPage.jsx'));
+const StatutoryPage = lazyPage(() => import('./StatutoryPage.jsx'));
 
 /** One register page per common master, all drawn by CommonMasterPage. */
-const register = (page) => { const Page = () => createElement(CommonMasterPage, { page }); Page.displayName = `CommonMaster(${page})`; return Page; };
+// the wrapper is a few lines; the page it draws is fetched when opened (part 166.4), so the wrapper is lazy too
+const register = (page) => { const Page = () => createElement(CommonMasterPage, { page }); Object.assign(Page, { displayName: `CommonMaster(${page})`, lazyPage: true, preload: CommonMasterPage.preload }); return Page; };
 // Module "mdm" (parts 06.01 and 06.02): master data governance and the common masters (one register per master and the Lookup List Manager). The dashboard, the change requests worklist, the duplicates with compare and merge, the quality rules and stewards, and the records of the governed masters.
 registerModule({
   code: 'mdm',
@@ -43,6 +48,12 @@ registerModule({
     { path: '/admin/master-data/common/banks', label: 'Banks & IFSC', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('banks') },
     { path: '/admin/master-data/common/payment-terms', label: 'Payment & Delivery Terms', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('payment-terms') },
     { path: '/admin/master-data/common/lookups', label: 'Lookup Lists', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('lookups') },
+    // part 166.8: the statutory changes of 2025-26 and their masters
+    { path: '/admin/master-data/statutory', label: 'Statutory Changes', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: StatutoryPage },
+    { path: '/admin/master-data/common/tds-forms', label: 'TDS Forms', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('tds-forms') },
+    { path: '/admin/master-data/common/statutory-calendar', label: 'Statutory Calendar', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('statutory-calendar') },
+    { path: '/admin/master-data/common/labour-rules', label: 'Labour Code Rules', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('labour-rules') },
+    { path: '/admin/master-data/common/pay-components', label: 'Pay Components', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('pay-components') },
     { path: '/admin/master-data/lookup-manager', label: 'Lookup List Manager', icon: 'erp.action.edit', permission: 'mdm.lookup.edit', flag: 'ff.mdm.p0602', Page: LookupListManagerPage },
     { path: '/admin/items', label: 'Item Master', icon: 'erp.action.history', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemMasterPage },
     { path: '/admin/items/item', label: 'Item', icon: 'erp.action.info', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemPage },

@@ -6,6 +6,7 @@ import { formatDate, formatDateTime } from '../../platform/format.js';
 import { authHeaders } from '../../platform/api/index.js';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CATEGORIES, STATUS, pol } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Policy Register and the policy page (part 05.05, section 7.1): every policy with its category, owner, version, status, effective and review dates and the acknowledgement percentage; opening one shows its versions,
 // who it applies to, who has acknowledged it, the requirements tagged for controls, and the actions of its owner (edit the draft, start a revision, compare versions, archive).
@@ -84,7 +85,7 @@ export default function PolicyRegisterPage() {
   const choose = (id) => { window.history.pushState(null, '', `/collab/policies?id=${id}`); setSel(id); };
   return (
     <section aria-labelledby="pr-title" data-testid="policy-register">
-      <div className="page-head"><h1 id="pr-title">Policy Register</h1>{d.canCreate && <button type="button" className="btn btn-primary" onClick={() => navigateTo('/collab/policies/edit')} data-testid="pr-new">New policy</button>}</div>
+      <PageHeader id="pr-title" title={"Policy Register"} actions={<>{d.canCreate && <button type="button" className="btn btn-primary" onClick={() => navigateTo('/collab/policies/edit')} data-testid="pr-new">New policy</button>}</>} />
       <form className="srch-form" role="search" aria-label="Filter the register" onSubmit={(e) => e.preventDefault()}>
         <Field label="Search" name="q" error={null}><input type="search" value={f.q} onChange={(e) => set({ q: e.target.value })} data-testid="pr-q" /></Field>
         <Field label="Category" name="category" error={null}><select value={f.category} onChange={(e) => set({ category: e.target.value })} data-testid="pr-category"><option value="">All</option>{CATEGORIES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>

@@ -6,6 +6,7 @@ import { previewPdf, useCatalogue, useCreateTemplate, useDiscardTemplate, useSub
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { PdfPages } from './DocumentViewer.jsx';
 import { TEMPLATE_STATUS, templateLink } from './templates-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Template Editor (part 04.11, section 7.2): the HTML and the style of a format, a picker of the variables the document type allows (nothing else can be used), a check against that catalogue as you type, and a
 // live preview drawn by the server with the sample record or a real record. A draft is saved, then sent for approval; an active template is changed by making a new version of it.
@@ -115,11 +116,11 @@ export default function TemplateEditorPage({ session }) {
   if (!can(session, 'tpl.template.view')) return <NoPermission what="the template editor" permission="tpl.template.view" />;
   if (id && q.isPending) return <Skeleton label="Loading the template" rows={5} />;
   if (id && q.isError) return <ErrorState title="The template could not be loaded" error={q.error} onRetry={() => q.refetch()} />;
-  if (!id && !isNew) return (<section aria-labelledby="te-title" data-testid="template-editor"><h1 id="te-title">Template Editor</h1><EmptyState title="No template chosen" message="Open a template from the library, or make a new one." action={{ label: 'Open the library', onClick: () => navigateTo('/admin/templates') }} /></section>);
+  if (!id && !isNew) return (<section aria-labelledby="te-title" data-testid="template-editor"><PageHeader id="te-title" title={"Template Editor"} /><EmptyState title="No template chosen" message="Open a template from the library, or make a new one." action={{ label: 'Open the library', onClick: () => navigateTo('/admin/templates') }} /></section>);
   return (
     <section aria-labelledby="te-title" data-testid="template-editor">
       <p className="muted small"><Link to="/admin/templates">Templates</Link> › {isNew ? 'New template' : f.code}</p>
-      <h1 id="te-title">{isNew ? 'New template' : `${f.code} version ${t.version}`}</h1>
+      <PageHeader id="te-title" title={isNew ? 'New template' : `${f.code} version ${t.version}`} />
       {t && <p><StatusBadge status={TEMPLATE_STATUS[t.status][0]} label={TEMPLATE_STATUS[t.status][1]} />{t.shared && <span className="muted"> A standard format of the library: make your own version to change it.</span>}{t.approvedBy && <span className="muted"> Approved by {t.approvedBy}{t.approvedAt ? ` on ${formatDate(t.approvedAt)}` : ''}.</span>}{t.instanceId && t.status === 'IN_REVIEW' && <> <Link to={`/workflow/instance?id=${t.instanceId}`}>Open the approval</Link></>}</p>}
       {notice && <p role="status" className="notice" data-testid="te-notice">{notice}</p>}
       {error?.form && <p role="alert" className="error" data-testid="te-error">{error.form}{error.correlationId ? ` (reference ${error.correlationId})` : ''}</p>}

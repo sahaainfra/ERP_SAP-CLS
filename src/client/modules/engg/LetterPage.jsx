@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { Tabs } from '../proj/parts.jsx';
 import { ISSUE_MODES, LETTER_TONE, lt, openPrint } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Letter (part 11.05): the letter with its scan, thread, links and response; an outward letter shows its approval and, once approved, its number and letterhead.
 const TABS = ['details', 'thread', 'links', 'files'];
@@ -20,7 +21,7 @@ export default function LetterPage() {
   const [tab, setTab] = useState('details'); const [error, setError] = useState(null); const [note, setNote] = useState(null); const [uploaded, setUploaded] = useState(0); const [edit, setEdit] = useState(null);
   const [iss, setIss] = useState({ issueMode: 'EMAIL', deliveryRef: '' }); const [ack, setAck] = useState({ ackBy: '', ackNote: '' });
   usePageTitle(q.data ? `${q.data.letterNo ?? t('letter.draft')} ${q.data.subject}` : t('letter.title'));
-  if (!id) return <section aria-labelledby="lt-h" data-testid="lt-none"><h1 id="lt-h">{t('letter.title')}</h1><p className="muted"><Link to="/engg/letters">{t('nav.letters')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="lt-h" data-testid="lt-none"><PageHeader id="lt-h" title={t('letter.title')} subtitle={<Link to="/engg/letters">{t('nav.letters')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('nav.letters')} permission="engg.letter.view" />;
   if (q.isPending) return <Skeleton label={t('letter.title')} rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -31,8 +32,7 @@ export default function LetterPage() {
   return (
     <section aria-labelledby="lt-h" data-testid="letter" data-status={l.status} data-direction={l.direction} data-number={l.letterNo ?? ''}>
       <header>
-        <h1 id="lt-h">{l.letterNo ?? t('letter.draft')} · {l.subject} <StatusBadge status={LETTER_TONE[l.status]} label={t(`lst.${l.status}`)} /></h1>
-        <p className="muted">{l.projectCode} · {l.direction === 'IN' ? t('letter.inward') : t('letter.outward')} · {l.party} · {t(`lcat.${l.category}`)}{l.clauseRef ? ` · ${t('letter.clause')} ${l.clauseRef}` : ''}{l.contractual ? ` · ${t('letter.contractual')}` : ''}{l.confidentiality === 'CONFIDENTIAL' ? ` · ${t('letter.confidential')}` : ''}</p>
+        <PageHeader id="lt-h" title={<>{l.letterNo ?? t('letter.draft')} · {l.subject} <StatusBadge status={LETTER_TONE[l.status]} label={t(`lst.${l.status}`)} /></>} subtitle={<>{l.projectCode} · {l.direction === 'IN' ? t('letter.inward') : t('letter.outward')} · {l.party} · {t(`lcat.${l.category}`)}{l.clauseRef ? ` · ${t('letter.clause')} ${l.clauseRef}` : ''}{l.contractual ? ` · ${t('letter.contractual')}` : ''}{l.confidentiality === 'CONFIDENTIAL' ? ` · ${t('letter.confidential')}` : ''}</>} />
         {l.direction === 'IN' && <p data-testid="lt-response">{t('letter.responseDue')}: {l.responseDue ?? '—'} · <strong>{t(`lresp.${l.responseStatus}`)}</strong>{l.overdue ? ` (${t('dwg.overdue')})` : ''}</p>}
         {error?.form && <p className="field-error" role="alert" data-testid="lt-act-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="lt-note">{note}</p>}

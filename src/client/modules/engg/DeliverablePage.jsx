@@ -7,6 +7,7 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { Tabs } from '../proj/parts.jsx';
 import { ep, openPrint } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Deliverable (part 11.04): the milestones with plan and actual, the IFC release, the client comment resolution sheet per revision and the holds.
 const TABS = ['milestones', 'crs', 'holds'];
@@ -17,7 +18,7 @@ export default function DeliverablePage() {
   const q = useQuery({ queryKey: ['engg', 'deliverable', id], queryFn: () => ep.deliverable(id), enabled: Boolean(id), retry: false });
   const [tab, setTab] = useState('milestones'); const [error, setError] = useState(null); const [note, setNote] = useState(null); const [cm, setCm] = useState({ revision: 'A', comment: '' }); const [reply, setReply] = useState({}); const [hold, setHold] = useState({ description: '', impactProcurement: false, impactConstruction: false, poRef: '', activityRef: '' });
   usePageTitle(q.data ? `${q.data.deliverableNo} ${q.data.title}` : t('del.title'));
-  if (!id) return <section aria-labelledby="del-h" data-testid="del-none"><h1 id="del-h">{t('del.title')}</h1><p className="muted"><Link to="/engg/deliverables">{t('nav.deliverables')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="del-h" data-testid="del-none"><PageHeader id="del-h" title={t('del.title')} subtitle={<Link to="/engg/deliverables">{t('nav.deliverables')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('nav.deliverables')} permission="engg.deliverable.view" />;
   if (q.isPending) return <Skeleton label={t('del.title')} rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -27,8 +28,7 @@ export default function DeliverablePage() {
   return (
     <section aria-labelledby="del-h" data-testid="deliverable" data-milestone={d.milestone} data-progress={d.progress} data-release={d.releaseStatus}>
       <header>
-        <h1 id="del-h">{d.deliverableNo} · {d.title} <StatusBadge status={d.registerStatus === 'CANCELLED' ? 'CANCELLED' : d.milestone === 'NOT_STARTED' ? 'DRAFT' : d.milestone === 'IFC' || d.milestone === 'ASBUILT' ? 'APPROVED' : 'ACTIVE'} label={d.registerStatus === 'CANCELLED' ? t('dwg.cancelled') : t(`mile.${d.milestone}`)} /></h1>
-        <p className="muted">{d.projectCode} · {t(`ddisc.${d.discipline}`)} · {t(`dtype.${d.type}`)}{d.packageName ? ` · ${d.packageName}` : ''} · {t('prog.weight')} {d.weight} · <strong data-testid="del-progress">{d.progress} %</strong>{d.overdue ? ` · ${t('dwg.overdue')}` : ''}{d.drawingId ? <> · <Link to={`/engg/drawing?id=${d.drawingId}`}>{d.drawingNo}</Link></> : null}</p>
+        <PageHeader id="del-h" title={<>{d.deliverableNo} · {d.title} <StatusBadge status={d.registerStatus === 'CANCELLED' ? 'CANCELLED' : d.milestone === 'NOT_STARTED' ? 'DRAFT' : d.milestone === 'IFC' || d.milestone === 'ASBUILT' ? 'APPROVED' : 'ACTIVE'} label={d.registerStatus === 'CANCELLED' ? t('dwg.cancelled') : t(`mile.${d.milestone}`)} /></>} subtitle={<>{d.projectCode} · {t(`ddisc.${d.discipline}`)} · {t(`dtype.${d.type}`)}{d.packageName ? ` · ${d.packageName}` : ''} · {t('prog.weight')} {d.weight} · <strong data-testid="del-progress">{d.progress} %</strong>{d.overdue ? ` · ${t('dwg.overdue')}` : ''}{d.drawingId ? <> · <Link to={`/engg/drawing?id=${d.drawingId}`}>{d.drawingNo}</Link></> : null}</>} />
         {d.releaseStatus === 'PENDING' && <p className="mdm-banner" role="status" data-testid="del-pending">{t('del.releasePending')}</p>}
         {error?.form && <p className="field-error" role="alert" data-testid="del-act-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="del-note">{note}</p>}

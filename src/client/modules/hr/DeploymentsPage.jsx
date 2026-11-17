@@ -1,6 +1,7 @@
 import { useSession } from '../core/api/index.js';
 import ListReport from '../../platform/list/ListReport.jsx';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Deployments (HR, part 07.03): the List Report of deployments (search, filters, sort, saved views, 25/50/100 a page, export). A person is on one primary deployment at a time; "Now" tells what is in force today.
 // Each user sees the deployments of the projects and sites their role reaches. New deployment opens the form (single or bulk by Excel).
@@ -11,7 +12,7 @@ export default function DeploymentsPage() {
   const canNew = perms.includes('hr.deployment.create');
   return (
     <section aria-labelledby="dl-title" data-testid="deployments">
-      <h1 id="dl-title" className="sr-only">Deployments</h1>
+      <PageHeader id="dl-title" srOnly title={"Deployments"} />
       <ListReport listCode="hr.deployments" endpoint="/hr/deployments" title="Deployments" session={session.data}
         rowHref={(r) => `/hr/deployments/deployment?id=${r.id}`} onOpen={(r) => navigateTo(`/hr/deployments/deployment?id=${r.id}`)}
         cardFields={['docNo', 'person', 'site', 'fromDate', 'status']} statusKey="status" dateKey="updatedAt"

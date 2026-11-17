@@ -7,6 +7,7 @@ import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx
 import { useSession } from '../core/api/index.js';
 import { VDR_TYPES, dayIST, ep } from './api.js';
 import { ProjectSelect } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // VDR Tracker by PO and vendor (part 11.04, FR-04): the documents vendors owe on each purchase order, with their status and the overdue ones.
 export default function VdrPage() {
@@ -27,7 +28,7 @@ export default function VdrPage() {
   const txt = (k, label, props = {}) => <Field label={label} name={k} error={error}><input value={f[k]} onChange={(e) => set(k, e.target.value)} data-testid={`vdr-f-${k}`} {...props} /></Field>;
   return (
     <section aria-labelledby="vdr-h" data-testid="eg-vdr">
-      <h1 id="vdr-h">{t('vdr.title')}</h1>
+      <PageHeader id="vdr-h" title={t('vdr.title')} />
       <div className="actions-row no-print">{perms.includes('engg.vdr_item.create') && <button type="button" className="btn btn-primary" onClick={() => setOpen(!open)} data-testid="vdr-new">{t('vdr.new')}</button>}</div>
       {open && (
         <form className="mdm-panel" aria-label={t('vdr.new')} data-testid="vdr-new-form" onSubmit={create}>

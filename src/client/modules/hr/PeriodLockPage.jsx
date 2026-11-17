@@ -5,6 +5,7 @@ import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, regs } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Period Lock (HR, part 07.06, FR-07): what is still open in an attendance period (requests waiting, days with a missing punch), and the lock itself. HR locks a period after its last day, for a site or for all sites; once locked the register never
 // changes: a correction becomes arrears for payroll. Reopening a locked period is asked for here and decided by another HR manager and the finance head.
@@ -25,7 +26,7 @@ export default function PeriodLockPage() {
   const r = d?.readiness;
   return (
     <section aria-labelledby="pl-title" data-testid="lock">
-      <h1 id="pl-title">Period Lock</h1>
+      <PageHeader id="pl-title" title={"Period Lock"} />
       <form className="srch-form" aria-label="Parameters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Any day of the period" name="period" error={null}><input type="date" value={period} onChange={(e) => setPeriod(e.target.value)} data-testid="pl-period" /></Field>
         <LookupField id="pl-site" label="Site (empty for all sites)" lookup="iam/sites" value={siteId} onChange={setSiteId} />

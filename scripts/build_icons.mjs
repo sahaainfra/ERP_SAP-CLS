@@ -13,7 +13,7 @@ const pascal = (hint) => hint.split('-').map((p) => p.charAt(0).toUpperCase() + 
 const hints = new Set();
 const hintOf = (v) => (typeof v === 'string' ? v : v.glyph_hint);
 for (const v of Object.values(registry.groups)) hints.add(hintOf(v));
-for (const g of ['actions', 'states', 'modules']) for (const v of Object.values(registry[g])) hints.add(hintOf(v));
+for (const g of ['actions', 'states', 'modules', 'kpi']) for (const v of Object.values(registry[g] ?? {})) hints.add(hintOf(v));
 hints.delete('original drawing');
 const sorted = [...hints].sort();
 const missing = sorted.filter((h) => !lucide[pascal(h)]);

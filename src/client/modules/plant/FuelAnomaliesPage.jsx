@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { ANOM_TONE, fmtDate, fmtQty, fmtRs, fu, pl } from './api.js';
 import { useRunner } from './PlantParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Fuel anomalies (part 17.04, FR-05): what the detection rules raised. The plant manager explains an anomaly; the plant supervisor and then the project manager accept the explanation; or the project manager confirms a loss after investigation.
 const REASONS = ['METER_FAULT', 'HEAVY_DUTY', 'SPARE_CAN', 'LEAK_FIXED', 'MEASUREMENT', 'LOG_LATE', 'OTHER'];
@@ -20,7 +21,7 @@ function Anomaly({ id }) {
   const confirm = () => { const why = globalThis.prompt(t('f.confirmPrompt')); if (why && why.length >= 5) run(() => fu.anomalyAct(x.id, 'confirm', { note: why }), t('f.confirmed')); };
   const kv = (k, v) => <div><dt>{t(k)}</dt><dd>{v ?? '—'}</dd></div>;
   return (
-    <div data-testid="fa-object" data-status={x.status}><h1 id="fa-h">{x.docNo} <StatusBadge status={ANOM_TONE[x.status]} label={t(`f.as.${x.status}`)} /></h1><p><Link to="/plant/fuel-anomalies">{t('f.anomaliesTitle')}</Link> · {x.assetCode ?? x.tank} · {t(`f.rule.${x.rule}`)} · {x.project}{x.site ? `/${x.site}` : ''}</p>
+    <div data-testid="fa-object" data-status={x.status}><PageHeader id="fa-h" title={<>{x.docNo} <StatusBadge status={ANOM_TONE[x.status]} label={t(`f.as.${x.status}`)} /></>} meta={<><Link to="/plant/fuel-anomalies">{t('f.anomaliesTitle')}</Link> · {x.assetCode ?? x.tank} · {t(`f.rule.${x.rule}`)} · {x.project}{x.site ? `/${x.site}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="fa-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="fa-note">{note}</p>}
       {x.reviewComment && <p className="mdm-banner" role="alert" data-testid="fa-returned">{t('f.returnedWith', { c: x.reviewComment })}</p>}
       <dl className="kv" data-testid="fa-details">{kv('f.severity', t(`f.sev.${x.severity}`))}{kv('f.detected', fmtDate(x.detectedOn))}{kv('f.age', x.ageDays)}{kv('f.litresAtRisk', fmtQty(x.litresAtRisk))}{x.valueAtRisk != null && kv('f.valueAtRisk', fmtRs(x.valueAtRisk))}{x.issueId && <div><dt>{t('f.issue')}</dt><dd><Link to={`/plant/fuel-issues?id=${x.issueId}`}>{t('f.openIssue')}</Link></dd></div>}{x.reasonLabel && kv('f.reason', x.reasonLabel)}{x.explanation && kv('f.explanation', x.explanation)}{x.explainedBy && kv('f.explainedBy', x.explainedBy)}{x.confirmNote && kv('f.confirmNote', x.confirmNote)}</dl>
@@ -39,7 +40,7 @@ export default function FuelAnomaliesPage() {
   if (id) return <section aria-labelledby="fa-h"><Anomaly id={id} /></section>;
   if (sq.error?.status === 403) return <NoPermission what={t('f.anomaliesTitle')} permission="plant.fuel.report" />;
   return (
-    <section aria-labelledby="fal-h" data-testid="plant-fuel-anomalies"><h1 id="fal-h">{t('f.anomaliesTitle')}</h1><p className="muted">{t('f.anomaliesIntro')}</p>
+    <section aria-labelledby="fal-h" data-testid="plant-fuel-anomalies"><PageHeader id="fal-h" title={t('f.anomaliesTitle')} subtitle={t('f.anomaliesIntro')} />
       {sq.data && <p data-testid="fa-summary">{t('f.summary', { open: sq.data.open, waiting: sq.data.waiting, high: sq.data.high })}</p>}
       <div className="actions-row no-print"><Link to="/plant/fuel-reports">{t('f.reportsTitle')}</Link><Link to="/plant/fuel-issues">{t('f.issuesTitle')}</Link></div>
       <ListReport listCode="plant.fuel_anomalies" endpoint="/plant/fuel/anomalies" title={t('f.anomaliesTitle')} session={session.data} rowHref={(r) => `/plant/fuel-anomalies?id=${r.id}`} onOpen={(r) => navigateTo(`/plant/fuel-anomalies?id=${r.id}`)} cardFields={['docNo', 'rule', 'assetCode', 'status']} statusKey="status" dateKey="detected" empty={{ title: t('f.anomaliesEmptyTitle'), text: t('f.anomaliesEmptyBody') }} />

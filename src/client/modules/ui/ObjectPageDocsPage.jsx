@@ -4,6 +4,7 @@ import { ApiError } from '../../platform/api/index.js';
 import { ConfirmDialog, ProgressDialog } from '../../platform/feedback/Dialogs.jsx';
 import { Banner, useToast } from '../../platform/feedback/Feedback.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // The Object Page and feedback components, documented (part 03.04, section 7): how a record page is built, what the server gives it, and
 // every feedback component working. The reference record is the sample material request.
@@ -50,8 +51,7 @@ export default function ObjectPageDocsPage() {
   return (
     <section aria-labelledby="page-title" className="gallery">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Design System &rsaquo; Object Page</nav>
-      <div className="page-head"><h1 id="page-title">Object Page</h1><span className="spacer" /><button type="button" className="btn btn-primary" onClick={() => navigateTo('/admin/sample-requests')}>Open the reference record</button></div>
-      <p className="muted">Every record looks and behaves the same: a sticky header with the number, status chips and key figures; the buttons the server allows right now (a button that is off says why); and the tabs Details, Lines, Attachments, Approvals, Timeline, Discussion and Related, plus Amendments once the record has been submitted. A request in Sample Material Requests is the working example.</p>
+      <PageHeader id="page-title" title={"Object Page"} actions={<><button type="button" className="btn btn-primary" onClick={() => navigateTo('/admin/sample-requests')}>Open the reference record</button></>} subtitle={"Every record looks and behaves the same: a sticky header with the number, status chips and key figures; the buttons the server allows right now (a button that is off says why); and the tabs Details, Lines, Attachments, Approvals, Timeline, Discussion and Related, plus Amendments once the record has been submitted. A request in Sample Material Requests is the working example."} />
 
       <h2>Using it in a record page</h2>
       <pre className="doc-code" tabIndex={0}><code>{`import ObjectPage from '../../platform/object/ObjectPage.jsx';

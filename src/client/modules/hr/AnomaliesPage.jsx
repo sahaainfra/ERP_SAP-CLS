@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { SEVERITY, attp } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Attendance Anomalies (HR, part 07.05, FR-08): the worklist of punches that look wrong, the most serious and the oldest first, each with a colour for its age against the service time (green, amber, red). A reviewer accepts or
 // rejects with a note, one at a time or for the rows ticked. Accepting an outside-fence punch makes it count; for a person for whom that was accepted several times lately it also goes to the HR manager (it then shows as waiting).
@@ -37,7 +38,7 @@ export default function AnomaliesPage() {
   const toggle = (id) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   return (
     <section aria-labelledby="an-title" data-testid="anomalies">
-      <h1 id="an-title">Attendance Anomalies</h1>
+      <PageHeader id="an-title" title={"Attendance Anomalies"} />
       <form className="srch-form" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
         <Field label="Show" name="status" error={null}><select value={status} onChange={(e) => setStatus(e.target.value)} data-testid="an-status">{STATUS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>
         <Field label="Kind" name="type" error={null}><select value={type} onChange={(e) => setType(e.target.value)} data-testid="an-type">{TYPES.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></Field>

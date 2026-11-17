@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { SCORE_KEYS, inr, tdr } from './api.js';
 import { TimelinePanel, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Bid / No-Bid Evaluation (business development, part 08.02, FR-03): the tender is scored from 1 to 5 on strategic fit, margin, risk, capacity and competition; the weights make a score out of 100 and a recommendation; a decision against it needs reasons.
 // A colleague of the estimation team and then the director approve; the approved decision puts the tender in preparation (bid) or stops it (no bid).
@@ -47,8 +48,7 @@ export default function BidDecisionPage() {
   return (
     <section aria-labelledby="bid-title-h" data-testid="bid-decision" data-status={d?.status ?? 'NEW'}>
       <header>
-        <h1 id="bid-title-h">{d ? d.docNo : t('bid.new')} {d && <StatusBadge status={TONE[d.status]} label={d.statusLabel} />}</h1>
-        <p className="muted"><Link to={`/bd/tender?id=${tender.id}`}>{tender.docNo}</Link> · {tender.nameOfWork} · {tender.clientName}</p>
+        <PageHeader id="bid-title-h" title={<>{d ? d.docNo : t('bid.new')} {d && <StatusBadge status={TONE[d.status]} label={d.statusLabel} />}</>} subtitle={<><Link to={`/bd/tender?id=${tender.id}`}>{tender.docNo}</Link> · {tender.nameOfWork} · {tender.clientName}</>} />
         <dl className="op-figures"><div><dt>{t('td.estCost')}</dt><dd>{inr(tender.estCost)}</dd></div><div><dt>{t('td.bidCapacity')}</dt><dd className={tender.bidCapacity != null && tender.bidCapacity < tender.estCost ? 'field-error' : ''}>{inr(tender.bidCapacity)}</dd></div><div><dt>{t('bid.score')}</dt><dd data-testid="bid-total">{total == null ? '—' : `${total}/100`}</dd></div><div><dt>{t('bid.recommended')}</dt><dd data-testid="bid-recommendation">{recommendation ? t(`decision.${recommendation}`) : '—'}</dd></div><div><dt>{t('bid.line')}</dt><dd>{threshold}</dd></div></dl>
         {errBox}{note && <p className="mdm-banner" role="status" data-testid="bid-note">{note}</p>}
         {d && (

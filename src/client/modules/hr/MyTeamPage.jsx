@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, ess } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Team (HR, part 07.09, FR-02): for a manager, the people who report to them, directly or through others: who is in, on leave, absent or not in yet on a day, what waits for the manager's decision (leave, regularisation, overtime, letters
 // and the rest), who is away in the next 14 days. A team member shows name, post, place and today only: no bank, ID, salary or address. Works on a phone, in English or Hindi.
@@ -19,7 +20,7 @@ export default function MyTeamPage() {
   const d = q.data;
   return (
     <section aria-labelledby="mt-title" data-testid="my-team">
-      <h1 id="mt-title">{t('team.title')}</h1>
+      <PageHeader id="mt-title" title={t('team.title')} />
       <form className="srch-form" aria-label={t('team.date')} onSubmit={(e) => e.preventDefault()}><Field label={t('team.date')} name="date" error={null}><input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} data-testid="mt-date" /></Field></form>
       {q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : q.isPending ? <Skeleton label={t('team.title')} rows={5} /> : d.members.length === 0 ? <EmptyState title={t('team.none')} message="" /> : (
         <>

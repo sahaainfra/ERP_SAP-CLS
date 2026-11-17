@@ -1,9 +1,11 @@
 // The translation catalogue and the translator (part 03.09, FR-01). Strings live in src/shared/i18n/locales/<lang>.js, grouped by namespace (one
 // per area: common, shell, palette, field, notify); a company may override a string in the database (ui_translations), which is merged over the
-// file text. English is complete; when a Hindi string is missing the English one is shown and the key is reported, never an empty label.
-export const LANGS = Object.freeze(['en', 'hi']);
+// file text. English is complete; when a Hindi or Telugu (166.3) string is missing the English one is shown and the key is reported, never an empty label.
+export const LANGS = Object.freeze(['en', 'hi', 'te']);
+/** A language the screens speak, or English. */
+export const cleanLang = (l) => (LANGS.includes(l) ? l : 'en');
 
-/** Which plural form of a key a count takes: `key_one` for 1 (and, in Hindi, 0) and `key_other` for the rest. */
+/** Which plural form of a key a count takes: `key_one` for 1 (and, in Hindi, 0) and `key_other` for the rest (Telugu as English). */
 export const pluralSuffix = (lang, count) => ((lang === 'hi' ? Math.abs(count) <= 1 : Math.abs(count) === 1) ? 'one' : 'other');
 
 /** Put {name} placeholders' values in the text; a placeholder with no value stays visible, so a mistake shows. */
@@ -13,7 +15,7 @@ export const interpolate = (text, params) => String(text).replace(/\{(\w+)\}/g, 
 export const placeholdersOf = (text) => [...new Set([...String(text).matchAll(/\{(\w+)\}/g)].map((m) => m[1]))].sort();
 
 /**
- * @param {{ catalogue: Record<string, Record<string, Record<string, string>>>, lang: 'en' | 'hi', onMissing?: (lang: string, ns: string, key: string) => void }} options
+ * @param {{ catalogue: Record<string, Record<string, Record<string, string>>>, lang: 'en' | 'hi' | 'te', onMissing?: (lang: string, ns: string, key: string) => void }} options
  * `catalogue[lang][namespace][key]` is the text.
  */
 export function createTranslator({ catalogue, lang, onMissing = () => {} }) {
@@ -37,16 +39,16 @@ export function createTranslator({ catalogue, lang, onMissing = () => {} }) {
 /** Every [namespace, key, text] of a language, in a stable order. */
 export const entriesOf = (catalogue, lang) => Object.entries(catalogue[lang] ?? {}).flatMap(([ns, keys]) => Object.entries(keys).map(([key, text]) => [ns, key, text])).sort((a, b) => (a[0] + a[1]).localeCompare(b[0] + b[1]));
 
-/** English keys with no Hindi text, and Hindi keys that are not in the English (a leftover), and placeholders that differ. */
-export function compareLanguages(catalogue) {
+/** English keys with no text in the language (Hindi unless named), its keys that are not in the English (a leftover), and placeholders that differ. */
+export function compareLanguages(catalogue, lang = 'hi') {
   const out = { missing: [], extra: [], placeholders: [] };
   for (const [ns, keys] of Object.entries(catalogue.en ?? {})) {
     for (const [key, text] of Object.entries(keys)) {
-      const hi = catalogue.hi?.[ns]?.[key];
+      const hi = catalogue[lang]?.[ns]?.[key];
       if (hi === undefined || String(hi).trim() === '') out.missing.push({ ns, key });
       else if (placeholdersOf(text).join() !== placeholdersOf(hi).join()) out.placeholders.push({ ns, key });
     }
   }
-  for (const [ns, keys] of Object.entries(catalogue.hi ?? {})) for (const key of Object.keys(keys)) if (catalogue.en?.[ns]?.[key] === undefined) out.extra.push({ ns, key });
+  for (const [ns, keys] of Object.entries(catalogue[lang] ?? {})) for (const key of Object.keys(keys)) if (catalogue.en?.[ns]?.[key] === undefined) out.extra.push({ ns, key });
   return out;
 }

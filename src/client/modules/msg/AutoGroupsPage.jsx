@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { comm } from '../../platform/messages/Comm.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Auto Groups (Administration, part 05.04, FR-01): the rules that keep the project, site, department, team and discipline groups in step with the organisation and the assignments. A change is a new version approved by a
 // second person; the groups it keeps and how many people are in each are listed below, and "Run now" does at once what the minute job does.
@@ -32,8 +33,7 @@ export default function AutoGroupsPage() {
   const run = async () => { setError(null); try { const r = await comm.syncGroups(); setNotice(`Done: ${r.groups} group(s) checked, ${r.created} made, ${r.added} added, ${r.removed} removed.`); qc.invalidateQueries({ queryKey: ['comm', 'rules'] }); } catch (er) { setError(errorInfo(er)); } };
   return (
     <section aria-labelledby="ag-title" data-testid="auto-groups">
-      <h1 id="ag-title">Auto Groups</h1>
-      <p className="muted">Version {d.version || 'default'} is in force. People added by hand stay; only the people the rules added are removed when an assignment ends. The groups follow assignments within a minute.</p>
+      <PageHeader id="ag-title" title={"Auto Groups"} subtitle={<>Version {d.version || 'default'} is in force. People added by hand stay; only the people the rules added are removed when an assignment ends. The groups follow assignments within a minute.</>} />
       {d.pending.length > 0 && <p role="status" className="notice" data-testid="ag-pending">Version {d.pending[0].version} waits for approval (sent by {d.pending[0].by}). Only one change can wait at a time.</p>}
       {notice && <p role="status" className="notice" data-testid="ag-notice">{notice}</p>}
       <form className="card form-grid" onSubmit={submit} noValidate aria-label="Auto group rules" data-testid="ag-form">

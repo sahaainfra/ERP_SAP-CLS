@@ -7,6 +7,7 @@ import StepDiagram from '../../platform/workflow/StepDiagram.jsx';
 import { useActivate, useCompare, useDefinition, useDefinitionOptions, useDefinitions, useDeleteDefinition, useSaveDefinition } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEF_STATUS, useSearch } from './common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Workflow Definition Editor (part 04.01, section 7.2): a form-based list of steps with a read-only diagram of what it makes, a comparison with the active
 // version, and the request to activate it. An active or retired version is shown but never changed: make a new version instead.
@@ -103,7 +104,7 @@ export default function WorkflowEditorPage({ session }) {
   const change = (patch) => { setDirty(true); setForm((f) => ({ ...f, ...patch })); };
   const setStep = (i, patch) => change({ steps: form.steps.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
   const preview = useMemo(() => form?.steps.map((s) => ({ ...s, notify: s.notify ?? [] })) ?? [], [form]);
-  if (!id) return <section aria-labelledby="we-title"><h1 id="we-title">Workflow Definition Editor</h1><EmptyState title="No definition chosen" message="Open a definition from the list, or make a new version of a document type there." action={{ label: 'Open the workflow definitions', onClick: () => navigateTo('/admin/workflows') }} /></section>;
+  if (!id) return <section aria-labelledby="we-title"><PageHeader id="we-title" title={"Workflow Definition Editor"} /><EmptyState title="No definition chosen" message="Open a definition from the list, or make a new version of a document type there." action={{ label: 'Open the workflow definitions', onClick: () => navigateTo('/admin/workflows') }} /></section>;
   if (query.error?.status === 403) return <NoPermission what="the workflow definitions" permission="eng.workflow.view" />;
   const body = () => ({ docType: def.docType, name: form.name, settings: form.settings, steps: form.steps });
   const doSave = () => save.mutateAsync({ id, definition: body(), version: def.rowVersion }).then(() => { setDirty(false); setNotice('Saved.'); setError(null); return true; }).catch((e) => { setError(errorInfo(e)); return false; });
@@ -116,7 +117,7 @@ export default function WorkflowEditorPage({ session }) {
   };
   return (
     <section aria-labelledby="we-title" data-testid="workflow-editor">
-      <h1 id="we-title">Workflow Definition Editor</h1>
+      <PageHeader id="we-title" title={"Workflow Definition Editor"} />
       {query.isPending && <Skeleton label="Loading the definition" rows={4} />}
       {query.isError && query.error?.status !== 403 && <ErrorState title="The definition could not be loaded" error={query.error} onRetry={() => query.refetch()} />}
       {def && form && (

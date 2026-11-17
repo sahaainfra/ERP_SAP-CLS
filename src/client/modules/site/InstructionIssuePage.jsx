@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { INS_TYPES, st, today } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Issue Instruction (part 14.04, mobile form): a received instruction is registered, an internal instruction or memo is issued to subcontractors and crews; with a back-charge it goes for approval. The server
 // checks every rule again; the form only mirrors the ones that need no data (a back-charge needs a subcontractor, an internal instruction needs recipients).
@@ -90,7 +91,7 @@ export function InstructionForm({ t, editing, onSaved, onCancel }) {
 export default function InstructionIssuePage() {
   const t = useT('site'); usePageTitle(t('cnd.ins.issueTitle'));
   return (
-    <section data-testid="site-instruction-issue"><h1 className="sr-only">{t('cnd.ins.issueTitle')}</h1>
+    <section data-testid="site-instruction-issue"><PageHeader srOnly title={t('cnd.ins.issueTitle')} />
       <InstructionForm t={t} editing={null} onSaved={(d) => navigateTo(`/site/instructions?id=${d.id}`)} onCancel={() => navigateTo('/site/instructions')} />
     </section>
   );

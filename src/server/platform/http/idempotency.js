@@ -71,7 +71,8 @@ export function idempotency(db, { required = false, ttlMs = IDEMPOTENCY_TTL_MS, 
     let body;
     const send = res.send.bind(res);
     res.send = (payload) => {
-      body = payload;
+      // a compressed JSON answer (part 166.4, compressJson) is kept as the JSON it was, so a replay sends the same answer
+      body = typeof payload === 'string' ? payload : (res.locals?.jsonText ?? payload);
       return send(payload);
     };
     res.on('finish', () => {

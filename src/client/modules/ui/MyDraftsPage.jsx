@@ -4,6 +4,7 @@ import { downloadCsv, navigateTo, Pager, QueryState, usePageTitle } from '../cor
 import Icon from '../../platform/design/Icon.jsx';
 import { formatDateTime, toCsv } from '../../platform/format.js';
 import { formPageFor } from '../../platform/forms/index.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 const SAVED_BY = { autosave: 'Kept automatically', blur: 'Kept on leaving a field', manual: 'Saved by you' };
 
@@ -43,8 +44,7 @@ export default function MyDraftsPage() {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">My account &rsaquo; My Drafts</nav>
-      <div className="page-head"><h1 id="page-title">My Drafts</h1></div>
-      <p className="muted">Forms you started and have not saved yet. A draft is kept every 30 seconds while you type and whenever you leave a field, so it survives a closed tab, a crashed browser or a change of device.</p>
+      <PageHeader id="page-title" title={"My Drafts"} subtitle={"Forms you started and have not saved yet. A draft is kept every 30 seconds while you type and whenever you leave a field, so it survives a closed tab, a crashed browser or a change of device."} />
       <p role="status" className="notice" data-testid="drafts-notice">{notice}</p>
       <div className="toolbar">
         <input type="search" aria-label="Search drafts" placeholder="Search title or form" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} />

@@ -417,7 +417,7 @@ export function createOfflineService({ db, storage }) {
       const buffer = Buffer.concat(parts);
       const fail = async (msg) => { db.prepare("UPDATE off_uploads SET status = 'FAILED', error_message = ?, updated_at = ? WHERE id = ?").run(msg, nowIso(), u.id); for (let i = 0; i < u.total_chunks; i += 1) await storage.remove?.(chunkKey(u, i)); throw unprocessable(msg); };
       if (buffer.length !== u.total_size) return fail('The photo arrived with the wrong size; send it again.');
-      const type = checkType(u.file_name, buffer.subarray(0, 4096), ['jpg', 'jpeg', 'png', 'webp', 'pdf']);
+      const type = checkType(u.file_name, buffer.subarray(0, 4096), ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'webm']); // webm: a voice note of a field form (part 166.3)
       if (!type.ok) return fail(type.problem);
       const verdict = await runScanners([scanner], async function* () { yield buffer; });
       if (verdict.status === 'INFECTED') return fail(`The photo was refused by the virus scan (${verdict.detail}).`);

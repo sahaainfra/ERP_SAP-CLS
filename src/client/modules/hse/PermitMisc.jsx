@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { hse, qs } from './api.js';
 import { ErrorLine, big, useRunner } from './HseParts.jsx';
 import { PermitState, stamp } from './PermitsPage.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Active Permits board per site, Permit Approvals worklist and Permit Types (part 19.02).
 function Card({ x }) {
@@ -21,7 +22,7 @@ export function PermitBoardPage() {
   if (q.error?.status === 403) return <NoPermission what={t('pb.title')} permission="hse.permit.view" />; if (q.isPending) return <Skeleton label={t('pb.title')} rows={4} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />; const d = q.data; const tot = d.totals;
   const groups = [['active', d.active], ['onHold', d.onHold], ['suspended', d.suspended], ['expired', d.expired], ['waiting', d.waiting]];
   return (
-    <section aria-labelledby="pb-h" data-testid="hse-permit-board"><h1 id="pb-h">{t('pb.title')}</h1><p className="muted">{t('pb.intro')} <Link to="/hse/permits">{t('pm.register')}</Link></p>
+    <section aria-labelledby="pb-h" data-testid="hse-permit-board"><PageHeader id="pb-h" title={t('pb.title')} subtitle={<>{t('pb.intro')} <Link to="/hse/permits">{t('pm.register')}</Link></>} />
       <div className="form-grid no-print"><Field label={t('site')} name="siteId" error={null}><select value={siteId} onChange={(e) => setSiteId(e.target.value)} style={big} data-testid="hse-board-site"><option value="">{t('cmp.all')}</option>{(oq.data?.sites ?? []).map((s) => <option key={s.id} value={s.id}>{s.code} {s.name}</option>)}</select></Field></div>
       <p data-testid="hse-board-totals">{t('pb.totals', { active: tot.active, soon: tot.expiringSoon, suspended: tot.suspended, hold: tot.onHold, waiting: tot.waiting })}</p>
       {groups.every(([, l]) => l.length === 0) ? <div className="empty-state" data-testid="hse-board-empty"><h2>{t('pb.emptyTitle')}</h2><p>{t('pb.emptyBody')}</p></div> : groups.map(([k, list]) => list.length > 0 && <div key={k}><h2>{t(`pb.${k}`)} ({list.length})</h2><ul style={{ listStyle: 'none', padding: 0 }}>{list.map((x) => <Card key={x.id} x={x} />)}</ul></div>)}
@@ -34,7 +35,7 @@ export function PermitApprovalsPage() {
   if (q.error?.status === 403) return <NoPermission what={t('pa.title')} permission="hse.permit.approve" />; if (q.isPending) return <Skeleton label={t('pa.title')} rows={3} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const decide = (x, action) => { const c = (comment[x.id] ?? '').trim(); if (action !== 'approve' && c.length < 5) { globalThis.alert?.(t('sayWhy')); return; } run(() => hse.decide(x.taskId, action, c || null), t(`done.${action}`)); };
   return (
-    <section aria-labelledby="pa-h" data-testid="hse-permit-approvals"><h1 id="pa-h">{t('pa.title')}</h1><p className="muted">{t('pa.intro')} <Link to="/hse/permits">{t('pm.register')}</Link></p><ErrorLine error={error} id="hse-pa-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-pa-note">{note}</p>}
+    <section aria-labelledby="pa-h" data-testid="hse-permit-approvals"><PageHeader id="pa-h" title={t('pa.title')} subtitle={<>{t('pa.intro')} <Link to="/hse/permits">{t('pm.register')}</Link></>} /><ErrorLine error={error} id="hse-pa-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-pa-note">{note}</p>}
       {q.data.length === 0 ? <div className="empty-state" data-testid="hse-pa-empty"><h2>{t('pa.emptyTitle')}</h2><p>{t('pa.emptyBody')}</p></div> : (
         <ul style={{ listStyle: 'none', padding: 0 }}>{q.data.map((x) => (
           <li key={x.id} className="mdm-panel" data-testid="hse-pa-card"><Link to={`/hse/permits?id=${x.id}`}>{x.docNo}</Link> · {x.type} {x.riskClass === 'HIGH' && <StatusBadge status="REJECTED" label={t('pm.high')} />}<br />{x.location ?? '—'} · {x.title}<br /><small>{stamp(x.validFrom)} → {stamp(x.validTo)} · {x.workerCount} {t('pm.workers')} · {x.requestedBy}</small>
@@ -49,7 +50,7 @@ export function PermitTypesPage() {
   const oq = useQuery({ queryKey: ['hse', 'permit-type-options'], queryFn: () => hse.get('/permit-types/options'), retry: false }); const o = oq.data;
   const toggle = (k, val) => setV({ ...v, [k]: v[k].includes(val) ? v[k].filter((x) => x !== val) : [...v[k], val] });
   return (
-    <section aria-labelledby="pt-h" data-testid="hse-permit-types"><h1 id="pt-h">{t('pt.title')}</h1><p className="muted">{t('pt.intro')}</p>
+    <section aria-labelledby="pt-h" data-testid="hse-permit-types"><PageHeader id="pt-h" title={t('pt.title')} subtitle={t('pt.intro')} />
       <details className="mdm-panel no-print" data-testid="hse-pt-form"><summary>{t('pt.new')}</summary><ErrorLine error={error} id="hse-pt-error" />{note && <p className="mdm-banner" role="status" data-testid="hse-pt-note">{note}</p>}
         <div className="form-grid"><Field label={t('lib.code')} name="code" error={error}><input value={v.code} onChange={(e) => setV({ ...v, code: e.target.value })} maxLength={40} style={big} data-testid="hse-pt-code" /></Field><Field label={t('pt.name')} name="name" error={error}><input value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} maxLength={120} style={big} data-testid="hse-pt-name" /></Field>
           <Field label={t('pt.risk')} name="riskClass" error={error}><select value={v.riskClass} onChange={(e) => setV({ ...v, riskClass: e.target.value })} style={big} data-testid="hse-pt-risk"><option value="NORMAL">{t('pt.NORMAL')}</option><option value="HIGH">{t('pt.HIGH')}</option></select></Field>

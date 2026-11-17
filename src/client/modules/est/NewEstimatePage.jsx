@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { LookupField } from '../../platform/forms/LookupField.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { dayIST, est } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Estimate (part 09.01, FR-01): the header of the first version: for a registered tender or for a project, the basis date of the rates, the region (the state whose resource rates apply), and the percentages of HO overhead,
 // contingency, escalation and GST on works contract. The items, indirects and risks follow on the estimate.
@@ -22,7 +23,7 @@ export default function NewEstimatePage() {
   const tenders = tq.data?.data ?? [];
   return (
     <section aria-labelledby="est-new-h" data-testid="estimate-new">
-      <h1 id="est-new-h">{t('new.title')}</h1>
+      <PageHeader id="est-new-h" title={t('new.title')} />
       {error?.form && <p className="field-error" role="alert" data-testid="est-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       <form className="mdm-panel mdm-fields" onSubmit={save} aria-label={t('new.title')}>
         <fieldset><legend>{t('new.for')}</legend>

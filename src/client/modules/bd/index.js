@@ -1,27 +1,32 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import BdDashboardPage from './BdDashboardPage.jsx';
-import ClientPage from './ClientPage.jsx';
-import ClientsPage from './ClientsPage.jsx';
-import LeadPage from './LeadPage.jsx';
-import { NewLead, NewOpportunity, NewTender } from './creators.jsx';
-import BidDecisionPage from './BidDecisionPage.jsx';
-import BidDecisionsPage from './BidDecisionsPage.jsx';
-import TenderCalendarPage from './TenderCalendarPage.jsx';
-import TenderDashboardPage from './TenderDashboardPage.jsx';
-import TenderPage from './TenderPage.jsx';
-import TendersPage from './TendersPage.jsx';
-import LeadsPage from './LeadsPage.jsx';
-import OpportunitiesPage from './OpportunitiesPage.jsx';
-import OpportunityPage from './OpportunityPage.jsx';
-import PipelinePage from './PipelinePage.jsx';
-import AwardPage from './AwardPage.jsx';
-import AwardsPage from './AwardsPage.jsx';
-import BidResultsPage from './BidResultsPage.jsx';
-import CompetitorsPage from './CompetitorsPage.jsx';
-import CredentialsPage from './CredentialsPage.jsx';
-import EmdPage from './EmdPage.jsx';
-import EmdRegisterPage from './EmdRegisterPage.jsx';
-import SubmissionPage from './SubmissionPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const BdDashboardPage = lazyPage(() => import('./BdDashboardPage.jsx'));
+const ClientPage = lazyPage(() => import('./ClientPage.jsx'));
+const ClientsPage = lazyPage(() => import('./ClientsPage.jsx'));
+const LeadPage = lazyPage(() => import('./LeadPage.jsx'));
+const NewLead = lazyPage(() => import('./creators.jsx'), 'NewLead');
+const NewOpportunity = lazyPage(() => import('./creators.jsx'), 'NewOpportunity');
+const NewTender = lazyPage(() => import('./creators.jsx'), 'NewTender');
+const BidDecisionPage = lazyPage(() => import('./BidDecisionPage.jsx'));
+const BidDecisionsPage = lazyPage(() => import('./BidDecisionsPage.jsx'));
+const TenderCalendarPage = lazyPage(() => import('./TenderCalendarPage.jsx'));
+const TenderDashboardPage = lazyPage(() => import('./TenderDashboardPage.jsx'));
+const TenderPage = lazyPage(() => import('./TenderPage.jsx'));
+const TendersPage = lazyPage(() => import('./TendersPage.jsx'));
+const LeadsPage = lazyPage(() => import('./LeadsPage.jsx'));
+const OpportunitiesPage = lazyPage(() => import('./OpportunitiesPage.jsx'));
+const OpportunityPage = lazyPage(() => import('./OpportunityPage.jsx'));
+const PipelinePage = lazyPage(() => import('./PipelinePage.jsx'));
+const AwardPage = lazyPage(() => import('./AwardPage.jsx'));
+const AwardsPage = lazyPage(() => import('./AwardsPage.jsx'));
+const BidResultsPage = lazyPage(() => import('./BidResultsPage.jsx'));
+const CompetitorsPage = lazyPage(() => import('./CompetitorsPage.jsx'));
+const CredentialsPage = lazyPage(() => import('./CredentialsPage.jsx'));
+const EmdPage = lazyPage(() => import('./EmdPage.jsx'));
+const EmdRegisterPage = lazyPage(() => import('./EmdRegisterPage.jsx'));
+const SubmissionPage = lazyPage(() => import('./SubmissionPage.jsx'));
 
 registerModule({
   code: 'bd',

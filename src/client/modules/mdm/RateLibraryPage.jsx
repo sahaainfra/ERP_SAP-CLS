@@ -6,6 +6,7 @@ import { formatDate } from '../../platform/format.js';
 import ItemSelector from '../../platform/items/ItemSelector.jsx';
 import { Field, Link, Pager, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { rates, todayIST } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Resource Rate Library (Administration, part 06.06, FR-01): the rates of materials, labour trades, equipment and transport by region (state), project and date, with their source (quotation, market survey,
 // DSR, last PO). Filters for item, region, source and "in force on"; the estimator adds a rate from a date (the rate in force for the same item, region and project ends the day before) or retires one; the
@@ -33,7 +34,7 @@ export default function RateLibraryPage() {
   const retire = async (r) => { setError(null); try { await rates.retireRate(r.id, 'Retired from the rate library'); qc.invalidateQueries({ queryKey: ['mdm', 'rates'] }); } catch (err) { setError(errorInfo(err)); } };
   return (
     <section aria-labelledby="rl-title" data-testid="rate-library" className="fin-page">
-      <div className="page-head"><h1 id="rl-title">Resource Rate Library</h1>{d.canEdit && <div className="actions-row"><button type="button" className="btn btn-primary btn-small" onClick={() => { setError(null); setForm({ item: null, region: '', rate: '', uom: '', basis: 'MARKET_SURVEY', basisRef: '', effectiveFrom: todayIST() }); }} data-testid="rl-new">New rate</button><Link to="/import">Import from Excel</Link></div>}</div>
+      <PageHeader id="rl-title" title={"Resource Rate Library"} actions={<>{d.canEdit && <div className="actions-row"><button type="button" className="btn btn-primary btn-small" onClick={() => { setError(null); setForm({ item: null, region: '', rate: '', uom: '', basis: 'MARKET_SURVEY', basisRef: '', effectiveFrom: todayIST() }); }} data-testid="rl-new">New rate</button><Link to="/import">Import from Excel</Link></div>}</>} />
       {note && <p className="mdm-banner" role="status" data-testid="rl-note">{note}</p>}
       {error?.form && !form && <p className="field-error" role="alert">{error.form}</p>}
       {form && (

@@ -4,6 +4,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, usePageTitle } from '../core/pages/ui.jsx';
 import { ess } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My HR (HR, part 07.09, FR-01 and FR-04): the home of an employee on a phone or a computer, in English or Hindi: where I stand today (in, out, late), the month so far, my leave balances, what is waiting (my requests in approval,
 // what was returned to me, what waits for my decision, policies to acknowledge) and the doors to what I do most: punch, apply for leave, correct a punch, ask for a letter, change my details. Everything on it is my own.
@@ -20,7 +21,7 @@ export default function MyHrPage() {
   const stat = (k, v) => <div key={k}><dt>{t(`month.${k}`)}</dt><dd data-testid={`mh-month-${k}`}>{v}</dd></div>;
   return (
     <section aria-labelledby="mh-title" data-testid="my-hr">
-      <h1 id="mh-title">{t('home.title')}</h1>
+      <PageHeader id="mh-title" title={t('home.title')} />
       <p data-testid="mh-who"><strong>{h.employee.name}</strong> <span className="muted small">{h.employee.code}{h.employee.designation ? ` · ${h.employee.designation}` : ''}{h.employee.site ? ` · ${h.employee.site}` : ''}</span></p>
       <div className="mdm-panel" data-testid="mh-today">
         <h2>{t('home.today')}</h2>

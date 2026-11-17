@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { trn } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Skill Matrix (HR, part 07.10, FR-04): people in the rows, skills in the columns, the latest assessed level (0 to 4) in each cell, for a site, a trade and employees or workers. A manager assesses the people who report to them by choosing a level
 // in the cell; HR assesses anybody; nobody assesses themselves. The totals say how many are assessed, skilled (3 or 4) and able to train others (4); the matrix feeds deployment, permits and resource planning.
@@ -34,7 +35,7 @@ export default function SkillMatrixPage() {
   };
   return (
     <section aria-labelledby="sk-title" data-testid="skill-matrix">
-      <h1 id="sk-title">{t('skill.title')}</h1>
+      <PageHeader id="sk-title" title={t('skill.title')} />
       <form className="srch-form mdm-fields no-print" aria-label={t('skill.filters')} onSubmit={(e) => e.preventDefault()}>
         <LookupField id="sk-site" label={t('s.site')} lookup="iam/sites" value={f.siteId} onChange={(x) => setF({ ...f, siteId: x })} />
         <Field label={t('skill.trade')} name="trade" error={null}><select value={f.trade} onChange={(e) => setF({ ...f, trade: e.target.value })} data-testid="sk-trade"><option value="">{t('skill.allTrades')}</option>{trades.map((x) => <option key={x} value={x}>{x}</option>)}</select></Field>

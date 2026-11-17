@@ -1,23 +1,28 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import { registerFormPage } from '../../platform/forms/index.js';
-import StyleGuidePage from './StyleGuidePage.jsx';
-import FormsGalleryPage from './FormsGalleryPage.jsx';
-import MyDraftsPage from './MyDraftsPage.jsx';
-import SampleRequestsPage from './SampleRequestsPage.jsx';
-import MyExportsPage from './MyExportsPage.jsx';
-import ListReportDocsPage from './ListReportDocsPage.jsx';
-import ObjectPageDocsPage from './ObjectPageDocsPage.jsx';
-import LaunchpadPage from './LaunchpadPage.jsx';
-import NavigationRegistryPage from './NavigationRegistryPage.jsx';
-import ConsolePage from './ConsolePage.jsx';
-import FieldHomePage from './FieldHomePage.jsx';
-import ScannerPage from './ScannerPage.jsx';
-import { MyWorkPage, RequestsOverviewPage } from './DashboardPages.jsx';
-import DashboardDesignerPage from './DashboardDesignerPage.jsx';
-import AdvancedSearchPage from './AdvancedSearchPage.jsx';
-import SearchAdminPage from './SearchAdminPage.jsx';
-import TranslationsPage from './TranslationsPage.jsx';
-import MigrationTrackerPage from './MigrationTrackerPage.jsx';
+import { registerFormPage } from '../../platform/forms/pages.js';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const StyleGuidePage = lazyPage(() => import('./StyleGuidePage.jsx'));
+const FormsGalleryPage = lazyPage(() => import('./FormsGalleryPage.jsx'));
+const MyDraftsPage = lazyPage(() => import('./MyDraftsPage.jsx'));
+const SampleRequestsPage = lazyPage(() => import('./SampleRequestsPage.jsx'));
+const MyExportsPage = lazyPage(() => import('./MyExportsPage.jsx'));
+const ListReportDocsPage = lazyPage(() => import('./ListReportDocsPage.jsx'));
+const ObjectPageDocsPage = lazyPage(() => import('./ObjectPageDocsPage.jsx'));
+const LaunchpadPage = lazyPage(() => import('./LaunchpadPage.jsx'));
+const NavigationRegistryPage = lazyPage(() => import('./NavigationRegistryPage.jsx'));
+const ConsolePage = lazyPage(() => import('./ConsolePage.jsx'));
+const FieldHomePage = lazyPage(() => import('./FieldHomePage.jsx'));
+const ScannerPage = lazyPage(() => import('./ScannerPage.jsx'));
+const MyWorkPage = lazyPage(() => import('./DashboardPages.jsx'), 'MyWorkPage');
+const RequestsOverviewPage = lazyPage(() => import('./DashboardPages.jsx'), 'RequestsOverviewPage');
+const DashboardDesignerPage = lazyPage(() => import('./DashboardDesignerPage.jsx'));
+const AdvancedSearchPage = lazyPage(() => import('./AdvancedSearchPage.jsx'));
+const SearchAdminPage = lazyPage(() => import('./SearchAdminPage.jsx'));
+const TranslationsPage = lazyPage(() => import('./TranslationsPage.jsx'));
+const MigrationTrackerPage = lazyPage(() => import('./MigrationTrackerPage.jsx'));
+const PagePatternsPage = lazyPage(() => import('./PagePatternsPage.jsx'));
 
 // Module "ui" (part 03.01): the design system. The style guide is listed for those with ui.styleguide.view; outside production the
 // server also lets every signed-in person open it by its address. Part 03.07 adds My Work, the Requests Overview and the Dashboard Designer. Part 03.02 adds the form components gallery, each person's drafts
@@ -43,6 +48,7 @@ registerModule({
     { path: '/account/drafts', label: 'My Drafts', icon: 'erp.state.draft', flag: 'ff.ui.p0302', Page: MyDraftsPage },
     { path: '/admin/design-system/lists', label: 'List Report', icon: 'erp.action.filter', permission: 'ui.styleguide.view', flag: 'ff.ui.p0303', Page: ListReportDocsPage },
     { path: '/admin/design-system/object-page', label: 'Object Page', icon: 'erp.action.info', permission: 'ui.styleguide.view', flag: 'ff.ui.p0304', Page: ObjectPageDocsPage },
+    { path: '/admin/design-system/patterns', label: 'Page Patterns', icon: 'erp.insights.metrics', permission: 'ui.styleguide.view', flag: 'ff.ui.p16602', Page: PagePatternsPage },
     { path: '/account/exports', label: 'My Exports', icon: 'erp.action.export', flag: 'ff.ui.p0303', Page: MyExportsPage },
     { path: '/admin/sample-requests', label: 'Sample Material Requests', icon: 'erp.group.supply', permission: 'core.sample.use', flag: 'ff.ui.p0302', Page: SampleRequestsPage },
   ],

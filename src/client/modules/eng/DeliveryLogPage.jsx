@@ -6,6 +6,7 @@ import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/f
 import { formatDateTime } from '../../platform/format.js';
 import { authHeaders, deliveriesUrl, useDeliveries, useDeliverySummary, useRetryDelivery } from '../../platform/notifications/api.js';
 import { can, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Delivery Log (part 04.06, section 7.4): what each channel did with each notification: sent, held for a digest, waiting to be tried again, failed or skipped, and why. A failed or
 // skipped message can be sent again. Addresses are partly hidden; the text of a message is not shown here.
@@ -39,8 +40,7 @@ export default function DeliveryLogPage({ session }) {
   const t = sum.data?.totals;
   return (
     <section aria-labelledby="dl-title" data-testid="delivery-log">
-      <h1 id="dl-title">Delivery Log</h1>
-      <p className="muted">What each channel did with each notification, and why a message did not leave. Failed and skipped messages can be sent again.</p>
+      <PageHeader id="dl-title" title={"Delivery Log"} subtitle={"What each channel did with each notification, and why a message did not leave. Failed and skipped messages can be sent again."} />
       {notice && <p role="status" className="notice" data-testid="dl-notice">{notice}</p>}
       {error && <p role="alert" className="error">{error.form}</p>}
       <form className="srch-form" role="search" aria-label="Report parameters" onSubmit={(e) => e.preventDefault()}>

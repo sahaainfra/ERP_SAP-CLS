@@ -70,10 +70,8 @@ export function dayFraction(day, start, end) {
 /** The fill of a heat map cell: the more, the darker, never fully white (a zero stays visible as a cell). */
 export const heatFill = (value, max) => `color-mix(in srgb, var(--erp-chart-1) ${Math.round(8 + (max > 0 ? (value / max) * 82 : 0))}%, var(--erp-color-bg-surface))`;
 
-/** The colour of series number i (the design tokens have eight; after that they repeat). */
-export const seriesColour = (i) => `var(--erp-chart-${(i % 8) + 1})`;
-
-export const formatCount = (n) => (typeof n === 'number' ? n.toLocaleString('en-IN', { maximumFractionDigits: 1 }) : String(n ?? ''));
+// the series colours and the number format are the one chart theme of part 166.2 (U-08)
+export { seriesColour, formatCount } from './theme.js';
 
 /** Every chart read as a table: { columns: [label], rows: [[cell]] }. The accessible alternative and the source of the CSV. */
 export function chartTable(type, d) {
@@ -81,6 +79,7 @@ export function chartTable(type, d) {
   if (type === 'gauge') return { columns: ['Measure', 'Value', 'Target'], rows: d.value === null ? [] : [[d.title ?? 'Value', d.value, d.target ?? '']] };
   if (type === 'heatmap') return { columns: ['', ...d.cols], rows: d.rows.map((r, ri) => [r, ...d.cols.map((_, ci) => d.cells.find((c) => c.row === ri && c.col === ci)?.value ?? 0)]) };
   if (type === 'gantt') return { columns: ['Item', 'Start', 'End', 'Status'], rows: d.rows.map((r) => [r.label, r.start, r.end, r.status ?? '']) };
+  if (type === 'scatter') return { columns: ['', d.xLabel ?? 'x', d.yLabel ?? 'y'], rows: d.points.map((pt) => [pt.label, pt.x, pt.y]) };
   return { columns: ['', ...d.series.map((s) => s.name)], rows: d.categories.map((c, i) => [c, ...d.series.map((s) => s.values[i] ?? '')]) };
 }
 

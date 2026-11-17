@@ -5,6 +5,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { DEPS, fmtDate, pl } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Time Impact Analysis (part 13.05, FR-03, BR-01): a fragnet (the activities the event adds and how they tie into the schedule) put into a copy of the schedule as at a date. Step 1 the delay and the date;
 // step 2 the fragnet; step 3 the result worked out by the server: completion before and after, the shift, the activities that moved. Saving keeps the result with the delay; the schedule is never written.
@@ -35,8 +36,7 @@ export default function TiaPage() {
   const bar = (iso) => Math.max(4, (W * (Date.parse(iso) - Date.parse(oq.data?.schedule?.start ?? result.completionBefore))) / 86_400_000 / span);
   return (
     <section aria-labelledby="tia-h" data-testid="plan-tia">
-      <h1 id="tia-h">{t('tia.title')}</h1>
-      <p className="muted">{t('tia.intro')}</p>
+      <PageHeader id="tia-h" title={t('tia.title')} subtitle={t('tia.intro')} />
       <form className="mdm-panel" onSubmit={(e) => e.preventDefault()} aria-label={t('tia.step1')} data-testid="tia-step1">
         <h2>{t('tia.step1')}</h2>
         {!delayId && (

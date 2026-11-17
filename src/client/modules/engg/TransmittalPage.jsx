@@ -6,6 +6,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { RESPONSES, TX_TONE, dayIST, eg, openPrint } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Transmittal (part 11.01, FR-03): the covering record, its drawings with the response codes A to D, and the actions along its life.
 export default function TransmittalPage() {
@@ -16,7 +17,7 @@ export default function TransmittalPage() {
   const h = useQuery({ queryKey: ['engg', 'transmittal-history', id], queryFn: () => eg.transmittalHistory(id), enabled: Boolean(id) && q.isSuccess, retry: false });
   const [error, setError] = useState(null); const [note, setNote] = useState(null); const [resp, setResp] = useState({});
   usePageTitle(q.data ? `${q.data.docNo} ${q.data.party}` : t('tx.title'));
-  if (!id) return <section aria-labelledby="tx-h" data-testid="tx-none"><h1 id="tx-h">{t('tx.title')}</h1><p className="muted"><Link to="/engg/transmittals">{t('nav.transmittals')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="tx-h" data-testid="tx-none"><PageHeader id="tx-h" title={t('tx.title')} subtitle={<Link to="/engg/transmittals">{t('nav.transmittals')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('nav.transmittals')} permission="engg.transmittal.view" />;
   if (q.isPending) return <Skeleton label={t('tx.title')} rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -28,8 +29,7 @@ export default function TransmittalPage() {
   return (
     <section aria-labelledby="tx-h" data-testid="transmittal" data-status={x.status}>
       <header>
-        <h1 id="tx-h">{x.docNo} · {x.party} <StatusBadge status={TX_TONE[x.status]} label={t(`txs.${x.status}`)} /></h1>
-        <p className="muted">{x.projectCode} · {t(`dir.${x.direction}`)} · {t(`purpose.${x.purpose}`)}{x.issuedOn ? ` · ${t('tx.issuedOn')}: ${x.issuedOn}` : ''}{x.dueOn ? ` · ${t('tx.due')}: ${x.dueOn}` : ''}{x.overdue ? ` · ${t('dwg.overdue')}` : ''}{x.contact ? ` · ${x.contact}` : ''}</p>
+        <PageHeader id="tx-h" title={<>{x.docNo} · {x.party} <StatusBadge status={TX_TONE[x.status]} label={t(`txs.${x.status}`)} /></>} subtitle={<>{x.projectCode} · {t(`dir.${x.direction}`)} · {t(`purpose.${x.purpose}`)}{x.issuedOn ? ` · ${t('tx.issuedOn')}: ${x.issuedOn}` : ''}{x.dueOn ? ` · ${t('tx.due')}: ${x.dueOn}` : ''}{x.overdue ? ` · ${t('dwg.overdue')}` : ''}{x.contact ? ` · ${x.contact}` : ''}</>} />
         {x.coverNote && <p data-testid="tx-cover">{x.coverNote}</p>}
         {error?.form && <p className="field-error" role="alert" data-testid="tx-act-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="tx-note">{note}</p>}

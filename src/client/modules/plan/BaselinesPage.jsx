@@ -9,6 +9,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { useSession } from '../core/api/index.js';
 import { BASELINE_TONE, REVISIONS, download, fmtDate, openPrint, pl } from './api.js';
 import { SchedulePicker, useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Baselines (part 13.03, FR-01, FR-02): the frozen pictures of the programme. The list, and one baseline with its approval (project manager, then project director), its change against the baseline it
 // revises, its comparison with the programme of today and the other baselines of the project. An approved baseline is never changed: a revision is a new baseline with its kind and reason.
@@ -78,8 +79,7 @@ function Baseline({ t, id, onGone }) {
   const why = (fn, done) => { const x = window.prompt(t('act.why')); if (x) run(() => fn(x), done); };
   return (
     <div data-testid="bl-object" data-status={b.status}>
-      <h1 id="bl-h">{b.docNo} · {b.name} <StatusBadge status={BASELINE_TONE[b.status]} label={t(`st.${b.status}`)} /> {b.current && <span className="chip" data-testid="bl-current">{t('bl.current')}</span>}</h1>
-      <p><Link to="/plan/baselines">{t('bl.back')}</Link></p>
+      <PageHeader id="bl-h" title={<>{b.docNo} · {b.name} <StatusBadge status={BASELINE_TONE[b.status]} label={t(`st.${b.status}`)} /> {b.current && <span className="chip" data-testid="bl-current">{t('bl.current')}</span>}</>} meta={<Link to="/plan/baselines">{t('bl.back')}</Link>} />
       <dl className="kv" data-testid="bl-figures">
         <div><dt>{t('f.project')}</dt><dd>{b.projectCode} · {b.projectName}</dd></div><div><dt>{t('bl.revision')}</dt><dd>{b.baselineNo} · {t(`bl.kind.${b.revisionType}`)}</dd></div>
         <div><dt>{t('f.schedule')}</dt><dd><Link to={`/plan/activities?scheduleId=${b.scheduleId}`}>{b.scheduleDocNo} v{b.scheduleVersionNo}</Link> · {t(`st.${b.scheduleStatus}`)}</dd></div>
@@ -180,7 +180,7 @@ export default function BaselinesPage() {
   if (id) return <section aria-labelledby="bl-h" data-testid="plan-baselines"><Baseline key={id} t={t} id={id} onGone={() => navigateTo('/plan/baselines')} /></section>;
   return (
     <section aria-labelledby="bl-h" data-testid="plan-baselines">
-      <h1 id="bl-h" className="sr-only">{t('bl.title')}</h1>
+      <PageHeader id="bl-h" srOnly title={t('bl.title')} />
       <div className="actions-row no-print">
         {perms.includes('plan.baseline.create') && <button type="button" className="btn btn-primary" onClick={() => setAdding(!adding)} data-testid="bl-new">{t('bl.new')}</button>}
         <button type="button" className="btn" onClick={() => navigateTo('/plan/variance')} data-testid="bl-to-variance">{t('var.title')}</button>

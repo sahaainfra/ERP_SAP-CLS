@@ -8,6 +8,7 @@ import { api } from '../../platform/api/index.js';
 import { useContextOptions } from '../../platform/shell/api.js';
 import { clickResult, searchQuery, useDeleteSearchView, useSaveSearchView, useSearch, useSearchTypes, useSearchViews } from '../../platform/search/api.js';
 import { downloadCsv, navigateTo } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Advanced Search (part 03.08, FR-05): the same search as the palette with filters for each kind of record, results grouped by kind or listed page by
 // page for one or more kinds, saved filters, and an export of what is listed. The filters are kept in the address, so a search can be shared and the Back
@@ -121,8 +122,7 @@ export default function AdvancedSearchPage() {
 
   return (
     <section aria-labelledby="search-title" data-testid="advanced-search">
-      <h1 id="search-title">Advanced Search</h1>
-      <p className="muted">Find records, documents and people you may see. Type part of a name or number; a document number such as MR/2026-27/000123 finds that record first. Names also match when spelled in Hindi or with a small mistake.</p>
+      <PageHeader id="search-title" title={"Advanced Search"} subtitle={"Find records, documents and people you may see. Type part of a name or number; a document number such as MR/2026-27/000123 finds that record first. Names also match when spelled in Hindi or with a small mistake."} />
       {notice && <p role="status" className="notice" data-testid="search-notice">{notice}</p>}
       <form className="srch-form" role="search" onSubmit={(e) => { e.preventDefault(); apply({ q: draft }); }}>
         <label className="field srch-q"><span>Search for</span><input type="search" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="A name, a number, a word from the text" autoFocus aria-describedby="search-help" maxLength={200} /></label>

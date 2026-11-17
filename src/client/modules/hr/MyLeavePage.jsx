@@ -4,6 +4,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { LV_STATUS, lv } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // My Leave (HR, part 07.07, FR-03 and FR-05): my balances by type (the balance, what waits for approval, what can still be asked for) and my applications with what can be done to each: send, withdraw, cancel (before it starts),
 // amend (an approved one, with approval again), delete a draft, print. Opens with ?done= after an application was made.
@@ -18,7 +19,7 @@ export default function MyLeavePage() {
   const ask = (text) => window.prompt(text);
   return (
     <section aria-labelledby="ml-title" data-testid="my-leave">
-      <h1 id="ml-title">My Leave</h1>
+      <PageHeader id="ml-title" title={"My Leave"} />
       <div className="actions-row"><button type="button" className="btn btn-primary" onClick={() => navigateTo('/leave/apply')} data-testid="ml-apply">Apply for leave</button></div>
       {note && <p className="mdm-banner" role="status" data-testid="ml-note">{note}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="ml-error">{error.form}</p>}

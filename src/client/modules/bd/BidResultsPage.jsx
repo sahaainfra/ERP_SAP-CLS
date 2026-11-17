@@ -4,6 +4,7 @@ import { useT } from '../../platform/i18n/index.js';
 import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { aw, dayIST, inr, rankPreview } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Bid Opening Results (business development, part 08.03, FR-04, T-01): every bidder read out at the opening with its price; the server ranks the qualified prices (L1 the lowest, equal prices share the rank) and works out how far each is from L1.
 // The bidders other than us become the competitor database of the analysis.
@@ -32,8 +33,7 @@ export default function BidResultsPage() {
   };
   return (
     <section aria-labelledby="res-title" data-testid="bid-results">
-      <h1 id="res-title">{t('res.title')}</h1>
-      <p className="muted"><Link to={`/bd/tender?id=${tenderId}`}>{r.tenderNo}</Link>{r.ourRank ? <> · <strong data-testid="res-our-rank">{t('res.ourRank', { rank: `L${r.ourRank}`, pct: r.ourDiffPct ?? 0 })}</strong></> : null}{r.l1 != null ? ` · L1 ${inr(r.l1)}` : ''}</p>
+      <PageHeader id="res-title" title={t('res.title')} subtitle={<><Link to={`/bd/tender?id=${tenderId}`}>{r.tenderNo}</Link>{r.ourRank ? <> · <strong data-testid="res-our-rank">{t('res.ourRank', { rank: `L${r.ourRank}`, pct: r.ourDiffPct ?? 0 })}</strong></> : null}{r.l1 != null ? ` · L1 ${inr(r.l1)}` : ''}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="res-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="res-note">{note}</p>}
       <form onSubmit={save} aria-label={t('res.title')}>

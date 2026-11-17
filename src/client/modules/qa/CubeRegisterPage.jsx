@@ -7,6 +7,7 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { fmtDate, qa } from './api.js';
 import { sel, useRecord, useRunner } from './QaParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Cube register (part 18.05): the samples with the QR label, the next test that is due, and the results at 7 and 28 days judged by IS 456; a failed result is raised as an NCR from here.
 const ACC_TONE = { INDICATIVE: 'DRAFT', WATCH: 'RETURNED', PASS: 'APPROVED', FAIL: 'REJECTED' }; const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -15,8 +16,7 @@ function Sample({ id }) {
   const save = () => run(() => qa.act('/cube-samples', x.id, 'results', { ageDays: Number(f.ageDays), strengths: f.strengths.split(/[\s,;]+/).filter(Boolean).map(Number), testedOn: f.testedOn }), t('cube.saved'));
   const raise = async (resultId) => { const d = await run(() => qa.post(`/cube-results/${resultId}/raise-ncr`, {}), t('cube.ncrRaised')); if (d) navigateTo(`/qa/ncrs?id=${d.ncrId}`); };
   return (
-    <div data-testid="qa-cube-object" data-overdue={String(x.overdue)}><h1 id="cube-h">{x.sampleNo}</h1>
-      <p><Link to="/qa/cubes">{t('cube.title')}</Link> · <Link to={`/qa/pour-cards?id=${x.pourCardId}`}>{x.pourNo}</Link> · {x.project} · {x.element} · {x.grade} (fck {x.fck}) · {t('pc.cubeCount')} {x.cubes} · {t('pc.castDate')} {fmtDate(x.castDate)}</p>
+    <div data-testid="qa-cube-object" data-overdue={String(x.overdue)}><PageHeader id="cube-h" title={x.sampleNo} meta={<><Link to="/qa/cubes">{t('cube.title')}</Link> · <Link to={`/qa/pour-cards?id=${x.pourCardId}`}>{x.pourNo}</Link> · {x.project} · {x.element} · {x.grade} (fck {x.fck}) · {t('pc.cubeCount')} {x.cubes} · {t('pc.castDate')} {fmtDate(x.castDate)}</>} />
       {error?.form && <p className="field-error" role="alert" data-testid="cube-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="cube-note">{note}</p>}
       <figure className="mdm-panel" data-testid="cube-qr"><img src={`data:image/svg+xml;utf8,${encodeURIComponent(x.qrSvg)}`} alt={t('cube.qrAlt', { code: x.sampleNo })} width={160} height={160} /><figcaption>{x.qrCode}</figcaption></figure>
       <p data-testid="cube-next">{x.nextAge ? `${t('cube.next')}: ${t('cube.age', { n: x.nextAge })} · ${fmtDate(x.nextDue)}${x.overdue ? ` · ${t('ir.overdue')}` : ''}` : t('cube.allTested')}</p>
@@ -34,7 +34,7 @@ export default function CubeRegisterPage() {
   const t = useT('qa'); usePageTitle(t('cube.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="cube-h"><Sample id={id} /></section>;
   return (
-    <section aria-labelledby="cubl-h" data-testid="qa-cubes"><h1 id="cubl-h">{t('cube.title')}</h1><p className="muted">{t('cube.intro')}</p>
+    <section aria-labelledby="cubl-h" data-testid="qa-cubes"><PageHeader id="cubl-h" title={t('cube.title')} subtitle={t('cube.intro')} />
       <div className="actions-row no-print"><Link to="/qa/pour-cards">{t('pc.title')}</Link><Link to="/qa/concrete-acceptance">{t('ca.title')}</Link><button type="button" className="btn" onClick={() => qa.exportFile('/cube-samples/export', 'cube-register.csv').catch(() => globalThis.alert?.(t('exportFailed')))} data-testid="cube-export">{t('export')}</button></div>
       <ListReport listCode="qa.cube_samples" endpoint="/qa/cube-samples" title={t('cube.title')} session={session.data} rowHref={(r) => `/qa/cubes?id=${r.id}`} onOpen={(r) => navigateTo(`/qa/cubes?id=${r.id}`)} cardFields={['sampleNo', 'element', 'grade', 'nextDue']} dateKey="nextDue" empty={{ title: t('cube.emptyTitle'), text: t('cube.emptyBody') }} />
     </section>

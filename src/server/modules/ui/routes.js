@@ -183,7 +183,7 @@ export function translationRoutes(service, { idempotent, xlsxBody }) {
     const q = parseImportQuery(req.query);
     res.status(q.commit === '1' ? 201 : 200).json({ data: await service.importXlsx(req.actor, Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0), { commit: q.commit === '1', reason: q.reason }) });
   });
-  r.get('/translations/:lang/:namespace', (req, res) => res.json({ data: service.strings(req.actor, parseCatalogueParams(req.params)) }));
+  r.get('/translations/:lang/:namespace', (req, res) => res.json({ data: service.strings(req.actor, parseCatalogueParams(req.params), { only: req.query.only === 'overrides' ? 'overrides' : null }) }));
   return r;
 }
 

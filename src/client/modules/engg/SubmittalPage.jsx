@@ -8,6 +8,7 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { Tabs } from '../proj/parts.jsx';
 import { RESPONSES, SUB_TONE, openPrint, sb } from './api.js';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Submittal (part 11.03): the submittal with its revisions and the responses of the consultant, its documents and the approved make.
 const TABS = ['details', 'revisions', 'files'];
@@ -18,7 +19,7 @@ export default function SubmittalPage() {
   const q = useQuery({ queryKey: ['engg', 'submittal', id], queryFn: () => sb.get(id), enabled: Boolean(id), retry: false });
   const [tab, setTab] = useState('details'); const [error, setError] = useState(null); const [note, setNote] = useState(null); const [uploaded, setUploaded] = useState(0); const [resp, setResp] = useState({ code: 'A', text: '' }); const [change, setChange] = useState('');
   usePageTitle(q.data ? `${q.data.submittalNo} ${q.data.title}` : t('sub.title'));
-  if (!id) return <section aria-labelledby="sub-h" data-testid="sub-none"><h1 id="sub-h">{t('sub.title')}</h1><p className="muted"><Link to="/engg/submittals">{t('nav.submittals')}</Link></p></section>;
+  if (!id) return <section aria-labelledby="sub-h" data-testid="sub-none"><PageHeader id="sub-h" title={t('sub.title')} subtitle={<Link to="/engg/submittals">{t('nav.submittals')}</Link>} /></section>;
   if (q.error?.status === 403) return <NoPermission what={t('nav.submittals')} permission="engg.submittal.view" />;
   if (q.isPending) return <Skeleton label={t('sub.title')} rows={5} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
@@ -28,8 +29,7 @@ export default function SubmittalPage() {
   return (
     <section aria-labelledby="sub-h" data-testid="submittal" data-status={s.status} data-revision={s.revision}>
       <header>
-        <h1 id="sub-h">{s.submittalNo} · {s.title} <StatusBadge status={SUB_TONE[s.status]} label={t(`subs.${s.status}`)} /></h1>
-        <p className="muted">{s.projectCode} · {t(`stype.${s.type}`)} · {t('f.revision')} {s.revision} · {t('rfi.requiredBy')} {s.requiredBy}{s.overdue ? ` · ${t('dwg.overdue')}` : ''}{s.responseCode ? ` · ${t('sub.response')}: ${s.responseLabel}` : ''}</p>
+        <PageHeader id="sub-h" title={<>{s.submittalNo} · {s.title} <StatusBadge status={SUB_TONE[s.status]} label={t(`subs.${s.status}`)} /></>} subtitle={<>{s.projectCode} · {t(`stype.${s.type}`)} · {t('f.revision')} {s.revision} · {t('rfi.requiredBy')} {s.requiredBy}{s.overdue ? ` · ${t('dwg.overdue')}` : ''}{s.responseCode ? ` · ${t('sub.response')}: ${s.responseLabel}` : ''}</>} />
         {error?.form && <p className="field-error" role="alert" data-testid="sub-act-error">{error.form}{error.fields ? ` ${Object.values(error.fields).slice(0, 4).join('; ')}` : ''}</p>}
         {note && <p className="mdm-banner" role="status" data-testid="sub-note">{note}</p>}
         <div className="actions-row no-print">

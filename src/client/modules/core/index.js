@@ -1,31 +1,34 @@
 import { registerModule } from '../../platform/shell/registry.js';
-import AboutPage from './pages/AboutPage.jsx';
-import ArchitecturePage from './pages/ArchitecturePage.jsx';
-import DataHealthPage from './pages/DataHealthPage.jsx';
-import CompanySettingsPage from './pages/CompanySettingsPage.jsx';
-import FinancialYearsPage from './pages/FinancialYearsPage.jsx';
-import HolidaysPage from './pages/HolidaysPage.jsx';
-import NumberingPage from './pages/NumberingPage.jsx';
-import ParametersPage from './pages/ParametersPage.jsx';
-import DeadLettersPage from './pages/DeadLettersPage.jsx';
-import JobsPage from './pages/JobsPage.jsx';
-import OperationsPage from './pages/OperationsPage.jsx';
-import OperationsHealthPage from './pages/OperationsHealthPage.jsx';
-import ConnectorsPage from './pages/ConnectorsPage.jsx';
-import ConnectorConfigPage from './pages/ConnectorConfigPage.jsx';
-import IntegrationLogPage from './pages/IntegrationLogPage.jsx';
-import SchedulesPage from './pages/SchedulesPage.jsx';
-import FileSettingsPage from './pages/FileSettingsPage.jsx';
-import SampleDocumentsPage from './pages/SampleDocumentsPage.jsx';
-import ApprovalsPage from './pages/ApprovalsPage.jsx';
-import FormulaRegistryPage from './pages/FormulaRegistryPage.jsx';
-import SampleBillsPage from './pages/SampleBillsPage.jsx';
-import ShadowReportPage from './pages/ShadowReportPage.jsx';
-import FlagsPage from './pages/FlagsPage.jsx';
-import AuditExplorerPage from './pages/AuditExplorerPage.jsx';
-import SecurityEventsPage from './pages/SecurityEventsPage.jsx';
-import RouteRegistryPage from './pages/RouteRegistryPage.jsx';
-import SecuritySettingsPage from './pages/SecuritySettingsPage.jsx';
+import { lazyPage } from '../../platform/shell/lazyPage.js';
+
+// Each page is fetched when it is first opened (part 166.4); the routes themselves stay in the first download.
+const AboutPage = lazyPage(() => import('./pages/AboutPage.jsx'));
+const ArchitecturePage = lazyPage(() => import('./pages/ArchitecturePage.jsx'));
+const DataHealthPage = lazyPage(() => import('./pages/DataHealthPage.jsx'));
+const CompanySettingsPage = lazyPage(() => import('./pages/CompanySettingsPage.jsx'));
+const FinancialYearsPage = lazyPage(() => import('./pages/FinancialYearsPage.jsx'));
+const HolidaysPage = lazyPage(() => import('./pages/HolidaysPage.jsx'));
+const NumberingPage = lazyPage(() => import('./pages/NumberingPage.jsx'));
+const ParametersPage = lazyPage(() => import('./pages/ParametersPage.jsx'));
+const DeadLettersPage = lazyPage(() => import('./pages/DeadLettersPage.jsx'));
+const JobsPage = lazyPage(() => import('./pages/JobsPage.jsx'));
+const OperationsPage = lazyPage(() => import('./pages/OperationsPage.jsx'));
+const OperationsHealthPage = lazyPage(() => import('./pages/OperationsHealthPage.jsx'));
+const ConnectorsPage = lazyPage(() => import('./pages/ConnectorsPage.jsx'));
+const ConnectorConfigPage = lazyPage(() => import('./pages/ConnectorConfigPage.jsx'));
+const IntegrationLogPage = lazyPage(() => import('./pages/IntegrationLogPage.jsx'));
+const SchedulesPage = lazyPage(() => import('./pages/SchedulesPage.jsx'));
+const FileSettingsPage = lazyPage(() => import('./pages/FileSettingsPage.jsx'));
+const SampleDocumentsPage = lazyPage(() => import('./pages/SampleDocumentsPage.jsx'));
+const ApprovalsPage = lazyPage(() => import('./pages/ApprovalsPage.jsx'));
+const FormulaRegistryPage = lazyPage(() => import('./pages/FormulaRegistryPage.jsx'));
+const SampleBillsPage = lazyPage(() => import('./pages/SampleBillsPage.jsx'));
+const ShadowReportPage = lazyPage(() => import('./pages/ShadowReportPage.jsx'));
+const FlagsPage = lazyPage(() => import('./pages/FlagsPage.jsx'));
+const AuditExplorerPage = lazyPage(() => import('./pages/AuditExplorerPage.jsx'));
+const SecurityEventsPage = lazyPage(() => import('./pages/SecurityEventsPage.jsx'));
+const RouteRegistryPage = lazyPage(() => import('./pages/RouteRegistryPage.jsx'));
+const SecuritySettingsPage = lazyPage(() => import('./pages/SecuritySettingsPage.jsx'));
 
 // Module "core" registers its pages once. The shell builds navigation and routing from the registry.
 registerModule({

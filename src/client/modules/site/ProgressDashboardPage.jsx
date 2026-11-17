@@ -8,6 +8,8 @@ import { Link, Tile, usePageTitle } from '../core/pages/ui.jsx';
 import { fmtDate, fmtPct, fmtRatio, fmtRs, st, today } from './api.js';
 import { ProjectDay, useProjects } from './progress-parts.jsx';
 import { useSearch } from './parts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow } from '../../platform/design/Kpi.jsx';
 
 // Progress Dashboard (part 14.05, FR-05, FR-06): physical progress planned against actual and forecast, the schedule and cost performance indexes, the S-curves (physical and financial), the variance of each WBS node
 // and the milestones. Every tile and row opens the report behind it; money is shown only to those who may see it.
@@ -22,7 +24,7 @@ export default function ProgressDashboardPage() {
   const curve = d && (() => { const c = d.curve; const fin = mode === 'financial' && c.planned.financial; const pick = (o) => (fin ? o.financial : o.physical); return { categories: c.dates.map((x) => x.slice(2)), series: [{ name: t('cnd.prg.planned'), values: pick(c.planned) }, { name: t('cnd.prg.actual'), values: pick(c.actual) }, { name: t('cnd.prg.forecast'), values: pick(c.forecast) }] }; })();
   return (
     <section aria-labelledby="prg-h" data-testid="site-progress">
-      <h1 id="prg-h">{t('cnd.prg.title')}</h1>
+      <PageHeader id="prg-h" title={t('cnd.prg.title')} />
       <ProjectDay projectId={projectId} asOf={asOf} onProject={setProjectId} onAsOf={setAsOf} max={today()} />
       {pq.isSuccess && (pq.data ?? []).length === 0 && <p className="muted" data-testid="prg-no-projects">{t('cnd.prg.noProjects')}</p>}
       {q.isPending && projectId && <Skeleton label={t('cnd.prg.title')} rows={6} />}
@@ -30,7 +32,7 @@ export default function ProgressDashboardPage() {
       {d && (
         <>
           <p className="muted" data-testid="prg-basis">{t('cnd.prg.basis', { s: d.schedule.docNo, b: d.baseline?.docNo ?? t('cnd.prg.noBaseline'), d: fmtDate(d.asOf) })}{d.baselineMissing && <> · <strong>{t('cnd.prg.baselineMissing')}</strong></>}</p>
-          <div className="tiles" data-testid="prg-tiles">
+          <KpiRow data-testid="prg-tiles">
             <Tile label={t('cnd.prg.physical')} value={fmtPct(d.project.physical)} to={`/site/progress-report?${base}`} testId="prg-physical" />
             <Tile label={t('cnd.prg.planned')} value={fmtPct(d.project.planned)} to={`/site/progress-report?${base}`} testId="prg-planned" />
             <Tile label={t('cnd.prg.spi')} value={fmtRatio(d.project.spi)} status={tone(d.project.spi, d.spiLimit)} hint={t('cnd.prg.target', { n: fmtRatio(d.spiLimit) })} to={`/site/progress-report?${base}`} testId="prg-spi" />
@@ -39,7 +41,7 @@ export default function ProgressDashboardPage() {
             {d.canSeeCost && <Tile label={t('cnd.prg.cv')} value={fmtRs(d.project.cv)} status={d.project.cv == null ? 'neutral' : d.project.cv < 0 ? 'danger' : 'success'} testId="prg-cv" />}
             {d.canSeeCost && <Tile label={t('cnd.prg.eac')} value={fmtRs(d.project.eac)} hint={`BAC ${fmtRs(d.project.bac)}`} testId="prg-eac" />}
             <Tile label={t('cnd.prg.finish')} value={d.project.forecastFinish ? fmtDate(d.project.forecastFinish) : '—'} hint={t('cnd.prg.baselineFinish', { d: d.project.baselineFinish ? fmtDate(d.project.baselineFinish) : '—' })} testId="prg-finish" />
-          </div>
+          </KpiRow>
           <div className="mdm-panel" data-testid="prg-curve-panel"><h2>{t('cnd.prg.scurve')}</h2>
             <div className="actions-row no-print" role="group" aria-label={t('cnd.prg.mode')}>
               <button type="button" className={`btn ${mode === 'physical' ? 'btn-primary' : ''}`} aria-pressed={mode === 'physical'} onClick={() => setMode('physical')} data-testid="prg-mode-physical">{t('cnd.prg.physical')}</button>

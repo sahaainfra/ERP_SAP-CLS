@@ -5,6 +5,7 @@ import { AttachmentList, FileUploader } from '../core/components/Attachments.jsx
 import { Field, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { BLOOD_GROUPS, DOC_TYPES, EMPLOYMENT_TYPES, GENDERS, MARITAL, PAYMENT_MODES, employees } from './api.js';
 import { AddressFields, ContactsEditor, EmploymentFields, addressOrNull, blankAddress, blankContact, contactsOut } from './HrForms.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // New Employee (HR, part 07.01): a wizard. 1 Personal details; 2 Employment (department, designation and grade filled from it, reporting manager, work location, cost centre); 3 Statutory and bank (PAN, Aadhaar
 // last four digits only, UAN, ESIC, PF and ESI, the bank account); 4 Contacts, nominees, education and experience; 5 Review, with the people who look like this one found as it is typed (PAN, Aadhaar, mobile,
@@ -97,7 +98,7 @@ export default function NewEmployeePage() {
   const blocked = dups.some((d) => d.block);
   return (
     <section aria-labelledby="ne-title" data-testid="new-employee">
-      <h1 id="ne-title">{saved?.code ? `New Employee: ${saved.code}` : 'New Employee'}</h1>
+      <PageHeader id="ne-title" title={saved?.code ? `New Employee: ${saved.code}` : 'New Employee'} />
       <ol className="wizard-steps" aria-label="Steps">{STEPS.map((s, i) => <li key={s} aria-current={i === step ? 'step' : undefined} className={i === step ? 'is-current' : i < step ? 'is-done' : ''}><button type="button" className="btn btn-small" onClick={() => setStep(i)} disabled={i > step || (i === 5 && !saved)}>{i + 1}. {s}</button></li>)}</ol>
       {dups.length > 0 && <div className="mdm-check" role="status" data-testid="ne-duplicates"><p><strong>{blocked ? 'Already employed:' : 'This looks like:'}</strong></p><ul>{dups.map((d) => <li key={`${d.id}${d.rule}`} className={d.block ? 'field-error' : ''}><a href={`/hr/employees/employee?id=${d.id}`} target="_blank" rel="noreferrer">{d.code} {d.name}</a>: {d.rule}{d.rehire ? ' (has left: a rehire)' : ''}</li>)}</ul></div>}
       {error?.form && <p className="field-error" role="alert" data-testid="ne-error">{error.form}{error.fields && Object.values(error.fields).some((x) => x && x !== 'required') ? ` ${Object.entries(error.fields).filter(([, x]) => x && x !== 'required').map(([k, x]) => `${k}: ${x}`).join('; ')}` : ''}</p>}

@@ -3,10 +3,11 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import Icon from '../../platform/design/Icon.jsx';
 import { EmptyState } from '../../platform/feedback/states.jsx';
 import { formatDateTime } from '../../platform/format.js';
-import { useLang } from '../../platform/i18n/index.js';
+import { useLang, labelIn } from '../../platform/i18n/index.js';
 import { enqueue, sync, useOffline } from '../../platform/offline/engine.js';
 import { Link, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { CMD_STATUS } from './offline-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Field Forms (Mobile, part 04.15, FR-08): the forms that can be filled in with no connection. The list comes from the registry (what the person may use, and which forms wait for their part); a form is checked with the
 // rules kept on the phone, saved in the encrypted queue and sent when there is a connection. Photos are made smaller and sent after the record.
@@ -20,7 +21,7 @@ function Capture({ form, off }) {
   const [busy, setBusy] = useState(false);
   const language = useLang();
   const projects = off.masters.projects ?? [];
-  const label = (f) => (language === 'hi' && f.labelHi) || f.label;
+  const label = (f) => labelIn(f, language);
   const set = (k, v) => setValues((cur) => ({ ...cur, [k]: v }));
   const err = (k) => errors.find((e) => e.field === k)?.message;
   const submit = async (e) => {
@@ -32,7 +33,7 @@ function Capture({ form, off }) {
   };
   return (
     <form onSubmit={submit} className="card form-grid field-form" noValidate aria-label={form.label} data-testid="field-form">
-      <h2>{(language === 'hi' && form.labelHi) || form.label}</h2>
+      <h2>{labelIn(form, language)}</h2>
       {off.locked && <p role="alert" className="error">The offline copy has expired. Connect once to refresh it.</p>}
       {form.fields.map((f) => (
         <label className="field" key={f.key}><span>{label(f)}{f.required ? ' *' : ''}</span>
@@ -62,7 +63,7 @@ export default function FieldFormsPage() {
   const mine = useMemo(() => [...off.queue].reverse().slice(0, 8), [off.queue]);
   return (
     <section aria-labelledby="ff-title" className="field-forms" data-testid="field-forms">
-      <div className="page-head"><h1 id="ff-title">Field Forms</h1></div>
+      <PageHeader id="ff-title" title={"Field Forms"} />
       <ul className="field-status" aria-label="Connection">
         <li data-testid="ff-online" data-online={off.online}><Icon name={off.online ? 'erp.state.sync' : 'erp.action.offline'} size={18} /> {off.online ? 'Online' : 'Offline: forms are saved on this phone'}</li>
         <li data-testid="ff-queue" data-count={off.queue.length}><Icon name="erp.action.inbox" size={18} /> {off.queue.length === 0 ? 'Nothing is waiting to be sent' : `${off.queue.length} waiting to be sent`} · <Link to="/field/sync">Sync status</Link></li>

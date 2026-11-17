@@ -4,6 +4,7 @@ import {
 } from '../api/index.js';
 import { formatNumber, formatProblems } from '../../../../shared/numbering.js';
 import { Field, FormDialog, QueryState, can, errorInfo, usePageTitle } from './ui.jsx';
+import PageHeader from '../../../platform/design/PageHeader.jsx';
 
 const RESETS = [['never', 'Never'], ['financial_year', 'Every financial year'], ['monthly', 'Every month']];
 const ASSIGN = [['create', 'When created'], ['submit', 'When submitted'], ['approval', 'When approved']];
@@ -74,12 +75,7 @@ export default function NumberingPage({ session }) {
   return (
     <section aria-labelledby="page-title">
       <nav aria-label="Breadcrumb" className="breadcrumb">Administration &rsaquo; Configuration &rsaquo; Document Types &amp; Numbering</nav>
-      <div className="page-head">
-        <h1 id="page-title">Document Types &amp; Numbering</h1>
-        <button type="button" className="btn" disabled={!canConfigure} onClick={() => open(typeDialog)}>Add document type</button>
-        <button type="button" className="btn btn-primary" disabled={!canConfigure} onClick={() => { setDraft({ ...draft, docType: types.data?.[0]?.code ?? '' }); open(seriesDialog); }}>Add number series</button>
-      </div>
-      <p className="muted">A series turns a format such as <code>{'{PREFIX}/{PROJECT}/{FY}/{SEQ:6}'}</code> into document numbers. Gap-free series are for statutory documents; once a number has been issued, a change needs approval.</p>
+      <PageHeader id="page-title" title={"Document Types & Numbering"} actions={<><button type="button" className="btn" disabled={!canConfigure} onClick={() => open(typeDialog)}>Add document type</button><button type="button" className="btn btn-primary" disabled={!canConfigure} onClick={() => { setDraft({ ...draft, docType: types.data?.[0]?.code ?? '' }); open(seriesDialog); }}>Add number series</button></>} subtitle={<>A series turns a format such as <code>{'{PREFIX}/{PROJECT}/{FY}/{SEQ:6}'}</code> into document numbers. Gap-free series are for statutory documents; once a number has been issued, a change needs approval.</>} />
       <p role="status" className="notice">{notice}</p>
 
       <QueryState query={types} what="document types" permission="core.numbering.view" />

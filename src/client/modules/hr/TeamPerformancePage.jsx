@@ -5,6 +5,7 @@ import StatusBadge from '../../platform/design/StatusBadge.jsx';
 import { EmptyState, ErrorState, NoPermission, Skeleton } from '../../platform/feedback/states.jsx';
 import { Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { perf } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Team Performance (HR, part 07.11, manager): the people who report to the manager, directly or through others: KPI score with its colour, goals agreed and waiting, the review stage, open disputes. A row opens that person's KPIs, goals and review.
 // The manager can compute the KPIs of the team again. HR sees everybody.
@@ -20,7 +21,7 @@ export default function TeamPerformancePage() {
   const refresh = async () => { setError(null); setNote(null); try { for (const p of d.people) await perf.compute({ employeeId: p.id }); setNote(t('my.refreshed')); qc.invalidateQueries({ queryKey: ['perf'] }); } catch (e) { setError(errorInfo(e)); } };
   return (
     <section aria-labelledby="tp-title" data-testid="team-performance">
-      <h1 id="tp-title">{t('team.title')}</h1>
+      <PageHeader id="tp-title" title={t('team.title')} />
       {error?.form && <p className="field-error" role="alert">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="tp-note">{note}</p>}
       {q.isPending ? <Skeleton label={t('team.title')} rows={5} /> : q.isError ? <ErrorState error={q.error} onRetry={q.refetch} /> : d.people.length === 0 ? <EmptyState title={t('team.none')} message={t('team.noneHint')} /> : (

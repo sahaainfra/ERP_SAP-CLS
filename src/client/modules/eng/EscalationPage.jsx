@@ -4,6 +4,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { useUnsavedGuard } from '../../platform/forms/guard.js';
 import { useDefinitionOptions, usePaths, usePolicies, useProposePath, useProposePolicies, useProposeSla, useSla } from '../../platform/workflow/api.js';
 import { Field, Link, can, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Escalation Paths & SLA settings (part 04.02, section 7.6): the management hierarchy a late task climbs (Site, Project, Regional, Head office, Director) and the time
 // each kind of document has, in working hours, with the points of reminder and escalation. A change is asked for from a date and applies to new tasks once approved.
@@ -174,8 +175,7 @@ export default function EscalationPage({ session }) {
   if (paths.error?.status === 403) return <NoPermission what="the escalation settings" permission="eng.matrix.view" />;
   return (
     <section aria-labelledby="es-title" data-testid="escalation">
-      <h1 id="es-title">Escalation Paths &amp; SLA</h1>
-      <p className="muted">How long an approver has, and who the task climbs to when the time passes. Changes are asked for here and approved by the system administrator and the chief financial officer.</p>
+      <PageHeader id="es-title" title={"Escalation Paths & SLA"} subtitle={"How long an approver has, and who the task climbs to when the time passes. Changes are asked for here and approved by the system administrator and the chief financial officer."} />
       <Paths canManage={canManage} options={options.data ?? {}} />
       <Sla canManage={canManage} />
       <Policies canManage={canManage} />

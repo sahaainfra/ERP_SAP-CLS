@@ -7,6 +7,7 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { formatDate, formatDateTime } from '../../platform/format.js';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { REQ_STATUS, STAGES, recruit, rupees } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Requisition (HR, part 07.02): one manpower requisition. Header: number and revision, status, positions and how many joined, the CTC range, against the plan; actions for this status and person: send, correct, withdraw,
 // cancel or close, amend (a new revision, approved again), print. Tabs: Details · Plan check · Candidates (counts by stage, opens the pipeline) · Revisions (comparison) · Approvals · Timeline · Discussion.
@@ -28,7 +29,7 @@ export default function RequisitionPage() {
       <p><Link to="/hr/requisitions">← Manpower Requisitions</Link></p>
       {sp.get('sent') === '1' && <p className="mdm-banner" role="status" data-testid="rp-sent">Sent for approval: the department or project head, then the HR manager{r.band === 'BEYOND_PLAN' ? ', then the director (beyond the plan)' : ''}.</p>}
       <header className="op-header">
-        <div className="page-head"><h1 id="rp-title">{r.docNo} · {r.designation}</h1><StatusBadge status={st} label={label} />{r.revision > 1 && <span className="muted">revision {r.revision}</span>}</div>
+        <PageHeader id="rp-title" title={<>{r.docNo} · {r.designation}</>} status={<StatusBadge status={st} label={label} />} actions={<>{r.revision > 1 && <span className="muted">revision {r.revision}</span>}</>} />
         <dl className="op-figures">
           <div><dt>Department</dt><dd>{r.department}</dd></div><div><dt>Positions</dt><dd data-testid="rp-positions">{r.positions} ({r.joined} joined, {r.open} open)</dd></div><div><dt>Reason</dt><dd>{r.reason === 'NEW' ? 'New position' : 'Replacement'}</dd></div>
           {r.ctcMin && <div><dt>CTC a year</dt><dd>{rupees(r.ctcMin)} to {rupees(r.ctcMax)}</dd></div>}<div><dt>Required by</dt><dd>{formatDate(r.requiredBy)}</dd></div>

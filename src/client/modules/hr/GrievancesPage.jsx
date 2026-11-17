@@ -6,6 +6,7 @@ import ListReport from '../../platform/list/ListReport.jsx';
 import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { ext } from './api.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Grievances (HR, part 07.13, FR-06): the register of grievances: a person sees what they raised, the officers all of them with the officer, the date to resolve by and the status. An anonymous grievance is followed with its tracking code here.
 export default function GrievancesPage() {
@@ -19,7 +20,7 @@ export default function GrievancesPage() {
   const answer = async (accept) => { setError(null); try { await ext.trackRespond({ code: code.trim().toUpperCase(), accept, reason: reason || null }); setNote(accept ? t('grv.closed') : t('grv.reopened')); setTr(await ext.track(code.trim().toUpperCase())); qc.invalidateQueries({ queryKey: ['ui', 'list'] }); } catch (x) { setError(errorInfo(x)); } };
   return (
     <section aria-labelledby="gl-title" data-testid="grievances">
-      <h1 id="gl-title" className="sr-only">{t('grv.title')}</h1>
+      <PageHeader id="gl-title" srOnly title={t('grv.title')} />
       <ListReport listCode="hr.grievances" endpoint="/hr/grievances" title={t('grv.title')} session={session.data} rowHref={(r) => `/grievances/grievance?id=${r.id}`} onOpen={(r) => navigateTo(`/grievances/grievance?id=${r.id}`)} cardFields={['docNo', 'subject', 'slaDue', 'status']} statusKey="status"
         newAction={perms.includes('hr.grievance.create') ? { label: t('grv.raise'), onClick: () => navigateTo('/grievances/new') } : undefined} empty={{ title: t('grv.emptyTitle'), text: t('grv.emptyText') }} />
       <form className="mdm-panel mdm-fields" onSubmit={track} data-testid="gl-track" aria-label={t('grv.track')}>

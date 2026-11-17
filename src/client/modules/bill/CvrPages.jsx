@@ -10,6 +10,9 @@ import { useSession } from '../core/api/index.js';
 import { useSearch } from '../site/parts.jsx';
 import { bill, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
+import PageHeader from '../../platform/design/PageHeader.jsx';
+import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import OverviewSwitch from '../../platform/dashboard/OverviewSwitch.jsx';
 
 // CVR Workbench (part 22.09): the monthly cost-value reconciliation of a project. The lines come from the owners; the claims, accruals and provisions are assessed here and each needs a note.
 const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); const money = (v) => (v == null ? '—' : `₹ ${mf.format(v)}`); const pctf = (v) => (v == null ? '—' : `${v} %`);
@@ -26,10 +29,10 @@ function Lines({ lines, side }) {
 function Totals({ x }) {
   const t = useT('bill');
   return (
-    <div className="form-grid" data-testid="bill-cvr-totals">
-      {[['value', money(x.value)], ['cost', money(x.cost)], ['margin', money(x.margin)], ['marginPct', pctf(x.marginPct)], ['budget', pctf(x.budgetMarginPct)], ['prev', pctf(x.prevMarginPct)], ['forecast', pctf(x.forecastMarginPct)]].map(([k, v]) => <div className="mdm-panel" key={k} data-testid={`bill-cvr-t-${k}`}><div className="muted">{t(`cvr.t.${k}`)}</div><strong style={{ fontSize: '1.3rem' }}>{v}</strong></div>)}
-      {x.changePct != null && <div className="mdm-panel" data-testid="bill-cvr-change"><div className="muted">{t('cvr.t.change')}</div><strong>{x.changePct > 0 ? '▲' : x.changePct < 0 ? '▼' : '='} {Math.abs(x.changePct)} {t('cvr.points')}</strong></div>}
-    </div>
+    <KpiRow data-testid="bill-cvr-totals">
+      {[['value', money(x.value), x.value], ['cost', money(x.cost), x.cost], ['margin', money(x.margin), x.margin], ['marginPct', pctf(x.marginPct), undefined, 'percent'], ['budget', pctf(x.budgetMarginPct), undefined, 'percent'], ['prev', pctf(x.prevMarginPct), undefined, 'percent'], ['forecast', pctf(x.forecastMarginPct), undefined, 'percent']].map(([k, v, amt, kd]) => <KpiTile label={t(`cvr.t.${k}`)} value={v} amount={amt} kind={kd ?? (amt !== undefined ? 'money' : /day/i.test(k) ? 'time' : 'count')} key={k} data-testid={`bill-cvr-t-${k}`} />)}
+      {x.changePct != null && <KpiTile label={t('cvr.t.change')} value={<>{x.changePct > 0 ? '▲' : x.changePct < 0 ? '▼' : '='} {Math.abs(x.changePct)} {t('cvr.points')}</>} kind="percent" data-testid="bill-cvr-change" />}
+    </KpiRow>
   );
 }
 
@@ -72,8 +75,7 @@ function Report({ id }) {
   const t = useT('bill'); const { q, guard } = useRecord('/reports', id, t('cvr.one'), 'bill.report.view'); const { error, run } = useRunner(); const [note, setNote] = useState(''); const [tab, setTab] = useState('buildup'); usePageTitle(t('cvr.one'));
   if (guard) return guard; const x = q.data;
   return (
-    <div data-testid="bill-cvr-object" data-status={x.status}><h1 id="cvr-h">{x.docNo} <Status x={x} /> {x.locked && <StatusBadge status="APPROVED" label={t('cvr.locked')} />}</h1>
-      <p><Link to="/bill/cvr">{t('cvr.title')}</Link> · {x.project} · {x.period} · {t('cvr.asOf', { date: x.asOf })}</p>
+    <div data-testid="bill-cvr-object" data-status={x.status}><PageHeader id="cvr-h" title={<>{x.docNo} <Status x={x} /> {x.locked && <StatusBadge status="APPROVED" label={t('cvr.locked')} />}</>} meta={<><Link to="/bill/cvr">{t('cvr.title')}</Link> · {x.project} · {x.period} · {t('cvr.asOf', { date: x.asOf })}</>} />
       <Totals x={x} />
       <div className="actions-row no-print" role="tablist">{['buildup', 'commentary', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-cvr-tab-${k}`}>{t(`cvr.tab.${k}`)}</button>)}</div>
       {tab === 'buildup' && <><h2>{t('cvr.value')}</h2><Lines lines={x.valueLines} side="value" /><h2>{t('cvr.cost')}</h2><Lines lines={x.costLines} side="cost" /></>}
@@ -87,9 +89,9 @@ function Report({ id }) {
 export default function CvrPage() {
   const t = useT('bill'); usePageTitle(t('cvr.title')); const sp = useSearch(); const id = Number(sp.get('id')) || null; const session = useSession();
   if (id) return <section aria-labelledby="cvr-h"><Report id={id} /></section>;
-  if (sp.get('new')) return <section aria-labelledby="cvrn-h"><h1 id="cvrn-h">{t('cvr.new')}</h1><p><Link to="/bill/cvr">{t('cvr.title')}</Link></p><Workbench /></section>;
+  if (sp.get('new')) return <section aria-labelledby="cvrn-h"><PageHeader id="cvrn-h" title={t('cvr.new')} meta={<Link to="/bill/cvr">{t('cvr.title')}</Link>} /><Workbench /></section>;
   return (
-    <section aria-labelledby="cvrs-h" data-testid="bill-cvr"><h1 id="cvrs-h">{t('cvr.title')}</h1><p className="muted">{t('cvr.intro')}</p>
+    <section aria-labelledby="cvrs-h" data-testid="bill-cvr"><PageHeader id="cvrs-h" title={t('cvr.title')} subtitle={t('cvr.intro')} />
       <div className="actions-row no-print"><Link to="/bill/cvr?new=1" data-testid="bill-cvr-new">{t('cvr.new')}</Link> · <Link to="/bill/control-tower">{t('ct.title')}</Link> · <Link to="/bill/qs-dashboard">{t('qd.title')}</Link></div>
       <ListReport listCode="bill.cvr" endpoint="/bill/reports" title={t('cvr.title')} session={session.data} rowHref={(r) => `/bill/cvr?id=${r.id}`} onOpen={(r) => navigateTo(`/bill/cvr?id=${r.id}`)} cardFields={['docNo', 'project', 'period', 'value', 'margin', 'status']} statusKey="status" empty={{ title: t('cvr.emptyTitle'), text: t('cvr.emptyBody') }} />
     </section>
@@ -97,18 +99,18 @@ export default function CvrPage() {
 }
 
 const FLAG_TONE = { LOSS: 'REJECTED', MARGIN_FALLING: 'RETURNED', NO_CVR: 'RETURNED', HIGH_RISK: 'RETURNED' };
-export function ControlTowerPage() {
+function ControlTowerClassic() {
   const t = useT('bill'); usePageTitle(t('ct.title')); const sp = useSearch(); const [projectId, setProjectId] = useState(sp.get('projectId') ?? '');
   const o = useQuery({ queryKey: ['bill', 'tower-options'], queryFn: () => bill.get('/control-tower/options'), retry: false });
   const q = useQuery({ queryKey: ['bill', 'tower', projectId], queryFn: () => bill.get(`/control-tower${qs({ projectId })}`), retry: false, placeholderData: (p) => p });
   if (q.error?.status === 403) return <NoPermission what={t('ct.title')} permission="bill.control_tower.view" />; if (q.isPending) return <Skeleton label={t('ct.title')} rows={6} />; if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   const d = q.data; const T = d.totals;
   return (
-    <section aria-labelledby="ct-h" data-testid="bill-tower"><h1 id="ct-h">{t('ct.title')}</h1><p className="muted">{t('ct.intro', { date: d.asOf })}</p>
+    <section aria-labelledby="ct-h" data-testid="bill-tower"><PageHeader id="ct-h" title={t('ct.title')} subtitle={t('ct.intro', { date: d.asOf })} />
       <div className="mdm-panel no-print"><div className="form-grid"><Field label={t('project')} name="projectId" error={null}><select value={projectId} onChange={(e) => setProjectId(e.target.value)} style={big} data-testid="bill-ct-project"><option value="">{t('qd.portfolio')}</option>{(o.data?.projects ?? []).map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}</select></Field></div>
         <div className="actions-row"><button type="button" className="btn" onClick={() => bill.exportFile(`/control-tower/export${qs({ projectId })}`, 'control-tower.csv')} data-testid="bill-ct-export">{t('rc.export')}</button> · <Link to="/bill/cvr">{t('cvr.title')}</Link> · <Link to="/bill/qs-dashboard">{t('qd.title')}</Link></div></div>
       {d.empty ? <div className="empty-state"><h2>{t('ct.emptyTitle')}</h2><p>{t('ct.emptyBody')}</p></div> : (<>
-        <div className="form-grid" data-testid="bill-ct-tiles">{[['contracts', T.contracts], ['value', money(T.value)], ['billed', money(T.billed)], ['collected', money(T.collected)], ['outstanding', money(T.outstanding)], ['margin', T.marginMasked ? t('qd.masked') : money(T.margin)], ['variations', money(T.variations)], ['claims', money(T.claims)], ['guarantees', money(T.guaranteeAmount)], ['retention', money(T.retentionHeld)]].map(([k, v]) => <div className="mdm-panel" key={k} data-testid={`bill-ct-t-${k}`}><div className="muted">{t(`ct.t.${k}`)}</div><strong style={{ fontSize: '1.3rem' }}>{v}</strong></div>)}</div>
+        <KpiRow data-testid="bill-ct-tiles">{[['contracts', T.contracts], ['value', money(T.value), T.value], ['billed', money(T.billed), T.billed], ['collected', money(T.collected), T.collected], ['outstanding', money(T.outstanding), T.outstanding], ['margin', T.marginMasked ? t('qd.masked') : money(T.margin), T.margin], ['variations', money(T.variations), T.variations], ['claims', money(T.claims), T.claims], ['guarantees', money(T.guaranteeAmount), T.guaranteeAmount], ['retention', money(T.retentionHeld), T.retentionHeld]].map(([k, v, amt, kd]) => <KpiTile label={t(`ct.t.${k}`)} value={v} amount={amt} kind={kd ?? (amt !== undefined ? 'money' : /day/i.test(k) ? 'time' : 'count')} key={k} data-testid={`bill-ct-t-${k}`} />)}</KpiRow>
         <h2>{t('dash.exceptions')}</h2>{d.exceptions.length === 0 ? <p className="muted">{t('ct.noExceptions')}</p> : <ul data-testid="bill-ct-exceptions">{d.exceptions.map((e) => <li key={e.key} data-key={e.key}><StatusBadge status={FLAG_TONE[e.key]} label={t(`ct.f.${e.key}`)} /> {e.count}: {e.contracts.map((c) => c.contractNo).join(', ')}</li>)}</ul>}
         <div className="table-scroll"><table className="data-table" data-testid="bill-ct-table"><thead><tr><th>{t('rt.contract')}</th><th>{t('project')}</th><th className="num">{t('ct.t.value')}</th><th className="num">{t('ct.t.billed')}</th><th className="num">{t('ct.t.collected')}</th><th className="num">{t('ct.t.margin')}</th><th className="num">{t('ct.t.variations')}</th><th className="num">{t('ct.t.claims')}</th><th className="num">{t('ct.t.guarantees')}</th><th className="num">{t('ct.t.retention')}</th><th className="num">{t('ct.risks')}</th><th>{t('ct.flags')}</th></tr></thead>
           <tbody>{d.rows.map((r) => (
@@ -117,4 +119,9 @@ export function ControlTowerPage() {
               <td>{r.flags.map((f) => <StatusBadge key={f} status={FLAG_TONE[f]} label={t(`ct.f.${f}`)} />)}</td></tr>))}</tbody></table></div></>)}
     </section>
   );
+}
+
+/** With ff.ui.p16605 the overview page of cards (part 166.5), else the page as it was. */
+export function ControlTowerPage() {
+  return <OverviewSwitch code="ov-tower" heading="Contract Control Tower" intro="Contract value, billing and collection, margin and the contracts that need attention, from the contract control tower service." Classic={ControlTowerClassic} />;
 }

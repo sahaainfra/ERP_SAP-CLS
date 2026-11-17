@@ -5,6 +5,7 @@ import { formatDateTime } from '../../platform/format.js';
 import { authHeaders, registerUrl, useProposeSigConfig, useRemoveProfile, useRevoke, useSaveProfile, useSigConfig, useSigProfile, useSigRegister } from '../../platform/signatures/api.js';
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { generatedLink } from './templates-common.js';
+import PageHeader from '../../platform/design/PageHeader.jsx';
 
 // Signature Register (part 04.12, section 7.2): every signature with its document, signer, method, time and the number of times the document was checked; filters, count by method, drill-down to the document,
 // revoking (the system administrator), export, my own signature picture, and the settings (which fields the public check shows, where the stamps go), changed by an approved change.
@@ -90,7 +91,7 @@ export default function SignatureRegisterPage() {
   const revoke = useRevoke();
   const query = useMemo(() => ({ ...filters, limit, offset: (page - 1) * limit }), [filters, limit, page]);
   const list = useSigRegister(query);
-  if (list.error?.status === 403) return <section><h1>Signature Register</h1><NoPermission what="the signature register" permission="sig.register.view" /><Profile /></section>;
+  if (list.error?.status === 403) return <section><PageHeader title={"Signature Register"} /><NoPermission what="the signature register" permission="sig.register.view" /><Profile /></section>;
   const d = list.data;
   const pages = d ? Math.max(1, Math.ceil(d.total / limit)) : 1;
   const set = (patch) => { setFilters((f) => ({ ...f, ...patch })); setPage(1); };
@@ -105,8 +106,7 @@ export default function SignatureRegisterPage() {
   const max = Math.max(1, ...(d?.summary.byMethod ?? []).map((x) => x.n));
   return (
     <section aria-labelledby="sr-title" data-testid="signature-register">
-      <h1 id="sr-title">Signature Register</h1>
-      <p className="muted">Every signature on a generated document: who signed, how and when, and how often the document was checked by its QR code. You see the signatures of your projects.</p>
+      <PageHeader id="sr-title" title={"Signature Register"} subtitle={"Every signature on a generated document: who signed, how and when, and how often the document was checked by its QR code. You see the signatures of your projects."} />
       {notice && <p role="status" className="notice" data-testid="sr-notice">{notice}</p>}
       <div className="srch-tools"><button type="button" className="btn" onClick={() => download('xlsx')}>Export XLSX</button><button type="button" className="btn" onClick={() => download('csv')}>Export CSV</button><button type="button" className="btn" onClick={() => download('pdf')}>Export PDF</button></div>
       <form className="srch-form" role="search" aria-label="Filters" onSubmit={(e) => e.preventDefault()}>
