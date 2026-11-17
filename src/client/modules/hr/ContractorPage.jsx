@@ -5,10 +5,12 @@ import { ErrorState, NoPermission, Skeleton } from '../../platform/feedback/stat
 import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { LICENCE_STATE, lab } from './api.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
 
 // Contractor compliance (HR, part 07.08, FR-01): the CLRA licence number and its validity, the most workers the licence allows, the PF and ESI registrations, the work order, and the documents held in the partner master. Whoever
 // keeps the compliance (HR, the subcontractor coordinator, commercial) edits it; HR is told when the licence is about to end, and no worker of the contractor is deployed once it has.
 export default function ContractorPage() {
+  const osh = useFlagOn('ff.mdm.p16608'); // part 166.8 (S-05): the licence under the OSH Code, 2020, which replaced the Contract Labour Act; the data is the same
   const id = Number(new URLSearchParams(window.location.search).get('id')) || null;
   usePageTitle('Contractor compliance');
   const qc = useQueryClient();
@@ -31,7 +33,7 @@ export default function ContractorPage() {
       {error?.form && <p className="field-error" role="alert" data-testid="cp-error">{error.form}</p>}
       {note && <p className="mdm-banner" role="status" data-testid="cp-note">{note}</p>}
       <form className="mdm-fields" onSubmit={(e) => { e.preventDefault(); save(); }}>
-        <Field label="CLRA licence number" name="clraLicenceNo" error={error}><input value={f.clraLicenceNo} maxLength={60} disabled={!d.can.edit} onChange={(e) => set({ clraLicenceNo: e.target.value })} data-testid="cp-licence" /></Field>
+        <Field label={osh ? 'Contract labour licence number (OSH Code, 2020)' : 'CLRA licence number'} name="clraLicenceNo" error={error}><input value={f.clraLicenceNo} maxLength={60} disabled={!d.can.edit} onChange={(e) => set({ clraLicenceNo: e.target.value })} data-testid="cp-licence" /></Field>
         <Field label="Licence valid until" name="licenceValidUntil" error={error}><input type="date" value={f.licenceValidUntil} disabled={!d.can.edit} onChange={(e) => set({ licenceValidUntil: e.target.value })} data-testid="cp-valid" /></Field>
         <Field label="Most workers allowed" name="maxWorkers" error={error}><input type="number" min="0" value={f.maxWorkers} disabled={!d.can.edit} onChange={(e) => set({ maxWorkers: e.target.value })} data-testid="cp-max" /></Field>
         <Field label="PF registration" name="pfCode" error={error}><input value={f.pfCode} maxLength={40} disabled={!d.can.edit} onChange={(e) => set({ pfCode: e.target.value })} /></Field>

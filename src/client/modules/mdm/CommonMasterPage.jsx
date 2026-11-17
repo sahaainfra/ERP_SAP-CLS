@@ -21,6 +21,10 @@ const PAGES = {
   banks: { title: 'Banks & IFSC', masters: ['banks'] },
   'payment-terms': { title: 'Payment & Delivery Terms', masters: ['payment-terms'] },
   lookups: { title: 'Lookup Lists', masters: ['lookup-lists', 'lookups'] },
+  'tds-forms': { title: 'TDS Forms', masters: ['tds-forms'] },
+  'statutory-calendar': { title: 'Statutory Calendar', masters: ['statutory-calendar'] },
+  'labour-rules': { title: 'Labour Code Rules', masters: ['labour-rules'] },
+  'pay-components': { title: 'Pay Components', masters: ['pay-components'] },
 };
 const IMPORT = { uom: 'MDM_UOM', 'gst-rates': 'MDM_GST_RATE', 'hsn-sac': 'MDM_HSN_SAC', 'tds-sections': 'MDM_TDS_SECTION', states: 'MDM_STATE', districts: 'MDM_DISTRICT', currencies: 'MDM_CURRENCY', 'exchange-rates': 'MDM_EXCHANGE_RATE', banks: 'MDM_BANK', 'payment-terms': 'MDM_PAYMENT_TERM', lookups: 'MDM_LOOKUP' };
 const show = (fd, v) => (v == null || v === '' ? '—' : fd.type === 'bool' ? (v ? 'Yes' : 'No') : fd.type === 'percent' ? `${v}%` : fd.type === 'money' ? `₹${Number(v).toLocaleString('en-IN')}` : fd.type === 'json' ? (v.length ? v.map((m) => `${m.label} ${m.pct}% (${m.days} d)`).join('; ') : '—') : fd.type === 'enum' ? (fd.options.find(([k]) => k === v)?.[1] ?? v) : String(v));
@@ -34,6 +38,7 @@ export default function CommonMasterPage({ page }) {
   if (cat.isError) return <ErrorState error={cat.error} onRetry={cat.refetch} />;
   if (cat.isPending) return <Skeleton label={`Loading ${p.title}`} rows={4} />;
   const defs = p.masters.map((m) => cat.data.rows.find((d) => d.code === m));
+  if (defs.some((d) => !d)) return <EmptyState title={`${p.title} is not enabled for your company`} message="The master is switched on with its feature flag." />;
   return (
     <section aria-labelledby="cm-title" data-testid={`cm-page-${page}`}>
       <PageHeader id="cm-title" title={p.title} />

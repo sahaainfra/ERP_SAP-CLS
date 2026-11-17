@@ -10463,6 +10463,37 @@ Indexes:
 - ix_hr_employee_history_company_id: company_id
 - ix_hr_employee_history_employee: employee_id, effective_date
 
+## hr_employee_pay
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| component_code | TEXT | yes |  |  |
+| monthly_paise | INTEGER | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_hr_employee_pay_company: company_id, employee_id
+- ux_hr_employee_pay_key (unique): employee_id, component_code, effective_from
+
 ## hr_employee_statutory
 
 | Column | Type | Not null | Key | Default |
@@ -15221,6 +15252,41 @@ Indexes:
 - ix_mdm_items_list: company_id, item_status, item_type, category_id
 - ux_mdm_items_code (unique): company_id, code, version_no
 
+## mdm_labour_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| state_code | TEXT | yes |  |  |
+| code_kind | TEXT | yes |  |  |
+| rule_ref | TEXT | yes |  |  |
+| notified_on | TEXT |  |  |  |
+| effective_from | TEXT | yes |  | '2000-01-01' |
+| effective_to | TEXT |  |  |  |
+| row_status | TEXT | yes |  | 'ACTIVE' |
+| change_request_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: change_request_id -> mdm_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_labour_rules_cr: change_request_id
+- ix_mdm_labour_rules_company: company_id, row_status
+- ux_mdm_labour_rules_key (unique): , state_code, code_kind, effective_from
+
 ## mdm_lookup_lists
 
 | Column | Type | Not null | Key | Default |
@@ -15656,6 +15722,41 @@ Indexes:
 - ix_mdm_partners_list: company_id, partner_status
 - ux_mdm_partners_code (unique): company_id, code
 
+## mdm_pay_components
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| wage_class | TEXT | yes |  |  |
+| legal_ref | TEXT |  |  |  |
+| effective_from | TEXT | yes |  | '2000-01-01' |
+| effective_to | TEXT |  |  |  |
+| row_status | TEXT | yes |  | 'ACTIVE' |
+| change_request_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: change_request_id -> mdm_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_pay_components_cr: change_request_id
+- ix_mdm_pay_components_company: company_id, row_status
+- ux_mdm_pay_components_key (unique): , code, effective_from
+
 ## mdm_payment_terms
 
 | Column | Type | Not null | Key | Default |
@@ -15841,6 +15942,47 @@ Indexes:
 - ix_mdm_states_company: company_id, row_status
 - ux_mdm_states_key (unique): , code
 
+## mdm_statutory_calendar
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| obligation | TEXT | yes |  |  |
+| purpose | TEXT |  |  |  |
+| period_kind | TEXT | yes |  |  |
+| period_no | INTEGER | yes |  | 0 |
+| due_months_after | INTEGER | yes |  | 1 |
+| due_day | INTEGER | yes |  |  |
+| alert_days | INTEGER | yes |  | 7 |
+| owner_role | TEXT | yes |  | 'ACCMGR' |
+| legal_ref | TEXT |  |  |  |
+| effective_from | TEXT | yes |  | '2000-01-01' |
+| effective_to | TEXT |  |  |  |
+| row_status | TEXT | yes |  | 'ACTIVE' |
+| change_request_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: change_request_id -> mdm_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_statutory_calendar_cr: change_request_id
+- ix_mdm_statutory_calendar_company: company_id, row_status
+- ux_mdm_statutory_calendar_key (unique): , code, effective_from
+
 ## mdm_stewards
 
 | Column | Type | Not null | Key | Default |
@@ -15876,6 +16018,43 @@ Indexes:
 - ix_mdm_stewards_user: user_id
 - ix_mdm_stewards_status: company_id, config_status, master_type
 
+## mdm_tds_forms
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| purpose | TEXT | yes |  |  |
+| form_code | TEXT | yes |  |  |
+| act_code | TEXT | yes |  |  |
+| replaces | TEXT |  |  |  |
+| legal_ref | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| effective_from | TEXT | yes |  | '2000-01-01' |
+| effective_to | TEXT |  |  |  |
+| row_status | TEXT | yes |  | 'ACTIVE' |
+| change_request_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: change_request_id -> mdm_change_requests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_mdm_tds_forms_cr: change_request_id
+- ix_mdm_tds_forms_company: company_id, row_status
+- ux_mdm_tds_forms_key (unique): , purpose, effective_from
+
 ## mdm_tds_sections
 
 | Column | Type | Not null | Key | Default |
@@ -15906,14 +16085,20 @@ Indexes:
 | source_type | TEXT |  |  |  |
 | source_id | TEXT |  |  |  |
 | remarks | TEXT |  |  |  |
+| nature_code | TEXT | yes |  | 'OTHER' |
+| act_code | TEXT | yes |  | 'IT1961' |
+| legal_ref | TEXT |  |  |  |
+| payment_code | TEXT |  |  |  |
+| payment_code_other | TEXT |  |  |  |
 
 Foreign keys: change_request_id -> mdm_change_requests(id), company_id -> org_companies(id)
 
 Indexes:
+- ix_mdm_tds_sections_nature: nature_code, effective_from
+- ux_mdm_tds_sections_key (unique): , section, nature_code, effective_from
 - ix_mdm_tds_sections_tax_kind: tax_kind
 - ix_mdm_tds_sections_cr: change_request_id
 - ix_mdm_tds_sections_company: company_id, row_status
-- ux_mdm_tds_sections_key (unique): , section, effective_from
 
 ## mdm_uoms
 

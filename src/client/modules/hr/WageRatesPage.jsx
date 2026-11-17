@@ -8,11 +8,13 @@ import { Field, Link, errorInfo, usePageTitle } from '../core/pages/ui.jsx';
 import { useSession } from '../core/api/index.js';
 import { SKILL_LABELS, dayIST, lab } from './api.js';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
 
 // Wage Rates & Minimum Wages (HR, part 07.08, FR-04): the minimum wage notifications by state and skill, and the rates contracted with each contractor by trade; effective-dated, daily, hourly or by the piece. A new rate is approved
 // (HR manager; the commercial manager too for a contract rate) and replaces the old one from its date; a contract rate below the minimum wage of the state and skill on its date is refused. "What to pay" shows the rate that applies.
 const blank = () => ({ kind: 'MINIMUM', contractorId: '', tradeCode: '', skillCategory: 'UNSKILLED', stateCode: '', payBasis: 'DAILY', rate: '', minWageRef: '', effectiveFrom: dayIST(0), reason: '' });
 export default function WageRatesPage() {
+  const codes = useFlagOn('ff.mdm.p16608'); // part 166.8 (S-05)
   usePageTitle('Wage Rates & Minimum Wages');
   const qc = useQueryClient();
   const session = useSession();
@@ -33,6 +35,7 @@ export default function WageRatesPage() {
   return (
     <section aria-labelledby="wr-title" data-testid="wages">
       <PageHeader id="wr-title" title={"Wage Rates & Minimum Wages"} />
+      {codes && <p className="small muted" role="note" data-testid="wr-code">Minimum wages are notified under the Code on Wages, 2019 (in force from 21-Nov-2025); each state's rules and their dates are in <Link to="/admin/master-data/common/labour-rules">Labour Code Rules</Link>.</p>}
       {note && <p className="mdm-banner" role="status" data-testid="wr-note">{note}</p>}
       {canEdit && <div className="actions-row"><button type="button" className="btn btn-primary" onClick={() => setOpen(true)} data-testid="wr-new">New rate</button></div>}
       {open && (

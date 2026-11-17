@@ -1,5 +1,6 @@
 -- Part 166.8 down: the pages, the new tables, the 2025-Act rows and columns of the TDS sections (the key back to section), the 40 % rate and cement's
 -- 18 % row (its 28 % row open again), and the flag.
+DELETE FROM ui_page_migration WHERE page_code IN ('mdm.statutory', 'mdm.common.tds-forms', 'mdm.common.statutory-calendar', 'mdm.common.labour-rules', 'mdm.common.pay-components');
 DELETE FROM ui_navigation_entries WHERE code IN ('mdm-statutory', 'mdm-common-tds-forms', 'mdm-common-statutory-calendar', 'mdm-common-labour-rules', 'mdm-common-pay-components');
 DELETE FROM alr_alerts WHERE rule_code = 'mdm.statutory_due';
 DELETE FROM alr_rule_runs WHERE rule_code = 'mdm.statutory_due';

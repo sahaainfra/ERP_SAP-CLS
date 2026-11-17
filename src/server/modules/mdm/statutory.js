@@ -178,7 +178,7 @@ export function createStatutoryService({ db, flags }) {
       if (!may(actor, 'hr.employee.sensitive.view')) throw forbidden('You may not see the pay of an employee (permission hr.employee.sensitive.view).');
       const e = db.prepare('SELECT id FROM hr_employees WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(employeeId), actor.companyId);
       if (!e) throw notFound('That employee does not exist.');
-      return wagesUnderCode(actor.companyId, e.id, month ?? todayIST().slice(0, 7));
+      return { ...wagesUnderCode(actor.companyId, e.id, month ?? todayIST().slice(0, 7)), canEdit: may(actor, 'hr.employee.edit'), components: db.prepare("SELECT code, name, wage_class FROM mdm_pay_components WHERE (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND deleted_at IS NULL AND (effective_to IS NULL OR effective_to >= ?) GROUP BY code ORDER BY CASE wage_class WHEN 'WAGES' THEN 0 WHEN 'EXCLUDED' THEN 1 ELSE 2 END, code").all(actor.companyId, todayIST()).map((c) => ({ code: c.code, name: c.name, wageClass: c.wage_class })) };
     },
     /** The monthly pay of an employee by component from a date: the components not sent end the day before. */
     setPay(actor, employeeId, { effectiveFrom, lines, reason }) {

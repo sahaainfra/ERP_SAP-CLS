@@ -49,7 +49,7 @@ for (const [type, description] of [
 const PARTNER_TABLES = ['mdm_partners', 'mdm_partner_roles', 'mdm_partner_gstins', 'mdm_partner_addresses', 'mdm_partner_contacts', 'mdm_partner_banks', 'mdm_partner_documents', 'mdm_partner_tds', 'mdm_partner_status_requests'];
 const ITEM_TABLES = ['mdm_item_categories', 'mdm_items', 'mdm_item_uoms', 'mdm_item_resources', 'mdm_item_makes', 'mdm_item_alternates', 'mdm_item_code_counters', 'mdm_item_user_marks', 'mdm_item_legacy_map'];
 const RATE_TABLES = ['ra_resource_rates', 'ra_sor_books', 'ra_sor_items', 'ra_analyses', 'ra_analysis_lines'];
-const COMMON_TABLES = ['mdm_uoms', 'mdm_gst_rates', 'mdm_hsn_sac', 'mdm_tds_sections', 'mdm_states', 'mdm_districts', 'mdm_currencies', 'mdm_exchange_rates', 'mdm_banks', 'mdm_payment_terms', 'mdm_lookup_lists', 'mdm_lookups'];
+const COMMON_TABLES = ['mdm_uoms', 'mdm_gst_rates', 'mdm_hsn_sac', 'mdm_tds_sections', 'mdm_states', 'mdm_districts', 'mdm_currencies', 'mdm_exchange_rates', 'mdm_banks', 'mdm_payment_terms', 'mdm_lookup_lists', 'mdm_lookups', 'mdm_tds_forms', 'mdm_statutory_calendar', 'mdm_labour_rules', 'mdm_pay_components'];
 // the integrity checks (01.02): a common master row without a company is a system row every company sees (06.02); the status lists of the governed records (06.01)
 integrityRegistry.register({ allowNegative: [], companyOptional: [...COMMON_TABLES, 'mdm_item_categories'], statuses: Object.fromEntries(COMMON_TABLES.map((t) => [t, ['PENDING', 'ACTIVE', 'RETIRED', 'REJECTED']])) });
 /** Module "mdm": master data governance (part 06.01). The tables are `mdm_*`; the masters plug in through `masterTypes` (platform/mdm). */

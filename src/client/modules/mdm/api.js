@@ -31,6 +31,12 @@ export const mdm = {
   quality: async (type) => (await api.get(`/mdm/quality?${q({ type })}`)).data,
   catalogue: async () => (await api.get('/mdm/common')).data,
   common: async (m, f) => (await api.get(`/mdm/common/${m}?${q(f)}`)).data,
+  // part 166.8
+  statutoryLookup: async (f) => (await api.get(`/mdm/statutory/lookup?${q(f)}`)).data,
+  statutoryCalendar: async (f) => (await api.get(`/mdm/statutory/calendar?${q(f)}`)).data,
+  migrationReport: async () => (await api.get('/mdm/statutory/migration-report')).data,
+  wages: async (id, month) => (await api.get(`/mdm/statutory/employees/${id}/wages?${q({ month })}`)).data,
+  setPay: async (id, b) => (await api.put(`/mdm/statutory/employees/${id}/pay`, b, idem())).data,
   commonRow: async (m, id) => (await api.get(`/mdm/common/${m}/${id}`)).data,
   commonCreate: async (m, b) => (await api.post(`/mdm/common/${m}`, b, idem())).data,
   commonUpdate: async (m, id, b) => (await api.put(`/mdm/common/${m}/${id}`, b, idem())).data,

@@ -11,6 +11,8 @@ import { Field, Link, errorInfo, navigateTo, usePageTitle } from '../core/pages/
 import { CHANGE_STATUS, DOC_TYPES, EMPLOYMENT_STATUS, EVENT_LABELS, EVENT_TYPES, RECORD_STATUS, dayIST, employees, todayIST } from './api.js';
 import { AddressFields, ContactsEditor, EmploymentFields, addressOrNull, blankAddress, blankContact, contactsOut } from './HrForms.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import { useFlagOn } from '../../platform/shell/api.js';
+import { mdm } from '../mdm/api.js';
 
 // Employee 360 (HR, part 07.01): one employee. Header: code, name, record status (Draft to Approved) and employment status (Active, Notice, Separated, Absconding), department, designation, grade, type, joining, manager, work
 // location and user account, with the actions allowed for this person and status: send a draft for approval, correct it, withdraw, cancel, amend (personal, employment, statutory, bank, status), create or link the user account,
@@ -28,12 +30,13 @@ export default function Employee360Page() {
   const q = useQuery({ queryKey: ['hr', 'employee', mine ? 'me' : id], queryFn: () => (mine ? employees.me() : employees.get(id)), enabled: mine || Boolean(id), retry: false });
   usePageTitle(q.data ? `${q.data.code} ${q.data.name}` : 'Employee 360');
   const [tab, setTab] = useState(() => sp.get('tab') ?? 'personal');
+  const v8 = useFlagOn('ff.mdm.p16608'); // part 166.8: the salary tab with the wages under the Code on Wages
   if (q.error?.status === 403) return <NoPermission what="employees" permission="hr.employee.team.view" />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   if (q.isPending) return <Skeleton label="Loading the employee" rows={6} />;
   const e = q.data;
   const restricted = e.accessLevel === 'team';
-  const tabs = [...BASE_TABS.filter(([k]) => !(restricted && ['documents', 'changes'].includes(k))), ...(e.relatedTabs ?? []).map((r) => [`rel-${r.code}`, r.label])];
+  const tabs = [...BASE_TABS.filter(([k]) => !(restricted && ['documents', 'changes'].includes(k))), ...(v8 && !mine && !restricted && !e.masked ? [['salary', 'Salary']] : []), ...(e.relatedTabs ?? []).map((r) => [`rel-${r.code}`, r.label])];
   const onKey = (ev) => { const i = tabs.findIndex(([k]) => k === tab); const n = ev.key === 'ArrowRight' ? tabs[(i + 1) % tabs.length] : ev.key === 'ArrowLeft' ? tabs[(i - 1 + tabs.length) % tabs.length] : null; if (n) { ev.preventDefault(); setTab(n[0]); document.getElementById(`e3-tab-${n[0]}`)?.focus(); } };
   const [recStatus, recLabel] = RECORD_STATUS[e.status];
   const [empStatus, empLabel] = EMPLOYMENT_STATUS[e.employmentStatus];
@@ -58,6 +61,7 @@ export default function Employee360Page() {
         {tab === 'personal' && <Personal e={e} />}
         {tab === 'employment' && <Employment e={e} />}
         {tab === 'statutory' && <Statutory e={e} />}
+        {tab === 'salary' && v8 && <Salary e={e} />}
         {tab === 'bank' && <Banks e={e} />}
         {tab === 'documents' && <Documents e={e} />}
         {tab === 'history' && <History e={e} />}
@@ -359,4 +363,60 @@ function Approvals({ e }) {
   if (q.isPending) return <Skeleton label="Loading the approvals" rows={2} />;
   if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
   return <ul className="mdm-list" data-testid="e3-approvals">{q.data.map((i) => <li key={i.id}><strong>{i.docTypeLabel ?? i.docType}</strong> · {String(i.status).toLowerCase()} · sent by {i.submittedBy}{i.submittedAt ? ` on ${formatDateTime(i.submittedAt)}` : ''}{(i.history ?? []).length ? <ol>{i.history.map((h, k) => <li key={k}>{h.event} · {h.actor}{h.comment ? `: ${h.comment}` : ''}</li>)}</ol> : null}</li>)}</ul>;
+}
+
+const CLASS = { WAGES: 'Wages', EXCLUDED: 'Excluded (50 % rule)', NOT_REMUNERATION: 'Not remuneration' };
+const inr = (n) => `₹${Number(n ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+/** Part 166.8 (S-04): the monthly pay by component and the wages under the Code on Wages, s.2(y), for a month; HR sets the pay from a date. */
+function Salary({ e }) {
+  const qc = useQueryClient();
+  const [month, setMonth] = useState(() => todayIST().slice(0, 7));
+  const q = useQuery({ queryKey: ['hr', 'wages', e.id, month], queryFn: () => mdm.wages(e.id, month), retry: false });
+  const [edit, setEdit] = useState(null); const [error, setError] = useState(null); const [busy, setBusy] = useState(false);
+  if (q.error?.status === 403) return <NoPermission what="the pay of an employee" permission="hr.employee.sensitive.view" />;
+  if (q.isError) return <ErrorState error={q.error} onRetry={q.refetch} />;
+  if (q.isPending) return <Skeleton label="Loading the pay" rows={3} />;
+  const w = q.data;
+  const start = () => setEdit({ effectiveFrom: `${month}-01`, reason: '', amounts: Object.fromEntries(w.components.map((c) => [c.code, String(w.lines.find((l) => l.code === c.code)?.amount ?? '')])) });
+  const save = async (ev) => {
+    ev.preventDefault(); setBusy(true); setError(null);
+    try {
+      const lines = Object.entries(edit.amounts).filter(([, v]) => v !== '' && Number(v) > 0).map(([code, v]) => ({ code, amount: Number(v) }));
+      await mdm.setPay(e.id, { effectiveFrom: edit.effectiveFrom, reason: edit.reason, lines });
+      setEdit(null); setMonth(edit.effectiveFrom.slice(0, 7)); await qc.invalidateQueries({ queryKey: ['hr', 'wages', e.id] });
+    } catch (err) { setError(errorInfo(err)); } finally { setBusy(false); }
+  };
+  return (
+    <div data-testid="e3-salary">
+      <Field label="Month" name="month"><input type="month" value={month} onChange={(ev) => ev.target.value && setMonth(ev.target.value)} data-testid="e3-salary-month" /></Field>
+      {w.lines.length === 0 ? <p className="muted">{w.note}</p> : (
+        <>
+          <div className="table-scroll">
+            <table className="data-table">
+              <caption className="sr-only">Pay by component for {month}</caption>
+              <thead><tr><th scope="col">Component</th><th scope="col">Under the Code</th><th scope="col" className="num">Monthly</th><th scope="col">From</th></tr></thead>
+              <tbody>{w.lines.map((l) => <tr key={l.code}><td data-label="Component">{l.name}</td><td data-label="Under the Code">{CLASS[l.wageClass]}</td><td data-label="Monthly" className="num">{inr(l.amount)}</td><td data-label="From">{formatDate(l.from)}</td></tr>)}</tbody>
+            </table>
+          </div>
+          <dl className="kv-list" data-testid="e3-wages">
+            <div><dt>Remuneration</dt><dd>{inr(w.remuneration)}</dd></div>
+            <div><dt>Exclusions</dt><dd>{inr(w.excluded)}</dd></div>
+            {w.addedBack > 0 && <div><dt>Added back (above half)</dt><dd>{inr(w.addedBack)}</dd></div>}
+            <div><dt>Wages under the Code</dt><dd><strong data-testid="e3-wages-amount">{inr(w.wages)}</strong></dd></div>
+          </dl>
+          <p className="small muted" role="note">{w.note}{w.rule ? ` ${w.rule.ref}.` : ''} Shown for information: gratuity, PF and bonus take these wages when payroll (24.x) computes them.</p>
+        </>
+      )}
+      {w.canEdit && !edit && <button type="button" className="btn" onClick={start} data-testid="e3-salary-edit">Set pay from a date</button>}
+      {edit && (
+        <form onSubmit={save} className="form-grid" data-testid="e3-salary-form">
+          <Field label="From" name="effectiveFrom" error={error}><input type="date" value={edit.effectiveFrom} onChange={(ev) => setEdit({ ...edit, effectiveFrom: ev.target.value })} required /></Field>
+          {w.components.map((c) => <Field key={c.code} label={`${c.name} (${CLASS[c.wageClass]})`} name={`lines.${c.code}`} error={error}><input inputMode="decimal" value={edit.amounts[c.code] ?? ''} onChange={(ev) => setEdit({ ...edit, amounts: { ...edit.amounts, [c.code]: ev.target.value.replace(/[^0-9.]/g, '') } })} /></Field>)}
+          <Field label="Reason" name="reason" error={error}><input value={edit.reason} maxLength={300} onChange={(ev) => setEdit({ ...edit, reason: ev.target.value })} required minLength={3} /></Field>
+          <div className="actions"><button type="button" className="btn" onClick={() => setEdit(null)}>Cancel</button><button type="submit" className="btn btn-primary" disabled={busy} data-testid="e3-salary-save">Save</button></div>
+          {error?.form && <p className="field-error" role="alert">{error.form}</p>}
+        </form>
+      )}
+    </div>
+  );
 }

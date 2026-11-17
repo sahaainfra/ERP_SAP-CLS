@@ -24,6 +24,7 @@ const RateAnalysisPage = lazyPage(() => import('./RateAnalysisPage.jsx'));
 const RateImpactPage = lazyPage(() => import('./RateImpactPage.jsx'));
 const RateLibraryPage = lazyPage(() => import('./RateLibraryPage.jsx'));
 const SchedulesOfRatesPage = lazyPage(() => import('./SchedulesOfRatesPage.jsx'));
+const StatutoryPage = lazyPage(() => import('./StatutoryPage.jsx'));
 
 /** One register page per common master, all drawn by CommonMasterPage. */
 // the wrapper is a few lines; the page it draws is fetched when opened (part 166.4), so the wrapper is lazy too
@@ -47,6 +48,12 @@ registerModule({
     { path: '/admin/master-data/common/banks', label: 'Banks & IFSC', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('banks') },
     { path: '/admin/master-data/common/payment-terms', label: 'Payment & Delivery Terms', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('payment-terms') },
     { path: '/admin/master-data/common/lookups', label: 'Lookup Lists', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p0602', Page: register('lookups') },
+    // part 166.8: the statutory changes of 2025-26 and their masters
+    { path: '/admin/master-data/statutory', label: 'Statutory Changes', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: StatutoryPage },
+    { path: '/admin/master-data/common/tds-forms', label: 'TDS Forms', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('tds-forms') },
+    { path: '/admin/master-data/common/statutory-calendar', label: 'Statutory Calendar', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('statutory-calendar') },
+    { path: '/admin/master-data/common/labour-rules', label: 'Labour Code Rules', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('labour-rules') },
+    { path: '/admin/master-data/common/pay-components', label: 'Pay Components', icon: 'erp.action.settings', permission: 'mdm.record.view', flag: 'ff.mdm.p16608', Page: register('pay-components') },
     { path: '/admin/master-data/lookup-manager', label: 'Lookup List Manager', icon: 'erp.action.edit', permission: 'mdm.lookup.edit', flag: 'ff.mdm.p0602', Page: LookupListManagerPage },
     { path: '/admin/items', label: 'Item Master', icon: 'erp.action.history', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemMasterPage },
     { path: '/admin/items/item', label: 'Item', icon: 'erp.action.info', permission: 'mdm.record.view', flag: 'ff.mdm.p0603', Page: ItemPage },
