@@ -129,7 +129,7 @@ test('T-01 T-02 HR with people: the cards follow the overview; the to-do card li
   // the to-do card: the second HR manager has the two approvals, the person who entered them has none of them (the maker never approves)
   const todo2 = (await api.call('GET', '/api/v1/ui/widgets/ov.todo.mine/data', hr2)).json.data.data;
   assert.ok(todo2.rows.length >= 2, JSON.stringify(todo2));
-  assert.equal(todo2.source, 'Workflow engine (04.01): my open tasks');
+  assert.equal(todo2.source, 'My open approvals and tasks');
   const todo1 = (await api.call('GET', '/api/v1/ui/widgets/ov.todo.mine/data', hr1)).json.data.data;
   const mine = new Set(todo2.rows.map((r) => r.taskId));
   assert.ok(todo1.rows.every((r) => !mine.has(r.taskId)), 'the maker does not see them');

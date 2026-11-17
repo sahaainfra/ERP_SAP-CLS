@@ -54,7 +54,7 @@ const widgetRows = cards.map((c, i) => {
   const o = c.overview;
   const permission = o ? o.permission : c.permission;
   const module = o ? o.module : c.module;
-  const description = o ? `${c.title}, read from ${o.source}. Opens ${c.drill}.` : c.description;
+  const description = o ? `${c.title}, from the ${o.source}. Opens ${c.drill}.` : c.description;
   return `INSERT OR IGNORE INTO ui_widgets (code, module, title, description, type, data_endpoint, permission_key, default_w, default_h, refresh_sec, drill_route, sort_order, created_by, source_type) VALUES (${q(c.code)}, ${q(module)}, ${q(c.title)}, ${q(description)}, ${q(c.type)}, ${q(`/api/v1/ui/widgets/${c.code}/data`)}, ${q(permission)}, ${c.w}, ${c.h}, ${c.type === 'todo' || c.type === 'alerts' ? 60 : 300}, ${q(c.drill)}, ${600 + i}, 'migration', 'reference_seed');`;
 });
 const layout = (cs) => JSON.stringify(cs.map((c, i) => ({ id: `c${i + 1}`, widget: c.code, w: c.w, h: c.h })));

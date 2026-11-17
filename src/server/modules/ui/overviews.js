@@ -60,17 +60,17 @@ function todo(ctx) {
       facts: [`Raised by ${t.instance.submittedBy}`, t.dueAt ? `due ${String(t.dueAt).slice(0, 10)}` : null, t.overdue ? 'past its time' : null].filter(Boolean),
       drill: t.instance.route ?? '/admin/approvals',
     })),
-    total: list.total, drill: '/workflow/inbox', source: 'Workflow engine (04.01): my open tasks',
+    total: list.total, drill: '/workflow/inbox', source: 'My open approvals and tasks',
   };
 }
 
 /** The latest notifications of the person with their time (the feed card), from the notification centre (04.06). */
 function feed(ctx) {
   const centre = notificationCentreOf(ctx.db)?.centre;
-  if (!centre) return { rows: [], total: 0, drill: '/notifications', source: 'Notification centre (04.06)' };
+  if (!centre) return { rows: [], total: 0, drill: '/notifications', source: 'Notification centre' };
   const list = centre.list(ctx.actor, { state: 'inbox', limit: 8 });
   const when = (iso) => new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' });
-  return { rows: list.rows.map((n) => ({ id: n.id, title: n.title, subtitle: `${when(n.at)}${n.read ? '' : ' · new'}`, drill: n.link ?? '/notifications' })), total: list.total, drill: '/notifications', source: 'Notification centre (04.06)' };
+  return { rows: list.rows.map((n) => ({ id: n.id, title: n.title, subtitle: `${when(n.at)}${n.read ? '' : ' · new'}`, drill: n.link ?? '/notifications' })), total: list.total, drill: '/notifications', source: 'Notification centre' };
 }
 
 /**
@@ -80,13 +80,13 @@ function feed(ctx) {
 export const OVERVIEWS = [
   {
     code: 'ov-qs', name: 'QS Management Dashboard', route: '/bill/qs-dashboard', permission: 'bill.qs_dashboard.view', module: 'bill', part: '22.08',
-    source: 'Billing, QS dashboard service (22.08)',
+    source: 'QS dashboard (billing)',
     read: (ctx) => once(keyOf('ov-qs', ctx), () => billOf(ctx.db).svc.qs.dashboard(ctx.actor, { projectId: pid(ctx) })),
     cards: [
       { code: 'ov.qs.unbilled_wip', title: 'Unbilled work (WIP)', type: 'kpi', w: 3, h: 1, drill: '/bill/qty-recon', map: (d) => qsKpi(d, 'unbilledWip') },
       { code: 'ov.qs.certified_not_billed', title: 'Certified, not billed', type: 'kpi', w: 3, h: 1, drill: '/bill/client-bill-new', map: (d) => qsKpi(d, 'certifiedNotBilled') },
       { code: 'ov.qs.billed_not_collected', title: 'Billed, not collected', type: 'kpi', w: 3, h: 1, drill: '/bill/client-bills?filter[status]=APPROVED', map: (d) => qsKpi(d, 'billedNotCollected') },
-      { code: 'ov.qs.margin', title: 'Back-to-back margin', type: 'kpi', w: 3, h: 1, drill: '/bill/cert-analysis', map: (d) => (d.backToBack.masked ? { ...kpi(0, { source: 'Billing, QS dashboard service (22.08)' }), masked: true } : kpi(d.backToBack.margin, { kind: 'money', subtitle: `₹ · certified less subcontract billed${d.backToBack.marginPct === null ? '' : ` · ${d.backToBack.marginPct}%`}`, status: d.backToBack.margin < 0 ? 'red' : 'green', drill: '/bill/cert-analysis' })) },
+      { code: 'ov.qs.margin', title: 'Back-to-back margin', type: 'kpi', w: 3, h: 1, drill: '/bill/cert-analysis', map: (d) => (d.backToBack.masked ? { ...kpi(0, { source: 'QS dashboard (billing)' }), masked: true } : kpi(d.backToBack.margin, { kind: 'money', subtitle: `₹ · certified less subcontract billed${d.backToBack.marginPct === null ? '' : ` · ${d.backToBack.marginPct}%`}`, status: d.backToBack.margin < 0 ? 'red' : 'green', drill: '/bill/cert-analysis' })) },
       { code: 'ov.qs.chain', title: 'From work done to money received', type: 'bar', w: 6, h: 2, drill: '/bill/qty-recon', map: (d) => { const ks = ['workNotMeasured', 'measuredNotCertified', 'certifiedNotBilled', 'billedNotCollected']; const k = ks.map((x) => d.kpis.find((y) => y.key === x)); return { categories: k.map((x) => x.label), series: [{ name: '₹', values: k.map((x) => x.value), drill: k.map((x) => x.drill) }], unit: '₹' }; } },
       { code: 'ov.qs.top_unbilled', title: 'Top projects by unbilled work', type: 'topn', w: 6, h: 2, drill: '/bill/qty-recon', map: (d) => ({ kind: 'money', rows: [...d.portfolio].sort((a, b) => (b.unbilledWip ?? 0) - (a.unbilledWip ?? 0)).filter((p) => p.unbilledWip).slice(0, 5).map((p) => ({ id: p.projectId, label: `${p.project} ${p.name}`, value: p.unbilledWip, drill: `/bill/qty-recon?projectId=${p.projectId}` })), emptyTitle: 'No unbilled work', emptyText: 'Projects with executed work not yet billed appear here.' }) },
       { code: 'ov.qs.queues', title: 'Work queues of the QS', type: 'list', w: 6, h: 2, drill: '/bill/qs-dashboard', map: (d) => { const rows = Object.entries(d.queues).map(([k, q]) => ({ id: k, title: q.label, subtitle: `${q.count} waiting${q.late ? `, ${q.late} late` : ''}`, drill: q.rows[0]?.link ?? null })); return { rows: rows.filter((r) => r.subtitle !== '0 waiting'), total: rows.length, drill: null }; } },
@@ -95,7 +95,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-tower', name: 'Contract Control Tower', route: '/bill/control-tower', permission: 'bill.control_tower.view', module: 'bill', part: '22.09',
-    source: 'Billing, contract control tower service (22.09)',
+    source: 'Contract control tower (billing)',
     read: (ctx) => once(keyOf('ov-tower', ctx), () => billOf(ctx.db).svc.tower.view(ctx.actor, { projectId: pid(ctx) })),
     cards: [
       { code: 'ov.tower.value', title: 'Contract value', type: 'kpi', w: 3, h: 1, drill: '/ctr/contracts', map: (d) => kpi(d.totals.value, { kind: 'money', subtitle: `₹ · ${d.totals.contracts} contract${d.totals.contracts === 1 ? '' : 's'}`, drill: '/ctr/contracts' }) },
@@ -108,7 +108,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-stores', name: 'Stores Dashboard', route: '/inv/dashboard', permission: 'inv.stock.view', module: 'inv', part: '16.01',
-    source: 'Inventory, stores dashboard service (16.01)',
+    source: 'Stores dashboard (inventory)',
     read: (ctx) => once(keyOf('ov-stores', ctx), () => invOf(ctx.db).invSvc.dashboard(ctx.actor, { projectId: pid(ctx) })),
     cards: [
       { code: 'ov.stores.value', title: 'Stock value', type: 'kpi', w: 3, h: 1, drill: '/inv/valuation', map: (d) => (d.canValues ? kpi(d.tiles.totalValue, { kind: 'money', subtitle: `₹ · ${d.tiles.stores} store${d.tiles.stores === 1 ? '' : 's'}`, drill: '/inv/valuation' }) : { ...kpi(0), masked: true }) },
@@ -122,7 +122,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-hse', name: 'HSE Dashboard', route: '/hse/dashboard', permission: 'hse.dashboard.view', module: 'hse', part: '19.08',
-    source: 'HSE, KPI service (19.08)',
+    source: 'HSE safety indicators',
     read: (ctx) => once(keyOf('ov-hse', ctx), () => hseOf(ctx.db).svc.kpi.dashboard(ctx.actor, { projectId: pid(ctx), siteId: ctx.filters?.siteId ?? undefined, ...period(ctx) })),
     cards: [
       { code: 'ov.hse.safe_hours', title: 'Safe man-hours since the last lost-time injury', type: 'kpi', w: 4, h: 1, drill: '/hse/incidents', map: (d) => kpi(d.lagging.safe.manHours, { unit: 'man-hours', subtitle: `man-hours · ${d.lagging.safe.lastLtiDate ? `since ${d.lagging.safe.lastLtiDate}` : 'no lost-time injury on record'}`, status: 'green', drill: '/hse/incidents' }) },
@@ -135,7 +135,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-qa', name: 'Quality Dashboard', route: '/qa/dashboard', permission: 'qa.dashboard.view', module: 'qa', part: '18.07',
-    source: 'Quality, dashboard service (18.07)',
+    source: 'Quality dashboard',
     read: (ctx) => once(keyOf('ov-qa', ctx), () => qaOf(ctx.db).dsh.dashboard(ctx.actor, { projectId: pid(ctx), ...period(ctx) })),
     cards: [
       { code: 'ov.qa.first_time_ir', title: 'First-time IR approval', type: 'kpi', w: 3, h: 1, drill: '/qa/inspection-requests', map: (d) => qaKpi(d, 'firstTimeIr') },
@@ -148,7 +148,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-proc', name: 'Procurement Dashboard', route: '/proc/dashboard', permission: 'proc.analytics.view', module: 'proc', part: '15.10',
-    source: 'Procurement, analytics service (15.10)',
+    source: 'Procurement analytics',
     read: (ctx) => once(keyOf('ov-proc', ctx), () => procOf(ctx.db).anaSvc.dashboard(ctx.actor, { projectId: pid(ctx), ...period(ctx) })),
     cards: [
       { code: 'ov.proc.spend_fy', title: 'Spend this financial year', type: 'kpi', w: 3, h: 1, drill: '/proc/analytics/spend', map: (d) => kpi(d.kpis.spendFy.value, { kind: 'money', subtitle: `₹ · since ${d.kpis.spendFy.from} · ${d.kpis.spendFy.count} orders`, drill: d.kpis.spendFy.route }) },
@@ -161,7 +161,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-plant', name: 'Plant Dashboard', route: '/plant/dashboard', permission: 'plant.equipment.view', module: 'plant', part: '17.01',
-    source: 'Plant, dashboard service (17.01)',
+    source: 'Plant dashboard',
     read: (ctx) => once(keyOf('ov-plant', ctx), () => plantOf(ctx.db).svc.dashboard(ctx.actor, { projectId: pid(ctx) })),
     cards: [
       { code: 'ov.plant.fleet', title: 'Fleet', type: 'kpi', w: 3, h: 1, drill: '/plant/equipment', map: (d) => kpi(d.kpis.fleet.count, { unit: 'machines', subtitle: `machines · ${d.kpis.fleet.owned} owned, ${d.kpis.fleet.hired} hired`, drill: d.kpis.fleet.drill }) },
@@ -174,7 +174,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-hr', name: 'HR Overview', route: '/hr', permission: 'hr.employee.view', module: 'hr', part: '07.01',
-    source: 'HR, employee overview service (07.01)',
+    source: 'HR employee overview',
     read: (ctx) => once(keyOf('ov-hr', ctx), () => employeesOf(ctx.db).overview(ctx.actor, { ...period(ctx) })),
     cards: [
       { code: 'ov.hr.headcount', title: 'Headcount', type: 'kpi', w: 3, h: 1, drill: '/hr/employees', map: (d) => hrTile(d, 'headcount') },
@@ -187,7 +187,7 @@ export const OVERVIEWS = [
   },
   {
     code: 'ov-budget', name: 'Budget vs Committed vs Actual', route: '/bud/ledger', permission: 'bud.ledger.view', module: 'bud', part: '12.03',
-    source: 'Budget, ledger report service (12.03)',
+    source: 'Budget ledger report',
     read: (ctx) => (pid(ctx) ? once(keyOf('ov-budget', ctx), () => budOf(ctx.db).ledger.report(ctx.actor, { projectId: pid(ctx), by: 'wbs' })) : null),
     cards: [
       { code: 'ov.budget.totals', title: 'Budget, committed and actual', type: 'bar', w: 8, h: 2, drill: '/bud/ledger', map: (d) => (d ? budTotals(d) : { categories: [], series: [] }) },
@@ -215,8 +215,8 @@ export const HOME = {
     DIR: ['ov.todo.mine', 'ov.tower.outstanding', 'ov.tower.margin', 'ov.qs.unbilled_wip', 'ov.hse.ltifr', 'ov.proc.spend_fy', 'ov.feed.notifications'],
   },
 };
-export const TODO_CARD = { code: 'ov.todo.mine', title: 'Waiting for my decision', type: 'todo', w: 6, h: 2, drill: '/workflow/inbox', permission: 'self', module: 'eng', description: 'The approvals and tasks waiting for your decision, with Approve and Return (workflow engine, 04.01).' };
-export const FEED_CARD = { code: 'ov.feed.notifications', title: 'Latest notifications', type: 'alerts', w: 6, h: 2, drill: '/notifications', permission: 'self', module: 'eng', description: 'Your latest notifications with their time (notification centre, 04.06).' };
+export const TODO_CARD = { code: 'ov.todo.mine', title: 'Waiting for my decision', type: 'todo', w: 6, h: 2, drill: '/workflow/inbox', permission: 'self', module: 'eng', description: 'The approvals and tasks waiting for your decision, with Approve and Return.' };
+export const FEED_CARD = { code: 'ov.feed.notifications', title: 'Latest notifications', type: 'alerts', w: 6, h: 2, drill: '/notifications', permission: 'self', module: 'eng', description: 'Your latest notifications with their time.' };
 /** Cards of no overview page: the to-do card and the notification feed. */
 export const STANDALONE = [TODO_CARD, FEED_CARD];
 

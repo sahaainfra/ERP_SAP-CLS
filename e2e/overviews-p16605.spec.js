@@ -31,7 +31,7 @@ test('FR-02 the QS dashboard is an overview page: cards with a subtitle, the fig
   await expect(card.getByRole('heading', { name: 'Unbilled work (WIP)' })).toBeVisible();
   await expect(card.getByTestId('kpi-subtitle')).toContainText('₹ ·');
   await expect(card.getByTestId('kpi-value')).toContainText('₹');
-  await expect(card.getByTestId('widget-source')).toHaveText('Source: Billing, QS dashboard service (22.08)');
+  await expect(card.getByTestId('widget-source')).toHaveText('Source: QS dashboard (billing)');
   // every card has "View all ›"
   const cards = page.locator('[data-testid^="widget-ov."]');
   const n = await cards.count();
@@ -61,7 +61,7 @@ test('FR-04 T-03 a chart card shows its figures as a table on request; on a phon
   await expect(page.getByTestId('overview-ov-proc')).toBeVisible();
   const card = page.getByTestId('widget-ov.proc.single_source');
   await expect(card.locator('svg.ch-svg')).toBeVisible();
-  await expect(card.getByTestId('widget-source')).toContainText('Procurement, analytics service (15.10)');
+  await expect(card.getByTestId('widget-source')).toContainText('Procurement analytics');
   if (info.project.name === 'mobile') {
     const h = await card.locator('svg.ch-svg').evaluate((s) => s.getBoundingClientRect().height);
     expect(h).toBeGreaterThanOrEqual(220);
@@ -117,7 +117,7 @@ test('FR-03 a stores keeper\'s Home: approvals, items below reorder level, what 
   await open(page, { user: 'e2e-ov-sk', roles: 'SK', path: '/home' });
   const insights = page.getByTestId('home-insights');
   await expect(insights.getByTestId('widget-ov.stores.below_reorder')).toBeVisible();
-  await expect(insights.getByTestId('widget-ov.stores.below_reorder').getByTestId('widget-source')).toHaveText('Source: Inventory, stores dashboard service (16.01)');
+  await expect(insights.getByTestId('widget-ov.stores.below_reorder').getByTestId('widget-source')).toHaveText('Source: Stores dashboard (inventory)');
   await expect(insights.getByTestId('widget-ov.qs.unbilled_wip')).toHaveCount(0);
   await shot(page, info, 'home-insights-sk');
 });
