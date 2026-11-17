@@ -39,6 +39,7 @@ const rs = (p) => (p == null ? null : p / 100);
 const exact = (v) => v == null || Math.abs(Number(v) * 100 - Math.round(Number(v) * 100)) < 1e-6;
 const addMonths = (d, n, day) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(1); x.setUTCMonth(x.getUTCMonth() + n); x.setUTCDate(Math.min(day, 28)); return x.toISOString().slice(0, 10); };
 const STEP = { MONTHLY: 1, QUARTERLY: 3, YEARLY: 12 };
+const addDay = (d) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 1); return x.toISOString().slice(0, 10); };
 
 export const jnList = defineList({
   code: 'fin.journals', label: 'Journals', permission: 'fin.journal.view',
@@ -461,15 +462,36 @@ export function createGlService({ db, base }) {
       page, pageSize: size, totalRows: total.n,
     };
   }
+  const PROJECTED = { branchId: 'branch_id', projectId: 'project_id', siteId: 'site_id', costCentreId: 'cost_centre_id' };
+  /**
+   * The trial balance's sums per account { ob, dr, cr } in paise. Whole months come from the balance projection (fin_balances, written at each posting, BR-02) and only the
+   * part-month up to the date from the lines, so a year of 200 000 lines is read in a few hundred rows; a filter on a dimension the projection does not carry, or a first
+   * date that is not the start of a month, reads the lines.
+   */
+  function tbSums(companyId, fy, from, to, q, dims, params) {
+    const extra = DIMS.map((d) => d[0]).filter((k) => q[k] && !PROJECTED[k]);
+    const periods = db.prepare('SELECT id, start_date, end_date FROM core_periods WHERE company_id = ? AND fy_id = ? ORDER BY start_date').all(companyId, fy.id);
+    const full = periods.filter((p) => p.end_date <= to);
+    if (extra.length || !periods.some((p) => p.start_date === from)) {
+      return qa(`SELECT l.account_id AS id, SUM(CASE WHEN j.voucher_date < :from THEN l.debit_paise - l.credit_paise ELSE 0 END) AS ob, SUM(CASE WHEN j.voucher_date >= :from THEN l.debit_paise ELSE 0 END) AS dr, SUM(CASE WHEN j.voucher_date >= :from THEN l.credit_paise ELSE 0 END) AS cr
+        FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = :c AND ${POSTED} AND j.voucher_date BETWEEN :fs AND :to${dims} GROUP BY l.account_id`, params);
+    }
+    const sums = new Map(); const add = (id, ob, dr, cr) => { const x = sums.get(id) ?? { id, ob: 0, dr: 0, cr: 0 }; x.ob += ob; x.dr += dr; x.cr += cr; sums.set(id, x); };
+    if (full.length) {
+      const bw = Object.entries(PROJECTED).filter(([k]) => q[k]).map(([k, c]) => ` AND b.${c} = :${k}`).join('');
+      for (const r of qa(`SELECT account_id, SUM(CASE WHEN p.end_date < :from THEN b.debit_paise - b.credit_paise ELSE 0 END) AS ob, SUM(CASE WHEN p.end_date >= :from THEN b.debit_paise ELSE 0 END) AS dr, SUM(CASE WHEN p.end_date >= :from THEN b.credit_paise ELSE 0 END) AS cr
+        FROM fin_balances b JOIN core_periods p ON p.id = b.period_id WHERE b.company_id = :c AND b.period_id IN (${full.map((p) => p.id).join(',')})${bw} GROUP BY account_id`, params)) add(r.account_id, r.ob, r.dr, r.cr);
+    }
+    const restFrom = full.length ? addDay(full.at(-1).end_date) : fy.start_date;
+    if (restFrom <= to) for (const r of qa(`SELECT l.account_id AS id, SUM(CASE WHEN j.voucher_date < :from THEN l.debit_paise - l.credit_paise ELSE 0 END) AS ob, SUM(CASE WHEN j.voucher_date >= :from THEN l.debit_paise ELSE 0 END) AS dr, SUM(CASE WHEN j.voucher_date >= :from THEN l.credit_paise ELSE 0 END) AS cr
+        FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = :c AND ${POSTED} AND j.voucher_date BETWEEN :rest AND :to${dims} GROUP BY l.account_id`, { ...params, rest: restFrom })) add(r.id, r.ob, r.dr, r.cr);
+    return [...sums.values()];
+  }
   function trialBalance(actor, q) {
     const { fy, from, to, dims, params } = frame(actor, { ...q, to: q.asOf ?? q.to });
-    const rows = qa(`SELECT a.id, a.code, a.name, a.normal_side, g.nature, g.code AS gcode, g.name AS gname,
-        SUM(CASE WHEN j.voucher_date < :from THEN l.debit_paise - l.credit_paise ELSE 0 END) AS ob,
-        SUM(CASE WHEN j.voucher_date >= :from THEN l.debit_paise ELSE 0 END) AS dr,
-        SUM(CASE WHEN j.voucher_date >= :from THEN l.credit_paise ELSE 0 END) AS cr
-      FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id JOIN fin_account_groups g ON g.id = a.group_id
-      WHERE l.company_id = :c AND ${POSTED} AND j.voucher_date BETWEEN :fs AND :to${dims}
-      GROUP BY a.id ORDER BY a.code`, params);
+    const sums = tbSums(actor.companyId, fy, from, to, q, dims, params);
+    const meta = new Map(db.prepare('SELECT a.id, a.code, a.name, a.normal_side, g.nature, g.code AS gcode, g.name AS gname FROM fin_accounts a JOIN fin_account_groups g ON g.id = a.group_id WHERE a.company_id = ?').all(actor.companyId).map((a) => [a.id, a]));
+    const rows = sums.map((x) => ({ ...meta.get(x.id), ob: x.ob, dr: x.dr, cr: x.cr })).filter((r) => r.code).sort((a, b) => String(a.code).localeCompare(String(b.code)));
     const out = rows.map((r) => { const cl = r.ob + r.dr - r.cr; return { accountId: r.id, code: r.code, name: r.name, nature: r.nature, group: `${r.gcode} ${r.gname}`, openingDebit: rs(Math.max(r.ob, 0)), openingCredit: rs(Math.max(-r.ob, 0)), debit: rs(r.dr), credit: rs(r.cr), closingDebit: rs(Math.max(cl, 0)), closingCredit: rs(Math.max(-cl, 0)) }; }).filter((r) => r.openingDebit || r.openingCredit || r.debit || r.credit);
     const sum = (k) => rs(out.reduce((a, r) => a + paise(r[k]), 0));
     const totals = { openingDebit: sum('openingDebit'), openingCredit: sum('openingCredit'), debit: sum('debit'), credit: sum('credit'), closingDebit: sum('closingDebit'), closingCredit: sum('closingCredit') };

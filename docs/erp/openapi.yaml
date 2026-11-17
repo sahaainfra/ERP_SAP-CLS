@@ -9296,3 +9296,106 @@ paths:
     put:
       summary: Set an employee's pay components from a date (hr.employee.edit; audited) (part 166.8)
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/journals/options:
+    get:
+      summary: "accounts with their dimension rules and the dimension lists for the journal form (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/export:
+    get:
+      summary: "CSV of the journals of the filters (part 23.01; fin.journal.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/check:
+    post:
+      summary: "check lines without saving (the same rules as save and submit) (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/import:
+    post:
+      summary: "import draft journals (rows grouped by ref) (part 23.01; fin.journal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals:
+    get:
+      summary: "list (List Report request) or create a journal (draft; the server checks the lines and the balance) (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+    post:
+      summary: "list (List Report request) or create a journal (draft; the server checks the lines and the balance) (part 23.01; fin.journal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}:
+    get:
+      summary: "one journal with its lines, links and rights; change or delete a draft (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+    patch:
+      summary: "one journal with its lines, links and rights; change or delete a draft (part 23.01; fin.journal.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+    delete:
+      summary: "one journal with its lines, links and rights; change or delete a draft (part 23.01; fin.journal.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}/submit:
+    post:
+      summary: "send for approval (accounts manager; CFO above the limit) (part 23.01; fin.journal.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}/withdraw:
+    post:
+      summary: "withdraw from approval (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}/cancel:
+    post:
+      summary: "cancel a draft or a journal in approval (part 23.01; fin.journal.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}/reverse:
+    post:
+      summary: "reverse a posted journal (mirror journal sent for approval) (part 23.01; fin.journal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}/amend:
+    post:
+      summary: "amend a posted journal: its reversal and a draft copy (part 23.01; fin.journal.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}/history:
+    get:
+      summary: "approvals and audit of a journal (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/journals/{id}/print:
+    get:
+      summary: "the journal as PDF (part 23.01; fin.journal.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/recurring-journals:
+    get:
+      summary: "list or create recurring journal templates (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+    post:
+      summary: "list or create recurring journal templates (part 23.01; fin.recurring.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/recurring-journals/{id}:
+    get:
+      summary: "one template with the journals it made; change it (part 23.01; fin.journal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+    put:
+      summary: "one template with the journals it made; change it (part 23.01; fin.recurring.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/recurring-journals/{id}/status:
+    post:
+      summary: "pause, resume or end a template (part 23.01; fin.recurring.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/ledger:
+    get:
+      summary: "the ledger of an account with its running balance (any dimension) (part 23.01; fin.ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/ledger/export:
+    get:
+      summary: "the ledger as CSV (part 23.01; fin.journal.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/trial-balance:
+    get:
+      summary: "the trial balance on a date by dimension (part 23.01; fin.ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/trial-balance/export:
+    get:
+      summary: "the trial balance as CSV (part 23.01; fin.journal.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/gl/carry-forward:
+    post:
+      summary: "draft the opening balances of the next financial year (part 23.01; fin.journal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/gl/integrity:
+    get:
+      summary: "balance projection against the posted lines (BR-02) (part 23.01; fin.ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }

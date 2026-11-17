@@ -152,6 +152,10 @@
   "DOC",
   "PM"
  ],
+ "fin.recurring.manage": [
+  "ACCMGR",
+  "FINEX"
+ ],
  "hr.disciplinary.manage": [
   "HRMGR"
  ],
