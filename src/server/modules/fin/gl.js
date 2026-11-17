@@ -446,9 +446,12 @@ export function createGlService({ db, base }) {
     const a = db.prepare('SELECT a.*, g.nature FROM fin_accounts a JOIN fin_account_groups g ON g.id = a.group_id WHERE a.id = ? AND a.company_id = ? AND a.deleted_at IS NULL').get(Number(q.accountId), actor.companyId);
     if (!a) throw notFound('That account does not exist.');
     const p = { ...params, a: a.id };
-    const ob = q1(`SELECT COALESCE(SUM(l.debit_paise - l.credit_paise), 0) AS b FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = :c AND l.account_id = :a AND ${POSTED} AND j.voucher_date >= :fs AND j.voucher_date < :from${dims}`, p).b;
+    // one pass for the opening balance (from the first day of the year to the day before the first date) and the totals of the dates asked
+    const total = q1(`SELECT COALESCE(SUM(CASE WHEN j.voucher_date < :from THEN l.debit_paise - l.credit_paise ELSE 0 END), 0) AS ob, SUM(CASE WHEN j.voucher_date >= :from THEN 1 ELSE 0 END) AS n,
+        COALESCE(SUM(CASE WHEN j.voucher_date >= :from THEN l.debit_paise ELSE 0 END), 0) AS dr, COALESCE(SUM(CASE WHEN j.voucher_date >= :from THEN l.credit_paise ELSE 0 END), 0) AS cr
+      FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = :c AND l.account_id = :a AND ${POSTED} AND j.voucher_date BETWEEN :fs AND :to${dims}`, p);
+    const ob = total.ob; total.n = total.n ?? 0;
     const page = Math.max(1, Number(q.page) || 1); const size = Math.min(500, Math.max(1, Number(q.pageSize) || 100));
-    const total = q1(`SELECT COUNT(*) AS n, COALESCE(SUM(l.debit_paise), 0) AS dr, COALESCE(SUM(l.credit_paise), 0) AS cr FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = :c AND l.account_id = :a AND ${POSTED} AND j.voucher_date >= :fs AND j.voucher_date BETWEEN :from AND :to${dims}`, p);
     const rows = qa(`SELECT * FROM (SELECT l.*, j.voucher_no, j.voucher_type, j.voucher_date, j.narration AS jn, j.source_type AS jst, j.source_id AS jsi, j.kind,
         SUM(l.debit_paise - l.credit_paise) OVER (ORDER BY j.voucher_date, j.id, l.line_no ROWS UNBOUNDED PRECEDING) AS run
       FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = :c AND l.account_id = :a AND ${POSTED} AND j.voucher_date >= :fs AND j.voucher_date BETWEEN :from AND :to${dims}) ORDER BY voucher_date, journal_id, line_no LIMIT :lim OFFSET :off`, { ...p, lim: size, off: (page - 1) * size });

@@ -80,3 +80,25 @@ export const DIM_LIST = { branchId: 'branches', projectId: 'projects', siteId: '
 export const JN_TONE = { DRAFT: 'DRAFT', SUBMITTED: 'IN_REVIEW', RETURNED: 'RETURNED', APPROVED: 'APPROVED', REJECTED: 'REJECTED', CANCELLED: 'CANCELLED' };
 const inr = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const money = (v) => (v == null || v === '' ? '—' : `₹ ${inr.format(Number(v))}`);
+
+// ---- part 23.02: the posting engine ----
+export const pe = {
+  catalogue: () => glget('/posting-rules/catalogue'),
+  samples: (eventType) => glget(`/posting-rules/samples?eventType=${encodeURIComponent(eventType)}`),
+  rule: (id) => glget(`/posting-rules/${id}`),
+  propose: async (b) => (await api.post('/fin/posting-rules', b, idem())).data,
+  updateRule: async (id, b) => (await api.patch(`/fin/posting-rules/${id}`, b, idem())).data,
+  ruleAct: async (id, action, b) => (await api.post(`/fin/posting-rules/${id}/${action}`, b ?? {}, idem())).data,
+  ruleHistory: (id) => glget(`/posting-rules/${id}/history`),
+  test: async (b) => (await api.post('/fin/posting-rules/test', b)).data,
+  posting: (id) => glget(`/postings/${id}`),
+  summary: () => glget('/postings/summary'),
+  repost: async (id) => (await api.post(`/fin/postings/${id}/repost`, {}, idem())).data,
+  repostAll: async (errorCode) => (await api.post('/fin/postings/repost-all', errorCode ? { errorCode } : {}, idem())).data,
+  resolve: async (id, b) => (await api.post(`/fin/postings/${id}/resolve`, b, idem())).data,
+  replays: () => glget('/replays'),
+  replay: (id) => glget(`/replays/${id}`),
+  dryRun: async (b) => (await api.post('/fin/replays', b, idem())).data,
+  replayAct: async (id, action, b) => (await api.post(`/fin/replays/${id}/${action}`, b ?? {}, idem())).data,
+  recon: (asOf) => glget(`/reconciliation${asOf ? `?asOf=${asOf}` : ''}`),
+};

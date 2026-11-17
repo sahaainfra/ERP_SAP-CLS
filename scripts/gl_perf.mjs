@@ -1,5 +1,5 @@
 // npm run erp:gl-perf -- [--queries 50] [--journals 100000]
-// Part 23.01 §14: fills 100 000 posted journals (two lines each: 200 000 lines) over 50 projects and the twelve months of a financial year, then times what the screens ask:
+// Parts 23.01 and 23.02 §14: fills 100 000 posted journals (two lines each: 200 000 lines) over 50 projects and the twelve months of a financial year, then times what the screens ask:
 // the journal list (first page, a type and status filter, a deep page), one journal with its lines, the ledger of a busy account (first page, a deep page), the trial
 // balance of the year (whole company, one project), and a save (a draft journal of two lines, checked against the account rules). Prints the query plans.
 // The standard (05_GLOBAL_STANDARDS section 11) is p95 <= 500 ms for a list, <= 300 ms for one record, <= 800 ms for a save.
@@ -9,6 +9,7 @@ import { migrateUp } from '../src/server/platform/db/index.js';
 import { createBase } from '../src/server/modules/proc/base.js';
 import { bindFin, createFinService } from '../src/server/modules/fin/service.js';
 import { createGlService } from '../src/server/modules/fin/gl.js';
+import { createPostingService } from '../src/server/modules/fin/posting.js';
 
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
@@ -70,10 +71,24 @@ time('trial balance of the year', 500, () => gl.trialBalance(acc, { asOf: '2027-
 time('trial balance of one project', 500, (i) => gl.trialBalance(acc, { asOf: '2027-03-31', projectId: projects[i % 50] }));
 time('save: a draft journal of two lines', 800, (i) => gl.journals.create(fx, { voucherType: 'JV', voucherDate: '2026-11-15', kind: 'MANUAL', narration: `Perf save ${i}`, lines: [{ accountId: expenses[0], debit: 1000 + i, projectId: projects[0] }, { accountId: bank, credit: 1000 + i }] }));
 
+// part 23.02 §14: 100 000 rows in the posting log (one per event, 10 % failed), then the worklist, its summary and the reconciliation
+console.log('\nFilling 100 000 posting log rows...');
+db.exec('BEGIN');
+const insP = db.prepare("INSERT INTO fin_posting_log (company_id, event_id, event_type, event_date, doc_type, doc_id, doc_ref, journal_id, log_status, error_code, error, amount_paise, payload_json, created_by, source_type) VALUES (1, ?, 'inv.grn.posted', ?, 'inv_grns', ?, ?, ?, ?, ?, ?, ?, '{}', 'perf', 'perf')");
+for (let i = 0; i < 100_000; i += 1) { const failed = i % 10 === 0; insP.run(`ev-${i}`, `2026-${String(4 + (i % 9)).padStart(2, '0')}-15`, String(i), `GRN/${i}`, failed ? null : 1 + (i % JOURNALS), failed ? 'FAILED' : 'POSTED', failed ? 'PERIOD_CLOSED' : null, failed ? 'The period is closed.' : null, 10_000 + i); }
+db.exec('COMMIT'); db.exec('ANALYZE');
+const peSvc = createPostingService({ db, base: createBase({ db }), gl, flags: { isOn: () => true } });
+time('postings worklist: failed, first page (25)', 500, () => peSvc.postings.list(acc, { 'filter[status]': 'FAILED', pageSize: '25' }));
+time('postings, all, page 200', 500, () => peSvc.postings.list(acc, { pageSize: '25', page: '200' }));
+time('postings summary (counts, reasons)', 500, () => peSvc.postings.summary(acc));
+time('one posting with its preview', 300, (i) => peSvc.postings.get(acc, 1 + ((i * 7919) % 100_000)));
+time('sub-ledger vs GL reconciliation', 500, () => peSvc.reconcile(acc, { asOf: '2027-03-31' }));
+
 console.log('\nQuery plans:');
 const plan = (label, sql, ...p) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(...p)) console.log(`    ${r.detail}`); };
 plan('list, one type and status', "SELECT x.* FROM fin_journals x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.voucher_type = 'PV' AND x.status = 'APPROVED' ORDER BY x.voucher_date DESC, x.id DESC LIMIT 25");
 plan('ledger rows of an account', "SELECT l.*, j.voucher_date FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = 1 AND l.account_id = ? AND j.status = 'APPROVED' AND j.voucher_date BETWEEN '2026-04-01' AND '2027-03-31' ORDER BY j.voucher_date, j.id, l.line_no LIMIT 100", bank);
+plan('failed postings worklist', "SELECT x.* FROM fin_posting_log x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.log_status = 'FAILED' ORDER BY x.event_date DESC, x.id DESC LIMIT 25");
 plan('trial balance', "SELECT l.account_id, SUM(l.debit_paise), SUM(l.credit_paise) FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = 1 AND j.status = 'APPROVED' AND j.voucher_date BETWEEN '2026-04-01' AND '2027-03-31' GROUP BY l.account_id");
 const bad = results.filter((r) => !r.ok);
 console.log(bad.length ? `\nOVER THE LIMIT: ${bad.map((r) => `${r.label} (${r.p95} ms)`).join('; ')}` : '\nEvery measure is within its limit.');

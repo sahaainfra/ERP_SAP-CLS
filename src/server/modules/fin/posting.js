@@ -377,7 +377,13 @@ export function createPostingService({ db, base, gl, flags }) {
 
   // ---- FR-05: the sub-ledgers against the control accounts of the ledger ----
   /** The ledger balance (debit − credit, paise) of accounts, posted up to a date. */
-  const glBalance = (companyId, where, args, asOf) => db.prepare(`SELECT COALESCE(SUM(l.debit_paise - l.credit_paise), 0) AS b FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE l.company_id = ? AND j.status = 'APPROVED' AND j.voucher_date <= ? AND l.deleted_at IS NULL AND ${where}`).get(companyId, asOf, ...args).b;
+  // whole periods from the balance projection (23.01 BR-02), the days after the last whole period from the lines
+  const glBalance = (companyId, where, args, asOf) => {
+    const lastEnd = db.prepare('SELECT MAX(end_date) AS d FROM core_periods WHERE company_id = ? AND end_date <= ?').get(companyId, asOf).d;
+    const proj = lastEnd ? db.prepare(`SELECT COALESCE(SUM(b.debit_paise - b.credit_paise), 0) AS b FROM fin_balances b JOIN core_periods p ON p.id = b.period_id JOIN fin_accounts a ON a.id = b.account_id WHERE b.company_id = ? AND p.end_date <= ? AND ${where}`).get(companyId, lastEnd, ...args).b : 0;
+    const rest = db.prepare(`SELECT COALESCE(SUM(l.debit_paise - l.credit_paise), 0) AS b FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE l.company_id = ? AND j.status = 'APPROVED' AND j.voucher_date > ? AND j.voucher_date <= ? AND l.deleted_at IS NULL AND ${where}`).get(companyId, lastEnd ?? '0000-00-00', asOf, ...args).b;
+    return proj + rest;
+  };
   const tableHas = (t) => Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(t));
   function reconcile(actor, { asOf }) {
     need(actor, 'fin.posting.view', 'see the reconciliation'); const c = actor.companyId; const on2 = asOf ?? todayIST();

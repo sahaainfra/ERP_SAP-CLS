@@ -9399,3 +9399,104 @@ paths:
     get:
       summary: "balance projection against the posted lines (BR-02) (part 23.01; fin.ledger.view)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or not yours or ff.fin.p2301 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it (period closed, unbalanced) } }
+  /api/v1/fin/posting-rules/catalogue:
+    get:
+      summary: "the events the engine posts with their fields (part 23.02; fin.posting_rule.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules/samples:
+    get:
+      summary: "recent events of a type, to test a rule (part 23.02; fin.posting_rule.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules/test:
+    post:
+      summary: "what a rule would post for a sample event (nothing written) (part 23.02; fin.posting_rule.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules:
+    get:
+      summary: "list the rule matrix (List Report) or propose a new rule version (draft) (part 23.02; fin.posting_rule.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+    post:
+      summary: "list the rule matrix (List Report) or propose a new rule version (draft) (part 23.02; fin.posting_rule.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules/{id}:
+    get:
+      summary: "one rule with its versions and rights; change a draft (part 23.02; fin.posting_rule.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "one rule with its versions and rights; change a draft (part 23.02; fin.posting_rule.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules/{id}/submit:
+    post:
+      summary: "send a rule version to the CFO (part 23.02; fin.posting_rule.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules/{id}/withdraw:
+    post:
+      summary: "withdraw from approval (part 23.02; fin.posting_rule.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules/{id}/cancel:
+    post:
+      summary: "cancel a draft rule version (part 23.02; fin.posting_rule.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/posting-rules/{id}/history:
+    get:
+      summary: "approvals and audit of a rule version (part 23.02; fin.posting_rule.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/summary:
+    get:
+      summary: "counts by status and failure reason (part 23.02; fin.posting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/export:
+    get:
+      summary: "CSV of the postings (part 23.02; fin.posting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/repost-all:
+    post:
+      summary: "post every failed posting again (part 23.02; fin.posting.repost)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings:
+    get:
+      summary: "the posting log (List Report; the failed postings worklist) (part 23.02; fin.posting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/{id}:
+    get:
+      summary: "one posting with its event, reason and what it would post now (part 23.02; fin.posting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/{id}/repost:
+    post:
+      summary: "post a failed event again (part 23.02; fin.posting.repost)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/postings/{id}/resolve:
+    post:
+      summary: "close a failed posting (put right by a journal, or not to be posted) (part 23.02; fin.posting.resolve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/replays:
+    get:
+      summary: "replays; create one = the dry run (part 23.02; fin.replay.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+    post:
+      summary: "replays; create one = the dry run (part 23.02; fin.replay.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/replays/{id}:
+    get:
+      summary: "one replay with its dry run and result (part 23.02; fin.replay.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/replays/{id}/submit:
+    post:
+      summary: "send the replay for approval (accounts manager, CFO); the commit runs on approval (part 23.02; fin.replay.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/replays/{id}/withdraw:
+    post:
+      summary: "withdraw from approval (part 23.02; fin.replay.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/replays/{id}/cancel:
+    post:
+      summary: "cancel a replay (part 23.02; fin.replay.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/replays/{id}/history:
+    get:
+      summary: "approvals and audit of a replay (part 23.02; fin.replay.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
+  /api/v1/fin/reconciliation:
+    get:
+      summary: "each sub-ledger against its control accounts on a date (part 23.02; fin.posting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2302 OFF }, '409': { description: conflict (a change waiting, events changed since the dry run) }, '422': { description: a business rule refused it } }
