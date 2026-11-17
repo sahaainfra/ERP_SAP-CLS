@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { STATUS_TONE, download, fmtDate, fmtQty, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Material Requests (part 15.01, FR-01, FR-02): the site view with the fulfilment status of each request; the request itself with its lines, the free stock of the site, nearby stores and the central warehouse, the way each line is met (issue,
 // transfer, purchase) and the requisitions it ended in. The construction manager decides it here; the procurement officer meets it.
@@ -48,6 +49,7 @@ function Mr({ t, id }) {
   return (
     <div data-testid="mr-object" data-status={m.status}>
       <PageHeader id="mr-h" title={<>{m.docNo} <StatusBadge status={STATUS_TONE[m.status]} label={t(`p.s.${m.status}`)} />{m.fulfilment && <> <StatusBadge status={m.fulfilment === 'COVERED' ? 'COMPLETED' : m.fulfilment === 'PARTIAL' ? 'IN_REVIEW' : 'DRAFT'} label={t(`p.f.${m.fulfilment}`)} /></>}</>} meta={<Link to="/proc/material-requests">{t('p.back')}</Link>} />
+      <DocumentFlow type="MR" id={m.id} />
       <dl className="kv" data-testid="mr-figures"><div><dt>{t('p.project')}</dt><dd>{m.projectCode} · {m.siteCode}</dd></div><div><dt>{t('p.requiredBy')}</dt><dd>{fmtDate(m.requiredBy)}</dd></div><div><dt>{t('p.priority')}</dt><dd>{t(`p.pri.${m.priority}`)}</dd></div><div><dt>{t('p.requestedBy')}</dt><dd>{m.requestedBy}</dd></div>{m.waNo && <div><dt>{t('p.wa')}</dt><dd data-testid="mr-wa"><Link to={`/site/work-authorisations?id=${m.waId}`}>{m.waNo}</Link>{m.activity ? ` · ${m.activity}` : ''}</dd></div>}{m.approvedBy && <div><dt>{t('p.approvedBy')}</dt><dd>{m.approvedBy}</dd></div>}</dl>
       {m.purpose && <p>{m.purpose}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="mr-error">{error.form}</p>}{note && <p className="mdm-banner" role="status" data-testid="mr-note">{note}</p>}

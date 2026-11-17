@@ -12,6 +12,7 @@ import { bill, fmtDate } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // The client RA bill (part 22.03): Prepare RA Bill (pulls the certified measurements of the period), the Client Bills list and the bill with its abstract, deductions, GST, documents and tracking, and the abstract in the format given to the client.
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -97,6 +98,7 @@ function Bill({ id, edit }) {
   if (edit && x.can.edit) return (<div><PageHeader id="cb-h" title={x.billNo} meta={<Link to={`/bill/client-bills?id=${x.id}`}>{x.billNo}</Link>} /><BillForm initial={fromBill(x)} isNew={false} busy={busy} error={error} onSave={async (v) => { const rest = payload(v); delete rest.projectId; delete rest.contractId; if (await run(() => bill.patch(`/client-bills/${x.id}`, { ...rest, rowVersion: x.version }), t('cb.refreshed'))) navigateTo(`/bill/client-bills?id=${x.id}`); }} /></div>);
   return (
     <div data-testid="bill-cb-object" data-status={x.status} data-client={x.clientState} data-type={x.billType}><PageHeader id="cb-h" title={<>{x.billNo} <Status x={x} /> <StatusBadge status={CLIENT_TONE[x.clientState]} label={t(`ccs.${x.clientState}`)} /></>} meta={<><Link to="/bill/client-bills">{t('cb.title')}</Link> · {x.docNo} · {x.project} · {x.contractNo} · {t(`bt.${x.billType}`)} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</>} />
+      <DocumentFlow type="CBILL" id={x.id} />
       <KpiRow><KpiTile label={t('cb.s.gross')} value={money(x.gross)} amount={x.gross} kind="money" valueTestid="bill-cb-gross"><div className="muted">{t('cb.cumulative')}: {money(x.cumGross)}</div></KpiTile><KpiTile label={t('cb.s.net')} value={money(x.net)} amount={x.net} kind="money" valueTestid="bill-cb-net" /></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}<Issues issues={x.issues} />
       <div className="actions-row no-print">{x.can.edit && <Link to={`/bill/client-bills?id=${x.id}&edit=1`} data-testid="bill-cb-edit">{t('cb.refreshEdit')}</Link>}<Link to={`/bill/client-bill-abstract?id=${x.id}`} data-testid="bill-cb-abstract-link">{t('cba.title')}</Link></div>

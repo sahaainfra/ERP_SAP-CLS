@@ -12,6 +12,7 @@ import { bill, fmtDate } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // The GST tax invoice (part 22.04): made on the certification, approved by the accounts manager, numbered without a gap, with the status of its IRN and of the receivable.
 const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); const money = (v) => (v == null ? '—' : `₹ ${mf.format(v)}`); const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -53,6 +54,7 @@ function Invoice({ id }) {
   if (guard) return guard; const x = q.data; const row = (k, val) => <tr><th scope="row">{t(k)}</th><td>{val}</td></tr>;
   return (
     <div data-testid="bill-ti-object" data-status={x.status} data-irn={x.irnState} data-ar={x.arState}><PageHeader id="ti-h" title={<>{x.invoiceNo ?? x.docNo} <Status x={x} /> <StatusBadge status={AR_TONE[x.arState]} label={t(`ar.${x.arState}`)} /></>} meta={<><Link to="/bill/tax-invoices">{t('ti.title')}</Link> · {x.project} · <Link to={`/bill/client-bills?id=${x.billId}`}>{x.billNo}</Link>{x.certNo ? <> · <Link to={`/bill/certifications?id=${x.certificationId}`}>{x.certNo}</Link></> : null}</>} />
+      <DocumentFlow type="TINV" id={x.id} />
       <KpiRow><KpiTile label={t('ti.taxable')} value={money(x.taxable)} amount={x.taxable} kind="money" valueTestid="bill-ti-taxable" /><KpiTile label={t('ti.total')} value={money(x.total)} amount={x.total} kind="money" valueTestid="bill-ti-total" /></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}<IrnPanel x={x} run={run} busy={busy} />
       <div className="actions-row no-print" role="tablist">{['invoice', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-ti-tab-${k}`}>{t(`ti.tab.${k}`)}</button>)}</div>

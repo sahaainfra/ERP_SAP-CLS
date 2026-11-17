@@ -53,3 +53,6 @@ export const parseCreateFrom = (q) => parse(z.object({ source: z.string().regex(
 export const parseRequestAction = (b) => parse(z.object({ version: z.number().int().positive(), reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/, 'Choose a reason').optional(), reason: z.string().trim().min(5, 'Give a reason of at least 5 characters').max(500).optional() }).strict(), b);
 export const parseDecision = (b) => parse(z.object({ action: z.enum(['approve', 'reject', 'return']), version: z.number({ error: 'Send the version of the approval you saw' }).int().positive(), reasonCode: z.string().regex(/^[A-Z][A-Z0-9_]{1,30}$/, 'Choose a reason').optional(), comment: z.string().trim().max(500).optional() }).strict(), b);
 export const parseId = (v) => parse(z.coerce.number().int().positive(), v);
+
+/** Part 166.7: the document flow of one document: its kind (MR, PR, RFQ, CS, PO, GATE, GRN, QC, ISSUE, VINV, CBILL, CERT, TINV, SMEAS, SBILL) and id. */
+export const parseDocFlow = (q) => parse(z.object({ type: z.enum(['MR', 'PR', 'RFQ', 'CS', 'PO', 'GATE', 'GRN', 'QC', 'ISSUE', 'VINV', 'CBILL', 'CERT', 'TINV', 'SMEAS', 'SBILL']), id: z.coerce.number().int().min(1) }).strict(), q ?? {});

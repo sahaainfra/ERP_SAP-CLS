@@ -10,6 +10,7 @@ import { bill, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Vendor invoices (part 22.06): the registration form with the live match, the matching queue, the invoice with the order, the goods received and the invoice side by side, and the invoice management hub.
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -66,6 +67,7 @@ function Invoice({ id }) {
   if (guard) return guard; const x = q.data;
   return (
     <div data-testid="bill-vi-object" data-status={x.status} data-match={x.matchStatus} data-blocked={x.blocked ? '1' : '0'}><PageHeader id="vi-h" title={<>{x.invoiceNo} <Status x={x} /> <MatchBadge status={x.matchStatus} /></>} meta={<><Link to="/bill/vendor-invoices">{t('vi.queue')}</Link> · {x.docNo} · {x.project} · {x.vendor} · {t(`vk.${x.invoiceKind}`)}{x.po ? ` · ${x.po.docNo}` : ''} · {fmtDate(x.invoiceDate)}</>} />
+      <DocumentFlow type="VINV" id={x.id} />
       <KpiRow><KpiTile label={t('vi.total')} value={money(x.total)} amount={x.total} kind="money" valueTestid="bill-vi-total"><div className="muted">{t('vi.taxable')} {money(x.taxable)} · {t('vi.tax')} {money(x.tax)}</div></KpiTile><KpiTile label={t('vi.payable')} value={money(x.payable)} amount={x.payable} kind="money" valueTestid="bill-vi-payable">{x.debit > 0 && <div className="muted">{t('vi.debit')} {money(x.debit)}</div>}<div className="muted">{x.paymentAllowed ? t('vi.payOk') : t('vi.payNo')} · {t('ce.due')} {fmtDate(x.dueDate)}</div></KpiTile></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}<Exceptions list={x.exceptions} />
       {x.resolution?.kind && <p data-testid="bill-vi-resolution">{t('vi.resolvedBy', { kind: t(`vr.${x.resolution.kind}`), by: x.resolution.by })}: {x.resolution.note}{x.resolution.ref ? ` (${x.resolution.ref})` : ''}</p>}

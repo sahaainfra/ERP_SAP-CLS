@@ -12,6 +12,7 @@ import { bill, fmtDate } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Subcontractor measurement and bills (part 22.05).
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -47,6 +48,7 @@ function Measurement({ id }) {
   if (guard) return guard; const x = q.data; const row = (k, val) => <tr><th scope="row">{t(k)}</th><td>{val}</td></tr>;
   return (
     <div data-testid="bill-sm-object" data-state={x.state}><PageHeader id="sm-h" title={<>{x.docNo} <StatusBadge status={MEAS_TONE[x.state]} label={t(`sm.s.${x.state}`)} /></>} meta={<><Link to="/bill/sub-measure">{t('sm.title')}</Link> · {x.project} · {x.woNo} · {x.subcontractor} · {x.lineNo}. {x.item}</>} />
+      <DocumentFlow type="SMEAS" id={x.id} />
       <div className="mdm-panel"><div className="muted">{t('mb.measured')}</div><strong style={{ fontSize: '1.3rem' }} data-testid="bill-sm-qty-value">{n(x.qty)} {x.uom}</strong> <span className="muted">({t('sm.ordered', { qty: n(x.ordered) })})</span></div>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status" data-testid="bill-note">{note}</p>}
       <div className="table-scroll"><table className="data-table"><tbody>{row('rec.description', x.description)}{row('rec.template', t(`tpl.${x.template}`))}{x.nos != null && row('rec.nos', n(x.nos))}{x.length != null && row('rec.length', n(x.length))}{x.breadth != null && row('rec.breadth', n(x.breadth))}{x.depth != null && row('rec.depth', n(x.depth))}{row('mb.measuredBy', `${x.measuredBy} · ${fmtDate(x.measuredOn)}`)}{x.subSigner && row('sm.signedBy', `${x.subSigner} · ${fmtDate(x.subSignedOn)} · ${x.signMethod}${x.signatureRef ? ` · ${x.signatureRef}` : ''}`)}{x.verifiedBy && row('sm.verifiedBy', `${x.verifiedBy} · ${fmtDate(x.verifiedOn)}`)}</tbody></table></div>
@@ -97,6 +99,7 @@ function SubBill({ id }) {
   if (guard) return guard; const x = q.data; const r = (k, v, s) => <tr><th scope="row">{t(`sb.s.${k}`)}</th><td className="num">{s ? <strong>{money(v)}</strong> : money(v)}</td></tr>;
   return (
     <div data-testid="bill-sb-object" data-status={x.status} data-compliance={x.complianceOk ? 'OK' : 'HOLD'}><PageHeader id="sb-h" title={<>{x.billNo} <Status x={x} /> <StatusBadge status={x.complianceOk ? 'APPROVED' : 'REJECTED'} label={x.complianceOk ? t('sb.complianceOk') : t('sb.complianceHold')} /></>} meta={<><Link to="/bill/sub-bills">{t('sb.title')}</Link> · {x.docNo} · {x.project} · {x.woNo} · {x.subcontractor} · {fmtDate(x.periodFrom)} → {fmtDate(x.periodTo)}</>} />
+      <DocumentFlow type="SBILL" id={x.id} />
       <KpiRow><KpiTile label={t('cb.s.gross')} value={money(x.gross)} amount={x.gross} kind="money" valueTestid="bill-sb-gross"><div className="muted">{t('cb.cumulative')}: {money(x.cumGross)}</div></KpiTile><KpiTile label={t('cb.s.net')} value={money(x.net)} amount={x.net} kind="money" valueTestid="bill-sb-net"><div className="muted">{t('ce.due')}: {fmtDate(x.dueDate)}</div></KpiTile></KpiRow>
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status">{note}</p>}<Issues issues={x.issues} complianceOk={x.complianceOk} reasons={x.complianceReasons} />
       <div className="actions-row no-print" role="tablist">{['items', 'deductions', 'summary', 'measurements', 'documents'].map((k) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} onClick={() => setTab(k)} data-testid={`bill-sb-tab-${k}`}>{t(`sb.tab.${k}`)}</button>)}</div>

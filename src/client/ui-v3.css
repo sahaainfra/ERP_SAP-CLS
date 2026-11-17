@@ -219,3 +219,15 @@ main :is(.theme-previews, .cc-grid, .form-grid, .ui-card-grid, .dash-grid, .fact
 .gate-review label { display: grid; gap: 2px; flex: 1 1 14rem; min-width: 0; }
 .gate-review-actions { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); }
 .gate-history { margin: 0; padding-left: var(--erp-space-5); }
+
+/* Part 166.7: the document flow panel (a timeline of the linked documents) */
+.doc-flow-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--erp-space-2); }
+.doc-flow-node { position: relative; display: grid; gap: 2px; padding: var(--erp-space-2) var(--erp-space-3) var(--erp-space-2) var(--erp-space-6); border-left: 2px solid var(--erp-color-border-subtle); }
+.doc-flow-node::before { content: ''; position: absolute; left: -7px; top: var(--erp-space-3); width: 12px; height: 12px; border-radius: 50%; background: var(--erp-color-bg-surface); border: 2px solid var(--erp-chart-1); }
+.doc-flow-node.is-current { background: var(--erp-color-bg-surface-sunken); border-left-color: var(--erp-chart-1); }
+.doc-flow-node.is-current::before { background: var(--erp-chart-1); }
+.doc-flow-node.is-hidden::before, .doc-flow-node.is-later::before { border-style: dashed; border-color: var(--erp-color-border-strong); }
+.doc-flow-node.is-later { border-left-style: dashed; }
+.doc-flow-ref { font-weight: 600; overflow-wrap: anywhere; }
+.doc-flow-facts { display: flex; flex-wrap: wrap; gap: var(--erp-space-2); align-items: center; }
+.doc-flow-amount { font-variant-numeric: tabular-nums; }

@@ -11,6 +11,7 @@ import { bill, fmtDate, qs } from './api.js';
 import { DocBar, ErrorLine, Status, big, useRecord, useRunner } from './BillParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
 import { KpiRow, KpiTile } from '../../platform/design/Kpi.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // The client certification and the submitted-against-certified analysis (part 22.04).
 const nf = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 }); const mf = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -82,6 +83,7 @@ function Certification({ id }) {
   if (guard) return guard; const x = q.data;
   return (
     <div data-testid="bill-ce-object" data-status={x.status} data-big={x.bigDiff ? '1' : '0'}><PageHeader id="ce-h" title={<>{x.certNo} <Status x={x} /></>} meta={<><Link to="/bill/certifications">{t('ce.title')}</Link> · {x.docNo} · {x.project} · <Link to={`/bill/client-bills?id=${x.billId}`}>{x.billNo}</Link> · {t('ce.certDate')} {fmtDate(x.certDate)}</>} />
+      <DocumentFlow type="CERT" id={x.id} />
       <KpiRow><KpiTile label={t('ce.submitted')} value={money(x.submittedGross)} amount={x.submittedGross} kind="money" valueTestid="bill-ce-submitted" /><KpiTile label={t('ce.certified')} value={money(x.certifiedGross)} amount={x.certifiedGross} kind="money" valueTestid="bill-ce-certified"><div data-testid="bill-ce-diffpct">{pctText(-x.diffPct)}</div></KpiTile><KpiTile label={t('ce.s.net')} value={money(x.certifiedNet)} amount={x.certifiedNet} kind="money" valueTestid="bill-ce-net"><div className="muted">{t('ce.due')}: {fmtDate(x.dueDate)}</div></KpiTile></KpiRow>
       {x.bigDiff && <p className="mdm-banner" role="status" data-testid="bill-ce-bigdiff">{t('ce.bigNote')}</p>}{x.disputed > 0 && <p data-testid="bill-ce-disputed">{t('ce.disputed', { amount: money(x.disputed) })}</p>}
       <ErrorLine error={error} id="bill-error" />{note && <p className="mdm-banner" role="status">{note}</p>}

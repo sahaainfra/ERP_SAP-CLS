@@ -9,6 +9,7 @@ import { useSession } from '../core/api/index.js';
 import { CS_TONE, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Comparative statements (part 15.04): the statement generated from the quotations of an RFQ: every line against every vendor with the landed rate, the rank, the technical compliance and the benchmarks; the recommendation (overall L1,
 // the L1 of each line with a split award, or a choice by hand); a vendor who is not the L1 needs a reason and goes one level higher; negotiation rounds; approval by value. An approved statement is what the order is made from.
@@ -33,6 +34,7 @@ function Cs({ t, id }) {
   return (
     <div data-testid="cs-object" data-status={r.status}>
       <PageHeader id="cs-h" title={<>{r.docNo} <StatusBadge status={CS_TONE[r.status]} label={t(`c.s.${r.status}`)} />{r.nonL1 && <> <StatusBadge status="AT_RISK" label={t('c.nonL1')} /></>}</>} meta={<><Link to="/proc/comparative-statements">{t('c.back')}</Link> · <Link to={`/proc/rfqs?id=${r.rfqId}`}>{r.rfqNo}</Link> {r.rfqTitle}</>} />
+      <DocumentFlow type="CS" id={r.id} />
       <dl className="kv" data-testid="cs-figures"><div><dt>{t('c.project')}</dt><dd>{r.projectCode}</dd></div><div><dt>{t('c.recommendation')}</dt><dd data-testid="cs-type">{t(`c.type.${r.recommendationType}`)}</dd></div><div><dt>{t('c.value')}</dt><dd data-testid="cs-value">{fmtRs(r.totalValue)}</dd></div>
         <div><dt>{t('c.vsEstimate')}</dt><dd data-testid="cs-savings">{fmtRs(r.savingsVsBudget)}</dd></div><div><dt>{t('c.rounds')}</dt><dd>{r.roundNo}</dd></div><div><dt>{t('c.level')}</dt><dd data-testid="cs-level">{t(`c.lvl.${r.approvalLevel}`)}</dd></div></dl>
       {r.warnings.map((w, i) => <p key={i} className="mdm-banner" role="status" data-testid="cs-warning">{w.message}</p>)}

@@ -11,6 +11,7 @@ import { ISSUE_TONE, download, fmtDate, fmtQty, fmtRs, is, iv } from './api.js';
 import { filePhoto } from './GateParts.jsx';
 import { History, useRunner } from './InvParts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Material Issues (part 16.04): the list, and the issue slip with the lines, the authorisation it was issued against, the receiver acknowledgement (code or signature), the stock postings and the returns.
 function Issue({ t, id }) {
@@ -26,6 +27,7 @@ function Issue({ t, id }) {
   return (
     <div data-testid="issue-object" data-status={g.status}>
       <PageHeader id="iss-h" title={<>{g.docNo} <StatusBadge status={ISSUE_TONE[g.status]} label={t(`is.${g.status}`)} /></>} meta={<><Link to="/inv/issues">{t('i.issuesTitle')}</Link> · {g.store} · {t(`i.it.${g.type}`)} · {g.issuedTo}</>} />
+      <DocumentFlow type="ISSUE" id={g.id} />
       {g.exceptionNeeded && <p className="mdm-banner" role="status" data-testid="issue-exception">{t('i.exceptionNote')}</p>}
       {error?.form && <p className="field-error" role="alert" data-testid="issue-error">{error.form}{error.fields ? ` ${Object.values(error.fields).join('; ')}` : ''}</p>}{note && <p className="mdm-banner" role="status" data-testid="issue-note">{note}</p>}
       <dl className="kv"><div><dt>{t('i.wa')}</dt><dd>{g.waNo ?? g.mrNo ?? t('i.noWa')}</dd></div><div><dt>{t('i.date')}</dt><dd>{fmtDate(g.date)}</dd></div>{g.totalValue != null && <div><dt>{t('r.value')}</dt><dd data-testid="issue-value">{fmtRs(g.totalValue)}</dd></div>}{g.recoverableValue > 0 && <div><dt>{t('i.recoverable')}</dt><dd>{fmtRs(g.recoverableValue)}</dd></div>}<div><dt>{t('g.requestedBy')}</dt><dd>{g.requestedBy}</dd></div>{g.acknowledged && <div><dt>{t('i.receivedBy')}</dt><dd data-testid="issue-ack">{g.receiverName} ({t(`i.am.${g.ackMethod}`)}) · {String(g.ackAt).slice(0, 16).replace('T', ' ')}</dd></div>}</dl>

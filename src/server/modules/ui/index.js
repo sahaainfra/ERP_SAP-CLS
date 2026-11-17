@@ -15,6 +15,8 @@ import { createFieldToday } from './field-today.js';
 import { createWidgetService, dashboardHandlers } from './widgets.js';
 import { registerWidgetProviders } from './widget-providers.js';
 import { registerOverviewProviders } from './overviews.js';
+import { createDocFlowService } from './docflow.js';
+import { parseDocFlow } from './validators.js';
 import { createDeviceService } from './device.js';
 import { loadVapid, sendPush } from '../../platform/push/index.js';
 import { createShellService, navHandlers } from './shell.js';
@@ -164,6 +166,12 @@ export const ui = {
     fieldRouter.use('/field', gate('ff.field.p16603', 'The mobile site app is'));
     fieldRouter.get('/field/today', (req, res) => res.json({ data: fieldToday.today(req.actor) }));
     router.use(fieldRouter);
+    // Part 166.7, FR-03: the document flow of a document (rights checked in the service, node by node)
+    const flowRouter = Router();
+    const docflow = createDocFlowService({ db });
+    flowRouter.use('/doc-flow', gate('ff.ui.p16607', 'The document flow is'));
+    flowRouter.get('/doc-flow', (req, res) => res.json({ data: docflow.flow(req.actor, parseDocFlow(req.query)) }));
+    router.use(flowRouter);
     // Part 03.07: widgets and dashboards.
     const dashboardRouter = Router();
     dashboardRouter.use(['/widgets', '/dashboards'], gate('ff.ui.p0307', 'Dashboards and widgets are'));

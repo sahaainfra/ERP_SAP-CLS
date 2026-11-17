@@ -10,6 +10,7 @@ import { useSession } from '../core/api/index.js';
 import { CHECK_TONE, STATUS_TONE, addDays, download, fmtDate, fmtQty, fmtRs, pc } from './api.js';
 import { useSearch } from '../site/parts.jsx';
 import PageHeader from '../../platform/design/PageHeader.jsx';
+import DocumentFlow from '../../platform/object/DocumentFlow.jsx';
 
 // Purchase Requisitions (part 15.01, FR-03 to FR-06): the list; the requisition with its budget panel, stock panel, possible duplicates, lines with the request lines they came from, approvals and the orders to come; a form for a direct
 // requisition (with an emergency path). Approval is by value; nobody approves what they raised; a blocked budget or free stock needs an approved exception of the control engine.
@@ -45,6 +46,7 @@ function Pr({ t, id }) {
   return (
     <div data-testid="pr-object" data-status={r.status}>
       <PageHeader id="pr-h" title={<>{r.docNo} <StatusBadge status={STATUS_TONE[r.status]} label={t(`p.s.${r.status}`)} />{r.isEmergency && <> <StatusBadge status="AT_RISK" label={t('p.emergency')} /></>}</>} meta={<Link to="/proc/requisitions">{t('p.back')}</Link>} />
+      <DocumentFlow type="PR" id={r.id} />
       {r.isEmergency && r.regulariseBy && !r.regularisedAt && <p className="mdm-banner" role="status" data-testid="pr-emergency">{t('p.emergencyBy', { d: String(r.regulariseBy).slice(0, 16).replace('T', ' ') })} {r.emergencyReason}</p>}
       <dl className="kv" data-testid="pr-figures"><div><dt>{t('p.project')}</dt><dd>{r.projectCode}{r.siteCode ? ` · ${r.siteCode}` : ''}</dd></div><div><dt>{t('p.source')}</dt><dd>{t(`p.src.${r.source}`)}{r.directReason ? `: ${r.directReason}` : ''}</dd></div><div><dt>{t('p.requiredBy')}</dt><dd>{fmtDate(r.requiredBy)}</dd></div><div><dt>{t('p.priority')}</dt><dd>{t(`p.pri.${r.priority}`)}</dd></div><div><dt>{t('p.total')}</dt><dd data-testid="pr-total">{r.canSeeCost ? fmtRs(r.totalAmount) : t('p.masked')}</dd></div><div><dt>{t('p.requestedBy')}</dt><dd>{r.requestedBy}</dd></div>{r.approvedBy && <div><dt>{t('p.approvedBy')}</dt><dd>{r.approvedBy}</dd></div>}</dl>
       {error?.form && <p className="field-error" role="alert" data-testid="pr-error">{error.form}{error.code === 'EXCEPTION_REQUIRED' && <> <Link to="/controls/exceptions">{t('p.raiseException')}</Link></>}</p>}{note && <p className="mdm-banner" role="status" data-testid="pr-note">{note}</p>}
