@@ -81,6 +81,9 @@ const CandidatePipelinePage = lazyPage(() => import('./CandidatePipelinePage.jsx
 const Employee360Page = lazyPage(() => import('./Employee360Page.jsx'));
 const EmployeeDirectoryPage = lazyPage(() => import('./EmployeeDirectoryPage.jsx'));
 const HrOverviewPage = lazyPage(() => import('./HrOverviewPage.jsx'));
+const WorkforcePage = lazyPage(() => import('./GatePages.jsx'), 'WorkforcePage');
+const GatesPage = lazyPage(() => import('./GatePages.jsx'), 'GatesPage');
+const GatePage = lazyPage(() => import('./GatePages.jsx'), 'GatePage');
 const NewEmployeePage = lazyPage(() => import('./NewEmployeePage.jsx'));
 const NewRequisitionPage = lazyPage(() => import('./NewRequisitionPage.jsx'));
 const OfferBuilderPage = lazyPage(() => import('./OfferBuilderPage.jsx'));
@@ -95,6 +98,10 @@ registerModule({
   label: 'HR & Workforce',
   routes: [
     { path: '/hr', label: 'HR Overview', icon: 'erp.group.workforce', permission: 'hr.employee.view', flag: 'ff.hr.p0701', Page: HrOverviewPage },
+    // part 07.14 (built in 166.6): the workforce dashboard and the gates G1–G4
+    { path: '/hr/workforce', label: 'Workforce Dashboard', icon: 'erp.group.workforce', permission: 'hr.workforce.view', flag: 'ff.hr.p0714', Page: WorkforcePage },
+    { path: '/admin/gates', label: 'Programme Gates', icon: 'erp.state.approved', permission: 'hr.gate.view', flag: 'ff.hr.p0714', Page: GatesPage },
+    { path: '/admin/gate', label: 'Gate', menu: false, icon: 'erp.state.approved', permission: 'hr.gate.view', flag: 'ff.hr.p0714', Page: GatePage },
     { path: '/hr/employees', label: 'Employee Directory', icon: 'erp.action.search', permission: 'hr.employee.team.view', flag: 'ff.hr.p0701', Page: EmployeeDirectoryPage },
     { path: '/hr/employees/employee', label: 'Employee 360', icon: 'erp.action.info', permission: null, flag: 'ff.hr.p0701', Page: Employee360Page },
     { path: '/hr/employees/new', label: 'New Employee', icon: 'erp.action.create', permission: 'hr.employee.create', flag: 'ff.hr.p0701', Page: NewEmployeePage },

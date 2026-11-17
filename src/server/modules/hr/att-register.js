@@ -446,7 +446,20 @@ export function createRegisterService({ db, dep }) {
     const to = addDays(today(), -1); const from = addDays(to, -2);
     return recompute(systemActor(companyId), { from, to, cascade: true });
   }
-  return { recompute: recomputeApi, recomputeFor: recompute, onChange, queueChange, flushChanges, computeDay, lockedDay, readiness, locks, decisions, arrears: arrearsApi, daily, dayDetail, register: (actor, q) => registerOf(actor, q), muster: (actor, q) => registerOf(actor, q, { muster: true }), registerExport, registerList, musterList, printRegister, widget, nightly, systemActor, scopeOf, siteRow, myEmployee, usernameOf };
+  /**
+   * The workforce dashboard (part 07.14, by 166.6): the paid overtime of a month on the register, for the days the person may see, with the people
+   * who worked it. There is no overtime budget in the application (D-691), so no comparison with one is made here.
+   */
+  function overtimeMonth(actor, { month = todayIST().slice(0, 7), projectId = null, siteId = null } = {}) {
+    need(actor, 'att.register.view', 'see the attendance register');
+    const p = { c: actor.companyId, from: `${month}-01`, to: `${month}-31` };
+    const where = ['d.company_id = :c', 'd.work_date BETWEEN :from AND :to', rowsScope(actor)];
+    if (projectId) { where.push('d.project_id = :p'); p.p = projectId; }
+    if (siteId) { where.push('d.daily_site_id = :s'); p.s = siteId; }
+    const r = db.prepare(`SELECT COALESCE(SUM(d.ot_paid_minutes), 0) AS m, COUNT(DISTINCT CASE WHEN d.ot_paid_minutes > 0 THEN d.person_id END) AS people FROM att_daily d WHERE ${where.join(' AND ')}`).get(p);
+    return { month, hours: Math.round((r.m / 60) * 100) / 100, people: r.people };
+  }
+  return { overtimeMonth, recompute: recomputeApi, recomputeFor: recompute, onChange, queueChange, flushChanges, computeDay, lockedDay, readiness, locks, decisions, arrears: arrearsApi, daily, dayDetail, register: (actor, q) => registerOf(actor, q), muster: (actor, q) => registerOf(actor, q, { muster: true }), registerExport, registerList, musterList, printRegister, widget, nightly, systemActor, scopeOf, siteRow, myEmployee, usernameOf };
 }
 
 export const REOPEN_DOC = 'HR_ATT_REOPEN';

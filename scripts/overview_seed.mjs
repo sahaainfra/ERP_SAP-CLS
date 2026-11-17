@@ -49,22 +49,30 @@ const rebuild = (types) => [
   'CREATE INDEX IF NOT EXISTS ix_ui_widgets_company ON ui_widgets (company_id);',
 ].join('\n');
 
-const cards = allCards();
-const widgetRows = cards.map((c, i) => {
-  const o = c.overview;
-  const permission = o ? o.permission : c.permission;
-  const module = o ? o.module : c.module;
-  const description = o ? `${c.title}, from the ${o.source}. Opens ${c.drill}.` : c.description;
-  return `INSERT OR IGNORE INTO ui_widgets (code, module, title, description, type, data_endpoint, permission_key, default_w, default_h, refresh_sec, drill_route, sort_order, created_by, source_type) VALUES (${q(c.code)}, ${q(module)}, ${q(c.title)}, ${q(description)}, ${q(c.type)}, ${q(`/api/v1/ui/widgets/${c.code}/data`)}, ${q(permission)}, ${c.w}, ${c.h}, ${c.type === 'todo' || c.type === 'alerts' ? 60 : 300}, ${q(c.drill)}, ${600 + i}, 'migration', 'reference_seed');`;
-});
+/** The SQL of the widget rows of these cards and of the system layout of these overviews (also used for 07.14 by scripts/p0714_seed.mjs). */
+export function widgetSql(cards, sortFrom = 600) {
+  return cards.map((c, i) => {
+    const o = c.overview;
+    const permission = c.permission ?? o?.permission;
+    const module = o ? o.module : c.module;
+    const description = o ? `${c.title}, from the ${c.source ?? o.source}. Opens ${c.drill}.` : c.description;
+    return `INSERT OR IGNORE INTO ui_widgets (code, module, title, description, type, data_endpoint, permission_key, default_w, default_h, refresh_sec, drill_route, sort_order, created_by, source_type) VALUES (${q(c.code)}, ${q(module)}, ${q(c.title)}, ${q(description)}, ${q(c.type)}, ${q(`/api/v1/ui/widgets/${c.code}/data`)}, ${q(permission)}, ${c.w}, ${c.h}, ${c.type === 'todo' || c.type === 'alerts' ? 60 : 300}, ${q(c.drill)}, ${sortFrom + i}, 'migration', 'reference_seed');`;
+  });
+}
 const layout = (cs) => JSON.stringify(cs.map((c, i) => ({ id: `c${i + 1}`, widget: c.code, w: c.w, h: c.h })));
+export const dashboardSql = (o) => `INSERT OR IGNORE INTO ui_dashboards (company_id, code, name, owner_type, owner_ref, permission_key, layout_json, filters_json, is_default, created_by, source_type) VALUES (NULL, ${q(o.code)}, ${q(o.name)}, 'system', 'system', ${q(o.permission)}, ${q(layout(o.cards))}, '{}', 1, 'migration', 'reference_seed');`;
+export { q };
+
+// part 166.5: every overview except the workforce dashboard of 07.14 (its own migration, scripts/p0714_seed.mjs)
+const OWN = OVERVIEWS.filter((o) => o.part !== '07.14');
+const cards = allCards().filter((c) => !c.overview || c.overview.part !== '07.14');
+const widgetRows = widgetSql(cards);
 const dashRows = [
-  ...OVERVIEWS.map((o) => `INSERT OR IGNORE INTO ui_dashboards (company_id, code, name, owner_type, owner_ref, permission_key, layout_json, filters_json, is_default, created_by, source_type) VALUES (NULL, ${q(o.code)}, ${q(o.name)}, 'system', 'system', ${q(o.permission)}, ${q(layout(o.cards))}, '{}', 1, 'migration', 'reference_seed');`),
+  ...OWN.map(dashboardSql),
   `INSERT OR IGNORE INTO ui_dashboards (company_id, code, name, owner_type, owner_ref, permission_key, layout_json, filters_json, is_default, created_by, source_type) VALUES (NULL, 'home-insights', 'Home insights', 'system', 'system', 'self', ${q(layout(STANDALONE))}, '{}', 1, 'migration', 'reference_seed');`,
 ];
 const codes = cards.map((c) => q(c.code)).join(', ');
-const dashCodes = [...OVERVIEWS.map((o) => q(o.code)), "'home-insights'"].join(', ');
-
+const dashCodes = [...OWN.map((o) => q(o.code)), "'home-insights'"].join(', ');
 const up = `-- Part 166.5: Home, role dashboards and overview pages (Fiori overview style). Written by scripts/overview_seed.mjs from src/server/modules/ui/overviews.js.
 -- The flag; the widget types of the new cards (Top-N, to-do, scatter) in the CHECK of ui_widgets (SQLite: the table is rebuilt with the same columns
 -- and rows); the ${cards.length} cards as widgets (each reads the service of the page it belongs to, never a figure of its own) and the system layout of
@@ -81,6 +89,8 @@ DELETE FROM ui_widgets WHERE code IN (${codes});
 ${rebuild(TYPES_OLD)}
 DELETE FROM core_feature_flags WHERE key = 'ff.ui.p16605';
 `;
+if (import.meta.url === `file://${process.argv[1]}`) {
 writeFileSync(`${NAME}.up.sql`, up);
 writeFileSync(`${NAME}.down.sql`, down);
-console.log(`${NAME}: ${cards.length} widgets, ${OVERVIEWS.length + 1} dashboards`);
+console.log(`${NAME}: ${cards.length} widgets, ${OWN.length + 1} dashboards`);
+}

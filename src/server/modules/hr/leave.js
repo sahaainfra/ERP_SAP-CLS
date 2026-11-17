@@ -140,6 +140,19 @@ export function createLeaveService({ db, dep }) {
       need(actor, 'lv.team.view', 'see leave balances');
       return runList(db, balanceList, parseListRequest(balanceList, query), { select: BAL_SELECT, scopeSql: balScope(actor), params: { c: actor.companyId }, tieBreaker: 'n.id', map: balPresent });
     },
+    /**
+     * The workforce dashboard (part 07.14, by 166.6): the people on approved leave on a day, and the leave liability in days (paid leave still to
+     * be taken in the year, by type), for the employees the person may see. In days: a value in rupees needs the pay rates of payroll (23.x).
+     */
+    summary(actor, { date = todayIST(), year = yearOf(date) } = {}) {
+      need(actor, 'lv.team.view', 'see leave balances');
+      const scope = authz.scopeFilter(actor, 'lv.team.view', { project: 'e.project_id', site: 'e.site_id' }).sql;
+      const byType = db.prepare(`SELECT t.code, t.name, COALESCE(SUM(n.remaining), 0) AS days, COUNT(DISTINCT n.employee_id) AS people FROM lv_entitlements n JOIN hr_employees e ON e.id = n.employee_id JOIN lv_types t ON t.id = n.leave_type_id
+        WHERE n.company_id = :c AND n.year = :y AND n.deleted_at IS NULL AND t.paid = 1 AND t.deleted_at IS NULL AND n.remaining > 0 AND ${scope} GROUP BY t.id ORDER BY t.sort_order, t.code`).all({ c: actor.companyId, y: year });
+      const onLeave = db.prepare(`SELECT COUNT(DISTINCT a.employee_id) AS n FROM lv_applications a JOIN hr_employees e ON e.id = a.employee_id
+        WHERE a.company_id = :c AND a.status = 'APPROVED' AND a.deleted_at IS NULL AND a.from_date <= :d AND a.to_date >= :d AND ${scope}`).get({ c: actor.companyId, d: date }).n;
+      return { date, year, onLeaveToday: onLeave, liability: byType.map((r) => ({ code: r.code, name: r.name, days: r2(r.days), people: r.people })), liabilityDays: r2(byType.reduce((n, r) => n + r.days, 0)) };
+    },
     exportSource(actor, req) {
       need(actor, 'hr.application.export', 'export leave balances');
       const opts = { select: BAL_SELECT, scopeSql: balScope(actor), params: { c: actor.companyId }, tieBreaker: 'n.id' };

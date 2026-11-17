@@ -879,6 +879,13 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/mdm/partners/:id/blacklist', g: 'permission', k: 'mdm.partner.blacklist', s: 'parseBlacklist', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/hr/employees', g: 'permission', k: ['hr.employee.view','hr.employee.team.view'], s: 'parseList', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/employees/export', g: 'permission', k: 'hr.employee.export', s: 'parseList', scope: 'company', rate: 'export', audit: true },
+  // part 07.14 (built in 166.6): the gates G1–G4
+  { m: 'GET', p: '/api/v1/hr/gates', g: 'permission', k: 'hr.gate.view', s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/hr/gates/evidence', g: 'permission', k: 'hr.gate.view', s: 'parseEvidence', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/hr/gates/:code', g: 'permission', k: 'hr.gate.view', s: 'parseCode', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/hr/gates/:code/report', g: 'permission', k: 'hr.gate.export', s: 'parseCode', scope: 'company', rate: 'export', audit: true },
+  { m: 'POST', p: '/api/v1/hr/gates/:code/criteria/:criterion', g: 'permission', k: 'hr.gate.review', s: 'parseReview', scope: 'company', rate: 'write', audit: true },
+  { m: 'POST', p: '/api/v1/hr/gates/:code/submit', g: 'permission', k: 'hr.gate.review', s: 'parseSubmit', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/hr/employees/overview', g: 'permission', k: 'hr.employee.view', s: 'parseOverview', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/employees/queue', g: 'permission', k: 'hr.employee.queue', s: 'parseQueue', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/hr/employees/changes', g: 'permission', k: 'hr.employee.view', s: 'parseChangeList', scope: 'company', rate: 'read', audit: false },

@@ -75,7 +75,7 @@ test('T-01 every card of every overview page shows the figures of the service th
   await setupCompany(api);
   // the same period for both: the framework's filter bar starts at this financial year, the HSE and quality pages at the last twelve months
   const period = { from: '2026-04-01', to: '2027-03-31' };
-  for (const o of OVERVIEWS) {
+  for (const o of OVERVIEWS.filter((x) => OLD[x.code])) { // the workforce dashboard of 07.14 has no old page: tests/gates-p0714.test.js
     const [, role] = OLD[o.code];
     const takesPeriod = ['ov-hse', 'ov-qa', 'ov-proc', 'ov-hr'].includes(o.code);
     await sameAsOld(api, o, as(role, `ov-${role.toLowerCase()}`), takesPeriod ? period : {}, takesPeriod ? `?from=${period.from}&to=${period.to}` : '');
@@ -181,4 +181,26 @@ test('FR-03 Home insights: each role starts from its own cards, a role without a
   const own = (await api.call('GET', '/api/v1/ui/dashboards/home-insights', pm)).json.data;
   assert.equal(own.source, 'personal');
   assert.deepEqual(own.layout.map((i) => [i.widget, i.w]), [['ov.todo.mine', 12], ['ov.qs.unbilled_wip', 6]]);
+});
+
+test('every card opens a page that exists: its "View all" route and the addresses its data gives are registered client routes', async () => {
+  const { readdirSync } = await import('node:fs');
+  const { allRoutes } = await import('../src/client/platform/shell/registry.js');
+  for (const m of readdirSync('src/client/modules')) await import(`../src/client/modules/${m}/index.js`).catch(() => null);
+  const known = new Set(allRoutes().map((r) => r.path));
+  const path = (to) => String(to).split('?')[0];
+  for (const c of allCards()) assert.ok(known.has(path(c.drill)), `${c.code}: ${c.drill} is a page`);
+  for (const o of OVERVIEWS) assert.ok(known.has(o.route), `${o.code}: ${o.route}`);
+  // and the addresses a provider writes into its rows (Home, the to-do card, the workforce cards)
+  for (const to of ['/approvals', '/att/today', '/leave/balances', '/leave/calendar', '/training/certifications', '/labour/contractors', '/att/register', '/hr/employees', '/notifications']) assert.ok(known.has(to), to);
+});
+
+test('the HR cards count people by site and by department (the overview\'s groups are { label, key, n })', () => {
+  const hr = OVERVIEWS.find((o) => o.code === 'ov-hr');
+  const d = { byDepartment: [{ label: 'Engineering', key: 3, n: 7 }, { label: 'No department', key: 0, n: 2 }], bySite: [{ label: 'Ring Road Site 1', key: 5, n: 4 }, { label: 'Head office', key: 0, n: 5 }] };
+  const dep = hr.cards.find((c) => c.code === 'ov.hr.by_department').map(d);
+  assert.deepEqual(dep.rows.map((r) => [r.label, r.value, r.drill]), [['Engineering', 7, '/hr/employees?filter[departmentId]=3'], ['No department', 2, '/hr/employees']]);
+  const site = hr.cards.find((c) => c.code === 'ov.hr.by_site').map(d);
+  assert.deepEqual(site.series[0].values, [4, 5]);
+  assert.deepEqual(site.categories, ['Ring Road Site 1', 'Head office']);
 });

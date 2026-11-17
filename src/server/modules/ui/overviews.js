@@ -9,6 +9,12 @@ import { plantOf } from '../plant/index.js';
 import { employeesOf } from '../hr/employees.js';
 import { budOf } from '../bud/budgets.js';
 import { notificationCentreOf } from '../eng/notifications.js';
+import { punchesOf } from '../hr/punches.js';
+import { labourOf } from '../hr/labour.js';
+import { leaveOf } from '../hr/leave.js';
+import { registerOf } from '../hr/att-register.js';
+import { trainingOf } from '../hr/training.js';
+import EN from '../../../shared/i18n/locales/en.js';
 
 // Part 166.5: the overview pages. Each module dashboard of parts 01–166 is drawn as cards on the dashboard framework of 03.07 (a dashboard code,
 // widgets in `ui_widgets`, a provider here per widget). A card never computes a figure of its own: its provider calls the service the old page
@@ -51,18 +57,29 @@ const TONE = { good: 'green', ok: 'green', green: 'green', bad: 'red', red: 'red
 const tone = (s) => TONE[String(s ?? '').toLowerCase()] ?? 'neutral';
 
 /** The person's approvals and tasks waiting for a decision (the to-do card), from the workflow engine (04.01). */
-function todo(ctx) {
-  const wf = workflowOf(ctx.db);
-  const list = wf.listTasks(ctx.actor, { mine: 'assigned', limit: 8 });
+/** Every open task of the person (up to 50), with its document type (the HR card keeps those of HR). */
+function openTasks(ctx) {
+  const list = workflowOf(ctx.db).listTasks(ctx.actor, { mine: 'assigned', limit: 50 });
   return {
     rows: list.rows.map((t) => ({
-      taskId: t.id, title: `${t.instance.docLabel}${t.instance.docRef ? ` ${t.instance.docRef}` : ''}${t.instance.title ? `: ${t.instance.title}` : ''}`,
+      taskId: t.id, docType: t.instance.docType, title: `${t.instance.docLabel}${t.instance.docRef ? ` ${t.instance.docRef}` : ''}${t.instance.title ? `: ${t.instance.title}` : ''}`,
       facts: [`Raised by ${t.instance.submittedBy}`, t.dueAt ? `due ${String(t.dueAt).slice(0, 10)}` : null, t.overdue ? 'past its time' : null].filter(Boolean),
       drill: t.instance.route ?? '/admin/approvals',
     })),
-    total: list.total, drill: '/workflow/inbox', source: 'My open approvals and tasks',
+    total: list.total,
   };
 }
+/**
+ * The to-do card: the first 8 of the person's open tasks, with the total.
+ * @param {any} ctx @param {(row: any) => boolean} [keep]
+ */
+function todo(ctx, keep = TRUE) {
+  const all = openTasks(ctx);
+  const rows = all.rows.filter((r) => keep(r));
+  return { rows: rows.slice(0, 8), total: keep === TRUE ? all.total : rows.length, drill: '/approvals', source: 'My open approvals and tasks' };
+}
+/** @type {(row: any) => boolean} */
+const TRUE = () => true;
 
 /** The latest notifications of the person with their time (the feed card), from the notification centre (04.06). */
 function feed(ctx) {
@@ -140,10 +157,11 @@ export const OVERVIEWS = [
     cards: [
       { code: 'ov.qa.first_time_ir', title: 'First-time IR approval', type: 'kpi', w: 3, h: 1, drill: '/qa/inspection-requests', map: (d) => qaKpi(d, 'firstTimeIr') },
       { code: 'ov.qa.open_ncr', title: 'Open NCRs', type: 'kpi', w: 3, h: 1, drill: '/qa/ncrs', map: (d) => qaKpi(d, 'openNcr') },
-      { code: 'ov.qa.cube_fail', title: 'Cube failure rate (28-day)', type: 'kpi', w: 3, h: 1, drill: '/qa/tests', map: (d) => qaKpi(d, 'cubeFail') },
+      { code: 'ov.qa.cube_fail', title: 'Cube failure rate (28-day)', type: 'kpi', w: 3, h: 1, drill: '/qa/test-requests', map: (d) => qaKpi(d, 'cubeFail') },
       { code: 'ov.qa.open_ir', title: 'Open inspection requests', type: 'kpi', w: 3, h: 1, drill: '/qa/inspection-requests', map: (d) => qaKpi(d, 'openIr') },
       { code: 'ov.qa.kpis', title: 'Quality measures against target', type: 'bar', w: 8, h: 2, drill: '/qa/dashboard', map: (d) => { const k = d.kpis.filter((x) => typeof x.value === 'number'); return { categories: k.map((x) => x.label), series: [{ name: 'Value', values: k.map((x) => x.value), drill: k.map((x) => x.drill) }, { name: 'Target', values: k.map((x) => x.target ?? 0) }] }; } },
-      { code: 'ov.qa.exceptions', title: 'Exceptions', type: 'alerts', w: 4, h: 2, drill: '/qa/ncrs', map: (d) => ({ rows: d.exceptions.slice(0, 8).map((x, i) => ({ id: x.id ?? i, title: x.label ?? x.title ?? x.kind, subtitle: x.ref ?? x.project ?? '', drill: x.link ?? x.drill ?? null })), total: d.exceptions.length, drill: null }) },
+      // the exceptions are { key, count, tone, drill }: their words are the quality page's own (the shared English text, qa namespace)
+      { code: 'ov.qa.exceptions', title: 'Exceptions', type: 'alerts', w: 4, h: 2, drill: '/qa/ncrs', map: (d) => ({ rows: d.exceptions.slice(0, 8).map((x) => ({ id: x.key, title: String(EN.qa?.[`exc.${x.key}`] ?? x.key).replace('{n}', String(x.count)), subtitle: x.tone === 'red' ? 'Act now' : 'Needs attention', drill: x.drill ?? null })), total: d.exceptions.length, drill: null }) },
     ],
   },
   {
@@ -151,12 +169,12 @@ export const OVERVIEWS = [
     source: 'Procurement analytics',
     read: (ctx) => once(keyOf('ov-proc', ctx), () => procOf(ctx.db).anaSvc.dashboard(ctx.actor, { projectId: pid(ctx), ...period(ctx) })),
     cards: [
-      { code: 'ov.proc.spend_fy', title: 'Spend this financial year', type: 'kpi', w: 3, h: 1, drill: '/proc/analytics/spend', map: (d) => kpi(d.kpis.spendFy.value, { kind: 'money', subtitle: `₹ · since ${d.kpis.spendFy.from} · ${d.kpis.spendFy.count} orders`, drill: d.kpis.spendFy.route }) },
+      { code: 'ov.proc.spend_fy', title: 'Spend this financial year', type: 'kpi', w: 3, h: 1, drill: '/proc/spend-analysis', map: (d) => kpi(d.kpis.spendFy.value, { kind: 'money', subtitle: `₹ · since ${d.kpis.spendFy.from} · ${d.kpis.spendFy.count} orders`, drill: d.kpis.spendFy.route }) },
       { code: 'ov.proc.open_prs', title: 'Open requisitions', type: 'kpi', w: 3, h: 1, drill: '/proc/requisitions', map: (d) => kpi(d.kpis.openPrs.count, { unit: 'open', subtitle: `requisitions · oldest ${d.kpis.openPrs.oldestDays} days`, status: d.kpis.openPrs.count ? 'amber' : 'green', drill: d.kpis.openPrs.route }) },
       { code: 'ov.proc.overdue', title: 'Overdue deliveries', type: 'kpi', w: 3, h: 1, drill: '/proc/purchase-orders', map: (d) => kpi(d.kpis.overdueDeliveries.count, { unit: 'orders', subtitle: `orders · up to ${d.kpis.overdueDeliveries.maxDays} days late`, status: d.kpis.overdueDeliveries.count ? 'red' : 'green', drill: d.kpis.overdueDeliveries.route }) },
-      { code: 'ov.proc.savings', title: 'Savings against budget', type: 'kpi', w: 3, h: 1, drill: '/proc/analytics/spend', map: (d) => kpi(d.kpis.savingsVsBudget.pct, { unit: '%', subtitle: `% · ₹ ${d.kpis.savingsVsBudget.value} saved`, target: d.kpis.savingsVsBudget.target, status: tone(d.kpis.savingsVsBudget.status), drill: d.kpis.savingsVsBudget.route }) },
+      { code: 'ov.proc.savings', title: 'Savings against budget', type: 'kpi', w: 3, h: 1, drill: '/proc/spend-analysis', map: (d) => kpi(d.kpis.savingsVsBudget.pct, { unit: '%', subtitle: `% · ₹ ${d.kpis.savingsVsBudget.value} saved`, target: d.kpis.savingsVsBudget.target, status: tone(d.kpis.savingsVsBudget.status), drill: d.kpis.savingsVsBudget.route }) },
       { code: 'ov.proc.queues', title: 'Work queues', type: 'topn', w: 6, h: 2, drill: '/proc/requisitions', map: (d) => ({ kind: 'count', rows: Object.entries(d.queues).map(([k, q]) => ({ id: k, label: q.label, sub: `₹ ${q.value}`, value: q.count, drill: q.route })) }) },
-      { code: 'ov.proc.single_source', title: 'Orders without competition and emergency requisitions', type: 'bar', w: 6, h: 2, drill: '/proc/analytics/compliance', map: (d) => ({ categories: ['Orders without competition', 'Emergency requisitions'], series: [{ name: '%', values: [d.kpis.singleSource.pct ?? 0, d.kpis.emergency.pct ?? 0], drill: [d.kpis.singleSource.route, d.kpis.emergency.route] }, { name: 'Target', values: [d.kpis.singleSource.target ?? 0, d.kpis.emergency.target ?? 0] }] }) },
+      { code: 'ov.proc.single_source', title: 'Orders without competition and emergency requisitions', type: 'bar', w: 6, h: 2, drill: '/proc/procurement-compliance', map: (d) => ({ categories: ['Orders without competition', 'Emergency requisitions'], series: [{ name: '%', values: [d.kpis.singleSource.pct ?? 0, d.kpis.emergency.pct ?? 0], drill: [d.kpis.singleSource.route, d.kpis.emergency.route] }, { name: 'Target', values: [d.kpis.singleSource.target ?? 0, d.kpis.emergency.target ?? 0] }] }) },
     ],
   },
   {
@@ -181,8 +199,9 @@ export const OVERVIEWS = [
       { code: 'ov.hr.joiners', title: 'Joiners', type: 'kpi', w: 3, h: 1, drill: '/hr/employees', map: (d) => hrTile(d, 'joiners') },
       { code: 'ov.hr.leavers', title: 'Leavers', type: 'kpi', w: 3, h: 1, drill: '/hr/employees', map: (d) => hrTile(d, 'leavers') },
       { code: 'ov.hr.pending', title: 'Waiting for approval', type: 'kpi', w: 3, h: 1, drill: '/hr/employees', map: (d) => hrTile(d, 'pending') },
-      { code: 'ov.hr.by_department', title: 'People by department', type: 'topn', w: 6, h: 2, drill: '/hr/employees', map: (d) => ({ kind: 'count', rows: d.byDepartment.slice(0, 8).map((r, i) => ({ id: r.id ?? i, label: r.label ?? r.name ?? r.department, value: r.count ?? r.value ?? 0, drill: r.to ?? (r.id ? `/hr/employees?filter[departmentId]=${r.id}` : null) })) }) },
-      { code: 'ov.hr.by_site', title: 'People by site', type: 'bar', w: 6, h: 2, drill: '/hr/employees', map: (d) => ({ categories: d.bySite.map((r) => r.label ?? r.name ?? r.site), series: [{ name: 'People', values: d.bySite.map((r) => r.count ?? r.value ?? 0), drill: d.bySite.map((r) => r.to ?? null) }] }) },
+      // the overview's groups are { label, key, n } (key 0: none); each row opens the register filtered on it
+      { code: 'ov.hr.by_department', title: 'People by department', type: 'topn', w: 6, h: 2, drill: '/hr/employees', map: (d) => ({ kind: 'count', rows: d.byDepartment.slice(0, 8).map((r, i) => ({ id: r.key ?? i, label: r.label, value: r.n, drill: r.key ? `/hr/employees?filter[departmentId]=${r.key}` : '/hr/employees' })) }) },
+      { code: 'ov.hr.by_site', title: 'People by site', type: 'bar', w: 6, h: 2, drill: '/hr/employees', map: (d) => ({ categories: d.bySite.map((r) => r.label), series: [{ name: 'People', values: d.bySite.map((r) => r.n), drill: d.bySite.map((r) => (r.key ? `/hr/employees?filter[siteId]=${r.key}` : '/hr/employees')) }] }) },
     ],
   },
   {
@@ -193,6 +212,24 @@ export const OVERVIEWS = [
       { code: 'ov.budget.totals', title: 'Budget, committed and actual', type: 'bar', w: 8, h: 2, drill: '/bud/ledger', map: (d) => (d ? budTotals(d) : { categories: [], series: [] }) },
       { code: 'ov.budget.available', title: 'Budget still available', type: 'kpi', w: 4, h: 1, drill: '/bud/ledger', map: (d, ctx) => (d ? budAvailable(d, ctx) : NO_PROJECT) },
       { code: 'ov.budget.top_overrun', title: 'Lines committed beyond their budget', type: 'topn', w: 4, h: 2, drill: '/bud/ledger', map: (d, ctx) => (d ? budOverruns(d, ctx) : { kind: 'money', rows: [], emptyTitle: 'No project chosen', emptyText: 'The ledger is read for one project: choose your working project, or a project in the filters.' }) },
+    ],
+  },
+  {
+    // Part 07.14 (built in 166.6): the workforce dashboard. Each card reads its own HR service (attendance today, leave, contract labour, the
+    // register, the employee overview, the workflow); the site cards come first, so a phone shows them before the others (prompt 166.6 §2.1).
+    code: 'ov-workforce', name: 'Workforce Dashboard', route: '/hr/workforce', permission: 'hr.workforce.view', module: 'hr', part: '07.14',
+    source: 'HR workforce services',
+    read: (ctx) => workforce(ctx),
+    cards: [
+      { code: 'ov.wf.attendance_today', title: 'Attendance today', type: 'bar', w: 6, h: 2, drill: '/att/today', source: 'Attendance, today\'s report and leave', map: (d) => wfAttendance(d) },
+      { code: 'ov.wf.present', title: 'Present today', type: 'kpi', w: 3, h: 1, drill: '/att/today', source: 'Attendance, today\'s report', map: (d) => wfPresent(d) },
+      { code: 'ov.wf.labour_on_site', title: 'Contract labour on site', type: 'topn', w: 3, h: 2, drill: '/labour/contractors', source: 'Contract labour strength', map: (d) => wfLabour(d) },
+      { code: 'ov.wf.headcount_by_site', title: 'Headcount by site', type: 'topn', w: 6, h: 2, drill: '/hr/employees', source: 'HR employee overview', map: (d) => wfBySite(d) },
+      { code: 'ov.wf.overtime', title: 'Overtime this month', type: 'kpi', w: 3, h: 1, drill: '/att/register', source: 'Attendance register', map: (d) => wfOvertime(d) },
+      { code: 'ov.wf.leave_liability', title: 'Leave liability', type: 'kpi', w: 3, h: 1, drill: '/leave/balances', source: 'Leave balances', map: (d) => wfLiability(d) },
+      { code: 'ov.wf.attrition', title: 'Attrition', type: 'kpi', w: 3, h: 1, drill: '/hr/employees?filter[status]=SEPARATED', source: 'HR employee overview', map: (d) => wfAttrition(d) },
+      { code: 'ov.wf.pending', title: 'HR approvals waiting', type: 'todo', w: 6, h: 2, drill: '/approvals', source: 'My open approvals and tasks', map: (d) => d.pendingHr() },
+      { code: 'ov.wf.expiring', title: 'Documents expired or expiring', type: 'alerts', w: 6, h: 2, drill: '/hr/employees', source: 'HR employee overview and contract labour', map: (d) => wfExpiring(d) },
     ],
   },
 ];
@@ -215,10 +252,74 @@ export const HOME = {
     DIR: ['ov.todo.mine', 'ov.tower.outstanding', 'ov.tower.margin', 'ov.qs.unbilled_wip', 'ov.hse.ltifr', 'ov.proc.spend_fy', 'ov.feed.notifications'],
   },
 };
-export const TODO_CARD = { code: 'ov.todo.mine', title: 'Waiting for my decision', type: 'todo', w: 6, h: 2, drill: '/workflow/inbox', permission: 'self', module: 'eng', description: 'The approvals and tasks waiting for your decision, with Approve and Return.' };
+export const TODO_CARD = { code: 'ov.todo.mine', title: 'Waiting for my decision', type: 'todo', w: 6, h: 2, drill: '/approvals', permission: 'self', module: 'eng', description: 'The approvals and tasks waiting for your decision, with Approve and Return.' };
 export const FEED_CARD = { code: 'ov.feed.notifications', title: 'Latest notifications', type: 'alerts', w: 6, h: 2, drill: '/notifications', permission: 'self', module: 'eng', description: 'Your latest notifications with their time.' };
 /** Cards of no overview page: the to-do card and the notification feed. */
 export const STANDALONE = [TODO_CARD, FEED_CARD];
+
+
+// ---- the workforce dashboard (07.14): each piece is read on demand, so a card needs only its own service and permission ----
+const HR_DOCS = /^(HR_|ATT_|LV_|LAB_|PERF_|TRN_|EXP_|EXIT_|ESS_|DEP_|REC_)/;
+function workforce(ctx) {
+  const k = (part) => keyOf(`ov-workforce:${part}`, ctx);
+  const pid = ctx.filters?.projectId ?? null;
+  const sid = ctx.filters?.siteId ?? null;
+  const tryRead = (fn) => { try { return fn(); } catch (e) { if (e?.status === 403) return null; throw e; } };
+  return {
+    db: ctx.db, actor: ctx.actor,
+    today: () => once(k('today'), () => punchesOf(ctx.db).report.today(ctx.actor, { projectId: pid, siteId: sid })),
+    leave: () => once(k('leave'), () => tryRead(() => leaveOf(ctx.db).balances.summary(ctx.actor, {}))),
+    labour: () => once(k('labour'), () => labourOf(ctx.db).contractors.strength(ctx.actor, { ...(pid ? { projectId: pid } : {}), ...(sid ? { siteId: sid } : {}) })),
+    overview: () => once(k('overview'), () => employeesOf(ctx.db).overview(ctx.actor, { ...period(ctx) })),
+    overtime: () => once(k('overtime'), () => registerOf(ctx.db).overtimeMonth(ctx.actor, { projectId: pid, siteId: sid })),
+    pendingHr: () => todo(ctx, (r) => HR_DOCS.test(r.docType ?? '')),
+  };
+}
+function wfAttendance(d) {
+  const t = d.today().totals;
+  const lv = d.leave();
+  const cats = [['Present', t.present], ['Absent', t.absent], ['Late', t.late], ...(lv ? [['On leave', lv.onLeaveToday]] : [])];
+  return { categories: cats.map(([c]) => c), series: [{ name: 'People', values: cats.map(([, v]) => v), drill: cats.map(([c]) => (c === 'On leave' ? '/leave/calendar' : '/att/today')) }] };
+}
+function wfPresent(d) {
+  const r = d.today();
+  return kpi(r.totals.present, { unit: 'people', subtitle: `people · ${r.date} · ${r.totals.expected} expected, ${r.totals.deployed} deployed`, status: r.totals.absent > 0 ? 'amber' : 'green', note: r.totals.openAnomalies ? `${r.totals.openAnomalies} attendance anomalies open` : null, drill: '/att/today' });
+}
+function wfLabour(d) {
+  const rows = d.labour().filter((x) => x.present || x.deployed).sort((a, b) => b.present - a.present || b.deployed - a.deployed).slice(0, 8);
+  return { kind: 'count', rows: rows.map((x) => ({ id: x.id, label: x.name, sub: `${x.deployed} deployed, ${x.registered} registered`, value: x.present, drill: `/labour/contractors?open=${x.id}` })), emptyTitle: 'No contract labour on site', emptyText: 'Contractors with workers present today appear here.' };
+}
+function wfBySite(d) {
+  const o = d.overview();
+  return { kind: 'count', rows: o.bySite.slice(0, 8).map((r) => ({ id: r.key, label: r.label, value: r.n, drill: r.key ? `/hr/employees?filter[siteId]=${r.key}` : '/hr/employees' })), emptyTitle: 'No employees yet', emptyText: 'Active employees appear here by their site.' };
+}
+function wfOvertime(d) {
+  const o = d.overtime();
+  return kpi(o.hours, { unit: 'hours', subtitle: `hours paid · ${o.month} · ${o.people} people`, note: 'No overtime budget is set in the application, so it is not compared.', drill: '/att/register' });
+}
+function wfLiability(d) {
+  const l = d.leave();
+  if (!l) return { ...kpi(null), masked: true };
+  return kpi(l.liabilityDays, { unit: 'days', subtitle: `days of paid leave to be taken · ${l.year}`, note: l.liability.map((x) => `${x.code} ${x.days}`).join(', ') || null, drill: '/leave/balances' });
+}
+function wfAttrition(d) {
+  const o = d.overview();
+  const tile = (key) => o.tiles.find((x) => x.key === key)?.value ?? 0;
+  const head = tile('headcount');
+  const leavers = tile('leavers');
+  const pct = head + leavers > 0 ? Math.round((leavers * 1000) / (head + leavers)) / 10 : null;
+  return kpi(pct, { unit: '%', subtitle: `% · leavers ÷ (headcount + leavers) · ${o.period.from} to ${o.period.to}`, note: `${leavers} left, ${head} in post`, status: pct === null ? 'neutral' : pct > 10 ? 'amber' : 'green', drill: '/hr/employees?filter[status]=SEPARATED' });
+}
+function wfExpiring(d) {
+  const o = d.overview();
+  const rows = o.attention.filter((a) => /document/.test(a.text)).map((a, i) => ({ id: `e${i}`, title: a.text, subtitle: a.kind === 'ERROR' ? 'Expired' : 'Expiring soon', drill: a.link }));
+  const soon = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+  for (const c of d.labour().filter((x) => x.licenceValidUntil && x.licenceValidUntil <= soon)) rows.push({ id: `l${c.id}`, title: `${c.name}: labour licence ${c.licenceValidUntil < new Date().toISOString().slice(0, 10) ? 'expired' : 'expires'} on ${c.licenceValidUntil}`, subtitle: 'Contract labour licence', drill: `/labour/contractors?open=${c.id}` });
+  // certificates and licences of training (07.10) that have expired or expire within their alert days
+  const certs = trainingOf(d.db)?.widget(d.actor)?.value ?? 0;
+  if (certs > 0) rows.push({ id: 'certs', title: `${certs} training certificate(s) or licence(s) expired or expiring`, subtitle: 'Training', drill: '/training/certifications' });
+  return { rows: rows.slice(0, 10), total: rows.length, drill: '/hr/employees' };
+}
 
 // ---- helpers of the maps ----
 function qsKpi(d, key) {
@@ -275,7 +376,7 @@ export function registerOverviewProviders() {
           const d = o.read(ctx);
           const out = c.map(d, ctx);
           // the list behind the card, with the dashboard's project and site (the framework adds them to "View all ›" as well)
-          return { ...out, drill: out.drill ?? c.drill, source: out.source ?? o.source };
+          return { ...out, drill: out.drill ?? c.drill, source: out.source ?? c.source ?? o.source };
         },
       });
     }
