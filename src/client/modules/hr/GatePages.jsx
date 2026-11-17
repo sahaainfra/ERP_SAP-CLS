@@ -15,6 +15,8 @@ const go = (to) => (e) => { e.preventDefault(); navigateTo(to); };
 const STATUS_WORD = { OPEN: 'Open', SUBMITTED: 'With the reviewers', PASSED: 'Passed', RETURNED: 'Returned', MET: 'Met', NOT_MET: 'Not met' };
 const STATUS_TONE = { OPEN: 'DRAFT', SUBMITTED: 'SUBMITTED', PASSED: 'APPROVED', RETURNED: 'RETURNED', MET: 'APPROVED', NOT_MET: 'REJECTED' };
 const badge = (s, variant) => <StatusBadge status={STATUS_TONE[s]} label={STATUS_WORD[s]} variant={variant} />;
+// the server's own words (a reason is required, the gate is locked): there are no form fields here to highlight
+const say = (e) => { const i = errorInfo(e); return `${e?.message ?? i.form}${i.correlationId ? ` (Correlation ID ${i.correlationId})` : ''}`; };
 const day = (iso) => (iso ? new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).replace(/ /g, '-') : '—');
 
 /** The workforce dashboard: the cards of the person's role on the overview framework (the site cards first, so a phone shows them first). */
@@ -62,7 +64,7 @@ function Criterion({ c, canReview, review }) {
   const [opening, setOpening] = useState(null);
   const set = (status) => {
     setError(null);
-    review.mutate({ criterion: c.code, status, note: note.trim() || undefined, version: c.version }, { onError: (e) => setError(errorInfo(e).form) });
+    review.mutate({ criterion: c.code, status, note: note.trim() || undefined, version: c.version }, { onError: (e) => setError(say(e)) });
   };
   const open = async (e) => { setOpening(e.path); try { await openFile(e.href.replace(/^\/api\/v1/, '')); } catch (err) { setError(err.message); } finally { setOpening(null); } };
   return (
@@ -110,7 +112,7 @@ export function GatePage() {
   if (!q.data) return <section aria-labelledby="gate-h"><PageHeader id="gate-h" title={`Gate ${code}`} /><QueryState query={q} what={`gate ${code}`} /></section>;
   const g = q.data;
   const allMet = g.counts.met === g.counts.total;
-  const send = () => { setMessage(null); submit.mutate({}, { onSuccess: () => setMessage({ tone: 'success', text: `${g.code} is with the technical lead and then the director for sign-off.` }), onError: (e) => setMessage({ tone: 'error', text: errorInfo(e).form }) }); };
+  const send = () => { setMessage(null); submit.mutate({}, { onSuccess: () => setMessage({ tone: 'success', text: `${g.code} is with the technical lead and then the director for sign-off.` }), onError: (e) => setMessage({ tone: 'error', text: say(e) }) }); };
   const report = async () => { setMessage(null); try { await openFile(`/hr/gates/${g.code}/report`, { save: `gate-${g.code}-report.pdf` }); } catch (e) { setMessage({ tone: 'error', text: e.message }); } };
   const shown = g.criteria.filter((c) => filter === 'ALL' || c.status === filter);
   return (
