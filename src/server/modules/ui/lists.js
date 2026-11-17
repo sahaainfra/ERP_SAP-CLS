@@ -27,6 +27,7 @@ const viewConfigSchema = z.object({
   sort: z.string().max(200).default(''),
   pageSize: z.number().int().refine((n) => [25, 50, 100, 200].includes(n)).default(25),
   q: z.string().max(100).default(''),
+  groupBy: z.string().max(60).optional(), // part 166.7: the column the rows are grouped by
 }).strict();
 export const parseViewCreate = (b) => parse(z.object({ list: z.string().max(80), name: z.string().trim().min(1, 'Name the view').max(80), isShared: z.boolean().default(false), shareScope: shareScope.default({ roles: [], projects: [] }), isDefault: z.boolean().default(false), config: viewConfigSchema }).strict(), b);
 export const parseViewUpdate = (b) => parse(z.object({ name: z.string().trim().min(1).max(80).optional(), isShared: z.boolean().optional(), shareScope: shareScope.optional(), isDefault: z.boolean().optional(), config: viewConfigSchema.optional(), version: z.number().int().positive() }).strict(), b);

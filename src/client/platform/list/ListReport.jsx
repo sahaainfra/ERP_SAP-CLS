@@ -1,5 +1,6 @@
 import { useSwipe, usePullToRefresh } from '../device/gestures.js';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { useFlagOn } from '../shell/api.js';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, authHeaders } from '../api/index.js';
 import Icon from '../design/Icon.jsx';
@@ -272,7 +273,10 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
 
   // virtual scrolling for long pages
   const ROW_H = 44;
-  const long = !narrow && rows.length > 60;
+  const v7 = useFlagOn('ff.ui.p16607'); // part 166.7: the title with the count, group-by, the filter sheet on a phone
+  const [sheet, setSheet] = useState(false);
+  const groupBy = v7 ? state?.groupBy ?? '' : '';
+  const long = !narrow && rows.length > 60 && !groupBy;
   const win = long ? windowOf({ count: rows.length, rowHeight: ROW_H, viewport: 560, scrollTop }) : { start: 0, end: rows.length, before: 0, after: 0 };
   const statusCol = columns.find((c) => c.key === statusKey);
   const presets = useMemo(() => datePresets(todayIst()), []);
@@ -308,8 +312,20 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
 
   const filterWords = describeFilters(state.filters, columns);
   const firstKey = shown[0]?.key;
+  // group-by (part 166.7, R18): the rows are sorted by the group's column on the server; a header starts each group, with the rows of the page in it
+  // and the totals of their money and quantity columns
+  const groupCol = groupBy ? columns.find((c) => c.key === groupBy) : null;
+  const groupKey = (r) => (groupCol ? String(r[groupCol.key] ?? '') : '');
+  const groupStarts = new Map();
+  if (groupCol) rows.forEach((r, i) => { if (i === 0 || groupKey(rows[i - 1]) !== groupKey(r)) groupStarts.set(r.id, rows.filter((x) => groupKey(x) === groupKey(r))); });
+  const groupLabel = (r) => (groupCol ? (groupCol.key === statusKey ? String(r[groupCol.key] ?? '').replace(/_/g, ' ').toLowerCase() : formatCell(groupCol, r[groupCol.key])) || '(none)' : '');
+  const groupSum = (members, c) => members.reduce((n, x) => n + (Number(x[c.key]) || 0), 0);
+  const groupable = columns.filter((c) => !['money', 'number', 'date', 'datetime'].includes(c.type) && !c.hiddenFromGroup);
+  const filterCount = state.filters.length;
+  const filtersOnSheet = v7 && narrow;
   return (
     <div className="lr" data-testid={`list-${listCode}`}>
+      {v7 && <p className="lr-title" data-testid="list-title"><strong>{title}</strong>{meta && <span className="muted" data-testid="list-count"> ({meta.total})</span>}</p>}
       <div className="lr-bar" role="search">
         <input type="search" className="lr-search" aria-label={`Search ${title}`} placeholder="Search" value={state.q} onChange={(e) => update({ q: e.target.value })} />
         <ViewsMenu list={listCode} views={views.data ?? []} current={view} canShare={can('ui.view.share')} roles={session?.roles ?? []}
@@ -322,10 +338,22 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
             {['xlsx', 'csv', 'pdf'].map((f) => <button key={f} type="button" className="btn btn-small" disabled={Boolean(exporting) || !meta?.total} onClick={() => exportAs(f)}>{f.toUpperCase()}</button>)}
           </div>
         </details>
+        {v7 && groupable.length > 0 && (
+          <label className="lr-group">Group by
+            <select value={groupBy} onChange={(e) => update({ groupBy: e.target.value, ...(e.target.value ? { sort: e.target.value } : {}) })} data-testid="list-group-by">
+              <option value="">None</option>
+              {groupable.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+          </label>
+        )}
+        {filtersOnSheet && <button type="button" className="btn" onClick={() => setSheet(true)} aria-haspopup="dialog" data-testid="filter-sheet-open"><Icon name="erp.action.filter" size={16} />Filters{filterCount ? ` (${filterCount})` : ''}</button>}
         <span className="spacer" />
         {newAction && can(newAction.permission) && <button type="button" className="btn btn-primary" onClick={newAction.onClick}><Icon name="erp.action.create" size={16} />{newAction.label}</button>}
       </div>
       {ctxFilters.length > 0 && <p className="muted small" data-testid="list-context">Showing the working context only: {ctxFilters.map((c) => c.value).join(' / ')}. Choose All projects in the context at the top of the page to see everything.</p>}
+      {filtersOnSheet && sheet && <div className="lr-sheet-backdrop" onClick={() => setSheet(false)} aria-hidden="true" />}
+      <div className={filtersOnSheet ? `lr-sheet${sheet ? ' is-open' : ''}` : 'lr-filters'} role={filtersOnSheet ? 'dialog' : undefined} aria-modal={filtersOnSheet && sheet ? 'true' : undefined} aria-label={filtersOnSheet ? `Filters of ${title}` : undefined} hidden={filtersOnSheet && !sheet} data-testid={filtersOnSheet ? 'filter-sheet' : undefined}>
+      {filtersOnSheet && <div className="lr-sheet-head"><strong>Filters</strong><button type="button" className="btn btn-small" onClick={() => setSheet(false)} data-testid="filter-sheet-close">Done</button></div>}
       <div className="lr-quick" role="group" aria-label="Quick filters">
         {statusCol?.options?.map(([v, l]) => {
           const on = state.filters.some((f) => f.key === statusKey && f.op === 'in' && f.value.split(',').includes(v));
@@ -348,6 +376,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
           <li><button type="button" className="link" onClick={() => update({ filters: [], q: '' })}>Clear all</button></li>
         </ul>
       )}
+      </div>
       <p role="status" className="notice" data-testid="list-notice">{notice}</p>
       {actions.length > 0 && selected.size > 0 && (
         <div className="toolbar lr-bulk" role="group" aria-label="Actions for the selected rows" data-testid="bulk-bar">
@@ -376,6 +405,8 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
       {rows.length > 0 && narrow && (
         <ul className="lr-cards" aria-label={title} data-testid="list-cards">
           {rows.map((r) => (
+            <Fragment key={r.id}>
+            {groupStarts.has(r.id) && <li className="lr-card-group" data-testid="list-group"><strong>{groupCol.label}: {groupLabel(r)}</strong> <span className="muted small">({groupStarts.get(r.id).length})</span></li>}
             <CardRow
               key={r.id} label={String(r[firstKey] ?? r.id)} rowHref={rowHref?.(r)} onOpenRow={open(r)} actions={rowActions ? rowActions(r) : []}
               selectable={actions.length > 0} selected={selected.has(r.id)} onSelect={() => setSelected((s0) => { const n = new Set(s0); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })}
@@ -385,6 +416,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
                 return <span key={k} className={i === 0 ? 'lr-card-title' : 'lr-card-field'}>{i > 0 && <span className="muted small">{c.label}: </span>}{c.key === statusKey ? <StatusBadge status={r[k]} /> : formatCell(c, r[k]) || (i === 0 ? `#${r.id}` : '')}</span>;
               })}
             />
+            </Fragment>
           ))}
         </ul>
       )}
@@ -410,7 +442,15 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
             <tbody>
               {win.before > 0 && <tr aria-hidden="true" style={{ height: win.before }}><td colSpan={shown.length + 2} /></tr>}
               {rows.slice(win.start, win.end).map((r) => (
-                <tr key={r.id} className={selected.has(r.id) ? 'is-selected' : ''} data-testid={`row-${r.id}`}>
+                <Fragment key={r.id}>
+                {groupStarts.has(r.id) && (
+                  <tr className="lr-group-row" data-testid="list-group">
+                    {actions.length > 0 && <td />}
+                    {shown.map((c, i) => <td key={c.key} className={`${i === 0 ? 'lr-freeze ' : ''}${c.total ? 'num' : ''}`}>{i === 0 ? <strong>{groupCol.label}: {groupLabel(r)} <span className="muted">({groupStarts.get(r.id).length} on this page)</span></strong> : c.total ? <strong>{formatCell(c, groupSum(groupStarts.get(r.id), c))}</strong> : null}</td>)}
+                    {rowActions && <td />}
+                  </tr>
+                )}
+                <tr className={selected.has(r.id) ? 'is-selected' : ''} data-testid={`row-${r.id}`}>
                   {actions.length > 0 && <td className="lr-sel"><input type="checkbox" aria-label={`Select ${r[firstKey] ?? r.id}`} checked={selected.has(r.id)} onChange={() => setSelected((s) => { const n = new Set(s); if (n.has(r.id)) n.delete(r.id); else n.add(r.id); return n; })} /></td>}
                   {shown.map((c, i) => (
                     <td key={c.key} className={`${i === 0 ? 'lr-freeze ' : ''}${['money', 'number'].includes(c.type) ? 'num' : ''}`} data-label={c.label}>
@@ -428,6 +468,7 @@ export default function ListReport({ listCode, endpoint, title, rowHref, onOpen,
                     </td>
                   )}
                 </tr>
+                </Fragment>
               ))}
               {win.after > 0 && <tr aria-hidden="true" style={{ height: win.after }}><td colSpan={shown.length + 2} /></tr>}
             </tbody>
