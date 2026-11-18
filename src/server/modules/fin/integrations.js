@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf, cashForecastsOf } from './index.js';
 import { registerProject360Widget } from '../proj/p360.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
@@ -417,3 +417,15 @@ workflowTypes.register({
 });
 // Project 360 (10.08): the P&L of the project this year
 registerProject360Widget('fin-pl', (ctx) => projectPlOf(ctx.db)?.widget(ctx.actor, ctx.project.project_id) ?? { figures: [], rows: [], note: 'The project P&L (part 23.12) is not set up for this database.' });
+
+// ---- part 23.13: cash forecast ----
+eventTypes.define({ type: 'fin.cash_forecast.published', version: 1, schema, owner: 'fin', description: 'The weekly cash forecast was published (approved by the CFO; part 23.13): data { forecastId, docNo, weekStart, weeks, opening, inflow, outflow, closing, lowest, lowestWeek }. The control tower (27.04) reads it.' });
+const cfDecide = (outcome) => (db, { instance, actor, comment }) => cashForecastsOf(db)?.forecasts.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_CASH_FORECAST', label: 'Weekly cash forecast publication', processOwner: 'CFO', route: (id) => `/finance/treasury?forecast=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM cf_forecasts WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Cash forecast from ${r.week_start}: closing ${inr(r.closing_paise)}, lowest ${inr(r.lowest_paise)}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM cf_forecasts WHERE id = ?').get(Number(id)); if (!r) return null; const adj = db.prepare("SELECT COUNT(*) AS n FROM cf_lines WHERE forecast_id = ? AND source = 'MANUAL' AND deleted_at IS NULL").get(r.id).n;
+    return { fields: [{ label: 'Weeks', value: `${r.weeks} from ${r.week_start}` }, { label: 'Opening cash', value: inr(r.opening_paise) }, { label: 'Inflow / outflow', value: `${inr(r.inflow_paise)} / ${inr(r.outflow_paise)}` }, { label: 'Closing', value: inr(r.closing_paise) }, { label: 'Lowest point', value: `${inr(r.lowest_paise)} (week of ${r.lowest_week})` }, { label: 'Manual adjustments', value: `${adj} (each with its reason)` }] }; },
+  defaultDefinition: { name: 'Cash forecast: the accounts manager (when someone else prepared it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: cfDecide('APPROVED'), onRejected: cfDecide('REJECTED'), onReturned: cfDecide('RETURNED'), onCancelled: cfDecide('CANCELLED') },
+});

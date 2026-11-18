@@ -227,3 +227,14 @@ export const parsePlDrill = (q) => parse(z.object({ projectId: id, line: z.strin
 export const parsePlLine = (b) => parse(z.object({ name: z.string().trim().min(2).max(80).optional(), accounts: z.array(z.string().regex(/^\d{4,8}$/)).max(200).default([]), groups: z.array(z.string().regex(/^\d{1,4}$/)).max(50).default([]) }).strict(), b);
 export const parseDateRange = (q) => parse(z.object({ from: date, to: date }).strict().refine((x) => x.from <= x.to, { message: 'The start is on or before the end', path: ['to'] }), q);
 export const parseSnapshotCreate = (b) => parse(z.object({ projectId: id, period }).strict(), b);
+
+// ---- part 23.13: cash forecast and treasury ----
+const cfCategory = z.enum(['AR_OPEN', 'BILLS_PENDING', 'UNBILLED', 'RETENTION', 'ADVANCE_IN', 'OTHER_IN', 'AP_DUE', 'COMMITMENTS', 'PAYROLL', 'STATUTORY', 'LOAN_EMI', 'CAPEX', 'OVERHEADS', 'OTHER_OUT']);
+export const parseCfCreate = (b) => parse(z.object({ weekStart: date.optional(), weeks: z.number().int().min(4).max(26).optional(), commentary: z.string().trim().max(2000).nullable().optional() }).strict(), b ?? {});
+export const parseCfUpdate = (b) => parse(z.object({ commentary: z.string().trim().max(2000).nullable().optional() }).strict(), b);
+export const parseCfAdjust = (b) => parse(z.object({ category: cfCategory, date, amount: money, projectId: id.nullable().optional(), reference: z.string().trim().max(100).nullable().optional(), counterparty: z.string().trim().max(200).nullable().optional(), confidence: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(), reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(500) }).strict(), b);
+export const parseCfView = (q) => parse(z.object({ scenario: z.enum(['BASE', 'DELAYED_COLLECTIONS', 'ACCELERATED_PAYMENTS', 'BOTH']).optional(), shift: z.coerce.number().int().min(1).max(8).optional() }).strict(), q);
+export const parseCfVariance = (q) => parse(z.object({ forecastId: id.optional() }).strict(), q);
+export const parseFacility = (b) => parse(z.object({ id: id.optional(), bankAccountId: id.nullable().optional(), bankName: z.string().trim().min(2).max(120), limitType: z.enum(['TERM_LOAN', 'CASH_CREDIT', 'OVERDRAFT', 'BG', 'LC', 'OTHER']), limit: money, utilised: money.optional(), emi: money.optional(), emiDay: z.number().int().min(1).max(28).nullable().optional(), startDate: date.nullable().optional(), endDate: date.nullable().optional(), status: z.enum(['ACTIVE', 'CLOSED']).optional(), version: z.number().int().optional() }).strict(), b);
+export const parsePriority = (q) => parse(z.object({ dueBy: date.optional() }).strict(), q);
+export const parseCritical = (b) => parse(z.object({ partnerId: id, reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);

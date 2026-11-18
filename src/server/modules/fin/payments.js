@@ -326,7 +326,10 @@ export function createPaymentService({ db, base, gl, ap, vaultKey }) {
       }).filter((b) => b.left > 0);
       const advances = db.prepare("SELECT a.*, p.legal_name FROM bill_advances a JOIN mdm_partners p ON p.id = a.party_id WHERE a.company_id = ? AND a.direction = 'GIVEN' AND a.status = 'APPROVED' AND a.deleted_at IS NULL ORDER BY a.advance_date").all(actor.companyId)
         .filter((a) => (!projectId || a.org_project_id === Number(projectId)) && (!partnerId || a.party_id === Number(partnerId))).map((a) => { const { left, inProposal } = advanceLeft(a, Number(exceptProposal)); const pb = payeeBank(a.party_id); return { kind: 'ADVANCE', advanceId: a.id, docNo: a.doc_no, partnerId: a.party_id, payee: a.legal_name, type: a.adv_type, date: a.advance_date, amount: rs(a.amount_paise), left: rs(left), inProposal, blocked: inProposal ? `In ${inProposal}` : null, bank: pb.bank ? `••••${pb.bank.account_last4}` : null, bankProblem: pb.problem ?? null }; }).filter((a) => a.left > 0);
-      const prio = (b) => (b.msme && b.overdue ? 0 : b.msme ? 1 : b.overdue ? 2 : 3);
+      // part 23.13 FR-05: suppliers marked critical in the treasury come after the MSME bills and before the rest
+      const critical = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'cf_priority_partners'").get() ? new Set(db.prepare('SELECT partner_id FROM cf_priority_partners WHERE company_id = ? AND deleted_at IS NULL').all(actor.companyId).map((r) => r.partner_id)) : new Set();
+      for (const b of bills) b.critical = critical.has(b.partnerId);
+      const prio = (b) => (b.msme && b.overdue ? 0 : b.msme ? 1 : b.critical ? 2 : b.overdue ? 3 : 4);
       bills.sort((x, y) => prio(x) - prio(y) || String(x.msmeDue ?? x.dueDate).localeCompare(String(y.msmeDue ?? y.dueDate)));
       return { bills, advances, banks: banks.list({ ...actor }).filter((b) => b.status === 'ACTIVE').map((b) => ({ id: b.id, name: b.name, account: b.account, balance: b.balance, chequesLeft: b.chequesLeft, fileFormat: b.fileFormat })), limits: { accmgr: limits(actor.companyId).acc / 100, cfo: limits(actor.companyId).cfo / 100, rtgsMin: Number(param(actor.companyId, 'fin.pmt.rtgs_min') ?? 200000), impsMax: Number(param(actor.companyId, 'fin.pmt.imps_max') ?? 500000) } };
     },
