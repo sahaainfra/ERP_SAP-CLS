@@ -97,6 +97,9 @@ test('ITC review: eligible, held, blocked, override with a reason, reversal beyo
   fill(d, 'bill_tax_invoices', { company_id: 1, org_project_id: w.A, bill_id: 1, invoice_no: '36/26-27/00011', invoice_date: '2026-10-20', sac_code: '9954', gst_pct_bp: 1800, taxable_paise: 50000000, cgst_paise: 4500000, sgst_paise: 4500000, igst_paise: 0, total_paise: 59000000, supply: 'intra', gstin_from: OWN, gstin_to: g('36AAAGT1234F1Z'), place_state: '36', status: 'APPROVED', irn_state: 'GENERATED', ar_state: 'HANDED' });
   const gr = (await w.call(U.acc, 'GET', '/gst-returns?period=2026-10')).json.data; assert.equal(gr.gstr1.b2b.length, 1); assert.equal(gr.gstr1.totals.cgst, 45000); assert.equal(gr.gstr3b.itc.net, 9000, 'ITC ₹19,800 (eligible and override) less ₹10,800 reversed');
   assert.equal(gr.gstr3b.outward.tax, 90000); assert.equal(gr.gstr3b.payable, 81000);
+  // D-738: head-wise set-off — CGST credit against CGST, SGST against SGST — the rest in cash; filed on time, no interest or late fee
+  assert.deepEqual(gr.gstr3b.setOff.cash, { igst: 0, cgst: 40500, sgst: 40500 }); assert.deepEqual(gr.gstr3b.setOff.utilised.map((u) => [u.from, u.to, u.amount]), [['cgst', 'cgst', 4500], ['sgst', 'sgst', 4500]]);
+  assert.equal(gr.gstr3b.dueDate, '2026-11-20'); assert.equal(gr.gstr3b.daysLate, 0); assert.equal(gr.gstr3b.interest.amount, 0); assert.equal(gr.gstr3b.lateFee.total, 0); assert.equal(gr.gstr3b.totalDue, 81000);
   assert.equal((await w.call(U.acc, 'POST', '/gst-returns/prepare', { period: '2026-10', returnType: 'GSTR3B' })).status, 200);
   assert.equal((await w.call(U.acc, 'POST', '/gst-returns/file', { period: '2026-10', returnType: 'GSTR3B', arn: 'AA3610260000001', filedOn: '2026-11-18' })).status, 200);
   assert.equal((await w.call(U.acc, 'POST', '/gst-returns/prepare', { period: '2026-10', returnType: 'GSTR3B' })).status, 409, 'a filed return is not prepared again');
@@ -121,4 +124,21 @@ test('ITC review: eligible, held, blocked, override with a reason, reversal beyo
   const cal = (await w.call(U.acc, 'GET', '/compliance-calendar?from=2026-10&to=2026-10')).json.data;
   assert.equal(cal.rows.find((r) => r.code === 'GSTR3B').status, 'DONE'); assert.equal(cal.rows.find((r) => r.code === 'GSTR2B_RECON').status, 'DONE'); assert.notEqual(cal.rows.find((r) => r.code === 'GSTR1').status, 'DONE');
   assert.equal((await w.call(U.se, 'GET', '/compliance-calendar')).status, 403);
+});
+
+test('D-738 ITC reversed for an unpaid vendor is claimed again once paid; GSTR-3B set-off by head with interest and late fee', async () => {
+  const w = await world(); const d = w.d;
+  const paid = w.bill(w.v1, 'INV/R1', '2026-01-10', 50000, 9000, { paid: 5900000 }); // fully paid since
+  const rv0 = fill(d, 'gst_itc_reviews', { company_id: 1, doc_no: 'ITC/JUL', period: '2026-07', status: 'APPROVED', reversed_paise: 900000 }); fill(d, 'gst_itc_review_lines', { company_id: 1, review_id: rv0, bill_id: paid, supplier_gstin: V1, decision: 'REVERSED_UNPAID_180', tax_paise: 900000, reverse_paise: 900000 });
+  const c = await w.call(U.acc, 'POST', '/itc-reviews', { period: '2026-10' }); assert.equal(c.status, 201, JSON.stringify(c.json)); let rv = c.json.data;
+  const line = rv.lines.find((l) => l.billId === paid); assert.equal(line.decision, 'RECLAIMED_PAID'); assert.equal(line.claim, 9000); assert.equal(rv.claimable, 9000);
+  assert.equal((await w.call(U.acc, 'POST', `/itc-reviews/${rv.id}/submit`)).status, 202); assert.equal((await w.act(U.cfo, w.wf('gst_itc_reviews', rv.id))).status, 200);
+  rv = (await w.call(U.cfo, 'GET', `/itc-reviews/${rv.id}`)).json.data; assert.equal(rv.status, 'APPROVED');
+  const jl = d.prepare('SELECT a.code, l.debit_paise, l.credit_paise FROM fin_journal_lines l JOIN fin_accounts a ON a.id = l.account_id WHERE l.journal_id = ? ORDER BY a.code').all(rv.journalId);
+  assert.deepEqual(jl.map((x) => [x.code, x.debit_paise, x.credit_paise]), [['170001', 450000, 0], ['170002', 450000, 0], ['560011', 0, 900000]], 'the reversal is put back');
+  const g3 = (await w.call(U.acc, 'GET', '/gst-returns?period=2026-10')).json.data.gstr3b; assert.equal(g3.itc.reclaimed, 9000); assert.equal(g3.itc.net, 9000); assert.equal(g3.carryForward, 9000, 'no output tax: the credit is carried forward');
+  // re-claimed once only
+  const again = await w.call(U.acc, 'POST', '/itc-reviews', { period: '2026-09' }); assert.equal(again.status, 201); assert.equal(again.json.data.lines.find((l) => l.billId === paid), undefined, 'a review of an earlier month made later does not claim it twice');
+  // September: nothing to report and no return filed by 20 October: a nil return late fee of ₹10 a day a head up to ₹250
+  const sep = (await w.call(U.acc, 'GET', '/gst-returns?period=2026-08')).json.data.gstr3b; assert.equal(sep.dueDate, '2026-09-20'); assert.ok(sep.daysLate >= 59); assert.equal(sep.lateFee.nil, true); assert.equal(sep.lateFee.total, 500); assert.equal(sep.interest.amount, 0);
 });

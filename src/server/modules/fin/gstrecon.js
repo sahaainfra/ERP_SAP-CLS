@@ -25,7 +25,10 @@ import { STATUS, createFlow } from '../qa/flow.js';
 
 export const ITC_DOC = 'FIN_ITC_REVIEW';
 export const MATCH = { MATCHED: 'Matched', MISMATCH_AMOUNT: 'Amount differs', MISMATCH_DATE: 'Date differs', MISMATCH_NUMBER: 'Number differs', MISSING_IN_BOOKS: 'Missing in the books', MISSING_IN_2B: 'Missing in 2B' };
-export const DECISIONS = { ELIGIBLE: 'Eligible', BLOCKED_17_5: 'Blocked (s.17(5))', HELD_NOT_IN_2B: 'Held: not in 2B', HELD_MISMATCH: 'Held: mismatch', REVERSED_UNPAID_180: 'Reversed: unpaid beyond 180 days', INELIGIBLE_2B: 'Not available in 2B', OVERRIDE_CLAIM: 'Claimed by override' };
+// D-738: GSTR-3B is due on the 20th of the next month (monthly filer); interest at 18% a year on the tax paid in cash late (s.50(1), on the net cash
+// liability); late fee ₹25 a day for CGST and as much for SGST (₹10 each for a nil return), capped at ₹5 000 (₹250 nil) a head for a year's turnover above ₹5 crore (s.47).
+const GSTR3B_DUE_DAY = 20; const GST_INTEREST_BP = 1800; const LATE_FEE_PER_HEAD = 2500; const LATE_FEE_NIL_PER_HEAD = 1000; const LATE_FEE_CAP_PER_HEAD = 500000; const LATE_FEE_NIL_CAP_PER_HEAD = 25000;
+export const DECISIONS = { ELIGIBLE: 'Eligible', BLOCKED_17_5: 'Blocked (s.17(5))', HELD_NOT_IN_2B: 'Held: not in 2B', HELD_MISMATCH: 'Held: mismatch', REVERSED_UNPAID_180: 'Reversed: unpaid beyond 180 days', INELIGIBLE_2B: 'Not available in 2B', OVERRIDE_CLAIM: 'Claimed by override', RECLAIMED_PAID: 'Re-claimed: the vendor is paid' };
 const rs = (p) => (p == null ? null : p / 100);
 const paise = (v) => Math.round(Number(v) * 100);
 const json = (s, d) => { try { return JSON.parse(s); } catch { return d; } };
@@ -199,7 +202,10 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     const blocked = blockedAccounts(companyId); const unpaidDays = Number(param(companyId, 'fin.itc.unpaid_days') ?? 180); const end = monthEnd(period);
     const lines2b = new Map(db.prepare('SELECT * FROM gst_2b_lines WHERE company_id = ? AND matched_bill_id IS NOT NULL AND deleted_at IS NULL').all(companyId).map((l) => [l.matched_bill_id, l]));
     const claimedBefore = new Set(db.prepare("SELECT l.bill_id FROM gst_itc_review_lines l JOIN gst_itc_reviews r ON r.id = l.review_id WHERE r.company_id = ? AND r.status = 'APPROVED' AND r.period < ? AND l.decision IN ('ELIGIBLE', 'OVERRIDE_CLAIM') AND l.deleted_at IS NULL").all(companyId, period).map((x) => x.bill_id));
-    const reversedBefore = new Set(db.prepare("SELECT l.bill_id FROM gst_itc_review_lines l JOIN gst_itc_reviews r ON r.id = l.review_id WHERE r.company_id = ? AND r.status = 'APPROVED' AND r.period < ? AND l.decision = 'REVERSED_UNPAID_180' AND l.deleted_at IS NULL").all(companyId, period).map((x) => x.bill_id));
+    // D-738: what was reversed for a bill and not yet re-claimed (Rule 37(2): claimed again once the vendor is paid)
+    // (a re-claim approved in any month counts, so a review of an earlier month made later does not claim it twice)
+    const reversedAmt = new Map(); for (const x of db.prepare("SELECT l.bill_id, l.decision, l.reverse_paise, l.claim_paise FROM gst_itc_review_lines l JOIN gst_itc_reviews r ON r.id = l.review_id WHERE r.company_id = ? AND r.status = 'APPROVED' AND (l.decision = 'REVERSED_UNPAID_180' AND r.period < ? OR l.decision = 'RECLAIMED_PAID') AND l.deleted_at IS NULL").all(companyId, period)) reversedAmt.set(x.bill_id, (reversedAmt.get(x.bill_id) ?? 0) + (x.decision === 'REVERSED_UNPAID_180' ? x.reverse_paise : -x.claim_paise));
+    const reversedBefore = new Set([...reversedAmt.keys()]);
     const heldBefore = db.prepare("SELECT l.bill_id FROM gst_itc_review_lines l JOIN gst_itc_reviews r ON r.id = l.review_id WHERE r.company_id = ? AND r.status = 'APPROVED' AND r.period < ? AND l.decision IN ('HELD_NOT_IN_2B', 'HELD_MISMATCH') AND l.deleted_at IS NULL").all(companyId, period).map((x) => x.bill_id).filter((b) => !claimedBefore.has(b));
     const everything = books(companyId, { from: '0000-01-01', to: end }); const byId = new Map(everything.map((b) => [b.id, b]));
     const ofMonth = everything.filter((b) => b.bill_date >= `${period}-01`); const ids = new Set(ofMonth.map((b) => b.id));
@@ -224,15 +230,25 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       const rev = Math.round((b.gst_input_paise * unpaid) / b.total_paise);
       out.push({ bill: b, line2b: lines2b.get(b.id) ?? null, decision: 'REVERSED_UNPAID_180', claim: 0, reverse: rev, reason: `Unpaid ₹${rs(unpaid)} of ₹${rs(b.total_paise)} ${daysBetween(b.bill_date, end)} days after the invoice (s.16(2), Rule 37).`, tax: b.gst_input_paise });
     }
+    for (const [billId, amt] of reversedAmt) {
+      const b = byId.get(billId); if (!b || amt <= 0) continue; const unpaid = b.total_paise - b.paid_paise - b.adjusted_paise; if (unpaid > 0) continue;
+      out.push({ bill: b, line2b: lines2b.get(b.id) ?? null, decision: 'RECLAIMED_PAID', claim: amt, reverse: 0, reason: `Paid in full: the ₹${rs(amt)} reversed earlier is claimed again (s.16(2), Rule 37(2)).`, tax: b.gst_input_paise });
+    }
     return out;
   }
-  const totalsOf = (lines) => { const s = (/** @type {(x: any) => boolean} */ f, k = 'tax') => lines.filter(f).reduce((/** @type {number} */ a, /** @type {any} */ x) => a + Number(x[k]), 0); const eligible = s((x) => x.decision === 'ELIGIBLE', 'claim'); const override = s((x) => x.decision === 'OVERRIDE_CLAIM', 'claim'); const reversed = s((x) => x.decision === 'REVERSED_UNPAID_180', 'reverse');
-    return { eligible, blocked: s((x) => ['BLOCKED_17_5', 'INELIGIBLE_2B'].includes(x.decision)), held: s((x) => ['HELD_NOT_IN_2B', 'HELD_MISMATCH'].includes(x.decision)), reversed, override, claimable: Math.max(0, eligible + override - reversed) }; };
+  const totalsOf = (lines) => { const s = (/** @type {(x: any) => boolean} */ f, k = 'tax') => lines.filter(f).reduce((/** @type {number} */ a, /** @type {any} */ x) => a + Number(x[k]), 0); const eligible = s((x) => x.decision === 'ELIGIBLE', 'claim'); const override = s((x) => x.decision === 'OVERRIDE_CLAIM', 'claim'); const reversed = s((x) => x.decision === 'REVERSED_UNPAID_180', 'reverse'); const reclaimed = s((x) => x.decision === 'RECLAIMED_PAID', 'claim');
+    return { eligible, blocked: s((x) => ['BLOCKED_17_5', 'INELIGIBLE_2B'].includes(x.decision)), held: s((x) => ['HELD_NOT_IN_2B', 'HELD_MISMATCH'].includes(x.decision)), reversed, override, reclaimed, claimable: Math.max(0, eligible + override + reclaimed - reversed) }; };
   function writeLines(r, lines) {
     db.prepare('UPDATE gst_itc_review_lines SET deleted_at = ? WHERE review_id = ? AND deleted_at IS NULL').run(nowIso(), r.id);
     const ins = db.prepare('INSERT INTO gst_itc_review_lines (company_id, review_id, bill_id, line_2b_id, supplier_gstin, supplier_name, invoice_no, invoice_date, taxable_paise, tax_paise, decision, reason, claim_paise, reverse_paise, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     for (const x of lines) ins.run(r.company_id, r.id, x.bill.id, x.line2b?.id ?? null, x.bill.gstin ?? null, x.bill.payee_name, x.bill.bill_no, x.bill.bill_date, x.bill.gross_paise, x.tax, x.decision, x.reason, x.claim, x.reverse, 'system');
     const t = totalsOf(lines); db.prepare('UPDATE gst_itc_reviews SET eligible_paise = ?, blocked_paise = ?, held_paise = ?, reversed_paise = ?, override_paise = ?, claimable_paise = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(t.eligible, t.blocked, t.held, t.reversed, t.override, t.claimable, nowIso(), r.id);
+  }
+  /** The tax of a review's lines of a decision by head: IGST when the supplier is in another state, else half CGST and half SGST. */
+  function headsOf(reviewId, decision, col) {
+    const r = db.prepare('SELECT company_id FROM gst_itc_reviews WHERE id = ?').get(reviewId); const own = ownStates(r.company_id); const h = { igst: 0, cgst: 0, sgst: 0, total: 0 };
+    for (const l of db.prepare(`SELECT supplier_gstin, ${col} AS v FROM gst_itc_review_lines WHERE review_id = ? AND decision ${Array.isArray(decision) ? `IN (${decision.map(() => '?').join(', ')})` : '= ?'} AND deleted_at IS NULL`).all(reviewId, ...[decision].flat())) { if (l.supplier_gstin && own.size && !own.has(l.supplier_gstin.slice(0, 2))) h.igst += l.v; else { const half = Math.round(l.v / 2); h.cgst += half; h.sgst += l.v - half; } h.total += l.v; }
+    return h;
   }
   const overridesOf = (reviewId) => new Map(db.prepare("SELECT bill_id, reason FROM gst_itc_review_lines WHERE review_id = ? AND decision = 'OVERRIDE_CLAIM' AND deleted_at IS NULL").all(reviewId).map((x) => [x.bill_id, x.reason]));
   const rolesOf = (companyId, user) => json(db.prepare('SELECT roles_json FROM iam_users WHERE company_id = ? AND username = ?').get(companyId, user)?.roles_json ?? '[]', []).flat();
@@ -241,13 +257,11 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     beforeSubmit: (_a, r) => { if (r.period > todayIST().slice(0, 7)) throw unprocessable('The month has not ended yet.'); writeLines(r, computeLines(r.company_id, r.period, overridesOf(r.id))); },
     onApproved: (actor, r) => {
       const x = db.prepare('SELECT * FROM gst_itc_reviews WHERE id = ?').get(r.id);
-      if (x.reversed_paise > 0) {
-        // the reversal by head: IGST when the supplier is in another state, else half CGST and half SGST
-        const own = ownStates(x.company_id); const rows = db.prepare("SELECT * FROM gst_itc_review_lines WHERE review_id = ? AND decision = 'REVERSED_UNPAID_180' AND deleted_at IS NULL").all(x.id); let ig = 0; let cg = 0; let sg = 0;
-        for (const l of rows) { if (l.supplier_gstin && own.size && !own.has(l.supplier_gstin.slice(0, 2))) ig += l.reverse_paise; else { const h = Math.round(l.reverse_paise / 2); cg += h; sg += l.reverse_paise - h; } }
-        const lines = [{ accountId: acct(x.company_id, '560011'), debit: rs(x.reversed_paise) }, ...[{ code: '170001', v: cg }, { code: '170002', v: sg }, { code: '170003', v: ig }].filter((h) => h.v > 0).map((h) => ({ accountId: acct(x.company_id, h.code), credit: rs(h.v) }))];
-        const j = gl.postEngine(x.company_id, { voucherType: 'JV', date: monthEnd(x.period), narration: `ITC reversed for ${x.period}: vendors unpaid beyond the days (${x.doc_no})`, sourceType: 'gst_itc_reviews', sourceId: x.id, lines, user: actor.user });
-        db.prepare('UPDATE gst_itc_reviews SET journal_id = ? WHERE id = ?').run(j.journal.id, x.id);
+      // the reversal by head (IGST when the supplier is in another state, else half CGST and half SGST); D-738: a re-claim puts it back
+      const rev = headsOf(x.id, 'REVERSED_UNPAID_180', 'reverse_paise'); const rec = headsOf(x.id, 'RECLAIMED_PAID', 'claim_paise'); const net = { cgst: rev.cgst - rec.cgst, sgst: rev.sgst - rec.sgst, igst: rev.igst - rec.igst }; const total = net.cgst + net.sgst + net.igst;
+      if (rev.total > 0 || rec.total > 0) {
+        const lines = [total > 0 ? { accountId: acct(x.company_id, '560011'), debit: rs(total) } : total < 0 ? { accountId: acct(x.company_id, '560011'), credit: rs(-total) } : null, ...[{ code: '170001', v: net.cgst }, { code: '170002', v: net.sgst }, { code: '170003', v: net.igst }].filter((h) => h.v !== 0).map((h) => (h.v > 0 ? { accountId: acct(x.company_id, h.code), credit: rs(h.v) } : { accountId: acct(x.company_id, h.code), debit: rs(-h.v) }))].filter(Boolean);
+        if (lines.length > 1) { const j = gl.postEngine(x.company_id, { voucherType: 'JV', date: monthEnd(x.period), narration: `ITC for ${x.period}: reversed ₹${rs(rev.total)} (vendors unpaid beyond the days), re-claimed ₹${rs(rec.total)} (vendors since paid) (${x.doc_no})`, sourceType: 'gst_itc_reviews', sourceId: x.id, lines, user: actor.user }); db.prepare('UPDATE gst_itc_reviews SET journal_id = ? WHERE id = ?').run(j.journal.id, x.id); }
       }
       if (x.amends_id) db.prepare("UPDATE gst_itc_reviews SET status = 'SUPERSEDED', updated_at = ? WHERE id = ? AND status = 'APPROVED'").run(nowIso(), x.amends_id);
       evt('fin.itc_review.approved', actor, x.company_id, 'gst_itc_reviews', x.id, { reviewId: x.id, docNo: x.doc_no, period: x.period, eligible: rs(x.eligible_paise), override: rs(x.override_paise), reversed: rs(x.reversed_paise), claimable: rs(x.claimable_paise), blocked: rs(x.blocked_paise), journalId: x.journal_id ?? null });
@@ -304,13 +318,31 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     const sum = (a, k) => a.reduce((s, x) => s + (x[k] ?? 0), 0);
     return { b2b, b2cs, cdnr, hsn: [...hsn.values()], totals: { taxable: sum(b2b, 'taxable') + sum(b2cs, 'taxable') - sum(cdnr, 'taxable'), igst: sum(b2b, 'igst') - sum(cdnr, 'igst'), cgst: sum(b2b, 'cgst') - sum(cdnr, 'cgst'), sgst: sum(b2b, 'sgst') - sum(cdnr, 'sgst'), b2csTax: sum(b2cs, 'tax'), invoices: b2b.length + b2cs.length, notes: cdnr.length } };
   }
+  /** Head-wise set-off (s.49(5), Rule 88A): IGST credit first against IGST, then CGST, then SGST; CGST credit against CGST, then IGST; SGST credit against SGST, then IGST; CGST never against SGST or the reverse. */
+  function setOff(liability, credit) {
+    const due = { ...liability }; const cr = { igst: Math.max(0, credit.igst), cgst: Math.max(0, credit.cgst), sgst: Math.max(0, credit.sgst) }; const utilised = [];
+    const use = (from, to) => { const v = Math.min(cr[from], due[to]); if (v > 0) { cr[from] -= v; due[to] -= v; utilised.push({ from, to, amount: v }); } };
+    use('igst', 'igst'); use('igst', 'cgst'); use('igst', 'sgst'); use('cgst', 'cgst'); use('cgst', 'igst'); use('sgst', 'sgst'); use('sgst', 'igst');
+    return { utilised, cash: due, carry: cr };
+  }
   function gstr3b(companyId, period) {
     const g1 = gstr1(companyId, period); const rv = db.prepare("SELECT * FROM gst_itc_reviews WHERE company_id = ? AND period = ? AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY id DESC LIMIT 1").get(companyId, period);
     const rcm = db.prepare('SELECT COALESCE(SUM(taxable_paise), 0) AS t, COALESCE(SUM(igst_paise + cgst_paise + sgst_paise + cess_paise), 0) AS g FROM gst_2b_lines WHERE company_id = ? AND period = ? AND reverse_charge = 1 AND deleted_at IS NULL').get(companyId, period);
-    const output = g1.totals.igst + g1.totals.cgst + g1.totals.sgst + g1.totals.b2csTax; const itc = rv ? rv.eligible_paise + rv.override_paise : 0; const reversed = rv ? rv.reversed_paise : 0;
-    return { outward: { taxable: g1.totals.taxable, igst: g1.totals.igst, cgst: g1.totals.cgst, sgst: g1.totals.sgst, b2csTax: g1.totals.b2csTax, tax: output }, inwardRcm: { taxable: rcm.t, tax: rcm.g }, itc: { available: itc, reversed, ineligible: rv ? rv.blocked_paise : 0, net: itc - reversed, review: rv ? { id: rv.id, docNo: rv.doc_no } : null }, payable: Math.max(0, output + rcm.g - (itc - reversed)), carryForward: Math.max(0, itc - reversed - output - rcm.g) };
+    const output = g1.totals.igst + g1.totals.cgst + g1.totals.sgst + g1.totals.b2csTax;
+    // D-738: the ITC by head from the review (claimed less reversed), set off head-wise against the output tax (s.49, Rule 88A), the rest paid in cash
+    const claim = rv ? headsOf(rv.id, ['ELIGIBLE', 'OVERRIDE_CLAIM', 'RECLAIMED_PAID'], 'claim_paise') : { igst: 0, cgst: 0, sgst: 0, total: 0 }; const rev = rv ? headsOf(rv.id, 'REVERSED_UNPAID_180', 'reverse_paise') : { igst: 0, cgst: 0, sgst: 0, total: 0 };
+    const reclaimed = rv ? headsOf(rv.id, 'RECLAIMED_PAID', 'claim_paise').total : 0; const itc = claim.total; const reversed = rev.total;
+    const b2csHalf = Math.round(g1.totals.b2csTax / 2); const liability = { igst: Math.max(0, g1.totals.igst), cgst: Math.max(0, g1.totals.cgst + b2csHalf), sgst: Math.max(0, g1.totals.sgst + g1.totals.b2csTax - b2csHalf) };
+    const set = setOff(liability, { igst: claim.igst - rev.igst, cgst: claim.cgst - rev.cgst, sgst: claim.sgst - rev.sgst });
+    const filed = db.prepare("SELECT filed_on FROM gst_return_filings WHERE company_id = ? AND return_type = 'GSTR3B' AND period = ? AND filing_status = 'FILED' AND deleted_at IS NULL").get(companyId, period)?.filed_on ?? null;
+    const due = `${addMonths(period, 1)}-${String(GSTR3B_DUE_DAY).padStart(2, '0')}`; const asOf = filed ?? todayIST(); const late = asOf > due ? daysBetween(due, asOf) : 0;
+    const cash = set.cash.igst + set.cash.cgst + set.cash.sgst + rcm.g; const interest = Math.round((cash * GST_INTEREST_BP * late) / (10000 * 365)); const nil = output === 0 && rcm.g === 0;
+    const feeHead = Math.min(late * (nil ? LATE_FEE_NIL_PER_HEAD : LATE_FEE_PER_HEAD), nil ? LATE_FEE_NIL_CAP_PER_HEAD : LATE_FEE_CAP_PER_HEAD);
+    return { outward: { taxable: g1.totals.taxable, igst: g1.totals.igst, cgst: g1.totals.cgst, sgst: g1.totals.sgst, b2csTax: g1.totals.b2csTax, tax: output }, inwardRcm: { taxable: rcm.t, tax: rcm.g }, itc: { available: itc, reversed, reclaimed, ineligible: rv ? rv.blocked_paise : 0, net: itc - reversed, byHead: { igst: claim.igst - rev.igst, cgst: claim.cgst - rev.cgst, sgst: claim.sgst - rev.sgst }, review: rv ? { id: rv.id, docNo: rv.doc_no } : null },
+      setOff: { liability, utilised: set.utilised, cash: set.cash, carryForward: set.carry }, payable: cash, carryForward: set.carry.igst + set.carry.cgst + set.carry.sgst,
+      dueDate: due, filedOn: filed, daysLate: late, interest: { ratePct: GST_INTEREST_BP / 100, on: cash, amount: interest }, lateFee: { cgst: feeHead, sgst: feeHead, total: 2 * feeHead, nil }, totalDue: cash + interest + 2 * feeHead };
   }
-  const money = (o) => JSON.parse(JSON.stringify(o, (k, v) => (typeof v === 'number' && !['count', 'invoices', 'notes', 'rate', 'id'].includes(k) ? v / 100 : v)));
+  const money = (o) => JSON.parse(JSON.stringify(o, (k, v) => (typeof v === 'number' && !['count', 'invoices', 'notes', 'rate', 'id', 'ratePct', 'daysLate'].includes(k) ? v / 100 : v)));
   const returns = {
     gst(actor, { period }) {
       need(actor, 'fin.gst_return.view', 'see the GST returns'); const c = actor.companyId; const gstin = gst()?.ownGstins(c)?.[0]?.gstin ?? null;
