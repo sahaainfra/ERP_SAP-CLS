@@ -73,6 +73,7 @@ export const rmc = {
     listExports.register('rmc.plants', { source: (actor, req) => { base.need(actor, 'rmc.plant.export', 'export plants'); return pl.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     listExports.register('rmc.mix_designs', { source: (actor, req) => { base.need(actor, 'rmc.mix_design.export', 'export mix designs'); return mx.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
     const runtime = runtimeOf(db);
+    runtime?.bus?.subscribe('fin.ewaybill.generated', (e) => { pr.onEwayBill(e); }, { consumer: 'rmc.ewaybill' }); runtime?.bus?.subscribe('fin.ewaybill.cancelled', (e) => { pr.onEwayBill(e, true); }, { consumer: 'rmc.ewaybill_cancelled' }); // D-734
     runtime?.jobs?.register('rmc.scale_sweep', (jctx) => { let n = 0; for (const c of db.prepare('SELECT id FROM org_companies').all()) n += pl.sweep(c.id).told; jctx.log(`${n} calibration reminder(s)`); return { n }; }, { maxAttempts: 2, description: 'Weighing scales whose calibration is due or overdue, told to the plant team' });
     runtime?.scheduler?.define({ code: 'rmc.scale_sweep_morning', cron: '15 1 * * *', jobType: 'rmc.scale_sweep', description: 'Every morning 06:45 India time: scale calibration reminders' });
     listExports.register('rmc.requisitions', { source: (actor, req) => { base.need(actor, 'rmc.requisition.export', 'export requisitions'); return pr.requisitions.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });

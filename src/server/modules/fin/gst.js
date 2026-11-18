@@ -420,6 +420,8 @@ export function createGstService({ db, base, flags, now = () => Date.now() }) {
       db.prepare("UPDATE gst_ewaybills SET ewb_status = 'CANCELLED', cancel_reason_code = ?, cancel_remark = ?, cancelled_at = ?, history_json = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?").run(String(b.reasonCode), b.remark, nowIso(), hist(r, { what: 'cancelled', reason: `${CANCEL_REASONS[b.reasonCode]}: ${b.remark}`, by: actor.user }), actor.user, nowIso(), r.id); audit(actor, 'gst_ewaybills', r.id, 'cancel', r.company_id, { reason: b.remark });
       evt('fin.ewaybill.cancelled', actor, r.company_id, 'gst_ewaybills', r.id, { ewaybillId: r.id, ewbNo: r.ewb_no, documentType: r.document_type, documentId: r.document_id }); return ewaybills.get(actor, r.id);
     },
+    /** D-734: whether e-way bills are generated here for the company (the documents then need no typed number; it arrives when generated). */
+    enabledFor(companyId) { return on(companyId); },
     /** The live e-way bill number of a document (the transfer's dispatch and the concrete ticket take it instead of a typed one). */
     activeFor(companyId, documentType, documentId) { return db.prepare("SELECT ewb_no FROM gst_ewaybills WHERE company_id = ? AND document_type = ? AND document_id = ? AND ewb_status IN ('PART_A', 'ACTIVE') ORDER BY id DESC LIMIT 1").get(companyId, documentType, Number(documentId))?.ewb_no ?? null; },
     /** Documents that may need an e-way bill and have none: issued invoices, approved transfers not yet received, concrete leaving the premises. */

@@ -11387,6 +11387,7 @@ export default {
     "tk.qr": "QR कोड",
     "tk.outside": "परिसर से बाहर जाएगा (ई-वे बिल)",
     "tk.eway": "ई-वे बिल सं.",
+    "tk.ewayAwaited": "वित्त विभाग से प्रतीक्षित",
     "tk.dispatch": "रवाना करें",
     "tk.times": "बैच {b}, रवाना {d}, पहुँचा {a}",
     "tk.unload": "उतारना {s} से {e}",

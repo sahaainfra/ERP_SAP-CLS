@@ -162,11 +162,16 @@ test('e-way bills: validity by distance, vehicle update, extension window, cance
   const tr = fill(d, 'inv_transfers', { company_id: 1, doc_no: 'TRF/000001', request_date: today, from_store_id: store('S1'), to_store_id: store('S2'), from_project_id: w.A, to_project_id: w.A, total_value: 7500000, status: 'APPROVED' });
   const te = await w.call(U.stm, 'POST', '/ewaybills', { documentType: 'inv_transfers', documentId: tr, fromPin: '500081', toPin: '502032', distance: 60, hsn: '7214' }); assert.equal(te.status, 201, JSON.stringify(te.json)); assert.equal(te.json.data.status, 'PART_A', 'no vehicle yet: Part A only');
   const te2 = await w.call(U.stm, 'POST', `/ewaybills/${te.json.data.id}/vehicle`, { vehicleNo: 'TS07UA4321', fromPlace: 'Hyderabad', reasonCode: '4', remark: 'First vehicle', version: te.json.data.version }); assert.equal(te2.json.data.status, 'ACTIVE'); assert.ok(te2.json.data.validUntil);
-  assert.equal(w.events('fin.ewaybill.generated').length, 2);
+  // D-734: concrete leaving the premises is ticketed without a number; the e-way bill made here writes it on the ticket, its cancellation takes it off
+  const tk = fill(d, 'bp_delivery_tickets', { company_id: 1, ticket_no: 'DT-0001', qr_code: 'DT:1', org_project_id: w.A, grade: 'M25', qty_milli: 6000, truck_no: 'TS08TM1111', outside_premises: 1, eway_no: null, departed_at: `${today}T08:00`, status: 'APPROVED' });
+  const tw = await w.call(U.acc, 'POST', '/ewaybills', { documentType: 'bp_delivery_tickets', documentId: tk, fromPin: '500081', toPin: '502032', distance: 40, hsn: '3824', value: '36000', vehicleNo: 'TS08TM1111' }); assert.equal(tw.status, 201, JSON.stringify(tw.json));
+  await w.drain(); assert.equal(d.prepare('SELECT eway_no FROM bp_delivery_tickets WHERE id = ?').get(tk).eway_no, tw.json.data.ewbNo);
+  assert.equal((await w.call(U.acc, 'POST', `/ewaybills/${tw.json.data.id}/cancel`, { reasonCode: '2', remark: 'Wrong entry' })).status, 200); await w.drain(); assert.equal(d.prepare('SELECT eway_no FROM bp_delivery_tickets WHERE id = ?').get(tk).eway_no, null);
+  assert.equal(w.events('fin.ewaybill.generated').length, 3);
   // cancelled within 24 hours by the accounts manager; the store manager may not cancel
   assert.equal((await w.call(U.stm, 'POST', `/ewaybills/${x.id}/cancel`, { reasonCode: '3', remark: 'Order cancelled' })).status, 403);
   const c = await w.call(U.acc, 'POST', `/ewaybills/${x.id}/cancel`, { reasonCode: '3', remark: 'Order cancelled' }); assert.equal(c.status, 200, JSON.stringify(c.json)); assert.equal(c.json.data.status, 'CANCELLED');
-  const list = await w.call(U.acc, 'GET', '/ewaybills'); assert.equal(list.status, 200); assert.equal(list.json.data.length, 2);
+  const list = await w.call(U.acc, 'GET', '/ewaybills'); assert.equal(list.status, 200); assert.equal(list.json.data.length, 3);
   assert.equal((await w.call(U.se, 'GET', '/ewaybills')).status, 403); assert.equal((await w.call(U.acc, 'GET', '/ewaybills/export')).status, 200);
   // the daily work: nothing due to expire within 12 hours yet, nothing expired
   const { gstOf } = await import('../src/server/modules/fin/index.js'); const a = gstOf(d).jobs.alerts(); assert.equal(a.expired, 0);
