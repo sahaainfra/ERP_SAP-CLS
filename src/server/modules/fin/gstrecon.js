@@ -386,7 +386,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     /** The statement of the quarter prepared (its data frozen) with the challans that paid it. */
     /** D-737: the TDS deposited in the books (journals debiting TDS payable 230004) from the quarter's start to its due date, and to which statement each challan is linked. */
     deposits(actor, { quarter }) {
-      need(actor, 'fin.tds_return.view', 'see TDS returns'); const c = actor.companyId; const { from, to } = quarterRange(quarter); const until = depositDue(quarter);
+      need(actor, 'fin.tds_return.view', 'see TDS returns'); const c = actor.companyId; const { from } = quarterRange(quarter); const until = depositDue(quarter);
       const linked = new Map(); for (const r of db.prepare('SELECT quarter, form, challans_json FROM tds_returns WHERE company_id = ? AND deleted_at IS NULL').all(c)) for (const x of json(r.challans_json, [])) if (x.journalId) linked.set(Number(x.journalId), `${r.form} ${r.quarter}`);
       return { quarter, from, to: until, rows: db.prepare("SELECT j.id, j.doc_no, j.voucher_no, j.voucher_date, j.narration, SUM(l.debit_paise) - SUM(l.credit_paise) AS amt FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = ? AND a.code = '230004' AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date BETWEEN ? AND ? GROUP BY j.id HAVING amt > 0 ORDER BY j.voucher_date, j.id").all(c, from, until).map((j) => ({ journalId: j.id, voucherNo: j.voucher_no ?? j.doc_no, date: j.voucher_date, narration: j.narration, amount: rs(j.amt), linkedTo: linked.get(j.id) ?? null })) };
     },
