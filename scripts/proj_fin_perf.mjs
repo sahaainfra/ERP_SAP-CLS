@@ -34,8 +34,9 @@ console.log('Filling 50 contracts and budgets, 100 000 journal lines and 100 000
 db.exec('BEGIN');
 let seq = 0;
 /** A row with the columns given; the other NOT NULL columns get the first allowed value or a filler. */
+/** @param {string} table @param {Record<string, any>} vals */
 function fill(table, vals) {
-  const cols = db.prepare(`PRAGMA table_info(${table})`).all(); const sql = db.prepare('SELECT sql FROM sqlite_master WHERE name = ?').get(table).sql;
+  const cols = /** @type {any[]} */ (db.prepare(`PRAGMA table_info(${table})`).all()); const sql = String(/** @type {any} */ (db.prepare('SELECT sql FROM sqlite_master WHERE name = ?').get(table)).sql);
   const first = (name) => { const m = new RegExp(`CHECK \\(${name} IN \\(([^)]*)\\)\\)`).exec(sql); return m ? m[1].split(',')[0].trim().replace(/^'|'$/g, '') : null; };
   const names = []; const params = []; for (const c of cols) { if (c.name === 'id') continue; if (c.name in vals) { names.push(c.name); params.push(vals[c.name]); } else if (c.notnull && c.dflt_value == null) { names.push(c.name); params.push(first(c.name) ?? (/INT|REAL|NUM/i.test(c.type) ? 1 : `perf${(seq += 1)}`)); } }
   return Number(db.prepare(`INSERT INTO ${table} (${names.join(', ')}) VALUES (${names.map(() => '?').join(', ')})`).run(...params).lastInsertRowid);

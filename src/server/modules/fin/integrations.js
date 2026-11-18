@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf } from './index.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { unprocessable } from '../../platform/http/errors.js';
@@ -390,3 +390,15 @@ objectTypes.register({ type: 'pa_revenue_recognition', label: 'Revenue recogniti
   access(db, actor, id) { if (!authzOf(db).check(actor, 'fin.revenue_recognition.view').allowed) return null; const r = db.prepare('SELECT company_id, org_project_id, status FROM pa_revenue_recognition WHERE id = ? AND deleted_at IS NULL').get(Number(id)); return r && r.company_id === actor.companyId ? { companyId: r.company_id, projectId: r.org_project_id, status: r.status } : null; },
   auditEntities: (id) => [{ entity: 'pa_revenue_recognition', id }], summary(db, _actor, id) { const r = db.prepare('SELECT doc_no, period, status FROM pa_revenue_recognition WHERE id = ?').get(Number(id)); return r ? { label: `${r.doc_no} ${r.period}`, status: r.status } : null; },
   related() { return []; } });
+
+// ---- part 23.11: cost forecast ----
+eventTypes.define({ type: 'fin.eac_version.approved', version: 1, schema, owner: 'fin', description: 'A cost forecast of a project for a month was approved (part 23.11 FR-05): data { forecastId, docNo, projectId, period, version, budget, actual, etc, eac, vac, riskAllowance, lossMaking, confidence }. Revenue recognition (23.10) takes its EAC; the P&L (23.12) and the cash forecast (23.13) read it.' });
+const fcDecide = (outcome) => (db, { instance, actor, comment }) => costForecastsOf(db)?.forecasts.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_COST_FORECAST', label: 'Monthly cost forecast of a project', processOwner: 'PD', route: (id) => `/finance/cost-forecasts?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT x.*, p.code FROM fc_forecasts x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Cost forecast of ${r.code} for ${r.period} v${r.version_no}: EAC ${inr(r.eac_total_paise)}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT x.*, p.code, p.name FROM fc_forecasts x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Project', value: `${r.code} ${r.name}` }, { label: 'Month / version', value: `${r.period} v${r.version_no}` }, { label: 'Budget', value: inr(r.budget_paise) }, { label: 'Actual + accrued', value: inr(r.actual_paise + r.accrued_paise) }, { label: 'ETC', value: inr(r.etc_paise) }, { label: 'Risk allowance / pending variations', value: `${inr(r.risk_allowance_paise)} / ${inr(r.pending_var_cost_paise)}` }, { label: 'EAC / VAC', value: `${inr(r.eac_total_paise)} / ${inr(r.vac_total_paise)}` }, { label: 'Contract revenue', value: `${inr(r.contract_revenue_paise)}${r.loss_making ? ' — loss-making' : ''}` }, { label: 'Confidence', value: r.confidence }] }; },
+  defaultDefinition: { name: 'Cost forecast: the project controls manager, the PM, the project director, and the CFO for a loss-making project', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('PCMGR', 'Project controls manager (when someone else prepared it)', 'PCMGR', { field: 'makerRole', op: 'ne', value: 'PCMGR' }), glStep('PM', 'Project manager (when someone else prepared it)', 'PM', { field: 'makerRole', op: 'ne', value: 'PM' }), glStep('PD', 'Project director', 'PD'), glStep('CFO', 'CFO (loss-making project)', 'CFO', { field: 'loss', op: 'eq', value: 'yes' })] },
+  hooks: { onApproved: fcDecide('APPROVED'), onRejected: fcDecide('REJECTED'), onReturned: fcDecide('RETURNED'), onCancelled: fcDecide('CANCELLED') },
+});

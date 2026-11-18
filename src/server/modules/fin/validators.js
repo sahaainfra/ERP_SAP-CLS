@@ -210,3 +210,13 @@ export const parseRevrecImport = (b) => parse(z.object({ rows: z.array(z.object(
 export const parseProjectTb = (q) => parse(z.object({ projectId: id, from: date, to: date }).strict().refine((x) => x.from <= x.to, { message: 'The start is on or before the end', path: ['to'] }), q);
 export const parseMonthRange = (q) => parse(z.object({ from: period, to: period }).strict().refine((x) => x.from <= x.to, { message: 'The first month is on or before the last', path: ['to'] }), q);
 export const parseProjectExport = (q) => parse(z.object({ kind: z.enum(['tb', 'wip', 'overheads']), projectId: id.optional(), from: z.string().optional(), to: z.string().optional(), period: period.optional() }).strict(), q);
+
+// ---- part 23.11: cost forecast ----
+const etcMethod = z.enum(['REMAINING_BUDGET', 'CPI', 'BOTTOM_UP', 'COMMITTED_PLUS', 'MANUAL']);
+const optNum = z.coerce.number().min(0).max(1e13).nullable().optional();
+export const parseForecastCreate = (b) => parse(z.object({ projectId: id, period }).strict(), b);
+export const parseForecastUpdate = (b) => parse(z.object({ pendingVarCost: optNum, pendingVarNote: z.string().trim().max(500).nullable().optional(), confidence: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(), commentary: z.string().trim().max(2000).nullable().optional(), version: z.number().int().optional() }).strict(), b);
+const forecastLine = { method: etcMethod.optional(), accrued: optNum, remainingQty: optNum, rate: optNum, manual: optNum, notes: z.string().trim().max(1000).nullable().optional() };
+export const parseForecastLine = (b) => parse(z.object(forecastLine).strict(), b);
+export const parseForecastImport = (b) => parse(z.object({ rows: z.array(z.object({ wbs: z.string().trim().max(40).optional(), costCode: z.string().trim().min(1).max(40), ...forecastLine }).strict()).min(1).max(1000) }).strict(), b);
+export const parseProjectQuery = (q) => parse(z.object({ projectId: id }).strict(), q);
