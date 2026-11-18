@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS gst_recon_followups (
 CREATE INDEX IF NOT EXISTS ix_gst_recon_followups_line ON gst_recon_followups (line_id);
 CREATE INDEX IF NOT EXISTS ix_gst_recon_followups_bill ON gst_recon_followups (bill_id);
 CREATE INDEX IF NOT EXISTS ix_gst_recon_followups_partner ON gst_recon_followups (partner_id);
+CREATE INDEX IF NOT EXISTS ix_gst_recon_followups_company_id ON gst_recon_followups (company_id);
 
 CREATE TABLE IF NOT EXISTS gst_itc_reviews (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -186,6 +187,7 @@ CREATE TABLE IF NOT EXISTS gst_itc_review_lines (
 CREATE INDEX IF NOT EXISTS ix_gst_itc_review_lines_review ON gst_itc_review_lines (review_id, decision);
 CREATE INDEX IF NOT EXISTS ix_gst_itc_review_lines_bill ON gst_itc_review_lines (bill_id);
 CREATE INDEX IF NOT EXISTS ix_gst_itc_review_lines_2b ON gst_itc_review_lines (line_2b_id);
+CREATE INDEX IF NOT EXISTS ix_gst_itc_review_lines_company_id ON gst_itc_review_lines (company_id);
 
 CREATE TABLE IF NOT EXISTS gst_return_filings (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

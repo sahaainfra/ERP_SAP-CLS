@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS fa_classes (
   remarks     TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_fa_classes ON fa_classes (COALESCE(company_id, 0), code, effective_from) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS ix_fa_classes_company_id ON fa_classes (company_id);
 
 CREATE TABLE IF NOT EXISTS fa_cwip (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,6 +85,7 @@ CREATE TABLE IF NOT EXISTS fa_cwip_lines (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_fa_cwip_lines_bill ON fa_cwip_lines (bill_id) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS ix_fa_cwip_lines_cwip ON fa_cwip_lines (cwip_id);
+CREATE INDEX IF NOT EXISTS ix_fa_cwip_lines_company_id ON fa_cwip_lines (company_id);
 
 CREATE TABLE IF NOT EXISTS fa_assets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -177,6 +179,7 @@ CREATE TABLE IF NOT EXISTS fa_dep_runs (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_fa_dep_runs_doc ON fa_dep_runs (company_id, doc_no);
 CREATE UNIQUE INDEX IF NOT EXISTS ux_fa_dep_runs_period ON fa_dep_runs (company_id, period) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS ix_fa_dep_runs_journal ON fa_dep_runs (journal_id);
+CREATE INDEX IF NOT EXISTS ix_fa_dep_runs_period_id ON fa_dep_runs (period_id);
 
 CREATE TABLE IF NOT EXISTS fa_depreciation (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -345,3 +348,4 @@ CREATE TABLE IF NOT EXISTS fa_verification_lines (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_fa_verification_lines ON fa_verification_lines (verification_id, asset_id);
 CREATE INDEX IF NOT EXISTS ix_fa_verification_lines_asset ON fa_verification_lines (asset_id);
+CREATE INDEX IF NOT EXISTS ix_fa_verification_lines_company_id ON fa_verification_lines (company_id);

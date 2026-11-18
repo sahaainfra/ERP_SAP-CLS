@@ -155,6 +155,9 @@
  "fin.bank.manage": [
   "CFO"
  ],
+ "fin.gst_recon.manage": [
+  "ACCMGR"
+ ],
  "fin.imprest.manage": [
   "ACCMGR"
  ],

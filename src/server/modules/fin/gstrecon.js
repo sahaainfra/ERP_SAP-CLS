@@ -40,7 +40,6 @@ const lev = (a, b) => { const m = a.length; const n = b.length; const d = Array.
 const toIso = (s) => { const t = String(s ?? '').trim(); if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10); const m = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.exec(t); return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : null; };
 const quarterOf = (date) => { const y = Number(date.slice(0, 4)); const m = Number(date.slice(5, 7)); const fy = m >= 4 ? y : y - 1; const q = m >= 4 && m <= 6 ? 1 : m >= 7 && m <= 9 ? 2 : m >= 10 ? 3 : 4; return `${fy}-${String((fy + 1) % 100).padStart(2, '0')}-Q${q}`; };
 const quarterRange = (q) => { const fy = Number(q.slice(0, 4)); const n = Number(q.slice(-1)); const sm = [4, 7, 10, 1][n - 1]; const y = n === 4 ? fy + 1 : fy; const from = `${y}-${String(sm).padStart(2, '0')}-01`; const em = sm + 2; return { from, to: `${y}-${String(em).padStart(2, '0')}-${lastDay(y, em)}` }; };
-const fyOfDate = (d) => { const y = Number(d.slice(0, 4)); const m = Number(d.slice(5, 7)); const s = m >= 4 ? y : y - 1; return `${s}-${String((s + 1) % 100).padStart(2, '0')}`; };
 
 parameterRegistry.get('fin.itc.blocked_account_codes') || parameterRegistry.define({ key: 'fin.itc.blocked_account_codes', dataType: 'string', default: 'NONE', scopes: ['system', 'company'], description: 'Part 23.08 FR-03: the expense accounts (codes, separated by commas; NONE for none) whose input tax is blocked under s.17(5) of the CGST Act — food and catering, club membership, motor vehicles not used for the business, works contract for own immovable property, personal use.' });
 parameterRegistry.get('fin.itc.unpaid_days') || parameterRegistry.define({ key: 'fin.itc.unpaid_days', dataType: 'integer', default: 180, scopes: ['system', 'company'], description: 'Part 23.08 FR-03: input tax of a bill not paid within this many days of the invoice date is reversed (second proviso to s.16(2) of the CGST Act; Rule 37).' });
@@ -129,7 +128,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
   }
 
   // ---- the views ----
-  const lineView = (actor, l) => { const age = daysBetween(String(l.created_at).slice(0, 10), todayIST()); const b = l.matched_bill_id ? db.prepare('SELECT doc_no, bill_no, bill_date, payee_name FROM ap_bills WHERE id = ?').get(l.matched_bill_id) : null;
+  const lineView = (actor, l) => { const age = daysBetween(String(l.created_at).slice(0, 10), todayIST()); const b = !l.matched_bill_id ? null : 'b_doc' in l ? { doc_no: l.b_doc, bill_no: l.b_no, bill_date: l.b_date, payee_name: l.b_payee } : db.prepare('SELECT doc_no, bill_no, bill_date, payee_name FROM ap_bills WHERE id = ?').get(l.matched_bill_id);
     return { id: l.id, period: l.period, supplierGstin: l.supplier_gstin, supplier: l.supplier_name ?? b?.payee_name ?? null, type: l.doc_type, invoiceNo: l.invoice_no, invoiceDate: l.invoice_date, taxable: rs(l.taxable_paise), igst: rs(l.igst_paise), cgst: rs(l.cgst_paise), sgst: rs(l.sgst_paise), cess: rs(l.cess_paise), tax: rs(l.igst_paise + l.cgst_paise + l.sgst_paise + l.cess_paise), rate: l.rate_pct / 10000, itcAvailable: Boolean(l.itc_available), reverseCharge: Boolean(l.reverse_charge),
       status: l.match_status, statusLabel: MATCH[l.match_status], note: l.match_note, bill: b ? { id: l.matched_bill_id, docNo: b.doc_no, billNo: b.bill_no, date: b.bill_date } : null, booksTax: rs(l.books_tax_paise), diff: rs(l.diff_paise), owner: l.owner, resolution: l.resolution_status, resolutionNote: l.resolution_note, followups: l.followups_count, nextFollowup: l.next_followup, ageDays: age, sla: l.match_status === 'MATCHED' || ['RESOLVED', 'ACCEPTED'].includes(l.resolution_status) ? 'DONE' : age > 10 ? 'LATE' : age > 5 ? 'DUE' : 'OK',
       can: { manage: l.match_status !== 'MATCHED' && may(actor, 'fin.gst_recon.manage') } }; };
@@ -151,17 +150,22 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     },
     rematch(actor, { period }) { need(actor, 'fin.gst_recon.manage', 'match GSTR-2B'); const counts = match(actor.companyId, period); audit(actor, 'gst_2b_lines', 0, 'rematch', actor.companyId, { reason: period }); return counts; },
     /** The worklist of a period: each category with its lines, and the books missing in 2B. */
-    worklist(actor, { period, status, mine }) {
-      need(actor, 'fin.gst_recon.view', 'see the GST reconciliation'); const c = actor.companyId;
-      const all = db.prepare('SELECT * FROM gst_2b_lines WHERE company_id = ? AND period = ? AND deleted_at IS NULL ORDER BY id').all(c, period);
-      const matchedBills = new Set(db.prepare('SELECT matched_bill_id AS b FROM gst_2b_lines WHERE company_id = ? AND matched_bill_id IS NOT NULL AND deleted_at IS NULL').all(c).map((r) => r.b));
-      const missing2b = books(c, { from: `${period}-01`, to: monthEnd(period) }).filter((x) => !matchedBills.has(x.id)).map((x) => ({ billId: x.id, docNo: x.doc_no, supplier: x.payee_name, supplierGstin: x.gstin, invoiceNo: x.bill_no, invoiceDate: x.bill_date, taxable: rs(x.gross_paise), tax: rs(x.gst_input_paise), status: 'MISSING_IN_2B', statusLabel: MATCH.MISSING_IN_2B, followups: db.prepare('SELECT COUNT(*) AS n FROM gst_recon_followups WHERE bill_id = ? AND deleted_at IS NULL').get(x.id).n }));
-      const counts = Object.fromEntries(Object.keys(MATCH).map((k) => [k, k === 'MISSING_IN_2B' ? missing2b.length : all.filter((l) => l.match_status === k).length]));
-      const sum = (f) => rs(all.filter(f).reduce((a, l) => a + l.igst_paise + l.cgst_paise + l.sgst_paise + l.cess_paise, 0));
-      let rows = all.map((l) => lineView(actor, l)); if (status && status !== 'MISSING_IN_2B') rows = rows.filter((r) => r.status === status); if (mine) rows = rows.filter((r) => r.owner === actor.user);
+    /** @param {any} actor @param {{ period: string, status?: string, mine?: any }} q */
+    worklist(actor, { period, status = undefined, mine = undefined }) {
+      need(actor, 'fin.gst_recon.view', 'see the GST reconciliation'); const c = actor.companyId; const LIMIT = 500;
+      const agg = db.prepare('SELECT match_status AS s, COUNT(*) AS n, SUM(igst_paise + cgst_paise + sgst_paise + cess_paise) AS t FROM gst_2b_lines WHERE company_id = ? AND period = ? AND deleted_at IS NULL GROUP BY match_status').all(c, period);
+      const missingWhere = "b.company_id = ? AND b.status = 'APPROVED' AND b.gst_input_paise > 0 AND b.deleted_at IS NULL AND b.bill_date BETWEEN ? AND ? AND b.id NOT IN (SELECT g.matched_bill_id FROM gst_2b_lines g WHERE g.company_id = ? AND g.matched_bill_id IS NOT NULL AND g.deleted_at IS NULL)";
+      const missingCount = db.prepare(`SELECT COUNT(*) AS n FROM ap_bills b WHERE ${missingWhere}`).get(c, `${period}-01`, monthEnd(period), c).n;
+      const counts = Object.fromEntries(Object.keys(MATCH).map((k) => [k, k === 'MISSING_IN_2B' ? missingCount : agg.find((a) => a.s === k)?.n ?? 0]));
+      const wantLines = status !== 'MISSING_IN_2B'; const wantMissing = !status || status === 'MISSING_IN_2B';
+      const cond = status === 'MISMATCH' ? " AND l.match_status LIKE 'MISMATCH%'" : status && status !== 'MISSING_IN_2B' ? ' AND l.match_status = ?' : '';
+      const args = [c, period, ...(status && !['MISMATCH', 'MISSING_IN_2B'].includes(status) ? [status] : []), ...(mine ? [actor.user] : [])];
+      const rows = wantLines ? db.prepare(`SELECT l.*, b.doc_no AS b_doc, b.bill_no AS b_no, b.bill_date AS b_date, b.payee_name AS b_payee FROM gst_2b_lines l LEFT JOIN ap_bills b ON b.id = l.matched_bill_id WHERE l.company_id = ? AND l.period = ? AND l.deleted_at IS NULL${cond}${mine ? ' AND l.owner = ?' : ''} ORDER BY CASE WHEN l.match_status = 'MATCHED' OR l.resolution_status IN ('RESOLVED', 'ACCEPTED') THEN 1 ELSE 0 END, l.created_at, l.id LIMIT ${LIMIT}`).all(...args).map((l) => lineView(actor, l)) : [];
       rows.sort((a, b) => ({ LATE: 0, DUE: 1, OK: 2, DONE: 3 }[a.sla] - { LATE: 0, DUE: 1, OK: 2, DONE: 3 }[b.sla]) || b.ageDays - a.ageDays);
+      const missingIn2b = wantMissing ? db.prepare(`SELECT b.id, b.doc_no, b.payee_name, b.bill_no, b.bill_date, b.gross_paise, b.gst_input_paise, (SELECT g.gstin FROM mdm_partner_gstins g WHERE g.partner_id = b.partner_id AND g.gstin_status = 'ACTIVE' AND g.deleted_at IS NULL ORDER BY g.id LIMIT 1) AS gstin, (SELECT COUNT(*) FROM gst_recon_followups f WHERE f.bill_id = b.id AND f.deleted_at IS NULL) AS fu FROM ap_bills b WHERE ${missingWhere} ORDER BY b.bill_date, b.id LIMIT ${LIMIT}`).all(c, `${period}-01`, monthEnd(period), c)
+        .map((x) => ({ billId: x.id, docNo: x.doc_no, supplier: x.payee_name, supplierGstin: x.gstin, invoiceNo: x.bill_no, invoiceDate: x.bill_date, taxable: rs(x.gross_paise), tax: rs(x.gst_input_paise), status: 'MISSING_IN_2B', statusLabel: MATCH.MISSING_IN_2B, followups: x.fu })) : [];
       const imports = db.prepare('SELECT doc_no, file_name, lines_count, duplicates_count, created_by, created_at FROM gst_2b_imports WHERE company_id = ? AND period = ? ORDER BY id DESC').all(c, period).map((i) => ({ docNo: i.doc_no, fileName: i.file_name, lines: i.lines_count, duplicates: i.duplicates_count, by: i.created_by, at: i.created_at }));
-      return { period, counts, taxIn2b: sum(() => true), taxMatched: sum((l) => l.match_status === 'MATCHED'), rows: status === 'MISSING_IN_2B' ? [] : rows, missingIn2b: !status || status === 'MISSING_IN_2B' ? missing2b : [], imports, canImport: may(actor, 'fin.gst_recon.import'), canManage: may(actor, 'fin.gst_recon.manage') };
+      return { period, counts, limit: LIMIT, taxIn2b: rs(agg.reduce((a, x) => a + (x.t ?? 0), 0)), taxMatched: rs(agg.find((a) => a.s === 'MATCHED')?.t ?? 0), rows, missingIn2b, imports, canImport: may(actor, 'fin.gst_recon.import'), canManage: may(actor, 'fin.gst_recon.manage') };
     },
     line(actor, id) { need(actor, 'fin.gst_recon.view', 'see the GST reconciliation'); const l = db.prepare('SELECT * FROM gst_2b_lines WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); if (!l) throw notFound('That 2B line does not exist.'); return { ...lineView(actor, l), history: db.prepare('SELECT channel, note, next_date, by_user, created_at FROM gst_recon_followups WHERE line_id = ? AND deleted_at IS NULL ORDER BY id DESC').all(l.id).map((f) => ({ channel: f.channel, note: f.note, nextDate: f.next_date, by: f.by_user, at: f.created_at })) }; },
     /** FR-02: an owner, a follow-up with the vendor (the vendor portal of 25.02 reads the event), a resolution. */
@@ -197,11 +201,12 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     const claimedBefore = new Set(db.prepare("SELECT l.bill_id FROM gst_itc_review_lines l JOIN gst_itc_reviews r ON r.id = l.review_id WHERE r.company_id = ? AND r.status = 'APPROVED' AND r.period < ? AND l.decision IN ('ELIGIBLE', 'OVERRIDE_CLAIM') AND l.deleted_at IS NULL").all(companyId, period).map((x) => x.bill_id));
     const reversedBefore = new Set(db.prepare("SELECT l.bill_id FROM gst_itc_review_lines l JOIN gst_itc_reviews r ON r.id = l.review_id WHERE r.company_id = ? AND r.status = 'APPROVED' AND r.period < ? AND l.decision = 'REVERSED_UNPAID_180' AND l.deleted_at IS NULL").all(companyId, period).map((x) => x.bill_id));
     const heldBefore = db.prepare("SELECT l.bill_id FROM gst_itc_review_lines l JOIN gst_itc_reviews r ON r.id = l.review_id WHERE r.company_id = ? AND r.status = 'APPROVED' AND r.period < ? AND l.decision IN ('HELD_NOT_IN_2B', 'HELD_MISMATCH') AND l.deleted_at IS NULL").all(companyId, period).map((x) => x.bill_id).filter((b) => !claimedBefore.has(b));
-    const ofMonth = books(companyId, { from: `${period}-01`, to: end }); const ids = new Set(ofMonth.map((b) => b.id));
-    const carried = heldBefore.filter((b) => !ids.has(b)).map((id) => books(companyId, { from: '0000-01-01', to: end }).find((b) => b.id === id)).filter(Boolean);
+    const everything = books(companyId, { from: '0000-01-01', to: end }); const byId = new Map(everything.map((b) => [b.id, b]));
+    const ofMonth = everything.filter((b) => b.bill_date >= `${period}-01`); const ids = new Set(ofMonth.map((b) => b.id));
+    const carried = heldBefore.filter((b) => !ids.has(b)).map((id) => byId.get(id)).filter(Boolean);
     const out = [];
     for (const b of [...ofMonth, ...carried]) {
-      const l = lines2b.get(b.id); const ov = overrides.get(b.id); let decision; let claim = 0; let reason = null;
+      const l = lines2b.get(b.id); const ov = overrides.get(b.id); let decision; let claim = 0; let reason;
       if (blocked.has(b.expense_account_id)) { decision = 'BLOCKED_17_5'; reason = 'The expense head is in the blocked list (s.17(5)).'; }
       else if (l && !l.itc_available) { decision = 'INELIGIBLE_2B'; reason = 'The supplier reported it with ITC not available.'; }
       else if (l && (l.match_status === 'MATCHED' || ['RESOLVED', 'ACCEPTED'].includes(l.resolution_status))) { decision = 'ELIGIBLE'; claim = Math.min(b.gst_input_paise, l.igst_paise + l.cgst_paise + l.sgst_paise + l.cess_paise); reason = l.match_note; }
@@ -212,16 +217,16 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       out.push({ bill: b, line2b: l ?? null, decision, claim, reverse: 0, reason, tax: b.gst_input_paise });
     }
     // reversal: bills of any month claimed earlier (or now), unpaid beyond the days at the end of the month
-    const old = books(companyId, { from: '0000-01-01', to: addDays(end, -unpaidDays) });
+    const cutoff = addDays(end, -unpaidDays); const old = everything.filter((b) => b.bill_date <= cutoff); const claimedNow = new Set(out.filter((x) => x.claim > 0).map((x) => x.bill.id));
     for (const b of old) {
-      if (reversedBefore.has(b.id) || !(claimedBefore.has(b.id) || out.some((x) => x.bill.id === b.id && x.claim > 0))) continue;
+      if (reversedBefore.has(b.id) || !(claimedBefore.has(b.id) || claimedNow.has(b.id))) continue;
       const unpaid = b.total_paise - b.paid_paise - b.adjusted_paise; if (unpaid <= 0) continue;
       const rev = Math.round((b.gst_input_paise * unpaid) / b.total_paise);
       out.push({ bill: b, line2b: lines2b.get(b.id) ?? null, decision: 'REVERSED_UNPAID_180', claim: 0, reverse: rev, reason: `Unpaid ₹${rs(unpaid)} of ₹${rs(b.total_paise)} ${daysBetween(b.bill_date, end)} days after the invoice (s.16(2), Rule 37).`, tax: b.gst_input_paise });
     }
     return out;
   }
-  const totalsOf = (lines) => { const s = (f, k = 'tax') => lines.filter(f).reduce((a, x) => a + x[k], 0); const eligible = s((x) => x.decision === 'ELIGIBLE', 'claim'); const override = s((x) => x.decision === 'OVERRIDE_CLAIM', 'claim'); const reversed = s((x) => x.decision === 'REVERSED_UNPAID_180', 'reverse');
+  const totalsOf = (lines) => { const s = (/** @type {(x: any) => boolean} */ f, k = 'tax') => lines.filter(f).reduce((/** @type {number} */ a, /** @type {any} */ x) => a + Number(x[k]), 0); const eligible = s((x) => x.decision === 'ELIGIBLE', 'claim'); const override = s((x) => x.decision === 'OVERRIDE_CLAIM', 'claim'); const reversed = s((x) => x.decision === 'REVERSED_UNPAID_180', 'reverse');
     return { eligible, blocked: s((x) => ['BLOCKED_17_5', 'INELIGIBLE_2B'].includes(x.decision)), held: s((x) => ['HELD_NOT_IN_2B', 'HELD_MISMATCH'].includes(x.decision)), reversed, override, claimable: Math.max(0, eligible + override - reversed) }; };
   function writeLines(r, lines) {
     db.prepare('UPDATE gst_itc_review_lines SET deleted_at = ? WHERE review_id = ? AND deleted_at IS NULL').run(nowIso(), r.id);
@@ -240,7 +245,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
         // the reversal by head: IGST when the supplier is in another state, else half CGST and half SGST
         const own = ownStates(x.company_id); const rows = db.prepare("SELECT * FROM gst_itc_review_lines WHERE review_id = ? AND decision = 'REVERSED_UNPAID_180' AND deleted_at IS NULL").all(x.id); let ig = 0; let cg = 0; let sg = 0;
         for (const l of rows) { if (l.supplier_gstin && own.size && !own.has(l.supplier_gstin.slice(0, 2))) ig += l.reverse_paise; else { const h = Math.round(l.reverse_paise / 2); cg += h; sg += l.reverse_paise - h; } }
-        const lines = [{ accountId: acct(x.company_id, '560011'), debit: rs(x.reversed_paise) }, ...[['170001', cg], ['170002', sg], ['170003', ig]].filter(([, v]) => v > 0).map(([code, v]) => ({ accountId: acct(x.company_id, code), credit: rs(v) }))];
+        const lines = [{ accountId: acct(x.company_id, '560011'), debit: rs(x.reversed_paise) }, ...[{ code: '170001', v: cg }, { code: '170002', v: sg }, { code: '170003', v: ig }].filter((h) => h.v > 0).map((h) => ({ accountId: acct(x.company_id, h.code), credit: rs(h.v) }))];
         const j = gl.postEngine(x.company_id, { voucherType: 'JV', date: monthEnd(x.period), narration: `ITC reversed for ${x.period}: vendors unpaid beyond the days (${x.doc_no})`, sourceType: 'gst_itc_reviews', sourceId: x.id, lines, user: actor.user });
         db.prepare('UPDATE gst_itc_reviews SET journal_id = ? WHERE id = ?').run(j.journal.id, x.id);
       }
@@ -313,7 +318,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       const trend = []; for (let k = 5; k >= 0; k -= 1) { const p = addMonths(period, -k); const g = gstr3b(c, p); trend.push({ period: p, output: rs(g.outward.tax), itc: rs(g.itc.net) }); }
       return { period, gstin, gstr1: money(gstr1(c, period)), gstr3b: money(gstr3b(c, period)), filings, trend, can: { prepare: may(actor, 'fin.gst_return.prepare'), file: may(actor, 'fin.gst_return.file') } };
     },
-    prepare(actor, { period, returnType }) {
+    prepareReturn(actor, { period, returnType }) {
       need(actor, 'fin.gst_return.prepare', 'prepare GST returns'); const c = actor.companyId; const gstin = gst()?.ownGstins(c)?.[0]?.gstin; if (!gstin) throw unprocessable('The company has no GSTIN.');
       if (returnType === 'GSTR3B' && !db.prepare("SELECT 1 FROM gst_itc_reviews WHERE company_id = ? AND period = ? AND status = 'APPROVED'").get(c, period)) throw unprocessable('Approve the ITC review of the month first: GSTR-3B takes its ITC from it.');
       const old = db.prepare('SELECT * FROM gst_return_filings WHERE company_id = ? AND return_type = ? AND period = ? AND gstin = ?').get(c, returnType, period, gstin); if (old?.filing_status === 'FILED') throw conflict('This return is filed; amendments go in a later return.');
@@ -345,7 +350,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       return { quarter, from, to, form: form?.formCode ?? null, formAct: form?.act ?? null, certificate: cert?.formCode ?? null, ...tdsView(actor, r, tdsRows(c, quarter)), tcs: { form: '27EQ', note: 'TCS is not collected by any module yet (D-736).' }, can: { prepare: may(actor, 'fin.tds_return.prepare'), file: may(actor, 'fin.tds_return.file'), certificate: may(actor, 'fin.tds_return.certificate') } };
     },
     /** The statement of the quarter prepared (its data frozen) with the challans that paid it. */
-    prepare(actor, { quarter, challans }) {
+    prepareStatement(actor, { quarter, challans }) {
       need(actor, 'fin.tds_return.prepare', 'prepare TDS returns'); const c = actor.companyId; const v = tds.quarter(actor, { quarter }); if (!v.form) throw unprocessable('No TDS form is in force for this quarter (forms master, 166.8).');
       const old = db.prepare('SELECT * FROM tds_returns WHERE company_id = ? AND quarter = ? AND form = ?').get(c, quarter, v.form); if (old?.return_status === 'FILED') throw conflict('This statement is filed; a correction statement is made on the portal.');
       const ch = challans ?? json(old?.challans_json ?? '[]', []); const dep = ch.reduce((a, x) => a + paise(x.amount), 0); const ded = paise(v.deducted);

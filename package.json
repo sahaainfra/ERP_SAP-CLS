@@ -69,7 +69,8 @@
     "db:backup": "node --env-file-if-exists=.env scripts/db_backup.mjs",
     "db:restore": "node scripts/db_restore.mjs",
     "db:rehearse": "node scripts/rehearse_backup.mjs",
-    "erp:gl-perf": "node scripts/gl_perf.mjs"
+    "erp:gl-perf": "node scripts/gl_perf.mjs",
+    "erp:gst-fa-perf": "node scripts/gst_fa_perf.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "5.3.0",

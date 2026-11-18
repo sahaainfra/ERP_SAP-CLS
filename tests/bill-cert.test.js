@@ -69,8 +69,8 @@ test('FR-02 FR-03 BR-01 the tax invoice: GSTIN, place of supply, SAC, tax breaku
   // the IRN
   assert.equal((await w.bc(U.qs, 'POST', `/tax-invoices/${i.id}/irn`, { irn: 'a'.repeat(64), ackNo: '1', ackDate: day(0) })).status, 403); assert.equal((await w.bc(U.acc, 'POST', `/tax-invoices/${i.id}/irn`, { irn: 'zz', ackNo: '1', ackDate: day(0) })).status, 400); const irn = 'ab'.repeat(32); const r2 = await w.bc(U.acc, 'POST', `/tax-invoices/${i.id}/irn`, { irn, ackNo: '112200334455', ackDate: day(0) }); assert.deepEqual([r2.status, r2.json.data.irnState, r2.json.data.can.cancel], [200, 'GENERATED', false]);
   assert.equal((await w.bc(U.acc, 'POST', `/tax-invoices/${i.id}/cancel`, { reason: 'Wrong value shown' })).status, 422, 'after the IRN only a credit note'); assert.equal((await w.bc(U.acc, 'POST', `/tax-invoices/${i.id}/irn`, { irn, ackNo: '1', ackDate: day(0) })).status, 422);
-  // the receivable of 23.05 links itself once
-  assert.deepEqual(w.sc.taxInvoices.linkReceivable(1, { invoiceId: i.id, arRef: 'AR/1' }), { replay: false }); assert.deepEqual(w.sc.taxInvoices.linkReceivable(1, { invoiceId: i.id, arRef: 'AR/1' }), { replay: true });
+  // the receivable of 23.05 links itself once (since 23.05 its consumer has already linked it on the invoice's event; linking again with its reference is a replay)
+  const arRef = (await w.bc(U.acc, 'GET', `/tax-invoices/${i.id}`)).json.data.arRef; if (!arRef) assert.deepEqual(w.sc.taxInvoices.linkReceivable(1, { invoiceId: i.id, arRef: 'AR/1' }), { replay: false }); assert.deepEqual(w.sc.taxInvoices.linkReceivable(1, { invoiceId: i.id, arRef: arRef ?? 'AR/1' }), { replay: true });
   assert.equal((await w.bc(U.acc, 'GET', `/tax-invoices/${i.id}/print`)).status, 200); assert.equal((await w.bc(U.acc, 'GET', '/tax-invoices/export')).status, 200);
 });
 

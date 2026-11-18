@@ -34,7 +34,7 @@ export function gstRoutes(gs, { idempotent, idempotentRequired, flags }) {
   r.post('/einvoices/:id/retry', idempotentRequired, async (req, res) => ok(res, await e.retry(req.actor, pid(req))));
   r.post('/einvoices/:id/cancel', idempotentRequired, async (req, res) => ok(res, await e.cancel(req.actor, pid(req), parseEinvCancel(req.body))));
   r.get('/ewaybills/sources', (req, res) => ok(res, w.sources(req.actor)));
-  r.get('/ewaybills/prepare', (req, res) => ok(res, w.prepare(req.actor, parseEwbDoc(req.query))));
+  r.get('/ewaybills/prepare', (req, res) => ok(res, w.draft(req.actor, parseEwbDoc(req.query))));
   r.get('/ewaybills/export', (req, res) => file(res, w.exportCsv(req.actor, req.query)));
   r.get('/ewaybills', (req, res) => res.json(w.list(req.actor, req.query)));
   r.post('/ewaybills', idempotentRequired, async (req, res) => ok(res, await w.generate(req.actor, parseEwbCreate(req.body)), 201));

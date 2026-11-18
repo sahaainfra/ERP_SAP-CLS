@@ -9622,3 +9622,373 @@ paths:
     get:
       summary: "accounts payable /payables/{kind}/export (part 23.03; fin.bill.export)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/resolve:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/resolve (part 23.07; fin.gst.resolve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/gstin-check:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/gstin-check (part 23.07; fin.gstin.check)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings (part 23.07; fin.gst_setting.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/export:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/export (part 23.07; fin.gst_setting.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/import:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/import (part 23.07; fin.gst_setting.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id} (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id} (part 23.07; fin.gst_setting.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id} (part 23.07; fin.gst_setting.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/submit:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/submit (part 23.07; fin.gst_setting.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/withdraw:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/withdraw (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/cancel:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/cancel (part 23.07; fin.gst_setting.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/history:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/history (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/due:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/due (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/export:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/export (part 23.07; fin.einvoice.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices (part 23.07; fin.einvoice.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id} (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/log:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/log (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/qr:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/qr (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/print:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/print (part 23.07; fin.einvoice.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/retry:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/retry (part 23.07; fin.einvoice.retry)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/cancel:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/cancel (part 23.07; fin.einvoice.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/sources:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/sources (part 23.07; fin.ewaybill.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/prepare:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/prepare (part 23.07; fin.ewaybill.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/export:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/export (part 23.07; fin.ewaybill.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills (part 23.07; fin.ewaybill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills (part 23.07; fin.ewaybill.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id} (part 23.07; fin.ewaybill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/retry:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/retry (part 23.07; fin.ewaybill.retry)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/vehicle:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/vehicle (part 23.07; fin.ewaybill.update)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/extend:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/extend (part 23.07; fin.ewaybill.extend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/cancel:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/cancel (part 23.07; fin.ewaybill.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/import:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/import (part 23.08; fin.gst_recon.import)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/rematch:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/rematch (part 23.08; fin.gst_recon.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/export:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/export (part 23.08; fin.gst_recon.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon (part 23.08; fin.gst_recon.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/lines/{id}:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/lines/{id} (part 23.08; fin.gst_recon.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/lines/{id}/act:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/lines/{id}/act (part 23.08; fin.gst_recon.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews (part 23.08; fin.itc_review.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id} (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id} (part 23.08; fin.itc_review.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/recompute:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/recompute (part 23.08; fin.itc_review.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/override:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/override (part 23.08; fin.itc_review.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/submit:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/submit (part 23.08; fin.itc_review.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/withdraw:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/withdraw (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/cancel:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/cancel (part 23.08; fin.itc_review.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/amend:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/amend (part 23.08; fin.itc_review.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/history:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/history (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/print:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/print (part 23.08; fin.itc_review.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/export:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/export (part 23.08; fin.itc_review.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns (part 23.08; fin.gst_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns/prepare:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns/prepare (part 23.08; fin.gst_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns/file:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns/file (part 23.08; fin.gst_return.file)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns/export:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns/export (part 23.08; fin.gst_return.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns (part 23.08; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/prepare:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/prepare (part 23.08; fin.tds_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/file:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/file (part 23.08; fin.tds_return.file)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/certificate:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/certificate (part 23.08; fin.tds_return.certificate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/26as:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/26as (part 23.08; fin.tds_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/26as (part 23.08; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/compliance-calendar:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /compliance-calendar (part 23.08; fin.gst_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-classes:
+    get:
+      summary: "fixed assets and depreciation /asset-classes (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/sources:
+    get:
+      summary: "fixed assets and depreciation /assets/sources (part 23.09; fin.asset.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/export:
+    get:
+      summary: "fixed assets and depreciation /assets/export (part 23.09; fin.asset.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets:
+    get:
+      summary: "fixed assets and depreciation /assets (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "fixed assets and depreciation /assets (part 23.09; fin.asset.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}:
+    get:
+      summary: "fixed assets and depreciation /assets/{id} (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "fixed assets and depreciation /assets/{id} (part 23.09; fin.asset.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "fixed assets and depreciation /assets/{id} (part 23.09; fin.asset.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/submit:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/submit (part 23.09; fin.asset.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/withdraw:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/withdraw (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/cancel:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/cancel (part 23.09; fin.asset.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/amend:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/amend (part 23.09; fin.asset.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/history:
+    get:
+      summary: "fixed assets and depreciation /assets/{id}/history (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/print:
+    get:
+      summary: "fixed assets and depreciation /assets/{id}/print (part 23.09; fin.asset.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/transfer:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/transfer (part 23.09; fin.asset.transfer)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cwip:
+    post:
+      summary: "fixed assets and depreciation /cwip (part 23.09; fin.asset.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/depreciation:
+    get:
+      summary: "fixed assets and depreciation /depreciation (part 23.09; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/depreciation/run:
+    post:
+      summary: "fixed assets and depreciation /depreciation/run (part 23.09; fin.depreciation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals:
+    get:
+      summary: "fixed assets and depreciation /disposals (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "fixed assets and depreciation /disposals (part 23.09; fin.disposal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}:
+    get:
+      summary: "fixed assets and depreciation /disposals/{id} (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "fixed assets and depreciation /disposals/{id} (part 23.09; fin.disposal.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/submit:
+    post:
+      summary: "fixed assets and depreciation /disposals/{id}/submit (part 23.09; fin.disposal.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/withdraw:
+    post:
+      summary: "fixed assets and depreciation /disposals/{id}/withdraw (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/cancel:
+    post:
+      summary: "fixed assets and depreciation /disposals/{id}/cancel (part 23.09; fin.disposal.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/history:
+    get:
+      summary: "fixed assets and depreciation /disposals/{id}/history (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications:
+    get:
+      summary: "fixed assets and depreciation /asset-verifications (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "fixed assets and depreciation /asset-verifications (part 23.09; fin.asset.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications/{id}:
+    get:
+      summary: "fixed assets and depreciation /asset-verifications/{id} (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications/{id}/scan:
+    post:
+      summary: "fixed assets and depreciation /asset-verifications/{id}/scan (part 23.09; fin.asset.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications/{id}/close:
+    post:
+      summary: "fixed assets and depreciation /asset-verifications/{id}/close (part 23.09; fin.asset.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/schedule:
+    get:
+      summary: "fixed assets and depreciation /asset-reports/schedule (part 23.09; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/tax-blocks:
+    get:
+      summary: "fixed assets and depreciation /asset-reports/tax-blocks (part 23.09; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

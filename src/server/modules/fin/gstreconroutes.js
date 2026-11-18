@@ -30,11 +30,11 @@ export function gstReconRoutes(gr, { idempotent, idempotentRequired, flags }) {
   r.get('/itc-reviews/:id/print', (req, res) => file(res, v.print(req.actor, pid(req))));
   r.get('/itc-reviews/:id/export', (req, res) => file(res, v.exportCsv(req.actor, pid(req))));
   r.get('/gst-returns', (req, res) => ok(res, g.gst(req.actor, parsePeriod(req.query))));
-  r.post('/gst-returns/prepare', idempotentRequired, (req, res) => ok(res, g.prepare(req.actor, parseReturnAct(req.body))));
+  r.post('/gst-returns/prepare', idempotentRequired, (req, res) => ok(res, g.prepareReturn(req.actor, parseReturnAct(req.body))));
   r.post('/gst-returns/file', idempotentRequired, (req, res) => ok(res, g.file(req.actor, parseReturnFile(req.body))));
   r.get('/gst-returns/export', (req, res) => { const b = parseReturnAct(req.query); file(res, g.exportJson(req.actor, b)); });
   r.get('/tds-returns', (req, res) => ok(res, t.quarter(req.actor, parseQuarter(req.query))));
-  r.post('/tds-returns/prepare', idempotentRequired, (req, res) => ok(res, t.prepare(req.actor, parseTdsPrepare(req.body))));
+  r.post('/tds-returns/prepare', idempotentRequired, (req, res) => ok(res, t.prepareStatement(req.actor, parseTdsPrepare(req.body))));
   r.post('/tds-returns/file', idempotentRequired, (req, res) => ok(res, t.file(req.actor, parseTdsFile(req.body))));
   r.get('/tds-returns/certificate', (req, res) => file(res, t.certificate(req.actor, parseTdsCert(req.query))));
   r.post('/tds-returns/26as', idempotentRequired, (req, res) => ok(res, t.import26as(req.actor, parse26as(req.body)), 201));

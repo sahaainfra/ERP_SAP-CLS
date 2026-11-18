@@ -92,8 +92,6 @@ export function createAssetService({ db, base, gl, flags, tax = () => null }) {
 
   // ---- the register ----
   const calcOf = (r) => ({ cost: r.cost_paise, residual: r.residual_paise, lifeMonths: r.useful_life_months, method: r.book_method, accumulated: r.accumulated_dep_paise, fyBase: r.fy_base_paise ?? r.cost_paise - r.opening_accum_paise });
-  /** The WDV base of the year an asset's next day falls in: the written-down value at the start of that year (the cost in the year it was capitalised). */
-  function baseFor(r, day) { const fy = fyOf(day); if (r.fy_base_year === fy && r.fy_base_paise != null) return r.fy_base_paise; return r.cost_paise - r.accumulated_dep_paise; }
   function rollFy(r, day) { const fy = fyOf(day); if (r.fy_base_year !== fy) { const b = r.cost_paise - r.accumulated_dep_paise; db.prepare('UPDATE fa_assets SET fy_base_paise = ?, fy_base_year = ? WHERE id = ?').run(b, fy, r.id); r.fy_base_paise = b; r.fy_base_year = fy; } }
   /** Book depreciation of one asset for [from, to] (split at 1 April so each year has its own WDV base). */
   function depOf(r, from, to) {

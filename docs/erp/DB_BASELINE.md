@@ -10044,6 +10044,411 @@ Indexes:
 - ix_exp_travel_company_id: company_id
 - ux_exp_travel_doc (unique): company_id, doc_no
 
+## fa_assets
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| asset_no | TEXT |  |  |  |
+| class_code | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| cost_paise | INTEGER | yes |  |  |
+| cap_date | TEXT | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| custodian | TEXT |  |  |  |
+| equipment_id | INTEGER |  |  |  |
+| small_asset_id | INTEGER |  |  |  |
+| cap_source | TEXT | yes |  |  |
+| source_bill_id | INTEGER |  |  |  |
+| cwip_id | INTEGER |  |  |  |
+| useful_life_months | INTEGER | yes |  |  |
+| residual_paise | INTEGER | yes |  | 0 |
+| book_method | TEXT | yes |  |  |
+| wdv_rate_bp | INTEGER | yes |  | 0 |
+| tax_block | TEXT | yes |  |  |
+| tax_rate_bp | INTEGER | yes |  | 0 |
+| opening_accum_paise | INTEGER | yes |  | 0 |
+| accumulated_dep_paise | INTEGER | yes |  | 0 |
+| wdv_paise | INTEGER | yes |  | 0 |
+| fy_base_paise | INTEGER |  |  |  |
+| fy_base_year | TEXT |  |  |  |
+| dep_until | TEXT |  |  |  |
+| hsn_code | TEXT |  |  |  |
+| asset_state | TEXT | yes |  | 'PENDING' |
+| disposed_on | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| last_verified_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), cwip_id -> fa_cwip(id), source_bill_id -> ap_bills(id), small_asset_id -> ast_small_assets(id), equipment_id -> plt_equipment(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_assets_journal: journal_id
+- ix_fa_assets_wf: workflow_instance_id
+- ix_fa_assets_cwip: cwip_id
+- ix_fa_assets_bill: source_bill_id
+- ix_fa_assets_site: org_site_id
+- ix_fa_assets_project: org_project_id
+- ix_fa_assets_list: company_id, status, asset_state, class_code
+- ux_fa_assets_small (unique): small_asset_id
+- ux_fa_assets_equipment (unique): equipment_id
+- ux_fa_assets_doc (unique): company_id, doc_no
+
+## fa_classes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| asset_account_code | TEXT | yes |  |  |
+| accum_account_code | TEXT | yes |  |  |
+| book_method | TEXT | yes |  |  |
+| useful_life_months | INTEGER | yes |  |  |
+| residual_bp | INTEGER | yes |  | 500 |
+| tax_block | TEXT | yes |  |  |
+| tax_rate_bp | INTEGER | yes |  |  |
+| legal_ref | TEXT |  |  |  |
+| effective_from | TEXT | yes |  | '2014-04-01' |
+| effective_to | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_classes_company_id: company_id
+- ux_fa_classes (unique): , code, effective_from
+
+## fa_cwip
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| title | TEXT | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| cost_paise | INTEGER | yes |  | 0 |
+| settled_paise | INTEGER | yes |  | 0 |
+| cwip_status | TEXT | yes |  | 'OPEN' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_cwip_project: org_project_id
+- ux_fa_cwip_doc (unique): company_id, doc_no
+
+## fa_cwip_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| cwip_id | INTEGER | yes |  |  |
+| bill_id | INTEGER | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bill_id -> ap_bills(id), cwip_id -> fa_cwip(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_cwip_lines_company_id: company_id
+- ix_fa_cwip_lines_cwip: cwip_id
+- ux_fa_cwip_lines_bill (unique): bill_id
+
+## fa_dep_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| assets_count | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| journal_id | INTEGER |  |  |  |
+| run_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), period_id -> core_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_dep_runs_period_id: period_id
+- ix_fa_dep_runs_journal: journal_id
+- ux_fa_dep_runs_period (unique): company_id, period
+- ux_fa_dep_runs_doc (unique): company_id, doc_no
+
+## fa_depreciation
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| run_id | INTEGER |  |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| book_dep_paise | INTEGER | yes |  |  |
+| tax_dep_paise | INTEGER |  |  |  |
+| wdv_after_paise | INTEGER | yes |  |  |
+| dep_kind | TEXT | yes |  | 'MONTHLY' |
+| posted_journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: posted_journal_id -> fin_journals(id), period_id -> core_periods(id), run_id -> fa_dep_runs(id), asset_id -> fa_assets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_depreciation_journal: posted_journal_id
+- ix_fa_depreciation_period_id: period_id
+- ix_fa_depreciation_period: company_id, period
+- ix_fa_depreciation_run: run_id
+- ux_fa_depreciation (unique): asset_id, period, dep_kind
+
+## fa_disposals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| disposal_date | TEXT | yes |  |  |
+| method | TEXT | yes |  |  |
+| buyer_partner_id | INTEGER |  |  |  |
+| proceeds_paise | INTEGER | yes |  | 0 |
+| gst_paise | INTEGER | yes |  | 0 |
+| dep_to_date_paise | INTEGER | yes |  | 0 |
+| wdv_paise | INTEGER | yes |  | 0 |
+| gain_loss_paise | INTEGER | yes |  | 0 |
+| reason | TEXT | yes |  |  |
+| journal_id | INTEGER |  |  |  |
+| ar_invoice_ref | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), buyer_partner_id -> mdm_partners(id), asset_id -> fa_assets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_disposals_journal: journal_id
+- ix_fa_disposals_wf: workflow_instance_id
+- ix_fa_disposals_buyer: buyer_partner_id
+- ix_fa_disposals_list: company_id, status, disposal_date
+- ux_fa_disposals_live (unique): asset_id
+- ux_fa_disposals_doc (unique): company_id, doc_no
+
+## fa_transfers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| transfer_date | TEXT | yes |  |  |
+| from_project_id | INTEGER |  |  |  |
+| to_project_id | INTEGER |  |  |  |
+| from_site_id | INTEGER |  |  |  |
+| to_site_id | INTEGER |  |  |  |
+| from_custodian | TEXT |  |  |  |
+| to_custodian | TEXT |  |  |  |
+| reason | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: to_site_id -> org_sites(id), from_site_id -> org_sites(id), to_project_id -> org_projects(id), from_project_id -> org_projects(id), asset_id -> fa_assets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_transfers_to_site: to_site_id
+- ix_fa_transfers_from_site: from_site_id
+- ix_fa_transfers_to: to_project_id
+- ix_fa_transfers_from: from_project_id
+- ix_fa_transfers_asset: asset_id
+- ux_fa_transfers_doc (unique): company_id, doc_no
+
+## fa_verification_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| verification_id | INTEGER | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| line_status | TEXT | yes |  | 'EXPECTED' |
+| asset_condition | TEXT |  |  |  |
+| scanned_by | TEXT |  |  |  |
+| scanned_at | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: asset_id -> fa_assets(id), verification_id -> fa_verifications(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_verification_lines_company_id: company_id
+- ix_fa_verification_lines_asset: asset_id
+- ux_fa_verification_lines (unique): verification_id, asset_id
+
+## fa_verifications
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| verify_date | TEXT | yes |  |  |
+| verify_status | TEXT | yes |  | 'OPEN' |
+| expected_count | INTEGER | yes |  | 0 |
+| found_count | INTEGER | yes |  | 0 |
+| closed_by | TEXT |  |  |  |
+| closed_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_verifications_site: org_site_id
+- ix_fa_verifications_project: org_project_id
+- ux_fa_verifications_doc (unique): company_id, doc_no
+
 ## fin_account_groups
 
 | Column | Type | Not null | Key | Default |
@@ -11157,6 +11562,512 @@ Indexes:
 - ix_gis_progress_location: location_id, activity, as_of
 - ix_gis_progress_project: org_project_id, activity, as_of
 - ix_gis_progress_company_id: company_id
+
+## gst_2b_imports
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| gstin | TEXT | yes |  |  |
+| file_name | TEXT | yes |  |  |
+| file_format | TEXT | yes |  |  |
+| lines_count | INTEGER | yes |  | 0 |
+| duplicates_count | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_2b_imports_period: company_id, period
+- ux_gst_2b_imports_doc (unique): company_id, doc_no
+
+## gst_2b_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| import_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| line_hash | TEXT | yes |  |  |
+| supplier_gstin | TEXT | yes |  |  |
+| supplier_name | TEXT |  |  |  |
+| doc_type | TEXT | yes |  | 'INV' |
+| invoice_no | TEXT | yes |  |  |
+| invoice_date | TEXT | yes |  |  |
+| pos | TEXT |  |  |  |
+| reverse_charge | INTEGER | yes |  | 0 |
+| rate_pct | INTEGER | yes |  | 0 |
+| taxable_paise | INTEGER | yes |  | 0 |
+| igst_paise | INTEGER | yes |  | 0 |
+| cgst_paise | INTEGER | yes |  | 0 |
+| sgst_paise | INTEGER | yes |  | 0 |
+| cess_paise | INTEGER | yes |  | 0 |
+| itc_available | INTEGER | yes |  | 1 |
+| match_status | TEXT | yes |  | 'MISSING_IN_BOOKS' |
+| matched_bill_id | INTEGER |  |  |  |
+| match_note | TEXT |  |  |  |
+| books_tax_paise | INTEGER |  |  |  |
+| diff_paise | INTEGER | yes |  | 0 |
+| owner | TEXT |  |  |  |
+| resolution_status | TEXT | yes |  | 'OPEN' |
+| resolution_note | TEXT |  |  |  |
+| resolved_by | TEXT |  |  |  |
+| resolved_at | TEXT |  |  |  |
+| followups_count | INTEGER | yes |  | 0 |
+| next_followup | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: matched_bill_id -> ap_bills(id), import_id -> gst_2b_imports(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_2b_lines_owner: company_id, owner, resolution_status
+- ix_gst_2b_lines_bill: matched_bill_id
+- ix_gst_2b_lines_import: import_id
+- ix_gst_2b_lines_supplier: company_id, supplier_gstin, invoice_date
+- ix_gst_2b_lines_list: company_id, period, match_status
+- ux_gst_2b_lines_hash (unique): company_id, line_hash
+
+## gst_compliance_log
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| document_type | TEXT | yes |  |  |
+| document_id | INTEGER | yes |  |  |
+| ref_kind | TEXT | yes |  |  |
+| ref_id | INTEGER |  |  |  |
+| action | TEXT | yes |  |  |
+| gsp_mode | TEXT | yes |  | 'SANDBOX' |
+| outcome | TEXT | yes |  |  |
+| request_json | TEXT |  |  |  |
+| response_json | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| correlation_id | TEXT |  |  |  |
+| actor | TEXT |  |  |  |
+| integration_log_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_compliance_log_company: company_id, ref_kind, created_at
+- ix_gst_compliance_log_doc: document_type, document_id, id
+
+## gst_einvoices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| document_type | TEXT | yes |  |  |
+| document_id | INTEGER | yes |  |  |
+| irp_doc_type | TEXT | yes |  |  |
+| document_no | TEXT | yes |  |  |
+| document_date | TEXT | yes |  |  |
+| fy | TEXT | yes |  |  |
+| seller_gstin | TEXT | yes |  |  |
+| buyer_gstin | TEXT |  |  |  |
+| supply_type | TEXT | yes |  | 'B2B' |
+| reverse_charge | INTEGER | yes |  | 0 |
+| taxable_paise | INTEGER | yes |  | 0 |
+| tax_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| request_json | TEXT |  |  |  |
+| irn | TEXT |  |  |  |
+| ack_no | TEXT |  |  |  |
+| ack_date | TEXT |  |  |  |
+| signed_qr | TEXT |  |  |  |
+| einv_status | TEXT | yes |  | 'PENDING' |
+| error_code | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| attempts | INTEGER | yes |  | 0 |
+| next_retry_at | TEXT |  |  |  |
+| due_by | TEXT |  |  |  |
+| gsp_mode | TEXT | yes |  | 'SANDBOX' |
+| cancel_reason_code | TEXT |  |  |  |
+| cancel_remark | TEXT |  |  |  |
+| cancelled_at | TEXT |  |  |  |
+| cancelled_by | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_einvoices_project: org_project_id
+- ix_gst_einvoices_retry: einv_status, next_retry_at
+- ix_gst_einvoices_list: company_id, einv_status, document_date
+- ux_gst_einvoices_irn (unique): irn
+- ux_gst_einvoices_number (unique): seller_gstin, fy, irp_doc_type, 
+- ux_gst_einvoices_source (unique): document_type, document_id
+- ux_gst_einvoices_doc (unique): company_id, doc_no
+
+## gst_ewaybills
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| document_type | TEXT | yes |  |  |
+| document_id | INTEGER | yes |  |  |
+| document_no | TEXT | yes |  |  |
+| document_date | TEXT | yes |  |  |
+| ewb_doc_type | TEXT | yes |  |  |
+| sub_type | TEXT | yes |  |  |
+| from_gstin | TEXT | yes |  |  |
+| to_gstin | TEXT |  |  |  |
+| from_state | TEXT | yes |  |  |
+| to_state | TEXT | yes |  |  |
+| from_pin | TEXT | yes |  |  |
+| to_pin | TEXT | yes |  |  |
+| distance_km | INTEGER | yes |  |  |
+| hsn_code | TEXT | yes |  |  |
+| value_paise | INTEGER | yes |  |  |
+| tax_paise | INTEGER | yes |  | 0 |
+| transport_mode | TEXT | yes |  | 'ROAD' |
+| vehicle_type | TEXT | yes |  | 'REGULAR' |
+| vehicle_no | TEXT |  |  |  |
+| transporter_id | TEXT |  |  |  |
+| transporter_doc | TEXT |  |  |  |
+| request_json | TEXT |  |  |  |
+| ewb_no | TEXT |  |  |  |
+| ewb_date | TEXT |  |  |  |
+| valid_until | TEXT |  |  |  |
+| extensions_count | INTEGER | yes |  | 0 |
+| ewb_status | TEXT | yes |  | 'PENDING' |
+| error_code | TEXT |  |  |  |
+| error | TEXT |  |  |  |
+| attempts | INTEGER | yes |  | 0 |
+| alerted_at | TEXT |  |  |  |
+| history_json | TEXT | yes |  | '[]' |
+| gsp_mode | TEXT | yes |  | 'SANDBOX' |
+| cancel_reason_code | TEXT |  |  |  |
+| cancel_remark | TEXT |  |  |  |
+| cancelled_at | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_ewaybills_project: org_project_id
+- ix_gst_ewaybills_source: document_type, document_id
+- ix_gst_ewaybills_list: company_id, ewb_status, valid_until
+- ux_gst_ewaybills_live (unique): document_type, document_id
+- ux_gst_ewaybills_no (unique): ewb_no
+- ux_gst_ewaybills_doc (unique): company_id, doc_no
+
+## gst_gstin_checks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| gstin | TEXT | yes |  |  |
+| format_ok | INTEGER | yes |  | 0 |
+| problem | TEXT |  |  |  |
+| api_status | TEXT | yes |  | 'UNKNOWN' |
+| legal_name | TEXT |  |  |  |
+| trade_name | TEXT |  |  |  |
+| state_code | TEXT |  |  |  |
+| checked_at | TEXT | yes |  |  |
+| check_source | TEXT | yes |  | 'FORMAT' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_gstin_checks_status: company_id, api_status
+- ux_gst_gstin_checks (unique): company_id, gstin
+
+## gst_itc_review_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| review_id | INTEGER | yes |  |  |
+| bill_id | INTEGER |  |  |  |
+| line_2b_id | INTEGER |  |  |  |
+| supplier_gstin | TEXT |  |  |  |
+| supplier_name | TEXT |  |  |  |
+| invoice_no | TEXT |  |  |  |
+| invoice_date | TEXT |  |  |  |
+| taxable_paise | INTEGER | yes |  | 0 |
+| tax_paise | INTEGER | yes |  | 0 |
+| decision | TEXT | yes |  |  |
+| reason | TEXT |  |  |  |
+| claim_paise | INTEGER | yes |  | 0 |
+| reverse_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: line_2b_id -> gst_2b_lines(id), bill_id -> ap_bills(id), review_id -> gst_itc_reviews(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_itc_review_lines_company_id: company_id
+- ix_gst_itc_review_lines_2b: line_2b_id
+- ix_gst_itc_review_lines_bill: bill_id
+- ix_gst_itc_review_lines_review: review_id, decision
+
+## gst_itc_reviews
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| eligible_paise | INTEGER | yes |  | 0 |
+| blocked_paise | INTEGER | yes |  | 0 |
+| held_paise | INTEGER | yes |  | 0 |
+| reversed_paise | INTEGER | yes |  | 0 |
+| override_paise | INTEGER | yes |  | 0 |
+| claimable_paise | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> gst_itc_reviews(id), journal_id -> fin_journals(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_itc_reviews_amends: amends_id
+- ix_gst_itc_reviews_journal: journal_id
+- ix_gst_itc_reviews_wf: workflow_instance_id
+- ix_gst_itc_reviews_list: company_id, status, period
+- ux_gst_itc_reviews_open (unique): company_id, period
+- ux_gst_itc_reviews_doc (unique): company_id, doc_no
+
+## gst_recon_followups
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| line_id | INTEGER |  |  |  |
+| bill_id | INTEGER |  |  |  |
+| partner_id | INTEGER |  |  |  |
+| channel | TEXT | yes |  |  |
+| note | TEXT | yes |  |  |
+| next_date | TEXT |  |  |  |
+| by_user | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), bill_id -> ap_bills(id), line_id -> gst_2b_lines(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_recon_followups_company_id: company_id
+- ix_gst_recon_followups_partner: partner_id
+- ix_gst_recon_followups_bill: bill_id
+- ix_gst_recon_followups_line: line_id
+
+## gst_return_filings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| return_type | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| gstin | TEXT | yes |  |  |
+| data_json | TEXT | yes |  | '{}' |
+| filing_status | TEXT | yes |  | 'PREPARED' |
+| arn | TEXT |  |  |  |
+| filed_on | TEXT |  |  |  |
+| filed_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_return_filings_status: company_id, filing_status
+- ux_gst_return_filings (unique): company_id, return_type, period, gstin
+
+## gst_settings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| effective_from | TEXT | yes |  |  |
+| aato_paise | INTEGER | yes |  | 0 |
+| einvoice_enabled | INTEGER | yes |  | 0 |
+| einvoice_threshold_paise | INTEGER | yes |  | 50000000000 |
+| irn_window_aato_paise | INTEGER | yes |  | 100000000000 |
+| irn_window_days | INTEGER | yes |  | 30 |
+| irn_alert_days_json | TEXT | yes |  | '[20,25]' |
+| irn_cancel_hours | INTEGER | yes |  | 24 |
+| eway_enabled | INTEGER | yes |  | 0 |
+| eway_threshold_paise | INTEGER | yes |  | 5000000 |
+| eway_max_doc_age_days | INTEGER | yes |  | 180 |
+| eway_ext_cap_days | INTEGER | yes |  | 360 |
+| eway_km_per_day | INTEGER | yes |  | 200 |
+| eway_odc_km_per_day | INTEGER | yes |  | 20 |
+| eway_ext_window_hours | INTEGER | yes |  | 8 |
+| eway_cancel_hours | INTEGER | yes |  | 24 |
+| eway_alert_hours | INTEGER | yes |  | 12 |
+| gsp_connector_code | TEXT |  |  |  |
+| gsp_mode | TEXT | yes |  | 'SANDBOX' |
+| change_note | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_gst_settings_wf: workflow_instance_id
+- ix_gst_settings_list: company_id, status, effective_from
+- ux_gst_settings_doc (unique): company_id, doc_no
 
 ## hr_candidates
 
@@ -28636,6 +29547,82 @@ Indexes:
 - ix_tdr_tenders_company_id: company_id
 - ux_tdr_tenders_ref (unique): company_id, client_partner_id, reference_no
 - ux_tdr_tenders_doc (unique): company_id, doc_no
+
+## tds_26as_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| fy | TEXT | yes |  |  |
+| line_hash | TEXT | yes |  |  |
+| deductor_tan | TEXT | yes |  |  |
+| deductor_name | TEXT |  |  |  |
+| section | TEXT |  |  |  |
+| txn_date | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  | 0 |
+| tds_paise | INTEGER | yes |  | 0 |
+| matched_receipt_id | INTEGER |  |  |  |
+| match_status | TEXT | yes |  | 'UNMATCHED' |
+| diff_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: matched_receipt_id -> ar_receipts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tds_26as_lines_receipt: matched_receipt_id
+- ix_tds_26as_lines_fy: company_id, fy, match_status
+- ux_tds_26as_lines_hash (unique): company_id, line_hash
+
+## tds_returns
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| quarter | TEXT | yes |  |  |
+| form | TEXT | yes |  |  |
+| data_json | TEXT | yes |  | '{}' |
+| challans_json | TEXT | yes |  | '[]' |
+| deducted_paise | INTEGER | yes |  | 0 |
+| deposited_paise | INTEGER | yes |  | 0 |
+| return_status | TEXT | yes |  | 'DRAFT' |
+| token_no | TEXT |  |  |  |
+| filed_on | TEXT |  |  |  |
+| filed_by | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_tds_returns_status: company_id, return_status
+- ux_tds_returns_quarter (unique): company_id, form, quarter
+- ux_tds_returns_doc (unique): company_id, doc_no
 
 ## tpl_auto_rules
 
