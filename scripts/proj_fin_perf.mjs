@@ -10,6 +10,7 @@ import { createBase } from '../src/server/modules/proc/base.js';
 import { bindFin, createFinService } from '../src/server/modules/fin/service.js';
 import { createGlService } from '../src/server/modules/fin/gl.js';
 import { createProjectAccountingService } from '../src/server/modules/fin/projacct.js';
+import { createCostForecastService } from '../src/server/modules/fin/costforecast.js';
 
 const args = process.argv.slice(2);
 const queries = Number(args.includes('--queries') ? args[args.indexOf('--queries') + 1] : 30);
@@ -24,7 +25,7 @@ db.exec('COMMIT');
 const fin = createFinService({ db }); bindFin(db, fin); fin.ensureSetup(1);
 const acct = (code) => db.prepare('SELECT id FROM fin_accounts WHERE company_id = 1 AND code = ?').get(code).id;
 const flags = { isOn: () => true }; const base = createBase({ db }); const gl = createGlService({ db, base });
-const pa = createProjectAccountingService({ db, base, gl, flags });
+const cf = createCostForecastService({ db, base, flags }); const pa = createProjectAccountingService({ db, base, gl, flags, forecast: () => cf });
 const acc = { user: 'acc', roles: ['ACCMGR'], companyId: 1 };
 const p95 = (ms) => [...ms].sort((x, y) => x - y)[Math.floor(ms.length * 0.95)] ?? 0;
 const results = [];
@@ -57,6 +58,22 @@ time('preview of a month (from the ledger: 2 000 lines of the project)', 800, (i
 time('project trial balance of the year', 500, (i) => pa.reports.trialBalance(acc, { projectId: projects[i % 50], from: '2026-04-01', to: '2027-03-31' }));
 time('WIP report of the month (100 000 records)', 500, () => pa.reports.wip(acc, { period: '2066-12' }), 10);
 time('overhead report of the year', 500, () => pa.reports.overheads(acc, { from: '2026-04', to: '2027-03' }));
+// 23.11: 50 projects × 200 WBS/cost code facts (10 000 lines), 100 000 forecasts
+console.log('Filling 10 000 control facts and 100 000 cost forecasts...');
+db.exec('BEGIN');
+const ccIds = []; for (let k = 0; k < 200; k += 1) ccIds.push(fill('fin_cost_codes', { company_id: 1, code: `CC${k}`, name: `Cost ${k}` }));
+const insF = db.prepare("INSERT INTO ctl_facts (company_id, org_project_id, wbs_id, cost_code_id, period_key, budget_cost, budget_qty, committed_cost, actual_cost, actual_qty, earned_cost, created_by) VALUES (1, ?, NULL, ?, '', ?, 1000000, ?, ?, 300000, ?, 'perf')");
+for (const p of projects) for (const c of ccIds) insF.run(p, c, 10_000_000, 2_000_000, 4_000_000, 3_000_000);
+const insC = db.prepare("INSERT INTO fc_forecasts (company_id, doc_no, org_project_id, period, version_no, budget_paise, eac_total_paise, vac_total_paise, status, created_by) VALUES (1, ?, ?, ?, 1, 2000000000, 2100000000, -100000000, ?, 'perf')");
+for (let i = 0; i < 100_000; i += 1) { const p = projects[i % 50]; const k = Math.floor(i / 50); const per = `${1900 + Math.floor(k / 12)}-${String(1 + (k % 12)).padStart(2, '0')}`; insC.run(`FC/${i}`, p, per, k % 10 === 0 ? 'SUPERSEDED' : 'APPROVED'); }
+db.exec('COMMIT'); db.exec('ANALYZE');
+const pcm = { user: 'pcm', roles: ['PCMGR'], companyId: 1 };
+time('cost forecast list, first page', 500, () => cf.forecasts.list(pcm, {}));
+time('cost forecast list, a month', 500, () => cf.forecasts.list(pcm, { 'filter[period]': '2026-10' }));
+let made = null; time('a forecast prepared from 200 facts (save)', 800, (i) => { const x = cf.forecasts.create(pcm, { projectId: projects[i % 50], period: '2026-11' }); made = x; db.prepare("UPDATE fc_forecasts SET status = 'CANCELLED' WHERE id = ?").run(x.id); }, 10);
+time('one forecast with 200 lines and its bridge', 300, () => cf.forecasts.get(pcm, made.id));
+time('forecast variance of all projects (100 000 forecasts)', 500, () => cf.reports.variance(pcm, { period: '2066-12' }), 10);
+time('EAC trend of a project', 500, (i) => cf.reports.trend(pcm, { projectId: projects[i % 50] }));
 const plan = (label, sql) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all()) console.log(`    ${r.detail}`); };
 plan('ledger of a project to a date', "SELECT a.id, SUM(l.debit_paise) FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = 1 AND l.project_id = 5 AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date <= '2026-10-31' GROUP BY a.id");
 plan('recognitions of a month', "SELECT x.* FROM pa_revenue_recognition x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.period = '2026-10' ORDER BY x.period DESC LIMIT 25");

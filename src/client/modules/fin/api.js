@@ -272,3 +272,17 @@ export const pa = {
   overheads: (f) => glget(`/project-accounts/overheads?${q(f)}`),
   catchUp: async () => (await api.post('/fin/project-accounts/overheads/catch-up', {}, idem())).data,
 };
+
+// ---- part 23.11: cost forecast ----
+export const fc = {
+  list: (f) => glget(`/cost-forecasts?${q(f)}`),
+  candidates: (f) => glget(`/cost-forecasts/candidates?${q(f)}`),
+  get: (id) => glget(`/cost-forecasts/${id}`),
+  create: async (b) => (await api.post('/fin/cost-forecasts', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/cost-forecasts/${id}`, b, idem())).data,
+  line: async (id, lineId, b) => (await api.patch(`/fin/cost-forecasts/${id}/lines/${lineId}`, b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/cost-forecasts/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/cost-forecasts/${id}`)).data,
+  trend: (f) => glget(`/forecast-reports/trend?${q(f)}`),
+  variance: (f) => glget(`/forecast-reports/variance?${q(f)}`),
+};

@@ -10112,3 +10112,72 @@ paths:
     get:
       summary: "project accounts: CSV { kind: tb | wip | overheads } (part 23.10; fin.project_ledger.export)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts:
+    get:
+      summary: "cost forecast: list (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "cost forecast: prepare a version of a month { projectId, period } from the control facts (part 23.11; fin.forecast.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/candidates:
+    get:
+      summary: "cost forecast: projects with control facts and their forecast of a month (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/export:
+    get:
+      summary: "cost forecast: CSV (part 23.11; fin.forecast.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}:
+    get:
+      summary: "cost forecast: one forecast with its lines, bridge and history (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "cost forecast: pending variations, confidence, commentary (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "cost forecast: delete a draft (part 23.11; fin.forecast.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/lines/{lineId}:
+    patch:
+      summary: "cost forecast: a line: method, accrued, remaining quantity, rate, manual amount, justification (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/import:
+    post:
+      summary: "cost forecast: line methods from rows (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/refresh:
+    post:
+      summary: "cost forecast: refresh from the control facts (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/submit:
+    post:
+      summary: "cost forecast: send for approval (PCMGR, PM, PD; CFO when loss-making) (part 23.11; fin.forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/withdraw:
+    post:
+      summary: "cost forecast: withdraw { reason } (part 23.11; fin.forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/cancel:
+    post:
+      summary: "cost forecast: cancel { reason } (part 23.11; fin.forecast.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/amend:
+    post:
+      summary: "cost forecast: a new version of an approved forecast { reason } (part 23.11; fin.forecast.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/history:
+    get:
+      summary: "cost forecast: history (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/print:
+    get:
+      summary: "cost forecast: PDF (part 23.11; fin.forecast.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/forecast-reports/trend:
+    get:
+      summary: "cost forecast: EAC of a project month by month { projectId } (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/forecast-reports/variance:
+    get:
+      summary: "cost forecast: forecast against budget of every project to a month { period } (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

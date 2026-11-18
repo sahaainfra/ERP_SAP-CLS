@@ -10502,6 +10502,116 @@ Indexes:
 - ix_fa_verifications_project: org_project_id
 - ux_fa_verifications_doc (unique): company_id, doc_no
 
+## fc_forecast_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| forecast_id | INTEGER | yes |  |  |
+| wbs_id | INTEGER |  |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| line_label | TEXT | yes |  |  |
+| budget_paise | INTEGER | yes |  | 0 |
+| budget_qty_milli | INTEGER | yes |  | 0 |
+| committed_paise | INTEGER | yes |  | 0 |
+| actual_paise | INTEGER | yes |  | 0 |
+| actual_qty_milli | INTEGER | yes |  | 0 |
+| earned_paise | INTEGER | yes |  | 0 |
+| accrued_paise | INTEGER | yes |  | 0 |
+| etc_method | TEXT | yes |  | 'REMAINING_BUDGET' |
+| remaining_qty_milli | INTEGER |  |  |  |
+| rate_x100 | INTEGER |  |  |  |
+| manual_paise | INTEGER |  |  |  |
+| etc_paise | INTEGER | yes |  | 0 |
+| eac_paise | INTEGER | yes |  | 0 |
+| vac_paise | INTEGER | yes |  | 0 |
+| method_note | TEXT |  |  |  |
+| notes | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: cost_code_id -> fin_cost_codes(id), wbs_id -> proj_wbs(id), forecast_id -> fc_forecasts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fc_forecast_lines_company: company_id
+- ix_fc_forecast_lines_code: cost_code_id
+- ix_fc_forecast_lines_wbs: wbs_id
+- ix_fc_forecast_lines_forecast: forecast_id
+- ux_fc_forecast_lines_key (unique): forecast_id, , 
+
+## fc_forecasts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| budget_paise | INTEGER | yes |  | 0 |
+| committed_paise | INTEGER | yes |  | 0 |
+| actual_paise | INTEGER | yes |  | 0 |
+| accrued_paise | INTEGER | yes |  | 0 |
+| etc_paise | INTEGER | yes |  | 0 |
+| lines_eac_paise | INTEGER | yes |  | 0 |
+| risk_allowance_paise | INTEGER | yes |  | 0 |
+| pending_var_cost_paise | INTEGER | yes |  | 0 |
+| pending_var_note | TEXT |  |  |  |
+| eac_total_paise | INTEGER | yes |  | 0 |
+| vac_total_paise | INTEGER | yes |  | 0 |
+| contract_revenue_paise | INTEGER | yes |  | 0 |
+| loss_making | INTEGER | yes |  | 0 |
+| confidence | TEXT | yes |  | 'MEDIUM' |
+| commentary | TEXT |  |  |  |
+| prev_forecast_id | INTEGER |  |  |  |
+| bridge_json | TEXT | yes |  | '[]' |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> fc_forecasts(id), prev_forecast_id -> fc_forecasts(id), period_id -> core_periods(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fc_forecasts_amends: amends_id
+- ix_fc_forecasts_prev: prev_forecast_id
+- ix_fc_forecasts_wf: workflow_instance_id
+- ix_fc_forecasts_period: period_id
+- ix_fc_forecasts_project: org_project_id, period, status
+- ix_fc_forecasts_list: company_id, period, status
+- ux_fc_forecasts_open (unique): org_project_id, period
+- ux_fc_forecasts_doc (unique): company_id, doc_no
+
 ## fin_account_groups
 
 | Column | Type | Not null | Key | Default |

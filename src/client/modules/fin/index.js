@@ -33,6 +33,8 @@ const GstReturnsPage = lazyPage(() => import('./GstReconPages.jsx'), 'GstReturns
 const AssetRegisterPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetRegisterPage');
 const RevenueRecognitionPage = lazyPage(() => import('./ProjectAccountingPages.jsx'), 'RevenueRecognitionPage');
 const ProjectAccountsPage = lazyPage(() => import('./ProjectAccountingPages.jsx'), 'ProjectAccountsPage');
+const ForecastWorkbenchPage = lazyPage(() => import('./ForecastPages.jsx'), 'ForecastWorkbenchPage');
+const ForecastReportsPage = lazyPage(() => import('./ForecastPages.jsx'), 'ForecastReportsPage');
 const AssetAccountingPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetAccountingPage');
 const GstSettingsPage = lazyPage(() => import('./GstPages.jsx'), 'GstSettingsPage');
 
@@ -83,6 +85,8 @@ registerModule({
     { path: '/finance/asset-accounting', label: 'Capitalise, Depreciate & FA Reports', labelHi: 'पूंजीकरण व मूल्यह्रास', icon: 'erp.action.history', permission: 'fin.asset.view', flag: 'ff.fin.p2309', Page: AssetAccountingPage },
     { path: '/finance/revenue-recognition', label: 'Revenue Recognition', labelHi: 'राजस्व मान्यता', icon: 'erp.action.history', permission: 'fin.revenue_recognition.view', flag: 'ff.fin.p2310', Page: RevenueRecognitionPage },
     { path: '/finance/project-accounts', label: 'Project Trial Balance & WIP', labelHi: 'परियोजना तलपट व WIP', icon: 'erp.action.history', permission: 'fin.project_ledger.view', flag: 'ff.fin.p2310', Page: ProjectAccountsPage },
+    { path: '/finance/cost-forecasts', label: 'Forecast Workbench', labelHi: 'पूर्वानुमान कार्यक्षेत्र', icon: 'erp.action.history', permission: 'fin.forecast.view', flag: 'ff.fin.p2311', Page: ForecastWorkbenchPage },
+    { path: '/finance/forecast-reports', label: 'EAC Trend & Forecast Variance', labelHi: 'EAC प्रवृत्ति व पूर्वानुमान अंतर', icon: 'erp.action.history', permission: 'fin.forecast.view', flag: 'ff.fin.p2311', Page: ForecastReportsPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });
