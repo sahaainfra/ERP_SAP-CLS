@@ -1,6 +1,6 @@
 // A one-page PDF of lines of text with a QR code drawn as squares at the top right (no image library needed): the e-invoice's signed QR (23.07)
 // on the e-invoice page and on the tax invoice's own print (D-732).
-/** @param {Array<[string, any]>} lines @param {{ size: number, get: (x: number, y: number) => any }} modules @param {string} title */
+/** @param {any[][]} lines @param {{ size: number, get: (x: number, y: number) => any }} modules @param {string} title */
 export function qrPdf(lines, modules, title) {
   const esc = (s) => String(s).replace(/[^\x20-\x7e]/g, '?').replace(/([()\\])/g, '\\$1');
   const n = modules.size; const cell = Math.min(4, 220 / n); const x0 = 595 - 36 - n * cell; const y0 = 842 - 60;
