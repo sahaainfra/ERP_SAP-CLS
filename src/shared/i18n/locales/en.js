@@ -26,6 +26,7 @@ import rmc from './en/rmc.js';
 import ctr from './en/ctr.js';
 import bill from './en/bill.js';
 import fin from './en/fin.js';
+import cash from './en/cash.js';
 
 // One file per area (part 166.4, D-682): the server and the tests read the whole text here; the screens fetch an area when a page first needs it.
 export default {
@@ -56,4 +57,5 @@ export default {
   ctr: ctr,
   bill: bill,
   fin: fin,
+  cash: cash,
 };

@@ -26,8 +26,8 @@ const guardOf = (q, what, permission) => (q.error?.status === 403 || q.error?.st
 const Tabs = ({ tabs, tab, setTab, label, prefix }) => (
   <div className="actions-row" role="tablist" aria-label={label}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={`btn${tab === k ? ' btn-primary' : ''}`} style={{ minHeight: 44 }} onClick={() => setTab(k)} data-testid={`${prefix}-${k}`}>{l}</button>)}</div>
 );
-function Decide({ x, run, busy, setError }) {
-  const t = useT('fin'); const [comment, setComment] = useState('');
+function Decide({ x, run, busy, setError, ns = 'fin' }) {
+  const t = useT(ns); const [comment, setComment] = useState('');
   if (!x?.approve || !x.taskId) return null;
   const decide = (action) => { if (action !== 'approve' && comment.trim().length < 5) { setError({ form: t('act.sayWhy') }); return; } run(() => gl.decide(x.taskId, action, comment.trim() || null), t(`done.${action}`)); };
   return (
@@ -109,7 +109,7 @@ export function BankReconciliationPage() {
 // ---- the site imprest on the phone ----
 const CATS = ['MATERIAL', 'TRANSPORT', 'FOOD', 'REPAIRS', 'SITE_EXPENSE', 'TRAVEL', 'POSTAGE', 'OTHER'];
 function VoucherForm({ imp, onDone }) {
-  const t = useT('fin'); const off = useOffline(); const { error, note, setNote, busy, run } = useGlRunner();
+  const t = useT('cash'); const off = useOffline(); const { error, note, setNote, busy, run } = useGlRunner();
   const [f, setF] = useState({ date: today(), payee: '', category: 'MATERIAL', description: '', amount: '', gst: '', expenseAccountId: '' }); const [photo, setPhoto] = useState(null);
   const heads = imp.heads ?? [];
   const fe = error?.fields ?? {}; const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
@@ -136,7 +136,7 @@ function VoucherForm({ imp, onDone }) {
   );
 }
 function Voucher({ id }) {
-  const t = useT('fin'); const q = useQuery({ queryKey: ['gl', 'cb-voucher', id], queryFn: () => cb.voucher(id), retry: false }); const { error, setError, note, busy, run } = useGlRunner(); usePageTitle(t('cb.voucher'));
+  const t = useT('cash'); const q = useQuery({ queryKey: ['gl', 'cb-voucher', id], queryFn: () => cb.voucher(id), retry: false }); const { error, setError, note, busy, run } = useGlRunner(); usePageTitle(t('cb.voucher'));
   const g = guardOf(q, t('cb.voucher'), 'fin.imprest_voucher.view'); if (g) return g; const x = q.data;
   return (
     <div data-testid="cb-voucher" data-status={x.status}>
@@ -144,22 +144,22 @@ function Voucher({ id }) {
       <p>{x.categoryLabel} · {x.description} · {x.date}{x.photos.length ? ` · ${t('cb.photos', { n: x.photos.length })}` : ''}</p>
       <GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}
       <div className="actions-row">{x.can.submit && <button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => run(() => cb.voucherAct(x.id, 'submit'), t('cb.voucherSent'))}>{t('act.submit')}</button>}{x.can.cancel && <button type="button" className="btn" style={big} disabled={busy} onClick={() => { const r = globalThis.prompt(t('act.why')); if (r) run(() => cb.voucherAct(x.id, 'cancel', { reason: r })); }}>{t('act.cancel')}</button>}</div>
-      <Decide x={x} run={run} busy={busy} setError={setError} />
+      <Decide x={x} run={run} busy={busy} setError={setError} ns="cash" />
     </div>
   );
 }
 function Replenishment({ id }) {
-  const t = useT('fin'); const q = useQuery({ queryKey: ['gl', 'cb-repl', id], queryFn: () => cb.replenishment(id), retry: false }); const { error, setError, note, busy, run } = useGlRunner(); usePageTitle(t('cb.replenishment'));
+  const t = useT('cash'); const q = useQuery({ queryKey: ['gl', 'cb-repl', id], queryFn: () => cb.replenishment(id), retry: false }); const { error, setError, note, busy, run } = useGlRunner(); usePageTitle(t('cb.replenishment'));
   const g = guardOf(q, t('cb.replenishment'), 'fin.imprest_replenishment.view'); if (g) return g; const x = q.data;
   return (
     <div data-testid="cb-repl" data-status={x.status}>
       <PageHeader id="cbp-h" title={<>{x.docNo} <StatusBadge status={JN_TONE[x.status]} label={t(`pm.st.${x.status}`)} /></>} subtitle={`${t('cb.vouchersN', { n: x.vouchers })} · ${money(x.amount)}`} meta={<Link to="/finance/imprest">{t('cb.imprest')}</Link>} />
-      <GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}<Decide x={x} run={run} busy={busy} setError={setError} />
+      <GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}<Decide x={x} run={run} busy={busy} setError={setError} ns="cash" />
     </div>
   );
 }
 export function ImprestPage() {
-  const t = useT('fin'); usePageTitle(t('cb.imprest')); const sp = useSearch(); const session = useSession();
+  const t = useT('cash'); usePageTitle(t('cb.imprest')); const sp = useSearch(); const session = useSession();
   const list = useQuery({ queryKey: ['gl', 'cb-imprests'], queryFn: cb.imprests, retry: false }); const banks = useQuery({ queryKey: ['gl', 'pm-banks'], queryFn: pm.banks, retry: false, enabled: can(session.data, 'fin.imprest_replenishment.create') });
   const [sel, setSel] = useState(''); const [tab, setTab] = useState('voucher'); const [den, setDen] = useState({}); const { error, note, busy, run } = useGlRunner();
   const chosen = sel || String(list.data?.find((i) => i.mine)?.id ?? list.data?.[0]?.id ?? '');
