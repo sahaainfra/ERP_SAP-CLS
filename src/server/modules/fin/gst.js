@@ -165,6 +165,20 @@ export function createGstService({ db, base, flags, now = () => Date.now() }) {
   }
   const stateOf = (gstin, state) => (state ? String(state) : gstin ? String(gstin).slice(0, 2) : null);
   /**
+   * D-733: the GST of a bill worked out outside this engine (client bills and certificates of 22.x, sub bills, AP direct bills): the rate is the SAC/HSN's
+   * in force on the date when one is given, else it must be a rate in force then (06.02); the supply is intra- or inter-state by the supplier's state and the
+   * place of supply (the property's state for works contract, else the recipient's) when they are known, else as given. Untouched when the part is off.
+   */
+  function documentGst(companyId, { date, pct = null, code = null, hsn = null, supplierGstin = null, recipientGstin = null, placeOfSupply = null, supply = null, taxablePaise = null, taxPaise = null }) {
+    const out = { pct, supply, rateCode: null, problems: /** @type {{ field: string, message: string }[]} */ ([]), engine: false }; if (!on(companyId)) return out; out.engine = true;
+    // a bill typed with its GST amount (AP direct bills): the amount must be a rate in force on the taxable value, within a rupee of rounding
+    if (pct == null && !code && !hsn && taxablePaise > 0 && taxPaise > 0) { const rates = db.prepare("SELECT code, igst_pct FROM mdm_gst_rates WHERE (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND deleted_at IS NULL AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?) AND igst_pct > 0").all(companyId, date, date); const hit = rates.find((r) => Math.abs(Math.round((taxablePaise * r.igst_pct) / 1_000_000) - taxPaise) <= 100); if (hit) { out.pct = hit.igst_pct / 10000; out.rateCode = hit.code; } else out.problems.push({ field: 'gst', message: `₹${(taxPaise / 100).toFixed(2)} of GST on ₹${(taxablePaise / 100).toFixed(2)} is not a GST rate in force on ${date} (GST rates master, 06.02).` }); }
+    if (code || hsn) { const r = rateOn(companyId, { code, hsn }, date); out.rateCode = r.code; const p2 = r.igst / 10000; if (pct != null && Math.abs(Number(pct) - p2) > 0.0001) out.problems.push({ field: 'gstPct', message: `The GST rate of ${hsn ?? code} on ${date} is ${p2}%, not ${pct}%.` }); out.pct = p2; }
+    else if (pct != null && Number(pct) > 0) { const r = db.prepare("SELECT code FROM mdm_gst_rates WHERE igst_pct = ? AND (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND deleted_at IS NULL AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?) ORDER BY company_id IS NULL, effective_from DESC LIMIT 1").get(Math.round(Number(pct) * 10000), companyId, date, date); if (r) out.rateCode = r.code; else out.problems.push({ field: 'gstPct', message: `${pct}% is not a GST rate in force on ${date} (GST rates master, 06.02).` }); }
+    const from = stateOf(supplierGstin, null); const pos = placeOfSupply ?? stateOf(recipientGstin, null); if (from && pos) out.supply = from === pos ? 'intra' : 'inter';
+    return out;
+  }
+  /**
    * FR-01: the tax lines of a document. `input`: { docDate, supplyDate?, paymentDate?, supplierGstin?, supplierState?, recipientGstin?, recipientState?, placeOfSupply?, propertyState?,
    * supplyKind: B2B | B2C | SEZ | EXPORT | IMPORT | DEEMED_EXPORT, withPayment? (SEZ or export with IGST paid), reverseCharge?, lines: [{ hsn? | rateCode?, taxable }] }.
    */
@@ -459,5 +473,5 @@ export function createGstService({ db, base, flags, now = () => Date.now() }) {
     catch (x) { log(companyId, { documentType, documentId, refKind: 'EINVOICE', action: 'prepare', mode: settingsOn(companyId).gsp_mode, outcome: 'REFUSED', error: x.message }); notify(companyId, 'fin.gst.alert', ['permission:fin.einvoice.generate'], String(documentId), 'e-invoice not prepared', `The e-invoice of document ${documentId} (${documentType}) was not prepared: ${x.message}`, '/finance/e-invoices?tab=due', Number(documentId)); return null; }
   }
 
-  return { resolve: (actor, input) => { need(actor, 'fin.gst.resolve', 'use the tax engine'); return resolve(actor.companyId, input); }, resolveFor: resolve, rateOn, settings, settingsOn, gstins, einvoices, ewaybills, jobs, consumers, ownGstins };
+  return { resolve: (actor, input) => { need(actor, 'fin.gst.resolve', 'use the tax engine'); return resolve(actor.companyId, input); }, resolveFor: resolve, rateOn, documentGst, settings, settingsOn, gstins, einvoices, ewaybills, jobs, consumers, ownGstins };
 }

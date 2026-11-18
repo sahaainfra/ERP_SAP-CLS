@@ -1,4 +1,5 @@
 import { transaction } from '../../platform/db/index.js';
+import { taxEngineOf } from '../../platform/tax/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { toPdf } from '../../platform/export/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
@@ -250,6 +251,8 @@ export function createApService({ db, base, gl, flags }) {
     // the expense line must satisfy its account's dimension rules (06.05) at save, not only when the last approver posts it
     if (gl) { const chk = gl.checkLines(actor.companyId, [{ accountId: ea.id, debit: '1', ...(b.projectId ? { projectId: Number(b.projectId) } : {}), ...(b.siteId ? { siteId: Number(b.siteId) } : {}) }, { accountId: apAccount(actor.companyId, p), credit: '1', partnerId: p.id }], { source: 'ENGINE' }); const bad = chk.problems.filter((x) => x.field.startsWith('lines.0.')); if (bad.length) throw badRequest('Correct the highlighted fields', bad.map((x) => ({ field: x.field.endsWith('.accountId') ? 'expenseAccountId' : x.field.replace('lines.0.', ''), message: x.message }))); }
     const gross = paise(b.amount); const gst = paise(b.gst ?? 0); const due = b.dueDate ?? addDays(b.billDate, Number(param(actor.companyId, 'fin.ap.default_credit_days') ?? 30));
+    // D-733: the GST typed is checked by the tax engine (23.07): a rate in force on the bill date
+    if (gst > 0) { const te = taxEngineOf(db)?.documentGst?.(actor.companyId, { date: b.billDate, taxablePaise: gross, taxPaise: gst }); if (te?.problems.length) throw badRequest('Correct the highlighted fields', te.problems); }
     if (due < b.billDate) throw badRequest('Correct the highlighted fields', [{ field: 'dueDate', message: 'The due date is on or after the bill date.' }]);
     const tds = b.tdsNature ? tdsFor(actor.companyId, { partnerId: p.id, nature: b.tdsNature, date: b.billDate, basePaise: gross }) : null;
     return { p, gross, gst, due, tds };

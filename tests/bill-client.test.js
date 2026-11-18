@@ -29,6 +29,8 @@ test('FR-01 FR-02 FR-03 T-01 the first bill from the certified measurements: pre
   const w = await world(); const adv = ctrOf(w.d).svc.advances.apply(1, { contractId: w.k.id, refNo: 'ADV-1', kind: 'MOBILISATION', advance: 70_000, recovered: 0 }); assert.ok(adv.id);
   await w.cert(w.item, 20); await w.cert(w.item2, 5); const m3 = await w.cert(w.item, 0.5); assert.ok(m3);
   assert.equal((await w.bc(U.mse, 'POST', '/client-bills', bodyOf(w))).status, 403); assert.equal((await w.bc(U.qs, 'POST', '/client-bills', bodyOf(w, { periodTo: day(-40) }))).status, 400, 'period ends before it starts'); assert.equal((await w.bc(U.qs, 'POST', '/client-bills', bodyOf(w, { net: 1 }))).status, 400, 'the net is the server\'s');
+  // D-733: the bill's GST rate is one in force on its date (the tax engine of 23.07)
+  const p7 = await w.bc(U.qs, 'POST', '/client-bills/preview', bodyOf(w, { gstPct: 7 })); assert.equal(p7.status, 400); assert.match(JSON.stringify(p7.json), /7% is not a GST rate in force/);
   const pv = await w.bc(U.qs, 'POST', '/client-bills/preview', bodyOf(w)); assert.equal(pv.status, 200, JSON.stringify(pv.json)); assert.equal(w.d.prepare('SELECT COUNT(*) AS n FROM bill_client_bills').get().n, 0, 'a preview saves nothing');
   const c = await w.bc(U.qs, 'POST', '/client-bills', bodyOf(w)); assert.equal(c.status, 201, JSON.stringify(c.json)); const b = c.json.data;
   assert.deepEqual([b.status, b.seqNo, b.billType, b.items.length], ['DRAFT', 1, 'RA', 2]);

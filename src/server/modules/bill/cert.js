@@ -1,4 +1,5 @@
 import { calcOf } from '../../platform/calc/index.js';
+import { taxEngineOf } from '../../platform/tax/index.js';
 import { transaction } from '../../platform/db/index.js';
 import { toPdf } from '../../platform/export/index.js';
 import { conflict, unprocessable } from '../../platform/http/errors.js';
@@ -52,7 +53,8 @@ export function createCertService({ db, base }) {
     }
     const gross = rows.reduce((n, x) => n + x._cert, 0); const subEsc = bill.escalation_paise; let esc = subEsc;
     if (escalation != null) { esc = paise(escalation); if (esc !== subEsc && (escalationReason ?? '').trim().length < 3) fail([{ field: 'escalationReason', message: 'Say why the certified escalation differs' }]); }
-    const taxable = Math.max(0, gross + esc); const pct = bill.gst_pct_bp / 100; const gst = gstOf(taxable, pct, bill.supply, rec); const bd = JSON.parse(bill.deductions_json); const out = []; const done = new Set();
+    // D-733: the GST rate checked by the tax engine (23.07)
+    const taxable = Math.max(0, gross + esc); const te = taxEngineOf(db)?.documentGst?.(companyId, { date: certDate ?? todayIST(), pct: bill.gst_pct_bp / 100, supply: bill.supply }); if (te?.problems.length) fail(te.problems.map((x) => ({ ...x, message: `${x.message} Correct the bill's GST rate.` }))); const pct = bill.gst_pct_bp / 100; const gst = gstOf(taxable, pct, bill.supply, rec); const bd = JSON.parse(bill.deductions_json); const out = []; const done = new Set();
     for (const [i, x] of deductions.entries()) if (!bd.some((d) => d.kind === x.kind) && !(x.kind in DEDUCTION_KIND)) fail([{ field: `deductions.${i}.kind`, message: 'Not a kind of deduction' }]);
     const baseOf = { gross, taxable };
     for (const d of bd) {
