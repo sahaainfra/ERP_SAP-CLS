@@ -256,3 +256,19 @@ export const fa = {
   setTaxOpening: async (b) => (await api.put('/fin/asset-reports/tax-openings', b, idem())).data,
   removeTaxOpening: async (id) => (await api.delete(`/fin/asset-reports/tax-openings/${id}`)).data,
 };
+
+// ---- part 23.10: project accounting ----
+export const pa = {
+  list: (f) => glget(`/revenue-recognition?${q(f)}`),
+  candidates: (f) => glget(`/revenue-recognition/candidates?${q(f)}`),
+  get: (id) => glget(`/revenue-recognition/${id}`),
+  preview: async (b) => (await api.post('/fin/revenue-recognition/preview', b)).data,
+  create: async (b) => (await api.post('/fin/revenue-recognition', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/revenue-recognition/${id}`, b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/revenue-recognition/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/revenue-recognition/${id}`)).data,
+  tb: (f) => glget(`/project-accounts/trial-balance?${q(f)}`),
+  wip: (f) => glget(`/project-accounts/wip?${q(f)}`),
+  overheads: (f) => glget(`/project-accounts/overheads?${q(f)}`),
+  catchUp: async () => (await api.post('/fin/project-accounts/overheads/catch-up', {}, idem())).data,
+};

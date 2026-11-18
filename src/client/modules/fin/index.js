@@ -31,6 +31,8 @@ const EwayBillRegisterPage = lazyPage(() => import('./GstPages.jsx'), 'EwayBillR
 const GstReconPage = lazyPage(() => import('./GstReconPages.jsx'), 'GstReconPage');
 const GstReturnsPage = lazyPage(() => import('./GstReconPages.jsx'), 'GstReturnsPage');
 const AssetRegisterPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetRegisterPage');
+const RevenueRecognitionPage = lazyPage(() => import('./ProjectAccountingPages.jsx'), 'RevenueRecognitionPage');
+const ProjectAccountsPage = lazyPage(() => import('./ProjectAccountingPages.jsx'), 'ProjectAccountsPage');
 const AssetAccountingPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetAccountingPage');
 const GstSettingsPage = lazyPage(() => import('./GstPages.jsx'), 'GstSettingsPage');
 
@@ -79,6 +81,8 @@ registerModule({
     // part 23.09: fixed assets and depreciation
     { path: '/finance/assets', label: 'Asset Register', labelHi: 'परिसंपत्ति रजिस्टर', icon: 'erp.action.history', permission: 'fin.asset.view', flag: 'ff.fin.p2309', Page: AssetRegisterPage },
     { path: '/finance/asset-accounting', label: 'Capitalise, Depreciate & FA Reports', labelHi: 'पूंजीकरण व मूल्यह्रास', icon: 'erp.action.history', permission: 'fin.asset.view', flag: 'ff.fin.p2309', Page: AssetAccountingPage },
+    { path: '/finance/revenue-recognition', label: 'Revenue Recognition', labelHi: 'राजस्व मान्यता', icon: 'erp.action.history', permission: 'fin.revenue_recognition.view', flag: 'ff.fin.p2310', Page: RevenueRecognitionPage },
+    { path: '/finance/project-accounts', label: 'Project Trial Balance & WIP', labelHi: 'परियोजना तलपट व WIP', icon: 'erp.action.history', permission: 'fin.project_ledger.view', flag: 'ff.fin.p2310', Page: ProjectAccountsPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });

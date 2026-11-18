@@ -10035,3 +10035,80 @@ paths:
     get:
       summary: "fixed assets and depreciation /asset-reports/tax-blocks (part 23.09; fin.depreciation.view)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition:
+    get:
+      summary: "revenue recognition: list (filters: period, project, status) (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "revenue recognition: create a draft { projectId, period, method, surveyPct?, surveyNote? }: worked out from the ledgers (part 23.10; fin.revenue_recognition.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/candidates:
+    get:
+      summary: "revenue recognition: projects with an approved contract and the state of the month (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/preview:
+    post:
+      summary: "revenue recognition: the figures, trace and journal of a month, nothing saved (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/import:
+    post:
+      summary: "revenue recognition: drafts from rows { project, period, method?, surveyPct?, surveyNote? } (part 23.10; fin.revenue_recognition.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/export:
+    get:
+      summary: "revenue recognition: CSV of the list (part 23.10; fin.revenue_recognition.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}:
+    get:
+      summary: "revenue recognition: one record with its trace, journal and history (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "revenue recognition: work a draft out again (method, survey) (part 23.10; fin.revenue_recognition.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "revenue recognition: delete a draft (part 23.10; fin.revenue_recognition.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/submit:
+    post:
+      summary: "revenue recognition: send for approval (ACCMGR when someone else prepared it, then CFO) (part 23.10; fin.revenue_recognition.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/withdraw:
+    post:
+      summary: "revenue recognition: withdraw { reason } (part 23.10; fin.revenue_recognition.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/cancel:
+    post:
+      summary: "revenue recognition: cancel { reason } (part 23.10; fin.revenue_recognition.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/amend:
+    post:
+      summary: "revenue recognition: amend the latest approved month { reason } (part 23.10; fin.revenue_recognition.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/history:
+    get:
+      summary: "revenue recognition: approval and audit history (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/print:
+    get:
+      summary: "revenue recognition: PDF (part 23.10; fin.revenue_recognition.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/trial-balance:
+    get:
+      summary: "project accounts: project trial balance { projectId, from, to } with heads (part 23.10; fin.project_ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/wip:
+    get:
+      summary: "project accounts: WIP and unbilled revenue of the projects to a month (part 23.10; fin.project_ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/overheads:
+    get:
+      summary: "project accounts: overhead posted to the projects { from, to } and the runs not yet posted (part 23.10; fin.project_ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/overheads/catch-up:
+    post:
+      summary: "project accounts: post the 12.04 runs not yet in the books (part 23.10; fin.overhead.post)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/export:
+    get:
+      summary: "project accounts: CSV { kind: tb | wip | overheads } (part 23.10; fin.project_ledger.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

@@ -20115,6 +20115,112 @@ Indexes:
 - ix_oss_status: company_id, compliance_status
 - ux_oss_component (unique): company_id, component
 
+## pa_overhead_allocations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| pool | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| basis_value_paise | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  |  |
+| journal_id | INTEGER |  |  |  |
+| alloc_status | TEXT | yes |  | 'POSTED' |
+| reversal_journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: reversal_journal_id -> fin_journals(id), journal_id -> fin_journals(id), org_project_id -> org_projects(id), period_id -> core_periods(id), run_id -> bud_alloc_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pa_overhead_allocations_rev: reversal_journal_id
+- ix_pa_overhead_allocations_journal: journal_id
+- ix_pa_overhead_allocations_period: period_id
+- ix_pa_overhead_allocations_project: org_project_id, period
+- ix_pa_overhead_allocations_list: company_id, period
+- ux_pa_overhead_allocations_run (unique): run_id, org_project_id
+
+## pa_revenue_recognition
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| method | TEXT | yes |  | 'COST_TO_COST' |
+| survey_pct_ppm | INTEGER |  |  |  |
+| survey_note | TEXT |  |  |  |
+| cost_to_date_paise | INTEGER | yes |  | 0 |
+| eac_paise | INTEGER | yes |  | 0 |
+| eac_source | TEXT | yes |  | 'BUDGET' |
+| eac_ref | TEXT |  |  |  |
+| output_paise | INTEGER | yes |  | 0 |
+| poc_ppm | INTEGER | yes |  | 0 |
+| contract_revenue_paise | INTEGER | yes |  | 0 |
+| recognised_cum_paise | INTEGER | yes |  | 0 |
+| recognised_prev_paise | INTEGER | yes |  | 0 |
+| recognised_period_paise | INTEGER | yes |  | 0 |
+| billed_cum_paise | INTEGER | yes |  | 0 |
+| unbilled_paise | INTEGER | yes |  | 0 |
+| excess_billing_paise | INTEGER | yes |  | 0 |
+| expected_loss_paise | INTEGER | yes |  | 0 |
+| loss_provision_paise | INTEGER | yes |  | 0 |
+| prev_unbilled_paise | INTEGER | yes |  | 0 |
+| prev_excess_paise | INTEGER | yes |  | 0 |
+| prev_provision_paise | INTEGER | yes |  | 0 |
+| calc_json | TEXT | yes |  | '{}' |
+| journal_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> pa_revenue_recognition(id), journal_id -> fin_journals(id), period_id -> core_periods(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pa_revenue_recognition_amends: amends_id
+- ix_pa_revenue_recognition_journal: journal_id
+- ix_pa_revenue_recognition_wf: workflow_instance_id
+- ix_pa_revenue_recognition_period: period_id
+- ix_pa_revenue_recognition_project: org_project_id, period
+- ix_pa_revenue_recognition_list: company_id, period, status
+- ux_pa_revenue_recognition_open (unique): org_project_id, period
+- ux_pa_revenue_recognition_doc (unique): company_id, doc_no
+
 ## pcs_check_results
 
 | Column | Type | Not null | Key | Default |
