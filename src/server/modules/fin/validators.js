@@ -109,3 +109,22 @@ export const parseBankAccount = (b) => parse(z.object({
   template: z.object({ delimiter: z.string().max(1).optional(), header: z.boolean().optional(), trailer: z.boolean().optional(), dateFormat: z.enum(['YYYY-MM-DD', 'DD/MM/YYYY']).optional(), columns: z.array(z.string()).max(20).optional() }).strict().optional(),
   chequeFrom: z.number().int().min(1).optional().nullable(), chequeTo: z.number().int().min(1).optional().nullable(), blocked: z.boolean().optional(), version: z.number().int().min(1).optional(),
 }).strict(), b);
+
+// ---- part 23.05: receivables ----
+const otherBody = { partnerId: id, projectId: id.optional().nullable(), incomeKind: z.enum(['SCRAP', 'HIRE_OUT', 'RENT', 'OTHER']), incomeAccountId: id, description: z.string().trim().min(3).max(300), invoiceNo: z.string().trim().max(60).optional().nullable(), invoiceDate: date, dueDate: date.optional().nullable(), amount: money, gst: money.optional(), total: money.optional() };
+export const parseArInvoiceCreate = (b) => parse(z.object(otherBody).strict(), b);
+export const parseArInvoiceUpdate = (b) => parse(z.object({ ...otherBody, version: z.number().int().min(1) }).strict(), b);
+const allocRow = z.object({ invoiceId: id, amount: money }).strict();
+const receiptBody = { partnerId: id, receiptDate: date, bankAccountId: id, reference: z.string().trim().max(60).optional().nullable(), projectId: id.optional().nullable(), amount: money, tds: money.optional(), tdsSection: z.string().trim().max(20).optional().nullable(), gstTds: money.optional(), retention: money.optional(),
+  otherDeductions: z.array(z.object({ label: z.string().trim().min(2).max(100), accountId: id, amount: money }).strict()).max(10).optional(), allocations: z.array(allocRow).max(200).optional(), auto: z.boolean().optional() };
+export const parseReceiptCreate = (b) => parse(z.object({ ...receiptBody, post: z.boolean().optional() }).strict(), b);
+export const parseReceiptUpdate = (b) => parse(z.object({ ...receiptBody, version: z.number().int().min(1) }).strict(), b);
+export const parseAllocate = (b) => parse(z.object({ allocations: z.array(allocRow).max(200).optional(), auto: z.boolean().optional() }).strict().refine((v) => v.auto || (v.allocations ?? []).length > 0, { message: 'Give the allocation or ask for it oldest first.', path: ['allocations'] }), b);
+export const parseTdsMatched = (b) => parse(z.object({ matched: z.boolean() }).strict(), b);
+export const parseOpenInvoices = (q) => parse(z.object({ partnerId: id }).strict(), q);
+export const parseCreditNote = (b) => parse(z.object({ invoiceId: id, reason: z.enum(['RATE_REVISION', 'DISPUTE', 'QUANTITY', 'OTHER']), noteDate: date, description: z.string().trim().min(5).max(300), taxable: money, gst: money.optional() }).strict(), b);
+export const parseWriteOff = (b) => parse(z.object({ invoiceId: id, amount: money, reason: z.string().trim().min(10, 'Say why (at least 10 characters)').max(300) }).strict(), b);
+export const parseFollowup = (b) => parse(z.object({ date, action: z.enum(['CALL', 'EMAIL', 'VISIT', 'LETTER', 'REMINDER']), notes: z.string().trim().min(3).max(500), contact: z.string().trim().max(100).optional().nullable(), promisedDate: date.optional().nullable(), promised: money.optional().nullable(), nextDate: date.optional().nullable() }).strict(), b);
+export const parseWorklist = (q) => parse(z.object({ partnerId: id.optional(), projectId: id.optional(), bucket: z.enum(['0', '30', '60', '90']).optional() }).strict(), q);
+export const parseArAgeing = (q) => parse(z.object({ asOf: date.optional(), projectId: id.optional() }).strict(), q);
+export const parseClientStatement = (q) => parse(z.object({ partnerId: id, from: date.optional(), to: date.optional() }).strict(), q);

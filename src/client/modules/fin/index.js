@@ -21,6 +21,8 @@ const PayablesPage = lazyPage(() => import('./ApPages.jsx'), 'PayablesPage');
 const PaymentProposalsPage = lazyPage(() => import('./PaymentPages.jsx'), 'PaymentProposalsPage');
 const PaymentsPage = lazyPage(() => import('./PaymentPages.jsx'), 'PaymentsPage');
 const BankAccountsPage = lazyPage(() => import('./PaymentPages.jsx'), 'BankAccountsPage');
+const ReceivablesPage = lazyPage(() => import('./ArPages.jsx'), 'ReceivablesPage');
+const CollectionsPage = lazyPage(() => import('./ArPages.jsx'), 'CollectionsPage');
 
 // Module "fin" (part 06.05): the finance masters. The chart of accounts (tree, Schedule III, import from Tally, changes), the account object page (properties, dimension rules, mapping), the cost heads and cost
 // codes, and the item category mapping. Every change is approved by the CFO before it applies.
@@ -50,6 +52,9 @@ registerModule({
     { path: '/finance/payment-proposals', label: 'Payment Proposals', labelHi: 'भुगतान प्रस्ताव', icon: 'erp.action.history', permission: 'fin.proposal.view', flag: 'ff.fin.p2304', Page: PaymentProposalsPage },
     { path: '/finance/payments', label: 'Payments & Cheque Register', labelHi: 'भुगतान', icon: 'erp.action.history', permission: 'fin.payment.view', flag: 'ff.fin.p2304', Page: PaymentsPage },
     { path: '/finance/bank-accounts', label: 'Company Bank Accounts', labelHi: 'कंपनी बैंक खाते', icon: 'erp.action.history', permission: 'fin.bank.view', flag: 'ff.fin.p2304', Page: BankAccountsPage },
+    // part 23.05: receivables
+    { path: '/finance/receivables', label: 'Receivables & Receipts', labelHi: 'प्राप्य', icon: 'erp.action.history', permission: 'fin.invoice.view', flag: 'ff.fin.p2305', Page: ReceivablesPage },
+    { path: '/finance/collections', label: 'Collections Follow-up', labelHi: 'वसूली', icon: 'erp.action.history', permission: 'fin.followup.view', flag: 'ff.fin.p2305', Page: CollectionsPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });

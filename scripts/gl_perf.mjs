@@ -12,6 +12,7 @@ import { createGlService } from '../src/server/modules/fin/gl.js';
 import { createPostingService } from '../src/server/modules/fin/posting.js';
 import { createApService } from '../src/server/modules/fin/ap.js';
 import { createPaymentService } from '../src/server/modules/fin/payments.js';
+import { createArService } from '../src/server/modules/fin/ar.js';
 
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
@@ -124,6 +125,26 @@ time('proposals list, first page (25)', 500, () => pmSvc.proposals.list(acc, { p
 time('one payment run (100 lines and payments)', 300, (i) => pmSvc.proposals.get(acc, 1 + (i % 1000)));
 time('candidates: bills to pay (100 000 bills, 100 000 payments)', 800, () => pmSvc.proposals.candidates(fx, { dueBy: '2026-12-31', projectId: undefined, partnerId: undefined, msmeOnly: false }), 10);
 time('cheque register (10 000 cheques)', 800, () => pmSvc.payments.chequeRegister(acc, { bankAccountId: bankAcc }), 10);
+
+// part 23.05 §14: 100 000 receivables of 200 clients over 50 projects (half settled by 50 000 receipts), then the list, one receivable, the ageing with DSO, the collections worklist, a client statement and a receipt posted oldest first
+console.log('\nFilling 100 000 receivables...');
+db.exec('BEGIN');
+const clientsP = []; for (let v = 1; v <= 200; v += 1) { const id = Number(db.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, trade_name, constitution, pan, partner_status, steward_role, created_by) VALUES (1, ?, ?, ?, 'GOVERNMENT', 'AAAGT1234F', 'ACTIVE', 'PROCMGR', 'perf')").run(`CL${v}`, `Client ${v}`, `CL${v}`).lastInsertRowid); db.prepare("INSERT INTO mdm_partner_roles (company_id, partner_id, partner_role, created_by) VALUES (1, ?, 'CLIENT', 'perf')").run(id); clientsP.push(id); }
+const insAr = db.prepare("INSERT INTO ar_invoices (company_id, doc_no, inv_source, source_ref, org_project_id, partner_id, invoice_no, invoice_date, due_date, taxable_paise, gst_paise, amount_paise, received_paise, status, created_by) VALUES (1, ?, 'TAX_INVOICE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED', 'perf')");
+const insRc = db.prepare("INSERT INTO ar_receipts (company_id, doc_no, partner_id, receipt_date, bank_account_id, amount_paise, allocated_paise, status, created_by) VALUES (1, ?, ?, ?, ?, ?, ?, 'APPROVED', 'perf')");
+const insAl = db.prepare("INSERT INTO ar_allocations (company_id, receipt_id, invoice_id, amount_paise, allocated_on, created_by) VALUES (1, ?, ?, ?, ?, 'perf')");
+for (let i = 0; i < 100_000; i += 1) { const c = clientsP[i % 200]; const date = `2026-${String(4 + (i % 8)).padStart(2, '0')}-${String(1 + (i % 27)).padStart(2, '0')}`; const amt = 1_000_000 + (i % 9_000_000); const paid = i % 2 === 0;
+  const inv = Number(insAr.run(`AR/${i + 1}`, String(i + 1), projects[i % 50], c, `36/2026-27/${String(i + 1).padStart(6, '0')}`, date, date, Math.round(amt / 1.18), amt - Math.round(amt / 1.18), amt, paid ? amt : 0).lastInsertRowid);
+  if (paid) { const rc = Number(insRc.run(`RCPT/${i + 1}`, c, date, bankAcc, amt, amt).lastInsertRowid); insAl.run(rc, inv, amt, date); } }
+db.exec('COMMIT'); db.exec('ANALYZE');
+const arSvc = createArService({ db, base: createBase({ db }), gl, flags: { isOn: () => true } });
+time('receivables list, first page (25)', 500, () => arSvc.invoices.list(acc, { pageSize: '25' }));
+time('receivables, page 300', 500, () => arSvc.invoices.list(acc, { pageSize: '25', page: '300' }));
+time('one receivable', 300, (i) => arSvc.invoices.get(acc, 1 + ((i * 7919) % 100_000)));
+time('receivables ageing with DSO (100 000)', 800, () => arSvc.ageing(acc, { asOf: '2027-01-31' }), 10);
+time('collections worklist', 500, () => arSvc.followups.worklist(acc, {}), 10);
+time('client statement (500 invoices, 250 receipts)', 500, (i) => arSvc.statement(acc, { partnerId: clientsP[i % 200], from: undefined, to: undefined }));
+time('save: a receipt posted oldest first', 800, (i) => arSvc.receipts.create(fx, { partnerId: clientsP[i % 200], receiptDate: '2026-11-15', bankAccountId: bankAcc, amount: '25000', tds: '500', tdsSection: '393(1)', auto: true, projectId: projects[0], post: true }), 20);
 
 console.log('\nQuery plans:');
 const plan = (label, sql, ...p) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(...p)) console.log(`    ${r.detail}`); };

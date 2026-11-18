@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, glOf, paymentsOf, postingOf } from './index.js';
+import { apOf, arOf, glOf, paymentsOf, postingOf } from './index.js';
 
 // The finance masters (part 06.05) for the rest of the ERP: the approval of a change (FIN_MASTER_CHANGE: the accounts manager checks what the project controls manager proposes, then the CFO approves),
 // what the approver sees, the object page of an account (search, audit), the form lookups (accounts, accounts open to manual postings, cost codes) and the events consumers listen to.
@@ -196,6 +196,47 @@ workflowTypes.register({
   },
   defaultDefinition: { name: 'Payment release: the accounts manager; above ₹10 lakh the CFO; above ₹1 crore a director (never the preparer; released by a third person)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above ₹10 lakh)', 'CFO', { field: 'overAcc', op: 'eq', value: 1 }), glStep('DIR', 'Director (above ₹1 crore)', 'DIR', { field: 'overCfo', op: 'eq', value: 1 })] },
   hooks: { onApproved: pmDecide('APPROVED'), onRejected: pmDecide('REJECTED'), onReturned: pmDecide('RETURNED'), onCancelled: pmDecide('CANCELLED') },
+});
+// ---- part 23.05: receivables ----
+for (const [type, description] of [
+  ['fin.ar_invoice.created', 'A receivable was made (part 23.05 FR-01): from an issued tax invoice, or an approved other-income invoice: data { invoiceId, docNo, source, partnerId, projectId, amount, dueDate }.'],
+  ['fin.receipt.posted', 'A receipt from a client was posted (part 23.05 FR-02): data { receiptId, docNo, partnerId, date, bankAccountId, reference, amount, tds, gstTds, retention, other, allocated, onAccount, journalId, invoices[] }. The cash forecast (23.13), bank reconciliation (23.06) and the client portal (25.04) read it.'],
+  ['fin.receipt.allocated', 'A receipt on account was set against invoices (part 23.05): data { receiptId, docNo, partnerId, invoices[] }.'],
+  ['fin.receipt.cancelled', 'A posted receipt was cancelled and reversed (part 23.05): data { receiptId, docNo, partnerId, amount, reason }.'],
+  ['fin.ar_credit_note.approved', 'A credit note to a client was approved and posted (part 23.05 FR-04): data { noteId, docNo, invoiceId, invoiceNo, partnerId, reason, taxable, cgst, sgst, igst, total, irnRequired, irnDueDate }. E-invoicing (23.07) reads it.'],
+  ['fin.ar.written_off', 'A receivable was written off (part 23.05): data { writeoffId, docNo, invoiceId, partnerId, amount, reason }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const arDecide = (outcome, kind) => (db, { instance, actor, comment }) => arOf(db)?.[kind].decide(instance, actor, outcome, comment);
+const arHooks = (kind) => ({ onApproved: arDecide('APPROVED', kind), onRejected: arDecide('REJECTED', kind), onReturned: arDecide('RETURNED', kind), onCancelled: arDecide('CANCELLED', kind) });
+const arRow = (db, table, id) => db.prepare(`SELECT x.*, p.legal_name FROM ${table} x JOIN mdm_partners p ON p.id = x.partner_id WHERE x.id = ?`).get(Number(id));
+workflowTypes.register({
+  docType: 'FIN_AR_INVOICE', label: 'Other-income invoice', processOwner: 'ACCMGR', route: (id) => `/finance/receivables?id=${id}`,
+  describe(db, companyId, id) { const r = arRow(db, 'ar_invoices', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.legal_name} ₹${(r.amount_paise / 100).toFixed(2)} ${r.description ?? ''}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = arRow(db, 'ar_invoices', id); return r ? { fields: [{ label: 'Party', value: r.legal_name }, { label: 'For', value: `${r.income_kind ?? ''} ${r.description ?? ''}` }, { label: 'Amount and GST', value: `₹${(r.taxable_paise / 100).toFixed(2)} + ₹${(r.gst_paise / 100).toFixed(2)}` }, { label: 'Due', value: r.due_date }] } : null; },
+  defaultDefinition: { name: 'Other-income invoice: the accounts manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR')] },
+  hooks: arHooks('invoices'),
+});
+workflowTypes.register({
+  docType: 'FIN_AR_CREDIT_NOTE', label: 'Credit note to a client', processOwner: 'ACCMGR', route: (id) => `/finance/receivables?cn=${id}`,
+  describe(db, companyId, id) { const r = arRow(db, 'ar_credit_notes', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.legal_name} ₹${(r.total_paise / 100).toFixed(2)} ${r.reason}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = arRow(db, 'ar_credit_notes', id); return r ? { fields: [{ label: 'Client', value: r.legal_name }, { label: 'Reason', value: `${r.reason}: ${r.description}` }, { label: 'Taxable and GST', value: `₹${(r.taxable_paise / 100).toFixed(2)} + ₹${((r.cgst_paise + r.sgst_paise + r.igst_paise) / 100).toFixed(2)}` }, ...(r.irn_required ? [{ label: 'IRN due by', value: r.irn_due_date }] : [])] } : null; },
+  defaultDefinition: { name: 'Credit note: the accounts manager; above ₹5 lakh the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above ₹5 lakh)', 'CFO', { field: 'overCfo', op: 'eq', value: 1 })] },
+  hooks: arHooks('notes'),
+});
+workflowTypes.register({
+  docType: 'FIN_AR_WRITEOFF', label: 'Write-off of a receivable', processOwner: 'CFO', route: (id) => `/finance/receivables?wo=${id}`,
+  describe(db, companyId, id) { const r = arRow(db, 'ar_writeoffs', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.legal_name} ₹${(r.amount_paise / 100).toFixed(2)}: ${r.reason}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = arRow(db, 'ar_writeoffs', id); return r ? { fields: [{ label: 'Client', value: r.legal_name }, { label: 'Amount', value: `₹${(r.amount_paise / 100).toFixed(2)}` }, { label: 'Why', value: r.reason }] } : null; },
+  defaultDefinition: { name: 'Write-off: the accounts manager, the CFO, then a director', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer', 'CFO'), glStep('DIR', 'Director', 'DIR')] },
+  hooks: arHooks('writeoffs'),
+});
+for (const [type, label, perm, route] of [['ar_invoices', 'Receivable', 'fin.invoice.view', '/finance/receivables?id='], ['ar_receipts', 'Receipt', 'fin.receipt.view', '/finance/receivables?receipt=']]) objectTypes.register({
+  type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,
+  access(db, actor, id) { const r = db.prepare(`SELECT company_id, org_project_id FROM ${type} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r || !authzOf(db).check(actor, perm, { companyId: r.company_id, projectId: r.org_project_id ?? undefined }).allowed) return null; return { companyId: r.company_id, projectId: r.org_project_id ?? undefined }; },
+  auditEntities: (id) => [{ entity: type, id }],
+  summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
+  related: () => [],
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND (doc_no LIKE ?${type === 'ar_invoices' ? ' OR invoice_no LIKE ?' : ' OR reference LIKE ?'}) ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, `%${q}%`, limit).map((x) => x.id); },
 });
 for (const [type, label, perm, route] of [['pmt_proposals', 'Payment proposal', 'fin.proposal.view', '/finance/payment-proposals?id='], ['pmt_payments', 'Payment', 'fin.payment.view', '/finance/payments?id=']]) objectTypes.register({
   type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,

@@ -141,3 +141,26 @@ export const pm = {
   chequeRegister: (bankAccountId) => glget(`/payments/cheque-register?bankAccountId=${bankAccountId}`),
   myTasks: async () => (await api.get('/workflow/tasks?mine=assigned')).data,
 };
+// part 23.05: receivables
+export const ar = {
+  invoice: (id) => glget(`/invoices/${id}`),
+  openInvoices: (partnerId) => glget(`/invoices/open?partnerId=${partnerId}`),
+  createInvoice: async (b) => (await api.post('/fin/invoices', b, idem())).data,
+  invoiceAct: async (id, action, b) => (await api.post(`/fin/invoices/${id}/${action}`, b ?? {}, idem())).data,
+  followup: async (id, b) => (await api.post(`/fin/invoices/${id}/followups`, b, idem())).data,
+  receipt: (id) => glget(`/receipts/${id}`),
+  createReceipt: async (b) => (await api.post('/fin/receipts', b, idem())).data,
+  receiptAct: async (id, action, b) => (await api.post(`/fin/receipts/${id}/${action}`, b ?? {}, idem())).data,
+  creditNotes: () => glget('/credit-notes'),
+  creditNote: (id) => glget(`/credit-notes/${id}`),
+  createCreditNote: async (b) => (await api.post('/fin/credit-notes', b, idem())).data,
+  creditNoteAct: async (id, action, b) => (await api.post(`/fin/credit-notes/${id}/${action}`, b ?? {}, idem())).data,
+  writeOff: (id) => glget(`/write-offs/${id}`),
+  createWriteOff: async (b) => (await api.post('/fin/write-offs', b, idem())).data,
+  writeOffAct: async (id, action, b) => (await api.post(`/fin/write-offs/${id}/${action}`, b ?? {}, idem())).data,
+  collections: (f) => glget(`/receivables/collections?${q(f)}`),
+  clients: () => glget('/receivables/clients'),
+  ageing: (f) => glget(`/receivables/ageing?${q(f)}`),
+  statement: (f) => glget(`/receivables/statement?${q(f)}`),
+  tds: (f) => glget(`/receivables/tds?${q(f)}`),
+};

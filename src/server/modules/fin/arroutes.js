@@ -1,0 +1,58 @@
+import { Router } from 'express';
+import { notFound } from '../../platform/http/errors.js';
+import { parseAllocate, parseArAgeing, parseArInvoiceCreate, parseArInvoiceUpdate, parseClientStatement, parseCreditNote, parseFollowup, parseId, parseJournalReason, parseOpenInvoices, parseRange, parseReceiptCreate, parseReceiptUpdate, parseTdsMatched, parseWorklist, parseWriteOff } from './validators.js';
+
+/** Part 23.05: the receivables API under /api/v1/fin (invoices, receipts, credit notes, write-offs, collections, reports), behind ff.fin.p2305. Rights are checked in the service. */
+export function arRoutes(ar, { idempotent, idempotentRequired, flags }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const file = (res, f) => res.status(200).set({ 'content-type': f.contentType, 'content-disposition': `attachment; filename="${f.fileName}"`, 'cache-control': 'no-store' }).send(f.buffer);
+  const pid = (req) => parseId(req.params.id);
+  r.use(['/invoices', '/receipts', '/credit-notes', '/write-offs', '/receivables'], (req, _res, next) => (flags.isOn(req.actor, 'ff.fin.p2305') ? next() : next(notFound('Receivables are not enabled for your company yet (feature flag ff.fin.p2305 is OFF).'))));
+  const { invoices: i, receipts: x, notes: n, writeoffs: w, followups: f } = ar;
+  r.get('/invoices/open', (req, res) => ok(res, i.open(req.actor, parseOpenInvoices(req.query))));
+  r.get('/invoices/export', (req, res) => file(res, i.exportCsv(req.actor, req.query)));
+  r.get('/invoices', (req, res) => res.json(i.list(req.actor, req.query)));
+  r.post('/invoices', idempotentRequired, (req, res) => ok(res, i.create(req.actor, parseArInvoiceCreate(req.body)), 201));
+  r.get('/invoices/:id', (req, res) => ok(res, i.get(req.actor, pid(req))));
+  r.patch('/invoices/:id', idempotent, (req, res) => ok(res, i.update(req.actor, pid(req), parseArInvoiceUpdate(req.body))));
+  r.delete('/invoices/:id', (req, res) => ok(res, i.remove(req.actor, pid(req))));
+  r.post('/invoices/:id/submit', idempotentRequired, (req, res) => ok(res, i.submit(req.actor, pid(req)), 202));
+  r.post('/invoices/:id/withdraw', idempotent, (req, res) => ok(res, i.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/invoices/:id/cancel', idempotent, (req, res) => ok(res, i.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.get('/invoices/:id/history', (req, res) => ok(res, i.history(req.actor, pid(req))));
+  r.get('/invoices/:id/print', (req, res) => file(res, i.print(req.actor, pid(req))));
+  r.get('/invoices/:id/dunning', (req, res) => file(res, i.dunning(req.actor, pid(req))));
+  r.post('/invoices/:id/followups', idempotentRequired, (req, res) => ok(res, f.add(req.actor, pid(req), parseFollowup(req.body)), 201));
+  r.get('/receipts/export', (req, res) => file(res, x.exportCsv(req.actor, req.query)));
+  r.get('/receipts', (req, res) => res.json(x.list(req.actor, req.query)));
+  r.post('/receipts', idempotentRequired, (req, res) => ok(res, x.create(req.actor, parseReceiptCreate(req.body)), 201));
+  r.get('/receipts/:id', (req, res) => ok(res, x.get(req.actor, pid(req))));
+  r.patch('/receipts/:id', idempotent, (req, res) => ok(res, x.update(req.actor, pid(req), parseReceiptUpdate(req.body))));
+  r.delete('/receipts/:id', (req, res) => ok(res, x.remove(req.actor, pid(req))));
+  r.post('/receipts/:id/submit', idempotentRequired, (req, res) => ok(res, x.post(req.actor, pid(req))));
+  r.post('/receipts/:id/allocate', idempotentRequired, (req, res) => ok(res, x.allocate(req.actor, pid(req), parseAllocate(req.body))));
+  r.post('/receipts/:id/cancel', idempotent, (req, res) => ok(res, x.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/receipts/:id/tds-matched', idempotent, (req, res) => ok(res, x.tdsMatched(req.actor, pid(req), parseTdsMatched(req.body))));
+  r.get('/credit-notes', (req, res) => ok(res, n.list(req.actor)));
+  r.post('/credit-notes', idempotentRequired, (req, res) => ok(res, n.create(req.actor, parseCreditNote(req.body)), 201));
+  r.get('/credit-notes/:id', (req, res) => ok(res, n.get(req.actor, pid(req))));
+  r.delete('/credit-notes/:id', (req, res) => ok(res, n.remove(req.actor, pid(req))));
+  r.post('/credit-notes/:id/submit', idempotentRequired, (req, res) => ok(res, n.submit(req.actor, pid(req)), 202));
+  r.post('/credit-notes/:id/withdraw', idempotent, (req, res) => ok(res, n.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/credit-notes/:id/cancel', idempotent, (req, res) => ok(res, n.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.get('/credit-notes/:id/history', (req, res) => ok(res, n.history(req.actor, pid(req))));
+  r.post('/write-offs', idempotentRequired, (req, res) => ok(res, w.create(req.actor, parseWriteOff(req.body)), 201));
+  r.get('/write-offs/:id', (req, res) => ok(res, w.get(req.actor, pid(req))));
+  r.post('/write-offs/:id/submit', idempotentRequired, (req, res) => ok(res, w.submit(req.actor, pid(req)), 202));
+  r.post('/write-offs/:id/withdraw', idempotent, (req, res) => ok(res, w.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/write-offs/:id/cancel', idempotent, (req, res) => ok(res, w.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.get('/write-offs/:id/history', (req, res) => ok(res, w.history(req.actor, pid(req))));
+  r.get('/receivables/collections', (req, res) => ok(res, f.worklist(req.actor, parseWorklist(req.query))));
+  r.get('/receivables/clients', (req, res) => ok(res, ar.clients(req.actor)));
+  r.get('/receivables/ageing', (req, res) => ok(res, ar.ageing(req.actor, parseArAgeing(req.query))));
+  r.get('/receivables/statement', (req, res) => ok(res, ar.statement(req.actor, parseClientStatement(req.query))));
+  r.get('/receivables/statement/pdf', (req, res) => file(res, ar.statementPdf(req.actor, parseClientStatement(req.query))));
+  r.get('/receivables/tds', (req, res) => ok(res, ar.tdsReceivable(req.actor, parseRange(req.query))));
+  return r;
+}

@@ -433,6 +433,291 @@ Indexes:
 - ix_ap_debit_notes_list: company_id, status, note_date
 - ux_ap_debit_notes_doc (unique): company_id, doc_no
 
+## ar_allocations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| receipt_id | INTEGER | yes |  |  |
+| invoice_id | INTEGER | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| allocated_on | TEXT | yes |  |  |
+| alloc_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: invoice_id -> ar_invoices(id), receipt_id -> ar_receipts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ar_allocations_company: company_id, alloc_status
+- ix_ar_allocations_invoice: invoice_id, alloc_status
+- ix_ar_allocations_receipt: receipt_id, alloc_status
+
+## ar_credit_notes
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| invoice_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| reason | TEXT | yes |  |  |
+| note_date | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| taxable_paise | INTEGER | yes |  |  |
+| cgst_paise | INTEGER | yes |  | 0 |
+| sgst_paise | INTEGER | yes |  | 0 |
+| igst_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  |  |
+| irn_required | INTEGER | yes |  | 0 |
+| irn_due_date | TEXT |  |  |  |
+| irn | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), org_project_id -> org_projects(id), partner_id -> mdm_partners(id), invoice_id -> ar_invoices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ar_credit_notes_wf: workflow_instance_id
+- ix_ar_credit_notes_journal: journal_id
+- ix_ar_credit_notes_project: org_project_id
+- ix_ar_credit_notes_partner: partner_id
+- ix_ar_credit_notes_invoice: invoice_id
+- ix_ar_credit_notes_list: company_id, status, note_date
+- ux_ar_credit_notes_doc (unique): company_id, doc_no
+
+## ar_followups
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| invoice_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| followup_date | TEXT | yes |  |  |
+| action | TEXT | yes |  |  |
+| notes | TEXT | yes |  |  |
+| contact_person | TEXT |  |  |  |
+| promised_date | TEXT |  |  |  |
+| promised_paise | INTEGER |  |  |  |
+| next_date | TEXT |  |  |  |
+| by_user | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), partner_id -> mdm_partners(id), invoice_id -> ar_invoices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ar_followups_company: company_id, promised_date
+- ix_ar_followups_project: org_project_id
+- ix_ar_followups_partner: partner_id
+- ix_ar_followups_invoice: invoice_id, followup_date
+
+## ar_invoices
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| inv_source | TEXT | yes |  |  |
+| source_ref | TEXT |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| partner_id | INTEGER | yes |  |  |
+| contract_id | INTEGER |  |  |  |
+| income_kind | TEXT |  |  |  |
+| income_account_id | INTEGER |  |  |  |
+| description | TEXT |  |  |  |
+| invoice_no | TEXT |  |  |  |
+| invoice_date | TEXT | yes |  |  |
+| due_date | TEXT | yes |  |  |
+| taxable_paise | INTEGER | yes |  | 0 |
+| gst_paise | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  |  |
+| received_paise | INTEGER | yes |  | 0 |
+| credited_paise | INTEGER | yes |  | 0 |
+| written_off_paise | INTEGER | yes |  | 0 |
+| interest_bp | INTEGER | yes |  | 0 |
+| promised_date | TEXT |  |  |  |
+| last_followup_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), income_account_id -> fin_accounts(id), contract_id -> ctr_contracts(id), partner_id -> mdm_partners(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ar_invoices_wf: workflow_instance_id
+- ix_ar_invoices_journal: journal_id
+- ix_ar_invoices_income: income_account_id
+- ix_ar_invoices_contract: contract_id
+- ix_ar_invoices_project: org_project_id
+- ix_ar_invoices_partner: partner_id, status, due_date
+- ix_ar_invoices_list: company_id, status, due_date
+- ux_ar_invoices_source (unique): company_id, inv_source, source_ref
+- ux_ar_invoices_doc (unique): company_id, doc_no
+
+## ar_receipts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| receipt_date | TEXT | yes |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| reference | TEXT |  |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| tds_paise | INTEGER | yes |  | 0 |
+| gst_tds_paise | INTEGER | yes |  | 0 |
+| retention_paise | INTEGER | yes |  | 0 |
+| other_ded_paise | INTEGER | yes |  | 0 |
+| other_ded_json | TEXT | yes |  | '[]' |
+| allocated_paise | INTEGER | yes |  | 0 |
+| unallocated_paise | INTEGER | yes |  | 0 |
+| tds_section | TEXT |  |  |  |
+| tds_quarter | TEXT |  |  |  |
+| tds_matched_26as | INTEGER | yes |  | 0 |
+| org_project_id | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), org_project_id -> org_projects(id), bank_account_id -> fin_bank_accounts(id), partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ar_receipts_wf: workflow_instance_id
+- ix_ar_receipts_journal: journal_id
+- ix_ar_receipts_project: org_project_id
+- ix_ar_receipts_bank: bank_account_id
+- ix_ar_receipts_partner: partner_id, receipt_date
+- ix_ar_receipts_list: company_id, status, receipt_date
+- ux_ar_receipts_doc (unique): company_id, doc_no
+
+## ar_writeoffs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| invoice_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| writeoff_date | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), org_project_id -> org_projects(id), partner_id -> mdm_partners(id), invoice_id -> ar_invoices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ar_writeoffs_wf: workflow_instance_id
+- ix_ar_writeoffs_journal: journal_id
+- ix_ar_writeoffs_project: org_project_id
+- ix_ar_writeoffs_partner: partner_id
+- ix_ar_writeoffs_invoice: invoice_id
+- ix_ar_writeoffs_list: company_id, status
+- ux_ar_writeoffs_doc (unique): company_id, doc_no
+
 ## ast_custody_log
 
 | Column | Type | Not null | Key | Default |
