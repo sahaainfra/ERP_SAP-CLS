@@ -107,4 +107,9 @@ test('CWIP settled into an asset; drafts from the equipment register and small a
   assert.equal(pm.additionsFull, 4500000, 'put to use 1 August: 180 days or more in the year'); assert.equal(pm.depreciation, 675000); assert.equal(bl.depreciation, 500000);
   assert.equal((await w.call(U.aud, 'GET', '/assets')).status, 200); assert.equal((await w.call(U.se, 'GET', '/assets')).status, 403); assert.equal((await w.call(U.acc, 'GET', '/assets/export')).status, 200);
   assert.equal((await w.call(U.acc, 'GET', `/assets/${bld.id}/print`)).status, 200);
+  // D-741: a disposal in finance of the asset of a registered machine makes the machine disposed of in the register (17.01), a deployed one released first
+  d.prepare("UPDATE plt_equipment SET approved_at = '2026-08-01', equip_state = 'DEPLOYED' WHERE id = ?").run(eq);
+  publishEvent(d, { type: 'fin.asset.disposed', entity: 'fa_disposals', entityId: 999, actorId: 'test', companyId: 1, data: { disposalId: 999, docNo: 'FAD/1', assetNo: drafts[0].doc_no, equipmentId: eq, method: 'SALE' } }); await w.drain();
+  const me = d.prepare('SELECT equip_state, state_note FROM plt_equipment WHERE id = ?').get(eq); assert.equal(me.equip_state, 'DISPOSED'); assert.match(me.state_note, /FAD\/1/);
+  assert.deepEqual(d.prepare("SELECT to_state FROM plt_timeline WHERE equipment_id = ? AND event = 'STATE' ORDER BY id").all(eq).map((x) => x.to_state), ['AVAILABLE', 'DISPOSED']);
 });

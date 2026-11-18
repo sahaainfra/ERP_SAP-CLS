@@ -222,7 +222,15 @@ export function createPlantService({ db, base, flags }) {
       if (['BREAKDOWN', 'DISPOSED'].includes(b.state) && !(b.note ?? '').trim()) fail([{ field: 'note', message: 'Say what happened' }]);
       return transaction(db, () => { db.prepare('UPDATE plt_equipment SET equip_state = ?, org_project_id = ?, org_site_id = ?, state_since = ?, state_note = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(b.state, pj?.id ?? null, st?.id ?? null, todayIST(), b.note ?? null, actor.user, nowIso(), e.id);
         const after = db.prepare('SELECT * FROM plt_equipment WHERE id = ?').get(e.id); timeline(actor, after, 'STATE', { from: e.equip_state, to: b.state, note: b.note ?? null }); audit(actor, 'plt_equipment', e.id, 'status', e.company_id, { reason: `${e.equip_state} to ${b.state}${b.note ? `: ${b.note}` : ''}` });
-        evt('plant.equipment.status_changed', actor, e.company_id, e.id, { equipmentId: e.id, assetCode: e.asset_code, from: e.equip_state, to: b.state, projectId: pj?.id ?? null, siteId: st?.id ?? null, note: b.note ?? null }, pj?.id ?? e.org_project_id); return equipment.get(actor, e.id); });
+        evt('plant.equipment.status_changed', actor, e.company_id, e.id, { equipmentId: e.id, assetCode: e.asset_code, from: e.equip_state, to: b.state, projectId: pj?.id ?? null, siteId: st?.id ?? null, note: b.note ?? null }, pj?.id ?? e.org_project_id); return internal ? after : equipment.get(actor, e.id); });
+    },
+    /** D-741: the fixed asset of this machine was disposed of in finance (23.09, event fin.asset.disposed): the machine becomes disposed of (a deployed one is released first, as the transitions require). Idempotent. */
+    onFinanceDisposal(ev) {
+      const d = ev?.data ?? {}; const c = Number(ev?.companyId); if (!c || !d.equipmentId) return null;
+      const e = db.prepare('SELECT * FROM plt_equipment WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(d.equipmentId), c); if (!e || !e.approved_at || e.equip_state === 'DISPOSED') return null;
+      const actor = { companyId: c, user: 'system', roles: [] }; const note = `Disposed of in finance: ${d.docNo ?? 'asset disposal'}${d.assetNo ? ` (asset ${d.assetNo})` : ''}${d.method ? `, ${String(d.method).toLowerCase()}` : ''}`;
+      if (!TRANSITIONS[e.equip_state].includes('DISPOSED')) equipment.setState(actor, e.id, { state: 'AVAILABLE', note }, true);
+      return equipment.setState(actor, e.id, { state: 'DISPOSED', note }, true);
     },
   };
 
