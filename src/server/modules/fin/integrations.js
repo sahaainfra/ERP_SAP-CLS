@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, glOf, postingOf } from './index.js';
+import { apOf, glOf, paymentsOf, postingOf } from './index.js';
 
 // The finance masters (part 06.05) for the rest of the ERP: the approval of a change (FIN_MASTER_CHANGE: the accounts manager checks what the project controls manager proposes, then the CFO approves),
 // what the approver sees, the object page of an account (search, audit), the form lookups (accounts, accounts open to manual postings, cost codes) and the events consumers listen to.
@@ -178,6 +178,32 @@ workflowTypes.register({
   summarise(db, _actor, id) { const r = db.prepare('SELECT n.*, p.legal_name FROM ap_debit_notes n JOIN mdm_partners p ON p.id = n.partner_id WHERE n.id = ?').get(Number(id)); return r ? { fields: [{ label: 'Vendor', value: r.legal_name }, { label: 'Reason', value: r.reason }, { label: 'For', value: r.description }, { label: 'Amount and GST', value: `₹${(r.amount_paise / 100).toFixed(2)} + ₹${(r.gst_paise / 100).toFixed(2)}` }] } : null; },
   defaultDefinition: { name: 'Debit note: the accounts manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR')] },
   hooks: apHooks('notes'),
+});
+// ---- part 23.04: payments ----
+for (const [type, description] of [
+  ['fin.payment.released', 'A payment was released to the bank or as a cheque, and posted (part 23.04 FR-03): data { paymentId, docNo, proposalId, proposalNo, kind, billId, advanceId, partnerId, amount, mode, chequeNo, journalId, releasedOn }. Accounts payable settles the bill.'],
+  ['fin.payment.confirmed', 'The bank confirmed a payment (UTR) or a cheque cleared (part 23.04 FR-03): data { paymentId, docNo, partnerId, amount, utr, chequeNo, paidOn, bankAccountId }. The advice is sent; bank reconciliation (23.06) reads it.'],
+  ['fin.payment.failed', 'A payment was returned by the bank or a cheque cancelled, and reversed (part 23.04): data { paymentId, docNo, kind, billId, advanceId, partnerId, amount, reason, chequeNo }. Accounts payable opens the bill again.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const pmDecide = (outcome) => (db, { instance, actor, comment }) => paymentsOf(db)?.proposals.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PAYMENT', label: 'Payment proposal', processOwner: 'CFO', route: (id) => `/finance/payment-proposals?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM pmt_proposals WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.lines_count} payment(s) ₹${(r.total_paise / 100).toFixed(2)} by ${r.pay_mode} on ${r.pay_date}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) {
+    const r = db.prepare('SELECT p.*, b.name AS bank FROM pmt_proposals p JOIN fin_bank_accounts b ON b.id = p.bank_account_id WHERE p.id = ?').get(Number(id)); if (!r) return null;
+    const lines = db.prepare("SELECT payee_name, line_kind, amount_paise, name_match FROM pmt_proposal_lines WHERE proposal_id = ? AND line_status = 'PROPOSED' AND deleted_at IS NULL ORDER BY line_no LIMIT 10").all(r.id);
+    return { fields: [{ label: 'From', value: `${r.bank} by ${r.pay_mode} on ${r.pay_date}` }, { label: 'Total', value: `₹${(r.total_paise / 100).toFixed(2)} in ${r.lines_count} line(s)` }, ...lines.map((l, i) => ({ label: `Line ${i + 1}`, value: `${l.payee_name} · ${l.line_kind} · ₹${(l.amount_paise / 100).toFixed(2)}${l.name_match === 'OK' ? ' · bank name matches' : ''}` }))] };
+  },
+  defaultDefinition: { name: 'Payment release: the accounts manager; above ₹10 lakh the CFO; above ₹1 crore a director (never the preparer; released by a third person)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above ₹10 lakh)', 'CFO', { field: 'overAcc', op: 'eq', value: 1 }), glStep('DIR', 'Director (above ₹1 crore)', 'DIR', { field: 'overCfo', op: 'eq', value: 1 })] },
+  hooks: { onApproved: pmDecide('APPROVED'), onRejected: pmDecide('REJECTED'), onReturned: pmDecide('RETURNED'), onCancelled: pmDecide('CANCELLED') },
+});
+for (const [type, label, perm, route] of [['pmt_proposals', 'Payment proposal', 'fin.proposal.view', '/finance/payment-proposals?id='], ['pmt_payments', 'Payment', 'fin.payment.view', '/finance/payments?id=']]) objectTypes.register({
+  type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,
+  access(db, actor, id) { if (!authzOf(db).check(actor, perm).allowed) return null; const r = db.prepare(`SELECT company_id FROM ${type} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); return r ? { companyId: r.company_id } : null; },
+  auditEntities: (id) => [{ entity: type, id }],
+  summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, ${type === 'pmt_payments' ? 'pay_status' : 'status'} AS status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
+  related: () => [],
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND (doc_no LIKE ?${type === 'pmt_payments' ? ' OR utr LIKE ? OR cheque_no LIKE ?' : ''}) ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, ...(type === 'pmt_payments' ? [`%${q}%`, `%${q}%`] : []), limit).map((x) => x.id); },
 });
 for (const [type, label, perm, route] of [['ap_bills', 'AP bill', 'fin.bill.view', '/finance/ap-bills?id='], ['ap_debit_notes', 'Debit note', 'fin.debit_note.view', '/finance/debit-notes?id=']]) objectTypes.register({
   type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,

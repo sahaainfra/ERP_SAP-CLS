@@ -86,3 +86,26 @@ export const parseDnUpdate = (b) => parse(z.object({ ...dnBody, kind: z.enum(['D
 export const parseVendorLedger = (q) => parse(z.object({ partnerId: id, from: date.optional(), to: date.optional() }).strict(), q);
 export const parseAsOf = (q) => parse(z.object({ asOf: date.optional() }).strict(), q);
 export const parseRange = (q) => parse(z.object({ from: date.optional(), to: date.optional() }).strict(), q);
+
+// ---- part 23.04: payments ----
+const pmtLine = z.object({
+  kind: z.enum(['BILL', 'ADVANCE', 'ON_ACCOUNT']), billId: id.optional(), advanceId: id.optional(), partnerId: id.optional(), projectId: id.optional().nullable(), amount: money, purpose: z.string().trim().max(200).optional(),
+}).strict().superRefine((l, ctx) => {
+  if (l.kind === 'BILL' && !l.billId) ctx.addIssue({ code: 'custom', path: ['billId'], message: 'Choose the bill.' });
+  if (l.kind === 'ADVANCE' && !l.advanceId) ctx.addIssue({ code: 'custom', path: ['advanceId'], message: 'Choose the advance.' });
+  if (l.kind === 'ON_ACCOUNT' && !l.partnerId) ctx.addIssue({ code: 'custom', path: ['partnerId'], message: 'Choose the payee.' });
+});
+const proposalBody = { bankAccountId: id, payMode: z.enum(['NEFT', 'RTGS', 'IMPS', 'CHEQUE']), payDate: date, purpose: z.string().trim().max(300).optional(), lines: z.array(pmtLine).min(1, 'Add at least one line').max(500), total: money.optional() };
+export const parseProposalCreate = (b) => parse(z.object(proposalBody).strict(), b);
+export const parseProposalUpdate = (b) => parse(z.object({ ...proposalBody, version: z.number().int().min(1) }).strict(), b);
+export const parseCandidates = (q) => parse(z.object({ dueBy: date.optional(), projectId: id.optional(), partnerId: id.optional(), msmeOnly: z.enum(['0', '1', 'true', 'false']).optional().transform((v) => v === '1' || v === 'true'), exceptProposal: id.optional() }).strict(), q);
+export const parseDropLine = (b) => parse(z.object({ reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);
+const confirmRow = z.object({ paymentId: id.optional(), docNo: z.string().trim().max(40).optional(), status: z.enum(['PAID', 'FAILED', 'CANCELLED']), utr: z.string().trim().max(40).optional().nullable(), paidOn: date.optional(), reason: z.string().trim().max(300).optional().nullable() }).strict();
+export const parseConfirm = (b) => parse(z.object({ rows: z.array(confirmRow).min(1).max(500).optional(), csv: z.string().max(500_000).optional() }).strict().refine((v) => Boolean(v.rows) !== Boolean(v.csv), { message: 'Send the rows or the bank\'s file, one of the two.', path: ['rows'] }), b);
+export const parseChequeRegister = (q) => parse(z.object({ bankAccountId: id }).strict(), q);
+export const parseBankAccount = (b) => parse(z.object({
+  code: z.string().trim().min(2).max(20).regex(/^[A-Z0-9-]+$/, 'Capital letters, digits and hyphens'), name: z.string().trim().min(3).max(100), bankName: z.string().trim().min(2).max(100),
+  ifsc: z.string().trim().toUpperCase(), accountNo: z.string().trim().regex(/^[0-9]{9,18}$/, 'An account number is 9 to 18 digits').optional(), glAccountId: id, fileFormat: z.enum(['GENERIC_CSV', 'H2H_PIPE']),
+  template: z.object({ delimiter: z.string().max(1).optional(), header: z.boolean().optional(), trailer: z.boolean().optional(), dateFormat: z.enum(['YYYY-MM-DD', 'DD/MM/YYYY']).optional(), columns: z.array(z.string()).max(20).optional() }).strict().optional(),
+  chequeFrom: z.number().int().min(1).optional().nullable(), chequeTo: z.number().int().min(1).optional().nullable(), blocked: z.boolean().optional(), version: z.number().int().min(1).optional(),
+}).strict(), b);

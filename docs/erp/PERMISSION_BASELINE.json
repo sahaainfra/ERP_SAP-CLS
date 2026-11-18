@@ -152,6 +152,9 @@
   "DOC",
   "PM"
  ],
+ "fin.bank.manage": [
+  "CFO"
+ ],
  "fin.recurring.manage": [
   "ACCMGR",
   "FINEX"

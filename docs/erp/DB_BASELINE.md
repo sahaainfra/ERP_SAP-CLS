@@ -9865,6 +9865,44 @@ Indexes:
 - ix_fin_balances_period: period_id
 - ux_fin_balances_key (unique): company_id, account_id, period_id, dimension_hash
 
+## fin_bank_accounts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| bank_name | TEXT | yes |  |  |
+| ifsc | TEXT | yes |  |  |
+| account_no_enc | TEXT | yes |  |  |
+| account_last4 | TEXT | yes |  |  |
+| gl_account_id | INTEGER | yes |  |  |
+| file_format | TEXT | yes |  | 'GENERIC_CSV' |
+| file_template_json | TEXT | yes |  | '{}' |
+| cheque_next_no | INTEGER |  |  |  |
+| cheque_last_no | INTEGER |  |  |  |
+| acct_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: gl_account_id -> fin_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_bank_accounts_gl: gl_account_id
+- ux_fin_bank_accounts_code (unique): company_id, code
+
 ## fin_category_mappings
 
 | Column | Type | Not null | Key | Default |
@@ -20850,6 +20888,149 @@ Indexes:
 - ix_plt_timeline_org_site_id: org_site_id
 - ix_plt_tl_project: org_project_id
 - ix_plt_tl_eq: equipment_id, id
+
+## pmt_payments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| proposal_id | INTEGER | yes |  |  |
+| line_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| payee_name | TEXT | yes |  |  |
+| pay_mode | TEXT | yes |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| utr | TEXT |  |  |  |
+| cheque_no | TEXT |  |  |  |
+| released_on | TEXT | yes |  |  |
+| paid_on | TEXT |  |  |  |
+| pay_status | TEXT | yes |  | 'PENDING' |
+| failure_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| advice_at | TEXT |  |  |  |
+| advice_status | TEXT |  |  |  |
+| advice_message_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), bank_account_id -> fin_bank_accounts(id), partner_id -> mdm_partners(id), line_id -> pmt_proposal_lines(id), proposal_id -> pmt_proposals(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pmt_payments_journal: journal_id
+- ix_pmt_payments_bank: bank_account_id
+- ix_pmt_payments_partner: partner_id, paid_on
+- ix_pmt_payments_proposal: proposal_id
+- ix_pmt_payments_list: company_id, pay_status, paid_on
+- ux_pmt_payments_cheque (unique): bank_account_id, cheque_no
+- ux_pmt_payments_utr (unique): company_id, utr
+- ux_pmt_payments_line (unique): line_id
+- ux_pmt_payments_doc (unique): company_id, doc_no
+
+## pmt_proposal_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| proposal_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| line_kind | TEXT | yes |  |  |
+| ap_bill_id | INTEGER |  |  |  |
+| advance_id | INTEGER |  |  |  |
+| partner_id | INTEGER | yes |  |  |
+| payee_name | TEXT | yes |  |  |
+| partner_bank_id | INTEGER |  |  |  |
+| bank_last4 | TEXT |  |  |  |
+| bank_ifsc | TEXT |  |  |  |
+| bank_account_name | TEXT |  |  |  |
+| name_match | TEXT | yes |  | 'UNCHECKED' |
+| amount_paise | INTEGER | yes |  |  |
+| tds_paise | INTEGER | yes |  | 0 |
+| purpose | TEXT |  |  |  |
+| line_status | TEXT | yes |  | 'PROPOSED' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_bank_id -> mdm_partner_banks(id), partner_id -> mdm_partners(id), advance_id -> bill_advances(id), ap_bill_id -> ap_bills(id), proposal_id -> pmt_proposals(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pmt_lines_company: company_id, line_status
+- ix_pmt_lines_bank: partner_bank_id
+- ix_pmt_lines_advance: advance_id, line_status
+- ix_pmt_lines_partner: partner_id
+- ix_pmt_lines_bill: ap_bill_id, line_status
+- ux_pmt_lines_no (unique): proposal_id, line_no
+
+## pmt_proposals
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| pay_mode | TEXT | yes |  |  |
+| pay_date | TEXT | yes |  |  |
+| purpose | TEXT |  |  |  |
+| total_paise | INTEGER | yes |  | 0 |
+| lines_count | INTEGER | yes |  | 0 |
+| run_status | TEXT | yes |  | 'NONE' |
+| released_by | TEXT |  |  |  |
+| released_at | TEXT |  |  |  |
+| file_name | TEXT |  |  |  |
+| file_hash | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bank_account_id -> fin_bank_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pmt_proposals_wf: workflow_instance_id
+- ix_pmt_proposals_bank: bank_account_id
+- ix_pmt_proposals_list: company_id, status, pay_date
+- ux_pmt_proposals_doc (unique): company_id, doc_no
 
 ## pol_acknowledgements
 

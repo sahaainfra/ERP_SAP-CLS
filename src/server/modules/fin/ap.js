@@ -124,6 +124,7 @@ export function createApService({ db, base, gl, flags }) {
     return h;
   }
   const outstanding = (b) => b.net_payable_paise - b.adjusted_paise - b.paid_paise;
+  let paymentsTable = null; const hasPayments = () => (paymentsTable ??= Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pmt_payments'").get()));
 
   // ---- posting (through the general ledger's engine entry, 23.01) ----
   const apAccount = (companyId, partner) => acct(companyId, partner && db.prepare("SELECT 1 FROM mdm_partner_roles WHERE partner_id = ? AND partner_role = 'SUBCONTRACTOR' AND deleted_at IS NULL").get(partner.id) ? '220002' : '220001');
@@ -182,6 +183,20 @@ export function createApService({ db, base, gl, flags }) {
         return b;
       });
     },
+    /** A payment released (23.04): the bill's paid amount (one inbox row per event and consumer, so once). */
+    onPaymentReleased(e) {
+      const d = e.data ?? {}; if (d.kind !== 'BILL' || !d.billId) return null; const amt = paise(d.amount ?? 0);
+      const b = db.prepare('SELECT * FROM ap_bills WHERE id = ? AND company_id = ?').get(Number(d.billId), Number(e.companyId)); if (!b || amt <= 0) return null;
+      db.prepare('UPDATE ap_bills SET paid_paise = paid_paise + ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(amt, 'system', nowIso(), b.id);
+      audit({ user: 'system' }, 'ap_bills', b.id, 'paid', b.company_id, { newValues: { payment: d.docNo, amount: rs(amt) } }); return b.id;
+    },
+    /** A payment returned by the bank or a cheque cancelled (23.04): the bill is open again by that amount. */
+    onPaymentFailed(e) {
+      const d = e.data ?? {}; if (d.kind !== 'BILL' || !d.billId) return null; const amt = paise(d.amount ?? 0);
+      const b = db.prepare('SELECT * FROM ap_bills WHERE id = ? AND company_id = ?').get(Number(d.billId), Number(e.companyId)); if (!b || amt <= 0) return null;
+      db.prepare('UPDATE ap_bills SET paid_paise = MAX(0, paid_paise - ?), updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(amt, 'system', nowIso(), b.id);
+      audit({ user: 'system' }, 'ap_bills', b.id, 'unpaid', b.company_id, { reason: d.reason, newValues: { payment: d.docNo, amount: rs(amt) } }); return b.id;
+    },
     /** An expense claim passed for payment (07.12): payable to the employee (no TDS). */
     onClaim(e) {
       const c = Number(e.companyId); const d = e.data ?? {}; if (!c || !on(c) || !d.docNo) return null;
@@ -204,7 +219,7 @@ export function createApService({ db, base, gl, flags }) {
       can: { ...c0, hold: b.status === 'APPROVED' && may(actor, 'fin.bill.hold'), adjust: b.status === 'APPROVED' && outstanding(b) > 0 && may(actor, 'fin.bill.approve') } };
     if (detail) {
       const source = b.source_type && b.source_id ? { type: b.source_type, id: b.source_id } : null;
-      Object.assign(o, b.bill_source === 'DIRECT' ? directFlow.approveInfo(actor, b) : {}, { sourceDoc: source, adjustments: db.prepare('SELECT * FROM ap_bill_adjustments WHERE bill_id = ? AND deleted_at IS NULL ORDER BY id').all(b.id).map((a) => ({ id: a.id, kind: a.adj_kind, refId: a.ref_id, amount: rs(a.amount_paise), on: a.adjusted_on, journalId: a.journal_id })), debitNotes: db.prepare("SELECT id, doc_no, reason, total_paise, status FROM ap_debit_notes WHERE bill_id = ? AND deleted_at IS NULL").all(b.id).map((n) => ({ id: n.id, docNo: n.doc_no, reason: n.reason, total: rs(n.total_paise), status: n.status })), payments: [], paymentsNote: 'Payments are made from payment proposals (part 23.04).',
+      Object.assign(o, b.bill_source === 'DIRECT' ? directFlow.approveInfo(actor, b) : {}, { sourceDoc: source, adjustments: db.prepare('SELECT * FROM ap_bill_adjustments WHERE bill_id = ? AND deleted_at IS NULL ORDER BY id').all(b.id).map((a) => ({ id: a.id, kind: a.adj_kind, refId: a.ref_id, amount: rs(a.amount_paise), on: a.adjusted_on, journalId: a.journal_id })), debitNotes: db.prepare("SELECT id, doc_no, reason, total_paise, status FROM ap_debit_notes WHERE bill_id = ? AND deleted_at IS NULL").all(b.id).map((n) => ({ id: n.id, docNo: n.doc_no, reason: n.reason, total: rs(n.total_paise), status: n.status })), payments: hasPayments() ? db.prepare("SELECT p.id, p.doc_no, p.pay_mode, p.amount_paise, p.released_on, p.paid_on, p.utr, p.cheque_no, p.pay_status FROM pmt_payments p JOIN pmt_proposal_lines l ON l.id = p.line_id WHERE l.ap_bill_id = ? ORDER BY p.id").all(b.id).map((p) => ({ id: p.id, docNo: p.doc_no, mode: p.pay_mode, amount: rs(p.amount_paise), releasedOn: p.released_on, paidOn: p.paid_on, utr: p.utr, chequeNo: p.cheque_no, status: p.pay_status })) : [],
         advances: b.partner_id ? db.prepare("SELECT a.id, a.doc_no, a.amount_paise, a.recovered_paise, a.adv_type FROM bill_advances a WHERE a.company_id = ? AND a.party_id = ? AND a.direction = 'GIVEN' AND a.status = 'APPROVED' AND a.deleted_at IS NULL").all(b.company_id, b.partner_id).map((a) => { const used = db.prepare("SELECT COALESCE(SUM(amount_paise), 0) AS s FROM ap_bill_adjustments WHERE company_id = ? AND adj_kind = 'ADVANCE' AND ref_id = ? AND deleted_at IS NULL").get(b.company_id, a.id).s; return { id: a.id, docNo: a.doc_no, type: a.adv_type, amount: rs(a.amount_paise), available: rs(a.amount_paise - a.recovered_paise - used) }; }).filter((a) => a.available > 0) : [] });
     }
     return o;
@@ -354,10 +369,12 @@ export function createApService({ db, base, gl, flags }) {
       ...db.prepare("SELECT id, doc_no, bill_no, bill_date AS d, total_paise, tds_paise FROM ap_bills WHERE company_id = ? AND partner_id = ? AND status = 'APPROVED' AND deleted_at IS NULL AND bill_date <= ?").all(c, p.id, upTo).flatMap((b) => [{ d: b.d, kind: 'BILL', ref: b.doc_no, theirRef: b.bill_no, credit: b.total_paise, debit: 0, link: `/finance/ap-bills?id=${b.id}` }, ...(b.tds_paise ? [{ d: b.d, kind: 'TDS', ref: b.doc_no, credit: 0, debit: b.tds_paise, link: `/finance/ap-bills?id=${b.id}` }] : [])]),
       ...db.prepare("SELECT id, doc_no, note_date AS d, total_paise, reason FROM ap_debit_notes WHERE company_id = ? AND partner_id = ? AND status = 'APPROVED' AND deleted_at IS NULL AND note_date <= ?").all(c, p.id, upTo).map((n) => ({ d: n.d, kind: 'DEBIT_NOTE', ref: n.doc_no, theirRef: DN_REASONS[n.reason], credit: 0, debit: n.total_paise, link: `/finance/debit-notes?id=${n.id}` })),
       ...db.prepare("SELECT a.amount_paise, a.adjusted_on AS d, b.doc_no FROM ap_bill_adjustments a JOIN ap_bills b ON b.id = a.bill_id WHERE a.company_id = ? AND b.partner_id = ? AND a.adj_kind = 'ADVANCE' AND a.deleted_at IS NULL AND a.adjusted_on <= ?").all(c, p.id, upTo).map((a) => ({ d: a.d, kind: 'ADVANCE', ref: a.doc_no, credit: 0, debit: a.amount_paise })),
+      // part 23.04: payments of bills and on account (sent to the bank or paid; a returned one, or a cancelled cheque, is reversed and left out); an advance paid is not a payable
+      ...(hasPayments() ? db.prepare("SELECT p.id, p.doc_no, p.released_on AS d, p.amount_paise, p.utr, p.cheque_no, p.pay_mode FROM pmt_payments p JOIN pmt_proposal_lines l ON l.id = p.line_id WHERE p.company_id = ? AND p.partner_id = ? AND l.line_kind IN ('BILL', 'ON_ACCOUNT') AND p.pay_status IN ('PENDING', 'PAID') AND p.released_on <= ?").all(c, p.id, upTo).map((x) => ({ d: x.d, kind: 'PAYMENT', ref: x.doc_no, theirRef: x.utr ? `UTR ${x.utr}` : x.cheque_no ? `Cheque ${x.cheque_no}` : x.pay_mode, credit: 0, debit: x.amount_paise, link: `/finance/payments?id=${x.id}` })) : []),
     ].sort((x, y) => x.d.localeCompare(y.d) || x.kind.localeCompare(y.kind));
     let bal = 0; let opening = 0; const rows = [];
     for (const e of entries) { bal += e.credit - e.debit; if (e.d < start) { opening = bal; continue; } rows.push({ ...e, credit: rs(e.credit), debit: rs(e.debit), balance: rs(bal) }); }
-    return { partner: { id: p.id, code: p.code, name: p.legal_name, msme: p.msme_category, pan: p.pan ? `${String(p.pan).slice(0, 2)}•••••${String(p.pan).slice(-3)}` : null }, from: from ?? null, to: upTo, opening: rs(opening), closing: rs(bal), rows, paymentsNote: 'Payments are made from payment proposals (part 23.04).' };
+    return { partner: { id: p.id, code: p.code, name: p.legal_name, msme: p.msme_category, pan: p.pan ? `${String(p.pan).slice(0, 2)}•••••${String(p.pan).slice(-3)}` : null }, from: from ?? null, to: upTo, opening: rs(opening), closing: rs(bal), rows };
   }
   function statementPdf(actor, q, letter = false) {
     const l = vendorLedger(actor, q); audit(actor, 'ap_bills', 0, letter ? 'print' : 'export', actor.companyId, { reason: `${letter ? 'balance confirmation' : 'statement'} ${l.partner.code} ${l.to}` });

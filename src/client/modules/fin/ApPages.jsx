@@ -80,7 +80,7 @@ function Bill({ id }) {
         {row('ap.amount', money(x.gross))}{row('ap.gst', money(x.gst))}
         {row('ap.tds', x.tdsSection ? `${money(x.tds)} · ${t('ap.tdsLine', { section: x.tdsSection, act: x.tdsAct ?? '', rate: x.tdsRate, base: money(x.tdsBase) })} · ${t(`ap.tdsBasis.${x.tdsBasis}`)}` : t('ap.noTds'))}
         {x.tdsCertificate && row('ap.certificate', `${x.tdsCertificate}${x.tdsPaymentCode ? ` · ${t('ap.paymentCode')} ${x.tdsPaymentCode}` : ''}${x.ldcNo ? ` · LDC ${x.ldcNo}` : ''}`)}
-        {row('ap.net', money(x.netPayable))}{row('ap.adjusted', money(x.adjusted))}{row('ap.paid', `${money(x.paid)} · ${x.paymentsNote ?? ''}`)}
+        {row('ap.net', money(x.netPayable))}{row('ap.adjusted', money(x.adjusted))}{row('ap.paid', money(x.paid))}
         {x.journalId && row('jn.voucher', <Link to={`/finance/journals?id=${x.journalId}`}>{t('common.open')}</Link>)}
       </tbody></table></div>
       <div className="mdm-panel" data-testid="ap-holds"><h2>{t('ap.holds')}</h2>{x.holds.length ? <ul>{x.holds.map((h, i) => <li key={i}><strong>{h.code}</strong> · {h.reason}</li>)}</ul> : <p className="muted">{t('ap.noHolds')}</p>}
@@ -90,6 +90,8 @@ function Bill({ id }) {
         <Field label={t('ap.advanceSel')} name="advanceId" error={error?.fields?.advanceId}><select value={adv.advanceId} onChange={(e) => setAdv({ ...adv, advanceId: e.target.value })} style={big}><option value="">—</option>{x.advances.map((a) => <option key={a.id} value={a.id}>{a.docNo} · {money(a.available)}</option>)}</select></Field>
         <Field label={t('ap.amount')} name="amount" error={error?.fields?.amount}><input inputMode="decimal" value={adv.amount} onChange={(e) => setAdv({ ...adv, amount: e.target.value })} style={big} /></Field>
         <div className="actions-row"><button type="submit" className="btn btn-primary" style={big} disabled={busy || !adv.advanceId}>{t('ap.adjust')}</button></div></form>}
+      {x.payments?.length > 0 && <div className="table-scroll" data-testid="ap-bill-payments"><table className="data-table"><caption>{t('pm.payments')}</caption><tbody>
+        {x.payments.map((p) => <tr key={p.id}><td><Link to={`/finance/payments?id=${p.id}`}>{p.docNo}</Link></td><td>{p.mode}{p.utr ? ` · UTR ${p.utr}` : p.chequeNo ? ` · ${t('pm.cheque')} ${p.chequeNo}` : ''}</td><td>{p.paidOn ?? p.releasedOn}</td><td>{t(`pm.ps.${p.status}`)}</td><td className="num">{money(p.amount)}</td></tr>)}</tbody></table></div>}
       {(x.adjustments?.length > 0 || x.debitNotes?.length > 0) && <div className="table-scroll"><table className="data-table"><caption>{t('ap.adjustments')}</caption><tbody>
         {x.adjustments.map((a) => <tr key={`a${a.id}`}><td>{a.kind === 'ADVANCE' ? t('py.e.ADVANCE') : t('py.e.DEBIT_NOTE')}</td><td>{a.on}</td><td className="num">{money(a.amount)}</td></tr>)}
         {x.debitNotes.map((n) => <tr key={`n${n.id}`}><td><Link to={`/finance/debit-notes?id=${n.id}`}>{n.docNo}</Link></td><td>{t(`dn.r.${n.reason}`)}</td><td className="num">{money(n.total)}</td></tr>)}</tbody></table></div>}
@@ -187,7 +189,7 @@ function VendorLedger({ session }) {
         {can(session, 'fin.bill.export') && <div className="actions-row"><button type="button" className="btn" onClick={() => gl.file(`/payables/statement?partnerId=${pid}`, `statement-${x.partner.code}.pdf`).catch(() => globalThis.alert?.(t('act.exportFailed')))} data-testid="ap-statement">{t('py.statement')}</button><button type="button" className="btn" onClick={() => gl.file(`/payables/confirmation?partnerId=${pid}`, `balance-confirmation-${x.partner.code}.pdf`).catch(() => globalThis.alert?.(t('act.exportFailed')))}>{t('py.confirm')}</button></div>}
         <div className="table-scroll"><table className="data-table" aria-label={t('py.tab.ledger')}><thead><tr><th scope="col">{t('jn.date')}</th><th scope="col">{t('py.entry')}</th><th scope="col">{t('jn.voucher')}</th><th scope="col" className="num">{t('jn.debit')}</th><th scope="col" className="num">{t('jn.credit')}</th><th scope="col" className="num">{t('led.balance')}</th></tr></thead>
           <tbody>{x.rows.map((r, i) => <tr key={i} data-testid="ap-ledger-row"><td>{r.d}</td><td>{t(`py.e.${r.kind}`)}</td><td>{r.link ? <Link to={r.link}>{r.ref}</Link> : r.ref}{r.theirRef ? ` · ${r.theirRef}` : ''}</td><td className="num">{r.debit ? money(r.debit) : ''}</td><td className="num">{r.credit ? money(r.credit) : ''}</td><td className="num">{money(r.balance)}</td></tr>)}</tbody></table></div>
-        <p className="muted">{x.paymentsNote}</p></>}
+        </>}
     </div>
   );
 }

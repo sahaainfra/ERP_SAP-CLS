@@ -96,7 +96,7 @@ const apSvc = createApService({ db, base: createBase({ db }), gl, flags: { isOn:
 time('AP bills list, first page (25)', 500, () => apSvc.bills.list(acc, { pageSize: '25' }));
 time('AP bills, page 300', 500, () => apSvc.bills.list(acc, { pageSize: '25', page: '300' }));
 time('TDS of a new bill (the vendor year counted)', 300, (i) => apSvc.tdsFor(1, { partnerId: vendors[i % 500], nature: 'CONTRACTOR', date: '2026-11-15', basePaise: 5_000_000 }));
-time('vendor ledger (200 bills)', 500, (i) => apSvc.vendorLedger(acc, { partnerId: vendors[i % 500] }));
+time('vendor ledger (200 bills)', 500, (i) => apSvc.vendorLedger(acc, { partnerId: vendors[i % 500], from: undefined, to: undefined }));
 time('payables ageing (100 000 bills)', 800, () => apSvc.ageing(acc, { asOf: '2027-01-31' }), 10);
 time('MSME due report', 500, () => apSvc.msmeReport(acc, { asOf: '2026-12-31' }));
 

@@ -121,3 +121,23 @@ export const ap = {
   tds: (f) => glget(`/payables/tds?${q(f)}`),
 };
 export const NATURES = ['CONTRACTOR', 'PROFESSIONAL', 'PURCHASE_GOODS', 'RENT_PLANT', 'RENT_LAND', 'COMMISSION'];
+// part 23.04: payments (bank accounts, proposals, runs, payments)
+export const pm = {
+  banks: () => glget('/bank-accounts'),
+  bank: (id) => glget(`/bank-accounts/${id}`),
+  formats: () => glget('/bank-accounts/formats'),
+  saveBank: async (id, b) => (id ? (await api.put(`/fin/bank-accounts/${id}`, b, idem())).data : (await api.post('/fin/bank-accounts', b, idem())).data),
+  candidates: (f) => glget(`/proposals/candidates?${q(f)}`),
+  proposal: (id) => glget(`/proposals/${id}`),
+  create: async (b) => (await api.post('/fin/proposals', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/proposals/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/proposals/${id}`, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/proposals/${id}/${action}`, b ?? {}, idem())).data,
+  dropLine: async (id, lineId, reason) => (await api.post(`/fin/proposals/${id}/lines/${lineId}/drop`, { reason }, idem())).data,
+  history: (id) => glget(`/proposals/${id}/history`),
+  payment: (id) => glget(`/payments/${id}`),
+  confirm: async (b) => (await api.post('/fin/payments/confirm', b, idem())).data,
+  advice: async (id) => (await api.post(`/fin/payments/${id}/advice`, {}, idem())).data,
+  chequeRegister: (bankAccountId) => glget(`/payments/cheque-register?bankAccountId=${bankAccountId}`),
+  myTasks: async () => (await api.get('/workflow/tasks?mine=assigned')).data,
+};

@@ -105,7 +105,8 @@ test('FR-05 BR-02 holds keep a bill out of payment; FR-03 a debit note approved,
   assert.equal(w.events('fin.advance.adjusted').length, 1);
   // the vendor ledger: bills credited, TDS, the debit note and the advance debited
   const led = (await w.call(U.aud, 'GET', `/payables/vendor-ledger?partnerId=${v}`)).json.data;
-  const total = 40000 * 1.18 + 20000 * 1.18; const tds = 800; // the ₹20,000 bill is below both thresholds (₹30,000 a bill, ₹1 lakh a year) assert.equal(led.closing, Math.round((total - tds - 2360 - 5000) * 100) / 100);
+  const total = 40000 * 1.18 + 20000 * 1.18; const tds = 800; // the ₹20,000 bill is below both thresholds (₹30,000 a bill, ₹1 lakh a year)
+  assert.equal(led.closing, Math.round((total - tds - 2360 - 5000) * 100) / 100);
   assert.equal(led.rows.filter((r) => r.kind === 'BILL').length, 2); assert.equal(led.rows.filter((r) => r.kind === 'DEBIT_NOTE').length, 1);
   const age = (await w.call(U.aud, 'GET', '/payables/ageing?asOf=2026-08-15')).json.data; const row = age.rows.find((x) => x.partnerId === v); assert.equal(row.b61, after1.outstanding, 'the June 1 bill is 75 days old'); assert.equal(row.b31, Math.round((20000 * 1.18 - 5000) * 100) / 100);
   const st = await w.api.call('GET', `${F}/payables/statement?partnerId=${v}`, { ...U.acc }); assert.equal(st.status, 200);
