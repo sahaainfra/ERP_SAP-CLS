@@ -1,5 +1,5 @@
 // npm run erp:proj-fin-perf -- [--queries 30]
-// Parts 23.10 to 23.15 §14 (50 projects; 23.13 adds 100 000 cash forecast lines): 100 000 journal lines over the projects and 100 000 revenue recognition records (23.10); then times what the screens and
+// Parts 23.10 to 23.15 §14 (50 projects; 23.13 adds 100 000 cash forecast lines; 23.14 100 000 close tasks): 100 000 journal lines over the projects and 100 000 revenue recognition records (23.10); then times what the screens and
 // the runs ask: the recognition list (first page, a month), one record, the preview of a month (worked out from the ledger), the project trial balance, the WIP
 // report and the overhead report. Prints the query plans. The standard (05_GLOBAL_STANDARDS §11): p95 <= 500 ms for a list, <= 300 ms for one record,
 // <= 800 ms for a save.
@@ -13,6 +13,7 @@ import { createProjectAccountingService } from '../src/server/modules/fin/projac
 import { createCostForecastService } from '../src/server/modules/fin/costforecast.js';
 import { createProjectPlService } from '../src/server/modules/fin/projectpl.js';
 import { createCashForecastService } from '../src/server/modules/fin/cashforecast.js';
+import { createPeriodCloseService } from '../src/server/modules/fin/periodclose.js';
 
 const args = process.argv.slice(2);
 const queries = Number(args.includes('--queries') ? args[args.indexOf('--queries') + 1] : 30);
@@ -95,6 +96,16 @@ let cfx = null; time('this week\'s forecast prepared from the source modules (sa
 time('treasury and cash position', 300, () => cs.treasury(acc));
 time('payment priority', 500, () => cs.priority.list(acc, {}));
 time('project cash curve (100 000 journal lines)', 500, (i) => cs.projectCurve(acc, { projectId: projects[i % 50] }));
+// 23.14: 10 000 closes with 100 000 tasks; the statements, the dashboard and one close over the 100 000 journal lines
+const pcs = createPeriodCloseService({ db, base, flags, gl }); const oct = db.prepare("SELECT id FROM core_periods WHERE company_id = 1 AND start_date = '2026-10-01'").get().id;
+db.exec('BEGIN'); const insP = db.prepare("INSERT INTO close_periods (company_id, doc_no, version_no, period_id, period, status, close_state, created_by) VALUES (1, ?, ?, ?, '2026-10', 'CANCELLED', 'IN_PROGRESS', 'perf')"); const insT = db.prepare("INSERT INTO close_tasks (company_id, close_id, task_code, name, module, sort_order, owner_id, due_date, created_by) VALUES (1, ?, ?, 'task', 'finance', ?, 'acc', '2026-11-07', 'perf')");
+let lastClose = 0; for (let i = 0; i < 10_000; i += 1) { lastClose = Number(insP.run(`CL/P${i}`, i + 1, oct).lastInsertRowid); for (let k = 0; k < 10; k += 1) insT.run(lastClose, `T${k}`, k); } db.exec('COMMIT'); db.exec('ANALYZE');
+const cfo2 = { user: 'cfo', roles: ['CFO'], companyId: 1 };
+time('period close list, first page (10 000 closes)', 500, () => pcs.closes.list(acc, {}));
+time('one close with its checklist and the checks', 300, () => pcs.closes.get(acc, lastClose));
+time('statements of a month: Schedule III, cash flow, TB, comparatives (100 000 journal lines)', 500, () => pcs.statements.get(cfo2, { period: '2026-10', basis: 'MONTH' }), 10);
+time('statements year to date', 500, () => pcs.statements.get(cfo2, { period: '2026-10', basis: 'YTD', statement: 'PL' }), 10);
+time('finance dashboard (12-month trend, ageing, exceptions)', 800, () => pcs.dashboard(cfo2, { period: '2026-10' }), 10);
 const plan = (label, sql) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all()) console.log(`    ${r.detail}`); };
 plan('ledger of a project to a date', "SELECT a.id, SUM(l.debit_paise) FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = 1 AND l.project_id = 5 AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date <= '2026-10-31' GROUP BY a.id");
 plan('lines of a cash forecast', 'SELECT * FROM cf_lines WHERE forecast_id = 5 AND deleted_at IS NULL ORDER BY week_start, category, id');

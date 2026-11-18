@@ -146,4 +146,7 @@ export default {
   "ye.closeYear": "Close the year",
   "ye.whyClose": "Note for the audit trail",
   "ye.closed": "The year is closed.",
+  "db.grossMarginPct": "Gross margin %",
+  "db.days": "{n} days",
+  "db.debtEquity": "Debt / equity",
 };

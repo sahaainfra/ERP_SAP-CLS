@@ -91,7 +91,7 @@ function Priorities({ t, run, busy, manage }) {
 
 export function TreasuryPage() {
   const t = useT('cf'); usePageTitle(t('cf.title')); const sp = useSearch(); const fid = Number(sp.get('forecast')) || null; const [tab, setTab] = useState('position'); const { error, note, busy, run } = useGlRunner();
-  const q = useQuery({ queryKey: ['gl', 'treasury'], queryFn: cf.treasury, retry: false, enabled: !fid }); const lq = useQuery({ queryKey: ['gl', 'cf-list'], queryFn: () => cf.list({ pageSize: 20 }), retry: false, enabled: !fid && tab === 'forecasts' });
+  const q = useQuery({ queryKey: ['gl', 'treasury'], queryFn: cf.treasury, retry: false, enabled: !fid }); const lq = useQuery({ queryKey: ['gl', 'cf-list'], queryFn: () => cf.list({ pageSize: 25 }), retry: false, enabled: !fid && tab === 'forecasts' });
   if (fid) return <Forecast id={fid} />;
   const g = guardOf(q, t('cf.title'), 'fin.cash_forecast.view'); if (g) return g; const x = q.data;
   const create = () => run(() => cf.create({ weekStart: istToday() }), t('cf.created')).then((r) => r && navigateTo(`/finance/treasury?forecast=${r.id}`));

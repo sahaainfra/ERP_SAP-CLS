@@ -14959,6 +14959,9 @@ export default {
     "ye.closeYear": "वर्ष बंद करें",
     "ye.whyClose": "ऑडिट के लिए टिप्पणी",
     "ye.closed": "वर्ष बंद हुआ।",
+    "db.grossMarginPct": "सकल मार्जिन %",
+    "db.days": "{n} दिन",
+    "db.debtEquity": "ऋण / इक्विटी",
   },
   fa: {
     "fa.accounting": "पूंजीकरण, मूल्यह्रास व रिपोर्ट",

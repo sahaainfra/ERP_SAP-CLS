@@ -10332,3 +10332,104 @@ paths:
     delete:
       summary: "cash forecast: unmark { reason } (part 23.13; fin.cash_forecast.manage)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods:
+    get:
+      summary: "period close: list (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "period close: start the close of an ended month with its checklist { period, commentary? } (part 23.14; fin.period.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/export:
+    get:
+      summary: "period close: CSV (part 23.14; fin.period.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}:
+    get:
+      summary: "period close: one close with its tasks, checks, module statuses and figures (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "period close: the commentary { commentary } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "period close: delete a draft (part 23.14; fin.period.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks:
+    post:
+      summary: "period close: an extra task { name, ownerId?, dueDate?, mandatory?, dependsOn? } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks/{taskId}:
+    patch:
+      summary: "period close: owner, due date, started, optional (fin.period.configure with the reason) { ownerId?, dueDate?, mandatory?, started?, reason?, version? } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks/{taskId}/complete:
+    post:
+      summary: "period close: a task done or not applicable with its evidence { note?, fileIds?, notApplicable? } (part 23.14; fin.period.edit, or the owner with fin.close_task.complete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks/{taskId}/reopen:
+    post:
+      summary: "period close: a done task opened again { reason } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/locks:
+    post:
+      summary: "period close: soft-close the other modules { modules } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/submit:
+    post:
+      summary: "period close: send to the CFO; the GL is soft-closed (part 23.14; fin.period.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/withdraw:
+    post:
+      summary: "period close: withdraw { reason } (part 23.14; fin.period.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/cancel:
+    post:
+      summary: "period close: cancel { reason } (part 23.14; fin.period.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/history:
+    get:
+      summary: "period close: approval history (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/print:
+    get:
+      summary: "period close: PDF of the checklist and the figures (part 23.14; fin.period.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/reopen:
+    post:
+      summary: "period close: ask to reopen a closed month, sent at once ACCMGR → CFO → DIR { modules?, targetStatus?, reason } (part 23.14; fin.period_reopen.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/period-reopens/{id}:
+    get:
+      summary: "period close: one reopen request (part 23.14; fin.period_reopen.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/period-reopens/{id}/withdraw:
+    post:
+      summary: "period close: withdraw a reopen request { reason } (part 23.14; fin.period_reopen.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/statements:
+    get:
+      summary: "statements: Schedule III balance sheet and P&L, cash flow (indirect), trial balance with comparatives and notes { period, basis?, statement? } (part 23.14; fin.statements.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/statements/export:
+    get:
+      summary: "statements: CSV { period, basis? } (part 23.14; fin.statements.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/statements/print:
+    get:
+      summary: "statements: PDF { period, basis? } (part 23.14; fin.statements.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/finance-dashboard:
+    get:
+      summary: "dashboard: KPIs, trend, ageing, exceptions, my pending tasks { period? } (part 23.14; fin.dashboard.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/year-end:
+    get:
+      summary: "year end: the steps of a financial year { fyId? } (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/year-end/{id}/carry-forward:
+    post:
+      summary: "year end: the closing entries (the carry-forward journal of 23.01) (part 23.14; fin.period.edit and fin.journal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/year-end/{id}/close:
+    post:
+      summary: "year end: close the financial year { reason } (part 23.14; fin.period.approve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
