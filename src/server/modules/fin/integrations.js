@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf } from './index.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { unprocessable } from '../../platform/http/errors.js';
@@ -371,3 +371,22 @@ workflowTypes.register({
   defaultDefinition: { name: 'Disposal: the accounts manager, the CFO, and a director above ₹10 lakh', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else proposed it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO'), glStep('DIR', 'Director (above ₹10 lakh)', 'DIR', { field: 'aboveDir', op: 'eq', value: 'yes' })] },
   hooks: faHooks('disposals'),
 });
+
+// ---- part 23.10: project accounting ----
+for (const [type, description] of [
+  ['fin.revenue.recognised', 'The revenue of a project for a month was recognised and posted (approved by the CFO; part 23.10 FR-02, FR-03): data { recognitionId, docNo, projectId, period, method, poc, contractRevenue, recognisedCum, recognisedPeriod, billed, unbilled, excess, lossProvision, eac, costToDate, journalId }. The project P&L (23.12) reads it.'],
+  ['fin.overhead.posted', 'The overhead of a pool allocated in 12.04 was posted to the projects (part 23.10 FR-04): data { runId, docNo, period, total, journalId, allocations: [{ projectId, amount }] }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const rrDecide = (outcome) => (db, { instance, actor, comment }) => projectAccountsOf(db)?.recognition.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_REVENUE_RECOGNITION', label: 'Revenue recognition of a project for a month', processOwner: 'CFO', route: (id) => `/finance/revenue-recognition?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT x.*, p.code FROM pa_revenue_recognition x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Revenue of ${r.code} for ${r.period}: ${inr(r.recognised_period_paise)} this month`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT x.*, p.code, p.name FROM pa_revenue_recognition x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Project', value: `${r.code} ${r.name}` }, { label: 'Month', value: r.period }, { label: 'Method', value: r.method === 'OUTPUT' ? 'Output' : 'Cost to cost' }, { label: 'Cost to date / EAC', value: `${inr(r.cost_to_date_paise)} / ${inr(r.eac_paise)} (${r.eac_ref ?? r.eac_source})` }, { label: 'Percentage of completion', value: `${(r.poc_ppm / 10000).toFixed(2)} %` }, { label: 'Contract revenue', value: inr(r.contract_revenue_paise) }, { label: 'Recognised to date / this month', value: `${inr(r.recognised_cum_paise)} / ${inr(r.recognised_period_paise)}` }, { label: 'Billed to date', value: inr(r.billed_cum_paise) }, { label: 'Unbilled / billing in excess', value: `${inr(r.unbilled_paise)} / ${inr(r.excess_billing_paise)}` }, { label: 'Expected loss provided', value: inr(r.loss_provision_paise) }] }; },
+  defaultDefinition: { name: 'Revenue recognition: the accounts manager (when someone else prepared it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: rrDecide('APPROVED'), onRejected: rrDecide('REJECTED'), onReturned: rrDecide('RETURNED'), onCancelled: rrDecide('CANCELLED') },
+});
+objectTypes.register({ type: 'pa_revenue_recognition', label: 'Revenue recognition', permission: 'fin.revenue_recognition.view', route: (id) => `/finance/revenue-recognition?id=${id}`,
+  access(db, actor, id) { if (!authzOf(db).check(actor, 'fin.revenue_recognition.view').allowed) return null; const r = db.prepare('SELECT company_id, org_project_id, status FROM pa_revenue_recognition WHERE id = ? AND deleted_at IS NULL').get(Number(id)); return r && r.company_id === actor.companyId ? { companyId: r.company_id, projectId: r.org_project_id, status: r.status } : null; },
+  auditEntities: (id) => [{ entity: 'pa_revenue_recognition', id }], summary(db, _actor, id) { const r = db.prepare('SELECT doc_no, period, status FROM pa_revenue_recognition WHERE id = ?').get(Number(id)); return r ? { label: `${r.doc_no} ${r.period}`, status: r.status } : null; },
+  related() { return []; } });

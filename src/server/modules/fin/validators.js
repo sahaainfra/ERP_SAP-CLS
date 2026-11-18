@@ -200,3 +200,13 @@ export const parseVerifyScan = (b) => parse(z.object({ code: z.string().trim().m
 /** D-740: the opening WDV of a tax block. */
 export const parseTaxOpening = (b) => parse(z.object({ block: z.string().trim().min(2).max(40), fy: z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27'), openingWdv: z.coerce.number().min(0).max(1e13), version: z.number().int().optional() }).strict(), b);
 export const parseFyQuery = (q) => parse(z.object({ fy: z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27') }).strict(), q);
+
+// ---- part 23.10: project accounting ----
+const rrMethod = z.enum(['COST_TO_COST', 'OUTPUT']);
+const surveyPct = z.coerce.number().min(0).max(100).nullable().optional();
+export const parseRevrecCreate = (b) => parse(z.object({ projectId: id, period, method: rrMethod.default('COST_TO_COST'), surveyPct, surveyNote: z.string().trim().max(500).nullable().optional() }).strict(), b);
+export const parseRevrecUpdate = (b) => parse(z.object({ method: rrMethod.optional(), surveyPct, surveyNote: z.string().trim().max(500).nullable().optional(), version: z.number().int().optional() }).strict(), b);
+export const parseRevrecImport = (b) => parse(z.object({ rows: z.array(z.object({ project: z.string().trim().min(1).max(40), period, method: rrMethod.optional(), surveyPct, surveyNote: z.string().trim().max(500).nullable().optional() }).strict()).min(1).max(500) }).strict(), b);
+export const parseProjectTb = (q) => parse(z.object({ projectId: id, from: date, to: date }).strict().refine((x) => x.from <= x.to, { message: 'The start is on or before the end', path: ['to'] }), q);
+export const parseMonthRange = (q) => parse(z.object({ from: period, to: period }).strict().refine((x) => x.from <= x.to, { message: 'The first month is on or before the last', path: ['to'] }), q);
+export const parseProjectExport = (q) => parse(z.object({ kind: z.enum(['tb', 'wip', 'overheads']), projectId: id.optional(), from: z.string().optional(), to: z.string().optional(), period: period.optional() }).strict(), q);
