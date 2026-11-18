@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf, cashForecastsOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf, cashForecastsOf, periodClosesOf } from './index.js';
 import { registerProject360Widget } from '../proj/p360.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
@@ -428,4 +428,27 @@ workflowTypes.register({
     return { fields: [{ label: 'Weeks', value: `${r.weeks} from ${r.week_start}` }, { label: 'Opening cash', value: inr(r.opening_paise) }, { label: 'Inflow / outflow', value: `${inr(r.inflow_paise)} / ${inr(r.outflow_paise)}` }, { label: 'Closing', value: inr(r.closing_paise) }, { label: 'Lowest point', value: `${inr(r.lowest_paise)} (week of ${r.lowest_week})` }, { label: 'Manual adjustments', value: `${adj} (each with its reason)` }] }; },
   defaultDefinition: { name: 'Cash forecast: the accounts manager (when someone else prepared it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
   hooks: { onApproved: cfDecide('APPROVED'), onRejected: cfDecide('REJECTED'), onReturned: cfDecide('RETURNED'), onCancelled: cfDecide('CANCELLED') },
+});
+
+// ---- part 23.14: period close ----
+eventTypes.define({ type: 'fin.period.closed', version: 1, schema, owner: 'fin', description: 'A month was closed (approved by the CFO; every module hard-closed; part 23.14 FR-02): data { closeId, docNo, period, periodId, tbDebit, tbCredit, balanced, assets, equityLiabilities, revenue, pbt, pat, revenueYtd, patYtd, cash }. MIS (27.07) and consolidation (23.15) read it.' });
+eventTypes.define({ type: 'fin.period.reopened', version: 1, schema, owner: 'fin', description: 'A closed month was reopened (approved ACCMGR → CFO → DIR; part 23.14 FR-02): data { closeId, reopenId, period, periodId, modules, to, reason }.' });
+eventTypes.define({ type: 'fin.year.closed', version: 1, schema, owner: 'fin', description: 'A financial year was closed after every month and the closing entries (part 23.14 FR-04): data { fyId, code, pat, carryForwardJournalId }.' });
+const clDecide = (outcome) => (db, { instance, actor, comment }) => periodClosesOf(db)?.closes.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PERIOD_CLOSE', label: 'Period close', processOwner: 'CFO', route: (id) => `/finance/close?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM close_periods WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Close of ${r.period}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM close_periods WHERE id = ?').get(Number(id)); if (!r) return null; const t = db.prepare("SELECT COUNT(*) AS n, SUM(CASE WHEN task_status IN ('DONE', 'NOT_APPLICABLE') THEN 1 ELSE 0 END) AS d FROM close_tasks WHERE close_id = ? AND deleted_at IS NULL").get(r.id); let f = {}; try { f = JSON.parse(r.figures_json); } catch { /* none */ }
+    return { fields: [{ label: 'Month', value: r.period }, { label: 'Checklist', value: `${t.d ?? 0} of ${t.n} tasks done` }, { label: 'Trial balance', value: `₹${f.tbDebit ?? '—'} / ₹${f.tbCredit ?? '—'}${f.balanced ? ' (balanced)' : ''}` }, { label: 'Revenue / profit after tax', value: `₹${f.revenue ?? '—'} / ₹${f.pat ?? '—'}` }, { label: 'Cash', value: `₹${f.cash ?? '—'}` }] }; },
+  defaultDefinition: { name: 'Period close: the accounts manager (when someone else prepared it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: clDecide('APPROVED'), onRejected: clDecide('REJECTED'), onReturned: clDecide('RETURNED'), onCancelled: clDecide('CANCELLED') },
+});
+const roDecide = (outcome) => (db, { instance, actor, comment }) => periodClosesOf(db)?.reopens.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PERIOD_REOPEN', label: 'Reopen of a closed month', processOwner: 'CFO', route: (id) => `/finance/close?reopen=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT r.*, c.period FROM close_reopens r JOIN close_periods c ON c.id = r.close_id WHERE r.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Reopen ${r.period}: ${r.reason}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT r.*, c.period, c.doc_no AS close_no FROM close_reopens r JOIN close_periods c ON c.id = r.close_id WHERE r.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Month', value: `${r.period} (${r.close_no})` }, { label: 'Modules', value: JSON.parse(r.modules_json).join(', ') }, { label: 'Reopened as', value: r.target_status }, { label: 'Reason', value: r.reason }] }; },
+  defaultDefinition: { name: 'Reopen of a closed month: the accounts manager (when someone else asked), the CFO, then the director', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else asked)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO'), glStep('DIR', 'Director', 'DIR')] },
+  hooks: { onApproved: roDecide('APPROVED'), onRejected: roDecide('REJECTED'), onReturned: roDecide('RETURNED'), onCancelled: roDecide('CANCELLED') },
 });

@@ -10251,3 +10251,84 @@ paths:
     get:
       summary: "project P&L: PDF (part 23.12; fin.pl_snapshot.print)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts:
+    get:
+      summary: "cash forecast: list (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "cash forecast: prepare the forecast of a week from the source modules { weekStart?, weeks?, commentary? } (part 23.13; fin.cash_forecast.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/variance:
+    get:
+      summary: "cash forecast: the published forecast against the bank movement, week by week { forecastId? } (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/project-curve:
+    get:
+      summary: "cash forecast: the cash curve of a project, actual then forecast, and its peak funding need { projectId } (part 23.13; fin.cash_forecast.view or fin.cash_curve.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}:
+    get:
+      summary: "cash forecast: one forecast: weeks, lines, sources, scenario { scenario?, shift? } (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "cash forecast: the commentary of a draft (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "cash forecast: delete a draft (part 23.13; fin.cash_forecast.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/refresh:
+    post:
+      summary: "cash forecast: rebuild the source lines, keeping the adjustments (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/adjustments:
+    post:
+      summary: "cash forecast: an adjustment with its reason { category, date, amount, projectId?, reference?, counterparty?, confidence?, reason } (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/adjustments/{lineId}:
+    delete:
+      summary: "cash forecast: remove an adjustment { reason } (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/submit:
+    post:
+      summary: "cash forecast: send for publication (part 23.13; fin.cash_forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/withdraw:
+    post:
+      summary: "cash forecast: withdraw { reason } (part 23.13; fin.cash_forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/cancel:
+    post:
+      summary: "cash forecast: cancel { reason } (part 23.13; fin.cash_forecast.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/history:
+    get:
+      summary: "cash forecast: approval history (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/print:
+    get:
+      summary: "cash forecast: PDF of the weeks { scenario?, shift? } (part 23.13; fin.cash_forecast.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/export:
+    get:
+      summary: "cash forecast: CSV of the lines (part 23.13; fin.cash_forecast.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury:
+    get:
+      summary: "cash forecast: cash position: banks, available, blocked, OD, guarantee limits, facilities, the published forecast (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/facilities:
+    post:
+      summary: "cash forecast: add or change a bank facility { id?, bankName, limitType, limit, utilised?, emi?, emiDay?, ... } (part 23.13; fin.cash_forecast.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/priorities:
+    get:
+      summary: "cash forecast: payment priority due by a date { dueBy? } (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/critical-suppliers:
+    post:
+      summary: "cash forecast: mark a supplier critical { partnerId, reason } (part 23.13; fin.cash_forecast.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/critical-suppliers/{id}:
+    delete:
+      summary: "cash forecast: unmark { reason } (part 23.13; fin.cash_forecast.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

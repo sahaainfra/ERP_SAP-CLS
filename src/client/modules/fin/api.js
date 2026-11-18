@@ -300,3 +300,43 @@ export const pl = {
   createSnapshot: async (b) => (await api.post('/fin/pl-snapshots', b, idem())).data,
   act: async (id, action, b) => (await api.post(`/fin/pl-snapshots/${id}/${action}`, b ?? {}, idem())).data,
 };
+
+// ---- part 23.13: cash forecast and treasury ----
+export const cf = {
+  list: (f) => glget(`/cash-forecasts?${q(f ?? {})}`),
+  get: (id, f) => glget(`/cash-forecasts/${id}?${q(f ?? {})}`),
+  create: async (b) => (await api.post('/fin/cash-forecasts', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/cash-forecasts/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/cash-forecasts/${id}`, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/cash-forecasts/${id}/${action}`, b ?? {}, idem())).data,
+  adjust: async (id, b) => (await api.post(`/fin/cash-forecasts/${id}/adjustments`, b, idem())).data,
+  unadjust: async (id, lineId, reason) => (await api.delete(`/fin/cash-forecasts/${id}/adjustments/${lineId}`, idem(), { reason })).data,
+  variance: (f) => glget(`/cash-forecasts/variance?${q(f ?? {})}`),
+  curve: (f) => glget(`/cash-forecasts/project-curve?${q(f)}`),
+  treasury: () => glget('/treasury'),
+  facility: async (b) => (await api.post('/fin/treasury/facilities', b, idem())).data,
+  priorities: (f) => glget(`/treasury/priorities?${q(f ?? {})}`),
+  critical: async (b) => (await api.post('/fin/treasury/critical-suppliers', b, idem())).data,
+  uncritical: async (id, reason) => (await api.delete(`/fin/treasury/critical-suppliers/${id}`, idem(), { reason })).data,
+};
+
+// ---- part 23.14: period close, statements, year end, dashboard ----
+export const pc = {
+  list: (f) => glget(`/periods?${q(f ?? {})}`),
+  get: (id) => glget(`/periods/${id}`),
+  create: async (b) => (await api.post('/fin/periods', b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/periods/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/periods/${id}`, idem())).data,
+  addTask: async (id, b) => (await api.post(`/fin/periods/${id}/tasks`, b, idem())).data,
+  updateTask: async (id, tid, b) => (await api.patch(`/fin/periods/${id}/tasks/${tid}`, b, idem())).data,
+  completeTask: async (id, tid, b) => (await api.post(`/fin/periods/${id}/tasks/${tid}/complete`, b ?? {}, idem())).data,
+  reopenTask: async (id, tid, reason) => (await api.post(`/fin/periods/${id}/tasks/${tid}/reopen`, { reason }, idem())).data,
+  lock: async (id, modules) => (await api.post(`/fin/periods/${id}/locks`, { modules }, idem())).data,
+  reopen: async (id, b) => (await api.post(`/fin/periods/${id}/reopen`, b, idem())).data,
+  reopenGet: (id) => glget(`/period-reopens/${id}`),
+  statements: (f) => glget(`/statements?${q(f)}`),
+  dashboard: (f) => glget(`/finance-dashboard?${q(f ?? {})}`),
+  yearEnd: (f) => glget(`/year-end?${q(f ?? {})}`),
+  carryForward: async (fyId) => (await api.post(`/fin/year-end/${fyId}/carry-forward`, {}, idem())).data,
+  closeYear: async (fyId, reason) => (await api.post(`/fin/year-end/${fyId}/close`, { reason }, idem())).data,
+};

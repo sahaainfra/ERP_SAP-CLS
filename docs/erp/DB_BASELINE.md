@@ -4506,6 +4506,293 @@ Indexes:
 - ix_camp_room_status: camp_id, room_status
 - ux_camp_room (unique): camp_id, block, room_no
 
+## cf_bank_limits
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bank_account_id | INTEGER |  |  |  |
+| bank_name | TEXT | yes |  |  |
+| limit_type | TEXT | yes |  |  |
+| limit_paise | INTEGER | yes |  |  |
+| utilised_paise | INTEGER | yes |  | 0 |
+| emi_paise | INTEGER | yes |  | 0 |
+| emi_day | INTEGER |  |  |  |
+| start_date | TEXT |  |  |  |
+| end_date | TEXT |  |  |  |
+| limit_status | TEXT | yes |  | 'ACTIVE' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bank_account_id -> fin_bank_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_cf_bank_limits_bank: bank_account_id
+- ix_cf_bank_limits_company: company_id, limit_type
+
+## cf_forecasts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| week_start | TEXT | yes |  |  |
+| weeks | INTEGER | yes |  | 13 |
+| opening_paise | INTEGER | yes |  | 0 |
+| inflow_paise | INTEGER | yes |  | 0 |
+| outflow_paise | INTEGER | yes |  | 0 |
+| closing_paise | INTEGER | yes |  | 0 |
+| lowest_paise | INTEGER | yes |  | 0 |
+| lowest_week | TEXT |  |  |  |
+| sources_json | TEXT | yes |  | '[]' |
+| commentary | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> cf_forecasts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_cf_forecasts_amends: amends_id
+- ix_cf_forecasts_wf: workflow_instance_id
+- ix_cf_forecasts_list: company_id, week_start, status
+- ux_cf_forecasts_open (unique): company_id, week_start
+- ux_cf_forecasts_doc (unique): company_id, doc_no
+
+## cf_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| forecast_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| category | TEXT | yes |  |  |
+| week_start | TEXT | yes |  |  |
+| due_date | TEXT |  |  |  |
+| inflow_paise | INTEGER | yes |  | 0 |
+| outflow_paise | INTEGER | yes |  | 0 |
+| source | TEXT | yes |  | 'SOURCE' |
+| source_doc | TEXT |  |  |  |
+| counterparty | TEXT |  |  |  |
+| confidence | TEXT | yes |  | 'MEDIUM' |
+| reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), forecast_id -> cf_forecasts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_cf_lines_company: company_id
+- ix_cf_lines_project: org_project_id
+- ix_cf_lines_forecast: forecast_id, week_start
+
+## cf_priority_partners
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| partner_id | INTEGER | yes |  |  |
+| reason | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_cf_priority_partners_partner: partner_id
+- ux_cf_priority_partners (unique): company_id, partner_id
+
+## close_periods
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| period_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| close_state | TEXT | yes |  | 'IN_PROGRESS' |
+| checklist_json | TEXT | yes |  | '{}' |
+| figures_json | TEXT | yes |  | '{}' |
+| soft_closed_at | TEXT |  |  |  |
+| locked_at | TEXT |  |  |  |
+| reopened_at | TEXT |  |  |  |
+| commentary | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> close_periods(id), period_id -> core_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_close_periods_amends: amends_id
+- ix_close_periods_wf: workflow_instance_id
+- ix_close_periods_period_id: period_id
+- ix_close_periods_list: company_id, period, status
+- ux_close_periods_open (unique): company_id, period_id
+- ux_close_periods_doc (unique): company_id, doc_no
+
+## close_reopens
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| close_id | INTEGER | yes |  |  |
+| period_id | INTEGER | yes |  |  |
+| modules_json | TEXT | yes |  | '[]' |
+| target_status | TEXT | yes |  | 'Soft-closed' |
+| reason | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> close_reopens(id), period_id -> core_periods(id), close_id -> close_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_close_reopens_amends: amends_id
+- ix_close_reopens_wf: workflow_instance_id
+- ix_close_reopens_list: company_id, status
+- ix_close_reopens_period_id: period_id
+- ix_close_reopens_close_id: close_id
+- ux_close_reopens_open (unique): close_id
+- ux_close_reopens_doc (unique): company_id, doc_no
+
+## close_tasks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| close_id | INTEGER | yes |  |  |
+| task_code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| module | TEXT | yes |  |  |
+| sort_order | INTEGER | yes |  | 0 |
+| mandatory | INTEGER | yes |  | 1 |
+| depends_on_json | TEXT | yes |  | '[]' |
+| owner_role | TEXT |  |  |  |
+| owner_id | TEXT |  |  |  |
+| due_date | TEXT |  |  |  |
+| task_status | TEXT | yes |  | 'OPEN' |
+| check_json | TEXT | yes |  | '{}' |
+| evidence_note | TEXT |  |  |  |
+| evidence_file_ids | TEXT | yes |  | '[]' |
+| done_by | TEXT |  |  |  |
+| done_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: close_id -> close_periods(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_close_tasks_owner: company_id, owner_id
+- ix_close_tasks_company_id: company_id, task_status, due_date
+- ix_close_tasks_close_id: close_id
+- ux_close_tasks_code (unique): close_id, task_code
+
 ## col_comments
 
 | Column | Type | Not null | Key | Default |

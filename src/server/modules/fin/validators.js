@@ -238,3 +238,16 @@ export const parseCfVariance = (q) => parse(z.object({ forecastId: id.optional()
 export const parseFacility = (b) => parse(z.object({ id: id.optional(), bankAccountId: id.nullable().optional(), bankName: z.string().trim().min(2).max(120), limitType: z.enum(['TERM_LOAN', 'CASH_CREDIT', 'OVERDRAFT', 'BG', 'LC', 'OTHER']), limit: money, utilised: money.optional(), emi: money.optional(), emiDay: z.number().int().min(1).max(28).nullable().optional(), startDate: date.nullable().optional(), endDate: date.nullable().optional(), status: z.enum(['ACTIVE', 'CLOSED']).optional(), version: z.number().int().optional() }).strict(), b);
 export const parsePriority = (q) => parse(z.object({ dueBy: date.optional() }).strict(), q);
 export const parseCritical = (b) => parse(z.object({ partnerId: id, reason: z.string().trim().min(5, 'Say why (at least 5 characters)').max(300) }).strict(), b);
+
+// ---- part 23.14: period close, statements, year end, dashboard ----
+const MODS = ['finance', 'payroll', 'procurement', 'inventory', 'plant', 'projects'];
+export const parseCloseCreate = (b) => parse(z.object({ period, commentary: z.string().trim().max(2000).nullable().optional() }).strict(), b);
+export const parseCloseUpdate = (b) => parse(z.object({ commentary: z.string().trim().max(2000).nullable().optional() }).strict(), b);
+export const parseCloseTaskAdd = (b) => parse(z.object({ name: z.string().trim().min(3, 'Name the task').max(200), ownerId: z.string().trim().min(1).max(100).nullable().optional(), dueDate: date.nullable().optional(), mandatory: z.boolean().optional(), dependsOn: z.array(z.string().trim().max(20)).max(20).optional() }).strict(), b);
+export const parseCloseTaskUpdate = (b) => parse(z.object({ ownerId: z.string().trim().min(1).max(100).optional(), dueDate: date.optional(), mandatory: z.boolean().optional(), started: z.boolean().optional(), reason: z.string().trim().max(500).optional(), version: z.number().int().optional() }).strict(), b);
+export const parseCloseTaskComplete = (b) => parse(z.object({ note: z.string().trim().max(2000).nullable().optional(), fileIds: z.array(z.coerce.number().int().min(1)).max(20).optional(), notApplicable: z.boolean().optional() }).strict(), b ?? {});
+export const parseCloseLock = (b) => parse(z.object({ modules: z.array(z.enum(MODS)).min(1) }).strict(), b);
+export const parseCloseReopen = (b) => parse(z.object({ modules: z.array(z.enum(MODS)).optional(), targetStatus: z.enum(['Open', 'Soft-closed']).optional(), reason: why }).strict(), b);
+export const parseStatements = (q) => parse(z.object({ period, basis: z.enum(['MONTH', 'QUARTER', 'YTD', 'YEAR']).optional(), statement: z.enum(['ALL', 'BS', 'PL', 'CF', 'TB']).optional() }).strict(), q);
+export const parseYearEnd = (q) => parse(z.object({ fyId: id.optional() }).strict(), q ?? {});
+export const parseDashboard = (q) => parse(z.object({ period: period.optional() }).strict(), q ?? {});

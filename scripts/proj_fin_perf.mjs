@@ -1,5 +1,5 @@
 // npm run erp:proj-fin-perf -- [--queries 30]
-// Parts 23.10 to 23.15 §14 (50 projects): 100 000 journal lines over the projects and 100 000 revenue recognition records (23.10); then times what the screens and
+// Parts 23.10 to 23.15 §14 (50 projects; 23.13 adds 100 000 cash forecast lines): 100 000 journal lines over the projects and 100 000 revenue recognition records (23.10); then times what the screens and
 // the runs ask: the recognition list (first page, a month), one record, the preview of a month (worked out from the ledger), the project trial balance, the WIP
 // report and the overhead report. Prints the query plans. The standard (05_GLOBAL_STANDARDS §11): p95 <= 500 ms for a list, <= 300 ms for one record,
 // <= 800 ms for a save.
@@ -12,6 +12,7 @@ import { createGlService } from '../src/server/modules/fin/gl.js';
 import { createProjectAccountingService } from '../src/server/modules/fin/projacct.js';
 import { createCostForecastService } from '../src/server/modules/fin/costforecast.js';
 import { createProjectPlService } from '../src/server/modules/fin/projectpl.js';
+import { createCashForecastService } from '../src/server/modules/fin/cashforecast.js';
 
 const args = process.argv.slice(2);
 const queries = Number(args.includes('--queries') ? args[args.indexOf('--queries') + 1] : 30);
@@ -83,8 +84,20 @@ time('project P&L of a month (month, year, to date, budget, forecast, 6-month tr
 time('profitability of the year, 50 projects (100 000 journal lines)', 500, () => ps.portfolio(cfo, { from: '2026-04-01', to: '2027-03-31' }), 10);
 time('P&L snapshot list, first page (100 000)', 500, () => ps.snapshots.list(cfo, {}));
 time('drill-down of a P&L line', 500, (i) => ps.pl.drill(cfo, { projectId: projects[i % 50], line: 'MATERIAL', from: '2026-04-01', to: '2026-10-31' }));
+// 23.13: 100 000 cash forecast lines over 50 forecasts; this week's forecast prepared from the ledger, the treasury, the variance, a project curve
+const cs = createCashForecastService({ db, base, flags }); const today = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
+db.exec('BEGIN'); const insCf = db.prepare("INSERT INTO cf_forecasts (company_id, doc_no, version_no, week_start, weeks, status, created_by) VALUES (1, ?, 1, ?, 13, 'SUPERSEDED', 'perf')"); const insCl = db.prepare("INSERT INTO cf_lines (company_id, forecast_id, org_project_id, category, week_start, inflow_paise, outflow_paise, source, created_by) VALUES (1, ?, ?, ?, ?, ?, ?, 'SOURCE', 'perf')");
+const fids = []; for (let f = 0; f < 50; f += 1) { const ws = new Date(Date.UTC(2020, 0, 6 + 7 * f)).toISOString().slice(0, 10); fids.push(Number(insCf.run(`CF/P${f}`, ws).lastInsertRowid)); for (let i = 0; i < 2000; i += 1) { const wk = new Date(Date.UTC(2020, 0, 6 + 7 * (f + (i % 13)))).toISOString().slice(0, 10); insCl.run(fids[f], projects[i % 50], i % 2 ? 'AP_DUE' : 'AR_OPEN', wk, i % 2 ? 0 : 50000, i % 2 ? 40000 : 0); } }
+db.exec('COMMIT'); db.exec('ANALYZE');
+time('cash forecast list, first page', 500, () => cs.forecasts.list(acc, {}));
+time('one cash forecast with 2 000 lines, a scenario', 300, (i) => cs.forecasts.get(acc, fids[i % 50], { scenario: i % 2 ? 'BOTH' : 'BASE' }));
+let cfx = null; time('this week\'s forecast prepared from the source modules (save)', 800, () => { cfx = cs.forecasts.create(acc, { weekStart: today }); db.prepare("UPDATE cf_forecasts SET status = 'CANCELLED', deleted_at = 'x' WHERE id = ?").run(cfx.id); }, 10);
+time('treasury and cash position', 300, () => cs.treasury(acc));
+time('payment priority', 500, () => cs.priority.list(acc, {}));
+time('project cash curve (100 000 journal lines)', 500, (i) => cs.projectCurve(acc, { projectId: projects[i % 50] }));
 const plan = (label, sql) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all()) console.log(`    ${r.detail}`); };
 plan('ledger of a project to a date', "SELECT a.id, SUM(l.debit_paise) FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = 1 AND l.project_id = 5 AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date <= '2026-10-31' GROUP BY a.id");
+plan('lines of a cash forecast', 'SELECT * FROM cf_lines WHERE forecast_id = 5 AND deleted_at IS NULL ORDER BY week_start, category, id');
 plan('recognitions of a month', "SELECT x.* FROM pa_revenue_recognition x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.period = '2026-10' ORDER BY x.period DESC LIMIT 25");
 const bad = results.filter((r) => !r.ok);
 console.log(bad.length ? `\nOVER THE LIMIT: ${bad.map((r) => `${r.label} (${r.p95} ms)`).join('; ')}` : '\nEvery measure is within its limit.');

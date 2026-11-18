@@ -356,5 +356,12 @@
  "ui.translation.manage": [
   "SUPADM",
   "SYSADM"
+ ],
+ "fin.cash_forecast.manage": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "fin.period.configure": [
+  "CFO"
  ]
 }

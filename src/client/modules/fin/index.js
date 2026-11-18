@@ -37,6 +37,12 @@ const ForecastWorkbenchPage = lazyPage(() => import('./ForecastPages.jsx'), 'For
 const ForecastReportsPage = lazyPage(() => import('./ForecastPages.jsx'), 'ForecastReportsPage');
 const ProjectPlPage = lazyPage(() => import('./PlPages.jsx'), 'ProjectPlPage');
 const ProfitabilityPage = lazyPage(() => import('./PlPages.jsx'), 'ProfitabilityPage');
+const TreasuryPage = lazyPage(() => import('./TreasuryPages.jsx'), 'TreasuryPage');
+const CashReportsPage = lazyPage(() => import('./TreasuryPages.jsx'), 'CashReportsPage');
+const ClosePage = lazyPage(() => import('./ClosePages.jsx'), 'ClosePage');
+const StatementsPage = lazyPage(() => import('./ClosePages.jsx'), 'StatementsPage');
+const FinanceDashboardPage = lazyPage(() => import('./ClosePages.jsx'), 'FinanceDashboardPage');
+const YearEndPage = lazyPage(() => import('./ClosePages.jsx'), 'YearEndPage');
 const AssetAccountingPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetAccountingPage');
 const GstSettingsPage = lazyPage(() => import('./GstPages.jsx'), 'GstSettingsPage');
 
@@ -91,6 +97,12 @@ registerModule({
     { path: '/finance/forecast-reports', label: 'EAC Trend & Forecast Variance', labelHi: 'EAC प्रवृत्ति व पूर्वानुमान अंतर', icon: 'erp.action.history', permission: 'fin.forecast.view', flag: 'ff.fin.p2311', Page: ForecastReportsPage },
     { path: '/finance/project-pl', label: 'Project P&L', labelHi: 'परियोजना लाभ-हानि', icon: 'erp.action.history', permission: 'fin.pl.view', flag: 'ff.fin.p2312', Page: ProjectPlPage },
     { path: '/finance/profitability', label: 'Profitability Overview', labelHi: 'लाभप्रदता अवलोकन', icon: 'erp.action.history', permission: 'fin.pl.view', flag: 'ff.fin.p2312', Page: ProfitabilityPage },
+    { path: '/finance/treasury', label: 'Treasury & Cash Position', labelHi: 'ट्रेज़री और नकद स्थिति', icon: 'erp.action.history', permission: 'fin.cash_forecast.view', flag: 'ff.fin.p2313', Page: TreasuryPage },
+    { path: '/finance/cash-reports', label: 'Cash Reports', labelHi: 'नकद रिपोर्ट', icon: 'erp.action.history', permission: 'fin.cash_curve.view', flag: 'ff.fin.p2313', Page: CashReportsPage },
+    { path: '/finance/close', label: 'Period Close', labelHi: 'अवधि समापन', icon: 'erp.action.history', permission: 'fin.period.view', flag: 'ff.fin.p2314', Page: ClosePage },
+    { path: '/finance/statements', label: 'Financial Statements', labelHi: 'वित्तीय विवरण', icon: 'erp.action.history', permission: 'fin.statements.view', flag: 'ff.fin.p2314', Page: StatementsPage },
+    { path: '/finance/dashboard', label: 'Finance Dashboard', labelHi: 'वित्त डैशबोर्ड', icon: 'erp.action.history', permission: 'fin.dashboard.view', flag: 'ff.fin.p2314', Page: FinanceDashboardPage },
+    { path: '/finance/year-end', label: 'Year-End Closing', labelHi: 'वर्षांत समापन', icon: 'erp.action.history', permission: 'fin.period.view', flag: 'ff.fin.p2314', Page: YearEndPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });
