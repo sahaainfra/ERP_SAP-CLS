@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { transaction } from '../../platform/db/index.js';
+import { taxEngineOf } from '../../platform/tax/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { HttpError, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
 import { toPdf } from '../../platform/export/index.js';
@@ -73,7 +74,8 @@ export function createPoService({ db, base, baseUrl = () => '', rc = null }) {
   const scope = (actor) => { const f = authz.scopeFilter(actor, 'proc.purchase_order.view', { project: 'x.org_project_id', site: 'x.po_site_id' }); return { sql: `x.company_id = :c AND ${f.sql}`, params: { c: actor.companyId, ...(f.params ?? {}) } }; };
   const levelOf = (cid, amount) => { const pm = Number(param(cid, 'proc.po.band_pm_minor') ?? 50_000_000); const pd = Number(param(cid, 'proc.po.band_pd_minor') ?? 250_000_000); const dir = Number(param(cid, 'proc.po.band_dir_minor') ?? 1_000_000_000); return amount > dir ? 3 : amount > pd ? 2 : amount > pm ? 1 : 0; };
   const link = (token) => `${String(baseUrl() ?? '').replace(/\/$/, '')}/vendor-po?token=${token}`;
-  const gstOf = (companyId, code, date) => { if (!code) return null; const g = db.prepare("SELECT igst_pct FROM mdm_gst_rates WHERE code = ? AND (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?) AND deleted_at IS NULL ORDER BY effective_from DESC LIMIT 1").get(code, companyId, date, date); return g ? g.igst_pct : null; };
+  // the rate of a GST code on the order date: the tax engine of 23.07 (the dated masters of 06.02, the company's own row first); before it is mounted, the master directly
+  const gstOf = (companyId, code, date) => { if (!code) return null; const te = taxEngineOf(db); if (te) { try { return te.rateOn(companyId, { code }, date).igst; } catch { return null; } } const g = db.prepare("SELECT igst_pct FROM mdm_gst_rates WHERE code = ? AND (company_id = ? OR company_id IS NULL) AND row_status = 'ACTIVE' AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?) AND deleted_at IS NULL ORDER BY effective_from DESC LIMIT 1").get(code, companyId, date, date); return g ? g.igst_pct : null; };
   const vendorGstin = (companyId, vendorId, gstinId = null) => (gstinId ? db.prepare("SELECT * FROM mdm_partner_gstins WHERE id = ? AND partner_id = ? AND gstin_status = 'ACTIVE' AND deleted_at IS NULL").get(gstinId, vendorId) : db.prepare("SELECT * FROM mdm_partner_gstins WHERE partner_id = ? AND gstin_status = 'ACTIVE' AND deleted_at IS NULL ORDER BY id LIMIT 1").get(vendorId)) ?? null;
 
   // ---- the view -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

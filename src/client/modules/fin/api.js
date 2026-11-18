@@ -191,3 +191,23 @@ export const cb = {
   contraAct: async (id, action, b) => (await api.post(`/fin/contras/${id}/${action}`, b ?? {}, idem())).data,
   position: (date) => glget(`/cash-position${date ? `?date=${date}` : ''}`),
 };
+// part 23.07: the GST service (tax engine, settings, e-invoices, e-way bills)
+export const gst = {
+  resolve: async (b) => (await api.post('/fin/gst/resolve', b)).data,
+  checkGstin: async (b) => (await api.post('/fin/gst/gstin-check', b, idem())).data,
+  settings: () => glget('/gst/settings'),
+  settingsOne: (id) => glget(`/gst/settings/${id}`),
+  createSettings: async (b) => (await api.post('/fin/gst/settings', b, idem())).data,
+  importSettings: async (b) => (await api.post('/fin/gst/settings/import', b, idem())).data,
+  settingsAct: async (id, action, b) => (await api.post(`/fin/gst/settings/${id}/${action}`, b ?? {}, idem())).data,
+  removeSettings: async (id) => (await api.delete(`/fin/gst/settings/${id}`, idem())).data,
+  einvoice: (id) => glget(`/einvoices/${id}`),
+  due: () => glget('/einvoices/due'),
+  generate: async (b) => (await api.post('/fin/einvoices', b, idem())).data,
+  einvAct: async (id, action, b) => (await api.post(`/fin/einvoices/${id}/${action}`, b ?? {}, idem())).data,
+  ewb: (id) => glget(`/ewaybills/${id}`),
+  ewbSources: () => glget('/ewaybills/sources'),
+  ewbPrepare: (f) => glget(`/ewaybills/prepare?${q(f)}`),
+  ewbCreate: async (b) => (await api.post('/fin/ewaybills', b, idem())).data,
+  ewbAct: async (id, action, b) => (await api.post(`/fin/ewaybills/${id}/${action}`, b ?? {}, idem())).data,
+};

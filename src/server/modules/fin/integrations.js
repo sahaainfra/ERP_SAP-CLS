@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, cashOf, glOf, paymentsOf, postingOf } from './index.js';
+import { apOf, arOf, cashOf, glOf, gstOf, paymentsOf, postingOf } from './index.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { unprocessable } from '../../platform/http/errors.js';
@@ -302,4 +302,28 @@ for (const [type, label, perm, route] of [['ap_bills', 'AP bill', 'fin.bill.view
   summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
   related: () => [],
   search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, limit).map((x) => x.id); },
+});
+
+// ---- part 23.07: the GST compliance service ----
+for (const [type, description] of [
+  ['fin.gst_settings.approved', 'A version of the GST settings was approved by the CFO (part 23.07): data { settingsId, effectiveFrom, einvoiceEnabled, ewayEnabled, gspMode }.'],
+  ['fin.einvoice.generated', 'The IRP returned the IRN of a document (part 23.07 FR-03): data { einvoiceId, documentType, documentId, documentNo, irn, ackNo, ackDate, mode }. The document (22.04, 23.05) carries the IRN and the QR.'],
+  ['fin.einvoice.failed', 'An e-invoice was refused or not answered (part 23.07): data { einvoiceId, documentType, documentId, documentNo, code, retryable }.'],
+  ['fin.einvoice.cancelled', 'An IRN was cancelled within its 24 hours (part 23.07): data { einvoiceId, documentType, documentId, documentNo, irn, reason }.'],
+  ['fin.ewaybill.generated', 'An e-way bill was generated (part 23.07 FR-04): data { ewaybillId, ewbNo, documentType, documentId, documentNo, vehicleNo, validUntil, projectId }. The gate and the transfer read it.'],
+  ['fin.ewaybill.vehicle_updated', 'The vehicle of an e-way bill changed (Part B): data { ewaybillId, ewbNo, vehicleNo, validUntil, documentType, documentId }.'],
+  ['fin.ewaybill.extended', 'An e-way bill was extended: data { ewaybillId, ewbNo, validUntil }.'],
+  ['fin.ewaybill.cancelled', 'An e-way bill was cancelled within its 24 hours: data { ewaybillId, ewbNo, documentType, documentId }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const gsDecide = (outcome) => (db, { instance, actor, comment }) => gstOf(db)?.settings.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_GST_SETTINGS', label: 'GST settings (version)', processOwner: 'CFO', route: (id) => `/finance/gst-settings?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM gst_settings WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `GST settings from ${r.effective_from}: ${r.change_note ?? ''}`.slice(0, 300), originator: r.requested_by } : null; },
+  summarise(db, _actor, id) {
+    const r = db.prepare('SELECT * FROM gst_settings WHERE id = ?').get(Number(id)); if (!r) return null; const prev = db.prepare("SELECT * FROM gst_settings WHERE company_id = ? AND status = 'APPROVED' AND id <> ? ORDER BY effective_from DESC, id DESC LIMIT 1").get(r.company_id, r.id);
+    const cr = (p) => `₹${(p / 1e7).toFixed(2)} crore`; /** @type {Array<[string, string, (v: any) => string]>} */ const rows = [['From', 'effective_from', (v) => v], ['Aggregate turnover', 'aato_paise', cr], ['e-Invoicing', 'einvoice_enabled', (v) => (v ? 'on' : 'off')], ['IRN reporting window', 'irn_window_days', (v) => `${v} days`], ['e-Way bills', 'eway_enabled', (v) => (v ? 'on' : 'off')], ['e-Way bill above', 'eway_threshold_paise', (v) => `₹${(v / 100).toLocaleString('en-IN')}`], ['GSP connector', 'gsp_connector_code', (v) => v ?? 'none'], ['Mode', 'gsp_mode', (v) => v], ['Why', 'change_note', (v) => v ?? '']];
+    return { fields: rows.map((x) => { const l = String(x[0]); const k = String(x[1]); const f = /** @type {(v: any) => string} */ (x[2]); return { label: l, value: prev && prev[k] !== r[k] && k !== 'change_note' ? `${f(r[k])} (was ${f(prev[k])})` : f(r[k]) }; }) };
+  },
+  defaultDefinition: { name: 'GST settings: the CFO (made by the accounts manager)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: { onApproved: gsDecide('APPROVED'), onRejected: gsDecide('REJECTED'), onReturned: gsDecide('RETURNED'), onCancelled: gsDecide('CANCELLED') },
 });
