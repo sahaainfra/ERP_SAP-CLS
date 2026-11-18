@@ -3291,7 +3291,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/fin/tds-returns/26as', g: 'permission', k: 'fin.tds_return.view', s: 'parseFy', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/compliance-calendar', g: 'permission', k: 'fin.gst_return.view', s: 'parseCalendar', scope: 'company', rate: 'read', audit: false },
   // part 23.07: the GST tax engine, GSTIN checks, the settings (maker-checker), e-invoices and e-way bills
-  { m: 'POST', p: '/api/v1/fin/gst/resolve', g: 'permission', k: 'fin.gst.resolve', s: 'parseGstResolve', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/fin/gst/resolve', g: 'permission', k: 'fin.gst.resolve', s: 'parseGstResolve', scope: 'company', rate: 'read', audit: true },
   { m: 'POST', p: '/api/v1/fin/gst/gstin-check', g: 'permission', k: 'fin.gstin.check', s: 'parseGstinCheck', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/fin/gst/settings', g: 'permission', k: 'fin.gst_setting.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/gst/settings/export', g: 'permission', k: 'fin.gst_setting.export', s: null, scope: 'company', rate: 'export', audit: true },
@@ -3441,7 +3441,7 @@ export const ROUTE_POLICY = [
   // part 23.02: the posting engine (rules, postings, replays, reconciliation)
   { m: 'GET', p: '/api/v1/fin/posting-rules/catalogue', g: 'permission', k: 'fin.posting_rule.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/posting-rules/samples', g: 'permission', k: 'fin.posting_rule.view', s: 'parseSamples', scope: 'company', rate: 'read', audit: false },
-  { m: 'POST', p: '/api/v1/fin/posting-rules/test', g: 'permission', k: 'fin.posting_rule.view', s: 'parseRuleTest', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/fin/posting-rules/test', g: 'permission', k: 'fin.posting_rule.view', s: 'parseRuleTest', scope: 'company', rate: 'read', audit: true },
   { m: 'GET', p: '/api/v1/fin/posting-rules', g: 'permission', k: 'fin.posting_rule.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/fin/posting-rules', g: 'permission', k: 'fin.posting_rule.edit', s: 'parseRulePropose', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/fin/posting-rules/:id', g: 'permission', k: 'fin.posting_rule.view', s: 'parseId', scope: 'company', rate: 'read', audit: false },
@@ -3468,7 +3468,7 @@ export const ROUTE_POLICY = [
   // part 23.01: the general ledger (journals, recurring journals, ledger, trial balance, carry-forward)
   { m: 'GET', p: '/api/v1/fin/journals/options', g: 'permission', k: 'fin.journal.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/journals/export', g: 'permission', k: 'fin.journal.export', s: null, scope: 'company', rate: 'export', audit: true },
-  { m: 'POST', p: '/api/v1/fin/journals/check', g: 'permission', k: 'fin.journal.view', s: 'parseJournalCheck', scope: 'company', rate: 'read', audit: false },
+  { m: 'POST', p: '/api/v1/fin/journals/check', g: 'permission', k: 'fin.journal.view', s: 'parseJournalCheck', scope: 'company', rate: 'read', audit: true },
   { m: 'POST', p: '/api/v1/fin/journals/import', g: 'permission', k: 'fin.journal.create', s: 'parseJournalImport', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/fin/journals', g: 'permission', k: 'fin.journal.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'POST', p: '/api/v1/fin/journals', g: 'permission', k: 'fin.journal.create', s: 'parseJournalCreate', scope: 'company', rate: 'write', audit: true },
