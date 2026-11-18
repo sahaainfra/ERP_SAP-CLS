@@ -1,4 +1,4 @@
-import { createHash, createHmac } from 'node:crypto';
+import { constants, createCipheriv, createDecipheriv, createHash, createHmac, createPublicKey, publicEncrypt, randomBytes } from 'node:crypto';
 import { ProviderError, endpointProblem, httpJson } from '../../platform/integrations/providers.js';
 import { gstinProblem } from '../../../shared/gst.js';
 
@@ -164,25 +164,78 @@ export function sandboxGsp({ now = () => Date.now() } = {}) {
   };
 }
 
+// ---- D-731: the encrypted API of the IRP and of the e-way bill system (direct, or through a GSP that passes it on) ----
+// e-invoice: the credentials and a random 32-byte AppKey are sent RSA-encrypted with the IRP's public key; the answer carries the AuthToken and the
+// session key (SEK) encrypted with the AppKey (AES-256-ECB). Each request is then {"Data": AES-256-ECB(SEK, JSON)} in Base64 and each answer's Data is
+// decrypted with the SEK. e-way bills: the password and the AppKey are each RSA-encrypted; a request is {"action", "data": AES(SEK, Base64(JSON))} and the
+// answer's data decrypts to Base64 JSON. The token is kept until ten minutes before it expires and fetched again once when the portal says it is invalid.
+const aesEnc = (key, buf) => { const c = createCipheriv('aes-256-ecb', key, null); return Buffer.concat([c.update(buf), c.final()]); };
+const aesDec = (key, buf) => { const d = createDecipheriv('aes-256-ecb', key, null); return Buffer.concat([d.update(buf), d.final()]); };
+const rsaB64 = (pem, buf) => publicEncrypt({ key: pem, padding: constants.RSA_PKCS1_PADDING }, buf).toString('base64');
+const b64 = (x) => Buffer.from(x).toString('base64');
+const sessions = new Map();
+/** Forget the sessions (a test, or a key changed). */
+export const resetGspSessions = () => sessions.clear();
+const sessionKey = (ctx, kind) => `${kind}|${ctx.config.baseUrl}|${ctx.config.gstin}|${ctx.config.userName}|${ctx.secrets.client_id ?? ''}`;
+const portalError = (d, what) => { const e = d?.ErrorDetails ?? d?.errorDetails ?? (d?.error ? [{ ErrorCode: d.error?.errorCodes ?? d.error, ErrorMessage: d.error?.message ?? String(d.error) }] : []); const first = Array.isArray(e) ? e[0] : e; const code = String(first?.ErrorCode ?? first?.errorCode ?? ''); const err = new ProviderError(`${code ? `${code}: ` : ''}${first?.ErrorMessage ?? first?.errorMessage ?? `${what} refused`}`, { retryable: false, httpStatus: 400, response: d }); return Object.assign(err, { code }); };
+const tokenInvalid = (x) => /^(1005|238|GSP102)$/.test(String(x?.code ?? '')) || /invalid token|token expired/i.test(String(x?.message ?? ''));
+const einvHeaders = (ctx, token = null) => ({ client_id: ctx.secrets.client_id ?? '', client_secret: ctx.secrets.client_secret ?? '', gstin: ctx.config.gstin ?? '', user_name: ctx.config.userName ?? '', ...(token ? { AuthToken: token } : {}) });
+const ewbHeaders = (ctx, token = null) => ({ 'client-id': ctx.secrets.client_id ?? '', 'client-secret': ctx.secrets.client_secret ?? '', gstin: ctx.config.gstin ?? '', ...(token ? { authtoken: token } : {}) });
+async function einvSession(ctx, force = false) {
+  const k = sessionKey(ctx, 'EINV'); const now = Date.now(); const cur = sessions.get(k); if (cur && !force && cur.until > now) return cur;
+  const appKey = randomBytes(32); const payload = { UserName: ctx.config.userName, Password: ctx.secrets.password ?? '', AppKey: appKey.toString('base64'), ForceRefreshAccessToken: Boolean(force) };
+  const out = await httpJson(ctx, { path: ctx.config.authPath || '/eivital/v1.04/auth', headers: einvHeaders(ctx), body: { Data: rsaB64(ctx.config.publicKey, Buffer.from(b64(JSON.stringify(payload)))) } });
+  const d = out.data ?? {}; if (String(d.Status) !== '1' || !d.Data?.Sek) throw portalError(d, 'The IRP authentication was');
+  const s = { token: d.Data.AuthToken, sek: aesDec(appKey, Buffer.from(d.Data.Sek, 'base64')), until: (Date.parse(String(d.Data.TokenExpiry ?? '').replace(' ', 'T') + '+05:30') || now + 6 * 3600_000) - 600_000 };
+  sessions.set(k, s); return s;
+}
+/** @param {any} ctx @param {{ method?: string, path: string, body?: any }} req */
+async function einvCall(ctx, { method = 'POST', path, body = undefined }, retried = false) {
+  const s = await einvSession(ctx);
+  const out = await httpJson(ctx, { method, path, headers: einvHeaders(ctx, s.token), body: body === undefined ? undefined : { Data: aesEnc(s.sek, Buffer.from(JSON.stringify(body))).toString('base64') } });
+  const d = out.data ?? {};
+  if (String(d.Status) !== '1') { const e = portalError(d, 'The IRP'); if (!retried && tokenInvalid(e)) { sessions.delete(sessionKey(ctx, 'EINV')); await einvSession(ctx, true); return einvCall(ctx, { method, path, body }, true); } throw e; }
+  const data = typeof d.Data === 'string' ? JSON.parse(aesDec(s.sek, Buffer.from(d.Data, 'base64')).toString('utf8')) : d.Data;
+  return { httpStatus: out.httpStatus, data };
+}
+async function ewbSession(ctx, force = false) {
+  const k = sessionKey(ctx, 'EWB'); const now = Date.now(); const cur = sessions.get(k); if (cur && !force && cur.until > now) return cur;
+  const appKey = randomBytes(32);
+  const out = await httpJson(ctx, { path: ctx.config.ewbAuthPath || '/ewaybillapi/v1.03/auth', headers: ewbHeaders(ctx), body: { action: 'ACCESSTOKEN', username: ctx.config.ewbUserName || ctx.config.userName, password: rsaB64(ctx.config.publicKey, Buffer.from(ctx.secrets.ewb_password || ctx.secrets.password || '')), app_key: rsaB64(ctx.config.publicKey, Buffer.from(appKey.toString('base64'))) } });
+  const d = out.data ?? {}; if (String(d.status) !== '1' || !d.sek) throw portalError(d, 'The e-way bill authentication was');
+  const s = { token: d.authtoken, sek: aesDec(appKey, Buffer.from(d.sek, 'base64')), until: now + 6 * 3600_000 - 600_000 }; sessions.set(k, s); return s;
+}
+async function ewbCall(ctx, { path, action, body }, retried = false) {
+  const s = await ewbSession(ctx);
+  const out = await httpJson(ctx, { path, headers: ewbHeaders(ctx, s.token), body: { action, data: aesEnc(s.sek, Buffer.from(b64(JSON.stringify(body)))).toString('base64') } });
+  const d = out.data ?? {};
+  if (String(d.status) !== '1') { const e = portalError(d, 'The e-way bill system'); if (!retried && tokenInvalid(e)) { sessions.delete(sessionKey(ctx, 'EWB')); await ewbSession(ctx, true); return ewbCall(ctx, { path, action, body }, true); } throw e; }
+  const data = typeof d.data === 'string' ? JSON.parse(Buffer.from(aesDec(s.sek, Buffer.from(d.data, 'base64')).toString('utf8'), 'base64').toString('utf8')) : d.data;
+  return { httpStatus: out.httpStatus, data };
+}
+
+const publicKeyProblem = (pem) => { try { createPublicKey(String(pem ?? '')); return null; } catch { return 'publicKey must be the public key (PEM) of the IRP / e-way bill system from its portal.'; } };
 /** An authorised GSP/ASP's JSON API: the operations are posted to configurable paths with the client id and secret; the GSP answers in the IRP's own fields. */
 export function httpGsp() {
   const path = (ctx, k, d) => ctx.config[k] || d;
   const headers = (ctx) => ({ 'client-id': ctx.secrets.client_id ?? '', 'client-secret': ctx.secrets.client_secret ?? '', 'user-name': ctx.config.userName ?? '', password: ctx.secrets.password ?? '', gstin: ctx.config.gstin ?? '' });
-  const op = (k, d, validate = undefined) => ({ validate, run: (ctx, p) => httpJson(ctx, { path: path(ctx, k, d), headers: headers(ctx), body: p.json ?? p }) });
+  const encrypted = (ctx) => String(ctx.config.encryption ?? 'NONE').toUpperCase() === 'IRP';
+  /** An operation: plain JSON to the GSP, or (encryption IRP, D-731) the portal's encrypted session; `action` marks an e-way bill call. */
+  const op = (k, d, validate = undefined, action = null) => ({ validate, run: (ctx, p) => (!encrypted(ctx) ? httpJson(ctx, { path: path(ctx, k, d), headers: headers(ctx), body: p.json ?? p }) : action ? ewbCall(ctx, { path: path(ctx, k, d), action, body: p.json ?? p }) : einvCall(ctx, { path: path(ctx, k, d), body: p.json ?? p })) });
   return {
     type: 'gsp', provider: 'gsp_http', label: 'Authorised GSP / ASP (JSON API)',
-    description: 'Calls the e-invoice and e-way bill API of a GST Suvidha Provider with its client id and secret and the taxpayer\'s API user. Production only after the GSP\'s own certification (D-731).',
-    configFields: [{ name: 'baseUrl', label: 'Base URL', required: true }, { name: 'gstin', label: 'GSTIN of the API user', required: true }, { name: 'userName', label: 'API user name', required: true }, { name: 'irnPath', label: 'Generate IRN path', help: 'Default /einvoice/v1.03/invoice' }, { name: 'cancelIrnPath', label: 'Cancel IRN path', help: 'Default /einvoice/v1.03/invoice/cancel' }, { name: 'ewbPath', label: 'Generate e-way bill path', help: 'Default /ewaybill/v1.03/ewayapi/genewaybill' }, { name: 'partBPath', label: 'Vehicle update path' }, { name: 'extendPath', label: 'Extension path' }, { name: 'cancelEwbPath', label: 'Cancel e-way bill path' }, { name: 'gstinPath', label: 'GSTIN search path', help: 'Default /einvoice/v1.03/Master/gstin' }],
-    secrets: [{ name: 'client_id', label: 'Client id', required: true }, { name: 'client_secret', label: 'Client secret', required: true }, { name: 'password', label: 'API user password', required: true }],
-    validateConfig: (c, env) => [endpointProblem(String(c.baseUrl ?? ''), env), /^[0-9]{2}[A-Z0-9]{13}$/.test(String(c.gstin ?? '')) ? null : 'gstin must be the 15-character GSTIN of the API user.'].filter(Boolean),
+    description: 'Calls the e-invoice and e-way bill API of a GST Suvidha Provider with its client id and secret and the taxpayer\'s API user. With encryption IRP the portal\'s AES/RSA session is made here (D-731); production use still needs the GSP\'s (or the IRP\'s) certification of this client.',
+    configFields: [{ name: 'baseUrl', label: 'Base URL', required: true }, { name: 'gstin', label: 'GSTIN of the API user', required: true }, { name: 'userName', label: 'API user name', required: true }, { name: 'irnPath', label: 'Generate IRN path', help: 'Default /einvoice/v1.03/invoice' }, { name: 'cancelIrnPath', label: 'Cancel IRN path', help: 'Default /einvoice/v1.03/invoice/cancel' }, { name: 'ewbPath', label: 'Generate e-way bill path', help: 'Default /ewaybill/v1.03/ewayapi/genewaybill' }, { name: 'partBPath', label: 'Vehicle update path' }, { name: 'extendPath', label: 'Extension path' }, { name: 'cancelEwbPath', label: 'Cancel e-way bill path' }, { name: 'gstinPath', label: 'GSTIN search path', help: 'Default /einvoice/v1.03/Master/gstin' }, { name: 'gstr2bPath', label: 'GSTR-2B path', help: 'Default /gstr2b/v1.0/get (D-735)' }, { name: 'encryption', label: 'Encryption', help: 'NONE: the GSP takes plain JSON and encrypts for the portal. IRP: the AES/RSA session of the IRP and the e-way bill system is made here (D-731).' }, { name: 'publicKey', label: 'Public key of the IRP / e-way bill system (PEM)', help: 'Needed for encryption IRP' }, { name: 'authPath', label: 'IRP authentication path', help: 'Default /eivital/v1.04/auth' }, { name: 'ewbAuthPath', label: 'E-way bill authentication path', help: 'Default /ewaybillapi/v1.03/auth' }, { name: 'ewbUserName', label: 'E-way bill API user (if not the e-invoice one)' }],
+    secrets: [{ name: 'client_id', label: 'Client id', required: true }, { name: 'client_secret', label: 'Client secret', required: true }, { name: 'password', label: 'API user password', required: true }, { name: 'ewb_password', label: 'E-way bill API user password (if not the e-invoice one)' }],
+    validateConfig: (c, env) => [endpointProblem(String(c.baseUrl ?? ''), env), /^[0-9]{2}[A-Z0-9]{13}$/.test(String(c.gstin ?? '')) ? null : 'gstin must be the 15-character GSTIN of the API user.', !['NONE', 'IRP', ''].includes(String(c.encryption ?? '').toUpperCase()) ? 'encryption is NONE (the GSP encrypts) or IRP (the portal\'s AES/RSA session here).' : null, String(c.encryption ?? '').toUpperCase() === 'IRP' ? publicKeyProblem(c.publicKey) : null].filter(Boolean),
     operations: {
-      searchGstin: { run: (ctx, p) => httpJson(ctx, { method: 'GET', path: `${path(ctx, 'gstinPath', '/einvoice/v1.03/Master/gstin')}?param1=${encodeURIComponent(p.gstin)}`, headers: headers(ctx) }) },
+      searchGstin: { run: (ctx, p) => (encrypted(ctx) ? einvCall(ctx, { method: 'GET', path: `${path(ctx, 'gstinPath', '/eivital/v1.04/Master/gstin')}/${encodeURIComponent(p.gstin)}` }) : httpJson(ctx, { method: 'GET', path: `${path(ctx, 'gstinPath', '/einvoice/v1.03/Master/gstin')}?param1=${encodeURIComponent(p.gstin)}`, headers: headers(ctx) })) },
       generateIrn: op('irnPath', '/einvoice/v1.03/invoice', (p) => einvoiceProblems(p?.json)),
       cancelIrn: op('cancelIrnPath', '/einvoice/v1.03/invoice/cancel'),
-      generateEwb: op('ewbPath', '/ewaybill/v1.03/ewayapi/genewaybill'),
-      updatePartB: op('partBPath', '/ewaybill/v1.03/ewayapi/vehewb'),
-      extendEwb: op('extendPath', '/ewaybill/v1.03/ewayapi/extendvalidity'),
-      cancelEwb: op('cancelEwbPath', '/ewaybill/v1.03/ewayapi/canewb'),
+      generateEwb: op('ewbPath', '/ewaybill/v1.03/ewayapi/genewaybill', undefined, 'GENEWAYBILL'),
+      updatePartB: op('partBPath', '/ewaybill/v1.03/ewayapi/vehewb', undefined, 'VEHEWB'),
+      extendEwb: op('extendPath', '/ewaybill/v1.03/ewayapi/extendvalidity', undefined, 'EXTENDVALIDITY'),
+      cancelEwb: op('cancelEwbPath', '/ewaybill/v1.03/ewayapi/canewb', undefined, 'CANEWB'),
       get2b: { run: (ctx, p) => httpJson(ctx, { method: 'GET', path: `${path(ctx, 'gstr2bPath', '/gstr2b/v1.0/get')}?gstin=${encodeURIComponent(p.gstin)}&rtnprd=${encodeURIComponent(p.rtnprd)}`, headers: headers(ctx) }) }, // D-735
     },
     health: async (ctx) => { const out = await httpJson(ctx, { method: 'GET', path: ctx.config.healthPath || '/health', headers: headers(ctx) }); return { message: `GSP answered HTTP ${out.httpStatus}.` }; },
