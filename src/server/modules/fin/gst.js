@@ -11,6 +11,7 @@ import { nowIso, rid } from '../proc/base.js';
 import { STATUS, createFlow } from '../qa/flow.js';
 import { endOfIstDay, fyOf, readSignedQr, validityDays } from './gsp.js';
 import QRCode from 'qrcode';
+import { qrPdf } from '../../platform/export/qrpdf.js';
 
 // Part 23.07: the GST compliance service, used by every module.
 //  - The tax resolver (FR-01, BR-01): supplier and recipient (GSTIN or state), place of supply, HSN/SAC, the kind of supply (B2B, B2C, SEZ, export, import), reverse
@@ -347,8 +348,10 @@ export function createGstService({ db, base, flags, now = () => Date.now() }) {
     async print(actor, id) {
       const r = einvRow(actor, id, 'fin.einvoice.print'); if (r.einv_status !== 'GENERATED') throw unprocessable('Only a generated e-invoice is printed with its QR.'); audit(actor, 'gst_einvoices', r.id, 'print', r.company_id);
       const q = QRCode.create(r.signed_qr, { errorCorrectionLevel: 'L' }).modules; const j = json(r.request_json, {}); const lines = [['e-Invoice', `${r.irp_doc_type} ${r.document_no} of ${r.document_date}${r.gsp_mode === 'SANDBOX' ? '  (SANDBOX - not reported to GSTN)' : ''}`], ['IRN', r.irn], ['Ack no / date', `${r.ack_no} / ${r.ack_date}`], ['Supplier', `${j.SellerDtls?.LglNm ?? ''} (${r.seller_gstin})`], ['Recipient', `${j.BuyerDtls?.LglNm ?? ''} (${r.buyer_gstin ?? 'URP'})`], ['Place of supply', j.BuyerDtls?.Pos ?? ''], ['Assessable value', `Rs ${(r.taxable_paise / 100).toFixed(2)}`], ['GST', `Rs ${(r.tax_paise / 100).toFixed(2)}`], ['Invoice value', `Rs ${(r.total_paise / 100).toFixed(2)}`]];
-      return { contentType: 'application/pdf', fileName: `${r.document_no.replaceAll('/', '-')}-e-invoice.pdf`, buffer: qrPdf(lines, q) };
+      return { contentType: 'application/pdf', fileName: `${r.document_no.replaceAll('/', '-')}-e-invoice.pdf`, buffer: qrPdf(lines, q, 'e-Invoice') };
     },
+    /** D-732: the signed QR of a document's generated e-invoice, for the document's own print (the tax invoice of 04.11 / 22.04). */
+    qrOf(companyId, documentType, documentId) { const r = db.prepare("SELECT irn, ack_no, ack_date, signed_qr, gsp_mode FROM gst_einvoices WHERE company_id = ? AND document_type = ? AND document_id = ? AND einv_status = 'GENERATED' AND deleted_at IS NULL ORDER BY id DESC LIMIT 1").get(companyId, documentType, Number(documentId)); return r?.signed_qr ? { irn: r.irn, ackNo: r.ack_no, ackDate: r.ack_date, sandbox: r.gsp_mode === 'SANDBOX', modules: QRCode.create(r.signed_qr, { errorCorrectionLevel: 'L' }).modules } : null; },
     async qrSvg(actor, id) { const r = einvRow(actor, id); if (!r.signed_qr) throw notFound('This e-invoice has no QR yet.'); return QRCode.toString(r.signed_qr, { type: 'svg', errorCorrectionLevel: 'L', margin: 2 }); },
     log: (actor, id) => { const r = einvRow(actor, id); return complianceLog(r.company_id, r.document_type, r.document_id); },
   });
@@ -457,15 +460,4 @@ export function createGstService({ db, base, flags, now = () => Date.now() }) {
   }
 
   return { resolve: (actor, input) => { need(actor, 'fin.gst.resolve', 'use the tax engine'); return resolve(actor.companyId, input); }, resolveFor: resolve, rateOn, settings, settingsOn, gstins, einvoices, ewaybills, jobs, consumers, ownGstins };
-}
-
-/** A one-page PDF: the e-invoice's lines of text and its signed QR drawn as squares (no image library needed). */
-function qrPdf(lines, modules) {
-  const esc = (s) => String(s).replace(/[^\x20-\x7e]/g, '?').replace(/([()\\])/g, '\\$1');
-  const n = modules.size; const cell = Math.min(4, 220 / n); const x0 = 595 - 36 - n * cell; const y0 = 842 - 60;
-  let qr = '0 0 0 rg\n'; for (let y = 0; y < n; y += 1) for (let x = 0; x < n; x += 1) if (modules.get(x, y)) qr += `${(x0 + x * cell).toFixed(2)} ${(y0 - (y + 1) * cell).toFixed(2)} ${cell.toFixed(2)} ${cell.toFixed(2)} re f\n`;
-  let txt = 'BT /F1 14 Tf 36 800 Td (e-Invoice) Tj ET\n'; lines.forEach(([k, v], i) => { const y = 770 - i * 18; txt += `BT /F1 9 Tf 36 ${y} Td (${esc(k)}) Tj ET\nBT /F1 9 Tf 140 ${y} Td (${esc(String(v).slice(0, 70))}) Tj ET\n`; if (String(v).length > 70) txt += `BT /F1 9 Tf 140 ${y - 9} Td (${esc(String(v).slice(70, 140))}) Tj ET\n`; });
-  const stream = `${txt}${qr}`; const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>', `<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}endstream`, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];
-  let out = '%PDF-1.4\n'; const offs = []; objs.forEach((o, i) => { offs.push(Buffer.byteLength(out)); out += `${i + 1} 0 obj\n${o}\nendobj\n`; }); const xref = Buffer.byteLength(out);
-  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offs.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`; return Buffer.from(out, 'latin1');
 }

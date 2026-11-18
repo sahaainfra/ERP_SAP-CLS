@@ -104,6 +104,8 @@ test('T-01 the IRN sandbox round trip: settings approved, IRN made by itself, QR
   const e1 = d.prepare("SELECT * FROM gst_einvoices WHERE document_type = 'bill_tax_invoices' AND document_id = ?").get(t1);
   assert.equal(e1.irn, createHash('sha256').update(`${OWN}${e1.fy}INV${e1.document_no.toUpperCase()}`).digest('hex'));
   const inv = d.prepare('SELECT irn, ack_no, irn_state FROM bill_tax_invoices WHERE id = ?').get(t1); assert.equal(inv.irn_state, 'GENERATED'); assert.equal(inv.irn, e1.irn); assert.equal(inv.ack_no, e1.ack_no);
+  // D-732: the tax invoice's own print carries the IRN and the signed QR (drawn as squares on the page)
+  const pr = await w.api.raw('GET', `/api/v1/bill/tax-invoices/${t1}/print`, { ...U.acc }); assert.equal(pr.status, 200, pr.buffer.toString('utf8').slice(0, 300)); const ipdf = pr.buffer.toString('latin1'); assert.match(ipdf, /Tax invoice INV/); assert.ok(ipdf.includes(e1.irn.slice(0, 60))); assert.ok((ipdf.match(/ re f/g) ?? []).length > 100, 'the QR is drawn');
   const qr = readSignedQr(e1.signed_qr); assert.equal(qr.sandboxValid, true); assert.equal(qr.Irn, e1.irn); assert.equal(qr.TotInvVal, 295000); assert.equal(qr.MainHsnCode, '9954');
   const view = (await w.call(U.fin, 'GET', `/einvoices/${e1.id}`)).json.data; assert.equal(view.status, 'GENERATED'); assert.equal(view.can.cancel, false, 'the finance executive retries, does not cancel'); assert.ok(view.log.some((l) => l.action === 'generate' && l.outcome === 'OK'));
   assert.equal(w.events('fin.einvoice.generated').length, 1);
