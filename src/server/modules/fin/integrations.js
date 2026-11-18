@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf, cashForecastsOf, periodClosesOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf, cashForecastsOf, periodClosesOf, interCompanyOf } from './index.js';
 import { registerProject360Widget } from '../proj/p360.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
@@ -451,4 +451,17 @@ workflowTypes.register({
     return { fields: [{ label: 'Month', value: `${r.period} (${r.close_no})` }, { label: 'Modules', value: JSON.parse(r.modules_json).join(', ') }, { label: 'Reopened as', value: r.target_status }, { label: 'Reason', value: r.reason }] }; },
   defaultDefinition: { name: 'Reopen of a closed month: the accounts manager (when someone else asked), the CFO, then the director', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else asked)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO'), glStep('DIR', 'Director', 'DIR')] },
   hooks: { onApproved: roDecide('APPROVED'), onRejected: roDecide('REJECTED'), onReturned: roDecide('RETURNED'), onCancelled: roDecide('CANCELLED') },
+});
+
+// ---- part 23.15: inter-company and consolidation ----
+eventTypes.define({ type: 'fin.ic_transaction.posted', version: 1, schema, owner: 'fin', description: 'An inter-company transaction was accepted by the counterpart and its mirror journals posted in both companies at once (part 23.15 FR-02): data { transactionId, docNo, type, fromCompanyId, toCompanyId, amount, date, journals }.' });
+eventTypes.define({ type: 'fin.consolidation.finalised', version: 1, schema, owner: 'fin', description: 'A consolidation of a parent with its subsidiaries was finalised with nothing unmatched (part 23.15 FR-04): data { consolidationId, docNo, period, basis, companies, assets, pat, eliminations }. MIS (27.07) reads it.' });
+const icDecide = (outcome) => (db, { instance, actor, comment }) => interCompanyOf(db)?.transactions.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_IC_TRANSACTION', label: 'Inter-company transaction', processOwner: 'ACCMGR', route: (id) => `/finance/inter-company?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM ic_transactions WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.ic_type} to company ${r.to_company_id}: ${inr(r.amount_paise)} — ${r.description}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT t.*, c.code AS to_code, c.legal_name AS to_name FROM ic_transactions t JOIN org_companies c ON c.id = t.to_company_id WHERE t.id = ?').get(Number(id)); if (!r) return null; const a = r.from_account_id ? db.prepare('SELECT code, name FROM fin_accounts WHERE id = ?').get(r.from_account_id) : null;
+    return { fields: [{ label: 'Counterpart', value: `${r.to_code} ${r.to_name}` }, { label: 'Type / date', value: `${r.ic_type} · ${r.txn_date}` }, { label: 'Amount', value: inr(r.amount_paise) }, { label: 'Account of this side', value: a ? `${a.code} ${a.name}` : '—' }, { label: 'Description', value: r.description }, { label: 'After approval', value: 'The counterpart accepts with the account of its side; the mirror journals are then posted in both companies.' }] }; },
+  defaultDefinition: { name: 'Inter-company transaction: the originating accounts manager (not the maker); then the counterpart accepts', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Originating accounts manager', 'ACCMGR')] },
+  hooks: { onApproved: icDecide('APPROVED'), onRejected: icDecide('REJECTED'), onReturned: icDecide('RETURNED'), onCancelled: icDecide('CANCELLED') },
 });

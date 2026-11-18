@@ -1,5 +1,5 @@
 // npm run erp:proj-fin-perf -- [--queries 30]
-// Parts 23.10 to 23.15 §14 (50 projects; 23.13 adds 100 000 cash forecast lines; 23.14 100 000 close tasks): 100 000 journal lines over the projects and 100 000 revenue recognition records (23.10); then times what the screens and
+// Parts 23.10 to 23.15 §14 (50 projects; 23.13 adds 100 000 cash forecast lines; 23.14 100 000 close tasks; 23.15 100 000 inter-company transactions): 100 000 journal lines over the projects and 100 000 revenue recognition records (23.10); then times what the screens and
 // the runs ask: the recognition list (first page, a month), one record, the preview of a month (worked out from the ledger), the project trial balance, the WIP
 // report and the overhead report. Prints the query plans. The standard (05_GLOBAL_STANDARDS §11): p95 <= 500 ms for a list, <= 300 ms for one record,
 // <= 800 ms for a save.
@@ -14,6 +14,7 @@ import { createCostForecastService } from '../src/server/modules/fin/costforecas
 import { createProjectPlService } from '../src/server/modules/fin/projectpl.js';
 import { createCashForecastService } from '../src/server/modules/fin/cashforecast.js';
 import { createPeriodCloseService } from '../src/server/modules/fin/periodclose.js';
+import { createInterCompanyService } from '../src/server/modules/fin/intercompany.js';
 
 const args = process.argv.slice(2);
 const queries = Number(args.includes('--queries') ? args[args.indexOf('--queries') + 1] : 30);
@@ -106,6 +107,21 @@ time('one close with its checklist and the checks', 300, () => pcs.closes.get(ac
 time('statements of a month: Schedule III, cash flow, TB, comparatives (100 000 journal lines)', 500, () => pcs.statements.get(cfo2, { period: '2026-10', basis: 'MONTH' }), 10);
 time('statements year to date', 500, () => pcs.statements.get(cfo2, { period: '2026-10', basis: 'YTD', statement: 'PL' }), 10);
 time('finance dashboard (12-month trend, ageing, exceptions)', 800, () => pcs.dashboard(cfo2, { period: '2026-10' }), 10);
+// 23.15: a subsidiary, 100 000 inter-company transactions (the last 1 000 posted with their mirror journals); the list, the reconciliation, the consolidation
+db.prepare("INSERT OR IGNORE INTO org_companies (id, code, legal_name, short_name, created_by, source_type) VALUES (2, 'SUB', 'Sub Infra Pvt Ltd', 'Sub', 't', 'perf')").run(); fin.ensureSetup(2);
+db.exec('BEGIN'); const fy2 = Number(db.prepare("INSERT INTO core_financial_years (company_id, code, start_date, end_date, status, created_by) VALUES (2, '2026-27', '2026-04-01', '2027-03-31', 'Open', 'perf')").run().lastInsertRowid);
+for (let m = 0; m < 12; m += 1) { const mm = ((3 + m) % 12) + 1; const yy = 2026 + (m >= 9 ? 1 : 0); const last = new Date(Date.UTC(yy, mm, 0)).getUTCDate(); db.prepare("INSERT INTO core_periods (company_id, fy_id, period_no, name, start_date, end_date, created_by) VALUES (2, ?, ?, ?, ?, ?, 'perf')").run(fy2, m + 1, `P${m + 1}`, `${yy}-${String(mm).padStart(2, '0')}-01`, `${yy}-${String(mm).padStart(2, '0')}-${last}`); }
+const rel = Number(db.prepare("INSERT INTO ic_relationships (company_id, counterpart_company_id, relationship_type, holding_pct, created_by) VALUES (1, 2, 'SUBSIDIARY', 80, 'perf')").run().lastInsertRowid);
+const inc = acct('420001'); const insI = db.prepare("INSERT INTO ic_transactions (company_id, doc_no, relationship_id, to_company_id, ic_type, txn_date, amount_paise, description, from_account_id, ic_state, status, created_by) VALUES (1, ?, ?, 2, 'CHARGE', ?, 100000, 'perf', ?, 'DRAFT', 'CANCELLED', 'perf')");
+for (let i = 0; i < 99_000; i += 1) insI.run(`IC/P${i}`, rel, `2026-${String(4 + (i % 8)).padStart(2, '0')}-15`, inc); db.exec('COMMIT');
+const ics = createInterCompanyService({ db, base, flags, gl, closes: () => pcs }); const exp2 = db.prepare("SELECT id FROM fin_accounts WHERE company_id = 2 AND code = '550001'").get().id;
+db.exec('BEGIN'); for (let i = 0; i < 1000; i += 1) { const id = Number(db.prepare("INSERT INTO ic_transactions (company_id, doc_no, relationship_id, to_company_id, ic_type, txn_date, amount_paise, description, from_account_id, ic_state, status, created_by) VALUES (1, ?, ?, 2, 'CHARGE', '2026-10-10', 100000, 'perf', ?, 'AWAITING_COUNTERPART', 'APPROVED', 'perf')").run(`IC/A${i}`, rel, inc).lastInsertRowid);
+  const ja = gl.postEngine(1, { date: '2026-10-10', narration: 'ic', sourceType: 'ic_transactions', sourceId: id, lines: [{ accountId: acct('160090'), debit: '1000' }, { accountId: inc, credit: '1000' }] }).journal; const jb = gl.postEngine(2, { date: '2026-10-10', narration: 'ic', sourceType: 'ic_transactions', sourceId: id, lines: [{ accountId: exp2, debit: '1000' }, { accountId: db.prepare("SELECT id FROM fin_accounts WHERE company_id = 2 AND code = '230090'").get().id, credit: '1000' }] }).journal;
+  db.prepare("UPDATE ic_transactions SET ic_state = 'POSTED', to_account_id = ?, journals_json = ? WHERE id = ?").run(exp2, JSON.stringify({ from: ja.id, to: jb.id }), id); } db.exec('COMMIT'); db.exec('ANALYZE');
+time('inter-company list, first page (100 000)', 500, () => ics.transactions.list(acc, {}));
+time('one inter-company transaction with its mirror', 300, () => ics.transactions.get(acc, 99_500));
+time('inter-company reconciliation (1 000 mirrored pairs)', 500, () => ics.reconciliation.get(acc, { asOf: '2026-10-31' }), 10);
+time('consolidation preview, parent and subsidiary, YTD', 800, () => ics.consolidations.preview(cfo2, { period: '2026-10', basis: 'YTD' }), 10);
 const plan = (label, sql) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all()) console.log(`    ${r.detail}`); };
 plan('ledger of a project to a date', "SELECT a.id, SUM(l.debit_paise) FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = 1 AND l.project_id = 5 AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date <= '2026-10-31' GROUP BY a.id");
 plan('lines of a cash forecast', 'SELECT * FROM cf_lines WHERE forecast_id = 5 AND deleted_at IS NULL ORDER BY week_start, category, id');

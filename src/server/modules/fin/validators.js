@@ -251,3 +251,14 @@ export const parseCloseReopen = (b) => parse(z.object({ modules: z.array(z.enum(
 export const parseStatements = (q) => parse(z.object({ period, basis: z.enum(['MONTH', 'QUARTER', 'YTD', 'YEAR']).optional(), statement: z.enum(['ALL', 'BS', 'PL', 'CF', 'TB']).optional() }).strict(), q);
 export const parseYearEnd = (q) => parse(z.object({ fyId: id.optional() }).strict(), q ?? {});
 export const parseDashboard = (q) => parse(z.object({ period: period.optional() }).strict(), q ?? {});
+
+// ---- part 23.15: inter-company, consolidation, JV ----
+const icDims = z.object({ branchId: id, siteId: id, wbsId: id, costCentreId: id, profitCentreId: id, departmentId: id, costCodeId: id, employeeId: id, equipmentId: id }).partial().strict();
+export const parseIcRelationship = (b) => parse(z.object({ counterpartCompanyId: id, type: z.enum(['SUBSIDIARY', 'ASSOCIATE', 'JOINT_VENTURE', 'FELLOW']).optional(), holdingPct: z.number().min(0).max(100).optional(), consolidate: z.boolean().optional(), receivableCode: z.string().trim().max(20).optional(), payableCode: z.string().trim().max(20).optional(), counterpartReceivableCode: z.string().trim().max(20).optional(), counterpartPayableCode: z.string().trim().max(20).optional(), status: z.enum(['ACTIVE', 'INACTIVE']).optional(), validFrom: date.nullable().optional(), version: z.number().int().optional() }).strict(), b);
+export const parseIcCreate = (b) => parse(z.object({ counterpartCompanyId: id, type: z.enum(['CHARGE', 'TRANSFER', 'LOAN', 'SETTLEMENT']), date, amount: money, accountId: id, description: z.string().trim().min(3, 'Describe the transaction').max(500), reference: z.string().trim().max(100).nullable().optional(), projectId: id.nullable().optional(), dimensions: icDims.optional() }).strict(), b);
+export const parseIcUpdate = (b) => parse(z.object({ date: date.optional(), amount: money.optional(), accountId: id.optional(), description: z.string().trim().min(3).max(500).optional(), reference: z.string().trim().max(100).nullable().optional(), version: z.number().int().optional() }).strict(), b);
+export const parseIcAccept = (b) => parse(z.object({ accountId: id, projectId: id.nullable().optional(), dimensions: icDims.optional() }).strict(), b);
+export const parseIcRecon = (q) => parse(z.object({ asOf: date.optional() }).strict(), q ?? {});
+export const parseConsolidation = (q) => parse(z.object({ period, basis: z.enum(['MONTH', 'QUARTER', 'YTD', 'YEAR']).optional() }).strict(), q);
+export const parseJvShare = (b) => parse(z.object({ id: id.optional(), projectId: id, partnerName: z.string().trim().min(2).max(200).optional(), partnerId: id.nullable().optional(), partnerCompanyId: id.nullable().optional(), sharePct: z.number().gt(0).lt(100), role: z.enum(['LEAD', 'MEMBER']).optional(), validFrom: date.nullable().optional() }).strict(), b);
+export const parseJvQuery = (q) => parse(z.object({ projectId: id, from: date.optional(), to: date.optional() }).strict(), q);

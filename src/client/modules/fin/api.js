@@ -340,3 +340,23 @@ export const pc = {
   carryForward: async (fyId) => (await api.post(`/fin/year-end/${fyId}/carry-forward`, {}, idem())).data,
   closeYear: async (fyId, reason) => (await api.post(`/fin/year-end/${fyId}/close`, { reason }, idem())).data,
 };
+
+// ---- part 23.15: inter-company, consolidation, JV ----
+export const ic = {
+  list: (f) => glget(`/ic-transactions?${q(f ?? {})}`),
+  get: (id) => glget(`/ic-transactions/${id}`),
+  create: async (b) => (await api.post('/fin/ic-transactions', b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/ic-transactions/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/ic-transactions/${id}`, idem())).data,
+  relationships: () => glget('/ic-relationships'),
+  saveRelationship: async (b) => (await api.post('/fin/ic-relationships', b, idem())).data,
+  reconciliation: (f) => glget(`/ic-reconciliation?${q(f ?? {})}`),
+  preview: (f) => glget(`/consolidations/preview?${q(f)}`),
+  runs: () => glget('/consolidations'),
+  run: async (b) => (await api.post('/fin/consolidations', b, idem())).data,
+  finalise: async (id) => (await api.post(`/fin/consolidations/${id}/finalise`, {}, idem())).data,
+  jvShares: (f) => glget(`/jv-shares?${q(f)}`),
+  saveJvShare: async (b) => (await api.post('/fin/jv-shares', b, idem())).data,
+  removeJvShare: async (id, reason) => (await api.delete(`/fin/jv-shares/${id}`, idem(), { reason })).data,
+  jvStatement: (f) => glget(`/jv-statement?${q(f)}`),
+};

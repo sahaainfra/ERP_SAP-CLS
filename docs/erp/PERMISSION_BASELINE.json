@@ -363,5 +363,12 @@
  ],
  "fin.period.configure": [
   "CFO"
+ ],
+ "fin.ic.configure": [
+  "CFO"
+ ],
+ "fin.jv.manage": [
+  "ACCMGR",
+  "CFO"
  ]
 }

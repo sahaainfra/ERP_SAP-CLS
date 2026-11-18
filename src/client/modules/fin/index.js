@@ -43,6 +43,10 @@ const ClosePage = lazyPage(() => import('./ClosePages.jsx'), 'ClosePage');
 const StatementsPage = lazyPage(() => import('./ClosePages.jsx'), 'StatementsPage');
 const FinanceDashboardPage = lazyPage(() => import('./ClosePages.jsx'), 'FinanceDashboardPage');
 const YearEndPage = lazyPage(() => import('./ClosePages.jsx'), 'YearEndPage');
+const InterCompanyPage = lazyPage(() => import('./InterCompanyPages.jsx'), 'InterCompanyPage');
+const IcReconciliationPage = lazyPage(() => import('./InterCompanyPages.jsx'), 'IcReconciliationPage');
+const ConsolidationPage = lazyPage(() => import('./InterCompanyPages.jsx'), 'ConsolidationPage');
+const JvStatementPage = lazyPage(() => import('./InterCompanyPages.jsx'), 'JvStatementPage');
 const AssetAccountingPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetAccountingPage');
 const GstSettingsPage = lazyPage(() => import('./GstPages.jsx'), 'GstSettingsPage');
 
@@ -103,6 +107,10 @@ registerModule({
     { path: '/finance/statements', label: 'Financial Statements', labelHi: 'वित्तीय विवरण', icon: 'erp.action.history', permission: 'fin.statements.view', flag: 'ff.fin.p2314', Page: StatementsPage },
     { path: '/finance/dashboard', label: 'Finance Dashboard', labelHi: 'वित्त डैशबोर्ड', icon: 'erp.action.history', permission: 'fin.dashboard.view', flag: 'ff.fin.p2314', Page: FinanceDashboardPage },
     { path: '/finance/year-end', label: 'Year-End Closing', labelHi: 'वर्षांत समापन', icon: 'erp.action.history', permission: 'fin.period.view', flag: 'ff.fin.p2314', Page: YearEndPage },
+    { path: '/finance/inter-company', label: 'Inter-company Transactions', labelHi: 'अंतर-कंपनी लेनदेन', icon: 'erp.action.history', permission: 'fin.transaction.view', flag: 'ff.fin.p2315', Page: InterCompanyPage },
+    { path: '/finance/ic-reconciliation', label: 'Inter-company Reconciliation', labelHi: 'अंतर-कंपनी मिलान', icon: 'erp.action.history', permission: 'fin.transaction.view', flag: 'ff.fin.p2315', Page: IcReconciliationPage },
+    { path: '/finance/consolidation', label: 'Consolidated Statements', labelHi: 'समेकित विवरण', icon: 'erp.action.history', permission: 'fin.consolidation.view', flag: 'ff.fin.p2315', Page: ConsolidationPage },
+    { path: '/finance/jv', label: 'JV Partner Statement', labelHi: 'जेवी साझेदार विवरण', icon: 'erp.action.history', permission: 'fin.jv.view', flag: 'ff.fin.p2315', Page: JvStatementPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });

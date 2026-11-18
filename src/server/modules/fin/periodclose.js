@@ -344,5 +344,7 @@ export function createPeriodCloseService({ db, base, flags, gl }) {
         for (const t of db.prepare("SELECT t.id, t.name, t.owner_id, t.due_date, x.id AS cid, x.period FROM close_tasks t JOIN close_periods x ON x.id = t.close_id WHERE t.company_id = ? AND t.deleted_at IS NULL AND x.status IN ('DRAFT', 'RETURNED') AND t.task_status IN ('OPEN', 'IN_PROGRESS') AND t.due_date < ? AND t.owner_id IS NOT NULL").all(co.id, today)) { n += 1; notify(co.id, 'fin.close.alert', [`user:${t.owner_id}`], t.period, 'close task overdue', `${t.name} (close of ${t.period}) was due ${t.due_date}.`, `/finance/close?id=${t.cid}`, `${t.id}-${today}`); } }
       return { reminded: n }; },
   };
-  return { closes, reopens, statements, yearEnd, dashboard, jobs, position, pnl, checkOf };
+  /** The Schedule III line of an account (consolidation, 23.15). */
+  const lineOf = (companyId, accountId) => meta(companyId).get(accountId)?.line ?? null;
+  return { closes, reopens, statements, yearEnd, dashboard, jobs, position, pnl, checkOf, lineOf, frameOf };
 }

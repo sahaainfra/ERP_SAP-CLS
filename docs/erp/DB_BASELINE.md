@@ -15346,6 +15346,138 @@ Indexes:
 - ux_iam_users_email (unique): email
 - ux_iam_users_username (unique): username
 
+## ic_consolidations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| basis | TEXT | yes |  | 'YTD' |
+| companies_json | TEXT | yes |  | '[]' |
+| result_json | TEXT | yes |  | '{}' |
+| eliminations_paise | INTEGER | yes |  | 0 |
+| unmatched_paise | INTEGER | yes |  | 0 |
+| run_status | TEXT | yes |  | 'DRAFT' |
+| finalised_by | TEXT |  |  |  |
+| finalised_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_ic_consolidations_list: company_id, period, run_status
+- ux_ic_consolidations_doc (unique): company_id, doc_no
+
+## ic_relationships
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| counterpart_company_id | INTEGER | yes |  |  |
+| relationship_type | TEXT | yes |  | 'SUBSIDIARY' |
+| holding_pct | REAL | yes |  | 100 |
+| consolidate | INTEGER | yes |  | 1 |
+| receivable_code | TEXT | yes |  | '160090' |
+| payable_code | TEXT | yes |  | '230090' |
+| cp_receivable_code | TEXT | yes |  | '160090' |
+| cp_payable_code | TEXT | yes |  | '230090' |
+| rel_status | TEXT | yes |  | 'ACTIVE' |
+| valid_from | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: counterpart_company_id -> org_companies(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ic_relationships_company_id: company_id
+- ix_ic_relationships_cp: counterpart_company_id
+- ux_ic_relationships_pair (unique): company_id, counterpart_company_id
+
+## ic_transactions
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| version_no | INTEGER | yes |  | 1 |
+| relationship_id | INTEGER | yes |  |  |
+| to_company_id | INTEGER | yes |  |  |
+| ic_type | TEXT | yes |  |  |
+| txn_date | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| reference | TEXT |  |  |  |
+| description | TEXT | yes |  |  |
+| from_account_id | INTEGER |  |  |  |
+| to_account_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| from_dims_json | TEXT | yes |  | '{}' |
+| to_dims_json | TEXT | yes |  | '{}' |
+| ic_state | TEXT | yes |  | 'DRAFT' |
+| journals_json | TEXT | yes |  | '{}' |
+| accepted_by | TEXT |  |  |  |
+| accepted_at | TEXT |  |  |  |
+| dispute_reason | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> ic_transactions(id), org_project_id -> org_projects(id), to_account_id -> fin_accounts(id), from_account_id -> fin_accounts(id), to_company_id -> org_companies(id), relationship_id -> ic_relationships(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_ic_transactions_amends: amends_id
+- ix_ic_transactions_wf: workflow_instance_id
+- ix_ic_transactions_project: org_project_id
+- ix_ic_transactions_to_acct: to_account_id
+- ix_ic_transactions_from_acct: from_account_id
+- ix_ic_transactions_rel: relationship_id
+- ix_ic_transactions_to: to_company_id, ic_state
+- ix_ic_transactions_list: company_id, txn_date, status
+- ux_ic_transactions_doc (unique): company_id, doc_no
+
 ## inv_adjustments
 
 | Column | Type | Not null | Key | Default |
@@ -16801,6 +16933,41 @@ Indexes:
 - ix_inv_val_store_id: store_id
 - ix_inv_val_item: item_id
 - ux_inv_val_key (unique): company_id, store_id, item_id
+
+## jv_shares
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| partner_id | INTEGER |  |  |  |
+| partner_company_id | INTEGER |  |  |  |
+| partner_name | TEXT | yes |  |  |
+| share_pct | REAL | yes |  |  |
+| share_role | TEXT | yes |  | 'MEMBER' |
+| valid_from | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: partner_company_id -> org_companies(id), partner_id -> mdm_partners(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_jv_shares_partner_company: partner_company_id
+- ix_jv_shares_partner_id: partner_id
+- ix_jv_shares_project: company_id, org_project_id
+- ux_jv_shares_partner (unique): org_project_id, partner_name
 
 ## lab_contractor_compliance
 

@@ -10433,3 +10433,109 @@ paths:
     post:
       summary: "year end: close the financial year { reason } (part 23.14; fin.period.approve)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-relationships:
+    get:
+      summary: "inter-company: the relationships of the company (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "inter-company: add or change a relationship { counterpartCompanyId, type?, holdingPct?, consolidate?, receivableCode?, payableCode?, counterpartReceivableCode?, counterpartPayableCode?, status? } (part 23.15; fin.ic.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-reconciliation:
+    get:
+      summary: "inter-company: pair balances, one-sided lines, open items { asOf? } (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions:
+    get:
+      summary: "inter-company: list { side=in|out|all } (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "inter-company: raise { counterpartCompanyId, type, date, amount, accountId, description, reference?, projectId?, dimensions? } (part 23.15; fin.transaction.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/export:
+    get:
+      summary: "inter-company: CSV (part 23.15; fin.transaction.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}:
+    get:
+      summary: "inter-company: one transaction with its mirror (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "inter-company: change a draft (part 23.15; fin.transaction.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "inter-company: delete a draft (part 23.15; fin.transaction.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/submit:
+    post:
+      summary: "inter-company: send for approval (part 23.15; fin.transaction.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/withdraw:
+    post:
+      summary: "inter-company: withdraw { reason } (part 23.15; fin.transaction.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/cancel:
+    post:
+      summary: "inter-company: cancel { reason } (part 23.15; fin.transaction.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/accept:
+    post:
+      summary: "inter-company: the counterpart accepts; both mirror journals posted at once { accountId, projectId?, dimensions? } (part 23.15; fin.transaction.approve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/dispute:
+    post:
+      summary: "inter-company: the counterpart disputes { reason } (part 23.15; fin.transaction.approve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/drop:
+    post:
+      summary: "inter-company: drop a disputed transaction { reason } (part 23.15; fin.transaction.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/reverse:
+    post:
+      summary: "inter-company: reverse in both companies { reason } (part 23.15; fin.transaction.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/history:
+    get:
+      summary: "inter-company: approval history (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/print:
+    get:
+      summary: "inter-company: PDF (part 23.15; fin.transaction.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/preview:
+    get:
+      summary: "consolidation: the consolidated statements, eliminations, NCI and what is unmatched { period, basis? } (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/export:
+    get:
+      summary: "consolidation: CSV { period, basis? } (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations:
+    get:
+      summary: "consolidation: runs (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "consolidation: save a run as a draft { period, basis? } (part 23.15; fin.consolidation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/{id}:
+    get:
+      summary: "consolidation: one run (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/{id}/finalise:
+    post:
+      summary: "consolidation: finalise when nothing is unmatched or open (part 23.15; fin.consolidation.finalise)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/jv-shares:
+    get:
+      summary: "JV: the partners and shares of a project { projectId } (part 23.15; fin.jv.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "JV: add or change a partner share { id?, projectId, partnerName?, partnerId?, partnerCompanyId?, sharePct, role? } (part 23.15; fin.jv.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/jv-shares/{id}:
+    delete:
+      summary: "JV: remove a partner share { reason } (part 23.15; fin.jv.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/jv-statement:
+    get:
+      summary: "JV: each partner share of the project revenue, cost and result { projectId, from?, to? } (part 23.15; fin.jv.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
