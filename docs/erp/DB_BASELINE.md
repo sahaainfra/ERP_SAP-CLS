@@ -10150,6 +10150,43 @@ Indexes:
 - ix_fin_balances_period: period_id
 - ux_fin_balances_key (unique): company_id, account_id, period_id, dimension_hash
 
+## fin_bank_account_profiles
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| account_kind | TEXT | yes |  | 'CURRENT' |
+| scope_kind | TEXT | yes |  | 'COMPANY' |
+| branch_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| escrow_purpose | TEXT |  |  |  |
+| od_limit_paise | INTEGER | yes |  | 0 |
+| opening_date | TEXT |  |  |  |
+| opening_paise | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: org_project_id -> org_projects(id), branch_id -> org_branches(id), bank_account_id -> fin_bank_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_bank_profiles_project: org_project_id
+- ix_fin_bank_profiles_branch: branch_id
+- ix_fin_bank_profiles_company: company_id, account_kind
+- ux_fin_bank_profiles_account (unique): bank_account_id
+
 ## fin_bank_accounts
 
 | Column | Type | Not null | Key | Default |
@@ -10188,6 +10225,166 @@ Indexes:
 - ix_fin_bank_accounts_gl: gl_account_id
 - ux_fin_bank_accounts_code (unique): company_id, code
 
+## fin_bank_recons
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| as_of | TEXT | yes |  |  |
+| book_paise | INTEGER | yes |  |  |
+| bank_paise | INTEGER | yes |  |  |
+| unpresented_paise | INTEGER | yes |  | 0 |
+| uncredited_paise | INTEGER | yes |  | 0 |
+| bank_only_dr_paise | INTEGER | yes |  | 0 |
+| bank_only_cr_paise | INTEGER | yes |  | 0 |
+| difference_paise | INTEGER | yes |  | 0 |
+| signed_by | TEXT | yes |  |  |
+| signed_at | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bank_account_id -> fin_bank_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_bank_recons_company: company_id, as_of
+- ux_fin_bank_recons_date (unique): bank_account_id, as_of
+
+## fin_bank_statement_imports
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| file_name | TEXT | yes |  |  |
+| file_format | TEXT | yes |  |  |
+| from_date | TEXT | yes |  |  |
+| to_date | TEXT | yes |  |  |
+| opening_paise | INTEGER |  |  |  |
+| closing_paise | INTEGER |  |  |  |
+| lines_count | INTEGER | yes |  | 0 |
+| duplicates_count | INTEGER | yes |  | 0 |
+| matched_count | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: bank_account_id -> fin_bank_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_bank_imports_account: bank_account_id, to_date
+- ux_fin_bank_imports_doc (unique): company_id, doc_no
+
+## fin_bank_statements
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| import_id | INTEGER | yes |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| line_no | INTEGER | yes |  |  |
+| txn_date | TEXT | yes |  |  |
+| value_date | TEXT |  |  |  |
+| description | TEXT | yes |  | '' |
+| ref | TEXT |  |  |  |
+| cheque_no | TEXT |  |  |  |
+| debit_paise | INTEGER | yes |  | 0 |
+| credit_paise | INTEGER | yes |  | 0 |
+| balance_paise | INTEGER |  |  |  |
+| line_hash | TEXT | yes |  |  |
+| match_status | TEXT | yes |  | 'UNMATCHED' |
+| matched_entity | TEXT |  |  |  |
+| matched_id | INTEGER |  |  |  |
+| match_rule | TEXT |  |  |  |
+| matched_by | TEXT |  |  |  |
+| matched_at | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| ignore_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), bank_account_id -> fin_bank_accounts(id), import_id -> fin_bank_statement_imports(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_bank_statements_entity: matched_entity, matched_id, match_status
+- ix_fin_bank_statements_journal: journal_id
+- ix_fin_bank_statements_company: company_id, match_status
+- ix_fin_bank_statements_import: import_id
+- ix_fin_bank_statements_queue: bank_account_id, match_status, txn_date
+- ux_fin_bank_statements_match (unique): matched_entity, matched_id
+- ux_fin_bank_statements_hash (unique): bank_account_id, line_hash
+
+## fin_cash_counts
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| imprest_id | INTEGER | yes |  |  |
+| count_date | TEXT | yes |  |  |
+| denominations_json | TEXT | yes |  | '{}' |
+| counted_paise | INTEGER | yes |  |  |
+| book_paise | INTEGER | yes |  |  |
+| difference_paise | INTEGER | yes |  |  |
+| counted_by | TEXT | yes |  |  |
+| witness | TEXT |  |  |  |
+| note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: imprest_id -> fin_imprests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_cash_counts_company: company_id, count_date
+- ix_fin_cash_counts_imprest: imprest_id, count_date
+
 ## fin_category_mappings
 
 | Column | Type | Not null | Key | Default |
@@ -10224,6 +10421,55 @@ Indexes:
 - ix_fin_category_mappings_inv: inventory_account_id
 - ix_fin_category_mappings_company: company_id, mapping_status
 - ix_fin_category_mappings_category: item_category_id, mapping_status
+
+## fin_contras
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| contra_kind | TEXT | yes |  |  |
+| contra_date | TEXT | yes |  |  |
+| from_bank_id | INTEGER |  |  |  |
+| from_imprest_id | INTEGER |  |  |  |
+| to_bank_id | INTEGER |  |  |  |
+| to_imprest_id | INTEGER |  |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| reference | TEXT |  |  |  |
+| purpose | TEXT | yes |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), to_imprest_id -> fin_imprests(id), to_bank_id -> fin_bank_accounts(id), from_imprest_id -> fin_imprests(id), from_bank_id -> fin_bank_accounts(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_contras_wf: workflow_instance_id
+- ix_fin_contras_journal: journal_id
+- ix_fin_contras_to_imprest: to_imprest_id
+- ix_fin_contras_from_imprest: from_imprest_id
+- ix_fin_contras_to_bank: to_bank_id
+- ix_fin_contras_from_bank: from_bank_id
+- ix_fin_contras_list: company_id, status, contra_date
+- ux_fin_contras_doc (unique): company_id, doc_no
 
 ## fin_cost_codes
 
@@ -10319,6 +10565,154 @@ Foreign keys: account_id -> fin_accounts(id), company_id -> org_companies(id)
 Indexes:
 - ix_fin_dimension_rules_company: company_id
 - ux_fin_dimension_rules (unique): account_id, dimension
+
+## fin_imprest_replenishments
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| imprest_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| vouchers_json | TEXT | yes |  | '[]' |
+| vouchers_count | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER | yes |  |  |
+| paid_on | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), bank_account_id -> fin_bank_accounts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), imprest_id -> fin_imprests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_imprest_repl_wf: workflow_instance_id
+- ix_fin_imprest_repl_journal: journal_id
+- ix_fin_imprest_repl_bank: bank_account_id
+- ix_fin_imprest_repl_site: org_site_id
+- ix_fin_imprest_repl_project: org_project_id
+- ix_fin_imprest_repl_list: company_id, status
+- ix_fin_imprest_repl_imprest: imprest_id, status
+- ux_fin_imprest_repl_doc (unique): company_id, doc_no
+
+## fin_imprest_vouchers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| imprest_id | INTEGER | yes |  |  |
+| voucher_date | TEXT | yes |  |  |
+| payee | TEXT | yes |  |  |
+| category | TEXT | yes |  |  |
+| description | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| gst_paise | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  |  |
+| expense_account_id | INTEGER | yes |  |  |
+| cost_code_id | INTEGER |  |  |  |
+| wbs_id | INTEGER |  |  |  |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| replenishment_id | INTEGER |  |  |  |
+| client_ref | TEXT |  |  |  |
+| lat | REAL |  |  |  |
+| lng | REAL |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), replenishment_id -> fin_imprest_replenishments(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), cost_code_id -> fin_cost_codes(id), expense_account_id -> fin_accounts(id), imprest_id -> fin_imprests(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_imprest_vouchers_wf: workflow_instance_id
+- ix_fin_imprest_vouchers_journal: journal_id
+- ix_fin_imprest_vouchers_repl: replenishment_id
+- ix_fin_imprest_vouchers_site: org_site_id
+- ix_fin_imprest_vouchers_project: org_project_id
+- ix_fin_imprest_vouchers_cost: cost_code_id
+- ix_fin_imprest_vouchers_expense: expense_account_id
+- ix_fin_imprest_vouchers_list: company_id, status, voucher_date
+- ix_fin_imprest_vouchers_imprest: imprest_id, status, replenishment_id
+- ux_fin_imprest_vouchers_client (unique): company_id, client_ref
+- ux_fin_imprest_vouchers_doc (unique): company_id, doc_no
+
+## fin_imprests
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| imprest_kind | TEXT | yes |  | 'SITE' |
+| org_project_id | INTEGER |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| custodian | TEXT | yes |  |  |
+| gl_account_id | INTEGER | yes |  |  |
+| limit_paise | INTEGER | yes |  |  |
+| balance_paise | INTEGER | yes |  | 0 |
+| imprest_status | TEXT | yes |  | 'ACTIVE' |
+| last_count_at | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: gl_account_id -> fin_accounts(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fin_imprests_gl: gl_account_id
+- ix_fin_imprests_site: org_site_id
+- ix_fin_imprests_project: org_project_id
+- ix_fin_imprests_custodian: company_id, custodian, imprest_status
+- ux_fin_imprests_doc (unique): company_id, doc_no
 
 ## fin_journal_lines
 
@@ -21216,7 +21610,7 @@ Foreign keys: journal_id -> fin_journals(id), bank_account_id -> fin_bank_accoun
 
 Indexes:
 - ix_pmt_payments_journal: journal_id
-- ix_pmt_payments_bank: bank_account_id
+- ix_pmt_payments_bank: bank_account_id, pay_status, released_on
 - ix_pmt_payments_partner: partner_id, paid_on
 - ix_pmt_payments_line_status: line_id, pay_status
 - ix_pmt_payments_proposal: proposal_id

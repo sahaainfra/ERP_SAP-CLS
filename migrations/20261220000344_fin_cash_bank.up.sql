@@ -112,6 +112,7 @@ CREATE INDEX IF NOT EXISTS ix_fin_bank_statements_queue ON fin_bank_statements (
 CREATE INDEX IF NOT EXISTS ix_fin_bank_statements_import ON fin_bank_statements (import_id);
 CREATE INDEX IF NOT EXISTS ix_fin_bank_statements_company ON fin_bank_statements (company_id, match_status);
 CREATE INDEX IF NOT EXISTS ix_fin_bank_statements_journal ON fin_bank_statements (journal_id);
+CREATE INDEX IF NOT EXISTS ix_fin_bank_statements_entity ON fin_bank_statements (matched_entity, matched_id, match_status);
 
 CREATE TABLE IF NOT EXISTS fin_bank_recons (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

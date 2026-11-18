@@ -158,5 +158,5 @@ CREATE INDEX IF NOT EXISTS ix_pmt_payments_list ON pmt_payments (company_id, pay
 CREATE INDEX IF NOT EXISTS ix_pmt_payments_proposal ON pmt_payments (proposal_id);
 CREATE INDEX IF NOT EXISTS ix_pmt_payments_line_status ON pmt_payments (line_id, pay_status);
 CREATE INDEX IF NOT EXISTS ix_pmt_payments_partner ON pmt_payments (partner_id, paid_on);
-CREATE INDEX IF NOT EXISTS ix_pmt_payments_bank ON pmt_payments (bank_account_id);
+CREATE INDEX IF NOT EXISTS ix_pmt_payments_bank ON pmt_payments (bank_account_id, pay_status, released_on);
 CREATE INDEX IF NOT EXISTS ix_pmt_payments_journal ON pmt_payments (journal_id);

@@ -13,6 +13,7 @@ import { createPostingService } from '../src/server/modules/fin/posting.js';
 import { createApService } from '../src/server/modules/fin/ap.js';
 import { createPaymentService } from '../src/server/modules/fin/payments.js';
 import { createArService } from '../src/server/modules/fin/ar.js';
+import { createCashService } from '../src/server/modules/fin/cash.js';
 
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
@@ -145,6 +146,20 @@ time('receivables ageing with DSO (100 000)', 800, () => arSvc.ageing(acc, { asO
 time('collections worklist', 500, () => arSvc.followups.worklist(acc, {}), 10);
 time('client statement (500 invoices, 250 receipts)', 500, (i) => arSvc.statement(acc, { partnerId: clientsP[i % 200], from: undefined, to: undefined }));
 time('save: a receipt posted oldest first', 800, (i) => arSvc.receipts.create(fx, { partnerId: clientsP[i % 200], receiptDate: '2026-11-15', bankAccountId: bankAcc, amount: '25000', tds: '500', tdsSection: '393(1)', auto: true, projectId: projects[0], post: true }), 20);
+
+// part 23.06 §14: 100 000 statement lines of the bank account that made the 100 000 payments (90 % matched), then the worklist, the BRS, the automatic match of a new statement of 1 000 lines and the daily position
+console.log('\nFilling 100 000 bank statement lines...');
+db.exec('BEGIN');
+const impId = Number(db.prepare("INSERT INTO fin_bank_statement_imports (company_id, doc_no, bank_account_id, file_name, file_format, from_date, to_date, created_by) VALUES (1, 'BST/1', ?, 'perf.csv', 'CSV', '2026-04-01', '2026-11-30', 'perf')").run(bankAcc).lastInsertRowid);
+const insSt = db.prepare("INSERT INTO fin_bank_statements (company_id, import_id, bank_account_id, line_no, txn_date, description, debit_paise, credit_paise, balance_paise, line_hash, match_status, matched_entity, matched_id, match_rule, created_by) VALUES (1, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, 'perf')");
+for (let i = 0; i < 100_000; i += 1) { const m = i % 10 !== 0; insSt.run(impId, bankAcc, i + 1, `2026-${String(4 + (i % 8)).padStart(2, '0')}-${String(1 + (i % 27)).padStart(2, '0')}`, `NEFT DR PAY${String(i + 1).padStart(6, '0')}`, 50_000, -50_000 * (i + 1), `h${i}`, m ? 'AUTO' : 'UNMATCHED', m ? 'pmt_payments' : null, m ? i + 1 : null, m ? 'REFERENCE' : null); }
+db.exec('COMMIT'); db.exec('ANALYZE');
+const csSvc = createCashService({ db, base: createBase({ db }), gl, payments: () => null });
+time('bank statement worklist (unmatched, 500)', 500, () => csSvc.statements.lines(acc, { bankAccountId: bankAcc, status: 'UNMATCHED', from: undefined, to: undefined }), 10);
+time('BRS of the account (100 000 lines, 100 000 payments)', 800, () => csSvc.brs(acc, { bankAccountId: bankAcc, asOf: '2026-11-30' }), 5);
+time('daily cash and bank position', 800, () => csSvc.position(acc, { date: '2026-11-15' }), 5);
+let stmtN = 0;
+time('import of a statement of 1 000 lines with the automatic match', 800, () => { stmtN += 1; const rows = Array.from({ length: 1000 }, (_, k) => `2026-11-${String(1 + (k % 27)).padStart(2, '0')},NEFT CR TEST ${stmtN}-${k},,${(1000 + k + stmtN).toFixed(2)}`); return csSvc.statements.import({ ...acc, user: 'acc' }, { bankAccountId: bankAcc, fileName: `s${stmtN}.csv`, format: 'CSV', content: `Date,Narration,Debit,Credit\n${rows.join('\n')}` }); }, 3);
 
 console.log('\nQuery plans:');
 const plan = (label, sql, ...p) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(...p)) console.log(`    ${r.detail}`); };

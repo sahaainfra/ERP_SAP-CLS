@@ -123,15 +123,30 @@ export function createCashService({ db, base, gl, payments }) {
 
   // ---- what the books say went through a bank account ----
   /** The entries of the books for a bank account: payments released (out), receipts posted (in), transfers, replenishments, statement lines posted as bank entries. */
-  function bookItems(companyId, bankId, upTo = '9999-12-31') {
+  /**
+   * The entries of the books for a bank account: payments released (out), receipts posted (in), transfers, replenishments. `unmatched` leaves out those a statement
+   * line already matches (in SQL, with the match index); `amounts` keeps those of these amounts only (the automatic match of a new statement).
+   */
+  function bookItems(companyId, bankId, upTo = '9999-12-31', { unmatched = false, amounts = null, from = '0000-01-01', matchedBy = '9999-12-31' } = {}) {
     const c = companyId; const items = [];
-    for (const p of db.prepare("SELECT id, doc_no, released_on, amount_paise, utr, cheque_no, payee_name, pay_status FROM pmt_payments WHERE company_id = ? AND bank_account_id = ? AND pay_status IN ('PENDING', 'PAID') AND released_on <= ?").all(c, bankId, upTo)) items.push({ entity: 'pmt_payments', id: p.id, date: p.released_on, dir: 'OUT', amount: p.amount_paise, refs: [p.utr, p.doc_no, p.cheque_no].filter(Boolean), cheque: p.cheque_no, label: `${p.doc_no} ${p.payee_name}`, pending: p.pay_status === 'PENDING' });
-    for (const r of db.prepare("SELECT r.id, r.doc_no, r.receipt_date, r.amount_paise, r.reference, p.legal_name FROM ar_receipts r JOIN mdm_partners p ON p.id = r.partner_id WHERE r.company_id = ? AND r.bank_account_id = ? AND r.status = 'APPROVED' AND r.deleted_at IS NULL AND r.receipt_date <= ?").all(c, bankId, upTo)) items.push({ entity: 'ar_receipts', id: r.id, date: r.receipt_date, dir: 'IN', amount: r.amount_paise, refs: [r.reference, r.doc_no].filter(Boolean), label: `${r.doc_no} ${r.legal_name}` });
-    for (const k of db.prepare("SELECT * FROM fin_contras WHERE company_id = ? AND status = 'APPROVED' AND deleted_at IS NULL AND (from_bank_id = ? OR to_bank_id = ?) AND contra_date <= ?").all(c, bankId, bankId, upTo)) items.push({ entity: 'fin_contras', id: k.id, date: k.contra_date, dir: k.from_bank_id === bankId ? 'OUT' : 'IN', amount: k.amount_paise, refs: [k.reference, k.doc_no].filter(Boolean), label: `${k.doc_no} ${CONTRA_KINDS[k.contra_kind]}` });
-    for (const x of db.prepare("SELECT id, doc_no, paid_on, amount_paise FROM fin_imprest_replenishments WHERE company_id = ? AND bank_account_id = ? AND status = 'APPROVED' AND deleted_at IS NULL AND paid_on <= ?").all(c, bankId, upTo)) items.push({ entity: 'fin_imprest_replenishments', id: x.id, date: x.paid_on, dir: 'OUT', amount: x.amount_paise, refs: [x.doc_no], label: `${x.doc_no} imprest replenishment` });
+    const free = (ent, col) => (unmatched ? ` AND NOT EXISTS (SELECT 1 FROM fin_bank_statements s WHERE s.matched_entity = '${ent}' AND s.matched_id = ${col} AND s.match_status IN ('AUTO', 'MANUAL') AND s.txn_date <= :mb)` : '');
+    const amt = (col) => (amounts ? ` AND ${col} IN (SELECT value FROM json_each(:am))` : '');
+    const p = { c, b: bankId, u: upTo, f: from, mb: matchedBy, ...(amounts ? { am: JSON.stringify([...amounts]) } : {}) };
+    const q = (sql) => db.prepare(sql).all(Object.fromEntries(Object.entries(p).filter(([k]) => sql.includes(`:${k}`))));
+    for (const x of q(`SELECT id, doc_no, released_on, amount_paise, utr, cheque_no, payee_name, pay_status FROM pmt_payments p WHERE company_id = :c AND bank_account_id = :b AND pay_status IN ('PENDING', 'PAID') AND released_on BETWEEN :f AND :u${amt('amount_paise')}${free('pmt_payments', 'p.id')}`)) items.push({ entity: 'pmt_payments', id: x.id, date: x.released_on, dir: 'OUT', amount: x.amount_paise, refs: [x.utr, x.doc_no, x.cheque_no].filter(Boolean), cheque: x.cheque_no, label: `${x.doc_no} ${x.payee_name}`, pending: x.pay_status === 'PENDING' });
+    for (const x of q(`SELECT r.id, r.doc_no, r.receipt_date, r.amount_paise, r.reference, p.legal_name FROM ar_receipts r JOIN mdm_partners p ON p.id = r.partner_id WHERE r.company_id = :c AND r.bank_account_id = :b AND r.status = 'APPROVED' AND r.deleted_at IS NULL AND r.receipt_date BETWEEN :f AND :u${amt('r.amount_paise')}${free('ar_receipts', 'r.id')}`)) items.push({ entity: 'ar_receipts', id: x.id, date: x.receipt_date, dir: 'IN', amount: x.amount_paise, refs: [x.reference, x.doc_no].filter(Boolean), label: `${x.doc_no} ${x.legal_name}` });
+    for (const k of q(`SELECT * FROM fin_contras k WHERE company_id = :c AND status = 'APPROVED' AND deleted_at IS NULL AND (from_bank_id = :b OR to_bank_id = :b) AND contra_date BETWEEN :f AND :u${amt('amount_paise')}${free('fin_contras', 'k.id')}`)) items.push({ entity: 'fin_contras', id: k.id, date: k.contra_date, dir: k.from_bank_id === bankId ? 'OUT' : 'IN', amount: k.amount_paise, refs: [k.reference, k.doc_no].filter(Boolean), label: `${k.doc_no} ${CONTRA_KINDS[k.contra_kind]}` });
+    for (const x of q(`SELECT id, doc_no, paid_on, amount_paise FROM fin_imprest_replenishments x WHERE company_id = :c AND bank_account_id = :b AND status = 'APPROVED' AND deleted_at IS NULL AND paid_on BETWEEN :f AND :u${amt('amount_paise')}${free('fin_imprest_replenishments', 'x.id')}`)) items.push({ entity: 'fin_imprest_replenishments', id: x.id, date: x.paid_on, dir: 'OUT', amount: x.amount_paise, refs: [x.doc_no], label: `${x.doc_no} imprest replenishment` });
     return items;
   }
-  const matchedKeys = (bankId) => new Set(db.prepare("SELECT matched_entity, matched_id FROM fin_bank_statements WHERE bank_account_id = ? AND match_status IN ('AUTO', 'MANUAL') AND deleted_at IS NULL").all(bankId).map((x) => `${x.matched_entity}:${x.matched_id}`));
+  /** The book's movement of a bank account between two dates, in SQL (in − out). */
+  const bookSum = (c, b, from, to) => db.prepare(`SELECT
+      (SELECT COALESCE(SUM(amount_paise), 0) FROM ar_receipts WHERE company_id = :c AND bank_account_id = :b AND status = 'APPROVED' AND deleted_at IS NULL AND receipt_date BETWEEN :f AND :t)
+    + (SELECT COALESCE(SUM(amount_paise), 0) FROM fin_contras WHERE company_id = :c AND to_bank_id = :b AND status = 'APPROVED' AND deleted_at IS NULL AND contra_date BETWEEN :f AND :t)
+    - (SELECT COALESCE(SUM(amount_paise), 0) FROM fin_contras WHERE company_id = :c AND from_bank_id = :b AND status = 'APPROVED' AND deleted_at IS NULL AND contra_date BETWEEN :f AND :t)
+    - (SELECT COALESCE(SUM(amount_paise), 0) FROM pmt_payments WHERE company_id = :c AND bank_account_id = :b AND pay_status IN ('PENDING', 'PAID') AND released_on BETWEEN :f AND :t)
+    - (SELECT COALESCE(SUM(amount_paise), 0) FROM fin_imprest_replenishments WHERE company_id = :c AND bank_account_id = :b AND status = 'APPROVED' AND deleted_at IS NULL AND paid_on BETWEEN :f AND :t)
+    + (SELECT COALESCE(SUM(credit_paise - debit_paise), 0) FROM fin_bank_statements WHERE bank_account_id = :b AND match_status = 'POSTED' AND deleted_at IS NULL AND txn_date BETWEEN :f AND :t) AS s`).get({ c, b, f: from, t: to }).s;
   const lineView = (l) => ({ id: l.id, importId: l.import_id, lineNo: l.line_no, date: l.txn_date, valueDate: l.value_date, description: l.description, ref: l.ref, chequeNo: l.cheque_no, debit: rs(l.debit_paise), credit: rs(l.credit_paise), balance: rs(l.balance_paise), status: l.match_status, entity: l.matched_entity, entityId: l.matched_id, rule: l.match_rule, matchedBy: l.matched_by, journalId: l.journal_id, ignoreReason: l.ignore_reason });
 
   /** Match a line to an entry of the books; a payment still pending at the bank is confirmed with the UTR (23.04). */
@@ -144,27 +159,30 @@ export function createCashService({ db, base, gl, payments }) {
     publishEvent(db, { type: 'fin.bank_line.matched', entity: 'fin_bank_statements', entityId: l.id, actorId: actor.user, companyId: l.company_id, data: { lineId: l.id, bankAccountId: l.bank_account_id, date: l.txn_date, debit: rs(l.debit_paise), credit: rs(l.credit_paise), entity: item.entity, entityId: item.id, rule } });
   }
   /** FR-02: the automatic match, in order: the UTR or reference, the cheque number, then the amount alone when one entry and one line fit within the days. */
-  function autoMatch(actor, bankId) {
-    const lines = db.prepare("SELECT * FROM fin_bank_statements WHERE bank_account_id = ? AND match_status = 'UNMATCHED' AND deleted_at IS NULL ORDER BY txn_date, id").all(bankId);
-    const done = matchedKeys(bankId); let open = bookItems(lines[0]?.company_id ?? actor.companyId, bankId).filter((i) => !done.has(`${i.entity}:${i.id}`));
-    const win = Number(param(actor.companyId, 'fin.recon.date_window_days') ?? 3); let n = 0;
-    const take = (l, item, rule) => { setMatch(actor, l, item, rule, 'AUTO'); open = open.filter((i) => i !== item); n += 1; };
+  function autoMatch(actor, bankId, importId = null) {
+    const lines = db.prepare("SELECT * FROM fin_bank_statements WHERE bank_account_id = ? AND match_status = 'UNMATCHED' AND deleted_at IS NULL AND (? IS NULL OR import_id = ?) ORDER BY txn_date, id").all(bankId, importId, importId);
+    if (!lines.length) return 0;
     const dirOf = (l) => (l.debit_paise > 0 ? 'OUT' : 'IN'); const amtOf = (l) => l.debit_paise || l.credit_paise;
-    const i0 = (i) => Boolean(i.cheque) && i.refs.length && norm(i.refs.find((r) => norm(r).length >= 6 && norm(r) === norm(i.cheque)) ?? '') !== '';
+    const pool = new Map(); for (const i of bookItems(lines[0].company_id, bankId, '9999-12-31', { unmatched: true, amounts: new Set(lines.map(amtOf)) })) { const k = `${i.dir}:${i.amount}`; if (!pool.has(k)) pool.set(k, []); pool.get(k).push(i); }
+    const win = Number(param(actor.companyId, 'fin.recon.date_window_days') ?? 3); let n = 0;
+    const take = (l, item, rule) => { setMatch(actor, l, item, rule, 'AUTO'); const k = `${item.dir}:${item.amount}`; pool.set(k, pool.get(k).filter((i) => i !== item)); l.match_status = 'AUTO'; n += 1; };
+    const i0 = (i) => Boolean(i.cheque);
     const left = [];
     for (const l of lines) {
-      const text = norm(`${l.description} ${l.ref ?? ''}`); const same = open.filter((i) => i.dir === dirOf(l) && i.amount === amtOf(l));
+      const text = norm(`${l.description} ${l.ref ?? ''}`); const same = pool.get(`${dirOf(l)}:${amtOf(l)}`) ?? [];
       // a line with the bank's cheque number column is a cheque first
       const byChq = l.cheque_no ? same.find((i) => i.cheque && norm(i.cheque) === norm(l.cheque_no)) : null;
       if (byChq) { take(l, byChq, 'CHEQUE'); continue; }
       const byRef = same.find((i) => i.refs.some((r) => norm(r).length >= 6 && text.includes(norm(r))));
-      if (byRef) { take(l, byRef, i0(byRef) ? 'CHEQUE' : 'REFERENCE'); continue; }
+      if (byRef) { take(l, byRef, i0(byRef) && text.includes(norm(byRef.cheque)) ? 'CHEQUE' : 'REFERENCE'); continue; }
       left.push(l);
     }
+    const near = (i, l) => Math.abs(Date.parse(i.date) - Date.parse(l.txn_date)) <= win * 86_400_000;
+    const sameKey = new Map(); for (const l of left) { const k = `${dirOf(l)}:${amtOf(l)}`; if (!sameKey.has(k)) sameKey.set(k, []); sameKey.get(k).push(l); }
     for (const l of left) {
-      const near = (i) => i.dir === dirOf(l) && i.amount === amtOf(l) && Math.abs(Date.parse(i.date) - Date.parse(l.txn_date)) <= win * 86_400_000;
-      const fits = open.filter(near); const rivals = left.filter((o) => o !== l && o.match_status === 'UNMATCHED' && amtOf(o) === amtOf(l) && dirOf(o) === dirOf(l) && fits.some((i) => Math.abs(Date.parse(i.date) - Date.parse(o.txn_date)) <= win * 86_400_000));
-      if (fits.length === 1 && rivals.length === 0) { take(l, fits[0], 'AMOUNT_DATE'); l.match_status = 'AUTO'; }
+      const fits = (pool.get(`${dirOf(l)}:${amtOf(l)}`) ?? []).filter((i) => near(i, l)); if (!fits.length) continue;
+      const rivals = sameKey.get(`${dirOf(l)}:${amtOf(l)}`).filter((o) => o !== l && o.match_status === 'UNMATCHED' && fits.some((i) => near(i, o)));
+      if (fits.length === 1 && rivals.length === 0) take(l, fits[0], 'AMOUNT_DATE');
     }
     return n;
   }
@@ -187,7 +205,7 @@ export function createCashService({ db, base, gl, payments }) {
           const r = ins.run(actor.companyId, imp, b.id, i + 1, l.txnDate, l.valueDate ?? null, String(l.description ?? '').slice(0, 500), l.ref ?? null, l.chequeNo ?? null, l.debit, l.credit, l.balance ?? null, hash, actor.user, 'fin_bank_statement_imports', String(imp));
           if (r.changes) added += 1; else dup += 1;
         });
-        const matched = autoMatch(actor, b.id);
+        const matched = autoMatch(actor, b.id, imp);
         db.prepare('UPDATE fin_bank_statement_imports SET lines_count = ?, duplicates_count = ?, matched_count = ? WHERE id = ?').run(added, dup, matched, imp);
         audit(actor, 'fin_bank_statement_imports', imp, 'import', actor.companyId, { newValues: { file: fileName, format: fmt, lines: added, duplicates: dup, matched } });
         return { importId: imp, lines: added, duplicates: dup, matched, unmatched: db.prepare("SELECT COUNT(*) AS n FROM fin_bank_statements WHERE import_id = ? AND match_status = 'UNMATCHED'").get(imp).n };
@@ -203,13 +221,13 @@ export function createCashService({ db, base, gl, payments }) {
     },
     /** The entries of the books that could be this line: same direction, nearest amount and date first. */
     candidates(actor, lineId) {
-      need(actor, 'fin.bank_statement.match', 'match bank statements'); const l = lineRow(actor, lineId); const done = matchedKeys(l.bank_account_id); const dir = l.debit_paise > 0 ? 'OUT' : 'IN'; const a = l.debit_paise || l.credit_paise;
-      return bookItems(l.company_id, l.bank_account_id).filter((i) => i.dir === dir && !done.has(`${i.entity}:${i.id}`)).sort((x, y) => Math.abs(x.amount - a) - Math.abs(y.amount - a) || Math.abs(Date.parse(x.date) - Date.parse(l.txn_date)) - Math.abs(Date.parse(y.date) - Date.parse(l.txn_date))).slice(0, 20).map((i) => ({ entity: i.entity, id: i.id, date: i.date, amount: rs(i.amount), label: i.label, refs: i.refs }));
+      need(actor, 'fin.bank_statement.match', 'match bank statements'); const l = lineRow(actor, lineId); const dir = l.debit_paise > 0 ? 'OUT' : 'IN'; const a = l.debit_paise || l.credit_paise;
+      return bookItems(l.company_id, l.bank_account_id, addDays(l.txn_date, 60), { unmatched: true, from: addDays(l.txn_date, -120) }).filter((i) => i.dir === dir).sort((x, y) => Math.abs(x.amount - a) - Math.abs(y.amount - a) || Math.abs(Date.parse(x.date) - Date.parse(l.txn_date)) - Math.abs(Date.parse(y.date) - Date.parse(l.txn_date))).slice(0, 20).map((i) => ({ entity: i.entity, id: i.id, date: i.date, amount: rs(i.amount), label: i.label, refs: i.refs }));
     },
     match(actor, lineId, { entity, id }) {
       need(actor, 'fin.bank_statement.match', 'match bank statements'); const l = lineRow(actor, lineId); if (l.match_status !== 'UNMATCHED') throw conflict('The line is matched or settled already.');
-      const done = matchedKeys(l.bank_account_id); const item = bookItems(l.company_id, l.bank_account_id).find((i) => i.entity === entity && i.id === Number(id));
-      if (!item || done.has(`${entity}:${id}`)) throw badRequest('Correct the highlighted fields', [{ field: 'id', message: 'Choose an entry of this bank account that is not matched yet.' }]);
+      const item = bookItems(l.company_id, l.bank_account_id, '9999-12-31', { unmatched: true, amounts: new Set([l.debit_paise || l.credit_paise]) }).find((i) => i.entity === entity && i.id === Number(id));
+      if (!item) throw badRequest('Correct the highlighted fields', [{ field: 'id', message: 'Choose an entry of this bank account that is not matched yet.' }]);
       if (item.dir !== (l.debit_paise > 0 ? 'OUT' : 'IN') || item.amount !== (l.debit_paise || l.credit_paise)) throw badRequest('Correct the highlighted fields', [{ field: 'id', message: `The entry is ${money(item.amount)} ${item.dir === 'OUT' ? 'out' : 'in'}; the line is ${money(l.debit_paise || l.credit_paise)} ${l.debit_paise ? 'out' : 'in'}. Post the difference as its own entry.` }]);
       return transaction(db, () => { setMatch(actor, l, item, 'MANUAL', 'MANUAL'); audit(actor, 'fin_bank_statements', l.id, 'match', l.company_id, { newValues: { entity, id } }); return lineView(db.prepare('SELECT * FROM fin_bank_statements WHERE id = ?').get(l.id)); });
     },
@@ -243,22 +261,22 @@ export function createCashService({ db, base, gl, payments }) {
   function brs(actor, { bankAccountId, asOf }) {
     need(actor, 'fin.brs.view', 'see reconciliations'); const b = bankRow(actor.companyId, bankAccountId); if (!b) throw notFound('That bank account does not exist.');
     const d = asOf ?? todayIST(); const p = profileOf(b.id); const start = p?.opening_date ?? '0000-01-01';
-    const lines = db.prepare('SELECT * FROM fin_bank_statements WHERE bank_account_id = ? AND deleted_at IS NULL AND txn_date <= ? ORDER BY txn_date, import_id, line_no').all(b.id, d);
-    const lastBal = [...lines].reverse().find((l) => l.balance_paise != null);
+    const lastBal = db.prepare('SELECT balance_paise FROM fin_bank_statements WHERE bank_account_id = ? AND deleted_at IS NULL AND txn_date <= ? AND balance_paise IS NOT NULL ORDER BY txn_date DESC, import_id DESC, line_no DESC LIMIT 1').get(b.id, d);
     const imp = db.prepare('SELECT * FROM fin_bank_statement_imports WHERE bank_account_id = ? AND deleted_at IS NULL AND to_date <= ? ORDER BY to_date DESC, id DESC LIMIT 1').get(b.id, d);
     const bank = lastBal?.balance_paise ?? imp?.closing_paise ?? null;
-    const items = bookItems(b.company_id, b.id, d).filter((i) => i.date >= start);
-    const posted = lines.filter((l) => l.match_status === 'POSTED');
-    const book = (p?.opening_paise ?? 0) + items.reduce((s, i) => s + (i.dir === 'IN' ? i.amount : -i.amount), 0) + posted.reduce((s, l) => s + l.credit_paise - l.debit_paise, 0);
-    const matchedBy = new Map(lines.filter((l) => ['AUTO', 'MANUAL'].includes(l.match_status)).map((l) => [`${l.matched_entity}:${l.matched_id}`, l]));
-    const unpresented = items.filter((i) => i.dir === 'OUT' && !matchedBy.has(`${i.entity}:${i.id}`)); const uncredited = items.filter((i) => i.dir === 'IN' && !matchedBy.has(`${i.entity}:${i.id}`));
-    const bankOnly = lines.filter((l) => ['UNMATCHED', 'IGNORED'].includes(l.match_status));
-    const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
-    const up = sum(unpresented, (i) => i.amount); const un = sum(uncredited, (i) => i.amount); const bDr = sum(bankOnly, (l) => l.debit_paise); const bCr = sum(bankOnly, (l) => l.credit_paise);
+    const book = (p?.opening_paise ?? 0) + bookSum(b.company_id, b.id, start, d);
+    // what the books have and the bank does not yet (unmatched by a line dated on or before the date): totals in SQL, the first 200 of each listed
+    const open = bookItems(b.company_id, b.id, d, { unmatched: true, from: start, matchedBy: d });
+    const unpresented = open.filter((i) => i.dir === 'OUT'); const uncredited = open.filter((i) => i.dir === 'IN');
+    const only = db.prepare("SELECT COALESCE(SUM(debit_paise), 0) AS dr, COALESCE(SUM(credit_paise), 0) AS cr FROM fin_bank_statements WHERE bank_account_id = ? AND deleted_at IS NULL AND txn_date <= ? AND match_status IN ('UNMATCHED', 'IGNORED')").get(b.id, d);
+    const onlyRows = db.prepare("SELECT * FROM fin_bank_statements WHERE bank_account_id = ? AND deleted_at IS NULL AND txn_date <= ? AND match_status IN ('UNMATCHED', 'IGNORED') ORDER BY txn_date DESC LIMIT 200").all(b.id, d);
+    const sum = (a, f) => a.reduce((s2, x) => s2 + f(x), 0);
+    const up = sum(unpresented, (i) => i.amount); const un = sum(uncredited, (i) => i.amount); const bDr = only.dr; const bCr = only.cr;
     const computed = book + up - un - bDr + bCr; const diff = bank == null ? null : bank - computed;
     const signed = db.prepare('SELECT * FROM fin_bank_recons WHERE bank_account_id = ? AND as_of = ? AND deleted_at IS NULL').get(b.id, d);
-    return { bank: { id: b.id, name: b.name, account: `••••${b.account_last4}` }, asOf: d, book: rs(book), statement: rs(bank), unpresented: { total: rs(up), rows: unpresented.map((i) => ({ entity: i.entity, id: i.id, date: i.date, label: i.label, amount: rs(i.amount) })) }, uncredited: { total: rs(un), rows: uncredited.map((i) => ({ entity: i.entity, id: i.id, date: i.date, label: i.label, amount: rs(i.amount) })) },
-      bankOnly: { debit: rs(bDr), credit: rs(bCr), rows: bankOnly.map(lineView) }, computed: rs(computed), difference: rs(diff), balanced: diff === 0, signed: signed ? { by: signed.signed_by, at: signed.signed_at } : null, can: { sign: may(actor, 'fin.brs.sign') && diff === 0 && !signed } };
+    const rowsOf = (a) => a.sort((x, y) => x.date.localeCompare(y.date)).slice(0, 200).map((i) => ({ entity: i.entity, id: i.id, date: i.date, label: i.label, amount: rs(i.amount) }));
+    return { bank: { id: b.id, name: b.name, account: `••••${b.account_last4}` }, asOf: d, book: rs(book), statement: rs(bank), unpresented: { total: rs(up), count: unpresented.length, rows: rowsOf(unpresented) }, uncredited: { total: rs(un), count: uncredited.length, rows: rowsOf(uncredited) },
+      bankOnly: { debit: rs(bDr), credit: rs(bCr), rows: onlyRows.map(lineView) }, computed: rs(computed), difference: rs(diff), balanced: diff === 0, signed: signed ? { by: signed.signed_by, at: signed.signed_at } : null, can: { sign: may(actor, 'fin.brs.sign') && diff === 0 && !signed } };
   }
   function signBrs(actor, q) {
     need(actor, 'fin.brs.sign', 'sign off reconciliations'); const r = brs(actor, q);
@@ -284,7 +302,7 @@ export function createCashService({ db, base, gl, payments }) {
       need(actor, 'fin.imprest.view', 'see imprests'); const f = authz.scopeFilter(actor, 'fin.imprest.view', { project: 'x.org_project_id', site: 'x.org_site_id' });
       return db.prepare(`SELECT x.* FROM fin_imprests x WHERE x.company_id = :c AND x.deleted_at IS NULL AND (x.custodian = :u OR ${f.sql}) ORDER BY (x.custodian = :u) DESC, x.name`).all({ c: actor.companyId, u: actor.user }).map((r) => impView(actor, r));
     },
-    get(actor, id) { need(actor, 'fin.imprest.view', 'see imprests'); const r = impRow(actor, id); if (!same(r.custodian, actor.user) && !may(actor, 'fin.imprest.view', r.org_project_id, r.org_site_id)) throw notFound('That imprest does not exist.'); return { ...impView(actor, r), vouchers: db.prepare('SELECT * FROM fin_imprest_vouchers WHERE imprest_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 100').all(r.id).map((v) => vView(actor, v)), replenishments: db.prepare('SELECT * FROM fin_imprest_replenishments WHERE imprest_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 50').all(r.id).map((x) => rView(actor, x)), counts: db.prepare('SELECT * FROM fin_cash_counts WHERE imprest_id = ? ORDER BY id DESC LIMIT 20').all(r.id).map((c) => ({ id: c.id, date: c.count_date, counted: rs(c.counted_paise), book: rs(c.book_paise), difference: rs(c.difference_paise), by: c.counted_by, witness: c.witness, note: c.note })) }; },
+    get(actor, id) { need(actor, 'fin.imprest.view', 'see imprests'); const r = impRow(actor, id); if (!same(r.custodian, actor.user) && !may(actor, 'fin.imprest.view', r.org_project_id, r.org_site_id)) throw notFound('That imprest does not exist.'); return { ...impView(actor, r), vouchers: db.prepare('SELECT * FROM fin_imprest_vouchers WHERE imprest_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 100').all(r.id).map((v) => vView(actor, v)), replenishments: db.prepare('SELECT * FROM fin_imprest_replenishments WHERE imprest_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 50').all(r.id).map((x) => rView(actor, x)), heads: db.prepare("SELECT a.id, a.code, a.name FROM fin_accounts a JOIN fin_account_groups g ON g.id = a.group_id WHERE a.company_id = ? AND a.deleted_at IS NULL AND a.account_status = 'ACTIVE' AND a.is_control = 0 AND g.code LIKE '5%' AND NOT EXISTS (SELECT 1 FROM fin_dimension_rules d WHERE d.account_id = a.id AND d.requirement = 'MANDATORY' AND d.dimension NOT IN ('PROJECT', 'SITE', 'WBS') AND d.deleted_at IS NULL) ORDER BY a.code").all(r.company_id), defaultHead: acct(r.company_id, '560004'), counts: db.prepare('SELECT * FROM fin_cash_counts WHERE imprest_id = ? ORDER BY id DESC LIMIT 20').all(r.id).map((c) => ({ id: c.id, date: c.count_date, counted: rs(c.counted_paise), book: rs(c.book_paise), difference: rs(c.difference_paise), by: c.counted_by, witness: c.witness, note: c.note })) }; },
     create(actor, b) {
       need(actor, 'fin.imprest.manage', 'set up imprests'); const problems = [];
       if (b.projectId && !db.prepare('SELECT 1 FROM org_projects WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(b.projectId), actor.companyId)) problems.push({ field: 'projectId', message: 'The project does not exist.' });
@@ -471,10 +489,9 @@ export function createCashService({ db, base, gl, payments }) {
   function position(actor, { date }) {
     need(actor, 'fin.cash_position.view', 'see the cash and bank position'); const d = date ?? todayIST(); const c = actor.companyId;
     const banks = db.prepare("SELECT * FROM fin_bank_accounts WHERE company_id = ? AND deleted_at IS NULL ORDER BY code").all(c).map((b) => {
-      const p = profileOf(b.id); const start = p?.opening_date ?? '0000-01-01'; const items = bookItems(c, b.id, d).filter((i) => i.date >= start);
-      const posted = db.prepare("SELECT COALESCE(SUM(credit_paise - debit_paise), 0) AS s FROM fin_bank_statements WHERE bank_account_id = ? AND match_status = 'POSTED' AND txn_date <= ? AND deleted_at IS NULL").get(b.id, d).s;
-      const book = (p?.opening_paise ?? 0) + items.reduce((s, i) => s + (i.dir === 'IN' ? i.amount : -i.amount), 0) + posted;
-      const today = items.filter((i) => i.date === d); const inn = today.filter((i) => i.dir === 'IN').reduce((s, i) => s + i.amount, 0); const out = today.filter((i) => i.dir === 'OUT').reduce((s, i) => s + i.amount, 0);
+      const p = profileOf(b.id); const start = p?.opening_date ?? '0000-01-01';
+      const book = (p?.opening_paise ?? 0) + bookSum(c, b.id, start, d);
+      const today = d >= start ? bookItems(c, b.id, d, { from: d }) : []; const inn = today.filter((i) => i.dir === 'IN').reduce((s, i) => s + i.amount, 0); const out = today.filter((i) => i.dir === 'OUT').reduce((s, i) => s + i.amount, 0);
       const last = db.prepare('SELECT txn_date, balance_paise FROM fin_bank_statements WHERE bank_account_id = ? AND balance_paise IS NOT NULL AND txn_date <= ? AND deleted_at IS NULL ORDER BY txn_date DESC, import_id DESC, line_no DESC LIMIT 1').get(b.id, d);
       const open = db.prepare("SELECT COUNT(*) AS n FROM fin_bank_statements WHERE bank_account_id = ? AND match_status = 'UNMATCHED' AND deleted_at IS NULL").get(b.id).n;
       return { id: b.id, name: b.name, account: `••••${b.account_last4}`, kind: p?.account_kind ?? 'CURRENT', kindLabel: ACCOUNT_KINDS[p?.account_kind ?? 'CURRENT'], projectId: p?.org_project_id ?? null, book: rs(book), received: rs(inn), paid: rs(out), statement: last ? { date: last.txn_date, balance: rs(last.balance_paise) } : null, unmatched: open, odLimit: rs(p?.od_limit_paise ?? 0), available: rs(book + (p?.od_limit_paise ?? 0)) };
