@@ -18,7 +18,7 @@ function portal() {
     const path = new URL(url).pathname; const h = init.headers; const body = init.body ? JSON.parse(init.body) : null; calls.push(path);
     if (path === '/eivital/v1.04/auth') {
       const p = JSON.parse(Buffer.from(rsaDec(body.Data).toString('utf8'), 'base64').toString('utf8'));
-      if (p.UserName !== 'api_user' || p.Password !== 'secret-pw' || h.client_id !== 'cid') return answer({ Status: 0, ErrorDetails: [{ ErrorCode: '1010', ErrorMessage: 'Invalid credentials' }] });
+      if (p.UserName !== 'api_user' || p.Password !== 'pw-test' || h.client_id !== 'cid') return answer({ Status: 0, ErrorDetails: [{ ErrorCode: '1010', ErrorMessage: 'Invalid credentials' }] });
       const sek = randomBytes(32); n += 1; const token = `T${n}`; tokens.set(token, sek);
       return answer({ Status: 1, Data: { AuthToken: token, Sek: aesEnc(Buffer.from(p.AppKey, 'base64'), sek).toString('base64'), TokenExpiry: '2099-12-31 23:59:00' } });
     }
@@ -41,7 +41,7 @@ function portal() {
   }
   return { fetch, calls, state };
 }
-const ctxOf = (p, over = {}) => ({ config: { baseUrl: 'https://portal.test', gstin: '36AAACM1234F1Z5', userName: 'api_user', encryption: 'IRP', publicKey, irnPath: '/eicore/v1.03/Invoice', ewbPath: '/ewaybillapi/v1.03/ewayapi', ...over }, secrets: { client_id: 'cid', client_secret: 'cs', password: 'secret-pw', ewb_password: 'ewb-pw' }, fetch: p.fetch });
+const ctxOf = (p, over = {}) => ({ config: { baseUrl: 'https://portal.test', gstin: '36AAACM1234F1Z5', userName: 'api_user', encryption: 'IRP', publicKey, irnPath: '/eicore/v1.03/Invoice', ewbPath: '/ewaybillapi/v1.03/ewayapi', ...over }, secrets: { client_id: 'cid', client_secret: 'cs', password: 'pw-test', ewb_password: 'ewb-pw' }, fetch: p.fetch });
 
 test('D-731 IRN through the IRP session: encrypted both ways, the token reused, renewed once when invalid', async () => {
   resetGspSessions(); const p = portal(); const gsp = httpGsp(); const ctx = ctxOf(p);
