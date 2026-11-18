@@ -3258,6 +3258,9 @@ export const ROUTE_POLICY = [
   { m: 'POST', p: '/api/v1/fin/asset-verifications/:id/scan', g: 'permission', k: 'fin.asset.verify', s: 'parseVerifyScan', scope: 'company', rate: 'write', audit: true },
   { m: 'POST', p: '/api/v1/fin/asset-verifications/:id/close', g: 'permission', k: 'fin.asset.verify', s: 'parseId', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/fin/asset-reports/schedule', g: 'permission', k: 'fin.depreciation.view', s: 'parseFyQuery', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/fin/asset-reports/tax-openings', g: 'permission', k: 'fin.depreciation.view', s: null, scope: 'company', rate: 'read', audit: false },
+  { m: 'PUT', p: '/api/v1/fin/asset-reports/tax-openings', g: 'permission', k: 'fin.depreciation.run', s: 'parseTaxOpening', scope: 'company', rate: 'write', audit: true },
+  { m: 'DELETE', p: '/api/v1/fin/asset-reports/tax-openings/:id', g: 'permission', k: 'fin.depreciation.run', s: 'parseId', scope: 'company', rate: 'write', audit: true },
   { m: 'GET', p: '/api/v1/fin/asset-reports/tax-blocks', g: 'permission', k: 'fin.depreciation.view', s: 'parseFyQuery', scope: 'company', rate: 'read', audit: false },
   // part 23.08: GSTR-2B reconciliation, the ITC review, GSTR-1/3B, TDS statements and certificates, 26AS, the compliance calendar
   { m: 'POST', p: '/api/v1/fin/gst-recon/import', g: 'permission', k: 'fin.gst_recon.import', s: 'parse2bImport', scope: 'company', rate: 'write', audit: true },

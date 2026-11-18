@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { notFound } from '../../platform/http/errors.js';
-import { parseAssetCreate, parseAssetTransfer, parseAssetUpdate, parseCwipCreate, parseDepPeriod, parseDisposalCreate, parseFyQuery, parseId, parseJournalReason, parseVerifyCreate, parseVerifyScan } from './validators.js';
+import { parseAssetCreate, parseAssetTransfer, parseAssetUpdate, parseCwipCreate, parseDepPeriod, parseDisposalCreate, parseFyQuery, parseTaxOpening, parseId, parseJournalReason, parseVerifyCreate, parseVerifyScan } from './validators.js';
 
 /** Part 23.09: fixed assets under /api/v1/fin (assets, CWIP, depreciation, disposals, verification, the schedules), behind ff.fin.p2309. Rights are checked in the service. */
 export function assetRoutes(fa, { idempotent, idempotentRequired, flags }) {
@@ -42,6 +42,9 @@ export function assetRoutes(fa, { idempotent, idempotentRequired, flags }) {
   r.post('/asset-verifications/:id/scan', idempotent, (req, res) => ok(res, v.scan(req.actor, pid(req), parseVerifyScan(req.body))));
   r.post('/asset-verifications/:id/close', idempotentRequired, (req, res) => ok(res, v.close(req.actor, pid(req))));
   r.get('/asset-reports/schedule', (req, res) => ok(res, fa.schedule(req.actor, parseFyQuery(req.query))));
+  r.get('/asset-reports/tax-openings', (req, res) => ok(res, fa.taxOpenings.list(req.actor)));
+  r.put('/asset-reports/tax-openings', idempotent, (req, res) => ok(res, fa.taxOpenings.set(req.actor, parseTaxOpening(req.body))));
+  r.delete('/asset-reports/tax-openings/:id', (req, res) => ok(res, fa.taxOpenings.remove(req.actor, pid(req))));
   r.get('/asset-reports/tax-blocks', (req, res) => ok(res, fa.taxBlocks(req.actor, parseFyQuery(req.query))));
   return r;
 }

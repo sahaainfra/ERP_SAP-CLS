@@ -166,7 +166,17 @@ function TaxBlocks() {
   const g = guardOf(q, t('fa.taxDep'), 'fin.depreciation.view'); const x = q.data;
   return (<div data-testid="fa-tax"><div className="form-grid"><Field label={t('fa.fy')} name="fy" error={null}><input value={fy} onChange={(e) => setFy(e.target.value)} style={big} /></Field></div>{g ?? (x.blocks.length === 0 ? <EmptyState compact title={t('fa.noAssets')} message={t('fa.noAssetsBody')} /> : <>
     <ul className="lp-list">{x.blocks.map((b) => <li key={b.block} className="mdm-panel" style={{ padding: 12, margin: '6px 0' }}><strong>{b.block} · {b.ratePct}%</strong><Rows rows={[[t('fa.opening'), money(b.opening)], [t('fa.addFull'), money(b.additionsFull)], [t('fa.addHalf'), money(b.additionsHalf)], [t('fa.deletions'), money(b.deletions)], [t('fa.taxDepL'), money(b.depreciation)], [t('fa.closing'), money(b.closing)], [t('fa.stcg'), b.stcg ? money(b.stcg) : null]]} /></li>)}</ul>
-    <p className="muted small">{x.note}</p><div className="ff-actionbar"><span>{t('fa.taxDepL')} <strong>{money(x.totals.depreciation)}</strong></span></div></>)}</div>);
+    <p className="muted small">{x.note}</p><div className="ff-actionbar"><span>{t('fa.taxDepL')} <strong>{money(x.totals.depreciation)}</strong></span></div></>)}<TaxOpenings fy={fy} /></div>);
+}
+/** D-740: the opening WDV of a block for the first tax year the register computes (assets taken over at go-live). */
+function TaxOpenings({ fy }) {
+  const t = useT('fa'); const session = useSession(); const q = useQuery({ queryKey: ['gl', 'fa-tax-open'], queryFn: () => fa.taxOpenings(), retry: false }); const { error, note, busy, run } = useGlRunner();
+  const [f, setF] = useState({ block: '', fy, openingWdv: '' }); const fe = error?.fields ?? {}; const edit = can(session.data, 'fin.depreciation.run'); const rows = q.data ?? [];
+  if (!q.data && !edit) return null;
+  return (<div className="mdm-panel" style={{ padding: 12, marginTop: 12 }} data-testid="fa-tax-open"><h3>{t('fa.taxOpening')}</h3><p className="muted small">{t('fa.taxOpeningIntro')}</p><GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}
+    {rows.length > 0 && <ul className="lp-list">{rows.map((o) => <li key={o.id}><strong>{o.block}</strong> · {o.fy} · {money(o.openingWdv)}{edit && <> <button type="button" className="btn" disabled={busy} onClick={() => run(() => fa.removeTaxOpening(o.id), t('fa.removedOpening'))}>{t('fa.removeOpening')}</button></>}</li>)}</ul>}
+    {edit && <><div className="form-grid"><Field label={t('fa.block')} name="block" error={fe.block}><input value={f.block} onChange={(e) => setF({ ...f, block: e.target.value.toUpperCase() })} style={big} data-testid="fa-open-block" /></Field><Field label={t('fa.fy')} name="openFy" error={fe.fy}><input value={f.fy} onChange={(e) => setF({ ...f, fy: e.target.value })} style={big} /></Field><Field label={t('fa.openingWdv')} name="openingWdv" error={fe.openingWdv}><input inputMode="decimal" value={f.openingWdv} onChange={(e) => setF({ ...f, openingWdv: e.target.value })} style={big} data-testid="fa-open-wdv" /></Field></div>
+      <div className="ff-actionbar"><button type="button" className="btn btn-primary" style={big} disabled={busy || !f.block || f.openingWdv === ''} onClick={() => run(() => fa.setTaxOpening({ block: f.block, fy: f.fy, openingWdv: Number(f.openingWdv) }), t('fa.savedOpening'))} data-testid="fa-open-save">{t('fa.saveOpening')}</button></div></>}</div>);
 }
 export function AssetAccountingPage() {
   const t = useT('fa'); usePageTitle(t('fa.accounting')); const sp = useSearch(); const session = useSession(); const [step, setStep] = useState(sp.get('step') ?? (can(session.data, 'fin.asset.create') ? 'capitalise' : 'depreciation'));

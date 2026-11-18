@@ -197,4 +197,6 @@ export const parseDepPeriod = (q) => parse(z.object({ period: z.string().regex(/
 export const parseDisposalCreate = (b) => parse(z.object({ assetId: id, date, method: z.enum(['SALE', 'SCRAP', 'WRITE_OFF']), buyerPartnerId: id.optional().nullable(), proceeds: money.optional(), hsn: z.string().trim().regex(/^\d{4,8}$/).optional().nullable(), reason: z.string().trim().min(5).max(300) }).strict(), b);
 export const parseVerifyCreate = (b) => parse(z.object({ projectId: id.optional().nullable(), siteId: id.optional().nullable(), date }).strict(), b);
 export const parseVerifyScan = (b) => parse(z.object({ code: z.string().trim().min(2).max(60), condition: z.enum(['GOOD', 'FAIR', 'DAMAGED', 'NOT_WORKING']).optional(), note: z.string().trim().max(200).optional() }).strict(), b);
+/** D-740: the opening WDV of a tax block. */
+export const parseTaxOpening = (b) => parse(z.object({ block: z.string().trim().min(2).max(40), fy: z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27'), openingWdv: z.coerce.number().min(0).max(1e13), version: z.number().int().optional() }).strict(), b);
 export const parseFyQuery = (q) => parse(z.object({ fy: z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27') }).strict(), q);

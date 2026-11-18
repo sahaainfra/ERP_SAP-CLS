@@ -105,6 +105,15 @@ test('CWIP settled into an asset; drafts from the equipment register and small a
   assert.equal(bRow.additions, 5000000); assert.equal(bRow.grossClose, 5000000); assert.equal(bRow.netClose, Math.round((5000000 - bRow.depYear) * 100) / 100); assert.equal(eRow.additions, 4500000);
   const tb = (await w.call(U.cfo, 'GET', '/asset-reports/tax-blocks?fy=2026-27')).json.data; const pm = tb.blocks.find((x) => x.block === 'PM_GENERAL'); const bl = tb.blocks.find((x) => x.block === 'BUILDING');
   assert.equal(pm.additionsFull, 4500000, 'put to use 1 August: 180 days or more in the year'); assert.equal(pm.depreciation, 675000); assert.equal(bl.depreciation, 500000);
+  // D-740: laptops taken over at go-live (put to use 2024): without an opening the block starts from their cost in 2024-25; with the block's opening WDV of 2026-27 it starts there
+  const lp = await w.capitalise({ source: 'OPENING', classCode: 'COMPUTER', description: 'Laptops taken over', cost: '300000', capDate: '2024-06-01', openingAccum: '150000' }); assert.equal(lp.status, 'APPROVED');
+  const tax = async () => (await w.call(U.cfo, 'GET', '/asset-reports/tax-blocks?fy=2026-27')).json.data; const cmp0 = (await tax()).blocks.find((x) => x.block === 'COMPUTERS'); assert.equal(cmp0.opening, 300000 * 0.6 * 0.6, 'carried from the cost at 40% a year');
+  assert.equal((await w.call(U.cfo, 'PUT', '/asset-reports/tax-openings', { block: 'NOPE', fy: '2026-27', openingWdv: 1 })).status, 403, 'the CFO sees, the accounts manager enters');
+  assert.equal((await w.call(U.acc, 'PUT', '/asset-reports/tax-openings', { block: 'NOPE', fy: '2026-27', openingWdv: 1 })).status, 400);
+  const op = await w.call(U.acc, 'PUT', '/asset-reports/tax-openings', { block: 'COMPUTERS', fy: '2026-27', openingWdv: 90000 }); assert.equal(op.status, 200, JSON.stringify(op.json)); assert.equal(op.json.data[0].openingWdv, 90000);
+  const t2 = await tax(); const cmp = t2.blocks.find((x) => x.block === 'COMPUTERS'); assert.equal(cmp.opening, 90000); assert.equal(cmp.additionsFull + cmp.additionsHalf, 0, 'the laptops are inside the opening'); assert.equal(cmp.depreciation, 36000); assert.equal(cmp.closing, 54000);
+  assert.equal(t2.openings[0].block, 'COMPUTERS'); assert.equal((await w.call(U.cfo, 'GET', '/asset-reports/tax-blocks?fy=2025-26')).json.data.blocks.find((x) => x.block === 'COMPUTERS'), undefined, 'not computed before its opening year');
+  assert.equal((await w.call(U.acc, 'DELETE', `/asset-reports/tax-openings/${op.json.data[0].id}`)).status, 200); assert.equal((await tax()).blocks.find((x) => x.block === 'COMPUTERS').opening, cmp0.opening);
   assert.equal((await w.call(U.aud, 'GET', '/assets')).status, 200); assert.equal((await w.call(U.se, 'GET', '/assets')).status, 403); assert.equal((await w.call(U.acc, 'GET', '/assets/export')).status, 200);
   assert.equal((await w.call(U.acc, 'GET', `/assets/${bld.id}/print`)).status, 200);
   // D-741: a disposal in finance of the asset of a registered machine makes the machine disposed of in the register (17.01), a deployed one released first

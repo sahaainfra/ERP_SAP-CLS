@@ -250,4 +250,7 @@ export const fa = {
   closeVerification: async (id) => (await api.post(`/fin/asset-verifications/${id}/close`, {}, idem())).data,
   schedule: (f) => glget(`/asset-reports/schedule?${q(f)}`),
   taxBlocks: (f) => glget(`/asset-reports/tax-blocks?${q(f)}`),
+  taxOpenings: () => glget('/asset-reports/tax-openings'),
+  setTaxOpening: async (b) => (await api.put('/fin/asset-reports/tax-openings', b, idem())).data,
+  removeTaxOpening: async (id) => (await api.delete(`/fin/asset-reports/tax-openings/${id}`)).data,
 };

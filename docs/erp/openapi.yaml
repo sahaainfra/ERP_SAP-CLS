@@ -9988,6 +9988,17 @@ paths:
     get:
       summary: "fixed assets and depreciation /asset-reports/schedule (part 23.09; fin.depreciation.view)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/tax-openings:
+    get:
+      summary: "fixed assets: opening tax WDV by block (D-740; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: "fixed assets: set the opening tax WDV of a block { block, fy, openingWdv } (D-740; fin.depreciation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/tax-openings/{id}:
+    delete:
+      summary: "fixed assets: remove an opening tax WDV (D-740; fin.depreciation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
   /api/v1/fin/asset-reports/tax-blocks:
     get:
       summary: "fixed assets and depreciation /asset-reports/tax-blocks (part 23.09; fin.depreciation.view)"

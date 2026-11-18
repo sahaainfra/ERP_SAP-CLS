@@ -344,15 +344,36 @@ export function createAssetService({ db, base, gl, flags, tax = () => null }) {
     return { fy, from, to, rows, totals: Object.fromEntries(['grossOpen', 'additions', 'deletions', 'grossClose', 'depOpen', 'depYear', 'depDeletions', 'depClose', 'netOpen', 'netClose'].map((k) => [k, tot(k)])) };
   }
   /** Income-tax depreciation by block for a financial year: opening WDV (carried from the first year), additions at the full rate when put to use for 180 days or more in the year and at half the rate otherwise, sale proceeds deducted, the block's depreciation and closing WDV; a block whose proceeds exceed it ends with a short-term capital gain. */
+  const rateOfBlock = (b, c) => db.prepare('SELECT tax_rate_bp FROM fa_classes WHERE tax_block = ? AND (company_id = ? OR company_id IS NULL) AND deleted_at IS NULL ORDER BY company_id DESC LIMIT 1').get(b, c)?.tax_rate_bp ?? 0;
+  /** D-740: the opening WDV of a block for the first tax year the register computes (assets taken over at go-live); one per block, set by who runs depreciation. */
+  const taxOpenings = {
+    list(actor) { need(actor, 'fin.depreciation.view', 'see tax depreciation'); return db.prepare('SELECT * FROM fa_tax_openings WHERE company_id = ? AND deleted_at IS NULL ORDER BY tax_block').all(actor.companyId).map((o) => ({ id: o.id, block: o.tax_block, fy: o.fy, openingWdv: rs(o.opening_wdv_paise), version: o.version, updatedBy: o.updated_by ?? o.created_by, updatedAt: o.updated_at ?? o.created_at })); },
+    set(actor, b) {
+      need(actor, 'fin.depreciation.run', 'enter the opening tax WDV'); const c = actor.companyId;
+      if (!db.prepare('SELECT 1 FROM fa_classes WHERE tax_block = ? AND (company_id = ? OR company_id IS NULL) AND deleted_at IS NULL').get(b.block, c)) throw badRequest('Correct the highlighted fields', [{ field: 'block', message: 'No asset class is in that block' }]);
+      const cur = db.prepare('SELECT * FROM fa_tax_openings WHERE company_id = ? AND tax_block = ? AND deleted_at IS NULL').get(c, b.block); if (cur && b.version && b.version !== cur.version) throw conflict('Someone changed this; reload it.');
+      const v = paise(b.openingWdv);
+      if (cur) db.prepare('UPDATE fa_tax_openings SET fy = ?, opening_wdv_paise = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(b.fy, v, actor.user, nowIso(), cur.id);
+      else db.prepare("INSERT INTO fa_tax_openings (company_id, tax_block, fy, opening_wdv_paise, created_by, source_type) VALUES (?, ?, ?, ?, ?, 'api')").run(c, b.block, b.fy, v, actor.user);
+      const row = db.prepare('SELECT id FROM fa_tax_openings WHERE company_id = ? AND tax_block = ? AND deleted_at IS NULL').get(c, b.block);
+      audit(actor, 'fa_tax_openings', row.id, cur ? 'update' : 'create', c, { reason: `${b.block} ${b.fy}: opening WDV ${rs(v)}`, ...(cur ? { oldValues: { fy: cur.fy, openingWdv: rs(cur.opening_wdv_paise) } } : {}), newValues: { fy: b.fy, openingWdv: rs(v) } }); return taxOpenings.list(actor);
+    },
+    remove(actor, id) { need(actor, 'fin.depreciation.run', 'remove an opening tax WDV'); const o = db.prepare('SELECT * FROM fa_tax_openings WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); if (!o) throw notFound('That opening does not exist.'); db.prepare('UPDATE fa_tax_openings SET deleted_at = ?, deleted_by = ?, is_active = 0 WHERE id = ?').run(nowIso(), actor.user, o.id); audit(actor, 'fa_tax_openings', o.id, 'delete', o.company_id, { reason: `${o.tax_block} ${o.fy}` }); return taxOpenings.list(actor); },
+  };
   function taxBlocks(actor, { fy }) {
     need(actor, 'fin.depreciation.view', 'see tax depreciation'); const c = actor.companyId;
-    const all = db.prepare("SELECT * FROM fa_assets WHERE company_id = ? AND status = 'APPROVED' AND deleted_at IS NULL").all(c); if (!all.length) return { fy, blocks: [], totals: { depreciation: 0 } };
-    const first = all.map((a) => fyOf(a.cap_date)).sort()[0]; const blocks = new Map(); let out = null;
+    const all = db.prepare("SELECT * FROM fa_assets WHERE company_id = ? AND status = 'APPROVED' AND deleted_at IS NULL").all(c);
+    // D-740: a block with an opening WDV starts in that tax year from it; its assets put to use before that year are inside the opening, not additions
+    const openings = new Map(db.prepare('SELECT tax_block, fy, opening_wdv_paise FROM fa_tax_openings WHERE company_id = ? AND deleted_at IS NULL').all(c).map((o) => [o.tax_block, o]));
+    const startOf = (b) => openings.get(b)?.fy ?? null; const inOpening = (a) => { const o = openings.get(a.tax_block); return Boolean(o) && a.cap_date < fyRange(o.fy).from; };
+    if (!all.length && !openings.size) return { fy, blocks: [], totals: { depreciation: 0, closing: 0 } };
+    const first = [...all.map((a) => fyOf(a.cap_date)), ...[...openings.values()].map((o) => o.fy)].sort()[0]; const blocks = new Map(); let out = null;
     for (let y = Number(first.slice(0, 4)); y <= Number(fy.slice(0, 4)); y += 1) {
       const f = `${y}-${String((y + 1) % 100).padStart(2, '0')}`; const { from, to } = fyRange(f); const rows = [];
-      const names = new Set([...blocks.keys(), ...all.filter((a) => a.cap_date >= from && a.cap_date <= to).map((a) => a.tax_block)]);
+      const names = new Set([...blocks.keys(), ...all.filter((a) => a.cap_date >= from && a.cap_date <= to && !inOpening(a)).map((a) => a.tax_block), ...[...openings.values()].filter((o) => o.fy === f).map((o) => o.tax_block)]);
       for (const b of names) {
-        const open = blocks.get(b)?.closing ?? 0; const rate = all.find((a) => a.tax_block === b)?.tax_rate_bp ?? 0; const adds = all.filter((a) => a.tax_block === b && a.cap_date >= from && a.cap_date <= to);
+        if (startOf(b) && f < startOf(b)) continue;
+        const open = startOf(b) === f ? openings.get(b).opening_wdv_paise : blocks.get(b)?.closing ?? 0; const rate = all.find((a) => a.tax_block === b)?.tax_rate_bp ?? rateOfBlock(b, c); const adds = all.filter((a) => a.tax_block === b && a.cap_date >= from && a.cap_date <= to && !inOpening(a));
         const addFull = adds.filter((a) => days(a.cap_date, to) >= 180).reduce((s, a) => s + a.cost_paise, 0); const addHalf = adds.filter((a) => days(a.cap_date, to) < 180).reduce((s, a) => s + a.cost_paise, 0);
         const sold = db.prepare("SELECT COALESCE(SUM(d.proceeds_paise), 0) AS s FROM fa_disposals d JOIN fa_assets a ON a.id = d.asset_id WHERE d.company_id = ? AND a.tax_block = ? AND d.status = 'APPROVED' AND d.disposal_date BETWEEN ? AND ?").get(c, b, from, to).s;
         let base0 = open + addFull + addHalf - sold; let stcg = 0; if (base0 < 0) { stcg = -base0; base0 = 0; }
@@ -361,7 +382,7 @@ export function createAssetService({ db, base, gl, flags, tax = () => null }) {
       }
       if (f === fy) out = rows;
     }
-    out = out ?? []; return { fy, blocks: out, totals: { depreciation: rs(out.reduce((s, r) => s + paise(r.depreciation), 0)), closing: rs(out.reduce((s, r) => s + paise(r.closing), 0)) }, note: 'Income-tax Act, 2025 from tax year 2026-27 (the Act of 1961 before): the block rates are master data of the asset classes.' };
+    out = (out ?? []).sort((a, b) => a.block.localeCompare(b.block)); return { fy, openings: [...openings.values()].map((o) => ({ block: o.tax_block, fy: o.fy, openingWdv: rs(o.opening_wdv_paise) })), blocks: out, totals: { depreciation: rs(out.reduce((s, r) => s + paise(r.depreciation), 0)), closing: rs(out.reduce((s, r) => s + paise(r.closing), 0)) }, note: 'Income-tax Act, 2025 from tax year 2026-27 (the Act of 1961 before): the block rates are master data of the asset classes.' };
   }
 
   // ---- consumers: the equipment register (17.01) and small assets (16.09) make a draft to capitalise ----
@@ -382,5 +403,5 @@ export function createAssetService({ db, base, gl, flags, tax = () => null }) {
     /** On the 5th of a month: tell the accounts manager when last month's depreciation is not run. */
     remind() { let n = 0; const t = todayIST(); if (Number(t.slice(8, 10)) < 5) return { reminded: 0 }; const last = addMonths(t.slice(0, 7), -1); for (const co of db.prepare('SELECT id FROM org_companies').all()) { if (!on(co.id)) continue; if (!db.prepare("SELECT 1 FROM fa_assets WHERE company_id = ? AND asset_state = 'IN_USE'").get(co.id)) continue; if (db.prepare('SELECT 1 FROM fa_dep_runs WHERE company_id = ? AND period = ?').get(co.id, last)) continue; n += 1; notify(co.id, 'fin.fa.alert', ['permission:fin.depreciation.run'], last, 'depreciation not run', `The depreciation of ${last} is not run yet.`, '/finance/asset-accounting?step=depreciation', 0); } return { reminded: n }; },
   };
-  return { assets, cwip, depreciation, disposals, verifications, schedule, taxBlocks, consumers, jobs };
+  return { assets, cwip, depreciation, disposals, verifications, schedule, taxBlocks, taxOpenings, consumers, jobs };
 }

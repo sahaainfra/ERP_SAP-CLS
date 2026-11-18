@@ -141,4 +141,12 @@ export default {
   "fa.taxDepL": "Tax depreciation",
   "fa.closing": "Closing WDV",
   "fa.stcg": "Short-term capital gain",
+  "fa.taxOpening": "Opening tax WDV by block",
+  "fa.taxOpeningIntro": "For assets taken over at go-live: the written-down value of each Income-tax block at the start of the first tax year computed here. Assets put to use before that year are inside it.",
+  "fa.block": "Tax block",
+  "fa.openingWdv": "Opening WDV",
+  "fa.saveOpening": "Save the opening",
+  "fa.savedOpening": "Opening saved.",
+  "fa.removeOpening": "Remove",
+  "fa.removedOpening": "Opening removed.",
 };

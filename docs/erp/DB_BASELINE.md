@@ -10339,6 +10339,32 @@ Indexes:
 - ux_fa_disposals_live (unique): asset_id
 - ux_fa_disposals_doc (unique): company_id, doc_no
 
+## fa_tax_openings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| tax_block | TEXT | yes |  |  |
+| fy | TEXT | yes |  |  |
+| opening_wdv_paise | INTEGER | yes |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ux_fa_tax_openings_block (unique): company_id, tax_block
+
 ## fa_transfers
 
 | Column | Type | Not null | Key | Default |
