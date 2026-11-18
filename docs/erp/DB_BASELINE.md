@@ -28966,6 +28966,45 @@ Indexes:
 - ix_site_work_fronts_company_id: company_id, status
 - ux_site_work_fronts_code (unique): wf_site_id, code
 
+## tcs_collections
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| invoice_id | INTEGER | yes |  |  |
+| partner_id | INTEGER |  |  |  |
+| nature | TEXT | yes |  |  |
+| section | TEXT | yes |  |  |
+| collected_on | TEXT | yes |  |  |
+| base_paise | INTEGER | yes |  |  |
+| rate_bp | INTEGER | yes |  |  |
+| tcs_paise | INTEGER | yes |  |  |
+| pan | TEXT |  |  |  |
+| tcs_status | TEXT | yes |  | 'COLLECTED' |
+| journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), partner_id -> mdm_partners(id), invoice_id -> ar_invoices(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_tcs_collections_journal: journal_id
+- ix_tcs_collections_partner: partner_id
+- ix_tcs_collections_date: company_id, collected_on
+- ux_tcs_collections_invoice (unique): invoice_id
+
 ## tdr_addenda
 
 | Column | Type | Not null | Key | Default |

@@ -44,6 +44,8 @@ const toIso = (s) => { const t = String(s ?? '').trim(); if (/^\d{4}-\d{2}-\d{2}
 const quarterOf = (date) => { const y = Number(date.slice(0, 4)); const m = Number(date.slice(5, 7)); const fy = m >= 4 ? y : y - 1; const q = m >= 4 && m <= 6 ? 1 : m >= 7 && m <= 9 ? 2 : m >= 10 ? 3 : 4; return `${fy}-${String((fy + 1) % 100).padStart(2, '0')}-Q${q}`; };
 /** D-737: TDS of a quarter is deposited by the 7th of the next month (the last month of Q4 by 30 April); deposits to then belong to its statement. */
 const depositDue = (q) => { const fy = Number(q.slice(0, 4)); return [`${fy}-07-07`, `${fy}-10-07`, `${fy + 1}-01-07`, `${fy + 1}-04-30`][Number(q.slice(-1)) - 1]; };
+/** D-736: TCS of a quarter is paid by the 7th of the next month, also for March. */
+const tcsDue = (q) => { const fy = Number(q.slice(0, 4)); return [`${fy}-07-07`, `${fy}-10-07`, `${fy + 1}-01-07`, `${fy + 1}-04-07`][Number(q.slice(-1)) - 1]; };
 const quarterRange = (q) => { const fy = Number(q.slice(0, 4)); const n = Number(q.slice(-1)); const sm = [4, 7, 10, 1][n - 1]; const y = n === 4 ? fy + 1 : fy; const from = `${y}-${String(sm).padStart(2, '0')}-01`; const em = sm + 2; return { from, to: `${y}-${String(em).padStart(2, '0')}-${lastDay(y, em)}` }; };
 
 parameterRegistry.get('fin.itc.blocked_account_codes') || parameterRegistry.define({ key: 'fin.itc.blocked_account_codes', dataType: 'string', default: 'NONE', scopes: ['system', 'company'], description: 'Part 23.08 FR-03: the expense accounts (codes, separated by commas; NONE for none) whose input tax is blocked under s.17(5) of the CGST Act — food and catering, club membership, motor vehicles not used for the business, works contract for own immovable property, personal use.' });
@@ -369,6 +371,11 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
 
   // ---- FR-05: TDS ----
   const maskPan = (p) => (p ? `${p.slice(0, 3)}•••••${p.slice(-2)}` : null);
+  /** D-736: the TCS collected on scrap sales in a quarter, in the shape of the TDS rows (rate × 10 000 of a per cent as there). */
+  function tcsRows(companyId, quarter) {
+    const { from, to } = quarterRange(quarter); if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tcs_collections'").get()) return [];
+    return db.prepare("SELECT t.id, i.doc_no, t.collected_on AS bill_date, p.legal_name AS payee_name, t.section AS tds_section, t.rate_bp * 100 AS tds_rate, t.base_paise AS tds_base_paise, t.tcs_paise AS tds_paise, t.partner_id, COALESCE(t.pan, p.pan) AS pan, p.legal_name, p.constitution FROM tcs_collections t JOIN ar_invoices i ON i.id = t.invoice_id LEFT JOIN mdm_partners p ON p.id = t.partner_id WHERE t.company_id = ? AND t.tcs_status = 'COLLECTED' AND t.collected_on BETWEEN ? AND ? AND t.deleted_at IS NULL ORDER BY t.collected_on, t.id").all(companyId, from, to);
+  }
   function tdsRows(companyId, quarter) {
     const { from, to } = quarterRange(quarter);
     return db.prepare("SELECT b.id, b.doc_no, b.bill_date, b.payee_name, b.tds_section, b.tds_rate, b.tds_base_paise, b.tds_paise, b.partner_id, p.pan, p.legal_name, p.constitution FROM ap_bills b LEFT JOIN mdm_partners p ON p.id = b.partner_id WHERE b.company_id = ? AND b.status = 'APPROVED' AND b.tds_paise > 0 AND b.bill_date BETWEEN ? AND ? AND b.deleted_at IS NULL ORDER BY b.bill_date, b.id").all(companyId, from, to);
@@ -376,19 +383,19 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
   const tdsView = (actor, r, rows) => { const full = may(actor, 'fin.tds_return.export'); const challans = json(r?.challans_json ?? '[]', []); const deducted = rows.reduce((a, x) => a + x.tds_paise, 0); const deposited = challans.reduce((a, x) => a + paise(x.amount), 0);
     const deductees = new Map(); for (const x of rows) { const k = x.partner_id ?? x.payee_name; const d = deductees.get(k) ?? { partnerId: x.partner_id, name: x.legal_name ?? x.payee_name, pan: full ? x.pan : maskPan(x.pan), sections: new Set(), paid: 0, tds: 0, entries: 0 }; d.sections.add(x.tds_section); d.paid += x.tds_base_paise; d.tds += x.tds_paise; d.entries += 1; deductees.set(k, d); }
     return { id: r?.id ?? null, docNo: r?.doc_no ?? null, status: r?.return_status ?? 'DRAFT', tokenNo: r?.token_no ?? null, filedOn: r?.filed_on ?? null, deducted: rs(deducted), deposited: rs(deposited), shortfall: rs(Math.max(0, deducted - deposited)), challans, rows: rows.map((x) => ({ billId: x.id, docNo: x.doc_no, date: x.bill_date, deductee: x.legal_name ?? x.payee_name, pan: full ? x.pan : maskPan(x.pan), noPan: !x.pan, section: x.tds_section, rate: x.tds_rate / 10000, paid: rs(x.tds_base_paise), tds: rs(x.tds_paise) })), deductees: [...deductees.values()].map((d) => ({ ...d, sections: [...d.sections].join(', '), paid: rs(d.paid), tds: rs(d.tds) })), version: r?.version ?? null }; };
+  function makeStatement(K) {
   const tds = {
     quarter(actor, { quarter }) {
-      need(actor, 'fin.tds_return.view', 'see TDS returns'); const c = actor.companyId; const { from, to } = quarterRange(quarter);
-      const form = statutory.resolve.form(c, { purpose: 'NON_SALARY_RETURN', date: to }); const cert = statutory.resolve.form(c, { purpose: 'NON_SALARY_CERT', date: to });
-      const r = db.prepare('SELECT * FROM tds_returns WHERE company_id = ? AND quarter = ? AND form = ? AND deleted_at IS NULL').get(c, quarter, form?.formCode ?? '26Q');
-      return { quarter, from, to, form: form?.formCode ?? null, formAct: form?.act ?? null, certificate: cert?.formCode ?? null, ...tdsView(actor, r, tdsRows(c, quarter)), tcs: { form: '27EQ', note: 'TCS is not collected by any module yet (D-736).' }, can: { prepare: may(actor, 'fin.tds_return.prepare'), file: may(actor, 'fin.tds_return.file'), certificate: may(actor, 'fin.tds_return.certificate') } };
+      need(actor, 'fin.tds_return.view', 'see TDS returns'); const c = actor.companyId; const { from, to } = quarterRange(quarter); const f = K.forms(c, to);
+      const r = db.prepare('SELECT * FROM tds_returns WHERE company_id = ? AND quarter = ? AND form = ? AND deleted_at IS NULL').get(c, quarter, f.form ?? K.defaultForm);
+      return { quarter, from, to, kind: K.kind, ...f, ...tdsView(actor, r, K.rows(c, quarter)), ...(K.kind === 'TDS' ? { tcs: K.tcsSummary(c, quarter) } : {}), can: { prepare: may(actor, 'fin.tds_return.prepare'), file: may(actor, 'fin.tds_return.file'), certificate: may(actor, 'fin.tds_return.certificate') } };
     },
     /** The statement of the quarter prepared (its data frozen) with the challans that paid it. */
     /** D-737: the TDS deposited in the books (journals debiting TDS payable 230004) from the quarter's start to its due date, and to which statement each challan is linked. */
     deposits(actor, { quarter }) {
-      need(actor, 'fin.tds_return.view', 'see TDS returns'); const c = actor.companyId; const { from } = quarterRange(quarter); const until = depositDue(quarter);
+      need(actor, 'fin.tds_return.view', 'see TDS returns'); const c = actor.companyId; const { from } = quarterRange(quarter); const until = K.due(quarter);
       const linked = new Map(); for (const r of db.prepare('SELECT quarter, form, challans_json FROM tds_returns WHERE company_id = ? AND deleted_at IS NULL').all(c)) for (const x of json(r.challans_json, [])) if (x.journalId) linked.set(Number(x.journalId), `${r.form} ${r.quarter}`);
-      return { quarter, from, to: until, rows: db.prepare("SELECT j.id, j.doc_no, j.voucher_no, j.voucher_date, j.narration, SUM(l.debit_paise) - SUM(l.credit_paise) AS amt FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = ? AND a.code = '230004' AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date BETWEEN ? AND ? GROUP BY j.id HAVING amt > 0 ORDER BY j.voucher_date, j.id").all(c, from, until).map((j) => ({ journalId: j.id, voucherNo: j.voucher_no ?? j.doc_no, date: j.voucher_date, narration: j.narration, amount: rs(j.amt), linkedTo: linked.get(j.id) ?? null })) };
+      return { quarter, from, to: until, rows: db.prepare("SELECT j.id, j.doc_no, j.voucher_no, j.voucher_date, j.narration, SUM(l.debit_paise) - SUM(l.credit_paise) AS amt FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = ? AND a.code = ? AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date BETWEEN ? AND ? GROUP BY j.id HAVING amt > 0 ORDER BY j.voucher_date, j.id").all(c, K.account, from, until).map((j) => ({ journalId: j.id, voucherNo: j.voucher_no ?? j.doc_no, date: j.voucher_date, narration: j.narration, amount: rs(j.amt), linkedTo: linked.get(j.id) ?? null })) };
     },
     prepareStatement(actor, { quarter, challans, tan }) {
       need(actor, 'fin.tds_return.prepare', 'prepare TDS returns'); const c = actor.companyId; const v = tds.quarter(actor, { quarter }); if (!v.form) throw unprocessable('No TDS form is in force for this quarter (forms master, 166.8).');
@@ -400,7 +407,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       if (new Set(ch.filter((x) => x.journalId).map((x) => Number(x.journalId))).size !== ch.filter((x) => x.journalId).length) problems.push({ field: 'challans', message: 'A deposit is linked to one challan only' });
       if (problems.length) throw badRequest('Correct the highlighted fields', problems);
       const tanNo = tan ?? json(old?.data_json ?? '{}', {}).tan ?? null;
-      const rows = tdsRows(c, quarter); const data = JSON.stringify({ form: v.form, quarter, tan: tanNo, deductees: rows.map((x) => ({ pan: x.pan, name: x.legal_name ?? x.payee_name, section: x.tds_section, date: x.bill_date, paid: rs(x.tds_base_paise), tds: rs(x.tds_paise), rate: x.tds_rate / 10000 })) });
+      const rows = K.rows(c, quarter); const data = JSON.stringify({ form: v.form, quarter, tan: tanNo, deductees: rows.map((x) => ({ pan: x.pan, name: x.legal_name ?? x.payee_name, section: x.tds_section, date: x.bill_date, paid: rs(x.tds_base_paise), tds: rs(x.tds_paise), rate: x.tds_rate / 10000 })) });
       const status = dep >= ded && ded > 0 ? 'PREPARED' : 'DRAFT';
       if (old) db.prepare('UPDATE tds_returns SET data_json = ?, challans_json = ?, deducted_paise = ?, deposited_paise = ?, return_status = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(data, JSON.stringify(ch), ded, dep, status, actor.user, nowIso(), old.id);
       else db.prepare('INSERT INTO tds_returns (company_id, doc_no, quarter, form, data_json, challans_json, deducted_paise, deposited_paise, return_status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(c, docNo(c, 'tds_returns', 'TDSR'), quarter, v.form, data, JSON.stringify(ch), ded, dep, status, actor.user);
@@ -413,7 +420,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       if (!r || r.return_status === 'DRAFT') throw unprocessable('Prepare the statement with challans covering the tax deducted first.'); const data = json(r.data_json, {}); if (!data.tan) throw unprocessable('Give the TAN of the deductor when preparing the statement.');
       const comp = db.prepare('SELECT legal_name, pan, address_json FROM core_company_settings WHERE company_id = ?').get(c) ?? {}; const addr = json(comp.address_json ?? '{}', {}); const dmy = (d) => (d ? `${d.slice(8, 10)}${d.slice(5, 7)}${d.slice(0, 4)}` : ''); const amt = (p2) => (p2 / 100).toFixed(2); const clean = (x) => String(x ?? '').replace(/[\^\r\n]/g, ' ').trim();
       const fy = Number(quarter.slice(0, 4)); const fyS = `${fy}${String((fy + 1) % 100).padStart(2, '0')}`; const ay = `${fy + 1}${String((fy + 2) % 100).padStart(2, '0')}`; const challans = json(r.challans_json, []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
-      const rows = tdsRows(c, quarter); const lines = []; let n = 0; const rec = (...f) => { n += 1; lines.push([n, ...f].map(clean).join('^')); };
+      const rows = K.rows(c, quarter); const lines = []; let n = 0; const rec = (...f) => { n += 1; lines.push([n, ...f].map(clean).join('^')); };
       rec('FH', 'NS1', 'R', dmy(todayIST()), 1, 'D', data.tan, 1, 'ERP', '', '', '', '', '', '', '', '', '');
       rec('BH', 1, challans.length, v.form, '', '', '', '', '', '', '', data.tan, '', comp.pan ?? '', ay, fyS, `Q${quarter.slice(-1)}`, comp.legal_name ?? '', '', addr.line1 ?? '', addr.line2 ?? '', '', '', '', addr.city ?? '', addr.stateCode ?? '', addr.pin ?? '', '', '', '', 'N', '', 'D', '', '', '', amt(rows.reduce((a, x) => a + x.tds_paise, 0)));
       let i = 0; let left = rows.map((x) => ({ ...x })); for (const ch of challans) {
@@ -432,7 +439,7 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     /** The certificate (Form 16A before April 2026, Form 131 after) of one deductee for a quarter, from the return filed. */
     certificate(actor, { quarter, partnerId }) {
       need(actor, 'fin.tds_return.certificate', 'issue TDS certificates'); const c = actor.companyId; const v = tds.quarter(actor, { quarter }); if (v.status !== 'FILED') throw unprocessable('A certificate is issued from a filed statement.');
-      const rows = tdsRows(c, quarter).filter((x) => x.partner_id === partnerId); if (!rows.length) throw notFound('That deductee has no TDS in the quarter.'); const comp = db.prepare('SELECT legal_name, pan FROM core_company_settings WHERE company_id = ?').get(c);
+      const rows = K.rows(c, quarter).filter((x) => x.partner_id === partnerId); if (!rows.length) throw notFound('That deductee has no TDS in the quarter.'); const comp = db.prepare('SELECT legal_name, pan FROM core_company_settings WHERE company_id = ?').get(c);
       audit(actor, 'tds_returns', v.id, 'certificate', c, { reason: `${v.certificate} ${quarter} partner ${partnerId}` });
       return { contentType: 'application/pdf', fileName: `form-${v.certificate}-${quarter}-${partnerId}.pdf`, buffer: toPdf({ title: `Form ${v.certificate}: TDS certificate`, columns: [{ key: 'd', label: 'Date of credit' }, { key: 'b', label: 'Bill' }, { key: 's', label: 'Section' }, { key: 'p', label: 'Amount paid/credited' }, { key: 't', label: 'Tax deducted' }], rows: rows.map((x) => ({ d: x.bill_date, b: x.doc_no, s: x.tds_section, p: rs(x.tds_base_paise), t: rs(x.tds_paise) })), footer: [`Deductor: ${comp?.legal_name ?? ''} (PAN ${comp?.pan ?? ''}). Deductee: ${rows[0].legal_name} (PAN ${rows[0].pan ?? 'not given'}). Quarter ${quarter}, statement ${v.form} token ${v.tokenNo}. Total deducted Rs ${rs(rows.reduce((a, x) => a + x.tds_paise, 0))}.`] }) };
     },
@@ -459,6 +466,12 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       return { fy, in26as: rs(lines.reduce((a, l) => a + l.tds_paise, 0)), inBooks: rs(books0.reduce((a, r) => a + r.tds_paise, 0)), lines: lines.map((l) => ({ id: l.id, tan: l.deductor_tan, deductor: l.deductor_name, section: l.section, date: l.txn_date, amount: rs(l.amount_paise), tds: rs(l.tds_paise), status: l.match_status, receiptId: l.matched_receipt_id, diff: rs(l.diff_paise) })), notIn26as: books0.filter((r) => !matchedIds.has(r.id)).map((r) => ({ receiptId: r.id, docNo: r.doc_no, date: r.receipt_date, client: r.legal_name, tds: rs(r.tds_paise) })) };
     },
   };
+  return tds;
+  }
+  // D-736: the TDS statement (26Q / Form 140) of the AP bills and the TCS statement (27EQ) of the scrap sales, the same way
+  const tds = makeStatement({ kind: 'TDS', defaultForm: '26Q', account: '230004', due: depositDue, rows: tdsRows, forms: (c, to) => { const form = statutory.resolve.form(c, { purpose: 'NON_SALARY_RETURN', date: to }); const cert = statutory.resolve.form(c, { purpose: 'NON_SALARY_CERT', date: to }); return { form: form?.formCode ?? null, formAct: form?.act ?? null, certificate: cert?.formCode ?? null }; },
+    tcsSummary: (c, quarter) => { const rows = tcsRows(c, quarter); return { form: '27EQ', collections: rows.length, collected: rs(rows.reduce((a, x) => a + x.tds_paise, 0)) }; } });
+  const tcs = makeStatement({ kind: 'TCS', defaultForm: '27EQ', account: '230007', due: tcsDue, rows: tcsRows, forms: () => ({ form: '27EQ', formAct: null, certificate: '27D' }) });
 
   // ---- FR-06: the compliance calendar ----
   function calendar(actor, { from, to }) {
@@ -479,5 +492,5 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
     /** Every morning: follow-ups due today and obligations within their alert days are told to the accounts manager. */
     daily() { let n = 0; for (const co of db.prepare('SELECT id FROM org_companies').all()) { if (!flags.isOn({ companyId: co.id, user: 'system', roles: [] }, 'ff.fin.p2308')) continue; const due = db.prepare("SELECT id, invoice_no, supplier_gstin, owner FROM gst_2b_lines WHERE company_id = ? AND resolution_status = 'FOLLOW_UP' AND next_followup <= ? AND deleted_at IS NULL").all(co.id, todayIST()); for (const l of due) { n += 1; notify(co.id, 'fin.gst_recon.alert', l.owner ? [`user:${l.owner}`] : ['permission:fin.gst_recon.manage'], l.invoice_no, 'follow-up due', `The follow-up of ${l.invoice_no} (${l.supplier_gstin}) is due today.`, `/finance/gst-reconciliation?line=${l.id}`, l.id); } } return { followups: n }; },
   };
-  return { recon, reviews, returns, tds, calendar, jobs, parse2b, match };
+  return { recon, reviews, returns, tds, tcs, calendar, jobs, parse2b, match };
 }

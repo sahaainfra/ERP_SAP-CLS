@@ -9859,6 +9859,30 @@ paths:
     get:
       summary: "the TDS statement as the '^'-separated text file for the FVU: FH, BH, CD and DD records (D-737; fin.tds_return.export)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns:
+    get:
+      summary: "the TCS statement 27EQ of a quarter: the collections on scrap sales, the challans, the status (D-736; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/prepare:
+    post:
+      summary: "prepare the 27EQ statement { quarter, challans, tan } (D-736; fin.tds_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/file:
+    post:
+      summary: "mark the 27EQ statement filed { quarter, tokenNo, filedOn } (D-736; fin.tds_return.file)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/deposits:
+    get:
+      summary: "TCS paid in the books (journals debiting TCS payable 230007) up to the due date of the quarter (D-736; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/text:
+    get:
+      summary: "the 27EQ statement as the FVU text file (D-736; fin.tds_return.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/certificate:
+    get:
+      summary: "the TCS certificate (Form 27D) of a collectee (D-736; fin.tds_return.certificate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
   /api/v1/fin/tds-returns/certificate:
     get:
       summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/certificate (part 23.08; fin.tds_return.certificate)"

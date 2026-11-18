@@ -8,7 +8,7 @@ export function gstReconRoutes(gr, { idempotent, idempotentRequired, flags }) {
   const ok = (res, data, status = 200) => res.status(status).json({ data });
   const file = (res, f) => res.status(200).set({ 'content-type': f.contentType, 'content-disposition': `attachment; filename="${f.fileName}"`, 'cache-control': 'no-store' }).send(f.buffer);
   const pid = (req) => parseId(req.params.id);
-  r.use(['/gst-recon', '/itc-reviews', '/gst-returns', '/tds-returns', '/compliance-calendar'], (req, _res, next) => (flags.isOn(req.actor, 'ff.fin.p2308') ? next() : next(notFound('GST reconciliation and TDS compliance are not enabled for your company yet (feature flag ff.fin.p2308 is OFF).'))));
+  r.use(['/gst-recon', '/itc-reviews', '/gst-returns', '/tds-returns', '/tcs-returns', '/compliance-calendar'], (req, _res, next) => (flags.isOn(req.actor, 'ff.fin.p2308') ? next() : next(notFound('GST reconciliation and TDS compliance are not enabled for your company yet (feature flag ff.fin.p2308 is OFF).'))));
   const { recon: x, reviews: v, returns: g, tds: t } = gr;
   r.post('/gst-recon/import', idempotentRequired, (req, res) => ok(res, x.import(req.actor, parse2bImport(req.body)), 201));
   r.post('/gst-recon/rematch', idempotentRequired, (req, res) => ok(res, x.rematch(req.actor, parsePeriod(req.body))));
@@ -36,6 +36,14 @@ export function gstReconRoutes(gr, { idempotent, idempotentRequired, flags }) {
   r.get('/tds-returns', (req, res) => ok(res, t.quarter(req.actor, parseQuarter(req.query))));
   r.post('/tds-returns/prepare', idempotentRequired, (req, res) => ok(res, t.prepareStatement(req.actor, parseTdsPrepare(req.body))));
   r.post('/tds-returns/file', idempotentRequired, (req, res) => ok(res, t.file(req.actor, parseTdsFile(req.body))));
+  // D-736: the TCS statement 27EQ, the same way as the TDS statement
+  const k = gr.tcs;
+  r.get('/tcs-returns', (req, res) => ok(res, k.quarter(req.actor, parseQuarter(req.query))));
+  r.post('/tcs-returns/prepare', idempotentRequired, (req, res) => ok(res, k.prepareStatement(req.actor, parseTdsPrepare(req.body))));
+  r.post('/tcs-returns/file', idempotentRequired, (req, res) => ok(res, k.file(req.actor, parseTdsFile(req.body))));
+  r.get('/tcs-returns/deposits', (req, res) => ok(res, k.deposits(req.actor, parseQuarter(req.query))));
+  r.get('/tcs-returns/text', (req, res) => file(res, k.textFile(req.actor, parseQuarter(req.query))));
+  r.get('/tcs-returns/certificate', (req, res) => file(res, k.certificate(req.actor, parseTdsCert(req.query))));
   r.get('/tds-returns/deposits', (req, res) => ok(res, t.deposits(req.actor, parseQuarter(req.query))));
   r.get('/tds-returns/text', (req, res) => file(res, t.textFile(req.actor, parseQuarter(req.query))));
   r.get('/tds-returns/certificate', (req, res) => file(res, t.certificate(req.actor, parseTdsCert(req.query))));

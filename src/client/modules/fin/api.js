@@ -225,10 +225,11 @@ export const gr = {
   returns: (f) => glget(`/gst-returns?${q(f)}`),
   prepareReturn: async (b) => (await api.post('/fin/gst-returns/prepare', b, idem())).data,
   fileReturn: async (b) => (await api.post('/fin/gst-returns/file', b, idem())).data,
-  tds: (f) => glget(`/tds-returns?${q(f)}`),
-  prepareTds: async (b) => (await api.post('/fin/tds-returns/prepare', b, idem())).data,
-  tdsDeposits: (f) => glget(`/tds-returns/deposits?${q(f)}`),
-  fileTds: async (b) => (await api.post('/fin/tds-returns/file', b, idem())).data,
+  // D-736: the TCS statement 27EQ has the same calls under /tcs-returns (kind 'tcs')
+  tds: (f, kind = 'tds') => glget(`/${kind}-returns?${q(f)}`),
+  prepareTds: async (b, kind = 'tds') => (await api.post(`/fin/${kind}-returns/prepare`, b, idem())).data,
+  tdsDeposits: (f, kind = 'tds') => glget(`/${kind}-returns/deposits?${q(f)}`),
+  fileTds: async (b, kind = 'tds') => (await api.post(`/fin/${kind}-returns/file`, b, idem())).data,
   calendar: (f) => glget(`/compliance-calendar?${q(f)}`),
 };
 // part 23.09: fixed assets
