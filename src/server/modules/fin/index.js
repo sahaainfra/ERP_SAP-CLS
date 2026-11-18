@@ -18,6 +18,8 @@ import { createPaymentService } from './payments.js';
 import { paymentRoutes } from './paymentroutes.js';
 import { createArService } from './ar.js';
 import { arRoutes } from './arroutes.js';
+import { createCashService } from './cash.js';
+import { cashRoutes } from './cashroutes.js';
 import { finRoutes } from './routes.js';
 import { accountPostings, bindFin, createFinService } from './service.js';
 
@@ -34,23 +36,26 @@ export const paymentsOf = (db) => paymentServices.get(db) ?? null;
 const arServices = new WeakMap();
 /** Accounts receivable of a database (part 23.05). */
 export const arOf = (db) => arServices.get(db) ?? null;
+const cashServices = new WeakMap();
+/** Cash and bank of a database (part 23.06). */
+export const cashOf = (db) => cashServices.get(db) ?? null;
 /** The general ledger of a database (part 23.01), for the posting engine (23.02) and the sub-ledgers. */
 export const glOf = (db) => glServices.get(db) ?? null;
 
-const TABLES = ['fin_account_groups', 'fin_accounts', 'fin_cost_heads', 'fin_cost_codes', 'fin_dimension_rules', 'fin_category_mappings', 'fin_master_changes', 'fin_journals', 'fin_journal_lines', 'fin_balances', 'fin_recurring_journals', 'fin_posting_rules', 'fin_posting_log', 'fin_replay_runs', 'ap_bills', 'ap_debit_notes', 'ap_bill_adjustments', 'fin_bank_accounts', 'pmt_proposals', 'pmt_proposal_lines', 'pmt_payments', 'ar_invoices', 'ar_receipts', 'ar_allocations', 'ar_credit_notes', 'ar_writeoffs', 'ar_followups'];
+const TABLES = ['fin_account_groups', 'fin_accounts', 'fin_cost_heads', 'fin_cost_codes', 'fin_dimension_rules', 'fin_category_mappings', 'fin_master_changes', 'fin_journals', 'fin_journal_lines', 'fin_balances', 'fin_recurring_journals', 'fin_posting_rules', 'fin_posting_log', 'fin_replay_runs', 'ap_bills', 'ap_debit_notes', 'ap_bill_adjustments', 'fin_bank_accounts', 'pmt_proposals', 'pmt_proposal_lines', 'pmt_payments', 'ar_invoices', 'ar_receipts', 'ar_allocations', 'ar_credit_notes', 'ar_writeoffs', 'ar_followups', 'fin_bank_account_profiles', 'fin_bank_statement_imports', 'fin_bank_statements', 'fin_bank_recons', 'fin_imprests', 'fin_imprest_vouchers', 'fin_imprest_replenishments', 'fin_cash_counts', 'fin_contras'];
 const TEMPLATE = ['fin_account_groups', 'fin_accounts', 'fin_cost_heads', 'fin_cost_codes', 'fin_dimension_rules', 'fin_posting_rules'];
 // the integrity checks (01.02): a row without a company is the template every company copies (the seed of migration 105)
-integrityRegistry.register({ allowNegative: [], companyOptional: TEMPLATE, statuses: { fin_journals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_recurring_journals: ['ACTIVE', 'PAUSED', 'ENDED'], fin_posting_rules: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_replay_runs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_bills: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_debit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), pmt_proposals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_invoices: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_receipts: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_credit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_writeoffs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED') }, uniqueKeys: [{ table: 'fin_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_recurring_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_replay_runs', columns: ['company_id', 'doc_no'] }, { table: 'fin_posting_log', columns: ['company_id', 'event_id'] }, { table: 'ap_bills', columns: ['company_id', 'doc_no'] }, { table: 'ap_debit_notes', columns: ['company_id', 'doc_no'] }] });
+integrityRegistry.register({ allowNegative: [], companyOptional: TEMPLATE, statuses: { fin_journals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_recurring_journals: ['ACTIVE', 'PAUSED', 'ENDED'], fin_posting_rules: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_replay_runs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_bills: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_debit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), pmt_proposals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_invoices: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_receipts: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_credit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_writeoffs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_imprest_vouchers: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_imprest_replenishments: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_contras: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED') }, uniqueKeys: [{ table: 'fin_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_recurring_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_replay_runs', columns: ['company_id', 'doc_no'] }, { table: 'fin_posting_log', columns: ['company_id', 'event_id'] }, { table: 'ap_bills', columns: ['company_id', 'doc_no'] }, { table: 'ap_debit_notes', columns: ['company_id', 'doc_no'] }] });
 /** Module "fin": the finance masters (part 06.05): chart of accounts, cost heads and cost codes, financial dimensions and the item category mapping. The tables are `fin_*`. */
 export const fin = {
   code: 'fin',
   name: 'Finance masters',
   routePrefix: '/api/v1/fin',
-  ownerPart: '23.05',
+  ownerPart: '23.06',
   status: 'Chart of accounts with Schedule III mapping and control accounts, cost heads and cost codes, dimension rules and the posting check, item category mapping, import from Tally; every change approved by the CFO (06.05). The general ledger: journals of every voucher type with dimensions, approval by band, posting by period, reversal, accruals and recurring journals, the account ledger, the trial balance and the carry-forward of a year (23.01)',
   tables: TABLES,
   companyOptional: TEMPLATE,
-  resources: ['accounts', 'account-groups', 'cost-heads', 'cost-codes', 'dimension-rules', 'category-mappings', 'schedule-iii', 'postings', 'changes', 'import', 'lookups', 'journals', 'recurring-journals', 'ledger', 'trial-balance', 'gl', 'posting-rules', 'postings', 'replays', 'reconciliation', 'bills', 'debit-notes', 'payables', 'bank-accounts', 'proposals', 'payments', 'invoices', 'receipts', 'credit-notes', 'write-offs', 'receivables'],
+  resources: ['accounts', 'account-groups', 'cost-heads', 'cost-codes', 'dimension-rules', 'category-mappings', 'schedule-iii', 'postings', 'changes', 'import', 'lookups', 'journals', 'recurring-journals', 'ledger', 'trial-balance', 'gl', 'posting-rules', 'postings', 'replays', 'reconciliation', 'bills', 'debit-notes', 'payables', 'bank-accounts', 'proposals', 'payments', 'invoices', 'receipts', 'credit-notes', 'write-offs', 'receivables', 'bank-profiles', 'bank-statements', 'brs', 'imprests', 'imprest-vouchers', 'imprest-replenishments', 'contras', 'cash-position'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fin_accounts'").get()) return;
@@ -103,6 +108,10 @@ export const fin = {
           listExports.register('fin.ar_invoices', { source: (actor, req) => { base.need(actor, 'fin.invoice.export', 'export receivables'); return ar.invoices.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
           listExports.register('fin.ar_receipts', { source: (actor, req) => { base.need(actor, 'fin.receipt.export', 'export receipts'); return ar.receipts.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
           router.use(arRoutes(ar, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fin_imprests'").get()) {
+          const cs = createCashService({ db, base, gl, payments: () => paymentServices.get(db) ?? null }); cashServices.set(db, cs);
+          router.use(cashRoutes(cs, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
         }
       }
     }

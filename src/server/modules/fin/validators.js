@@ -128,3 +128,20 @@ export const parseFollowup = (b) => parse(z.object({ date, action: z.enum(['CALL
 export const parseWorklist = (q) => parse(z.object({ partnerId: id.optional(), projectId: id.optional(), bucket: z.enum(['0', '30', '60', '90']).optional() }).strict(), q);
 export const parseArAgeing = (q) => parse(z.object({ asOf: date.optional(), projectId: id.optional() }).strict(), q);
 export const parseClientStatement = (q) => parse(z.object({ partnerId: id, from: date.optional(), to: date.optional() }).strict(), q);
+
+// ---- part 23.06: cash and bank ----
+export const parseBankProfile = (b) => parse(z.object({ kind: z.enum(['CURRENT', 'CASH_CREDIT', 'OVERDRAFT', 'ESCROW', 'DEPOSIT']), scope: z.enum(['COMPANY', 'BRANCH', 'PROJECT']), branchId: id.optional().nullable(), projectId: id.optional().nullable(), escrowPurpose: z.string().trim().max(200).optional().nullable(), odLimit: money.optional(), openingDate: date.optional().nullable(), opening: z.union([z.number(), z.string().trim().regex(/^-?\d+(\.\d{1,2})?$/)]).optional() }).strict(), b);
+export const parseStatementImport = (b) => parse(z.object({ bankAccountId: id, fileName: z.string().trim().min(1).max(200), format: z.enum(['CSV', 'MT940']).optional(), content: z.string().min(10).max(5_000_000) }).strict(), b);
+export const parseStatementLines = (q) => parse(z.object({ bankAccountId: id, status: z.enum(['UNMATCHED', 'AUTO', 'MANUAL', 'POSTED', 'IGNORED']).optional(), from: date.optional(), to: date.optional() }).strict(), q);
+export const parseLineMatch = (b) => parse(z.object({ entity: z.enum(['pmt_payments', 'ar_receipts', 'fin_contras', 'fin_imprest_replenishments']), id }).strict(), b);
+export const parseLinePost = (b) => parse(z.object({ accountId: id, narration: z.string().trim().min(3).max(200), projectId: id.optional().nullable(), costCentreId: id.optional().nullable() }).strict(), b);
+export const parseBankOnly = (b) => parse(z.object({ bankAccountId: id }).strict(), b);
+export const parseBrs = (q) => parse(z.object({ bankAccountId: id, asOf: date.optional() }).strict(), q);
+export const parseImprest = (b) => parse(z.object({ name: z.string().trim().min(3).max(100), kind: z.enum(['SITE', 'OFFICE']).optional(), projectId: id.optional().nullable(), siteId: id.optional().nullable(), custodian: z.string().trim().min(1).max(100), limit: money }).strict(), b);
+export const parseCashCount = (b) => parse(z.object({ denominations: z.record(z.string().regex(/^\d+(\.\d{1,2})?$/), z.number().int().min(0).max(100000)), witness: z.string().trim().max(100).optional().nullable(), note: z.string().trim().max(300).optional().nullable() }).strict(), b);
+const voucherBody = { imprestId: id, date, payee: z.string().trim().min(2).max(100), category: z.enum(['MATERIAL', 'TRANSPORT', 'FOOD', 'REPAIRS', 'SITE_EXPENSE', 'TRAVEL', 'POSTAGE', 'OTHER']), description: z.string().trim().min(3).max(300), amount: money, gst: money.optional(), expenseAccountId: id, costCodeId: id.optional().nullable(), projectId: id.optional().nullable(), siteId: id.optional().nullable(), clientRef: z.string().trim().max(80).optional(), lat: z.number().min(-90).max(90).optional(), lng: z.number().min(-180).max(180).optional() };
+export const parseVoucherCreate = (b) => parse(z.object(voucherBody).strict(), b);
+export const parseVoucherUpdate = (b) => parse(z.object({ ...voucherBody, imprestId: id.optional(), version: z.number().int().min(1) }).strict(), b);
+export const parseReplenish = (b) => parse(z.object({ imprestId: id, bankAccountId: id }).strict(), b);
+export const parseContra = (b) => parse(z.object({ kind: z.enum(['DEPOSIT', 'WITHDRAWAL', 'TRANSFER']), date, fromBankId: id.optional().nullable(), fromImprestId: id.optional().nullable(), toBankId: id.optional().nullable(), toImprestId: id.optional().nullable(), amount: money, reference: z.string().trim().max(60).optional().nullable(), purpose: z.string().trim().min(3).max(200) }).strict(), b);
+export const parsePosition = (q) => parse(z.object({ date: date.optional() }).strict(), q);

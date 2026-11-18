@@ -1,0 +1,52 @@
+import { Router } from 'express';
+import { notFound } from '../../platform/http/errors.js';
+import { parseBankOnly, parseBankProfile, parseBrs, parseCashCount, parseContra, parseDropLine, parseId, parseImprest, parseJournalReason, parseLineMatch, parseLinePost, parsePosition, parseReplenish, parseStatementImport, parseStatementLines, parseVoucherCreate, parseVoucherUpdate } from './validators.js';
+
+/** Part 23.06: the cash and bank API under /api/v1/fin (bank profiles, statements, reconciliation, imprests, vouchers, replenishments, contras, the position), behind ff.fin.p2306. */
+export function cashRoutes(cs, { idempotent, idempotentRequired, flags }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const pid = (req) => parseId(req.params.id);
+  r.use(['/bank-statements', '/brs', '/imprests', '/imprest-vouchers', '/imprest-replenishments', '/contras', '/cash-position', '/bank-profiles'], (req, _res, next) => (flags.isOn(req.actor, 'ff.fin.p2306') ? next() : next(notFound('Cash and bank are not enabled for your company yet (feature flag ff.fin.p2306 is OFF).'))));
+  const { statements: s, imprests: m, vouchers: v, replenishments: p, contras: k } = cs;
+  r.get('/bank-profiles/:id', (req, res) => ok(res, cs.profiles.get(req.actor, pid(req))));
+  r.put('/bank-profiles/:id', idempotent, (req, res) => ok(res, cs.profiles.save(req.actor, pid(req), parseBankProfile(req.body))));
+  r.post('/bank-statements/import', idempotentRequired, (req, res) => ok(res, s.import(req.actor, parseStatementImport(req.body)), 201));
+  r.post('/bank-statements/rematch', idempotentRequired, (req, res) => ok(res, s.rematch(req.actor, parseBankOnly(req.body))));
+  r.get('/bank-statements', (req, res) => ok(res, s.lines(req.actor, parseStatementLines(req.query))));
+  r.get('/bank-statements/:id/candidates', (req, res) => ok(res, s.candidates(req.actor, pid(req))));
+  r.post('/bank-statements/:id/match', idempotentRequired, (req, res) => ok(res, s.match(req.actor, pid(req), parseLineMatch(req.body))));
+  r.post('/bank-statements/:id/unmatch', idempotentRequired, (req, res) => ok(res, s.unmatch(req.actor, pid(req), parseDropLine(req.body))));
+  r.post('/bank-statements/:id/post', idempotentRequired, (req, res) => ok(res, s.post(req.actor, pid(req), parseLinePost(req.body))));
+  r.post('/bank-statements/:id/ignore', idempotentRequired, (req, res) => ok(res, s.ignore(req.actor, pid(req), parseDropLine(req.body))));
+  r.get('/brs', (req, res) => ok(res, cs.brs(req.actor, parseBrs(req.query))));
+  r.post('/brs/sign', idempotentRequired, (req, res) => ok(res, cs.signBrs(req.actor, parseBrs(req.body))));
+  r.get('/imprests', (req, res) => ok(res, m.list(req.actor)));
+  r.post('/imprests', idempotentRequired, (req, res) => ok(res, m.create(req.actor, parseImprest(req.body)), 201));
+  r.get('/imprests/:id', (req, res) => ok(res, m.get(req.actor, pid(req))));
+  r.post('/imprests/:id/count', idempotentRequired, (req, res) => ok(res, m.count(req.actor, pid(req), parseCashCount(req.body))));
+  r.post('/imprest-vouchers', idempotentRequired, (req, res) => ok(res, v.create(req.actor, parseVoucherCreate(req.body)), 201));
+  r.get('/imprest-vouchers/:id', (req, res) => ok(res, v.get(req.actor, pid(req))));
+  r.patch('/imprest-vouchers/:id', idempotent, (req, res) => ok(res, v.update(req.actor, pid(req), parseVoucherUpdate(req.body))));
+  r.delete('/imprest-vouchers/:id', (req, res) => ok(res, v.remove(req.actor, pid(req))));
+  r.post('/imprest-vouchers/:id/submit', idempotentRequired, (req, res) => ok(res, v.submit(req.actor, pid(req)), 202));
+  r.post('/imprest-vouchers/:id/withdraw', idempotent, (req, res) => ok(res, v.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/imprest-vouchers/:id/cancel', idempotent, (req, res) => ok(res, v.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.get('/imprest-vouchers/:id/history', (req, res) => ok(res, v.history(req.actor, pid(req))));
+  r.get('/imprest-replenishments', (req, res) => ok(res, p.list(req.actor, { status: req.query.status ? String(req.query.status) : undefined })));
+  r.post('/imprest-replenishments', idempotentRequired, (req, res) => ok(res, p.create(req.actor, parseReplenish(req.body)), 201));
+  r.get('/imprest-replenishments/:id', (req, res) => ok(res, p.get(req.actor, pid(req))));
+  r.post('/imprest-replenishments/:id/withdraw', idempotent, (req, res) => ok(res, p.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/imprest-replenishments/:id/cancel', idempotent, (req, res) => ok(res, p.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.get('/imprest-replenishments/:id/history', (req, res) => ok(res, p.history(req.actor, pid(req))));
+  r.get('/contras', (req, res) => ok(res, k.list(req.actor)));
+  r.post('/contras', idempotentRequired, (req, res) => ok(res, k.create(req.actor, parseContra(req.body)), 201));
+  r.get('/contras/:id', (req, res) => ok(res, k.get(req.actor, pid(req))));
+  r.delete('/contras/:id', (req, res) => ok(res, k.remove(req.actor, pid(req))));
+  r.post('/contras/:id/submit', idempotentRequired, (req, res) => ok(res, k.submit(req.actor, pid(req)), 202));
+  r.post('/contras/:id/withdraw', idempotent, (req, res) => ok(res, k.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/contras/:id/cancel', idempotent, (req, res) => ok(res, k.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.get('/contras/:id/history', (req, res) => ok(res, k.history(req.actor, pid(req))));
+  r.get('/cash-position', (req, res) => ok(res, cs.position(req.actor, parsePosition(req.query))));
+  return r;
+}
