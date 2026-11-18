@@ -36,6 +36,8 @@ export function gstReconRoutes(gr, { idempotent, idempotentRequired, flags }) {
   r.get('/tds-returns', (req, res) => ok(res, t.quarter(req.actor, parseQuarter(req.query))));
   r.post('/tds-returns/prepare', idempotentRequired, (req, res) => ok(res, t.prepareStatement(req.actor, parseTdsPrepare(req.body))));
   r.post('/tds-returns/file', idempotentRequired, (req, res) => ok(res, t.file(req.actor, parseTdsFile(req.body))));
+  r.get('/tds-returns/deposits', (req, res) => ok(res, t.deposits(req.actor, parseQuarter(req.query))));
+  r.get('/tds-returns/text', (req, res) => file(res, t.textFile(req.actor, parseQuarter(req.query))));
   r.get('/tds-returns/certificate', (req, res) => file(res, t.certificate(req.actor, parseTdsCert(req.query))));
   r.post('/tds-returns/26as', idempotentRequired, (req, res) => ok(res, t.import26as(req.actor, parse26as(req.body)), 201));
   r.get('/tds-returns/26as', (req, res) => ok(res, t.recon26as(req.actor, parseFy(req.query))));

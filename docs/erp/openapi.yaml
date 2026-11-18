@@ -9851,6 +9851,14 @@ paths:
     post:
       summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/file (part 23.08; fin.tds_return.file)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/deposits:
+    get:
+      summary: "TDS deposits in the books (journals debiting TDS payable) from the quarter's start to its due date, with the statement each is linked to (D-737; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/text:
+    get:
+      summary: "the TDS statement as the '^'-separated text file for the FVU: FH, BH, CD and DD records (D-737; fin.tds_return.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '422': { description: a business rule refused it } }
   /api/v1/fin/tds-returns/certificate:
     get:
       summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/certificate (part 23.08; fin.tds_return.certificate)"

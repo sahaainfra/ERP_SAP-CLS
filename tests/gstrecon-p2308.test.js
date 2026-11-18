@@ -111,7 +111,17 @@ test('ITC review: eligible, held, blocked, override with a reason, reversal beyo
   assert.equal((await w.call(U.acc, 'GET', '/tds-returns?quarter=2025-26-Q4')).json.data.form, '26Q');
   q = (await w.call(U.acc, 'POST', '/tds-returns/prepare', { quarter: '2026-27-Q3', challans: [{ bsr: '0510308', date: '2026-12-05', serial: '12345', amount: '3000', forMonth: '2026-11' }] })).json.data; assert.equal(q.status, 'DRAFT'); assert.equal(q.shortfall, 1000);
   assert.equal((await w.call(U.acc, 'POST', '/tds-returns/file', { quarter: '2026-27-Q3', tokenNo: '123456789012345', filedOn: '2027-01-20' })).status, 422, 'not filed with a shortfall');
-  q = (await w.call(U.acc, 'POST', '/tds-returns/prepare', { quarter: '2026-27-Q3', challans: [{ bsr: '0510308', date: '2026-12-05', serial: '12345', amount: '4000', forMonth: '2026-11' }] })).json.data; assert.equal(q.status, 'PREPARED');
+  // D-737: the deposit of November's TDS in the books (TDS payable debited) is linked to the challan; its amount must agree; the TAN goes on the statement
+  const jv = fill(d, 'fin_journals', { company_id: 1, doc_no: 'JV/TDS/1', voucher_no: 'BP/0001', voucher_date: '2026-12-05', narration: 'TDS of November deposited', status: 'APPROVED' });
+  fill(d, 'fin_journal_lines', { company_id: 1, journal_id: jv, line_no: 1, account_id: w.acct('230004'), debit_paise: 400000, credit_paise: 0 }); fill(d, 'fin_journal_lines', { company_id: 1, journal_id: jv, line_no: 2, account_id: w.acct('510001'), debit_paise: 0, credit_paise: 400000 });
+  const dep = (await w.call(U.acc, 'GET', '/tds-returns/deposits?quarter=2026-27-Q3')).json.data; assert.equal(dep.to, '2027-01-07'); assert.deepEqual(dep.rows.map((x) => [x.journalId, x.amount, x.linkedTo]), [[jv, 4000, null]]);
+  const wrong = await w.call(U.acc, 'POST', '/tds-returns/prepare', { quarter: '2026-27-Q3', tan: 'HYDM12345A', challans: [{ bsr: '0510308', date: '2026-12-05', serial: '12345', amount: '3500', journalId: jv }] }); assert.equal(wrong.status, 400); assert.match(JSON.stringify(wrong.json), /deposit in the books is ₹4000/);
+  assert.equal((await w.call(U.acc, 'POST', '/tds-returns/prepare', { quarter: '2026-27-Q3', tan: 'BAD', challans: [] })).status, 400, 'a TAN has its shape');
+  assert.equal((await w.call(U.acc, 'GET', '/tds-returns/text?quarter=2026-27-Q3')).status, 422, 'not before the challans cover the tax');
+  q = (await w.call(U.acc, 'POST', '/tds-returns/prepare', { quarter: '2026-27-Q3', tan: 'HYDM12345A', challans: [{ bsr: '0510308', date: '2026-12-05', serial: '12345', amount: '4000', forMonth: '2026-11', journalId: jv }] })).json.data; assert.equal(q.status, 'PREPARED');
+  assert.equal((await w.call(U.acc, 'GET', '/tds-returns/deposits?quarter=2026-27-Q3')).json.data.rows[0].linkedTo, '140 2026-27-Q3');
+  const txt = await w.api.raw('GET', '/api/v1/fin/tds-returns/text?quarter=2026-27-Q3', { ...U.acc }); assert.equal(txt.status, 200); const recs = txt.buffer.toString('utf8').trim().split('\r\n').map((l) => l.split('^'));
+  assert.deepEqual(recs.map((x) => x[1]), ['FH', 'BH', 'CD', 'DD']); assert.equal(recs[0][7], 'HYDM12345A'); assert.equal(recs[1][4], '140'); assert.equal(recs[2][14], '0510308'); assert.equal(recs[3][9], 'AABCE2222B'); assert.equal(recs[3][12], '4000.00');
   assert.equal((await w.call(U.acc, 'POST', '/tds-returns/file', { quarter: '2026-27-Q3', tokenNo: '123456789012345', filedOn: '2027-01-20' })).json.data.status, 'FILED');
   const cert = await w.call(U.acc, 'GET', `/tds-returns/certificate?quarter=2026-27-Q3&partnerId=${w.v2}`); assert.equal(cert.status, 200);
   assert.equal((await w.call(U.cfo, 'GET', `/tds-returns/certificate?quarter=2026-27-Q3&partnerId=${w.v2}`)).status, 403);

@@ -227,6 +227,7 @@ export const gr = {
   fileReturn: async (b) => (await api.post('/fin/gst-returns/file', b, idem())).data,
   tds: (f) => glget(`/tds-returns?${q(f)}`),
   prepareTds: async (b) => (await api.post('/fin/tds-returns/prepare', b, idem())).data,
+  tdsDeposits: (f) => glget(`/tds-returns/deposits?${q(f)}`),
   fileTds: async (b) => (await api.post('/fin/tds-returns/file', b, idem())).data,
   calendar: (f) => glget(`/compliance-calendar?${q(f)}`),
 };

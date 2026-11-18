@@ -179,8 +179,8 @@ export const parseItcOverride = (b) => parse(z.object({ billId: id, claim: z.boo
 export const parseReturnAct = (b) => parse(z.object({ period, returnType: z.enum(['GSTR1', 'GSTR3B']), arn: z.string().trim().min(5).max(30).optional(), filedOn: date.optional() }).strict(), b);
 export const parseReturnFile = (b) => parse(z.object({ period, returnType: z.enum(['GSTR1', 'GSTR3B']), arn: z.string().trim().min(5).max(30), filedOn: date }).strict(), b);
 export const parseQuarter = (q) => parse(z.object({ quarter }).strict(), q);
-const challan = z.object({ bsr: z.string().trim().regex(/^\d{7}$/, 'The BSR code has 7 digits'), date, serial: z.string().trim().regex(/^\d{1,5}$/, 'The challan serial has up to 5 digits'), amount: money, forMonth: period.optional() }).strict();
-export const parseTdsPrepare = (b) => parse(z.object({ quarter, challans: z.array(challan).max(60).optional() }).strict(), b);
+const challan = z.object({ bsr: z.string().trim().regex(/^\d{7}$/, 'The BSR code has 7 digits'), date, serial: z.string().trim().regex(/^\d{1,5}$/, 'The challan serial has up to 5 digits'), amount: money, forMonth: period.optional(), journalId: id.optional() }).strict();
+export const parseTdsPrepare = (b) => parse(z.object({ quarter, challans: z.array(challan).max(60).optional(), tan: z.string().trim().toUpperCase().regex(/^[A-Z]{4}\d{5}[A-Z]$/, 'A TAN is four letters, five digits and a letter').optional() }).strict(), b);
 export const parseTdsFile = (b) => parse(z.object({ quarter, tokenNo: z.string().trim().min(5).max(30), filedOn: date }).strict(), b);
 export const parseTdsCert = (q) => parse(z.object({ quarter, partnerId: id }).strict(), q);
 export const parse26as = (b) => parse(z.object({ fy, content: z.string().min(10).max(5_000_000) }).strict(), b);
