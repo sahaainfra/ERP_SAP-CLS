@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, cashOf, glOf, gstOf, paymentsOf, postingOf } from './index.js';
+import { apOf, arOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf } from './index.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { unprocessable } from '../../platform/http/errors.js';
@@ -326,4 +326,22 @@ workflowTypes.register({
   },
   defaultDefinition: { name: 'GST settings: the CFO (made by the accounts manager)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('CFO', 'Chief financial officer', 'CFO')] },
   hooks: { onApproved: gsDecide('APPROVED'), onRejected: gsDecide('REJECTED'), onReturned: gsDecide('RETURNED'), onCancelled: gsDecide('CANCELLED') },
+});
+
+// ---- part 23.08: GST reconciliation, ITC review and TDS ----
+for (const [type, description] of [
+  ['fin.gst_2b.imported', 'A GSTR-2B statement was imported and matched (part 23.08 FR-01): data { importId, period, lines, MATCHED, MISMATCH_AMOUNT, MISMATCH_DATE, MISMATCH_NUMBER, MISSING_IN_BOOKS }.'],
+  ['fin.gst_recon.followup', 'A vendor is asked about an invoice missing in GSTR-2B or that differs from it (part 23.08 FR-02): data { lineId, billId, partnerId, channel, invoiceNo, invoiceDate, issue, note, nextDate }. The vendor portal (25.02) shows it to the vendor.'],
+  ['fin.itc_review.approved', 'The ITC of a month was approved by the CFO (part 23.08 FR-03): data { reviewId, docNo, period, eligible, override, reversed, claimable, blocked, journalId }. The reversal is posted.'],
+  ['fin.gst_return.filed', 'GSTR-1 or GSTR-3B of a month was marked filed with its ARN: data { returnType, period, arn, filedOn }.'],
+  ['fin.tds_return.filed', 'A quarterly TDS statement was marked filed with its token: data { quarter, form, tokenNo, filedOn }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const itcDecide = (outcome) => (db, { instance, actor, comment }) => gstReconOf(db)?.reviews.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_ITC_REVIEW', label: 'Monthly ITC claim (review)', processOwner: 'CFO', route: (id) => `/finance/gst-reconciliation?tab=itc&review=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM gst_itc_reviews WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `ITC of ${r.period}: claim ₹${(r.claimable_paise / 100).toFixed(2)}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM gst_itc_reviews WHERE id = ?').get(Number(id)); if (!r) return null; const m = (p) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`; const n = db.prepare("SELECT COUNT(*) AS n FROM gst_itc_review_lines WHERE review_id = ? AND decision = 'OVERRIDE_CLAIM' AND deleted_at IS NULL").get(r.id).n;
+    return { fields: [{ label: 'Month', value: r.period }, { label: 'Eligible (matched in 2B)', value: m(r.eligible_paise) }, { label: 'Claimed by override', value: `${m(r.override_paise)} (${n} invoice(s), each with its reason)` }, { label: 'Reversed (unpaid beyond 180 days)', value: m(r.reversed_paise) }, { label: 'Blocked or not available', value: m(r.blocked_paise) }, { label: 'Held (not in 2B or mismatch)', value: m(r.held_paise) }, { label: 'ITC to claim', value: m(r.claimable_paise) }] }; },
+  defaultDefinition: { name: 'Monthly ITC claim: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: { onApproved: itcDecide('APPROVED'), onRejected: itcDecide('REJECTED'), onReturned: itcDecide('RETURNED'), onCancelled: itcDecide('CANCELLED') },
 });

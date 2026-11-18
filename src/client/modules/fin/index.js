@@ -28,6 +28,8 @@ const ImprestPage = lazyPage(() => import('./CashPages.jsx'), 'ImprestPage');
 const CashPositionPage = lazyPage(() => import('./CashPages.jsx'), 'CashPositionPage');
 const EinvoiceRegisterPage = lazyPage(() => import('./GstPages.jsx'), 'EinvoiceRegisterPage');
 const EwayBillRegisterPage = lazyPage(() => import('./GstPages.jsx'), 'EwayBillRegisterPage');
+const GstReconPage = lazyPage(() => import('./GstReconPages.jsx'), 'GstReconPage');
+const GstReturnsPage = lazyPage(() => import('./GstReconPages.jsx'), 'GstReturnsPage');
 const GstSettingsPage = lazyPage(() => import('./GstPages.jsx'), 'GstSettingsPage');
 
 // Module "fin" (part 06.05): the finance masters. The chart of accounts (tree, Schedule III, import from Tally, changes), the account object page (properties, dimension rules, mapping), the cost heads and cost
@@ -69,6 +71,9 @@ registerModule({
     { path: '/finance/e-invoices', label: 'e-Invoice & e-Way Bill Register', labelHi: 'ई-इनवॉइस व ई-वे बिल', icon: 'erp.action.history', permission: 'fin.einvoice.view', flag: 'ff.fin.p2307', Page: EinvoiceRegisterPage },
     { path: '/finance/e-way-bills', label: 'e-Way Bills', labelHi: 'ई-वे बिल', icon: 'erp.action.history', permission: 'fin.ewaybill.view', flag: 'ff.fin.p2307', Page: EwayBillRegisterPage },
     { path: '/finance/gst-settings', label: 'GST Settings', labelHi: 'जीएसटी सेटिंग्स', icon: 'erp.action.settings', permission: 'fin.gst_setting.view', flag: 'ff.fin.p2307', Page: GstSettingsPage },
+    // part 23.08: GST reconciliation, ITC review, returns and TDS
+    { path: '/finance/gst-reconciliation', label: 'GSTR-2B Reconciliation & ITC Review', labelHi: 'जीएसटीआर-2बी मिलान व आईटीसी', icon: 'erp.action.history', permission: 'fin.gst_recon.view', flag: 'ff.fin.p2308', Page: GstReconPage },
+    { path: '/finance/gst-returns', label: 'GST & TDS Returns, Compliance Calendar', labelHi: 'जीएसटी व टीडीएस रिटर्न', icon: 'erp.action.history', permission: 'fin.gst_return.view', flag: 'ff.fin.p2308', Page: GstReturnsPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });

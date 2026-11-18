@@ -165,3 +165,24 @@ export const parseEwbCreate = (b) => parse(z.object({ documentType: z.enum(['bil
 export const parseEwbVehicle = (b) => parse(z.object({ vehicleNo: vehicle, fromPlace: z.string().trim().min(3).max(50), reasonCode: z.enum(['1', '2', '3', '4']), remark: z.string().trim().min(3).max(50), version: z.number().int().min(1) }).strict(), b);
 export const parseEwbExtend = (b) => parse(z.object({ remainingKm: z.number().int().min(1).max(4000), fromPlace: z.string().trim().min(3).max(50), reasonCode: z.enum(['1', '2', '3', '4', '99']), remark: z.string().trim().min(3).max(50), vehicleNo: vehicle.optional() }).strict(), b);
 export const parseEwbCancel = (b) => parse(z.object({ reasonCode: z.enum(['1', '2', '3', '4']), remark: z.string().trim().min(3).max(50) }).strict(), b);
+
+// ---- part 23.08: GST reconciliation, ITC review, returns and TDS ----
+const period = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'A month such as 2026-10');
+const quarter = z.string().regex(/^\d{4}-\d{2}-Q[1-4]$/, 'A quarter such as 2026-27-Q3');
+const fy = z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27');
+export const parse2bImport = (b) => parse(z.object({ period, gstin: z.string().trim().toUpperCase().regex(/^[0-9A-Z]{15}$/).optional(), fileName: z.string().trim().min(1).max(200), format: z.enum(['JSON', 'CSV', 'GSP']), content: z.string().max(20_000_000).default('') }).strict(), b);
+export const parsePeriod = (q) => parse(z.object({ period }).strict(), q);
+export const parseWorklist2b = (q) => parse(z.object({ period, status: z.enum(['MATCHED', 'MISMATCH_AMOUNT', 'MISMATCH_DATE', 'MISMATCH_NUMBER', 'MISSING_IN_BOOKS', 'MISSING_IN_2B']).optional(), mine: z.enum(['1', 'true']).optional() }).strict(), q);
+export const parseReconAct = (b) => parse(z.object({ on: z.enum(['line', 'bill']).default('line'), action: z.enum(['assign', 'followup', 'resolve', 'accept', 'reopen']), owner: z.string().trim().max(80).optional(), channel: z.enum(['EMAIL', 'PORTAL', 'CALL', 'LETTER']).optional(), note: z.string().trim().max(500).optional(), nextDate: date.optional().nullable(), version: z.number().int().min(1).optional() }).strict().refine((x) => x.action !== 'followup' || (x.channel && x.note && x.note.length >= 5), { message: 'A follow-up needs a channel and a note of at least 5 characters', path: ['note'] }), b);
+export const parseItcCreate = (b) => parse(z.object({ period }).strict(), b);
+export const parseItcOverride = (b) => parse(z.object({ billId: id, claim: z.boolean(), reason: z.string().trim().max(500).optional(), version: z.number().int().min(1) }).strict(), b);
+export const parseReturnAct = (b) => parse(z.object({ period, returnType: z.enum(['GSTR1', 'GSTR3B']), arn: z.string().trim().min(5).max(30).optional(), filedOn: date.optional() }).strict(), b);
+export const parseReturnFile = (b) => parse(z.object({ period, returnType: z.enum(['GSTR1', 'GSTR3B']), arn: z.string().trim().min(5).max(30), filedOn: date }).strict(), b);
+export const parseQuarter = (q) => parse(z.object({ quarter }).strict(), q);
+const challan = z.object({ bsr: z.string().trim().regex(/^\d{7}$/, 'The BSR code has 7 digits'), date, serial: z.string().trim().regex(/^\d{1,5}$/, 'The challan serial has up to 5 digits'), amount: money, forMonth: period.optional() }).strict();
+export const parseTdsPrepare = (b) => parse(z.object({ quarter, challans: z.array(challan).max(60).optional() }).strict(), b);
+export const parseTdsFile = (b) => parse(z.object({ quarter, tokenNo: z.string().trim().min(5).max(30), filedOn: date }).strict(), b);
+export const parseTdsCert = (q) => parse(z.object({ quarter, partnerId: id }).strict(), q);
+export const parse26as = (b) => parse(z.object({ fy, content: z.string().min(10).max(5_000_000) }).strict(), b);
+export const parseFy = (q) => parse(z.object({ fy }).strict(), q);
+export const parseCalendar = (q) => parse(z.object({ from: period.optional(), to: period.optional() }).strict(), q);

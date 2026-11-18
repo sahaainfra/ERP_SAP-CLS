@@ -211,3 +211,22 @@ export const gst = {
   ewbCreate: async (b) => (await api.post('/fin/ewaybills', b, idem())).data,
   ewbAct: async (id, action, b) => (await api.post(`/fin/ewaybills/${id}/${action}`, b ?? {}, idem())).data,
 };
+// part 23.08: GST reconciliation, ITC review, returns, TDS, calendar
+export const gr = {
+  worklist: (f) => glget(`/gst-recon?${q(f)}`),
+  import: async (b) => (await api.post('/fin/gst-recon/import', b, idem())).data,
+  rematch: async (b) => (await api.post('/fin/gst-recon/rematch', b, idem())).data,
+  act: async (id, b) => (await api.post(`/fin/gst-recon/lines/${id}/act`, b, idem())).data,
+  reviews: () => glget('/itc-reviews'),
+  review: (id) => glget(`/itc-reviews/${id}`),
+  createReview: async (b) => (await api.post('/fin/itc-reviews', b, idem())).data,
+  reviewAct: async (id, action, b) => (await api.post(`/fin/itc-reviews/${id}/${action}`, b ?? {}, idem())).data,
+  override: async (id, b) => (await api.post(`/fin/itc-reviews/${id}/override`, b, idem())).data,
+  returns: (f) => glget(`/gst-returns?${q(f)}`),
+  prepareReturn: async (b) => (await api.post('/fin/gst-returns/prepare', b, idem())).data,
+  fileReturn: async (b) => (await api.post('/fin/gst-returns/file', b, idem())).data,
+  tds: (f) => glget(`/tds-returns?${q(f)}`),
+  prepareTds: async (b) => (await api.post('/fin/tds-returns/prepare', b, idem())).data,
+  fileTds: async (b) => (await api.post('/fin/tds-returns/file', b, idem())).data,
+  calendar: (f) => glget(`/compliance-calendar?${q(f)}`),
+};
