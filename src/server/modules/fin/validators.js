@@ -220,3 +220,10 @@ const forecastLine = { method: etcMethod.optional(), accrued: optNum, remainingQ
 export const parseForecastLine = (b) => parse(z.object(forecastLine).strict(), b);
 export const parseForecastImport = (b) => parse(z.object({ rows: z.array(z.object({ wbs: z.string().trim().max(40).optional(), costCode: z.string().trim().min(1).max(40), ...forecastLine }).strict()).min(1).max(1000) }).strict(), b);
 export const parseProjectQuery = (q) => parse(z.object({ projectId: id }).strict(), q);
+
+// ---- part 23.12: project P&L ----
+export const parseProjectPl = (q) => parse(z.object({ projectId: id, period }).strict(), q);
+export const parsePlDrill = (q) => parse(z.object({ projectId: id, line: z.string().regex(/^[A-Z_]{2,30}$/), from: date, to: date }).strict(), q);
+export const parsePlLine = (b) => parse(z.object({ name: z.string().trim().min(2).max(80).optional(), accounts: z.array(z.string().regex(/^\d{4,8}$/)).max(200).default([]), groups: z.array(z.string().regex(/^\d{1,4}$/)).max(50).default([]) }).strict(), b);
+export const parseDateRange = (q) => parse(z.object({ from: date, to: date }).strict().refine((x) => x.from <= x.to, { message: 'The start is on or before the end', path: ['to'] }), q);
+export const parseSnapshotCreate = (b) => parse(z.object({ projectId: id, period }).strict(), b);

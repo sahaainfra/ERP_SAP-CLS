@@ -4,7 +4,8 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf } from './index.js';
+import { registerProject360Widget } from '../proj/p360.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { unprocessable } from '../../platform/http/errors.js';
@@ -402,3 +403,17 @@ workflowTypes.register({
   defaultDefinition: { name: 'Cost forecast: the project controls manager, the PM, the project director, and the CFO for a loss-making project', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('PCMGR', 'Project controls manager (when someone else prepared it)', 'PCMGR', { field: 'makerRole', op: 'ne', value: 'PCMGR' }), glStep('PM', 'Project manager (when someone else prepared it)', 'PM', { field: 'makerRole', op: 'ne', value: 'PM' }), glStep('PD', 'Project director', 'PD'), glStep('CFO', 'CFO (loss-making project)', 'CFO', { field: 'loss', op: 'eq', value: 'yes' })] },
   hooks: { onApproved: fcDecide('APPROVED'), onRejected: fcDecide('REJECTED'), onReturned: fcDecide('RETURNED'), onCancelled: fcDecide('CANCELLED') },
 });
+
+// ---- part 23.12: project P&L ----
+eventTypes.define({ type: 'fin.pl_snapshot.frozen', version: 1, schema, owner: 'fin', description: 'The P&L of a project for a month was frozen (approved by the CFO; equal to the ledger; part 23.12 FR-04): data { snapshotId, docNo, projectId, period, revenue, grossProfit, operatingProfit, revenueToDate, operatingProfitToDate }. MIS (27.07), the control tower (27.04) and the closeout (26.04) read it.' });
+const plDecide = (outcome) => (db, { instance, actor, comment }) => projectPlOf(db)?.snapshots.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PL_SNAPSHOT', label: 'Freeze of a project P&L for a month', processOwner: 'CFO', route: (id) => `/finance/project-pl?snapshot=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT x.*, p.code FROM pl_snapshots x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `P&L of ${r.code} for ${r.period}: revenue ${inr(r.revenue_paise)}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT x.*, p.code, p.name FROM pl_snapshots x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Project', value: `${r.code} ${r.name}` }, { label: 'Month', value: r.period }, { label: 'Revenue', value: inr(r.revenue_paise) }, { label: 'Gross profit', value: inr(r.gross_profit_paise) }, { label: 'Operating profit', value: inr(r.operating_profit_paise) }, { label: 'Ledger / P&L', value: `${inr(r.gl_total_paise)} / ${inr(r.pl_total_paise)}${r.gl_total_paise === r.pl_total_paise ? ' (equal)' : ' (NOT equal)'}` }] }; },
+  defaultDefinition: { name: 'P&L snapshot freeze: the accounts manager (when someone else made it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else made it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: plDecide('APPROVED'), onRejected: plDecide('REJECTED'), onReturned: plDecide('RETURNED'), onCancelled: plDecide('CANCELLED') },
+});
+// Project 360 (10.08): the P&L of the project this year
+registerProject360Widget('fin-pl', (ctx) => projectPlOf(ctx.db)?.widget(ctx.actor, ctx.project.project_id) ?? { figures: [], rows: [], note: 'The project P&L (part 23.12) is not set up for this database.' });
