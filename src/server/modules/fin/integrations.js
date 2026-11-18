@@ -4,6 +4,10 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
+import { apOf, arOf, cashOf, glOf, paymentsOf, postingOf } from './index.js';
+import { registerOfflineForm } from '../eng/offline.js';
+import { fileEntities } from '../../platform/files/entities.js';
+import { unprocessable } from '../../platform/http/errors.js';
 
 // The finance masters (part 06.05) for the rest of the ERP: the approval of a change (FIN_MASTER_CHANGE: the accounts manager checks what the project controls manager proposes, then the CFO approves),
 // what the approver sees, the object page of an account (search, audit), the form lookups (accounts, accounts open to manual postings, cost codes) and the events consumers listen to.
@@ -90,4 +94,212 @@ lookupRegistry.register({
     const rows = db.prepare(`SELECT c.id, c.code, c.name, h.code || ' ' || h.name AS head FROM fin_cost_codes c JOIN fin_cost_heads h ON h.id = c.cost_head_id WHERE ${w} ORDER BY c.code LIMIT ? OFFSET ?`).all(...args, ...(q.ids ?? []), q.ids ? 200 : q.limit, q.ids ? 0 : q.offset);
     return { rows: rows.map((r) => ({ id: r.id, code: r.code, name: r.name, extra: { head: r.head } })), total };
   },
+});
+
+// ---- part 23.01: the journal's approval, its events and its object page ----
+for (const [type, description] of [
+  ['fin.journal.posted', 'A journal was posted to the general ledger (part 23.01): data { journalId, voucherNo, voucherType, kind, date, periodId, total, sourceType, sourceId, reversalOf, lines[{ lineId, accountId, debit, credit, projectId, siteId, costCentreId, branchId }] }. Finance reports (23.x) and statements (23.14) read it.'],
+  ['fin.gl.posted', 'The lines with a cost centre of a posted journal, for the department budgets (part 16.x, contract in bud/constants.js): data { sourceType, sourceId, docRef, date, lines[{ lineId, costCentreId, accountId, amount, narration }] }.'],
+  ['fin.gl.reversed', 'A journal with lines on cost centres was reversed (part 23.01): data { sourceType, sourceId, docRef, date }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+
+const glStep = (code, name, role, when = null) => ({ code, name, type: 'approval', mode: 'single', approvers: [{ kind: 'role', role }], slaHours: 24, requireAttachment: false, checklist: [], when, notify: [], action: null });
+const jrow = (db, id) => db.prepare('SELECT * FROM fin_journals WHERE id = ?').get(Number(id));
+const glDecide = (outcome) => (db, { instance, actor, comment }) => glOf(db)?.journals.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_JOURNAL', label: 'Journal voucher', processOwner: 'CFO', route: (id) => `/finance/journals?id=${id}`,
+  describe(db, companyId, id) { const r = jrow(db, id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.doc_no} ₹${(r.total_paise / 100).toFixed(2)} ${r.narration}`.slice(0, 300), originator: r.requested_by } : null; },
+  summarise(db, _actor, id) {
+    const r = jrow(db, id); if (!r) return null;
+    const lines = db.prepare('SELECT l.*, a.code, a.name FROM fin_journal_lines l JOIN fin_accounts a ON a.id = l.account_id WHERE l.journal_id = ? AND l.deleted_at IS NULL ORDER BY l.line_no').all(r.id);
+    return { fields: [{ label: 'Voucher', value: `${r.voucher_type} ${r.doc_no} of ${r.voucher_date}` }, { label: 'Kind', value: r.kind }, { label: 'Amount', value: `₹${(r.total_paise / 100).toFixed(2)}` }, { label: 'Narration', value: r.narration }, ...lines.slice(0, 12).map((l) => ({ label: `${l.line_no}. ${l.code} ${l.name}`, value: l.debit_paise ? `Dr ₹${(l.debit_paise / 100).toFixed(2)}` : `Cr ₹${(l.credit_paise / 100).toFixed(2)}` }))] };
+  },
+  defaultDefinition: { name: 'Journal: the accounts manager; above the CFO limit (₹5 lakh), then the CFO (SoD-03: never the maker)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above the limit)', 'CFO', { field: 'overCfo', op: 'eq', value: 1 })] },
+  hooks: { onApproved: glDecide('APPROVED'), onRejected: glDecide('REJECTED'), onReturned: glDecide('RETURNED'), onCancelled: glDecide('CANCELLED') },
+});
+evidenceProviders.register('FIN_JOURNAL', ({ db, instance }) => {
+  const r = jrow(db, instance.docId); if (!r) return { sections: [] };
+  const lines = db.prepare('SELECT l.*, a.code, a.name, a.is_control FROM fin_journal_lines l JOIN fin_accounts a ON a.id = l.account_id WHERE l.journal_id = ? AND l.deleted_at IS NULL').all(r.id);
+  const dr = lines.reduce((a, l) => a + l.debit_paise, 0); const cr = lines.reduce((a, l) => a + l.credit_paise, 0);
+  const period = db.prepare('SELECT p.name, p.module_status_json FROM core_periods p WHERE p.company_id = ? AND ? BETWEEN p.start_date AND p.end_date').get(r.company_id, r.voucher_date);
+  const fstatus = period ? (JSON.parse(period.module_status_json || '{}').finance ?? 'Open') : 'none';
+  return { sections: [{ code: 'fin-journal', title: 'Before approving', kind: 'metrics', items: [
+    { label: 'Debits = credits', value: dr === cr ? `Yes, ₹${(dr / 100).toFixed(2)}` : `No: ₹${(dr / 100).toFixed(2)} / ₹${(cr / 100).toFixed(2)}`, format: 'text', tone: dr === cr ? undefined : 'warn' },
+    { label: 'Period', value: period ? `${period.name} (finance ${fstatus})` : 'No period covers the date', format: 'text', tone: fstatus === 'Open' ? undefined : 'warn' },
+    { label: 'Lines', value: lines.length, format: 'text' },
+    { label: 'Made by', value: r.requested_by, format: 'text' },
+    ...(r.reversal_of_id ? [{ label: 'Reverses', value: jrow(db, r.reversal_of_id)?.voucher_no ?? '', format: 'text' }] : []),
+  ] }] };
+});
+objectTypes.register({
+  type: 'fin_journals', label: 'Journal', permission: 'fin.journal.view', route: (id) => `/finance/journals?id=${id}`, attachmentEntity: 'fin_journals', approvalTarget: 'fin_journals',
+  access(db, actor, id) { if (!authzOf(db).check(actor, 'fin.journal.view').allowed) return null; const r = db.prepare('SELECT company_id FROM fin_journals WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), actor.companyId); return r ? { companyId: r.company_id } : null; },
+  auditEntities: (id) => [{ entity: 'fin_journals', id }],
+  summary(db, actor, id) { const r = db.prepare('SELECT * FROM fin_journals WHERE id = ? AND company_id = ?').get(Number(id), actor.companyId); return r ? { label: `${r.voucher_no ?? r.doc_no} ${r.narration}`.slice(0, 200), status: r.status } : null; },
+  related: () => [],
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, 'fin.journal.view').allowed) return []; return db.prepare('SELECT id FROM fin_journals WHERE company_id = ? AND deleted_at IS NULL AND (voucher_no LIKE ? OR doc_no LIKE ? OR narration LIKE ?) ORDER BY id DESC LIMIT ?').all(actor.companyId, `%${q}%`, `%${q}%`, `%${q}%`, limit).map((x) => x.id); },
+});
+
+// ---- part 23.02: the posting engine's approvals and its event ----
+eventTypes.define({ type: 'fin.document.posted', version: 1, schema, owner: 'fin', description: 'The posting engine posted a document of another module (part 23.02): data { eventType, docType, docId, docRef, journalId, voucherNo, date, amount, rule }. The source module and its trace show the journal.' });
+const peDecide = (outcome, kind) => (db, { instance, actor, comment }) => postingOf(db)?.[kind].decide(instance, actor, outcome, comment);
+const peHooks = (kind) => ({ onApproved: peDecide('APPROVED', kind), onRejected: peDecide('REJECTED', kind), onReturned: peDecide('RETURNED', kind), onCancelled: peDecide('CANCELLED', kind) });
+workflowTypes.register({
+  docType: 'FIN_POSTING_RULE', label: 'Posting rule change', processOwner: 'CFO', route: (id) => `/finance/posting-rules?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM fin_posting_rules WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.rule_code} v${r.rule_version} ${r.name} from ${r.effective_from}`.slice(0, 300), originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM fin_posting_rules WHERE id = ?').get(Number(id)); if (!r) return null; const lines = JSON.parse(r.lines_json || '[]'); return { fields: [{ label: 'Rule', value: `${r.rule_code} version ${r.rule_version}` }, { label: 'Event', value: r.event_type }, { label: 'In force from', value: r.effective_from }, { label: 'Why', value: r.change_reason ?? '' }, ...lines.slice(0, 10).map((l, i) => ({ label: `${i + 1}. ${l.side} ${l.account}`, value: l.amount }))] }; },
+  defaultDefinition: { name: 'Posting rule change: the accounts manager proposes, the CFO approves', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: peHooks('rules'),
+});
+workflowTypes.register({
+  docType: 'FIN_REPLAY', label: 'Replay of historical events', processOwner: 'CFO', route: (id) => `/finance/posting-replay?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM fin_replay_runs WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Replay ${r.from_date} to ${r.to_date}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM fin_replay_runs WHERE id = ?').get(Number(id)); if (!r) return null; const s = JSON.parse(r.dry_run_json || '{}'); return { fields: [{ label: 'Events', value: JSON.parse(r.event_types_json || '[]').join(', ') }, { label: 'Dates', value: `${r.from_date} to ${r.to_date}` }, { label: 'Dry run', value: `${s.events ?? 0} events, ${s.wouldPost ?? 0} would post ₹${s.total ?? 0}` }, { label: 'Would fail', value: Object.entries(s.failures ?? {}).map(([k, v]) => `${k} ${v}`).join(', ') || 'none' }] }; },
+  defaultDefinition: { name: 'Replay commit: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: peHooks('replays'),
+});
+
+// ---- part 23.03: accounts payable ----
+for (const [type, description] of [
+  ['fin.ap_bill.created', 'An AP bill was made (part 23.03): from a matched vendor invoice, an approved subcontractor bill, a passed expense claim, or an approved direct expense bill: data { billId, docNo, source, partnerId, netPayable, dueDate, tds, tdsSection }. Payment proposals (23.04) read it.'],
+  ['fin.ap_bill.hold_changed', 'An AP bill was held or released (part 23.03 FR-05): data { billId, docNo, hold, reason }. A held bill is not offered for payment.'],
+  ['fin.advance.adjusted', 'An advance given was set against an AP bill (part 23.03 FR-04): data { advanceId, advanceNo, billId, billNo, partnerId, amount, on }. The advance ledger (22.07) reads it.'],
+  ['fin.debit_note.approved', 'A debit note, or a credit note received from a vendor, was approved and posted (part 23.03 FR-03): data { noteId, docNo, kind, partnerId, reason, referenceType, referenceId, billId, amount, gst, total }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const apDecide = (outcome, kind) => (db, { instance, actor, comment }) => apOf(db)?.[kind].decide(instance, actor, outcome, comment);
+const apHooks = (kind) => ({ onApproved: apDecide('APPROVED', kind), onRejected: apDecide('REJECTED', kind), onReturned: apDecide('RETURNED', kind), onCancelled: apDecide('CANCELLED', kind) });
+workflowTypes.register({
+  docType: 'FIN_AP_DIRECT', label: 'Direct expense bill', processOwner: 'CFO', route: (id) => `/finance/ap-bills?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM ap_bills WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.payee_name} ₹${(r.total_paise / 100).toFixed(2)} ${r.description ?? ''}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM ap_bills WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Payee', value: r.payee_name }, { label: 'Their bill', value: `${r.bill_no ?? ''} of ${r.bill_date}` }, { label: 'For', value: r.description ?? '' }, { label: 'Amount and GST', value: `₹${(r.gross_paise / 100).toFixed(2)} + ₹${(r.gst_input_paise / 100).toFixed(2)}` }, { label: 'TDS', value: r.tds_paise ? `₹${(r.tds_paise / 100).toFixed(2)} under ${r.tds_section}` : 'none' }, { label: 'Net payable', value: `₹${(r.net_payable_paise / 100).toFixed(2)}` }] } : null; },
+  defaultDefinition: { name: 'Direct expense bill: the head of the department, the accounts manager, then the CFO above ₹1 lakh', settings: { resubmit: 'first', distinctApprovers: true }, steps: [{ code: 'HEAD', name: 'Head of the department', type: 'approval', mode: 'single', approvers: [{ kind: 'manager' }], slaHours: 48, requireAttachment: false, checklist: [], when: null, notify: [], action: null }, glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above the limit)', 'CFO', { field: 'overCfo', op: 'eq', value: 1 })] },
+  hooks: apHooks('bills'),
+});
+workflowTypes.register({
+  docType: 'FIN_DEBIT_NOTE', label: 'Debit note', processOwner: 'ACCMGR', route: (id) => `/finance/debit-notes?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM ap_debit_notes WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.reason} ₹${(r.total_paise / 100).toFixed(2)} ${r.description}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT n.*, p.legal_name FROM ap_debit_notes n JOIN mdm_partners p ON p.id = n.partner_id WHERE n.id = ?').get(Number(id)); return r ? { fields: [{ label: 'Vendor', value: r.legal_name }, { label: 'Reason', value: r.reason }, { label: 'For', value: r.description }, { label: 'Amount and GST', value: `₹${(r.amount_paise / 100).toFixed(2)} + ₹${(r.gst_paise / 100).toFixed(2)}` }] } : null; },
+  defaultDefinition: { name: 'Debit note: the accounts manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR')] },
+  hooks: apHooks('notes'),
+});
+// ---- part 23.04: payments ----
+for (const [type, description] of [
+  ['fin.payment.released', 'A payment was released to the bank or as a cheque, and posted (part 23.04 FR-03): data { paymentId, docNo, proposalId, proposalNo, kind, billId, advanceId, partnerId, amount, mode, chequeNo, journalId, releasedOn }. Accounts payable settles the bill.'],
+  ['fin.payment.confirmed', 'The bank confirmed a payment (UTR) or a cheque cleared (part 23.04 FR-03): data { paymentId, docNo, partnerId, amount, utr, chequeNo, paidOn, bankAccountId }. The advice is sent; bank reconciliation (23.06) reads it.'],
+  ['fin.payment.failed', 'A payment was returned by the bank or a cheque cancelled, and reversed (part 23.04): data { paymentId, docNo, kind, billId, advanceId, partnerId, amount, reason, chequeNo }. Accounts payable opens the bill again.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const pmDecide = (outcome) => (db, { instance, actor, comment }) => paymentsOf(db)?.proposals.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PAYMENT', label: 'Payment proposal', processOwner: 'CFO', route: (id) => `/finance/payment-proposals?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM pmt_proposals WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.lines_count} payment(s) ₹${(r.total_paise / 100).toFixed(2)} by ${r.pay_mode} on ${r.pay_date}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) {
+    const r = db.prepare('SELECT p.*, b.name AS bank FROM pmt_proposals p JOIN fin_bank_accounts b ON b.id = p.bank_account_id WHERE p.id = ?').get(Number(id)); if (!r) return null;
+    const lines = db.prepare("SELECT payee_name, line_kind, amount_paise, name_match FROM pmt_proposal_lines WHERE proposal_id = ? AND line_status = 'PROPOSED' AND deleted_at IS NULL ORDER BY line_no LIMIT 10").all(r.id);
+    return { fields: [{ label: 'From', value: `${r.bank} by ${r.pay_mode} on ${r.pay_date}` }, { label: 'Total', value: `₹${(r.total_paise / 100).toFixed(2)} in ${r.lines_count} line(s)` }, ...lines.map((l, i) => ({ label: `Line ${i + 1}`, value: `${l.payee_name} · ${l.line_kind} · ₹${(l.amount_paise / 100).toFixed(2)}${l.name_match === 'OK' ? ' · bank name matches' : ''}` }))] };
+  },
+  defaultDefinition: { name: 'Payment release: the accounts manager; above ₹10 lakh the CFO; above ₹1 crore a director (never the preparer; released by a third person)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above ₹10 lakh)', 'CFO', { field: 'overAcc', op: 'eq', value: 1 }), glStep('DIR', 'Director (above ₹1 crore)', 'DIR', { field: 'overCfo', op: 'eq', value: 1 })] },
+  hooks: { onApproved: pmDecide('APPROVED'), onRejected: pmDecide('REJECTED'), onReturned: pmDecide('RETURNED'), onCancelled: pmDecide('CANCELLED') },
+});
+// ---- part 23.05: receivables ----
+for (const [type, description] of [
+  ['fin.ar_invoice.created', 'A receivable was made (part 23.05 FR-01): from an issued tax invoice, or an approved other-income invoice: data { invoiceId, docNo, source, partnerId, projectId, amount, dueDate }.'],
+  ['fin.receipt.posted', 'A receipt from a client was posted (part 23.05 FR-02): data { receiptId, docNo, partnerId, date, bankAccountId, reference, amount, tds, gstTds, retention, other, allocated, onAccount, journalId, invoices[] }. The cash forecast (23.13), bank reconciliation (23.06) and the client portal (25.04) read it.'],
+  ['fin.receipt.allocated', 'A receipt on account was set against invoices (part 23.05): data { receiptId, docNo, partnerId, invoices[] }.'],
+  ['fin.receipt.cancelled', 'A posted receipt was cancelled and reversed (part 23.05): data { receiptId, docNo, partnerId, amount, reason }.'],
+  ['fin.ar_credit_note.approved', 'A credit note to a client was approved and posted (part 23.05 FR-04): data { noteId, docNo, invoiceId, invoiceNo, partnerId, reason, taxable, cgst, sgst, igst, total, irnRequired, irnDueDate }. E-invoicing (23.07) reads it.'],
+  ['fin.ar.written_off', 'A receivable was written off (part 23.05): data { writeoffId, docNo, invoiceId, partnerId, amount, reason }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const arDecide = (outcome, kind) => (db, { instance, actor, comment }) => arOf(db)?.[kind].decide(instance, actor, outcome, comment);
+const arHooks = (kind) => ({ onApproved: arDecide('APPROVED', kind), onRejected: arDecide('REJECTED', kind), onReturned: arDecide('RETURNED', kind), onCancelled: arDecide('CANCELLED', kind) });
+const arRow = (db, table, id) => db.prepare(`SELECT x.*, p.legal_name FROM ${table} x JOIN mdm_partners p ON p.id = x.partner_id WHERE x.id = ?`).get(Number(id));
+workflowTypes.register({
+  docType: 'FIN_AR_INVOICE', label: 'Other-income invoice', processOwner: 'ACCMGR', route: (id) => `/finance/receivables?id=${id}`,
+  describe(db, companyId, id) { const r = arRow(db, 'ar_invoices', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.legal_name} ₹${(r.amount_paise / 100).toFixed(2)} ${r.description ?? ''}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = arRow(db, 'ar_invoices', id); return r ? { fields: [{ label: 'Party', value: r.legal_name }, { label: 'For', value: `${r.income_kind ?? ''} ${r.description ?? ''}` }, { label: 'Amount and GST', value: `₹${(r.taxable_paise / 100).toFixed(2)} + ₹${(r.gst_paise / 100).toFixed(2)}` }, { label: 'Due', value: r.due_date }] } : null; },
+  defaultDefinition: { name: 'Other-income invoice: the accounts manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR')] },
+  hooks: arHooks('invoices'),
+});
+workflowTypes.register({
+  docType: 'FIN_AR_CREDIT_NOTE', label: 'Credit note to a client', processOwner: 'ACCMGR', route: (id) => `/finance/receivables?cn=${id}`,
+  describe(db, companyId, id) { const r = arRow(db, 'ar_credit_notes', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.legal_name} ₹${(r.total_paise / 100).toFixed(2)} ${r.reason}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = arRow(db, 'ar_credit_notes', id); return r ? { fields: [{ label: 'Client', value: r.legal_name }, { label: 'Reason', value: `${r.reason}: ${r.description}` }, { label: 'Taxable and GST', value: `₹${(r.taxable_paise / 100).toFixed(2)} + ₹${((r.cgst_paise + r.sgst_paise + r.igst_paise) / 100).toFixed(2)}` }, ...(r.irn_required ? [{ label: 'IRN due by', value: r.irn_due_date }] : [])] } : null; },
+  defaultDefinition: { name: 'Credit note: the accounts manager; above ₹5 lakh the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer (above ₹5 lakh)', 'CFO', { field: 'overCfo', op: 'eq', value: 1 })] },
+  hooks: arHooks('notes'),
+});
+workflowTypes.register({
+  docType: 'FIN_AR_WRITEOFF', label: 'Write-off of a receivable', processOwner: 'CFO', route: (id) => `/finance/receivables?wo=${id}`,
+  describe(db, companyId, id) { const r = arRow(db, 'ar_writeoffs', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.legal_name} ₹${(r.amount_paise / 100).toFixed(2)}: ${r.reason}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = arRow(db, 'ar_writeoffs', id); return r ? { fields: [{ label: 'Client', value: r.legal_name }, { label: 'Amount', value: `₹${(r.amount_paise / 100).toFixed(2)}` }, { label: 'Why', value: r.reason }] } : null; },
+  defaultDefinition: { name: 'Write-off: the accounts manager, the CFO, then a director', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR'), glStep('CFO', 'Chief financial officer', 'CFO'), glStep('DIR', 'Director', 'DIR')] },
+  hooks: arHooks('writeoffs'),
+});
+// ---- part 23.06: cash and bank ----
+for (const [type, description] of [
+  ['fin.bank_line.matched', 'A bank statement line was matched to an entry of the books (part 23.06 FR-02): data { lineId, bankAccountId, date, debit, credit, entity, entityId, rule }. A payment matched by its UTR is confirmed in 23.04.'],
+  ['fin.bank.reconciled', 'A bank reconciliation statement was signed off by the accounts manager (part 23.06): data { reconId, bankAccountId, asOf, book, statement }.'],
+  ['fin.imprest_voucher.approved', 'An imprest voucher was approved and posted (part 23.06 FR-03): data { voucherId, docNo, imprestId, projectId, siteId, costCodeId, category, amount, gst, total }. Project costs read it.'],
+  ['fin.imprest.replenished', 'An imprest was replenished from the bank (part 23.06 FR-03): data { replenishmentId, docNo, imprestId, bankAccountId, amount, journalId }.'],
+  ['fin.contra.posted', 'A contra entry was posted (part 23.06 FR-04): data { contraId, docNo, kind, fromBankId, toBankId, fromImprestId, toImprestId, amount, date, journalId }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const csDecide = (outcome, kind) => (db, { instance, actor, comment }) => cashOf(db)?.[kind].decide(instance, actor, outcome, comment);
+const csHooks = (kind) => ({ onApproved: csDecide('APPROVED', kind), onRejected: csDecide('REJECTED', kind), onReturned: csDecide('RETURNED', kind), onCancelled: csDecide('CANCELLED', kind) });
+const csRow = (db, table, id) => db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(Number(id));
+workflowTypes.register({
+  docType: 'FIN_IMPREST_VOUCHER', label: 'Imprest voucher (above the custodian\'s band)', processOwner: 'ACCMGR', route: (id) => `/finance/imprest?voucher=${id}`,
+  describe(db, companyId, id) { const r = csRow(db, 'fin_imprest_vouchers', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.payee} ₹${(r.total_paise / 100).toFixed(2)} ${r.description}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = csRow(db, 'fin_imprest_vouchers', id); if (!r) return null; const photos = db.prepare("SELECT COUNT(*) AS n FROM core_files WHERE linked_entity = 'fin_imprest_vouchers' AND linked_id = ? AND deleted_at IS NULL").get(r.id).n; return { fields: [{ label: 'Payee', value: r.payee }, { label: 'For', value: `${r.category}: ${r.description}` }, { label: 'Amount and GST', value: `₹${(r.amount_paise / 100).toFixed(2)} + ₹${(r.gst_paise / 100).toFixed(2)}` }, { label: 'Bill photos', value: String(photos) }] }; },
+  defaultDefinition: { name: 'Imprest voucher above ₹10,000: the construction manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('CM', 'Construction manager', 'CM')] },
+  hooks: csHooks('vouchers'),
+});
+workflowTypes.register({
+  docType: 'FIN_IMPREST_REPL', label: 'Imprest replenishment', processOwner: 'ACCMGR', route: (id) => `/finance/imprest?replenishment=${id}`,
+  describe(db, companyId, id) { const r = csRow(db, 'fin_imprest_replenishments', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.vouchers_count} voucher(s) ₹${(r.amount_paise / 100).toFixed(2)}`, originator: r.requested_by, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = csRow(db, 'fin_imprest_replenishments', id); if (!r) return null; const i = csRow(db, 'fin_imprests', r.imprest_id); return { fields: [{ label: 'Imprest', value: `${i?.name ?? ''} (${i?.custodian ?? ''})` }, { label: 'Vouchers', value: String(r.vouchers_count) }, { label: 'Amount', value: `₹${(r.amount_paise / 100).toFixed(2)}` }, { label: 'Cash in hand now', value: `₹${((i?.balance_paise ?? 0) / 100).toFixed(2)} of ₹${((i?.limit_paise ?? 0) / 100).toFixed(2)}` }] }; },
+  defaultDefinition: { name: 'Imprest replenishment: the project manager, then the accounts manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('PM', 'Project manager', 'PM'), glStep('ACCMGR', 'Accounts manager', 'ACCMGR')] },
+  hooks: csHooks('replenishments'),
+});
+workflowTypes.register({
+  docType: 'FIN_CONTRA', label: 'Contra entry', processOwner: 'ACCMGR', route: (id) => `/finance/cash-position?contra=${id}`,
+  describe(db, companyId, id) { const r = csRow(db, 'fin_contras', id); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.contra_kind} ₹${(r.amount_paise / 100).toFixed(2)} ${r.purpose}`.slice(0, 300), originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = csRow(db, 'fin_contras', id); return r ? { fields: [{ label: 'Kind', value: r.contra_kind }, { label: 'Amount', value: `₹${(r.amount_paise / 100).toFixed(2)}` }, { label: 'Date', value: r.contra_date }, { label: 'Why', value: r.purpose }] } : null; },
+  defaultDefinition: { name: 'Contra entry: the accounts manager', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager', 'ACCMGR')] },
+  hooks: csHooks('contras'),
+});
+// the bill photo of an imprest voucher: seen by those who see the voucher, added by its custodian while it can be changed
+fileEntities.register({
+  entity: 'fin_imprest_vouchers', label: 'Imprest voucher (bill photo)',
+  resolve(db, actor, id) { const v = db.prepare('SELECT v.company_id, v.org_project_id, v.org_site_id, v.status, i.custodian FROM fin_imprest_vouchers v JOIN fin_imprests i ON i.id = v.imprest_id WHERE v.id = ? AND v.company_id = ? AND v.deleted_at IS NULL').get(Number(id), actor.companyId); if (!v) return null; const a = authzOf(db); const own = v.custodian === actor.user; return { companyId: v.company_id, projectId: v.org_project_id, siteId: v.org_site_id, canView: own || a.check(actor, 'fin.imprest_voucher.view', { companyId: v.company_id, projectId: v.org_project_id ?? undefined }).allowed, canEdit: own && ['DRAFT', 'RETURNED'].includes(v.status), locked: !['DRAFT', 'RETURNED'].includes(v.status) }; },
+});
+// FR-03 on the phone: a voucher typed without a connection is queued and made when the phone is back online; its bill photo follows the command
+registerOfflineForm({
+  code: 'imprest_voucher', label: 'Imprest voucher', labelHi: 'इम्प्रेस्ट वाउचर', module: '23.06', permission: 'fin.imprest_voucher.create', attachmentEntity: 'fin_imprest_vouchers',
+  fields: [{ key: 'imprestId', label: 'Imprest', type: 'number', required: true }, { key: 'date', label: 'Date', type: 'date', required: true }, { key: 'payee', label: 'Paid to', type: 'text', required: true }, { key: 'category', label: 'Category', type: 'text', required: true }, { key: 'description', label: 'For', type: 'text', required: true }, { key: 'amount', label: 'Amount', type: 'number', required: true }, { key: 'expenseAccountId', label: 'Expense head', type: 'number', required: true }],
+  validate(v) { const e = []; if (!(Number(v.amount) > 0)) e.push({ field: 'amount', message: 'Amount: more than nothing.' }); if (!v.payee) e.push({ field: 'payee', message: 'Paid to: who was paid.' }); if (!/^\d{4}-\d{2}-\d{2}$/.test(String(v.date ?? ''))) e.push({ field: 'date', message: 'Date: the day of the bill.' }); return e; },
+  create(db, actor, v, ctx) { const cs = cashOf(db); if (!cs) throw unprocessable('Cash and bank are not set up.'); const r = cs.vouchers.create(actor, { imprestId: Number(v.imprestId), date: v.date, payee: v.payee, category: v.category ?? 'SITE_EXPENSE', description: v.description, amount: String(v.amount), gst: v.gst != null ? String(v.gst) : undefined, expenseAccountId: Number(v.expenseAccountId), costCodeId: v.costCodeId ? Number(v.costCodeId) : null, clientRef: ctx?.clientRef ?? undefined, lat: ctx?.gps?.lat, lng: ctx?.gps?.lng }); return { entityId: r.id, version: r.version, projectId: r.projectId ?? null }; },
+  load(db, actor, id) { const r = db.prepare('SELECT * FROM fin_imprest_vouchers WHERE id = ? AND company_id = ?').get(Number(id), actor.companyId); return r ? { version: r.version, values: { imprestId: r.imprest_id, date: r.voucher_date, payee: r.payee, category: r.category, description: r.description, amount: r.amount_paise / 100 }, projectId: r.org_project_id } : null; },
+  update() { throw unprocessable('A voucher is changed on its page once it reached the server.'); },
+});
+for (const [type, label, perm, route] of [['ar_invoices', 'Receivable', 'fin.invoice.view', '/finance/receivables?id='], ['ar_receipts', 'Receipt', 'fin.receipt.view', '/finance/receivables?receipt=']]) objectTypes.register({
+  type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,
+  access(db, actor, id) { const r = db.prepare(`SELECT company_id, org_project_id FROM ${type} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); if (!r || !authzOf(db).check(actor, perm, { companyId: r.company_id, projectId: r.org_project_id ?? undefined }).allowed) return null; return { companyId: r.company_id, projectId: r.org_project_id ?? undefined }; },
+  auditEntities: (id) => [{ entity: type, id }],
+  summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
+  related: () => [],
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND (doc_no LIKE ?${type === 'ar_invoices' ? ' OR invoice_no LIKE ?' : ' OR reference LIKE ?'}) ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, `%${q}%`, limit).map((x) => x.id); },
+});
+for (const [type, label, perm, route] of [['pmt_proposals', 'Payment proposal', 'fin.proposal.view', '/finance/payment-proposals?id='], ['pmt_payments', 'Payment', 'fin.payment.view', '/finance/payments?id=']]) objectTypes.register({
+  type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,
+  access(db, actor, id) { if (!authzOf(db).check(actor, perm).allowed) return null; const r = db.prepare(`SELECT company_id FROM ${type} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); return r ? { companyId: r.company_id } : null; },
+  auditEntities: (id) => [{ entity: type, id }],
+  summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, ${type === 'pmt_payments' ? 'pay_status' : 'status'} AS status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
+  related: () => [],
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND (doc_no LIKE ?${type === 'pmt_payments' ? ' OR utr LIKE ? OR cheque_no LIKE ?' : ''}) ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, ...(type === 'pmt_payments' ? [`%${q}%`, `%${q}%`] : []), limit).map((x) => x.id); },
+});
+for (const [type, label, perm, route] of [['ap_bills', 'AP bill', 'fin.bill.view', '/finance/ap-bills?id='], ['ap_debit_notes', 'Debit note', 'fin.debit_note.view', '/finance/debit-notes?id=']]) objectTypes.register({
+  type, label, permission: perm, route: (id) => `${route}${id}`, attachmentEntity: type, approvalTarget: type,
+  access(db, actor, id) { if (!authzOf(db).check(actor, perm).allowed) return null; const r = db.prepare(`SELECT company_id, org_project_id FROM ${type} WHERE id = ? AND company_id = ? AND deleted_at IS NULL`).get(Number(id), actor.companyId); return r ? { companyId: r.company_id, projectId: r.org_project_id ?? undefined } : null; },
+  auditEntities: (id) => [{ entity: type, id }],
+  summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
+  related: () => [],
+  search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, limit).map((x) => x.id); },
 });

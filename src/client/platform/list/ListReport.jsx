@@ -36,8 +36,10 @@ const useMedia = (q) => {
 export function formatCell(col, value) {
   if (value === null || value === undefined || value === '') return '';
   if (typeof value === 'string' && /^•+$/.test(value)) return value; // masked
-  if (col.type === 'money') return formatNumberInput(value);
-  if (col.type === 'number') return formatNumberInput(value, { scale: 0 });
+  // an amount in rupees arrives as a JSON number (25000.75): the decimal helper takes a fractional value only as a string (part 23.01 found a list crashing on one)
+  const n = typeof value === 'number' ? String(value) : value;
+  if (col.type === 'money') return formatNumberInput(n);
+  if (col.type === 'number') return formatNumberInput(n, { scale: Number.isInteger(Number(value)) ? 0 : 2, trim: true });
   if (col.type === 'date') return formatBusinessDate(value);
   if (col.type === 'datetime') return formatDateTime(value);
   if (col.type === 'enum') return col.options?.find(([v]) => v === value)?.[1] ?? value;

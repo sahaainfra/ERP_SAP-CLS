@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS fin_contras;
+DROP TABLE IF EXISTS fin_cash_counts;
+DROP TABLE IF EXISTS fin_imprest_vouchers;
+DROP TABLE IF EXISTS fin_imprest_replenishments;
+DROP TABLE IF EXISTS fin_imprests;
+DROP TABLE IF EXISTS fin_bank_recons;
+DROP TABLE IF EXISTS fin_bank_statements;
+DROP TABLE IF EXISTS fin_bank_statement_imports;
+DROP TABLE IF EXISTS fin_bank_account_profiles;

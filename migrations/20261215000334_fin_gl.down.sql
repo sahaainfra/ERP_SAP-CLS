@@ -1,0 +1,9 @@
+DROP INDEX IF EXISTS ix_fin_recurring_due;
+DROP INDEX IF EXISTS ux_fin_recurring_doc;
+DROP TABLE IF EXISTS fin_recurring_journals;
+DROP INDEX IF EXISTS ix_fin_balances_account;
+DROP INDEX IF EXISTS ix_fin_balances_period;
+DROP INDEX IF EXISTS ux_fin_balances_key;
+DROP TABLE IF EXISTS fin_balances;
+DROP TABLE IF EXISTS fin_journal_lines;
+DROP TABLE IF EXISTS fin_journals;

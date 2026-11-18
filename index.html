@@ -14,7 +14,16 @@
     <title>Feature Flags - ERP</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Part 166.4 (D-683): a shell drawn by the HTML itself, before any script, so a phone on a slow network shows the frame of the
+         application at once instead of a blank page; React replaces it when the application starts. -->
+    <style>
+      .boot-shell { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #1C2530; background: #F4F6F8; min-height: 100vh; }
+      .boot-shell__bar { height: 56px; background: #1C2530; color: #fff; display: flex; align-items: center; padding: 0 16px; font-weight: 600; font-size: 18px; }
+      .boot-shell__body { padding: 24px 16px; }
+      .boot-shell__line { height: 14px; border-radius: 4px; background: #E3E8EE; margin: 12px 0; max-width: 520px; }
+      @media (prefers-color-scheme: dark) { .boot-shell { background: #11161C; color: #E6EAF0; } .boot-shell__line { background: #232B35; } }
+    </style>
+    <div id="root"><div class="boot-shell" data-boot-shell role="status" aria-live="polite"><div class="boot-shell__bar">ERP</div><div class="boot-shell__body"><p>Opening your workspace…</p><div class="boot-shell__line"></div><div class="boot-shell__line" style="max-width:360px"></div><div class="boot-shell__line" style="max-width:440px"></div></div></div></div>
     <script src="/boot-guard.js"></script>
     <script type="module" src="/src/client/main.jsx"></script>
   </body>

@@ -152,6 +152,16 @@
   "DOC",
   "PM"
  ],
+ "fin.bank.manage": [
+  "CFO"
+ ],
+ "fin.imprest.manage": [
+  "ACCMGR"
+ ],
+ "fin.recurring.manage": [
+  "ACCMGR",
+  "FINEX"
+ ],
  "hr.disciplinary.manage": [
   "HRMGR"
  ],

@@ -51,7 +51,7 @@ registerModule({
     { path: '/proc/item-params', label: 'Item Planning Parameters', icon: 'erp.group.supply', permission: 'proc.item_param.view', flag: 'ff.proc.p1502', Page: ItemParamsPage },
     { path: '/proc/rfqs', label: 'RFQs', icon: 'erp.group.supply', permission: 'proc.rfq.view', flag: 'ff.proc.p1503', Page: RfqsPage },
     { path: '/proc/rfq-new', label: 'Create RFQ from PRs', icon: 'erp.group.supply', permission: 'proc.rfq.create', flag: 'ff.proc.p1503', Page: RfqNewPage },
-    { path: '/proc/quotation-entry', label: 'Quotation Entry', icon: 'erp.group.supply', permission: 'proc.quotation.view', flag: 'ff.proc.p1503', Page: QuotationEntryPage },
+    { path: '/proc/quotation-entry', label: 'Quotation Entry', icon: 'erp.group.supply', permission: 'proc.quotation.create', flag: 'ff.proc.p1503', Page: QuotationEntryPage },
     { path: '/proc/comparative-statements', label: 'Comparative Statements', icon: 'erp.group.supply', permission: 'proc.comparative_statement.view', flag: 'ff.proc.p1504', Page: ComparativeStatementsPage },
     { path: '/proc/purchase-orders', label: 'Purchase Orders', icon: 'erp.group.supply', permission: 'proc.purchase_order.view', flag: 'ff.proc.p1505', Page: PurchaseOrdersPage },
     { path: '/proc/po-new', label: 'Create Purchase Order', icon: 'erp.group.supply', permission: 'proc.purchase_order.create', flag: 'ff.proc.p1505', Page: PoNewPage },

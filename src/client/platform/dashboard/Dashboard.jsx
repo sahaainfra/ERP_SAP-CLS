@@ -124,7 +124,8 @@ function WidgetFrame({ item, widget, filters, presets, edit, index, count, onCha
 }
 
 const useWidth = (ref) => {
-  const [w, setW] = useState(1280);
+  // the first frame takes the window's width (a phone draws the phone layout at once, not the desktop's and then the phone's: layout shift, 166.4)
+  const [w, setW] = useState(() => (typeof window === 'undefined' ? 1280 : Math.max(320, Math.round(window.innerWidth))));
   useEffect(() => {
     if (!ref.current || typeof ResizeObserver === 'undefined') return undefined;
     const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width)));
@@ -154,7 +155,7 @@ export function DashboardGrid({ layout, catalogue, filters, presets, edit = fals
         const widget = byCode.get(item.widget);
         if (!widget) return null;
         return (
-          <div key={item.id} className="dash-cell" style={{ gridColumn: `span ${spanAt(item, width)}`, gridRow: width < 600 ? 'auto' : `span ${item.h}` }}>
+          <div key={item.id} className="dash-cell" style={{ gridColumn: `span ${spanAt(item, width)}`, gridRow: width < 600 ? 'auto' : `span ${item.h}`, ...(width < 600 ? { minHeight: `${item.h * 150 + (item.h - 1) * 16}px` } : {}) }}>
             <WidgetFrame item={item} widget={widget} filters={filters} presets={presets} edit={edit} index={i} count={layout.length} layout={layout} onChange={onChange} onDrill={onDrill} drag={drag} />
           </div>
         );
