@@ -20862,6 +20862,94 @@ Indexes:
 - ux_perf_reviews_person (unique): cycle_id, employee_id
 - ux_perf_reviews_doc (unique): company_id, doc_no
 
+## pl_snapshots
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| lines_json | TEXT | yes |  | '[]' |
+| revenue_paise | INTEGER | yes |  | 0 |
+| gross_profit_paise | INTEGER | yes |  | 0 |
+| operating_profit_paise | INTEGER | yes |  | 0 |
+| revenue_cum_paise | INTEGER | yes |  | 0 |
+| operating_profit_cum_paise | INTEGER | yes |  | 0 |
+| gl_total_paise | INTEGER | yes |  | 0 |
+| pl_total_paise | INTEGER | yes |  | 0 |
+| gl_lines_count | INTEGER | yes |  | 0 |
+| gl_max_line_id | INTEGER | yes |  | 0 |
+| budget_json | TEXT | yes |  | '{}' |
+| forecast_json | TEXT | yes |  | '{}' |
+| frozen_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> pl_snapshots(id), period_id -> core_periods(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pl_snapshots_amends: amends_id
+- ix_pl_snapshots_wf: workflow_instance_id
+- ix_pl_snapshots_period: period_id
+- ix_pl_snapshots_project: org_project_id, period, status
+- ix_pl_snapshots_list: company_id, period, status
+- ux_pl_snapshots_open (unique): org_project_id, period
+- ux_pl_snapshots_doc (unique): company_id, doc_no
+
+## pl_structure
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| line_code | TEXT | yes |  |  |
+| name | TEXT | yes |  |  |
+| line_type | TEXT | yes |  |  |
+| mapping_json | TEXT | yes |  | '{}' |
+| catch_all | INTEGER | yes |  | 0 |
+| overhead | INTEGER | yes |  | 0 |
+| sort | INTEGER | yes |  | 0 |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_pl_structure_company: company_id, sort
+- ux_pl_structure_line (unique): , line_code
+
 ## plan_activities
 
 | Column | Type | Not null | Key | Default |

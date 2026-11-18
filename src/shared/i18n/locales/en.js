@@ -31,6 +31,7 @@ import gst from './en/gst.js';
 import fa from './en/fa.js';
 import pa from './en/pa.js';
 import fc from './en/fc.js';
+import pl from './en/pl.js';
 
 // One file per area (part 166.4, D-682): the server and the tests read the whole text here; the screens fetch an area when a page first needs it.
 export default {
@@ -64,6 +65,7 @@ export default {
   cash: cash,
   gst: gst,
   fa: fa,
+  pl: pl,
   fc: fc,
   pa: pa,
 };

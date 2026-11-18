@@ -119,6 +119,8 @@ export function createProjectPlService({ db, base, flags }) {
   const money = (lines) => lines.map((l) => ({ ...l, amount: l.amount == null ? null : rs(l.amount) }));
   const projectOk = (actor, projectId, key, what) => { const p = projOf(projectId); if (!p || p.company_id !== actor.companyId) throw notFound('That project does not exist.'); need(actor, key, what, p.id); return p; };
   const pl = {
+    /** The projects whose P&L the actor may see (for the picker). */
+    projects(actor) { need(actor, 'fin.pl.view', 'see the project P&L'); return db.prepare("SELECT id, code, name FROM org_projects WHERE company_id = ? AND deleted_at IS NULL ORDER BY code LIMIT 500").all(actor.companyId).filter((p) => may(actor, 'fin.pl.view', p.id)).map((p) => ({ projectId: p.id, project: `${p.code} ${p.name}` })); },
     /** FR-02, FR-03: the P&L of a project: the month, to date (life of the project), budget and forecast side by side, with the frozen snapshot if any. */
     project(actor, { projectId, period }) {
       const p = projectOk(actor, projectId, 'fin.pl.view', 'see the project P&L'); const c = actor.companyId; const lm = lineMap(c); const end = monthEnd(period);

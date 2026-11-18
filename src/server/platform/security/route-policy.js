@@ -3296,6 +3296,7 @@ export const ROUTE_POLICY = [
   { m: 'GET', p: '/api/v1/fin/forecast-reports/trend', g: 'permission', k: 'fin.forecast.view', s: 'parseProjectQuery', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/forecast-reports/variance', g: 'permission', k: 'fin.forecast.view', s: 'parsePeriod', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/project-pl', g: 'permission', k: 'fin.pl.view', s: 'parseProjectPl', scope: 'company', rate: 'read', audit: false },
+  { m: 'GET', p: '/api/v1/fin/project-pl/projects', g: 'permission', k: 'fin.pl.view', s: null, scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/project-pl/drill', g: 'permission', k: 'fin.pl.view', s: 'parsePlDrill', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/profitability', g: 'permission', k: 'fin.pl.view', s: 'parseDateRange', scope: 'company', rate: 'read', audit: false },
   { m: 'GET', p: '/api/v1/fin/pl-structure', g: 'permission', k: 'fin.pl.view', s: null, scope: 'company', rate: 'read', audit: false },

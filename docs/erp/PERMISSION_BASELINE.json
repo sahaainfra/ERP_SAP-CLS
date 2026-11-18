@@ -161,6 +161,10 @@
  "fin.imprest.manage": [
   "ACCMGR"
  ],
+ "fin.pl.configure": [
+  "ACCMGR",
+  "CFO"
+ ],
  "fin.recurring.manage": [
   "ACCMGR",
   "FINEX"

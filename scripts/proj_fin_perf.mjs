@@ -11,6 +11,7 @@ import { bindFin, createFinService } from '../src/server/modules/fin/service.js'
 import { createGlService } from '../src/server/modules/fin/gl.js';
 import { createProjectAccountingService } from '../src/server/modules/fin/projacct.js';
 import { createCostForecastService } from '../src/server/modules/fin/costforecast.js';
+import { createProjectPlService } from '../src/server/modules/fin/projectpl.js';
 
 const args = process.argv.slice(2);
 const queries = Number(args.includes('--queries') ? args[args.indexOf('--queries') + 1] : 30);
@@ -74,6 +75,14 @@ let made = null; time('a forecast prepared from 200 facts (save)', 800, (i) => {
 time('one forecast with 200 lines and its bridge', 300, () => cf.forecasts.get(pcm, made.id));
 time('forecast variance of all projects (100 000 forecasts)', 500, () => cf.reports.variance(pcm, { period: '2066-12' }), 10);
 time('EAC trend of a project', 500, (i) => cf.reports.trend(pcm, { projectId: projects[i % 50] }));
+// 23.12: the P&L over the 100 000 journal lines; 100 000 snapshots
+const ps = createProjectPlService({ db, base, flags }); const cfo = { user: 'cfo', roles: ['CFO'], companyId: 1 };
+db.exec('BEGIN'); const insS = db.prepare("INSERT INTO pl_snapshots (company_id, doc_no, org_project_id, period, revenue_paise, status, created_by) VALUES (1, ?, ?, ?, 100000, 'APPROVED', 'perf')");
+for (let i = 0; i < 100_000; i += 1) { const k = Math.floor(i / 50); insS.run(`PLS/${i}`, projects[i % 50], `${1900 + Math.floor(k / 12)}-${String(1 + (k % 12)).padStart(2, '0')}`); } db.exec('COMMIT'); db.exec('ANALYZE');
+time('project P&L of a month (month, year, to date, budget, forecast, 6-month trend)', 500, (i) => ps.pl.project(cfo, { projectId: projects[i % 50], period: '2026-10' }));
+time('profitability of the year, 50 projects (100 000 journal lines)', 500, () => ps.portfolio(cfo, { from: '2026-04-01', to: '2027-03-31' }), 10);
+time('P&L snapshot list, first page (100 000)', 500, () => ps.snapshots.list(cfo, {}));
+time('drill-down of a P&L line', 500, (i) => ps.pl.drill(cfo, { projectId: projects[i % 50], line: 'MATERIAL', from: '2026-04-01', to: '2026-10-31' }));
 const plan = (label, sql) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all()) console.log(`    ${r.detail}`); };
 plan('ledger of a project to a date', "SELECT a.id, SUM(l.debit_paise) FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id JOIN fin_accounts a ON a.id = l.account_id WHERE j.company_id = 1 AND l.project_id = 5 AND j.status = 'APPROVED' AND j.deleted_at IS NULL AND l.deleted_at IS NULL AND j.voucher_date <= '2026-10-31' GROUP BY a.id");
 plan('recognitions of a month', "SELECT x.* FROM pa_revenue_recognition x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.period = '2026-10' ORDER BY x.period DESC LIMIT 25");

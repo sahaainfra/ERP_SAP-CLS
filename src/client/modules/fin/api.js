@@ -286,3 +286,17 @@ export const fc = {
   trend: (f) => glget(`/forecast-reports/trend?${q(f)}`),
   variance: (f) => glget(`/forecast-reports/variance?${q(f)}`),
 };
+
+// ---- part 23.12: project P&L ----
+export const pl = {
+  projects: () => glget('/project-pl/projects'),
+  project: (f) => glget(`/project-pl?${q(f)}`),
+  drill: (f) => glget(`/project-pl/drill?${q(f)}`),
+  portfolio: (f) => glget(`/profitability?${q(f)}`),
+  structure: () => glget('/pl-structure'),
+  setLine: async (code, b) => (await api.put(`/fin/pl-structure/${code}`, b, idem())).data,
+  snapshots: (f) => glget(`/pl-snapshots?${q(f)}`),
+  snapshot: (id) => glget(`/pl-snapshots/${id}`),
+  createSnapshot: async (b) => (await api.post('/fin/pl-snapshots', b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/pl-snapshots/${id}/${action}`, b ?? {}, idem())).data,
+};

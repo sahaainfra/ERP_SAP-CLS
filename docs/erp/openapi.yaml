@@ -10181,3 +10181,73 @@ paths:
     get:
       summary: "cost forecast: forecast against budget of every project to a month { period } (part 23.11; fin.forecast.view)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-pl:
+    get:
+      summary: "project P&L: the P&L of a project { projectId, period }: month, year, to date, budget, forecast, trend, reconciliation (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-pl/projects:
+    get:
+      summary: "project P&L: the projects whose P&L the caller may see (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-pl/drill:
+    get:
+      summary: "project P&L: journal lines behind a P&L line { projectId, line, from, to } (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/profitability:
+    get:
+      summary: "project P&L: the portfolio { from, to }: ranking, sector, region, client, loss-making (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-structure:
+    get:
+      summary: "project P&L: the P&L structure and the accounts each line takes (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-structure/{code}:
+    put:
+      summary: "project P&L: the accounts and groups of a line { name?, accounts, groups } (part 23.12; fin.pl.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots:
+    get:
+      summary: "project P&L: list (part 23.12; fin.pl_snapshot.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "project P&L: make the snapshot of a month { projectId, period } (part 23.12; fin.pl_snapshot.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/export:
+    get:
+      summary: "project P&L: CSV (part 23.12; fin.pl_snapshot.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}:
+    get:
+      summary: "project P&L: one snapshot (part 23.12; fin.pl_snapshot.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "project P&L: delete a draft (part 23.12; fin.pl_snapshot.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/recompute:
+    post:
+      summary: "project P&L: work a draft out again (part 23.12; fin.pl_snapshot.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/submit:
+    post:
+      summary: "project P&L: send to be frozen (ACCMGR when someone else made it, then CFO) (part 23.12; fin.pl_snapshot.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/withdraw:
+    post:
+      summary: "project P&L: withdraw (part 23.12; fin.pl_snapshot.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/cancel:
+    post:
+      summary: "project P&L: cancel (part 23.12; fin.pl_snapshot.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/amend:
+    post:
+      summary: "project P&L: a new snapshot that supersedes a frozen one (part 23.12; fin.pl_snapshot.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/history:
+    get:
+      summary: "project P&L: history (part 23.12; fin.pl_snapshot.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/print:
+    get:
+      summary: "project P&L: PDF (part 23.12; fin.pl_snapshot.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

@@ -11,6 +11,7 @@ export function projectPlRoutes(ps, { idempotent, idempotentRequired, flags }) {
   r.use(['/project-pl', '/pl-structure', '/pl-snapshots', '/profitability'], (req, _res, next) => (flags.isOn(req.actor, 'ff.fin.p2312') ? next() : next(notFound('The project P&L is not enabled for your company yet (feature flag ff.fin.p2312 is OFF).'))));
   const { structure: st, pl, snapshots: s } = ps;
   r.get('/project-pl', (req, res) => ok(res, pl.project(req.actor, parseProjectPl(req.query))));
+  r.get('/project-pl/projects', (req, res) => ok(res, pl.projects(req.actor)));
   r.get('/project-pl/drill', (req, res) => ok(res, pl.drill(req.actor, parsePlDrill(req.query))));
   r.get('/profitability', (req, res) => ok(res, ps.portfolio(req.actor, parseDateRange(req.query))));
   r.get('/pl-structure', (req, res) => ok(res, st.get(req.actor)));

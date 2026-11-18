@@ -35,6 +35,8 @@ const RevenueRecognitionPage = lazyPage(() => import('./ProjectAccountingPages.j
 const ProjectAccountsPage = lazyPage(() => import('./ProjectAccountingPages.jsx'), 'ProjectAccountsPage');
 const ForecastWorkbenchPage = lazyPage(() => import('./ForecastPages.jsx'), 'ForecastWorkbenchPage');
 const ForecastReportsPage = lazyPage(() => import('./ForecastPages.jsx'), 'ForecastReportsPage');
+const ProjectPlPage = lazyPage(() => import('./PlPages.jsx'), 'ProjectPlPage');
+const ProfitabilityPage = lazyPage(() => import('./PlPages.jsx'), 'ProfitabilityPage');
 const AssetAccountingPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetAccountingPage');
 const GstSettingsPage = lazyPage(() => import('./GstPages.jsx'), 'GstSettingsPage');
 
@@ -87,6 +89,8 @@ registerModule({
     { path: '/finance/project-accounts', label: 'Project Trial Balance & WIP', labelHi: 'परियोजना तलपट व WIP', icon: 'erp.action.history', permission: 'fin.project_ledger.view', flag: 'ff.fin.p2310', Page: ProjectAccountsPage },
     { path: '/finance/cost-forecasts', label: 'Forecast Workbench', labelHi: 'पूर्वानुमान कार्यक्षेत्र', icon: 'erp.action.history', permission: 'fin.forecast.view', flag: 'ff.fin.p2311', Page: ForecastWorkbenchPage },
     { path: '/finance/forecast-reports', label: 'EAC Trend & Forecast Variance', labelHi: 'EAC प्रवृत्ति व पूर्वानुमान अंतर', icon: 'erp.action.history', permission: 'fin.forecast.view', flag: 'ff.fin.p2311', Page: ForecastReportsPage },
+    { path: '/finance/project-pl', label: 'Project P&L', labelHi: 'परियोजना लाभ-हानि', icon: 'erp.action.history', permission: 'fin.pl.view', flag: 'ff.fin.p2312', Page: ProjectPlPage },
+    { path: '/finance/profitability', label: 'Profitability Overview', labelHi: 'लाभप्रदता अवलोकन', icon: 'erp.action.history', permission: 'fin.pl.view', flag: 'ff.fin.p2312', Page: ProfitabilityPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });
