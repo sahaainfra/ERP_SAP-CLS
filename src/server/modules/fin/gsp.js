@@ -80,6 +80,10 @@ export function einvoiceProblems(j) {
 }
 
 /** The sandbox IRP and e-way bill system. State lives with the provider registry of the database (one per application). */
+// D-735: GSTR-2B as the sandbox gives it, by GSTIN and return period (MMYYYY); set for training and tests (empty when nothing is set).
+const SANDBOX_2B = new Map();
+/** @param {string} gstin @param {string} rtnprd MMYYYY @param {any} docdata GSTN's docdata { b2b, cdnr } */
+export const seedSandbox2b = (gstin, rtnprd, docdata) => SANDBOX_2B.set(`${gstin}|${rtnprd}`, docdata);
 export function sandboxGsp({ now = () => Date.now() } = {}) {
   const irns = new Map(); // IRN -> { ackNo, ackDt, cancelled }
   const ewbs = new Map(); // EWB number -> { at, validUpto, cancelled, docKey }
@@ -146,6 +150,10 @@ export function sandboxGsp({ now = () => Date.now() } = {}) {
           x.validUpto = next; return { httpStatus: 200, data: { validUpto: next, updatedDate: istStamp(now()), sandbox: true } };
         },
       },
+      get2b: {
+        validate: (p) => (p && !gstinProblem(String(p.gstin ?? '')) && /^(0[1-9]|1[0-2])\d{4}$/.test(String(p.rtnprd ?? '')) ? [] : [{ field: 'rtnprd', message: 'Give the GSTIN and the return period (MMYYYY).' }]),
+        async run(_ctx, p) { const doc = SANDBOX_2B.get(`${p.gstin}|${p.rtnprd}`) ?? { b2b: [], cdnr: [] }; return { httpStatus: 200, data: { data: { gstin: p.gstin, rtnprd: p.rtnprd, gendt: istDate(now()).split('-').reverse().join('-'), docdata: doc }, Sandbox: true } }; },
+      },
       cancelEwb: {
         validate: (p) => (p && /^\d{12}$/.test(String(p.ewbNo)) && ['1', '2', '3', '4'].includes(String(p.cancelRsnCode)) ? [] : [{ field: 'cancelRsnCode', message: 'Give the e-way bill number and a reason (1 to 4).' }]),
         async run(_ctx, p) { const x = ewbs.get(String(p.ewbNo)); if (!x) throw refuse('312', 'The e-way bill does not exist.'); if (x.cancelled) throw refuse('315', 'The e-way bill is already cancelled.'); if (now() - x.at > (p.cancelHours ?? 24) * 3600_000) throw refuse('315', 'An e-way bill is cancelled within 24 hours of its generation.'); x.cancelled = true; return { httpStatus: 200, data: { ewayBillNo: p.ewbNo, cancelDate: istStamp(now()), sandbox: true } }; },
@@ -175,6 +183,7 @@ export function httpGsp() {
       updatePartB: op('partBPath', '/ewaybill/v1.03/ewayapi/vehewb'),
       extendEwb: op('extendPath', '/ewaybill/v1.03/ewayapi/extendvalidity'),
       cancelEwb: op('cancelEwbPath', '/ewaybill/v1.03/ewayapi/canewb'),
+      get2b: { run: (ctx, p) => httpJson(ctx, { method: 'GET', path: `${path(ctx, 'gstr2bPath', '/gstr2b/v1.0/get')}?gstin=${encodeURIComponent(p.gstin)}&rtnprd=${encodeURIComponent(p.rtnprd)}`, headers: headers(ctx) }) }, // D-735
     },
     health: async (ctx) => { const out = await httpJson(ctx, { method: 'GET', path: ctx.config.healthPath || '/health', headers: headers(ctx) }); return { message: `GSP answered HTTP ${out.httpStatus}.` }; },
   };

@@ -3,6 +3,7 @@ import { transaction } from '../../platform/db/index.js';
 import { publishEvent } from '../../platform/events/index.js';
 import { toPdf } from '../../platform/export/index.js';
 import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../platform/http/errors.js';
+import { integrationsOf } from '../../platform/integrations/index.js';
 import { createParameterStore, parameterRegistry } from '../../platform/parameters/index.js';
 import { toCsv } from '../../platform/security/csv.js';
 import { todayIST } from '../../../shared/dates.js';
@@ -141,13 +142,21 @@ export function createGstReconService({ db, base, gl, flags, gst = () => null })
       can: { manage: l.match_status !== 'MATCHED' && may(actor, 'fin.gst_recon.manage') } }; };
 
   const recon = {
+    /** D-735: GSTR-2B fetched from the GSP of the GST settings (operation get2b), then imported as its JSON. */
+    async importFromGsp(actor, b) {
+      need(actor, 'fin.gst_recon.import', 'import GSTR-2B'); const c = actor.companyId; const s = gst()?.settingsOn(c); if (!s?.gsp_connector_code) throw unprocessable('No GSP connector is set in the GST settings: import the 2B file instead.');
+      const gstin = (b.gstin ?? gst()?.ownGstins(c)?.[0]?.gstin ?? '').toUpperCase(); if (!gstin) throw unprocessable('The company has no GSTIN (Company settings).'); const rtnprd = `${b.period.slice(5, 7)}${b.period.slice(0, 4)}`;
+      let out; try { out = await integrationsOf(db).hub.call(s.gsp_connector_code, 'get2b', { gstin, rtnprd }, { companyId: c, actor, idempotencyKey: `2b-${c}-${gstin}-${rtnprd}-${Date.now()}` }); } catch (x) { throw unprocessable(`The GSP did not give GSTR-2B of ${b.period}: ${x?.message ?? x}`); }
+      const d = out?.data ?? {}; const content = JSON.stringify(d.data ?? d);
+      return recon.import(actor, { ...b, gstin, format: 'JSON', content, fileName: `GSTR-2B ${gstin} ${rtnprd} (GSP ${s.gsp_connector_code})`, via: 'GSP' });
+    },
     import(actor, b) {
       need(actor, 'fin.gst_recon.import', 'import GSTR-2B'); const c = actor.companyId;
-      let lines; if (b.format === 'GSP') { const s = gst()?.settingsOn(c); if (!s?.gsp_connector_code) throw unprocessable('No GSP connector is set in the GST settings: import the 2B file instead.'); throw unprocessable('The GSP does not offer GSTR-2B through this connector yet (D-735): download the 2B JSON from the portal and import it.'); }
-      lines = parse2b(b.content, b.format);
+      if (b.format === 'GSP') throw unprocessable('Fetch it from the GSP through importFromGsp.');
+      const lines = parse2b(b.content, b.format);
       const gstin = (b.gstin ?? gst()?.ownGstins(c)?.[0]?.gstin ?? '').toUpperCase(); if (!gstin) throw unprocessable('The company has no GSTIN (Company settings).');
       return transaction(db, () => {
-        const imp = Number(db.prepare('INSERT INTO gst_2b_imports (company_id, doc_no, period, gstin, file_name, file_format, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)').run(c, docNo(c, 'gst_2b_imports', '2B'), b.period, gstin, b.fileName, b.format, actor.user).lastInsertRowid);
+        const imp = Number(db.prepare('INSERT INTO gst_2b_imports (company_id, doc_no, period, gstin, file_name, file_format, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)').run(c, docNo(c, 'gst_2b_imports', '2B'), b.period, gstin, b.fileName, b.via === 'GSP' ? 'GSP' : b.format, actor.user).lastInsertRowid);
         let added = 0; let dup = 0; const ins = db.prepare('INSERT OR IGNORE INTO gst_2b_lines (company_id, import_id, period, line_hash, supplier_gstin, supplier_name, doc_type, invoice_no, invoice_date, pos, reverse_charge, rate_pct, taxable_paise, igst_paise, cgst_paise, sgst_paise, cess_paise, itc_available, created_by, source_type, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         for (const l of lines) { const h = createHash('sha256').update([gstin, l.gstin, l.type, normNo(l.no), l.date].join('|')).digest('hex'); const r = ins.run(c, imp, b.period, h, l.gstin, l.name, l.type, l.no, l.date, l.pos, l.rcm, l.rate, l.taxable, l.igst, l.cgst, l.sgst, l.cess, l.itc, actor.user, 'gst_2b_imports', String(imp)); if (r.changes) added += 1; else dup += 1; }
         db.prepare('UPDATE gst_2b_imports SET lines_count = ?, duplicates_count = ? WHERE id = ?').run(added, dup, imp); audit(actor, 'gst_2b_imports', imp, 'import', c, { reason: `${added} line(s), ${dup} already imported` });

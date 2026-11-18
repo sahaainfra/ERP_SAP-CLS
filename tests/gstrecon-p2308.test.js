@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { ready as qaReady, as, fill, key, U as QU } from './qa-helpers.js';
 import { gstinCheckChar } from '../src/shared/gst.js';
 import { normNo, parse2b } from '../src/server/modules/fin/gstrecon.js';
+import { seedSandbox2b } from '../src/server/modules/fin/gsp.js';
 
 // Part 23.08: GST reconciliation, ITC review and TDS compliance.
 //  T-01 the matching categories are right for seeded mismatches: matched (number written differently), amount, date and number differences, missing in the books,
@@ -151,4 +152,17 @@ test('D-738 ITC reversed for an unpaid vendor is claimed again once paid; GSTR-3
   const again = await w.call(U.acc, 'POST', '/itc-reviews', { period: '2026-09' }); assert.equal(again.status, 201); assert.equal(again.json.data.lines.find((l) => l.billId === paid), undefined, 'a review of an earlier month made later does not claim it twice');
   // September: nothing to report and no return filed by 20 October: a nil return late fee of ₹10 a day a head up to ₹250
   const sep = (await w.call(U.acc, 'GET', '/gst-returns?period=2026-08')).json.data.gstr3b; assert.equal(sep.dueDate, '2026-09-20'); assert.ok(sep.daysLate >= 59); assert.equal(sep.lateFee.nil, true); assert.equal(sep.lateFee.total, 500); assert.equal(sep.interest.amount, 0);
+});
+
+test('D-735 GSTR-2B fetched from the GSP of the GST settings and matched', async () => {
+  const w = await world(); const d = w.d;
+  assert.equal((await w.call(U.acc, 'POST', '/gst-recon/import', { period: '2026-10', fileName: 'gsp', format: 'GSP' })).status, 422, 'no GSP connector in the GST settings yet');
+  d.prepare("INSERT INTO core_connectors (company_id, code, name, type, provider, environment, config_json, status, max_retries) VALUES (1, 'GSP-SBX', 'GST sandbox', 'gsp', 'sandbox', 'development', '{}', 'ENABLED', 0)").run();
+  const st = await w.call(U.acc, 'POST', '/gst/settings', { effectiveFrom: '2025-01-01', aato: '1200000000', einvoiceEnabled: true, ewayEnabled: true, gspConnector: 'GSP-SBX', gspMode: 'SANDBOX', changeNote: '2B through the sandbox GSP' }); assert.equal(st.status, 201, JSON.stringify(st.json));
+  assert.equal((await w.call(U.acc, 'POST', `/gst/settings/${st.json.data.id}/submit`)).status, 202); assert.equal((await w.act(U.cfo, w.wf('gst_settings', st.json.data.id))).status, 200);
+  const b1 = w.bill(w.v1, 'INV/9001', '2026-10-05', 100000, 18000);
+  seedSandbox2b(OWN, '102026', { b2b: [{ ctin: V1, trdnm: 'Deccan', inv: [{ inum: 'INV/9001', dt: '05-10-2026', val: 118000, pos: '36', rev: 'N', typ: 'R', itcavl: 'Y', items: [{ rt: 18, txval: 100000, igst: 0, cgst: 9000, sgst: 9000, cess: 0 }] }] }] });
+  const im = await w.call(U.acc, 'POST', '/gst-recon/import', { period: '2026-10', fileName: 'gsp', format: 'GSP' }); assert.equal(im.status, 201, JSON.stringify(im.json)); assert.equal(im.json.data.lines, 1); assert.equal(im.json.data.counts.matched ?? im.json.data.counts.MATCHED, 1);
+  const row = d.prepare('SELECT file_format, file_name FROM gst_2b_imports WHERE id = ?').get(im.json.data.importId); assert.equal(row.file_format, 'GSP'); assert.match(row.file_name, /GSP-SBX/);
+  assert.equal(d.prepare('SELECT matched_bill_id FROM gst_2b_lines WHERE import_id = ?').get(im.json.data.importId).matched_bill_id, b1);
 });

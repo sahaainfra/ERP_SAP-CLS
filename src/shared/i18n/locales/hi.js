@@ -14165,6 +14165,7 @@ export default {
     "rec.books": "खाते",
     "rec.c.mismatch": "अंतर",
     "rec.choose": "2बी फ़ाइल चुनें",
+    "rec.fromGsp": "GSP से प्राप्त करें",
     "rec.diff": "अंतर",
     "rec.export": "निर्यात",
     "rec.followed": "विक्रेता से पूछा गया।",

@@ -45,6 +45,7 @@ export default {
   "rec.period": "Month",
   "rec.importIntro": "Import the GSTR-2B of the month (the JSON from the GST portal or a CSV export). A document already imported is not taken twice; the matching runs at once.",
   "rec.choose": "Choose the 2B file",
+  "rec.fromGsp": "Fetch from the GSP",
   "rec.import": "Import and match",
   "rec.imported": "Imported and matched.",
   "rec.rematch": "Match again",

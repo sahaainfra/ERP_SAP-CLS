@@ -10,7 +10,7 @@ export function gstReconRoutes(gr, { idempotent, idempotentRequired, flags }) {
   const pid = (req) => parseId(req.params.id);
   r.use(['/gst-recon', '/itc-reviews', '/gst-returns', '/tds-returns', '/tcs-returns', '/compliance-calendar'], (req, _res, next) => (flags.isOn(req.actor, 'ff.fin.p2308') ? next() : next(notFound('GST reconciliation and TDS compliance are not enabled for your company yet (feature flag ff.fin.p2308 is OFF).'))));
   const { recon: x, reviews: v, returns: g, tds: t } = gr;
-  r.post('/gst-recon/import', idempotentRequired, (req, res) => ok(res, x.import(req.actor, parse2bImport(req.body)), 201));
+  r.post('/gst-recon/import', idempotentRequired, async (req, res) => { const b = parse2bImport(req.body); ok(res, b.format === 'GSP' ? await x.importFromGsp(req.actor, b) : x.import(req.actor, b), 201); });
   r.post('/gst-recon/rematch', idempotentRequired, (req, res) => ok(res, x.rematch(req.actor, parsePeriod(req.body))));
   r.get('/gst-recon/export', (req, res) => file(res, x.exportCsv(req.actor, parsePeriod(req.query))));
   r.get('/gst-recon', (req, res) => ok(res, x.worklist(req.actor, parseWorklist2b(req.query))));
