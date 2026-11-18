@@ -11,6 +11,7 @@ import { bindFin, createFinService } from '../src/server/modules/fin/service.js'
 import { createGlService } from '../src/server/modules/fin/gl.js';
 import { createPostingService } from '../src/server/modules/fin/posting.js';
 import { createApService } from '../src/server/modules/fin/ap.js';
+import { createPaymentService } from '../src/server/modules/fin/payments.js';
 
 const args = process.argv.slice(2);
 const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
@@ -100,11 +101,36 @@ time('vendor ledger (200 bills)', 500, (i) => apSvc.vendorLedger(acc, { partnerI
 time('payables ageing (100 000 bills)', 800, () => apSvc.ageing(acc, { asOf: '2027-01-31' }), 10);
 time('MSME due report', 500, () => apSvc.msmeReport(acc, { asOf: '2026-12-31' }));
 
+// part 23.04 §14: a bank account, 1 000 released proposals of 100 lines (100 000 lines and 100 000 payments, half confirmed with a UTR), then the lists, a payment, a run, the candidates, the cheque register
+console.log('\nFilling 100 000 payments...');
+db.exec('BEGIN');
+const bankAcc = Number(db.prepare("INSERT INTO fin_bank_accounts (company_id, code, name, bank_name, ifsc, account_no_enc, account_last4, gl_account_id, file_format, cheque_next_no, cheque_last_no, created_by) VALUES (1, 'HDFC-CA', 'HDFC current', 'HDFC Bank', 'HDFC0000001', 'v1.x.x.x', '5678', ?, 'GENERIC_CSV', 100001, 900000, 'perf')").run(bank).lastInsertRowid);
+const insPr = db.prepare("INSERT INTO pmt_proposals (company_id, doc_no, bank_account_id, pay_mode, pay_date, total_paise, lines_count, run_status, released_by, released_at, status, requested_by, approved_by, created_by) VALUES (1, ?, ?, ?, ?, ?, 100, 'RELEASED', 'cfo', ?, 'APPROVED', 'fin', 'acc', 'perf')");
+const insPl = db.prepare("INSERT INTO pmt_proposal_lines (company_id, proposal_id, line_no, line_kind, ap_bill_id, partner_id, payee_name, amount_paise, line_status, created_by) VALUES (1, ?, ?, 'BILL', ?, ?, ?, ?, ?, 'perf')");
+const insPay = db.prepare("INSERT INTO pmt_payments (company_id, doc_no, proposal_id, line_id, partner_id, payee_name, pay_mode, bank_account_id, amount_paise, utr, cheque_no, released_on, paid_on, pay_status, created_by) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'perf')");
+for (let k = 0; k < 1000; k += 1) {
+  const mode = k % 10 === 0 ? 'CHEQUE' : 'NEFT'; const date = `2026-${String(4 + (k % 8)).padStart(2, '0')}-${String(1 + (k % 27)).padStart(2, '0')}`;
+  const pr = Number(insPr.run(`PP/${String(k + 1).padStart(6, '0')}`, bankAcc, mode, date, 100 * 50_000, `${date}T10:00:00.000Z`).lastInsertRowid);
+  for (let j = 0; j < 100; j += 1) { const i = k * 100 + j; const v = vendors[i % 500]; const paid = i % 2 === 0; const l = Number(insPl.run(pr, j + 1, i + 1, v, `Vendor ${(i % 500) + 1}`, 50_000, paid ? 'PAID' : 'RELEASED').lastInsertRowid);
+    insPay.run(`PAY/${String(i + 1).padStart(6, '0')}`, pr, l, v, `Vendor ${(i % 500) + 1}`, mode, bankAcc, 50_000, paid && mode !== 'CHEQUE' ? `UTR${String(i).padStart(12, '0')}` : null, mode === 'CHEQUE' ? String(100001 + i) : null, date, paid ? date : null, paid ? 'PAID' : 'PENDING'); }
+}
+db.exec('COMMIT'); db.exec('ANALYZE');
+const pmSvc = createPaymentService({ db, base: createBase({ db }), gl, ap: apSvc });
+time('payments list, first page (25)', 500, () => pmSvc.payments.list(acc, { pageSize: '25' }));
+time('payments, sent to the bank, page 100', 500, () => pmSvc.payments.list(acc, { 'filter[status]': 'PENDING', pageSize: '25', page: '100' }));
+time('payments, search by UTR', 500, (i) => pmSvc.payments.list(acc, { q: `UTR${String((i * 2 * 997) % 100_000).padStart(12, '0')}`, pageSize: '25' }));
+time('one payment', 300, (i) => pmSvc.payments.get(acc, 1 + ((i * 7919) % 100_000)));
+time('proposals list, first page (25)', 500, () => pmSvc.proposals.list(acc, { pageSize: '25' }));
+time('one payment run (100 lines and payments)', 300, (i) => pmSvc.proposals.get(acc, 1 + (i % 1000)));
+time('candidates: bills to pay (100 000 bills, 100 000 payments)', 800, () => pmSvc.proposals.candidates(fx, { dueBy: '2026-12-31', projectId: undefined, partnerId: undefined, msmeOnly: false }), 10);
+time('cheque register (10 000 cheques)', 800, () => pmSvc.payments.chequeRegister(acc, { bankAccountId: bankAcc }), 10);
+
 console.log('\nQuery plans:');
 const plan = (label, sql, ...p) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(...p)) console.log(`    ${r.detail}`); };
 plan('list, one type and status', "SELECT x.* FROM fin_journals x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.voucher_type = 'PV' AND x.status = 'APPROVED' ORDER BY x.voucher_date DESC, x.id DESC LIMIT 25");
 plan('ledger rows of an account', "SELECT l.*, j.voucher_date FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = 1 AND l.account_id = ? AND j.status = 'APPROVED' AND j.voucher_date BETWEEN '2026-04-01' AND '2027-03-31' ORDER BY j.voucher_date, j.id, l.line_no LIMIT 100", bank);
 plan('failed postings worklist', "SELECT x.* FROM fin_posting_log x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.log_status = 'FAILED' ORDER BY x.event_date DESC, x.id DESC LIMIT 25");
+plan('payments sent to the bank', "SELECT x.* FROM pmt_payments x JOIN pmt_proposals pr ON pr.id = x.proposal_id WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.pay_status = 'PENDING' ORDER BY x.id DESC LIMIT 25");
 plan('trial balance', "SELECT l.account_id, SUM(l.debit_paise), SUM(l.credit_paise) FROM fin_journal_lines l JOIN fin_journals j ON j.id = l.journal_id WHERE l.company_id = 1 AND j.status = 'APPROVED' AND j.voucher_date BETWEEN '2026-04-01' AND '2027-03-31' GROUP BY l.account_id");
 const bad = results.filter((r) => !r.ok);
 console.log(bad.length ? `\nOVER THE LIMIT: ${bad.map((r) => `${r.label} (${r.p95} ms)`).join('; ')}` : '\nEvery measure is within its limit.');

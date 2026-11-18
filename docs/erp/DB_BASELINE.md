@@ -20933,6 +20933,7 @@ Indexes:
 - ix_pmt_payments_journal: journal_id
 - ix_pmt_payments_bank: bank_account_id
 - ix_pmt_payments_partner: partner_id, paid_on
+- ix_pmt_payments_line_status: line_id, pay_status
 - ix_pmt_payments_proposal: proposal_id
 - ix_pmt_payments_list: company_id, pay_status, paid_on
 - ux_pmt_payments_cheque (unique): bank_account_id, cheque_no

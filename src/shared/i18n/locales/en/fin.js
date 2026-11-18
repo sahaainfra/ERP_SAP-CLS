@@ -89,6 +89,7 @@ export default {
   'pm.banks': 'Company Bank Accounts', 'pm.banksIntro': 'The company\'s own bank accounts: the ledger account each posts to, the format of its bank file and its cheque book. The account number is kept encrypted.',
   'pm.newBank': 'New bank account', 'pm.bankCode': 'Code', 'pm.bankLabel': 'Name', 'pm.bankName': 'Bank', 'pm.accountNo': 'Account number', 'pm.accountNoChange': 'Account number (only to change it)', 'pm.glAccount': 'Ledger account (bank)',
   'pm.fileFormat': 'Bank file format', 'pm.chequeFrom': 'First cheque number', 'pm.chequeTo': 'Last cheque number', 'pm.blocked': 'Blocked',
-  'py.e.PAYMENT': 'Payment',
+  'py.e.PAYMENT': 'Payment', 'pm.total': 'Total', 'pm.amount': 'Amount',
+  'pm.st.DRAFT': 'Draft', 'pm.st.SUBMITTED': 'Waiting for approval', 'pm.st.RETURNED': 'Returned for correction', 'pm.st.APPROVED': 'Approved', 'pm.st.REJECTED': 'Rejected', 'pm.st.CANCELLED': 'Cancelled',
   'common.none': '—', 'common.open': 'Open', 'common.filters': 'Filters', 'common.apply': 'Show', 'common.all': 'All',
 };

@@ -312,9 +312,14 @@ export function createPaymentService({ db, base, gl, ap, vaultKey }) {
     get(actor, id) { need(actor, 'fin.proposal.view', 'see payment proposals'); return proposalView(actor, proposalRow(actor, id), true); },
     /** FR-01: what may be paid: the bills (BR-02 of 23.03, less what open proposals and payments take), the advances approved, with the MSME and overdue first. */
     candidates(actor, { dueBy, projectId, partnerId, msmeOnly, exceptProposal = 0 }) {
-      need(actor, 'fin.proposal.create', 'prepare payment proposals'); const today = todayIST();
-      const bills = ap.bills.payable(actor, { dueBy }).filter((b) => b.partnerId && (!projectId || b.projectId === Number(projectId)) && (!partnerId || b.partnerId === Number(partnerId)) && (!msmeOnly || b.msme)).map((b) => {
-        const row = db.prepare('SELECT * FROM ap_bills WHERE id = ?').get(b.id); const { left, inProposal } = billLeft(row, Number(exceptProposal));
+      need(actor, 'fin.proposal.create', 'prepare payment proposals'); need(actor, 'fin.bill.view', 'see payable bills'); const today = todayIST();
+      // the bills that may be paid, most urgent first (the MSME date, then the due date), at most 200 at a time; narrowed by the filters in SQL
+      const rows = db.prepare(`SELECT * FROM ap_bills WHERE company_id = :c AND status = 'APPROVED' AND deleted_at IS NULL AND partner_id IS NOT NULL AND net_payable_paise - adjusted_paise - paid_paise > 0 AND due_date <= :due
+          AND (:proj = 0 OR org_project_id = :proj) AND (:par = 0 OR partner_id = :par) AND (:msme = 0 OR msme = 1) ORDER BY COALESCE(msme_due_date, due_date), due_date, id LIMIT 400`)
+        .all({ c: actor.companyId, due: dueBy ?? '9999-12-31', proj: Number(projectId ?? 0), par: Number(partnerId ?? 0), msme: msmeOnly ? 1 : 0 }).filter((b) => ap.holdsOf(b).length === 0).slice(0, 200);
+      const bills = rows.map((row) => {
+        const { left, inProposal } = billLeft(row, Number(exceptProposal));
+        const b = { id: row.id, docNo: row.doc_no, billNo: row.bill_no, partnerId: row.partner_id, payee: row.payee_name, projectId: row.org_project_id, billDate: row.bill_date, dueDate: row.due_date, msmeDue: row.msme_due_date, msme: Boolean(row.msme), outstanding: rs(row.net_payable_paise - row.adjusted_paise - row.paid_paise), tds: rs(row.tds_paise) };
         const p = partnerOf(actor.companyId, b.partnerId); const hold = partnerHold(p);
         const pb = payeeBank(b.partnerId); const nm = pb.bank ? nameMatch(p.legal_name, pb.bank.account_name, Number(param(actor.companyId, 'fin.pmt.name_match_pct') ?? 60)) : null;
         return { kind: 'BILL', billId: b.id, docNo: b.docNo, billNo: b.billNo, partnerId: b.partnerId, payee: b.payee, projectId: b.projectId, billDate: b.billDate, dueDate: b.dueDate, msmeDue: b.msmeDue, msme: b.msme, overdue: (b.msmeDue ?? b.dueDate) < today, outstanding: b.outstanding, left: rs(left), tds: b.tds, inProposal, blocked: inProposal ? `In ${inProposal}` : hold ? `Payee on hold: ${hold}` : null, bank: pb.bank ? `••••${pb.bank.account_last4}` : null, bankProblem: pb.problem ?? (nm && !nm.ok ? 'The name on the bank account does not match' : null) };
