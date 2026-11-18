@@ -10044,6 +10044,33 @@ Indexes:
 - ix_exp_travel_company_id: company_id
 - ux_exp_travel_doc (unique): company_id, doc_no
 
+## fa_asset_components
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| asset_id | INTEGER | yes |  |  |
+| parent_asset_id | INTEGER | yes |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: parent_asset_id -> fa_assets(id), asset_id -> fa_assets(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_fa_asset_components_company: company_id
+- ix_fa_asset_components_parent: parent_asset_id
+- ux_fa_asset_components_asset (unique): asset_id
+
 ## fa_assets
 
 | Column | Type | Not null | Key | Default |

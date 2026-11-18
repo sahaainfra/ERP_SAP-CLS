@@ -122,3 +122,26 @@ test('CWIP settled into an asset; drafts from the equipment register and small a
   const me = d.prepare('SELECT equip_state, state_note FROM plt_equipment WHERE id = ?').get(eq); assert.equal(me.equip_state, 'DISPOSED'); assert.match(me.state_note, /FAD\/1/);
   assert.deepEqual(d.prepare("SELECT to_state FROM plt_timeline WHERE equipment_id = ? AND event = 'STATE' ORDER BY id").all(eq).map((x) => x.to_state), ['AVAILABLE', 'DISPOSED']);
 });
+
+test('D-739 an addition is a component over the remaining life; a month of a moved asset is split by days; the asset is disposed of with its components', async () => {
+  const w = await world(); const d = w.d;
+  const ex = await w.capitalise({ source: 'AP_BILL', billId: w.bill('110001', 1200000, '2026-04-01'), classCode: 'PM_CONSTRUCTION', usefulLifeMonths: 144, residual: '0' });
+  assert.equal((await w.call(U.acc, 'POST', '/assets', { source: 'AP_BILL', billId: w.bill('110001', 1000, '2026-03-01'), parentAssetId: ex.id, classCode: 'PM_CONSTRUCTION' })).status, 400, 'an addition is put to use after the asset');
+  const cp = await w.capitalise({ source: 'AP_BILL', billId: w.bill('110001', 120000, '2026-06-01'), parentAssetId: ex.id, classCode: 'VEHICLE', description: 'Rock breaker attachment', residual: '0' });
+  assert.equal(cp.parentAssetId, ex.id); assert.equal(cp.classCode, 'PM_CONSTRUCTION', 'the parent class'); assert.equal(cp.lifeMonths, 142, 'the remaining life of the parent'); assert.equal(cp.projectId, w.A);
+  const ex1 = (await w.call(U.acc, 'GET', `/assets/${ex.id}`)).json.data; assert.equal(ex1.components.length, 1); assert.equal(ex1.totalCost, 1320000); assert.equal((await w.call(U.acc, 'GET', `/assets/${cp.id}`)).json.data.parent.docNo, ex.docNo);
+  for (const p of ['2026-04', '2026-05']) assert.equal((await w.call(U.acc, 'POST', '/depreciation/run', { period: p })).status, 201);
+  // moved to B on 11 June with its component: June is 10 days A, 20 days B
+  const tr = await w.call(U.acc, 'POST', `/assets/${ex.id}/transfer`, { date: '2026-06-11', toProjectId: w.B, reason: 'To Tower B', version: (await w.call(U.acc, 'GET', `/assets/${ex.id}`)).json.data.version }); assert.equal(tr.status, 200, JSON.stringify(tr.json)); assert.equal((await w.call(U.acc, 'GET', `/assets/${cp.id}`)).json.data.projectId, w.B, 'the component goes with it');
+  assert.equal((await w.call(U.acc, 'POST', '/depreciation/run', { period: '2026-06' })).status, 201);
+  const jn = d.prepare("SELECT l.project_id, l.debit_paise FROM fin_journal_lines l JOIN fin_accounts a ON a.id = l.account_id WHERE a.code = '550001' AND l.journal_id = (SELECT journal_id FROM fa_dep_runs WHERE period = '2026-06' AND company_id = 1) ORDER BY l.project_id").all();
+  const total = d.prepare("SELECT total_paise FROM fa_dep_runs WHERE period = '2026-06' AND company_id = 1").get().total_paise; assert.deepEqual(jn.map((x) => x.project_id), [w.A, w.B]); assert.equal(jn[0].debit_paise + jn[1].debit_paise, total); assert.ok(Math.abs(jn[0].debit_paise * 2 - jn[1].debit_paise) <= 2, `10 days to 20: ${jn[0].debit_paise} / ${jn[1].debit_paise}`);
+  // the excavator sold on 16 July: its component goes with it, both depreciated to 15 July
+  const buyer = Number(d.prepare("INSERT INTO mdm_partners (company_id, code, legal_name, constitution, pan, partner_status, steward_role, created_by) VALUES (1, 'B9', 'Resale Co', 'PRIVATE_LIMITED', 'AABCR9999K', 'ACTIVE', 'PROCMGR', 'test')").run().lastInsertRowid);
+  const dp = await w.call(U.acc, 'POST', '/disposals', { assetId: ex.id, date: '2026-07-16', method: 'SALE', buyerPartnerId: buyer, proceeds: '900000', reason: 'Sold with the breaker' }); assert.equal(dp.status, 201, JSON.stringify(dp.json));
+  assert.equal((await w.call(U.acc, 'POST', `/disposals/${dp.json.data.id}/submit`)).status, 202); const inst = w.wf('fa_disposals', dp.json.data.id); assert.equal((await w.act(U.cfo, inst)).status, 200); if ((await w.call(U.acc, 'GET', `/disposals/${dp.json.data.id}`)).json.data.status === 'SUBMITTED') assert.equal((await w.act(U.dir, inst)).status, 200);
+  const done = (await w.call(U.acc, 'GET', `/disposals/${dp.json.data.id}`)).json.data; assert.equal(done.status, 'APPROVED');
+  const st = d.prepare('SELECT id, asset_state, wdv_paise, dep_until FROM fa_assets WHERE id IN (?, ?) ORDER BY id').all(ex.id, cp.id); assert.deepEqual(st.map((x) => [x.asset_state, x.wdv_paise, x.dep_until]), [['DISPOSED', 0, '2026-07-15'], ['DISPOSED', 0, '2026-07-15']]);
+  const jl = d.prepare("SELECT a.code, SUM(l.debit_paise) AS dr, SUM(l.credit_paise) AS cr FROM fin_journal_lines l JOIN fin_accounts a ON a.id = l.account_id WHERE l.journal_id = ? GROUP BY a.code").all(done.journalId); assert.equal(jl.find((x) => x.code === '110001').cr, 132000000, 'the cost of both leaves the books');
+  assert.equal(jl.reduce((s, x) => s + x.dr, 0), jl.reduce((s, x) => s + x.cr, 0)); assert.equal(d.prepare("SELECT COUNT(*) AS n FROM fa_depreciation WHERE dep_kind = 'TO_DISPOSAL' AND asset_id IN (?, ?)").get(ex.id, cp.id).n, 2);
+});
