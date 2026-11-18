@@ -1,0 +1,47 @@
+import { Router } from 'express';
+import { notFound } from '../../platform/http/errors.js';
+import { parseAssetCreate, parseAssetTransfer, parseAssetUpdate, parseCwipCreate, parseDepPeriod, parseDisposalCreate, parseFyQuery, parseId, parseJournalReason, parseVerifyCreate, parseVerifyScan } from './validators.js';
+
+/** Part 23.09: fixed assets under /api/v1/fin (assets, CWIP, depreciation, disposals, verification, the schedules), behind ff.fin.p2309. Rights are checked in the service. */
+export function assetRoutes(fa, { idempotent, idempotentRequired, flags }) {
+  const r = Router();
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const file = (res, f) => res.status(200).set({ 'content-type': f.contentType, 'content-disposition': `attachment; filename="${f.fileName}"`, 'cache-control': 'no-store' }).send(f.buffer);
+  const pid = (req) => parseId(req.params.id);
+  r.use(['/assets', '/asset-classes', '/cwip', '/depreciation', '/disposals', '/asset-verifications', '/asset-reports'], (req, _res, next) => (flags.isOn(req.actor, 'ff.fin.p2309') ? next() : next(notFound('Fixed assets are not enabled for your company yet (feature flag ff.fin.p2309 is OFF).'))));
+  const { assets: a, disposals: d, verifications: v } = fa;
+  r.get('/asset-classes', (req, res) => ok(res, a.classes(req.actor)));
+  r.get('/assets/sources', (req, res) => ok(res, a.sources(req.actor)));
+  r.get('/assets/export', (req, res) => file(res, a.exportCsv(req.actor, req.query)));
+  r.get('/assets', (req, res) => res.json(a.list(req.actor, req.query)));
+  r.post('/assets', idempotentRequired, (req, res) => ok(res, a.create(req.actor, parseAssetCreate(req.body)), 201));
+  r.get('/assets/:id', (req, res) => ok(res, a.get(req.actor, pid(req))));
+  r.patch('/assets/:id', idempotent, (req, res) => ok(res, a.update(req.actor, pid(req), parseAssetUpdate(req.body))));
+  r.delete('/assets/:id', (req, res) => ok(res, a.remove(req.actor, pid(req))));
+  r.post('/assets/:id/submit', idempotentRequired, (req, res) => ok(res, a.submit(req.actor, pid(req)), 202));
+  r.post('/assets/:id/withdraw', idempotent, (req, res) => ok(res, a.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/assets/:id/cancel', idempotent, (req, res) => ok(res, a.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/assets/:id/amend', idempotentRequired, (req, res) => ok(res, a.amend(req.actor, pid(req))));
+  r.get('/assets/:id/history', (req, res) => ok(res, a.history(req.actor, pid(req))));
+  r.get('/assets/:id/print', (req, res) => file(res, a.print(req.actor, pid(req))));
+  r.post('/assets/:id/transfer', idempotentRequired, (req, res) => ok(res, a.transfer(req.actor, pid(req), parseAssetTransfer(req.body))));
+  r.post('/cwip', idempotentRequired, (req, res) => ok(res, fa.cwip.create(req.actor, parseCwipCreate(req.body)), 201));
+  r.get('/depreciation', (req, res) => ok(res, fa.depreciation.preview(req.actor, parseDepPeriod(req.query))));
+  r.post('/depreciation/run', idempotentRequired, (req, res) => ok(res, fa.depreciation.run(req.actor, parseDepPeriod(req.body)), 201));
+  r.get('/disposals', (req, res) => ok(res, d.list(req.actor)));
+  r.post('/disposals', idempotentRequired, (req, res) => ok(res, d.create(req.actor, parseDisposalCreate(req.body)), 201));
+  r.get('/disposals/:id', (req, res) => ok(res, d.get(req.actor, pid(req))));
+  r.delete('/disposals/:id', (req, res) => ok(res, d.remove(req.actor, pid(req))));
+  r.post('/disposals/:id/submit', idempotentRequired, (req, res) => ok(res, d.submit(req.actor, pid(req)), 202));
+  r.post('/disposals/:id/withdraw', idempotent, (req, res) => ok(res, d.withdraw(req.actor, pid(req), parseJournalReason(req.body))));
+  r.post('/disposals/:id/cancel', idempotent, (req, res) => ok(res, d.cancel(req.actor, pid(req), parseJournalReason(req.body))));
+  r.get('/disposals/:id/history', (req, res) => ok(res, d.history(req.actor, pid(req))));
+  r.get('/asset-verifications', (req, res) => ok(res, v.list(req.actor)));
+  r.post('/asset-verifications', idempotentRequired, (req, res) => ok(res, v.create(req.actor, parseVerifyCreate(req.body)), 201));
+  r.get('/asset-verifications/:id', (req, res) => ok(res, v.get(req.actor, pid(req))));
+  r.post('/asset-verifications/:id/scan', idempotent, (req, res) => ok(res, v.scan(req.actor, pid(req), parseVerifyScan(req.body))));
+  r.post('/asset-verifications/:id/close', idempotentRequired, (req, res) => ok(res, v.close(req.actor, pid(req))));
+  r.get('/asset-reports/schedule', (req, res) => ok(res, fa.schedule(req.actor, parseFyQuery(req.query))));
+  r.get('/asset-reports/tax-blocks', (req, res) => ok(res, fa.taxBlocks(req.actor, parseFyQuery(req.query))));
+  return r;
+}

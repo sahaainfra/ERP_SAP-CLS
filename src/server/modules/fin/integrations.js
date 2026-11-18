@@ -4,7 +4,7 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf } from './index.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { unprocessable } from '../../platform/http/errors.js';
@@ -344,4 +344,30 @@ workflowTypes.register({
     return { fields: [{ label: 'Month', value: r.period }, { label: 'Eligible (matched in 2B)', value: m(r.eligible_paise) }, { label: 'Claimed by override', value: `${m(r.override_paise)} (${n} invoice(s), each with its reason)` }, { label: 'Reversed (unpaid beyond 180 days)', value: m(r.reversed_paise) }, { label: 'Blocked or not available', value: m(r.blocked_paise) }, { label: 'Held (not in 2B or mismatch)', value: m(r.held_paise) }, { label: 'ITC to claim', value: m(r.claimable_paise) }] }; },
   defaultDefinition: { name: 'Monthly ITC claim: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO')] },
   hooks: { onApproved: itcDecide('APPROVED'), onRejected: itcDecide('REJECTED'), onReturned: itcDecide('RETURNED'), onCancelled: itcDecide('CANCELLED') },
+});
+
+// ---- part 23.09: fixed assets ----
+for (const [type, description] of [
+  ['fin.asset.capitalised', 'A fixed asset was capitalised (approved by the CFO; part 23.09 FR-02): data { assetId, docNo, classCode, cost, capDate, projectId, equipmentId, smallAssetId, source, journalId }.'],
+  ['fin.depreciation.posted', 'The book depreciation of a month was posted (part 23.09 FR-03): data { runId, period, total, journalId, assets: [{ assetId, equipmentId, smallAssetId, projectId, siteId, classCode, amount }] }. Plant costs (17.07) and the batching plant (20.03) read the machines\' share.'],
+  ['fin.asset.transferred', 'A fixed asset moved to another project, site or custodian (part 23.09 FR-04): data { assetId, transferId, fromProjectId, toProjectId, toCustodian, equipmentId, date }.'],
+  ['fin.asset.disposed', 'A fixed asset was sold, scrapped or written off (part 23.09 FR-05): data { disposalId, docNo, assetId, assetNo, description, equipmentId, smallAssetId, projectId, method, date, buyerPartnerId, proceeds, gst, wdv, gainLoss, journalId, requestedBy, clearingAccountCode }. A sale becomes a receivable to invoice (23.05).'],
+  ['fin.asset.verified', 'A physical verification of fixed assets was closed (part 23.09 FR-06): data { verificationId, projectId, expected, missing }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const faDecide = (kind, outcome) => (db, { instance, actor, comment }) => assetsOf(db)?.[kind].flow.decide(instance, actor, outcome, comment);
+const faHooks = (kind) => ({ onApproved: faDecide(kind, 'APPROVED'), onRejected: faDecide(kind, 'REJECTED'), onReturned: faDecide(kind, 'RETURNED'), onCancelled: faDecide(kind, 'CANCELLED') });
+const inr = (p) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+workflowTypes.register({
+  docType: 'FIN_FA_ASSET', label: 'Capitalisation of a fixed asset', processOwner: 'CFO', route: (id) => `/finance/assets?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM fa_assets WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.description} ${inr(r.cost_paise)}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM fa_assets WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Asset', value: r.description }, { label: 'Class', value: r.class_code }, { label: 'From', value: r.cap_source }, { label: 'Cost', value: inr(r.cost_paise) }, { label: 'Put to use', value: r.cap_date }, { label: 'Depreciation', value: `${r.book_method} over ${r.useful_life_months} months, residual ${inr(r.residual_paise)}` }, { label: 'Tax block', value: `${r.tax_block} at ${r.tax_rate_bp / 100}%` }] } : null; },
+  defaultDefinition: { name: 'Capitalisation: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: faHooks('assets'),
+});
+workflowTypes.register({
+  docType: 'FIN_FA_DISPOSAL', label: 'Disposal of a fixed asset', processOwner: 'CFO', route: (id) => `/finance/assets?disposal=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT d.*, a.doc_no AS asset_no, a.description, a.org_project_id FROM fa_disposals d JOIN fa_assets a ON a.id = d.asset_id WHERE d.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.method} of ${r.asset_no} ${r.description}: WDV ${inr(r.wdv_paise)}, proceeds ${inr(r.proceeds_paise)}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT d.*, a.doc_no AS asset_no, a.description, a.cost_paise, a.accumulated_dep_paise FROM fa_disposals d JOIN fa_assets a ON a.id = d.asset_id WHERE d.id = ?').get(Number(id)); return r ? { fields: [{ label: 'Asset', value: `${r.asset_no} ${r.description}` }, { label: 'How', value: r.method }, { label: 'Date', value: r.disposal_date }, { label: 'Cost', value: inr(r.cost_paise) }, { label: 'Depreciation to the day before', value: inr(r.accumulated_dep_paise + r.dep_to_date_paise) }, { label: 'Written-down value', value: inr(r.wdv_paise) }, { label: 'Proceeds (+ GST)', value: `${inr(r.proceeds_paise)} + ${inr(r.gst_paise)}` }, { label: r.gain_loss_paise >= 0 ? 'Gain' : 'Loss', value: inr(Math.abs(r.gain_loss_paise)) }, { label: 'Why', value: r.reason }] } : null; },
+  defaultDefinition: { name: 'Disposal: the accounts manager, the CFO, and a director above ₹10 lakh', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else proposed it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO'), glStep('DIR', 'Director (above ₹10 lakh)', 'DIR', { field: 'aboveDir', op: 'eq', value: 'yes' })] },
+  hooks: faHooks('disposals'),
 });

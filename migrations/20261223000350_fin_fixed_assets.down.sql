@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS fa_verification_lines;
+DROP TABLE IF EXISTS fa_verifications;
+DROP TABLE IF EXISTS fa_disposals;
+DROP TABLE IF EXISTS fa_transfers;
+DROP TABLE IF EXISTS fa_depreciation;
+DROP TABLE IF EXISTS fa_dep_runs;
+DROP TABLE IF EXISTS fa_assets;
+DROP TABLE IF EXISTS fa_cwip_lines;
+DROP TABLE IF EXISTS fa_cwip;
+DROP TABLE IF EXISTS fa_classes;

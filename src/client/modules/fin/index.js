@@ -30,6 +30,8 @@ const EinvoiceRegisterPage = lazyPage(() => import('./GstPages.jsx'), 'EinvoiceR
 const EwayBillRegisterPage = lazyPage(() => import('./GstPages.jsx'), 'EwayBillRegisterPage');
 const GstReconPage = lazyPage(() => import('./GstReconPages.jsx'), 'GstReconPage');
 const GstReturnsPage = lazyPage(() => import('./GstReconPages.jsx'), 'GstReturnsPage');
+const AssetRegisterPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetRegisterPage');
+const AssetAccountingPage = lazyPage(() => import('./AssetPages.jsx'), 'AssetAccountingPage');
 const GstSettingsPage = lazyPage(() => import('./GstPages.jsx'), 'GstSettingsPage');
 
 // Module "fin" (part 06.05): the finance masters. The chart of accounts (tree, Schedule III, import from Tally, changes), the account object page (properties, dimension rules, mapping), the cost heads and cost
@@ -74,6 +76,9 @@ registerModule({
     // part 23.08: GST reconciliation, ITC review, returns and TDS
     { path: '/finance/gst-reconciliation', label: 'GSTR-2B Reconciliation & ITC Review', labelHi: 'जीएसटीआर-2बी मिलान व आईटीसी', icon: 'erp.action.history', permission: 'fin.gst_recon.view', flag: 'ff.fin.p2308', Page: GstReconPage },
     { path: '/finance/gst-returns', label: 'GST & TDS Returns, Compliance Calendar', labelHi: 'जीएसटी व टीडीएस रिटर्न', icon: 'erp.action.history', permission: 'fin.gst_return.view', flag: 'ff.fin.p2308', Page: GstReturnsPage },
+    // part 23.09: fixed assets and depreciation
+    { path: '/finance/assets', label: 'Asset Register', labelHi: 'परिसंपत्ति रजिस्टर', icon: 'erp.action.history', permission: 'fin.asset.view', flag: 'ff.fin.p2309', Page: AssetRegisterPage },
+    { path: '/finance/asset-accounting', label: 'Capitalise, Depreciate & FA Reports', labelHi: 'पूंजीकरण व मूल्यह्रास', icon: 'erp.action.history', permission: 'fin.asset.view', flag: 'ff.fin.p2309', Page: AssetAccountingPage },
     { path: '/finance/category-mapping', label: 'Item Category → GL / Cost Code Mapping', icon: 'erp.action.settings', permission: 'fin.coa.view', flag: 'ff.mdm.p0605', Page: CategoryMappingPage },
   ],
 });

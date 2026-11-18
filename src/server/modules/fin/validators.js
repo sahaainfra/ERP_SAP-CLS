@@ -186,3 +186,15 @@ export const parseTdsCert = (q) => parse(z.object({ quarter, partnerId: id }).st
 export const parse26as = (b) => parse(z.object({ fy, content: z.string().min(10).max(5_000_000) }).strict(), b);
 export const parseFy = (q) => parse(z.object({ fy }).strict(), q);
 export const parseCalendar = (q) => parse(z.object({ from: period.optional(), to: period.optional() }).strict(), q);
+
+// ---- part 23.09: fixed assets and depreciation ----
+const assetBody = { source: z.enum(['AP_BILL', 'CWIP', 'EQUIPMENT', 'SMALL_ASSET', 'OPENING']), billId: id.optional().nullable(), cwipId: id.optional().nullable(), equipmentId: id.optional().nullable(), smallAssetId: id.optional().nullable(), classCode: z.string().trim().min(2).max(30), description: z.string().trim().min(3).max(300).optional(), cost: money.optional(), capDate: date.optional(), projectId: id.optional().nullable(), siteId: id.optional().nullable(), custodian: z.string().trim().max(100).optional().nullable(), usefulLifeMonths: z.number().int().min(1).max(1200).optional(), residual: money.optional(), method: z.enum(['SLM', 'WDV']).optional(), hsn: z.string().trim().regex(/^\d{4,8}$/).optional().nullable(), openingAccum: money.optional() };
+export const parseAssetCreate = (b) => parse(z.object(assetBody).strict(), b);
+export const parseAssetUpdate = (b) => parse(z.object({ ...Object.fromEntries(Object.entries(assetBody).map(([k, v]) => [k, v.optional()])), version: z.number().int().min(1) }).strict(), b);
+export const parseAssetTransfer = (b) => parse(z.object({ date, toProjectId: id.optional().nullable(), toSiteId: id.optional().nullable(), toCustodian: z.string().trim().max(100).optional().nullable(), reason: z.string().trim().min(5).max(300), version: z.number().int().min(1) }).strict(), b);
+export const parseCwipCreate = (b) => parse(z.object({ title: z.string().trim().min(3).max(200), projectId: id.optional().nullable(), billIds: z.array(id).min(1).max(200) }).strict(), b);
+export const parseDepPeriod = (q) => parse(z.object({ period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'A month such as 2026-10') }).strict(), q);
+export const parseDisposalCreate = (b) => parse(z.object({ assetId: id, date, method: z.enum(['SALE', 'SCRAP', 'WRITE_OFF']), buyerPartnerId: id.optional().nullable(), proceeds: money.optional(), hsn: z.string().trim().regex(/^\d{4,8}$/).optional().nullable(), reason: z.string().trim().min(5).max(300) }).strict(), b);
+export const parseVerifyCreate = (b) => parse(z.object({ projectId: id.optional().nullable(), siteId: id.optional().nullable(), date }).strict(), b);
+export const parseVerifyScan = (b) => parse(z.object({ code: z.string().trim().min(2).max(60), condition: z.enum(['GOOD', 'FAIR', 'DAMAGED', 'NOT_WORKING']).optional(), note: z.string().trim().max(200).optional() }).strict(), b);
+export const parseFyQuery = (q) => parse(z.object({ fy: z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27') }).strict(), q);

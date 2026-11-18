@@ -110,6 +110,18 @@ export function createArService({ db, base, gl, flags }) {
     },
   };
 
+  /** Part 23.09: an asset sold (its disposal approved) becomes a draft receivable of other income to invoice: the proceeds against the sale clearing account, its GST. */
+  consumers.onAssetSold = (e) => {
+    const c = Number(e.companyId); const d = e.data ?? {}; if (!c || !on(c) || d.method !== 'SALE' || !d.buyerPartnerId || !(Number(d.proceeds) > 0)) return null;
+    const had = db.prepare("SELECT doc_no FROM ar_invoices WHERE company_id = ? AND source_type = 'fa_disposals' AND source_id = ? AND status != 'CANCELLED'").get(c, String(d.disposalId)); if (had) return had.doc_no;
+    const income = acct(c, d.clearingAccountCode ?? '160010'); if (!income) return null; const days = Number(param(c, 'fin.ar.default_credit_days') ?? 30);
+    return transaction(db, () => { const no = docNo(c, 'ar_invoices', 'AR'); const taxable = paise(d.proceeds); const gst = paise(d.gst ?? 0);
+      const id = Number(db.prepare("INSERT INTO ar_invoices (company_id, doc_no, inv_source, org_project_id, partner_id, income_kind, income_account_id, description, invoice_date, due_date, taxable_paise, gst_paise, amount_paise, requested_by, created_by, source_type, source_id) VALUES (?, ?, 'OTHER_INCOME', ?, ?, 'OTHER', ?, ?, ?, ?, ?, ?, ?, ?, 'system', 'fa_disposals', ?)")
+        .run(c, no, d.projectId ?? null, Number(d.buyerPartnerId), income, `Sale of fixed asset ${d.assetNo ?? ''} ${d.description ?? ''} (${d.docNo})`.slice(0, 300), d.date, addDays(d.date, days), taxable, gst, taxable + gst, d.requestedBy ?? 'system', String(d.disposalId)).lastInsertRowid);
+      audit({ user: 'system' }, 'ar_invoices', id, 'create', c, { newValues: { source: 'fa_disposals', amount: rs(taxable + gst) } });
+      notify(c, 'fin.ar.alert', ['permission:fin.invoice.submit'], no, 'asset sale to invoice', `The sale of ${d.assetNo ?? 'an asset'} (${d.docNo}) is a draft receivable: check it and send it for approval.`, `/finance/receivables?id=${id}`, id); return no; });
+  };
+
   // ---- views ----
   function invView(actor, r, detail = false) {
     const p = partnerOf(r.company_id, r.partner_id); const bal = balance(r); const today = todayIST(); const late = r.status === 'APPROVED' && bal > 0 ? Math.max(0, daysBetween(r.due_date, today)) : 0;

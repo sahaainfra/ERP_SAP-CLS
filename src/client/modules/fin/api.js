@@ -230,3 +230,24 @@ export const gr = {
   fileTds: async (b) => (await api.post('/fin/tds-returns/file', b, idem())).data,
   calendar: (f) => glget(`/compliance-calendar?${q(f)}`),
 };
+// part 23.09: fixed assets
+export const fa = {
+  asset: (id) => glget(`/assets/${id}`),
+  sources: () => glget('/assets/sources'),
+  createAsset: async (b) => (await api.post('/fin/assets', b, idem())).data,
+  assetAct: async (id, action, b) => (await api.post(`/fin/assets/${id}/${action}`, b ?? {}, idem())).data,
+  transfer: async (id, b) => (await api.post(`/fin/assets/${id}/transfer`, b, idem())).data,
+  createCwip: async (b) => (await api.post('/fin/cwip', b, idem())).data,
+  depreciation: (f) => glget(`/depreciation?${q(f)}`),
+  runDepreciation: async (b) => (await api.post('/fin/depreciation/run', b, idem())).data,
+  disposal: (id) => glget(`/disposals/${id}`),
+  createDisposal: async (b) => (await api.post('/fin/disposals', b, idem())).data,
+  disposalAct: async (id, action, b) => (await api.post(`/fin/disposals/${id}/${action}`, b ?? {}, idem())).data,
+  verifications: () => glget('/asset-verifications'),
+  verification: (id) => glget(`/asset-verifications/${id}`),
+  createVerification: async (b) => (await api.post('/fin/asset-verifications', b, idem())).data,
+  scan: async (id, b) => (await api.post(`/fin/asset-verifications/${id}/scan`, b, idem())).data,
+  closeVerification: async (id) => (await api.post(`/fin/asset-verifications/${id}/close`, {}, idem())).data,
+  schedule: (f) => glget(`/asset-reports/schedule?${q(f)}`),
+  taxBlocks: (f) => glget(`/asset-reports/tax-blocks?${q(f)}`),
+};
