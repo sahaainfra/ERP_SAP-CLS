@@ -1,4 +1,5 @@
 import { calcOf } from '../../platform/calc/index.js';
+import { taxEngineOf } from '../../platform/tax/index.js';
 import { transaction } from '../../platform/db/index.js';
 import { toPdf } from '../../platform/export/index.js';
 import { conflict, unprocessable } from '../../platform/http/errors.js';
@@ -82,7 +83,8 @@ export function createClientBillService({ db, base, mb }) {
     if (!esc && k.pvc_applicable === 1) issue('ESCALATION_PENDING', 'INFO', 'The contract has price variation but no approved escalation computation is made against this bill number; it is billed separately or after the computation is approved');
     if (billType === 'ESCALATION' && !esc) fail([{ field: 'billType', message: `An escalation bill needs an approved escalation computation against the bill number ${billNo}` }]);
     if (!items.length && billType !== 'ESCALATION') fail([{ field: 'periodTo', message: billType === 'MILESTONE' ? 'No achieved payment milestone is waiting to be billed' : `There is no certified measurement to bill up to ${periodTo}` }]);
-    const taxable = Math.max(0, gross + escPaise); const pct = gstPct ?? num(companyId, 'bill.client.gst_pct'); const gst = gstOf(taxable, pct, supply, rec);
+    // D-733: the GST rate checked by the tax engine (23.07)
+    const taxable = Math.max(0, gross + escPaise); const te = taxEngineOf(db)?.documentGst?.(companyId, { date: periodTo, pct: gstPct ?? num(companyId, 'bill.client.gst_pct'), supply }); if (te?.problems.length) fail(te.problems); const pct = te?.pct ?? gstPct ?? num(companyId, 'bill.client.gst_pct'); const gst = gstOf(taxable, pct, supply, rec);
     // the deductions
     const ded = []; const add = (kind, label, basis, pct2, amount, note, calc = null, extra = {}) => { if (amount > 0) ded.push({ kind, label, basis, pct: pct2, amount, note, calc, ...extra }); };
     if (k.retention_bp > 0) { const r = pctOf(gross, k.retention_bp / 100, rec, 'retention'); let amount = r.paise; let note = `${k.retention_bp / 100}% of the value of work`; if (k.retention_cap_bp > 0) { const cap = Math.round((k.revised_paise * k.retention_cap_bp) / 10000); const before = prevBills.reduce((n, b) => n + JSON.parse(b.deductions_json).filter((x) => x.kind === 'RETENTION').reduce((m, x) => m + x.amount, 0), 0); if (before + amount > cap) { amount = Math.max(0, cap - before); note += `; limited to the cap of ${k.retention_cap_bp / 100}% of the contract value`; } } add('RETENTION', DEDUCTION_KIND.RETENTION, gross, k.retention_bp / 100, amount, note, r.formula); }

@@ -150,8 +150,24 @@ export function createStatutoryService({ db, flags }) {
     return { rows, changes, scope: { vendorInvoices: seesBills, subBills: seesSub, purchaseOrders: seesPo }, note: 'Only documents not yet approved are listed; approved and posted documents keep the tax of their date and are never changed.' };
   }
 
+  /**
+   * The monthly pay of an employee by component from a date (the lines not sent end the day before): what setPay does for HR by hand, and what an approved
+   * pay assignment of payroll (24.01) applies. A service call, no person: the caller has checked the rights and the approval.
+   */
+  function applyPay(companyId, employeeId, { effectiveFrom, lines, reason = null, user = 'system', source = 'manual', sourceId = null }) {
+    const e = { id: Number(employeeId) };
+      const dayBefore = new Date(Date.parse(`${effectiveFrom}T00:00:00Z`) - MS_DAY).toISOString().slice(0, 10);
+      const now = new Date().toISOString();
+      db.exec('SAVEPOINT pay');
+      try {
+        db.prepare('UPDATE hr_employee_pay SET deleted_at = ?, deleted_by = ? WHERE employee_id = ? AND effective_from >= ? AND deleted_at IS NULL').run(now, user, e.id, effectiveFrom);
+        db.prepare('UPDATE hr_employee_pay SET effective_to = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE employee_id = ? AND deleted_at IS NULL AND (effective_to IS NULL OR effective_to >= ?)').run(dayBefore, user, now, e.id, effectiveFrom);
+        for (const l of lines) db.prepare("INSERT INTO hr_employee_pay (company_id, employee_id, component_code, monthly_paise, effective_from, created_by, source_type, source_id, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(companyId, e.id, l.code, Math.round(l.amount * 100), effectiveFrom, user, source, sourceId == null ? null : String(sourceId), reason);
+        db.exec('RELEASE pay');
+      } catch (err) { db.exec('ROLLBACK TO pay'); db.exec('RELEASE pay'); throw err; }
+  }
   return {
-    resolve, wagesUnderCode, dues, hashOf, on,
+    resolve, wagesUnderCode, dues, hashOf, on, applyPay,
     /** FR-02: the GST rate of an HSN code, the TDS section of a nature of payment and the forms, on a date (the page "Statutory Changes"). */
     lookup(actor, { hsn, nature, date, constitution }) {
       needView(actor);
@@ -193,15 +209,7 @@ export function createStatutoryService({ db, flags }) {
         if (!inForce(db, 'mdm_pay_components', actor.companyId, 'code = ?', [l.code], effectiveFrom)) problems.push({ field: `lines.${i}.code`, message: `${l.code} is not a pay component in force on ${effectiveFrom}` });
       }
       if (problems.length) throw badRequest('Some lines are not valid.', problems);
-      const dayBefore = new Date(Date.parse(`${effectiveFrom}T00:00:00Z`) - MS_DAY).toISOString().slice(0, 10);
-      const now = new Date().toISOString();
-      db.exec('SAVEPOINT pay');
-      try {
-        db.prepare('UPDATE hr_employee_pay SET deleted_at = ?, deleted_by = ? WHERE employee_id = ? AND effective_from >= ? AND deleted_at IS NULL').run(now, actor.user, e.id, effectiveFrom);
-        db.prepare('UPDATE hr_employee_pay SET effective_to = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE employee_id = ? AND deleted_at IS NULL AND (effective_to IS NULL OR effective_to >= ?)').run(dayBefore, actor.user, now, e.id, effectiveFrom);
-        for (const l of lines) db.prepare("INSERT INTO hr_employee_pay (company_id, employee_id, component_code, monthly_paise, effective_from, created_by, source_type, remarks) VALUES (?, ?, ?, ?, ?, ?, 'manual', ?)").run(actor.companyId, e.id, l.code, Math.round(l.amount * 100), effectiveFrom, actor.user, reason);
-        db.exec('RELEASE pay');
-      } catch (err) { db.exec('ROLLBACK TO pay'); db.exec('RELEASE pay'); throw err; }
+      applyPay(actor.companyId, e.id, { effectiveFrom, lines, reason, user: actor.user, source: 'manual' });
       return wagesUnderCode(actor.companyId, e.id, effectiveFrom.slice(0, 7));
     },
     labelOfNature: (k) => label(NATURES, k),

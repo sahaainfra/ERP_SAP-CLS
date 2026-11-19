@@ -62,11 +62,14 @@ export const receiptList = defineList({
 });
 
 /** @param {{ db: any, base: any, gl: any, flags: any }} o */
+// D-736: TCS on scrap, s.206C(1) (collection code 6CE): 1 %; 5 % without the buyer's PAN (s.206CC)
+const TCS_SCRAP_BP = 100; const TCS_NO_PAN_BP = 500;
 export function createArService({ db, base, gl, flags }) {
   const { may, audit, notify, authz } = base;
   const need = (actor, key, what) => { if (!may(actor, key)) throw forbidden(`You may not ${what} (permission ${key}).`); };
   const param = (companyId, key, date = todayIST()) => createParameterStore(db).get(key, { companyId, date });
   const on = (companyId) => flags.isOn({ companyId, user: 'system', roles: [] }, 'ff.fin.p2305');
+  const tcsOn = (companyId) => flags.isOn({ companyId, user: 'system', roles: [] }, 'ff.fin.p2308') && Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'tcs_collections'").get());
   const acct = (companyId, code) => db.prepare('SELECT id FROM fin_accounts WHERE company_id = ? AND code = ? AND deleted_at IS NULL').get(companyId, code)?.id ?? null;
   const partnerOf = (companyId, id) => (id ? db.prepare('SELECT * FROM mdm_partners WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(Number(id), companyId) : null);
   const docNo = (companyId, table, prefix) => { const n = (db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE company_id = ?`).get(companyId).n ?? 0) + 1; let no = `${prefix}/${String(n).padStart(6, '0')}`; for (let k = n + 1; db.prepare(`SELECT 1 FROM ${table} WHERE company_id = ? AND doc_no = ?`).get(companyId, no); k += 1) no = `${prefix}/${String(k).padStart(6, '0')}`; return no; };
@@ -110,12 +113,24 @@ export function createArService({ db, base, gl, flags }) {
     },
   };
 
+  /** Part 23.09: an asset sold (its disposal approved) becomes a draft receivable of other income to invoice: the proceeds against the sale clearing account, its GST. */
+  consumers.onAssetSold = (e) => {
+    const c = Number(e.companyId); const d = e.data ?? {}; if (!c || !on(c) || d.method !== 'SALE' || !d.buyerPartnerId || !(Number(d.proceeds) > 0)) return null;
+    const had = db.prepare("SELECT doc_no FROM ar_invoices WHERE company_id = ? AND source_type = 'fa_disposals' AND source_id = ? AND status != 'CANCELLED'").get(c, String(d.disposalId)); if (had) return had.doc_no;
+    const income = acct(c, d.clearingAccountCode ?? '160010'); if (!income) return null; const days = Number(param(c, 'fin.ar.default_credit_days') ?? 30);
+    return transaction(db, () => { const no = docNo(c, 'ar_invoices', 'AR'); const taxable = paise(d.proceeds); const gst = paise(d.gst ?? 0);
+      const id = Number(db.prepare("INSERT INTO ar_invoices (company_id, doc_no, inv_source, org_project_id, partner_id, income_kind, income_account_id, description, invoice_date, due_date, taxable_paise, gst_paise, amount_paise, requested_by, created_by, source_type, source_id) VALUES (?, ?, 'OTHER_INCOME', ?, ?, 'OTHER', ?, ?, ?, ?, ?, ?, ?, ?, 'system', 'fa_disposals', ?)")
+        .run(c, no, d.projectId ?? null, Number(d.buyerPartnerId), income, `Sale of fixed asset ${d.assetNo ?? ''} ${d.description ?? ''} (${d.docNo})`.slice(0, 300), d.date, addDays(d.date, days), taxable, gst, taxable + gst, d.requestedBy ?? 'system', String(d.disposalId)).lastInsertRowid);
+      audit({ user: 'system' }, 'ar_invoices', id, 'create', c, { newValues: { source: 'fa_disposals', amount: rs(taxable + gst) } });
+      notify(c, 'fin.ar.alert', ['permission:fin.invoice.submit'], no, 'asset sale to invoice', `The sale of ${d.assetNo ?? 'an asset'} (${d.docNo}) is a draft receivable: check it and send it for approval.`, `/finance/receivables?id=${id}`, id); return no; });
+  };
+
   // ---- views ----
   function invView(actor, r, detail = false) {
     const p = partnerOf(r.company_id, r.partner_id); const bal = balance(r); const today = todayIST(); const late = r.status === 'APPROVED' && bal > 0 ? Math.max(0, daysBetween(r.due_date, today)) : 0;
     const c0 = r.inv_source === 'OTHER_INCOME' ? invFlow.can(actor, r) : { edit: false, delete: false, submit: false, withdraw: false, cancel: false, amend: false };
     const o = { id: r.id, docNo: r.doc_no, source: r.inv_source, sourceRef: r.source_ref, projectId: r.org_project_id, partnerId: r.partner_id, client: p?.legal_name, contractId: r.contract_id, incomeKind: r.income_kind, description: r.description, invoiceNo: r.invoice_no, invoiceDate: r.invoice_date, dueDate: r.due_date,
-      taxable: rs(r.taxable_paise), gst: rs(r.gst_paise), amount: rs(r.amount_paise), received: rs(r.received_paise), credited: rs(r.credited_paise), writtenOff: rs(r.written_off_paise), balance: rs(bal), daysOverdue: late, interestPct: r.interest_bp / 100, interest: rs(interestOf(r)), promisedDate: r.promised_date, lastFollowupAt: r.last_followup_at,
+      taxable: rs(r.taxable_paise), gst: rs(r.gst_paise), tcs: r.inv_source === 'OTHER_INCOME' ? rs(Math.max(0, r.amount_paise - r.taxable_paise - r.gst_paise)) : 0, amount: rs(r.amount_paise), received: rs(r.received_paise), credited: rs(r.credited_paise), writtenOff: rs(r.written_off_paise), balance: rs(bal), daysOverdue: late, interestPct: r.interest_bp / 100, interest: rs(interestOf(r)), promisedDate: r.promised_date, lastFollowupAt: r.last_followup_at,
       status: r.status, statusLabel: STATUS[r.status], journalId: r.journal_id, version: r.version,
       can: { ...c0, print: may(actor, 'fin.invoice.print', r.org_project_id), followup: r.status === 'APPROVED' && bal > 0 && may(actor, 'fin.followup.create', r.org_project_id), creditNote: r.status === 'APPROVED' && bal > 0 && may(actor, 'fin.credit_note.create'), writeOff: r.status === 'APPROVED' && bal > 0 && may(actor, 'fin.writeoff.create'), receipt: r.status === 'APPROVED' && bal > 0 && may(actor, 'fin.receipt.create') } };
     if (detail) {
@@ -136,9 +151,11 @@ export function createArService({ db, base, gl, flags }) {
     beforeSubmit: (_a, r) => { if (r.inv_source !== 'OTHER_INCOME') throw unprocessable('A receivable of a tax invoice was approved with the invoice.'); supplyOf(r); },
     onApproved: (actor, r) => {
       const x = db.prepare('SELECT * FROM ar_invoices WHERE id = ?').get(r.id); const s = gstSplit(supplyOf(x), x.gst_paise);
-      const lines = [{ accountId: acct(x.company_id, '140001'), debit: rs(x.amount_paise), partnerId: x.partner_id, ...dims(x) }, { accountId: x.income_account_id, credit: rs(x.taxable_paise), ...projectFor(x.income_account_id, x.org_project_id) }, ...gstLines(x.company_id, s, 'credit')];
+      const tcs = x.amount_paise - x.taxable_paise - x.gst_paise;
+      const lines = [{ accountId: acct(x.company_id, '140001'), debit: rs(x.amount_paise), partnerId: x.partner_id, ...dims(x) }, { accountId: x.income_account_id, credit: rs(x.taxable_paise), ...projectFor(x.income_account_id, x.org_project_id) }, ...gstLines(x.company_id, s, 'credit'), ...(tcs > 0 ? [{ accountId: acct(x.company_id, '230007'), credit: rs(tcs) }] : [])];
       const j = gl.postEngine(x.company_id, { voucherType: 'SJ', date: x.invoice_date, narration: `${INCOME_KINDS[x.income_kind]} ${x.doc_no}: ${x.description ?? ''}`.slice(0, 500), sourceType: 'ar_invoices', sourceId: x.id, lines, user: actor.user });
       db.prepare('UPDATE ar_invoices SET journal_id = ? WHERE id = ?').run(j.journal.id, x.id);
+      if (tcs > 0) { const p = partnerOf(x.company_id, x.partner_id); db.prepare("INSERT INTO tcs_collections (company_id, invoice_id, partner_id, nature, section, collected_on, base_paise, rate_bp, tcs_paise, pan, journal_id, project_id, created_by, source_type, source_id) VALUES (?, ?, ?, 'SCRAP', '6CE', ?, ?, ?, ?, ?, ?, ?, ?, 'ar_invoices', ?)").run(x.company_id, x.id, x.partner_id, x.invoice_date, x.taxable_paise + x.gst_paise, p?.pan ? TCS_SCRAP_BP : TCS_NO_PAN_BP, tcs, p?.pan ?? null, j.journal.id, x.org_project_id ?? null, actor.user, String(x.id)); }
       publishEvent(db, { type: 'fin.ar_invoice.created', entity: 'ar_invoices', entityId: x.id, actorId: actor.user, companyId: x.company_id, data: { invoiceId: x.id, docNo: x.doc_no, source: 'OTHER_INCOME', partnerId: x.partner_id, projectId: x.org_project_id, amount: rs(x.amount_paise), dueDate: x.due_date } });
     },
   });
@@ -158,7 +175,9 @@ export function createArService({ db, base, gl, flags }) {
     if (chk.problems.length) throw badRequest('Correct the highlighted fields', chk.problems.map((x) => ({ field: /projectId/.test(x.field) ? 'projectId' : x.field.startsWith('lines.1') ? 'incomeAccountId' : 'partnerId', message: x.message })));
     const taxable = paise(b.amount); const gst = paise(b.gst ?? 0);
     if (b.total != null && paise(b.total) !== taxable + gst) throw badRequest('Correct the highlighted fields', [{ field: 'total', message: 'The total sent does not match the amount and the GST.' }]);
-    return { p, due, taxable, gst };
+    // D-736: TCS on the sale of scrap — 1 % of the consideration (with GST), 5 % when the buyer has no PAN (s.206CC) — added to what the buyer owes
+    const tcs = b.incomeKind === 'SCRAP' && tcsOn(actor.companyId) ? Math.round(((taxable + gst) * (p.pan ? TCS_SCRAP_BP : TCS_NO_PAN_BP)) / 10000) : 0;
+    return { p, due, taxable, gst, tcs };
   }
   const invoices = {
     flow: invFlow,
@@ -168,16 +187,16 @@ export function createArService({ db, base, gl, flags }) {
       need(actor, 'fin.invoice.create', 'make receivables'); const v = otherValues(actor, b);
       return transaction(db, () => {
         const id = Number(db.prepare("INSERT INTO ar_invoices (company_id, doc_no, inv_source, org_project_id, partner_id, income_kind, income_account_id, description, invoice_no, invoice_date, due_date, taxable_paise, gst_paise, amount_paise, requested_by, created_by, source_type) VALUES (?, ?, 'OTHER_INCOME', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ar_invoices')")
-          .run(actor.companyId, docNo(actor.companyId, 'ar_invoices', 'AR'), b.projectId ?? null, v.p.id, b.incomeKind, Number(b.incomeAccountId), b.description, b.invoiceNo ?? null, b.invoiceDate, v.due, v.taxable, v.gst, v.taxable + v.gst, actor.user, actor.user).lastInsertRowid);
-        audit(actor, 'ar_invoices', id, 'create', actor.companyId, { newValues: { kind: b.incomeKind, amount: rs(v.taxable + v.gst) } }); return invoices.get(actor, id);
+          .run(actor.companyId, docNo(actor.companyId, 'ar_invoices', 'AR'), b.projectId ?? null, v.p.id, b.incomeKind, Number(b.incomeAccountId), b.description, b.invoiceNo ?? null, b.invoiceDate, v.due, v.taxable, v.gst, v.taxable + v.gst + v.tcs, actor.user, actor.user).lastInsertRowid);
+        audit(actor, 'ar_invoices', id, 'create', actor.companyId, { newValues: { kind: b.incomeKind, amount: rs(v.taxable + v.gst + v.tcs), ...(v.tcs ? { tcs: rs(v.tcs) } : {}) } }); return invoices.get(actor, id);
       });
     },
     update(actor, id, b) {
       const r = invFlow.row(actor, id, 'fin.invoice.edit'); need(actor, 'fin.invoice.edit', 'change receivables'); if (r.inv_source !== 'OTHER_INCOME') throw unprocessable('A receivable of a tax invoice follows its invoice.'); if (!invFlow.EDITABLE.includes(r.status)) throw conflict('Only a draft or a returned receivable is changed.'); if (b.version !== r.version) throw conflict('The receivable was changed by someone else; reload it.');
       const v = otherValues(actor, b);
       db.prepare('UPDATE ar_invoices SET org_project_id = ?, partner_id = ?, income_kind = ?, income_account_id = ?, description = ?, invoice_no = ?, invoice_date = ?, due_date = ?, taxable_paise = ?, gst_paise = ?, amount_paise = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?')
-        .run(b.projectId ?? null, v.p.id, b.incomeKind, Number(b.incomeAccountId), b.description, b.invoiceNo ?? null, b.invoiceDate, v.due, v.taxable, v.gst, v.taxable + v.gst, actor.user, nowIso(), r.id);
-      audit(actor, 'ar_invoices', r.id, 'update', actor.companyId, { oldValues: { amount: rs(r.amount_paise) }, newValues: { amount: rs(v.taxable + v.gst) } }); return invoices.get(actor, r.id);
+        .run(b.projectId ?? null, v.p.id, b.incomeKind, Number(b.incomeAccountId), b.description, b.invoiceNo ?? null, b.invoiceDate, v.due, v.taxable, v.gst, v.taxable + v.gst + v.tcs, actor.user, nowIso(), r.id);
+      audit(actor, 'ar_invoices', r.id, 'update', actor.companyId, { oldValues: { amount: rs(r.amount_paise) }, newValues: { amount: rs(v.taxable + v.gst + v.tcs) } }); return invoices.get(actor, r.id);
     },
     remove(actor, id) { return invFlow.remove(actor, id); },
     submit(actor, id) { invFlow.submit(actor, id); return invoices.get(actor, id); },

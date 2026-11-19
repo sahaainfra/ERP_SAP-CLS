@@ -22,7 +22,8 @@ const clean = cleanLang;
 // is fetched the first time a screen asks for it (useT suspends the page meanwhile, inside the page's own skeleton), and the remaining areas once the
 // first screen is drawn, so text asked for outside a screen (a toast in a handler) is there too.
 const BUILT_IN = { en: { common, ess, field, format, notify, palette, shell }, hi: null, te: null };
-const AREA_LOADERS = Object.fromEntries(Object.entries(import.meta.glob('../../../shared/i18n/locales/en/*.js')).map(([path, load]) => [path.replace(/^.*\/|\.js$/g, ''), load]));
+// D-743: outside Vite (Node's test runner) there is no import.meta.glob; the areas are then not lazily loadable and only the bundled ones exist
+const AREA_LOADERS = Object.fromEntries(Object.entries(import.meta.env ? import.meta.glob('../../../shared/i18n/locales/en/*.js') : {}).map(([path, load]) => [path.replace(/^.*\/|\.js$/g, ''), load]));
 const areaLoading = {};
 /** The English text of one area: resolves once it is here (at once for an area of the first download or one without a file). */
 export function loadArea(ns) {

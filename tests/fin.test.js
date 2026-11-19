@@ -128,7 +128,7 @@ test('changes are approved before they apply: the CFO approves the accounts mana
   const { api, call, chart, accountId } = await setup();
   const c = await chart();
   const other = c.groups.find((g) => g.code === '5600');
-  const body = { code: '560010', name: 'Site security services', groupId: other.id, type: 'EXPENSE', normalBalance: 'DR', dimensions: { PROJECT: 'MANDATORY', SITE: 'OPTIONAL' }, reason: 'security guards at sites' };
+  const body = { code: '560090', name: 'Site security services', groupId: other.id, type: 'EXPENSE', normalBalance: 'DR', dimensions: { PROJECT: 'MANDATORY', SITE: 'OPTIONAL' }, reason: 'security guards at sites' };
   assert.equal((await call(acc, 'POST', '/accounts', { ...body, type: 'REVENUE' })).status, 400, 'a revenue account is not in an expense group');
   assert.equal((await call(acc, 'POST', '/accounts', { ...body, normalBalance: 'CR' })).status, 400, 'an expense account is debit unless a contra reason is given');
   assert.equal((await call(acc, 'POST', '/accounts', { ...body, isControl: true, controlKind: 'AP' })).status, 400, 'an AP control account is a payable');
@@ -136,14 +136,14 @@ test('changes are approved before they apply: the CFO approves the accounts mana
   assert.equal(r.status, 202, JSON.stringify(r.json));
   assert.equal(r.json.data.status, 'PENDING');
   assert.equal(r.json.data.makerRole, 'ACCMGR');
-  assert.ok(!(await chart()).accounts.some((a) => a.code === '560010'), 'not in the chart before approval');
+  assert.ok(!(await chart()).accounts.some((a) => a.code === '560090'), 'not in the chart before approval');
   assert.equal((await api.call('GET', `${W}/tasks?mine=assigned`, as('ACCMGR', 'facc1'))).json.data.rows.filter((t) => t.instance.id === r.json.data.instanceId).length, 0, 'the maker does not approve their own change');
   await act(api, cfo, r.json.data.instanceId, 'return', 'add the cost centre rule please');
   assert.equal((await call(acc, 'GET', `/changes/${r.json.data.id}`)).json.data.status, 'RETURNED');
   const again = await call(acc, 'POST', `/changes/${r.json.data.id}/resubmit`, { reason: 'the rule is fine as it is, see note' });
   assert.equal(again.status, 202, JSON.stringify(again.json));
   await act(api, cfo, r.json.data.instanceId);
-  const added = (await chart()).accounts.find((a) => a.code === '560010');
+  const added = (await chart()).accounts.find((a) => a.code === '560090');
   assert.deepEqual(added.dimensions, { PROJECT: 'MANDATORY', SITE: 'OPTIONAL' });
   const detail = (await call(pm, 'GET', `/accounts/${added.id}`)).json.data;
   assert.equal(detail.group.code, '5600');
@@ -161,12 +161,12 @@ test('changes are approved before they apply: the CFO approves the accounts mana
   assert.equal(subHead.status, 202, JSON.stringify(subHead.json));
   assert.equal((await call(pcm, 'POST', '/cost-heads', { code: '7', name: 'Insurance', reason: 'a top head without account' })).status, 400, 'a top cost head needs an account');
   // withdraw before anyone acted; reject
-  const wd = await call(acc, 'POST', '/accounts', { ...body, code: '560011', name: 'Site housekeeping' });
+  const wd = await call(acc, 'POST', '/accounts', { ...body, code: '560091', name: 'Site housekeeping' });
   assert.equal((await call(acc, 'POST', `/changes/${wd.json.data.id}/withdraw`, { reason: 'proposed by mistake today' })).json.data.status, 'CANCELLED');
-  const rj = await call(acc, 'POST', '/accounts', { ...body, code: '560012', name: 'Site entertainment' });
+  const rj = await call(acc, 'POST', '/accounts', { ...body, code: '560092', name: 'Site entertainment' });
   await act(api, cfo, rj.json.data.instanceId, 'reject', 'use site overheads');
   assert.equal((await call(acc, 'GET', `/changes/${rj.json.data.id}`)).json.data.status, 'REJECTED');
-  assert.ok(!(await chart()).accounts.some((a) => ['560011', '560012'].includes(a.code)));
+  assert.ok(!(await chart()).accounts.some((a) => ['560091', '560092'].includes(a.code)));
   // one change of an account at a time
   const fuel = await accountId('560003');
   const f = (await call(acc, 'GET', `/accounts/${fuel}`)).json.data;

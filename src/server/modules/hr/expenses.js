@@ -441,7 +441,9 @@ export function createExpenseService({ db, dep }) {
       if (!['DRAFT', 'RETURNED'].includes(a.status)) throw conflict(`This advance is ${ADVANCE_STATUS[a.status].toLowerCase()}.`);
       if (!maker(actor, a)) throw forbidden(`Only ${a.created_by}, who asked for it, submits it.`);
       const problems = advanceChecks(actor, emp(a.employee_id), { type: a.advance_type, amount: money(a.amount_minor), instalments: a.instalments, travelRequestId: a.travel_request_id }, id); if (problems.length) throw badRequest('The advance cannot be sent yet.', problems);
-      const big = a.advance_type === 'SALARY' ? a.amount_minor > Number(param(actor.companyId, 'exp.advance.salary_cfo_above_minor')) : a.amount_minor > L * 100;
+      // D-366: "above one month salary" is the employee's monthly gross in force (payroll, 24.01); the parameter only when no pay is recorded
+      const monthPay = db.prepare('SELECT COALESCE(SUM(monthly_paise), 0) AS p FROM hr_employee_pay WHERE employee_id = ? AND deleted_at IS NULL AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)').get(a.employee_id, today(), today()).p;
+      const big = a.advance_type === 'SALARY' ? a.amount_minor > (monthPay > 0 ? monthPay : Number(param(actor.companyId, 'exp.advance.salary_cfo_above_minor'))) : a.amount_minor > L * 100;
       return transaction(db, () => {
         const ctx = { kind: a.advance_type, big, amount: a.amount_minor / 100, employeeId: a.employee_id };
         if (a.status === 'RETURNED') workflowOf(db).resubmit(actor, a.workflow_instance_id, { comment: comment ?? 'Corrected', context: ctx });

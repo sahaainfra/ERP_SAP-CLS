@@ -186,6 +186,7 @@ export default {
   "tk.qr": "QR code",
   "tk.outside": "Leaves the premises (e-way bill)",
   "tk.eway": "E-way bill no.",
+  "tk.ewayAwaited": "awaited from finance",
   "tk.dispatch": "Dispatch",
   "tk.times": "Batched {b}, left {d}, arrived {a}",
   "tk.unload": "Unloading {s} to {e}",

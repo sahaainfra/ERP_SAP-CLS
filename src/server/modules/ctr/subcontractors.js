@@ -19,6 +19,9 @@ for (const [key, type, def, description, min, max] of [
   ['ctr.sub.rating_weights', 'string', '40,25,20,15', 'Weights in percent of the progress, quality, safety and compliance scores in the period rating (sum 100).', null, null]]) {
   if (!parameterRegistry.get(key)) parameterRegistry.define({ key, dataType: type, default: def, scopes: ['system', 'company'], description, ...(min == null ? {} : { min, max }) });
 }
+/** Other reasons that hold a subcontractor's payments on a project, given by other modules (part 24.03: contract labour wage sheets held for variances):
+ *  each is (db, companyId, subcontractorId, projectId) → [{ period, message, ... }]. */
+export const subHoldSources = [];
 export const ITEM_LABEL = { CLRA: 'CLRA licence', PF: 'PF challan and ECR', ESI: 'ESI challan', WAGE_REG: 'Wage register proof', WC_INSURANCE: 'Workmen compensation insurance', GST_RETURN: 'GST returns filed', BOCW: 'BOCW registration' };
 export const COMP_STATE = { OPEN: 'To be compiled', SUBMITTED: 'Waiting for verification', VERIFIED: 'Verified', RETURNED: 'Returned for correction' };
 const band = (t) => (t >= 85 ? 'A' : t >= 70 ? 'B' : t >= 55 ? 'C' : 'D');
@@ -50,6 +53,7 @@ export function createSubcontractorService({ db, base, flags, workOrders }) {
       const miss = missingOf(itemsOf(r), mandatoryOf(cid)); const bad = miss.length > 0 || r.comp_state === 'RETURNED'; if (!bad) continue; const waived = new Set(waiverOf(cid, r.id, t).flatMap((w) => JSON.parse(w.items_json))); if (miss.length > 0 && miss.every((c) => waived.has(c))) continue;
       reasons.push({ period: r.period, complianceId: r.id, docNo: r.doc_no, missing: miss.filter((c) => !waived.has(c)), returned: r.comp_state === 'RETURNED', daysLate: dayDiff(t, r.due_date), message: miss.length ? `${r.period}: ${miss.filter((c) => !waived.has(c)).map((c) => ITEM_LABEL[c]).join(', ')} missing, due ${r.due_date}` : `${r.period}: returned for correction, due ${r.due_date}` });
     }
+    for (const src of subHoldSources) { try { reasons.push(...(src(db, cid, subId, projectId) ?? [])); } catch { /* a source that fails holds nothing */ } }
     return reasons;
   }
   /** Sets the hold of a subcontractor on a project from the compliance and tells the others once when it changes (23.03, 23.04). */

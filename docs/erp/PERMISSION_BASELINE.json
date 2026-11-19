@@ -155,8 +155,15 @@
  "fin.bank.manage": [
   "CFO"
  ],
+ "fin.gst_recon.manage": [
+  "ACCMGR"
+ ],
  "fin.imprest.manage": [
   "ACCMGR"
+ ],
+ "fin.pl.configure": [
+  "ACCMGR",
+  "CFO"
  ],
  "fin.recurring.manage": [
   "ACCMGR",
@@ -349,5 +356,36 @@
  "ui.translation.manage": [
   "SUPADM",
   "SYSADM"
+ ],
+ "fin.cash_forecast.manage": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "fin.period.configure": [
+  "CFO"
+ ],
+ "fin.ic.configure": [
+  "CFO"
+ ],
+ "fin.jv.manage": [
+  "ACCMGR",
+  "CFO"
+ ],
+ "pay.calendar.configure": [
+  "PAY"
+ ],
+ "pay.component.configure": [
+  "PAY"
+ ],
+ "pay.structure.configure": [
+  "PAY"
+ ],
+ "pay.input.manage": [
+  "PAY"
+ ],
+ "pay.wage_check.manage": [
+  "PAY",
+  "SACC",
+  "SUBCO"
  ]
 }

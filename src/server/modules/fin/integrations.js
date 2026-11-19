@@ -4,7 +4,8 @@ import { lookupRegistry } from '../../platform/lookups/index.js';
 import { objectTypes } from '../../platform/objects/index.js';
 import { evidenceProviders, workflowTypes } from '../../platform/workflow/index.js';
 import { CONTROL_KINDS, DIMENSION_LABELS, FIN_DOC, finOf } from './service.js';
-import { apOf, arOf, cashOf, glOf, paymentsOf, postingOf } from './index.js';
+import { apOf, arOf, assetsOf, cashOf, glOf, gstOf, gstReconOf, paymentsOf, postingOf, projectAccountsOf, costForecastsOf, projectPlOf, cashForecastsOf, periodClosesOf, interCompanyOf } from './index.js';
+import { registerProject360Widget } from '../proj/p360.js';
 import { registerOfflineForm } from '../eng/offline.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { unprocessable } from '../../platform/http/errors.js';
@@ -302,4 +303,165 @@ for (const [type, label, perm, route] of [['ap_bills', 'AP bill', 'fin.bill.view
   summary(db, actor, id) { const r = db.prepare(`SELECT doc_no, status FROM ${type} WHERE id = ? AND company_id = ?`).get(Number(id), actor.companyId); return r ? { label: r.doc_no, status: r.status } : null; },
   related: () => [],
   search(db, actor, q, limit) { if (!authzOf(db).check(actor, perm).allowed) return []; return db.prepare(`SELECT id FROM ${type} WHERE company_id = ? AND deleted_at IS NULL AND doc_no LIKE ? ORDER BY id DESC LIMIT ?`).all(actor.companyId, `%${q}%`, limit).map((x) => x.id); },
+});
+
+// ---- part 23.07: the GST compliance service ----
+for (const [type, description] of [
+  ['fin.gst_settings.approved', 'A version of the GST settings was approved by the CFO (part 23.07): data { settingsId, effectiveFrom, einvoiceEnabled, ewayEnabled, gspMode }.'],
+  ['fin.einvoice.generated', 'The IRP returned the IRN of a document (part 23.07 FR-03): data { einvoiceId, documentType, documentId, documentNo, irn, ackNo, ackDate, mode }. The document (22.04, 23.05) carries the IRN and the QR.'],
+  ['fin.einvoice.failed', 'An e-invoice was refused or not answered (part 23.07): data { einvoiceId, documentType, documentId, documentNo, code, retryable }.'],
+  ['fin.einvoice.cancelled', 'An IRN was cancelled within its 24 hours (part 23.07): data { einvoiceId, documentType, documentId, documentNo, irn, reason }.'],
+  ['fin.ewaybill.generated', 'An e-way bill was generated (part 23.07 FR-04): data { ewaybillId, ewbNo, documentType, documentId, documentNo, vehicleNo, validUntil, projectId }. The gate and the transfer read it.'],
+  ['fin.ewaybill.vehicle_updated', 'The vehicle of an e-way bill changed (Part B): data { ewaybillId, ewbNo, vehicleNo, validUntil, documentType, documentId }.'],
+  ['fin.ewaybill.extended', 'An e-way bill was extended: data { ewaybillId, ewbNo, validUntil }.'],
+  ['fin.ewaybill.cancelled', 'An e-way bill was cancelled within its 24 hours: data { ewaybillId, ewbNo, documentType, documentId }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const gsDecide = (outcome) => (db, { instance, actor, comment }) => gstOf(db)?.settings.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_GST_SETTINGS', label: 'GST settings (version)', processOwner: 'CFO', route: (id) => `/finance/gst-settings?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM gst_settings WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `GST settings from ${r.effective_from}: ${r.change_note ?? ''}`.slice(0, 300), originator: r.requested_by } : null; },
+  summarise(db, _actor, id) {
+    const r = db.prepare('SELECT * FROM gst_settings WHERE id = ?').get(Number(id)); if (!r) return null; const prev = db.prepare("SELECT * FROM gst_settings WHERE company_id = ? AND status = 'APPROVED' AND id <> ? ORDER BY effective_from DESC, id DESC LIMIT 1").get(r.company_id, r.id);
+    const cr = (p) => `₹${(p / 1e7).toFixed(2)} crore`; /** @type {Array<[string, string, (v: any) => string]>} */ const rows = [['From', 'effective_from', (v) => v], ['Aggregate turnover', 'aato_paise', cr], ['e-Invoicing', 'einvoice_enabled', (v) => (v ? 'on' : 'off')], ['IRN reporting window', 'irn_window_days', (v) => `${v} days`], ['e-Way bills', 'eway_enabled', (v) => (v ? 'on' : 'off')], ['e-Way bill above', 'eway_threshold_paise', (v) => `₹${(v / 100).toLocaleString('en-IN')}`], ['GSP connector', 'gsp_connector_code', (v) => v ?? 'none'], ['Mode', 'gsp_mode', (v) => v], ['Why', 'change_note', (v) => v ?? '']];
+    return { fields: rows.map((x) => { const l = String(x[0]); const k = String(x[1]); const f = /** @type {(v: any) => string} */ (x[2]); return { label: l, value: prev && prev[k] !== r[k] && k !== 'change_note' ? `${f(r[k])} (was ${f(prev[k])})` : f(r[k]) }; }) };
+  },
+  defaultDefinition: { name: 'GST settings: the CFO (made by the accounts manager)', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: { onApproved: gsDecide('APPROVED'), onRejected: gsDecide('REJECTED'), onReturned: gsDecide('RETURNED'), onCancelled: gsDecide('CANCELLED') },
+});
+
+// ---- part 23.08: GST reconciliation, ITC review and TDS ----
+for (const [type, description] of [
+  ['fin.gst_2b.imported', 'A GSTR-2B statement was imported and matched (part 23.08 FR-01): data { importId, period, lines, MATCHED, MISMATCH_AMOUNT, MISMATCH_DATE, MISMATCH_NUMBER, MISSING_IN_BOOKS }.'],
+  ['fin.gst_recon.followup', 'A vendor is asked about an invoice missing in GSTR-2B or that differs from it (part 23.08 FR-02): data { lineId, billId, partnerId, channel, invoiceNo, invoiceDate, issue, note, nextDate }. The vendor portal (25.02) shows it to the vendor.'],
+  ['fin.itc_review.approved', 'The ITC of a month was approved by the CFO (part 23.08 FR-03): data { reviewId, docNo, period, eligible, override, reversed, claimable, blocked, journalId }. The reversal is posted.'],
+  ['fin.gst_return.filed', 'GSTR-1 or GSTR-3B of a month was marked filed with its ARN: data { returnType, period, arn, filedOn }.'],
+  ['fin.tds_return.filed', 'A quarterly TDS statement was marked filed with its token: data { quarter, form, tokenNo, filedOn }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const itcDecide = (outcome) => (db, { instance, actor, comment }) => gstReconOf(db)?.reviews.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_ITC_REVIEW', label: 'Monthly ITC claim (review)', processOwner: 'CFO', route: (id) => `/finance/gst-reconciliation?tab=itc&review=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM gst_itc_reviews WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `ITC of ${r.period}: claim ₹${(r.claimable_paise / 100).toFixed(2)}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM gst_itc_reviews WHERE id = ?').get(Number(id)); if (!r) return null; const m = (p) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`; const n = db.prepare("SELECT COUNT(*) AS n FROM gst_itc_review_lines WHERE review_id = ? AND decision = 'OVERRIDE_CLAIM' AND deleted_at IS NULL").get(r.id).n;
+    return { fields: [{ label: 'Month', value: r.period }, { label: 'Eligible (matched in 2B)', value: m(r.eligible_paise) }, { label: 'Claimed by override', value: `${m(r.override_paise)} (${n} invoice(s), each with its reason)` }, { label: 'Reversed (unpaid beyond 180 days)', value: m(r.reversed_paise) }, { label: 'Blocked or not available', value: m(r.blocked_paise) }, { label: 'Held (not in 2B or mismatch)', value: m(r.held_paise) }, { label: 'ITC to claim', value: m(r.claimable_paise) }] }; },
+  defaultDefinition: { name: 'Monthly ITC claim: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: { onApproved: itcDecide('APPROVED'), onRejected: itcDecide('REJECTED'), onReturned: itcDecide('RETURNED'), onCancelled: itcDecide('CANCELLED') },
+});
+
+// ---- part 23.09: fixed assets ----
+for (const [type, description] of [
+  ['fin.asset.capitalised', 'A fixed asset was capitalised (approved by the CFO; part 23.09 FR-02): data { assetId, docNo, classCode, cost, capDate, projectId, equipmentId, smallAssetId, source, journalId }.'],
+  ['fin.depreciation.posted', 'The book depreciation of a month was posted (part 23.09 FR-03): data { runId, period, total, journalId, assets: [{ assetId, equipmentId, smallAssetId, projectId, siteId, classCode, amount }] }. Plant costs (17.07) and the batching plant (20.03) read the machines\' share.'],
+  ['fin.asset.transferred', 'A fixed asset moved to another project, site or custodian (part 23.09 FR-04): data { assetId, transferId, fromProjectId, toProjectId, toCustodian, equipmentId, date }.'],
+  ['fin.asset.disposed', 'A fixed asset was sold, scrapped or written off (part 23.09 FR-05): data { disposalId, docNo, assetId, assetNo, description, equipmentId, smallAssetId, projectId, method, date, buyerPartnerId, proceeds, gst, wdv, gainLoss, journalId, requestedBy, clearingAccountCode }. A sale becomes a receivable to invoice (23.05).'],
+  ['fin.asset.verified', 'A physical verification of fixed assets was closed (part 23.09 FR-06): data { verificationId, projectId, expected, missing }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const faDecide = (kind, outcome) => (db, { instance, actor, comment }) => assetsOf(db)?.[kind].flow.decide(instance, actor, outcome, comment);
+const faHooks = (kind) => ({ onApproved: faDecide(kind, 'APPROVED'), onRejected: faDecide(kind, 'REJECTED'), onReturned: faDecide(kind, 'RETURNED'), onCancelled: faDecide(kind, 'CANCELLED') });
+const inr = (p) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+workflowTypes.register({
+  docType: 'FIN_FA_ASSET', label: 'Capitalisation of a fixed asset', processOwner: 'CFO', route: (id) => `/finance/assets?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM fa_assets WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.description} ${inr(r.cost_paise)}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined, siteId: r.org_site_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM fa_assets WHERE id = ?').get(Number(id)); return r ? { fields: [{ label: 'Asset', value: r.description }, { label: 'Class', value: r.class_code }, { label: 'From', value: r.cap_source }, { label: 'Cost', value: inr(r.cost_paise) }, { label: 'Put to use', value: r.cap_date }, { label: 'Depreciation', value: `${r.book_method} over ${r.useful_life_months} months, residual ${inr(r.residual_paise)}` }, { label: 'Tax block', value: `${r.tax_block} at ${r.tax_rate_bp / 100}%` }] } : null; },
+  defaultDefinition: { name: 'Capitalisation: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO')] },
+  hooks: faHooks('assets'),
+});
+workflowTypes.register({
+  docType: 'FIN_FA_DISPOSAL', label: 'Disposal of a fixed asset', processOwner: 'CFO', route: (id) => `/finance/assets?disposal=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT d.*, a.doc_no AS asset_no, a.description, a.org_project_id FROM fa_disposals d JOIN fa_assets a ON a.id = d.asset_id WHERE d.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.method} of ${r.asset_no} ${r.description}: WDV ${inr(r.wdv_paise)}, proceeds ${inr(r.proceeds_paise)}`.slice(0, 300), originator: r.requested_by, projectId: r.org_project_id ?? undefined } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT d.*, a.doc_no AS asset_no, a.description, a.cost_paise, a.accumulated_dep_paise FROM fa_disposals d JOIN fa_assets a ON a.id = d.asset_id WHERE d.id = ?').get(Number(id)); return r ? { fields: [{ label: 'Asset', value: `${r.asset_no} ${r.description}` }, { label: 'How', value: r.method }, { label: 'Date', value: r.disposal_date }, { label: 'Cost', value: inr(r.cost_paise) }, { label: 'Depreciation to the day before', value: inr(r.accumulated_dep_paise + r.dep_to_date_paise) }, { label: 'Written-down value', value: inr(r.wdv_paise) }, { label: 'Proceeds (+ GST)', value: `${inr(r.proceeds_paise)} + ${inr(r.gst_paise)}` }, { label: r.gain_loss_paise >= 0 ? 'Gain' : 'Loss', value: inr(Math.abs(r.gain_loss_paise)) }, { label: 'Why', value: r.reason }] } : null; },
+  defaultDefinition: { name: 'Disposal: the accounts manager, the CFO, and a director above ₹10 lakh', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else proposed it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'Chief financial officer', 'CFO'), glStep('DIR', 'Director (above ₹10 lakh)', 'DIR', { field: 'aboveDir', op: 'eq', value: 'yes' })] },
+  hooks: faHooks('disposals'),
+});
+
+// ---- part 23.10: project accounting ----
+for (const [type, description] of [
+  ['fin.revenue.recognised', 'The revenue of a project for a month was recognised and posted (approved by the CFO; part 23.10 FR-02, FR-03): data { recognitionId, docNo, projectId, period, method, poc, contractRevenue, recognisedCum, recognisedPeriod, billed, unbilled, excess, lossProvision, eac, costToDate, journalId }. The project P&L (23.12) reads it.'],
+  ['fin.overhead.posted', 'The overhead of a pool allocated in 12.04 was posted to the projects (part 23.10 FR-04): data { runId, docNo, period, total, journalId, allocations: [{ projectId, amount }] }.'],
+]) eventTypes.define({ type, version: 1, schema, owner: 'fin', description });
+const rrDecide = (outcome) => (db, { instance, actor, comment }) => projectAccountsOf(db)?.recognition.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_REVENUE_RECOGNITION', label: 'Revenue recognition of a project for a month', processOwner: 'CFO', route: (id) => `/finance/revenue-recognition?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT x.*, p.code FROM pa_revenue_recognition x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Revenue of ${r.code} for ${r.period}: ${inr(r.recognised_period_paise)} this month`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT x.*, p.code, p.name FROM pa_revenue_recognition x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Project', value: `${r.code} ${r.name}` }, { label: 'Month', value: r.period }, { label: 'Method', value: r.method === 'OUTPUT' ? 'Output' : 'Cost to cost' }, { label: 'Cost to date / EAC', value: `${inr(r.cost_to_date_paise)} / ${inr(r.eac_paise)} (${r.eac_ref ?? r.eac_source})` }, { label: 'Percentage of completion', value: `${(r.poc_ppm / 10000).toFixed(2)} %` }, { label: 'Contract revenue', value: inr(r.contract_revenue_paise) }, { label: 'Recognised to date / this month', value: `${inr(r.recognised_cum_paise)} / ${inr(r.recognised_period_paise)}` }, { label: 'Billed to date', value: inr(r.billed_cum_paise) }, { label: 'Unbilled / billing in excess', value: `${inr(r.unbilled_paise)} / ${inr(r.excess_billing_paise)}` }, { label: 'Expected loss provided', value: inr(r.loss_provision_paise) }] }; },
+  defaultDefinition: { name: 'Revenue recognition: the accounts manager (when someone else prepared it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: rrDecide('APPROVED'), onRejected: rrDecide('REJECTED'), onReturned: rrDecide('RETURNED'), onCancelled: rrDecide('CANCELLED') },
+});
+objectTypes.register({ type: 'pa_revenue_recognition', label: 'Revenue recognition', permission: 'fin.revenue_recognition.view', route: (id) => `/finance/revenue-recognition?id=${id}`,
+  access(db, actor, id) { if (!authzOf(db).check(actor, 'fin.revenue_recognition.view').allowed) return null; const r = db.prepare('SELECT company_id, org_project_id, status FROM pa_revenue_recognition WHERE id = ? AND deleted_at IS NULL').get(Number(id)); return r && r.company_id === actor.companyId ? { companyId: r.company_id, projectId: r.org_project_id, status: r.status } : null; },
+  auditEntities: (id) => [{ entity: 'pa_revenue_recognition', id }], summary(db, _actor, id) { const r = db.prepare('SELECT doc_no, period, status FROM pa_revenue_recognition WHERE id = ?').get(Number(id)); return r ? { label: `${r.doc_no} ${r.period}`, status: r.status } : null; },
+  related() { return []; } });
+
+// ---- part 23.11: cost forecast ----
+eventTypes.define({ type: 'fin.eac_version.approved', version: 1, schema, owner: 'fin', description: 'A cost forecast of a project for a month was approved (part 23.11 FR-05): data { forecastId, docNo, projectId, period, version, budget, actual, etc, eac, vac, riskAllowance, lossMaking, confidence }. Revenue recognition (23.10) takes its EAC; the P&L (23.12) and the cash forecast (23.13) read it.' });
+const fcDecide = (outcome) => (db, { instance, actor, comment }) => costForecastsOf(db)?.forecasts.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_COST_FORECAST', label: 'Monthly cost forecast of a project', processOwner: 'PD', route: (id) => `/finance/cost-forecasts?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT x.*, p.code FROM fc_forecasts x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Cost forecast of ${r.code} for ${r.period} v${r.version_no}: EAC ${inr(r.eac_total_paise)}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT x.*, p.code, p.name FROM fc_forecasts x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Project', value: `${r.code} ${r.name}` }, { label: 'Month / version', value: `${r.period} v${r.version_no}` }, { label: 'Budget', value: inr(r.budget_paise) }, { label: 'Actual + accrued', value: inr(r.actual_paise + r.accrued_paise) }, { label: 'ETC', value: inr(r.etc_paise) }, { label: 'Risk allowance / pending variations', value: `${inr(r.risk_allowance_paise)} / ${inr(r.pending_var_cost_paise)}` }, { label: 'EAC / VAC', value: `${inr(r.eac_total_paise)} / ${inr(r.vac_total_paise)}` }, { label: 'Contract revenue', value: `${inr(r.contract_revenue_paise)}${r.loss_making ? ' — loss-making' : ''}` }, { label: 'Confidence', value: r.confidence }] }; },
+  defaultDefinition: { name: 'Cost forecast: the project controls manager, the PM, the project director, and the CFO for a loss-making project', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('PCMGR', 'Project controls manager (when someone else prepared it)', 'PCMGR', { field: 'makerRole', op: 'ne', value: 'PCMGR' }), glStep('PM', 'Project manager (when someone else prepared it)', 'PM', { field: 'makerRole', op: 'ne', value: 'PM' }), glStep('PD', 'Project director', 'PD'), glStep('CFO', 'CFO (loss-making project)', 'CFO', { field: 'loss', op: 'eq', value: 'yes' })] },
+  hooks: { onApproved: fcDecide('APPROVED'), onRejected: fcDecide('REJECTED'), onReturned: fcDecide('RETURNED'), onCancelled: fcDecide('CANCELLED') },
+});
+
+// ---- part 23.12: project P&L ----
+eventTypes.define({ type: 'fin.pl_snapshot.frozen', version: 1, schema, owner: 'fin', description: 'The P&L of a project for a month was frozen (approved by the CFO; equal to the ledger; part 23.12 FR-04): data { snapshotId, docNo, projectId, period, revenue, grossProfit, operatingProfit, revenueToDate, operatingProfitToDate }. MIS (27.07), the control tower (27.04) and the closeout (26.04) read it.' });
+const plDecide = (outcome) => (db, { instance, actor, comment }) => projectPlOf(db)?.snapshots.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PL_SNAPSHOT', label: 'Freeze of a project P&L for a month', processOwner: 'CFO', route: (id) => `/finance/project-pl?snapshot=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT x.*, p.code FROM pl_snapshots x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `P&L of ${r.code} for ${r.period}: revenue ${inr(r.revenue_paise)}`, originator: r.requested_by, projectId: r.org_project_id } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT x.*, p.code, p.name FROM pl_snapshots x JOIN org_projects p ON p.id = x.org_project_id WHERE x.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Project', value: `${r.code} ${r.name}` }, { label: 'Month', value: r.period }, { label: 'Revenue', value: inr(r.revenue_paise) }, { label: 'Gross profit', value: inr(r.gross_profit_paise) }, { label: 'Operating profit', value: inr(r.operating_profit_paise) }, { label: 'Ledger / P&L', value: `${inr(r.gl_total_paise)} / ${inr(r.pl_total_paise)}${r.gl_total_paise === r.pl_total_paise ? ' (equal)' : ' (NOT equal)'}` }] }; },
+  defaultDefinition: { name: 'P&L snapshot freeze: the accounts manager (when someone else made it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else made it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: plDecide('APPROVED'), onRejected: plDecide('REJECTED'), onReturned: plDecide('RETURNED'), onCancelled: plDecide('CANCELLED') },
+});
+// Project 360 (10.08): the P&L of the project this year
+registerProject360Widget('fin-pl', (ctx) => projectPlOf(ctx.db)?.widget(ctx.actor, ctx.project.project_id) ?? { figures: [], rows: [], note: 'The project P&L (part 23.12) is not set up for this database.' });
+
+// ---- part 23.13: cash forecast ----
+eventTypes.define({ type: 'fin.cash_forecast.published', version: 1, schema, owner: 'fin', description: 'The weekly cash forecast was published (approved by the CFO; part 23.13): data { forecastId, docNo, weekStart, weeks, opening, inflow, outflow, closing, lowest, lowestWeek }. The control tower (27.04) reads it.' });
+const cfDecide = (outcome) => (db, { instance, actor, comment }) => cashForecastsOf(db)?.forecasts.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_CASH_FORECAST', label: 'Weekly cash forecast publication', processOwner: 'CFO', route: (id) => `/finance/treasury?forecast=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM cf_forecasts WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Cash forecast from ${r.week_start}: closing ${inr(r.closing_paise)}, lowest ${inr(r.lowest_paise)}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM cf_forecasts WHERE id = ?').get(Number(id)); if (!r) return null; const adj = db.prepare("SELECT COUNT(*) AS n FROM cf_lines WHERE forecast_id = ? AND source = 'MANUAL' AND deleted_at IS NULL").get(r.id).n;
+    return { fields: [{ label: 'Weeks', value: `${r.weeks} from ${r.week_start}` }, { label: 'Opening cash', value: inr(r.opening_paise) }, { label: 'Inflow / outflow', value: `${inr(r.inflow_paise)} / ${inr(r.outflow_paise)}` }, { label: 'Closing', value: inr(r.closing_paise) }, { label: 'Lowest point', value: `${inr(r.lowest_paise)} (week of ${r.lowest_week})` }, { label: 'Manual adjustments', value: `${adj} (each with its reason)` }] }; },
+  defaultDefinition: { name: 'Cash forecast: the accounts manager (when someone else prepared it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: cfDecide('APPROVED'), onRejected: cfDecide('REJECTED'), onReturned: cfDecide('RETURNED'), onCancelled: cfDecide('CANCELLED') },
+});
+
+// ---- part 23.14: period close ----
+eventTypes.define({ type: 'fin.period.closed', version: 1, schema, owner: 'fin', description: 'A month was closed (approved by the CFO; every module hard-closed; part 23.14 FR-02): data { closeId, docNo, period, periodId, tbDebit, tbCredit, balanced, assets, equityLiabilities, revenue, pbt, pat, revenueYtd, patYtd, cash }. MIS (27.07) and consolidation (23.15) read it.' });
+eventTypes.define({ type: 'fin.period.reopened', version: 1, schema, owner: 'fin', description: 'A closed month was reopened (approved ACCMGR → CFO → DIR; part 23.14 FR-02): data { closeId, reopenId, period, periodId, modules, to, reason }.' });
+eventTypes.define({ type: 'fin.year.closed', version: 1, schema, owner: 'fin', description: 'A financial year was closed after every month and the closing entries (part 23.14 FR-04): data { fyId, code, pat, carryForwardJournalId }.' });
+const clDecide = (outcome) => (db, { instance, actor, comment }) => periodClosesOf(db)?.closes.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PERIOD_CLOSE', label: 'Period close', processOwner: 'CFO', route: (id) => `/finance/close?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM close_periods WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Close of ${r.period}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM close_periods WHERE id = ?').get(Number(id)); if (!r) return null; const t = db.prepare("SELECT COUNT(*) AS n, SUM(CASE WHEN task_status IN ('DONE', 'NOT_APPLICABLE') THEN 1 ELSE 0 END) AS d FROM close_tasks WHERE close_id = ? AND deleted_at IS NULL").get(r.id); let f = {}; try { f = JSON.parse(r.figures_json); } catch { /* none */ }
+    return { fields: [{ label: 'Month', value: r.period }, { label: 'Checklist', value: `${t.d ?? 0} of ${t.n} tasks done` }, { label: 'Trial balance', value: `₹${f.tbDebit ?? '—'} / ₹${f.tbCredit ?? '—'}${f.balanced ? ' (balanced)' : ''}` }, { label: 'Revenue / profit after tax', value: `₹${f.revenue ?? '—'} / ₹${f.pat ?? '—'}` }, { label: 'Cash', value: `₹${f.cash ?? '—'}` }] }; },
+  defaultDefinition: { name: 'Period close: the accounts manager (when someone else prepared it), then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else prepared it)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO')] },
+  hooks: { onApproved: clDecide('APPROVED'), onRejected: clDecide('REJECTED'), onReturned: clDecide('RETURNED'), onCancelled: clDecide('CANCELLED') },
+});
+const roDecide = (outcome) => (db, { instance, actor, comment }) => periodClosesOf(db)?.reopens.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_PERIOD_REOPEN', label: 'Reopen of a closed month', processOwner: 'CFO', route: (id) => `/finance/close?reopen=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT r.*, c.period FROM close_reopens r JOIN close_periods c ON c.id = r.close_id WHERE r.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Reopen ${r.period}: ${r.reason}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT r.*, c.period, c.doc_no AS close_no FROM close_reopens r JOIN close_periods c ON c.id = r.close_id WHERE r.id = ?').get(Number(id)); if (!r) return null;
+    return { fields: [{ label: 'Month', value: `${r.period} (${r.close_no})` }, { label: 'Modules', value: JSON.parse(r.modules_json).join(', ') }, { label: 'Reopened as', value: r.target_status }, { label: 'Reason', value: r.reason }] }; },
+  defaultDefinition: { name: 'Reopen of a closed month: the accounts manager (when someone else asked), the CFO, then the director', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Accounts manager (when someone else asked)', 'ACCMGR', { field: 'makerRole', op: 'ne', value: 'ACCMGR' }), glStep('CFO', 'CFO', 'CFO'), glStep('DIR', 'Director', 'DIR')] },
+  hooks: { onApproved: roDecide('APPROVED'), onRejected: roDecide('REJECTED'), onReturned: roDecide('RETURNED'), onCancelled: roDecide('CANCELLED') },
+});
+
+// ---- part 23.15: inter-company and consolidation ----
+eventTypes.define({ type: 'fin.ic_transaction.posted', version: 1, schema, owner: 'fin', description: 'An inter-company transaction was accepted by the counterpart and its mirror journals posted in both companies at once (part 23.15 FR-02): data { transactionId, docNo, type, fromCompanyId, toCompanyId, amount, date, journals }.' });
+eventTypes.define({ type: 'fin.consolidation.finalised', version: 1, schema, owner: 'fin', description: 'A consolidation of a parent with its subsidiaries was finalised with nothing unmatched (part 23.15 FR-04): data { consolidationId, docNo, period, basis, companies, assets, pat, eliminations }. MIS (27.07) reads it.' });
+const icDecide = (outcome) => (db, { instance, actor, comment }) => interCompanyOf(db)?.transactions.flow.decide(instance, actor, outcome, comment);
+workflowTypes.register({
+  docType: 'FIN_IC_TRANSACTION', label: 'Inter-company transaction', processOwner: 'ACCMGR', route: (id) => `/finance/inter-company?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM ic_transactions WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.ic_type} to company ${r.to_company_id}: ${inr(r.amount_paise)} — ${r.description}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT t.*, c.code AS to_code, c.legal_name AS to_name FROM ic_transactions t JOIN org_companies c ON c.id = t.to_company_id WHERE t.id = ?').get(Number(id)); if (!r) return null; const a = r.from_account_id ? db.prepare('SELECT code, name FROM fin_accounts WHERE id = ?').get(r.from_account_id) : null;
+    return { fields: [{ label: 'Counterpart', value: `${r.to_code} ${r.to_name}` }, { label: 'Type / date', value: `${r.ic_type} · ${r.txn_date}` }, { label: 'Amount', value: inr(r.amount_paise) }, { label: 'Account of this side', value: a ? `${a.code} ${a.name}` : '—' }, { label: 'Description', value: r.description }, { label: 'After approval', value: 'The counterpart accepts with the account of its side; the mirror journals are then posted in both companies.' }] }; },
+  defaultDefinition: { name: 'Inter-company transaction: the originating accounts manager (not the maker); then the counterpart accepts', settings: { resubmit: 'first', distinctApprovers: true }, steps: [glStep('ACCMGR', 'Originating accounts manager', 'ACCMGR')] },
+  hooks: { onApproved: icDecide('APPROVED'), onRejected: icDecide('REJECTED'), onReturned: icDecide('RETURNED'), onCancelled: icDecide('CANCELLED') },
 });

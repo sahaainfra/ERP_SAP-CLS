@@ -20,6 +20,27 @@ import { createArService } from './ar.js';
 import { arRoutes } from './arroutes.js';
 import { createCashService } from './cash.js';
 import { cashRoutes } from './cashroutes.js';
+import { createGstService } from './gst.js';
+import { gstRoutes } from './gstroutes.js';
+import { createGstReconService } from './gstrecon.js';
+import { gstReconRoutes } from './gstreconroutes.js';
+import { createAssetService } from './assets.js';
+import { assetRoutes } from './assetroutes.js';
+import { httpGsp, sandboxGsp } from './gsp.js';
+import { integrationsOf } from '../../platform/integrations/index.js';
+import { bindTaxEngine } from '../../platform/tax/index.js';
+import { createProjectAccountingService } from './projacct.js';
+import { projectAccountingRoutes } from './projacctroutes.js';
+import { createCostForecastService } from './costforecast.js';
+import { costForecastRoutes } from './costforecastroutes.js';
+import { createProjectPlService } from './projectpl.js';
+import { projectPlRoutes } from './projectplroutes.js';
+import { createCashForecastService } from './cashforecast.js';
+import { cashForecastRoutes } from './cashforecastroutes.js';
+import { createPeriodCloseService } from './periodclose.js';
+import { periodCloseRoutes } from './periodcloseroutes.js';
+import { createInterCompanyService } from './intercompany.js';
+import { interCompanyRoutes } from './intercompanyroutes.js';
 import { finRoutes } from './routes.js';
 import { accountPostings, bindFin, createFinService } from './service.js';
 
@@ -39,13 +60,34 @@ export const arOf = (db) => arServices.get(db) ?? null;
 const cashServices = new WeakMap();
 /** Cash and bank of a database (part 23.06). */
 export const cashOf = (db) => cashServices.get(db) ?? null;
+const gstServices = new WeakMap();
+/** The GST compliance service of a database (part 23.07): the tax engine, e-invoices and e-way bills. */
+export const gstOf = (db) => gstServices.get(db) ?? null;
+const gstReconServices = new WeakMap();
+/** GST reconciliation, ITC review and TDS compliance of a database (part 23.08). */
+export const gstReconOf = (db) => gstReconServices.get(db) ?? null;
+const assetServices = new WeakMap();
+/** Fixed assets and depreciation of a database (part 23.09). */
+export const assetsOf = (db) => assetServices.get(db) ?? null;
+const projectAccountServices = new WeakMap();
+const costForecastServices = new WeakMap();
+export const costForecastsOf = (db) => costForecastServices.get(db) ?? null;
+const projectPlServices = new WeakMap();
+export const projectPlOf = (db) => projectPlServices.get(db) ?? null;
+const cashForecastServices = new WeakMap();
+export const cashForecastsOf = (db) => cashForecastServices.get(db) ?? null;
+const periodCloseServices = new WeakMap();
+export const periodClosesOf = (db) => periodCloseServices.get(db) ?? null;
+const interCompanyServices = new WeakMap();
+export const interCompanyOf = (db) => interCompanyServices.get(db) ?? null;
+export const projectAccountsOf = (db) => projectAccountServices.get(db) ?? null;
 /** The general ledger of a database (part 23.01), for the posting engine (23.02) and the sub-ledgers. */
 export const glOf = (db) => glServices.get(db) ?? null;
 
-const TABLES = ['fin_account_groups', 'fin_accounts', 'fin_cost_heads', 'fin_cost_codes', 'fin_dimension_rules', 'fin_category_mappings', 'fin_master_changes', 'fin_journals', 'fin_journal_lines', 'fin_balances', 'fin_recurring_journals', 'fin_posting_rules', 'fin_posting_log', 'fin_replay_runs', 'ap_bills', 'ap_debit_notes', 'ap_bill_adjustments', 'fin_bank_accounts', 'pmt_proposals', 'pmt_proposal_lines', 'pmt_payments', 'ar_invoices', 'ar_receipts', 'ar_allocations', 'ar_credit_notes', 'ar_writeoffs', 'ar_followups', 'fin_bank_account_profiles', 'fin_bank_statement_imports', 'fin_bank_statements', 'fin_bank_recons', 'fin_imprests', 'fin_imprest_vouchers', 'fin_imprest_replenishments', 'fin_cash_counts', 'fin_contras'];
-const TEMPLATE = ['fin_account_groups', 'fin_accounts', 'fin_cost_heads', 'fin_cost_codes', 'fin_dimension_rules', 'fin_posting_rules'];
+const TABLES = ['fin_account_groups', 'fin_accounts', 'fin_cost_heads', 'fin_cost_codes', 'fin_dimension_rules', 'fin_category_mappings', 'fin_master_changes', 'fin_journals', 'fin_journal_lines', 'fin_balances', 'fin_recurring_journals', 'fin_posting_rules', 'fin_posting_log', 'fin_replay_runs', 'ap_bills', 'ap_debit_notes', 'ap_bill_adjustments', 'fin_bank_accounts', 'pmt_proposals', 'pmt_proposal_lines', 'pmt_payments', 'ar_invoices', 'ar_receipts', 'ar_allocations', 'ar_credit_notes', 'ar_writeoffs', 'ar_followups', 'fin_bank_account_profiles', 'fin_bank_statement_imports', 'fin_bank_statements', 'fin_bank_recons', 'fin_imprests', 'fin_imprest_vouchers', 'fin_imprest_replenishments', 'fin_cash_counts', 'fin_contras', 'gst_settings', 'gst_gstin_checks', 'gst_einvoices', 'gst_ewaybills', 'gst_compliance_log', 'gst_2b_imports', 'gst_2b_lines', 'gst_recon_followups', 'gst_itc_reviews', 'gst_itc_review_lines', 'gst_return_filings', 'tds_returns', 'tds_26as_lines', 'fa_classes', 'fa_cwip', 'fa_cwip_lines', 'fa_assets', 'fa_dep_runs', 'fa_depreciation', 'fa_transfers', 'fa_disposals', 'fa_verifications', 'fa_verification_lines', 'fa_tax_openings', 'fa_asset_components', 'tcs_collections', 'pa_revenue_recognition', 'pa_overhead_allocations', 'fc_forecasts', 'fc_forecast_lines', 'pl_structure', 'pl_snapshots', 'cf_forecasts', 'cf_lines', 'cf_bank_limits', 'cf_priority_partners', 'close_periods', 'close_tasks', 'close_reopens', 'ic_relationships', 'ic_transactions', 'ic_consolidations', 'jv_shares'];
+const TEMPLATE = ['fin_account_groups', 'fin_accounts', 'fin_cost_heads', 'fin_cost_codes', 'fin_dimension_rules', 'fin_posting_rules', 'fa_classes', 'pl_structure'];
 // the integrity checks (01.02): a row without a company is the template every company copies (the seed of migration 105)
-integrityRegistry.register({ allowNegative: [], companyOptional: TEMPLATE, statuses: { fin_journals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_recurring_journals: ['ACTIVE', 'PAUSED', 'ENDED'], fin_posting_rules: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_replay_runs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_bills: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_debit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), pmt_proposals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_invoices: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_receipts: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_credit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_writeoffs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_imprest_vouchers: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_imprest_replenishments: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_contras: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED') }, uniqueKeys: [{ table: 'fin_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_recurring_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_replay_runs', columns: ['company_id', 'doc_no'] }, { table: 'fin_posting_log', columns: ['company_id', 'event_id'] }, { table: 'ap_bills', columns: ['company_id', 'doc_no'] }, { table: 'ap_debit_notes', columns: ['company_id', 'doc_no'] }] });
+integrityRegistry.register({ allowNegative: [], companyOptional: TEMPLATE, statuses: { fin_journals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_recurring_journals: ['ACTIVE', 'PAUSED', 'ENDED'], fin_posting_rules: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_replay_runs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_bills: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ap_debit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), pmt_proposals: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_invoices: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_receipts: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_credit_notes: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), ar_writeoffs: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_imprest_vouchers: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_imprest_replenishments: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), fin_contras: Object.keys(STATUS).filter((k) => k !== 'SUPERSEDED'), gst_settings: Object.keys(STATUS), gst_itc_reviews: Object.keys(STATUS), fa_assets: Object.keys(STATUS), fa_disposals: Object.keys(STATUS), pa_revenue_recognition: Object.keys(STATUS), fc_forecasts: Object.keys(STATUS), pl_snapshots: Object.keys(STATUS), cf_forecasts: Object.keys(STATUS), close_periods: Object.keys(STATUS), close_reopens: Object.keys(STATUS), ic_transactions: Object.keys(STATUS) }, uniqueKeys: [{ table: 'fin_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_recurring_journals', columns: ['company_id', 'doc_no'] }, { table: 'fin_replay_runs', columns: ['company_id', 'doc_no'] }, { table: 'fin_posting_log', columns: ['company_id', 'event_id'] }, { table: 'ap_bills', columns: ['company_id', 'doc_no'] }, { table: 'ap_debit_notes', columns: ['company_id', 'doc_no'] }] });
 /** Module "fin": the finance masters (part 06.05): chart of accounts, cost heads and cost codes, financial dimensions and the item category mapping. The tables are `fin_*`. */
 export const fin = {
   code: 'fin',
@@ -55,7 +97,7 @@ export const fin = {
   status: 'Chart of accounts with Schedule III mapping and control accounts, cost heads and cost codes, dimension rules and the posting check, item category mapping, import from Tally; every change approved by the CFO (06.05). The general ledger: journals of every voucher type with dimensions, approval by band, posting by period, reversal, accruals and recurring journals, the account ledger, the trial balance and the carry-forward of a year (23.01)',
   tables: TABLES,
   companyOptional: TEMPLATE,
-  resources: ['accounts', 'account-groups', 'cost-heads', 'cost-codes', 'dimension-rules', 'category-mappings', 'schedule-iii', 'postings', 'changes', 'import', 'lookups', 'journals', 'recurring-journals', 'ledger', 'trial-balance', 'gl', 'posting-rules', 'postings', 'replays', 'reconciliation', 'bills', 'debit-notes', 'payables', 'bank-accounts', 'proposals', 'payments', 'invoices', 'receipts', 'credit-notes', 'write-offs', 'receivables', 'bank-profiles', 'bank-statements', 'brs', 'imprests', 'imprest-vouchers', 'imprest-replenishments', 'contras', 'cash-position'],
+  resources: ['accounts', 'account-groups', 'cost-heads', 'cost-codes', 'dimension-rules', 'category-mappings', 'schedule-iii', 'postings', 'changes', 'import', 'lookups', 'journals', 'recurring-journals', 'ledger', 'trial-balance', 'gl', 'posting-rules', 'postings', 'replays', 'reconciliation', 'bills', 'debit-notes', 'payables', 'bank-accounts', 'proposals', 'payments', 'invoices', 'receipts', 'credit-notes', 'write-offs', 'receivables', 'bank-profiles', 'bank-statements', 'brs', 'imprests', 'imprest-vouchers', 'imprest-replenishments', 'contras', 'cash-position', 'gst', 'einvoices', 'ewaybills', 'gst-recon', 'itc-reviews', 'gst-returns', 'tds-returns', 'compliance-calendar', 'assets', 'asset-classes', 'cwip', 'depreciation', 'disposals', 'asset-verifications', 'asset-reports', 'tcs-returns', 'revenue-recognition', 'project-accounts', 'cost-forecasts', 'forecast-reports', 'project-pl', 'pl-structure', 'pl-snapshots', 'profitability', 'cash-forecasts', 'treasury', 'periods', 'period-reopens', 'statements', 'year-end', 'finance-dashboard', 'ic-transactions', 'ic-relationships', 'ic-reconciliation', 'consolidations', 'jv-shares', 'jv-statement'],
 
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fin_accounts'").get()) return;
@@ -74,6 +116,18 @@ export const fin = {
       runtime?.jobs?.register('fin.gl_daily', (jctx) => { const a = gl.jobs.autoReverse(); const r = gl.jobs.recurring(); jctx.log(`${a.reversed} accrual(s) reversed, ${r.made} recurring journal(s) made${[...a.errors, ...r.errors].length ? `; ${[...a.errors, ...r.errors].length} problem(s): ${[...a.errors, ...r.errors].join(' | ')}` : ''}`); return { reversed: a.reversed, made: r.made, errors: [...a.errors, ...r.errors] }; }, { maxAttempts: 3, description: 'Part 23.01 FR-03: reverses the accruals whose date has come and makes the journals of the recurring templates that are due.' });
       runtime?.scheduler?.define({ code: 'fin.gl_daily_morning', cron: '35 0 * * *', jobType: 'fin.gl_daily', description: 'Every morning 06:05 India time: accrual reversals and recurring journals' });
       router.use(glRoutes(gl, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+      if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'gst_einvoices'").get()) {
+        // part 23.07: the GST providers of the integration hub (01.08), the service, its consumers and its daily work
+        const { providers } = integrationsOf(db, { vaultKey: appConfig.vaultKey ?? undefined }); providers.register(sandboxGsp()); providers.register(httpGsp());
+        const gs = createGstService({ db, base, flags }); gstServices.set(db, gs); bindTaxEngine(db, gs);
+        runtime?.bus?.subscribe('bill.invoice.issued', (e) => { gs.consumers.onInvoiceIssued(e); }, { consumer: 'fin.gst_einvoice' });
+        runtime?.bus?.subscribe('fin.ar_credit_note.approved', (e) => { gs.consumers.onCreditNote(e); }, { consumer: 'fin.gst_einvoice_cn' });
+        runtime?.jobs?.register('fin.gst_daily', async (jctx) => { const r = await gs.jobs.retryDue(); const a = gs.jobs.alerts(); jctx.log(`${r.tried} e-invoice(s) retried, ${r.generated} generated; ${a.irnAlerts} IRN alert(s), ${a.ewbAlerts} e-way bill(s) about to expire, ${a.expired} expired`); return { ...r, ...a }; }, { maxAttempts: 3, description: 'Part 23.07: retries e-invoices waiting or failed, alerts IRNs due (day 20 and 25 of the reporting window) and e-way bills about to expire, marks expired e-way bills.' });
+        runtime?.scheduler?.define({ code: 'fin.gst_hourly', cron: '20 * * * *', jobType: 'fin.gst_daily', description: 'Every hour: e-invoice retries, IRN-due and e-way bill expiry alerts' });
+        listExports.register('fin.einvoices', { source: (actor, req) => { base.need(actor, 'fin.einvoice.export', 'export e-invoices'); return gs.einvoices.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+        listExports.register('fin.ewaybills', { source: (actor, req) => { base.need(actor, 'fin.ewaybill.export', 'export e-way bills'); return gs.ewaybills.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+        router.use(gstRoutes(gs, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+      }
       if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fin_posting_rules'").get()) {
         const pe = createPostingService({ db, base, gl, flags }); postingServices.set(db, pe);
         // FR-02: the engine consumes the outbox (01.04): one inbox row per event, retried by the bus only when the engine itself fails; a posting problem is a failed posting in the log
@@ -108,6 +162,72 @@ export const fin = {
           listExports.register('fin.ar_invoices', { source: (actor, req) => { base.need(actor, 'fin.invoice.export', 'export receivables'); return ar.invoices.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
           listExports.register('fin.ar_receipts', { source: (actor, req) => { base.need(actor, 'fin.receipt.export', 'export receipts'); return ar.receipts.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
           router.use(arRoutes(ar, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'gst_2b_lines'").get()) {
+          // part 23.08: GST reconciliation, ITC review, returns and TDS (reads the AP bills of 23.03, the sales of 22.04 and 23.05)
+          const gr = createGstReconService({ db, base, gl, flags, gst: () => gstServices.get(db) ?? null }); gstReconServices.set(db, gr);
+          runtime?.jobs?.register('fin.gst_recon_daily', (jctx) => { const r = gr.jobs.daily(); jctx.log(`${r.followups} follow-up(s) due`); return r; }, { maxAttempts: 3, description: 'Part 23.08: tells the owners of the GST mismatches whose vendor follow-up is due today.' });
+          runtime?.scheduler?.define({ code: 'fin.gst_recon_morning', cron: '5 3 * * *', jobType: 'fin.gst_recon_daily', description: 'Every morning 08:35 India time: GST reconciliation follow-ups due' });
+          router.use(gstReconRoutes(gr, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fa_assets'").get()) {
+          // part 23.09: fixed assets — drafts from the equipment register (17.01) and small assets (16.09); a sale becomes a receivable (23.05)
+          const fa = createAssetService({ db, base, gl, flags, tax: () => gstServices.get(db) ?? null }); assetServices.set(db, fa);
+          runtime?.bus?.subscribe('plant.equipment.registered', (e) => { fa.consumers.onEquipment(e); }, { consumer: 'fin.fa_equipment' });
+          runtime?.bus?.subscribe('inv.asset.registered', (e) => { fa.consumers.onSmallAsset(e); }, { consumer: 'fin.fa_small_asset' });
+          runtime?.bus?.subscribe('fin.asset.disposed', (e) => { const ar = arServices.get(db); const ref = ar?.consumers.onAssetSold?.(e); if (ref) fa.disposals.linkReceivable(Number(e.companyId), { disposalId: e.data?.disposalId, arRef: ref }); }, { consumer: 'fin.ar_asset_sale' });
+          runtime?.jobs?.register('fin.fa_monthly', (jctx) => { const r = fa.jobs.remind(); jctx.log(`${r.reminded} compan(y/ies) reminded`); return r; }, { maxAttempts: 3, description: 'Part 23.09: from the 5th, reminds the accounts manager when last month\'s depreciation is not run.' });
+          runtime?.scheduler?.define({ code: 'fin.fa_monthly_morning', cron: '15 3 * * *', jobType: 'fin.fa_monthly', description: 'Every morning 08:45 India time: depreciation not yet run for last month' });
+          listExports.register('fin.fa_assets', { source: (actor, req) => { base.need(actor, 'fin.asset.export', 'export fixed assets'); return fa.assets.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+          router.use(assetRoutes(fa, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pa_revenue_recognition'").get()) {
+          // part 23.10: revenue recognition and the project accounts; the overhead pools of 12.04 posted to the projects by their events
+          const pa = createProjectAccountingService({ db, base, gl, flags, forecast: () => costForecastServices.get(db) ?? null }); projectAccountServices.set(db, pa);
+          runtime?.bus?.subscribe('bud.overhead.allocated', (e) => { pa.consumers.onAllocated(e); }, { consumer: 'fin.pa_overhead' });
+          runtime?.bus?.subscribe('bud.overhead.allocation_reversed', (e) => { pa.consumers.onAllocationReversed(e); }, { consumer: 'fin.pa_overhead_reversed' });
+          runtime?.jobs?.register('fin.pa_monthly', (jctx) => { const r = pa.jobs.remind(); jctx.log(`${r.reminded} compan(y/ies) reminded`); return r; }, { maxAttempts: 3, description: 'Part 23.10: from the 5th, reminds who recognises revenue when last month is not recognised for a project.' });
+          runtime?.scheduler?.define({ code: 'fin.pa_monthly_morning', cron: '25 3 * * *', jobType: 'fin.pa_monthly', description: 'Every morning 08:55 India time: projects whose revenue of last month is not recognised' });
+          listExports.register('fin.revenue_recognition', { source: (actor, req) => { base.need(actor, 'fin.revenue_recognition.export', 'export revenue recognition'); return pa.recognition.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+          router.use(projectAccountingRoutes(pa, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fc_forecasts'").get()) {
+          // part 23.11: the monthly cost forecast of a project from the facts of 14.07; its approved EAC feeds 23.10, 23.12 and 23.13
+          const cf = createCostForecastService({ db, base, flags, projectAccounts: () => projectAccountServices.get(db) ?? null }); costForecastServices.set(db, cf);
+          runtime?.jobs?.register('fin.fc_monthly', (jctx) => { const r = cf.jobs.remind(); jctx.log(`${r.reminded} compan(y/ies) reminded`); return r; }, { maxAttempts: 3, description: 'Part 23.11: from the 10th, projects without an approved cost forecast of last month.' });
+          runtime?.scheduler?.define({ code: 'fin.fc_monthly_morning', cron: '35 3 * * *', jobType: 'fin.fc_monthly', description: 'Every morning 09:05 India time: cost forecasts due' });
+          listExports.register('fin.cost_forecasts', { source: (actor, req) => { base.need(actor, 'fin.forecast.export', 'export cost forecasts'); return cf.forecasts.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+          router.use(costForecastRoutes(cf, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pl_snapshots'").get()) {
+          // part 23.12: the project P&L from the ledger (with 23.10's revenue), budget and forecast; monthly snapshots frozen equal to the ledger
+          const ps = createProjectPlService({ db, base, flags }); projectPlServices.set(db, ps);
+          runtime?.jobs?.register('fin.pl_monthly', (jctx) => { const r = ps.jobs.remind(); jctx.log(`${r.reminded} compan(y/ies) reminded`); return r; }, { maxAttempts: 3, description: 'Part 23.12: from the 15th, projects without a frozen P&L snapshot of last month.' });
+          runtime?.scheduler?.define({ code: 'fin.pl_monthly_morning', cron: '45 3 * * *', jobType: 'fin.pl_monthly', description: 'Every morning 09:15 India time: P&L snapshots to freeze' });
+          listExports.register('fin.pl_snapshots', { source: (actor, req) => { base.need(actor, 'fin.pl_snapshot.export', 'export P&L snapshots'); return ps.snapshots.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+          router.use(projectPlRoutes(ps, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'cf_forecasts'").get()) {
+          // part 23.13: the weekly cash forecast from the source modules, the treasury position and the payment priorities
+          const cs = createCashForecastService({ db, base, flags }); cashForecastServices.set(db, cs);
+          runtime?.jobs?.register('fin.cf_weekly', (jctx) => { const r = cs.jobs.remind(); jctx.log(`${r.reminded} compan(y/ies) reminded`); return r; }, { maxAttempts: 3, description: 'Part 23.13: on Monday, companies without the cash forecast of the week.' });
+          runtime?.scheduler?.define({ code: 'fin.cf_weekly_morning', cron: '55 3 * * 1', jobType: 'fin.cf_weekly', description: 'Every Monday 09:25 India time: the weekly cash forecast is due' });
+          listExports.register('fin.cash_forecasts', { source: (actor, req) => { base.need(actor, 'fin.cash_forecast.export', 'export cash forecasts'); return cs.forecasts.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+          router.use(cashForecastRoutes(cs, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'close_periods'").get()) {
+          // part 23.14: the monthly close with its checklist and locks, the reopen, the statements, the year end and the finance dashboard
+          const pc = createPeriodCloseService({ db, base, flags, gl }); periodCloseServices.set(db, pc);
+          runtime?.jobs?.register('fin.close_monthly', (jctx) => { const r = pc.jobs.remind(); jctx.log(`${r.reminded} reminder(s)`); return r; }, { maxAttempts: 3, description: 'Part 23.14: from the 3rd, companies whose last month has no close started, and overdue close tasks to their owners.' });
+          runtime?.scheduler?.define({ code: 'fin.close_monthly_morning', cron: '5 4 * * *', jobType: 'fin.close_monthly', description: 'Every morning 09:35 India time: period close reminders' });
+          listExports.register('fin.period_closes', { source: (actor, req) => { base.need(actor, 'fin.period.export', 'export period closes'); return pc.closes.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+          router.use(periodCloseRoutes(pc, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
+        }
+        if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'ic_transactions'").get()) {
+          // part 23.15: inter-company transactions mirrored in both companies, their reconciliation, the consolidation of a group and JV shares
+          const ic = createInterCompanyService({ db, base, flags, gl, closes: () => periodCloseServices.get(db) ?? null }); interCompanyServices.set(db, ic);
+          listExports.register('fin.ic_transactions', { source: (actor, req) => { base.need(actor, 'fin.transaction.export', 'export inter-company transactions'); return ic.transactions.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: () => [] });
+          router.use(interCompanyRoutes(ic, { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags }));
         }
         if (db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fin_imprests'").get()) {
           const cs = createCashService({ db, base, gl, payments: () => paymentServices.get(db) ?? null }); cashServices.set(db, cs);

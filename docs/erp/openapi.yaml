@@ -9622,3 +9622,1225 @@ paths:
     get:
       summary: "accounts payable /payables/{kind}/export (part 23.03; fin.bill.export)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2303 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/resolve:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/resolve (part 23.07; fin.gst.resolve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/gstin-check:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/gstin-check (part 23.07; fin.gstin.check)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings (part 23.07; fin.gst_setting.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/export:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/export (part 23.07; fin.gst_setting.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/import:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/import (part 23.07; fin.gst_setting.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id} (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id} (part 23.07; fin.gst_setting.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id} (part 23.07; fin.gst_setting.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/submit:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/submit (part 23.07; fin.gst_setting.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/withdraw:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/withdraw (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/cancel:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/cancel (part 23.07; fin.gst_setting.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst/settings/{id}/history:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /gst/settings/{id}/history (part 23.07; fin.gst_setting.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/due:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/due (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/export:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/export (part 23.07; fin.einvoice.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices (part 23.07; fin.einvoice.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id} (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/log:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/log (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/qr:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/qr (part 23.07; fin.einvoice.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/print:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/print (part 23.07; fin.einvoice.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/retry:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/retry (part 23.07; fin.einvoice.retry)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/einvoices/{id}/cancel:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /einvoices/{id}/cancel (part 23.07; fin.einvoice.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/sources:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/sources (part 23.07; fin.ewaybill.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/prepare:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/prepare (part 23.07; fin.ewaybill.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/export:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/export (part 23.07; fin.ewaybill.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills (part 23.07; fin.ewaybill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills (part 23.07; fin.ewaybill.generate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}:
+    get:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id} (part 23.07; fin.ewaybill.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/retry:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/retry (part 23.07; fin.ewaybill.retry)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/vehicle:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/vehicle (part 23.07; fin.ewaybill.update)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/extend:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/extend (part 23.07; fin.ewaybill.extend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ewaybills/{id}/cancel:
+    post:
+      summary: "GST tax engine, e-invoice and e-way bill /ewaybills/{id}/cancel (part 23.07; fin.ewaybill.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2307 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/import:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/import (part 23.08; fin.gst_recon.import)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/rematch:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/rematch (part 23.08; fin.gst_recon.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/export:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/export (part 23.08; fin.gst_recon.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon (part 23.08; fin.gst_recon.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/lines/{id}:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/lines/{id} (part 23.08; fin.gst_recon.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-recon/lines/{id}/act:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-recon/lines/{id}/act (part 23.08; fin.gst_recon.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews (part 23.08; fin.itc_review.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id} (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id} (part 23.08; fin.itc_review.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/recompute:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/recompute (part 23.08; fin.itc_review.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/override:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/override (part 23.08; fin.itc_review.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/submit:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/submit (part 23.08; fin.itc_review.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/withdraw:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/withdraw (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/cancel:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/cancel (part 23.08; fin.itc_review.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/amend:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/amend (part 23.08; fin.itc_review.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/history:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/history (part 23.08; fin.itc_review.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/print:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/print (part 23.08; fin.itc_review.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/itc-reviews/{id}/export:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /itc-reviews/{id}/export (part 23.08; fin.itc_review.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns (part 23.08; fin.gst_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns/prepare:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns/prepare (part 23.08; fin.gst_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns/file:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns/file (part 23.08; fin.gst_return.file)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/gst-returns/export:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /gst-returns/export (part 23.08; fin.gst_return.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns (part 23.08; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/prepare:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/prepare (part 23.08; fin.tds_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/file:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/file (part 23.08; fin.tds_return.file)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/deposits:
+    get:
+      summary: "TDS deposits in the books (journals debiting TDS payable) from the quarter's start to its due date, with the statement each is linked to (D-737; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/text:
+    get:
+      summary: "the TDS statement as the '^'-separated text file for the FVU: FH, BH, CD and DD records (D-737; fin.tds_return.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns:
+    get:
+      summary: "the TCS statement 27EQ of a quarter: the collections on scrap sales, the challans, the status (D-736; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/prepare:
+    post:
+      summary: "prepare the 27EQ statement { quarter, challans, tan } (D-736; fin.tds_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/file:
+    post:
+      summary: "mark the 27EQ statement filed { quarter, tokenNo, filedOn } (D-736; fin.tds_return.file)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/deposits:
+    get:
+      summary: "TCS paid in the books (journals debiting TCS payable 230007) up to the due date of the quarter (D-736; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/text:
+    get:
+      summary: "the 27EQ statement as the FVU text file (D-736; fin.tds_return.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tcs-returns/certificate:
+    get:
+      summary: "the TCS certificate (Form 27D) of a collectee (D-736; fin.tds_return.certificate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/certificate:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/certificate (part 23.08; fin.tds_return.certificate)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/tds-returns/26as:
+    post:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/26as (part 23.08; fin.tds_return.prepare)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /tds-returns/26as (part 23.08; fin.tds_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/compliance-calendar:
+    get:
+      summary: "GST reconciliation, ITC review, returns and TDS /compliance-calendar (part 23.08; fin.gst_return.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2308 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-classes:
+    get:
+      summary: "fixed assets and depreciation /asset-classes (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/sources:
+    get:
+      summary: "fixed assets and depreciation /assets/sources (part 23.09; fin.asset.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/export:
+    get:
+      summary: "fixed assets and depreciation /assets/export (part 23.09; fin.asset.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets:
+    get:
+      summary: "fixed assets and depreciation /assets (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "fixed assets and depreciation /assets (part 23.09; fin.asset.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}:
+    get:
+      summary: "fixed assets and depreciation /assets/{id} (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "fixed assets and depreciation /assets/{id} (part 23.09; fin.asset.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "fixed assets and depreciation /assets/{id} (part 23.09; fin.asset.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/submit:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/submit (part 23.09; fin.asset.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/withdraw:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/withdraw (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/cancel:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/cancel (part 23.09; fin.asset.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/amend:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/amend (part 23.09; fin.asset.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/history:
+    get:
+      summary: "fixed assets and depreciation /assets/{id}/history (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/print:
+    get:
+      summary: "fixed assets and depreciation /assets/{id}/print (part 23.09; fin.asset.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/assets/{id}/transfer:
+    post:
+      summary: "fixed assets and depreciation /assets/{id}/transfer (part 23.09; fin.asset.transfer)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cwip:
+    post:
+      summary: "fixed assets and depreciation /cwip (part 23.09; fin.asset.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/depreciation:
+    get:
+      summary: "fixed assets and depreciation /depreciation (part 23.09; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/depreciation/run:
+    post:
+      summary: "fixed assets and depreciation /depreciation/run (part 23.09; fin.depreciation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals:
+    get:
+      summary: "fixed assets and depreciation /disposals (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "fixed assets and depreciation /disposals (part 23.09; fin.disposal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}:
+    get:
+      summary: "fixed assets and depreciation /disposals/{id} (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "fixed assets and depreciation /disposals/{id} (part 23.09; fin.disposal.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/submit:
+    post:
+      summary: "fixed assets and depreciation /disposals/{id}/submit (part 23.09; fin.disposal.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/withdraw:
+    post:
+      summary: "fixed assets and depreciation /disposals/{id}/withdraw (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/cancel:
+    post:
+      summary: "fixed assets and depreciation /disposals/{id}/cancel (part 23.09; fin.disposal.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/disposals/{id}/history:
+    get:
+      summary: "fixed assets and depreciation /disposals/{id}/history (part 23.09; fin.disposal.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications:
+    get:
+      summary: "fixed assets and depreciation /asset-verifications (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "fixed assets and depreciation /asset-verifications (part 23.09; fin.asset.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications/{id}:
+    get:
+      summary: "fixed assets and depreciation /asset-verifications/{id} (part 23.09; fin.asset.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications/{id}/scan:
+    post:
+      summary: "fixed assets and depreciation /asset-verifications/{id}/scan (part 23.09; fin.asset.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-verifications/{id}/close:
+    post:
+      summary: "fixed assets and depreciation /asset-verifications/{id}/close (part 23.09; fin.asset.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/schedule:
+    get:
+      summary: "fixed assets and depreciation /asset-reports/schedule (part 23.09; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/tax-openings:
+    get:
+      summary: "fixed assets: opening tax WDV by block (D-740; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    put:
+      summary: "fixed assets: set the opening tax WDV of a block { block, fy, openingWdv } (D-740; fin.depreciation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/tax-openings/{id}:
+    delete:
+      summary: "fixed assets: remove an opening tax WDV (D-740; fin.depreciation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/asset-reports/tax-blocks:
+    get:
+      summary: "fixed assets and depreciation /asset-reports/tax-blocks (part 23.09; fin.depreciation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2309 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition:
+    get:
+      summary: "revenue recognition: list (filters: period, project, status) (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "revenue recognition: create a draft { projectId, period, method, surveyPct?, surveyNote? }: worked out from the ledgers (part 23.10; fin.revenue_recognition.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/candidates:
+    get:
+      summary: "revenue recognition: projects with an approved contract and the state of the month (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/preview:
+    post:
+      summary: "revenue recognition: the figures, trace and journal of a month, nothing saved (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/import:
+    post:
+      summary: "revenue recognition: drafts from rows { project, period, method?, surveyPct?, surveyNote? } (part 23.10; fin.revenue_recognition.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/export:
+    get:
+      summary: "revenue recognition: CSV of the list (part 23.10; fin.revenue_recognition.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}:
+    get:
+      summary: "revenue recognition: one record with its trace, journal and history (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "revenue recognition: work a draft out again (method, survey) (part 23.10; fin.revenue_recognition.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "revenue recognition: delete a draft (part 23.10; fin.revenue_recognition.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/submit:
+    post:
+      summary: "revenue recognition: send for approval (ACCMGR when someone else prepared it, then CFO) (part 23.10; fin.revenue_recognition.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/withdraw:
+    post:
+      summary: "revenue recognition: withdraw { reason } (part 23.10; fin.revenue_recognition.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/cancel:
+    post:
+      summary: "revenue recognition: cancel { reason } (part 23.10; fin.revenue_recognition.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/amend:
+    post:
+      summary: "revenue recognition: amend the latest approved month { reason } (part 23.10; fin.revenue_recognition.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/history:
+    get:
+      summary: "revenue recognition: approval and audit history (part 23.10; fin.revenue_recognition.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/revenue-recognition/{id}/print:
+    get:
+      summary: "revenue recognition: PDF (part 23.10; fin.revenue_recognition.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/trial-balance:
+    get:
+      summary: "project accounts: project trial balance { projectId, from, to } with heads (part 23.10; fin.project_ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/wip:
+    get:
+      summary: "project accounts: WIP and unbilled revenue of the projects to a month (part 23.10; fin.project_ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/overheads:
+    get:
+      summary: "project accounts: overhead posted to the projects { from, to } and the runs not yet posted (part 23.10; fin.project_ledger.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/overheads/catch-up:
+    post:
+      summary: "project accounts: post the 12.04 runs not yet in the books (part 23.10; fin.overhead.post)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-accounts/export:
+    get:
+      summary: "project accounts: CSV { kind: tb | wip | overheads } (part 23.10; fin.project_ledger.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2310 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts:
+    get:
+      summary: "cost forecast: list (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "cost forecast: prepare a version of a month { projectId, period } from the control facts (part 23.11; fin.forecast.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/candidates:
+    get:
+      summary: "cost forecast: projects with control facts and their forecast of a month (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/export:
+    get:
+      summary: "cost forecast: CSV (part 23.11; fin.forecast.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}:
+    get:
+      summary: "cost forecast: one forecast with its lines, bridge and history (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "cost forecast: pending variations, confidence, commentary (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "cost forecast: delete a draft (part 23.11; fin.forecast.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/lines/{lineId}:
+    patch:
+      summary: "cost forecast: a line: method, accrued, remaining quantity, rate, manual amount, justification (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/import:
+    post:
+      summary: "cost forecast: line methods from rows (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/refresh:
+    post:
+      summary: "cost forecast: refresh from the control facts (part 23.11; fin.forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/submit:
+    post:
+      summary: "cost forecast: send for approval (PCMGR, PM, PD; CFO when loss-making) (part 23.11; fin.forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/withdraw:
+    post:
+      summary: "cost forecast: withdraw { reason } (part 23.11; fin.forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/cancel:
+    post:
+      summary: "cost forecast: cancel { reason } (part 23.11; fin.forecast.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/amend:
+    post:
+      summary: "cost forecast: a new version of an approved forecast { reason } (part 23.11; fin.forecast.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/history:
+    get:
+      summary: "cost forecast: history (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cost-forecasts/{id}/print:
+    get:
+      summary: "cost forecast: PDF (part 23.11; fin.forecast.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/forecast-reports/trend:
+    get:
+      summary: "cost forecast: EAC of a project month by month { projectId } (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/forecast-reports/variance:
+    get:
+      summary: "cost forecast: forecast against budget of every project to a month { period } (part 23.11; fin.forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2311 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-pl:
+    get:
+      summary: "project P&L: the P&L of a project { projectId, period }: month, year, to date, budget, forecast, trend, reconciliation (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-pl/projects:
+    get:
+      summary: "project P&L: the projects whose P&L the caller may see (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/project-pl/drill:
+    get:
+      summary: "project P&L: journal lines behind a P&L line { projectId, line, from, to } (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/profitability:
+    get:
+      summary: "project P&L: the portfolio { from, to }: ranking, sector, region, client, loss-making (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-structure:
+    get:
+      summary: "project P&L: the P&L structure and the accounts each line takes (part 23.12; fin.pl.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-structure/{code}:
+    put:
+      summary: "project P&L: the accounts and groups of a line { name?, accounts, groups } (part 23.12; fin.pl.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots:
+    get:
+      summary: "project P&L: list (part 23.12; fin.pl_snapshot.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "project P&L: make the snapshot of a month { projectId, period } (part 23.12; fin.pl_snapshot.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/export:
+    get:
+      summary: "project P&L: CSV (part 23.12; fin.pl_snapshot.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}:
+    get:
+      summary: "project P&L: one snapshot (part 23.12; fin.pl_snapshot.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "project P&L: delete a draft (part 23.12; fin.pl_snapshot.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/recompute:
+    post:
+      summary: "project P&L: work a draft out again (part 23.12; fin.pl_snapshot.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/submit:
+    post:
+      summary: "project P&L: send to be frozen (ACCMGR when someone else made it, then CFO) (part 23.12; fin.pl_snapshot.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/withdraw:
+    post:
+      summary: "project P&L: withdraw (part 23.12; fin.pl_snapshot.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/cancel:
+    post:
+      summary: "project P&L: cancel (part 23.12; fin.pl_snapshot.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/amend:
+    post:
+      summary: "project P&L: a new snapshot that supersedes a frozen one (part 23.12; fin.pl_snapshot.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/history:
+    get:
+      summary: "project P&L: history (part 23.12; fin.pl_snapshot.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/pl-snapshots/{id}/print:
+    get:
+      summary: "project P&L: PDF (part 23.12; fin.pl_snapshot.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2312 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts:
+    get:
+      summary: "cash forecast: list (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "cash forecast: prepare the forecast of a week from the source modules { weekStart?, weeks?, commentary? } (part 23.13; fin.cash_forecast.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/variance:
+    get:
+      summary: "cash forecast: the published forecast against the bank movement, week by week { forecastId? } (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/project-curve:
+    get:
+      summary: "cash forecast: the cash curve of a project, actual then forecast, and its peak funding need { projectId } (part 23.13; fin.cash_forecast.view or fin.cash_curve.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}:
+    get:
+      summary: "cash forecast: one forecast: weeks, lines, sources, scenario { scenario?, shift? } (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "cash forecast: the commentary of a draft (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "cash forecast: delete a draft (part 23.13; fin.cash_forecast.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/refresh:
+    post:
+      summary: "cash forecast: rebuild the source lines, keeping the adjustments (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/adjustments:
+    post:
+      summary: "cash forecast: an adjustment with its reason { category, date, amount, projectId?, reference?, counterparty?, confidence?, reason } (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/adjustments/{lineId}:
+    delete:
+      summary: "cash forecast: remove an adjustment { reason } (part 23.13; fin.cash_forecast.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/submit:
+    post:
+      summary: "cash forecast: send for publication (part 23.13; fin.cash_forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/withdraw:
+    post:
+      summary: "cash forecast: withdraw { reason } (part 23.13; fin.cash_forecast.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/cancel:
+    post:
+      summary: "cash forecast: cancel { reason } (part 23.13; fin.cash_forecast.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/history:
+    get:
+      summary: "cash forecast: approval history (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/print:
+    get:
+      summary: "cash forecast: PDF of the weeks { scenario?, shift? } (part 23.13; fin.cash_forecast.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/cash-forecasts/{id}/export:
+    get:
+      summary: "cash forecast: CSV of the lines (part 23.13; fin.cash_forecast.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury:
+    get:
+      summary: "cash forecast: cash position: banks, available, blocked, OD, guarantee limits, facilities, the published forecast (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/facilities:
+    post:
+      summary: "cash forecast: add or change a bank facility { id?, bankName, limitType, limit, utilised?, emi?, emiDay?, ... } (part 23.13; fin.cash_forecast.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/priorities:
+    get:
+      summary: "cash forecast: payment priority due by a date { dueBy? } (part 23.13; fin.cash_forecast.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/critical-suppliers:
+    post:
+      summary: "cash forecast: mark a supplier critical { partnerId, reason } (part 23.13; fin.cash_forecast.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/treasury/critical-suppliers/{id}:
+    delete:
+      summary: "cash forecast: unmark { reason } (part 23.13; fin.cash_forecast.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2313 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods:
+    get:
+      summary: "period close: list (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "period close: start the close of an ended month with its checklist { period, commentary? } (part 23.14; fin.period.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/export:
+    get:
+      summary: "period close: CSV (part 23.14; fin.period.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}:
+    get:
+      summary: "period close: one close with its tasks, checks, module statuses and figures (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "period close: the commentary { commentary } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "period close: delete a draft (part 23.14; fin.period.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks:
+    post:
+      summary: "period close: an extra task { name, ownerId?, dueDate?, mandatory?, dependsOn? } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks/{taskId}:
+    patch:
+      summary: "period close: owner, due date, started, optional (fin.period.configure with the reason) { ownerId?, dueDate?, mandatory?, started?, reason?, version? } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks/{taskId}/complete:
+    post:
+      summary: "period close: a task done or not applicable with its evidence { note?, fileIds?, notApplicable? } (part 23.14; fin.period.edit, or the owner with fin.close_task.complete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/tasks/{taskId}/reopen:
+    post:
+      summary: "period close: a done task opened again { reason } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/locks:
+    post:
+      summary: "period close: soft-close the other modules { modules } (part 23.14; fin.period.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/submit:
+    post:
+      summary: "period close: send to the CFO; the GL is soft-closed (part 23.14; fin.period.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/withdraw:
+    post:
+      summary: "period close: withdraw { reason } (part 23.14; fin.period.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/cancel:
+    post:
+      summary: "period close: cancel { reason } (part 23.14; fin.period.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/history:
+    get:
+      summary: "period close: approval history (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/print:
+    get:
+      summary: "period close: PDF of the checklist and the figures (part 23.14; fin.period.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/periods/{id}/reopen:
+    post:
+      summary: "period close: ask to reopen a closed month, sent at once ACCMGR → CFO → DIR { modules?, targetStatus?, reason } (part 23.14; fin.period_reopen.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/period-reopens/{id}:
+    get:
+      summary: "period close: one reopen request (part 23.14; fin.period_reopen.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/period-reopens/{id}/withdraw:
+    post:
+      summary: "period close: withdraw a reopen request { reason } (part 23.14; fin.period_reopen.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/statements:
+    get:
+      summary: "statements: Schedule III balance sheet and P&L, cash flow (indirect), trial balance with comparatives and notes { period, basis?, statement? } (part 23.14; fin.statements.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/statements/export:
+    get:
+      summary: "statements: CSV { period, basis? } (part 23.14; fin.statements.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/statements/print:
+    get:
+      summary: "statements: PDF { period, basis? } (part 23.14; fin.statements.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/finance-dashboard:
+    get:
+      summary: "dashboard: KPIs, trend, ageing, exceptions, my pending tasks { period? } (part 23.14; fin.dashboard.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/year-end:
+    get:
+      summary: "year end: the steps of a financial year { fyId? } (part 23.14; fin.period.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/year-end/{id}/carry-forward:
+    post:
+      summary: "year end: the closing entries (the carry-forward journal of 23.01) (part 23.14; fin.period.edit and fin.journal.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/year-end/{id}/close:
+    post:
+      summary: "year end: close the financial year { reason } (part 23.14; fin.period.approve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2314 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-relationships:
+    get:
+      summary: "inter-company: the relationships of the company (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "inter-company: add or change a relationship { counterpartCompanyId, type?, holdingPct?, consolidate?, receivableCode?, payableCode?, counterpartReceivableCode?, counterpartPayableCode?, status? } (part 23.15; fin.ic.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-reconciliation:
+    get:
+      summary: "inter-company: pair balances, one-sided lines, open items { asOf? } (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions:
+    get:
+      summary: "inter-company: list { side=in|out|all } (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "inter-company: raise { counterpartCompanyId, type, date, amount, accountId, description, reference?, projectId?, dimensions? } (part 23.15; fin.transaction.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/export:
+    get:
+      summary: "inter-company: CSV (part 23.15; fin.transaction.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}:
+    get:
+      summary: "inter-company: one transaction with its mirror (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "inter-company: change a draft (part 23.15; fin.transaction.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "inter-company: delete a draft (part 23.15; fin.transaction.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/submit:
+    post:
+      summary: "inter-company: send for approval (part 23.15; fin.transaction.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/withdraw:
+    post:
+      summary: "inter-company: withdraw { reason } (part 23.15; fin.transaction.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/cancel:
+    post:
+      summary: "inter-company: cancel { reason } (part 23.15; fin.transaction.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/accept:
+    post:
+      summary: "inter-company: the counterpart accepts; both mirror journals posted at once { accountId, projectId?, dimensions? } (part 23.15; fin.transaction.approve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/dispute:
+    post:
+      summary: "inter-company: the counterpart disputes { reason } (part 23.15; fin.transaction.approve)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/drop:
+    post:
+      summary: "inter-company: drop a disputed transaction { reason } (part 23.15; fin.transaction.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/reverse:
+    post:
+      summary: "inter-company: reverse in both companies { reason } (part 23.15; fin.transaction.amend)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/history:
+    get:
+      summary: "inter-company: approval history (part 23.15; fin.transaction.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/ic-transactions/{id}/print:
+    get:
+      summary: "inter-company: PDF (part 23.15; fin.transaction.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/preview:
+    get:
+      summary: "consolidation: the consolidated statements, eliminations, NCI and what is unmatched { period, basis? } (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/export:
+    get:
+      summary: "consolidation: CSV { period, basis? } (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations:
+    get:
+      summary: "consolidation: runs (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "consolidation: save a run as a draft { period, basis? } (part 23.15; fin.consolidation.run)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/{id}:
+    get:
+      summary: "consolidation: one run (part 23.15; fin.consolidation.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/consolidations/{id}/finalise:
+    post:
+      summary: "consolidation: finalise when nothing is unmatched or open (part 23.15; fin.consolidation.finalise)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/jv-shares:
+    get:
+      summary: "JV: the partners and shares of a project { projectId } (part 23.15; fin.jv.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "JV: add or change a partner share { id?, projectId, partnerName?, partnerId?, partnerCompanyId?, sharePct, role? } (part 23.15; fin.jv.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/jv-shares/{id}:
+    delete:
+      summary: "JV: remove a partner share { reason } (part 23.15; fin.jv.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/fin/jv-statement:
+    get:
+      summary: "JV: each partner share of the project revenue, cost and result { projectId, from?, to? } (part 23.15; fin.jv.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/components:
+    get:
+      summary: "payroll set-up: the pay components of the company (part 24.01; pay.component.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: add or change a component { id?, code, name, type, method, formula?, percent?, baseCodes?, statutoryCode?, flags, wageClass, sequence } (part 24.01; pay.component.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/components/test:
+    post:
+      summary: "payroll set-up: test a formula on sample values { code, formula, values } (part 24.01; pay.component.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/structures:
+    get:
+      summary: "payroll set-up: salary structures { status? } (part 24.01; pay.structure.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: a structure or its new version { id?, code, name, grade, senior, components [{ code, value? }] } (part 24.01; pay.structure.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/structures/preview:
+    post:
+      summary: "payroll set-up: the CTC breakup { structureId, ctcAnnual, employeeId?, date?, ptState?, pf?, esi?, overrides? } (part 24.01; pay.structure.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/structures/{id}:
+    get:
+      summary: "payroll set-up: one structure with its versions (part 24.01; pay.structure.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/employees:
+    get:
+      summary: "payroll set-up: employees with their current assignment { q? } (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/arrears:
+    get:
+      summary: "payroll set-up: arrears { employeeId?, status? } (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments:
+    get:
+      summary: "payroll set-up: pay assignments (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: an assignment or revision { employeeId, structureId, ctcAnnual, effectiveFrom, kind?, reason, overrides? } (part 24.01; pay.assignment.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/export:
+    get:
+      summary: "payroll set-up: CSV (part 24.01; pay.assignment.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}:
+    get:
+      summary: "payroll set-up: one assignment with its breakup, previous and arrears (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "payroll set-up: change a draft (part 24.01; pay.assignment.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "payroll set-up: delete a draft (part 24.01; pay.assignment.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/submit:
+    post:
+      summary: "payroll set-up: send for approval HRMGR → CFO (→ DIR) (part 24.01; pay.assignment.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/withdraw:
+    post:
+      summary: "payroll set-up: withdraw { reason } (part 24.01; pay.assignment.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/cancel:
+    post:
+      summary: "payroll set-up: cancel { reason } (part 24.01; pay.assignment.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/history:
+    get:
+      summary: "payroll set-up: approval history (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/print:
+    get:
+      summary: "payroll set-up: PDF of the breakup (part 24.01; pay.assignment.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params:
+    get:
+      summary: "payroll set-up: statutory parameters { code?, state? } (part 24.01; pay.statutory.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: propose a change { code, state?, params, effectiveFrom, legalRef } (part 24.01; pay.statutory.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}:
+    get:
+      summary: "payroll set-up: one row (part 24.01; pay.statutory.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "payroll set-up: change a draft (part 24.01; pay.statutory.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "payroll set-up: delete a draft (part 24.01; pay.statutory.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}/submit:
+    post:
+      summary: "payroll set-up: send to the CFO (part 24.01; pay.statutory.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}/withdraw:
+    post:
+      summary: "payroll set-up: withdraw { reason } (part 24.01; pay.statutory.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}/cancel:
+    post:
+      summary: "payroll set-up: cancel { reason } (part 24.01; pay.statutory.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/calendar:
+    get:
+      summary: "payroll set-up: payroll periods { fy? } (part 24.01; pay.calendar.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/calendar/generate:
+    post:
+      summary: "payroll set-up: the twelve periods of a year { fyStart, payDay?, attendanceCutoffDay?, inputsCutoffDay? } (part 24.01; pay.calendar.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/calendar/{id}:
+    patch:
+      summary: "payroll set-up: cut-offs and pay date of an open period (part 24.01; pay.calendar.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/readiness:
+    get:
+      summary: "payroll run: the inputs check of a period: attendance locked, arrears, inputs, advances, the regular run { period, branchId? } (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs:
+    get:
+      summary: "payroll run: payroll runs (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll run: create and compute a run { period, type?, branchId?, employeeIds? } (part 24.02; pay.run.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}:
+    get:
+      summary: "payroll run: one run with its lines (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "payroll run: delete a draft (part 24.02; pay.run.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/compute:
+    post:
+      summary: "payroll run: compute again (draft or returned) (part 24.02; pay.run.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/lines/{lineId}/hold:
+    post:
+      summary: "payroll run: hold or release a salary { hold, reason } (part 24.02; pay.run.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/submit:
+    post:
+      summary: "payroll run: send for approval PAY → HRMGR → CFO (part 24.02; pay.run.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/withdraw:
+    post:
+      summary: "payroll run: withdraw { reason } (part 24.02; pay.run.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/cancel:
+    post:
+      summary: "payroll run: cancel { reason } (part 24.02; pay.run.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/history:
+    get:
+      summary: "payroll run: approval history (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/variance:
+    get:
+      summary: "payroll run: each employee against last month (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/print:
+    get:
+      summary: "payroll run: the payroll register PDF (part 24.02; pay.run.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/export:
+    get:
+      summary: "payroll run: the payroll register CSV with every component (part 24.02; pay.run.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/inputs:
+    get:
+      summary: "payroll run: payroll inputs { period?, status? } (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll run: an input { employeeId, period, code, amount, note } (part 24.02; pay.input.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/inputs/{id}/cancel:
+    post:
+      summary: "payroll run: cancel a pending input { reason } (part 24.02; pay.input.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/declarations/mine:
+    get:
+      summary: "payroll run: my tax declaration of a year { fy } (part 24.02; pay.declaration.own)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll run: save or send my declaration { fy, regime, declarations, proofs?, submit? } (part 24.02; pay.declaration.own)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/declarations:
+    get:
+      summary: "payroll run: declarations { fy?, status? } (part 24.02; pay.declaration.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/declarations/{id}/verify:
+    post:
+      summary: "payroll run: verify or return { action, verified?, note? } (part 24.02; pay.declaration.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/options:
+    get:
+      summary: "wage run: the sites and labour contractors the user may run wages for (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs:
+    get:
+      summary: "wage run: wage runs, filtered by site, project, cycle, status (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "wage run: create and compute from the punches { siteId, contractorId, cycle WEEKLY|FORTNIGHTLY|MONTHLY, periodFrom } (pay.wage_run.create) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}:
+    get:
+      summary: "wage run: one run with its lines, the approval history (pay.wage_run.view; rates need pay.wage_rate.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "wage run: delete a draft (pay.wage_run.delete) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/compute:
+    post:
+      summary: "wage run: compute again from the punches (draft or returned) (pay.wage_run.edit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/lines/{lineId}:
+    patch:
+      summary: "wage run: a worker's inputs { basis, rateOverride (not below the minimum, BR-01), pieceQty, pieceRate, pieceSources [{ mbId, qty }], allowances, advance, canteen, otherDeductions, adjust { days, otHours, reason }, version } (pay.wage_run.edit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/submit:
+    post:
+      summary: "wage run: send for approval SACC → PM → HRMGR; computed again and refused with blocking checks (pay.wage_run.submit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/withdraw:
+    post:
+      summary: "wage run: withdraw { reason } (pay.wage_run.submit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/cancel:
+    post:
+      summary: "wage run: cancel { reason } (pay.wage_run.cancel) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/amend:
+    post:
+      summary: "wage run: amend an approved run not yet paid { reason } (pay.wage_run.amend) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/history:
+    get:
+      summary: "wage run: approvals and audit (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/pay:
+    post:
+      summary: "wage run: record payment { lineIds, mode BANK|CASH, paidOn, reference } (pay.wage_run.disburse) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/lines/{lineId}/acknowledge:
+    post:
+      summary: "wage run: the worker's acknowledgement { method CARD|PHOTO, badge or fileId, disputed?, note? } (pay.wage_run.acknowledge) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/slips:
+    get:
+      summary: "wage run: wage slips as a printable HTML page { lang en|hi, lineId? } (pay.wage_run.print) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/muster:
+    get:
+      summary: "wage run: the muster roll (Form XVI layout) { format csv|pdf } (pay.wage_run.export) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/print:
+    get:
+      summary: "wage run: PDF (pay.wage_run.print) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/export:
+    get:
+      summary: "wage run: CSV of the lines (pay.wage_run.export) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-register:
+    get:
+      summary: "wage register (Form XVII layout) of approved runs { from, to, projectId?, siteId?, contractorId? } (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-register/export:
+    get:
+      summary: "wage register CSV or PDF { from, to, format? } (pay.wage_run.export) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/worklist:
+    get:
+      summary: "contractor wage verification: the worklist by due date with counts (pay.wage_check.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks:
+    get:
+      summary: "contractor wage checks (pay.wage_check.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "contractor wage check: start a contractor's month { contractorId, projectId, siteId?, period } (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}:
+    get:
+      summary: "contractor wage check with the sheet, the variances and the attendance (pay.wage_check.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/sheet:
+    put:
+      summary: "contractor wage check: the wage sheet { lines [{ workerCode, days, otHours, gross, deductions, net, paidOn }] or csv, version } compared with the attendance (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/attach:
+    post:
+      summary: "contractor wage check: attach { kind SHEET|PROOF, fileId } (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/submit:
+    post:
+      summary: "contractor wage check: send for verification (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/decide:
+    post:
+      summary: "contractor wage check: { decision VERIFY|RETURN|HOLD, note } — HOLD holds the contractor's payments on the project, 21.04 (pay.wage_check.verify; not the compiler) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

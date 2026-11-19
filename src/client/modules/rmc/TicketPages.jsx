@@ -40,7 +40,7 @@ function Ticket({ id }) {
       <div className="mdm-panel" data-testid="rmc-ticket-view"><p>{t('tk.qr')}: <code data-testid="rmc-tk-qr">{x.qrCode}</code></p><p>{t('tk.driver')}: {x.driver ?? '—'} {x.driverPhone ?? ''} · {t('rq.title')}: <Link to={`/rmc/requisitions?id=${x.requisitionId}`}>{x.requisition}</Link> · {t('bt.title')}: {x.batch ?? '—'} · {t('rq.mix')}: {x.mix ?? '—'}</p>
         <p>{t('tk.times', { b: stamp(x.batchedAt), d: stamp(x.departedAt), a: stamp(x.arrivedAt) })} · {t('tk.unload', { s: stamp(x.unloadStart), e: stamp(x.unloadEnd) })}</p>
         <p>{t('tk.slump')}: {x.slumpMm ?? '—'} {x.slumpFlag ? `⚠ ${t('tk.slumpOut')}` : ''} · {t('tk.temp')}: {x.temperatureC ?? '—'} · {t('tk.returned')}: {x.returned} · {t('tk.wasted')}: {x.wasted} · {t('tk.net')}: <strong data-testid="rmc-tk-net">{x.net}</strong> m3 {x.returnReason ? `(${x.returnReason})` : ''}</p>
-        <p>{t('tk.receivedBy')}: {x.receivedBy ?? '—'} · {x.outsidePremises ? `${t('tk.eway')}: ${x.ewayNo ?? '—'}` : ''}</p></div>
+        <p>{t('tk.receivedBy')}: {x.receivedBy ?? '—'} · {x.outsidePremises ? `${t('tk.eway')}: ${x.ewayNo ?? (x.ewayAwaited ? t('tk.ewayAwaited') : '—')}` : ''}</p></div>
       <div className="actions-row no-print">{x.can.receive && <><button type="button" className="btn" disabled={busy || x.state !== 'DISPATCHED'} onClick={() => run(() => rmc.post(`/delivery-tickets/${x.id}/arrive`, {}), t('tk.arrivedNote'))} data-testid="rmc-tk-arrive">{t('tk.arrive')}</button><Link to={`/rmc/receipt?code=${encodeURIComponent(x.qrCode)}`} data-testid="rmc-tk-receive-link">{t('tk.receive')}</Link></>}</div>
       <DocBar kind="/delivery-tickets" x={x} printName={`${x.docNo}.pdf`} />
     </div>

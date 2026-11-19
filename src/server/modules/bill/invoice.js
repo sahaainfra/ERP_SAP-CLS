@@ -1,6 +1,8 @@
 import { calcOf } from '../../platform/calc/index.js';
 import { transaction } from '../../platform/db/index.js';
 import { toPdf } from '../../platform/export/index.js';
+import { qrPdf } from '../../platform/export/qrpdf.js';
+import { taxEngineOf } from '../../platform/tax/index.js';
 import { conflict, unprocessable } from '../../platform/http/errors.js';
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { toCsv } from '../../platform/security/csv.js';
@@ -109,6 +111,9 @@ export function createInvoiceService({ db, base }) {
     print(actor, id) {
       const r = flow.row(actor, id, 'bill.tax_invoice.print'); const v = invoices.get(actor, id); audit(actor, 'bill_tax_invoices', r.id, 'print', r.company_id); const m = (x) => x.toFixed(2);
       const rows = [['Invoice number', v.invoiceNo ?? '(not issued yet)'], ['Invoice date', v.invoiceDate ?? ''], ['Supplier GSTIN', v.gstinFrom], ['Recipient GSTIN', v.gstinTo], ['Place of supply (state code)', v.placeState], ['SAC', v.sacCode], ['Description', v.description], ['Taxable value', m(v.taxable)], [`GST ${v.gstPct}%`, v.supply === 'intra' ? `CGST ${m(v.cgst)} + SGST ${m(v.sgst)}` : `IGST ${m(v.igst)}`], ['Invoice value', m(v.total)], ['Due date', v.dueDate ?? ''], ['IRN', v.irn ?? v.irnLabel], ['Acknowledgement', v.ackNo ? `${v.ackNo} (${v.ackDate})` : '']].map(([k, val]) => ({ k, v: String(val) }));
+      // D-732: an invoice with its e-invoice generated (23.07) is printed with the IRN and the signed QR of the IRP
+      const qr = taxEngineOf(db)?.einvoices?.qrOf?.(r.company_id, 'bill_tax_invoices', r.id);
+      if (qr) { const lines = rows.map((x) => [x.k, x.k === 'IRN' ? qr.irn : x.k === 'Acknowledgement' ? `${qr.ackNo} (${qr.ackDate})` : x.v]); lines.push(['Bill / project', `${v.billNo} · ${v.project}`]); if (qr.sandbox) lines.push(['Note', 'SANDBOX e-invoice - not reported to GSTN']); return { buffer: qrPdf(lines, qr.modules, `Tax invoice ${v.invoiceNo ?? v.docNo}`), contentType: 'application/pdf', fileName: `${(v.invoiceNo ?? v.docNo).replaceAll('/', '-')}.pdf`, rows: lines.length, qr: true }; }
       return { buffer: toPdf({ columns: [{ key: 'k', label: 'Particular', type: 'text' }, { key: 'v', label: 'Value', type: 'text' }], rows, footer: [`${v.billNo} · ${v.project}`], title: `Tax invoice ${v.invoiceNo ?? v.docNo}` }), contentType: 'application/pdf', fileName: `${(v.invoiceNo ?? v.docNo).replaceAll('/', '-')}.pdf`, rows: rows.length };
     },
   };

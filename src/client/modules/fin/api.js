@@ -191,3 +191,172 @@ export const cb = {
   contraAct: async (id, action, b) => (await api.post(`/fin/contras/${id}/${action}`, b ?? {}, idem())).data,
   position: (date) => glget(`/cash-position${date ? `?date=${date}` : ''}`),
 };
+// part 23.07: the GST service (tax engine, settings, e-invoices, e-way bills)
+export const gst = {
+  resolve: async (b) => (await api.post('/fin/gst/resolve', b)).data,
+  checkGstin: async (b) => (await api.post('/fin/gst/gstin-check', b, idem())).data,
+  settings: () => glget('/gst/settings'),
+  settingsOne: (id) => glget(`/gst/settings/${id}`),
+  createSettings: async (b) => (await api.post('/fin/gst/settings', b, idem())).data,
+  importSettings: async (b) => (await api.post('/fin/gst/settings/import', b, idem())).data,
+  settingsAct: async (id, action, b) => (await api.post(`/fin/gst/settings/${id}/${action}`, b ?? {}, idem())).data,
+  removeSettings: async (id) => (await api.delete(`/fin/gst/settings/${id}`, idem())).data,
+  einvoice: (id) => glget(`/einvoices/${id}`),
+  due: () => glget('/einvoices/due'),
+  generate: async (b) => (await api.post('/fin/einvoices', b, idem())).data,
+  einvAct: async (id, action, b) => (await api.post(`/fin/einvoices/${id}/${action}`, b ?? {}, idem())).data,
+  ewb: (id) => glget(`/ewaybills/${id}`),
+  ewbSources: () => glget('/ewaybills/sources'),
+  ewbPrepare: (f) => glget(`/ewaybills/prepare?${q(f)}`),
+  ewbCreate: async (b) => (await api.post('/fin/ewaybills', b, idem())).data,
+  ewbAct: async (id, action, b) => (await api.post(`/fin/ewaybills/${id}/${action}`, b ?? {}, idem())).data,
+};
+// part 23.08: GST reconciliation, ITC review, returns, TDS, calendar
+export const gr = {
+  worklist: (f) => glget(`/gst-recon?${q(f)}`),
+  import: async (b) => (await api.post('/fin/gst-recon/import', b, idem())).data,
+  rematch: async (b) => (await api.post('/fin/gst-recon/rematch', b, idem())).data,
+  act: async (id, b) => (await api.post(`/fin/gst-recon/lines/${id}/act`, b, idem())).data,
+  reviews: () => glget('/itc-reviews'),
+  review: (id) => glget(`/itc-reviews/${id}`),
+  createReview: async (b) => (await api.post('/fin/itc-reviews', b, idem())).data,
+  reviewAct: async (id, action, b) => (await api.post(`/fin/itc-reviews/${id}/${action}`, b ?? {}, idem())).data,
+  override: async (id, b) => (await api.post(`/fin/itc-reviews/${id}/override`, b, idem())).data,
+  returns: (f) => glget(`/gst-returns?${q(f)}`),
+  prepareReturn: async (b) => (await api.post('/fin/gst-returns/prepare', b, idem())).data,
+  fileReturn: async (b) => (await api.post('/fin/gst-returns/file', b, idem())).data,
+  // D-736: the TCS statement 27EQ has the same calls under /tcs-returns (kind 'tcs')
+  tds: (f, kind = 'tds') => glget(`/${kind}-returns?${q(f)}`),
+  prepareTds: async (b, kind = 'tds') => (await api.post(`/fin/${kind}-returns/prepare`, b, idem())).data,
+  tdsDeposits: (f, kind = 'tds') => glget(`/${kind}-returns/deposits?${q(f)}`),
+  fileTds: async (b, kind = 'tds') => (await api.post(`/fin/${kind}-returns/file`, b, idem())).data,
+  calendar: (f) => glget(`/compliance-calendar?${q(f)}`),
+};
+// part 23.09: fixed assets
+export const fa = {
+  asset: (id) => glget(`/assets/${id}`),
+  sources: () => glget('/assets/sources'),
+  createAsset: async (b) => (await api.post('/fin/assets', b, idem())).data,
+  assetAct: async (id, action, b) => (await api.post(`/fin/assets/${id}/${action}`, b ?? {}, idem())).data,
+  transfer: async (id, b) => (await api.post(`/fin/assets/${id}/transfer`, b, idem())).data,
+  createCwip: async (b) => (await api.post('/fin/cwip', b, idem())).data,
+  depreciation: (f) => glget(`/depreciation?${q(f)}`),
+  runDepreciation: async (b) => (await api.post('/fin/depreciation/run', b, idem())).data,
+  disposal: (id) => glget(`/disposals/${id}`),
+  createDisposal: async (b) => (await api.post('/fin/disposals', b, idem())).data,
+  disposalAct: async (id, action, b) => (await api.post(`/fin/disposals/${id}/${action}`, b ?? {}, idem())).data,
+  verifications: () => glget('/asset-verifications'),
+  verification: (id) => glget(`/asset-verifications/${id}`),
+  createVerification: async (b) => (await api.post('/fin/asset-verifications', b, idem())).data,
+  scan: async (id, b) => (await api.post(`/fin/asset-verifications/${id}/scan`, b, idem())).data,
+  closeVerification: async (id) => (await api.post(`/fin/asset-verifications/${id}/close`, {}, idem())).data,
+  schedule: (f) => glget(`/asset-reports/schedule?${q(f)}`),
+  taxBlocks: (f) => glget(`/asset-reports/tax-blocks?${q(f)}`),
+  taxOpenings: () => glget('/asset-reports/tax-openings'),
+  setTaxOpening: async (b) => (await api.put('/fin/asset-reports/tax-openings', b, idem())).data,
+  removeTaxOpening: async (id) => (await api.delete(`/fin/asset-reports/tax-openings/${id}`)).data,
+};
+
+// ---- part 23.10: project accounting ----
+export const pa = {
+  list: (f) => glget(`/revenue-recognition?${q(f)}`),
+  candidates: (f) => glget(`/revenue-recognition/candidates?${q(f)}`),
+  get: (id) => glget(`/revenue-recognition/${id}`),
+  preview: async (b) => (await api.post('/fin/revenue-recognition/preview', b)).data,
+  create: async (b) => (await api.post('/fin/revenue-recognition', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/revenue-recognition/${id}`, b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/revenue-recognition/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/revenue-recognition/${id}`)).data,
+  tb: (f) => glget(`/project-accounts/trial-balance?${q(f)}`),
+  wip: (f) => glget(`/project-accounts/wip?${q(f)}`),
+  overheads: (f) => glget(`/project-accounts/overheads?${q(f)}`),
+  catchUp: async () => (await api.post('/fin/project-accounts/overheads/catch-up', {}, idem())).data,
+};
+
+// ---- part 23.11: cost forecast ----
+export const fc = {
+  list: (f) => glget(`/cost-forecasts?${q(f)}`),
+  candidates: (f) => glget(`/cost-forecasts/candidates?${q(f)}`),
+  get: (id) => glget(`/cost-forecasts/${id}`),
+  create: async (b) => (await api.post('/fin/cost-forecasts', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/cost-forecasts/${id}`, b, idem())).data,
+  line: async (id, lineId, b) => (await api.patch(`/fin/cost-forecasts/${id}/lines/${lineId}`, b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/cost-forecasts/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/cost-forecasts/${id}`)).data,
+  trend: (f) => glget(`/forecast-reports/trend?${q(f)}`),
+  variance: (f) => glget(`/forecast-reports/variance?${q(f)}`),
+};
+
+// ---- part 23.12: project P&L ----
+export const pl = {
+  projects: () => glget('/project-pl/projects'),
+  project: (f) => glget(`/project-pl?${q(f)}`),
+  drill: (f) => glget(`/project-pl/drill?${q(f)}`),
+  portfolio: (f) => glget(`/profitability?${q(f)}`),
+  structure: () => glget('/pl-structure'),
+  setLine: async (code, b) => (await api.put(`/fin/pl-structure/${code}`, b, idem())).data,
+  snapshots: (f) => glget(`/pl-snapshots?${q(f)}`),
+  snapshot: (id) => glget(`/pl-snapshots/${id}`),
+  createSnapshot: async (b) => (await api.post('/fin/pl-snapshots', b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/pl-snapshots/${id}/${action}`, b ?? {}, idem())).data,
+};
+
+// ---- part 23.13: cash forecast and treasury ----
+export const cf = {
+  list: (f) => glget(`/cash-forecasts?${q(f ?? {})}`),
+  get: (id, f) => glget(`/cash-forecasts/${id}?${q(f ?? {})}`),
+  create: async (b) => (await api.post('/fin/cash-forecasts', b, idem())).data,
+  update: async (id, b) => (await api.patch(`/fin/cash-forecasts/${id}`, b, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/cash-forecasts/${id}`, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/cash-forecasts/${id}/${action}`, b ?? {}, idem())).data,
+  adjust: async (id, b) => (await api.post(`/fin/cash-forecasts/${id}/adjustments`, b, idem())).data,
+  unadjust: async (id, lineId, reason) => (await api.delete(`/fin/cash-forecasts/${id}/adjustments/${lineId}`, idem(), { reason })).data,
+  variance: (f) => glget(`/cash-forecasts/variance?${q(f ?? {})}`),
+  curve: (f) => glget(`/cash-forecasts/project-curve?${q(f)}`),
+  treasury: () => glget('/treasury'),
+  facility: async (b) => (await api.post('/fin/treasury/facilities', b, idem())).data,
+  priorities: (f) => glget(`/treasury/priorities?${q(f ?? {})}`),
+  critical: async (b) => (await api.post('/fin/treasury/critical-suppliers', b, idem())).data,
+  uncritical: async (id, reason) => (await api.delete(`/fin/treasury/critical-suppliers/${id}`, idem(), { reason })).data,
+};
+
+// ---- part 23.14: period close, statements, year end, dashboard ----
+export const pc = {
+  list: (f) => glget(`/periods?${q(f ?? {})}`),
+  get: (id) => glget(`/periods/${id}`),
+  create: async (b) => (await api.post('/fin/periods', b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/periods/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/periods/${id}`, idem())).data,
+  addTask: async (id, b) => (await api.post(`/fin/periods/${id}/tasks`, b, idem())).data,
+  updateTask: async (id, tid, b) => (await api.patch(`/fin/periods/${id}/tasks/${tid}`, b, idem())).data,
+  completeTask: async (id, tid, b) => (await api.post(`/fin/periods/${id}/tasks/${tid}/complete`, b ?? {}, idem())).data,
+  reopenTask: async (id, tid, reason) => (await api.post(`/fin/periods/${id}/tasks/${tid}/reopen`, { reason }, idem())).data,
+  lock: async (id, modules) => (await api.post(`/fin/periods/${id}/locks`, { modules }, idem())).data,
+  reopen: async (id, b) => (await api.post(`/fin/periods/${id}/reopen`, b, idem())).data,
+  reopenGet: (id) => glget(`/period-reopens/${id}`),
+  statements: (f) => glget(`/statements?${q(f)}`),
+  dashboard: (f) => glget(`/finance-dashboard?${q(f ?? {})}`),
+  yearEnd: (f) => glget(`/year-end?${q(f ?? {})}`),
+  carryForward: async (fyId) => (await api.post(`/fin/year-end/${fyId}/carry-forward`, {}, idem())).data,
+  closeYear: async (fyId, reason) => (await api.post(`/fin/year-end/${fyId}/close`, { reason }, idem())).data,
+};
+
+// ---- part 23.15: inter-company, consolidation, JV ----
+export const ic = {
+  list: (f) => glget(`/ic-transactions?${q(f ?? {})}`),
+  get: (id) => glget(`/ic-transactions/${id}`),
+  create: async (b) => (await api.post('/fin/ic-transactions', b, idem())).data,
+  act: async (id, action, b) => (await api.post(`/fin/ic-transactions/${id}/${action}`, b ?? {}, idem())).data,
+  remove: async (id) => (await api.delete(`/fin/ic-transactions/${id}`, idem())).data,
+  relationships: () => glget('/ic-relationships'),
+  saveRelationship: async (b) => (await api.post('/fin/ic-relationships', b, idem())).data,
+  reconciliation: (f) => glget(`/ic-reconciliation?${q(f ?? {})}`),
+  preview: (f) => glget(`/consolidations/preview?${q(f)}`),
+  runs: () => glget('/consolidations'),
+  run: async (b) => (await api.post('/fin/consolidations', b, idem())).data,
+  finalise: async (id) => (await api.post(`/fin/consolidations/${id}/finalise`, {}, idem())).data,
+  jvShares: (f) => glget(`/jv-shares?${q(f)}`),
+  saveJvShare: async (b) => (await api.post('/fin/jv-shares', b, idem())).data,
+  removeJvShare: async (id, reason) => (await api.delete(`/fin/jv-shares/${id}`, idem(), { reason })).data,
+  jvStatement: (f) => glget(`/jv-statement?${q(f)}`),
+};

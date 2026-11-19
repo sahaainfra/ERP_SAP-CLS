@@ -68,6 +68,8 @@ test('FR-01 §9 sources: vendor invoice, subcontractor bill, expense claim; a di
   const v = w.partner('Hyderabad Security Services Pvt Ltd');
   const body = { partnerId: v, projectId: w.A, billNo: 'HSS/118', billDate: '2026-07-05', description: 'Site security for June', expenseAccountId: w.acct('560004'), amount: 150000, gst: 27000, tdsNature: 'CONTRACTOR' };
   assert.equal((await w.call(U.aud, 'POST', '/bills', body)).status, 403);
+  // D-733: the GST typed is a rate in force on the bill date (the tax engine of 23.07): ₹15,000 on ₹1,50,000 is 10 %, not a GST rate
+  const odd = await w.call(U.fin, 'POST', '/bills', { ...body, billNo: 'HSS/ODD', gst: 15000 }); assert.equal(odd.status, 400); assert.match(JSON.stringify(odd.json), /not a GST rate in force/);
   const c = await w.call(U.fin, 'POST', '/bills', body); assert.equal(c.status, 201, JSON.stringify(c.json));
   const id = c.json.data.id; assert.equal(c.json.data.tds, 3000, 'single bill above ₹30,000: 2 %'); assert.equal(c.json.data.netPayable, 174000);
   assert.equal((await w.call(U.fin, 'POST', `/bills/${id}/submit`)).status, 202);

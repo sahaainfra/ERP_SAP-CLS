@@ -243,12 +243,15 @@ export function createEssService({ db, dep }) {
       const r = rowOf(actor, id);
       return { approvals: r.workflow_instance_id ? db.prepare('SELECT event, actor, comment, at, step_code FROM wf_history WHERE instance_id = ? ORDER BY id').all(r.workflow_instance_id) : [], audit: db.prepare("SELECT action, actor, reason, created_at AS at FROM core_audit_log WHERE entity = 'ess_requests' AND entity_id = ? ORDER BY id").all(String(id)).map((x) => ({ action: x.action, by: x.actor, reason: x.reason, at: x.at })) };
     },
-    /** HR issues an approved request from the template library: the text is made from the employee record, the document is a numbered, verifiable PDF (04.11). A salary certificate states the monthly gross that HR enters here (payroll, M24, will give it). */
+    /** HR issues an approved request from the template library: the text is made from the employee record, the document is a numbered, verifiable PDF (04.11). A salary certificate states the employee's monthly gross from payroll (24.01), or what HR enters when no pay is recorded. */
     async issue(actor, id, b) {
       need(actor, 'hr.ess.issue', 'issue letters');
       const r = rowOf(actor, id);
       if (r.status !== 'APPROVED') throw unprocessable(r.status === 'ISSUED' ? 'This letter was issued already.' : 'Only an approved request is issued.');
-      if (r.letter_type === 'SALARY' && !(b.salaryMonthly > 0)) throw badRequest('Some fields are not valid.', [{ field: 'salaryMonthly', message: 'Give the gross monthly salary the certificate states' }]);
+      // D-352: the gross monthly salary is the employee's pay in force (set by payroll, 24.01); HR gives it only when no pay is recorded
+      const payGross = db.prepare('SELECT COALESCE(SUM(monthly_paise), 0) AS p FROM hr_employee_pay WHERE employee_id = ? AND deleted_at IS NULL AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)').get(r.employee_id, todayIST(), todayIST()).p;
+      if (r.letter_type === 'SALARY' && payGross > 0) b = { ...b, salaryMonthly: payGross / 100 };
+      if (r.letter_type === 'SALARY' && !(b.salaryMonthly > 0)) throw badRequest('Some fields are not valid.', [{ field: 'salaryMonthly', message: 'No pay is recorded for the employee: give the gross monthly salary the certificate states' }]);
       const tpl = templateServiceOf(db); if (!tpl) throw unprocessable('The document templates are not running.');
       const e = emp(r.employee_id); const company = db.prepare('SELECT legal_name FROM org_companies WHERE id = ?').get(r.company_id)?.legal_name ?? '';
       const since = sentence(e.doj); const who = `${e.full_name} (employee code ${e.emp_code})`;
