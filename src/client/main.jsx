@@ -38,6 +38,7 @@ import './modules/rmc/index.js';
 import './modules/ctr/index.js';
 import './modules/bill/index.js';
 import './modules/fin/index.js';
+import './modules/pay/index.js';
 import { initAuth, signedInUser } from './platform/api/index.js';
 import { loadLanguage } from './platform/i18n/index.js';
 import { findRoute } from './platform/shell/registry.js';

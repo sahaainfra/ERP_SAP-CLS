@@ -51,7 +51,7 @@ const CURRENT_LIABS = ['BS_ST_BORROWINGS', 'BS_TRADE_PAYABLES', 'BS_OTHER_CURREN
 
 export const closeList = defineList({
   code: 'fin.period_closes', label: 'Period closes', permission: 'fin.period.view', from: 'close_periods x', where: 'x.deleted_at IS NULL', searchable: ['x.doc_no', 'x.period'], defaultSort: '-period',
-  columns: { docNo: { sql: 'x.doc_no', type: 'text', label: 'Close' }, period: { sql: 'x.period', type: 'text', label: 'Month', filter: 'eq' }, versionNo: { sql: 'x.version_no', type: 'number', label: 'Version' }, closeState: { sql: 'x.close_state', type: 'enum', label: 'State', options: ['IN_PROGRESS', 'SOFT_CLOSED', 'CLOSED', 'REOPENED'] }, status: { sql: 'x.status', type: 'enum', label: 'Status', options: Object.keys(STATUS) }, lockedAt: { sql: 'x.locked_at', type: 'date', label: 'Closed on' } },
+  columns: { docNo: { sql: 'x.doc_no', type: 'text', label: 'Close' }, period: { sql: 'x.period', type: 'text', label: 'Month', filter: 'eq' }, versionNo: { sql: 'x.version_no', type: 'number', label: 'Version' }, closeState: { sql: 'x.close_state', type: 'enum', label: 'State', options: [['IN_PROGRESS', 'IN_PROGRESS'], ['SOFT_CLOSED', 'SOFT_CLOSED'], ['CLOSED', 'CLOSED'], ['REOPENED', 'REOPENED']] }, status: { sql: 'x.status', type: 'enum', label: 'Status', options: Object.entries(STATUS) }, lockedAt: { sql: 'x.locked_at', type: 'date', label: 'Closed on' } },
 });
 
 /** Pure: the indirect cash flow from the Schedule III lines at the start and the end, and the P&L of the period (FR-03). Sums to the change in cash. */

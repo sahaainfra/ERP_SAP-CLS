@@ -10539,3 +10539,119 @@ paths:
     get:
       summary: "JV: each partner share of the project revenue, cost and result { projectId, from?, to? } (part 23.15; fin.jv.view)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.fin.p2315 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/components:
+    get:
+      summary: "payroll set-up: the pay components of the company (part 24.01; pay.component.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: add or change a component { id?, code, name, type, method, formula?, percent?, baseCodes?, statutoryCode?, flags, wageClass, sequence } (part 24.01; pay.component.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/components/test:
+    post:
+      summary: "payroll set-up: test a formula on sample values { code, formula, values } (part 24.01; pay.component.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/structures:
+    get:
+      summary: "payroll set-up: salary structures { status? } (part 24.01; pay.structure.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: a structure or its new version { id?, code, name, grade, senior, components [{ code, value? }] } (part 24.01; pay.structure.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/structures/preview:
+    post:
+      summary: "payroll set-up: the CTC breakup { structureId, ctcAnnual, employeeId?, date?, ptState?, pf?, esi?, overrides? } (part 24.01; pay.structure.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/structures/{id}:
+    get:
+      summary: "payroll set-up: one structure with its versions (part 24.01; pay.structure.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/employees:
+    get:
+      summary: "payroll set-up: employees with their current assignment { q? } (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/arrears:
+    get:
+      summary: "payroll set-up: arrears { employeeId?, status? } (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments:
+    get:
+      summary: "payroll set-up: pay assignments (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: an assignment or revision { employeeId, structureId, ctcAnnual, effectiveFrom, kind?, reason, overrides? } (part 24.01; pay.assignment.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/export:
+    get:
+      summary: "payroll set-up: CSV (part 24.01; pay.assignment.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}:
+    get:
+      summary: "payroll set-up: one assignment with its breakup, previous and arrears (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "payroll set-up: change a draft (part 24.01; pay.assignment.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "payroll set-up: delete a draft (part 24.01; pay.assignment.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/submit:
+    post:
+      summary: "payroll set-up: send for approval HRMGR → CFO (→ DIR) (part 24.01; pay.assignment.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/withdraw:
+    post:
+      summary: "payroll set-up: withdraw { reason } (part 24.01; pay.assignment.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/cancel:
+    post:
+      summary: "payroll set-up: cancel { reason } (part 24.01; pay.assignment.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/history:
+    get:
+      summary: "payroll set-up: approval history (part 24.01; pay.assignment.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/assignments/{id}/print:
+    get:
+      summary: "payroll set-up: PDF of the breakup (part 24.01; pay.assignment.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params:
+    get:
+      summary: "payroll set-up: statutory parameters { code?, state? } (part 24.01; pay.statutory.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll set-up: propose a change { code, state?, params, effectiveFrom, legalRef } (part 24.01; pay.statutory.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}:
+    get:
+      summary: "payroll set-up: one row (part 24.01; pay.statutory.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "payroll set-up: change a draft (part 24.01; pay.statutory.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "payroll set-up: delete a draft (part 24.01; pay.statutory.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}/submit:
+    post:
+      summary: "payroll set-up: send to the CFO (part 24.01; pay.statutory.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}/withdraw:
+    post:
+      summary: "payroll set-up: withdraw { reason } (part 24.01; pay.statutory.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/statutory-params/{id}/cancel:
+    post:
+      summary: "payroll set-up: cancel { reason } (part 24.01; pay.statutory.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/calendar:
+    get:
+      summary: "payroll set-up: payroll periods { fy? } (part 24.01; pay.calendar.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/calendar/generate:
+    post:
+      summary: "payroll set-up: the twelve periods of a year { fyStart, payDay?, attendanceCutoffDay?, inputsCutoffDay? } (part 24.01; pay.calendar.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/calendar/{id}:
+    patch:
+      summary: "payroll set-up: cut-offs and pay date of an open period (part 24.01; pay.calendar.configure)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
