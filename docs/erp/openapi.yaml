@@ -10844,3 +10844,78 @@ paths:
     post:
       summary: "contractor wage check: { decision VERIFY|RETURN|HOLD, note } — HOLD holds the contractor's payments on the project, 21.04 (pay.wage_check.verify; not the compiler) (part 24.03)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/calendar:
+    get:
+      summary: "statutory calendar of a financial year: the items with due dates, rules, status and filings { fy } (pay.stat.calendar.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/filings:
+    get:
+      summary: "statutory filings (pay.stat.filing.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "statutory payment: prepare a filing for a period { type ECR|ESI|PT|LWF|TDS_MONTHLY|BOCW, period, state? }; the file is generated and validated first; the amount is tied to the locked payroll (pay.stat.filing.create) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/filings/{id}:
+    get:
+      summary: "statutory filing with its history and kept file (pay.stat.filing.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "statutory filing: delete a draft (pay.stat.filing.delete) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/filings/{id}/submit:
+    post:
+      summary: "statutory filing: send for approval ACCMGR → CFO (pay.stat.filing.submit) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/filings/{id}/withdraw:
+    post:
+      summary: "statutory filing: withdraw { reason } (pay.stat.filing.submit) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/filings/{id}/cancel:
+    post:
+      summary: "statutory filing: cancel { reason } (pay.stat.filing.cancel) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/filings/{id}/challan:
+    post:
+      summary: "statutory filing: record the challan of an approved filing { challanRef, challanDate, paidOn, paymentRef? }; a payment after the due date is flagged late (pay.stat.filing.edit) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/registers:
+    get:
+      summary: "generated files and registers (pay.stat.register.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "generate a file or register { registerType, period? | quarter? | fy?, state?, siteId? }; validated and kept with its checksum (pay.stat.register.generate; FORM16_BATCH needs pay.stat.form16.generate) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/registers/{id}/download:
+    get:
+      summary: "download a kept file or register (pay.stat.register.export) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/form16/pdf:
+    get:
+      summary: "Form 16 / Form 130 batch as PDF { fy } (pay.stat.form16.generate) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/rules:
+    get:
+      summary: "statutory rules with their legal references and status (pay.stat.rule.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "save or add a statutory rule { type, state?, params, effectiveFrom, legalRef, status? } (pay.stat.rule.configure) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/bocw:
+    get:
+      summary: "BOCW cess per project and month { period? } (pay.stat.bocw.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "record a project's construction cost for a month { projectId, period, constructionCost, source }; the cess is worked out at the rate of the rule (pay.stat.bocw.manage) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/bonus:
+    get:
+      summary: "bonus of the year: eligibility and the bonus of each employee { fy, pct? } (pay.stat.register.view and pay.salary.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/gratuity:
+    get:
+      summary: "gratuity on leaving { employeeId, leavingDate } (pay.stat.register.view and pay.salary.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/stat/gratuity-provision:
+    get:
+      summary: "gratuity provision of the year { fy } (pay.stat.register.view and pay.salary.view) (part 24.04)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: sent for approval }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2404 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

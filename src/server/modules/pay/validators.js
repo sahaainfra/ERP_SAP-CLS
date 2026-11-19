@@ -65,3 +65,18 @@ const sheetLine = z.object({ workerCode: z.string().trim().min(1).max(40), days:
 export const parseWageSheet = (b) => parse(z.object({ lines: z.array(sheetLine).max(5000).optional(), csv: z.string().max(2_000_000).optional(), version: z.number().int().optional() }).strict().refine((x) => x.lines || x.csv != null, { message: 'Give the rows or the CSV of the sheet' }), b);
 export const parseWageAttach = (b) => parse(z.object({ kind: z.enum(['SHEET', 'PROOF']), fileId: id }).strict(), b);
 export const parseWageDecision = (b) => parse(z.object({ decision: z.enum(['VERIFY', 'RETURN', 'HOLD']), note: z.string().trim().max(500).optional() }).strict(), b);
+
+// ---- 24.04 ----
+const fyCode = z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27');
+const stateCode = z.string().regex(/^[A-Z]{2}$/, 'A state code such as TS');
+export const parseFilingCreate = (b) => parse(z.object({ type: z.enum(['ECR', 'ESI', 'PT', 'LWF', 'TDS_MONTHLY', 'BOCW']), period, state: stateCode.optional() }).strict(), b);
+export const parseChallan = (b) => parse(z.object({ challanRef: z.string().trim().min(3).max(60), challanDate: date, paidOn: date, paymentRef: z.string().trim().max(80).optional() }).strict(), b);
+export const parseRegisterCreate = (b) => parse(z.object({ registerType: z.enum(['ECR_FILE', 'ESI_FILE', 'PT_REPORT', 'LWF_REPORT', 'TDS_24Q_FILE', 'FORM16_BATCH', 'WORKMEN_REGISTER', 'OVERTIME_REGISTER', 'DEDUCTION_REGISTER', 'ADVANCE_REGISTER']), period: z.string().regex(/^\d{4}-\d{2}$/, 'A month such as 2026-10').optional(), quarter: z.string().regex(/^Q[1-4] \d{4}-\d{2}$/, 'A quarter such as Q1 2026-27').optional(), fy: fyCode.optional(), state: stateCode.optional(), siteId: id.optional() }).strict()
+  .superRefine((x, ctx) => { if (['ECR_FILE', 'ESI_FILE', 'PT_REPORT', 'LWF_REPORT', 'WORKMEN_REGISTER', 'OVERTIME_REGISTER', 'DEDUCTION_REGISTER', 'ADVANCE_REGISTER'].includes(x.registerType) && !x.period) ctx.addIssue({ code: 'custom', path: ['period'], message: 'Choose the month' }); if (x.registerType === 'TDS_24Q_FILE' && !x.quarter) ctx.addIssue({ code: 'custom', path: ['quarter'], message: 'Choose the quarter' }); if (x.registerType === 'FORM16_BATCH' && !x.fy) ctx.addIssue({ code: 'custom', path: ['fy'], message: 'Choose the financial year' }); }), b);
+export const parseRuleSave = (b) => parse(z.object({ type: z.enum(['ECR', 'ESI', 'PT', 'LWF', 'TDS_MONTHLY', 'TDS_MONTHLY_MAR', 'TDS_24Q_Q1', 'TDS_24Q_Q2', 'TDS_24Q_Q3', 'TDS_24Q_Q4', 'FORM16', 'BOCW', 'GRATUITY_CAP', 'BOCW_RATE']), state: z.union([z.literal('ALL'), stateCode]).optional(), params: z.record(z.string(), z.union([z.number(), z.string(), z.array(z.number())])), effectiveFrom: date, legalRef: z.string().trim().min(10).max(600), status: z.enum(['APPROVED', 'TO_CONFIRM']).optional() }).strict(), b);
+export const parseBocwSave = (b) => parse(z.object({ projectId: id, period, constructionCost: money, source: z.string().trim().max(300) }).strict(), b);
+export const parseBonusQuery = (q) => parse(z.object({ fy: fyCode, pct: z.coerce.number().min(0).max(100).optional() }), q);
+export const parseGratuityQuery = (q) => parse(z.object({ employeeId: id, leavingDate: date }), q);
+export const parseFyQuery = (q) => parse(z.object({ fy: fyCode }), q);
+export const parseBocwQuery = (q) => parse(z.object({ period: period.optional() }), q);
+export const parseFilingCreateQuery = (q) => parse(z.object({}).passthrough(), q);

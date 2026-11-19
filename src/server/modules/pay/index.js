@@ -12,6 +12,8 @@ import { createStatutoryService } from '../mdm/statutory.js';
 import { ASSIGNMENT_DOC, STATUTORY_DOC, createPaySetupService } from './setup.js';
 import { RUN_DOC, createPayRunService } from './runs.js';
 import { runRoutes, setupRoutes, wageRoutes } from './routes.js';
+import { statutoryRoutes } from './statroutes.js';
+import { FILING_DOC, createStatutoryService as createFilingService } from './statutory.js';
 import { WAGE_DOC, createPayWageService } from './wages.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { authzOf } from '../../platform/authz/index.js';
@@ -34,13 +36,16 @@ for (const [type, description] of [
   ['pay.wage_run.paid', 'Workers of an approved wage run were paid (part 24.03): data { runId, docNo, projectId, siteId, mode, paidOn, workers, net, late, complete }. Payment posting (24.05) reads it.'],
   ['pay.contractor_wage.verified', 'A labour contractor\'s wage sheet of a month was verified against the attendance (part 24.03): data { checkId, docNo, contractorId, projectId, siteId, period, workers, variances, blocking, hold, decision }.'],
   ['pay.contractor_wage.variance', 'A labour contractor\'s wage sheet was held for variances (part 24.03): data as pay.contractor_wage.verified; the subcontractor workspace (21.04) holds the contractor\'s payments on the project.'],
+  ['pay.statutory.filing_approved', 'A statutory payment (ECR, ESI, PT, LWF, TDS deposit or BOCW cess) was approved ACCMGR -> CFO (part 24.04): data { filingId, docNo, type, period, state, amount, dueDate }. The payment request goes to the bank through 24.05 (23.04 pays bills only today).'],
+  ['pay.statutory.paid', 'The challan of an approved statutory payment was recorded (part 24.04): data { filingId, docNo, type, period, paidOn, late, amount }.'],
+  ['pay.statutory.file_generated', 'A statutory file or register was generated and validated (part 24.04): data { registerId, type, period, rows }.'],
   ['pay.statutory.approved', 'A statutory parameter change was approved by the CFO (part 24.01): data { paramId, code, state, effectiveFrom, params }. Payroll reads it from its date.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'pay', description });
 
 integrityRegistry.register({
-  companyOptional: ['pay_components', 'pay_statutory_params'],
-  statuses: { pay_assignments: Object.keys(STATUS), pay_statutory_params: Object.keys(STATUS), pay_runs: Object.keys(STATUS), pay_wage_runs: Object.keys(STATUS) },
-  uniqueKeys: [{ table: 'pay_assignments', columns: ['company_id', 'doc_no'] }, { table: 'pay_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_wage_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_contractor_wage_checks', columns: ['company_id', 'doc_no'] }],
+  companyOptional: ['pay_components', 'pay_statutory_params', 'stat_rules'],
+  statuses: { stat_filings: Object.keys(STATUS), pay_assignments: Object.keys(STATUS), pay_statutory_params: Object.keys(STATUS), pay_runs: Object.keys(STATUS), pay_wage_runs: Object.keys(STATUS) },
+  uniqueKeys: [{ table: 'stat_filings', columns: ['company_id', 'doc_no'] }, { table: 'pay_assignments', columns: ['company_id', 'doc_no'] }, { table: 'pay_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_wage_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_contractor_wage_checks', columns: ['company_id', 'doc_no'] }],
 });
 
 const step = (code, name, role, slaHours, when = null) => ({ code, name, type: 'approval', mode: 'single', approvers: [{ kind: 'role', role }], slaHours, requireAttachment: false, checklist: [], when, notify: [], action: null });
@@ -54,12 +59,20 @@ workflowTypes.register({
   hooks: hooks((s) => s?.setup.assignments),
 });
 workflowTypes.register({
-  docType: STATUTORY_DOC, label: 'Statutory parameter change', processOwner: 'CFO', route: (id) => `/payroll/statutory?id=${id}`,
+  docType: STATUTORY_DOC, label: 'Statutory parameter change', processOwner: 'CFO', route: (id) => `/payroll/compliance?id=${id}`,
   describe(db, companyId, id) { const r = db.prepare('SELECT * FROM pay_statutory_params WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.code} ${r.state_code} from ${r.effective_from}`, originator: r.requested_by } : null; },
   summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM pay_statutory_params WHERE id = ?').get(Number(id)); if (!r) return null; const prev = db.prepare("SELECT params_json, effective_from FROM pay_statutory_params WHERE code = ? AND state_code = ? AND status = 'APPROVED' AND (company_id = ? OR company_id IS NULL) AND effective_from <= ? AND deleted_at IS NULL ORDER BY effective_from DESC LIMIT 1").get(r.code, r.state_code, r.company_id, r.effective_from);
     return { fields: [{ label: 'Parameter', value: `${r.code} · ${r.state_code}` }, { label: 'From', value: r.effective_from }, { label: 'New values', value: r.params_json }, { label: 'In force now', value: prev ? `${prev.params_json} (from ${prev.effective_from})` : 'none' }, { label: 'Notification', value: r.legal_ref ?? '—' }] }; },
   defaultDefinition: { name: 'Statutory parameter change: the payroll team proposes, the CFO approves', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('CFO', 'CFO', 'CFO', 72)] },
   hooks: hooks((s) => s?.setup.statutoryParams),
+});
+
+workflowTypes.register({
+  docType: FILING_DOC, label: 'Statutory payment', processOwner: 'ACCMGR', route: (id) => `/payroll/compliance?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM stat_filings WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `${r.filing_type} ${r.period}${r.state_code !== 'ALL' ? ` ${r.state_code}` : ''}: ₹${(r.amount_paise / 100).toFixed(2)}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM stat_filings WHERE id = ?').get(Number(id)); if (!r) return null; return { fields: [{ label: 'Payment', value: `${r.filing_type} · ${r.period} · ${r.state_code}` }, { label: 'Due', value: r.due_date }, { label: 'Amount', value: inr(r.amount_paise) }, { label: 'Source', value: r.register_id ? `register ${r.register_id}` : 'payroll run / BOCW' }] }; },
+  defaultDefinition: { name: 'Statutory payment: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('ACCMGR', 'Accounts manager', 'ACCMGR', 48), step('CFO', 'CFO', 'CFO', 48)] },
+  hooks: hooks((s) => s?.stat?.filings),
 });
 
 workflowTypes.register({
@@ -91,8 +104,8 @@ export const pay = {
   routePrefix: '/api/v1/pay',
   ownerPart: '24.01',
   status: 'Pay components with formulas of the calculation engine and Code-on-Wages classes; salary structures with the CTC breakup; employee pay assignments and revisions (HRMGR -> CFO, the director for senior grades) with arrears; statutory parameters by date and state (PAY -> CFO); the payroll calendar.',
-  tables: ['pay_components', 'pay_structures', 'pay_assignments', 'pay_arrears', 'pay_statutory_params', 'pay_calendar', 'pay_runs', 'pay_run_lines', 'pay_inputs', 'pay_tax_declarations', 'pay_wage_runs', 'pay_wage_lines', 'pay_contractor_wage_checks'],
-  resources: ['components', 'structures', 'assignments', 'arrears', 'statutory-params', 'calendar', 'employees', 'runs', 'inputs', 'declarations', 'wage-runs', 'wage-register', 'wage-checks'],
+  tables: ['stat_filings', 'stat_registers', 'stat_rules', 'stat_bocw_months', 'pay_components', 'pay_structures', 'pay_assignments', 'pay_arrears', 'pay_statutory_params', 'pay_calendar', 'pay_runs', 'pay_run_lines', 'pay_inputs', 'pay_tax_declarations', 'pay_wage_runs', 'pay_wage_lines', 'pay_contractor_wage_checks'],
+  resources: ['stat', 'components', 'structures', 'assignments', 'arrears', 'statutory-params', 'calendar', 'employees', 'runs', 'inputs', 'declarations', 'wage-runs', 'wage-register', 'wage-checks'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_components'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
@@ -100,13 +113,15 @@ export const pay = {
     const setup = createPaySetupService({ db, base, flags, statutory });
     const runs = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_runs'").get() ? createPayRunService({ db, base, flags, setup, expenses: () => expensesOf(db) }) : null;
     const wages = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_wage_runs'").get() ? createPayWageService({ db, base, flags, setup, labour: () => labourOf(db), ctr: () => ctrOf(db) }) : null;
-    const ctx = { setup, runs, wages, base, flags };
+    const stat = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'stat_filings'").get() ? createFilingService({ db, base, flags, setup }) : null;
+    const ctx = { setup, runs, wages, stat, base, flags };
     services.set(db, ctx);
     listExports.register('pay.assignments', { source: (actor, req) => { base.need(actor, 'pay.assignment.export', 'export pay assignments'); return setup.assignments.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: (actor) => (base.may(actor, 'pay.salary.view') ? [] : ['ctcAnnual', 'grossMonthly', 'arrears']) });
     runtimeOf(db)?.bus?.subscribe('perf.review.approved', (e) => { setup.assignments.onRating(e); }, { consumer: 'pay.rating' }); // D-361
     const r = Router(); const h = { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags };
     setupRoutes(r, setup, h); if (runs) { runRoutes(r, runs, h); const bus = runtimeOf(db)?.bus; bus?.subscribe('lv.encashment.input', (e) => { runs.consumers.onEncashment(e); }, { consumer: 'pay.encashment' }); bus?.subscribe('inv.asset.recovery_approved', (e) => { runs.consumers.onLossRecovery(e); }, { consumer: 'pay.loss_recovery' }); }
     if (wages) wageRoutes(r, wages, h);
+    if (stat) statutoryRoutes(r, stat, h);
     api.use('/pay', r);
   },
 };
