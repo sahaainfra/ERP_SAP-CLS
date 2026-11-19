@@ -43,7 +43,7 @@ for (const [type, description] of [
 ]) eventTypes.define({ type, version: 1, schema, owner: 'pay', description });
 
 integrityRegistry.register({
-  companyOptional: ['pay_components', 'pay_statutory_params'],
+  companyOptional: ['pay_components', 'pay_statutory_params', 'stat_rules'],
   statuses: { stat_filings: Object.keys(STATUS), pay_assignments: Object.keys(STATUS), pay_statutory_params: Object.keys(STATUS), pay_runs: Object.keys(STATUS), pay_wage_runs: Object.keys(STATUS) },
   uniqueKeys: [{ table: 'stat_filings', columns: ['company_id', 'doc_no'] }, { table: 'pay_assignments', columns: ['company_id', 'doc_no'] }, { table: 'pay_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_wage_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_contractor_wage_checks', columns: ['company_id', 'doc_no'] }],
 });
