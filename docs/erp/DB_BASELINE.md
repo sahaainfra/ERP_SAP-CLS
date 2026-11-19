@@ -21010,6 +21010,98 @@ Indexes:
 - ux_pay_contractor_wage_checks_key (unique): company_id, contractor_id, org_project_id, , period
 - ux_pay_contractor_wage_checks_doc (unique): company_id, doc_no
 
+## pay_fnf
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| separation_id | INTEGER | yes |  |  |
+| last_working_day | TEXT | yes |  |  |
+| due_date | TEXT |  |  |  |
+| inputs_json | TEXT | yes |  | '{}' |
+| components_json | TEXT | yes |  | '[]' |
+| adjustments_json | TEXT | yes |  | '[]' |
+| working_json | TEXT | yes |  | '{}' |
+| bonus_rate_bp | INTEGER |  |  |  |
+| gross_paise | INTEGER | yes |  | 0 |
+| deductions_paise | INTEGER | yes |  | 0 |
+| tds_paise | INTEGER | yes |  | 0 |
+| net_paise | INTEGER | yes |  | 0 |
+| payable_paise | INTEGER | yes |  | 0 |
+| recoverable_paise | INTEGER | yes |  | 0 |
+| computed_at | TEXT |  |  |  |
+| pay_status | TEXT | yes |  | 'UNPAID' |
+| paid_on | TEXT |  |  |  |
+| late | INTEGER | yes |  | 0 |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> pay_fnf(id), separation_id -> hr_separations(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_fnf_pay: company_id, pay_status
+- ix_pay_fnf_wf: workflow_instance_id
+- ix_pay_fnf_amends_id: amends_id
+- ix_pay_fnf_separation_id: separation_id
+- ix_pay_fnf_employee_id: employee_id
+- ix_pay_fnf_list: company_id, status, last_working_day
+- ux_pay_fnf_separation (unique): company_id, separation_id
+- ux_pay_fnf_doc (unique): company_id, doc_no
+
+## pay_fnf_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| rule_type | TEXT | yes |  |  |
+| state_code | TEXT | yes |  | 'ALL' |
+| params_json | TEXT | yes |  | '{}' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| legal_ref | TEXT |  |  |  |
+| rule_status | TEXT | yes |  | 'APPROVED' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_fnf_rules_company_id: company_id
+- ux_pay_fnf_rules (unique): , rule_type, state_code, effective_from
+
 ## pay_inputs
 
 | Column | Type | Not null | Key | Default |
@@ -21046,6 +21138,54 @@ Indexes:
 - ix_pay_inputs_company: company_id, period, input_status
 - ix_pay_inputs_employee: employee_id, input_status, period
 - ux_pay_inputs_source (unique): company_id, source_type, source_id
+
+## pay_payslips
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| run_line_id | INTEGER |  |  |  |
+| employee_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| lang | TEXT | yes |  | 'en' |
+| generated_doc_id | INTEGER |  |  |  |
+| file_id | INTEGER |  |  |  |
+| net_paise | INTEGER | yes |  | 0 |
+| protected | INTEGER | yes |  | 1 |
+| email_status | TEXT | yes |  | 'NOT_SENT' |
+| email_to | TEXT |  |  |  |
+| email_error | TEXT |  |  |  |
+| emailed_at | TEXT |  |  |  |
+| delivery_id | INTEGER |  |  |  |
+| viewed_at | TEXT |  |  |  |
+| view_count | INTEGER | yes |  | 0 |
+| slip_status | TEXT | yes |  | 'GENERATED' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: file_id -> core_files(id), generated_doc_id -> tpl_generated_docs(id), employee_id -> hr_employees(id), run_line_id -> pay_run_lines(id), run_id -> pay_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_payslips_file_id: file_id
+- ix_pay_payslips_generated_doc_id: generated_doc_id
+- ix_pay_payslips_employee_id: employee_id, period
+- ix_pay_payslips_run_line_id: run_line_id
+- ix_pay_payslips_run_id: run_id
+- ix_pay_payslips_list: company_id, period, email_status
+- ux_pay_payslips_current (unique): run_id, employee_id
 
 ## pay_run_lines
 
@@ -21269,6 +21409,101 @@ Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
 Indexes:
 - ix_pay_tax_declarations_company: company_id, fy, decl_status
 - ux_pay_tax_declarations_emp (unique): employee_id, fy
+
+## pay_transfer_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| transfer_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| run_line_id | INTEGER |  |  |  |
+| fnf_id | INTEGER |  |  |  |
+| amount_paise | INTEGER | yes |  |  |
+| employee_bank_id | INTEGER |  |  |  |
+| bank_last4 | TEXT |  |  |  |
+| bank_ifsc | TEXT |  |  |  |
+| account_name | TEXT |  |  |  |
+| name_match | TEXT | yes |  | 'UNCHECKED' |
+| line_status | TEXT | yes |  | 'INCLUDED' |
+| utr | TEXT |  |  |  |
+| paid_on | TEXT |  |  |  |
+| failure_reason | TEXT |  |  |  |
+| reversal_journal_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: reversal_journal_id -> fin_journals(id), employee_bank_id -> hr_employee_banks(id), fnf_id -> pay_fnf(id), run_line_id -> pay_run_lines(id), employee_id -> hr_employees(id), transfer_id -> pay_transfers(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_transfer_lines_reversal: reversal_journal_id
+- ix_pay_transfer_lines_employee_bank_id: employee_bank_id
+- ix_pay_transfer_lines_employee_id: employee_id
+- ix_pay_transfer_lines_company_id: company_id
+- ix_pay_transfer_lines_transfer_id: transfer_id, line_status
+- ux_pay_transfer_lines_fnf (unique): fnf_id
+- ux_pay_transfer_lines_run_line (unique): run_line_id
+
+## pay_transfers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| source_kind | TEXT | yes |  |  |
+| run_id | INTEGER |  |  |  |
+| fnf_id | INTEGER |  |  |  |
+| bank_account_id | INTEGER | yes |  |  |
+| pay_mode | TEXT | yes |  | 'NEFT' |
+| pay_date | TEXT | yes |  |  |
+| lines_count | INTEGER | yes |  | 0 |
+| total_paise | INTEGER | yes |  | 0 |
+| paid_paise | INTEGER | yes |  | 0 |
+| file_name | TEXT |  |  |  |
+| file_text | TEXT |  |  |  |
+| file_hash | TEXT |  |  |  |
+| transfer_status | TEXT | yes |  | 'DRAFT' |
+| prepared_by | TEXT |  |  |  |
+| released_by | TEXT |  |  |  |
+| released_at | TEXT |  |  |  |
+| journal_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: journal_id -> fin_journals(id), bank_account_id -> fin_bank_accounts(id), fnf_id -> pay_fnf(id), run_id -> pay_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_transfers_journal_id: journal_id
+- ix_pay_transfers_bank_account_id: bank_account_id
+- ix_pay_transfers_fnf_id: fnf_id
+- ix_pay_transfers_run_id: run_id
+- ix_pay_transfers_list: company_id, transfer_status, pay_date
+- ux_pay_transfers_doc (unique): company_id, doc_no
 
 ## pay_wage_lines
 

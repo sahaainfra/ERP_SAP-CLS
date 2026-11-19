@@ -15,6 +15,9 @@ import { runRoutes, setupRoutes, wageRoutes } from './routes.js';
 import { statutoryRoutes } from './statroutes.js';
 import { FILING_DOC, createStatutoryService as createFilingService } from './statutory.js';
 import { WAGE_DOC, createPayWageService } from './wages.js';
+import { FNF_DOC, createSettleService } from './settle.js';
+import { settleRoutes } from './settleroutes.js';
+import { glOf, postingOf } from '../fin/index.js';
 import { fileEntities } from '../../platform/files/entities.js';
 import { authzOf } from '../../platform/authz/index.js';
 import { labourOf } from '../hr/labour.js';
@@ -39,13 +42,20 @@ for (const [type, description] of [
   ['pay.statutory.filing_approved', 'A statutory payment (ECR, ESI, PT, LWF, TDS deposit or BOCW cess) was approved ACCMGR -> CFO (part 24.04): data { filingId, docNo, type, period, state, amount, dueDate }. The payment request goes to the bank through 24.05 (23.04 pays bills only today).'],
   ['pay.statutory.paid', 'The challan of an approved statutory payment was recorded (part 24.04): data { filingId, docNo, type, period, paidOn, late, amount }.'],
   ['pay.statutory.file_generated', 'A statutory file or register was generated and validated (part 24.04): data { registerId, type, period, rows }.'],
+  ['pay.fnf.approved', 'A full-and-final settlement was approved PAY -> HRMGR -> CFO (part 24.05): data { fnfId, docNo, employeeId, employee, departmentId, costCentreId, separationId, approvedOn, net, dueDate, and the posting figures }. The posting engine (23.02) posts it; payroll pays it by bank transfer.'],
+  ['pay.fnf.paid', 'The net pay of a full-and-final settlement was confirmed paid by the bank (part 24.05): data { fnfId, docNo, employeeId, separationId, amount, paidOn, utr, late }. HR issues the relieving letter (07.13).'],
+  ['pay.salary.released', 'A salary bank transfer was released to the bank and posted (part 24.05): data { transferId, docNo, kind, runId, fnfId, lines, amount, payDate, journalId }.'],
+  ['pay.salary.paid', 'Every line of a salary bank transfer was confirmed by the bank (part 24.05): data { transferId, docNo, kind, runId, fnfId, paid }.'],
+  ['pay.salary.returned', 'The bank returned a salary payment; its posting was reversed and the salary is payable again (part 24.05): data { transferId, docNo, employeeId, amount, reason }.'],
+  ['pay.payslip.published', 'The payslips of an approved payroll run were generated, password-protected, for self-service and e-mail (part 24.05): data { runId, docNo, period, payslips }.'],
+  ['hr.payroll.posted', 'The labour cost of a posted payroll or wage run, for a project (part 24.05): data { projectId, sourceType, sourceId, docRef, date, lines[{ lineId, resourceType, amount, qty, description }] }. The project cost ledger (12.03) records it as actual cost; project control (14.07) reads it.'],
   ['pay.statutory.approved', 'A statutory parameter change was approved by the CFO (part 24.01): data { paramId, code, state, effectiveFrom, params }. Payroll reads it from its date.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'pay', description });
 
 integrityRegistry.register({
-  companyOptional: ['pay_components', 'pay_statutory_params', 'stat_rules'],
-  statuses: { stat_filings: Object.keys(STATUS), pay_assignments: Object.keys(STATUS), pay_statutory_params: Object.keys(STATUS), pay_runs: Object.keys(STATUS), pay_wage_runs: Object.keys(STATUS) },
-  uniqueKeys: [{ table: 'stat_filings', columns: ['company_id', 'doc_no'] }, { table: 'pay_assignments', columns: ['company_id', 'doc_no'] }, { table: 'pay_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_wage_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_contractor_wage_checks', columns: ['company_id', 'doc_no'] }],
+  companyOptional: ['pay_components', 'pay_statutory_params', 'stat_rules', 'pay_fnf_rules'],
+  statuses: { pay_fnf: Object.keys(STATUS), stat_filings: Object.keys(STATUS), pay_assignments: Object.keys(STATUS), pay_statutory_params: Object.keys(STATUS), pay_runs: Object.keys(STATUS), pay_wage_runs: Object.keys(STATUS) },
+  uniqueKeys: [{ table: 'pay_fnf', columns: ['company_id', 'doc_no'] }, { table: 'pay_transfers', columns: ['company_id', 'doc_no'] }, { table: 'stat_filings', columns: ['company_id', 'doc_no'] }, { table: 'pay_assignments', columns: ['company_id', 'doc_no'] }, { table: 'pay_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_wage_runs', columns: ['company_id', 'doc_no'] }, { table: 'pay_contractor_wage_checks', columns: ['company_id', 'doc_no'] }],
 });
 
 const step = (code, name, role, slaHours, when = null) => ({ code, name, type: 'approval', mode: 'single', approvers: [{ kind: 'role', role }], slaHours, requireAttachment: false, checklist: [], when, notify: [], action: null });
@@ -73,6 +83,15 @@ workflowTypes.register({
   summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM stat_filings WHERE id = ?').get(Number(id)); if (!r) return null; return { fields: [{ label: 'Payment', value: `${r.filing_type} · ${r.period} · ${r.state_code}` }, { label: 'Due', value: r.due_date }, { label: 'Amount', value: inr(r.amount_paise) }, { label: 'Source', value: r.register_id ? `register ${r.register_id}` : 'payroll run / BOCW' }] }; },
   defaultDefinition: { name: 'Statutory payment: the accounts manager, then the CFO', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('ACCMGR', 'Accounts manager', 'ACCMGR', 48), step('CFO', 'CFO', 'CFO', 48)] },
   hooks: hooks((s) => s?.stat?.filings),
+});
+
+workflowTypes.register({
+  docType: FNF_DOC, label: 'Full and final settlement', processOwner: 'HRMGR', route: (id) => `/payroll/fnf?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT f.*, e.emp_code, e.full_name FROM pay_fnf f JOIN hr_employees e ON e.id = f.employee_id WHERE f.id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Full and final ${r.emp_code} ${r.full_name}: net ₹${(r.net_paise / 100).toFixed(2)}`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT f.*, e.emp_code, e.full_name, e.doj FROM pay_fnf f JOIN hr_employees e ON e.id = f.employee_id WHERE f.id = ?').get(Number(id)); if (!r) return null; const c = JSON.parse(r.components_json || '[]'); const w = JSON.parse(r.working_json || '{}'); const amt = (code) => inr(Math.round((c.find((x) => x.code === code)?.amount ?? 0) * 100));
+    return { fields: [{ label: 'Employee', value: `${r.emp_code} ${r.full_name} · joined ${r.doj} · left ${r.last_working_day}` }, { label: 'Earnings / deductions', value: `${inr(r.gross_paise)} / ${inr(r.deductions_paise)} (TDS ${inr(r.tds_paise)})` }, { label: 'Net', value: r.net_paise < 0 ? `${inr(-r.net_paise)} to recover` : inr(r.net_paise) }, { label: 'Gratuity', value: w.gratuity?.eligible ? `${amt('GRATUITY')} for ${w.gratuity.countedYears} year(s)` : 'not eligible' }, { label: 'Leave encashment / notice', value: `${amt('LEAVE_ENC')} / pay ${amt('NOTICE_PAY')}, recovery ${amt('NOTICE_RECOVERY')}` }, { label: 'Pay by', value: r.due_date ?? '—' }] }; },
+  defaultDefinition: { name: 'Full and final settlement: payroll prepares, the HR manager and the CFO approve', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('HRMGR', 'HR manager', 'HRMGR', 24), step('CFO', 'CFO', 'CFO', 24)] },
+  hooks: hooks((s) => s?.settle?.fnf),
 });
 
 workflowTypes.register({
@@ -104,8 +123,8 @@ export const pay = {
   routePrefix: '/api/v1/pay',
   ownerPart: '24.01',
   status: 'Pay components with formulas of the calculation engine and Code-on-Wages classes; salary structures with the CTC breakup; employee pay assignments and revisions (HRMGR -> CFO, the director for senior grades) with arrears; statutory parameters by date and state (PAY -> CFO); the payroll calendar.',
-  tables: ['stat_filings', 'stat_registers', 'stat_rules', 'stat_bocw_months', 'pay_components', 'pay_structures', 'pay_assignments', 'pay_arrears', 'pay_statutory_params', 'pay_calendar', 'pay_runs', 'pay_run_lines', 'pay_inputs', 'pay_tax_declarations', 'pay_wage_runs', 'pay_wage_lines', 'pay_contractor_wage_checks'],
-  resources: ['stat', 'components', 'structures', 'assignments', 'arrears', 'statutory-params', 'calendar', 'employees', 'runs', 'inputs', 'declarations', 'wage-runs', 'wage-register', 'wage-checks'],
+  tables: ['pay_fnf', 'pay_payslips', 'pay_transfers', 'pay_transfer_lines', 'pay_fnf_rules', 'stat_filings', 'stat_registers', 'stat_rules', 'stat_bocw_months', 'pay_components', 'pay_structures', 'pay_assignments', 'pay_arrears', 'pay_statutory_params', 'pay_calendar', 'pay_runs', 'pay_run_lines', 'pay_inputs', 'pay_tax_declarations', 'pay_wage_runs', 'pay_wage_lines', 'pay_contractor_wage_checks'],
+  resources: ['posting', 'transfers', 'payslips', 'fnf', 'stat', 'components', 'structures', 'assignments', 'arrears', 'statutory-params', 'calendar', 'employees', 'runs', 'inputs', 'declarations', 'wage-runs', 'wage-register', 'wage-checks'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_components'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
@@ -114,7 +133,8 @@ export const pay = {
     const runs = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_runs'").get() ? createPayRunService({ db, base, flags, setup, expenses: () => expensesOf(db) }) : null;
     const wages = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_wage_runs'").get() ? createPayWageService({ db, base, flags, setup, labour: () => labourOf(db), ctr: () => ctrOf(db) }) : null;
     const stat = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'stat_filings'").get() ? createFilingService({ db, base, flags, setup, vaultKey: appConfig.vaultKey }) : null;
-    const ctx = { setup, runs, wages, stat, base, flags };
+    const settle = runs && stat && db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_fnf'").get() ? createSettleService({ db, base, flags, setup, runs, stat, vaultKey: appConfig.vaultKey, gl: () => glOf(db), posting: () => postingOf(db), expenses: () => expensesOf(db) }) : null;
+    const ctx = { setup, runs, wages, stat, settle, base, flags };
     services.set(db, ctx);
     listExports.register('pay.assignments', { source: (actor, req) => { base.need(actor, 'pay.assignment.export', 'export pay assignments'); return setup.assignments.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: (actor) => (base.may(actor, 'pay.salary.view') ? [] : ['ctcAnnual', 'grossMonthly', 'arrears']) });
     runtimeOf(db)?.bus?.subscribe('perf.review.approved', (e) => { setup.assignments.onRating(e); }, { consumer: 'pay.rating' }); // D-361
@@ -122,6 +142,13 @@ export const pay = {
     setupRoutes(r, setup, h); if (runs) { runRoutes(r, runs, h); const bus = runtimeOf(db)?.bus; bus?.subscribe('lv.encashment.input', (e) => { runs.consumers.onEncashment(e); }, { consumer: 'pay.encashment' }); runtimeOf(db)?.jobs?.register('pay.run.compute', (jctx) => runs.runs.runJob(jctx), { maxAttempts: 1, description: 'Computes a payroll run in the background with progress (part 24.02, D-745)' }); bus?.subscribe('inv.asset.recovery_approved', (e) => { runs.consumers.onLossRecovery(e); }, { consumer: 'pay.loss_recovery' }); }
     if (wages) wageRoutes(r, wages, h);
     if (stat) statutoryRoutes(r, stat, h);
+    if (settle) {
+      settleRoutes(r, settle, h); const bus = runtimeOf(db)?.bus;
+      bus?.subscribe('hr.fnf.released', (e) => { settle.fnf.onReleased(e); }, { consumer: 'pay.fnf' });
+      bus?.subscribe('fin.document.posted', (e) => { settle.consumers.onPosted(e); }, { consumer: 'pay.labour_cost' });
+      runtimeOf(db)?.jobs?.register('pay.payslips.generate', (jctx) => settle.payslips.job(jctx), { maxAttempts: 1, description: 'Generates the password-protected payslips of a payroll run with progress (part 24.05)' });
+      listExports.register('pay.fnf', { source: (actor, req) => { base.need(actor, 'pay.fnf.export', 'export settlements'); return settle.fnf.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: (actor) => (base.may(actor, 'pay.salary.view') ? [] : ['gross', 'deductions', 'tds', 'net', 'payable', 'recoverable']) });
+    }
     api.use('/pay', r);
   },
 };

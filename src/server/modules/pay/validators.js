@@ -80,3 +80,19 @@ export const parseGratuityQuery = (q) => parse(z.object({ employeeId: id, leavin
 export const parseFyQuery = (q) => parse(z.object({ fy: fyCode }), q);
 export const parseBocwQuery = (q) => parse(z.object({ period: period.optional() }), q);
 export const parseFilingCreateQuery = (q) => parse(z.object({}).passthrough(), q);
+
+// ---- 24.05 ----
+const utr = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{12,22}$/, 'A UTR is 12 to 22 letters and digits');
+const adjustment = z.object({ label: z.string().trim().min(2).max(80), type: z.enum(['EARNING', 'DEDUCTION']), amount: z.coerce.number().positive().max(1e9), taxable: z.boolean().optional(), reason: why }).strict();
+export const parseTransferCreate = (b) => parse(z.object({ runId: id.optional(), fnfId: id.optional(), bankAccountId: id, payDate: date, mode: z.enum(['NEFT', 'RTGS', 'IMPS']).default('NEFT') }).strict()
+  .refine((x) => Boolean(x.runId) !== Boolean(x.fnfId), { message: 'Name the payroll run or the settlement to pay', path: ['runId'] }), b);
+export const parseTransferConfirm = (b) => parse(z.object({ rows: z.array(z.object({ lineId: id, status: z.enum(['PAID', 'FAILED']), utr: utr.optional(), paidOn: date, reason: z.string().trim().max(200).optional() }).strict()
+  .refine((x) => x.status === 'FAILED' || Boolean(x.utr), { message: 'A paid line needs the UTR', path: ['utr'] }).refine((x) => x.status === 'PAID' || (x.reason ?? '').length >= 3, { message: 'Say why the bank returned it', path: ['reason'] })).min(1).max(1000) }).strict(), b);
+export const parseHoldAfterLock = (b) => parse(z.object({ hold: z.boolean(), reason: why }).strict(), b);
+export const parsePayslipGenerate = (b) => parse(z.object({ runId: id, employeeIds: z.array(id).max(5000).optional(), lang: z.enum(['en', 'hi', 'auto']).default('auto') }).strict(), b);
+export const parsePayslipEmail = (b) => parse(z.object({ runId: id, employeeIds: z.array(id).max(5000).optional() }).strict(), b);
+export const parsePayslipQuery = (q) => parse(z.object({ runId: id }), q);
+export const parsePostingQuery = (q) => parse(z.object({ period: period.optional() }), q);
+export const parseFnfCreate = (b) => parse(z.object({ separationId: id }).strict(), b);
+export const parseFnfUpdate = (b) => parse(z.object({ version: z.number().int().min(1), adjustments: z.array(adjustment).max(30).optional(), bonusRate: z.number().min(0).max(100).nullable().optional(), remarks: z.string().trim().max(500).nullable().optional() }).strict(), b);
+export const parseFnfImport = (b) => parse(z.object({ csv: z.string().min(5).max(200000) }).strict(), b);

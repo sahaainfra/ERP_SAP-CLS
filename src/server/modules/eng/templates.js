@@ -16,7 +16,8 @@ import { formatBusinessDate } from '../../../shared/dates.js';
 import { CATALOGUE, DOC_TYPES, OWNER_ROLES, SYSTEM_SCALARS, compute, sampleOf, variablesOf } from './tpl-catalogue.js';
 import { documentHtml, render, validate } from './tpl-engine.js';
 import { renderPdf } from './tpl-pdf.js';
-import { BASE_CSS, standardFormat } from './tpl-library.js';
+import { protectPdf } from './tpl-protect.js';
+import { BASE_CSS, payslipHindiFormat, standardFormat } from './tpl-library.js';
 
 // Document templates, PDF generation, print and delivery (part 04.11). A template (a format with controlled variables) is approved before production use (BR-01); an official document is made from approved data
 // and the active template, carries a QR verification code, is stored through the file service and never changes (BR-02: a new generation is a new version with a reason); delivery goes by download, e-mail,
@@ -68,6 +69,10 @@ export function createTemplateService({ db, engine, storage, jobs, secret, publi
       if (!v.ok) throw new Error(`The standard format of ${t} is not valid: ${v.problems[0].message}`);
       insert.run(t, `${t}_STANDARD`, f.name, f.html, f.css, JSON.stringify(v.variables), '2026-01-01T00:00:00.000Z');
     }
+    // 24.05: the payslip in Hindi for workers, beside the standard (English) payslip
+    const hi = payslipHindiFormat(); const vh = validate('PAYSLIP', hi);
+    if (!vh.ok) throw new Error(`The Hindi payslip format is not valid: ${vh.problems[0].message}`);
+    db.prepare("INSERT OR IGNORE INTO tpl_templates (company_id, doc_type, code, template_version, name, html, css, variables_json, status, is_default, approved_by, approved_at, effective_from, created_by, source_type) VALUES (NULL, 'PAYSLIP', 'PAYSLIP_HI', 1, ?, ?, ?, ?, 'ACTIVE', 0, 'system', ?, '2026-01-01', 'system', 'reference_seed')").run(hi.name, hi.html, hi.css, JSON.stringify(vh.variables), '2026-11-19T00:00:00.000Z');
   }
 
   // ---- presenting ----
@@ -364,6 +369,8 @@ export function createTemplateService({ db, engine, storage, jobs, secret, publi
     const label = version === 1 ? 'ORIGINAL' : `REGENERATED v${version}`;
     const purpose = b.purpose ?? 'OFFICIAL';
     const out = await makePdf(tpl, actor.companyId, { ...rec, docNo: rec.docNo }, data, { code, version, label, by: actor.user, pdfa: Boolean(b.pdfa) || purpose === 'ARCHIVAL' });
+    // 24.05: a document sent by e-mail with personal data (the payslip) is kept and delivered encrypted, opened only with the password the recipient knows
+    if (b.password) out.buffer = await protectPdf(out.buffer, b.password);
     const hash = sha256(out.buffer);
     const day = engine.clock();
     const key = `c${actor.companyId}/tpl/${day.getUTCFullYear()}/${String(day.getUTCMonth() + 1).padStart(2, '0')}/${randomUUID()}.pdf`;
@@ -478,11 +485,12 @@ export function createTemplateService({ db, engine, storage, jobs, secret, publi
     return { url: publicUrl ? `${publicUrl.replace(/\/$/, '')}${path}` : path, expiresAt: new Date(l.exp * 1000).toISOString() };
   };
   const delivery = {
-    send(actor, id, b) {
+    /** `internal` (24.05): a module that checked its own right to send (payroll sends each employee their payslip) delivers without the template rights. */
+    send(actor, id, b, { internal = false } = {}) {
       const g = db.prepare('SELECT * FROM tpl_generated_docs WHERE id = ? AND is_active = 1').get(id);
-      if (!g || !generated.visible(actor, g)) throw notFound('That document does not exist.');
+      if (!g || (!internal && !generated.visible(actor, g)) || (internal && g.company_id !== actor.companyId)) throw notFound('That document does not exist.');
       const scope = { companyId: g.company_id, projectId: g.project_id ?? undefined, siteId: g.site_id ?? undefined };
-      if (!may(actor, 'tpl.document.deliver', scope)) throw forbidden('You may not send documents (permission tpl.document.deliver).');
+      if (!internal && !may(actor, 'tpl.document.deliver', scope)) throw forbidden('You may not send documents (permission tpl.document.deliver).');
       if (!CHANNELS.includes(b.channel) || b.channel === 'DOWNLOAD') throw badRequest('Choose how to deliver it.', [{ field: 'channel', message: 'Choose e-mail, WhatsApp, message or portal.' }]);
       const label = CATALOGUE[g.doc_type]?.label ?? g.doc_type;
       const link = linkFor(g);
@@ -622,7 +630,7 @@ export function createTemplateService({ db, engine, storage, jobs, secret, publi
     },
   };
 
-  return { seedLibrary, templates, records, preview, generate: (actor, b) => generateOne(actor, b), generated, delivery, bulk, rules, load, catalogue: (t) => CATALOGUE[t], ownerRoles: OWNER_ROLES, linkFor, SYSTEM_SCALARS, formatBusinessDate };
+  return { seedLibrary, templates, records, preview, generate: (actor, b, o) => generateOne(actor, b, o), generated, delivery, bulk, rules, load, catalogue: (t) => CATALOGUE[t], ownerRoles: OWNER_ROLES, linkFor, SYSTEM_SCALARS, formatBusinessDate };
 }
 
 // ---- the approval of a template ----

@@ -305,6 +305,6 @@ export function createStatutoryService({ db, base, flags, setup, vaultKey = null
     gratuity(actor, q) { need(actor, 'pay.stat.register.view', 'see the gratuity computation'); if (!seesPay(actor)) throw forbidden('You may not see the gratuity amounts (permission pay.salary.view).'); return gratuityOf(actor.companyId, q.employeeId, q.leavingDate); },
     provision(actor, q) { need(actor, 'pay.stat.register.view', 'see the gratuity provision'); if (!seesPay(actor)) throw forbidden('You may not see the gratuity provision (permission pay.salary.view).'); return gratuityProvision(actor.companyId, q.fy); },
   };
-  return { filings, registers, rules: rules_, bocw, comps, calendarOf: (actor, fy) => { need(actor, 'pay.stat.calendar.view', 'see the statutory calendar'); return calendarOf(actor, actor.companyId, fy); }, ecrOf, esiOf, dueOf, rule, linesOf, form16Of, quarterOf, monthsOfFy, fyStartOf, _ecrRecord: ecrRecord };
+  return { filings, registers, rules: rules_, bocw, comps, bonusOf, regularRun, calendarOf: (actor, fy) => { need(actor, 'pay.stat.calendar.view', 'see the statutory calendar'); return calendarOf(actor, actor.companyId, fy); }, ecrOf, esiOf, dueOf, rule, linesOf, form16Of, quarterOf, monthsOfFy, fyStartOf, _ecrRecord: ecrRecord };
 }
 export const STAT_STATUS = STATUS;

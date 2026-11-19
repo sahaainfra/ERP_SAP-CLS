@@ -14,6 +14,9 @@ const WageRegisterPage = lazyPage(() => import('./WagePages.jsx'), 'WageRegister
 const ContractorWagesPage = lazyPage(() => import('./WagePages.jsx'), 'ContractorWagesPage');
 const ComplianceBoardPage = lazyPage(() => import('./StatPages.jsx'), 'ComplianceBoardPage');
 const RegistersPage = lazyPage(() => import('./StatPages.jsx'), 'RegistersPage');
+const PostingPage = lazyPage(() => import('./SettlePages.jsx'), 'PostingPage');
+const FnfPage = lazyPage(() => import('./SettlePages.jsx'), 'FnfPage');
+const MyPayslipsPage = lazyPage(() => import('./SettlePages.jsx'), 'MyPayslipsPage');
 
 registerModule({
   code: 'pay',
@@ -30,6 +33,9 @@ registerModule({
     { path: '/payroll/contractor-wages', label: 'Contractor Wage Verification', labelHi: 'ठेकेदार मज़दूरी सत्यापन', icon: 'erp.group.workforce', permission: 'pay.wage_check.view', flag: 'ff.pay.p2403', Page: ContractorWagesPage },
     { path: '/payroll/compliance', label: 'Statutory Calendar & Filings', labelHi: 'सांविधिक कैलेंडर व दाखिल', icon: 'erp.group.workforce', permission: 'pay.stat.calendar.view', flag: 'ff.pay.p2404', Page: ComplianceBoardPage },
     { path: '/payroll/registers', label: 'Labour Registers, Form 16 & Bonus / Gratuity', labelHi: 'श्रम रजिस्टर, फ़ॉर्म 16 व बोनस / ग्रेच्युटी', icon: 'erp.group.workforce', permission: 'pay.stat.register.view', flag: 'ff.pay.p2404', Page: RegistersPage },
+    { path: '/payroll/posting', label: 'Post Payroll & Create Payment', labelHi: 'वेतन पोस्टिंग व भुगतान', icon: 'erp.group.workforce', permission: 'pay.posting.view', flag: 'ff.pay.p2405', Page: PostingPage },
+    { path: '/payroll/fnf', label: 'Full & Final Settlement', labelHi: 'पूर्ण एवं अंतिम निपटान', icon: 'erp.group.workforce', permission: 'pay.fnf.view', flag: 'ff.pay.p2405', Page: FnfPage },
+    { path: '/payroll/my-payslips', label: 'My Payslips', labelHi: 'मेरी वेतन पर्चियाँ', icon: 'erp.group.workforce', permission: 'pay.payslip.own', flag: 'ff.pay.p2405', Page: MyPayslipsPage },
     { path: '/payroll/declarations', label: 'Tax Declarations', labelHi: 'कर घोषणाएँ', icon: 'erp.group.workforce', permission: 'pay.declaration.own', flag: 'ff.pay.p2402', Page: DeclarationsPage },
   ],
 });

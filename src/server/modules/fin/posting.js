@@ -43,6 +43,18 @@ export const EVENTS = {
   'bill.invoice.cancelled': { label: 'Tax invoice cancelled (22.04)', docType: 'bill_tax_invoices', idField: 'invoiceId', refField: 'invoiceNo', date: (d, _db, e) => String(e?.occurredAt ?? '').slice(0, 10) || todayIST(), paise: [], amounts: ['total'], text: ['invoiceNo', 'reason'], ids: ['projectId', 'billId'], enrich: null },
 };
 export const EVENT_TYPES = Object.keys(EVENTS);
+/**
+ * Part 24.05: another module registers an event the engine posts (the payroll run, the wage run, a wage payment, a full-and-final settlement). Besides the fields
+ * above, `enrich` may be a function (db, companyId, data, event) giving more fields, `docId` a function (data, event) giving the source document's id when the event
+ * has no single id field, and `itemAmounts` the figures of the items of a list (by the list's name) that a rule line repeats over with `each` (a line per item: the
+ * salary cost of each project and site, the advance recovered from each employee).
+ * @param {string} type @param {any} def
+ */
+export function definePostingEvent(type, def) {
+  if (EVENTS[type]) return;
+  EVENTS[type] = { paise: [], amounts: [], text: [], ids: [], itemAmounts: {}, ...def };
+  EVENT_TYPES.push(type);
+}
 
 export const ruleList = defineList({
   code: 'fin.posting_rules', label: 'Posting rules', permission: 'fin.posting_rule.view',
@@ -95,8 +107,9 @@ export function createPostingService({ db, base, gl, flags }) {
     const data = { ...d };
     for (const k of def.paise) if (d[k] != null) data[k] = (Number(d[k]) / 100).toFixed(2);
     for (const k of def.amounts) if (d[k] != null) data[k] = String(d[k]);
-    if (def.enrich) { try { Object.assign(data, ENRICH[def.enrich](companyId, d)); } catch { /* a master that is not there: the rule's field stays empty and the rule says what is missing */ } }
-    return { def, data, date: def.date(d, db, e), docId: d[def.idField] == null ? null : String(d[def.idField]), docRef: d[def.refField] ?? null };
+    if (def.enrich) { try { Object.assign(data, typeof def.enrich === 'function' ? def.enrich(db, companyId, d, e) : ENRICH[def.enrich](companyId, d)); } catch { /* a master that is not there: the rule's field stays empty and the rule says what is missing */ } }
+    const id = def.docId ? def.docId(d, e) : d[def.idField];
+    return { def, data, date: def.date(d, db, e), docId: id == null ? null : String(id), docRef: d[def.refField] ?? null };
   }
 
   // ---- the rules in force ----
@@ -123,8 +136,8 @@ export function createPostingService({ db, base, gl, flags }) {
   }
   const fill = (tpl, data) => String(tpl ?? '').replace(/\{([A-Za-z0-9_.]+)\}/g, (_m, k) => { const v = valueAt(data, k); return v == null ? '' : String(v); });
   /** An amount of a rule line: the expression of the calculation engine over the event's figures, rounded to the paisa. */
-  function amountOf(expr, def, data) {
-    const names = [...def.paise, ...def.amounts, 'interState'];
+  function amountOf(expr, def, data, extra = []) {
+    const names = [...def.paise, ...def.amounts, 'interState', ...extra];
     const inputs = names.filter((k) => data[k] != null && data[k] !== '').map((k) => ({ name: k, type: k === 'interState' ? 'integer' : 'decimal' }));
     const raw = Object.fromEntries(inputs.map((i) => [i.name, String(data[i.name])]));
     const r = runDefinition({ expression: `amount = ${expr}`, inputs, outputs: [{ name: 'amount', type: 'money' }], rounding_policy: 'half_up' }, raw);
@@ -158,12 +171,17 @@ export function createPostingService({ db, base, gl, flags }) {
     json(rule.lines_json, []).forEach((l, i) => {
       const a = db.prepare('SELECT id FROM fin_accounts WHERE company_id = ? AND code = ? AND deleted_at IS NULL').get(companyId, String(l.account ?? ''));
       if (!a) { problems.push(`line ${i + 1}: account ${l.account} is not in the company's chart`); return; }
-      let amt;
-      try { amt = amountOf(l.amount, def, data); } catch (x) { problems.push(`line ${i + 1}: the amount "${l.amount}" cannot be worked out (${x instanceof CalcError ? x.message : String(x?.message ?? x)})`); return; }
-      if (amt < 0) { problems.push(`line ${i + 1}: the amount "${l.amount}" is negative (${(amt / 100).toFixed(2)})`); return; }
-      if (amt === 0) return;
-      const dims = {}; for (const [k, path] of Object.entries(l.dims ?? {})) { if (!LINE_DIMS.includes(k)) continue; const v = valueAt(data, path); if (v != null && v !== '') dims[k] = Number(v); }
-      lines.push({ accountId: a.id, ...(l.side === 'DR' ? { debit: (amt / 100).toFixed(2) } : { credit: (amt / 100).toFixed(2) }), narration: l.narration ? fill(l.narration, data).slice(0, 300) : null, ...dims });
+      // a line with `each` repeats over the items of a list of the event (24.05): each item's own figures and dimensions, the event's for the rest
+      const items = l.each ? (Array.isArray(data[l.each]) ? data[l.each] : []) : [null];
+      for (const item of items) {
+        const ctx = item ? { ...data, ...item } : data;
+        let amt;
+        try { amt = amountOf(l.amount, def, ctx, item ? (def.itemAmounts?.[l.each] ?? []) : []); } catch (x) { problems.push(`line ${i + 1}: the amount "${l.amount}" cannot be worked out (${x instanceof CalcError ? x.message : String(x?.message ?? x)})`); return; }
+        if (amt < 0) { problems.push(`line ${i + 1}: the amount "${l.amount}" is negative (${(amt / 100).toFixed(2)})`); return; }
+        if (amt === 0) continue;
+        const dims = {}; for (const [k, path] of Object.entries(l.dims ?? {})) { if (!LINE_DIMS.includes(k)) continue; const v = valueAt(ctx, path); if (v != null && v !== '') dims[k] = Number(v); }
+        lines.push({ accountId: a.id, ...(l.side === 'DR' ? { debit: (amt / 100).toFixed(2) } : { credit: (amt / 100).toFixed(2) }), narration: l.narration ? fill(l.narration, ctx).slice(0, 300) : null, ...dims });
+      }
     });
     if (problems.length) return fail(problems.some((p) => p.includes('chart')) ? 'MISSING_ACCOUNT' : 'AMOUNT', problems.join('; '), { ...base0, rule });
     if (lines.length < 2) return fail('NO_LINES', 'The rule gives fewer than two lines for this event (every amount is nil).', { ...base0, rule });
@@ -190,7 +208,7 @@ export function createPostingService({ db, base, gl, flags }) {
       if (prior) db.prepare('UPDATE fin_posting_log SET rule_id = ?, journal_id = ?, log_status = ?, error_code = ?, error = ?, attempts = attempts + 1, amount_paise = ?, posted_at = ?, event_date = COALESCE(?, event_date), replay_run_id = COALESCE(?, replay_run_id), updated_by = ?, updated_at = ?, version = version + 1 WHERE company_id = ? AND event_id = ?')
         .run(p.rule?.id ?? null, journalId, st, code, message, amt, journalId ? now : null, p.date ?? null, replayRunId, user, now, companyId, e.eventId);
       else db.prepare("INSERT INTO fin_posting_log (company_id, event_id, event_type, event_date, doc_type, doc_id, doc_ref, rule_id, journal_id, log_status, error_code, error, amount_paise, payload_json, posted_at, replay_run_id, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'fin_posting')")
-        .run(companyId, e.eventId, e.type, p.date ?? null, EVENTS[e.type].docType, p.docId ?? (e.data?.[EVENTS[e.type].idField] == null ? null : String(e.data[EVENTS[e.type].idField])), p.docRef ?? null, p.rule?.id ?? null, journalId, st, code, message, amt, JSON.stringify(slim(e)), journalId ? now : null, replayRunId, user);
+        .run(companyId, e.eventId, e.type, p.date ?? null, EVENTS[e.type].docType, p.docId ?? (EVENTS[e.type].docId ? String(EVENTS[e.type].docId(e.data ?? {}, e) ?? '') || null : e.data?.[EVENTS[e.type].idField] == null ? null : String(e.data[EVENTS[e.type].idField])), p.docRef ?? null, p.rule?.id ?? null, journalId, st, code, message, amt, JSON.stringify(slim(e)), journalId ? now : null, replayRunId, user);
       return logRow(companyId, e.eventId);
     };
     if (!p.ok) {
@@ -255,8 +273,9 @@ export function createPostingService({ db, base, gl, flags }) {
     if (b.action === 'REVERSE') { if (!EVENTS[b.reversesEvent]) p.push({ field: 'reversesEvent', message: 'Name the event whose journal is reversed.' }); return p; }
     const lines = b.lines ?? []; if (lines.length < 2) p.push({ field: 'lines', message: 'A rule has at least two lines.' });
     if (!lines.some((l) => l.side === 'DR') || !lines.some((l) => l.side === 'CR')) p.push({ field: 'lines', message: 'A rule debits something and credits something.' });
-    const names = [...def.paise, ...def.amounts, 'interState'];
     lines.forEach((l, i) => {
+      if (l.each && !def.itemAmounts?.[l.each]) p.push({ field: `lines.${i}.each`, message: `${l.each} is not a list of this event.` });
+      const names = [...def.paise, ...def.amounts, 'interState', ...(l.each ? def.itemAmounts?.[l.each] ?? [] : [])];
       if (!['DR', 'CR'].includes(l.side)) p.push({ field: `lines.${i}.side`, message: 'Debit or credit.' });
       if (companyId != null && !db.prepare('SELECT 1 FROM fin_accounts WHERE company_id = ? AND code = ? AND deleted_at IS NULL').get(companyId, String(l.account ?? ''))) p.push({ field: `lines.${i}.account`, message: `Account ${l.account} is not in the chart of accounts.` });
       try { runDefinition({ expression: `amount = ${l.amount}`, inputs: names.map((n) => ({ name: n, type: n === 'interState' ? 'integer' : 'decimal' })), outputs: [{ name: 'amount', type: 'money' }] }, Object.fromEntries(names.map((n) => [n, n === 'interState' ? '0' : '1']))); } catch (x) { p.push({ field: `lines.${i}.amount`, message: `The amount: ${x.message}` }); }
@@ -266,7 +285,7 @@ export function createPostingService({ db, base, gl, flags }) {
   }
   const rules = {
     flow: ruleFlow,
-    catalogue(actor) { need(actor, 'fin.posting_rule.view', 'see posting rules'); return Object.entries(EVENTS).map(([type, d]) => ({ type, label: d.label, docType: d.docType, amounts: [...d.paise, ...d.amounts], text: d.text, ids: d.ids, extra: d.enrich === 'store' ? ['storeProjectId', 'storeSiteId'] : d.enrich === 'client' ? ['clientId'] : d.enrich ? ['interState'] : [] })); },
+    catalogue(actor) { need(actor, 'fin.posting_rule.view', 'see posting rules'); return Object.entries(EVENTS).map(([type, d]) => ({ type, label: d.label, docType: d.docType, amounts: [...d.paise, ...d.amounts], lists: d.itemAmounts ?? {}, text: d.text, ids: d.ids, extra: d.enrich === 'store' ? ['storeProjectId', 'storeSiteId'] : d.enrich === 'client' ? ['clientId'] : d.enrich ? ['interState'] : [] })); },
     list(actor, query) { need(actor, 'fin.posting_rule.view', 'see posting rules'); return runList(db, ruleList, parseListRequest(ruleList, query), { select: 'x.*', scopeSql: '1 = 1', params: { c: actor.companyId }, tieBreaker: 'x.id', map: ruleView }); },
     get(actor, id) {
       need(actor, 'fin.posting_rule.view', 'see posting rules'); const r = ruleRow(actor, id); const v = ruleView(r);

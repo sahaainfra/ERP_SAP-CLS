@@ -101,3 +101,32 @@ export const stat = {
   gratuity: (f) => get(`/stat/gratuity?${q(f)}`),
   provision: (f) => get(`/stat/gratuity-provision?${q(f)}`),
 };
+
+// ---- 24.05 ----
+export const settle = {
+  runs: (f) => get(`/posting/runs?${q(f)}`),
+  run: (id) => get(`/posting/runs/${id}`),
+  post: (id) => post(`/posting/runs/${id}/post`),
+  hold: (runId, lineId, b) => post(`/posting/runs/${runId}/lines/${lineId}/hold`, b),
+  wageRuns: (f) => get(`/posting/wage-runs?${q(f)}`),
+  postWage: (id) => post(`/posting/wage-runs/${id}/post`),
+  banks: () => get('/transfers/banks'),
+  transfer: (id) => get(`/transfers/${id}`),
+  createTransfer: (b) => post('/transfers', b),
+  release: (id) => post(`/transfers/${id}/release`),
+  cancelTransfer: (id, b) => post(`/transfers/${id}/cancel`, b),
+  confirm: (id, b) => post(`/transfers/${id}/confirm`, b),
+  payslips: (runId) => get(`/payslips?${q({ runId })}`),
+  generate: (b) => post('/payslips/generate', b),
+  email: (b) => post('/payslips/email', b),
+  mine: () => get('/payslips/mine'),
+  fnfList: (f) => api.get(`/pay/fnf?${q(f)}`),
+  candidates: () => get('/fnf/candidates'),
+  fnf: (id) => get(`/fnf/${id}`),
+  createFnf: (b) => post('/fnf', b),
+  updateFnf: (id, b) => patch(`/fnf/${id}`, b),
+  removeFnf: (id) => del(`/fnf/${id}`),
+  fnfAct: (id, action, b) => post(`/fnf/${id}/${action}`, b),
+  compare: (id) => get(`/fnf/${id}/compare`),
+  letter: async (separationId) => (await api.post(`/hr/separations/${separationId}/letters`, { kind: 'RELIEVING' }, idem())).data,
+};

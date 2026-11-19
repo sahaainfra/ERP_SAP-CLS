@@ -1,5 +1,5 @@
 // npm run erp:pay-perf -- [--queries 30]
-// Parts 24.01 to 24.03 §14: payroll at volume — 2,000 employees and 100,000 pay assignments (24.01); a month's run for the 2,000 and 98,000 run lines before it (24.02); times the screens and the saves: the assignment list (first
+// Parts 24.01 to 24.05 §14: payroll at volume — 2,000 employees and 100,000 pay assignments (24.01); a month's run for the 2,000 and 98,000 run lines before it (24.02); times the screens and the saves: the assignment list (first
 // page, a status), one assignment with its breakup, a CTC preview, an assignment saved. The standard (05_GLOBAL_STANDARDS §11): p95 <= 500 ms for a list,
 // <= 300 ms for one record, <= 800 ms for a save. Prints the query plans.
 import '../src/server/modules/registry.js';
@@ -11,6 +11,7 @@ import { createPaySetupService } from '../src/server/modules/pay/setup.js';
 import { createPayRunService } from '../src/server/modules/pay/runs.js';
 import { createPayWageService } from '../src/server/modules/pay/wages.js';
 import { createStatutoryService as createFilingService } from '../src/server/modules/pay/statutory.js';
+import { createSettleService, runPostingData } from '../src/server/modules/pay/settle.js';
 import { createLabourService } from '../src/server/modules/hr/labour.js';
 
 const args = process.argv.slice(2);
@@ -19,7 +20,7 @@ const db = new DatabaseSync(':memory:'); db.exec('PRAGMA foreign_keys = OFF;'); 
 db.prepare("INSERT OR IGNORE INTO org_companies (id, code, legal_name, short_name, created_by, source_type) VALUES (1, 'MAIN', 'Main Infra Pvt Ltd', 'Main', 't', 'perf')").run();
 const results = []; const p95 = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.ceil(s.length * 0.95) - 1)]; };
 const time = (label, limit, fn, n = queries) => { const ms = []; for (let i = 0; i < n; i += 1) { const t = performance.now(); fn(i); ms.push(performance.now() - t); } const r = { label, p95: Math.round(p95(ms)), limit, ok: p95(ms) <= limit }; results.push(r); console.log(`${r.ok ? 'OK  ' : 'OVER'} ${label}: p95 ${r.p95} ms (limit ${limit})`); };
-const flags = { isOn: () => true }; const base = createBase({ db }); const s = createPaySetupService({ db, base, flags, statutory: createStatutoryService({ db, flags: null }) });
+const flags = { isOn: () => true }; const base0 = createBase({ db }); const base = { ...base0, param: (c, k) => (k === 'pay.run.async_employees' ? 1000000 : base0.param(c, k)) }; /* the run is timed in the request here: no job runner in the script */ const s = createPaySetupService({ db, base, flags, statutory: createStatutoryService({ db, flags: null }) });
 const pay = { user: 'pay', roles: ['PAY'], companyId: 1 };
 const st = s.structures.save(pay, { code: 'STAFF', name: 'Staff', grade: 'M2', components: ['BASIC', 'HRA', 'CONVEYANCE', 'SPECIAL', 'PF_EE', 'PT', 'PF_ER', 'EPS_ER', 'EDLI_ER', 'PF_ADMIN', 'GRATUITY'].map((code) => ({ code, ...(code === 'CONVEYANCE' ? { value: 1600 } : {}) })) });
 console.log('Filling 2 000 employees and 100 000 pay assignments...');
@@ -93,6 +94,15 @@ const stat = createFilingService({ db, base, flags, setup: s });
 db.prepare("UPDATE pay_runs SET status = 'APPROVED', locked_at = ? WHERE id = ?").run(new Date().toISOString(), run.id);
 time('the ECR file of a month for 2,000 employees (validated and kept)', 800, () => stat.registers.generate(pay, { registerType: 'ECR_FILE', period: run.period }), 3);
 time('the statutory calendar of a financial year (2026-27)', 500, () => stat.calendarOf(pay, '2026-27'), 5);
+// 24.05: the posting figures of the month's run (2,000 employees), and the full-and-final list on 100,000 settlements
+time('the posting of a month\'s payroll for 2,000 employees (cost by project and site, balanced)', 800, () => { const x = runPostingData(db, run.id); if (!x._check.balanced) throw new Error('unbalanced'); }, 5);
+{ const sep = Number(db.prepare("INSERT INTO hr_separations (company_id, doc_no, doc_date, employee_id, sep_type, reason_code, reason, submitted_on, notice_days, standard_lwd, last_working_day, status) VALUES (1, 'SEP/PERF', '2026-01-01', 1, 'RESIGNATION', 'OTHER', 'Perf', '2026-01-01', 30, '2026-01-31', '2026-01-31', 'SETTLED')").run().lastInsertRowid);
+  const ins = db.prepare("INSERT INTO pay_fnf (company_id, doc_no, employee_id, separation_id, last_working_day, net_paise, payable_paise, status, pay_status, amends_id) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+  db.exec('BEGIN'); for (let i = 1; i <= 100000; i += 1) ins.run(`FNF/P${i}`, 1 + (i % 2000), sep, `2026-${String(1 + (i % 12)).padStart(2, '0')}-15`, 100000 + i, 100000 + i, ['DRAFT', 'SUBMITTED', 'APPROVED'][i % 3], 'UNPAID', i); db.exec('COMMIT'); }
+const settle = createSettleService({ db, base, flags, setup: s, runs: null, stat, gl: () => null, posting: () => null, expenses: () => null });
+time('full-and-final list, first page (100,000 settlements)', 500, () => settle.fnf.list(pay, {}));
+time('full-and-final list, approved only', 500, () => settle.fnf.list(pay, { 'filter[status]': 'APPROVED' }));
+plan('settlements waiting for approval', "SELECT x.* FROM pay_fnf x JOIN hr_employees e ON e.id = x.employee_id WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.status = 'SUBMITTED' ORDER BY x.last_working_day DESC LIMIT 25");
 plan('wage runs of a site', "SELECT x.* FROM pay_wage_runs x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.org_site_id = 3 ORDER BY x.period_from DESC LIMIT 25");
 plan('the punches of a contractor\'s workers at a site in a week', "SELECT t.person_id FROM att_punches t JOIN lab_workers w ON w.id = t.person_id AND t.person_type = 'WORKER' WHERE t.company_id = 1 AND w.contractor_id = 2 AND t.work_date BETWEEN '2026-11-02' AND '2026-11-08' AND t.result IN ('ACCEPTED', 'FLAGGED') AND t.deleted_at IS NULL AND t.punch_site_id = 1");
 plan('the current assignment of an employee', "SELECT * FROM pay_assignments WHERE employee_id = 5 AND status = 'APPROVED' AND deleted_at IS NULL AND effective_to IS NULL ORDER BY effective_from DESC LIMIT 1");
