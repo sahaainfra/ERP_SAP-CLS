@@ -387,5 +387,11 @@
   "PAY",
   "SACC",
   "SUBCO"
+ ],
+ "pay.stat.rule.configure": [
+  "CFO"
+ ],
+ "pay.stat.bocw.manage": [
+  "PAY"
  ]
 }

@@ -10,6 +10,7 @@ import { createStatutoryService } from '../src/server/modules/mdm/statutory.js';
 import { createPaySetupService } from '../src/server/modules/pay/setup.js';
 import { createPayRunService } from '../src/server/modules/pay/runs.js';
 import { createPayWageService } from '../src/server/modules/pay/wages.js';
+import { createStatutoryService as createFilingService } from '../src/server/modules/pay/statutory.js';
 import { createLabourService } from '../src/server/modules/hr/labour.js';
 
 const args = process.argv.slice(2);
@@ -86,6 +87,12 @@ let ck = null; time('a contractor\'s month checked against the attendance of 200
   ck = wsvc.checks.saveSheet({ user: 'subco', roles: ['SUBCO'], companyId: 1 }, ck.id, { lines: ck.attendance.map((a, k) => ({ workerCode: a.code, days: k % 10 ? a.days : a.days - 1, gross: a.days * 700, net: a.days * 700, paidOn: '2026-11-05' })) }); }, 5);
 console.log(`  (variances found: ${ck.variances})`);
 time('contractor wage verification worklist', 500, () => wsvc.checks.worklist({ user: 'hr', roles: ['HRMGR'], companyId: 1 }));
+// 24.04: the statutory files of a month for the 2,000 employees of the computed payroll (ECR and ESI with their UANs), and the year's calendar
+db.exec("UPDATE hr_employee_statutory SET uan = printf('%012d', employee_id), esic_ip = printf('%010d', employee_id) WHERE uan IS NULL");
+const stat = createFilingService({ db, base, flags, setup: s });
+db.prepare("UPDATE pay_runs SET status = 'APPROVED', locked_at = ? WHERE id = ?").run(new Date().toISOString(), run.id);
+time('the ECR file of a month for 2,000 employees (validated and kept)', 800, () => stat.registers.generate(pay, { registerType: 'ECR_FILE', period: run.period }), 3);
+time('the statutory calendar of a financial year (2026-27)', 500, () => stat.calendarOf(pay, '2026-27'), 5);
 plan('wage runs of a site', "SELECT x.* FROM pay_wage_runs x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.org_site_id = 3 ORDER BY x.period_from DESC LIMIT 25");
 plan('the punches of a contractor\'s workers at a site in a week', "SELECT t.person_id FROM att_punches t JOIN lab_workers w ON w.id = t.person_id AND t.person_type = 'WORKER' WHERE t.company_id = 1 AND w.contractor_id = 2 AND t.work_date BETWEEN '2026-11-02' AND '2026-11-08' AND t.result IN ('ACCEPTED', 'FLAGGED') AND t.deleted_at IS NULL AND t.punch_site_id = 1");
 plan('the current assignment of an employee', "SELECT * FROM pay_assignments WHERE employee_id = 5 AND status = 'APPROVED' AND deleted_at IS NULL AND effective_to IS NULL ORDER BY effective_from DESC LIMIT 1");

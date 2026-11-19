@@ -30343,6 +30343,167 @@ Indexes:
 - ix_site_work_fronts_company_id: company_id, status
 - ux_site_work_fronts_code (unique): wf_site_id, code
 
+## stat_bocw_months
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| construction_cost_paise | INTEGER | yes |  | 0 |
+| source_note | TEXT | yes |  |  |
+| cess_rate_bp | INTEGER | yes |  | 100 |
+| cess_paise | INTEGER | yes |  | 0 |
+| cess_status | TEXT | yes |  | 'OPEN' |
+| filing_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: filing_id -> stat_filings(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_stat_bocw_months_project: org_project_id
+- ix_stat_bocw_months_period: company_id, period, cess_status
+- ix_stat_bocw_months_filing_id: filing_id
+- ux_stat_bocw_months (unique): company_id, org_project_id, period
+
+## stat_filings
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| filing_type | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| state_code | TEXT | yes |  | 'ALL' |
+| due_date | TEXT | yes |  |  |
+| amount_paise | INTEGER | yes |  | 0 |
+| source_run_id | INTEGER |  |  |  |
+| register_id | INTEGER |  |  |  |
+| challan_ref | TEXT |  |  |  |
+| challan_date | TEXT |  |  |  |
+| paid_on | TEXT |  |  |  |
+| payment_ref | TEXT |  |  |  |
+| approved_amount_paise | INTEGER |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> stat_filings(id), register_id -> stat_registers(id), source_run_id -> pay_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_stat_filings_amends: amends_id
+- ix_stat_filings_wf: workflow_instance_id
+- ix_stat_filings_register_id: register_id
+- ix_stat_filings_source_run_id: source_run_id
+- ix_stat_filings_list: company_id, filing_type, due_date, status
+- ux_stat_filings_period (unique): company_id, filing_type, period, state_code
+- ux_stat_filings_doc (unique): company_id, doc_no
+
+## stat_registers
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| register_type | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| state_code | TEXT |  |  |  |
+| org_site_id | INTEGER |  |  |  |
+| source_run_id | INTEGER |  |  |  |
+| row_count | INTEGER | yes |  | 0 |
+| amount_paise | INTEGER |  |  |  |
+| file_name | TEXT | yes |  |  |
+| content_type | TEXT | yes |  |  |
+| content | TEXT | yes |  |  |
+| checksum | TEXT | yes |  |  |
+| generated_at | TEXT | yes |  |  |
+| generated_by | TEXT | yes |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: source_run_id -> pay_runs(id), org_site_id -> org_sites(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_stat_registers_source_run_id: source_run_id
+- ix_stat_registers_site_id: org_site_id
+- ix_stat_registers_list: company_id, register_type, period
+
+## stat_rules
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER |  |  |  |
+| rule_type | TEXT | yes |  |  |
+| state_code | TEXT | yes |  | 'ALL' |
+| params_json | TEXT | yes |  | '{}' |
+| effective_from | TEXT | yes |  |  |
+| effective_to | TEXT |  |  |  |
+| legal_ref | TEXT |  |  |  |
+| rule_status | TEXT | yes |  | 'APPROVED' |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: company_id -> org_companies(id)
+
+Indexes:
+- ix_stat_rules_company_id: company_id
+- ix_stat_rules_type: rule_type, state_code, effective_from
+- ux_stat_rules_key (unique): , rule_type, state_code, effective_from
+
 ## tcs_collections
 
 | Column | Type | Not null | Key | Default |

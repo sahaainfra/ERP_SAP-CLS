@@ -80,3 +80,24 @@ export const wages = {
 };
 /** Opens the wage slips (an HTML page the browser prints) in a new tab. */
 export const openSlips = async (id, lang) => { const res = await fetch(`/api/v1/pay/wage-runs/${id}/slips?lang=${lang}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(new Blob([await res.text()], { type: 'text/html' })); globalThis.open?.(url, '_blank', 'noopener'); };
+
+// ---- 24.04 ----
+export const stat = {
+  calendar: (fy) => get(`/stat/calendar?${q({ fy })}`),
+  filings: (f) => get(`/stat/filings?${q(f)}`),
+  filing: (id) => get(`/stat/filings/${id}`),
+  createFiling: (b) => post('/stat/filings', b),
+  submitFiling: (id) => post(`/stat/filings/${id}/submit`),
+  withdrawFiling: (id, b) => post(`/stat/filings/${id}/withdraw`, b),
+  removeFiling: (id) => del(`/stat/filings/${id}`),
+  challan: (id, b) => post(`/stat/filings/${id}/challan`, b),
+  registers: (f) => get(`/stat/registers?${q(f)}`),
+  generate: (b) => post('/stat/registers', b),
+  rules: () => get('/stat/rules'),
+  saveRule: (b) => post('/stat/rules', b),
+  bocw: (f) => get(`/stat/bocw?${q(f)}`),
+  saveBocw: (b) => post('/stat/bocw', b),
+  bonus: (f) => get(`/stat/bonus?${q(f)}`),
+  gratuity: (f) => get(`/stat/gratuity?${q(f)}`),
+  provision: (f) => get(`/stat/gratuity-provision?${q(f)}`),
+};
