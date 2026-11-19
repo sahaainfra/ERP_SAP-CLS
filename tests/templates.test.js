@@ -386,13 +386,13 @@ test('AC-03 who sees and does what: the library, the records, the payslip with p
   try {
     // the library of standard formats, shared by all, is seen by those who keep or approve templates
     const lib = (await call(t, 'GET', '/templates?limit=100', sys)).json.data;
-    assert.equal(lib.total, 19);
+    assert.equal(lib.total, 20); // 19 standard formats and, since 24.05, the payslip in Hindi (PAYSLIP_HI)
     assert.ok(lib.rows.every((r) => r.shared && r.status === 'ACTIVE' && r.version === 1));
     assert.equal(lib.canEdit, true);
     assert.equal((await call(t, 'GET', '/templates', cfo)).json.data.canEdit, false);
     assert.equal((await call(t, 'GET', '/templates', emp)).status, 403);
     assert.equal((await call(t, 'GET', '/templates', as('AUD', 'aud1'))).status, 200);
-    assert.equal((await call(t, 'GET', '/templates?docType=PAYSLIP', sys)).json.data.rows.length, 1);
+    assert.equal((await call(t, 'GET', '/templates?docType=PAYSLIP', sys)).json.data.rows.length, 2); // the standard payslip and the Hindi one (24.05)
     // payslip: pay and bank data need the extra right
     const pay = { docNo: 'PAY/2026-10/E0412', 'employee': { name: 'Sunil Patil', code: 'E0412' }, designation: 'Engineer', month: 'October 2026', pan: 'ABCPP1234Q', bank: { account: '123456784821' }, lines: [{ label: 'Basic', amount: '38000' }], deductions: [{ label: 'PF', amount: '4560' }] };
     assert.equal((await publish(t, sys, 'PAYSLIP', 'e0412-oct', pay)).status, 200);

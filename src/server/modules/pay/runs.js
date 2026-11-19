@@ -37,6 +37,11 @@ export const payRunList = defineList({
   columns: { docNo: { sql: 'x.doc_no', type: 'text', label: 'Run' }, period: { sql: 'x.period', type: 'text', label: 'Period', filter: 'eq' }, type: { sql: 'x.run_type', type: 'enum', label: 'Type', options: [['REGULAR', 'Regular'], ['SUPPLEMENTARY', 'Supplementary']] }, employees: { sql: 'x.employees_count', type: 'number', label: 'Employees' }, net: { sql: '(x.net_paise / 100.0)', type: 'money', label: 'Net' }, status: { sql: 'x.status', type: 'enum', label: 'Status', options: Object.entries(STATUS), filter: 'eq' } },
 });
 
+/** The deductions from income under the old regime (chapter VI-A within the caps, home-loan interest, professional tax); none under the new regime. Also used by the full-and-final (24.05). */
+export function regimeDeductions(regime, ver, pfYear, ptYear) {
+  if (regime !== 'OLD') return 0; const v = ver ?? {};
+  return Math.min(CAPS.sec80C, (v.sec80C ?? 0) + pfYear) + Math.min(CAPS.sec80CCD1B, v.sec80CCD1B ?? 0) + Math.min(CAPS.sec80D, v.sec80D ?? 0) + Math.min(CAPS.sec24b, v.sec24b ?? 0) + (v.other ?? 0) + ptYear;
+}
 /** TDS of the month (FR-02): the tax of the projected year under the regime, less what was deducted, over the months left. Pure. */
 export function tdsOfMonth({ params, ytdTaxable, monthTaxable, futureMonthly, monthsLeft, ytdTds, deductions = 0 }) {
   const annual = r2(ytdTaxable + monthTaxable + futureMonthly * Math.max(0, monthsLeft - 1)); const t = annualTax(params, annual, deductions);
@@ -118,7 +123,7 @@ export function createPayRunService({ db, base, flags, setup, expenses }) {
     const fy = fyOf(period); const decl = declarationOf(e.id, fy.code); const regime = decl?.regime ?? 'NEW'; const p = memo(cache, `tds:${regime}:${end}`, () => setup.paramsAt(companyId, regime === 'OLD' ? 'TDS_OLD' : 'TDS_NEW', null, end));
     const ytd = db.prepare("SELECT COALESCE(SUM(l.taxable_paise), 0) AS t, COALESCE(SUM(l.tds_paise), 0) AS d FROM pay_run_lines l JOIN pay_runs r ON r.id = l.run_id WHERE l.employee_id = ? AND r.status = 'APPROVED' AND r.period >= ? AND r.period < ? AND l.deleted_at IS NULL AND r.deleted_at IS NULL").get(e.id, fy.start, period);
     const ver = decl && decl.decl_status === 'VERIFIED' ? JSON.parse(decl.verified_json) : decl ? JSON.parse(decl.declarations_json) : {}; const pfYear = (b.lines.find((l) => l.code === 'PF_EE')?.amount ?? 0) * 12;
-    const ded = regime === 'OLD' ? Math.min(CAPS.sec80C, (ver.sec80C ?? 0) + pfYear) + Math.min(CAPS.sec80CCD1B, ver.sec80CCD1B ?? 0) + Math.min(CAPS.sec80D, ver.sec80D ?? 0) + Math.min(CAPS.sec24b, ver.sec24b ?? 0) + (ver.other ?? 0) + (b.lines.find((l) => l.code === 'PT')?.amount ?? 0) * 12 : 0;
+    const ded = regimeDeductions(regime, ver, pfYear, (b.lines.find((l) => l.code === 'PT')?.amount ?? 0) * 12);
     const tds = p ? tdsOfMonth({ params: p, ytdTaxable: rs(ytd.t), monthTaxable: b.taxableGross, futureMonthly: full.taxableGross, monthsLeft: fy.left, ytdTds: rs(ytd.d), deductions: ded }) : { month: 0 };
     const tl = b.lines.find((l) => l.code === 'TDS'); if (tl) { tl.amount = tds.month; b.deductions = r2(b.deductions + tds.month); b.net = r2(b.net - tds.month); }
     // FR-03: the checks
@@ -162,7 +167,9 @@ export function createPayRunService({ db, base, flags, setup, expenses }) {
   function compute(actor, r, onProgress = null) {
     const c = r.company_id; const end = monthEnd(r.period); const start = `${r.period}-01`; const holds = new Map(db.prepare('SELECT employee_id, hold_reason FROM pay_run_lines WHERE run_id = ? AND hold = 1 AND deleted_at IS NULL').all(r.id).map((h) => [h.employee_id, h.hold_reason]));
     const chosen = JSON.parse(r.inputs_json || '{}').employeeIds ?? null;
-    const emps = db.prepare(`SELECT * FROM hr_employees WHERE company_id = ? AND deleted_at IS NULL AND record_status = 'APPROVED' AND doj <= ? AND (last_working_date IS NULL OR last_working_date >= ?)${r.branch_id ? ' AND branch_id = ?' : ''} ORDER BY emp_code`).all(c, end, start, ...(r.branch_id ? [r.branch_id] : [])).filter((e) => !chosen || chosen.includes(e.id));
+    // 24.05: a leaver whose last month is paid by the full-and-final settlement is not paid again by the run
+    const settled = has('pay_fnf') ? new Set(db.prepare("SELECT employee_id, working_json FROM pay_fnf WHERE company_id = ? AND status NOT IN ('CANCELLED', 'REJECTED', 'SUPERSEDED') AND deleted_at IS NULL").all(c).filter((f) => (JSON.parse(f.working_json || '{}').lastSalaryPeriods ?? []).includes(r.period)).map((f) => f.employee_id)) : new Set();
+    const emps = db.prepare(`SELECT * FROM hr_employees WHERE company_id = ? AND deleted_at IS NULL AND record_status = 'APPROVED' AND doj <= ? AND (last_working_date IS NULL OR last_working_date >= ?)${r.branch_id ? ' AND branch_id = ?' : ''} ORDER BY emp_code`).all(c, end, start, ...(r.branch_id ? [r.branch_id] : [])).filter((e) => (!chosen || chosen.includes(e.id)) && !settled.has(e.id));
     const prevRun = db.prepare("SELECT id FROM pay_runs WHERE company_id = ? AND period = ? AND run_type = 'REGULAR' AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY id DESC LIMIT 1").get(c, addMonths(r.period, -1));
     const prevNet = new Map(prevRun ? db.prepare('SELECT employee_id, net_paise FROM pay_run_lines WHERE run_id = ? AND deleted_at IS NULL').all(prevRun.id).map((x) => [x.employee_id, rs(x.net_paise)]) : []);
     const ins = db.prepare("INSERT INTO pay_run_lines (company_id, run_id, employee_id, assignment_id, days_in_month, payable_days, paid_days, lop_days, ot_hours, components_json, gross_paise, taxable_paise, deductions_paise, employer_paise, net_paise, tds_paise, tds_json, wages_json, flags_json, hold, hold_reason, allocation_json, bank_ok, payment_mode, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pay_runs')");

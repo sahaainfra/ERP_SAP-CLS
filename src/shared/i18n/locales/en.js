@@ -39,6 +39,7 @@ import ps from './en/ps.js';
 import pr from './en/pr.js';
 import wr from './en/wr.js';
 import st from './en/st.js';
+import pp from './en/pp.js';
 
 // One file per area (part 166.4, D-682): the server and the tests read the whole text here; the screens fetch an area when a page first needs it.
 export default {
@@ -73,6 +74,7 @@ export default {
   gst: gst,
   fa: fa,
   st: st,
+  pp: pp,
   wr: wr,
   pr: pr,
   ps: ps,

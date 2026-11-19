@@ -10844,6 +10844,142 @@ paths:
     post:
       summary: "contractor wage check: { decision VERIFY|RETURN|HOLD, note } — HOLD holds the contractor's payments on the project, 21.04 (pay.wage_check.verify; not the compiler) (part 24.03)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/posting/runs:
+    get:
+      summary: "approved payroll runs with posting, payment and payslip state { period? } (pay.posting.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/posting/runs/{id}:
+    get:
+      summary: "a run: the journal it makes (balanced), the posting, transfers, unpaid employees and why, payslip counts (pay.posting.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/posting/runs/{id}/post:
+    post:
+      summary: "post the approval of the run through the 23.02 engine (once per event) (pay.posting.post) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/posting/runs/{id}/lines/{lineId}/hold:
+    post:
+      summary: "hold or release a salary after the lock { hold, reason } (pay.transfer.hold) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/posting/wage-runs:
+    get:
+      summary: "approved wage runs with their posting and payments (pay.posting.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/posting/wage-runs/{id}/post:
+    post:
+      summary: "post an approved wage run (pay.posting.post) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/transfers/banks:
+    get:
+      summary: "active bank accounts of the company (pay.transfer.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/transfers:
+    get:
+      summary: "salary transfers { runId?, fnfId? } / prepare one { runId|fnfId, bankAccountId, payDate, mode } (pay.transfer.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "salary transfers { runId?, fnfId? } / prepare one { runId|fnfId, bankAccountId, payDate, mode } (pay.transfer.create) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/transfers/{id}:
+    get:
+      summary: "a transfer with its lines (pay.transfer.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/transfers/{id}/release:
+    post:
+      summary: "release to the bank (not by the preparer): the bank file built, checked and kept; Dr salaries payable Cr bank (pay.transfer.release) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/transfers/{id}/cancel:
+    post:
+      summary: "cancel a prepared transfer { reason } (pay.transfer.create) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/transfers/{id}/file:
+    get:
+      summary: "the bank file (pay.transfer.release) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/transfers/{id}/confirm:
+    post:
+      summary: "the bank's answer per line { rows[{ lineId, status PAID|FAILED, utr?, paidOn, reason? }] }; returned lines reversed (pay.transfer.confirm) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/payslips:
+    get:
+      summary: "payslip distribution of a run { runId } (pay.payslip.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/payslips/mine:
+    get:
+      summary: "the employee's own payslips (pay.payslip.own) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/payslips/generate:
+    post:
+      summary: "generate the password-protected payslips of a run { runId, employeeIds?, lang } (a background job above 50) (pay.payslip.generate) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/payslips/email:
+    post:
+      summary: "e-mail the payslips as signed links { runId, employeeIds? } (pay.payslip.distribute) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/payslips/{id}/download:
+    get:
+      summary: "the protected PDF (the employee, or payroll) (own record or pay.payslip.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf:
+    get:
+      summary: "full-and-final settlements / prepare one { separationId } (BR-01: after the clearance) (pay.fnf.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "full-and-final settlements / prepare one { separationId } (BR-01: after the clearance) (pay.fnf.create) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/candidates:
+    get:
+      summary: "leavers whose inputs HR released (pay.fnf.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/export:
+    get:
+      summary: "settlements as CSV (pay.fnf.export) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}:
+    get:
+      summary: "a settlement with components and working / change adjustments { version, adjustments, bonusRate } / delete a draft (pay.fnf.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    patch:
+      summary: "a settlement with components and working / change adjustments { version, adjustments, bonusRate } / delete a draft (pay.fnf.edit) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "a settlement with components and working / change adjustments { version, adjustments, bonusRate } / delete a draft (pay.fnf.delete) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/compute:
+    post:
+      summary: "compute again (pay.fnf.edit) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/submit:
+    post:
+      summary: "send for approval PAY -> HRMGR -> CFO (pay.fnf.submit) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/withdraw:
+    post:
+      summary: "withdraw { reason } (pay.fnf.submit) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/cancel:
+    post:
+      summary: "cancel { reason } (pay.fnf.cancel) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/amend:
+    post:
+      summary: "amend an approved, unpaid settlement { reason } (pay.fnf.amend) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/history:
+    get:
+      summary: "approval and audit history (pay.fnf.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/compare:
+    get:
+      summary: "amendment comparison (pay.fnf.view) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/print:
+    get:
+      summary: "the F&F statement PDF (pay.fnf.print) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/fnf/{id}/import:
+    post:
+      summary: "adjustments from a CSV { csv } (pay.fnf.import) (part 24.05)"
+      responses: { '200': { description: ok }, '201': { description: created }, '202': { description: accepted }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2405 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
   /api/v1/pay/stat/calendar:
     get:
       summary: "statutory calendar of a financial year: the items with due dates, rules, status and filings { fy } (pay.stat.calendar.view) (part 24.04)"

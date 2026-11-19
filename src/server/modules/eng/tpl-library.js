@@ -107,3 +107,20 @@ export function standardFormat(docType) {
   }
   return { name: `${cat.label} (standard format)`, html: `${HEADER}\n${body}\n${FOOTER}`, css: BASE_CSS };
 }
+
+/**
+ * Part 24.05: the payslip in Hindi for workers (FR-03): the same variables as the standard payslip, the labels in Hindi (the renderer draws Devanagari with
+ * IBM Plex Sans Devanagari). Kept in the library as the shared template PAYSLIP_HI; a company may copy and approve its own version like any other format.
+ */
+export function payslipHindiFormat() {
+  const tableHi = (group, labels) => `<table class="lines"><thead><tr><th width="5%">#</th><th>${labels[0]}</th><th class="num" width="13%">${labels[1]}</th></tr></thead><tbody>{{#each ${group}}}<tr><td>{{@no}}</td><td>{{label}}</td><td class="num">{{amount}}</td></tr>{{/each}}</tbody></table>`;
+  const body = `<h1 class="title">वेतन पर्ची</h1><table class="meta">
+<tr>${row('कर्मचारी', 'employee.name')}${row('कोड', 'employee.code')}</tr><tr>${row('पद', 'designation')}${row('विभाग', 'department')}</tr>
+<tr>${row('वेतन माह', 'month')}${row('भुगतान के दिन', 'daysPaid')}</tr><tr>${row('पैन', 'pan')}${row('बैंक खाता', 'bank.account')}</tr></table>
+<h2>आय</h2>${tableHi('lines', ['आय', 'राशि'])}
+<h2>कटौतियाँ</h2>${tableHi('deductions', ['कटौती', 'राशि'])}
+<table class="totals"><tr><td width="50%"></td><td><table class="totals">${totalsRow('कुल आय', 'grossEarnings')}${totalsRow('कुल कटौती', 'totalDeductions')}${totalsRow('शुद्ध वेतन', 'netPay', 'grand')}</table></td></tr></table>
+<div class="words"><strong>शुद्ध वेतन शब्दों में:</strong> {{amountWordsHi}}<br>{{amountWords}}</div>
+<p class="muted">यह कंप्यूटर द्वारा बनाई गई वेतन पर्ची है। इसकी सत्यता QR कोड से जाँची जा सकती है।</p>`;
+  return { name: 'Payslip in Hindi (वेतन पर्ची)', html: `${HEADER}\n${body}\n${FOOTER}`, css: BASE_CSS };
+}
