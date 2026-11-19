@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS pay_wage_lines (
   piece_source_json TEXT  NOT NULL DEFAULT '[]',
   rate_paise      INTEGER NOT NULL DEFAULT 0 CHECK (rate_paise >= 0),
   min_rate_paise  INTEGER CHECK (min_rate_paise IS NULL OR min_rate_paise >= 0),
-  rate_source     TEXT,
+  wage_source     TEXT,
   rate_override_paise INTEGER CHECK (rate_override_paise IS NULL OR rate_override_paise >= 0),
   ot_rate_paise   INTEGER NOT NULL DEFAULT 0 CHECK (ot_rate_paise >= 0),
   basic_paise     INTEGER NOT NULL DEFAULT 0 CHECK (basic_paise >= 0),

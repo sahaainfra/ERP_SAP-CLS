@@ -10735,3 +10735,112 @@ paths:
     post:
       summary: "payroll run: verify or return { action, verified?, note? } (part 24.02; pay.declaration.verify)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/options:
+    get:
+      summary: "wage run: the sites and labour contractors the user may run wages for (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs:
+    get:
+      summary: "wage run: wage runs, filtered by site, project, cycle, status (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "wage run: create and compute from the punches { siteId, contractorId, cycle WEEKLY|FORTNIGHTLY|MONTHLY, periodFrom } (pay.wage_run.create) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}:
+    get:
+      summary: "wage run: one run with its lines, the approval history (pay.wage_run.view; rates need pay.wage_rate.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "wage run: delete a draft (pay.wage_run.delete) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/compute:
+    post:
+      summary: "wage run: compute again from the punches (draft or returned) (pay.wage_run.edit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/lines/{lineId}:
+    patch:
+      summary: "wage run: a worker's inputs { basis, rateOverride (not below the minimum, BR-01), pieceQty, pieceRate, pieceSources [{ mbId, qty }], allowances, advance, canteen, otherDeductions, adjust { days, otHours, reason }, version } (pay.wage_run.edit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/submit:
+    post:
+      summary: "wage run: send for approval SACC → PM → HRMGR; computed again and refused with blocking checks (pay.wage_run.submit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/withdraw:
+    post:
+      summary: "wage run: withdraw { reason } (pay.wage_run.submit) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/cancel:
+    post:
+      summary: "wage run: cancel { reason } (pay.wage_run.cancel) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/amend:
+    post:
+      summary: "wage run: amend an approved run not yet paid { reason } (pay.wage_run.amend) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/history:
+    get:
+      summary: "wage run: approvals and audit (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/pay:
+    post:
+      summary: "wage run: record payment { lineIds, mode BANK|CASH, paidOn, reference } (pay.wage_run.disburse) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/lines/{lineId}/acknowledge:
+    post:
+      summary: "wage run: the worker's acknowledgement { method CARD|PHOTO, badge or fileId, disputed?, note? } (pay.wage_run.acknowledge) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/slips:
+    get:
+      summary: "wage run: wage slips as a printable HTML page { lang en|hi, lineId? } (pay.wage_run.print) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/muster:
+    get:
+      summary: "wage run: the muster roll (Form XVI layout) { format csv|pdf } (pay.wage_run.export) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/print:
+    get:
+      summary: "wage run: PDF (pay.wage_run.print) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-runs/{id}/export:
+    get:
+      summary: "wage run: CSV of the lines (pay.wage_run.export) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-register:
+    get:
+      summary: "wage register (Form XVII layout) of approved runs { from, to, projectId?, siteId?, contractorId? } (pay.wage_run.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-register/export:
+    get:
+      summary: "wage register CSV or PDF { from, to, format? } (pay.wage_run.export) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/worklist:
+    get:
+      summary: "contractor wage verification: the worklist by due date with counts (pay.wage_check.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks:
+    get:
+      summary: "contractor wage checks (pay.wage_check.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "contractor wage check: start a contractor's month { contractorId, projectId, siteId?, period } (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}:
+    get:
+      summary: "contractor wage check with the sheet, the variances and the attendance (pay.wage_check.view) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/sheet:
+    put:
+      summary: "contractor wage check: the wage sheet { lines [{ workerCode, days, otHours, gross, deductions, net, paidOn }] or csv, version } compared with the attendance (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/attach:
+    post:
+      summary: "contractor wage check: attach { kind SHEET|PROOF, fileId } (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/submit:
+    post:
+      summary: "contractor wage check: send for verification (pay.wage_check.manage) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/wage-checks/{id}/decide:
+    post:
+      summary: "contractor wage check: { decision VERIFY|RETURN|HOLD, note } — HOLD holds the contractor's payments on the project, 21.04 (pay.wage_check.verify; not the compiler) (part 24.03)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2403 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

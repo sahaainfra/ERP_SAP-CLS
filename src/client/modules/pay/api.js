@@ -55,3 +55,28 @@ export const runs = {
   declarations: (f) => get(`/declarations?${q(f)}`),
   verify: (id, b) => post(`/declarations/${id}/verify`, b),
 };
+
+// ---- 24.03 ----
+const put = async (p, b) => (await api.put(`/pay${p}`, b, idem())).data;
+export const wages = {
+  options: () => get('/wage-runs/options'),
+  list: (f) => get(`/wage-runs?${q(f)}`),
+  get: (id) => get(`/wage-runs/${id}`),
+  create: (b) => post('/wage-runs', b),
+  compute: (id) => post(`/wage-runs/${id}/compute`),
+  line: (id, lineId, b) => patch(`/wage-runs/${id}/lines/${lineId}`, b),
+  act: (id, action, b) => post(`/wage-runs/${id}/${action}`, b),
+  remove: (id) => del(`/wage-runs/${id}`),
+  pay: (id, b) => post(`/wage-runs/${id}/pay`, b),
+  ack: (id, lineId, b) => post(`/wage-runs/${id}/lines/${lineId}/acknowledge`, b),
+  register: (f) => get(`/wage-register?${q(f)}`),
+  worklist: () => get('/wage-checks/worklist'),
+  check: (id) => get(`/wage-checks/${id}`),
+  createCheck: (b) => post('/wage-checks', b),
+  sheet: (id, b) => put(`/wage-checks/${id}/sheet`, b),
+  attach: (id, b) => post(`/wage-checks/${id}/attach`, b),
+  submitCheck: (id) => post(`/wage-checks/${id}/submit`),
+  decide: (id, b) => post(`/wage-checks/${id}/decide`, b),
+};
+/** Opens the wage slips (an HTML page the browser prints) in a new tab. */
+export const openSlips = async (id, lang) => { const res = await fetch(`/api/v1/pay/wage-runs/${id}/slips?lang=${lang}`, { headers: authHeaders() }); if (!res.ok) throw new Error(String(res.status)); const url = URL.createObjectURL(new Blob([await res.text()], { type: 'text/html' })); globalThis.open?.(url, '_blank', 'noopener'); };

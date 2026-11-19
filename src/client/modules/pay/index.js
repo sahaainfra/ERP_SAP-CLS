@@ -9,6 +9,9 @@ const CalendarPage = lazyPage(() => import('./SetupPages.jsx'), 'CalendarPage');
 const RunsPage = lazyPage(() => import('./RunPages.jsx'), 'RunsPage');
 const RegisterPage = lazyPage(() => import('./RunPages.jsx'), 'RegisterPage');
 const DeclarationsPage = lazyPage(() => import('./RunPages.jsx'), 'DeclarationsPage');
+const WageRunsPage = lazyPage(() => import('./WagePages.jsx'), 'WageRunsPage');
+const WageRegisterPage = lazyPage(() => import('./WagePages.jsx'), 'WageRegisterPage');
+const ContractorWagesPage = lazyPage(() => import('./WagePages.jsx'), 'ContractorWagesPage');
 
 registerModule({
   code: 'pay',
@@ -20,6 +23,9 @@ registerModule({
     { path: '/payroll/calendar', label: 'Payroll Calendar', labelHi: 'वेतन कैलेंडर', icon: 'erp.group.workforce', permission: 'pay.calendar.view', flag: 'ff.pay.p2401', Page: CalendarPage },
     { path: '/payroll/runs', label: 'Payroll Run', labelHi: 'वेतन रन', icon: 'erp.group.workforce', permission: 'pay.run.view', flag: 'ff.pay.p2402', Page: RunsPage },
     { path: '/payroll/register', label: 'Payroll Register & Variance', labelHi: 'वेतन रजिस्टर व अंतर', icon: 'erp.group.workforce', permission: 'pay.run.view', flag: 'ff.pay.p2402', Page: RegisterPage },
+    { path: '/payroll/wage-runs', label: 'Wage Run', labelHi: 'मज़दूरी रन', icon: 'erp.group.workforce', permission: 'pay.wage_run.view', flag: 'ff.pay.p2403', Page: WageRunsPage },
+    { path: '/payroll/wage-register', label: 'Wage Register & Muster Roll', labelHi: 'मज़दूरी रजिस्टर व हाज़िरी', icon: 'erp.group.workforce', permission: 'pay.wage_run.view', flag: 'ff.pay.p2403', Page: WageRegisterPage },
+    { path: '/payroll/contractor-wages', label: 'Contractor Wage Verification', labelHi: 'ठेकेदार मज़दूरी सत्यापन', icon: 'erp.group.workforce', permission: 'pay.wage_check.view', flag: 'ff.pay.p2403', Page: ContractorWagesPage },
     { path: '/payroll/declarations', label: 'Tax Declarations', labelHi: 'कर घोषणाएँ', icon: 'erp.group.workforce', permission: 'pay.declaration.own', flag: 'ff.pay.p2402', Page: DeclarationsPage },
   ],
 });

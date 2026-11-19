@@ -20952,6 +20952,64 @@ Indexes:
 - ix_pay_components_list: company_id, comp_type, sequence
 - ux_pay_components_code (unique): , code
 
+## pay_contractor_wage_checks
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| contractor_id | INTEGER | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER |  |  |  |
+| period | TEXT | yes |  |  |
+| pay_due_on | TEXT | yes |  |  |
+| verify_due_on | TEXT | yes |  |  |
+| state_code | TEXT |  |  |  |
+| workers_count | INTEGER | yes |  | 0 |
+| attendance_days_milli | INTEGER | yes |  | 0 |
+| sheet_days_milli | INTEGER | yes |  | 0 |
+| sheet_gross_paise | INTEGER | yes |  | 0 |
+| sheet_net_paise | INTEGER | yes |  | 0 |
+| sheet_json | TEXT | yes |  | '[]' |
+| wage_sheet_file_id | INTEGER |  |  |  |
+| proof_file_id | INTEGER |  |  |  |
+| variances_json | TEXT | yes |  | '[]' |
+| variance_count | INTEGER | yes |  | 0 |
+| blocking_count | INTEGER | yes |  | 0 |
+| check_status | TEXT | yes |  | 'DRAFT' |
+| hold_requested | INTEGER | yes |  | 0 |
+| submitted_by | TEXT |  |  |  |
+| submitted_at | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| decision_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: proof_file_id -> core_files(id), wage_sheet_file_id -> core_files(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), contractor_id -> mdm_partners(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_contractor_wage_checks_proof_file_id: proof_file_id
+- ix_pay_contractor_wage_checks_wage_sheet_file_id: wage_sheet_file_id
+- ix_pay_contractor_wage_checks_org_site_id: org_site_id
+- ix_pay_contractor_wage_checks_org_project_id: org_project_id
+- ix_pay_contractor_wage_checks_contractor_id: contractor_id, org_project_id, hold_requested
+- ix_pay_contractor_wage_checks_list: company_id, check_status, verify_due_on
+- ux_pay_contractor_wage_checks_key (unique): company_id, contractor_id, org_project_id, , period
+- ux_pay_contractor_wage_checks_doc (unique): company_id, doc_no
+
 ## pay_inputs
 
 | Column | Type | Not null | Key | Default |
@@ -21211,6 +21269,140 @@ Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
 Indexes:
 - ix_pay_tax_declarations_company: company_id, fy, decl_status
 - ux_pay_tax_declarations_emp (unique): employee_id, fy
+
+## pay_wage_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| worker_id | INTEGER | yes |  |  |
+| trade_code | TEXT |  |  |  |
+| skill_category | TEXT |  |  |  |
+| pay_basis | TEXT | yes |  | 'DAILY' |
+| days_milli | INTEGER | yes |  | 0 |
+| ot_milli | INTEGER | yes |  | 0 |
+| piece_qty_milli | INTEGER | yes |  | 0 |
+| piece_uom | TEXT |  |  |  |
+| piece_rate_paise | INTEGER |  |  |  |
+| piece_source_json | TEXT | yes |  | '[]' |
+| rate_paise | INTEGER | yes |  | 0 |
+| min_rate_paise | INTEGER |  |  |  |
+| wage_source | TEXT |  |  |  |
+| rate_override_paise | INTEGER |  |  |  |
+| ot_rate_paise | INTEGER | yes |  | 0 |
+| basic_paise | INTEGER | yes |  | 0 |
+| ot_paise | INTEGER | yes |  | 0 |
+| piece_paise | INTEGER | yes |  | 0 |
+| topup_paise | INTEGER | yes |  | 0 |
+| allowances_paise | INTEGER | yes |  | 0 |
+| gross_paise | INTEGER | yes |  | 0 |
+| advance_paise | INTEGER | yes |  | 0 |
+| canteen_paise | INTEGER | yes |  | 0 |
+| other_ded_paise | INTEGER | yes |  | 0 |
+| pf_paise | INTEGER | yes |  | 0 |
+| esi_paise | INTEGER | yes |  | 0 |
+| deductions_paise | INTEGER | yes |  | 0 |
+| employer_paise | INTEGER | yes |  | 0 |
+| net_paise | INTEGER | yes |  | 0 |
+| days_json | TEXT | yes |  | '[]' |
+| adjust_json | TEXT | yes |  | '[]' |
+| flags_json | TEXT | yes |  | '[]' |
+| paid_mode | TEXT |  |  |  |
+| paid_on | TEXT |  |  |  |
+| paid_ref | TEXT |  |  |  |
+| paid_by | TEXT |  |  |  |
+| ack_status | TEXT | yes |  | 'PENDING' |
+| ack_method | TEXT |  |  |  |
+| ack_file_id | INTEGER |  |  |  |
+| ack_by | TEXT |  |  |  |
+| ack_at | TEXT |  |  |  |
+| ack_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: ack_file_id -> core_files(id), worker_id -> lab_workers(id), run_id -> pay_wage_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_wage_lines_ack_file_id: ack_file_id
+- ix_pay_wage_lines_worker_id: worker_id
+- ix_pay_wage_lines_company_id: company_id
+- ix_pay_wage_lines_run_id: run_id
+- ux_pay_wage_lines_worker (unique): run_id, worker_id
+
+## pay_wage_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| org_project_id | INTEGER | yes |  |  |
+| org_site_id | INTEGER | yes |  |  |
+| contractor_id | INTEGER | yes |  |  |
+| cycle | TEXT | yes |  |  |
+| period_from | TEXT | yes |  |  |
+| period_to | TEXT | yes |  |  |
+| pay_due_on | TEXT | yes |  |  |
+| state_code | TEXT |  |  |  |
+| workers_count | INTEGER | yes |  | 0 |
+| days_milli | INTEGER | yes |  | 0 |
+| ot_milli | INTEGER | yes |  | 0 |
+| gross_paise | INTEGER | yes |  | 0 |
+| deductions_paise | INTEGER | yes |  | 0 |
+| employer_paise | INTEGER | yes |  | 0 |
+| net_paise | INTEGER | yes |  | 0 |
+| flags_count | INTEGER | yes |  | 0 |
+| blocking_count | INTEGER | yes |  | 0 |
+| paid_count | INTEGER | yes |  | 0 |
+| acked_count | INTEGER | yes |  | 0 |
+| computed_at | TEXT |  |  |  |
+| locked_at | TEXT |  |  |  |
+| disbursed_at | TEXT |  |  |  |
+| summary_json | TEXT | yes |  | '{}' |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> pay_wage_runs(id), contractor_id -> mdm_partners(id), org_site_id -> org_sites(id), org_project_id -> org_projects(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_wage_runs_amends: amends_id
+- ix_pay_wage_runs_wf: workflow_instance_id
+- ix_pay_wage_runs_contractor_id: contractor_id
+- ix_pay_wage_runs_org_project_id: org_project_id
+- ix_pay_wage_runs_site: org_site_id, contractor_id, period_from, period_to
+- ix_pay_wage_runs_list: company_id, org_project_id, org_site_id, period_from, status
+- ux_pay_wage_runs_doc (unique): company_id, doc_no
 
 ## pcs_check_results
 
