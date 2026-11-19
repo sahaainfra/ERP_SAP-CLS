@@ -42,10 +42,11 @@ function LineCard({ l, t, x, run, busy }) {
 }
 
 function Run({ id }) {
-  const t = useT('pr'); const q = useQuery({ queryKey: ['gl', 'pay-run', id], queryFn: () => runs.get(id), retry: false }); const { error, note, busy, run } = useGlRunner(); const [step, setStep] = useState(null); usePageTitle(t('pr.title'));
+  const t = useT('pr'); const q = useQuery({ queryKey: ['gl', 'pay-run', id], queryFn: () => runs.get(id), retry: false, refetchInterval: (qq) => (qq.state.data?.computing ? 2000 : false) }); const { error, note, busy, run } = useGlRunner(); const [step, setStep] = useState(null); usePageTitle(t('pr.title'));
   const g = guardOf(q, t('pr.title'), 'pay.run.view'); if (g) return g; const x = q.data; const c = x.can; const cur = step ?? (x.status === 'SUBMITTED' || x.status === 'APPROVED' ? 'approve' : 'review');
   return (<section aria-labelledby="pr-h" data-testid="pr-run" data-status={x.status}><PageHeader id="pr-h" title={`${x.docNo} · ${x.period}`} subtitle={`${t(`pr.type.${x.type}`)} · ${t('pr.employeesN', { n: x.employees })}`} meta={<StatusBadge status={TONE[x.status] ?? 'CANCELLED'} label={x.lockedAt ? t('pr.locked') : t(`pr.st.${x.status}`)} />} />
     <p><Link to="/payroll/runs">{t('pr.back')}</Link> · <Link to={`/payroll/register?run=${x.id}`}>{t('rg.title')}</Link></p><GlError error={error} />{note && <p className="mdm-banner" role="status">{note}</p>}
+    {x.computing && <p className="mdm-banner" role="status" data-testid="pr-computing">{t('pr.computing', { p: x.job.progress ?? 0, msg: x.job.message ?? '' })}</p>}{x.job?.status === 'FAILED' && <p className="field-error" role="alert">{t('pr.computeFailed', { e: x.job.error ?? '' })}</p>}
     <Pills tabs={STEPS.map((k, i) => [k, `${i + 1}. ${t(`pr.step.${k}`)}`])} tab={cur} setTab={setStep} label={t('pr.steps')} prefix="pr-step" />
     {cur === 'inputs' && <div className="mdm-panel"><Rows rows={[[t('pr.excluded'), (x.inputs.excluded ?? []).map((e) => `${e.employee} (${t(`pr.why.${e.reason}`)})`).join('; ') || '—'], [t('pr.arrears'), String(x.inputs.arrears ?? 0)], [t('pr.inputsPending'), String(x.inputs.inputs ?? 0)]]} /></div>}
     {cur === 'compute' && <div className="mdm-panel"><p className="small">{t('pr.computedAt', { at: String(x.computedAt ?? '').slice(0, 16).replace('T', ' ') })}</p>{c.compute && <button type="button" className="btn btn-primary" style={big} disabled={busy} onClick={() => run(() => runs.compute(x.id), t('pr.recomputed'))} data-testid="pr-recompute">{t('pr.recompute')}</button>}</div>}

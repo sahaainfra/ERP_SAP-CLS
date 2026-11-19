@@ -8,6 +8,7 @@ import { toCsv } from '../../platform/security/csv.js';
 import { todayIST } from '../../../shared/dates.js';
 import { nowIso, rid } from '../proc/base.js';
 import { STATUS, createFlow } from '../qa/flow.js';
+import { createVault } from '../../platform/integrations/vault.js';
 
 // Part 24.04: statutory compliance. FR-01 the monthly ECR (EPFO) and ESI contribution files, the PT and LWF state reports; FR-02 challans (amount, date,
 // reference) and the payment request of each approved filing (ACCMGR -> CFO, the statutory payment chain of section 9); FR-03 the TDS deduction register
@@ -52,8 +53,11 @@ export function ecrRecord(l) {
 /** Validates an ECR record: twelve-digit UAN, eleven fields, whole rupees (pure). Returns the problems. */
 export function ecrProblems(rec) { const p = []; const f = rec.split('#'); if (f.length !== 11) p.push(`expected 11 fields, found ${f.length}`); if (!/^\d{12}$/.test(f[0] ?? '')) p.push('UAN must be 12 digits'); for (const i of [2, 3, 4, 5, 6, 7, 8, 9, 10]) if (!/^\d+$/.test(f[i] ?? '')) p.push(`field ${i + 1} must be a whole number`); return p; }
 
-/** @param {{ db: any, base: any, flags: any, setup: any, ctr?: any }} o */
-export function createStatutoryService({ db, base, flags, setup }) {
+/** @param {{ db: any, base: any, flags: any, setup: any, vaultKey?: string | null }} o */
+export function createStatutoryService({ db, base, flags, setup, vaultKey = null }) {
+  const vault = createVault({ secret: vaultKey ?? undefined });
+  /** D-749: the full PAN for the TDS statement and the certificate, read from the HR vault (the slot of the employee's PAN); the last four digits if it cannot be read. */
+  const panOf = (companyId, l) => { if (!l.pan_enc) return { pan: '', full: false }; try { const v = vault.decrypt(l.pan_enc, `hr_employee_pan/${companyId}/${l.employee_id}`); return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v) ? { pan: v, full: true } : { pan: `XXXXXX${l.pan_last4 ?? ''}`, full: false }; } catch { return { pan: `XXXXXX${l.pan_last4 ?? ''}`, full: false }; } };
   const { may, audit, number } = base;
   const need = (actor, key, what, pid = null, sid = null) => { if (!may(actor, key, pid, sid)) throw forbidden(`You may not ${what} (permission ${key}).`); };
   const on = (companyId) => flags.isOn({ companyId, user: 'system', roles: [] }, 'ff.pay.p2404');
@@ -67,7 +71,7 @@ export function createStatutoryService({ db, base, flags, setup }) {
 
   /** The lines of a locked run with the employee's statutory identity, the components in rupees and the wage bases (ECR, ESI, PT, LWF, TDS). */
   function linesOf(runId) {
-    return db.prepare(`SELECT l.*, e.emp_code, e.full_name, e.doj, s.uan, s.esic_ip, s.pt_state, s.lwf_state, s.pan_last4 FROM pay_run_lines l JOIN hr_employees e ON e.id = l.employee_id LEFT JOIN hr_employee_statutory s ON s.employee_id = l.employee_id AND s.deleted_at IS NULL WHERE l.run_id = ? AND l.deleted_at IS NULL ORDER BY e.emp_code`).all(runId)
+    return db.prepare(`SELECT l.*, e.emp_code, e.full_name, e.doj, s.uan, s.esic_ip, s.pt_state, s.lwf_state, s.pan_last4, s.pan_enc FROM pay_run_lines l JOIN hr_employees e ON e.id = l.employee_id LEFT JOIN hr_employee_statutory s ON s.employee_id = l.employee_id AND s.deleted_at IS NULL WHERE l.run_id = ? AND l.deleted_at IS NULL ORDER BY e.emp_code`).all(runId)
       .map((l) => { const comp = new Map(JSON.parse(l.components_json || '[]').map((c) => [c.code, Number(c.amount ?? 0)])); const w = JSON.parse(l.wages_json || '{}'); const tds = JSON.parse(l.tds_json || '{}');
         return { ...l, comp: (code) => r0(comp.get(code) ?? 0), pfBase: r0(w.pfBase ?? 0), pfWage: r0(w.pfWage ?? 0), esiWage: r0(w.esiWage ?? 0), regime: tds.regime ?? 'NEW', tdsRupees: rs(l.tds_paise), grossRupees: rs(l.gross_paise), name: l.full_name, code: l.emp_code }; });
   }
@@ -102,18 +106,18 @@ export function createStatutoryService({ db, base, flags, setup }) {
   function tdsQuarterOf(companyId, quarter) {
     const q = quarterOf(quarter); if (!q) throw badRequest('Correct the highlighted fields', [{ field: 'period', message: 'A quarter such as Q1 2026-27.' }]);
     const per = new Map(); const T = { tds: 0 };
-    for (const m of q.months) { const run = regularRun(companyId, m); if (!run) continue; for (const l of linesOf(run.id)) { if (!per.has(l.employee_id)) per.set(l.employee_id, { code: l.emp_code, name: l.name, pan: l.pan_last4 ? `XXXXXX${l.pan_last4}` : '', regime: l.regime, m: {}, tot: 0 }); const p = per.get(l.employee_id); p.m[m] = (p.m[m] ?? 0) + (l.tds_paise ?? 0); p.tot += l.tds_paise ?? 0; T.tds += l.tds_paise ?? 0; } }
+    for (const m of q.months) { const run = regularRun(companyId, m); if (!run) continue; for (const l of linesOf(run.id)) { if (!per.has(l.employee_id)) { const pn = panOf(companyId, l); per.set(l.employee_id, { code: l.emp_code, name: l.name, pan: pn.pan, panFull: pn.full, regime: l.regime, m: {}, tot: 0 }); } const p = per.get(l.employee_id); p.m[m] = (p.m[m] ?? 0) + (l.tds_paise ?? 0); p.tot += l.tds_paise ?? 0; T.tds += l.tds_paise ?? 0; } }
     const rows = [...per.values()].sort((a, b) => a.code.localeCompare(b.code)).map((p) => [p.code, p.name, p.pan, p.regime, ...q.months.map((m) => rs(p.m[m] ?? 0)), rs(p.tot)]);
-    return { content: toCsv(['Employee', 'Name', 'PAN', 'Regime', ...q.months, 'Total TDS'], rows), rows: rows.length, totals: { tds: rs(T.tds) } };
+    return { content: toCsv(['Employee', 'Name', 'PAN', 'Regime', ...q.months, 'Total TDS'], rows), rows: rows.length, totals: { tds: rs(T.tds) }, panRead: [...per.values()].filter((p) => p.panFull).length, panMissing: [...per.values()].filter((p) => !p.panFull).map((p) => p.code) };
   }
   /** The Form 16 (FY 2025-26) or Form 130 (from 2026-27) batch: per employee the salary of the year, the standard deduction of the regime, the tax deducted. */
   function form16Of(companyId, fy) {
     const start = fyStartOf(fy); const months = monthsOfFy(start); const form = start >= 2026 ? '130' : '16'; const std = setup.paramsAt(companyId, start >= 2026 ? 'TDS_NEW' : 'TDS_OLD', null, `${start}-04-01`)?.standardDeduction ?? 0;
     const per = new Map(); const T = { gross: 0, tds: 0 };
-    for (const m of months) { const run = regularRun(companyId, m); if (!run) continue; for (const l of linesOf(run.id)) { if (!per.has(l.employee_id)) per.set(l.employee_id, { code: l.emp_code, name: l.name, pan: l.pan_last4 ? `XXXXXX${l.pan_last4}` : '', regime: l.regime, months: 0, gross: 0, tds: 0, pt: 0, pf: 0 }); const p = per.get(l.employee_id); p.months += 1; p.gross += l.gross_paise; p.tds += l.tds_paise; p.pt += l.comp('PT') * 100; p.pf += l.comp('PF_EE') * 100; T.gross += l.gross_paise; T.tds += l.tds_paise; } }
+    for (const m of months) { const run = regularRun(companyId, m); if (!run) continue; for (const l of linesOf(run.id)) { if (!per.has(l.employee_id)) { const pn = panOf(companyId, l); per.set(l.employee_id, { code: l.emp_code, name: l.name, pan: pn.pan, panFull: pn.full, regime: l.regime, months: 0, gross: 0, tds: 0, pt: 0, pf: 0 }); } const p = per.get(l.employee_id); p.months += 1; p.gross += l.gross_paise; p.tds += l.tds_paise; p.pt += l.comp('PT') * 100; p.pf += l.comp('PF_EE') * 100; T.gross += l.gross_paise; T.tds += l.tds_paise; } }
     const rows = [...per.values()].sort((a, b) => a.code.localeCompare(b.code)).map((p) => { const stdP = p.regime === 'NEW' ? paise(std) : 0; return [p.code, p.name, p.pan, p.regime, p.months, rs(p.gross), rs(p.pf), rs(p.pt), rs(stdP), rs(Math.max(0, p.gross - p.pf - p.pt - stdP)), rs(p.tds)]; });
     const head = ['Employee', 'Name', 'PAN', 'Regime', 'Months', 'Gross salary', 'PF (16(iii))', 'Professional tax', 'Standard deduction', 'Taxable salary', 'Tax deducted'];
-    return { form, head, data: rows, content: toCsv(head, rows), rows: rows.length, totals: { gross: rs(T.gross), tds: rs(T.tds) } };
+    return { form, head, data: rows, content: toCsv(head, rows), rows: rows.length, totals: { gross: rs(T.gross), tds: rs(T.tds) }, panRead: [...per.values()].filter((p) => p.panFull).length, panMissing: [...per.values()].filter((p) => !p.panFull).map((p) => p.code) };
   }
   /** Labour registers per site from the wage runs of the month (24.03): workers, overtime, deductions and advances. */
   function siteRegister(companyId, type, siteId, period) {
@@ -236,7 +240,7 @@ export function createStatutoryService({ db, base, flags, setup }) {
     const type = ext === 'txt' ? 'text/plain; charset=utf-8' : 'text/csv; charset=utf-8';
     const id = Number(db.prepare("INSERT INTO stat_registers (company_id, register_type, period, state_code, org_site_id, source_run_id, row_count, amount_paise, file_name, content_type, content, checksum, generated_at, generated_by, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'api')")
       .run(actor.companyId, registerType, period, state, siteId, runId, file.rows, file.totals?.amount != null ? paise(file.totals.amount) : null, name, type, file.content, sha(file.content), nowIso(), actor.user, actor.user).lastInsertRowid);
-    audit(actor, 'stat_registers', id, 'generate', actor.companyId, { newValues: { type: registerType, period, rows: file.rows } }); evt('pay.statutory.file_generated', actor, actor.companyId, 'stat_registers', id, { registerId: id, type: registerType, period, rows: file.rows }); return id;
+    audit(actor, 'stat_registers', id, 'generate', actor.companyId, { newValues: { type: registerType, period, rows: file.rows, ...(file.panRead != null ? { panRead: file.panRead, panMissing: file.panMissing.length } : {}) }, reason: file.panRead ? `PAN read from the vault for ${file.panRead} employee(s) for the statutory file` : undefined }); evt('pay.statutory.file_generated', actor, actor.companyId, 'stat_registers', id, { registerId: id, type: registerType, period, rows: file.rows }); return id;
   }
   const registers = {
     list(actor, q) { need(actor, 'pay.stat.register.view', 'see the registers'); const rows = db.prepare("SELECT id, register_type, period, state_code, org_site_id AS site_id, row_count, amount_paise, file_name, checksum, generated_at, generated_by FROM stat_registers WHERE company_id = ? AND deleted_at IS NULL" + (q.registerType ? ' AND register_type = ?' : '') + ' ORDER BY id DESC LIMIT 200').all(actor.companyId, ...(q.registerType ? [q.registerType] : []));
@@ -255,7 +259,7 @@ export function createStatutoryService({ db, base, flags, setup }) {
       else if (t === 'FORM16_BATCH') { out = form16Of(c, b.fy); rid0 = registerOf(actor, { registerType: t, period: b.fy, file: out }); }
       else if (['WORKMEN_REGISTER', 'OVERTIME_REGISTER', 'DEDUCTION_REGISTER', 'ADVANCE_REGISTER'].includes(t)) { if (!b.siteId) throw badRequest('Correct the highlighted fields', [{ field: 'siteId', message: 'Choose the site.' }]); const s = db.prepare('SELECT id FROM org_sites WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(b.siteId), c); if (!s) throw notFound('That site does not exist.'); if (!may(actor, need1, null, s.id)) throw forbidden('You may not generate registers for this site.'); out = siteRegister(c, t, s.id, b.period); rid0 = registerOf(actor, { registerType: t, period: b.period, file: out, siteId: s.id }); }
       else throw badRequest('Correct the highlighted fields', [{ field: 'registerType', message: 'Choose a register.' }]);
-      return { id: rid0, rows: out.rows, totals: out.totals };
+      return { id: rid0, rows: out.rows, totals: out.totals, ...(out.panMissing ? { panMissing: out.panMissing } : {}) };
     },
     get(actor, id) { need(actor, 'pay.stat.register.view', 'see the registers'); const r = db.prepare('SELECT * FROM stat_registers WHERE id = ? AND company_id = ? AND deleted_at IS NULL').get(rid(id), actor.companyId); if (!r) throw notFound('That register does not exist.'); return r; },
     download(actor, id) { need(actor, 'pay.stat.register.export', 'export the registers'); const r = registers.get(actor, id); audit(actor, 'stat_registers', r.id, 'export', actor.companyId, { newValues: { rows: r.row_count } });

@@ -4,6 +4,7 @@ import { ready as qaReady, as, fill, key, U as QU } from './qa-helpers.js';
 import { publishEvent } from '../src/server/platform/events/index.js';
 import { annualTax } from '../src/server/modules/pay/engine.js';
 import { fyOf, tdsOfMonth } from '../src/server/modules/pay/runs.js';
+import { runtimeOf } from '../src/server/platform/runtime/index.js';
 
 // Part 24.02: monthly staff payroll.
 //  T-01 gross to net for sample employees equals the hand calculation; LOP pro-rates the month.
@@ -78,4 +79,25 @@ test('AC-01 payroll from locked inputs: computed, checked, approved PAY → HRMG
   // rights and isolation
   assert.equal((await call(U.se, 'GET', '/runs')).status, 403); assert.equal((await call(U.hr, 'POST', '/runs', { period: '2026-11' })).status, 403);
   assert.equal((await call(as('PAY', 'pay9', '2'), 'GET', `/runs/${run.id}`)).status, 404);
+});
+
+test('D-745 a large payroll run is computed as a background job with progress: refused for approval while it runs, the preparer told when it is done', async () => {
+  const r = await qaReady(opened, { users: Object.values(U) }); const d = r.d; const call = (who, method, path, body, k = key()) => r.api.call(method, `${P}${path}`, { ...who, headers: k, body });
+  const emp = (code) => { const id = fill(d, 'hr_employees', { company_id: 1, emp_code: code, first_name: code, full_name: `Employee ${code}`, gender: 'MALE', dob: '1990-01-01', mobile: '9000000000', employment_type: 'PERMANENT', doj: '2025-01-01', record_status: 'APPROVED', employment_status: 'ACTIVE', salary_payment_mode: 'CASH' }); fill(d, 'hr_employee_statutory', { company_id: 1, employee_id: id, pf_applicable: 1, esi_applicable: 0, pt_state: 'TS' }); return id; };
+  const ids = ['J1', 'J2', 'J3'].map(emp);
+  const sid = (await call(U.pay, 'POST', '/structures', { code: 'STAFF', name: 'Staff', components: ['BASIC', 'HRA', 'SPECIAL', 'PF_EE', 'PT', 'TDS', 'PF_ER', 'EPS_ER', 'EDLI_ER', 'PF_ADMIN'].map((code) => ({ code })) })).json.data.id;
+  for (const id of ids) { const a = await call(U.pay, 'POST', '/assignments', { employeeId: id, structureId: sid, ctcAnnual: 480000, effectiveFrom: '2026-04-01', reason: 'Joining' }); await call(U.pay, 'POST', `/assignments/${a.json.data.id}/submit`); const i = r.wf('pay_assignments', a.json.data.id); await r.act(U.hr, i); await r.act(U.cfo, i); }
+  assert.equal((await call(U.pay, 'POST', '/calendar/generate', { fyStart: '2026-04-01' })).status, 200);
+  for (const id of ids) for (let k = 1; k <= 31; k += 1) fill(d, 'att_daily', { company_id: 1, person_type: 'EMPLOYEE', person_id: id, work_date: `2026-10-${String(k).padStart(2, '0')}`, status: 'PRESENT', paid_day: 1, lop_day: 0, locked: 1, computed_at: '2026-11-01T00:00:00Z', source: 'SYSTEM' });
+  // the company computes runs of more than 2 employees in the background
+  d.prepare("INSERT INTO core_parameters (company_id, key, value, data_type, scope_type, scope_id, effective_from, created_by, source_type) VALUES (1, 'pay.run.async_employees', '2', 'integer', 'company', 1, '2020-01-01', 'test', 'test')").run();
+  const c = await call(U.pay, 'POST', '/runs', { period: '2026-10' }); assert.equal(c.status, 201, JSON.stringify(c.json)); let run = c.json.data;
+  assert.equal(run.computedAt, null); assert.equal(run.computing, true); assert.equal(run.job.status, 'QUEUED'); assert.equal(run.job.employees, 3);
+  assert.equal((await call(U.pay, 'POST', `/runs/${run.id}/compute`)).status, 409, 'not queued twice');
+  const sub = await call(U.pay, 'POST', `/runs/${run.id}/submit`); assert.equal(sub.status, 422); assert.match(sub.json.error.message, /still being computed/);
+  const jobs = runtimeOf(d).jobs; const done = await jobs.runNext(); assert.equal(done.status, 'SUCCEEDED', JSON.stringify(done));
+  run = (await call(U.pay, 'GET', `/runs/${run.id}`)).json.data; assert.equal(run.computing, false); assert.equal(run.job.progress, 100); assert.ok(run.computedAt); assert.equal(run.employees, 3);
+  assert.ok(d.prepare("SELECT 1 FROM core_audit_log WHERE entity = 'pay_runs' AND action = 'queue'").get());
+  const n = d.prepare("SELECT * FROM ntf_notifications WHERE template_code = 'pay.run.alert' AND user_ref LIKE '%pay1%' ORDER BY id DESC").get(); assert.ok(n, 'the preparer is told'); assert.match(`${n.title} ${n.body}`, /computed/);
+  assert.equal((await call(U.pay, 'POST', `/runs/${run.id}/submit`)).status, 202, 'sent once computed');
 });

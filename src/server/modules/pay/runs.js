@@ -5,6 +5,8 @@ import { badRequest, conflict, forbidden, notFound, unprocessable } from '../../
 import { defineList, parseListRequest, runList } from '../../platform/list/index.js';
 import { toCsv } from '../../platform/security/csv.js';
 import { nowIso } from '../proc/base.js';
+import { parameterRegistry } from '../../platform/parameters/index.js';
+import { runtimeOf } from '../../platform/runtime/index.js';
 import { STATUS, createFlow } from '../qa/flow.js';
 import { annualTax, computeBreakup, r2 } from './engine.js';
 
@@ -27,6 +29,8 @@ const daysBetween = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.pa
 export const fyOf = (period) => { const y = Number(period.slice(0, 4)); const m = Number(period.slice(5, 7)); const s = m >= 4 ? y : y - 1; return { code: `${s}-${String((s + 1) % 100).padStart(2, '0')}`, start: `${s}-04`, end: `${s + 1}-03`, left: (m >= 4 ? 16 - m : 4 - m) }; };
 const CAPS = { sec80C: 150000, sec80CCD1B: 50000, sec80D: 100000, sec24b: 200000 };
 export const VARIANCE_PCT = 20;
+// D-745: a run of more employees than this is computed as a background job with progress; smaller runs are computed in the request.
+if (!parameterRegistry.get('pay.run.async_employees')) parameterRegistry.define({ key: 'pay.run.async_employees', dataType: 'integer', default: 500, scopes: ['system', 'company'], description: 'Part 24.02 (D-745): a payroll run of more employees than this is computed as a background job with progress; smaller runs are computed at once.', min: 1, max: 1000000 });
 
 export const payRunList = defineList({
   code: 'pay.runs', label: 'Payroll runs', permission: 'pay.run.view', from: 'pay_runs x', where: 'x.deleted_at IS NULL', searchable: ['x.doc_no', 'x.period'], defaultSort: '-period',
@@ -128,7 +132,7 @@ export function createPayRunService({ db, base, flags, setup, expenses }) {
   // ---- the run (approval-controlled) ----
   const flow = createFlow({ db, base, docType: RUN_DOC, table: 'pay_runs', perm: 'pay.run', label: 'payroll run', route: '/payroll/runs?id=', where: () => ({ pid: null, sid: null }),
     ctx: (r) => ({ total: rs(r.net_paise), period: r.period, makerRole: rolesOf(r.company_id, r.requested_by ?? r.created_by).includes('PAY') ? 'PAY' : 'OTHER' }), title: (r) => `Payroll ${r.period} (${r.run_type.toLowerCase()}): ${r.employees_count} employees, net ₹${rs(r.net_paise)}`, notifyCode: 'pay.run.decided', prefix: 'PRUN',
-    beforeSubmit: (_a, r) => { if (!on(r.company_id)) throw unprocessable('Payroll runs are off for the company (ff.pay.p2402).'); if (!r.computed_at) throw unprocessable('Compute the run first.');
+    beforeSubmit: (_a, r) => { if (!on(r.company_id)) throw unprocessable('Payroll runs are off for the company (ff.pay.p2402).'); if (!r.computed_at) throw unprocessable(JSON.parse(r.inputs_json || '{}').job ? 'The run is still being computed in the background: send it once it is done.' : 'Compute the run first.');
       const blocking = db.prepare("SELECT COUNT(*) AS n FROM pay_run_lines WHERE run_id = ? AND hold = 0 AND deleted_at IS NULL AND flags_json LIKE '%\"BLOCK\"%'").get(r.id).n; if (blocking) throw unprocessable(`${blocking} employee(s) have a blocking check (negative net pay): hold them or correct the inputs.`);
       const stale = db.prepare("SELECT COUNT(*) AS n FROM att_daily d JOIN pay_run_lines l ON l.employee_id = d.person_id AND d.person_type = 'EMPLOYEE' WHERE l.run_id = ? AND l.deleted_at IS NULL AND d.work_date BETWEEN ? AND ? AND d.locked = 0").get(r.id, `${r.period}-01`, monthEnd(r.period)).n; if (stale) throw unprocessable('The attendance of some employees was reopened after the run: compute it again (BR-01).'); },
     onApproved: (actor, r) => lock(actor, db.prepare('SELECT * FROM pay_runs WHERE id = ?').get(r.id)) });
@@ -149,31 +153,53 @@ export function createPayRunService({ db, base, flags, setup, expenses }) {
   const view = (actor, r, detail = false) => {
     const o = { id: r.id, docNo: r.doc_no, period: r.period, type: r.run_type, branchId: r.branch_id, employees: r.employees_count, gross: mask(actor, rs(r.gross_paise)), deductions: mask(actor, rs(r.deductions_paise)), employer: mask(actor, rs(r.employer_paise)), net: mask(actor, rs(r.net_paise)), tds: mask(actor, rs(r.tds_paise)), held: r.held_count, flags: r.flags_count, blocking: r.blocking_count, computedAt: r.computed_at, lockedAt: r.locked_at, status: r.status, statusLabel: STATUS[r.status], requestedBy: r.requested_by, approvedBy: r.approved_by, version: r.version, masked: !seesPay(actor), can: { ...flow.can(actor, r), compute: ['DRAFT', 'RETURNED'].includes(r.status) && may(actor, 'pay.run.edit'), hold: ['DRAFT', 'RETURNED'].includes(r.status) && may(actor, 'pay.run.edit') } };
     if (detail) { const emps = new Map(db.prepare('SELECT e.id, e.emp_code, e.full_name FROM hr_employees e JOIN pay_run_lines l ON l.employee_id = e.id WHERE l.run_id = ?').all(r.id).map((e) => [e.id, e]));
-      o.lines = db.prepare('SELECT * FROM pay_run_lines WHERE run_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id).map((l) => lineView(actor, l, emps.get(l.employee_id))); o.inputs = JSON.parse(r.inputs_json || '{}'); Object.assign(o.can, flow.approveInfo(actor, r)); o.history = flow.history(actor, r.id); }
+      o.lines = db.prepare('SELECT * FROM pay_run_lines WHERE run_id = ? AND deleted_at IS NULL ORDER BY id').all(r.id).map((l) => lineView(actor, l, emps.get(l.employee_id))); o.inputs = JSON.parse(r.inputs_json || '{}'); const jb = o.inputs.job ? db.prepare('SELECT status, progress, progress_message, error FROM core_jobs WHERE job_id = ?').get(o.inputs.job.id) : null; o.job = jb ? { id: o.inputs.job.id, status: jb.status, progress: jb.progress, message: jb.progress_message, error: jb.error, employees: o.inputs.job.employees } : null; o.computing = Boolean(jb && ['QUEUED', 'RUNNING'].includes(jb.status)); Object.assign(o.can, flow.approveInfo(actor, r)); o.history = flow.history(actor, r.id); }
     return o;
   };
   const editable = (actor, id) => { const r = flow.row(actor, id, 'pay.run.edit'); if (!['DRAFT', 'RETURNED'].includes(r.status)) throw conflict('Only a run in draft or returned is changed; after the lock, corrections go in a supplementary run.'); return r; };
   /** FR-01: (re)compute the run: the employees, their months and the totals. A hold is kept across a recomputation. */
-  function compute(actor, r) {
+  /** @param {any} actor @param {any} r @param {((done: number, total: number) => void) | null} [onProgress] */
+  function compute(actor, r, onProgress = null) {
     const c = r.company_id; const end = monthEnd(r.period); const start = `${r.period}-01`; const holds = new Map(db.prepare('SELECT employee_id, hold_reason FROM pay_run_lines WHERE run_id = ? AND hold = 1 AND deleted_at IS NULL').all(r.id).map((h) => [h.employee_id, h.hold_reason]));
     const chosen = JSON.parse(r.inputs_json || '{}').employeeIds ?? null;
     const emps = db.prepare(`SELECT * FROM hr_employees WHERE company_id = ? AND deleted_at IS NULL AND record_status = 'APPROVED' AND doj <= ? AND (last_working_date IS NULL OR last_working_date >= ?)${r.branch_id ? ' AND branch_id = ?' : ''} ORDER BY emp_code`).all(c, end, start, ...(r.branch_id ? [r.branch_id] : [])).filter((e) => !chosen || chosen.includes(e.id));
     const prevRun = db.prepare("SELECT id FROM pay_runs WHERE company_id = ? AND period = ? AND run_type = 'REGULAR' AND status = 'APPROVED' AND deleted_at IS NULL ORDER BY id DESC LIMIT 1").get(c, addMonths(r.period, -1));
     const prevNet = new Map(prevRun ? db.prepare('SELECT employee_id, net_paise FROM pay_run_lines WHERE run_id = ? AND deleted_at IS NULL').all(prevRun.id).map((x) => [x.employee_id, rs(x.net_paise)]) : []);
     const ins = db.prepare("INSERT INTO pay_run_lines (company_id, run_id, employee_id, assignment_id, days_in_month, payable_days, paid_days, lop_days, ot_hours, components_json, gross_paise, taxable_paise, deductions_paise, employer_paise, net_paise, tds_paise, tds_json, wages_json, flags_json, hold, hold_reason, allocation_json, bank_ok, payment_mode, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pay_runs')");
+    // each employee's month is read and computed first (outside the write, so the progress of a background job is visible), then the lines are written at once
+    const cache = new Map(); const results = emps.map((e, i) => { if (onProgress && i % 50 === 0) onProgress(i, emps.length); return { e, x: computeEmployee(c, e, r.period, r, prevNet.get(e.id) ?? null, cache) }; }); if (onProgress) onProgress(emps.length, emps.length);
     return transaction(db, () => {
       db.prepare('DELETE FROM pay_run_lines WHERE run_id = ?').run(r.id); const excluded = []; const T = { n: 0, gross: 0, ded: 0, er: 0, net: 0, tds: 0, held: 0, flags: 0, block: 0 };
-      const cache = new Map(); for (const e of emps) { const x = computeEmployee(c, e, r.period, r, prevNet.get(e.id) ?? null, cache); if (x.excluded) { excluded.push({ employeeId: e.id, employee: `${e.emp_code} ${e.full_name}`, reason: x.excluded, detail: x.detail ?? null }); continue; }
+      for (const { e, x } of results) { if (x.excluded) { excluded.push({ employeeId: e.id, employee: `${e.emp_code} ${e.full_name}`, reason: x.excluded, detail: x.detail ?? null }); continue; }
         const l = x.line; const b = l.breakup; const hold = holds.has(e.id); const totalPay = r2(b.gross + b.employer);
         const alloc = l.allocation.map((a) => ({ ...a, amount: r2(totalPay * a.share) }));
         ins.run(c, r.id, e.id, l.assignmentId, l.daysInMonth, l.payableDays, l.paidDays, l.lopDays, l.otHours, JSON.stringify(b.lines.filter((y) => y.amount || y.full).map((y) => ({ code: y.code, name: y.name, type: y.type, amount: y.amount, full: y.full }))), paise(b.gross), paise(b.taxableGross), paise(b.deductions), paise(b.employer), paise(b.net), paise(l.tds.month ?? 0), JSON.stringify({ ...l.tds, regime: l.regime, used: l.used }), JSON.stringify({ ...b.wages, pfWage: b.pfWage, esiWage: b.esiWage }), JSON.stringify(l.flags), hold ? 1 : 0, holds.get(e.id) ?? null, JSON.stringify(alloc), l.bankOk ? 1 : 0, l.mode, actor.user);
         T.n += 1; T.gross += paise(b.gross); T.ded += paise(b.deductions); T.er += paise(b.employer); T.tds += paise(l.tds.month ?? 0); if (hold) T.held += 1; else T.net += paise(b.net); if (l.flags.some((f) => f.severity !== 'INFO')) T.flags += 1; if (!hold && l.flags.some((f) => f.severity === 'BLOCK')) T.block += 1; }
-      const summary = { ...(chosen ? { employeeIds: chosen } : {}), excluded, attendanceLocked: emps.length - excluded.filter((x) => x.reason !== 'NO_ASSIGNMENT').length, arrears: db.prepare("SELECT COUNT(*) AS n FROM pay_arrears WHERE company_id = ? AND arrear_status = 'PENDING' AND arrear_month <= ?").get(c, r.period).n, inputs: db.prepare("SELECT COUNT(*) AS n FROM pay_inputs WHERE company_id = ? AND input_status = 'PENDING' AND period <= ? AND deleted_at IS NULL").get(c, r.period).n };
+      const prevJob = JSON.parse(r.inputs_json || '{}').job; const summary = { ...(chosen ? { employeeIds: chosen } : {}), ...(prevJob ? { job: prevJob } : {}), excluded, attendanceLocked: emps.length - excluded.filter((x) => x.reason !== 'NO_ASSIGNMENT').length, arrears: db.prepare("SELECT COUNT(*) AS n FROM pay_arrears WHERE company_id = ? AND arrear_status = 'PENDING' AND arrear_month <= ?").get(c, r.period).n, inputs: db.prepare("SELECT COUNT(*) AS n FROM pay_inputs WHERE company_id = ? AND input_status = 'PENDING' AND period <= ? AND deleted_at IS NULL").get(c, r.period).n };
       db.prepare('UPDATE pay_runs SET employees_count = ?, gross_paise = ?, deductions_paise = ?, employer_paise = ?, net_paise = ?, tds_paise = ?, held_count = ?, flags_count = ?, blocking_count = ?, inputs_json = ?, computed_at = ?, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(T.n, T.gross, T.ded, T.er, T.net, T.tds, T.held, T.flags, T.block, JSON.stringify(summary), nowIso(), actor.user, nowIso(), r.id);
       audit(actor, 'pay_runs', r.id, 'compute', c, { newValues: { employees: T.n, excluded: excluded.length, net: rs(T.net) } }); });
   }
+  const empCount = (r) => { const chosen = JSON.parse(r.inputs_json || '{}').employeeIds ?? null; if (chosen) return chosen.length; return db.prepare(`SELECT COUNT(*) AS n FROM hr_employees WHERE company_id = ? AND deleted_at IS NULL AND record_status = 'APPROVED' AND doj <= ? AND (last_working_date IS NULL OR last_working_date >= ?)${r.branch_id ? ' AND branch_id = ?' : ''}`).get(r.company_id, monthEnd(r.period), `${r.period}-01`, ...(r.branch_id ? [r.branch_id] : [])).n; };
+  /** D-745: a large run is queued as the job `pay.run.compute` (progress, cancellation, the preparer told when it is done); a small one is computed at once. */
+  function computeOrQueue(actor, r) {
+    const limit = Number(base.param(r.company_id, 'pay.run.async_employees') ?? 500); const n = empCount(r); const jobs = runtimeOf(db)?.jobs;
+    if (!jobs || n <= limit) { compute(actor, r); return; }
+    const pending = JSON.parse(r.inputs_json || '{}').job; if (pending && db.prepare("SELECT 1 FROM core_jobs WHERE job_id = ? AND status IN ('QUEUED', 'RUNNING')").get(pending.id)) throw conflict('The run is being computed already: wait for it to finish.');
+    const job = jobs.enqueue('pay.run.compute', { runId: r.id, user: actor.user }, { createdBy: actor.user, companyId: r.company_id });
+    db.prepare('UPDATE pay_runs SET inputs_json = ?, computed_at = NULL, updated_by = ?, updated_at = ?, version = version + 1 WHERE id = ?').run(JSON.stringify({ ...JSON.parse(r.inputs_json || '{}'), job: { id: job.jobId, queuedAt: nowIso(), employees: n } }), actor.user, nowIso(), r.id);
+    audit(actor, 'pay_runs', r.id, 'queue', r.company_id, { newValues: { jobId: job.jobId, employees: n } });
+  }
+  /** The background job: computes the run with progress, then tells the preparer. */
+  function runJob(ctx) {
+    const r = db.prepare('SELECT * FROM pay_runs WHERE id = ?').get(Number(ctx.params.runId)); if (!r || !['DRAFT', 'RETURNED'].includes(r.status)) { ctx.log('The run is no longer in draft: nothing to compute.'); return { skipped: true }; }
+    const actor = { user: ctx.params.user, roles: rolesOf(r.company_id, ctx.params.user), companyId: r.company_id };
+    compute(actor, r, (done, total) => { ctx.setProgress(total ? (done * 100) / total : 100, `${done} of ${total} employees`); ctx.throwIfCancelled(); });
+    const x = db.prepare('SELECT * FROM pay_runs WHERE id = ?').get(r.id); ctx.log(`Computed ${x.employees_count} employee(s), net ${rs(x.net_paise)}`);
+    notify(r.company_id, 'pay.run.alert', [`user:${ctx.params.user}`], r.doc_no, 'computed', `The payroll of ${r.period} is computed: ${x.employees_count} employee(s), net ₹${rs(x.net_paise)}. Review it and send it for approval.`, `/payroll/runs?id=${r.id}`, `${r.id}-computed-${ctx.jobId}`);
+    return { runId: r.id, employees: x.employees_count };
+  }
   const runs = {
-    flow,
+    flow, runJob,
     list(actor, query) { need(actor, 'pay.run.view', 'see payroll runs'); return runList(db, payRunList, parseListRequest(payRunList, query), { select: 'x.*', scopeSql: 'x.company_id = :c', params: { c: actor.companyId }, tieBreaker: 'x.id', map: (r) => view(actor, r) }); },
     get(actor, id) { return view(actor, flow.row(actor, id), true); },
     /** FR-01 step 1: the readiness of a period — attendance locked, pending arrears and inputs, advances due, employees without pay. */
@@ -190,9 +216,9 @@ export function createPayRunService({ db, base, flags, setup, expenses }) {
       if (type === 'SUPPLEMENTARY') { if (!b.employeeIds?.length) throw badRequest('Correct the highlighted fields', [{ field: 'employeeIds', message: 'Choose the employees of the supplementary run.' }]); if (!db.prepare("SELECT 1 FROM pay_runs WHERE company_id = ? AND period = ? AND run_type = 'REGULAR' AND status = 'APPROVED' AND deleted_at IS NULL").get(c, b.period)) throw unprocessable('A supplementary run follows the locked regular run of the period.'); }
       let id; try { id = Number(db.prepare("INSERT INTO pay_runs (company_id, doc_no, period, period_id, run_type, branch_id, inputs_json, created_by, source_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'api')").run(c, flow.next(actor), b.period, cal.id, type, b.branchId ?? null, JSON.stringify(type === 'SUPPLEMENTARY' ? { employeeIds: b.employeeIds.map(Number) } : {}), actor.user).lastInsertRowid); } catch (x) { if (/UNIQUE/.test(String(x.message))) throw conflict(`The regular run of ${b.period} exists already.`); throw x; }
       if (type === 'REGULAR') db.prepare("UPDATE pay_calendar SET cal_status = 'PROCESSING' WHERE id = ? AND cal_status = 'OPEN'").run(cal.id);
-      audit(actor, 'pay_runs', id, 'create', c, { newValues: { period: b.period, type } }); compute(actor, db.prepare('SELECT * FROM pay_runs WHERE id = ?').get(id)); return runs.get(actor, id);
+      audit(actor, 'pay_runs', id, 'create', c, { newValues: { period: b.period, type } }); computeOrQueue(actor, db.prepare('SELECT * FROM pay_runs WHERE id = ?').get(id)); return runs.get(actor, id);
     },
-    recompute(actor, id) { const r = editable(actor, id); compute(actor, r); return runs.get(actor, r.id); },
+    recompute(actor, id) { const r = editable(actor, id); computeOrQueue(actor, r); return runs.get(actor, r.id); },
     /** FR-05: hold or release the salary of an employee of the run, with the reason. */
     hold(actor, id, lineId, { hold, reason }) { const r = editable(actor, id); const l = db.prepare('SELECT * FROM pay_run_lines WHERE id = ? AND run_id = ? AND deleted_at IS NULL').get(Number(lineId), r.id); if (!l) throw notFound('That employee is not in the run.');
       if (hold && (reason ?? '').trim().length < 5) throw badRequest('Correct the highlighted fields', [{ field: 'reason', message: 'Say why the salary is held.' }]);

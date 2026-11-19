@@ -119,4 +119,6 @@ export default {
   "dc.st.SUBMITTED": "With payroll",
   "dc.st.VERIFIED": "Verified",
   "dc.st.RETURNED": "Returned",
+  "pr.computing": "Being computed in the background: {p} % ({msg}). The page refreshes; you are told when it is done.",
+  "pr.computeFailed": "The background computation failed: {e}. Compute it again.",
 };
