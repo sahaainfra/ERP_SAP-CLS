@@ -379,5 +379,8 @@
  ],
  "pay.structure.configure": [
   "PAY"
+ ],
+ "pay.input.manage": [
+  "PAY"
  ]
 }

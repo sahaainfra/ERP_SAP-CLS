@@ -1,5 +1,5 @@
 // npm run erp:pay-perf -- [--queries 30]
-// Parts 24.01 to 24.03 §14: payroll at volume — 2,000 employees and 100,000 pay assignments (24.01); times the screens and the saves: the assignment list (first
+// Parts 24.01 to 24.03 §14: payroll at volume — 2,000 employees and 100,000 pay assignments (24.01); a month's run for the 2,000 and 98,000 run lines before it (24.02); times the screens and the saves: the assignment list (first
 // page, a status), one assignment with its breakup, a CTC preview, an assignment saved. The standard (05_GLOBAL_STANDARDS §11): p95 <= 500 ms for a list,
 // <= 300 ms for one record, <= 800 ms for a save. Prints the query plans.
 import '../src/server/modules/registry.js';
@@ -8,6 +8,7 @@ import { migrateUp } from '../src/server/platform/db/index.js';
 import { createBase } from '../src/server/modules/proc/base.js';
 import { createStatutoryService } from '../src/server/modules/mdm/statutory.js';
 import { createPaySetupService } from '../src/server/modules/pay/setup.js';
+import { createPayRunService } from '../src/server/modules/pay/runs.js';
 
 const args = process.argv.slice(2);
 const queries = Number(args.includes('--queries') ? args[args.indexOf('--queries') + 1] : 30);
@@ -33,6 +34,19 @@ time('pay assignment list, those waiting for approval', 500, () => s.assignments
 time('one assignment with its breakup', 300, (i) => s.assignments.get(pay, 1 + (i * 997) % 100000));
 time('CTC breakup preview of a structure for an employee', 300, (i) => s.structures.preview(pay, { structureId: st.id, ctcAnnual: 600000 + i * 1000, employeeId: emps[i % 2000], date: '2026-10-01' }));
 time('an assignment saved (validated and computed)', 800, (i) => { const a = s.assignments.create(pay, { employeeId: emps[i * 10 + 1], structureId: st.id, ctcAnnual: 720000, effectiveFrom: '2026-10-01', reason: 'perf' }); db.prepare("UPDATE pay_assignments SET status = 'CANCELLED' WHERE id = ?").run(a.id); }, Math.min(queries, 50));
+// 24.02: the payroll of October for the 2,000 employees (a month of locked attendance each: 62,000 days), and 49 locked runs of 2,000 lines before it (98,000 lines)
+const rsvc = createPayRunService({ db, base, flags, setup: s, expenses: () => null });
+s.calendar.generate(pay, { fyStart: '2026-04-01' });
+db.exec('BEGIN'); const insD = db.prepare("INSERT INTO att_daily (company_id, person_type, person_id, work_date, status, paid_day, lop_day, locked, computed_at, source) VALUES (1, 'EMPLOYEE', ?, ?, 'PRESENT', 1, 0, 1, '2026-11-01', 'SYSTEM')");
+for (const e of emps) for (let d = 1; d <= 31; d += 1) insD.run(e, `2026-10-${String(d).padStart(2, '0')}`);
+db.prepare("UPDATE pay_assignments SET effective_to = NULL WHERE id IN (SELECT MAX(id) FROM pay_assignments GROUP BY employee_id)").run(); db.prepare("UPDATE pay_assignments SET status = 'APPROVED'").run();
+const insR = db.prepare("INSERT INTO pay_runs (company_id, doc_no, period, run_type, employees_count, status, created_by) VALUES (1, ?, ?, 'REGULAR', 2000, 'APPROVED', 'perf')"); const insL = db.prepare("INSERT INTO pay_run_lines (company_id, run_id, employee_id, days_in_month, payable_days, gross_paise, net_paise, created_by) VALUES (1, ?, ?, 30, 30, 5000000, 4500000, 'perf')");
+for (let k = 0; k < 49; k += 1) { const rid = Number(insR.run(`PRUN/P${k}`, `${2020 + Math.floor(k / 12)}-${String(1 + (k % 12)).padStart(2, '0')}`).lastInsertRowid); for (const e of emps) insL.run(rid, e); }
+db.exec('COMMIT'); db.exec('ANALYZE');
+let run = null; time('the payroll of a month computed for 2,000 employees (a save run as one request)', 8000, () => { if (run) { db.prepare('DELETE FROM pay_run_lines WHERE run_id = ?').run(run.id); db.prepare('DELETE FROM pay_runs WHERE id = ?').run(run.id); db.prepare("UPDATE pay_calendar SET cal_status = 'OPEN'").run(); } run = rsvc.runs.create(pay, { period: '2026-10' }); }, 3);
+time('payroll run list, first page (50 runs, 100 000 lines)', 500, () => rsvc.runs.list(pay, {}));
+time('one run with its 2,000 lines', 800, () => rsvc.runs.get(pay, run.id), 5);
+time('variance against last month (2,000 employees)', 500, () => rsvc.runs.variance(pay, run.id), 5);
 const plan = (label, sql) => { console.log(`- ${label}`); for (const r of db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all()) console.log(`    ${r.detail}`); };
 plan('the current assignment of an employee', "SELECT * FROM pay_assignments WHERE employee_id = 5 AND status = 'APPROVED' AND deleted_at IS NULL AND effective_to IS NULL ORDER BY effective_from DESC LIMIT 1");
 plan('assignments waiting for approval', "SELECT x.* FROM pay_assignments x WHERE x.company_id = 1 AND x.deleted_at IS NULL AND x.status = 'SUBMITTED' ORDER BY x.effective_from DESC LIMIT 25");

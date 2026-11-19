@@ -10,7 +10,9 @@ import { createBase } from '../proc/base.js';
 import { STATUS } from '../qa/flow.js';
 import { createStatutoryService } from '../mdm/statutory.js';
 import { ASSIGNMENT_DOC, STATUTORY_DOC, createPaySetupService } from './setup.js';
-import { setupRoutes } from './routes.js';
+import { RUN_DOC, createPayRunService } from './runs.js';
+import { runRoutes, setupRoutes } from './routes.js';
+import { expensesOf } from '../hr/expenses.js';
 
 // Payroll and statutory compliance (module M24, code pay): payroll set-up (24.01).
 const services = new WeakMap();
@@ -21,13 +23,14 @@ const inr = (p) => `₹${((p ?? 0) / 100).toLocaleString('en-IN', { minimumFract
 const schema = { type: 'object', properties: {}, required: [] };
 for (const [type, description] of [
   ['pay.assignment.approved', 'An employee pay assignment or revision was approved (part 24.01): data { assignmentId, docNo, employeeId, structureId, kind, ctcAnnual, grossMonthly, effectiveFrom, arrears }. The monthly pay of the employee is set from the date; arrears of a retro-dated revision are paid by the next payroll run (24.02).'],
+  ['pay.run.approved', 'A payroll run was approved by the CFO and locked (part 24.02): data { runId, docNo, period, type, branchId, employees, gross, deductions, employer, net, tds, held }. Statutory returns (24.04) and posting and payment (24.05) read it.'],
   ['pay.statutory.approved', 'A statutory parameter change was approved by the CFO (part 24.01): data { paramId, code, state, effectiveFrom, params }. Payroll reads it from its date.'],
 ]) eventTypes.define({ type, version: 1, schema, owner: 'pay', description });
 
 integrityRegistry.register({
   companyOptional: ['pay_components', 'pay_statutory_params'],
-  statuses: { pay_assignments: Object.keys(STATUS), pay_statutory_params: Object.keys(STATUS) },
-  uniqueKeys: [{ table: 'pay_assignments', columns: ['company_id', 'doc_no'] }],
+  statuses: { pay_assignments: Object.keys(STATUS), pay_statutory_params: Object.keys(STATUS), pay_runs: Object.keys(STATUS) },
+  uniqueKeys: [{ table: 'pay_assignments', columns: ['company_id', 'doc_no'] }, { table: 'pay_runs', columns: ['company_id', 'doc_no'] }],
 });
 
 const step = (code, name, role, slaHours, when = null) => ({ code, name, type: 'approval', mode: 'single', approvers: [{ kind: 'role', role }], slaHours, requireAttachment: false, checklist: [], when, notify: [], action: null });
@@ -49,25 +52,35 @@ workflowTypes.register({
   hooks: hooks((s) => s?.setup.statutoryParams),
 });
 
+workflowTypes.register({
+  docType: RUN_DOC, label: 'Payroll run', processOwner: 'CFO', route: (id) => `/payroll/runs?id=${id}`,
+  describe(db, companyId, id) { const r = db.prepare('SELECT * FROM pay_runs WHERE id = ?').get(Number(id)); return r && r.company_id === companyId ? { ref: r.doc_no, title: `Payroll ${r.period} (${r.run_type.toLowerCase()}): ${r.employees_count} employees`, originator: r.requested_by } : null; },
+  summarise(db, _actor, id) { const r = db.prepare('SELECT * FROM pay_runs WHERE id = ?').get(Number(id)); if (!r) return null; const x = JSON.parse(r.inputs_json || '{}');
+    return { fields: [{ label: 'Period / type', value: `${r.period} · ${r.run_type}` }, { label: 'Employees', value: `${r.employees_count}${x.excluded?.length ? ` (${x.excluded.length} left out: attendance not locked or no pay)` : ''}` }, { label: 'Gross / deductions', value: `${inr(r.gross_paise)} / ${inr(r.deductions_paise)}` }, { label: 'Net (held)', value: `${inr(r.net_paise)} (${r.held_count} held)` }, { label: 'Employer contributions / TDS', value: `${inr(r.employer_paise)} / ${inr(r.tds_paise)}` }, { label: 'Checks raised', value: String(r.flags_count) }] }; },
+  defaultDefinition: { name: 'Payroll run: the payroll team prepares, the HR manager and the CFO approve', settings: { resubmit: 'first', distinctApprovers: true }, steps: [step('HRMGR', 'HR manager', 'HRMGR', 24), step('CFO', 'CFO', 'CFO', 24)] },
+  hooks: hooks((s) => s?.runs.runs),
+});
+
 export const pay = {
   code: 'pay',
   name: 'Payroll and statutory compliance',
   routePrefix: '/api/v1/pay',
   ownerPart: '24.01',
   status: 'Pay components with formulas of the calculation engine and Code-on-Wages classes; salary structures with the CTC breakup; employee pay assignments and revisions (HRMGR -> CFO, the director for senior grades) with arrears; statutory parameters by date and state (PAY -> CFO); the payroll calendar.',
-  tables: ['pay_components', 'pay_structures', 'pay_assignments', 'pay_arrears', 'pay_statutory_params', 'pay_calendar'],
-  resources: ['components', 'structures', 'assignments', 'arrears', 'statutory-params', 'calendar', 'employees'],
+  tables: ['pay_components', 'pay_structures', 'pay_assignments', 'pay_arrears', 'pay_statutory_params', 'pay_calendar', 'pay_runs', 'pay_run_lines', 'pay_inputs', 'pay_tax_declarations'],
+  resources: ['components', 'structures', 'assignments', 'arrears', 'statutory-params', 'calendar', 'employees', 'runs', 'inputs', 'declarations'],
   mount(api, { db, config: appConfig }) {
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_components'").get()) return;
     const flags = createFlagService({ db, environment: appConfig.environment }); const base = createBase({ db });
     const statutory = createStatutoryService({ db, flags: null });
     const setup = createPaySetupService({ db, base, flags, statutory });
-    const ctx = { setup, base, flags };
+    const runs = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_runs'").get() ? createPayRunService({ db, base, flags, setup, expenses: () => expensesOf(db) }) : null;
+    const ctx = { setup, runs, base, flags };
     services.set(db, ctx);
     listExports.register('pay.assignments', { source: (actor, req) => { base.need(actor, 'pay.assignment.export', 'export pay assignments'); return setup.assignments.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: (actor) => (base.may(actor, 'pay.salary.view') ? [] : ['ctcAnnual', 'grossMonthly', 'arrears']) });
     runtimeOf(db)?.bus?.subscribe('perf.review.approved', (e) => { setup.assignments.onRating(e); }, { consumer: 'pay.rating' }); // D-361
     const r = Router(); const h = { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags };
-    setupRoutes(r, setup, h);
+    setupRoutes(r, setup, h); if (runs) { runRoutes(r, runs, h); const bus = runtimeOf(db)?.bus; bus?.subscribe('lv.encashment.input', (e) => { runs.consumers.onEncashment(e); }, { consumer: 'pay.encashment' }); bus?.subscribe('inv.asset.recovery_approved', (e) => { runs.consumers.onLossRecovery(e); }, { consumer: 'pay.loss_recovery' }); }
     api.use('/pay', r);
   },
 };

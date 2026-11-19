@@ -1,5 +1,5 @@
 import { notFound } from '../../platform/http/errors.js';
-import { parseArrears, parseAssignment, parseAssignmentUpdate, parseCalendarGen, parseCalendarQuery, parseCalendarUpdate, parseComponent, parseEmpQuery, parseFormulaTest, parseId, parsePreview, parseReason, parseStatParam, parseStatParamUpdate, parseStatQuery, parseStructure } from './validators.js';
+import { parseDeclQuery, parseDeclaration, parseFy, parseHold, parseInput, parseInputQuery, parseReadiness, parseRunCreate, parseVerify, parseArrears, parseAssignment, parseAssignmentUpdate, parseCalendarGen, parseCalendarQuery, parseCalendarUpdate, parseComponent, parseEmpQuery, parseFormulaTest, parseId, parsePreview, parseReason, parseStatParam, parseStatParamUpdate, parseStatQuery, parseStructure } from './validators.js';
 
 /** Part 24.01: payroll set-up under /api/v1/pay, behind ff.pay.p2401. Rights are checked in the services. */
 export function setupRoutes(r, s, { idempotent, idempotentRequired, flags }) {
@@ -38,5 +38,35 @@ export function setupRoutes(r, s, { idempotent, idempotentRequired, flags }) {
   r.get('/calendar', (req, res) => ok(res, s.calendar.list(req.actor, parseCalendarQuery(req.query))));
   r.post('/calendar/generate', idempotentRequired, (req, res) => ok(res, s.calendar.generate(req.actor, parseCalendarGen(req.body))));
   r.patch('/calendar/:id', idempotent, (req, res) => ok(res, s.calendar.update(req.actor, pid(req), parseCalendarUpdate(req.body))));
+  return r;
+}
+
+/** Part 24.02: payroll runs, inputs and tax declarations under /api/v1/pay, behind ff.pay.p2402. */
+export function runRoutes(r, s, { idempotent, idempotentRequired, flags }) {
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const file = (res, f) => res.status(200).set({ 'content-type': f.contentType, 'content-disposition': `attachment; filename="${f.fileName}"`, 'cache-control': 'no-store' }).send(f.buffer);
+  const pid = (req) => parseId(req.params.id);
+  r.use(['/runs', '/inputs', '/declarations'], (req, _res, next) => (flags.isOn(req.actor, 'ff.pay.p2402') ? next() : next(notFound('Payroll runs are not enabled for your company yet (feature flag ff.pay.p2402 is OFF).'))));
+  r.get('/runs/readiness', (req, res) => ok(res, s.runs.readiness(req.actor, parseReadiness(req.query))));
+  r.get('/runs', (req, res) => res.json(s.runs.list(req.actor, req.query)));
+  r.post('/runs', idempotentRequired, (req, res) => ok(res, s.runs.create(req.actor, parseRunCreate(req.body)), 201));
+  r.get('/runs/:id', (req, res) => ok(res, s.runs.get(req.actor, pid(req))));
+  r.delete('/runs/:id', (req, res) => ok(res, s.runs.remove(req.actor, pid(req))));
+  r.post('/runs/:id/compute', idempotent, (req, res) => ok(res, s.runs.recompute(req.actor, pid(req))));
+  r.post('/runs/:id/lines/:lineId/hold', idempotent, (req, res) => ok(res, s.runs.hold(req.actor, pid(req), parseId(req.params.lineId), parseHold(req.body))));
+  r.post('/runs/:id/submit', idempotentRequired, (req, res) => ok(res, s.runs.submit(req.actor, pid(req)), 202));
+  r.post('/runs/:id/withdraw', idempotent, (req, res) => ok(res, s.runs.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/runs/:id/cancel', idempotent, (req, res) => ok(res, s.runs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/runs/:id/history', (req, res) => ok(res, s.runs.history(req.actor, pid(req))));
+  r.get('/runs/:id/variance', (req, res) => ok(res, s.runs.variance(req.actor, pid(req))));
+  r.get('/runs/:id/print', (req, res) => file(res, s.runs.print(req.actor, pid(req))));
+  r.get('/runs/:id/export', (req, res) => file(res, s.runs.exportCsv(req.actor, pid(req))));
+  r.get('/inputs', (req, res) => ok(res, s.inputs.list(req.actor, parseInputQuery(req.query))));
+  r.post('/inputs', idempotentRequired, (req, res) => ok(res, s.inputs.add(req.actor, parseInput(req.body)), 201));
+  r.post('/inputs/:id/cancel', idempotent, (req, res) => ok(res, s.inputs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.get('/declarations/mine', (req, res) => ok(res, s.declarations.mine(req.actor, parseFy(req.query))));
+  r.post('/declarations/mine', idempotentRequired, (req, res) => ok(res, s.declarations.saveMine(req.actor, parseDeclaration(req.body))));
+  r.get('/declarations', (req, res) => ok(res, s.declarations.list(req.actor, parseDeclQuery(req.query))));
+  r.post('/declarations/:id/verify', idempotentRequired, (req, res) => ok(res, s.declarations.verify(req.actor, pid(req), parseVerify(req.body))));
   return r;
 }

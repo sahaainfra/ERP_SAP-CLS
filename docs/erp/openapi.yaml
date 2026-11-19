@@ -10655,3 +10655,83 @@ paths:
     patch:
       summary: "payroll set-up: cut-offs and pay date of an open period (part 24.01; pay.calendar.configure)"
       responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2401 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/readiness:
+    get:
+      summary: "payroll run: the inputs check of a period: attendance locked, arrears, inputs, advances, the regular run { period, branchId? } (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs:
+    get:
+      summary: "payroll run: payroll runs (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll run: create and compute a run { period, type?, branchId?, employeeIds? } (part 24.02; pay.run.create)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}:
+    get:
+      summary: "payroll run: one run with its lines (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    delete:
+      summary: "payroll run: delete a draft (part 24.02; pay.run.delete)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/compute:
+    post:
+      summary: "payroll run: compute again (draft or returned) (part 24.02; pay.run.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/lines/{lineId}/hold:
+    post:
+      summary: "payroll run: hold or release a salary { hold, reason } (part 24.02; pay.run.edit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/submit:
+    post:
+      summary: "payroll run: send for approval PAY → HRMGR → CFO (part 24.02; pay.run.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/withdraw:
+    post:
+      summary: "payroll run: withdraw { reason } (part 24.02; pay.run.submit)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/cancel:
+    post:
+      summary: "payroll run: cancel { reason } (part 24.02; pay.run.cancel)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/history:
+    get:
+      summary: "payroll run: approval history (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/variance:
+    get:
+      summary: "payroll run: each employee against last month (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/print:
+    get:
+      summary: "payroll run: the payroll register PDF (part 24.02; pay.run.print)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/runs/{id}/export:
+    get:
+      summary: "payroll run: the payroll register CSV with every component (part 24.02; pay.run.export)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/inputs:
+    get:
+      summary: "payroll run: payroll inputs { period?, status? } (part 24.02; pay.run.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll run: an input { employeeId, period, code, amount, note } (part 24.02; pay.input.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/inputs/{id}/cancel:
+    post:
+      summary: "payroll run: cancel a pending input { reason } (part 24.02; pay.input.manage)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/declarations/mine:
+    get:
+      summary: "payroll run: my tax declaration of a year { fy } (part 24.02; pay.declaration.own)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+    post:
+      summary: "payroll run: save or send my declaration { fy, regime, declarations, proofs?, submit? } (part 24.02; pay.declaration.own)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/declarations:
+    get:
+      summary: "payroll run: declarations { fy?, status? } (part 24.02; pay.declaration.view)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }
+  /api/v1/pay/declarations/{id}/verify:
+    post:
+      summary: "payroll run: verify or return { action, verified?, note? } (part 24.02; pay.declaration.verify)"
+      responses: { '200': { description: ok }, '400': { description: invalid input }, '403': { description: no right }, '404': { description: not found or ff.pay.p2402 OFF }, '409': { description: conflict }, '422': { description: a business rule refused it } }

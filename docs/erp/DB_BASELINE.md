@@ -20952,6 +20952,151 @@ Indexes:
 - ix_pay_components_list: company_id, comp_type, sequence
 - ux_pay_components_code (unique): , code
 
+## pay_inputs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| period | TEXT | yes |  |  |
+| component_code | TEXT | yes |  |  |
+| amount_paise | INTEGER |  |  |  |
+| qty_milli | INTEGER |  |  |  |
+| basis | TEXT | yes |  | 'AMOUNT' |
+| note | TEXT |  |  |  |
+| input_status | TEXT | yes |  | 'PENDING' |
+| run_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: run_id -> pay_runs(id), employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_inputs_run_id: run_id
+- ix_pay_inputs_company: company_id, period, input_status
+- ix_pay_inputs_employee: employee_id, input_status, period
+- ux_pay_inputs_source (unique): company_id, source_type, source_id
+
+## pay_run_lines
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| run_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| assignment_id | INTEGER |  |  |  |
+| days_in_month | INTEGER | yes |  |  |
+| payable_days | REAL | yes |  | 0 |
+| paid_days | REAL | yes |  | 0 |
+| lop_days | REAL | yes |  | 0 |
+| ot_hours | REAL | yes |  | 0 |
+| components_json | TEXT | yes |  | '[]' |
+| gross_paise | INTEGER | yes |  | 0 |
+| taxable_paise | INTEGER | yes |  | 0 |
+| deductions_paise | INTEGER | yes |  | 0 |
+| employer_paise | INTEGER | yes |  | 0 |
+| net_paise | INTEGER | yes |  | 0 |
+| tds_paise | INTEGER | yes |  | 0 |
+| tds_json | TEXT | yes |  | '{}' |
+| wages_json | TEXT | yes |  | '{}' |
+| flags_json | TEXT | yes |  | '[]' |
+| hold | INTEGER | yes |  | 0 |
+| hold_reason | TEXT |  |  |  |
+| hold_released_at | TEXT |  |  |  |
+| allocation_json | TEXT | yes |  | '[]' |
+| bank_ok | INTEGER | yes |  | 0 |
+| payment_mode | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: assignment_id -> pay_assignments(id), employee_id -> hr_employees(id), run_id -> pay_runs(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_run_lines_assignment: assignment_id
+- ix_pay_run_lines_employee: employee_id, company_id
+- ix_pay_run_lines_company_id: company_id
+- ix_pay_run_lines_run_id: run_id
+- ux_pay_run_lines_emp (unique): run_id, employee_id
+
+## pay_runs
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| doc_no | TEXT | yes |  |  |
+| period | TEXT | yes |  |  |
+| period_id | INTEGER |  |  |  |
+| run_type | TEXT | yes |  | 'REGULAR' |
+| branch_id | INTEGER |  |  |  |
+| employees_count | INTEGER | yes |  | 0 |
+| gross_paise | INTEGER | yes |  | 0 |
+| deductions_paise | INTEGER | yes |  | 0 |
+| employer_paise | INTEGER | yes |  | 0 |
+| net_paise | INTEGER | yes |  | 0 |
+| tds_paise | INTEGER | yes |  | 0 |
+| held_count | INTEGER | yes |  | 0 |
+| flags_count | INTEGER | yes |  | 0 |
+| blocking_count | INTEGER | yes |  | 0 |
+| inputs_json | TEXT | yes |  | '{}' |
+| computed_at | TEXT |  |  |  |
+| locked_at | TEXT |  |  |  |
+| status | TEXT | yes |  | 'DRAFT' |
+| requested_by | TEXT |  |  |  |
+| approved_by | TEXT |  |  |  |
+| approved_at | TEXT |  |  |  |
+| workflow_instance_id | INTEGER |  |  |  |
+| cancel_reason | TEXT |  |  |  |
+| amends_id | INTEGER |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: amends_id -> pay_runs(id), branch_id -> org_branches(id), period_id -> pay_calendar(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_runs_amends: amends_id
+- ix_pay_runs_wf: workflow_instance_id
+- ix_pay_runs_branch: branch_id
+- ix_pay_runs_period_id: period_id
+- ix_pay_runs_list: company_id, period, status
+- ux_pay_runs_regular (unique): company_id, period, 
+- ux_pay_runs_doc (unique): company_id, doc_no
+
 ## pay_statutory_params
 
 | Column | Type | Not null | Key | Default |
@@ -21029,6 +21174,43 @@ Indexes:
 - ix_pay_structures_prev: previous_id
 - ix_pay_structures_list: company_id, grade, structure_status
 - ux_pay_structures_active (unique): company_id, code
+
+## pay_tax_declarations
+
+| Column | Type | Not null | Key | Default |
+|---|---|---|---|---|
+| id | INTEGER |  | PK |  |
+| company_id | INTEGER | yes |  |  |
+| employee_id | INTEGER | yes |  |  |
+| fy | TEXT | yes |  |  |
+| regime | TEXT | yes |  | 'NEW' |
+| declarations_json | TEXT | yes |  | '{}' |
+| proofs_json | TEXT | yes |  | '[]' |
+| verified_json | TEXT | yes |  | '{}' |
+| decl_status | TEXT | yes |  | 'DRAFT' |
+| submitted_at | TEXT |  |  |  |
+| verified_by | TEXT |  |  |  |
+| verified_at | TEXT |  |  |  |
+| verify_note | TEXT |  |  |  |
+| project_id | INTEGER |  |  |  |
+| site_id | INTEGER |  |  |  |
+| created_by | TEXT |  |  |  |
+| created_at | TEXT | yes |  | strftime('%Y-%m-%dT%H:%M:%fZ','now') |
+| updated_by | TEXT |  |  |  |
+| updated_at | TEXT |  |  |  |
+| version | INTEGER | yes |  | 1 |
+| is_active | INTEGER | yes |  | 1 |
+| deleted_at | TEXT |  |  |  |
+| deleted_by | TEXT |  |  |  |
+| source_type | TEXT |  |  |  |
+| source_id | TEXT |  |  |  |
+| remarks | TEXT |  |  |  |
+
+Foreign keys: employee_id -> hr_employees(id), company_id -> org_companies(id)
+
+Indexes:
+- ix_pay_tax_declarations_company: company_id, fy, decl_status
+- ux_pay_tax_declarations_emp (unique): employee_id, fy
 
 ## pcs_check_results
 

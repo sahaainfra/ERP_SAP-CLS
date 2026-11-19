@@ -36,3 +36,22 @@ export const setup = {
   generateCalendar: (b) => post('/calendar/generate', b),
   updatePeriod: (id, b) => patch(`/calendar/${id}`, b),
 };
+
+// ---- 24.02 ----
+export const runs = {
+  readiness: (f) => get(`/runs/readiness?${q(f)}`),
+  list: (f) => get(`/runs?${q(f)}`),
+  get: (id) => get(`/runs/${id}`),
+  create: (b) => post('/runs', b),
+  compute: (id) => post(`/runs/${id}/compute`),
+  hold: (id, lineId, b) => post(`/runs/${id}/lines/${lineId}/hold`, b),
+  act: (id, action, b) => post(`/runs/${id}/${action}`, b),
+  remove: (id) => del(`/runs/${id}`),
+  variance: (id) => get(`/runs/${id}/variance`),
+  inputs: (f) => get(`/inputs?${q(f)}`),
+  addInput: (b) => post('/inputs', b),
+  myDeclaration: (f) => get(`/declarations/mine?${q(f)}`),
+  saveDeclaration: (b) => post('/declarations/mine', b),
+  declarations: (f) => get(`/declarations?${q(f)}`),
+  verify: (id, b) => post(`/declarations/${id}/verify`, b),
+};

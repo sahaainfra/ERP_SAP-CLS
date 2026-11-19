@@ -31,3 +31,16 @@ export const parseCalendarUpdate = (b) => parse(z.object({ attendanceCutoff: dat
 export const parseCalendarQuery = (q) => parse(z.object({ fy: z.string().regex(/^\d{4}/).optional() }).strict(), q ?? {});
 export const parseEmpQuery = (q) => parse(z.object({ q: z.string().trim().max(60).optional() }).strict(), q ?? {});
 export const parsePeriod = period;
+
+// ---- 24.02 ----
+export const parseRunCreate = (b) => parse(z.object({ period, type: z.enum(['REGULAR', 'SUPPLEMENTARY']).optional(), branchId: id.nullable().optional(), employeeIds: z.array(id).max(5000).optional() }).strict(), b);
+export const parseReadiness = (q) => parse(z.object({ period, branchId: id.optional() }).strict(), q);
+export const parseHold = (b) => parse(z.object({ hold: z.boolean(), reason: z.string().trim().max(500).optional() }).strict(), b);
+export const parseInput = (b) => parse(z.object({ employeeId: id, period, code, amount: money.refine((v) => v > 0, 'Give the amount'), note: z.string().trim().min(3, 'Say what it is').max(300) }).strict(), b);
+export const parseInputQuery = (q) => parse(z.object({ period: period.optional(), status: z.enum(['PENDING', 'APPLIED', 'CANCELLED']).optional() }).strict(), q ?? {});
+const fy = z.string().regex(/^\d{4}-\d{2}$/, 'A financial year such as 2026-27');
+const amounts = z.object({ sec80C: money.optional(), sec80CCD1B: money.optional(), sec80D: money.optional(), sec24b: money.optional(), hraRent: money.optional(), other: money.optional() }).strict();
+export const parseDeclaration = (b) => parse(z.object({ fy, regime: z.enum(['NEW', 'OLD']), declarations: amounts.optional(), proofs: z.array(z.object({ section: z.string().trim().max(20), amount: money, fileId: id.nullable().optional(), note: z.string().trim().max(200).optional() }).strict()).max(50).optional(), submit: z.boolean().optional() }).strict(), b);
+export const parseDeclQuery = (q) => parse(z.object({ fy: fy.optional(), status: z.enum(['DRAFT', 'SUBMITTED', 'VERIFIED', 'RETURNED']).optional() }).strict(), q ?? {});
+export const parseVerify = (b) => parse(z.object({ action: z.enum(['verify', 'return']), verified: amounts.optional(), note: z.string().trim().max(300).optional() }).strict(), b);
+export const parseFy = (q) => parse(z.object({ fy }).strict(), q);
