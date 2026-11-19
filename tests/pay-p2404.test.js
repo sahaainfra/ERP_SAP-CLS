@@ -2,6 +2,7 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { ready, as, fill, key, U as QU } from './qa-helpers.js';
 import { dueOf, ecrProblems, ecrRecord, pickRule, quarterOf } from '../src/server/modules/pay/statutory.js';
+import { createVault } from '../src/server/platform/integrations/vault.js';
 
 // Part 24.04: statutory compliance.
 //  T-01 the ECR file passes the format check and its PF totals equal the payroll's; due dates come from the dated rules (March TDS, quarters, Form 16 and 130).
@@ -52,6 +53,8 @@ function payroll(d, companyId) {
   const e2 = fill(d, 'hr_employees', { company_id: companyId, emp_code: 'P2', first_name: 'Sita', full_name: 'Sita Devi', gender: 'FEMALE', dob: '1992-01-01', mobile: '9000000002', employment_type: 'PERMANENT', doj: '2021-04-01', record_status: 'APPROVED', employment_status: 'ACTIVE' });
   fill(d, 'hr_employee_statutory', { company_id: companyId, employee_id: e1, pf_applicable: 1, esi_applicable: 0, pt_state: 'TS', lwf_state: 'TS', uan: '100200300400', pan_last4: '1234' });
   fill(d, 'hr_employee_statutory', { company_id: companyId, employee_id: e2, pf_applicable: 1, esi_applicable: 1, pt_state: 'TS', uan: '100200300401', esic_ip: '3100200301', pan_last4: '5678' });
+  // D-749: Ravi's PAN is kept encrypted by HR (the vault slot of the employee's PAN); Sita's is not on file
+  d.prepare('UPDATE hr_employee_statutory SET pan_enc = ? WHERE employee_id = ?').run(createVault().encrypt('ABCDE1234F', `hr_employee_pan/${companyId}/${e1}`), e1);
   const run = fill(d, 'pay_runs', { company_id: companyId, period: '2026-10', run_type: 'REGULAR', status: 'APPROVED', employees_count: 2, gross_paise: 4500000, net_paise: 3800000, tds_paise: 150000, locked_at: '2026-11-02T00:00:00Z' });
   const comps1 = [{ code: 'BASIC', name: 'Basic', type: 'EARNING', amount: 20000 }, { code: 'PF_EE', name: 'PF', type: 'DEDUCTION', amount: 1800 }, { code: 'PF_ER', name: 'EPF', type: 'EMPLOYER', amount: 551 }, { code: 'EPS_ER', name: 'EPS', type: 'EMPLOYER', amount: 1250 }, { code: 'EDLI_ER', name: 'EDLI', type: 'EMPLOYER', amount: 75 }, { code: 'PF_ADMIN', name: 'Admin', type: 'EMPLOYER', amount: 75 }, { code: 'PT', name: 'PT', type: 'DEDUCTION', amount: 200 }, { code: 'GRATUITY', name: 'Gratuity', type: 'EMPLOYER', amount: 800 }];
   const comps2 = [{ code: 'BASIC', name: 'Basic', type: 'EARNING', amount: 25000 }, { code: 'PF_EE', name: 'PF', type: 'DEDUCTION', amount: 1800 }, { code: 'PF_ER', name: 'EPF', type: 'EMPLOYER', amount: 551 }, { code: 'EPS_ER', name: 'EPS', type: 'EMPLOYER', amount: 1250 }, { code: 'EDLI_ER', name: 'EDLI', type: 'EMPLOYER', amount: 75 }, { code: 'PF_ADMIN', name: 'Admin', type: 'EMPLOYER', amount: 75 }, { code: 'ESI_EE', name: 'ESI', type: 'DEDUCTION', amount: 188 }, { code: 'ESI_ER', name: 'ESI', type: 'EMPLOYER', amount: 813 }, { code: 'PT', name: 'PT', type: 'DEDUCTION', amount: 200 }];
@@ -96,6 +99,9 @@ test('AC-01 the statutory chain on a locked payroll: the ECR file tied to the pa
   assert.equal(ecr.column, 'PAID'); assert.equal(cal.items.find((x) => x.type === 'FORM16').dueDate, '2027-06-15'); assert.equal(cal.items.find((x) => x.type === 'TDS_24Q' && x.period === 'Q3 2026-27').dueDate, '2027-01-31');
   // the TDS statement and the Form 16 / 130 batch
   const q = await call(U.pay, 'POST', '/stat/registers', { registerType: 'TDS_24Q_FILE', quarter: 'Q3 2026-27' }); assert.equal(q.status, 201); assert.equal(q.json.data.rows, 2);
+  assert.deepEqual(q.json.data.panMissing, ['P2'], 'D-749: the employee without a PAN on file is named');
+  const qf = (await r.api.raw('GET', `${P}/stat/registers/${q.json.data.id}/download`, U.pay)).buffer.toString('utf8'); assert.match(qf, /P1,Ravi Kumar,ABCDE1234F,/, 'D-749: the full PAN from the vault'); assert.doesNotMatch(qf, /P2,Sita Devi,[A-Z]{5}/);
+  assert.match(d.prepare("SELECT reason FROM core_audit_log WHERE entity = 'stat_registers' AND action = 'generate' ORDER BY id DESC LIMIT 1").get().reason ?? '', /PAN read from the vault for 1/);
   const f130 = await r.api.raw('GET', `${P}/stat/form16/pdf?fy=2026-27`, U.hr); assert.equal(f130.status, 200);
   assert.equal((await call(U.hr, 'POST', '/stat/registers', { registerType: 'FORM16_BATCH', fy: '2026-27' })).status, 201, 'HR generates the batch');
   const list = (await call(U.aud, 'GET', '/stat/registers')).json.data; assert.ok(list.length >= 3); assert.equal(list[0].amount, null, 'the auditor sees no amounts');

@@ -113,13 +113,13 @@ export const pay = {
     const setup = createPaySetupService({ db, base, flags, statutory });
     const runs = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_runs'").get() ? createPayRunService({ db, base, flags, setup, expenses: () => expensesOf(db) }) : null;
     const wages = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pay_wage_runs'").get() ? createPayWageService({ db, base, flags, setup, labour: () => labourOf(db), ctr: () => ctrOf(db) }) : null;
-    const stat = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'stat_filings'").get() ? createFilingService({ db, base, flags, setup }) : null;
+    const stat = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'stat_filings'").get() ? createFilingService({ db, base, flags, setup, vaultKey: appConfig.vaultKey }) : null;
     const ctx = { setup, runs, wages, stat, base, flags };
     services.set(db, ctx);
     listExports.register('pay.assignments', { source: (actor, req) => { base.need(actor, 'pay.assignment.export', 'export pay assignments'); return setup.assignments.list(actor, { ...req, page: 1, pageSize: 100 }); }, hidden: (actor) => (base.may(actor, 'pay.salary.view') ? [] : ['ctcAnnual', 'grossMonthly', 'arrears']) });
     runtimeOf(db)?.bus?.subscribe('perf.review.approved', (e) => { setup.assignments.onRating(e); }, { consumer: 'pay.rating' }); // D-361
     const r = Router(); const h = { idempotent: idempotency(db), idempotentRequired: idempotency(db, { required: true }), flags };
-    setupRoutes(r, setup, h); if (runs) { runRoutes(r, runs, h); const bus = runtimeOf(db)?.bus; bus?.subscribe('lv.encashment.input', (e) => { runs.consumers.onEncashment(e); }, { consumer: 'pay.encashment' }); bus?.subscribe('inv.asset.recovery_approved', (e) => { runs.consumers.onLossRecovery(e); }, { consumer: 'pay.loss_recovery' }); }
+    setupRoutes(r, setup, h); if (runs) { runRoutes(r, runs, h); const bus = runtimeOf(db)?.bus; bus?.subscribe('lv.encashment.input', (e) => { runs.consumers.onEncashment(e); }, { consumer: 'pay.encashment' }); runtimeOf(db)?.jobs?.register('pay.run.compute', (jctx) => runs.runs.runJob(jctx), { maxAttempts: 1, description: 'Computes a payroll run in the background with progress (part 24.02, D-745)' }); bus?.subscribe('inv.asset.recovery_approved', (e) => { runs.consumers.onLossRecovery(e); }, { consumer: 'pay.loss_recovery' }); }
     if (wages) wageRoutes(r, wages, h);
     if (stat) statutoryRoutes(r, stat, h);
     api.use('/pay', r);
