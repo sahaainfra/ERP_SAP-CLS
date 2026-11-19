@@ -382,5 +382,10 @@
  ],
  "pay.input.manage": [
   "PAY"
+ ],
+ "pay.wage_check.manage": [
+  "PAY",
+  "SACC",
+  "SUBCO"
  ]
 }

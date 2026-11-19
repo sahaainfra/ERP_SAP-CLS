@@ -44,3 +44,24 @@ export const parseDeclaration = (b) => parse(z.object({ fy, regime: z.enum(['NEW
 export const parseDeclQuery = (q) => parse(z.object({ fy: fy.optional(), status: z.enum(['DRAFT', 'SUBMITTED', 'VERIFIED', 'RETURNED']).optional() }).strict(), q ?? {});
 export const parseVerify = (b) => parse(z.object({ action: z.enum(['verify', 'return']), verified: amounts.optional(), note: z.string().trim().max(300).optional() }).strict(), b);
 export const parseFy = (q) => parse(z.object({ fy }).strict(), q);
+
+// ---- 24.03 ----
+const qty = z.coerce.number().min(-31).max(10000);
+export const parseWageRunCreate = (b) => parse(z.object({ siteId: id, contractorId: id, cycle: z.enum(['WEEKLY', 'FORTNIGHTLY', 'MONTHLY']), periodFrom: date }).strict(), b);
+export const parseWageLine = (b) => parse(z.object({
+  basis: z.enum(['DAILY', 'PIECE']).optional(), rateOverride: money.nullable().optional(), pieceRate: money.nullable().optional(), pieceQty: z.coerce.number().nonnegative().max(1e7).optional(), pieceUom: z.string().trim().max(20).nullable().optional(),
+  pieceSources: z.array(z.object({ mbId: id, qty: z.coerce.number().positive().max(1e7) }).strict()).max(50).optional(),
+  allowances: money.optional(), advance: money.optional(), canteen: money.optional(), otherDeductions: money.optional(),
+  adjust: z.object({ days: qty.optional(), otHours: qty.optional(), reason: z.string().trim().max(300) }).strict().optional(), version: z.number().int().optional(),
+}).strict(), b);
+export const parseWagePay = (b) => parse(z.object({ lineIds: z.array(id).min(1).max(1000), mode: z.enum(['BANK', 'CASH']), paidOn: date, reference: z.string().trim().max(80).optional() }).strict(), b);
+export const parseWageAck = (b) => parse(z.object({ method: z.enum(['CARD', 'PHOTO']), badge: z.string().trim().max(120).optional(), fileId: id.optional(), disputed: z.boolean().optional(), note: z.string().trim().max(300).optional() }).strict()
+  .refine((x) => (x.method === 'CARD' ? Boolean(x.badge) : Boolean(x.fileId)), { message: 'Scan the worker card or attach the photograph' }), b);
+export const parseSlipQuery = (q) => parse(z.object({ lang: z.enum(['en', 'hi']).default('en'), lineId: id.optional() }), q);
+export const parseFileFormat = (q) => parse(z.object({ format: z.enum(['csv', 'pdf']).default('csv') }), q);
+export const parseWageRegister = (q) => parse(z.object({ from: date, to: date, projectId: id.optional(), siteId: id.optional(), contractorId: id.optional(), format: z.enum(['csv', 'pdf']).optional() }).refine((x) => x.to >= x.from, { message: 'The end is before the start' }), q);
+export const parseWageCheckCreate = (b) => parse(z.object({ contractorId: id, projectId: id, siteId: id.optional(), period }).strict(), b);
+const sheetLine = z.object({ workerCode: z.string().trim().min(1).max(40), days: z.coerce.number().min(0).max(31), otHours: z.coerce.number().min(0).max(400).default(0), gross: money, deductions: money.default(0), net: money, paidOn: date.nullable().optional() }).strict();
+export const parseWageSheet = (b) => parse(z.object({ lines: z.array(sheetLine).max(5000).optional(), csv: z.string().max(2_000_000).optional(), version: z.number().int().optional() }).strict().refine((x) => x.lines || x.csv != null, { message: 'Give the rows or the CSV of the sheet' }), b);
+export const parseWageAttach = (b) => parse(z.object({ kind: z.enum(['SHEET', 'PROOF']), fileId: id }).strict(), b);
+export const parseWageDecision = (b) => parse(z.object({ decision: z.enum(['VERIFY', 'RETURN', 'HOLD']), note: z.string().trim().max(500).optional() }).strict(), b);

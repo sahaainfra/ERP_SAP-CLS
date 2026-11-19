@@ -1,5 +1,5 @@
 import { notFound } from '../../platform/http/errors.js';
-import { parseDeclQuery, parseDeclaration, parseFy, parseHold, parseInput, parseInputQuery, parseReadiness, parseRunCreate, parseVerify, parseArrears, parseAssignment, parseAssignmentUpdate, parseCalendarGen, parseCalendarQuery, parseCalendarUpdate, parseComponent, parseEmpQuery, parseFormulaTest, parseId, parsePreview, parseReason, parseStatParam, parseStatParamUpdate, parseStatQuery, parseStructure } from './validators.js';
+import { parseFileFormat, parseSlipQuery, parseWageAck, parseWageAttach, parseWageCheckCreate, parseWageDecision, parseWageLine, parseWagePay, parseWageRegister, parseWageRunCreate, parseWageSheet, parseDeclQuery, parseDeclaration, parseFy, parseHold, parseInput, parseInputQuery, parseReadiness, parseRunCreate, parseVerify, parseArrears, parseAssignment, parseAssignmentUpdate, parseCalendarGen, parseCalendarQuery, parseCalendarUpdate, parseComponent, parseEmpQuery, parseFormulaTest, parseId, parsePreview, parseReason, parseStatParam, parseStatParamUpdate, parseStatQuery, parseStructure } from './validators.js';
 
 /** Part 24.01: payroll set-up under /api/v1/pay, behind ff.pay.p2401. Rights are checked in the services. */
 export function setupRoutes(r, s, { idempotent, idempotentRequired, flags }) {
@@ -68,5 +68,42 @@ export function runRoutes(r, s, { idempotent, idempotentRequired, flags }) {
   r.post('/declarations/mine', idempotentRequired, (req, res) => ok(res, s.declarations.saveMine(req.actor, parseDeclaration(req.body))));
   r.get('/declarations', (req, res) => ok(res, s.declarations.list(req.actor, parseDeclQuery(req.query))));
   r.post('/declarations/:id/verify', idempotentRequired, (req, res) => ok(res, s.declarations.verify(req.actor, pid(req), parseVerify(req.body))));
+  return r;
+}
+
+/** Part 24.03: labour wage runs and contractor wage verification under /api/v1/pay, behind ff.pay.p2403. */
+export function wageRoutes(r, s, { idempotent, idempotentRequired, flags }) {
+  const ok = (res, data, status = 200) => res.status(status).json({ data });
+  const file = (res, f) => res.status(200).set({ 'content-type': f.contentType, 'content-disposition': `${f.contentType.startsWith('text/html') ? 'inline' : 'attachment'}; filename="${f.fileName}"`, 'cache-control': 'no-store' }).send(f.buffer);
+  const pid = (req) => parseId(req.params.id);
+  r.use(['/wage-runs', '/wage-register', '/wage-checks'], (req, _res, next) => (flags.isOn(req.actor, 'ff.pay.p2403') ? next() : next(notFound('Labour wages are not enabled for your company yet (feature flag ff.pay.p2403 is OFF).'))));
+  r.get('/wage-runs/options', (req, res) => ok(res, s.runs.options(req.actor)));
+  r.get('/wage-runs', (req, res) => res.json(s.runs.list(req.actor, req.query)));
+  r.post('/wage-runs', idempotentRequired, (req, res) => ok(res, s.runs.create(req.actor, parseWageRunCreate(req.body)), 201));
+  r.get('/wage-runs/:id', (req, res) => ok(res, s.runs.get(req.actor, pid(req))));
+  r.delete('/wage-runs/:id', (req, res) => ok(res, s.runs.remove(req.actor, pid(req))));
+  r.post('/wage-runs/:id/compute', idempotent, (req, res) => ok(res, s.runs.recompute(req.actor, pid(req))));
+  r.patch('/wage-runs/:id/lines/:lineId', idempotent, (req, res) => ok(res, s.runs.updateLine(req.actor, pid(req), parseId(req.params.lineId), parseWageLine(req.body))));
+  r.post('/wage-runs/:id/submit', idempotentRequired, (req, res) => ok(res, s.runs.submit(req.actor, pid(req)), 202));
+  r.post('/wage-runs/:id/withdraw', idempotent, (req, res) => ok(res, s.runs.withdraw(req.actor, pid(req), parseReason(req.body))));
+  r.post('/wage-runs/:id/cancel', idempotent, (req, res) => ok(res, s.runs.cancel(req.actor, pid(req), parseReason(req.body))));
+  r.post('/wage-runs/:id/amend', idempotentRequired, (req, res) => ok(res, s.runs.amend(req.actor, pid(req), parseReason(req.body)), 201));
+  r.get('/wage-runs/:id/history', (req, res) => ok(res, s.runs.history(req.actor, pid(req))));
+  r.post('/wage-runs/:id/pay', idempotentRequired, (req, res) => ok(res, s.runs.pay(req.actor, pid(req), parseWagePay(req.body))));
+  r.post('/wage-runs/:id/lines/:lineId/acknowledge', idempotentRequired, (req, res) => ok(res, s.runs.acknowledge(req.actor, pid(req), parseId(req.params.lineId), parseWageAck(req.body))));
+  r.get('/wage-runs/:id/slips', (req, res) => file(res, s.runs.slips(req.actor, pid(req), parseSlipQuery(req.query))));
+  r.get('/wage-runs/:id/muster', (req, res) => file(res, s.runs.muster(req.actor, pid(req), parseFileFormat(req.query))));
+  r.get('/wage-runs/:id/print', (req, res) => file(res, s.runs.print(req.actor, pid(req))));
+  r.get('/wage-runs/:id/export', (req, res) => file(res, s.runs.exportCsv(req.actor, pid(req))));
+  r.get('/wage-register', (req, res) => ok(res, s.runs.register(req.actor, parseWageRegister(req.query))));
+  r.get('/wage-register/export', (req, res) => file(res, s.runs.registerFile(req.actor, parseWageRegister(req.query))));
+  r.get('/wage-checks/worklist', (req, res) => ok(res, s.checks.worklist(req.actor)));
+  r.get('/wage-checks', (req, res) => res.json(s.checks.list(req.actor, req.query)));
+  r.post('/wage-checks', idempotentRequired, (req, res) => ok(res, s.checks.create(req.actor, parseWageCheckCreate(req.body)), 201));
+  r.get('/wage-checks/:id', (req, res) => ok(res, s.checks.get(req.actor, pid(req))));
+  r.put('/wage-checks/:id/sheet', idempotent, (req, res) => ok(res, s.checks.saveSheet(req.actor, pid(req), parseWageSheet(req.body))));
+  r.post('/wage-checks/:id/attach', idempotent, (req, res) => ok(res, s.checks.attach(req.actor, pid(req), parseWageAttach(req.body))));
+  r.post('/wage-checks/:id/submit', idempotentRequired, (req, res) => ok(res, s.checks.submit(req.actor, pid(req)), 202));
+  r.post('/wage-checks/:id/decide', idempotentRequired, (req, res) => ok(res, s.checks.decide(req.actor, pid(req), parseWageDecision(req.body))));
   return r;
 }
