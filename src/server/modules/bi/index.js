@@ -21,6 +21,7 @@ import { domainHistoryCode, domainMetricDefinition, listDomainMetrics, readDomai
 import { bindExecution, createExecution } from './execution.js';
 import { createMonthlyClose } from './monthly-close.js';
 import { bindExplain, createExplain } from './explain.js';
+import { createRoleDashboards, registerRoleLayouts } from './role-dashboards.js';
 import { FINDING_STATUSES, OUTCOMES, RULES as DET_RULES, createLeakage } from './leakage.js';
 import { SECTIONS as MR_SECTIONS, CHANNELS as MR_CHANNELS, createMorningReport } from './morning-report.js';
 import { ALERT_STATUSES, RULES, SEVERITIES, DIMENSIONS, bindTower, createControlTower } from './control-tower.js';
@@ -60,7 +61,7 @@ const actorKey = ({ companyId, userId, user }) => JSON.stringify([companyId, use
 export const bi = {
   code: 'bi', name: 'Reports', routePrefix: '/api/v1/bi', ownerPart: '27.01',
   status: 'Project status catalogue, builder, exports, personal subscriptions and usage.',
-  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes', 'det_rules', 'det_findings'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes', 'explain', 'leakage', 'findings', 'detection-rules', 'detection'],
+  tables: ['rpt_subscriptions', 'rpt_runs', 'bi_metrics', 'bi_refresh_log', 'bi_project_snapshots', 'bi_domain_refreshes', 'bi_domain_observations', 'exec_alerts', 'exec_alert_settings', 'mr_configs', 'mr_reports', 'dei_daily', 'mc_monthly_closes', 'det_rules', 'det_findings'], companyOptional: [], resources: ['reports', 'datasets', 'custom-reports', 'subscriptions', 'usage', 'metrics', 'control-tower', 'exec-alerts', 'exec-alert-settings', 'morning-reports', 'morning-report-settings', 'execution', 'monthly-closes', 'explain', 'leakage', 'findings', 'detection-rules', 'detection', 'dashboard-inventory', 'role-dashboard'],
   mount(api, { db, config }) {
     // The report background jobs are available once the reporting schema has been installed.
     if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'rpt_subscriptions'").get()) return;
@@ -375,6 +376,19 @@ export const bi = {
     router.post('/detection-rules/changes/:id/act', towerIdempotency, (req, res) => ok(res, leakage.decideRule(req.actor, parseId(req.params.id), parse(z.object({ action: z.enum(['approve', 'reject', 'return']),
       comment: z.string().trim().max(500).optional(), version: z.number().int().positive() }).strict(), req.body))));
     router.post('/detection/runs', towerIdempotency, (req, res) => ok(res, leakage.queueRun(req.actor, parse(z.object({ ruleCode: z.enum(DET_RULES.map((r) => r.code)).optional() }).strict(), req.body ?? {}).ruleCode), 202));
+    // ---- part 27.10: role dashboards and the dashboard inventory
+    const roleDash = createRoleDashboards(context);
+    registerRoleLayouts(db);
+    const invQ = z.object({ module: z.string().regex(/^[a-z]{2,12}$/).optional(), status: z.enum(['OK', 'REVIEW', 'RETIRED', 'NO_PROVIDER']).optional(), type: z.string().regex(/^[a-z]{2,12}$/).optional(),
+      source: z.enum(['CERTIFIED_METRIC', 'OVERVIEW_SERVICE', 'OWNER_SERVICE', 'FRAMEWORK']).optional() }).strict();
+    router.get('/role-dashboard', (req, res) => { parse(z.object({}).strict(), req.query); return ok(res, roleDash.mine(req.actor)); });
+    router.get('/dashboard-inventory', (req, res) => ok(res, roleDash.inventory(req.actor, parse(invQ, req.query))));
+    router.get('/dashboard-inventory/export', (req, res) => {
+      const { format, ...q } = parse(invQ.extend({ format: z.enum(['csv', 'xlsx', 'pdf']).default('xlsx') }), req.query);
+      const out = roleDash.exportInventory(req.actor, q, format);
+      return res.set({ 'content-type': out.contentType, 'content-disposition': `attachment; filename="${out.fileName}"`, 'cache-control': 'no-store' }).send(out.buffer);
+    });
+    router.post('/dashboard-inventory/scans', towerIdempotency, (req, res) => { parse(z.object({}).strict(), req.body ?? {}); return ok(res, roleDash.rescan(req.actor), 201); });
     router.get('/reports/project-status/export', startExport(reportCode, {}));
     router.get('/datasets/project-status', (req, res) => {
       verifyBuilder(req.actor);

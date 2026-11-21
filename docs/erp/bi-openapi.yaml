@@ -775,6 +775,27 @@ paths:
     post:
       summary: Queue a run of the rules (all, or one ruleCode) as a background job (bi.det_rule.run); the job also runs daily at 05:30 IST
       responses: { '202': { description: The job } }
+  /bi/role-dashboard:
+    get:
+      summary: The roles of the caller that have a role dashboard (part 27.10); the layout itself is GET /ui/dashboards/role-dashboard (03.07)
+      responses: { '200': { description: '{ roles [role, name, widgets], dashboard }' }, '404': { description: Flag ff.bi.p2710 off } }
+  /bi/dashboard-inventory:
+    get:
+      summary: Every widget with its provider, source (certified metric, overview card, module service, framework), permission, drill, dashboards and role dashboards that use it, and status (OK, REVIEW, RETIRED, NO_PROVIDER); the dashboards; the role coverage; the last scan for hard-coded figures
+      parameters:
+        - { name: module, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [OK, REVIEW, RETIRED, NO_PROVIDER] } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: source, in: query, schema: { type: string, enum: [CERTIFIED_METRIC, OVERVIEW_SERVICE, OWNER_SERVICE, FRAMEWORK] } }
+      responses: { '200': { description: '{ totals, byModule, widgets, roles, dashboards, scan }' }, '403': { description: bi.dashboard_inventory.view required } }
+  /bi/dashboard-inventory/export:
+    get:
+      summary: Export the inventory (CSV, XLSX, PDF; audited)
+      responses: { '200': { description: The file } }
+  /bi/dashboard-inventory/scans:
+    post:
+      summary: Run the scan for hard-coded figures and sample data in the dashboard code again (audited)
+      responses: { '201': { description: '{ available, files, findings [rule, file, line, text, why], scannedAt }' } }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }

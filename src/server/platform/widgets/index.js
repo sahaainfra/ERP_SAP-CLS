@@ -52,3 +52,15 @@ export const roleLayouts = {
     return null;
   },
 };
+
+/**
+ * Retired widgets (part 27.10): a widget that duplicated another is retired in favour of it; a saved layout that still names the old code shows
+ * the new one, so nobody's dashboard loses a card.
+ *   register(from, to); of(code) -> the code to show
+ */
+const aliasMap = new Map();
+export const widgetAliases = {
+  register(from, to) { aliasMap.set(from, to); },
+  of: (code) => aliasMap.get(code) ?? code,
+  all: () => Object.fromEntries(aliasMap),
+};

@@ -5,7 +5,7 @@ import { createLogger } from '../src/server/platform/http/logger.js';
 import { identityOf } from '../src/server/platform/identity/index.js';
 import { authzOf } from '../src/server/platform/authz/index.js';
 import { createUserStore } from '../src/server/modules/iam/users.js';
-import { widgetRegistry } from '../src/server/platform/widgets/index.js';
+import { widgetAliases, widgetRegistry } from '../src/server/platform/widgets/index.js';
 import { previousPeriod, requestsDrill, trendPct } from '../src/server/modules/ui/widget-providers.js';
 import { admin, setupCompany, startApi } from './helpers.js';
 
@@ -53,7 +53,8 @@ test('FR-02 every widget of the registry has a provider and every provider a wid
   const api = await startApi();
   await world(api);
   const rows = api.db.prepare('SELECT code, permission_key, type FROM ui_widgets WHERE is_active = 1').all();
-  assert.deepEqual(rows.map((r) => r.code).sort(), widgetRegistry.codes(), 'the registry and the providers match');
+  // a widget retired as a duplicate (27.10) keeps its provider for its module's own use; its saved places show the replacement (widgetAliases)
+  assert.deepEqual([...rows.map((r) => r.code), ...Object.keys(widgetAliases.all())].sort(), widgetRegistry.codes(), 'the registry and the providers match');
   assert.ok(rows.length >= 23);
   const types = new Set(rows.map((r) => r.type));
   for (const t of ['kpi', 'line', 'bar', 'stacked', 'area', 'donut', 'gauge', 'heatmap', 'gantt', 'table', 'alerts', 'list', 'calendar', 'map', 'notice', 'actions']) assert.ok(types.has(t), `a widget of type ${t}`);
@@ -227,9 +228,9 @@ test('FR-03 T-03 a person\'s own copy of a dashboard is kept on the server, foll
   // the overview pages of part 166.5 (ov-*) and Home insights are listed too, each for those who may open its page
   const own = (rows) => rows.map((d) => d.code).filter((c) => !c.startsWith('ov-') && c !== 'home-insights');
   const pmList = (await api.call('GET', `${U}/dashboards`, pm)).json.data.map((d) => d.code);
-  assert.deepEqual(own((await api.call('GET', `${U}/dashboards`, pm)).json.data), ['my-work', 'requests-overview']);
+  assert.deepEqual(own((await api.call('GET', `${U}/dashboards`, pm)).json.data), ['my-work', 'requests-overview', 'role-dashboard']);
   assert.ok(pmList.includes('home-insights') && pmList.includes('ov-qs') && !pmList.includes('ov-hr'), pmList.join(','));
-  assert.deepEqual(own((await api.call('GET', `${U}/dashboards`, emp)).json.data), ['my-work']);
+  assert.deepEqual(own((await api.call('GET', `${U}/dashboards`, emp)).json.data), ['my-work', 'role-dashboard'], 'every person has My Work and the dashboard of their role (27.10)');
   assert.equal((await api.call('GET', `${U}/dashboards/requests-overview`, emp)).status, 403);
   assert.equal((await api.call('GET', `${U}/dashboards/nothing-here`, pm)).status, 404);
   // the person changes their layout on one device

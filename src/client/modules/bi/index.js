@@ -8,6 +8,8 @@ const MetricCatalogue = lazyPage(() => import('./Metrics.jsx'), 'MetricCatalogue
 const ReportUsage = lazyPage(() => import('./Subscriptions.jsx'), 'ReportUsage');
 const ControlTower = lazyPage(() => import('./ControlTower.jsx'), 'ControlTower');
 const ExecutiveAlerts = lazyPage(() => import('./ControlTower.jsx'), 'ExecutiveAlerts');
+const RoleDashboard = lazyPage(() => import('./RoleDashboards.jsx'), 'RoleDashboard');
+const DashboardInventory = lazyPage(() => import('./RoleDashboards.jsx'), 'DashboardInventory');
 const LeakageTower = lazyPage(() => import('./Leakage.jsx'), 'LeakageTower');
 const VarianceExplainer = lazyPage(() => import('./Explain.jsx'), 'VarianceExplainer');
 const MonthlyClose = lazyPage(() => import('./MonthlyClose.jsx'), 'MonthlyClose');
@@ -20,6 +22,8 @@ registerModule({
   routes: [
     { path: '/bi/control-tower', label: 'Enterprise Control Tower', labelHi: 'उद्यम नियंत्रण टॉवर', icon: 'erp.insights.rb', permission: 'bi.control_tower.view', flag: 'ff.bi.p2704', Page: ControlTower },
     { path: '/bi/exec-alerts', label: 'Executive Alerts', labelHi: 'कार्यकारी चेतावनियाँ', icon: 'erp.insights.rb', permission: 'bi.exec_alert.view', flag: 'ff.bi.p2704', Page: ExecutiveAlerts },
+    { path: '/bi/role-dashboard', label: 'My Role Dashboard', labelHi: 'मेरा भूमिका डैशबोर्ड', icon: 'erp.insights.rb', flag: 'ff.bi.p2710', Page: RoleDashboard },
+    { path: '/bi/dashboard-inventory', label: 'Dashboard Inventory', labelHi: 'डैशबोर्ड सूची', icon: 'erp.insights.rb', permission: 'bi.dashboard_inventory.view', flag: 'ff.bi.p2710', Page: DashboardInventory },
     { path: '/bi/leakage', label: 'Leakage & Controls Tower', labelHi: 'रिसाव एवं नियंत्रण टॉवर', icon: 'erp.insights.rb', flag: 'ff.bi.p2709', Page: LeakageTower },
     { path: '/bi/explain', label: 'Variance Explainer', labelHi: 'विचलन विश्लेषक', icon: 'erp.insights.rb', permission: 'bi.explain.view', flag: 'ff.bi.p2708', Page: VarianceExplainer },
     { path: '/bi/monthly-close', label: 'Monthly Close Status', labelHi: 'मासिक समापन स्थिति', icon: 'erp.insights.rb', permission: 'bi.monthly_close.view', flag: 'ff.bi.p2707', Page: MonthlyClose },
